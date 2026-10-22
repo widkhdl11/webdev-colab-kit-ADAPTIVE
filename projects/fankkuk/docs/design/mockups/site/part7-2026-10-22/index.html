@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>7파트 안내·정책 — 지금 / 바꾼 뒤</title>
+<!-- 7파트 시안 목록 2026-10-22. 진단: docs/design/redesign-2026-10-22-part7.md. 왼쪽 now/ 는 실제 사이트 캡처, 오른쪽 shots/ 는 시안 캡처(같은 폭). 13절 다섯 가지는 모두 추천(①)으로 그렸다. -->
+<style>
+body{margin:0;font-family:Pretendard,system-ui,sans-serif;background:#f3f4f6;color:#111827}
+header{position:sticky;top:0;z-index:2;background:#fff;border-bottom:1px solid #d1d5db;padding:16px 24px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+header h1{font-size:20px;margin:0}header p{margin:4px 0 0;font-size:14px;color:#4b5563}
+.modes{margin-left:auto;display:flex;gap:8px}
+.modes button{min-height:44px;padding:0 16px;border:1px solid #9ca3af;border-radius:12px;background:#fff;font-size:14px;cursor:pointer}
+.modes button[aria-pressed=true]{background:#111827;color:#fff;border-color:#111827}
+section{padding:32px 24px;border-bottom:1px solid #d1d5db}
+section h2{font-size:20px;margin:0 0 4px}section h2 code{font-size:14px;color:#4b5563;font-weight:400}
+section ul{margin:8px 0 16px;padding-left:20px;font-size:14px;color:#374151}
+section a.open{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:600;color:#0b6aa8}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+.cmp figure{margin:0;background:#fff;border:1px solid #d1d5db;border-radius:12px;overflow:hidden}
+.cmp figcaption{padding:8px 12px;font-size:13px;font-weight:600;border-bottom:1px solid #e5e7eb}
+.cmp img{width:100%;display:block}
+body.w390 .cmp{grid-template-columns:repeat(2,minmax(0,390px));justify-content:center}
+@media (max-width:767px){.cmp,body.w390 .cmp{grid-template-columns:1fr}}
+</style></head>
+<body>
+<header><div><h1>7파트 안내·정책 — 지금 / 바꾼 뒤</h1><p>왼쪽이 지금 사이트, 오른쪽이 시안이에요. 「시안 열기」로 들어가면 회색 막대에서 바뀐 곳 번호와 상태(고객센터 로그인 전·후 등)를 바꿔 볼 수 있어요.</p></div>
+<div class="modes"><button type="button" data-w="1440" aria-pressed="true">PC 1440</button><button type="button" data-w="390" aria-pressed="false">모바일 390</button></div></header>
+<main id="list"></main>
+<script>
+const pages = [
+  ['guide-fan','이용 안내(팬)','/guide/fan',['하늘 판 둘(요약·목차) → 「먼저 알아 두세요」 판 하나 + 글 위 접는 목차','진행 단계 카드 6장 → 약관과 같은 단계 칩, 요금 카드 3장 → 요금 표','끝 「더 궁금하면」 조 → 판 모양']],
+  ['guide-creator','이용 안내(크리에이터)','/guide/creator',['팬 안내와 같은 틀 — 판 하나·접는 목차·요금 표']],
+  ['inspection','검수 기준','/inspection',['같은 틀','첫 조 「모든 상자에 하는 일」을 회색 면에 앉혀 구분(문장이 길어 칩 대신)']],
+  ['security','보안 안내','/security',['흐름 그림이 기준점 — 「송장을 출력할 때만 주소 열람」 칸만 하늘 면','요약은 회색 보조 면, 목차는 접는 칸']],
+  ['dispute','분쟁 처리 안내','/dispute',['같은 틀','처리 순서를 단계 칩(접수 확인 › 결과 답변)으로']],
+  ['faq','자주 묻는 질문','/faq',['요약 판을 약관 「먼저 알아 두세요」 모양으로','펼친 답 폭 680, 첫 줄 펼침(공지·고객센터와 같게)']],
+  ['about','팬꾹 소개','/about',['이야기 세 문단 → 한 기둥 글','카드 격자 셋 → 강조 판 하나 · 검수 네 칸 한 줄 · 「하지 않는 것」 줄 목록']],
+  ['support','고객센터','/support',['로그인 전에는 문의 칸 넷 없이 「로그인하고 문의 남기기」 버튼만(시안 막대에서 로그인 후로 바꿔 보기)','1:1 문의 구간을 크림 띠로, 연락처 카드 넷 → 사실 한 줄, 값 없는 「점심 시간」 숨김']],
+  ['notices','공지사항','/notices',['배치 그대로 — 펼친 본문 폭 680, 본문 안 소제목 16']],
+  ['report','신고·문의','/report',['요약 판 없앰 — 같은 말이 두 번 나오던 첫 줄 뺌','「이메일 앱이 열려요」 줄을 버튼 바로 위로, 시작선 하나(680)']],
+];
+const list = document.getElementById('list');
+list.innerHTML = pages.map(([slug, name, path, notes]) => `<section><h2>${name} <code>${path}</code></h2><ul>${notes.map(n => `<li>${n}</li>`).join('')}</ul><div class="cmp"><figure><figcaption>지금</figcaption><img data-src="now/${slug}" alt="${name} 지금 화면"></figure><figure><figcaption>바꾼 뒤 · <a class="open" href="${slug}.html">시안 열기</a></figcaption><img data-src="shots/${slug}" alt="${name} 시안"></figure></div></section>`).join('');
+function setW(w){document.body.classList.toggle('w390', w === '390');document.querySelectorAll('img[data-src]').forEach(i => { i.src = i.dataset.src + '-' + w + '.png'; });document.querySelectorAll('.modes button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.w === w)));}
+document.querySelectorAll('.modes button').forEach(b => b.addEventListener('click', () => setW(b.dataset.w)));
+setW('1440');
+</script>
+</body></html>

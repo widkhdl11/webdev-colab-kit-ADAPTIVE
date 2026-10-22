@@ -1,0 +1,123 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>고객센터 · 팬꾹 7파트 정돈 시안</title><link rel="stylesheet" href="part7-pages.css"></head>
+<!-- 7파트 정돈 시안 2026-10-22 — /support (고객센터). 제안: redesign-2026-10-22-part7.md 2절 + 13절 2·3·5번 ①(추천).
+ 근거: design-rules 16(로그인 전 880·글 680)·0000(카드 없이)·14(사실 한 줄), tokens 0-4(크림 띠·--line-on-cream), 21(강조 하나).
+ 상태: 시안 보기 막대의 「로그인 전 / 로그인 후」로 1:1 문의 구간을 바꿔 본다 — 로그인 전은 칸 넷을 그리지 않고 기존 버튼 「로그인하고 문의 남기기」만, 로그인 후는 지금 양식 칸 넷 + 「내 문의」(없음/있음). 「보내기」는 칸 오류·보냄 문구 확인용. (문의 제한 계정의 안내 한 줄은 이번 시안 범위 밖 — 모양이 바뀌지 않는다.)
+ 바뀐 곳(빨간 번호): 1 탭 — 390 에서 두 줄로 접히지 않고 한 줄 가로 넘김, 펼친 답 글만 680 · 2 1:1 문의 구간을 크림 띠로, 폭 680(카드 테두리·그림자 없이 띠 위에) · 3 로그인 전은 버튼 하나 ·
+   4 연락처 카드 넷 -> 사실 한 줄(운영 시간 · 전화 · 이메일, 사이 가는 세로선 — 767 이하 위아래), 값이 없는 「점심 시간」 칸은 그리지 않는다.
+ 문구는 지금 화면(widgets/support/ui/support-page.tsx · features/inquiry-submit/ui/inquiry-form.tsx) 그대로. 「내 문의」 예시 두 건은 더미(지어낸 값). 질문 열다섯은 소스 그대로(요금 숫자는 DB 요금표 값).
+ 회색 막대(.mockbar)와 빨간 번호(.mk)는 시안 전용. -->
+<body id="top">
+<header class="pg-top"><div class="pg-wrap"><a class="pg-logo" href="#top" aria-label="팬꾹 처음으로"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
+<nav class="pg-nav" aria-label="주 메뉴"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#" aria-current="page">고객센터</a></nav>
+<button class="pg-menu" type="button" aria-label="메뉴 열기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+<div class="pg-auth"><a href="#">로그인</a><i aria-hidden="true"></i><a href="#">회원가입</a></div></div></header>
+<main id="main">
+<div class="pg-wrap">
+<div class="mockbar" role="group" aria-label="시안 보기 전환"><b>시안 보기</b>
+ <span class="mb-grp">1:1 문의 <button type="button" data-st="out" aria-pressed="true">로그인 전</button><button type="button" data-st="in" aria-pressed="false">로그인 후</button></span>
+ <span class="mb-grp">내 문의 <button type="button" data-mine="no" aria-pressed="true">없음</button><button type="button" data-mine="yes" aria-pressed="false">있음</button></span>
+ <span class="mb-grp">보내기 <button type="button" data-send="idle" aria-pressed="true">전</button><button type="button" data-send="err" aria-pressed="false">칸 오류</button><button type="button" data-send="done" aria-pressed="false">보냄</button></span>
+ <span class="mb-grp"><button type="button" id="mkBtn" aria-pressed="false">바뀐 곳 번호 표시</button></span></div>
+<header class="pg-head"><h1 class="pg-title" id="page-title" tabindex="-1">고객센터</h1><p class="pg-desc">궁금한 점을 먼저 찾아보시고, 없으면 1:1 문의를 남겨 주세요.</p></header>
+
+<section aria-labelledby="faq-title"><h2 id="faq-title" class="pg-round" style="font-size:20px">자주 묻는 질문</h2>
+<div class="su-tabs mkp" role="tablist" aria-label="질문 분류"><i class="mk tl" style="left:0" aria-hidden="true">1</i>
+ <button class="su-tab" role="tab" id="t-gift" aria-controls="p-gift" aria-selected="true" type="button">선물 보내기</button>
+ <button class="su-tab" role="tab" id="t-fee" aria-controls="p-fee" aria-selected="false" tabindex="-1" type="button">요금</button>
+ <button class="su-tab" role="tab" id="t-ship" aria-controls="p-ship" aria-selected="false" tabindex="-1" type="button">배송</button>
+ <button class="su-tab" role="tab" id="t-creator" aria-controls="p-creator" aria-selected="false" tabindex="-1" type="button">크리에이터</button>
+ <button class="su-tab" role="tab" id="t-account" aria-controls="p-account" aria-selected="false" tabindex="-1" type="button">계정</button>
+</div>
+
+<div class="su-panel" role="tabpanel" id="p-gift" aria-labelledby="t-gift"><ul class="pg-acc">
+<li><details class="pg-fold" open><summary><span class="q"><b>선물은 어떻게 보내나요?</b></span></summary><div class="ans"><p>크리에이터를 찾아 「선물 보내기」를 누르고 상자 크기를 골라 결제하면 돼요. 결제하면 상자마다 보낼 팬꾹 주소가 나와요. 크리에이터가 승인하면 주소가 바로 보이고, 「먼저 보내기」로 미리 보낼 수도 있어요.</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>크리에이터가 거절하면 어떻게 되나요?</b></span></summary><div class="ans"><p>거절된 선물은 크리에이터에게 배송되지 않아요. 사무실에 도착하기 전이면 결제 금액을 모두 돌려드리고, 도착한 뒤면 보낸 주소로 돌려보내 드린 뒤 반송 택배비를 뺀 금액을 돌려드려요(검수에 걸린 상자는 돌려드리는 금액이 없어요). 7일 안에 승인하지 않은 선물도 같아요. 거절 이유는 팬에게 알리지 않습니다.</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>여러 상자를 한 번에 보낼 수 있나요?</b></span></summary><div class="ans"><p>네, 한 선물에 상자를 여러 개 등록할 수 있어요. 상자마다 크기에 맞는 요금이 정해져요.</p></div></details></li>
+</ul></div>
+
+<div class="su-panel" role="tabpanel" id="p-fee" aria-labelledby="t-fee" hidden><ul class="pg-acc">
+<li><details class="pg-fold" open><summary><span class="q"><b>요금은 얼마인가요?</b></span></summary><div class="ans"><p>상자마다 배송비가 포함된 금액이에요. 소형(세 변 합 100cm·5kg 이하) 6,900원, 중형(세 변 합 100cm·10kg 이하) 8,900원, 대형(세 변 합 160cm·20kg 이하) 10,900원이고, 검수비도 포함돼 있어요.</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>크기와 무게가 서로 다른 구간이면 어떻게 정해지나요?</b></span></summary><div class="ans"><p>크기와 무게 중 큰 쪽 기준으로 정해져요. 예를 들어 세 변 합은 80cm인데 무게가 7kg이면 중형이에요.</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>도착해서 잰 크기가 등록한 것보다 크면요?</b></span></summary><div class="ans"><p>사무실에서 실측한 크기가 더 크면 차액을 따로 결제해 주셔야 해요. 세 변 합 160cm나 20kg를 넘는 상자는 받지 않아요.</p></div></details></li>
+</ul></div>
+
+<div class="su-panel" role="tabpanel" id="p-ship" aria-labelledby="t-ship" hidden><ul class="pg-acc">
+<li><details class="pg-fold" open><summary><span class="q"><b>선물이 어디쯤 왔는지 어떻게 확인하나요?</b></span></summary><div class="ans"><p>등록 → 입고 → 검수 → 출고 → 배송중 → 수령, 여섯 단계로 (크리에이터 승인은 검수와 출고 사이에 따로 표시돼요) 선물 상세 화면과 상단 선물 아이콘에서 볼 수 있어요.</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>크리에이터행 송장번호를 볼 수 있나요?</b></span></summary><div class="ans"><p>팬에게는 크리에이터행 송장번호를 보여 드리지 않아요. 팬이 입력하는 것은 사무실로 보내는 상자의 송장번호예요.</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>검수는 어떻게 하나요?</b></span></summary><div class="ans"><p>모든 선물은 팬꾹에서 검수한 뒤 보냅니다. 송장을 떼고 겉면과 추적 장치를 검사하고, 탐지기 반응이 있으면 열어서 확인해요. 보낼 수 없는 물품이 나오면 상자를 돌려보내 드려요. 이때는 검수비와 택배비를 빼면 환불 금액이 남지 않아요.</p></div></details></li>
+</ul></div>
+
+<div class="su-panel" role="tabpanel" id="p-creator" aria-labelledby="t-creator" hidden><ul class="pg-acc">
+<li><details class="pg-fold" open><summary><span class="q"><b>크리에이터는 어떻게 가입하나요?</b></span></summary><div class="ans"><p>가입할 때 「크리에이터」를 고르면 돼요. 가입한 뒤 「주소와 설정」에서 활동 채널 주인인지 확인을 마치면 「크리에이터 찾기」에 나타나요. 유튜브·치지직은 그 계정으로 로그인하면 바로 끝나요(인스타그램은 프로페셔널 계정만).</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>선물 승인은 어떻게 하나요?</b></span></summary><div class="ans"><p>요청이 오면 한 건씩 카카오톡 인증서로 서명해서 승인해요. 전체 승인 버튼은 없어요.</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>원치 않는 팬을 막을 수 있나요?</b></span></summary><div class="ans"><p>네, 차단 목록에 추가하면 그 팬은 선물을 요청할 수 없어요.</p></div></details></li>
+</ul></div>
+
+<div class="su-panel" role="tabpanel" id="p-account" aria-labelledby="t-account" hidden><ul class="pg-acc">
+<li><details class="pg-fold" open><summary><span class="q"><b>비밀번호를 잊어버렸어요.</b></span></summary><div class="ans"><p>로그인 화면의 「비밀번호를 잊으셨나요?」에서 가입 이메일을 입력하면 재설정 링크를 보내 드려요.</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>아이디를 바꿀 수 있나요?</b></span></summary><div class="ans"><p>아이디는 바꿀 수 없어요. 닉네임과 이메일은 내 팬꾹의 개인정보에서 고칠 수 있어요.</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>휴대폰 번호를 바꾸고 싶어요.</b></span></summary><div class="ans"><p>내 팬꾹의 개인정보에서 바꿀 수 있고, 카카오톡 인증을 다시 받아야 해요.</p></div></details></li>
+</ul></div>
+</section>
+</div>
+
+<section class="su-ask pg-band mkp" aria-labelledby="inquiry-title"><i class="mk tl" aria-hidden="true">2</i>
+ <div class="pg-wrap"><div class="pg-prose">
+  <h2 id="inquiry-title">1:1 문의</h2>
+  <p class="lead">1:1 문의는 남겨 주신 순서대로 답변드려요. 답변이 달리면 「내 문의」에서 볼 수 있어요.</p>
+
+  <div class="su-state-out su-out mkp"><i class="mk tl" aria-hidden="true">3</i><a class="pg-btn fill block" href="#">로그인하고 문의 남기기</a></div>
+
+  <div class="su-state-in">
+   <form class="su-form" id="qform" novalidate onsubmit="return false">
+    <div class="pg-field"><label for="q-cat">분류</label><div class="pg-sel"><select class="pg-in" id="q-cat"><option value="">분류를 골라 주세요</option><option>선물 보내기</option><option>요금</option><option>배송</option><option>크리에이터</option><option>계정</option><option>기타</option></select><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m4 7.5 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+    <div class="pg-field"><label for="q-order">주문번호 <span>(선택)</span></label><input class="pg-in" id="q-order" type="text" placeholder="예: FC-7K3M9" aria-describedby="q-order-h"><p class="pg-hint" id="q-order-h">선물에 관한 문의라면 적어 주시면 더 빨리 확인할 수 있어요.</p></div>
+    <div class="pg-field"><label for="q-title">제목</label><input class="pg-in" id="q-title" type="text" placeholder="문의 제목을 적어 주세요"></div>
+    <div class="pg-field"><label for="q-body">내용</label><textarea class="pg-in" id="q-body" rows="6" placeholder="궁금한 점을 자세히 적어 주세요"></textarea></div>
+    <div role="alert"><p class="pg-err" id="q-err" hidden>분류를 골라 주세요.</p></div>
+    <div role="status"><p class="pg-done" id="q-done" hidden>문의를 남겼어요. 답변이 달리면 아래 「내 문의」에서 볼 수 있어요.</p></div>
+    <button type="button" class="pg-btn fill block" style="margin-top:24px">문의 남기기</button>
+   </form>
+   <section class="su-mine" aria-labelledby="mine-title"><h3 id="mine-title">내 문의</h3>
+    <p class="su-hasmine-no" style="color:var(--sub);font-size:14px">아직 남긴 문의가 없어요.</p>
+    <ul class="pg-acc su-hasmine-yes">
+     <li><details class="pg-fold"><summary><span class="q"><b>송장번호를 잘못 입력했어요</b></span><span class="su-tag wait">답변 대기</span></summary><div class="ans"><p class="meta">배송 · 주문번호 FC-7K3M9 · 2026.10.21 14:20</p><p>사무실로 보낸 상자의 송장번호를 한 자리 잘못 적었어요. 고칠 수 있을까요?</p><p class="meta">답변을 준비하고 있어요. 남겨 주신 순서대로 답변드려요.</p></div></details></li>
+     <li><details class="pg-fold"><summary><span class="q"><b>요금이 다르게 결제됐어요</b></span><span class="su-tag ok">답변 완료</span></summary><div class="ans"><p class="meta">요금 · 2026.10.19 09:41</p><p>중형으로 등록했는데 대형 요금이 결제됐어요.</p><div class="reply"><p style="font-weight:600">팬꾹의 답변 · 2026.10.19 15:02</p><p>사무실에서 실측한 크기가 등록한 것보다 커서 차액이 결제됐어요. 상세 내역은 선물 상세 화면에서 볼 수 있어요.</p></div></div></details></li>
+    </ul>
+   </section>
+  </div>
+ </div></div>
+</section>
+
+<section class="su-sec" style="margin-bottom:96px" aria-labelledby="contact-title"><div class="pg-wrap mkp"><i class="mk tl" style="left:16px" aria-hidden="true">4</i>
+ <h2 id="contact-title" class="pg-round" style="font-size:20px;margin-bottom:16px">운영 시간·연락처</h2>
+ <dl class="su-fact"><div><dt>운영 시간</dt><dd>평일 10:00~18:00 (주말·공휴일 휴무)</dd></div><div><dt>전화</dt><dd>0502-1931-8289</dd></div><div><dt>이메일</dt><dd>support@fankkuk.com</dd></div></dl>
+</div></section>
+</main>
+<footer class="pg-foot"><div class="pg-wrap">
+<div><a class="pg-logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
+<dl><dt>상호</dt><dd>팬꾹</dd><dt>대표자</dt><dd>정재원</dd><dt>사업자등록번호</dt><dd>260-12-03086</dd><dt>통신판매업 신고번호</dt><dd>신고 진행 중</dd><dt>사업장 주소</dt><dd>서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)</dd><dt>고객센터</dt><dd>support@fankkuk.com · 0502-1931-8289</dd><dt>호스팅 제공자</dt><dd>Vercel Inc.</dd></dl></div>
+<nav aria-label="약관과 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></nav>
+<nav aria-label="안내"><a href="#">팬꾹 소개</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></nav>
+<p class="cp">© 2026 팬꾹. All rights reserved.</p></div></footer>
+<script>
+const body=document.body;
+function setMk(on){body.classList.toggle('show-mk',on);document.getElementById('mkBtn').setAttribute('aria-pressed',String(on));}
+document.getElementById('mkBtn').addEventListener('click',()=>setMk(!body.classList.contains('show-mk')));
+addEventListener('message',e=>{if(e.data&&typeof e.data.mk==='boolean')setMk(e.data.mk);});
+function grp(sel,attr,fn){document.querySelectorAll(sel).forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll(sel).forEach(x=>x.setAttribute('aria-pressed',String(x===b)));fn(b.dataset[attr]);}));}
+grp('[data-st]','st',v=>body.classList.toggle('in',v==='in'));
+grp('[data-mine]','mine',v=>body.classList.toggle('mine',v==='yes'));
+grp('[data-send]','send',v=>{
+ const e=document.getElementById('q-err'),d=document.getElementById('q-done'),c=document.getElementById('q-cat');
+ e.hidden=v!=='err';d.hidden=v!=='done';
+ if(v==='err'){c.setAttribute('aria-invalid','true');}else{c.removeAttribute('aria-invalid');}
+ if(v!=='idle'&&!body.classList.contains('in')){document.querySelector('[data-st="in"]').click();}
+});
+const tabs=[...document.querySelectorAll('.su-tab')];
+function pick(n){tabs.forEach((t,i)=>{t.setAttribute('aria-selected',String(i===n));t.tabIndex=i===n?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=i!==n;});}
+tabs.forEach((t,i)=>{
+ t.addEventListener('click',()=>pick(i));
+ t.addEventListener('keydown',e=>{const s=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(!s)return;e.preventDefault();const n=(i+s+tabs.length)%tabs.length;pick(n);tabs[n].focus();});
+});
+</script></body></html>

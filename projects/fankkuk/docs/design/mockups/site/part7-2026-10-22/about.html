@@ -1,0 +1,104 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>소개 · 팬꾹 7파트 정돈 시안</title><link rel="stylesheet" href="part7-pages.css"></head>
+<!-- 7파트 정돈 시안 2026-10-22 — /about (소개). 제안: redesign-2026-10-22-part7.md 1절 + 13절 4번 ①(추천).
+ 근거: design-rules 00000(글자·폭·반경)·0000(카드를 좌우로 늘어놓지 않는다)·16(로그인 전 880·글 680)·21(강조 하나), tokens 0-4(크림 띠).
+ 로그인 전 화면 — 상단 바 + 880 기둥 + 바닥글(v26-terms 껍데기), 사이드바 없음. 문구는 지금 화면(widgets/about/ui/about-page.tsx, PROMISE) 그대로.
+ 바뀐 곳(빨간 번호): 1 첫 화면 크림 띠 위 가운데(제목 48/800 그대로) · 2 이야기 세 카드 -> 680 한 기둥 글, 셋째 문단만 16/600 · 3 강조 판은 이 하나만, 단계 칸 다섯 카드 -> 번호·제목 20·설명 14 줄(줄 사이 1px), 넷째 줄만 하늘 면 ·
+   4 (3번 안) · 5 검수 카드 셋 + 떨어진 개봉 검수 카드 -> 네 칸 한 줄(12열 3+3+3+3), 넷째 칸만 위 줄 굵게(휴대폰 390 은 한 줄씩) · 6 「하지 않는 것」 카드 6장 -> 680 줄 목록(아이콘·제목 16/600·설명 14) · 7 마무리 판 -> 크림 띠 위 가운데(판·장식 그림 둘 뺌).
+ 옮긴 것/뺀 것: 열람 기록 표(880)·「크리에이터로 가입하기」 위치는 그대로. 검수 카드·진행 칸의 작은 아이콘(자물쇠·상자 등)은 줄 목록에서 뺐다(번호가 그 일을 한다). 굵기 700·500 -> 600·400.
+ 회색 막대(.mockbar)와 빨간 번호(.mk)는 시안 전용. -->
+<body id="top">
+<header class="pg-top"><div class="pg-wrap"><a class="pg-logo" href="#top" aria-label="팬꾹 처음으로"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
+<nav class="pg-nav" aria-label="주 메뉴"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#" aria-current="page">팬꾹 소개</a><a href="#">고객센터</a></nav>
+<button class="pg-menu" type="button" aria-label="메뉴 열기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+<div class="pg-auth"><a href="#">로그인</a><i aria-hidden="true"></i><a href="#">회원가입</a></div></div></header>
+<main id="main">
+<div class="pg-wrap"><div class="mockbar" role="group" aria-label="시안 보기"><b>시안 보기</b><span class="mb-grp"><button type="button" id="mkBtn" aria-pressed="false">바뀐 곳 번호 표시</button></span></div></div>
+
+<section class="ab-hero pg-band mkp" style="margin-top:24px" aria-labelledby="about-title"><i class="mk tl" aria-hidden="true">1</i>
+ <div class="pg-wrap"><div class="dec">
+  <img class="ab-deco l" src="../../../../../public/img/icon-inspect.png" alt="" aria-hidden="true"><img class="ab-deco r" src="../../../../../public/img/icon-log.png" alt="" aria-hidden="true">
+  <h1 id="about-title">선물은 따뜻하게,<br>주소는 조심스럽게</h1>
+  <p class="lead">팬꾹은 팬의 선물을 검수하고 크리에이터에게 대신 보내는 서비스예요. 크리에이터 주소는 팬에게 공개되지 않습니다. 팬꾹이 만들고 운영합니다.</p>
+ </div></div>
+</section>
+
+<section class="ab-sec" style="padding-top:96px" aria-labelledby="why-title"><div class="pg-wrap"><div class="pg-prose mkp"><i class="mk tl" aria-hidden="true">2</i>
+ <h2 id="why-title">&ldquo;택배에 내 주소가 적히는 게 걱정이에요&rdquo;</h2>
+ <div class="ab-story">
+  <p>팬이 보내 주는 선물은 늘 고맙지만, 그 상자 겉면에는 크리에이터의 이름과 집 주소가 그대로 적혀요. 송장은 택배사 직원, 이웃, 버려진 상자를 본 누구에게나 보일 수 있어요.</p>
+  <p>그래서 많은 크리에이터가 선물 받기를 망설이거나, 주소를 숨기려고 번거로운 방법을 써요. 팬도 마음을 전하고 싶은데 어디로 보내야 할지 몰라 포기하고요.</p>
+  <p>그래서 팬꾹이 팬과 크리에이터 사이에 들어가기로 했어요. 팬은 주소를 몰라도 선물을 보낼 수 있고, 크리에이터는 주소를 드러내지 않고 받을 수 있어요.</p>
+ </div></div></div>
+</section>
+
+<section class="ab-sec" aria-labelledby="once-title"><div class="pg-wrap">
+ <div class="ab-key mkp"><i class="mk tl" aria-hidden="true">3</i>
+  <h2 id="once-title">주소는 송장을 출력할 때만 <em>열립니다</em></h2>
+  <p class="lead">승인 전까지 주소는 노출되지 않습니다. 승인한 선물도 송장을 출력할 때만 열려요.</p>
+  <div class="ab-scene" role="group" aria-label="주소가 잠겨 있다가 송장 출력 때만 열리는 예시 그림">
+   <img src="../../../../../public/img/icon-address-lock.png" alt="" aria-hidden="true">
+   <div class="ab-sc" aria-hidden="true"><div class="row"><span class="pg-chip">잠김</span>🔒</div><div class="mask"><i></i><i></i></div></div>
+   <span class="ab-arrow" aria-hidden="true">→</span>
+   <div class="ab-sc" aria-hidden="true"><div class="row"><span class="pg-chip">열림</span>🔓</div><p class="addr">서울시 ○○구 ○○로 ●●</p><p class="log">10월 14일 14:02 · 주문 FK-2410 · 송장 출력으로 열림</p></div>
+  </div>
+  <ol class="ab-steps mkp" aria-label="주소가 열리기까지의 흐름"><i class="mk tl" style="left:-8px;top:-8px" aria-hidden="true">4</i>
+   <li><span class="ab-n" aria-hidden="true">1</span><h3>입력하자마자 잠가요</h3><p>크리에이터가 입력한 주소는 팬꾹으로 오기 전에 잠겨요.</p></li>
+   <li><span class="ab-n" aria-hidden="true">2</span><h3>잠긴 채 보관해요</h3><p>승인 전까지 주소는 노출되지 않습니다.</p></li>
+   <li><span class="ab-n" aria-hidden="true">3</span><h3>크리에이터가 승인해요</h3><p>선물마다 카카오톡으로 한 번 더 확인해요.</p></li>
+   <li class="on"><span class="ab-n" aria-hidden="true">4</span><h3>송장 출력 때만 열려요</h3><p>열릴 때마다 기록이 남아요.</p><span class="pg-chip">출력할 때만</span></li>
+   <li><span class="ab-n" aria-hidden="true">5</span><h3>팬꾹 송장으로 출고해요</h3><p>승인과 검수를 모두 통과한 선물만 출고합니다.</p></li>
+  </ol>
+ </div>
+</div></section>
+
+<section class="ab-sec" aria-labelledby="inspect-title"><div class="pg-wrap">
+ <img class="ab-art" src="../../../../../public/img/icon-inspect.png" alt="" aria-hidden="true">
+ <h2 id="inspect-title">검수는 이렇게 해요</h2>
+ <p class="lead">모든 선물은 팬꾹에서 검수한 뒤 보냅니다.</p>
+ <ol class="ab-ins mkp"><i class="mk tl" aria-hidden="true">5</i>
+  <li><span class="ab-n" aria-hidden="true">1</span><h3>송장 제거</h3><p>원래 송장은 떼어서 파쇄해요.</p></li>
+  <li><span class="ab-n" aria-hidden="true">2</span><h3>겉면 검사</h3><p>숨겨진 연락처나 이상한 부착물이 없는지 봐요.</p></li>
+  <li><span class="ab-n" aria-hidden="true">3</span><h3>추적 장치 탐지</h3><p>모든 상자를 탐지기로 검사해요.</p></li>
+  <li class="on"><span class="ab-n" aria-hidden="true">4</span><h3>반응이 있으면 개봉 검수</h3><p>탐지기 반응이 있으면 개봉 검수합니다.</p></li>
+ </ol>
+</div></section>
+
+<section class="ab-sec" aria-labelledby="log-title"><div class="pg-wrap">
+ <img class="ab-art" src="../../../../../public/img/icon-log.png" alt="" aria-hidden="true">
+ <h2 id="log-title">주소를 연 기록은 크리에이터에게 전부 공개해요</h2>
+ <p class="lead pg-prose">언제, 어느 주문의 주소가 몇 번째로 열렸는지 크리에이터가 언제든 확인할 수 있어요. 승인한 적 없는 주문이 기록에 보이면 바로 알아챌 수 있어요.</p>
+ <div class="ab-tbl" role="region" aria-label="주소 열람 기록 예시 표" tabindex="0"><table><caption class="sr-only">주소 열람 기록 예시</caption><thead><tr><th scope="col">열린 시각</th><th scope="col">주문번호</th><th scope="col">비고</th></tr></thead><tbody><tr><td>10.28 14:32</td><td>FC-7K3M9</td><td>첫 출력</td></tr><tr><td>10.27 11:05</td><td>FC-5D1H6</td><td>첫 출력</td></tr><tr><td>10.25 16:48</td><td>FC-2P8QW</td><td>첫 출력</td></tr></tbody></table></div>
+ <p class="ab-note">예시 화면이에요. 실제 기록은 크리에이터 화면에서 볼 수 있어요.</p>
+ <div class="ab-foot"><a class="pg-btn fill" href="#">크리에이터로 가입하기</a></div>
+</div></section>
+
+<section class="ab-sec" aria-labelledby="not-title"><div class="pg-wrap"><div class="pg-prose mkp"><i class="mk tl" aria-hidden="true">6</i>
+ <h2 id="not-title">팬꾹이 하지 않는 것</h2>
+ <p class="lead">약속만큼 중요한 건 하지 않는 일이에요.</p>
+ <ul class="ab-nots">
+  <li><span class="ab-x" aria-hidden="true"><svg viewBox="0 0 14 14"><path d="m3 3 8 8M11 3l-8 8"/></svg></span><h3>승인 전에는 주소를 열지 않습니다</h3><p>크리에이터 주소는 팬에게 공개되지 않습니다.</p></li>
+  <li><span class="ab-x" aria-hidden="true"><svg viewBox="0 0 14 14"><path d="m3 3 8 8M11 3l-8 8"/></svg></span><h3>한꺼번에 승인하지 않습니다</h3><p>선물마다 카카오톡으로 따로 확인해요.</p></li>
+  <li><span class="ab-x" aria-hidden="true"><svg viewBox="0 0 14 14"><path d="m3 3 8 8M11 3l-8 8"/></svg></span><h3>받지 않은 이유를 팬에게 알리지 않습니다</h3><p>크리에이터가 받지 않은 선물은 배송하지 않아요.</p></li>
+  <li><span class="ab-x" aria-hidden="true"><svg viewBox="0 0 14 14"><path d="m3 3 8 8M11 3l-8 8"/></svg></span><h3>필요 없이 상자를 열지 않습니다</h3><p>탐지기 반응이 있는 상자만 열어요.</p></li>
+  <li><span class="ab-x" aria-hidden="true"><svg viewBox="0 0 14 14"><path d="m3 3 8 8M11 3l-8 8"/></svg></span><h3>크리에이터에게 가는 송장번호는 공개하지 않습니다</h3><p>팬에게 보이는 주소는 팬꾹 주소뿐이에요.</p></li>
+  <li><span class="ab-x" aria-hidden="true"><svg viewBox="0 0 14 14"><path d="m3 3 8 8M11 3l-8 8"/></svg></span><h3>검수를 뺀 요금제는 만들지 않습니다</h3><p>모든 요금에 검수가 포함돼요.</p></li>
+ </ul></div></div>
+</section>
+
+<section class="ab-end pg-band mkp" aria-labelledby="cta-title"><i class="mk tl" aria-hidden="true">7</i>
+ <div class="pg-wrap"><h2 id="cta-title">마음을 담아, 꾹.</h2>
+ <div class="acts"><a class="pg-btn fill" href="#">지금 바로 선물 보내러 가기</a><a class="pg-btn" href="#">나의 크리에이터 찾으러 가기</a></div></div>
+</section>
+</main>
+<footer class="pg-foot"><div class="pg-wrap">
+<div><a class="pg-logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
+<dl><dt>상호</dt><dd>팬꾹</dd><dt>대표자</dt><dd>정재원</dd><dt>사업자등록번호</dt><dd>260-12-03086</dd><dt>통신판매업 신고번호</dt><dd>신고 진행 중</dd><dt>사업장 주소</dt><dd>서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)</dd><dt>고객센터</dt><dd>support@fankkuk.com · 0502-1931-8289</dd><dt>호스팅 제공자</dt><dd>Vercel Inc.</dd></dl></div>
+<nav aria-label="약관과 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></nav>
+<nav aria-label="안내"><a href="#">팬꾹 소개</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></nav>
+<p class="cp">© 2026 팬꾹. All rights reserved.</p></div></footer>
+<script>
+const body=document.body;
+function setMk(on){body.classList.toggle('show-mk',on);document.getElementById('mkBtn').setAttribute('aria-pressed',String(on));}
+document.getElementById('mkBtn').addEventListener('click',()=>setMk(!body.classList.contains('show-mk')));
+addEventListener('message',e=>{if(e.data&&typeof e.data.mk==='boolean')setMk(e.data.mk);});
+</script></body></html>

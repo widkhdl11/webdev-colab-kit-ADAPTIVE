@@ -1,0 +1,56 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>신고·문의 · 팬꾹 7파트 정돈 시안</title><link rel="stylesheet" href="part7-pages.css"></head>
+<!-- 7파트 정돈 시안 2026-10-22 — /report (신고·문의). 제안: redesign-2026-10-22-part7.md 10절.
+ 근거: design-rules 16(글 680)·21(강조 하나)·0000, tokens 0-4(--line-on-white 테두리).
+ 상태: 시안 보기 막대의 「보내기」 — 전(입력 전) / 칸 오류(첫 칸 오류 문구) / 열림(이메일 앱을 열었어요 문구). 로그인과 상관없는 화면이라 로그인 전환은 없다.
+ 바뀐 곳(빨간 번호): 1 「요약」 하늘 판을 없앴다 — 첫 줄(「팬꾹을 사칭하는 페이지…」)은 머리 설명과 같은 말이라 뺐고, 셋째 줄(주소를 묻지 않는다는 안내)만 머리 아래 한 줄 ·
+   2 양식을 머리와 같은 시작선·680 한 기둥으로(지금은 머리 x272·양식 x392 시작선 둘), 이 화면의 기준점은 양식 하나(흰 카드) · 3 「이메일로 보내기」 누르면 이메일 앱이 열린다는 둘째 줄 문장을 버튼 바로 위로(문장 그대로).
+ 1:1 문의와 문의 입구가 겹치는 점은 문구를 바꿔야 풀려서 이번에는 그대로 둔다. 문구는 지금 화면(widgets/legal/ui/report-page.tsx · features/report-mail/ui/report-form.tsx) 그대로.
+ 회색 막대(.mockbar)와 빨간 번호(.mk)는 시안 전용. -->
+<body id="top">
+<header class="pg-top"><div class="pg-wrap"><a class="pg-logo" href="#top" aria-label="팬꾹 처음으로"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
+<nav class="pg-nav" aria-label="주 메뉴"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a></nav>
+<button class="pg-menu" type="button" aria-label="메뉴 열기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+<div class="pg-auth"><a href="#">로그인</a><i aria-hidden="true"></i><a href="#">회원가입</a></div></div></header>
+<main id="main">
+<div class="pg-wrap">
+<div class="mockbar" role="group" aria-label="시안 보기 전환"><b>시안 보기</b>
+ <span class="mb-grp">보내기 <button type="button" data-send="idle" aria-pressed="true">전</button><button type="button" data-send="err" aria-pressed="false">칸 오류</button><button type="button" data-send="done" aria-pressed="false">열림</button></span>
+ <span class="mb-grp"><button type="button" id="mkBtn" aria-pressed="false">바뀐 곳 번호 표시</button></span></div>
+<div class="pg-prose">
+<header class="pg-head" style="margin-bottom:0"><h1 class="pg-title" id="page-title" tabindex="-1">신고·문의</h1>
+<p class="pg-desc">사칭 페이지 신고, 사진 권리 침해 신고, 일반 문의를 받아요.</p>
+<p class="rp-note mkp"><i class="mk tl" aria-hidden="true">1</i>팬꾹은 채팅·메일·전화로 주소를 묻지 않아요. 주소를 다시 알려 달라는 연락은 팬꾹이 아닙니다.</p></header>
+
+<form class="rp-form mkp" id="rform" novalidate onsubmit="return false"><i class="mk tl" aria-hidden="true">2</i>
+ <div class="pg-field"><label for="r-kind">분류</label><div class="pg-sel"><select class="pg-in" id="r-kind"><option value="">분류를 골라 주세요</option><option>사칭 페이지 신고</option><option>사진 권리 침해 신고</option><option>일반 문의</option></select><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m4 7.5 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+ <div class="pg-field"><label for="r-reply">답장받을 이메일</label><input class="pg-in" id="r-reply" type="email" autocomplete="email"></div>
+ <div class="pg-field"><label for="r-page">페이지 주소 <span>(선택)</span></label><input class="pg-in" id="r-page" type="url" inputmode="url" placeholder="https://" aria-describedby="r-page-h"><p class="pg-hint" id="r-page-h">사칭 페이지나 사진이 있는 곳의 주소를 적어 주세요.</p></div>
+ <div class="pg-field"><label for="r-body">내용</label><textarea class="pg-in" id="r-body" rows="6" maxlength="1000" aria-describedby="r-body-h"></textarea><p class="pg-hint" id="r-body-h">1,000자까지 적을 수 있어요. 파일은 첨부할 수 없어요.</p></div>
+ <div role="alert"><p class="pg-err" id="r-err" hidden>분류를 골라 주세요.</p></div>
+ <div role="status"><p class="pg-done" id="r-done" hidden>이메일 앱을 열었어요. 열리지 않으면 support@fankkuk.com로 보내 주세요.</p></div>
+ <p class="pg-btnhint mkp"><i class="mk tl" aria-hidden="true">3</i>「이메일로 보내기」를 누르면 적은 내용이 담긴 이메일 앱이 열려요. 파일은 첨부할 수 없어요.</p>
+ <button type="button" class="pg-btn fill block">이메일로 보내기</button>
+ <p class="rp-to">받는 이메일: support@fankkuk.com · 회원이라면 <a class="pg-link" href="#" style="font-weight:600">고객센터의 1:1 문의</a>로도 남길 수 있어요.</p>
+</form>
+</div>
+</div>
+<div style="height:96px"></div>
+</main>
+<footer class="pg-foot"><div class="pg-wrap">
+<div><a class="pg-logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
+<dl><dt>상호</dt><dd>팬꾹</dd><dt>대표자</dt><dd>정재원</dd><dt>사업자등록번호</dt><dd>260-12-03086</dd><dt>통신판매업 신고번호</dt><dd>신고 진행 중</dd><dt>사업장 주소</dt><dd>서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)</dd><dt>고객센터</dt><dd>support@fankkuk.com · 0502-1931-8289</dd><dt>호스팅 제공자</dt><dd>Vercel Inc.</dd></dl></div>
+<nav aria-label="약관과 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></nav>
+<nav aria-label="안내"><a href="#">팬꾹 소개</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></nav>
+<p class="cp">© 2026 팬꾹. All rights reserved.</p></div></footer>
+<script>
+const body=document.body;
+function setMk(on){body.classList.toggle('show-mk',on);document.getElementById('mkBtn').setAttribute('aria-pressed',String(on));}
+document.getElementById('mkBtn').addEventListener('click',()=>setMk(!body.classList.contains('show-mk')));
+addEventListener('message',e=>{if(e.data&&typeof e.data.mk==='boolean')setMk(e.data.mk);});
+document.querySelectorAll('[data-send]').forEach(b=>b.addEventListener('click',()=>{
+ document.querySelectorAll('[data-send]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+ const v=b.dataset.send,k=document.getElementById('r-kind');
+ document.getElementById('r-err').hidden=v!=='err';document.getElementById('r-done').hidden=v!=='done';
+ if(v==='err'){k.setAttribute('aria-invalid','true');k.focus();}else{k.removeAttribute('aria-invalid');}
+}));
+</script></body></html>

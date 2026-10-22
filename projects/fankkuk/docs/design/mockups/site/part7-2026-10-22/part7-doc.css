@@ -1,0 +1,129 @@
+/* 7파트 글 읽는 화면 여섯 장 공용 — 시안 2026-10-22 (redesign-2026-10-22-part7.md 4~9·12절, 13절 추천 1).
+   14절 약관 틀의 부품(먼저 알아 두세요 판 · 글 위 접는 목차 · 진행 단계 칩 · 요금 표)을 가져오되
+   탭·사실 한 줄·버전 기록은 빼고 페이지 제목은 24. 로그인 전 껍데기(상단 바 880 · 바닥글)는 v26-terms 와 같다.
+   굵기 800·600·500·400 만 쓴다(700 없음). 간격은 4·8·12·16·24·32·40·48·64·96.
+   이 파일은 about·support·notices·report 시안의 part7-pages.css 와 따로다. */
+@font-face{font-family:"Tmoney Round Wind";src:url("../../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2");font-weight:800;font-display:swap}
+@font-face{font-family:"Tmoney Round Wind";src:url("../../../../../public/fonts/TmoneyRoundWindRegular.woff2") format("woff2");font-weight:400;font-display:swap}
+body{margin:0;background:#fff}
+.dc{font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#1F2937;font-size:16px;line-height:1.6;word-break:keep-all;background:#fff}
+.dc *{box-sizing:border-box}
+.dc h1,.dc h2,.dc h3,.dc p,.dc ol,.dc ul,.dc dl,.dc dd{margin:0}
+.dc a{color:#1F2937}.dc a:hover{color:#4B5563}
+.dc a:focus-visible,.dc summary:focus-visible,.dc button:focus-visible{outline:3px solid #1F2937;outline-offset:3px}
+.dc .wrap{max-width:928px;margin:0 auto;padding:0 24px}
+.dc .round{font-family:"Tmoney Round Wind","Pretendard Variable",Pretendard,sans-serif;font-weight:800;font-synthesis:none}
+/* 껍데기 */
+.dc .top{border-bottom:1px solid #E5E7EB}
+.dc .top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px}
+.dc .top a{text-decoration:none}
+.dc .logo{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:800}
+.dc .logo img{width:32px;height:32px;border-radius:22%;display:block}
+.dc .navlinks{display:flex;gap:24px;font-size:16px;font-weight:500}
+.dc .auth{display:flex;align-items:center;gap:12px;font-size:16px;font-weight:600}
+.dc .auth .bar{width:1px;height:16px;background:#E5E7EB}
+.dc .mmenu{display:none;width:44px;height:44px;border:0;border-radius:12px;background:transparent;color:#1F2937;align-items:center;justify-content:center}
+.dc .foot{background:#F9FAFB;padding:40px 0}
+.dc .foot .wrap{display:flex;flex-direction:column;gap:8px;color:#4B5563;font-size:14px}
+.dc .foot b{font-size:16px;font-weight:800;color:#1F2937}
+/* 시안 전용 막대와 번호 */
+.mockbar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px 16px;background:#1F2937;color:#fff;font:600 14px/1.4 "Pretendard Variable",Pretendard,sans-serif}
+.mockbar button{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid #9CA3AF;background:transparent;color:#fff;font:600 14px/1 "Pretendard Variable",Pretendard,sans-serif;cursor:pointer}
+.mockbar button[aria-pressed="true"]{background:#fff;color:#1F2937}
+.mockbar button:focus-visible{outline:3px solid #89CFF0;outline-offset:2px}
+.mk{display:none;position:absolute;z-index:3;width:22px;height:22px;border-radius:50%;background:#B42318;color:#fff;font:600 14px/1 sans-serif;font-style:normal;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 0 0 2px #fff}
+body.show-mk .mk{display:flex}
+.mkp{position:relative}
+.mk.tl{left:-8px;top:-8px}
+/* 페이지 머리 — 탭·사실 한 줄 없음, 제목 24 */
+.dc .head{padding:40px 0 0}
+.dc .head h1{font-size:24px;line-height:1.3;letter-spacing:-.02em}
+.dc .head p{margin-top:8px;max-width:680px;color:#4B5563}
+.dc .col{max-width:680px}
+/* 먼저 알아 두세요 판 (14절: 옅은 하늘 면 · 반경 24 · 하늘 동그라미 번호) */
+.dc .note{margin-top:32px;border-radius:24px;background:#F0F8FF;padding:32px;display:flex;flex-direction:column;gap:16px}
+.dc .note h2{font-size:20px;line-height:1.4}
+.dc .note ol{list-style:none;padding:0;display:flex;flex-direction:column;gap:12px}
+.dc .note li{display:flex;gap:12px;align-items:flex-start}
+.dc .note li>span:first-child{flex:none;width:26px;height:26px;border-radius:50%;background:#89CFF0;font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;line-height:1}
+.dc .note.gray{background:#F3F4F6}
+.dc .note.gray li>span:first-child{background:#fff;box-shadow:inset 0 0 0 1px #D1D5DB}
+/* 글 위 접는 목차 (14절) */
+.dc .toc{margin-top:24px;border-radius:16px;box-shadow:inset 0 0 0 1px #E5E7EB;padding:0 16px}
+.dc .toc summary{display:flex;align-items:center;min-height:56px;font-size:16px;font-weight:600;cursor:pointer}
+.dc .toc nav{display:flex;flex-direction:column;gap:2px;padding:0 0 12px}
+.dc .toc nav a{display:flex;align-items:center;min-height:44px;padding:0 12px;border-radius:8px;text-decoration:none;color:#4B5563;font-size:14px}
+.dc .toc nav a:hover{background:#F3F4F6;color:#1F2937}
+/* 본문 */
+.dc .body{padding:24px 0 96px}
+.dc .art{padding:40px 0;border-top:1px solid #E5E7EB;display:flex;flex-direction:column;gap:16px;scroll-margin-top:24px}
+.dc .art:first-child{border-top:0}
+.dc .art h2{font-size:20px;line-height:1.4}
+.dc .prose{font-size:16px;line-height:1.75;color:#1F2937;display:flex;flex-direction:column;gap:16px;overflow-wrap:anywhere}
+.dc .dots{padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+.dc .dots li{position:relative;padding-left:18px}
+.dc .dots li::before{content:"";position:absolute;left:4px;top:12px;width:5px;height:5px;border-radius:50%;background:#6B7280}
+.dc .steps{padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;counter-reset:s}
+.dc .steps li{position:relative;padding-left:40px;counter-increment:s}
+.dc .steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:26px;height:26px;border-radius:50%;background:#E0F2FE;color:#1F2937;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;line-height:1}
+.dc .sub{font-size:14px;color:#4B5563}
+/* 같은 모양의 번호 목록을 회색 면 하나에 앉힌 것(검수 「모든 상자에 하는 일」) */
+.dc .panel{border-radius:16px;background:#F9FAFB;padding:24px}
+/* 요금 표 (14절: 머리 줄 회색 면 · 첫 금액 칸 20 · 금액 줄바꿈 없음) */
+.dc .tbl{border-radius:16px;box-shadow:inset 0 0 0 1px #E5E7EB;overflow:hidden;line-height:1.6}
+.dc .tbl .r{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;padding:16px 24px;border-top:1px solid #E5E7EB;align-items:center}
+.dc .tbl .r.h{padding:12px 24px;background:#F9FAFB;border-top:0;font-size:14px;font-weight:600;color:#4B5563}
+.dc .tbl .r>span:last-child{text-align:right}
+.dc .tbl .amt{font-size:20px;font-weight:600;white-space:nowrap}
+.dc .tbl .rule{font-size:14px;color:#4B5563}
+/* 진행 단계 칩 (14절 4조) */
+.dc .chips{border-radius:16px;background:#F9FAFB;padding:16px 24px;display:flex;flex-direction:column;gap:12px}
+.dc .chips .lab{font-size:14px;font-weight:600;color:#4B5563}
+.dc .chiprow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px;line-height:1.5}
+.dc .chip{padding:2px 12px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1px #E5E7EB}
+.dc .chiprow .ar{color:#6B7280}
+.dc .chips dl{display:grid;grid-template-columns:minmax(0,72px) minmax(0,1fr);gap:4px 16px;font-size:14px;color:#4B5563;margin-top:4px}
+.dc .chips dt{font-weight:600;color:#1F2937}
+.dc .chips .after{font-size:14px;color:#4B5563}
+/* 끝 판 (14절: 큰 하늘 판 24) */
+.dc .endnote{margin-top:16px;border-radius:24px;background:#F0F8FF;padding:32px;display:flex;flex-direction:column;gap:12px}
+.dc .endnote h2{font-size:20px;line-height:1.4}
+/* 보안: 흐름 그림 (880 안 12열 3+3+3+3, 카드 테두리 없음, 셋째 칸만 하늘 면) */
+.dc .flowfig{margin:32px 0 0}
+.dc .flow{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
+.dc .flow li{position:relative;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.dc .flow li:not(:last-child)::after{content:"›";position:absolute;right:-20px;top:16px;width:16px;text-align:center;color:#6B7280;font-size:20px;line-height:1.3}
+.dc .flow li.key{background:#E0F2FE}
+.dc .flow .no{width:26px;height:26px;border-radius:50%;background:#F3F4F6;font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex:none;line-height:1}
+.dc .flow li.key .no{background:#89CFF0}
+.dc .flow h3{font-size:16px;font-weight:600;line-height:1.4;font-family:inherit}
+.dc .flow p{font-size:14px;color:#4B5563;line-height:1.6}
+.dc .flow li.key p{color:#1F2937}
+.dc .flowfig figcaption{margin-top:12px;font-size:14px;color:#4B5563}
+/* 자주 묻는 질문: 줄 880 · 펼친 답 680 · 첫 줄 펼침 */
+.dc .acc{margin-top:32px;border-top:1px solid #E5E7EB}
+.dc .acc details{border-bottom:1px solid #E5E7EB}
+.dc .acc summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:58px;padding:8px 0;font-weight:600;cursor:pointer}
+.dc .acc summary::-webkit-details-marker{display:none}
+.dc .acc summary svg{flex:none;width:20px;height:20px;color:#4B5563;transition:transform 150ms cubic-bezier(.2,.8,.2,1)}
+.dc .acc details[open] summary svg{transform:rotate(180deg)}
+.dc .acc .ans{max-width:680px;padding:0 0 24px;line-height:1.75;color:#1F2937;overflow-wrap:anywhere}
+@media (prefers-reduced-motion:reduce){.dc .acc summary svg{transition:none}}
+@media (max-width:767px){
+.dc .wrap{padding:0 16px}
+.dc .navlinks,.dc .auth{display:none}
+.dc .mmenu{display:inline-flex}
+.dc .note,.dc .endnote{padding:24px 16px}
+.dc .panel{padding:16px}
+.dc .art{padding:32px 0}
+.dc .tbl .r{padding:16px;gap:12px}
+.dc .tbl .r.h{padding:12px 16px}
+.dc .chips{padding:16px}
+.dc .chips dl{grid-template-columns:minmax(0,1fr)}
+.dc .chips dd{margin-bottom:8px}
+.dc .flow{grid-template-columns:minmax(0,1fr);gap:8px}
+.dc .flow li{flex-direction:row;align-items:flex-start;gap:12px}
+.dc .flow li::after{display:none}
+.dc .flow .txt{display:flex;flex-direction:column;gap:4px;min-width:0}
+.dc .acc summary{min-height:64px}
+}

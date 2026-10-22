@@ -1,0 +1,45 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>공지사항 · 팬꾹 7파트 정돈 시안</title><link rel="stylesheet" href="part7-pages.css"></head>
+<!-- 7파트 정돈 시안 2026-10-22 — /notices (공지사항, 맨 위 글이 펼쳐진 모습). 제안: redesign-2026-10-22-part7.md 3절.
+ 근거: design-rules 16(로그인 전 880)·00000(글 680), tokens 2절(위계)·3절 --prose-max 680.
+ 배치는 지금 그대로(머리 24 · 접기 줄 8개 · 쪽 넘김). 바뀐 곳(빨간 번호): 1 펼친 본문만 680(줄 머리는 880 그대로) · 2 펼친 글 안쪽 소제목 20/800 -> 16/600(줄 제목 16/600 보다 커 보이지 않게).
+ 문구는 지금 화면(supabase/seed.sql 공지 시드) 그대로. 회색 막대(.mockbar)와 빨간 번호(.mk)는 시안 전용. -->
+<body id="top">
+<header class="pg-top"><div class="pg-wrap"><a class="pg-logo" href="#top" aria-label="팬꾹 처음으로"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
+<nav class="pg-nav" aria-label="주 메뉴"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#" aria-current="page">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a></nav>
+<button class="pg-menu" type="button" aria-label="메뉴 열기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+<div class="pg-auth"><a href="#">로그인</a><i aria-hidden="true"></i><a href="#">회원가입</a></div></div></header>
+<main id="main">
+<div class="pg-wrap">
+<div class="mockbar" role="group" aria-label="시안 보기"><b>시안 보기</b><span class="mb-grp"><button type="button" id="mkBtn" aria-pressed="false">바뀐 곳 번호 표시</button></span></div>
+<header class="pg-head"><h1 class="pg-title" id="page-title" tabindex="-1">공지사항</h1></header>
+<ul class="pg-acc nt-list" aria-label="공지사항 목록">
+<li class="mkp"><i class="mk tl" aria-hidden="true">1</i><details class="pg-fold" open><summary><span class="pg-chip">고정</span><span class="q"><b>팬꾹 서비스 시작 안내</b><small>2026.10.01</small></span></summary><div class="ans">
+ <h3 class="mkp"><i class="mk tl" style="left:-24px" aria-hidden="true">2</i>안녕하세요, 팬꾹이에요</h3>
+ <p>팬이 보낸 선물을 크리에이터가 안전하게 받을 수 있도록, 팬꾹이 문을 열어요.</p>
+ <p>팬꾹에서는 크리에이터가 승인한 선물만 배송돼요. 승인 없이는 저희 시스템이 주소를 열지 않습니다. 사무실에 도착한 상자는 송장을 제거하고 겉면과 추적 장치를 검사한 뒤 출고하고, 검사에 걸린 상자만 열어서 확인해요.</p>
+ <p>서비스 이용 중 궁금한 점은 <a href="#">고객센터</a>에서 확인해 주세요. 많이 사랑해 주세요.</p>
+ <p class="sig">네오코드 팬꾹 운영팀</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="pg-chip">고정</span><span class="q"><b>선물 보내기 전에 꼭 확인해 주세요 (크기·무게 기준)</b><small>2026.10.01</small></span></summary><div class="ans"><p>소형(세 변 합 100cm · 5kg 이하), 중형(세 변 합 100cm · 10kg 이하), 대형(세 변 합 160cm · 20kg 이하)까지 받아요. 크기와 무게 중 큰 쪽 기준으로 정해지고, 대형을 넘는 상자는 받지 않아요.</p><p>사무실에 도착해 실측한 크기가 등록하신 것보다 크면 차액을 따로 결제하셔야 해요.</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>요금 안내: 상자마다 배송비가 포함돼 있어요</b><small>2026.09.30</small></span></summary><div class="ans"><ul><li>소형 6,900원 — 세 변 합 100cm · 5kg 이하</li><li>중형 8,900원 — 세 변 합 100cm · 10kg 이하</li><li>대형 10,900원 — 세 변 합 160cm · 20kg 이하</li><li>모든 요금에 추적 장치 검수가 포함돼 있어요.</li></ul></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>개천절·한글날 배송 일정 안내</b><small>2026.09.29</small></span></summary><div class="ans"><p>10월 3일 개천절과 9일 한글날에는 사무실 입고와 출고가 쉬어요. 쉬는 날 전에 도착하게 하려면 여유를 두고 보내 주세요.</p><p>휴무 기간: (출시 전 기재)</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>크리에이터 방송 채널 인증 방법 안내</b><small>2026.09.28</small></span></summary><div class="ans"><p>크리에이터로 가입하신 뒤에는 방송 채널에 인증 코드를 올려 본인 확인을 해 주세요. 확인이 끝나면 「크리에이터 찾기」에 나타나고, 팬이 선물을 보낼 수 있어요.</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>검수는 이렇게 진행돼요: 걸린 상자만 개봉합니다</b><small>2026.09.26</small></span></summary><div class="ans"><p>사무실에 도착한 모든 상자는 원래 송장을 제거하고 겉면과 추적 장치를 검사해요. 검사에 걸린 상자만 열어서 확인해요.</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>카카오톡 인증 점검 안내</b><small>2026.09.24</small></span></summary><div class="ans"><p>점검 시간에는 가입과 승인 서명이 잠시 어려울 수 있어요. 점검이 끝나면 바로 이용하실 수 있어요.</p><p>점검 일시: (출시 전 기재)</p></div></details></li>
+<li><details class="pg-fold"><summary><span class="q"><b>개인정보 보관 방식 안내</b><small>2026.09.22</small></span></summary><div class="ans"><p>휴대폰 번호는 알림톡을 보내는 데 쓰고, 실명·주소와 따로 나눠 보관해요. 자세한 내용은 개인정보처리방침에서 확인하실 수 있어요.</p></div></details></li>
+</ul>
+<nav class="nt-pager" aria-label="공지사항 페이지"><span aria-hidden="true">&lsaquo;</span><a href="#" aria-label="1페이지" aria-current="page">1</a><a href="#" aria-label="2페이지">2</a><a href="#" aria-label="다음 페이지">&rsaquo;</a></nav>
+</div>
+<div style="height:96px"></div>
+</main>
+<footer class="pg-foot"><div class="pg-wrap">
+<div><a class="pg-logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
+<dl><dt>상호</dt><dd>팬꾹</dd><dt>대표자</dt><dd>정재원</dd><dt>사업자등록번호</dt><dd>260-12-03086</dd><dt>통신판매업 신고번호</dt><dd>신고 진행 중</dd><dt>사업장 주소</dt><dd>서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)</dd><dt>고객센터</dt><dd>support@fankkuk.com · 0502-1931-8289</dd><dt>호스팅 제공자</dt><dd>Vercel Inc.</dd></dl></div>
+<nav aria-label="약관과 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></nav>
+<nav aria-label="안내"><a href="#">팬꾹 소개</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></nav>
+<p class="cp">© 2026 팬꾹. All rights reserved.</p></div></footer>
+<script>
+const body=document.body;
+function setMk(on){body.classList.toggle('show-mk',on);document.getElementById('mkBtn').setAttribute('aria-pressed',String(on));}
+document.getElementById('mkBtn').addEventListener('click',()=>setMk(!body.classList.contains('show-mk')));
+addEventListener('message',e=>{if(e.data&&typeof e.data.mk==='boolean')setMk(e.data.mk);});
+</script></body></html>

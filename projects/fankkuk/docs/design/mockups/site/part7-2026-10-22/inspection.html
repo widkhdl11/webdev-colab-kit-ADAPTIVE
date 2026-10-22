@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>검수 기준 · 팬꾹 7파트 정돈 시안</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<link rel="stylesheet" href="part7-doc.css">
+</head>
+<!--
+정돈 시안 2026-10-22 — /inspection (검수 기준). 제안: redesign-2026-10-22-part7.md 7절(5절 틀).
+옮긴 것: 요약 판 + 목차 판(3열 8개) → 「먼저 알아 두세요」 판 + 글 위 접는 목차 · 판·목차·조 680 기둥. 기준점은 판, 둘째 무게는 첫 조 「모든 상자에 하는 일」.
+첫 조를 진행 칩으로 그리지 않은 이유: 칩은 목록 첫 구절이 짧을 때만인데 이 조의 일곱 줄은 모두 한 문장 이상(「상자가 사무실에 도착하면 팬이 붙인 원래 송장을 떼어요.」 등)이라 칩 한 줄이 여러 줄로 부서진다.
+그래서 번호 목록은 그대로 두고 회색 면(#F9FAFB, 반경 16) 하나에 앉혀 다른 조와 무게만 갈랐다 — 칩 글자를 줄이려면 새 문구가 필요하다(확인 포인트).
+뺀 것: 사실 한 줄·탭·버전 기록. 요약 판 제목 「요약」 → 「먼저 알아 두세요」. 조 제목 20.
+공통: redesign-2026-10-22-part7.md 13절 「고르셔야 할 것」 1·2 를 모두 추천(1)으로 그렸다. 14절 부품(먼저 알아 두세요 판 · 글 위 접는 목차 · 진행 단계 칩 · 요금 표)을 쓰고
+탭·사실 한 줄·버전 기록은 뺐다. 제목 24. 글 기둥 680(x272 시작), 로그인 전 껍데기 880(v26-terms 와 같다).
+회색 막대(.mockbar)와 빨간 번호(.mk)는 시안 전용. 번호 1 = 먼저 알아 두세요 판, 2 = 접는 목차, 3 = 이 화면의 기준점·강조, 4 = 요금 표.
+-->
+<body>
+<div class="mockbar" role="group" aria-label="시안 보기 전환"><b>시안 보기</b><button type="button" id="openBtn" aria-pressed="false">목차 펼치기</button><button type="button" id="mkBtn" aria-pressed="false">바뀐 곳 번호 표시</button></div>
+<div class="dc">
+<header class="top">
+<div class="wrap">
+<a class="logo" href="#" aria-label="팬꾹 처음으로"><img src="../../../../../public/images/logo-mark.png" width="32" height="32" alt="">팬꾹</a>
+<nav class="navlinks" aria-label="주 메뉴"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a></nav>
+<button class="mmenu" type="button" aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+<div class="auth"><a href="#" style="color:#4B5563">로그인</a><span class="bar" aria-hidden="true"></span><a href="#">회원가입</a></div>
+</div>
+</header>
+<main id="main">
+<section class="head" aria-labelledby="t-title"><div class="wrap">
+<h1 id="t-title" class="round">검수 기준</h1>
+<p>모든 선물은 팬꾹에서 검수한 뒤 보냅니다. 탐지기 반응이 있으면 개봉 검수합니다.</p>
+<div class="note col mkp" style="max-width:680px"><i class="mk tl" aria-hidden="true">1</i><h2 class="round">먼저 알아 두세요</h2><ol><li><span>1</span><span>모든 상자는 원래 송장을 떼고 겉면을 검사해요.</span></li><li><span>2</span><span>팬 선물은 블루투스·RF·금속 탐지기로 검사하고, 반응이 있는 상자와 추적 장치가 나온 적이 있는 팬의 상자를 열어 확인해요.</span></li><li><span>3</span><span>탐지기가 반응하지 않는 물품까지 모두 찾아낸다고 보장하지는 않아요.</span></li></ol></div><details class="toc col mkp" data-fold><i class="mk tl" aria-hidden="true">2</i><summary>목차 · 8개</summary><nav aria-label="목차"><a href="#every-box">모든 상자에 하는 일</a><a href="#detect">팬 선물의 탐지기 검사</a><a href="#tracker">추적 장치가 나왔을 때</a><a href="#not-tracker">반응이 있었지만 추적 장치가 아닐 때</a><a href="#return">돌려보내는 상자</a><a href="#revgift">역조공 상자</a><a href="#records">검수 기록</a><a href="#limits">검수의 한계</a></nav></details>
+</div></section>
+<section class="body" aria-label="검수 기준 본문"><div class="wrap">
+<article id="every-box" class="art col" aria-labelledby="every-box-h">
+<h2 id="every-box-h" class="round">모든 상자에 하는 일</h2>
+<div class="prose"><div class="panel mkp"><i class="mk tl" aria-hidden="true">3</i><ol class="steps"><li>상자가 사무실에 도착하면 팬이 붙인 원래 송장을 떼어요.</li><li>뗀 원래 송장은 그 상자의 내부 QR 번호가 적힌 봉투에 넣어 상자와 따로 보관해요.</li><li>상자에는 팬꾹의 내부 라벨을 붙여요.</li><li>내부 라벨의 QR에는 주문번호만 들어가요. 주소는 들어가지 않아요.</li><li>상자의 겉면을 검사해요.</li><li>팬 선물은 상자의 크기와 무게를 재요. 등록한 구간보다 크면 차액 결제를 요청해요.</li><li>상자가 반송되거나 출고되면 보관하던 원래 송장을 파쇄하고, 누가 언제 파쇄했는지 기록해요.</li></ol></div></div>
+</article>
+<article id="detect" class="art col" aria-labelledby="detect-h">
+<h2 id="detect-h" class="round">팬 선물의 탐지기 검사</h2>
+<div class="prose"><ol class="steps"><li>팬 선물은 블루투스·RF·금속 탐지기로 검사해요.</li><li>탐지기 반응이 있는 상자를 열어 확인해요.</li><li>추적 장치가 나온 적이 있는 팬이 보낸 상자는 반응이 없어도 열어 확인해요.</li><li>금속 반응이 있으면 상자를 열어 보낼 수 없는 물품인지 확인해요.</li><li>블루투스·RF 반응이 있으면 상자를 열어 추적 장치인지 확인해요.</li></ol></div>
+</article>
+<article id="tracker" class="art col" aria-labelledby="tracker-h">
+<h2 id="tracker-h" class="round">추적 장치가 나왔을 때</h2>
+<div class="prose"><ol class="steps"><li>추적 장치가 확인된 상자는 크리에이터에게 보내지 않고 사무실에 보관해요.</li><li>크리에이터에게 알리고, 크리에이터가 「신고하기」와 「신고하지 않기」 중에서 골라요.</li><li>「신고하기」면 상자를 경찰에 넘겨요. 「신고하지 않기」거나 7일 안에 고르지 않으면 보낸 팬에게 돌려보내 드려요.</li><li>이때는 검수비와 반송 택배비를 빼므로 환불 금액이 남지 않아요.</li></ol></div>
+</article>
+<article id="not-tracker" class="art col" aria-labelledby="not-tracker-h">
+<h2 id="not-tracker-h" class="round">반응이 있었지만 추적 장치가 아닐 때</h2>
+<div class="prose"><ol class="steps"><li>블루투스·RF 반응이 있었지만 추적 장치가 아닌 상자는 바로 보내지 않아요.</li><li>크리에이터에게 그 상자를 받을지 물어요.</li><li>크리에이터가 받기를 고르면 다른 상자와 함께 출고해요.</li><li>크리에이터가 돌려보내기를 고르거나 7일 안에 답하지 않으면 팬에게 돌려보내 드려요.</li><li>이렇게 돌려보내는 상자도 검수비와 반송 택배비를 빼므로 환불 금액이 남지 않아요.</li></ol></div>
+</article>
+<article id="return" class="art col" aria-labelledby="return-h">
+<h2 id="return-h" class="round">돌려보내는 상자</h2>
+<div class="prose"><ol class="steps"><li>보낼 수 없는 물품이 나온 상자는 팬에게 돌려보내 드려요.</li><li>세 변 합 160cm나 20kg를 넘는 상자도 팬에게 돌려보내 드려요.</li><li>보낼 수 없는 물품 목록은 선물 보내기 화면과 크리에이터 페이지에 있어요.</li><li>돌려보낼 때는 처음 상자에 붙어 있던 원래 송장의 주소로 보내요.</li></ol></div>
+</article>
+<article id="revgift" class="art col" aria-labelledby="revgift-h">
+<h2 id="revgift-h" class="round">역조공 상자</h2>
+<div class="prose"><ol class="steps"><li>역조공 상자는 추적 장치 검사를 하지 않아요.</li><li>겉면과 크기·무게, 보낼 수 없는 물품이 있는지만 확인해요.</li></ol></div>
+</article>
+<article id="records" class="art col" aria-labelledby="records-h">
+<h2 id="records-h" class="round">검수 기록</h2>
+<div class="prose"><ol class="steps"><li>검수 기록(장비·시각·결과·담당자)은 상자마다 남겨요.</li><li>남긴 검수 기록은 고치거나 지우지 않아요.</li><li>검수 사진은 공개하지 않아요.</li></ol></div>
+</article>
+<article id="limits" class="art col" aria-labelledby="limits-h">
+<h2 id="limits-h" class="round">검수의 한계</h2>
+<div class="prose"><ol class="steps"><li>검수는 탐지기 반응과 겉면 검사로 해요.</li><li>탐지기 반응이 없는 상자는 열지 않으므로 안에 든 물품을 하나하나 확인하지 않아요.</li><li>꺼져 있거나 나중에 켜지는 장치, 다른 물건 안에 숨긴 장치는 겉면 탐지로 발견되지 않을 수 있어요.</li><li>탐지기가 반응하지 않는 물품까지 모두 찾아낸다고 보장하지는 않아요.</li></ol></div>
+</article>
+
+</div></section>
+</main>
+<footer class="foot"><div class="wrap"><b>팬꾹</b><p>상호 [상호] · 대표 [대표자] · 사업자등록번호 [번호] · 통신판매업 [번호]</p><p><a href="#">이용약관</a> · 개인정보처리방침 · 환불 규정 · 고객센터</p></div></footer>
+</div>
+<script>
+const b=document.body;
+document.getElementById('mkBtn').addEventListener('click',function(){const on=!b.classList.contains('show-mk');b.classList.toggle('show-mk',on);this.setAttribute('aria-pressed',String(on));});
+const o=document.getElementById('openBtn');
+if(o){o.addEventListener('click',function(){const on=this.getAttribute('aria-pressed')!=='true';this.setAttribute('aria-pressed',String(on));document.querySelectorAll('[data-fold]').forEach(function(d){d.open=on;});});}
+</script>
+</body>
+</html>

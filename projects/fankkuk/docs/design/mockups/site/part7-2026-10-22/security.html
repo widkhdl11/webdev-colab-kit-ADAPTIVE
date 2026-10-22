@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보안 안내 · 팬꾹 7파트 정돈 시안</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<link rel="stylesheet" href="part7-doc.css">
+</head>
+<!--
+정돈 시안 2026-10-22 — /security (보안 안내). 제안: redesign-2026-10-22-part7.md 8절.
+옮긴 것: 요약 판 → 흐름 그림 → 목차 판 순서를 흐름 그림(기준점) → 회색 보조 면 「먼저 알아 두세요」 → 글 위 접는 목차 → 조 로 바꿨다. 흐름 카드 4장은 테두리 없이 12열 3+3+3+3(880),
+셋째 칸 「송장을 출력할 때만 주소 열람」만 하늘 면(소개 기준점 판과 같은 강조 방식). 번호 14/700 → 600. 휴대폰 390 에서는 세로 네 줄(번호 왼쪽 · 글 오른쪽), 셋째 줄만 하늘 면.
+요약 판 제목 「요약」 → 「먼저 알아 두세요」(진단 이름). 그림 아래 글귀 「크리에이터 주소가 열리는 때」는 지금 화면 그대로 아래에 둔다. 흐름 그림만 880, 나머지는 680.
+조 제목 20. 뺀 것: 사실 한 줄·탭·버전 기록.
+공통: redesign-2026-10-22-part7.md 13절 「고르셔야 할 것」 1·2 를 모두 추천(1)으로 그렸다. 14절 부품(먼저 알아 두세요 판 · 글 위 접는 목차 · 진행 단계 칩 · 요금 표)을 쓰고
+탭·사실 한 줄·버전 기록은 뺐다. 제목 24. 글 기둥 680(x272 시작), 로그인 전 껍데기 880(v26-terms 와 같다).
+회색 막대(.mockbar)와 빨간 번호(.mk)는 시안 전용. 번호 1 = 먼저 알아 두세요 판, 2 = 접는 목차, 3 = 이 화면의 기준점·강조, 4 = 요금 표.
+-->
+<body>
+<div class="mockbar" role="group" aria-label="시안 보기 전환"><b>시안 보기</b><button type="button" id="openBtn" aria-pressed="false">목차 펼치기</button><button type="button" id="mkBtn" aria-pressed="false">바뀐 곳 번호 표시</button></div>
+<div class="dc">
+<header class="top">
+<div class="wrap">
+<a class="logo" href="#" aria-label="팬꾹 처음으로"><img src="../../../../../public/images/logo-mark.png" width="32" height="32" alt="">팬꾹</a>
+<nav class="navlinks" aria-label="주 메뉴"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a></nav>
+<button class="mmenu" type="button" aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+<div class="auth"><a href="#" style="color:#4B5563">로그인</a><span class="bar" aria-hidden="true"></span><a href="#">회원가입</a></div>
+</div>
+</header>
+<main id="main">
+<section class="head" aria-labelledby="t-title"><div class="wrap">
+<h1 id="t-title" class="round">보안 안내</h1>
+<p>크리에이터 주소를 어떻게 다루는지, 상자를 어떻게 검수하는지 적었어요. 승인 전까지 주소는 노출되지 않습니다.</p>
+<figure class="flowfig mkp"><i class="mk tl" aria-hidden="true">3</i><ol class="flow"><li><span class="no" aria-hidden="true">1</span><div class="txt"><h3>팬</h3><p>받는 주소로 팬꾹 사무실에 상자를 보내요. 크리에이터 주소는 보이지 않아요.</p></div></li><li><span class="no" aria-hidden="true">2</span><div class="txt"><h3>팬꾹 사무실</h3><p>상자를 받아 검수해요. 이때 크리에이터 주소는 열리지 않아요.</p></div></li><li class="key"><span class="no" aria-hidden="true">3</span><div class="txt"><h3>송장을 출력할 때만 주소 열람</h3><p>승인과 검수가 끝난 상자의 송장을 출력할 때만 주소가 열려요.</p></div></li><li><span class="no" aria-hidden="true">4</span><div class="txt"><h3>크리에이터</h3><p>상자를 받고, 주소가 열린 기록을 열람 기록 화면에서 봐요.</p></div></li></ol><figcaption>크리에이터 주소가 열리는 때</figcaption></figure><div class="note gray col mkp" style="max-width:680px"><i class="mk tl" aria-hidden="true">1</i><h2 class="round">먼저 알아 두세요</h2><ol><li><span>1</span><span>크리에이터 주소는 크리에이터의 브라우저에서 암호화한 뒤 저장해요.</span></li><li><span>2</span><span>주소는 승인과 검수가 끝난 상자의 송장을 출력할 때만 열리고, 열린 기록은 크리에이터가 볼 수 있어요.</span></li><li><span>3</span><span>운영자 화면에도 실명·주소·휴대폰 번호는 나오지 않아요.</span></li></ol></div><details class="toc col mkp" data-fold><i class="mk tl" aria-hidden="true">2</i><summary>목차 · 6개</summary><nav aria-label="목차"><a href="#address-opening">승인 없이는 주소를 열지 않아요</a><a href="#access-log">열람 기록 공개</a><a href="#inspection">검수 방법과 한계</a><a href="#fan-address">팬 주소는 역조공을 받을 때만 받아요</a><a href="#operator-view">운영자가 보는 범위</a><a href="#limits">이렇게는 막을 수 없어요</a></nav></details>
+</div></section>
+<section class="body" aria-label="보안 안내 본문"><div class="wrap">
+<article id="address-opening" class="art col" aria-labelledby="address-opening-h">
+<h2 id="address-opening-h" class="round">승인 없이는 주소를 열지 않아요</h2>
+<div class="prose"><ol class="steps"><li>크리에이터가 주소를 입력하면 크리에이터의 브라우저에서 암호화한 뒤 서버로 보내요. 서버와 데이터베이스는 암호문만 받아요.</li><li>암호문을 여는 키는 사이트 서버·데이터베이스와 떨어진 곳에 둬요.</li><li>주소는 크리에이터가 승인하고 검수가 끝난 상자의 송장을 출력할 때만 열려요.</li><li>송장 출력은 대표 계정 하나만 할 수 있어요.</li><li>주소는 상자 하나에 최대 3번 열려요. 첫 출력에 더해, 프린터 걸림이나 송장이 망가졌을 때 다시 출력하는 2번이에요.</li><li>송장이 나오지 않은 시도(프린터 오류 등)는 상자마다 2번까지 횟수에서 빼고, 기록에는 그대로 남겨요.</li><li>크리에이터 주소는 팬에게 공개되지 않습니다.</li><li>크리에이터에게 가는 상자의 송장번호도 팬에게 알려 드리지 않아요.</li><li>알림 본문과 상자에 붙이는 내부 QR 라벨에는 주소·실명·휴대폰 번호를 넣지 않아요. QR 에는 주문번호만 들어가요.</li></ol></div>
+</article>
+<article id="access-log" class="art col" aria-labelledby="access-log-h">
+<h2 id="access-log-h" class="round">열람 기록 공개</h2>
+<div class="prose"><ol class="steps"><li>주소를 열려는 시도는 성공한 것과 거절된 것 모두 한 줄씩 남겨요.</li><li>크리에이터는 「열람 기록」 화면에서 자기 선물의 주소가 열린 시각·주문번호·몇 번째 출력인지 모두 볼 수 있어요.</li><li>역조공을 받은 팬도 받은 역조공 화면에서 자기 주소가 열리고 지워진 기록을 볼 수 있어요.</li><li>거절된 시도와 출력한 사람의 기록은 팬꾹 안에서만 보관해요.</li><li>사이트 서버는 이 기록을 고치거나 지울 수 없어요.</li></ol></div>
+</article>
+<article id="inspection" class="art col" aria-labelledby="inspection-h">
+<h2 id="inspection-h" class="round">검수 방법과 한계</h2>
+<div class="prose"><p>모든 선물은 팬꾹에서 검수한 뒤 보냅니다. 탐지기 반응이 있으면 개봉 검수합니다.</p><ol class="steps"><li>모든 상자는 붙어 온 송장을 떼고 겉면을 검사해요.</li><li>팬 선물 상자는 블루투스·RF·금속 탐지기로 검사해요.</li><li>탐지기 반응이 있는 상자와 추적 장치가 나온 적이 있는 팬의 상자를 열어서 확인해요.</li><li>추적 장치가 나오면 출고하지 않고 사무실에 보관해요. 크리에이터가 신고할지 정하고, 신고하면 경찰에 넘기고 신고하지 않으면 보낸 사람에게 돌려보내요.</li><li>탐지기 반응이 있었지만 추적 장치가 아닌 상자는 크리에이터에게 받을지 물어요.</li><li>역조공 상자는 겉면과 보낼 수 없는 물품인지만 확인해요.</li><li>검수 기록(장비·시각·결과·담당자)은 상자마다 남기고 고치지 않아요. 검수 사진은 공개하지 않아요.</li><li>검수는 탐지기 반응과 겉면 검사로 해요. 탐지기가 반응하지 않는 물품까지 모두 찾아낸다고 약속하지는 않아요. 꺼져 있거나 나중에 켜지는 장치, 다른 물건 안에 숨긴 장치는 겉면 탐지로 발견되지 않을 수 있어요.</li></ol></div>
+</article>
+<article id="fan-address" class="art col" aria-labelledby="fan-address-h">
+<h2 id="fan-address-h" class="round">팬 주소는 역조공을 받을 때만 받아요</h2>
+<div class="prose"><ol class="steps"><li>팬이 선물을 보낼 때는 팬의 주소를 받지 않아요.</li><li>상자에 붙어 온 송장(종이)의 이름·주소·전화번호는 시스템에 입력하지 않아요.</li><li>그 송장은 입고할 때 떼어 봉투에 넣어 따로 보관하고, 반송하거나 출고가 끝나면 파쇄해요.</li><li>역조공을 받을 때는 「받기」를 누르면서 받을 주소를 입력해요.</li><li>그 주소는 팬의 브라우저에서 암호화한 뒤 저장해요.</li><li>입력한 주소는 그 역조공 한 건에만 쓰고, 다음 역조공에 다시 쓰지 않아요.</li><li>출고·받지 않음·반송·취소 가운데 하나가 되면 그 주소를 지워요.</li></ol></div>
+</article>
+<article id="operator-view" class="art col" aria-labelledby="operator-view-h">
+<h2 id="operator-view-h" class="round">운영자가 보는 범위</h2>
+<div class="prose"><ol class="steps"><li>운영자 화면에는 실명·주소·휴대폰 번호가 나오지 않아요.</li><li>운영자 화면에서 회원은 아이디와 닉네임으로만 보여요.</li><li>주소·실명·휴대폰 번호는 사이트 화면에서 바로 읽을 수 없는 별도 구역에 둬요.</li><li>주소가 열리는 송장 출력은 대표 계정만 할 수 있어요.</li><li>크리에이터에게 팬의 실명·주소·연락처를 알려 드리지 않아요. 크리에이터에게는 팬의 닉네임만 보여요.</li></ol></div>
+</article>
+<article id="limits" class="art col" aria-labelledby="limits-h">
+<h2 id="limits-h" class="round">이렇게는 막을 수 없어요</h2>
+<div class="prose"><ol class="steps"><li>회원 본인의 기기나 계정, 카카오톡 인증서를 빼앗긴 경우는 이 방법으로 막을 수 없어요.</li><li>팬꾹은 채팅·메일·전화로 주소를 묻지 않아요. 주소를 다시 알려 달라는 연락은 팬꾹이 아닙니다.</li><li>의심스러운 연락을 받았다면 고객센터의 1:1 문의로 알려 주세요.</li></ol></div>
+</article>
+
+</div></section>
+</main>
+<footer class="foot"><div class="wrap"><b>팬꾹</b><p>상호 [상호] · 대표 [대표자] · 사업자등록번호 [번호] · 통신판매업 [번호]</p><p><a href="#">이용약관</a> · 개인정보처리방침 · 환불 규정 · 고객센터</p></div></footer>
+</div>
+<script>
+const b=document.body;
+document.getElementById('mkBtn').addEventListener('click',function(){const on=!b.classList.contains('show-mk');b.classList.toggle('show-mk',on);this.setAttribute('aria-pressed',String(on));});
+const o=document.getElementById('openBtn');
+if(o){o.addEventListener('click',function(){const on=this.getAttribute('aria-pressed')!=='true';this.setAttribute('aria-pressed',String(on));document.querySelectorAll('[data-fold]').forEach(function(d){d.open=on;});});}
+</script>
+</body>
+</html>
