@@ -1,0 +1,69 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>계정 설정(팬) · 팬꾹 정돈 시범 시안</title><link rel="stylesheet" href="../v34-part1/styles.css"><link rel="stylesheet" href="../v34-part1/v33.css"><link rel="stylesheet" href="../v34-part1/v33b.css"><link rel="stylesheet" href="../v34-part1/v34.css"><link rel="stylesheet" href="../v35-part1/v35.css"><link rel="stylesheet" href="../v37-part2/v37.css"><link rel="stylesheet" href="../v39-part3/v39.css"><link rel="stylesheet" href="pilot.css"></head>
+<!-- 정돈 시범 2026-10-22 — /me/following. 제안: redesign-2026-10-22-pilot.md 1절 「레이아웃 제안」. 880 기둥 12열 8+4. 왼쪽 촘촘한 줄(72), 오른쪽 숫자 판(크림 띠, 스크롤 따라옴). 문구는 지금 화면 그대로(FOLLOWING_NICKNAME_NOTICE · 「선물 보내기」 · 「팔로우 취소」 · 「크리에이터 더 찾기」 · 빈 상태 문구). 회색 막대(.mockbar)와 빨간 번호(.mk)는 시안 전용. 이름·소개는 예시. -->
+
+<!-- 정돈 시범 2026-10-22 — /me (계정 설정, 팬). 제안: redesign-2026-10-22-pilot.md · tokens.md 0-4. 880 기둥 12열 4+8 묶음 넷(카드 없음). 순서 보안 → 받을 주소 → 개인정보 → 알림 → [되돌리기][저장하기] → 회원 탈퇴. 아이디 안내 문장은 뺌(머리 설명·「프로필 수정」 버튼과 중복). 줄 이름 16/600 · 값 16/400 · 보조 14/400. 「꼭 가는 알림」은 접지 않고 늘 보임(스펙 my-account INV-A11): 제목 줄 14/600 + 목록 문장 14/400 --sub. 받을 주소 없음 문구는 my-info-page.tsx 그대로(「등록한 주소가 없어요」·「등록하기」). 회색 막대(.mockbar)와 빨간 번호(.mk)는 시안 전용. -->
+<body class="member" id="top"><aside class="sidebar"><a class="logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a><nav aria-label="주 메뉴"><a href="#"><span class="nav-glyph" aria-hidden="true">⌂</span>홈</a><a href="#"><span class="nav-glyph" aria-hidden="true">☑</span>지금 할 일<span class="nav-count" aria-label="2건">2</span></a><a href="#"><span class="nav-glyph" aria-hidden="true">⌕</span>크리에이터 찾기</a><a href="#"><span class="nav-glyph" aria-hidden="true">◇</span>선물 보내기</a><a href="#"><span class="nav-glyph" aria-hidden="true">□</span>보낸 선물</a><a href="#"><span class="nav-glyph" aria-hidden="true">↗</span>받은 선물</a><a href="#"><span class="nav-glyph" aria-hidden="true">♡</span>팔로우한 크리에이터</a><a href="#"><span class="nav-glyph" aria-hidden="true">?</span>문의</a></nav><div class="account"><span class="avatar">별</span><div><strong>별빛님</strong><small>팬 · 계정 설정</small></div></div></aside><div class="page"><header class="mobile-bar"><a class="logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a><button type="button" aria-label="메뉴 열기">☰</button></header><main id="main"><div class="wrap me-wrap">
+<div class="mockbar" role="group" aria-label="시안 보기 전환"><b>시안 보기</b><span class="mb-grp">받을 주소 <button type="button" data-a="on" aria-pressed="true">등록됨</button><button type="button" data-a="off" aria-pressed="false">없음</button></span><span class="mb-grp"><button type="button" id="mkBtn" aria-pressed="false">바뀐 곳 번호 표시</button></span></div>
+
+<header class="me-head"><div><h1 class="p-title" tabindex="-1">계정 설정</h1><p class="p-desc">로그인·받을 주소·알림에 관한 설정이에요. 닉네임은 프로필 수정에서 바꿔요.</p></div><a class="p-btn" href="#">프로필 수정</a></header>
+
+<section class="me-grp mkp" aria-labelledby="g1"><i class="mk tl" aria-hidden="true">1</i>
+ <div class="me-nm"><h2 id="g1">보안</h2></div>
+ <ul class="me-rows">
+  <li class="me-row"><div class="me-txt"><span class="me-k">비밀번호</span></div><div class="me-act"><button class="p-btn" type="button">바꾸기</button></div></li>
+  <li class="me-row"><div class="me-txt"><span class="me-k">휴대폰 번호</span><span class="me-v">010-****-5678</span></div><div class="me-act"><button class="p-btn" type="button">바꾸기</button></div></li>
+ </ul>
+</section>
+
+<section class="me-grp mkp" aria-labelledby="g2"><i class="mk tl" aria-hidden="true">2</i>
+ <div class="me-nm"><h2 id="g2">받을 주소</h2></div>
+ <ul class="me-rows">
+  <li class="me-row"><div class="me-txt"><span class="me-v" id="addrT">집 · 10월 22일 (목)에 등록한 주소</span></div><div class="me-act" id="addrA"><button class="p-btn" type="button">바꾸기</button><button class="p-btn" type="button">지우기</button></div></li>
+ </ul>
+</section>
+
+<section class="me-grp mkp" aria-labelledby="g3"><i class="mk tl" aria-hidden="true">2</i>
+ <div class="me-nm"><h2 id="g3">개인정보</h2></div>
+ <ul class="me-rows">
+  <li class="me-row mkp"><i class="mk tl" style="left:-8px;top:-4px" aria-hidden="true">4</i><div class="me-txt"><span class="me-k">아이디</span><span class="me-v">byeolbit_fan</span></div></li>
+  <li class="me-row col"><label class="me-k" for="em">이메일</label><input class="me-input" id="em" type="email" value="byeolbit.fan@example.com" autocomplete="off" aria-describedby="em-h"><p class="me-s" id="em-h">바꾸면 새 주소로 확인 메일이 가요. 링크를 눌러야 바뀌어요.</p></li>
+ </ul>
+</section>
+
+<section class="me-grp mkp" aria-labelledby="g4"><i class="mk tl" aria-hidden="true">2</i>
+ <div class="me-nm"><h2 id="g4">알림</h2></div>
+ <ul class="me-rows">
+  <li class="me-row sw"><button type="button" class="me-sw" role="switch" aria-checked="true" id="n1"><span class="me-txt"><span class="me-k">카카오 알림톡으로 받기</span><span class="me-s">승인·배송처럼 선물 소식을 카카오톡으로 받아요.</span></span><span class="me-trk" aria-hidden="true"></span></button></li>
+  <li class="me-row sw"><button type="button" class="me-sw" role="switch" aria-checked="true" id="n2"><span class="me-txt"><span class="me-k">이메일로 받기</span><span class="me-s">영수증과 안내 메일을 받아요.</span></span><span class="me-trk" aria-hidden="true"></span></button></li>
+  <li class="me-must mkp"><i class="mk tl" style="left:-8px;top:8px" aria-hidden="true">5</i><p class="me-mt">끌 수 없는 알림</p><p class="me-ml">돌려보낼 상자, 아직 도착하지 않은 상자, 전해지지 못한 선물, 추가 결제 요청, 결제 취소, 추가 결제 취소, 받는 주소 없이 보낸 상자, 역조공 받기, 돌려받을 주소 확인 — 선물을 진행하는 데 필요하거나 돈·상자가 걸린 일이라 꺼 두어도 가요.</p></li>
+ </ul>
+</section>
+
+<div class="me-end mkp"><i class="mk tl" aria-hidden="true">2</i>
+ <p class="st-msg" role="status" id="msg"></p>
+ <div class="me-btns"><button class="p-btn" type="button" id="rev">되돌리기</button><button class="p-btn fill" type="button" id="save">저장하기</button></div>
+</div>
+
+<div class="me-quit mkp"><i class="mk tl" aria-hidden="true">3</i>
+ <div class="me-txt"><span class="me-k">회원 탈퇴</span><span class="me-s">계정과 프로필을 삭제해요</span></div>
+ <button class="p-btn danger" type="button">탈퇴하기</button>
+</div>
+</div></main></div>
+<script>
+const body=document.body;
+function setMk(on){body.classList.toggle('show-mk',on);document.getElementById('mkBtn').setAttribute('aria-pressed',String(on));}
+document.getElementById('mkBtn').addEventListener('click',()=>setMk(!body.classList.contains('show-mk')));
+addEventListener('message',e=>{if(e.data&&typeof e.data.mk==='boolean')setMk(e.data.mk);});
+document.querySelectorAll('[data-a]').forEach(b=>b.addEventListener('click',()=>{
+ const on=b.dataset.a==='on';
+ document.querySelectorAll('[data-a]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+ document.getElementById('addrT').textContent=on?'집 · 10월 22일 (목)에 등록한 주소':'등록한 주소가 없어요';
+ document.getElementById('addrA').innerHTML=on?'<button class="p-btn" type="button">바꾸기</button><button class="p-btn" type="button">지우기</button>':'<button class="p-btn" type="button">등록하기</button>';
+}));
+const sws=[...document.querySelectorAll('.me-sw')];let saved=sws.map(s=>s.getAttribute('aria-checked'));
+const msg=t=>document.getElementById('msg').textContent=t;
+sws.forEach(s=>s.addEventListener('click',()=>{s.setAttribute('aria-checked',String(s.getAttribute('aria-checked')!=='true'));msg('');}));
+document.getElementById('save').addEventListener('click',()=>{saved=sws.map(s=>s.getAttribute('aria-checked'));msg('저장했어요.');});
+document.getElementById('rev').addEventListener('click',()=>{sws.forEach((s,i)=>s.setAttribute('aria-checked',saved[i]));msg('');});
+</script>
+</body></html>
