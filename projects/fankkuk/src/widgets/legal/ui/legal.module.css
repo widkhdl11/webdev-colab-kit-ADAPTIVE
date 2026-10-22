@@ -1,51 +1,25 @@
-/* 이용약관·개인정보처리방침 공용 — 시안 docs/design/mockups/site/v18/legal.html · v18-pub.css 「약관」. 카드·격자·긴 글·점 목록은 공통 클래스(base.css)
-   본문은 로그인 전 880 선. 상단 바 아래 40, 구간 사이 48, 바닥글까지 96(휴대폰 64) */
+/* 안내 글 · 신고·문의에 남은 것 — 머리·요약·목차·조·글 모양은 공통 틀 doc-page.module.css 로 옮겼다(문서형 C12).
+   신고·문의(report-page)는 v18 머리 + 요약 카드 + 양식 카드 그대로. 상단 바 아래 40, 바닥글까지 96(휴대폰 64) */
 .page { padding: var(--space-10) 0 var(--section-gap); }
-.sec { margin-top: var(--space-12); }
-
-/* 운영·시행일·동의 기록의 판 카드 — 세 칸(767 이하 하나) */
-.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-6); }
-.facts dt { color: var(--gray-600); font-size: var(--fs-caption); font-weight: 400; }
-.facts dd { margin: var(--space-2) 0 0; font-weight: var(--fw-btn); }
-
-/* 맨 위 목차 카드 — 3열(1023px 이하 2열, 767px 이하 1열) */
-.toc ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 var(--space-8); margin-top: var(--space-4); }
-.toc a { display: flex; align-items: center; min-height: var(--touch); text-decoration: none; }
-.toc a:hover { color: var(--brand-ink); text-decoration: underline; }
-@media (max-width: 1023px) { .toc ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-
-/* 조마다 위 구분선 */
-.art { padding-block: var(--space-8); border-top: 1px solid var(--gray-200); scroll-margin-top: calc(var(--header-h) + 16px); }
-.art:first-child { padding-top: 0; border-top: 0; }
-.art > h2 { margin-bottom: var(--space-4); }
-.prose { max-width: none; margin-inline: 0; }
-.prose > * { max-width: var(--prose-max); }
-.prose > :global(.grid) { max-width: var(--prose-max); }
-
-/* 카드 안 이름·값 — 좁은 카드에서 이름 아래 값 */
-.kv { display: grid; gap: var(--space-4); margin-top: var(--space-4); }
-.art .kv > div { display: block; padding: 0; }
-.kv dt { color: var(--gray-600); font-size: var(--fs-caption); font-weight: 400; }
-.kv dd { margin-top: var(--space-2); font-weight: var(--fw-btn); }
 
 @media (max-width: 767px) {
   .page { padding-top: var(--space-4); }
-  .facts { grid-template-columns: minmax(0, 1fr); }
-  .toc ol { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* 옅은 판 — 공개 화면 시안(v18-pub.css .card--soft)은 옅은 빨강. 전역 기본(회색)은 로그인 후 화면 값이다 */
 .page :global(.card--soft) { background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
+.prose { max-width: none; margin-inline: 0; }
+.prose > * { max-width: var(--prose-max); }
 
-/* 세 줄 요약 — 사실 카드 위 */
+/* 세 줄 요약 */
 .summary { margin-bottom: var(--space-6); }
 .summary ul { margin-top: var(--space-2); }
 /* 신고·문의 양식 카드 — 폼 한 기둥(design-rules 정렬: 폼은 가운데 한 기둥 560~720) */
 .formCard { max-width: 640px; margin-inline: auto; }
 
-/* 보안 안내 그림 — 네 칸이 차례로(오른쪽 화살표), 767 이하에서는 위아래(아래 화살표) */
-.figure { margin: 0 0 var(--space-6); }
-.flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-8); counter-reset: none; }
+/* 보안 안내 그림 — 네 칸이 차례로(오른쪽 화살표), 1023 이하에서는 위아래(아래 화살표) */
+.figure { margin: 0; }
+.flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-8); margin: 0; padding: 0; list-style: none; counter-reset: none; }
 .flow > li { position: relative; display: grid; align-content: start; gap: var(--space-2); }
 .flow > li:not(:last-child)::after { content: "→" / ""; position: absolute; top: 50%; right: calc(var(--space-8) / -2); transform: translate(50%, -50%); color: var(--gray-600); font-weight: var(--fw-bold); }
 .flowNo { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-bold); font-size: var(--fs-caption); }

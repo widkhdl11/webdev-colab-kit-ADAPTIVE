@@ -1,0 +1,183 @@
+/* 문서형 페이지 공통 — 약관 셋(14절, 시안 v26-terms) · 안내 글(28절, 시안 part7-2026-10-22) · 자주 묻는 질문의 요약·검색·칩.
+   로그인 전 880 선(pub-inner) 안, 글 기둥 680. 왼쪽 따라오는 목차는 없앴다 — 모든 폭에서 화면 위에 붙는 목차 줄(D1 ②, 높이 44).
+   상단 바 아래 40, 머리와 본문 사이 48, 바닥글까지 96 */
+
+/* 목차 줄이 붙는 높이 — 로그인 전 상단 바 64, 로그인 후 PC 는 위 막대가 없어 0, 768 이하 로그인 후는 위 막대 56 */
+.page { --doc-top: var(--header-h); --bar-h: 44px; padding: var(--space-10) 0 96px; }
+:global(body:has(.sidebar)) .page { --doc-top: 0px; }
+@media (max-width: 768px) { :global(body:has(.sidebar)) .page { --doc-top: var(--topbar-h); } }
+
+.head :global(.pub-inner) { display: flex; flex-direction: column; gap: var(--space-6); }
+
+/* 탭 — 지금 글은 짙은 면(14절 알약 높이 40, 누를 칸 44) */
+.tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tab { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 var(--space-4); border-radius: var(--r-pill); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--gray-900); font-size: var(--fs-small); font-weight: 500; text-decoration: none; }
+.tab:hover { background: var(--gray-50); }
+.tab[aria-current="page"] { background: var(--gray-900); box-shadow: none; color: var(--white); font-weight: var(--fw-btn); }
+.tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.titleBox { display: flex; flex-direction: column; gap: var(--space-2); max-width: var(--prose-max); }
+.title { margin: 0; font-size: var(--fs-title); line-height: 1.25; }
+.lead { margin: 0; color: var(--gray-600); }
+.guide .title { font-size: var(--fs-page); line-height: 1.3; }
+/* 안내 글 최종 수정일 한 줄(28절 · 기준 11) */
+.updated { margin: 0; color: var(--gray-600); font-size: var(--fs-small); }
+
+/* 「먼저 알아 두세요」 판 — 옅은 하늘 면, 하늘 동그라미 번호 */
+.summary { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-8); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
+.summaryT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
+.summaryList { display: flex; flex-direction: column; gap: var(--space-3); max-width: var(--col-list); margin: 0; padding: 0; list-style: none; counter-reset: sum; }
+.summaryList li { display: flex; gap: var(--space-3); align-items: flex-start; counter-increment: sum; }
+.summaryList li::before { content: counter(sum); flex: none; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); font-size: var(--fs-small); font-weight: var(--fw-bold); }
+/* 요약 줄 → 조(원칙 ④) — 문장 그대로 링크, 밑줄로 누를 수 있음을 보인다 */
+.summaryLink { color: var(--gray-900); text-decoration: underline; text-decoration-color: var(--gray-500); text-underline-offset: 4px; }
+.summaryLink:hover { text-decoration-color: var(--gray-900); }
+.summaryLink:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* 본문 */
+.body { margin-top: var(--space-12); }
+
+/* 검색 · 분류 칩 */
+.tools { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-6); }
+.search { margin: 0; }
+.searchRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.searchBox { position: relative; flex: 1 1 240px; min-width: 0; max-width: var(--prose-max); }
+.searchIcon { position: absolute; top: 50%; left: 14px; width: 20px; height: 20px; color: var(--gray-500); transform: translateY(-50%); pointer-events: none; }
+.searchInput { width: 100%; min-height: 44px; padding: 0 var(--space-4) 0 44px; border: 1px solid var(--field-line); border-radius: var(--r-btn); background: var(--white); color: var(--gray-900); font: inherit; font-size: var(--fs-body); }
+.searchInput:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.stepBtns { display: inline-flex; gap: var(--space-2); }
+.stepBtn, .filterChip { min-height: 44px; padding: 0 var(--space-4); border: 0; background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--gray-900); font: inherit; font-size: var(--fs-small); cursor: pointer; }
+.stepBtn { border-radius: var(--r-btn); font-weight: var(--fw-btn); }
+.stepBtn:hover, .filterChip:hover { background: var(--gray-50); }
+.stepBtn:focus-visible, .filterChip:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.searchCount { margin: 0; color: var(--gray-600); font-size: var(--fs-small); }
+.searchCount:not(:empty) { margin-top: var(--space-2); }
+.chipRow { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.filterChip { border-radius: var(--r-pill); font-weight: 500; }
+.filterChip[aria-pressed="true"] { background: var(--gray-900); box-shadow: none; color: var(--white); font-weight: var(--fw-btn); }
+.mark { padding: 0; background: var(--tint-line); color: inherit; }
+
+/* 「자주 찾음」(원칙 ③) */
+.badge { flex: none; display: inline-flex; align-items: center; padding: 2px var(--space-2); border-radius: var(--r-pill); background: var(--primary-50); color: var(--gray-900); font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.4; white-space: nowrap; }
+
+/* 위에 붙는 목차 줄 — 첫 화면에서는 제자리, 스크롤하면 상단 바 아래에 붙는다. 붙는 범위는 조가 든 칸(.flow) 안 */
+.flow { position: relative; }
+.bar { position: sticky; top: var(--doc-top); z-index: 30; margin-bottom: var(--space-8); border-bottom: 1px solid var(--gray-200); background: var(--background); }
+.barRow { display: flex; align-items: center; gap: var(--space-3); min-height: var(--bar-h); }
+/* 긴 조 제목은 말줄임 — 전체는 펼친 목록에서(그리고 title) */
+.barNow { flex: 1 1 auto; min-width: 0; margin: 0; overflow: hidden; color: var(--gray-900); font-size: var(--fs-small); font-weight: var(--fw-btn); text-overflow: ellipsis; white-space: nowrap; }
+.barBtn { flex: none; display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-3); border: 0; border-radius: var(--r-btn); background: none; color: var(--gray-900); font: inherit; font-size: var(--fs-small); font-weight: var(--fw-btn); cursor: pointer; }
+.barBtn:hover { background: var(--surface); }
+.barBtn:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.barBtn svg { width: 20px; height: 20px; transition: transform var(--dur-hover) var(--ease-micro); }
+.barBtn[aria-expanded="true"] svg { transform: rotate(180deg); }
+/* 펼친 목록 — 화면 높이 안에서 스크롤(C10) */
+.panel { position: absolute; top: 100%; right: 0; left: 0; display: flex; flex-direction: column; gap: var(--space-3); max-height: calc(100dvh - var(--doc-top) - var(--bar-h) - 16px); padding: var(--space-3); overflow-y: auto; overscroll-behavior: contain; border-radius: 0 0 var(--r-card) var(--r-card); background: var(--white); box-shadow: var(--hair), var(--float); }
+.panel[hidden] { display: none; }
+.tocGroup { display: flex; flex-direction: column; gap: 2px; }
+.tocGroupT { margin: 0; padding: 4px var(--space-3); color: var(--gray-600); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.tocLink { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: var(--space-2) var(--space-3); border-radius: var(--r-btn); color: var(--gray-900); font-size: var(--fs-small); line-height: 1.5; text-decoration: none; }
+.tocLabel { flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.tocLink:hover { background: var(--gray-100); }
+.tocLink[aria-current] { background: var(--primary-50); font-weight: var(--fw-btn); }
+.tocLink:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+/* 칩으로 가린 조 — 흐리게(누르면 「전체」로 돌아가 그 조로 간다). 흐린 글자는 gray-500 아래로 내리지 않는다(4.5:1) */
+.tocLink.dim:not([aria-current]) { color: var(--gray-500); }
+
+/* 조 — 위 구분선, 꼬리표 · 제목 줄(제목 · 자주 찾음 · 주소 복사) · 글. 제목이 목차 줄 아래로 숨지 않게 그 높이만큼 더 띄운다 */
+.main { min-width: 0; max-width: var(--prose-max); }
+.main .art { display: flex; flex-direction: column; gap: var(--space-4); padding: 40px 0; border-top: 1px solid var(--gray-200); scroll-margin-top: calc(var(--doc-top) + var(--bar-h) + 24px); }
+.main .art[hidden] { display: none; }
+.main > .art:first-child { padding-top: 0; border-top: 0; }
+.no { align-self: flex-start; padding: 2px var(--space-3); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.artHead { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.artT { flex: 0 1 auto; min-width: 0; margin: 0; font-size: var(--fs-page); line-height: 1.3; overflow-wrap: anywhere; }
+.guide .artT { font-size: var(--fs-card); line-height: 1.4; }
+.artT:focus { outline: none; }
+.artT:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* 조 주소 복사 — 제목에 마우스를 올리거나 키보드 초점이 오면 보인다. 터치 화면은 늘 */
+.copy { flex: none; display: inline-flex; align-items: center; gap: var(--space-1); }
+.copyBtn { display: grid; place-items: center; width: 44px; height: 44px; margin-block: -8px; padding: 0; border: 0; border-radius: var(--r-btn); background: none; color: var(--gray-600); cursor: pointer; opacity: 0; transition: opacity var(--dur-hover) var(--ease-micro); }
+.copyBtn svg { width: 20px; height: 20px; }
+.copyBtn:hover { background: var(--surface); color: var(--gray-900); }
+.copyBtn:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+:is(.artHead:hover, .faqItem:hover) .copyBtn, .copyBtn:focus, .copy:has(.copied:not(:empty)) .copyBtn { opacity: 1; }
+@media (hover: none) { .copyBtn { opacity: 1; } }
+.copied { color: var(--gray-600); font-size: var(--fs-small); white-space: nowrap; }
+
+.prose { display: flex; flex-direction: column; gap: var(--space-3); line-height: 1.75; overflow-wrap: anywhere; }
+.prose p { margin: 0; }
+
+.dots { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.dots li { position: relative; padding-left: var(--space-4); }
+.dots li::before { content: ""; position: absolute; top: 12px; left: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--gray-500); }
+.steps { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; padding: 0; list-style: none; counter-reset: st; }
+.steps li { position: relative; padding-left: 40px; counter-increment: st; }
+.steps li::before { content: counter(st); position: absolute; top: 0; left: 0; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--primary-50); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1; }
+
+/* 단계 칩 한 줄 — 회색 면 안에 이름표 · 흰 칩(사이 › ) · 덧붙임 한 줄 */
+.stages { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
+.stagesT, .stagesNote { margin: 0; color: var(--gray-600); font-size: var(--fs-small); }
+.stagesT { font-weight: var(--fw-btn); }
+.stageChips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0; padding: 0; list-style: none; font-size: var(--fs-small); line-height: 1.5; }
+.stageChips li { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
+.stageChips li:not(:last-child)::after { content: "›" / ""; color: var(--gray-500); }
+.stageChip { padding: 2px var(--space-3); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
+
+/* 환불 금액 꼬리표 — 전액 초록 · 없음 빨강 */
+.pill { display: inline-block; padding: 0 var(--space-2); border-radius: var(--r-tag); font-weight: var(--fw-btn); }
+.pillFull { background: var(--success-soft); color: var(--success); }
+.pillNone { background: var(--danger-soft); color: var(--danger); }
+
+/* 테두리 상자 한 덩어리 — 줄 사이 가는 선 */
+.box { display: flex; flex-direction: column; margin: 0; border-radius: var(--r-card); box-shadow: inset 0 0 0 1px var(--gray-200); overflow: hidden; }
+.defRow, .caseRow { display: flex; flex-direction: column; gap: 4px; padding: var(--space-4) var(--space-6); }
+.defRow + .defRow, .caseRow + .caseRow { border-top: 1px solid var(--gray-200); }
+.defRow dt { font-weight: var(--fw-btn); }
+.defRow dd { margin: 0; color: var(--gray-600); line-height: 1.7; }
+.caseRow { gap: var(--space-2); }
+.caseRow h3 { margin: 0; font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; }
+.kv { display: grid; gap: var(--space-2) var(--space-4); margin: 0; line-height: 1.6; }
+.kv > div { display: grid; grid-template-columns: minmax(0, 180px) minmax(0, 1fr); gap: var(--space-4); }
+.kv dt { color: var(--gray-600); font-weight: 400; }
+.kv dd { margin: 0; }
+
+/* 요금 표 — 머리 줄 회색 면, 금액은 오른쪽 정렬, 첫 금액 칸만 크게(28절 굵기 800) */
+.prices { width: 100%; border-collapse: collapse; line-height: 1.5; }
+.prices th, .prices td { padding: var(--space-4) var(--space-6); text-align: right; font-weight: 400; vertical-align: middle; }
+.prices th:first-child { text-align: left; }
+.prices thead th { padding-block: var(--space-3); background: var(--gray-50); color: var(--gray-600); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.prices tbody tr { border-top: 1px solid var(--gray-200); }
+.prices tbody th strong { display: block; font-weight: var(--fw-btn); }
+.prices tbody th span { display: block; color: var(--gray-500); font-size: var(--fs-small); }
+.prices td { color: var(--gray-600); white-space: nowrap; }
+.prices td.amountMain { color: var(--gray-900); font-size: var(--fs-card); font-weight: var(--fw-title); white-space: nowrap; }
+
+/* 맨 아래 문의 판 */
+.ask { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); margin-top: var(--space-4); padding: var(--space-8); border-radius: var(--r-panel); background: var(--surface-accent-fx); text-align: center; box-shadow: var(--surface-accent-shadow); }
+.ask p { margin: 0; }
+.sub { color: var(--gray-600); }
+
+/* 자주 묻는 질문 — 질문 줄 오른쪽(화살표 왼쪽)에 주소 복사. 접기 모양은 base.css .acc 그대로 */
+.faqItem { position: relative; }
+:global(.acc) > .faqItem[id] { scroll-margin-top: calc(var(--doc-top) + 24px); }
+.faqItem[hidden] { display: none; }
+.faqItem :global(summary .q) { padding-right: 44px; }
+.faqItem .badge { margin-top: var(--space-1); }
+.faqCopy { position: absolute; top: 14px; right: 56px; }
+.faqCopy .copied { position: absolute; top: 100%; right: 0; padding: 2px var(--space-2); border-radius: var(--r-btn); background: var(--white); }
+.faqCopy .copied:empty { padding: 0; }
+
+@media (max-width: 767px) {
+  .page { padding: var(--space-6) 0 64px; }
+  .summary, .ask { padding: var(--space-6); }
+  .kv > div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .defRow, .caseRow { padding: var(--space-4); }
+  .prices th, .prices td { padding-inline: var(--space-3); }
+  .tabs .tab { flex: 1 1 auto; }
+  .faqCopy { right: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .barBtn svg, .copyBtn { transition: none; }
+}

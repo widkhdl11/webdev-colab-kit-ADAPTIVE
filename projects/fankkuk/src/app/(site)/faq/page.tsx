@@ -18,7 +18,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <FaqPage summary={faq.summary} items={faq.items} />
+      <FaqPage {...faq} />
       <SiteFooter />
     </>
   );

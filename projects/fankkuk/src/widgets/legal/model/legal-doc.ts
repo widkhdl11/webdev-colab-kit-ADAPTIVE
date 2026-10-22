@@ -30,7 +30,15 @@ export type LegalBlock =
 
 export type LegalPriceRow = { name: string; rule: string; amounts: readonly string[] };
 
-export type LegalSection = { id: string; title: string; blocks: readonly LegalBlock[] };
+export type LegalSection = {
+  id: string;
+  title: string;
+  blocks: readonly LegalBlock[];
+  /** 분류 칩 이름(문서형 원칙 ②) — 없으면 칩을 고를 때 이 조는 접힌다. 문서에 tags 가 하나도 없으면 칩 줄을 그리지 않는다 */
+  tags?: readonly string[];
+  /** 「자주 찾음」 배지(원칙 ③) — 조 제목 옆과 목차 줄 */
+  frequent?: true;
+};
 
 /** 목차 묶음 — 조가 많은 글만. ids 는 sections 의 id */
 export type LegalTocGroup = { title: string; ids: readonly string[] };
@@ -43,6 +51,12 @@ export type LegalDoc = {
   facts: readonly (readonly [string, string])[];
   sections: readonly LegalSection[];
   tocGroups?: readonly LegalTocGroup[];
+  /** 요약 줄마다 이어지는 조 id(원칙 ④) — summary 와 같은 길이. 길이가 다르면 화면은 링크 없이 그린다 */
+  summaryLinks?: readonly string[];
+  /** 분류 칩 순서 — 없으면 조에 처음 나온 차례 */
+  tagOrder?: readonly string[];
+  /** 안내 글의 최종 수정일 「YYYY-MM-DD」(원칙 ⑥ · 기준 11). 버전이 있는 세 글은 쓰지 않는다 */
+  updated?: string;
 };
 
 /** 글 안에 남은 빈칸 표시를 모은다(출시 전 점검용). 같은 문장은 한 번만. */

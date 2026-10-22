@@ -17,7 +17,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <LegalPage doc={guideFanDoc(prices)} icon="/img/icon-notice.png" />
+      <LegalPage tab="guide-fan" doc={guideFanDoc(prices)} icon="/img/icon-notice.png" />
       <SiteFooter />
     </>
   );

@@ -16,7 +16,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <LegalPage doc={disputeDoc()} icon="/img/icon-notice.png" />
+      <LegalPage tab="dispute" doc={disputeDoc()} icon="/img/icon-notice.png" />
       <SiteFooter />
     </>
   );
