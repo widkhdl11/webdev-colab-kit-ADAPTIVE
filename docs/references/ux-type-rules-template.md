@@ -3,7 +3,8 @@
 <!--
   킷 정본 UX 유형 규칙 양식이다(원본: docs/references/ux-type-rules-template.md).
   실제 문서는 이 파일을 복사해 projects/<이름>/docs/ux/<유형>-pages.md 로 쓴다.
-  유형: 문서형·목록형·작업형·상세형·관리형. 프로젝트 전체에 걸친 원칙은 같은 양식으로
+  유형과 파일 이름: 문서형 document · 목록형 list · 작업형 task · 상세형 detail · 관리형 admin
+  (예: 목록형 → list-pages.md). 프로젝트 전체에 걸친 원칙은 같은 양식으로
   projects/<이름>/docs/ux/principles.md 에 쓴다(제목만 「UX 원칙」으로).
 
   번호는 한 번 붙이면 바꾸지 않는다 — UX 명세의 「근거」 칸과 리뷰 지적이 이 번호를 가리킨다.

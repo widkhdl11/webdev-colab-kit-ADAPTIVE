@@ -53,7 +53,8 @@ design-drafting.md 가 같은 확인을 자기 쪽에서도 직접 한다 — �
 ## 4. 판정 기준 문서
 
 - `projects/<이름>/docs/ux/principles.md`
-- `projects/<이름>/docs/ux/<유형>-pages.md`
+- `projects/<이름>/docs/ux/<유형>-pages.md` — 파일 이름의 유형은 영문으로: 문서형 `document`,
+  목록형 `list`, 작업형 `task`, 상세형 `detail`, 관리형 `admin` (예: `list-pages.md`)
 - `projects/<이름>/docs/ux/states.md`
 
 **하나라도 없으면 멈추지 말고** 「UX 기준 문서 없음: <경로>」를 보고하고 작성할지 묻는다.
