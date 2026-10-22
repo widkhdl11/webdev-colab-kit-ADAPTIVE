@@ -41,6 +41,8 @@ a{text-underline-offset:3px;text-decoration-thickness:1px}
 .mockbar button{min-height:36px;padding:4px 12px;border:1px solid #9ca3af;background:#fff;border-radius:12px;font-size:14px}
 .mockbar button[aria-pressed=true]{background:#1f2937;color:#fff;border-color:#1f2937}
 body.s-guest :is(.only-fan,.only-creator),body.s-fan :is(.only-guest,.only-creator),body.s-creator :is(.only-guest,.only-fan){display:none!important}
+/* 로그인한 사람(팬·크리에이터) — 크리에이터도 다른 크리에이터를 팔로우하고 선물을 보낸다(followModeOf: 운영자·자기 자신만 숨김) */
+body.s-guest .only-member{display:none!important}
 body.s-guest .page{margin-left:0}
 body.s-guest .site-header{display:block}
 @media(max-width:767px){body.s-guest .site-header{display:none}}
