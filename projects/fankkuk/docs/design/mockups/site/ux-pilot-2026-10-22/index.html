@@ -1,0 +1,25 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>UX 정돈 시범 — 지금 / 바꾼 뒤 · 팬꾹 UX 정돈 시범 시안</title><link rel="stylesheet" href="../v34-part1/styles.css"><link rel="stylesheet" href="../v34-part1/v33.css"><link rel="stylesheet" href="ux.css"></head>
+<!-- UX 정돈 시범 2026-10-22 — 세 화면(보낸 선물 목록·상세 / 지금 할 일 / 선물 보내기)의 무엇이 언제 보이는지 비교. 모양은 바꾸지 않는다. 근거: docs/ux/diagnosis-2026-10-22-pilot.md · docs/ux/states.md -->
+<body class="review-body">
+<header class="review-toolbar"><div><h1>UX 정돈 시범 — 지금 / 바꾼 뒤</h1><p>색·간격·글자는 그대로이고, 화면에 무엇이 언제 보이는지만 바꿨어요. 화면을 골라 보세요.</p></div></header>
+<main class="ux-index">
+<section class="ux-cards" aria-label="화면">
+<a class="ux-card" href="gifts.html"><strong>보낸 선물 목록</strong><span>/gifts</span><small>비교 2개</small><ul><li>정상 기본 · 「진행 중」 탭, 카드 세 장</li><li>예외 · 결제를 마치지 않은 선물이 있음</li></ul></a>
+<a class="ux-card" href="gift-detail.html"><strong>보낸 선물 상세</strong><span>/gifts/{주문번호}</span><small>비교 4개</small><ul><li>정상 기본 · 승인됨, 「보내 주세요」, 상자 1개</li><li>결제 직후 · 승인 전 (?paid=1, 먼저 보내기 전)</li><li>예외 · 맨 위 칸 「도착이 늦어요」 (결제 뒤 14일, 상자 미도착)</li><li>「아직 보내지 않음」을 누른 뒤 (바꾼 뒤만)</li></ul></a>
+<a class="ux-card" href="actions.html"><strong>지금 할 일</strong><span>/me/actions</span><small>비교 2개</small><ul><li>정상 기본 · 줄 세 개</li><li>빈 상태 (지금·바꾼 뒤 같음)</li></ul></a>
+<a class="ux-card" href="send.html"><strong>선물 보내기</strong><span>/gifts/new</span><small>비교 4개</small><ul><li>정상 기본 · 2단계, 선물 종류 「인형·쿠션」</li><li>2단계 · 접힌 줄을 눌러 펼친 모습 (바꾼 뒤만)</li><li>예외 · 1단계, 이번 달 한도에 닿은 크리에이터가 목록에 있음</li><li>예외 · 결제창에서 실패하고 돌아옴 (?payment=failed)</li></ul></a>
+</section>
+<section class="ux-pick" aria-labelledby="pk-h"><h2 id="pk-h">고르셔야 할 것 세 가지 — 시안은 추천안으로 그렸어요</h2>
+<ol>
+<li><b>① 「보내 주세요」 선물을 할 일로 칠까요?</b> 추천 가: 목록의 하늘 면을 지금 할 일이 있는 카드에만 쓴다. (보낸 선물 목록 상태 1)</li>
+<li><b>② 선물 보내기 2단계의 선택 칸(선물 사진·나만 보는 메모)을 어떻게 할까요?</b> 추천 가: 글자 한 줄로 접어 두고 누르면 펼친다. (선물 보내기 상태 1과 펼친 모습)</li>
+<li><b>③ 「아직 보내지 않음」을 누른 뒤 지금 할 일 줄을 어떻게 할까요?</b> 추천 가: 줄을 지우고 상자 줄에만 「아직 보내지 않음 · ○월 ○일」을 남긴다. (보낸 선물 상세 상태 3과 누른 뒤)</li>
+</ol></section>
+<section class="ux-pick" aria-labelledby="nd-h"><h2 id="nd-h">진단 문서에 있으나 이 시안에 그리지 않은 것</h2>
+<ul>
+<li>보낸 선물 상세 B-6(거절·기한 지남 안내 문단을 상자 상태별로 가르기) — 「시안에 그릴 상태」에 거절·기한 지남 상태가 없고, 첫 문단은 읽기 함수 변경이 먼저 필요해서</li>
+<li>지금 할 일 C-2(결제 이어 하기 실패 뒤 안내 줄)·C-3(돌려받을 주소 확인 뒤 안내 줄) — 「시안에 그릴 상태」 목록에 없음. 안내 줄 하나씩이라 필요하면 추가</li>
+<li>선물 보내기 D-5(「검수 포함」 아래 문장에 「검수비」) — 고칠지 사람이 볼 일이라 보류. 4단계도 그리지 않음</li>
+</ul></section>
+</main>
+</body></html>

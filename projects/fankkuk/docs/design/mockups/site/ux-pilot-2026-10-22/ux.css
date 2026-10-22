@@ -1,0 +1,67 @@
+/* UX 정돈 시범 2026-10-22 — 모양은 앞 CSS(v34~v39) 그대로. 여기는 (1) 시안 전용 번호 (2) 비교 페이지 틀 (3) 새로 생기는 줄의 배치만. 새 색·글자 크기 없음(14·16·20), 간격은 4·8·12·16·24·32·40·48. */
+.mk{display:none;position:absolute;z-index:3;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#b42318;color:#fff;font-size:12px;font-weight:700;font-style:normal;line-height:1;align-items:center;justify-content:center;gap:6px;pointer-events:none;box-shadow:0 0 0 2px #fff;white-space:nowrap}
+body.show-mk .mk{display:flex}
+.mk.tl{left:-8px;top:-8px}
+.mk.pk span{font-weight:600}
+.mkp{position:relative}
+/* 목록 */
+.ccards.one{grid-template-columns:minmax(0,1fr)}
+.gcard .todoline{display:flex;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;padding-top:16px;border-top:1px solid #bfe3f7;font-size:14px;font-weight:600;color:#1f2937}
+.gcard .u-what{font-size:16px}
+.gcard .u-due{font-size:14px;color:#4b5563;margin-top:4px}
+.linkarr{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:600;color:#1f2937;position:relative;z-index:1}
+/* 상세 */
+.textlink{display:inline-flex;align-items:center;min-height:44px;font-size:14px;color:#4b5563;text-decoration:underline;text-underline-offset:4px}
+.bottomlink{margin-top:32px}
+.paidline{margin-top:16px;padding:12px 16px;border:1px solid #e5e7eb;border-radius:12px;background:#fff;font-weight:600}
+.note14{margin-top:12px;font-size:14px;color:#4b5563}
+.addr{margin-top:16px;padding:24px;border-radius:16px;background:#f0f8ff}
+.addr-t{font-size:20px;font-weight:700}
+.addr dl{display:grid;gap:12px;margin:12px 0 0}
+.addr dl div{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px}
+.addr dt{color:#4b5563}.addr dd{margin:0;font-weight:700;overflow-wrap:anywhere}
+.addr-act{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:16px}
+.addr-note{margin-top:12px;color:#4b5563}
+.early{margin-top:12px;padding:16px 24px;border-radius:12px;background:#f7f7f8}
+.early p+p{margin-top:8px}.early .hint{font-size:14px;color:#4b5563}
+.early-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.dsec{margin-top:32px;padding-top:32px;border-top:1px solid #e5e7eb}
+.dsec h2{font-family:inherit;font-size:20px;font-weight:700;letter-spacing:0;line-height:1.4}
+.dsec p{margin-top:8px;color:#4b5563}
+.tbox .wide{grid-column:1/-1;min-width:0}
+.tbox .wide .input{background:#fff}
+.findgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:16px;align-items:end}
+.todo-alt{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding-top:16px;border-top:1px solid #bfe3f7}
+/* 지금 할 일 빈 상태 */
+.empty-card{text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:32px;padding:48px 24px}
+.empty-card h2{font-size:20px}.empty-card p{color:#4b5563}
+/* 선물 보내기 */
+.optfold{margin-top:32px}
+.optfold .in>.fblock:first-child{margin-top:8px}
+.optfold .memo{margin-top:24px}
+.pcard.stop{cursor:not-allowed}
+.pcard input:disabled{cursor:not-allowed}
+.resume{margin-top:4px}
+/* 비교 페이지 틀 */
+.cmp-row.one{grid-template-columns:minmax(0,1fr)}
+.cmp-head{margin-top:40px}
+.cmp-head ol{margin:12px 0 0;padding-left:24px;font-size:14px;color:#4b5563}
+.cmp-head li+li{margin-top:8px}
+.cmp-head li b{color:#1f2937}
+.ref{font-size:12px;color:#4b5563;border:1px solid #d1d5db;border-radius:999px;padding:0 8px;white-space:nowrap}
+.pick-tag{font-size:12px;font-weight:700;color:#fff;background:#b42318;border-radius:999px;padding:0 8px;white-space:nowrap}
+.mk-toggle{border:1px solid #9ca3af;background:#fff;border-radius:12px;padding:8px 16px;min-height:44px}
+.mk-toggle[aria-pressed=true]{background:#b42318;color:#fff;border-color:#b42318}
+.ux-nav{display:flex;flex-wrap:wrap;gap:8px 24px;padding:8px 24px;background:#fff;border-bottom:1px solid #d1d5db;font-size:14px}
+.ux-nav a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:4px}
+.ux-nav a[aria-current=page]{font-weight:700;text-decoration:none}
+.ux-hr{border:0;border-top:1px solid #d1d5db;margin:48px 24px 0}
+.ux-index{max-width:1080px;margin:0 auto;padding:32px 24px 96px}
+.ux-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.ux-card{display:flex;flex-direction:column;gap:4px;padding:24px;border:1px solid #d1d5db;border-radius:16px;background:#fff;color:#1f2937}
+.ux-card:hover{background:#f0f8ff}
+.ux-card strong{font-size:20px}.ux-card span,.ux-card small{font-size:14px;color:#4b5563}
+.ux-card ul{margin:12px 0 0;padding-left:20px;font-size:14px;color:#4b5563}
+.ux-pick{margin-top:40px;padding:24px;border:1px solid #d1d5db;border-radius:16px;background:#fff}
+.ux-pick h2{font-size:20px}.ux-pick ol,.ux-pick ul{margin:12px 0 0;padding-left:24px}.ux-pick li+li{margin-top:8px}
+@media(max-width:767px){.ux-cards{grid-template-columns:1fr}.findgrid{grid-template-columns:1fr}.addr dl div{grid-template-columns:1fr;gap:0}}

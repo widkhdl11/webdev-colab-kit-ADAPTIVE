@@ -1,0 +1,20 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>지금 할 일 /me/actions · 팬꾹 UX 정돈 시범 시안</title><link rel="stylesheet" href="../v34-part1/styles.css"><link rel="stylesheet" href="../v34-part1/v33.css"><link rel="stylesheet" href="ux.css"></head>
+<!-- UX 정돈 시범 2026-10-22 — 지금 할 일 /me/actions. 입력: docs/ux/diagnosis-2026-10-22-pilot.md 「시안에 그릴 상태」. 왼쪽 「지금」은 지금 사이트의 모양, 오른쪽 「바꾼 뒤」는 같은 모양에서 무엇이 언제 보이는지만 바꾼 것. 「고르셔야 할 것」은 추천안으로 그렸다. -->
+<body class="review-body">
+<header class="review-toolbar"><div><h1>지금 할 일 /me/actions</h1><p>왼쪽이 지금 사이트, 오른쪽이 바꾼 시안이에요. 모양(색·간격·글자)은 같고 무엇이 언제 보이는지만 달라요. 이름·번호·날짜는 예시예요.</p></div><div class="review-modes" aria-label="화면 설정"><button type="button" data-width="1440" aria-pressed="true">PC 1440</button><button type="button" data-width="390" aria-pressed="false">모바일 390</button><button type="button" class="mk-toggle" id="mk" aria-pressed="true">바뀐 곳 번호 표시</button></div></header>
+<nav class="ux-nav" aria-label="화면 이동"><a href="index.html">처음</a><a href="gifts.html">보낸 선물 목록</a><a href="gift-detail.html">보낸 선물 상세</a><a href="actions.html" aria-current="page">지금 할 일</a><a href="send.html">선물 보내기</a></nav>
+<div class="cmp-head"><h2>정상 기본 · 줄 세 개</h2><ol><li><b>강조 판에서 태그 「송장번호 입력」 빠짐</b> — 「아직 보내지 않음」을 누를 팬에게는 송장번호가 없다. 보낸 경우에만 맞는 말이라 뺐다. 이 화면에서 바뀌는 것은 이것 하나다. 나머지는 선물 상세 칸에서 처리한다. <span class="ref">진단 C-1 · 기준 4·8</span></li></ol></div><div class="cmp-row" data-row><section><p class="tagline">지금 사이트 · <a href="s/actions-1-now.html" target="_blank" rel="noopener noreferrer">크게 보기 ↗</a></p><div class="frame-box"><iframe title="정상 기본 · 줄 세 개 지금 사이트" data-page="s/actions-1-now.html" data-h="910" data-hm="910"></iframe></div></section><section><p class="tagline">바꾼 뒤 · <a href="s/actions-1-after.html" target="_blank" rel="noopener noreferrer">크게 보기 ↗</a></p><div class="frame-box"><iframe title="정상 기본 · 줄 세 개 바꾼 뒤" data-page="s/actions-1-after.html" data-h="910" data-hm="910"></iframe></div></section></div>
+<hr class="ux-hr">
+<div class="cmp-head"><h2>빈 상태 (지금·바꾼 뒤 같음)</h2></div><div class="cmp-row" data-row><section><p class="tagline">지금 사이트 · <a href="s/actions-2-now.html" target="_blank" rel="noopener noreferrer">크게 보기 ↗</a></p><div class="frame-box"><iframe title="빈 상태 (지금·바꾼 뒤 같음) 지금 사이트" data-page="s/actions-2-now.html" data-h="910" data-hm="910"></iframe></div></section><section><p class="tagline">바꾼 뒤 (같음) · <a href="s/actions-2-after.html" target="_blank" rel="noopener noreferrer">크게 보기 ↗</a></p><div class="frame-box"><iframe title="빈 상태 (지금·바꾼 뒤 같음) 바꾼 뒤 (같음)" data-page="s/actions-2-after.html" data-h="910" data-hm="910"></iframe></div></section></div>
+<script>var mkOn=true,viewWidth=1440;
+function sendMk(){document.querySelectorAll('iframe').forEach(function(f){try{f.contentWindow.postMessage({mk:mkOn},'*');}catch(e){}});}
+document.querySelectorAll('iframe[data-page]').forEach(function(f){f.addEventListener('load',sendMk);f.src=f.dataset.page;});
+document.getElementById('mk').addEventListener('click',function(e){mkOn=!mkOn;e.currentTarget.setAttribute('aria-pressed',String(mkOn));sendMk();});
+function sizeFrames(){
+  document.querySelectorAll('[data-row]').forEach(function(r){r.classList.toggle('mobile',viewWidth===390);});
+  document.querySelectorAll('.frame-box').forEach(function(box){var f=box.querySelector('iframe');var hh=(viewWidth===390)?f.dataset.hm:f.dataset.h;var sc=box.clientWidth/viewWidth;f.style.width=viewWidth+'px';f.style.height=hh+'px';f.style.transform='scale('+sc+')';box.style.height=(hh*sc)+'px';});
+}
+document.querySelectorAll('[data-width]').forEach(function(b){b.addEventListener('click',function(){viewWidth=Number(b.dataset.width);document.querySelectorAll('[data-width]').forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});sizeFrames();});});
+new ResizeObserver(sizeFrames).observe(document.body);
+sizeFrames();</script>
+</body></html>
