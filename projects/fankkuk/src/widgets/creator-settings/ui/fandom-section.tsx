@@ -13,8 +13,8 @@ import { clipChars, FAN_NAME_MAX, oneLine } from "@/features/creator-settings-sa
 import { charCount } from "@/shared/lib/validation/char-count";
 import s from "./fandom-section.module.css";
 
-// 상세 설정 · 팬덤 (design-rules 12절 · 17절, 시안 v21-addendum3/cre-detail-settings.html · v28-card-redesign/settings.html). 단계 순서로 위에서 아래:
-// 팬덤 이름 → 팬마크 → 테마 색 → 미리보기(바로 아래 — 폭 720 그대로, DECISIONS 2026-10-18) → 되돌리기·저장.
+// 상세 설정 · 팬덤 (design-rules 12절 · 17절 · 27절, 시안 pilot-2026-10-22/settings.html). 1200 안 12열 7 + 5:
+// 왼쪽 입력 한 판(팬덤 이름 · 팬마크 · 테마 색 소제목, 끝에 저장 결과 안내 · 되돌리기 · 저장) · 오른쪽 미리보기(뱃지 · 카드, 따라옴).
 // - 팬덤 이름·테마 색은 「저장」으로 한 번에 보낸다(/api/creator/profile — my-account INV-A9 경로, 크리에이터 ID 는 보내지 않는다).
 //   테마 색은 파스텔 8색 원형 견본 가운데 하나 또는 「선택 안 함」(기본 모양)뿐이다(creator-link INV-E13 — 서버·DB 가 같은 8색으로 다시 본다).
 //   팬컬러는 고르지 않는다 — 보내지도 않는다(INV-E13).
@@ -49,16 +49,13 @@ export type FandomSectionProps = {
   card: { creatorId: string; channelTitle: string; intro: string; tags: readonly string[]; approvalMinutes: number | null; faceTone: string };
 };
 
-/** 테마 색 고르기 — 원형 견본 8개 + 「선택 안 함」(시안 v28 settings.html .sws). 한 무리의 라디오라 화살표로 옮겨 다닌다. */
-function ThemeStep({ step, value, onChange }: { step: number; value: ThemeColor | null; onChange: (v: ThemeColor | null) => void }) {
+/** 테마 색 고르기 — 원형 견본 8개 + 「선택 안 함」(시안 pilot-2026-10-22 settings.html .st-sw). 한 무리의 라디오라 화살표로 옮겨 다닌다. */
+function ThemeField({ value, onChange }: { value: ThemeColor | null; onChange: (v: ThemeColor | null) => void }) {
   return (
-    <div className={s.card}>
-      <div className={s.step}>
-        <i aria-hidden="true">{step}</i>
-        <span className={s.label} id="fd-theme-l">
-          테마 색
-        </span>
-      </div>
+    <div className={s.sub}>
+      <h3 className={s.subT}>
+        <span id="fd-theme-l">테마 색</span>
+      </h3>
       <p className={s.hint} id="fd-theme-h">
         배경 사진이 없을 때 카드 바탕과 팬덤 뱃지에 쓰여요. 사이트의 버튼과 글자는 그대로예요.
       </p>
@@ -118,112 +115,115 @@ export function FandomSection(p: FandomSectionProps) {
         팬덤
       </h2>
 
-      <div className={s.card}>
-        <div className={s.step}>
-          <i aria-hidden="true">1</i>
-          <label className={s.label} htmlFor="fd-name">
-            팬덤 이름
-          </label>
-          <span className={s.count} aria-hidden="true">
-            {charCount(name)}/{FAN_NAME_MAX}
-          </span>
-        </div>
-        <input
-          className="field"
-          id="fd-name"
-          type="text"
-          value={fanName}
-          autoComplete="off"
-          aria-describedby="fd-name-h"
-          onChange={(e) => setFanName(clipChars(oneLine(e.currentTarget.value), FAN_NAME_MAX))}
-        />
-        <p className={s.hint} id="fd-name-h">
-          가입할 때 정한 이름이에요. 여기서 바꿀 수 있고, 팬 뱃지에 그대로 보여요. 쓸 수 없는 말은 걸러져요.
-        </p>
-      </div>
+      <div className={s.grid}>
+        {/* 왼쪽 7열 — 입력 한 판. 소제목 셋(순서가 없는 설정이라 번호는 없다) 끝에 저장 결과 안내와 되돌리기·저장 */}
+        <div className={s.form}>
+          <div className={s.sub}>
+            <h3 className={s.subT}>
+              <label htmlFor="fd-name">팬덤 이름</label>
+              <span className={s.count} aria-hidden="true">
+                {charCount(name)}/{FAN_NAME_MAX}
+              </span>
+            </h3>
+            <input
+              className="field"
+              id="fd-name"
+              type="text"
+              value={fanName}
+              autoComplete="off"
+              aria-describedby="fd-name-h"
+              onChange={(e) => setFanName(clipChars(oneLine(e.currentTarget.value), FAN_NAME_MAX))}
+            />
+            <p className={s.hint} id="fd-name-h">
+              가입할 때 정한 이름이에요. 여기서 바꿀 수 있고, 팬 뱃지에 그대로 보여요. 쓸 수 없는 말은 걸러져요.
+            </p>
+          </div>
 
-      <div className={s.card}>
-        <div className={s.step}>
-          <i aria-hidden="true">2</i>
-          <span className={s.label} aria-hidden="true">
-            팬마크
-          </span>
-        </div>
-        <ImageField
-          id="fd-sym"
-          label="팬마크"
-          hideLabel
-          view={
-            <span className={s.markBox} aria-hidden="true">
-              {symbolUrl ? <img src={symbolUrl} alt="" width={512} height={512} /> : null}
-            </span>
-          }
-          hasImage={symbolUrl !== null}
-          pickLabel="팬마크 올리기"
-          removeLabel="지우기"
-          hint="정사각 그림을 올려 주세요(JPG·PNG). 뱃지에는 작게 줄어서 들어가요."
-          blocked={rights ? null : "fd-sym-right"}
-          upload={(f) => sendCreatorImage("symbol", f, { rightsChecked: rights })}
-          remove={() => deleteCreatorImage("symbol")}
-          onSaved={(path) => setSymbolUrl(creatorSymbolUrl(p.photoBase, path))}
-          onLogin={() => router.push(LOGIN)}
-          savedText="팬마크를 올렸어요."
-          removedText="팬마크를 지웠어요."
-        />
-        <label className={s.chk} htmlFor="fd-rights">
-          <input type="checkbox" id="fd-rights" checked={rights} onChange={(e) => setRights(e.currentTarget.checked)} />
-          <span id="fd-sym-right">내가 만들었거나 쓸 권리가 있는 이미지예요</span>
-        </label>
-      </div>
+          <div className={s.sub}>
+            <h3 className={s.subT} id="fd-sym-h">
+              <span>팬마크</span>
+            </h3>
+            <ImageField
+              id="fd-sym"
+              label="팬마크"
+              labelledBy="fd-sym-h"
+              view={
+                <span className={s.markBox} aria-hidden="true">
+                  {symbolUrl ? <img src={symbolUrl} alt="" width={512} height={512} /> : null}
+                </span>
+              }
+              hasImage={symbolUrl !== null}
+              pickLabel="팬마크 올리기"
+              removeLabel="지우기"
+              hint="정사각 그림을 올려 주세요(JPG·PNG). 뱃지에는 작게 줄어서 들어가요."
+              blocked={rights ? null : "fd-sym-right"}
+              upload={(f) => sendCreatorImage("symbol", f, { rightsChecked: rights })}
+              remove={() => deleteCreatorImage("symbol")}
+              onSaved={(path) => setSymbolUrl(creatorSymbolUrl(p.photoBase, path))}
+              onLogin={() => router.push(LOGIN)}
+              savedText="팬마크를 올렸어요."
+              removedText="팬마크를 지웠어요."
+            />
+            <label className={s.chk} htmlFor="fd-rights">
+              <input type="checkbox" id="fd-rights" checked={rights} onChange={(e) => setRights(e.currentTarget.checked)} />
+              <span id="fd-sym-right">내가 만들었거나 쓸 권리가 있는 이미지예요</span>
+            </label>
+          </div>
 
-      <ThemeStep step={3} value={theme} onChange={setTheme} />
+          <ThemeField value={theme} onChange={setTheme} />
 
-      <div className={`${s.card} ${s.pv}`} aria-labelledby="pv-t" role="group">
-        <h3 className={s.pvT} id="pv-t">
-          미리보기
-        </h3>
-        {name ? (
-          <div className={s.pvBox}>
-            <p className={s.pvCap}>팬덤 뱃지</p>
-            <div className={s.pvBadges}>
-              <FandomBadge name={name} symbolUrl={symbolUrl} themeColor={theme} size="large" />
-              <FandomBadge name={name} symbolUrl={symbolUrl} themeColor={theme} />
+          {/* 판 끝 — 결과 안내 자리는 비어 있어도 한 줄을 남긴다(글이 들어올 때 버튼이 밀리지 않게). 휴대폰에서는 화면 아래에 붙는다 */}
+          <div className={s.end}>
+            <p className={`${s.msg} ${msg && !msg.ok ? "err" : "t-meta"}`} role="status" id="fd-msg">
+              {msg?.text}
+            </p>
+            <div className={s.btns}>
+              <button className="btn btn--line" type="button" onClick={revert}>
+                되돌리기
+              </button>
+              <button className="btn" type="button" aria-disabled={saving} aria-describedby="fd-msg" onClick={() => void save()}>
+                {saving ? "저장하는 중…" : "저장"}
+              </button>
             </div>
           </div>
-        ) : null}
-        <div className={s.pvBox}>
-          <p className={s.pvCap}>카드 미리보기</p>
-          <div className={creatorCardClass} role="group" aria-label="크리에이터 카드 미리보기" data-card-preview="">
-            <CreatorCardHead
-              creatorId={p.card.creatorId}
-              name={p.publicName}
-              href={null}
-              look={{ photoUrl: p.photoUrl, backgroundUrl: p.backgroundUrl, symbolUrl, fanName: name || null }}
-              colors={{ personal: theme }}
-              faceTone={p.card.faceTone}
-            />
-            <CreatorCardLine channelTitle={p.card.channelTitle} intro={p.card.intro} />
-            <CreatorCardFoot tags={p.card.tags} />
-            {/* 처음 보는 팬에게 보이는 모양 — 「팔로우」 하나(누를 수 없는 모양) */}
-            <CreatorCardActions creatorId={p.card.creatorId} colors={{ personal: theme }}>
-              <span className="btn btn--sm btn--line" aria-hidden="true" data-card-btn="main">
-                <CardButtonLabel icon="heart-plus">팔로우</CardButtonLabel>
-              </span>
-            </CreatorCardActions>
-          </div>
         </div>
-      </div>
 
-      <p className={`${s.msg} ${msg && !msg.ok ? "err" : "t-meta"}`} role="status" id="fd-msg">
-        {msg?.text}
-      </p>
-      <div className={s.btnEnd}>
-        <button className="btn btn--line" type="button" onClick={revert}>
-          되돌리기
-        </button>
-        <button className="btn" type="button" aria-disabled={saving} aria-describedby="fd-msg" onClick={() => void save()}>
-          {saving ? "저장하는 중…" : "저장"}
-        </button>
+        {/* 오른쪽 5열 — 미리보기(스크롤하면 따라온다). 1100 이하는 입력 위로, 휴대폰은 카드만 가로형으로 작게 */}
+        <aside className={s.pv} aria-labelledby="pv-t">
+          <h3 className={s.pvT} id="pv-t">
+            미리보기
+          </h3>
+          {name ? (
+            <div className={`${s.pvBox} ${s.pvBadgeBox}`}>
+              <p className={s.pvCap}>팬덤 뱃지</p>
+              <div className={s.pvBadges}>
+                <FandomBadge name={name} symbolUrl={symbolUrl} themeColor={theme} size="large" />
+                <FandomBadge name={name} symbolUrl={symbolUrl} themeColor={theme} />
+              </div>
+            </div>
+          ) : null}
+          <div className={s.pvBox}>
+            <p className={s.pvCap}>카드 미리보기</p>
+            <div className={creatorCardClass} role="group" aria-label="크리에이터 카드 미리보기" data-card-preview="">
+              <CreatorCardHead
+                creatorId={p.card.creatorId}
+                name={p.publicName}
+                href={null}
+                look={{ photoUrl: p.photoUrl, backgroundUrl: p.backgroundUrl, symbolUrl, fanName: name || null }}
+                colors={{ personal: theme }}
+                faceTone={p.card.faceTone}
+              />
+              <CreatorCardLine channelTitle={p.card.channelTitle} intro={p.card.intro} />
+              <CreatorCardFoot tags={p.card.tags} />
+              {/* 처음 보는 팬에게 보이는 모양 — 「팔로우」 하나(누를 수 없는 모양) */}
+              <CreatorCardActions creatorId={p.card.creatorId} colors={{ personal: theme }}>
+                <span className="btn btn--sm btn--line" aria-hidden="true" data-card-btn="main">
+                  <CardButtonLabel icon="heart-plus">팔로우</CardButtonLabel>
+                </span>
+              </CreatorCardActions>
+            </div>
+          </div>
+        </aside>
       </div>
     </section>
   );

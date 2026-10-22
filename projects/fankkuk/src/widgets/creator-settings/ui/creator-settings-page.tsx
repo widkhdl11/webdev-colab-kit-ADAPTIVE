@@ -25,7 +25,7 @@ import type { MyHardItems } from "@/entities/gift-item/model/hard-items";
 import { PROMISE, NO_ADDRESS_ASK } from "@/shared/config/site-copy";
 import s from "./creator-settings.module.css";
 
-// 크리에이터 상세 설정 (design-rules 12절, 시안 docs/design/mockups/site/v21-addendum3/cre-detail-settings.html, 입력형 720 — 00절 「본문 틀」).
+// 크리에이터 상세 설정 (design-rules 12절 · 27절, 시안 docs/design/mockups/site/pilot-2026-10-22/settings.html). 틀 폭 1200 — 「팬덤」은 12열 7 + 5, 「주소와 설정」은 880 한 기둥.
 // 위에서 아래: 팬덤(팬덤 이름·팬마크·테마 색·미리보기 — fandom-section) → 주소와 설정(접힌 칸: 받는 주소·받기 설정·차단한 팬·선물 링크·감사 답장)
 // 본인 확인·알림·계정 보안은 크리에이터 계정 설정(/creator/account, widgets/creator-account)으로 옮겼다(2026-10-16).
 // 사이드바 「주소 관리」 줄은 없어졌고(12절) 받는 주소는 이 화면의 접힌 칸이다. 옛 주소(/creator/settings#address · #blocked …)로 오면
@@ -153,7 +153,7 @@ export function CreatorSettingsPage({
       <div className={`stack ${s.page}`}>
         <FandomSection {...fandom} />
 
-        <section id="more" className={s.group} aria-labelledby="more-h">
+        <section id="more" className={`${s.group} ${s.more}`} aria-labelledby="more-h">
           <h2 className={s.groupT} id="more-h">
             주소와 설정
           </h2>

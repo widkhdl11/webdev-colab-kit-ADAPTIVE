@@ -1,9 +1,6 @@
 import { redirect } from "next/navigation";
-import {
-  readCreatorCards,
-  readCreatorLooks,
-} from "@/entities/creator/api/creator-reads";
-import { toCardLooks } from "@/entities/creator/model/card-look";
+import { readCreatorCards } from "@/entities/creator/api/creator-reads";
+import { creatorPhotoUrl } from "@/entities/creator/model/link-images";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
 import { MyFollowingPanel } from "@/widgets/my-following/ui/my-following-page";
 import { MyShell } from "@/widgets/my-nav/ui/my-shell";
@@ -25,20 +22,16 @@ export default async function Page() {
   const followed = (
     await readCreatorCards(supabase, { signedIn: true })
   ).filter((c) => c.following);
-  // 카드마다 크리에이터가 꾸민 대로(2026-10-16 — 크리에이터 찾기와 같은 카드). 찾기 노출을 끈 크리에이터도 팔로우 목록에는 보여 id 로 읽는다
-  const looks = toCardLooks(
-    followed,
-    await readCreatorLooks(
-      supabase,
-      followed.map((c) => c.id),
-    ),
-    readPublicStorageBase(),
+  // 줄 목록은 얼굴(프로필 사진, 없으면 얼굴 색)만 쓴다 — 배경사진·팬덤 꾸밈은 읽지 않는다(2026-10-22 정돈 시범, design-rules 27절)
+  const storageBase = readPublicStorageBase();
+  const photos = Object.fromEntries(
+    followed.map((c) => [c.id, creatorPhotoUrl(storageBase, c.photoPath)]),
   );
   return (
     <>
       <SiteHeader {...header} />
       <MyShell width="list">
-        <MyFollowingPanel creators={followed} looks={looks} />
+        <MyFollowingPanel creators={followed} photos={photos} />
       </MyShell>
       <SiteFooter />
     </>

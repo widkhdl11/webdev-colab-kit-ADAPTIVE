@@ -198,6 +198,15 @@
   --card-pad: 24px; /* 목록·통계·설정 카드 안쪽(휴대폰도 24) */
   --panel-pad: 32px; /* 큰 판 안쪽(휴대폰 24) */
   --card-gap: 24px; /* 카드 격자 간격(휴대폰 16) */
+
+  /* 정돈 시범(tokens.md 0-4-1, 2026-10-22 승인) — 구간 띠·띠 위 낮은 대비 테두리·12열 격자. 띠 위 흐린 글자는 --sub 만(--gray-500 은 띠 끝에서 4.2:1 로 미달) */
+  --band-white: linear-gradient(180deg, #ffffff 0%, #eff1f3 100%); /* 흰 구간 바탕 — 위→아래 밝기 4.0% */
+  --band-cream: linear-gradient(180deg, #fffaf7 0%, #f6ede4 100%); /* 크림 구간 바탕 — 페이지 바탕이 아니라 구간을 바꿀 때만 */
+  --line-on-white: #dcdee0; /* 흰 구간 위 테두리 — 흰색과 10% */
+  --line-on-cream: #e4d8cb; /* 크림 구간 위 테두리 */
+  --grid-cols: 12; /* 카드 폭은 3·4·6·8·12 열만 */
+  --grid-gap: 24px;
+  --group-gap: 16px; /* 묶음 안 간격 상한 — 묶음 사이의 절반 이하 */
   --btn-h: 48px;
   --btn-h-sm: 44px; /* 2026-10-18 재진단 36 → 44(누름 칸 44) */
   --touch: 48px;

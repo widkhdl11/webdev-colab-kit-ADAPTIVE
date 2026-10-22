@@ -21,7 +21,7 @@ import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
 export const dynamic = "force-dynamic";
 
-// 크리에이터 상세 설정 (design-rules 12절, 입력형 720). 모두 로그인한 크리에이터 본인 것만 읽는다:
+// 크리에이터 상세 설정 (design-rules 12절 · 27절, 틀 폭 1200 — 「팬덤」 입력 + 미리보기 두 단). 모두 로그인한 크리에이터 본인 것만 읽는다:
 // 팬덤 이름·테마 색(my_creator_settings — creator-link INV-E13)과 카드 미리보기에 쓰는 사진·배경·심볼(my_creator_link · my_creator_look)·공개 카드 값(creator_by_id),
 // 차단 목록(INV-D9)·주소 등록 여부(INV-P13 — 주소는 값이 아니라 등록 여부와 봉인에 넣을 크리에이터 ID 만), 채널 본인 확인(creator-verification INV-V11),
 // 알림 두 칸(my_account — INV-A11), 받는 상태·팬당 한도·생일·기념일(creator-receiving INV-B1·B6), 받기 어려운 품목(hard-items INV-H3·H6),
@@ -52,7 +52,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell width="form">
+      <MyShell width="broad">
         <CreatorSettingsPage
           settings={settings}
           fandom={{

@@ -1,11 +1,62 @@
-/* 팔로우한 크리에이터 — 시안 docs/design/mockups/site/v18/my-following.html (v18-app.css .fgrid · .fcard · .fc-*). 빈 화면은 전역 .empty */
-/* 카드 격자·카드 틀 — 크리에이터 찾기와 같다(시안 v28-card-redesign, design-rules 17절 A안). 결과 칸(.results) 폭 기준 3열 · 2열 · 1열 · 사이 24(1열 16) */
-.results { min-width: 0; container-type: inline-size; }
-.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
-/* 2열 이상은 모든 줄을 가장 큰 카드 높이로 — 줄마다 높이가 달라 보이지 않게 */
-/* 열 수는 화면 폭이 아니라 카드가 놓이는 칸 폭으로(컨테이너 쿼리) — 카드가 210 이상인 만큼 최대 3열.
-   444 = 210×2 + 사이 24, 678 = 210×3 + 24×2. 로그인 뒤 왼쪽 메뉴로 좁아진 칸(1024 에서 약 700)도 3열(카드 약 217)
-   — 2026-10-18 하한 260 으로 2열이 됐다가 사용자 「원래 3열이었는데 2열로 바뀐 걸 말한 거야」로 210 */
-@container (min-width: 444px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: var(--space-6); } }
-@container (min-width: 678px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.empty p { max-width: 480px; }
+/* 팔로우한 크리에이터 — 시안 docs/design/mockups/site/pilot-2026-10-22/following.html (pilot.css .fl-* · .p-*, design-rules 27절).
+   960 안 12열 8 + 4: 왼쪽 촘촘한 줄 목록, 오른쪽 숫자 판(크림 띠, 따라옴). 767 이하는 숫자 판이 위로 낮게, 그 아래 줄. */
+/* 본문 틀(MyShell list 880)의 기둥 폭을 이 화면만 960 으로 — base.css 의 .page-pane > * 가 이 변수로 max-width 를 정한다 */
+.wrap { --pane-col: 960px; }
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--grid-gap); align-items: start; }
+.list { grid-column: span 8; min-width: 0; }
+.side { grid-column: span 4; position: sticky; top: var(--space-6); min-width: 0; }
+
+/* 줄 목록 — 위·줄마다 아래 1px 낮은 대비 선. 높이 72(저장 실패 알림이 뜬 순간만 그 줄이 높아진다 — 실패 순간이라 허용) */
+.rows { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line-on-white); }
+.row { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--space-4); min-height: 72px; padding-block: var(--space-2); border-bottom: 1px solid var(--line-on-white); }
+.face { flex: none; border-radius: 50%; object-fit: cover; } /* 크기는 전역 .face--sm(40) */
+.who { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+/* 이름(최대 20자) + 채널 칩 — 이름이 먼저 줄고(말줄임, 전체는 title·크리에이터 페이지) 칩은 제 폭을 지킨다 */
+.name { display: flex; align-items: center; gap: var(--space-2); min-width: 0; margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; }
+.name a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); text-decoration: none; }
+.name a:hover { text-decoration: underline; }
+/* 이름 글자만 누를 곳이면 높이 22 — 이름·소개 칸 전체(줄 높이에서 위아래 8 뺀 만큼)를 덮어 누를 칸을 44 이상으로. 오른쪽 버튼 칸은 덮지 않는다 */
+.who { position: relative; }
+.name a::after { content: ""; position: absolute; inset: calc(-1 * var(--space-2)) 0; }
+.name :global(.ctag) { flex: none; }
+.intro { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--sub); font-size: var(--fs-small); line-height: 1.4; }
+.intro:empty { display: none; }
+
+/* 버튼 — 찾기 카드와 같은 FollowButton(card). 「선물 보내기」 = 흰 선 버튼 14/600(아이콘 없이), 「팔로우 취소」 = 테두리 없는 아이콘 44×44.
+   버튼 칸은 display: contents — 버튼·저장 실패 알림이 줄(flex-wrap)의 직접 항목이 되어, 알림(FollowButton 이 폭 100% 로 그린다)이 뜨면 줄 아래 한 줄을 차지한다 */
+.act { display: contents; }
+.act > [data-card-btn] { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; border-radius: var(--r-btn); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.4; white-space: nowrap; }
+.act > [data-card-btn="main"] { padding: var(--space-2) var(--space-4); background: var(--white); color: var(--ink); box-shadow: inset 0 0 0 1px var(--gray-400); }
+.act > [data-card-btn="main"] > svg { display: none; }
+.act > [data-card-btn="main"]:is(:hover, :active) { background: var(--surface-hover); }
+.act > [data-card-btn] { flex: none; }
+/* 두 버튼 사이 8 — 줄 사이 간격(16)에서 8 을 당긴다 */
+.act > [data-card-btn="sub"] { margin-left: calc(var(--space-2) * -1); width: 44px; height: 44px; padding: 0; background: none; color: var(--sub); box-shadow: none; }
+.act > [data-card-btn="sub"]:is(:hover, :active) { background: var(--surface-hover); }
+.act > [data-card-btn="sub"] > svg { width: 20px; height: 20px; }
+.act > [data-card-btn][aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+
+/* 숫자 판 — 크림 띠 · 「팔로우」 · 숫자 48 + 「명」 · 「크리에이터 더 찾기」 · 고양이 96 */
+.panel { display: flex; flex-direction: column; align-items: flex-start; gap: var(--group-gap); padding: var(--space-6); border: 1px solid var(--line-on-cream); border-radius: var(--r-card); background: var(--band-cream); }
+.total { min-width: 0; }
+.label { margin: 0; color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.num { margin: 0; color: var(--ink); font-family: var(--font-round); font-size: var(--fs-hero); font-weight: var(--fw-title); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.num small { margin-left: var(--space-1); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); }
+.cat { align-self: flex-end; width: 96px; height: 96px; object-fit: contain; }
+
+/* 빈 상태(0명) — 지금 그림·문구 그대로, 왼쪽 칸에 낮은 대비 테두리 상자 */
+.empty { display: flex; flex-direction: column; align-items: center; gap: var(--group-gap); padding: var(--space-12) var(--space-6); border: 1px solid var(--line-on-white); border-radius: var(--r-card); text-align: center; }
+.empty img { width: 96px; height: 96px; }
+.empty p { max-width: 360px; margin: 0; color: var(--sub); }
+
+@media (max-width: 767px) {
+  .grid { display: flex; flex-direction: column; gap: var(--space-4); }
+  .side { position: static; order: -1; width: 100%; }
+  .list { width: 100%; }
+  .panel { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-4); }
+  .total { flex: 1; min-width: 120px; }
+  .cat { display: none; }
+  .row { column-gap: var(--space-2); }
+  .act > [data-card-btn="main"] { padding: var(--space-2) var(--space-3); }
+  .act > [data-card-btn="sub"] { margin-left: 0; }
+}

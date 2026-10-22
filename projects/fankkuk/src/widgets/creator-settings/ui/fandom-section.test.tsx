@@ -186,3 +186,42 @@ describe("INV-E14: 팬덤 뱃지는 테마 색 — 글자는 #111827 고정(CSS)
     expect(host.textContent).not.toContain("저절로 바뀌어요");
   });
 });
+
+describe("입력 한 판 + 미리보기 두 단(design-rules 27절)", () => {
+  it("입력 칸 셋은 번호 없이 소제목만, 미리보기는 입력 판 옆(aside)에 있다", async () => {
+    await render();
+    const titles = [...host.querySelectorAll("h3")].map((h) => h.textContent);
+    expect(titles).toEqual(["팬덤 이름4/10", "팬마크", "테마 색", "미리보기"]);
+    expect([...host.querySelectorAll("i")].some((i) => /^\d$/.test(i.textContent ?? ""))).toBe(false);
+    const panel = host.querySelector("#fd-name")!.parentElement!.parentElement;
+    const aside = host.querySelector("aside[aria-labelledby='pv-t']");
+    expect(aside).not.toBeNull();
+    expect(panel?.nextElementSibling).toBe(aside);
+    expect(aside?.contains(host.querySelector("[data-card-preview]"))).toBe(true);
+  });
+
+  it("저장 결과 안내(role=status)는 입력 판 끝, 되돌리기·저장 바로 위에 있고 저장하면 그 자리에 뜬다", async () => {
+    await render();
+    const status = host.querySelector<HTMLElement>("#fd-msg")!;
+    expect(status.getAttribute("role")).toBe("status");
+    expect(status.nextElementSibling?.contains(saveBtn())).toBe(true);
+    // 입력 판 안이다 — 미리보기(aside) 밖
+    expect(status.closest("aside")).toBeNull();
+    // 입력 칸과 같은 판의 마지막 칸
+    const panel = host.querySelector("#fd-name")!.parentElement!.parentElement!;
+    expect(status.parentElement?.parentElement).toBe(panel);
+    expect(panel.lastElementChild).toBe(status.parentElement);
+    expect(status.textContent).toBe("");
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    await act(async () => saveBtn().click());
+    expect(status.textContent).toBe("저장했어요.");
+  });
+  it("팬마크 칸 묶음은 보이는 소제목으로 이름을 읽는다 — 같은 이름을 숨긴 글자로 한 번 더 두지 않는다", async () => {
+    await render();
+    const group = symbolFile().closest("[role='group']")!;
+    const heading = host.querySelector(`#${group.getAttribute("aria-labelledby")}`);
+    expect(heading?.tagName).toBe("H3");
+    expect(heading?.textContent).toBe("팬마크");
+    expect([...host.querySelectorAll(".sr-only")].some((e) => e.textContent === "팬마크")).toBe(false);
+  });
+});

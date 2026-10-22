@@ -14,7 +14,7 @@ export type ImageSendResult = { kind: "ok"; path: string | null } | { kind: "log
 export function ImageField({
   id,
   label,
-  hideLabel = false,
+  labelledBy,
   view,
   hasImage,
   pickLabel,
@@ -31,8 +31,8 @@ export function ImageField({
 }: {
   id: string;
   label: string;
-  /** 바깥에 같은 이름의 제목이 이미 보이면 칸 이름은 화면 읽기용으로만 */
-  hideLabel?: boolean;
+  /** 바깥에 같은 이름의 제목이 이미 보이면 그 제목의 id — 칸 이름을 따로 그리지 않고 그 제목으로 읽힌다(같은 이름을 두 번 읽지 않게) */
+  labelledBy?: string;
   /** 지금 사진 보기 — 화면 위 미리보기가 이미 보여 주면 없다 */
   view?: ReactNode;
   hasImage: boolean;
@@ -87,10 +87,12 @@ export function ImageField({
 
   const off = busy || blocked !== null;
   return (
-    <div className={s.fld} role="group" aria-labelledby={`${id}-t`}>
-      <p className={hideLabel ? "sr-only" : s.lbl} id={`${id}-t`}>
-        {label}
-      </p>
+    <div className={s.fld} role="group" aria-labelledby={labelledBy ?? `${id}-t`}>
+      {labelledBy ? null : (
+        <p className={s.lbl} id={`${id}-t`}>
+          {label}
+        </p>
+      )}
       <div className={s.imgRow}>
         {view ?? null}
         <div className="btn-stack">

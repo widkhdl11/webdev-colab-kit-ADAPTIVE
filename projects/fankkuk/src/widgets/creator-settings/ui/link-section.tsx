@@ -129,7 +129,9 @@ export function LinkSection({
       </p>
 
       <p className="t-meta">
-        프로필 사진·배경사진은 <a href={CREATOR_PROFILE_EDIT}>프로필 수정</a>
+        프로필 사진·배경사진은 <a className={s["text-link"]} href={CREATOR_PROFILE_EDIT}>
+          프로필 수정
+        </a>
         에서 바꿔요.
       </p>
 

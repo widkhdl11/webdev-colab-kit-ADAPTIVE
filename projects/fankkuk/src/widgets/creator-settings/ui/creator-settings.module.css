@@ -1,4 +1,5 @@
-/* 상세 설정 화면 — 시안 v21-addendum3/cre-detail-settings.html(cre-21.css .jump · .fold · .sec-t). 접힌 칸 안의 설정 상자는 옛 v18 카드 그대로.
+/* 상세 설정 화면 — 시안 pilot-2026-10-22/settings.html(pilot.css 「상세 설정」 .st-jump · .st-more) · v21-addendum3(.fold). 접힌 칸 안의 설정 상자는 옛 v18 카드 그대로.
+   폭: 틀은 1200(MyShell broad) — 「팬덤」(7 + 5)이 다 쓰고, 「주소와 설정」은 880(--col-list) 한 기둥 + 위 구분선(design-rules 27절).
    공통 부품(.card·.card--soft·.grid·.opt·.sw-row·.tags·.chip·.field·.hint·.err)은 base.css 가 그린다 — 여기는 이 화면에만 있는 것 */
 
 .set { display: grid; gap: 24px; scroll-margin-top: var(--space-6); }
@@ -6,12 +7,14 @@
 .inner { padding: 24px; }
 .set :global(.fs) > :global(.label) { margin-bottom: 12px; }
 /* 구간 바로가기 — 시안 .jump(글자 링크 한 줄) */
-.jump { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); margin-top: var(--space-6); font-weight: var(--fw-btn); }
-.jump a { display: inline-flex; align-items: center; min-height: 44px; /* 누름 칸 44 */ color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
-.page { display: grid; gap: var(--space-12); margin-top: var(--space-8); min-width: 0; }
+.jump { display: flex; flex-wrap: wrap; gap: 0 var(--space-4); margin-top: var(--space-4); font-size: var(--fs-small); }
+.jump a { display: inline-flex; align-items: center; min-height: 44px; /* 누름 칸 44 */ color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+.page { display: grid; margin-top: var(--space-6); min-width: 0; }
 .page > * { min-width: 0; }
 .page > section + section { margin-top: 0; }
 .group { display: grid; gap: var(--space-4); scroll-margin-top: var(--space-6); }
+/* 「주소와 설정」 — 폭을 880 으로 줄이고 위 구분선으로 구간이 바뀐 것을 보인다(1200 → 880) */
+.more { width: 100%; max-width: var(--col-list); margin: var(--space-24) auto 0; padding-top: var(--space-12); border-top: 1px solid var(--line-on-white); }
 .groupT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
 
 /* 접힌 칸 — 시안 .fold: 제목 · 오른쪽 짧은 상태 · 화살표 */
@@ -61,9 +64,11 @@ label.txt { cursor: pointer; }
 
 /* 선물 링크 — 주소 앞부분(fankkuk.kr/, @)은 칸 왼쪽에 붙인 글자 */
 .handle-row { display: flex; align-items: center; gap: 8px; }
-.handle-host { flex-shrink: 0; font-weight: var(--fw-bold); white-space: nowrap; }
+.handle-host { flex-shrink: 0; font-weight: var(--fw-btn); white-space: nowrap; }
 .handle-row :global(.field) { flex: 1; }
 .link-text { overflow-wrap: anywhere; }
+/* 글 안의 누를 글자 링크(「프로필 수정」) — 누름 칸 높이 44 */
+.text-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; }
 
 @media (max-width: 767px) {
   /* 고르기 칸 4열은 휴대폰에서 2열(시안 v18-cre.css .opt-grid) — 공통 격자는 1열로 접는다 */
@@ -74,6 +79,7 @@ label.txt { cursor: pointer; }
   .inner { padding: 24px 16px; }
   .set :global(.sw-row) { gap: 12px; padding: 16px; }
   .addr-ico { width: 56px; height: 56px; }
+  .more { margin-top: var(--space-12); padding-top: var(--space-6); }
   .ann-row { grid-template-columns: minmax(0, 1fr) auto; }
   .ann-row > .md-row { grid-column: 1 / -1; grid-row: 2; }
 }
