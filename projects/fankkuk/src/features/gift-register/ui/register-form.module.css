@@ -36,6 +36,8 @@
 /* ── 흰 입력 판 (시안 .fpanel) ── */
 .panel { margin-top: var(--space-6); padding: var(--space-8) var(--space-10) var(--space-10); border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--card-fx); box-shadow: var(--card-shadow); }
 fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
+/* 단계 칸은 한 번에 하나만 보인다 — 공용 「구획 뒤 구획 위 여백」이 숨은 3단계 뒤의 4단계에 붙어 판 위가 48 비던 것을 막는다 */
+section.step.step { margin-top: 0; }
 .actions { display: flex; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-10); }
 .actions :global(.btn) { min-width: 160px; }
 
