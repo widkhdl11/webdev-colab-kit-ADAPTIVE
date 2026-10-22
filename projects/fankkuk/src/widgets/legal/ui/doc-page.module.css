@@ -11,7 +11,9 @@
 
 /* 탭 — 지금 글은 짙은 면(14절 알약 높이 40, 누를 칸 44) */
 .tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.tab { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 var(--space-4); border-radius: var(--r-pill); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--gray-900); font-size: var(--fs-small); font-weight: 500; text-decoration: none; }
+.tab { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 var(--space-4); border-radius: var(--r-pill); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--gray-900); font-size: var(--fs-small); font-weight: 500; text-decoration: none; }
+/* 보이는 알약은 40, 누를 칸은 위아래 2px 씩 보이지 않게 넓혀 44 */
+.tab::before { content: ""; position: absolute; inset: -2px 0; }
 .tab:hover { background: var(--gray-50); }
 .tab[aria-current="page"] { background: var(--gray-900); box-shadow: none; color: var(--white); font-weight: var(--fw-btn); }
 .tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -28,7 +30,7 @@
 .summaryT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
 .summaryList { display: flex; flex-direction: column; gap: var(--space-3); max-width: var(--col-list); margin: 0; padding: 0; list-style: none; counter-reset: sum; }
 .summaryList li { display: flex; gap: var(--space-3); align-items: flex-start; counter-increment: sum; }
-.summaryList li::before { content: counter(sum); flex: none; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); font-size: var(--fs-small); font-weight: var(--fw-bold); }
+.summaryList li::before { content: counter(sum); flex: none; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); font-size: var(--fs-small); font-weight: var(--fw-btn); }
 /* 요약 줄 → 조(원칙 ④) — 문장 그대로 링크, 밑줄로 누를 수 있음을 보인다 */
 .summaryLink { color: var(--gray-900); text-decoration: underline; text-decoration-color: var(--gray-500); text-underline-offset: 4px; }
 .summaryLink:hover { text-decoration-color: var(--gray-900); }
@@ -55,7 +57,8 @@
 .chipRow { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .filterChip { border-radius: var(--r-pill); font-weight: 500; }
 .filterChip[aria-pressed="true"] { background: var(--gray-900); box-shadow: none; color: var(--white); font-weight: var(--fw-btn); }
-.mark { padding: 0; background: var(--tint-line); color: inherit; }
+/* 회색 글자 위에 겹치면 3.6:1 — 표시한 낱말은 늘 짙은 글자 */
+.mark { padding: 0; background: var(--tint-line); color: var(--gray-900); }
 
 /* 「자주 찾음」(원칙 ③) */
 .badge { flex: none; display: inline-flex; align-items: center; padding: 2px var(--space-2); border-radius: var(--r-pill); background: var(--primary-50); color: var(--gray-900); font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.4; white-space: nowrap; }
@@ -84,6 +87,8 @@
 .tocLink:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 /* 칩으로 가린 조 — 흐리게(누르면 「전체」로 돌아가 그 조로 간다). 흐린 글자는 gray-500 아래로 내리지 않는다(4.5:1) */
 .tocLink.dim:not([aria-current]) { color: var(--gray-500); }
+/* 흐린 줄에 마우스를 올리면 바탕이 짙어져 대비가 4.4:1 로 떨어진다 — 그동안은 글자를 한 단계 짙게 */
+.tocLink.dim:not([aria-current]):hover { color: var(--gray-600); }
 
 /* 조 — 위 구분선, 꼬리표 · 제목 줄(제목 · 자주 찾음 · 주소 복사) · 글. 제목이 목차 줄 아래로 숨지 않게 그 높이만큼 더 띄운다 */
 .main { min-width: 0; max-width: var(--prose-max); }
@@ -115,7 +120,7 @@
 .dots li::before { content: ""; position: absolute; top: 12px; left: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--gray-500); }
 .steps { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; padding: 0; list-style: none; counter-reset: st; }
 .steps li { position: relative; padding-left: 40px; counter-increment: st; }
-.steps li::before { content: counter(st); position: absolute; top: 0; left: 0; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--primary-50); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1; }
+.steps li::before { content: counter(st); position: absolute; top: 0; left: 0; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--primary-50); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1; }
 
 /* 단계 칩 한 줄 — 회색 면 안에 이름표 · 흰 칩(사이 › ) · 덧붙임 한 줄 */
 .stages { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
