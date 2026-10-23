@@ -126,7 +126,8 @@ describe("탈퇴 처리 — 가명 처리 (my-account INV-A15)", () => {
     }
     expect([profileRows(fan.userId), authRows(fan.userId), contactRows(fan.userId)]).toEqual([1, 1, 1]);
     expect(fanOf(a.orderId)).toBe(fan.userId);
-    expect(Number(psql(`select count(*) from public.profiles where nickname = '탈퇴한 회원'`))).toBe(0);
+    // 같이 쓰는 「탈퇴한 회원」 계정(자동 삭제가 쓰는 고정 ID) 말고는 가명 계정이 생기지 않았다
+    expect(Number(psql(`select count(*) from public.profiles where nickname = '탈퇴한 회원' and id <> 'ffffffff-0000-4000-8000-000000000001'`))).toBe(0);
   });
 });
 
@@ -309,5 +310,103 @@ describe("기간 지난 가명 기록 자동 삭제 (my-account INV-A16 · appro
       const r = await client.rpc("retention_purge");
       expect(r.error).not.toBeNull();
     }
+  });
+});
+
+// 주문 기록 — 카드 d123 「추천대로(A)」: 둘 다 탈퇴한 주문만 통째로 지우고, 한쪽이 회원이면 주문은 남기고
+// 탈퇴한 쪽 칸을 모두가 같이 쓰는 「탈퇴한 회원」·「탈퇴한 크리에이터」로 바꾼다. 기간은 그 주문의 마지막 기록 시각부터.
+const SHARED_FAN = "ffffffff-0000-4000-8000-000000000001";
+const SHARED_CREATOR = "ffffffff-0000-4000-8000-000000000002";
+/** 주문과 그 결제·환불·취소·상자·서명의 시각을 모두 거꾸로 민다 — 「마지막 기록」이 now() - shift 가 된다 */
+function ageOrder(orderId: string, shift: string, only: "all" | "keep-payments" = "all") {
+  const cols = "created_at, registered_at, approved_at, received_at, inspected_at, shipped_at, delivered_at, fan_send_ack_at, fan_not_sent_at";
+  const sets = (list: string) => list.split(", ").map((c) => `${c} = ${c} - interval '${shift}'`).join(", ");
+  backdate(
+    [
+      `update public.orders set ${sets(cols)} where id = '${orderId}'`,
+      only === "all" ? `update public.payments set ${sets("created_at, settled_at, expired_at, confirming_at, review_at")} where order_id = '${orderId}'` : "select 1",
+      `update public.office_parcels set ${sets("received_at, labeled_at, inspected_at, printed_at, shipped_at, return_printed_at, returned_at, created_at, hold_at, hold_closed_at, return_waiting_at, return_confirmed_at")} where box_id in (select id from public.boxes where order_id = '${orderId}')`,
+      `update public.approval_signatures set signed_at = signed_at - interval '${shift}' where request_id in (select request_id from public.approval_requests where order_id = '${orderId}')`,
+    ].join("; "),
+  );
+}
+const orderRows = (orderId: string) =>
+  psql(
+    `select (select count(*) from public.orders where id = '${orderId}') || ',' || (select count(*) from public.payments where order_id = '${orderId}') || ',' ||
+       (select count(*) from public.approval_requests where order_id = '${orderId}') || ',' || (select count(*) from public.boxes where order_id = '${orderId}') || ',' ||
+       (select count(*) from public.decrypt_log where order_id = '${orderId}')`,
+  );
+/** 주소 열람 기록 한 줄(고칠 수 없는 표) — 지울 때 이것도 함께 지워지는지 보려고 */
+const addDecryptLog = (orderId: string) =>
+  psql(`insert into public.decrypt_log (order_id, requester_id, result, deny_reason) select '${orderId}', id, 'denied', 'not_owner' from public.profiles where login_id = 'fankkuk_admin'`);
+
+describe("기간 지난 주문 기록 자동 삭제 (my-account INV-A16, 카드 d123)", () => {
+  async function bothWithdrawnOrder(tag: string) {
+    const fan = await createTestAccount({ tag: `${tag}f`, phone: null });
+    const cre = await createTestAccount({ tag: `${tag}c`, phone: null });
+    const o = await shippedOrder({ senderId: fan.userId, creatorId: makeCreator(cre) });
+    addDecryptLog(o.orderId);
+    expect((await withdraw(fan.loginId)).error).toBeNull();
+    expect((await withdraw(cre.loginId)).error).toBeNull();
+    return o;
+  }
+
+  it("INV-A16 (S16): 팬·크리에이터 둘 다 탈퇴했고 마지막 기록이 5년 1일 전인 주문은 결제·승인 요청·상자·주소 열람 기록까지 지워진다", async () => {
+    const o = await bothWithdrawnOrder("wdo1");
+    expect(orderRows(o.orderId)).toBe("1,1,1,1,1");
+    ageOrder(o.orderId, "5 years 1 day");
+    const counts = purge();
+    expect(counts.orders).toBeGreaterThanOrEqual(1);
+    expect(orderRows(o.orderId)).toBe("0,0,0,0,0");
+    // 지운 뒤 「고치거나 지울 수 없다」 트리거는 다시 켜져 있다
+    expect(psql(`select count(*) from pg_trigger where tgname = 'decrypt_log_no_update' and tgenabled = 'D'`)).toBe("0");
+  });
+
+  it("INV-A16 (S16b): 둘 다 탈퇴했어도 마지막 기록이 5년보다 하루 덜 됐으면 남는다", async () => {
+    const o = await bothWithdrawnOrder("wdo2");
+    ageOrder(o.orderId, "5 years - 1 day");
+    purge();
+    expect(orderRows(o.orderId)).toBe("1,1,1,1,1");
+  });
+
+  it("INV-A16 (S16b, 실패경로): 주문 칸은 5년 1일 전이어도 결제 기록이 그 뒤면 결제 때부터 센다 — 남는다", async () => {
+    const o = await bothWithdrawnOrder("wdo3");
+    // 결제 시각만 그대로 두고 나머지(주문·상자·서명)는 5년 1일 전으로
+    ageOrder(o.orderId, "5 years 1 day", "keep-payments");
+    purge();
+    expect(orderRows(o.orderId).startsWith("1,")).toBe(true);
+  });
+
+  it("INV-A16 (d123): 팬만 탈퇴한 5년 1일 된 주문은 남고, 팬 칸은 가명 식별자 대신 같이 쓰는 「탈퇴한 회원」이 된다", async () => {
+    const fan = await createTestAccount({ tag: "wdo4f", phone: null });
+    const cre = await createTestAccount({ tag: "wdo4c", phone: null });
+    const o = await shippedOrder({ senderId: fan.userId, creatorId: makeCreator(cre) });
+    const r = await withdraw(fan.loginId);
+    const pseudonym = (r.data as { pseudonym: string }).pseudonym;
+    expect(fanOf(o.orderId)).toBe(pseudonym);
+    ageOrder(o.orderId, "5 years 1 day");
+    const counts = purge();
+    expect(counts.unlinked).toBeGreaterThanOrEqual(1);
+    expect(orderRows(o.orderId).startsWith("1,")).toBe(true);
+    expect(fanOf(o.orderId)).toBe(SHARED_FAN);
+    // 이미 바꾼 주문은 다음 회차에 다시 세지 않는다(S16c)
+    expect(purge().unlinked).toBe(0);
+    // 크리에이터(회원)의 서명 기록은 그대로다
+    expect(psql(`select count(*) from public.approval_signatures where request_id = '${o.requestId}' and signed_content is not null`)).toBe("1");
+  });
+
+  it("INV-A16 (d123): 크리에이터만 탈퇴한 5년 1일 된 주문은 남고, 크리에이터 칸이 같이 쓰는 「탈퇴한 크리에이터」가 된다. 하루 덜 된 주문은 그대로다", async () => {
+    const fan = await createTestAccount({ tag: "wdo5f", phone: null });
+    const cre = await createTestAccount({ tag: "wdo5c", phone: null });
+    const creatorId = makeCreator(cre);
+    const old = await shippedOrder({ senderId: fan.userId, creatorId });
+    const recent = await shippedOrder({ senderId: fan.userId, creatorId });
+    expect((await withdraw(cre.loginId)).error).toBeNull();
+    ageOrder(old.orderId, "5 years 1 day");
+    ageOrder(recent.orderId, "5 years - 1 day");
+    purge();
+    const creatorOf = (id: string) => psql(`select creator_id from public.orders where id = '${id}'`);
+    expect([creatorOf(old.orderId), creatorOf(recent.orderId)]).toEqual([SHARED_CREATOR, creatorId]);
+    expect(fanOf(old.orderId)).toBe(fan.userId);
   });
 });

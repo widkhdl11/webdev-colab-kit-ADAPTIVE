@@ -91,6 +91,8 @@ export const PII_FUNCTIONS = {
   admin_move_held_share: "찾기로 이은 상자를 같은 크리에이터의 다른 팬별 선물로 옮김 → 몫 정리, 돌려주는 것은 결과 글자(moved)",
   // 물품 보관소 입고 처리(inbound-address-code INV-C13) — 운영자 잇기와 같은 판정·입고 마무리(office_finish_held_receive → office_sync)로 닿는다
   admin_accept_storage_claim: "물품 보관소 확인 요청의 입고 처리 → 몫 정리 경로, 돌려주는 것은 결과 글자(linked)",
+  // 회원 탈퇴(my-account INV-A15, manual/0025) — 대표만(첫 줄에서 거부). 개인정보 구역은 지우기만 하고 읽어 돌려주지 않는다
+  withdraw_account: "회원 탈퇴 — 개인정보 구역의 연락처·주소·키를 지우기만 한다, 돌려주는 것은 가명 식별자와 저장소에서 지울 사진 경로",
 };
 
 // 사람이 적용하는 수동 SQL 이 들어간 DB 에서만 개인정보 구역에 닿는 함수. 표식 표가 있으면 위 목록처럼 허용하고,
