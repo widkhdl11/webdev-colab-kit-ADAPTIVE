@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { findIds, queryWords, type NavItem } from "../model/doc-nav";
+import { findIds, hitsUnder, queryWords, type NavItem } from "../model/doc-nav";
 
 // 문서형 페이지의 찾기 상태 — 검색 · 분류 칩 · 지금 읽는 조 · 조로 가기(docs/ux/document-pages.md 원칙 ①②, 기준 1·3·4).
 // 조로 갈 때 칩에 가려진 조면 「전체」로 되돌린 뒤 간다 — 주소(#조id)·목차·요약·검색 어디서 와도 같다.
@@ -11,6 +11,8 @@ type GoOptions = {
   focus?: boolean;
   /** 주소 끝(#조id)을 방문 기록에 남긴다. 검색의 다음·이전·주소로 들어온 경우는 바꾸기만 한다 */
   push?: boolean;
+  /** 칩을 「전체」로 되돌린 뒤 간다 — 요약 링크(요약 줄은 시점을 가리지 않는다), 찾은 낱말이 칩에 가린 줄에만 있을 때 */
+  showAll?: boolean;
 };
 
 export type DocNav = {
@@ -61,7 +63,7 @@ export function useDocNav(items: readonly NavItem[], reveal?: (el: HTMLElement) 
     (id: string, opts: GoOptions = {}) => {
       if (!tagsOf.has(id)) return;
       // 가린 조로 가면 칩을 「전체」로 — 칩에 맞는 조면 칩은 그대로 둔다
-      setTag((t) => (t !== null && !(tagsOf.get(id) ?? []).includes(t) ? null : t));
+      setTag((t) => (t !== null && (opts.showAll === true || !(tagsOf.get(id) ?? []).includes(t)) ? null : t));
       setPending({ id, ...opts });
     },
     [tagsOf],
@@ -131,9 +133,11 @@ export function useDocNav(items: readonly NavItem[], reveal?: (el: HTMLElement) 
       if (matches.length === 0) return;
       const next = matchIndex < 0 ? (dir === 1 ? 0 : matches.length - 1) : (matchIndex + dir + matches.length) % matches.length;
       setMatchIndex(next);
-      goTo(matches[next]!);
+      const id = matches[next]!;
+      const item = items.find((i) => i.id === id);
+      goTo(id, { showAll: item !== undefined && !hitsUnder(item, tag, words) });
     },
-    [matches, matchIndex, goTo],
+    [matches, matchIndex, goTo, items, tag, words],
   );
 
   return { query, setQuery, words, matches, matchIndex, step, tag, setTag, hidden, current, goTo };

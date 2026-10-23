@@ -11,7 +11,12 @@ export const toCheck = (what: string) => `[확인 필요: ${what}]`;
 
 /** 환불 금액 칸의 색 꼬리표 — 전액(초록)·없음(빨강). 일부만 돌려받는 칸은 붙이지 않는다(design-rules 14절) */
 export type RefundTone = "full" | "none";
-export type LegalRow = { title: string; fields: readonly (readonly [string, string, RefundTone?])[] };
+export type LegalRow = {
+  title: string;
+  fields: readonly (readonly [string, string, RefundTone?])[];
+  /** 분류 칩 이름 — 칩을 고르면 이 줄만 남긴다(취소·환불 규정 2절의 시점). 없으면 칩과 상관없이 늘 보인다 */
+  tags?: readonly string[];
+};
 
 export type LegalBlock =
   | { kind: "text"; text: string }

@@ -1,3 +1,4 @@
+import { rowShown } from "../model/doc-nav";
 import type { LegalBlock, RefundTone } from "../model/legal-doc";
 import { Marked } from "./doc-parts";
 import s from "./doc-page.module.css";
@@ -19,7 +20,10 @@ function RefundValue({ value, tone, words }: { value: string; tone?: RefundTone;
   return text;
 }
 
-export function DocBlock({ block, words }: { block: LegalBlock; words: readonly string[] }) {
+/**
+ * @param tag 고른 분류 칩 — 줄에 꼬리표가 있는 상자(rows)만 거른다. 남는 줄이 없으면 상자를 그리지 않는다
+ */
+export function DocBlock({ block, words, tag = null }: { block: LegalBlock; words: readonly string[]; tag?: string | null }) {
   const m = (text: string) => <Marked text={text} words={words} />;
   switch (block.kind) {
     case "text":
@@ -98,10 +102,12 @@ export function DocBlock({ block, words }: { block: LegalBlock; words: readonly 
           <p className={s.stagesNote}>{m(block.note)}</p>
         </div>
       );
-    case "rows":
+    case "rows": {
+      const rows = block.rows.filter((r) => rowShown(r, tag));
+      if (rows.length === 0) return null;
       return (
         <div className={s.box}>
-          {block.rows.map((row) => (
+          {rows.map((row) => (
             <div key={row.title} className={s.caseRow}>
               <h3>{m(row.title)}</h3>
               <dl className={s.kv}>
@@ -118,5 +124,6 @@ export function DocBlock({ block, words }: { block: LegalBlock; words: readonly 
           ))}
         </div>
       );
+    }
   }
 }

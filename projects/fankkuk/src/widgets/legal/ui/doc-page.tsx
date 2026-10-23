@@ -73,7 +73,7 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
             heading={guide ? "먼저 알아 두세요" : "먼저 세 가지만 알아 두세요"}
             lines={doc.summary}
             targets={targets}
-            onGo={(id) => nav.goTo(id, { focus: true, push: true })}
+            onGo={(id) => nav.goTo(id, { focus: true, push: true, showAll: true })}
           />
           {figure}
         </div>
@@ -110,7 +110,7 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
                     </div>
                     <div className={s.prose}>
                       {sec.blocks.map((b, i) => (
-                        <DocBlock key={i} block={b} words={nav.words} />
+                        <DocBlock key={i} block={b} words={nav.words} tag={nav.tag} />
                       ))}
                     </div>
                   </article>

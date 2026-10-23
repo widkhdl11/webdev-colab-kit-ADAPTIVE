@@ -1,10 +1,18 @@
-import type { LegalBlock, LegalDoc, LegalSection } from "./legal-doc";
+import type { LegalBlock, LegalDoc, LegalRow, LegalSection } from "./legal-doc";
 
 // 문서형 페이지(약관 셋 · 안내 글 · 자주 묻는 질문)의 찾기 도구가 같이 쓰는 계산 — docs/ux/document-pages.md 원칙 ①~⑥.
 // 화면(doc-page·faq-page)은 결과만 그린다. 글 내용은 읽기만 하고 바꾸지 않는다.
 
 /** 검색·분류·목차가 보는 한 칸 — 약관·안내 글의 조 하나, 자주 묻는 질문의 질문 하나 */
-export type NavItem = { id: string; title: string; text: string; tags: readonly string[]; frequent: boolean };
+export type NavItem = {
+  id: string;
+  title: string;
+  text: string;
+  tags: readonly string[];
+  frequent: boolean;
+  /** 칩마다 그 칩을 골랐을 때 화면에 남는 글자 — 줄에 꼬리표가 있는 조만(취소·환불 규정 2절). 없으면 text 가 다 보인다 */
+  tagTexts?: Readonly<Record<string, string>>;
+};
 
 /** 목차 묶음 — 약관처럼 묶음이 있는 글만 제목이 있다 */
 export type TocGroup = { title: string | null; items: readonly { id: string; label: string }[] };
@@ -28,14 +36,30 @@ export function blockTexts(block: LegalBlock): string[] {
   }
 }
 
+/** 칩을 골랐을 때 남는 줄 — 꼬리표가 없는 줄은 늘 남는다 */
+export function rowShown(row: LegalRow, tag: string | null): boolean {
+  return tag === null || row.tags === undefined || row.tags.includes(tag);
+}
+
+/** 칩을 고른 화면에 남는 글자 — rows 상자는 남는 줄만 */
+function shownTexts(block: LegalBlock, tag: string): string[] {
+  if (block.kind !== "rows") return blockTexts(block);
+  return blockTexts({ ...block, rows: block.rows.filter((r) => rowShown(r, tag)) });
+}
+
 export function sectionItems(sections: readonly LegalSection[]): NavItem[] {
-  return sections.map((sec) => ({
-    id: sec.id,
-    title: sec.title,
-    text: [sec.title, ...sec.blocks.flatMap(blockTexts)].join("\n"),
-    tags: sec.tags ?? [],
-    frequent: sec.frequent === true,
-  }));
+  return sections.map((sec) => {
+    const join = (texts: string[]) => [sec.title, ...texts].join("\n");
+    const rowTagged = sec.blocks.some((b) => b.kind === "rows" && b.rows.some((r) => r.tags !== undefined));
+    return {
+      id: sec.id,
+      title: sec.title,
+      text: join(sec.blocks.flatMap(blockTexts)),
+      tags: sec.tags ?? [],
+      frequent: sec.frequent === true,
+      ...(rowTagged ? { tagTexts: Object.fromEntries((sec.tags ?? []).map((t) => [t, join(sec.blocks.flatMap((b) => shownTexts(b, t)))])) } : {}),
+    };
+  });
 }
 
 const fold = (s: string) => s.toLocaleLowerCase("ko-KR");
@@ -49,6 +73,12 @@ export function queryWords(query: string): string[] {
 export function findIds(items: readonly NavItem[], words: readonly string[]): string[] {
   if (words.length === 0) return [];
   return items.filter((i) => words.every((w) => fold(i.text).includes(w))).map((i) => i.id);
+}
+
+/** 칩을 고른 채로도 찾은 낱말이 그 칸 화면에 다 보이는가 — 아니면 칩을 「전체」로 되돌려야 보인다 */
+export function hitsUnder(item: NavItem, tag: string | null, words: readonly string[]): boolean {
+  const text = tag === null ? item.text : (item.tagTexts?.[tag] ?? item.text);
+  return words.every((w) => fold(text).includes(w));
 }
 
 export type MarkPart = { text: string; hit: boolean };

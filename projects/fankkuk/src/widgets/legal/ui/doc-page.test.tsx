@@ -140,6 +140,71 @@ describe("분류 칩(C5)", () => {
     expect(dim).toEqual(["#intro", "#fee"]);
   });
 
+  // 취소·환불 규정 2절처럼 줄마다 시점 꼬리표가 있는 조
+  const rowsDoc: LegalDoc = {
+    ...base,
+    summaryLinks: ["table", "table", "table"],
+    sections: [
+      {
+        id: "table",
+        title: "2. 상태별 환불 금액",
+        tags: ["입고 전", "입고 후"],
+        blocks: [
+          {
+            kind: "rows",
+            rows: [
+              { title: "가 줄", fields: [["환불 금액", "전액", "full"]], tags: ["입고 전"] },
+              { title: "나 줄", fields: [["환불 금액", "일부"]], tags: ["입고 전", "입고 후"] },
+              { title: "다 줄", fields: [["환불 금액", "일부"]] },
+            ],
+          },
+          { kind: "rows", rows: [{ title: "라 줄", fields: [["환불 금액", "없음", "none"]], tags: ["입고 전"] }] },
+        ],
+      },
+    ],
+  };
+  const rowTitles = () => qa("#table h3").map((h) => h.textContent);
+  const ALL_ROWS = ["가 줄", "나 줄", "다 줄", "라 줄"];
+
+  it("줄에 꼬리표가 있는 상자는 칩이 줄을 거르고, 남는 줄이 없는 상자는 그리지 않는다 — 꼬리표 없는 줄은 늘 남는다", () => {
+    render(<DocPage doc={rowsDoc} variant="policy" />);
+    expect(rowTitles()).toEqual(ALL_ROWS);
+    click(byText('[aria-label="분류"] button', "입고 후"));
+    expect(rowTitles()).toEqual(["나 줄", "다 줄"]);
+    // 줄이 다 빠진 둘째 상자는 빈 테두리로도 남지 않는다
+    expect(new Set(qa("#table h3").map((h) => h.parentElement?.parentElement)).size).toBe(1);
+    expect(qa("#table [class*=box]")).toHaveLength(1);
+    click(byText('[aria-label="분류"] button', "전체"));
+    expect(rowTitles()).toEqual(ALL_ROWS);
+  });
+
+  it("칩을 고른 채 찾은 낱말이 가린 줄에만 있으면, 다음으로 갈 때 「전체」로 돌아가 그 줄이 보인다", () => {
+    render(<DocPage doc={rowsDoc} variant="policy" />);
+    click(byText('[aria-label="분류"] button', "입고 후"));
+    type(q<HTMLInputElement>('input[type="search"]')!, "전액");
+    click(byText("button", "다음"));
+    expect(byText('[aria-label="분류"] button', "전체")?.getAttribute("aria-pressed")).toBe("true");
+    expect(rowTitles()).toEqual(ALL_ROWS);
+    expect(qa("#table mark").map((m) => m.textContent)).toEqual(["전액"]);
+  });
+
+  it("칩을 고른 채 찾은 낱말이 남은 줄에 있으면 칩은 그대로다", () => {
+    render(<DocPage doc={rowsDoc} variant="policy" />);
+    click(byText('[aria-label="분류"] button', "입고 후"));
+    type(q<HTMLInputElement>('input[type="search"]')!, "일부");
+    click(byText("button", "다음"));
+    expect(byText('[aria-label="분류"] button', "입고 후")?.getAttribute("aria-pressed")).toBe("true");
+    expect(rowTitles()).toEqual(["나 줄", "다 줄"]);
+  });
+
+  it("요약 링크로 가면 칩에 맞는 조여도 「전체」로 돌아간다 — 요약 줄은 시점을 가리지 않는다", () => {
+    render(<DocPage doc={rowsDoc} variant="policy" />);
+    click(byText('[aria-label="분류"] button', "입고 후"));
+    click(q('a[href="#table"]'));
+    expect(byText('[aria-label="분류"] button', "전체")?.getAttribute("aria-pressed")).toBe("true");
+    expect(rowTitles()).toEqual(ALL_ROWS);
+  });
+
   it("tagOrder 가 있으면 그 차례", () => {
     render(<DocPage doc={{ ...tagged, tagOrder: ["환불", "팬"] }} variant="policy" />);
     expect(qa('[aria-label="분류"] button').map((c) => c.textContent)).toEqual(["전체", "환불", "팬", "크리에이터"]);

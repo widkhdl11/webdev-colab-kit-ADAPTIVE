@@ -22,6 +22,9 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
       "환불 금액은 선물의 상태에 따라 정해집니다. 실제 환불 금액은 선물 상세의 결제 내역에 숫자로 보입니다.",
     ],
     facts: [["운영", OPERATOR_NAME]],
+    // 요약 세 줄 → 2절(입고 전) · 4절(반송 택배비 공제) · 5절(결제 내역). 칩은 선물의 시점(사용자 확정 2026-10-23)
+    summaryLinks: ["table", "return", "show"],
+    tagOrder: ["입고 전", "입고 후", "출고 후"],
     sections: [
       {
         id: "fee",
@@ -54,14 +57,20 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
       {
         id: "table",
         title: "2. 상태별 환불 금액",
+        tags: ["입고 전", "입고 후", "출고 후"],
+        frequent: true,
         blocks: [
           { kind: "text", text: "환불 금액은 선물의 상태에 따라 정해지며, 담당자가 금액을 개별적으로 정하지 않습니다." },
+          // 시점 차례로 상자를 나눈다(입고 전 · 입고 후 · 출고 후, 사용자 확정 2026-10-23) — 칩은 줄을 거른다.
+          // 입고 후 다섯 줄은 390 폭에서 1,246 이라 같은 차례로 3줄 · 2줄로 한 번 더 나눴다 — 한 상자 900 이하(document-pages 기준 8, design-rules 14절).
+          // 「30일이 지나도 도착하지 않은 상자」는 입고 전 상자로 올렸다. 크리에이터 사정은 두 시점 모두라 입고 후 상자의 원래 자리에 두고 꼬리표 둘.
           {
             kind: "rows",
             rows: [
               {
                 title: "입고 전 취소·거절·자동 반려 — 받는 주소가 공개되지 않은 경우",
                 fields: [["환불 금액", "결제 금액 전액", "full"]],
+                tags: ["입고 전"],
               },
               {
                 title: "입고 전 취소·거절·자동 반려 — 받는 주소가 공개된 경우(승인 또는 「먼저 보내기」)",
@@ -70,7 +79,22 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
                   [`${WAIT} 이내에 도착한 경우`, "해당 선물의 상자로 받아 반송하며, 추가 환불 금액은 없음"],
                   [`${WAIT} 이내에 도착하지 않은 경우`, "남겨 둔 반송 택배비까지 환불"],
                 ],
+                // 입고 후 줄 셋이 「아직 도착하지 않은 상자」를 이 줄로 보낸다 — 입고 후 칩에서도 남긴다
+                tags: ["입고 전", "입고 후"],
               },
+              {
+                title: "승인 후 결제 완료 시각부터 30일이 지나도 도착하지 않은 상자",
+                fields: [
+                  ["환불 금액", "해당 상자 금액 전액", "full"],
+                  ["같은 선물의 다른 상자", "그대로 진행"],
+                ],
+                tags: ["입고 전"],
+              },
+            ],
+          },
+          {
+            kind: "rows",
+            rows: [
               {
                 title: "입고 후 거절·자동 반려",
                 fields: [
@@ -78,6 +102,7 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
                   ["검수에 걸린 상자", "환불 금액 없음", "none"],
                   ["아직 도착하지 않은 상자", "위 「받는 주소가 공개된 경우」 기준에 따름"],
                 ],
+                tags: ["입고 후"],
               },
               {
                 title: "크리에이터 사정에 의한 취소(크리에이터 탈퇴 신청 등)",
@@ -86,6 +111,7 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
                   ["검수에 걸린 상자", "환불 금액 없음", "none"],
                   ["아직 도착하지 않은 상자", "위 「받는 주소가 공개된 경우」 기준에 따름"],
                 ],
+                tags: ["입고 전", "입고 후"],
               },
               {
                 title: "팬의 입고 후 취소(1:1 문의로 접수)",
@@ -94,26 +120,32 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
                   ["검수에 걸린 상자", "환불 금액 없음", "none"],
                   ["아직 도착하지 않은 상자", "위 「받는 주소가 공개된 경우」 기준에 따름"],
                 ],
+                tags: ["입고 후"],
               },
+            ],
+          },
+          {
+            kind: "rows",
+            rows: [
               {
                 title: "검수 불합격에 따른 반송",
                 fields: [
                   ["해당", `보낼 수 없는 물품이 발견되거나 ${OVERSIZE_RULE}, 또는 크리에이터가 돌려보내기를 선택했거나 ${CREATOR_CHECK_DAYS}일 이내에 답하지 않은 상자`],
                   ["환불 금액", "검수비와 반송 택배비를 공제하므로 환불 금액이 없습니다", "none"],
                 ],
+                tags: ["입고 후"],
               },
               {
                 title: "차액 미결제에 따른 반송",
                 fields: [["환불 금액", "검수 불합격에 따른 반송과 같이 환불 금액이 없습니다", "none"]],
+                tags: ["입고 후"],
               },
-              {
-                title: "승인 후 결제 완료 시각부터 30일이 지나도 도착하지 않은 상자",
-                fields: [
-                  ["환불 금액", "해당 상자 금액 전액", "full"],
-                  ["같은 선물의 다른 상자", "그대로 진행"],
-                ],
-              },
-              { title: "출고 후", fields: [["환불 금액", "없음", "none"]] },
+            ],
+          },
+          {
+            kind: "rows",
+            rows: [
+              { title: "출고 후", fields: [["환불 금액", "없음", "none"]], tags: ["출고 후"] },
             ],
           },
           {
@@ -128,6 +160,7 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
       {
         id: "cancel",
         title: "3. 취소하는 방법",
+        tags: ["입고 전", "입고 후", "출고 후"],
         blocks: [
           {
             kind: "steps",
@@ -144,6 +177,9 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
       {
         id: "return",
         title: "4. 반송 방법",
+        // 주소가 공개된 뒤 늦게 도착한 상자도 반송한다(2절 입고 전 둘째 줄)
+        tags: ["입고 전", "입고 후"],
+        frequent: true,
         blocks: [
           {
             kind: "steps",
@@ -168,6 +204,8 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
       {
         id: "show",
         title: "5. 환불 금액의 확인과 지급",
+        tags: ["입고 전", "입고 후", "출고 후"],
+        frequent: true,
         blocks: [
           {
             kind: "steps",

@@ -77,6 +77,33 @@ describe("안내·법정 페이지 공통", () => {
     expect(t.sections.filter((s) => s.tags?.includes("크리에이터")).map((s) => s.id)).toEqual(["creator", "block", "revgift", "address"]);
   });
 
+  it("취소·환불 규정 시점 칩·주요·요약 링크는 확정한 표대로다(2026-10-23) — 2절 상자는 시점 차례로 나뉜다", () => {
+    const r = docs.refund!;
+    expect(r.summaryLinks).toEqual(["table", "return", "show"]);
+    expect(r.tagOrder).toEqual(["입고 전", "입고 후", "출고 후"]);
+    expect(r.sections.filter((s) => s.frequent).map((s) => s.id)).toEqual(["table", "return", "show"]);
+    expect(r.sections.find((s) => s.id === "fee")!.tags).toBeUndefined();
+    const boxes = r.sections.find((s) => s.id === "table")!.blocks.flatMap((b) => (b.kind === "rows" ? [b.rows] : []));
+    // 줄 제목 앞부분 → 꼬리표. 상자 차례가 입고 전 → 입고 후(3줄 · 2줄) → 출고 후
+    expect(boxes.map((rows) => rows.map((row) => [row.title.split(/[ ·(]/)[0], row.tags]))).toEqual([
+      [
+        ["입고", ["입고 전"]],
+        ["입고", ["입고 전", "입고 후"]],
+        ["승인", ["입고 전"]],
+      ],
+      [
+        ["입고", ["입고 후"]],
+        ["크리에이터", ["입고 전", "입고 후"]],
+        ["팬의", ["입고 후"]],
+      ],
+      [
+        ["검수", ["입고 후"]],
+        ["차액", ["입고 후"]],
+      ],
+      [["출고", ["출고 후"]]],
+    ]);
+  });
+
   it("배상 한도는 설정값에서 읽는다", () => {
     expect(text(termsDoc(prices, 123_000))).toContain("123,000원");
     expect(text(disputeDoc({ ...SITE_INFO, compensationCapKrw: 77_000 }))).toContain("77,000원");
