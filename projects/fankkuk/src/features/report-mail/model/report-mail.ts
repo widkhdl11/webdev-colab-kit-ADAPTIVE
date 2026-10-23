@@ -22,7 +22,7 @@ export type ReportField = "kind" | "replyTo" | "pageUrl" | "body";
 
 const schema = z.object({
   kind: z.enum(REPORT_KINDS, { error: "분류를 골라 주세요." }),
-  replyTo: z.email({ error: "답장받을 이메일을 확인해 주세요." }),
+  replyTo: z.email({ error: "답변받을 이메일을 확인해 주세요." }),
   pageUrl: z.union([z.literal(""), z.url({ protocol: /^https?$/, error: "페이지 주소는 http 나 https 로 시작해야 해요." })]),
   body: z
     .string()
@@ -46,7 +46,7 @@ export function buildReportMail(draft: ReportDraft, to: string): ReportMail {
   if (!z.email().safeParse(to.trim()).success) return { ok: false, field: null, message: "고객센터 이메일이 아직 없어요. 로그인했다면 고객센터의 1:1 문의를 써 주세요." };
   const d = parsed.data;
   const subject = `[팬꾹 ${REPORT_KIND_LABELS[d.kind]}]`;
-  const lines = [`분류: ${REPORT_KIND_LABELS[d.kind]}`, `답장받을 이메일: ${d.replyTo}`];
+  const lines = [`분류: ${REPORT_KIND_LABELS[d.kind]}`, `답변받을 이메일: ${d.replyTo}`];
   if (d.pageUrl !== "") lines.push(`페이지 주소: ${d.pageUrl}`);
   lines.push("", d.body);
   const href = `mailto:${to.trim()}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join("\n"))}`;

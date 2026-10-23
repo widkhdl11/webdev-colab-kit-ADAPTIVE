@@ -72,7 +72,7 @@ export function ReportForm({ to, toLabel }: Props) {
         </div>
       </div>
       <div className="field">
-        <label htmlFor="r-reply">답장받을 이메일</label>
+        <label htmlFor="r-reply">답변받을 이메일</label>
         <input
           className="input"
           id="r-reply"
@@ -100,7 +100,7 @@ export function ReportForm({ to, toLabel }: Props) {
           onChange={(e) => edit("pageUrl", e.target.value)}
         />
         <p className="hint" id="r-page-hint">
-          사칭 페이지나 사진이 있는 곳의 주소를 적어 주세요.
+          신고할 페이지나 사진이 있는 페이지의 주소를 적어 주세요.
         </p>
       </div>
       <div className="field">
@@ -116,7 +116,7 @@ export function ReportForm({ to, toLabel }: Props) {
           onChange={(e) => edit("body", e.target.value)}
         />
         <p className="hint" id="r-body-hint">
-          {REPORT_BODY_MAX.toLocaleString("ko-KR")}자까지 적을 수 있어요. 파일은 첨부할 수 없어요.
+          {REPORT_BODY_MAX.toLocaleString("ko-KR")}자까지 적을 수 있어요. 이 화면에서는 파일을 첨부할 수 없어요.
         </p>
       </div>
       <div role="alert">
@@ -131,7 +131,7 @@ export function ReportForm({ to, toLabel }: Props) {
         이메일로 보내기
       </button>
       <p className={`t-meta ${s.to}`}>
-        받는 이메일: {toLabel} · 회원이라면 <Link href="/support">고객센터의 1:1 문의</Link>로도 남길 수 있어요.
+        받는 이메일: {toLabel} · 회원은 <Link href="/support">고객센터의 1:1 문의</Link>도 이용할 수 있어요.
       </p>
     </form>
   );

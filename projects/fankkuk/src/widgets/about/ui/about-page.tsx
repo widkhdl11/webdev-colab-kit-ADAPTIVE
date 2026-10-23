@@ -10,15 +10,15 @@ import s from "./about.module.css";
 const FLOW: readonly { icon: AboutIconName; title: string; body: string; once?: true }[] = [
   { icon: "lock", title: "입력하자마자 잠가요", body: "크리에이터가 입력한 주소는 팬꾹으로 오기 전에 잠겨요." },
   { icon: "package", title: "잠긴 채 보관해요", body: PROMISE.address },
-  { icon: "message", title: "크리에이터가 승인해요", body: "선물마다 카카오톡으로 한 번 더 확인해요." },
-  { icon: "printer", title: "송장 출력 때만 열려요", body: "열릴 때마다 기록이 남아요.", once: true },
-  { icon: "truck", title: "팬꾹 송장으로 출고해요", body: "승인과 검수를 모두 통과한 선물만 출고합니다." },
+  { icon: "message", title: "크리에이터가 직접 승인해요", body: "선물마다 카카오톡으로 한 번 더 확인해요." },
+  { icon: "printer", title: "송장 출력 때만 열려요", body: "주소가 열릴 때마다 기록을 남겨요.", once: true },
+  { icon: "truck", title: "팬꾹 송장으로 출고해요", body: "크리에이터의 승인과 검수를 모두 마친 선물만 출고해요." },
 ];
 
 const INSPECT = [
-  { title: "송장 제거", body: "원래 송장은 떼어서 파쇄해요." },
-  { title: "겉면 검사", body: "숨겨진 연락처나 이상한 부착물이 없는지 봐요." },
-  { title: "추적 장치 탐지", body: "모든 상자를 탐지기로 검사해요." },
+  { title: "송장 제거", body: "상자에 붙어 있던 송장은 떼어 따로 보관해요. 상자를 돌려보내거나 크리에이터에게 보낼 때, 상자를 처분하거나 경찰에 넘길 때 파쇄해요." },
+  { title: "겉면 검사", body: "상자 겉면에 숨겨진 연락처나 의심스러운 부착물이 있는지 확인해요." },
+  { title: "추적 장치 탐지", body: "팬이 보낸 모든 상자를 탐지기로 검사해요." },
 ] as const;
 
 /** 열람 기록 표 예시 — 지어낸 값. 실제 기록은 크리에이터 화면(/creator/log)에 있다. */
@@ -32,7 +32,7 @@ const NOTS = [
   { title: "승인 전에는 주소를 열지 않습니다", body: PROMISE.addressFan },
   { title: "한꺼번에 승인하지 않습니다", body: "선물마다 카카오톡으로 따로 확인해요." },
   { title: "받지 않은 이유를 팬에게 알리지 않습니다", body: "크리에이터가 받지 않은 선물은 배송하지 않아요." },
-  { title: "필요 없이 상자를 열지 않습니다", body: "탐지기 반응이 있는 상자만 열어요." },
+  { title: "필요 없이 상자를 열지 않습니다", body: "탐지기 반응이 있는 상자는 열어서 확인해요." },
   { title: "크리에이터에게 가는 송장번호는 공개하지 않습니다", body: "팬에게 보이는 주소는 팬꾹 주소뿐이에요." },
   { title: "검수를 뺀 요금제는 만들지 않습니다", body: "모든 요금에 검수가 포함돼요." },
 ] as const;
@@ -53,13 +53,13 @@ export function AboutPage() {
           <img className={`${s.deco} ${s.decoR}`} src="/img/icon-log.png" width={160} height={160} alt="" aria-hidden="true" />
           <div className={s.heroText}>
             <h1 className="t-hero" id="about-title">
-              선물은 따뜻하게,
+              선물에 담긴 마음은 그대로,
               <br />
-              주소는 조심스럽게
+              주소는 소중하게
             </h1>
             <p className="t-lead">
-              팬꾹은 팬의 선물을 검수하고 크리에이터에게 대신 보내는 서비스예요. {PROMISE.addressFan} {withSubjectParticle(OPERATOR_NAME)} 만들고
-              운영합니다.
+              팬꾹은 팬이 보낸 선물을 검수한 뒤 크리에이터에게 대신 보내는 서비스예요. {PROMISE.addressFan} {withSubjectParticle(OPERATOR_NAME)}{" "}
+              만들고 운영해요.
             </p>
           </div>
         </div>
@@ -69,25 +69,25 @@ export function AboutPage() {
       <section className={s.near} aria-labelledby="why-title">
         <div className="pub-inner">
           <div className="sec-head">
-            <h2 id="why-title">&ldquo;택배에 내 주소가 적히는 게 걱정이에요&rdquo;</h2>
+            <h2 id="why-title">&ldquo;선물은 받고 싶지만, 주소가 알려질까 걱정돼요&rdquo;</h2>
           </div>
           <div className={`${s.grid3} ${s.story}`}>
             <div className="card">
               <p>
-                팬이 보내 주는 선물은 늘 고맙지만, 그 상자 겉면에는 크리에이터의 이름과 집 주소가 그대로 적혀요. 송장은 택배사
-                직원, 이웃, 버려진 상자를 본 누구에게나 보일 수 있어요.
+                팬이 보내 주는 선물은 늘 고맙지만, 상자에 붙은 송장에는 크리에이터의 이름과 집 주소가 적혀 있어요. 배송 중에도,
+                상자를 버린 뒤에도 다른 사람에게 보일 수 있어요.
               </p>
             </div>
             <div className="card">
               <p>
-                그래서 많은 크리에이터가 선물 받기를 망설이거나, 주소를 숨기려고 번거로운 방법을 써요. 팬도 마음을 전하고 싶은데
-                어디로 보내야 할지 몰라 포기하고요.
+                그래서 선물 받기를 망설이거나 주소를 숨기려고 번거로운 방법을 쓰는 크리에이터가 있어요. 팬도 마음을 전하고 싶지만,
+                어디로 보내야 할지 몰라 선물을 포기하기도 하고요.
               </p>
             </div>
             <div className="card card--soft">
               <p>
-                그래서 팬꾹이 팬과 크리에이터 사이에 들어가기로 했어요. 팬은 주소를 몰라도 선물을 보낼 수 있고, 크리에이터는 주소를
-                드러내지 않고 받을 수 있어요.
+                그래서 팬꾹이 팬과 크리에이터 사이에 들어가기로 했어요. 팬은 크리에이터의 주소를 몰라도 선물을 보낼 수 있고,
+                크리에이터는 팬에게 주소를 공개하지 않고 선물을 받을 수 있어요.
               </p>
             </div>
           </div>
@@ -129,7 +129,7 @@ export function AboutPage() {
                 <p className={s.sceneAddr}>서울시 ○○구 ○○로 ●●</p>
                 <p className={s.sceneLog}>
                   <AboutIcon name="clock" />
-                  <span>10월 14일 14:02 · 주문 FK-2410 · 송장 출력으로 열림</span>
+                  <span>10월 14일 14:02 · 주문 FC-4T2N8 · 송장 출력으로 열림</span>
                 </p>
               </div>
             </div>
@@ -159,7 +159,7 @@ export function AboutPage() {
         <div className="pub-inner">
           <div className="sec-head">
             <img className={s.art} src="/img/icon-inspect.png" width={64} height={64} alt="" aria-hidden="true" />
-            <h2 id="inspect-title">검수는 이렇게 해요</h2>
+            <h2 id="inspect-title">선물은 이렇게 검수해요</h2>
             <p className="t-lead t-desc">{PROMISE.inspection}</p>
           </div>
           <ol className={s.grid3}>
@@ -172,7 +172,7 @@ export function AboutPage() {
             ))}
           </ol>
           <div className={`card card--soft center ${s.opened}`}>
-            <h3>반응이 있으면 개봉 검수</h3>
+            <h3>탐지기 반응 시 개봉 검수</h3>
             <p>{PROMISE.inspectionOpen}</p>
           </div>
         </div>
@@ -183,10 +183,10 @@ export function AboutPage() {
         <div className="pub-inner">
           <div className="sec-head">
             <img className={s.art} src="/img/icon-log.png" width={64} height={64} alt="" aria-hidden="true" />
-            <h2 id="log-title">주소를 연 기록은 크리에이터에게 전부 공개해요</h2>
+            <h2 id="log-title">주소 열람 기록을 직접 확인할 수 있어요</h2>
             <p className="t-lead t-desc">
-              언제, 어느 주문의 주소가 몇 번째로 열렸는지 크리에이터가 언제든 확인할 수 있어요. 승인한 적 없는 주문이 기록에 보이면
-              바로 알아챌 수 있어요.
+              크리에이터는 언제, 어느 주문의 주소가 열렸는지, 송장을 몇 번째 출력했는지 확인할 수 있어요. 승인하지 않은 주문의 열람
+              기록이 있는지도 살펴볼 수 있어요.
             </p>
           </div>
           <div>
@@ -195,7 +195,7 @@ export function AboutPage() {
                 <caption className="sr-only">주소 열람 기록 예시</caption>
                 <thead>
                   <tr>
-                    <th scope="col">열린 시각</th>
+                    <th scope="col">열람 시각</th>
                     <th scope="col">주문번호</th>
                     <th scope="col">비고</th>
                   </tr>
@@ -205,13 +205,13 @@ export function AboutPage() {
                     <tr key={orderNo}>
                       <td>{at}</td>
                       <td>{orderNo}</td>
-                      <td>첫 출력</td>
+                      <td>최초 출력</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p className={`t-meta ${s.tableNote}`}>예시 화면이에요. 실제 기록은 크리에이터 화면에서 볼 수 있어요.</p>
+            <p className={`t-meta ${s.tableNote}`}>이해를 돕기 위한 예시예요. 실제 기록은 크리에이터 화면에서 확인할 수 있어요.</p>
           </div>
           <div className={s.foot}>
             <Link className="btn" href="/signup">
@@ -249,10 +249,10 @@ export function AboutPage() {
             <h2 id="cta-title">마음을 담아, 꾹.</h2>
             <div className="hero-actions">
               <Link className="btn btn--wide" href="/gifts/new">
-                지금 바로 선물 보내러 가기
+                선물 보내기
               </Link>
               <Link className="btn btn--line btn--wide" href="/creators">
-                나의 크리에이터 찾으러 가기
+                크리에이터 찾기
               </Link>
             </div>
           </div>

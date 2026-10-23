@@ -5,7 +5,7 @@ import { useRef, useState, type KeyboardEvent } from "react";
 import { INQUIRY_KIND_LABELS } from "@/entities/inquiry/model/inquiry-kind";
 import type { MyInquiry } from "@/entities/inquiry/model/my-inquiry";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
-import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
+import { OVERSIZE_RULE, PARCEL_TIER_GUIDE, RETURN_ON_INSPECTION_NOTICE } from "@/entities/parcel/model/size-tier";
 import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { InquiryForm } from "@/features/inquiry-submit/ui/inquiry-form";
 import { formatDateTime } from "@/shared/lib/format/datetime";
@@ -23,9 +23,9 @@ type Faq = { q: string; a: string };
 type Category = { id: string; label: string; faqs: readonly Faq[] };
 
 function feeAnswer(prices: PublicPriceTable): string {
-  return `상자마다 배송비가 포함된 금액이에요. ${PRICED_TIERS.map(
+  return `요금은 상자마다 정해지고, 택배비와 검수비가 포함돼 있어요. ${PRICED_TIERS.map(
     (t) => `${PARCEL_TIER_GUIDE[t].name}(${PARCEL_TIER_GUIDE[t].rule}) ${prices[t].priceKrw.toLocaleString("ko-KR")}원`,
-  ).join(", ")}이고, 검수비도 포함돼 있어요.`;
+  ).join(", ")}이에요.`;
 }
 
 const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
@@ -35,15 +35,15 @@ const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
     faqs: [
       {
         q: "선물은 어떻게 보내나요?",
-        a: "크리에이터를 찾아 「선물 보내기」를 누르고 상자 크기를 골라 결제하면 돼요. 결제하면 상자마다 보낼 팬꾹 주소가 나와요. 크리에이터가 승인하면 주소가 바로 보이고, 「먼저 보내기」로 미리 보낼 수도 있어요.",
+        a: "크리에이터를 찾아 「선물 보내기」를 누르고 상자 크기를 골라 결제해 주세요. 결제하면 상자마다 받는 주소가 나와요. 크리에이터가 승인하면 받는 주소를 볼 수 있고, 승인 전에도 「먼저 보내기」를 누르면 받는 주소를 보고 상자를 보낼 수 있어요.",
       },
       {
-        q: "크리에이터가 거절하면 어떻게 되나요?",
-        a: `거절된 선물은 크리에이터에게 배송되지 않아요. 사무실에 도착하기 전이면 결제 금액을 모두 돌려드리고, 도착한 뒤면 보낸 주소로 돌려보내 드린 뒤 반송 택배비를 뺀 금액을 돌려드려요(검수에 걸린 상자는 돌려드리는 금액이 없어요). ${APPROVAL_DEADLINE_DAYS}일 안에 승인하지 않은 선물도 같아요. 거절 이유는 팬에게 알리지 않습니다.`,
+        q: "크리에이터가 받지 않으면 어떻게 되나요?",
+        a: `크리에이터가 받지 않은 선물과 결제하고 ${APPROVAL_DEADLINE_DAYS}일 안에 승인되지 않은 선물은 크리에이터에게 배송되지 않고, 받지 않은 이유는 팬에게 알리지 않아요. 사무실에 도착하기 전이고 받는 주소를 본 적이 없으면 결제 금액을 모두 돌려드려요. 받는 주소를 본 적이 있으면 택배비를 뺀 금액을 먼저 돌려드리고, 그 뒤에 도착한 상자는 돌려보내 드려요. 결제하고 30일 안에 상자가 오지 않으면 택배비도 돌려드려요. 사무실에 도착한 상자는 확인해 주신 돌려받을 주소로 돌려보내 드리고, 택배비를 뺀 금액을 돌려드려요(검수에 걸린 상자는 돌려드리는 금액이 없어요).`,
       },
       {
         q: "여러 상자를 한 번에 보낼 수 있나요?",
-        a: "네, 한 선물에 상자를 여러 개 등록할 수 있어요. 상자마다 크기에 맞는 요금이 정해져요.",
+        a: "네. 선물 한 건에 상자를 여러 개 등록할 수 있어요. 요금은 상자마다 크기에 맞게 정해져요.",
       },
     ],
   },
@@ -57,8 +57,8 @@ const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
         a: "크기와 무게 중 큰 쪽 기준으로 정해져요. 예를 들어 세 변 합은 80cm인데 무게가 7kg이면 중형이에요.",
       },
       {
-        q: "도착해서 잰 크기가 등록한 것보다 크면요?",
-        a: `사무실에서 실측한 크기가 더 크면 차액을 따로 결제해 주셔야 해요. ${OVERSIZE_RULE}는 받지 않아요.`,
+        q: "실제 상자 크기가 등록한 크기보다 크면 어떻게 되나요?",
+        a: `사무실에서 잰 크기가 등록한 상자 크기보다 크면 차액을 따로 결제해 주셔야 해요. ${OVERSIZE_RULE}는 받지 않고 돌려보내 드려요. 이때는 검수비와 택배비를 빼면 환불 금액이 남지 않아요.`,
       },
     ],
   },
@@ -67,14 +67,17 @@ const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
     label: "배송",
     faqs: [
       {
-        q: "선물이 어디쯤 왔는지 어떻게 확인하나요?",
-        a: "등록 → 입고 → 검수 → 출고 → 배송중 → 수령, 여섯 단계로 (크리에이터 승인은 검수와 출고 사이에 따로 표시돼요) 선물 상세 화면과 상단 선물 아이콘에서 볼 수 있어요.",
+        q: "선물의 배송 상황은 어디에서 확인하나요?",
+        a: "선물 상세 화면과 화면 위쪽의 선물 아이콘에서 볼 수 있어요. 진행 상황은 등록 → 입고 → 검수 → 출고 → 배송 중 → 수령, 여섯 단계로 표시돼요. 크리에이터 승인은 검수와 출고 사이에 따로 표시돼요.",
       },
       {
-        q: "크리에이터행 송장번호를 볼 수 있나요?",
-        a: "팬에게는 크리에이터행 송장번호를 보여 드리지 않아요. 팬이 입력하는 것은 사무실로 보내는 상자의 송장번호예요.",
+        q: "크리에이터에게 보낸 상자의 송장번호를 볼 수 있나요?",
+        a: "크리에이터에게 보낸 상자의 송장번호는 팬에게 보여 드리지 않아요. 팬이 선물 상세에 입력하는 송장번호는 팬꾹 사무실로 보내는 상자의 송장번호예요.",
       },
-      { q: "검수는 어떻게 하나요?", a: `${PROMISE.inspection} 송장을 떼고 겉면과 추적 장치를 검사하고, 탐지기 반응이 있으면 열어서 확인해요. 보낼 수 없는 물품이 나오면 상자를 돌려보내 드려요. 이때는 검수비와 택배비를 빼면 환불 금액이 남지 않아요.` },
+      {
+        q: "검수는 어떻게 진행되나요?",
+        a: `${PROMISE.inspection} 송장을 떼고 겉면을 검사해요. 팬이 보낸 상자는 추적 장치도 검사하고, 탐지기 반응이 있으면 열어서 확인해요. ${RETURN_ON_INSPECTION_NOTICE}`,
+      },
     ],
   },
   {
@@ -83,10 +86,10 @@ const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
     faqs: [
       {
         q: "크리에이터는 어떻게 가입하나요?",
-        a: "가입할 때 「크리에이터」를 고르면 돼요. 가입한 뒤 「주소와 설정」에서 활동 채널 주인인지 확인을 마치면 「크리에이터 찾기」에 나타나요. 유튜브·치지직은 그 계정으로 로그인하면 바로 끝나요(인스타그램은 프로페셔널 계정만).",
+        a: "가입할 때 「크리에이터」를 골라 주세요. 가입한 뒤 「계정 설정」에서 채널 소유 확인을 마치면 「크리에이터 찾기」에 나타나요. 유튜브·치지직은 그 계정으로 로그인하면 바로 확인돼요. 인스타그램은 프로페셔널 계정만 확인할 수 있어요.",
       },
-      { q: "선물 승인은 어떻게 하나요?", a: "요청이 오면 한 건씩 카카오톡 인증서로 서명해서 승인해요. 전체 승인 버튼은 없어요." },
-      { q: "원치 않는 팬을 막을 수 있나요?", a: "네, 차단 목록에 추가하면 그 팬은 선물을 요청할 수 없어요." },
+      { q: "선물은 어떻게 승인하나요?", a: "승인 요청이 오면 선물마다 카카오톡으로 승인해 주세요. 한꺼번에 승인하는 기능은 없어요." },
+      { q: "특정 팬의 선물을 차단할 수 있나요?", a: "네. 차단 목록에 추가한 팬은 그 크리에이터에게 선물을 요청할 수 없어요." },
     ],
   },
   {
@@ -95,10 +98,10 @@ const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
     faqs: [
       {
         q: "비밀번호를 잊어버렸어요.",
-        a: "로그인 화면의 「비밀번호를 잊으셨나요?」에서 가입 이메일을 입력하면 재설정 링크를 보내 드려요.",
+        a: "로그인 화면에서 「비밀번호를 잊으셨나요?」를 누르고 가입한 이메일 주소를 입력해 주세요. 비밀번호 재설정 링크를 보내 드려요.",
       },
-      { q: "아이디를 바꿀 수 있나요?", a: "아이디는 바꿀 수 없어요. 닉네임과 이메일은 내 팬꾹의 개인정보에서 고칠 수 있어요." },
-      { q: "휴대폰 번호를 바꾸고 싶어요.", a: "내 팬꾹의 개인정보에서 바꿀 수 있고, 카카오톡 인증을 다시 받아야 해요." },
+      { q: "아이디를 바꿀 수 있나요?", a: "아이디는 바꿀 수 없어요. 닉네임은 「프로필 수정」에서, 이메일은 「계정 설정」에서 바꿀 수 있어요." },
+      { q: "휴대폰 번호를 바꾸고 싶어요.", a: "「계정 설정」의 휴대폰 번호에서 바꿀 수 있어요. 지금 비밀번호를 입력하고 카카오톡으로 본인 확인을 다시 받아 주세요." },
     ],
   },
 ];
@@ -194,7 +197,7 @@ export function SupportPage({
                 고객센터
               </h1>
             </div>
-            <p className="ph-desc">궁금한 점을 먼저 찾아보시고, 없으면 1:1 문의를 남겨 주세요.</p>
+            <p className="ph-desc">자주 묻는 질문에서 궁금한 내용을 확인해 보세요. 원하는 답변을 찾지 못했다면 1:1 문의를 남겨 주세요.</p>
           </header>
         </div>
       </section>
@@ -256,7 +259,7 @@ export function SupportPage({
         <div className="pub-inner">
           <div className="sec-head">
             <h2 id="inquiry-title">1:1 문의</h2>
-            <p className="t-lead t-desc">1:1 문의는 남겨 주신 순서대로 답변드려요. 답변이 달리면 「내 문의」에서 볼 수 있어요.</p>
+            <p className="t-lead t-desc">1:1 문의는 접수된 순서대로 답변해 드려요. 답변은 「내 문의」에서 확인할 수 있어요.</p>
           </div>
           <div className={`stack ${s.col}`}>
             <div className={`card ${s.ask}`}>
@@ -270,7 +273,7 @@ export function SupportPage({
       <section className={s.sec} aria-labelledby="contact-title">
         <div className="pub-inner">
           <div className="sec-head">
-            <h2 id="contact-title">운영 시간·연락처</h2>
+            <h2 id="contact-title">운영 시간 및 연락처</h2>
           </div>
           <dl className={s.hours}>
             {CONTACT.map(([k, v]) => (

@@ -123,7 +123,7 @@ export function InquiryForm({ signedIn, restricted = false }: { signedIn: boolea
           onChange={(e) => edit("orderNo", e.target.value)}
         />
         <p className="hint" id="q-order-h">
-          선물에 관한 문의라면 적어 주시면 더 빨리 확인할 수 있어요.
+          선물에 관한 문의라면 주문번호를 함께 입력해 주세요. 더 빠르게 확인할 수 있어요.
         </p>
       </div>
       <div className="field">
@@ -132,7 +132,7 @@ export function InquiryForm({ signedIn, restricted = false }: { signedIn: boolea
           className="input"
           id="q-title"
           type="text"
-          placeholder="문의 제목을 적어 주세요"
+          placeholder="문의 제목을 입력해 주세요"
           value={draft.title}
           aria-invalid={invalid("title")}
           aria-describedby={describedBy("title")}
@@ -145,7 +145,7 @@ export function InquiryForm({ signedIn, restricted = false }: { signedIn: boolea
           className={`input ${s.textarea}`}
           id="q-body"
           rows={6}
-          placeholder="궁금한 점을 자세히 적어 주세요"
+          placeholder="문의 내용을 자세히 입력해 주세요"
           value={draft.body}
           aria-invalid={invalid("body")}
           aria-describedby={describedBy("body")}
@@ -168,7 +168,7 @@ export function InquiryForm({ signedIn, restricted = false }: { signedIn: boolea
       ) : (
         // 로그인한 뒤 고객센터로 돌아온다 — 로그인 링크에는 경로만 싣는다(session-login INV-L13)
         <Link className="btn btn--block" href="/login?next=/support">
-          로그인하고 문의 남기기
+          로그인하고 문의하기
         </Link>
       )}
     </form>

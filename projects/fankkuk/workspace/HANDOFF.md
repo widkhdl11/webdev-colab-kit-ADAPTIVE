@@ -11,7 +11,7 @@
   },
   "spec": {
     "status": "clean",
-    "hash": "a64e4af8af35"
+    "hash": "1df593067050"
   },
   "design": {
     "status": "clean",
@@ -27,11 +27,11 @@
   },
   "implement": {
     "status": "clean",
-    "hash": "c22798050501"
+    "hash": "13a02bc3b82b"
   },
   "qa": {
     "status": "clean",
-    "hash": "e38a163fa211"
+    "hash": "87211d3ef646"
   },
   "review": {
     "status": "dirty",

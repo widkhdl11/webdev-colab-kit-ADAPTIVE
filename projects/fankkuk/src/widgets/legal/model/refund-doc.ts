@@ -1,16 +1,15 @@
-import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { CREATOR_CHECK_DAYS } from "@/entities/parcel/model/creator-check";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { OPERATOR_NAME } from "@/shared/config/site-copy";
 import { toCheck, type LegalDoc } from "./legal-doc";
 
-// 취소·환불 규정. 근거: 이용약관 제8·9·10·13조(terms-doc.ts) · specs/payment.md INV-M8·M14·M16·M17·M18 · office-workflow INV-W10.
+// 취소·환불 규정. 근거: 이용약관 제8·9·10·13조(terms-doc.ts) · specs/payment.md INV-M8·M14·M16·M17·M18·M21 · office-workflow INV-W6·W10·W14·W15 · address-protection INV-P5·P17·P18.
+// 늦게 오는 상자의 시계는 결제 완료부터 30일(INV-M18 ③, 2026-10-21 기한 정리) — 승인 기한(APPROVAL_DEADLINE_DAYS)과 다른 값이다.
 // 요금 안의 칸 중 반송 택배비(배송비)만 상자 크기별 숫자로 쓴다(카드 d98 ①, DECISIONS 2026-10-17). 검수비·서비스료는 말로만.
 // 실제로 공제한 금액은 선물 상세의 결제 내역이 보여 준다(payment INV-M14 — 결제 당시 저장한 칸).
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
-const WAIT = `${APPROVAL_DEADLINE_DAYS}일`;
 
 export function refundDoc(prices: PublicPriceTable): LegalDoc {
   return {
@@ -34,7 +33,7 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
             kind: "steps",
             items: [
               "이용요금은 상자별로 부과합니다.",
-              "상자의 크기와 무게 중 더 높은 구간의 요금을 적용합니다.",
+              "크기와 무게를 각각 확인하여 더 높은 구간의 요금을 적용합니다.",
               "이용요금에는 배송비, 검수비, 서비스료가 포함되어 있습니다.",
               "배송비는 상자를 택배로 보내는 데 드는 금액입니다. 상자를 반송할 때 공제하는 반송 택배비도 이 금액으로 계산합니다.",
               "검수비는 사무실에서 상자를 검수하는 데 드는 금액입니다.",
@@ -76,8 +75,8 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
                 title: "입고 전 취소·거절·자동 반려 — 받는 주소가 공개된 경우(승인 또는 「먼저 보내기」)",
                 fields: [
                   ["우선 환불 금액", "아직 도착하지 않은 상자별로 해당 상자 금액에서 반송 택배비를 공제한 금액"],
-                  [`${WAIT} 이내에 도착한 경우`, "해당 선물의 상자로 받아 반송하며, 추가 환불 금액은 없음"],
-                  [`${WAIT} 이내에 도착하지 않은 경우`, "남겨 둔 반송 택배비까지 환불"],
+                  ["결제 완료부터 30일 이내에 도착한 경우", "해당 선물의 상자로 받아 반송하며, 추가 환불 금액은 없음"],
+                  ["결제 완료부터 30일 이내에 도착하지 않은 경우", "남겨 둔 반송 택배비까지 환불"],
                 ],
                 // 입고 후 줄 셋이 「아직 도착하지 않은 상자」를 이 줄로 보낸다 — 입고 후 칩에서도 남긴다
                 tags: ["입고 전", "입고 후"],
@@ -131,7 +130,8 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
                 title: "검수 불합격에 따른 반송",
                 fields: [
                   ["해당", `보낼 수 없는 물품이 발견되거나 ${OVERSIZE_RULE}, 또는 크리에이터가 돌려보내기를 선택했거나 ${CREATOR_CHECK_DAYS}일 이내에 답하지 않은 상자`],
-                  ["환불 금액", "검수비와 반송 택배비를 공제하므로 환불 금액이 없습니다", "none"],
+                  ["환불 금액", "검수비·서비스료·반송 택배비를 공제하므로 환불 금액이 없습니다", "none"],
+                  ["위치 추적 장치가 확인된 상자", "신고를 위한 보관·수사기관 인계·반송 중 어느 쪽으로 끝나도 환불 금액이 없습니다", "none"],
                 ],
                 tags: ["입고 후"],
               },
@@ -159,7 +159,7 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
       },
       {
         id: "cancel",
-        title: "3. 취소하는 방법",
+        title: "3. 취소 신청 방법",
         tags: ["입고 전", "입고 후", "출고 후"],
         blocks: [
           {
@@ -167,7 +167,7 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
             items: [
               "선물이 사무실에 입고되기 전에는 팬이 선물 상세에서 「취소하기」를 눌러 직접 취소할 수 있습니다.",
               "입고 전에 취소하면 결제 금액 전액을 환불합니다. 다만 받는 주소가 공개된 후에는 상자가 이미 배송 중일 수 있으므로, 2절 표의 「받는 주소가 공개된 경우」 기준에 따라 환불합니다.",
-              "입고 후에는 고객센터의 1:1 문의로 취소를 접수합니다.",
+              "입고 후에는 고객센터의 1:1 문의로 취소를 신청합니다.",
               "입고 후 취소의 환불 금액은 2절 표의 「팬의 입고 후 취소」 기준에 따릅니다.",
               "출고된 선물은 취소할 수 없습니다.",
             ],
@@ -176,7 +176,7 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
       },
       {
         id: "return",
-        title: "4. 반송 방법",
+        title: "4. 반송 방법과 비용",
         // 주소가 공개된 뒤 늦게 도착한 상자도 반송한다(2절 입고 전 둘째 줄)
         tags: ["입고 전", "입고 후"],
         frequent: true,
@@ -184,10 +184,13 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
           {
             kind: "steps",
             items: [
-              "사무실에 도착한 상자를 반송할 때에는 상자를 보낸 회원이 등록한 주소로 보냅니다. 회사가 반송할 상자를 알리면, 보낸 회원이 화면에서 주소를 확인하거나 바꾼 후 「확인」을 눌러야 반송합니다.",
-              "반송할 상자가 생긴 때부터 14일이 지나도 확인하지 않으면 다시 알리고, 30일이 지나도 확인하지 않은 상자는 처분합니다. 처분하더라도 환불 금액은 다시 계산하지 않습니다.",
-              "받는 주소의 6자리로 선물을 확인할 수 없는 상자(보류)는 원래 송장의 보낸 사람 주소로 착불 발송합니다. 주문과 연결되지 않아 환불할 결제가 없기 때문입니다.",
-              "회사는 반송 택배비를 먼저 부담하여 선불로 보내고, 그 금액을 환불 금액에서 공제합니다.",
+              "사무실에 도착한 상자를 반송할 때에는 상자를 보낸 사람이 확인한 배송지로 보냅니다. 회사가 반송할 상자를 통지하면, 보낸 사람은 「돌려받을 주소 확인」에서 등록한 배송지를 확인하거나 바꾼 후 「확인」을 눌러야 합니다. 등록한 배송지가 없으면 그 화면에서 등록할 수 있습니다.",
+              "「확인」을 누른 때의 배송지를 그 상자에 따로 저장하며, 그 뒤 등록한 배송지를 바꾸거나 지워도 저장한 배송지로 반송합니다.",
+              "반송할 상자가 생긴 때부터 7일과 14일이 지나도 확인하지 않으면 그때마다 다시 통지하고, 25일이 되면 처분 기한을 통지합니다. 30일이 지나도 확인하지 않은 상자는 처분합니다. 처분하더라도 환불 금액은 다시 계산하지 않습니다.",
+              "받는 주소의 6자리로 선물을 확인할 수 없는 상자(보류)는 사무실에 도착한 날부터 30일이 지나도 확인되지 않으면 원래 송장의 보낸 사람 주소로 착불로 반송합니다. 주문과 연결되지 않아 환불할 결제가 없기 때문입니다.",
+              "위 착불 반송 외에는 회사가 반송 택배비를 먼저 부담하여 선불로 보내고, 그 금액을 환불 금액에서 공제합니다.",
+              "반송 송장은 상자마다 처음 출력과 재출력을 합해 최대 3번까지 출력할 수 있으며, 반송한 뒤에도 저장한 배송지를 지우기 전까지는 남은 횟수 안에서 재출력할 수 있습니다.",
+              "저장한 배송지는 택배사가 상자를 가져간 것을 확인한 때 지웁니다. 택배사와 연결되기 전에는 이 확인을 받을 수 없으므로 반송한 때부터 72시간이 지나면 지웁니다. 그 전에 상자를 처분하면 처분할 때 지웁니다.",
               "공제하는 반송 택배비는 상자 크기별로 정한 배송비 상당액이며, 결제 당시의 금액으로 계산합니다.",
             ],
           },

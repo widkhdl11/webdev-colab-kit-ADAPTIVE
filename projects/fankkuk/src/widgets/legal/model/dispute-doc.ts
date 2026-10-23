@@ -28,7 +28,7 @@ export function disputeDoc(info: SiteInfo = SITE_INFO): LegalDoc {
               "로그인한 뒤 고객센터의 1:1 문의로 알려 주세요.",
               "사이트 아래쪽의 「신고·문의」에서도 알릴 수 있어요.",
               `이메일 ${orBlank(info.supportEmail)}로 보내셔도 돼요.`,
-              "선물에 관한 일이면 주문번호(예: FC-7K3M9)를 같이 적어 주세요.",
+              "선물에 관한 문의라면 주문번호(예: FC-7K3M9)를 같이 적어 주세요.",
             ],
           },
         ],
@@ -82,7 +82,7 @@ export function disputeDoc(info: SiteInfo = SITE_INFO): LegalDoc {
           {
             kind: "steps",
             items: [
-              "팬꾹이 맡은 상자가 없어지거나 부서지면 보낸 회원이 신고한 물품 가액을 한도로 배상해요.",
+              "팬꾹이 맡은 상자가 없어지거나 부서지면 보낸 사람이 신고한 물품 가액을 한도로 배상해요.",
               `신고한 가액이 없으면 ${won(info.compensationCapKrw)}을 한도로 배상해요.`,
               "이 기준은 이용약관 제17조와 같아요.",
             ],

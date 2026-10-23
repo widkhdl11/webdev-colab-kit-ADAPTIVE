@@ -9,13 +9,13 @@ const decode = (href: string) => {
 };
 
 describe("신고·문의 메일", () => {
-  it("적은 내용이 고객센터 이메일로 가는 메일 창 주소가 된다(분류·답장 이메일·페이지 주소·내용)", () => {
+  it("적은 내용이 고객센터 이메일로 가는 메일 창 주소가 된다(분류·답변받을 이메일·페이지 주소·내용)", () => {
     const r = buildReportMail(ok, "help@example.com");
     expect(r.ok).toBe(true);
     const m = decode(r.ok ? r.href : "");
     expect(m.to).toBe("help@example.com");
     expect(m.subject).toBe("[팬꾹 사칭 페이지 신고]");
-    expect(m.body).toBe("분류: 사칭 페이지 신고\n답장받을 이메일: fan@example.com\n페이지 주소: https://example.com/fake\n\n팬꾹을 사칭하는 페이지예요.");
+    expect(m.body).toBe("분류: 사칭 페이지 신고\n답변받을 이메일: fan@example.com\n페이지 주소: https://example.com/fake\n\n팬꾹을 사칭하는 페이지예요.");
   });
 
   it("페이지 주소는 비워도 되고, 비우면 메일에 그 줄이 없다", () => {
