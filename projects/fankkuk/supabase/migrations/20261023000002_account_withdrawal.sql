@@ -3,7 +3,7 @@
 --
 -- 무엇을 바꾸나
 --   1) profiles.withdrawn_at · creators.withdrawn_at — 탈퇴한 때. 가명 계정은 profiles 에 withdrawn_at 이 찍힌 줄로 둔다(로그인 계정 없음).
---      profiles.id → auth.users 외래키를 「탈퇴하지 않은 계정은 로그인 계정이 있어야 한다」 트리거로 바꾼다 — 가명 계정에는 로그인 계정이 없다.
+--      profiles.id → auth.users 외래키를 트리거 둘로 바꾼다 — 「탈퇴하지 않은 계정은 로그인 계정이 있어야 한다」·「로그인 계정을 지우면 계정 행도 지운다」. 가명 계정에는 로그인 계정이 없다.
 --      닉네임 중복 금지는 탈퇴하지 않은 계정끼리만. 「탈퇴한 회원」은 가명 계정 말고는 쓸 수 없다.
 --   2) approval_signatures.content_hash — 탈퇴 때 서명 원문 대신 남기는 해시. 서명자 식별값·원문은 탈퇴 때 비운다(빈 값 허용).
 --   3) 탈퇴한 크리에이터·팬 앞으로 주문·승인 요청·역조공 몫이 생기지 않는다(넣는 순간 트리거가 거부, INV-S15).
@@ -41,6 +41,20 @@ end $$;
 drop trigger if exists profiles_need_login_account on public.profiles;
 create trigger profiles_need_login_account before insert or update of id, nickname, withdrawn_at on public.profiles
   for each row execute function public.profiles_need_login_account();
+
+-- 외래키가 하던 「로그인 계정을 지우면 계정 행도 지운다」는 트리거로 이어 간다(가명 계정은 로그인 계정이 없어 해당 없음)
+create or replace function public.profiles_drop_with_login_account()
+returns trigger
+language plpgsql security definer set search_path = ''
+as $$
+begin
+  delete from public.profiles where id = old.id;
+  return old;
+end $$;
+
+drop trigger if exists profiles_drop_with_login_account on auth.users;
+create trigger profiles_drop_with_login_account after delete on auth.users
+  for each row execute function public.profiles_drop_with_login_account();
 
 drop index if exists public.profiles_nickname_key;
 create unique index profiles_nickname_key on public.profiles (lower(btrim(nickname))) where withdrawn_at is null;

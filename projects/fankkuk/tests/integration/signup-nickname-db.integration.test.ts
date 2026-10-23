@@ -4,7 +4,7 @@ import { saveAccount } from "@/features/account-edit/model/save-account";
 import { checkPhoneVerification, startPhoneVerification } from "@/features/signup/model/phone-verification";
 import { signUp } from "@/features/signup/model/sign-up";
 import { choosePhoneVerifier } from "@/shared/api/phone-verifier/verifier";
-import { adminClient, anonClient, deleteTestSignups, psql, SEED, signedInClient, TEST_SIGNUP_PHONE_PREFIX } from "./helpers";
+import { adminClient, anonClient, deleteTestSignups, psql, psqlError, SEED, signedInClient, TEST_SIGNUP_PHONE_PREFIX } from "./helpers";
 
 // 가입 닉네임(signup INV-U13)·아이디·닉네임 미리 확인(INV-U14)을 실제 DB 로.
 // 시험 계정은 it_nk 로 시작하는 아이디, 0109000 의 7000번대 번호만 쓴다 — 끝나면 지운다.
@@ -156,9 +156,16 @@ describe("INV-U13: 가입 때 받은 닉네임으로 계정이 생긴다", () =>
     expect(psql(`select count(*) from public.profiles where lower(btrim(nickname)) = '동시닉';`)).toBe("1");
   });
 
-  it("INV-U13: 겹침을 막는 것은 비교 값 lower(btrim(nickname)) 의 유일 인덱스다 — 대소문자·앞뒤 공백을 빼고 비교하는 그 정의 그대로", () => {
+  it("INV-U13: 겹침을 막는 것은 비교 값 lower(btrim(nickname)) 의 유일 인덱스다 — 대소문자·앞뒤 공백을 빼고 비교하는 그 정의 그대로, 가명 처리된 계정만 뺀다", () => {
     const def = psql(`select indexdef from pg_indexes where schemaname = 'public' and tablename = 'profiles' and indexname = 'profiles_nickname_key';`);
-    expect(def).toBe("CREATE UNIQUE INDEX profiles_nickname_key ON public.profiles USING btree (lower(btrim(nickname)))");
+    expect(def).toBe("CREATE UNIQUE INDEX profiles_nickname_key ON public.profiles USING btree (lower(btrim(nickname))) WHERE (withdrawn_at IS NULL)");
+  });
+
+  it("INV-U13 (실패경로): 가명 계정이 쓰는 「탈퇴한 회원」은 회원이 닉네임으로 쓸 수 없다 — 대소문자·앞뒤 공백이 달라도", () => {
+    for (const nick of ["탈퇴한 회원", " 탈퇴한 회원 "]) {
+      expect(psqlError(`update public.profiles set nickname = '${nick}' where login_id = 'byeolbit_fan'`)).toContain("이미 쓰는 닉네임");
+    }
+    expect(psql(`select nickname from public.profiles where login_id = 'byeolbit_fan'`)).not.toContain("탈퇴한");
   });
 
   it("INV-U13: 가입 처리 — 이미 쓰는 닉네임이면 닉네임 칸 「이미 쓰는 닉네임」, 로그인 정보는 남지 않는다", async () => {

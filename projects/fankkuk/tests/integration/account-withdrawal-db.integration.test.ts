@@ -33,7 +33,7 @@ async function withdraw(loginId: string) {
   return r;
 }
 
-const handleOf = (a: TestAccount) => a.loginId.replaceAll("_", "-");
+const handleOf = (a: TestAccount) => a.loginId;
 
 /** 시험 계정 하나를 확인된 크리에이터로 — 크리에이터 행·받는 주소 자리 표시 */
 function makeCreator(a: TestAccount): string {
@@ -72,16 +72,27 @@ describe("탈퇴 처리 — 가명 처리 (my-account INV-A15)", () => {
     const fan = await createTestAccount({ tag: "wdfan", email: "wd.fan@example.com", phone: "01090001111" });
     const a = await shippedOrder({ senderId: fan.userId });
     const b = await shippedOrder({ senderId: fan.userId });
+    // 그 번호의 본인 확인 기록 · 주소 등록 기록(고칠 수 없는 표)도 개인정보 구역에서 지운다
+    psql(`insert into pii.phone_verifications (phone, verified_at) values ('01090001111', now()); insert into pii.fan_address_events (account_id, event) values ('${fan.userId}', 'registered')`);
     const r = await withdraw(fan.loginId);
     expect(r.error).toBeNull();
     const pseudonym = (r.data as { pseudonym: string }).pseudonym;
     expect(pseudonym).not.toBe(fan.userId);
     expect([profileRows(fan.userId), authRows(fan.userId), contactRows(fan.userId)]).toEqual([0, 0, 0]);
+    expect(Number(psql(`select count(*) from pii.phone_verifications where phone = '01090001111'`))).toBe(0);
+    expect(Number(psql(`select count(*) from pii.fan_address_events where account_id in ('${fan.userId}', '${pseudonym}')`))).toBe(0);
     expect([fanOf(a.orderId), fanOf(b.orderId)]).toEqual([pseudonym, pseudonym]);
-    expect(psql(`select nickname || '|' || (withdrawn_at is not null) || '|' || role from public.profiles where id = '${pseudonym}'`)).toBe("탈퇴한 회원|t|fan");
+    expect(psql(`select nickname || '|' || (withdrawn_at is not null) || '|' || role from public.profiles where id = '${pseudonym}'`)).toBe("탈퇴한 회원|true|fan");
     expect(Number(psql(`select count(*) from public.account_withdrawals where pseudonym_id = '${pseudonym}'`))).toBe(1);
     // 가명 식별자로 원래 계정을 되짚을 칸이 없다 — 원래 계정 ID 가 어느 줄에도 남지 않는다
     expect(Number(psql(`select count(*) from public.orders where fan_id = '${fan.userId}'`))).toBe(0);
+  });
+
+  it("INV-A15: 가명 계정 때문에 계정 행이 로그인 계정 없이도 있을 수 있게 됐지만, 탈퇴하지 않은 계정은 로그인 계정 없이 만들 수 없고 로그인 계정을 지우면 계정 행도 지워진다", async () => {
+    const fan = await createTestAccount({ tag: "wdlogin", phone: "01090009997" });
+    expect(psqlError(`insert into public.profiles (id, login_id, nickname, role) values (gen_random_uuid(), 'it_wd_nologin', 'it_wd_nologin', 'fan')`)).toContain("로그인 계정");
+    expect((await adminClient().auth.admin.deleteUser(fan.userId)).error).toBeNull();
+    expect([profileRows(fan.userId), contactRows(fan.userId)]).toEqual([0, 0]);
   });
 
   it("INV-A15 (S15b, 실패경로): 진행 중인 선물이 있으면 거부(55000)되고 아무것도 지워지지 않는다. 대표가 아닌 사람(직원·팬·크리에이터)이 부르면 거부(42501)", async () => {
@@ -130,7 +141,7 @@ describe("탈퇴한 크리에이터 (approval-signature INV-S14·S15)", () => {
     const after = psql(
       `select coalesce(content_hash, '') || '|' || signed_at || '|' || (signed_content is null) || '|' || (signer_id is null) from public.approval_signatures where request_id = '${requestId}'`,
     );
-    expect(after).toBe(`${before}|t|t`);
+    expect(after).toBe(`${before}|true|true`);
     expect([profileRows(acc.userId), authRows(acc.userId)]).toEqual([0, 0]);
   });
 
@@ -158,7 +169,7 @@ describe("탈퇴한 크리에이터 (approval-signature INV-S14·S15)", () => {
       psql(
         `select name || '|' || (profile_id is null) || '|' || (withdrawn_at is not null) || '|' || searchable || '|' || identity_verified || '|' || coalesce(x_handle, '-') || '|' || coalesce(fan_name, '-') || '|' || channel from public.creators where id = '${creatorId}'`,
       ),
-    ).toBe("탈퇴한 크리에이터|t|t|f|f|-|-|");
+    ).toBe("탈퇴한 크리에이터|true|true|false|false|-|-|");
     // 크리에이터 페이지가 「활동 종료」를 그릴 근거 — 링크 주소·ID 로 물으면 탈퇴, 활동 중인 하루는 아님
     const anon = anonClient();
     expect((await anon.rpc("withdrawn_creator", { p_handle: handleOf(acc) })).data).toBe(true);
@@ -188,5 +199,31 @@ describe("탈퇴한 크리에이터 (approval-signature INV-S14·S15)", () => {
       psqlError(`insert into public.approval_requests (request_id, order_id, payload, created_at) values ('apr_ITWDBLOCK', '${old.orderId}', 'x', now())`),
     ).not.toBeNull();
     expect((await adminClient().from("approval_requests").select("id").eq("request_id", "apr_ITWDBLOCK")).data).toEqual([]);
+  });
+
+  it("INV-S15 (S15c, 실패경로): 등록 함수를 거치지 않고 표에 바로 넣어도 — 탈퇴한 크리에이터 앞 주문 · 탈퇴한 팬의 주문 · 탈퇴한 크리에이터의 역조공 · 탈퇴한 팬 앞 역조공 몫 — 모두 「탈퇴한 회원」으로 거부된다", async () => {
+    const acc = await createTestAccount({ tag: "wdrow", phone: "01090009999" });
+    const creatorId = makeCreator(acc);
+    await shippedOrder({ creatorId });
+    const fan = await createTestAccount({ tag: "wdrowfan", phone: "01090009998" });
+    await shippedOrder({ senderId: fan.userId });
+    const c = await withdraw(acc.loginId);
+    const f = await withdraw(fan.loginId);
+    expect([c.error, f.error]).toEqual([null, null]);
+    const fanPseudonym = (f.data as { pseudonym: string }).pseudonym;
+    const order = (fanId: string, toCreator: string) =>
+      `insert into public.orders (order_no, fan_id, creator_id, item_kind, has_electronics_or_metal, status) values ('FC-TWDROW${Math.floor(Math.random() * 90 + 10)}', '${fanId}', '${toCreator}', '시험 선물', false, 'pending_payment')`;
+    expect(psqlError(order("00000000-0000-4000-a000-000000000001", creatorId))).toContain("탈퇴한 회원");
+    expect(psqlError(order(fanPseudonym, "00000000-0000-4000-b000-000000000001"))).toContain("탈퇴한 회원");
+    expect(
+      psqlError(
+        `insert into public.revgift_sends (sender_id, creator_id, toss_order_id, amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw) values ('00000000-0000-4000-a000-000000000011', '${creatorId}', 'pay_it_wdrow', 1, 0, 0, 0, 1)`,
+      ),
+    ).toContain("탈퇴한 회원");
+    expect(
+      psqlError(
+        `insert into public.revgift_shares (send_id, seq, order_no, fan_id, tier, amount_krw, shipping_fee_krw) values (gen_random_uuid(), 1, 'RG-ITWD1', '${fanPseudonym}', 'small', 1, 0)`,
+      ),
+    ).toContain("탈퇴한 회원");
   });
 });
