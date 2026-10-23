@@ -483,6 +483,172 @@ describe("기간 지난 주문 기록 자동 삭제 (my-account INV-A16, 카드 
   });
 });
 
+// 역조공 기록 — 같은 규칙(카드 d123)을 보내기에 맞춘다. 보내기 하나에 몫(받는 팬)이 여럿이라, 5년은 보내기 전체가 끝난 때
+// (모든 몫·결제·열람 기록 가운데 마지막)부터 센다. 크리에이터·팬 둘 다 탈퇴한 몫은 지우고, 한쪽만이면 같이 쓰는 표시로 바꾼다.
+// 크리에이터가 탈퇴했고 몫이 다 지워진 보내기는 지운다. 보내기·몫은 실제 흐름 대신 표에 바로 넣는다.
+const RG_TOSS = "pay_test_rg_wd";
+function makeSend(creator: { profileId: string; creatorId: string }, shares: { fanId: string; open?: boolean }[]): { sendId: string; shareIds: string[] } {
+  const toss = `${RG_TOSS}${rand(8)}`;
+  const out = psql(
+    `begin; set local session_replication_role = replica;
+     insert into public.revgift_sends (sender_id, creator_id, toss_order_id, amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw, status, payment_key, settled_at)
+       values ('${creator.profileId}', '${creator.creatorId}', '${toss}', ${shares.length}, 0, 0, 0, ${shares.length}, 'done', 'pk_${toss}', now());
+     ${shares
+       .map(
+         (s, i) =>
+           `insert into public.revgift_shares (send_id, seq, order_no, fan_id, tier, amount_krw, shipping_fee_krw, reply, replied_at, received_at, inspected_at, shipped_at)
+              select id, ${i + 1}, 'RG-IT${rand(6)}', '${s.fanId}', 'small', 1, 1, ${s.open ? "'waiting', null, null, null, null" : "'accepted', now(), now(), now(), now()"} from public.revgift_sends where toss_order_id = '${toss}';`,
+       )
+       .join("\n")}
+     commit;
+     select id from public.revgift_sends where toss_order_id = '${toss}';
+     select id from public.revgift_shares where send_id = (select id from public.revgift_sends where toss_order_id = '${toss}') order by seq;`,
+  )
+    .split("\n")
+    .filter((l) => /^[0-9a-f-]{36}$/.test(l));
+  return { sendId: out[0], shareIds: out.slice(1) };
+}
+/** 몫의 주소 열람 기록(고칠 수 없는 표) — 지울 때 함께 지워지는지, 그 시각도 「마지막 기록」인지 보려고 */
+const addShareDecryptLog = (shareId: string) =>
+  psql(`insert into public.revgift_decrypt_log (share_id, requester_id, result, deny_reason) select '${shareId}', id, 'denied', 'not_owner' from public.profiles where login_id = 'fankkuk_admin'`);
+/** 몫의 사무실 상자(발송됨)와 검수 기록, nicknameOf 를 주면 그 계정을 닉네임 일치로 잡은 보류 상자 줄 — 상자 기록도 지우거나 바꾸는지 보려고 */
+function addShareParcel(shareId: string, nicknameOf?: string): string {
+  const staff = STAFF();
+  const parcel = idLine(
+    psql(
+      `begin; set local session_replication_role = replica;
+       insert into public.office_parcels (share_id, state, received_at, inspected_at, shipped_at, outbound_waybill_no)
+         values ('${shareId}', 'shipped', now(), now(), now(), '9${rand(12)}') returning id;
+       commit;`,
+    ),
+  );
+  psql(
+    `begin; set local session_replication_role = replica;
+     insert into public.office_inspections (parcel_id, inspected_by, outcome, bluetooth, rf, metal) values ('${parcel}', '${staff}', 'return', 'clear', 'clear', 'clear');
+     ${nicknameOf ? `insert into public.office_unmatched (waybill_no, shelf, recorded_by, reason, nickname_profile_id, matched_parcel_id, matched_at) values ('8${rand(11)}', 'A1', '${staff}', 'no_code', '${nicknameOf}', '${parcel}', now());` : ""}
+     commit;`,
+  );
+  return parcel;
+}
+const shareParcelRows = (sendId: string) =>
+  psql(
+    `select (select count(*) from public.office_parcels op join public.revgift_shares s on s.id = op.share_id where s.send_id = '${sendId}') || ',' ||
+       (select count(*) from public.office_inspections i join public.office_parcels op on op.id = i.parcel_id join public.revgift_shares s on s.id = op.share_id where s.send_id = '${sendId}')`,
+  );
+function ageSend(sendId: string, shift: string, only: "all" | "keep-logs" = "all") {
+  const sets = (list: string) => list.split(", ").map((c) => `${c} = ${c} - interval '${shift}'`).join(", ");
+  const parcels = `select op.id from public.office_parcels op join public.revgift_shares s on s.id = op.share_id where s.send_id = '${sendId}'`;
+  backdate(
+    [
+      `update public.office_parcels set ${sets("created_at, received_at, inspected_at, shipped_at")} where id in (${parcels})`,
+      `update public.office_inspections set at = at - interval '${shift}' where parcel_id in (${parcels})`,
+      `update public.office_unmatched set ${sets("arrived_at, matched_at")} where matched_parcel_id in (${parcels})`,
+      `update public.revgift_sends set ${sets("created_at, settled_at")} where id = '${sendId}'`,
+      `update public.revgift_shares set ${sets("replied_at, received_at, inspected_at, shipped_at")} where send_id = '${sendId}'`,
+      only === "all" ? `update public.revgift_decrypt_log set at = at - interval '${shift}' where share_id in (select id from public.revgift_shares where send_id = '${sendId}')` : "select 1",
+    ].join("; "),
+  );
+}
+const sendRows = (sendId: string) =>
+  psql(
+    `select (select count(*) from public.revgift_sends where id = '${sendId}') || ',' || (select count(*) from public.revgift_shares where send_id = '${sendId}') || ',' ||
+       (select count(*) from public.revgift_decrypt_log l join public.revgift_shares s on s.id = l.share_id where s.send_id = '${sendId}')`,
+  );
+const cleanSends = () =>
+  backdate(
+    `delete from public.office_unmatched where matched_parcel_id in (select op.id from public.office_parcels op join public.revgift_shares s on s.id = op.share_id join public.revgift_sends d on d.id = s.send_id where d.toss_order_id like '${RG_TOSS}%');
+     delete from public.office_inspections where parcel_id in (select op.id from public.office_parcels op join public.revgift_shares s on s.id = op.share_id join public.revgift_sends d on d.id = s.send_id where d.toss_order_id like '${RG_TOSS}%');
+     delete from public.office_parcels where share_id in (select s.id from public.revgift_shares s join public.revgift_sends d on d.id = s.send_id where d.toss_order_id like '${RG_TOSS}%');
+     delete from public.revgift_decrypt_log where share_id in (select s.id from public.revgift_shares s join public.revgift_sends d on d.id = s.send_id where d.toss_order_id like '${RG_TOSS}%');
+     delete from public.revgift_shares where send_id in (select id from public.revgift_sends where toss_order_id like '${RG_TOSS}%');
+     delete from public.revgift_sends where toss_order_id like '${RG_TOSS}%'`,
+  );
+
+describe("기간 지난 역조공 기록 자동 삭제 (my-account INV-A16, 카드 d123)", () => {
+  afterEach(() => cleanSends());
+
+  async function sendTo(tag: string, fanCount: number, opts: { openLast?: boolean } = {}) {
+    const cre = await createTestAccount({ tag: `${tag}c`, phone: null });
+    const creatorId = makeCreator(cre);
+    const fans = [];
+    for (let i = 0; i < fanCount; i += 1) fans.push(await createTestAccount({ tag: `${tag}f${i}`, phone: null }));
+    const s = makeSend(
+      { profileId: cre.userId, creatorId },
+      fans.map((f, i) => ({ fanId: f.userId, open: opts.openLast === true && i === fanCount - 1 })),
+    );
+    s.shareIds.forEach(addShareDecryptLog);
+    return { cre, creatorId, fans, ...s };
+  }
+  const pseudonymOf = async (loginId: string) => {
+    const r = await withdraw(loginId);
+    expect(r.error).toBeNull();
+    return (r.data as { pseudonym: string }).pseudonym;
+  };
+
+  it("INV-A16 (S16·d123): 5년 1일 된 보내기 — 크리에이터·팬 둘 다 탈퇴한 몫은 열람 기록까지 지워지고, 회원인 팬의 몫은 남아 보내기의 크리에이터·보낸 사람이 같이 쓰는 표시가 된다. 그 팬도 탈퇴하면 보내기까지 지워진다", async () => {
+    const s = await sendTo("wdg1", 2);
+    addShareParcel(s.shareIds[0]);
+    const fanGone = await pseudonymOf(s.fans[0].loginId);
+    const creGone = await pseudonymOf(s.cre.loginId);
+    ageSend(s.sendId, "5 years 1 day");
+    const counts = purge();
+    expect(counts.revgift_shares).toBeGreaterThanOrEqual(1);
+    expect(sendRows(s.sendId)).toBe("1,1,1");
+    expect(shareParcelRows(s.sendId)).toBe("0,0");
+    expect(psql(`select fan_id from public.revgift_shares where send_id = '${s.sendId}'`)).toBe(s.fans[1].userId);
+    expect(psql(`select creator_id || ',' || sender_id from public.revgift_sends where id = '${s.sendId}'`)).toBe(`${SHARED_CREATOR},${SHARED_FAN}`);
+    expect([referencesTo(fanGone), referencesTo(creGone)]).toEqual([[], []]);
+    expect(psql(`select count(*) from pg_trigger where tgname = 'revgift_decrypt_log_no_update' and tgenabled = 'D'`)).toBe("0");
+    // 이미 바꾼 보내기는 다음 회차에 다시 세지 않는다
+    expect(purge().revgift_unlinked).toBe(0);
+
+    await pseudonymOf(s.fans[1].loginId);
+    purge();
+    expect(sendRows(s.sendId)).toBe("0,0,0");
+  });
+
+  it("INV-A16 (d123): 팬만 탈퇴한 5년 1일 된 보내기 — 몫과 사무실 상자는 남고, 몫의 팬 칸과 상자 기록의 닉네임 일치 칸이 같이 쓰는 「탈퇴한 회원」이 된다. 크리에이터 칸은 그대로다", async () => {
+    const s = await sendTo("wdg5", 1);
+    addShareParcel(s.shareIds[0], s.fans[0].userId);
+    const fanGone = await pseudonymOf(s.fans[0].loginId);
+    ageSend(s.sendId, "5 years 1 day");
+    expect(purge().revgift_unlinked).toBe(1);
+    expect(sendRows(s.sendId)).toBe("1,1,1");
+    expect(shareParcelRows(s.sendId)).toBe("1,1");
+    expect(psql(`select fan_id from public.revgift_shares where send_id = '${s.sendId}'`)).toBe(SHARED_FAN);
+    expect(psql(`select creator_id from public.revgift_sends where id = '${s.sendId}'`)).toBe(s.creatorId);
+    expect(referencesTo(fanGone)).toEqual([]);
+  });
+
+  it("INV-A16 (S16b): 둘 다 탈퇴했어도 보내기의 마지막 기록이 5년보다 하루 덜 됐으면 그대로다", async () => {
+    const s = await sendTo("wdg2", 1);
+    const fanGone = await pseudonymOf(s.fans[0].loginId);
+    await pseudonymOf(s.cre.loginId);
+    ageSend(s.sendId, "5 years - 1 day");
+    purge();
+    expect(sendRows(s.sendId)).toBe("1,1,1");
+    expect(psql(`select fan_id from public.revgift_shares where send_id = '${s.sendId}'`)).toBe(fanGone);
+  });
+
+  it("INV-A16 (S16b, 실패경로): 다른 기록은 5년 1일 전이어도 주소 열람 기록이 최근이면 그때부터 센다 — 남는다", async () => {
+    const s = await sendTo("wdg3", 1);
+    await pseudonymOf(s.fans[0].loginId);
+    await pseudonymOf(s.cre.loginId);
+    ageSend(s.sendId, "5 years 1 day", "keep-logs");
+    purge();
+    expect(sendRows(s.sendId)).toBe("1,1,1");
+  });
+
+  it("INV-A16 (실패경로): 아직 끝나지 않은 몫(수락 대기)이 있는 보내기는 5년 1일 전이어도 손대지 않는다 — 탈퇴한 팬의 몫도 가명 그대로", async () => {
+    const s = await sendTo("wdg4", 2, { openLast: true });
+    const fanGone = await pseudonymOf(s.fans[0].loginId);
+    ageSend(s.sendId, "5 years 1 day");
+    purge();
+    expect(sendRows(s.sendId)).toBe("1,2,2");
+    expect(psql(`select fan_id from public.revgift_shares where send_id = '${s.sendId}' and seq = 1`)).toBe(fanGone);
+  });
+});
+
 // 코드 리뷰(2026-10-23) 반영 — 사무실 상자가 있는 주문. 상자 기록은 실제 흐름 대신 표에 바로 넣는다(시험 대상은 탈퇴·자동 삭제다).
 const STAFF = () => psql(`select id from public.profiles where login_id = 'fankkuk_staff'`);
 const rand = (digits: number) => String(Math.floor(Math.random() * 10 ** digits)).padStart(digits, "0");
