@@ -30,7 +30,7 @@ export const SITE_INFO: SiteInfo = {
   companyName: OPERATOR_NAME, // 등록증 상호 "팬꾹"과 같은지 site-copy의 OPERATOR_NAME 확인
   ceoName: "정재원",
   bizRegNo: "260-12-03086",
-  mailOrderNo: "", // 통신판매업 신고번호 나오면 채움. 비어 있으면 「신고 진행 중」
+  mailOrderNo: "제2026-서울강남-05946호", // 통신판매업 신고번호(2026-10-24 발급)
   bizAddress: "서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)",
   supportEmail: "support@fankkuk.com", // 고객센터 이메일 — 신고·문의 폼이 이 주소로 열림. 홈택스·토스에 쓴 주소와 같게
   supportPhone: "0502-1931-8289", // 고객센터 전화 — 050 안심번호(개인 번호는 쓰지 않는다)
