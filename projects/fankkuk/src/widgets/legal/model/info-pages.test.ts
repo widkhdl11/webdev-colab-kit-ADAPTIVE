@@ -104,6 +104,33 @@ describe("안내·법정 페이지 공통", () => {
     ]);
   });
 
+  it("개인정보처리방침 주제 칩·주요·요약 링크는 확정한 표대로다(2026-10-23, C) — 상자는 원래 줄 차례 그대로 나뉜다", () => {
+    const pv = docs.privacy!;
+    expect(pv.summaryLinks).toEqual(["collect", "access-log", "outsource"]);
+    expect(pv.tagOrder).toEqual(["받는 정보", "보관·파기", "주소 보호", "맡기는 곳", "내 권리"]);
+    expect(pv.sections.map((s) => [s.id, s.tags])).toEqual([
+      ["collect", ["받는 정보"]],
+      ["retention", ["보관·파기"]],
+      ["destroy", ["보관·파기"]],
+      ["outsource", ["맡기는 곳"]],
+      ["provide", ["맡기는 곳"]],
+      ["abroad", ["맡기는 곳"]],
+      ["safety", ["주소 보호"]],
+      ["access-log", ["주소 보호"]],
+      ["rights", ["내 권리"]],
+      ["cookie", ["내 권리"]],
+      ["officer", ["내 권리"]],
+      ["change", ["내 권리"]],
+    ]);
+    expect(pv.sections.filter((s) => s.frequent).map((s) => s.id)).toEqual(["collect", "retention", "safety", "rights"]);
+    const boxSizes = (id: string) => pv.sections.find((s) => s.id === id)!.blocks.flatMap((b) => (b.kind === "rows" ? [b.rows.length] : []));
+    expect(boxSizes("collect")).toEqual([3, 3, 3, 2, 2]);
+    expect(boxSizes("retention")).toEqual([6, 5]);
+    expect(boxSizes("outsource")).toEqual([4, 4]);
+    // 줄 꼬리표는 쓰지 않는다 — 칩은 절만 거른다
+    for (const s of pv.sections) for (const b of s.blocks) if (b.kind === "rows") for (const r of b.rows) expect(r.tags).toBeUndefined();
+  });
+
   it("배상 한도는 설정값에서 읽는다", () => {
     expect(text(termsDoc(prices, 123_000))).toContain("123,000원");
     expect(text(disputeDoc({ ...SITE_INFO, compensationCapKrw: 77_000 }))).toContain("77,000원");

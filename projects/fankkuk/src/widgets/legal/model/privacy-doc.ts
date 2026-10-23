@@ -18,10 +18,16 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
     "개인정보를 다른 회사에 팔거나 넘기지 않으며, 배송·결제·알림처럼 맡기는 일은 4절에 적은 곳에만 맡깁니다.",
   ],
   facts: [["운영", OPERATOR_NAME]],
+    // 찾기 데이터(사용자 확정 2026-10-23 「C로 하자」) — 주제 칩이 절을 거른다(이용약관과 같은 방식). 요약 → 1·8·4절.
+    // 1·2·4절 상자는 줄 차례를 그대로 두고 한 상자 900 이하로 나눴다(document-pages 기준 8, design-rules 14절).
+    summaryLinks: ["collect", "access-log", "outsource"],
+    tagOrder: ["받는 정보", "보관·파기", "주소 보호", "맡기는 곳", "내 권리"],
   sections: [
     {
       id: "collect",
       title: "1. 받는 개인정보와 쓰는 목적",
+      tags: ["받는 정보"],
+      frequent: true,
       blocks: [
         { kind: "text", text: "팬꾹은 서비스에 꼭 필요한 정보만 받습니다. 받는 정보와 목적은 다음과 같습니다." },
         {
@@ -51,6 +57,11 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
                 ["목적", "번호 하나에 계정 하나만 만들고, 남의 번호로 가입하지 못하게 하기"],
               ],
             },
+          ],
+        },
+        {
+          kind: "rows",
+          rows: [
             {
               title: "선택 동의한 회원",
               fields: [
@@ -72,6 +83,11 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
                 ["목적", "승인된 선물의 송장 출력"],
               ],
             },
+          ],
+        },
+        {
+          kind: "rows",
+          rows: [
             {
               title: "선물 승인 서명",
               fields: [
@@ -93,6 +109,11 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
                 ["목적", "역조공 송장과, 그 팬이 보낸 상자를 돌려보내는 반송 송장 출력"],
               ],
             },
+          ],
+        },
+        {
+          kind: "rows",
+          rows: [
             {
               title: "사무실 처리",
               fields: [
@@ -107,6 +128,11 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
                 ["목적", "문의 답변"],
               ],
             },
+          ],
+        },
+        {
+          kind: "rows",
+          rows: [
             {
               title: "알림 발송 기록",
               fields: [
@@ -135,6 +161,8 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
     {
       id: "retention",
       title: "2. 보관 기간",
+      tags: ["보관·파기"],
+      frequent: true,
       blocks: [
         {
           kind: "rows",
@@ -145,6 +173,11 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
             { title: "반송할 상자에 쓸 주소", fields: [["보관", "보낸 회원이 확인한 때 복사해 두고, 반송이 확정되거나 상자를 처분하는 순간 지웁니다"]] },
             { title: "이메일 확인 링크", fields: [["보관", "24시간이 지나거나 한 번 쓰면 더 쓸 수 없습니다. 링크 값은 원문이 아니라 해시로만 둡니다"]] },
             { title: "크리에이터 배송지", fields: [["보관", "새 주소를 등록하면 이전 주소를 덮어씁니다"]] },
+          ],
+        },
+        {
+          kind: "rows",
+          rows: [
             { title: "회원 정보", fields: [["보관", "탈퇴하면 바로 지웁니다"]] },
             { title: "가입 경로와 처음 들어온 링크", fields: [["보관", "회원 정보와 함께 탈퇴하면 바로 지웁니다. 가입하지 않으면 링크 표시는 브라우저 쿠키에만 30일 남았다가 사라집니다"]] },
             {
@@ -168,6 +201,7 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
     {
       id: "destroy",
       title: "3. 파기",
+      tags: ["보관·파기"],
       blocks: [
         {
           kind: "list",
@@ -181,6 +215,7 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
     {
       id: "outsource",
       title: "4. 처리를 맡기는 곳",
+      tags: ["맡기는 곳"],
       blocks: [
         { kind: "text", text: "서비스 운영을 위해 다음 업무를 맡깁니다." },
         {
@@ -190,6 +225,11 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
             { title: "Vercel", fields: [["맡기는 일", "사이트 운영(서버)"]] },
             { title: "토스페이먼츠", fields: [["맡기는 일", "결제와 환불"]] },
             { title: vendor("카카오 인증 대행사", info.vendors.kakaoAuth), fields: [["맡기는 일", "카카오톡 본인 확인, 선물 승인과 주소 등록의 카카오톡 인증서 전자서명"]] },
+          ],
+        },
+        {
+          kind: "rows",
+          rows: [
             { title: vendor("알림톡 발송 대행사", info.vendors.alimtalk), fields: [["맡기는 일", "카카오 알림톡 발송"]] },
             { title: vendor("메일 발송", info.vendors.mail), fields: [["맡기는 일", "확인 메일과 알림 메일 발송"]] },
             { title: vendor("택배사", info.vendors.carrier), fields: [["맡기는 일", "송장 출력과 배송"]] },
@@ -202,6 +242,7 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
     {
       id: "provide",
       title: "5. 다른 곳에 주는 경우",
+      tags: ["맡기는 곳"],
       blocks: [
         {
           kind: "list",
@@ -218,6 +259,7 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
     {
       id: "abroad",
       title: "6. 국외 이전",
+      tags: ["맡기는 곳"],
       blocks: [
         {
           kind: "text",
@@ -228,6 +270,8 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
     {
       id: "safety",
       title: "7. 주소를 지키는 방법",
+      tags: ["주소 보호"],
+      frequent: true,
       blocks: [
         { kind: "text", text: `팬꾹은 「${PROMISE.address}」라고 약속합니다. 그래서 다음과 같이 만들었습니다.` },
         {
@@ -247,6 +291,7 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
     {
       id: "access-log",
       title: "8. 주소 열람 기록 공개",
+      tags: ["주소 보호"],
       blocks: [
         {
           kind: "list",
@@ -262,6 +307,8 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
     {
       id: "rights",
       title: "9. 회원의 권리",
+      tags: ["내 권리"],
+      frequent: true,
       blocks: [
         {
           kind: "list",
@@ -278,6 +325,7 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
     {
       id: "cookie",
       title: "10. 쿠키",
+      tags: ["내 권리"],
       blocks: [
         {
           kind: "text",
@@ -288,6 +336,7 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
     {
       id: "officer",
       title: "11. 개인정보 보호책임자",
+      tags: ["내 권리"],
       blocks: [
         {
           kind: "rows",
@@ -308,6 +357,7 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
     {
       id: "change",
       title: "12. 방침의 변경",
+      tags: ["내 권리"],
       blocks: [
         { kind: "text", text: "이 방침의 시행일과 지난 버전은 맨 위와 「버전 기록」에 적습니다." },
         {
