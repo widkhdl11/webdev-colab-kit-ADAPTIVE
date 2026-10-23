@@ -111,6 +111,51 @@ describe("탈퇴 처리 — 가명 처리 (my-account INV-A15)", () => {
     expect(profileRows(fan.userId)).toBe(1);
   });
 
+  it("INV-A15 · payment INV-M15·M22: 결제하지 않고 닫힌 주문은 진행 중인 선물이 아니다 — 이어 하기가 되는 24시간 안의 승인 거절 주문은 막고, 24시간이 지나 닫힌 주문만 남으면 탈퇴된다", async () => {
+    const fan = await createTestAccount({ tag: "wdunpaid", phone: "01090003333" });
+    const declined = await registerTestOrder(1, { senderId: fan.userId });
+    psql(`update public.payments set status = 'failed', settled_at = now() where order_id = '${declined.orderId}'`);
+    const abandoned = await registerTestOrder(1, { senderId: fan.userId });
+    const ago25h = (orderId: string) =>
+      backdate(`update public.orders set created_at = now() - interval '25 hours' where id = '${orderId}'; update public.payments set created_at = now() - interval '25 hours' where order_id = '${orderId}'`);
+    ago25h(abandoned.orderId);
+    psql(`begin; select set_config('request.jwt.claims', '{"role":"service_role"}', true); select public.office_run_expiry('${abandoned.orderNo}'); commit;`);
+    expect(psql(`select status from public.payments where order_id = '${abandoned.orderId}'`)).toBe("failed");
+    expect(psql(`select status from public.orders where id = '${abandoned.orderId}'`)).toBe("pending_payment");
+
+    expect((await withdraw(fan.loginId)).error?.code).toBe("55000");
+    ago25h(declined.orderId);
+    // 24시간이 지나도 승인 중(결과 모름)인 결제는 INV-M19 가 정리할 때까지 진행 중이다
+    const stuck = await registerTestOrder(1, { senderId: fan.userId });
+    ago25h(stuck.orderId);
+    psql(`update public.payments set status = 'confirming', confirming_at = now() where order_id = '${stuck.orderId}'`);
+    expect((await withdraw(fan.loginId)).error?.code).toBe("55000");
+    psql(`update public.payments set status = 'failed', settled_at = now() where order_id = '${stuck.orderId}'`);
+    const r = await withdraw(fan.loginId);
+    expect(r.error).toBeNull();
+    expect(fanOf(abandoned.orderId)).toBe((r.data as { pseudonym: string }).pseudonym);
+  });
+
+  it("INV-A15 · reverse-gift INV-R15: 결제가 닫힌 역조공 보내기의 몫은 진행 중인 역조공이 아니다 — 승인 중인 보내기의 몫은 받는 팬을 막고, 닫히면 팬·크리에이터 둘 다 탈퇴된다", async () => {
+    const acc = await createTestAccount({ tag: "wdrgcr", phone: "01090004444" });
+    const creatorId = makeCreator(acc);
+    const fan = await createTestAccount({ tag: "wdrgfan", phone: "01090004445" });
+    const toss = `pay_test_rg_wd${Math.floor(Math.random() * 900000 + 100000)}`;
+    try {
+      backdate(
+        `insert into public.revgift_sends (sender_id, creator_id, toss_order_id, amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw, status, confirming_at) values ('${acc.userId}', '${creatorId}', '${toss}', 1, 0, 0, 0, 1, 'confirming', now());
+         insert into public.revgift_shares (send_id, seq, order_no, fan_id, tier, amount_krw, shipping_fee_krw) select id, 1, 'RG-IT${toss.slice(-6)}', '${fan.userId}', 'small', 1, 0 from public.revgift_sends where toss_order_id = '${toss}'`,
+      );
+      expect((await withdraw(fan.loginId)).error?.code).toBe("55000");
+      psql(`update public.revgift_sends set status = 'failed' where toss_order_id = '${toss}'`);
+      const f = await withdraw(fan.loginId);
+      const c = await withdraw(acc.loginId);
+      expect([f.error, c.error]).toEqual([null, null]);
+    } finally {
+      backdate(`delete from public.revgift_shares where send_id in (select id from public.revgift_sends where toss_order_id = '${toss}'); delete from public.revgift_sends where toss_order_id = '${toss}'`);
+    }
+  });
+
   it("INV-A15 (S15c, 실패경로): 탈퇴 처리 도중 기록 하나의 가명 바꾸기가 실패하면 계정·연락처·주문이 그대로 남는다(일부만 지운 상태가 없다)", async () => {
     const fan = await createTestAccount({ tag: "wdatom", phone: "01090003333" });
     const a = await shippedOrder({ senderId: fan.userId });
