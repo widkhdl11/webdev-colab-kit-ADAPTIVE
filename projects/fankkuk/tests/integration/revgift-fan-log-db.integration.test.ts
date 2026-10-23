@@ -4,7 +4,7 @@ import { createInvoiceDecryptor, type InvoiceDecryptor } from "@/features/invoic
 import { sealEnvelope } from "@/shared/lib/envelope/envelope";
 import { anonClient, deleteTestOrders, psql, registerTestOrder, signedInClient } from "./helpers";
 import { decryptFileText, LABEL, OWNER_ID, testKeyPair, type TestKeys } from "./invoice-helpers";
-import { creatorSetsWaybill, deleteTestUnmatched, inspect, paidShare, receiveAndLabel, SHARE_PASS, waybill } from "./office-helpers";
+import { ageShareShipment, creatorSetsWaybill, deleteTestUnmatched, dropAddressCopies, inspect, paidShare, receiveAndLabel, SHARE_PASS, waybill } from "./office-helpers";
 import { acceptWithAddress, deleteTestRevgifts, followHaru, payTestRevgift, PROFILE, registerTestRevgift, unfollowHaru } from "./revgift-helpers";
 
 // 팬이 자기 몫 주소의 열람 기록을 본다 (reverse-gift INV-R16).
@@ -64,7 +64,10 @@ async function inspectedShare(): Promise<{ orderNo: string; shareId: string; qr:
   return { orderNo: s.orderNo, shareId: s.shareId, qr };
 }
 
-/** S16 의 Given: 대표가 한 번 열고, 직원 시도가 한 번 거부된 뒤, 출고 확정, 그 뒤 대표 본인의 시도도 한 번 거부. */
+/**
+ * S16 의 Given: 대표가 한 번 열고, 직원 시도가 한 번 거부된 뒤, 출고 확정 → 72시간이 지나 대표 본인의 시도도 한 번 거부 → 72시간 자동 처리로 주소 사본이 지워짐.
+ * 출고 확정 뒤 72시간 안에는 사본이 남아 대표가 재출력할 수 있다(INV-R9, 2026-10-23 카드 d120) — 그래서 지운 줄은 출고 확정이 아니라 72시간 처리에서 생긴다.
+ */
 async function openedDeniedShipped(): Promise<{ orderNo: string; shareId: string; outbound: string }> {
   const s = await inspectedShare();
   const first = await print(s.qr, "fankkuk_admin");
@@ -74,10 +77,13 @@ async function openedDeniedShipped(): Promise<{ orderNo: string; shareId: string
   const staff = await signedInClient("fankkuk_staff");
   const shipped = await staff.rpc("office_confirm_shipment", { p_qr: s.qr, p_waybill: first.waybill });
   if (shipped.error) throw new Error(`office_confirm_shipment 실패: ${shipped.error.code} ${shipped.error.message}`);
+  ageShareShipment(s.orderNo, 73);
   // 대표 본인의 거부 줄(대표 아님이 아닌 사유) — 이것도 팬에게 가지 않는다(D12)
   const ownerDenied = await print(s.qr, "fankkuk_admin");
   expect(ownerDenied.kind).toBe("denied");
   if (ownerDenied.kind === "denied") expect(ownerDenied.reason).not.toBe("not_owner");
+  // 72시간 자동 처리 — 사본을 지우고 지운 줄(출고)을 남긴다
+  expect(dropAddressCopies().revgift).toBeGreaterThanOrEqual(1);
   return { orderNo: s.orderNo, shareId: s.shareId, outbound: first.waybill };
 }
 
@@ -94,6 +100,22 @@ async function readAs(loginId: string, orderNo: string) {
 }
 
 describe("INV-R16: 팬은 자기 몫 주소의 열람 기록을 본다", () => {
+  it("INV-R9 · R16 (실패경로): 출고 확정 뒤 72시간 안에는 대표의 재출력이 열리고(같은 송장번호) 직원 시도는 그때도 거부된다 — 팬에게는 연 줄만 늘고 거부 줄은 가지 않는다", async () => {
+    const s = await inspectedShare();
+    const first = await print(s.qr, "fankkuk_admin");
+    if (first.kind !== "printed") throw new Error("첫 출력 실패");
+    const staff = await signedInClient("fankkuk_staff");
+    const shipped = await staff.rpc("office_confirm_shipment", { p_qr: s.qr, p_waybill: first.waybill });
+    expect(shipped.error).toBeNull();
+    ageShareShipment(s.orderNo, 71);
+    expect(await print(s.qr, "fankkuk_staff")).toEqual({ kind: "denied", reason: "not_owner" });
+    expect(await print(s.qr, "fankkuk_admin")).toMatchObject({ kind: "printed", waybill: first.waybill });
+    const { data } = await readAs("byeolbit_fan", s.orderNo);
+    const rows = data as { kind?: string; result?: string }[];
+    expect(text0(rows)).not.toContain("denied");
+    expect(rows.length).toBe(2);
+  });
+
   it("INV-R16 S16: 연 줄(1번째) · 지운 줄(출고) 두 줄만 시각 역순으로 — 직원 거부 줄·대표 표시·주소·운송장·요청자 계정 없이 온다", async () => {
     const s = await openedDeniedShipped();
     const { data, error } = await readAs("byeolbit_fan", s.orderNo);
