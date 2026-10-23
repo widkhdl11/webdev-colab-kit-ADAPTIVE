@@ -131,6 +131,21 @@ describe("안내·법정 페이지 공통", () => {
     for (const s of pv.sections) for (const b of s.blocks) if (b.kind === "rows") for (const r of b.rows) expect(r.tags).toBeUndefined();
   });
 
+  it("팬 이용 안내 찾기 데이터는 확정한 표대로다(2026-10-23, 카드 d119 B) — 칩 없음, 끝 「더 궁금하면」은 끝 판 + 글 속 링크", () => {
+    const g = docs.guideFan!;
+    expect(g.summaryLinks).toEqual(["receiving-address", "how-to-send", "stages"]);
+    for (const id of g.summaryLinks ?? []) expect(g.sections.map((s) => s.id)).toContain(id);
+    expect(g.sections.filter((s) => s.frequent).map((s) => s.id)).toEqual(["how-to-send", "receiving-address", "declined-returned"]);
+    expect(g.sections.flatMap((s) => s.tags ?? [])).toEqual([]);
+    const last = g.sections.at(-1)!;
+    expect([last.id, last.closing]).toEqual(["more", true]);
+    expect(last.links).toEqual([
+      ["이용약관", "/terms"],
+      ["1:1 문의", "/support"],
+    ]);
+    expect(g.sections.filter((s) => s.closing).map((s) => s.id)).toEqual(["more"]);
+  });
+
   it("배상 한도는 설정값에서 읽는다", () => {
     expect(text(termsDoc(prices, 123_000))).toContain("123,000원");
     expect(text(disputeDoc({ ...SITE_INFO, compensationCapKrw: 77_000 }))).toContain("77,000원");

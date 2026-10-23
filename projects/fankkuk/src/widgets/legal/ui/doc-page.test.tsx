@@ -361,6 +361,44 @@ describe("글 가운데서도 수단 둘(원칙 ①) — 목차 줄의 「찾기
   });
 });
 
+describe("끝 판(28절) · 글 속 링크", () => {
+  const closingDoc: LegalDoc = {
+    ...base,
+    sections: [
+      base.sections[0]!,
+      {
+        id: "more",
+        title: "더 궁금하면",
+        closing: true,
+        links: [
+          ["이용약관", "/terms"],
+          ["1:1 문의", "/support"],
+        ],
+        blocks: [{ kind: "steps", items: ["자세한 기준은 이용약관에 있어요.", "고객센터의 1:1 문의로 물어보실 수 있어요."] }],
+      },
+    ],
+  };
+
+  it("closing 조는 끝 판 모양이고 목록 대신 문단, 낱말 자리에 링크 — 문장 글자는 그대로", () => {
+    render(<DocPage doc={closingDoc} variant="guide" />);
+    const more = q("#more")!;
+    expect(more.className).toContain("closing");
+    expect(q("#intro")!.className).not.toContain("closing");
+    expect(more.querySelector("ol, ul")).toBeNull();
+    expect(Array.from(more.querySelectorAll("p")).map((p) => p.textContent)).toEqual(["자세한 기준은 이용약관에 있어요.", "고객센터의 1:1 문의로 물어보실 수 있어요."]);
+    expect(Array.from(more.querySelectorAll("p a")).map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
+      ["이용약관", "/terms"],
+      ["1:1 문의", "/support"],
+    ]);
+  });
+
+  it("링크 안 낱말도 검색 표시를 받는다", () => {
+    render(<DocPage doc={closingDoc} variant="guide" />);
+    type(q<HTMLInputElement>('input[type="search"]')!, "이용약관");
+    expect(qa("#more a mark").map((m) => m.textContent)).toEqual(["이용약관"]);
+  });
+});
+
 describe("자주 묻는 질문(C4 · C5 · C8)", () => {
   const faq: FaqDoc = {
     summary: ["요약 하나", "요약 둘", "요약 셋"],

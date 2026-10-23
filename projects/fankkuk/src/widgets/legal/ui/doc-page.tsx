@@ -99,7 +99,13 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
               {doc.sections.map((sec) => {
                 const { no, name } = splitArticle(sec.title);
                 return (
-                  <article key={sec.id} id={sec.id} className={s.art} aria-labelledby={`${sec.id}-h`} hidden={nav.hidden.has(sec.id)}>
+                  <article
+                    key={sec.id}
+                    id={sec.id}
+                    className={sec.closing ? `${s.art} ${s.closing}` : s.art}
+                    aria-labelledby={`${sec.id}-h`}
+                    hidden={nav.hidden.has(sec.id)}
+                  >
                     {no ? <span className={s.no}>{no}</span> : null}
                     <div className={s.artHead}>
                       <h2 className={s.artT} id={`${sec.id}-h`} tabIndex={-1} data-doc-heading="">
@@ -110,7 +116,7 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
                     </div>
                     <div className={s.prose}>
                       {sec.blocks.map((b, i) => (
-                        <DocBlock key={i} block={b} words={nav.words} tag={nav.tag} />
+                        <DocBlock key={i} block={b} words={nav.words} tag={nav.tag} plain={sec.closing === true} links={sec.links} />
                       ))}
                     </div>
                   </article>

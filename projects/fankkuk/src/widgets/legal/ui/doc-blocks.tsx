@@ -1,3 +1,5 @@
+import Link from "next/link";
+import type { ReactNode } from "react";
 import { rowShown } from "../model/doc-nav";
 import type { LegalBlock, RefundTone } from "../model/legal-doc";
 import { Marked } from "./doc-parts";
@@ -20,11 +22,52 @@ function RefundValue({ value, tone, words }: { value: string; tone?: RefundTone;
   return text;
 }
 
-/**
- * @param tag 고른 분류 칩 — 줄에 꼬리표가 있는 상자(rows)만 거른다. 남는 줄이 없으면 상자를 그리지 않는다
- */
-export function DocBlock({ block, words, tag = null }: { block: LegalBlock; words: readonly string[]; tag?: string | null }) {
-  const m = (text: string) => <Marked text={text} words={words} />;
+type Links = readonly (readonly [string, string])[];
+
+/** 문장 속 낱말을 링크로 — 낱말마다 처음 나오는 자리 하나만, 앞에서부터. 링크 안 글자도 찾은 낱말 표시를 받는다 */
+function Linked({ text, words, links }: { text: string; words: readonly string[]; links: Links }) {
+  const spots = links
+    .map(([word, href]) => ({ at: text.indexOf(word), word, href }))
+    .filter((x) => x.at >= 0)
+    .sort((a, b) => a.at - b.at);
+  const parts: ReactNode[] = [];
+  let last = 0;
+  for (const { at, word, href } of spots) {
+    if (at < last) continue;
+    if (at > last) parts.push(<Marked key={`t${last}`} text={text.slice(last, at)} words={words} />);
+    parts.push(
+      <Link key={`l${at}`} className={s.inLink} href={href}>
+        <Marked text={word} words={words} />
+      </Link>,
+    );
+    last = at + word.length;
+  }
+  if (last < text.length) parts.push(<Marked key={`t${last}`} text={text.slice(last)} words={words} />);
+  return <>{parts}</>;
+}
+
+type Props = {
+  block: LegalBlock;
+  words: readonly string[];
+  /** 고른 분류 칩 — 줄에 꼬리표가 있는 상자(rows)만 거른다. 남는 줄이 없으면 상자를 그리지 않는다 */
+  tag?: string | null;
+  /** 끝 판 안 — 점·번호 목록을 문단으로 그린다(28절) */
+  plain?: boolean;
+  /** 글 속 링크(조의 links) */
+  links?: Links;
+};
+
+export function DocBlock({ block, words, tag = null, plain = false, links = [] }: Props) {
+  const m = (text: string) => (links.length > 0 ? <Linked text={text} words={words} links={links} /> : <Marked text={text} words={words} />);
+  if (plain && (block.kind === "list" || block.kind === "steps")) {
+    return (
+      <>
+        {block.items.map((item) => (
+          <p key={item}>{m(item)}</p>
+        ))}
+      </>
+    );
+  }
   switch (block.kind) {
     case "text":
       return <p>{m(block.text)}</p>;

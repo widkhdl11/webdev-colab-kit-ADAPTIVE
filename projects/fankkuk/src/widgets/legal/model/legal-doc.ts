@@ -43,6 +43,10 @@ export type LegalSection = {
   tags?: readonly string[];
   /** 「주요」 배지(원칙 ③) — 조 제목 옆과 목차 줄 */
   frequent?: true;
+  /** 끝 판 모양(하늘 면, design-rules 28절) — 글 맨 끝 「더 궁금하면」 같은 조. 목록 대신 문단으로 그린다 */
+  closing?: true;
+  /** 글 속 링크 — [낱말, 주소]. 문장마다 그 낱말이 처음 나오는 자리만 링크로 감싼다(문장은 그대로) */
+  links?: readonly (readonly [string, string])[];
 };
 
 /** 목차 묶음 — 조가 많은 글만. ids 는 sections 의 id */

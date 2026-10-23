@@ -20,11 +20,14 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
       "그 주소를 끝 6자리까지 그대로 써서 팬꾹 사무실로 상자를 보내 주세요.",
       "팬꾹이 검수하고, 크리에이터가 승인한 선물만 크리에이터에게 보내요.",
     ],
+    // 찾기 데이터(사용자 확정 2026-10-23, 카드 d119 B) — 칩 없음. 요약 → 받는 주소 · 보내는 순서 · 진행 단계
+    summaryLinks: ["receiving-address", "how-to-send", "stages"],
     facts: [["운영", OPERATOR_NAME]],
     sections: [
       {
         id: "how-to-send",
         title: "보내는 순서",
+        frequent: true,
         blocks: [
           {
             kind: "steps",
@@ -46,6 +49,7 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
       {
         id: "receiving-address",
         title: "상자마다 받는 주소가 달라요",
+        frequent: true,
         blocks: [
           {
             kind: "steps",
@@ -134,6 +138,7 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
       {
         id: "declined-returned",
         title: "거절되거나 돌려보내면",
+        frequent: true,
         blocks: [
           {
             kind: "steps",
@@ -208,6 +213,12 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
       {
         id: "more",
         title: "더 궁금하면",
+        // 끝 판(하늘 면, design-rules 28절) — 시안 guide-fan.html 그대로 이용약관·1:1 문의는 글 속 링크
+        closing: true,
+        links: [
+          ["이용약관", "/terms"],
+          ["1:1 문의", "/support"],
+        ],
         blocks: [
           {
             kind: "steps",
