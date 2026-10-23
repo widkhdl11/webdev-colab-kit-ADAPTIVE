@@ -1,8 +1,22 @@
 ---
 project: fankkuk
 status: passed
-basis: d44de9926c00
+basis: ee3e6e9e2351
 reviewers: [security-reviewer, code-reviewer]
+---
+
+# 리뷰 사인오프 — fankkuk (2026-10-24, 돌려줄 환불이 끝나지 않으면 탈퇴 막기 — 49ceb36c)
+
+- 범위: 5748fde9 뒤 커밋 하나. account_has_open_work(마이그레이션 20261024000001) · 운영자 거부 문구 한 줄 · INV-A15 S15d.
+  그 앞의 257f83f0(역조공 닫기 시험을 10-21 시계로)·c74df1dd(통신판매업 신고번호)는 시험·설정값만이라 리뷰어 없이 자동 검사로.
+  화면 구조 변경 없음(문구 한 줄) → ux·ui 리뷰어는 보내지 않음.
+- security-reviewer: 중간 1(6자리를 살려 둔 동안 환불 금액이 null 이라 탈퇴가 통과하고 그 뒤 돌려줄 돈이 생김) → 살려 둔 상자·몫 갈래 둘. 권한·옛 표(revgift_refunds) 지적 없음.
+- code-reviewer: medium 2(같은 지적, 상자·몫) · low 1(줄마다 금액 함수 — 함수가 null 인 경우를 미리 거름) · 시험 빈틈(결제 갈래의 box_id is null) → 한 결제에 주문·상자 환불이 같이 있는 시험.
+  재리뷰: 둘 다 새 지적 없음.
+- 실행 근거: 통합 account-withdrawal-db 42/42 · revgift-close-db 19/19 · 유닛 310파일 2,574/2,574 · tsc 0 · copy:lint 금지어 0.
+  고치기 전 red: S15d 셋(탈퇴가 됨) · 살려 둔 6자리 둘(탈퇴가 됨). 변이 아홉(세 갈래 제거 · 갈래마다 완료 조건 제거 · box_id is null 제거 · 살려 둔 상자/몫 제거) — 모두 잡힘.
+- 안 한 것·남은 것: 통합 전체 재실행 안 함. 실패한 지 14일 지난 환불을 완료로 적을 경로가 없음(BACKLOG). 시험 사이트 DB 적용(20261024000001)은 아직.
+
 ---
 
 # 리뷰 사인오프 — fankkuk (2026-10-23 밤 2, 배포 전 확인 셋 — c3c59b25·b3f1846d·3b3d2bc4·ab7e5a4a)
