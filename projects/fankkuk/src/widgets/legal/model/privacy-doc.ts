@@ -1,6 +1,6 @@
 import { OPERATOR_NAME, PROMISE } from "@/shared/config/site-copy";
 import { orBlank, SITE_INFO, type SiteInfo } from "@/shared/config/site-info";
-import { TO_DECIDE, toCheck, type LegalDoc } from "./legal-doc";
+import { TO_DECIDE, type LegalDoc } from "./legal-doc";
 
 // 개인정보처리방침. 근거: docs/PRODUCT.md · DECISIONS.md · specs(address-protection·reverse-gift·office-workflow INV-W8·
 // signup·my-account·notifications·approval-signature·creator-verification) · tech-stack.md · DB 의 개인정보 구역 표.
@@ -180,22 +180,28 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
           rows: [
             { title: "회원 정보", fields: [["보관", "탈퇴하면 바로 지웁니다"]] },
             { title: "가입 경로와 처음 들어온 링크", fields: [["보관", "회원 정보와 함께 탈퇴하면 바로 지웁니다. 가입하지 않으면 링크 표시는 브라우저 쿠키에만 30일 남았다가 사라집니다"]] },
-            {
-              title: "계약·결제 기록",
-              fields: [["보관", "5년(전자상거래 등에서의 소비자보호에 관한 법률 시행령)"]],
-            },
-            {
-              title: "소비자 불만·분쟁 처리 기록",
-              fields: [["보관", "3년(전자상거래 등에서의 소비자보호에 관한 법률 시행령)"]],
-            },
-            { title: "개인정보 접속 기록(주소 열람 시도·출력한 사람)", fields: [["보관", toCheck("보관 기간 — 개인정보의 안전성 확보조치 기준")]] },
+            { title: "계약 또는 청약철회 등에 관한 기록", fields: [["보관", "5년(전자상거래 등에서의 소비자보호에 관한 법률 제6조, 같은 법 시행령 제6조)"]] },
+            { title: "대금 결제와 재화 등의 공급에 관한 기록", fields: [["보관", "5년(같은 법 제6조, 같은 법 시행령 제6조)"]] },
+            { title: "소비자의 불만 또는 분쟁 처리에 관한 기록", fields: [["보관", "3년(같은 법 제6조, 같은 법 시행령 제6조)"]] },
+            { title: "표시·광고에 관한 기록", fields: [["보관", "6개월(같은 법 제6조, 같은 법 시행령 제6조)"]] },
           ],
         },
         {
           kind: "text",
-          text: "주소 열람 기록·승인 서명·검수 기록은 고치거나 지울 수 없게 만들어 두었습니다. 회원이 탈퇴하면 주소 열람 기록과 검수 기록은 회원 정보 없이 주문번호만 남겨 보관합니다.",
+          text: "주소 열람 기록·승인 서명·검수 기록은 고치거나 지울 수 없게 만들어 두었습니다. 회원이 탈퇴하면 이 기록들은 회원과의 연결을 끊는 가명 처리를 한 뒤 아래 기간 동안 보관합니다.",
         },
-        { kind: "text", text: `탈퇴 뒤 승인 서명 기록의 처리와, 주문번호만 남긴 기록의 보관 기간: ${TO_DECIDE}` },
+        {
+          kind: "rows",
+          rows: [
+            { title: "가명 처리", fields: [["내용", "이름·닉네임·연락처·주소·채널 정보를 삭제하고, 주문번호와 계정의 가명 식별자만 남깁니다"]] },
+            { title: "승인 서명 기록(서명값·서명 원문의 해시·주문번호·서명 시각)", fields: [["보관", "가명 처리 후 거래 기록으로 5년"]] },
+            { title: "주문·결제·배송 단계 기록, 검수 기록, 주소 열람 기록", fields: [["보관", "가명 처리 후 5년"]] },
+            { title: "분쟁·문의 기록", fields: [["보관", "가명 처리 후 3년"]] },
+            { title: "개인정보처리시스템 접속 기록", fields: [["보관", "1년 이상(개인정보의 안전성 확보조치 기준 제8조)"]] },
+            { title: "크리에이터 주소의 암호문과 암호화 키", fields: [["보관", "탈퇴 즉시 삭제합니다. 진행 중인 선물이 있으면 크리에이터 사정에 의한 취소로 종료하고 이용약관 제9조에 따라 환불한 뒤 삭제합니다"]] },
+          ],
+        },
+        { kind: "text", text: "보관 기간이 지난 기록은 매일 실행하는 자동 삭제 작업으로 삭제하거나, 사람을 알아볼 수 없는 통계 값만 남깁니다." },
       ],
     },
     {

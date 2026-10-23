@@ -125,7 +125,7 @@ describe("안내·법정 페이지 공통", () => {
     expect(pv.sections.filter((s) => s.frequent).map((s) => s.id)).toEqual(["collect", "retention", "safety", "rights"]);
     const boxSizes = (id: string) => pv.sections.find((s) => s.id === id)!.blocks.flatMap((b) => (b.kind === "rows" ? [b.rows.length] : []));
     expect(boxSizes("collect")).toEqual([3, 3, 3, 2, 2]);
-    expect(boxSizes("retention")).toEqual([6, 5]);
+    expect(boxSizes("retention")).toEqual([6, 6, 6]);
     expect(boxSizes("outsource")).toEqual([4, 4]);
     // 줄 꼬리표는 쓰지 않는다 — 칩은 절만 거른다
     for (const s of pv.sections) for (const b of s.blocks) if (b.kind === "rows") for (const r of b.rows) expect(r.tags).toBeUndefined();
