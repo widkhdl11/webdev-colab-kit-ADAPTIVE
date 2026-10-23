@@ -245,6 +245,16 @@ function addInquiry(authorId: string, answered: boolean): string {
 }
 
 describe("기간 지난 가명 기록 자동 삭제 (my-account INV-A16 · approval-signature S14c)", () => {
+  it("INV-A15 (실패경로): 탈퇴 처리 안쪽 함수(트리거 끄기·진행 중인 일 판정)는 서버 키·로그인 키·익명 키 누구도 부를 수 없다 — 서명 표 보호가 꺼진 채 남지 않는다", async () => {
+    for (const client of [adminClient(), anonClient(), await owner()]) {
+      const toggled = await client.rpc("withdrawal_toggle_append_only", { p_table: "public.approval_signatures", p_enable: false });
+      expect(toggled.error).not.toBeNull();
+      const open = await client.rpc("account_has_open_work", { p_account: "ffffffff-0000-4000-8000-000000000001", p_creator: null });
+      expect(open.error).not.toBeNull();
+    }
+    expect(psql(`select count(*) from pg_trigger where tgrelid = 'public.approval_signatures'::regclass and not tgisinternal and tgenabled = 'D'`)).toBe("0");
+  });
+
   it("INV-A15: 탈퇴한 팬이 쓴 1:1 문의(답이 달린 것 포함)는 지워지지 않고 가명 계정의 문의로 남는다 — 3년 보관 대상이라서", async () => {
     const fan = await createTestAccount({ tag: "wdinq", phone: "01090006666" });
     const answered = addInquiry(fan.userId, true);
