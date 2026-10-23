@@ -420,3 +420,199 @@ describe("기간 지난 주문 기록 자동 삭제 (my-account INV-A16, 카드 
     expect(fanOf(old.orderId)).toBe(fan.userId);
   });
 });
+
+// 코드 리뷰(2026-10-23) 반영 — 사무실 상자가 있는 주문. 상자 기록은 실제 흐름 대신 표에 바로 넣는다(시험 대상은 탈퇴·자동 삭제다).
+const STAFF = () => psql(`select id from public.profiles where login_id = 'fankkuk_staff'`);
+const rand = (digits: number) => String(Math.floor(Math.random() * 10 ** digits)).padStart(digits, "0");
+const idLine = (out: string) => out.split("\n").find((l) => /^[0-9a-f-]{36}$/.test(l))!;
+
+/** 주문의 첫 상자의 사무실 상자(결제 때 「도착 기다림」으로 생긴 줄)를 반송·처분으로 두고 그 기록(검수·크리에이터 확인 질문과 답·답 기록·보류 상자 잇기·처분)을 붙이고 주문을 「검수 완료」로 둔다 */
+function officeTrail(orderId: string, o: { fanId: string; creatorProfileId: string; state: "returned" | "disposed" }): string {
+  const staff = STAFF();
+  const wb = `9${rand(12)}`;
+  const parcel = idLine(
+    psql(
+      `begin; set local session_replication_role = replica;
+       update public.office_parcels set state = '${o.state}', received_at = now(), inspected_at = now(),
+              return_waybill_no = ${o.state === "returned" ? `'${wb}'` : "null"}, returned_at = ${o.state === "returned" ? "now()" : "null"}
+        where box_id = (select b.id from public.boxes b where b.order_id = '${orderId}' order by b.id limit 1) returning id;
+       commit;`,
+    ),
+  );
+  const unmatched = idLine(
+    psql(
+      `begin; set local session_replication_role = replica;
+       insert into public.office_inspections (parcel_id, inspected_by, outcome, bluetooth, rf, metal) values ('${parcel}', '${staff}', 'return', 'clear', 'clear', 'clear');
+       insert into public.office_creator_checks (parcel_id, kind, answer, answered_at, answered_by) values ('${parcel}', 'confirm', 'return', now(), '${o.creatorProfileId}');
+       insert into public.office_creator_check_events (parcel_id, action, actor) values ('${parcel}', 'cancel', '${o.creatorProfileId}');
+       ${o.state === "disposed" ? `insert into public.office_disposals (parcel_id, disposed_by) values ('${parcel}', '${staff}');` : ""}
+       insert into public.office_unmatched (waybill_no, shelf, recorded_by, reason, nickname_profile_id, matched_parcel_id, matched_at)
+         values ('${wb.slice(0, 12)}', 'A1', '${staff}', 'no_code', '${o.fanId}', '${parcel}', now()) returning id;
+       commit;`,
+    ),
+  );
+  psql(
+    `begin; set local session_replication_role = replica;
+     insert into public.office_held_links (unmatched_id, parcel_id, account_id, linked_by, contents_checked) values ('${unmatched}', '${parcel}', '${o.fanId}', '${staff}', true);
+     update public.orders set status = 'inspected', shipped_at = null, inspection_result = 'returned', inspected_at = now() where id = '${orderId}';
+     commit;`,
+  );
+  return parcel;
+}
+function ageOffice(parcel: string, shift: string) {
+  backdate(
+    [
+      `update public.office_inspections set at = at - interval '${shift}' where parcel_id = '${parcel}'`,
+      `update public.office_creator_checks set asked_at = asked_at - interval '${shift}', answered_at = answered_at - interval '${shift}' where parcel_id = '${parcel}'`,
+      `update public.office_creator_check_events set at = at - interval '${shift}' where parcel_id = '${parcel}'`,
+      `update public.office_held_links set linked_at = linked_at - interval '${shift}' where parcel_id = '${parcel}'`,
+      `update public.office_unmatched set arrived_at = arrived_at - interval '${shift}', matched_at = matched_at - interval '${shift}' where matched_parcel_id = '${parcel}'`,
+    ].join("; "),
+  );
+}
+const officeRows = (parcel: string) =>
+  psql(
+    `select (select count(*) from public.office_parcels where id = '${parcel}') || ',' || (select count(*) from public.office_inspections where parcel_id = '${parcel}') || ',' ||
+       (select count(*) from public.office_creator_checks where parcel_id = '${parcel}') || ',' || (select count(*) from public.office_held_links where parcel_id = '${parcel}') || ',' ||
+       (select count(*) from public.office_unmatched where matched_parcel_id = '${parcel}')`,
+  );
+/** 계정을 가리키는 칸 전부(public)에서 이 계정 ID 가 나오는 칸 — 탈퇴 처리 기록(account_withdrawals)은 뺀다 */
+function referencesTo(profileId: string): string[] {
+  const cols = psql(
+    `select c.conrelid::regclass || '.' || a.attname from pg_constraint c join pg_attribute a on a.attrelid = c.conrelid and a.attnum = c.conkey[1]
+     where c.contype = 'f' and c.confrelid = 'public.profiles'::regclass and array_length(c.conkey, 1) = 1 and c.conrelid <> 'public.account_withdrawals'::regclass`,
+  ).split("\n");
+  return cols.filter((col) => {
+    const dot = col.lastIndexOf(".");
+    return Number(psql(`select count(*) from ${col.slice(0, dot)} where ${col.slice(dot + 1)} = '${profileId}'`)) > 0;
+  });
+}
+
+describe("자동 삭제 — 사무실 상자가 있는 주문 (코드 리뷰 반영, my-account INV-A15·A16 · 카드 d123)", () => {
+  it("INV-A15·A16: 상자가 모두 반송돼 주문 상태가 「검수 완료」에 머문 주문은 끝난 주문이다 — 팬·크리에이터가 탈퇴할 수 있고, 5년 1일 뒤 상자 기록까지 지워진다", async () => {
+    const fan = await createTestAccount({ tag: "wdr1f", phone: null });
+    const cre = await createTestAccount({ tag: "wdr1c", phone: null });
+    const o = await shippedOrder({ senderId: fan.userId, creatorId: makeCreator(cre) });
+    const parcel = officeTrail(o.orderId, { fanId: fan.userId, creatorProfileId: cre.userId, state: "returned" });
+    expect(psql(`select status from public.orders where id = '${o.orderId}'`)).toBe("inspected");
+    expect((await withdraw(fan.loginId)).error).toBeNull();
+    expect((await withdraw(cre.loginId)).error).toBeNull();
+    ageOrder(o.orderId, "5 years 1 day");
+    ageOffice(parcel, "5 years 1 day");
+    expect(purge().orders).toBeGreaterThanOrEqual(1);
+    expect(orderRows(o.orderId)).toBe("0,0,0,0,0");
+    expect(officeRows(parcel)).toBe("0,0,0,0,0");
+  });
+
+  it("INV-A15 (실패경로): 상자가 아직 사무실에 있는(검수 완료) 주문은 끝나지 않았다 — 탈퇴가 거부된다", async () => {
+    const fan = await createTestAccount({ tag: "wdr2f", phone: null });
+    const o = await shippedOrder({ senderId: fan.userId });
+    psql(
+      `begin; set local session_replication_role = replica;
+       update public.office_parcels set state = 'inspected', received_at = now(), inspected_at = now() where box_id in (select b.id from public.boxes b where b.order_id = '${o.orderId}');
+       update public.orders set status = 'inspected', shipped_at = null where id = '${o.orderId}'; commit;`,
+    );
+    expect((await withdraw(fan.loginId)).error?.code).toBe("55000");
+  });
+
+  it("카드 d123 (실패경로): 팬만 탈퇴한 5년 1일 된 주문 — 팬의 가명이 주문·상자 기록 어느 칸에도 남지 않는다(같이 쓰는 「탈퇴한 회원」으로)", async () => {
+    const fan = await createTestAccount({ tag: "wdr3f", phone: null });
+    const cre = await createTestAccount({ tag: "wdr3c", phone: null });
+    const o = await shippedOrder({ senderId: fan.userId, creatorId: makeCreator(cre) });
+    const parcel = officeTrail(o.orderId, { fanId: fan.userId, creatorProfileId: cre.userId, state: "returned" });
+    const pseudonym = ((await withdraw(fan.loginId)).data as { pseudonym: string }).pseudonym;
+    expect(referencesTo(pseudonym).sort()).toEqual(["office_held_links.account_id", "office_unmatched.nickname_profile_id", "orders.fan_id"]);
+    ageOrder(o.orderId, "5 years 1 day");
+    ageOffice(parcel, "5 years 1 day");
+    purge();
+    expect(referencesTo(pseudonym)).toEqual([]);
+    expect(officeRows(parcel)).toBe("1,1,1,1,1");
+    expect(psql(`select answered_by from public.office_creator_checks where parcel_id = '${parcel}'`)).toBe(cre.userId);
+  });
+
+  it("카드 d123 (실패경로): 크리에이터만 탈퇴한 5년 1일 된 주문 — 크리에이터의 가명(확인 답·답 기록)도 어느 칸에도 남지 않는다", async () => {
+    const fan = await createTestAccount({ tag: "wdr4f", phone: null });
+    const cre = await createTestAccount({ tag: "wdr4c", phone: null });
+    const o = await shippedOrder({ senderId: fan.userId, creatorId: makeCreator(cre) });
+    const parcel = officeTrail(o.orderId, { fanId: fan.userId, creatorProfileId: cre.userId, state: "returned" });
+    const pseudonym = ((await withdraw(cre.loginId)).data as { pseudonym: string }).pseudonym;
+    expect(referencesTo(pseudonym).sort()).toEqual(["office_creator_check_events.actor", "office_creator_checks.answered_by"]);
+    ageOrder(o.orderId, "5 years 1 day");
+    ageOffice(parcel, "5 years 1 day");
+    purge();
+    expect(referencesTo(pseudonym)).toEqual([]);
+    expect(fanOf(o.orderId)).toBe(fan.userId);
+  });
+
+  it("INV-A16 (실패경로): 처분 시각도 「마지막 기록」이다 — 다른 기록은 5년 1일 전이어도 처분이 최근이면 남고, 처분도 5년 1일 전이면 지워진다", async () => {
+    const fan = await createTestAccount({ tag: "wdr5f", phone: null });
+    const cre = await createTestAccount({ tag: "wdr5c", phone: null });
+    const o = await shippedOrder({ senderId: fan.userId, creatorId: makeCreator(cre) });
+    const parcel = officeTrail(o.orderId, { fanId: fan.userId, creatorProfileId: cre.userId, state: "disposed" });
+    expect((await withdraw(fan.loginId)).error).toBeNull();
+    expect((await withdraw(cre.loginId)).error).toBeNull();
+    ageOrder(o.orderId, "5 years 1 day");
+    ageOffice(parcel, "5 years 1 day");
+    purge();
+    expect(orderRows(o.orderId).startsWith("1,")).toBe(true);
+    backdate(`update public.office_disposals set at = at - interval '5 years 1 day' where parcel_id = '${parcel}'`);
+    purge();
+    expect(orderRows(o.orderId)).toBe("0,0,0,0,0");
+  });
+
+  it("카드 d123: 탈퇴 때 가명으로 옮기는 칸 목록이 바뀌면 이 시험이 알린다 — 새 칸은 자동 삭제의 「같이 쓰는 표시로 바꾸기」와 함께 본다", () => {
+    const moved = psql(
+      `select c.conrelid::regclass || '.' || a.attname from pg_constraint c join pg_attribute a on a.attrelid = c.conrelid and a.attnum = c.conkey[1]
+       where c.contype = 'f' and c.connamespace = 'public'::regnamespace and c.confrelid = 'public.profiles'::regclass
+         and c.confdeltype <> 'c' and array_length(c.conkey, 1) = 1
+         and c.conrelid not in ('public.creators'::regclass, 'public.account_withdrawals'::regclass) order by 1`,
+    ).split("\n");
+    expect(moved).toEqual(MOVED_PROFILE_COLUMNS);
+  });
+});
+
+// 탈퇴 때 가명으로 옮기는 칸(지우면 함께 지워지는 칸 말고). 자동 삭제가 주문 줄을 남길 때 주문·상자에 달린 칸의 가명을 같이 쓰는 「탈퇴한 회원」으로 바꾼다.
+// 운영자가 누른 기록(…_by·operator_id 등)은 탈퇴하는 회원을 가리키지 않는다. 칸이 늘면 이 목록과 retention_purge 의 바꾸는 칸을 같이 고친다.
+const MOVED_PROFILE_COLUMNS = [
+  "banner_changes.acted_by",
+  "banners.created_by",
+  "banners.updated_by",
+  "creator_blocks.sender_id",
+  "creator_channel_claims.account_id",
+  "creator_verification_applications.account_id",
+  "creator_verification_events.acted_by",
+  "creator_verification_unlocks.account_id",
+  "creator_verification_unlocks.acted_by",
+  "inquiries.answered_by",
+  "inquiry_restriction_events.acted_by",
+  "inquiry_restrictions.restricted_by",
+  "notices.author_id",
+  "notices.updated_by",
+  "office_code_inputs.operator_id",
+  "office_creator_check_events.actor",
+  "office_creator_checks.answered_by",
+  "office_disposals.disposed_by",
+  "office_envelope_shreds.shredded_by",
+  "office_held_links.account_id",
+  "office_held_links.linked_by",
+  "office_inspections.inspected_by",
+  "office_label_pending.operator_id",
+  "office_not_mine_reports.reported_by",
+  "office_parcels.hold_closed_by",
+  "office_police_handovers.handed_by",
+  "office_share_moves.moved_by",
+  "office_storage_claims.decided_by",
+  "office_unmatched.nickname_profile_id",
+  "office_unmatched.recorded_by",
+  "office_unmatched.returned_by",
+  "office_unmatched_look_edits.edited_by",
+  "order_cancellations.canceled_by",
+  "orders.fan_id",
+  "owner_setting.owner_user_id",
+  "prohibited_item_changes.changed_by",
+  "refunds.requested_by",
+  "revgift_sends.sender_id",
+  "revgift_shares.fan_id",
+  "review_cancels.requested_by",
+  "tier_price_changes.changed_by",
+];
