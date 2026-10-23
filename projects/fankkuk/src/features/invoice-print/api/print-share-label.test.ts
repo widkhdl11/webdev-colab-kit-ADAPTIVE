@@ -132,6 +132,17 @@ describe("역조공 송장 출력 — 팬 주소 열기 (INV-R7)", () => {
     expect(calls[2]?.args).toEqual({ p_qr: QR, p_waybill: null });
   });
 
+  it("INV-R9 S9 (카드 d120): 출고 확정된 몫도 한 번 연 적이 있으면 새 송장번호 없이 마무리를 불러 처음 번호로 재출력한다 — 연 적 없으면 거부", async () => {
+    const { db, calls } = fakeDb(goodContext({ parcel_state: "shipped", shipped: true, decrypt_count: 1 }), await openedClaim(), ok({ waybill: OLD_WAYBILL, first: false }));
+    expect(await printShareLabel(deps(db), ask)).toEqual({ kind: "printed", waybill: OLD_WAYBILL, reprint: true, label: fields });
+    expect(calls[2]?.args).toEqual({ p_qr: QR, p_waybill: null });
+    const never = fakeDb(goodContext({ parcel_state: "shipped", shipped: true, decrypt_count: 0 }), await openedClaim());
+    expect(await printShareLabel(deps(never.db), ask)).toEqual({ kind: "denied", reason: "order_not_printable" });
+    // 몫은 출고 확정인데 상자가 출고 확정이 아니면 거부 — DB(revgift_claim_print)와 같은 조건
+    const notShippedParcel = fakeDb(goodContext({ parcel_state: "label_printed", shipped: true, decrypt_count: 1 }), await openedClaim());
+    expect(await printShareLabel(deps(notShippedParcel.db), ask)).toEqual({ kind: "denied", reason: "order_not_printable" });
+  });
+
   it("INV-R7 S7e·S7b·S7d (실패경로): 대표 아님·받기 전·검수 전·반송·결제 전·상한이면 DB 봉투를 부르지 않고 거부 줄 하나만 남긴다", async () => {
     const cases: [Context, string, string][] = [
       [goodContext(), "staff-token", "not_owner"],

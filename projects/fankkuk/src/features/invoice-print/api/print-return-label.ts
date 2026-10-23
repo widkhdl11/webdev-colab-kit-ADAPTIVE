@@ -127,9 +127,9 @@ export async function printReturnLabel(deps: ReturnLabelDeps, input: { qr: strin
     return { kind: "denied", reason: opened.reason };
   }
 
-  // 첫 출력이면 새 송장번호로 반송 송장 출력 단계로 넘기고, 재출력이면 DB 가 처음 번호를 돌려준다(어느 쪽인지는 DB 가 잠근 자리에서 정한다).
+  // 첫 출력(반송 대기)이면 새 송장번호로 반송 송장 출력 단계로 넘기고, 재출력(반송 송장 출력함·반송 확정 뒤)이면 DB 가 처음 번호를 돌려준다(어느 쪽인지는 DB 가 잠근 자리에서 정한다).
   // 봉투를 내준 뒤 보낸 사람이 다른 주소로 다시 확인했으면 확인 시각이 달라 DB 가 거부한다(P0041) — 먼저 연 주소로 출력하지 않고 연 줄을 돌려받는다.
-  const waybill = ctx.parcel_state === "return_printed" ? null : deps.newWaybill();
+  const waybill = ctx.parcel_state === "return_waiting" ? deps.newWaybill() : null;
   const finish = await deps.db.rpc("return_finish_print", { p_qr: input.qr, p_waybill: waybill, p_confirmed_at: confirmedAt });
   if (finish.error) return releaseOpened(deps, logId, requesterId);
   const finished = finishShape.safeParse(finish.data);

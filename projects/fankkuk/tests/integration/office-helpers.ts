@@ -202,6 +202,25 @@ export function markReturnConfirmedForTest(qr: string): void {
   psql(`update public.office_parcels set return_confirmed_at = now() where qr_code = '${qr}'`);
 }
 
+/**
+ * 출고·반송 확정 + 72시간 주소 사본 지우기(reverse-gift INV-R9 · address-protection INV-P18 · office-workflow INV-W11, 2026-10-23 카드 d120)를
+ * 예약 작업 대신 한 번 돌린다. 함수는 manual/0024 가 만든다 — 적용 전에는 함수가 없어 이 호출이 실패한다(빨간불이 맞다).
+ * 돌려주는 값: {revgift, return} — 이번에 지운 몫 사본 수 · 반송 상자 사본 수.
+ */
+export function dropAddressCopies(): { revgift: number; return: number } {
+  return JSON.parse(psql("select public.office_drop_address_copies()::text")) as { revgift: number; return: number };
+}
+
+/** 몫의 출고 확정 시각을 hours 시간 앞으로 당긴다 — 72시간 사본 지우기의 시계(revgift_shares.shipped_at) */
+export function ageShareShipment(orderNo: string, hours: number): void {
+  psql(`update public.revgift_shares set shipped_at = shipped_at - interval '${hours} hours' where order_no = '${orderNo}'`);
+}
+
+/** 상자의 반송 확정 시각을 hours 시간 앞으로 당긴다 — 72시간 사본 지우기의 시계(office_parcels.returned_at) */
+export function ageReturn(qr: string, hours: number): void {
+  psql(`update public.office_parcels set returned_at = returned_at - interval '${hours} hours' where qr_code = '${qr}'`);
+}
+
 export function parcelState(qr: string): string {
   return psql(`select state from public.office_parcels where qr_code = '${qr}'`);
 }

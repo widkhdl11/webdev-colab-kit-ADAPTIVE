@@ -136,10 +136,17 @@ describe("반송 송장 출력 — 확인한 등록 주소 열기 (address-prote
     expect(calls[2]?.args).toEqual({ p_qr: QR, p_waybill: null, p_confirmed_at: CONFIRMED_AT });
   });
 
+  it("INV-P18 S18d (카드 d120): 반송 확정된 상자도 한 번 연 적이 있으면 새 송장번호 없이 마무리를 불러 처음 번호로 재출력한다", async () => {
+    const { db, calls } = fakeDb(linkedContext({ parcel_state: "returned", decrypt_count: 1 }), await fanClaim(), ok({ waybill: OLD_WAYBILL, first: false }));
+    expect(await printReturnLabel(deps(db), ask)).toEqual({ kind: "printed", waybill: OLD_WAYBILL, reprint: true, label: fields });
+    expect(calls[2]?.args).toEqual({ p_qr: QR, p_waybill: null, p_confirmed_at: CONFIRMED_AT });
+  });
+
   it("INV-P18 (S18b, 실패경로): 대표 아님·확인 전·반송 대기 아님·상한이면 봉투를 부르지 않고 거부 줄 하나만 남긴다 — 갈래마다", async () => {
     const cases: [Context, string, string][] = [
       [linkedContext(), "staff-token", "not_owner"],
       [linkedContext({ confirmed: false }), "owner-token", "no_valid_approval"],
+      // 반송 확정 뒤 첫 출력은 없다 — 연 적 없는 상자(카드 d120)
       [linkedContext({ parcel_state: "returned" }), "owner-token", "order_not_printable"],
       [linkedContext({ parcel_state: "dispose_due" }), "owner-token", "order_not_printable"],
       [linkedContext({ parcel_state: "inspected" }), "owner-token", "order_not_printable"],

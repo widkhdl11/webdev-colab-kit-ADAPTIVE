@@ -5,7 +5,20 @@ import { createInvoiceDecryptor, type InvoiceDecryptor } from "@/features/invoic
 import { sealEnvelope, type Envelope } from "@/shared/lib/envelope/envelope";
 import { adminClient, deleteTestOrders, holdRowLock, psql, psqlError, signedInClient } from "./helpers";
 import { decryptFileText, LABEL, OWNER_ID, STAFF_ID, testKeyPair, type TestKeys } from "./invoice-helpers";
-import { creatorSetsWaybill, deleteTestUnmatched, fanSetsWaybill, inspect, paidGift, paidShare, parcelState, receiveAndLabel, SHARE_PASS, waybill } from "./office-helpers";
+import {
+  ageShareShipment,
+  creatorSetsWaybill,
+  deleteTestUnmatched,
+  dropAddressCopies,
+  fanSetsWaybill,
+  inspect,
+  paidGift,
+  paidShare,
+  parcelState,
+  receiveAndLabel,
+  SHARE_PASS,
+  waybill,
+} from "./office-helpers";
 import { acceptWithAddress, deleteTestRevgifts, PROFILE } from "./revgift-helpers";
 
 // 역조공 송장 출력 = 팬 주소 열기 (reverse-gift INV-R7) · 송장이 안 나온 출력 돌려주기 (INV-R13).
@@ -221,6 +234,64 @@ describe("INV-R7: 역조공 몫의 주소는 조건이 모두 참일 때만 열�
       expect((await client.rpc("revgift_release_print", { p_log_id: 1, p_requester: OWNER_ID })).error).not.toBeNull();
     }
     expect(logRows(s.shareId)).toEqual([]);
+  });
+});
+
+describe("INV-R7 · R9 (카드 d120): 출고 확정 뒤에도 72시간 안에는 남은 횟수로 재출력한다", () => {
+  async function shipped(): Promise<Share & { out: string }> {
+    const s = await inspectedShare();
+    const first = await print(s.qr);
+    if (first.kind !== "printed") throw new Error("첫 출력 실패");
+    const staff = await signedInClient("fankkuk_staff");
+    expect((await staff.rpc("office_confirm_shipment", { p_qr: s.qr, p_waybill: first.waybill })).error).toBeNull();
+    expect(parcelState(s.qr)).toBe("shipped");
+    return { ...s, out: first.waybill };
+  }
+
+  it("INV-R9 S9: 출고 확정 뒤 대표가 다시 출력하면 같은 송장번호의 재출력이고 「재출력」 줄이 남는다 — 상자는 출고 확정 그대로", async () => {
+    const s = await shipped();
+    const again = await print(s.qr);
+    expect(again).toMatchObject({ kind: "printed", reprint: true, waybill: s.out });
+    expect(logRows(s.shareId)).toEqual([`opened:1:${OWNER_ID}`, `opened:2:${OWNER_ID}`]);
+    expect(parcelState(s.qr)).toBe("shipped");
+  });
+
+  it("INV-R9 S9: 출고 확정 + 71시간에도 재출력이 열린다 — 경계 안쪽", async () => {
+    const s = await shipped();
+    ageShareShipment(s.orderNo, 71);
+    expect(await print(s.qr)).toMatchObject({ kind: "printed", reprint: true, waybill: s.out });
+  });
+
+  it("INV-W11 · R9: 5분 예약 작업(office_run_scheduled)이 출고 확정 + 72시간 지난 사본을 지운다 — 예약 작업과 지우기의 연결", async () => {
+    const s = await shipped();
+    ageShareShipment(s.orderNo, 73);
+    const ran = JSON.parse(psql("select public.office_run_scheduled()::text")) as { address_copies?: { revgift: number } };
+    expect(ran.address_copies?.revgift).toBeGreaterThanOrEqual(1);
+    expect(psql(`select count(*) from pii.revgift_addresses where share_id = '${s.shareId}'`)).toBe("0");
+  });
+
+  it("INV-R9 S9 (실패경로): 출고 확정 + 72시간이 지나면 자동 처리 전이라도 열지 않고, 자동 처리 뒤에는 사본도 없다", async () => {
+    const s = await shipped();
+    ageShareShipment(s.orderNo, 73);
+    expect(await print(s.qr)).toEqual({ kind: "denied", reason: "order_not_printable" });
+    dropAddressCopies();
+    expect(psql(`select count(*) from pii.revgift_addresses where share_id = '${s.shareId}'`)).toBe("0");
+    expect((await print(s.qr)).kind).toBe("denied");
+  });
+
+  it("INV-R7 (실패경로): 출고 확정 뒤에도 상한 3회는 그대로다", async () => {
+    const s = await shipped();
+    expect((await print(s.qr)).kind).toBe("printed");
+    expect((await print(s.qr)).kind).toBe("printed");
+    expect(await print(s.qr)).toEqual({ kind: "denied", reason: "decrypt_limit_reached" });
+  });
+
+  it("INV-W11 (실패경로): 72시간 사본 지우기는 앱 서버 키·로그인 키·익명 키로 부를 수 없다", async () => {
+    const fan = await signedInClient("byeolbit_fan");
+    const admin = await signedInClient("fankkuk_admin");
+    for (const client of [adminClient(), fan, admin]) {
+      expect((await client.rpc("office_drop_address_copies")).error).not.toBeNull();
+    }
   });
 });
 

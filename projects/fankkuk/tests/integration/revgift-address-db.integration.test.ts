@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { adminClient, psql, signedInClient } from "./helpers";
+import { ageShareShipment, dropAddressCopies } from "./office-helpers";
 import {
   acceptWithAddress,
   backdateSettlement,
@@ -180,15 +181,27 @@ describe("INV-R6: 팬 주소가 저장되는 자리는 등록 주소 하나와 �
     await fan.rpc("accept_revgift", { p_order_no: b });
     const registered = fanEnvelope(PROFILE.byeolbit);
     psql(`update public.revgift_shares set received_at = now(), inspected_at = now() where order_no = '${a}'`);
-    expect((await adminClient().rpc("close_revgift_share", { p_order_no: a, p_outcome: "shipped" })).error).toBeNull();
+    expect((await adminClient().rpc("close_revgift_share", { p_order_no: a, p_outcome: "cancelled" })).error).toBeNull();
     expect(addressCount(a)).toBe(0);
     expect(addressCount(b)).toBe(1);
     expect(fanEnvelope(PROFILE.byeolbit)).toBe(registered);
   });
 });
 
-describe("INV-R9: 출고 확정·반송·취소가 되는 순간 주소가 지워진다", () => {
-  it.each(["shipped", "returned", "cancelled"] as const)("INV-R9 S9·S9b: %s 가 되면 같은 처리 안에서 주소가 지워진다", async (outcome) => {
+describe("INV-R9: 반송·취소가 되는 순간 주소가 지워지고, 출고된 몫은 출고 확정 + 72시간에 지워진다(카드 d120)", () => {
+  it("INV-R9 S9: shipped 로 닫으면 주소는 남고(재출력용), 72시간 자동 처리가 지운다", async () => {
+    const no = await paidShareFor(PROFILE.byeolbit);
+    const fan = await signedInClient("byeolbit_fan");
+    await acceptWithAddress(fan, no);
+    psql(`update public.revgift_shares set received_at = now(), inspected_at = now() where order_no = '${no}'`);
+    expect((await adminClient().rpc("close_revgift_share", { p_order_no: no, p_outcome: "shipped" })).error).toBeNull();
+    expect(addressCount(no)).toBe(1);
+    ageShareShipment(no, 73);
+    dropAddressCopies();
+    expect(addressCount(no)).toBe(0);
+  });
+
+  it.each(["returned", "cancelled"] as const)("INV-R9 S9b: %s 가 되면 같은 처리 안에서 주소가 지워진다", async (outcome) => {
     const no = await paidShareFor(PROFILE.byeolbit);
     const fan = await signedInClient("byeolbit_fan");
     await acceptWithAddress(fan, no);
@@ -323,6 +336,8 @@ describe("리뷰 뒤 보강 (2026-10-03)", () => {
     await acceptWithAddress(fan, no);
     psql(`update public.revgift_shares set received_at = now(), inspected_at = now() where order_no = '${no}'`);
     await adminClient().rpc("close_revgift_share", { p_order_no: no, p_outcome: "shipped" });
+    ageShareShipment(no, 73);
+    dropAddressCopies();
     expect(
       psql(`select e.event || ',' || e.outcome from public.revgift_address_events e join public.revgift_shares s on s.id = e.share_id where s.order_no = '${no}'`),
     ).toBe("deleted,shipped");

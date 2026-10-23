@@ -2,8 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, afterEach, describe, expect, it } from "vitest";
 import { adminClient, deleteTestOrders, holdRowLock, psql, SEED, signedInClient } from "./helpers";
 import {
+  ageReturn,
   codeOf,
   deleteTestUnmatched,
+  dropAddressCopies,
   FAN_PASS,
   fanSetsWaybill,
   finishReturnPrint,
@@ -258,7 +260,7 @@ describe("반송 송장의 주소 열기 (address-protection INV-P18)", () => {
     return { g, qr: qrs[0]! };
   }
 
-  it("INV-P18 (S18): 확인한 반송 대기 상자 → 봉투와 보낸 계정을 내주고 연 줄 1, 별빛이 자기 열람 기록에서 본다. 반송 확정 → 복사본 지움·지운 기록 1, 다시 열기 거부", async () => {
+  it("INV-P18 (S18·S18d): 확인한 반송 대기 상자 → 봉투와 보낸 계정을 내주고 연 줄 1, 별빛이 자기 열람 기록에서 본다. 반송 확정 뒤 72시간 안에는 재출력, 72시간 자동 처리가 복사본 지움·지운 기록 1, 그 뒤 열기 거부", async () => {
     const { g, qr } = await confirmedBox();
     const opened = claim(qr);
     expect(opened).toMatchObject({ result: "opened", print_no: 1, order_no: g.orderNo, sender_id: BYEOLBIT, sender_creator_id: null });
@@ -273,13 +275,37 @@ describe("반송 송장의 주소 열기 (address-protection INV-P18)", () => {
     expect((await (await signedInClient("daltokki_fan")).rpc("my_return_access_log", { p_order_no: g.orderNo })).data).toEqual([]);
 
     expect((await (await staff()).rpc("office_confirm_return", { p_qr: qr, p_waybill: back })).error).toBeNull();
+    // 카드 d120: 반송 확정 뒤에도 기사가 오기 전 망가진 라벨을 다시 뽑도록 복사본은 남고, 재출력(2번째)이 열린다 — 송장번호는 처음 것
+    expect(copies(qr)).toBe("1");
+    expect(events(qr)).toBe("");
+    expect(claim(qr)).toMatchObject({ result: "opened", print_no: 2 });
+    expect(finishReturnPrint(qr, waybill())).toBeNull();
+    expect(psql(`select state || '/' || return_waybill_no from public.office_parcels where qr_code = '${qr}'`)).toBe(`returned/${back}`);
+    ageReturn(qr, 71);
+    dropAddressCopies();
+    expect(copies(qr)).toBe("1");
+    // 봉투 함수도 경계 안쪽(71시간)에서는 연다
+    expect(claim(qr)).toMatchObject({ result: "opened", print_no: 3 });
+    ageReturn(qr, 2);
+    dropAddressCopies();
     expect(copies(qr)).toBe("0");
     expect(events(qr)).toBe("deleted,returned");
     // 지우는 것은 상자 복사본뿐 — 설정의 등록 주소는 그대로다
     expect(fanAddressRows(BYEOLBIT)).toBe("1");
     expect(claim(qr)).toEqual({ result: "denied", reason: "order_not_printable" });
     const after = (await (await signedInClient("byeolbit_fan")).rpc("my_return_access_log", { p_order_no: g.orderNo })).data as { kind: string; outcome: string | null }[];
-    expect(after.map((r) => [r.kind, r.outcome])).toEqual([["deleted", "returned"], ["opened", null]]);
+    expect(after.map((r) => [r.kind, r.outcome])).toEqual([["deleted", "returned"], ["opened", null], ["opened", null], ["opened", null]]);
+  });
+
+  it("INV-P18 S18d (실패경로): 반송 확정 뒤 72시간이 지났으면 복사본이 아직 남아 있어도(자동 처리 전) 열지 않는다", async () => {
+    const { qr } = await confirmedBox();
+    expect(claim(qr)).toMatchObject({ result: "opened", print_no: 1 });
+    const back = waybill();
+    expect(finishReturnPrint(qr, back)).toBeNull();
+    expect((await (await staff()).rpc("office_confirm_return", { p_qr: qr, p_waybill: back })).error).toBeNull();
+    ageReturn(qr, 73);
+    expect(copies(qr)).toBe("1");
+    expect(claim(qr)).toEqual({ result: "denied", reason: "order_not_printable" });
   });
 
   it("INV-P7 · P18: 반송 송장으로 주소를 연 줄과 거부 줄이 운영자 내부 열람 기록에 「반송」 줄로 보인다 — 주문번호·결과·몇 번째·누가, 주소 칸은 없다", async () => {

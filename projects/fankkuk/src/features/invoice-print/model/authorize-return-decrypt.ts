@@ -5,8 +5,10 @@ import { readOpenedFanAddress } from "@/entities/address/model/fan-address-plain
 // 반송 송장의 주소를 여는 조건(address-protection INV-P18). 역조공 몫의 판정(authorize-revgift-decrypt)과 같은 자리에서 부른다 —
 // 근거는 「보낸 사람이 확인하며 상자에 복사해 둔 등록 주소 암호문」이다(office-workflow INV-W15).
 
-/** 반송 송장을 출력할 수 있는 단계 — 반송 대기(첫 출력)와 반송 송장 출력함(재출력). 처분 대상·반송 확정 뒤에는 열지 않는다 */
+/** 반송 송장을 출력할 수 있는 단계 — 반송 대기(첫 출력)와 반송 송장 출력함(재출력). 처분 대상에서는 열지 않는다 */
 export const RETURN_PRINTABLE_STATES: readonly string[] = ["return_waiting", "return_printed"];
+/** 반송 확정 뒤 — 이미 한 번 이상 연 상자의 재출력만(카드 d120). 반송 확정 + 72시간은 봉투를 내주는 DB 함수가 본다(INV-P18) */
+const RETURN_REPRINT_AFTER_CLOSE = "returned";
 
 export type ReturnDecryptRequest = {
   /** 복호화 함수가 스스로 검증한 로그인 토큰의 사용자 ID */
@@ -27,7 +29,8 @@ export function authorizeReturnDecrypt(req: ReturnDecryptRequest): ReturnDecrypt
   // (c) 대표 계정만 — 판단 근거는 복호화 함수 설정의 대표 ID 하나(INV-P8 과 같은 판정)
   if (req.ownerUserId === "" || req.requesterUserId !== req.ownerUserId) return { ok: false, reason: "not_owner" };
   // (a) 반송 대기 상자(반송 송장 출력 뒤 재출력 포함) — 봉투를 내주는 DB 함수와 같은 순서로 본다
-  if (!RETURN_PRINTABLE_STATES.includes(req.parcelState)) return { ok: false, reason: "order_not_printable" };
+  const reprintAfterClose = req.parcelState === RETURN_REPRINT_AFTER_CLOSE && req.decryptCount > 0;
+  if (!RETURN_PRINTABLE_STATES.includes(req.parcelState) && !reprintAfterClose) return { ok: false, reason: "order_not_printable" };
   // (a) 보낸 사람이 확인해 복사해 둔 암호문이 있어야 한다
   if (!req.confirmed) return { ok: false, reason: "no_valid_approval" };
   // 상한 3회(INV-P5 와 같은 규칙)

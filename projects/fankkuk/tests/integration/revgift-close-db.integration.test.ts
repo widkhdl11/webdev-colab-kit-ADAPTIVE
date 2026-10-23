@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { adminClient, holdRowLock, psql, signedInClient } from "./helpers";
-import { creatorSetsWaybill, finishPrint, finishReturnPrint, inspect, markReturnConfirmedForTest, receiveAndLabel, SHARE_PASS, waybill } from "./office-helpers";
+import { ageShareShipment, creatorSetsWaybill, dropAddressCopies, finishPrint, finishReturnPrint, inspect, markReturnConfirmedForTest, receiveAndLabel, SHARE_PASS, waybill } from "./office-helpers";
 import {
   backdateSettlement,
   deleteTestRevgifts,
@@ -59,8 +59,8 @@ afterAll(() => {
   unfollowHaru(ADDED_FOLLOWERS);
 });
 
-describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫고 팬 주소를 지운다", () => {
-  it("INV-R9 S9: 출고 확정 스캔 한 번으로 몫이 닫히고 주소가 지워지며, 지운 기록이 한 줄 남는다", async () => {
+describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫고 팬 주소를 지운다(출고된 몫은 72시간 뒤)", () => {
+  it("INV-R9 S9: 출고 확정 스캔 한 번으로 몫이 닫히고, 주소는 출고 확정 + 72시간 자동 처리에서 지워지며 지운 기록이 한 줄 남는다(카드 d120)", async () => {
     const { orderNo, qr } = await acceptedAndLabeled();
     const staff = await signedInClient("fankkuk_staff");
     expect(await inspect(staff, qr, SHARE_PASS)).toBe("inspected");
@@ -69,9 +69,20 @@ describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫
     expect(addressCount(orderNo)).toBe(1);
 
     expect((await staff.rpc("office_confirm_shipment", { p_qr: qr, p_waybill: out })).error).toBeNull();
+    expect(psql(`select shipped_at is not null from public.revgift_shares where order_no = '${orderNo}'`)).toBe("t");
+    // 기사가 오기 전 라벨이 망가지면 다시 출력하도록 사본은 남는다
+    expect(addressCount(orderNo)).toBe(1);
+    expect(closeEvents(orderNo)).toBe("");
+    ageShareShipment(orderNo, 71);
+    dropAddressCopies();
+    expect(addressCount(orderNo)).toBe(1);
+    ageShareShipment(orderNo, 2);
+    expect(dropAddressCopies().revgift).toBeGreaterThanOrEqual(1);
     expect(addressCount(orderNo)).toBe(0);
     expect(closeEvents(orderNo)).toBe("deleted,shipped");
-    expect(psql(`select shipped_at is not null from public.revgift_shares where order_no = '${orderNo}'`)).toBe("t");
+    // 두 번 돌려도 지운 기록은 한 줄이다
+    dropAddressCopies();
+    expect(closeEvents(orderNo)).toBe("deleted,shipped");
   });
 
   it("INV-R9 S9b: 검수에서 걸린 몫을 반송 확정하면 같은 처리 안에서 주소가 지워진다", async () => {
@@ -138,16 +149,17 @@ describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫
     expect(closeEvents(orderNo)).toBe("");
   });
 
-  it("INV-R9 (실패경로): 출고 확정 뒤에는 송장을 다시 출력할 수 없고 몫·지운 기록도 그대로다", async () => {
+  it("INV-R9 · R7 (카드 d120): 출고 확정 뒤 송장 마무리는 처음 송장번호로 재출력을 받고, 몫은 닫힌 채 출고 확정 상태 그대로다", async () => {
     const { orderNo, qr } = await acceptedAndLabeled();
     const staff = await signedInClient("fankkuk_staff");
     await inspect(staff, qr, SHARE_PASS);
     const out = waybill();
     expect(finishPrint(qr, out)).toBeNull();
     expect((await staff.rpc("office_confirm_shipment", { p_qr: qr, p_waybill: out })).error).toBeNull();
-    expect(finishPrint(qr, waybill())).toBe("55000");
-    expect(psql(`select state from public.office_parcels where qr_code = '${qr}'`)).toBe("shipped");
-    expect(closeEvents(orderNo)).toBe("deleted,shipped");
+    expect(finishPrint(qr, waybill())).toBeNull();
+    expect(psql(`select state || '/' || outbound_waybill_no from public.office_parcels where qr_code = '${qr}'`)).toBe(`shipped/${out}`);
+    expect(psql(`select shipped_at is not null from public.revgift_shares where order_no = '${orderNo}'`)).toBe("t");
+    expect(closeEvents(orderNo)).toBe("");
   });
 
   it("INV-R9: 지운 기록에는 주소가 없다 — 칸은 몫·사건·결과·시각뿐", async () => {

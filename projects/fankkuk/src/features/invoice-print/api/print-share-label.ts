@@ -54,7 +54,7 @@ const finishShape = z.object({ waybill: z.string().min(1), first: z.boolean() })
 
 type ShareContext = z.infer<typeof shareContext>;
 
-/** 출력할 수 있는 단계 — 검수 완료부터 송장 출력까지. 결제가 끝난 보내기의 몫만. */
+/** 출력할 수 있는 단계 — 검수 완료부터 송장 출력까지. 출고 확정된 몫은 상자도 출고 확정일 때만 재출력(카드 d120). 결제가 끝난 보내기의 몫만. */
 const PRINTABLE_STATES: readonly string[] = ["inspected", "label_printed"];
 
 async function logDenied(deps: ShareLabelDeps, ctx: ShareContext, requesterId: string, reason: AccessDenyReason): Promise<void> {
@@ -99,7 +99,7 @@ export async function printShareLabel(deps: ShareLabelDeps, input: { qr: string;
     hasEnvelope: ctx.reply === "accepted",
     share: {
       reply: ctx.reply,
-      inspected: ctx.inspected && ctx.paid && PRINTABLE_STATES.includes(ctx.parcel_state),
+      inspected: ctx.inspected && ctx.paid && (ctx.shipped ? ctx.parcel_state === "shipped" : PRINTABLE_STATES.includes(ctx.parcel_state)),
       shipped: ctx.shipped,
       returned: ctx.returned,
       cancelled: ctx.cancelled,
@@ -148,7 +148,7 @@ export async function printShareLabel(deps: ShareLabelDeps, input: { qr: string;
   }
 
   // 첫 출력이면 새 송장번호로 송장 출력 단계로 넘기고, 재출력이면 DB 가 처음 번호를 돌려준다(재출력인지는 DB 가 잠근 자리에서 정한다).
-  const waybill = ctx.parcel_state === "label_printed" ? null : deps.newWaybill();
+  const waybill = ctx.parcel_state === "inspected" ? deps.newWaybill() : null;
   const finish = await deps.db.rpc("revgift_finish_print", { p_qr: input.qr, p_waybill: waybill });
   if (finish.error) return releaseOpened(deps, logId, requesterId);
   const finished = finishShape.safeParse(finish.data);

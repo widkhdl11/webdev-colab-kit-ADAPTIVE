@@ -31,7 +31,7 @@ describe("INV-R7: 몫의 주소를 여는 조건", () => {
     }
   });
 
-  it("INV-R7 S7d (c, 실패경로): 검수 전·출고 확정 뒤·반송·취소된 몫은 열지 않는다", () => {
+  it("INV-R7 S7d (c, 실패경로): 검수 전·출고 확정 뒤 첫 출력·반송·취소된 몫은 열지 않는다", () => {
     expect(authorizeRevgiftDecrypt({ ...ok, share: { ...ok.share, inspected: false } })).toEqual({ ok: false, reason: "order_not_printable" });
     expect(authorizeRevgiftDecrypt({ ...ok, share: { ...ok.share, shipped: true } })).toEqual({ ok: false, reason: "order_not_printable" });
     expect(authorizeRevgiftDecrypt({ ...ok, share: { ...ok.share, returned: true } })).toEqual({ ok: false, reason: "order_not_printable" });
@@ -41,6 +41,16 @@ describe("INV-R7: 몫의 주소를 여는 조건", () => {
   it("INV-R7 S7e (d, 실패경로): 대표가 아니면 열지 않는다 — 대표 ID 설정이 비어 있어도 마찬가지", () => {
     expect(authorizeRevgiftDecrypt({ ...ok, requesterUserId: "staff-1" })).toEqual({ ok: false, reason: "not_owner" });
     expect(authorizeRevgiftDecrypt({ ...ok, requesterUserId: "", ownerUserId: "" })).toEqual({ ok: false, reason: "not_owner" });
+  });
+
+  it("INV-R7 (c)·R9 S9 (카드 d120): 출고 확정 뒤에도 한 번 연 적이 있으면 재출력으로 연다 — 반송·취소가 겹치면 거부, 상한은 그대로", () => {
+    const shipped = { ...ok.share, shipped: true };
+    expect(authorizeRevgiftDecrypt({ ...ok, share: shipped, decryptCount: 1 })).toEqual({ ok: true, isReprint: true });
+    // 몫은 출고 확정인데 상자가 출고 확정 단계가 아니면(호출하는 쪽이 inspected 를 내린다) 열지 않는다 — DB 와 같은 조건
+    expect(authorizeRevgiftDecrypt({ ...ok, share: { ...shipped, inspected: false }, decryptCount: 2 })).toEqual({ ok: false, reason: "order_not_printable" });
+    expect(authorizeRevgiftDecrypt({ ...ok, share: { ...shipped, returned: true }, decryptCount: 1 })).toEqual({ ok: false, reason: "order_not_printable" });
+    expect(authorizeRevgiftDecrypt({ ...ok, share: { ...shipped, cancelled: true }, decryptCount: 1 })).toEqual({ ok: false, reason: "order_not_printable" });
+    expect(authorizeRevgiftDecrypt({ ...ok, share: shipped, decryptCount: 3 })).toEqual({ ok: false, reason: "decrypt_limit_reached" });
   });
 
   it("INV-R7: 한 몫은 최대 3회 — 2회째부터는 재출력, 4회째는 거부", () => {

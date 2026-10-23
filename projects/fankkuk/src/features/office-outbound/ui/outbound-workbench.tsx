@@ -567,44 +567,55 @@ function ParcelCard({ parcel, access, busy, onPrint, onRecord, opened }: CardPro
       );
 
     default:
-      // INV-P5 (2026-10-10): 출고 확정된 팬 선물 상자도 택배 기사가 가져가기 전이면 남은 횟수 안에서 대표가 다시 출력한다
-      if (parcel.kind === "gift" && parcel.state === "shipped" && canReprintLabel(access)) {
-        return (
-          <section className={w.result} aria-labelledby="out-shipped">
-            <div className={w.resultHead}>
-              <span className={`${a.tag} ${a.tagBrand}`}>출고함</span>
-              <h2 id="out-shipped" className={a.mono}>
-                {parcel.orderNo}
-              </h2>
-            </div>
-            <Facts parcel={parcel} />
-            {parcel.outboundWaybillNo && <WaybillBox label="출력한 송장번호 (개발용 — 택배사 연동 전)" waybill={parcel.outboundWaybillNo} />}
-            <div className={w.nextStep}>
-              {opened ? (
-                <>
-                  <PrintLabel orderNo={parcel.orderNo} opened={opened} />
-                  <div className={a.btnRow}>
-                    <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => window.print()}>
-                      송장 인쇄
-                    </button>
-                  </div>
-                  <p className={a.hint}>받는 사람 주소는 화면에 보이지 않고 인쇄에만 찍혀요. 송장번호는 처음 것과 같아요.</p>
-                </>
-              ) : (
-                <>
-                  <h3>출고된 상자예요</h3>
-                  <p>택배 기사가 가져가기 전에 송장이 젖거나 망가졌을 때만 다시 출력해요. 송장번호는 처음 것 그대로예요.</p>
-                  <div className={a.btnRow}>
-                    <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => onPrint("print_label")} aria-disabled={busy}>
-                      {busy ? "출력하는 중…" : "송장 다시 출력"}
-                    </button>
-                  </div>
-                  <p className={a.hint}>다시 출력하면 주소를 한 번 더 열고 열람 기록에 남아요(첫 출력 포함 최대 3번).</p>
-                </>
-              )}
-            </div>
-          </section>
-        );
+      // 확정 뒤 다시 출력 — 택배 기사가 가져가기 전 라벨이 망가졌을 때. 대표만, 상자마다 첫 출력 포함 3번(address-protection INV-P5).
+      // 팬 선물 출고 상자는 2026-10-10 부터, 역조공 출고·반송 상자는 2026-10-23 카드 d120 부터 — 이 둘은 확정 + 72시간까지만(reverse-gift INV-R9 · INV-P18).
+      // 기한·남은 횟수는 서버(송장 출력 함수 → DB)가 판정한다. 화면은 단추를 보일지만 정한다.
+      {
+        const reprint = parcel.state === "shipped" ? "print_label" : parcel.state === "returned" ? "print_return" : null;
+        if (reprint && canReprintLabel(access)) {
+          const shipped = reprint === "print_label";
+          const waybill = shipped ? parcel.outboundWaybillNo : parcel.returnWaybillNo;
+          const windowed = !(shipped && parcel.kind === "gift");
+          return (
+            <section className={w.result} aria-labelledby="out-closed">
+              <div className={w.resultHead}>
+                <span className={`${a.tag} ${a.tagBrand}`}>{shipped ? "출고함" : "반송함"}</span>
+                <h2 id="out-closed" className={a.mono}>
+                  {parcel.orderNo}
+                </h2>
+              </div>
+              <Facts parcel={parcel} />
+              {waybill && <WaybillBox label={`${shipped ? "출력한 송장번호" : "반송 송장번호"} (개발용 — 택배사 연동 전)`} waybill={waybill} />}
+              <div className={w.nextStep}>
+                {opened ? (
+                  <>
+                    <PrintLabel orderNo={parcel.orderNo} opened={opened} />
+                    <div className={a.btnRow}>
+                      <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => window.print()}>
+                        송장 인쇄
+                      </button>
+                    </div>
+                    <p className={a.hint}>받는 사람 주소는 화면에 보이지 않고 인쇄에만 찍혀요. 송장번호는 처음 것과 같아요.</p>
+                  </>
+                ) : (
+                  <>
+                    <h3>{shipped ? "출고된 상자예요" : "반송된 상자예요"}</h3>
+                    <p>
+                      택배 기사가 가져가기 전에 송장이 젖거나 망가졌을 때만 다시 출력해요{windowed ? `(${shipped ? "출고" : "반송"}하고 3일 안)` : ""}. 송장번호는 처음 것
+                      그대로예요.
+                    </p>
+                    <div className={a.btnRow}>
+                      <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => onPrint(reprint)} aria-disabled={busy}>
+                        {busy ? "출력하는 중…" : "송장 다시 출력"}
+                      </button>
+                    </div>
+                    <p className={a.hint}>다시 출력하면 주소를 한 번 더 열고 열람 기록에 남아요(첫 출력 포함 최대 3번).</p>
+                  </>
+                )}
+              </div>
+            </section>
+          );
+        }
       }
       return (
         <section className={w.result} aria-labelledby="out-other">

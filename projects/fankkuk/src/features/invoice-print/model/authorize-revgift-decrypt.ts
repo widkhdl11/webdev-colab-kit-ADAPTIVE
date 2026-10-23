@@ -34,9 +34,11 @@ export function authorizeRevgiftDecrypt(req: RevgiftDecryptRequest): RevgiftDecr
   if (req.ownerUserId === "" || req.requesterUserId !== req.ownerUserId) return { ok: false, reason: "not_owner" };
   // (a) 팬이 받기를 하며 넣은 암호문이 있어야 한다
   if (!req.hasEnvelope || req.share.reply !== "accepted") return { ok: false, reason: "no_valid_approval" };
-  // (c) 검수 완료 ~ 출고 확정 전, 반송·취소 아님
+  // (c) 검수 완료 ~ 송장 출력, 또는 출고 확정 뒤의 재출력(카드 d120 — 이미 한 번 이상 연 몫만). 반송·취소 아님.
+  //     출고 확정 + 72시간이 지났는지·사본이 남았는지는 봉투를 내주는 DB 함수가 몫을 잠근 자리에서 본다(INV-R9).
   const s = req.share;
-  if (!s.inspected || s.shipped || s.returned || s.cancelled) return { ok: false, reason: "order_not_printable" };
+  if (s.returned || s.cancelled) return { ok: false, reason: "order_not_printable" };
+  if (!s.inspected || (s.shipped && req.decryptCount === 0)) return { ok: false, reason: "order_not_printable" };
   // 상한 3회(INV-P5 와 같은 규칙)
   if (req.decryptCount >= MAX_DECRYPTS_PER_BOX) return { ok: false, reason: "decrypt_limit_reached" };
   return { ok: true, isReprint: req.decryptCount > 0 };

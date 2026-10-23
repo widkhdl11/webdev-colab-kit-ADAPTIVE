@@ -74,6 +74,50 @@ const click = async (name: string) => {
 };
 const writes = () => api.postOutbound.mock.calls.map((c) => c[0] as { kind: string });
 
+describe("출고 화면 — 확정 뒤 송장 다시 출력 (address-protection INV-P5 · reverse-gift INV-R9 · INV-P18, 카드 d120)", () => {
+  function closed(kind: "gift" | "revgift", state: "shipped" | "returned") {
+    const reply = parcel(state, "done") as { kind: string; body: { parcel: Record<string, unknown> } };
+    reply.body.parcel = { ...reply.body.parcel, kind, orderNo: kind === "gift" ? "FC-7K3M9" : "RG-AB12CD", outboundWaybillNo: "111122223333", returnWaybillNo: state === "returned" ? "555566667777" : null };
+    return reply;
+  }
+
+  it.each([
+    ["gift", "shipped", "print_label"],
+    ["revgift", "shipped", "print_label"],
+    ["gift", "returned", "print_return"],
+    ["revgift", "returned", "print_return"],
+  ] as const)("대표: %s 상자 %s → 「송장 다시 출력」이 %s 로 간다", async (kind, state, write) => {
+    await scanQr(closed(kind, state));
+    api.postOutbound.mockResolvedValueOnce({ kind: "ok", body: { waybill: "111122223333", reprint: true, label: LABEL } });
+    api.postOutbound.mockResolvedValueOnce(closed(kind, state));
+    await click("송장 다시 출력");
+    expect(writes().at(-2)).toEqual({ kind: write, qr: QR });
+    expect(host.querySelector(".print-only")?.textContent).toContain("테헤란로 1");
+  });
+
+  it("역조공·반송 상자는 「확정하고 3일 안」을 안내하고, 팬 선물 출고 상자는 기한 문장이 없다", async () => {
+    await scanQr(closed("revgift", "shipped"));
+    expect(host.textContent).toContain("3일 안");
+    await scanQr(closed("gift", "shipped"));
+    expect(host.textContent).not.toContain("3일 안");
+  });
+
+  it("INV-W3 (실패경로): 직원 화면에는 확정 뒤 다시 출력 단추가 없다", async () => {
+    act(() => root.render(<OutboundWorkbench access="staff" operatorNickname="담당" />));
+    api.postOutbound.mockResolvedValueOnce(closed("revgift", "returned"));
+    const scan = host.querySelector<HTMLInputElement>("input")!;
+    await act(async () => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+      setter.call(scan, QR);
+      scan.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      scan.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    });
+    expect([...host.querySelectorAll("button")].some((b) => b.textContent === "송장 다시 출력")).toBe(false);
+  });
+});
+
 describe("출고 화면 — 반송·처분·경찰 인계 (INV-W8·W14·W15)", () => {
   it("INV-P18: 주문에 이어진 상자의 반송 송장 응답(라벨 칸)을 읽는다 — 「출력 결과를 읽지 못했어요」가 없고, 주소는 인쇄 칸에만 있다", async () => {
     await scanQr(parcel("return_waiting", "print_return"));
