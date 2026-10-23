@@ -170,7 +170,7 @@ describe("탈퇴한 크리에이터 (approval-signature INV-S14·S15)", () => {
         `select name || '|' || (profile_id is null) || '|' || (withdrawn_at is not null) || '|' || searchable || '|' || identity_verified || '|' || coalesce(x_handle, '-') || '|' || coalesce(fan_name, '-') || '|' || channel from public.creators where id = '${creatorId}'`,
       ),
     ).toBe("탈퇴한 크리에이터|true|true|false|false|-|-|");
-    // 크리에이터 페이지가 「활동 종료」를 그릴 근거 — 링크 주소·ID 로 물으면 탈퇴, 활동 중인 하루는 아님
+    // 크리에이터 페이지가 「탈퇴한 크리에이터입니다.」를 그릴 근거 — 링크 주소·ID 로 물으면 탈퇴, 활동 중인 하루는 아님
     const anon = anonClient();
     expect((await anon.rpc("withdrawn_creator", { p_handle: handleOf(acc) })).data).toBe(true);
     expect((await anon.rpc("withdrawn_creator", { p_creator: creatorId })).data).toBe(true);

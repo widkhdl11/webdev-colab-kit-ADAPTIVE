@@ -8,7 +8,7 @@
 --   2) approval_signatures.content_hash — 탈퇴 때 서명 원문 대신 남기는 해시. 서명자 식별값·원문은 탈퇴 때 비운다(빈 값 허용).
 --   3) 탈퇴한 크리에이터·팬 앞으로 주문·승인 요청·역조공 몫이 생기지 않는다(넣는 순간 트리거가 거부, INV-S15).
 --   4) account_withdrawals — 탈퇴 처리 기록(가명 식별자·역할·시각·처리한 대표). 원래 계정을 되짚는 칸은 없다(INV-A15).
---   6) withdrawn_creator(handle, id) — 링크 주소(지금·옛 아이디)나 크리에이터 ID 가 탈퇴한 크리에이터면 true. 공개 읽기 — 크리에이터 페이지가 「활동 종료」를 그린다(INV-S15).
+--   6) withdrawn_creator(handle, id) — 링크 주소(지금·옛 아이디)나 크리에이터 ID 가 탈퇴한 크리에이터면 true. 공개 읽기 — 크리에이터 페이지가 「탈퇴한 크리에이터입니다.」를 그린다(INV-S15).
 --   5) withdraw_account(login_id) — 대표만. 없는 회원·운영자·이미 탈퇴한 계정은 P0002, 진행 중인 일이 있으면 55000 으로 거부. 한 처리 안에서
 --      가명 계정 만들기 → 개인정보 구역 지우기(pii.withdraw_account, manual/0025) → 서명 기록 가명 처리 → 크리에이터 행 비우기 →
 --      계정을 가리키는 칸을 가명 계정으로 옮기기 → 원래 계정·로그인 계정 지우기. 저장소에서 지울 사진 경로를 저장소별로(팬 사진·크리에이터 사진) 돌려준다(서버가 지운다).
@@ -263,7 +263,7 @@ end $$;
 revoke all on function public.withdraw_account(text) from public, anon;
 grant execute on function public.withdraw_account(text) to authenticated;
 
--- ── 6) 탈퇴한 크리에이터인지 (크리에이터 페이지 「활동 종료」) ──
+-- ── 6) 탈퇴한 크리에이터인지 (크리에이터 페이지 「탈퇴한 크리에이터입니다.」) ──
 
 create or replace function public.withdrawn_creator(p_handle text default null, p_creator uuid default null)
 returns boolean

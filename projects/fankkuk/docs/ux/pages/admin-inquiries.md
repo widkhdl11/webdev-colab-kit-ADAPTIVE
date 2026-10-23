@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 # 1:1 문의(운영자) UX 명세 — `/admin/inquiries`
 
