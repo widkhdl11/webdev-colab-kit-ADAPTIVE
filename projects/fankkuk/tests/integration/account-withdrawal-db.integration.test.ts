@@ -227,3 +227,87 @@ describe("탈퇴한 크리에이터 (approval-signature INV-S14·S15)", () => {
     ).toContain("탈퇴한 회원");
   });
 });
+
+// 기간 지난 가명 기록 자동 삭제 — my-account INV-A16 (S16~S16c) · approval-signature INV-S14 (S14c).
+// 기간은 DB 시각 기준이라 시험은 기록의 시각을 거꾸로 돌려 둔다(고칠 수 없는 표라 트리거를 끄고).
+const purge = () => JSON.parse(psql("select public.retention_purge()")) as Record<string, number>;
+const backdate = (sql: string) => psql(`begin; set local session_replication_role = replica; ${sql}; commit;`);
+const inquiryRows = (id: string) => Number(psql(`select count(*) from public.inquiries where id = '${id}'`));
+function addInquiry(authorId: string, answered: boolean): string {
+  return psql(
+    answered
+      ? `insert into public.inquiries (author_id, kind, title, body, status, answer, answered_at) values ('${authorId}', 'account', '시험 문의', '본문', 'answered', '답', now()) returning id`
+      : `insert into public.inquiries (author_id, kind, title, body) values ('${authorId}', 'account', '시험 문의', '본문') returning id`,
+  )
+    .split("\n")
+    .find((l) => /^[0-9a-f-]{36}$/.test(l))!;
+}
+
+describe("기간 지난 가명 기록 자동 삭제 (my-account INV-A16 · approval-signature S14c)", () => {
+  it("INV-A15: 탈퇴한 팬이 쓴 1:1 문의(답이 달린 것 포함)는 지워지지 않고 가명 계정의 문의로 남는다 — 3년 보관 대상이라서", async () => {
+    const fan = await createTestAccount({ tag: "wdinq", phone: "01090006666" });
+    const answered = addInquiry(fan.userId, true);
+    const open = addInquiry(fan.userId, false);
+    const r = await withdraw(fan.loginId);
+    expect(r.error).toBeNull();
+    const pseudonym = (r.data as { pseudonym: string }).pseudonym;
+    expect(psql(`select string_agg(author_id::text, ',' order by id) from public.inquiries where id in ('${answered}', '${open}')`)).toBe(`${pseudonym},${pseudonym}`);
+    expect(psql(`select answer from public.inquiries where id = '${answered}'`)).toBe("답");
+  });
+
+  it("INV-A16 (S16·S16b): 탈퇴한 사람이 쓴 문의는 쓴 지 3년 1일이면 지워지고 하루 덜 된 것은 남는다. 탈퇴하지 않은 회원의 3년 1일 된 문의는 남는다", async () => {
+    const fan = await createTestAccount({ tag: "wdold", phone: "01090007777" });
+    const member = await createTestAccount({ tag: "wdkeep", phone: "01090008888" });
+    const old = addInquiry(fan.userId, true);
+    const recent = addInquiry(fan.userId, false);
+    const memberOld = addInquiry(member.userId, false);
+    expect((await withdraw(fan.loginId)).error).toBeNull();
+    backdate(`update public.inquiries set created_at = now() - interval '3 years 1 day' where id in ('${old}', '${memberOld}'); update public.inquiries set created_at = now() - interval '3 years' + interval '1 day' where id = '${recent}'`);
+    const counts = purge();
+    expect(counts.inquiries).toBeGreaterThanOrEqual(1);
+    expect([inquiryRows(old), inquiryRows(recent), inquiryRows(memberOld)]).toEqual([0, 1, 1]);
+  });
+
+  it("INV-S14 (S14c): 가명 처리된 서명 기록은 서명 시각이 5년 1일 전이면 지워지고, 4년 364일 전이면 남는다. 탈퇴하지 않은 크리에이터의 5년 1일 된 서명은 남는다", async () => {
+    const gone = await createTestAccount({ tag: "wdsg1", phone: "01090009991" });
+    const kept = await createTestAccount({ tag: "wdsg2", phone: "01090009992" });
+    const member = await createTestAccount({ tag: "wdsg3", phone: "01090009993" });
+    const a = await shippedOrder({ creatorId: makeCreator(gone) });
+    const b = await shippedOrder({ creatorId: makeCreator(kept) });
+    const c = await shippedOrder({ creatorId: makeCreator(member) });
+    expect((await withdraw(gone.loginId)).error).toBeNull();
+    expect((await withdraw(kept.loginId)).error).toBeNull();
+    backdate(
+      `update public.approval_signatures set signed_at = now() - interval '5 years 1 day' where request_id in ('${a.requestId}', '${c.requestId}'); update public.approval_signatures set signed_at = now() - interval '5 years' + interval '1 day' where request_id = '${b.requestId}'`,
+    );
+    const counts = purge();
+    expect(counts.signatures).toBeGreaterThanOrEqual(1);
+    const sigRows = (req: string) => Number(psql(`select count(*) from public.approval_signatures where request_id = '${req}'`));
+    expect([sigRows(a.requestId), sigRows(b.requestId), sigRows(c.requestId)]).toEqual([0, 1, 1]);
+    // 지운 뒤에도 서명 표는 다시 「고치거나 지울 수 없다」 — 끈 트리거가 다시 켜져 있다
+    expect(psqlError(`delete from public.approval_signatures where request_id = '${b.requestId}'`)).not.toBeNull();
+  });
+
+  it("INV-A16 (S16c, 실패경로): 같은 날 두 번 돌면 두 번째는 지울 것이 없고 오류가 나지 않는다. 돌 때마다 지운 건수가 한 줄씩 기록된다", async () => {
+    const fan = await createTestAccount({ tag: "wdtwice", phone: "01090009994" });
+    const old = addInquiry(fan.userId, false);
+    expect((await withdraw(fan.loginId)).error).toBeNull();
+    backdate(`update public.inquiries set created_at = now() - interval '3 years 1 day' where id = '${old}'`);
+    const before = Number(psql("select count(*) from public.retention_purge_runs"));
+    const first = purge();
+    const second = purge();
+    expect(first.inquiries).toBeGreaterThanOrEqual(1);
+    expect(Object.values(second).every((n) => n === 0)).toBe(true);
+    expect(Number(psql("select count(*) from public.retention_purge_runs"))).toBe(before + 2);
+  });
+
+  it("INV-A16: 자동 삭제 작업이 매일 한 번 예약돼 있고, 팬·크리에이터·익명은 앱 경로로 부를 수 없다", async () => {
+    expect(psql(`select schedule || '|' || command from cron.job where jobname = 'fankkuk-retention'`)).toBe("30 18 * * *|select public.retention_purge()");
+    const fanClient = await signedInClient("byeolbit_fan");
+    // 대표·서버 키도 못 부른다 — 예약 작업 실행자만
+    for (const client of [fanClient, anonClient(), await owner(), adminClient()]) {
+      const r = await client.rpc("retention_purge");
+      expect(r.error).not.toBeNull();
+    }
+  });
+});
