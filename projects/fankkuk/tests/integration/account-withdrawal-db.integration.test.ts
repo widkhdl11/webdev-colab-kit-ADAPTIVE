@@ -279,22 +279,25 @@ describe("기간 지난 가명 기록 자동 삭제 (my-account INV-A16 · appro
     expect([inquiryRows(old), inquiryRows(recent), inquiryRows(memberOld)]).toEqual([0, 1, 1]);
   });
 
-  it("INV-S14 (S14c): 가명 처리된 서명 기록은 서명 시각이 5년 1일 전이면 지워지고, 4년 364일 전이면 남는다. 탈퇴하지 않은 크리에이터의 5년 1일 된 서명은 남는다", async () => {
+  it("INV-S14 (S14c): 크리에이터만 탈퇴한 주문 — 마지막 기록이 5년 1일 전이면 서명 기록은 지워지고 주문은 남는다. 서명이 5년 1일 전이어도 주문의 마지막 기록이 4년 364일 전이면 남는다(서명한 때부터 세면 법정 5년을 못 채운다). 탈퇴하지 않은 크리에이터의 서명은 남는다", async () => {
+    const fan = await createTestAccount({ tag: "wdsgf", phone: null });
     const gone = await createTestAccount({ tag: "wdsg1", phone: "01090009991" });
-    const kept = await createTestAccount({ tag: "wdsg2", phone: "01090009992" });
     const member = await createTestAccount({ tag: "wdsg3", phone: "01090009993" });
-    const a = await shippedOrder({ creatorId: makeCreator(gone) });
-    const b = await shippedOrder({ creatorId: makeCreator(kept) });
-    const c = await shippedOrder({ creatorId: makeCreator(member) });
+    const goneCreator = makeCreator(gone);
+    const a = await shippedOrder({ senderId: fan.userId, creatorId: goneCreator });
+    const b = await shippedOrder({ senderId: fan.userId, creatorId: goneCreator });
+    const c = await shippedOrder({ senderId: fan.userId, creatorId: makeCreator(member) });
     expect((await withdraw(gone.loginId)).error).toBeNull();
-    expect((await withdraw(kept.loginId)).error).toBeNull();
-    backdate(
-      `update public.approval_signatures set signed_at = now() - interval '5 years 1 day' where request_id in ('${a.requestId}', '${c.requestId}'); update public.approval_signatures set signed_at = now() - interval '5 years' + interval '1 day' where request_id = '${b.requestId}'`,
-    );
+    ageOrder(a.orderId, "5 years 1 day");
+    ageOrder(c.orderId, "5 years 1 day");
+    // b: 서명은 5년 1일 전, 주문의 마지막 기록(출고)은 4년 364일 전
+    ageOrder(b.orderId, "5 years - 1 day");
+    backdate(`update public.approval_signatures set signed_at = now() - interval '5 years 1 day' where request_id = '${b.requestId}'`);
     const counts = purge();
     expect(counts.signatures).toBeGreaterThanOrEqual(1);
     const sigRows = (req: string) => Number(psql(`select count(*) from public.approval_signatures where request_id = '${req}'`));
     expect([sigRows(a.requestId), sigRows(b.requestId), sigRows(c.requestId)]).toEqual([0, 1, 1]);
+    expect(orderRows(a.orderId).startsWith("1,")).toBe(true);
     // 지운 뒤에도 서명 표는 다시 「고치거나 지울 수 없다」 — 끈 트리거가 다시 켜져 있다
     expect(psqlError(`delete from public.approval_signatures where request_id = '${b.requestId}'`)).not.toBeNull();
   });
