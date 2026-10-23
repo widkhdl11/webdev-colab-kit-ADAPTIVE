@@ -245,12 +245,14 @@ function addInquiry(authorId: string, answered: boolean): string {
 }
 
 describe("기간 지난 가명 기록 자동 삭제 (my-account INV-A16 · approval-signature S14c)", () => {
-  it("INV-A15 (실패경로): 탈퇴 처리 안쪽 함수(트리거 끄기·진행 중인 일 판정)는 서버 키·로그인 키·익명 키 누구도 부를 수 없다 — 서명 표 보호가 꺼진 채 남지 않는다", async () => {
+  it("INV-A15 (실패경로): 탈퇴·자동 삭제 안쪽 함수(트리거 끄기·진행 중인 일·끝난 주문·마지막 기록 시각)는 서버 키·로그인 키·익명 키 누구도 부를 수 없다 — 서명 표 보호가 꺼진 채 남지 않는다", async () => {
     for (const client of [adminClient(), anonClient(), await owner()]) {
       const toggled = await client.rpc("withdrawal_toggle_append_only", { p_table: "public.approval_signatures", p_enable: false });
       expect(toggled.error).not.toBeNull();
       const open = await client.rpc("account_has_open_work", { p_account: "ffffffff-0000-4000-8000-000000000001", p_creator: null });
       expect(open.error).not.toBeNull();
+      expect((await client.rpc("order_is_finished", { p_order: "ffffffff-0000-4000-8000-000000000001" })).error).not.toBeNull();
+      expect((await client.rpc("order_ended_at", { p_order: "ffffffff-0000-4000-8000-000000000001" })).error).not.toBeNull();
     }
     expect(psql(`select count(*) from pg_trigger where tgrelid = 'public.approval_signatures'::regclass and not tgisinternal and tgenabled = 'D'`)).toBe("0");
   });
@@ -561,6 +563,20 @@ describe("자동 삭제 — 사무실 상자가 있는 주문 (코드 리뷰 반
     backdate(`update public.office_disposals set at = at - interval '5 years 1 day' where parcel_id = '${parcel}'`);
     purge();
     expect(orderRows(o.orderId)).toBe("0,0,0,0,0");
+  });
+
+  it("INV-A16 (실패경로): 보류 상자가 이어진 시각도 「마지막 기록」이다 — 다른 기록은 5년 1일 전이어도 그것이 최근이면 남는다", async () => {
+    const fan = await createTestAccount({ tag: "wdr6f", phone: null });
+    const cre = await createTestAccount({ tag: "wdr6c", phone: null });
+    const o = await shippedOrder({ senderId: fan.userId, creatorId: makeCreator(cre) });
+    const parcel = officeTrail(o.orderId, { fanId: fan.userId, creatorProfileId: cre.userId, state: "returned" });
+    expect((await withdraw(fan.loginId)).error).toBeNull();
+    expect((await withdraw(cre.loginId)).error).toBeNull();
+    ageOrder(o.orderId, "5 years 1 day");
+    ageOffice(parcel, "5 years 1 day");
+    backdate(`update public.office_unmatched set matched_at = now() where matched_parcel_id = '${parcel}'; update public.office_held_links set linked_at = now() - interval '5 years 1 day' where parcel_id = '${parcel}'`);
+    purge();
+    expect(orderRows(o.orderId).startsWith("1,")).toBe(true);
   });
 
   it("카드 d123: 탈퇴 때 가명으로 옮기는 칸 목록이 바뀌면 이 시험이 알린다 — 새 칸은 자동 삭제의 「같이 쓰는 표시로 바꾸기」와 함께 본다", () => {
