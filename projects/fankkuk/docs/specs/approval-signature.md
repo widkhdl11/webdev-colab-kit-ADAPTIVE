@@ -1,6 +1,6 @@
 ---
 feature: 크리에이터 선물 승인 서명 (approval signature)
-status: draft
+status: approved
 # ↑ 값은 반드시 이 줄에 붙여 쓴다.
 # 이력:
 #   2026-10-01 초안. 원본: docs/reference/fankkuk-decisions.md D-01·3장, fankkuk-design.md 「승인 인증 방법」.
@@ -21,6 +21,7 @@ status: draft
 #   2026-10-23 draft — INV-S14·S15 새로, S14~S15c. 사용자 지시(처리방침·약관 [확인 필요] 처리 ③): 탈퇴 뒤 승인 서명 기록은 거래 기록으로 5년,
 #              계정과의 연결을 끊고 가명 식별자·주문번호만 남긴다. 주소 암호문과 그 키는 탈퇴 즉시 지운다. 탈퇴한 크리에이터에게는 새 승인 요청이 없고
 #              크리에이터 페이지는 「활동 종료」. INV-S12 「서명 표는 고치거나 지울 수 없다」에 탈퇴 처리 한 경로만 예외로 붙였다. 재승인 대기.
+#   2026-10-23 approved — 카드 fankkuk-20261001-1-d121, 사용자 「전액 환불이 아니지 않아? 팬꾹이 손해를 보잖아」(기록된 환불 규칙 유지로 승인).
 surfaces: [auth, authz, concurrency]
 # ↑ auth: 서명한 사람이 그 크리에이터 본인인가. authz: 승인 하나가 주문 하나에만 효력을 갖는가.
 #   concurrency: 같은 서명이 두 번·동시에 와도 승인은 한 번만 일어난다.
