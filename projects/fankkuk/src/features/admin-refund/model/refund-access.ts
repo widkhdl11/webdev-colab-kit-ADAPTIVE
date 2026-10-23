@@ -19,3 +19,14 @@ export function canRefundShare(
   if (share.reply !== "declined" && share.reply !== "expired") return false;
   return share.refundStatus === null || share.refundStatus === "failed";
 }
+
+/** INV-K7 (카드 d126): 「직접 환불함」은 대표에게만, 결제사 취소가 실패했거나 처리 중으로 남은 줄에만.
+ *  누른 지 2분 안의 처리 중·이미 완료 같은 판정은 DB 가 다시 한다. 확인 필요 줄은 결제가 끝나지 않아 버튼이 없다(INV-M19). */
+export function canMarkManual(access: "staff" | "owner", status: RefundStatus, needsReview: boolean): boolean {
+  return access === "owner" && !needsReview && (status === "failed" || status === "requesting");
+}
+
+/** 역조공 몫의 「직접 환불함」 — 몫의 환불 기록이 실패했거나 처리 중으로 남은 줄에만. */
+export function canMarkManualShare(access: "staff" | "owner", share: { refundStatus: ShareRefundStatus | null }): boolean {
+  return access === "owner" && (share.refundStatus === "failed" || share.refundStatus === "requesting");
+}

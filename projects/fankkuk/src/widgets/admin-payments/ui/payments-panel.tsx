@@ -4,7 +4,8 @@ import { useState } from "react";
 import type { PaymentRow, RefundStatus } from "@/entities/payment/model/payment-rows";
 import type { PendingBox } from "@/entities/payment/model/pending-boxes";
 import type { ReviewPayment } from "@/entities/payment/model/review-payments";
-import { canRefund } from "@/features/admin-refund/model/refund-access";
+import { canMarkManual, canRefund } from "@/features/admin-refund/model/refund-access";
+import { ManualRefundButton } from "@/features/admin-refund/ui/manual-refund-button";
 import { RefundButton } from "@/features/admin-refund/ui/refund-button";
 import { CreatorCancelForm } from "@/features/admin-order-cancel/ui/creator-cancel-form";
 import { ReceivedCancelForm } from "@/features/admin-order-cancel/ui/received-cancel-form";
@@ -192,6 +193,16 @@ export function PaymentsPanel({ rows, pendingBoxes, reviewPayments, access }: Pr
                             payerNickname={r.payerNickname}
                             amountKrw={r.refund.amountKrw}
                             retry={r.refund.status === "failed"}
+                            returnFocusId="payments-title"
+                          />
+                        )}
+                        {canMarkManual(access, r.refund.status, r.needsReview) && (
+                          <ManualRefundButton
+                            unitKind={r.unitKind}
+                            unitId={r.unitId}
+                            orderNo={r.orderNo}
+                            payerNickname={r.payerNickname}
+                            amountKrw={r.refund.amountKrw}
                             returnFocusId="payments-title"
                           />
                         )}

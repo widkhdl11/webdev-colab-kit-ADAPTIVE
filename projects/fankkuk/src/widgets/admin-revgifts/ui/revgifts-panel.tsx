@@ -3,7 +3,8 @@
 import { useState } from "react";
 import type { RevgiftShare } from "@/entities/parcel/model/office-lists";
 import { TIER_LABEL } from "@/entities/parcel/model/office-labels";
-import { canRefundShare } from "@/features/admin-refund/model/refund-access";
+import { canMarkManualShare, canRefundShare } from "@/features/admin-refund/model/refund-access";
+import { ManualRefundButton } from "@/features/admin-refund/ui/manual-refund-button";
 import { RefundButton } from "@/features/admin-refund/ui/refund-button";
 import { RunExpiryButton } from "@/features/office-expiry-run/ui/run-expiry-button";
 import { formatMonthDay, formatStamp } from "@/shared/lib/format/datetime";
@@ -149,6 +150,17 @@ export function RevgiftsPanel({ rows, access, now }: Props) {
                             payerLabel="팬"
                             amountKrw={null}
                             retry={r.refundStatus === "failed"}
+                            returnFocusId="revgifts-title"
+                          />
+                        )}
+                        {canMarkManualShare(access, r) && (
+                          <ManualRefundButton
+                            unitKind="revgift"
+                            unitId={r.shareId}
+                            orderNo={r.orderNo}
+                            payerNickname={r.fanNickname}
+                            payerLabel="팬"
+                            amountKrw={null}
                             returnFocusId="revgifts-title"
                           />
                         )}

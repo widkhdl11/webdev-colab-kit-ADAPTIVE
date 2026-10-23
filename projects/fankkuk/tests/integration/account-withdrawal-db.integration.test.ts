@@ -989,6 +989,7 @@ const MOVED_PROFILE_COLUMNS = [
   "orders.fan_id",
   "owner_setting.owner_user_id",
   "prohibited_item_changes.changed_by",
+  "refunds.manual_by",
   "refunds.requested_by",
   "revgift_sends.sender_id",
   "revgift_shares.fan_id",

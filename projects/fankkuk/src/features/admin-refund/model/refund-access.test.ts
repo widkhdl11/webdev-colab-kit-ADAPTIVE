@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canRefund, canRefundShare } from "./refund-access";
+import { canMarkManual, canMarkManualShare, canRefund, canRefundShare } from "./refund-access";
 
 describe("INV-K2 · INV-K7: 환불 버튼은 대표에게만, 대기·실패 줄에만", () => {
   it("대표는 대기·실패 줄에서 누를 수 있다", () => {
@@ -37,5 +37,25 @@ describe("INV-M19: 결제사 기록과 달라 확인 필요인 줄", () => {
       expect(canRefund("owner", s, true)).toBe(false);
       expect(canRefund("staff", s, true)).toBe(false);
     }
+  });
+});
+
+describe("INV-K7 (S7d·S7e): 「직접 환불함」 버튼은 대표에게만, 실패·처리 중 줄에만 (카드 d126)", () => {
+  it("INV-K7 (S7d): 대표는 실패·처리 중 줄에서 누를 수 있다 — 처리 중이 2분 안인지는 DB 가 본다", () => {
+    expect(canMarkManual("owner", "failed", false)).toBe(true);
+    expect(canMarkManual("owner", "requesting", false)).toBe(true);
+    expect(canMarkManualShare("owner", { refundStatus: "failed" })).toBe(true);
+    expect(canMarkManualShare("owner", { refundStatus: "requesting" })).toBe(true);
+  });
+
+  it("INV-K7 (S7e, 실패경로): 누르기 전(대기)·완료·대상 아님 줄, 확인 필요 줄, 직원에게는 없다", () => {
+    for (const s of ["due", "done", "none"] as const) expect(canMarkManual("owner", s, false)).toBe(false);
+    for (const s of ["failed", "requesting"] as const) {
+      expect(canMarkManual("owner", s, true)).toBe(false);
+      expect(canMarkManual("staff", s, false)).toBe(false);
+      expect(canMarkManualShare("staff", { refundStatus: s })).toBe(false);
+    }
+    expect(canMarkManualShare("owner", { refundStatus: null })).toBe(false);
+    expect(canMarkManualShare("owner", { refundStatus: "done" })).toBe(false);
   });
 });

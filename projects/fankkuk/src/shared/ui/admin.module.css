@@ -121,7 +121,7 @@
 .btnSoft:hover { background: var(--surface-hover); }
 .btnInk { background: var(--ink); color: var(--white); }
 .btnInk:hover { background: var(--ink); opacity: .88; }
-.act .btn + .btn { margin-left: 6px; }
+.act > .btn ~ .btn { margin-left: 6px; } /* 버튼마다 뒤에 확인 창(dialog)이 붙어 바로 옆이 아니어도 간격을 둔다 — 창 안 버튼(.dlgFoot gap)은 빼려고 칸의 바로 아래만 */
 .pick { display: grid; width: 100%; gap: 2px; padding: 10px 14px; border: 0; background: var(--white); color: var(--ink); text-align: left; font: inherit; font-size: 14px; cursor: pointer; }
 .pick:hover { background: var(--surface); }
 .pick[aria-current="true"] { background: var(--brand-soft); box-shadow: inset 4px 0 0 var(--brand-line); }
