@@ -227,7 +227,7 @@ describe("INV-R10 · INV-K1: 역조공 받기 기한 처리는 운영자가 관�
     expect(shareReply(send.orderNos[0]!)).toBe("waiting");
   });
 
-  it("INV-R11 S11·S11e: 기한 처리로 받지 않음이 된 몫은 상자가 안 온 채 168시간이 지나 닫힐 때 환불 대상(그 몫 전액)이 된다 — 그 전에는 아니다", async () => {
+  it("INV-R11 S11·S11e: 기한 처리로 받지 않음이 된 몫은 상자가 안 온 채 몫 결제 완료 + 720시간이 지나 닫힐 때 환불 대상(그 몫 전액)이 된다 — 그 전에는 아니다", async () => {
     const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "medium" }]);
     await payTestRevgift(send);
     const other = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
@@ -240,17 +240,19 @@ describe("INV-R10 · INV-K1: 역조공 받기 기한 처리는 운영자가 관�
     await staff.rpc("office_run_expiry", { p_order_no: send.orderNos[0] });
     // 받지 않음이 됐어도 상자가 오는 중일 수 있어 6자리를 살려 두고 환불을 미룬다
     expect(due(send.orderNos[0]!)).toBe("none");
-    keptSince(send.orderNos[0]!, 167);
+    // 살려 둔 지 168시간이 넘어도(2026-10-21 전의 시계) 몫 결제 완료 + 720시간 전이면 그대로(S11e)
+    keptSince(send.orderNos[0]!, 200);
+    backdateSettlement(send, 719);
     await staff.rpc("office_run_expiry", { p_order_no: send.orderNos[0] });
     expect(due(send.orderNos[0]!)).toBe("none");
-    keptSince(send.orderNos[0]!, 169);
+    backdateSettlement(send, 720, 1);
     await staff.rpc("office_run_expiry", { p_order_no: send.orderNos[0] });
     expect(psql(`select state from public.inbound_codes c join public.revgift_shares s on s.id = c.share_id where s.order_no = '${send.orderNos[0]}'`)).toBe("void");
     expect(due(send.orderNos[0]!)).toBe("6900");
     expect(due(other.orderNos[0]!)).toBe("none");
   });
 
-  it("INV-R11 (S11e, 경계): 살려 둔 때부터 168시간 「안에」 안 오면 닫는다 — 167시간 59분 59초면 그대로, 정확히 168시간이면 6자리 무효·몫 전액", async () => {
+  it("INV-R11 (S11e, 경계): 몫 결제 완료부터 720시간 「안에」 안 오면 닫는다 — 719시간 59분 59초면 그대로, 정확히 720시간이면 6자리 무효·몫 전액", async () => {
     const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "medium" }]);
     await payTestRevgift(send);
     const no = send.orderNos[0]!;
@@ -258,19 +260,20 @@ describe("INV-R10 · INV-K1: 역조공 받기 기한 처리는 운영자가 관�
     await (await signedInClient("fankkuk_staff")).rpc("office_run_expiry", { p_order_no: no });
     const due = () => psql(`select coalesce(public.refund_due_of_share(s.id)::text, 'none') from public.revgift_shares s where s.order_no = '${no}'`);
     const code = () => psql(`select state from public.inbound_codes c join public.revgift_shares s on s.id = c.share_id where s.order_no = '${no}'`);
-    // 살려 둔 시각을 옮기고 같은 처리 안에서 자동 처리를 돌린다 — 한 처리 안의 now() 는 한 값이라 경계를 오차 없이 본다
-    const keepThenExpiry = (gap: string) =>
+    // 몫 결제 완료 시각을 옮기고 같은 처리 안에서 자동 처리를 돌린다 — 한 처리 안의 now() 는 한 값이라 경계를 오차 없이 본다
+    const paidThenExpiry = (gap: string) =>
       psql(
-        `begin; set local session_replication_role = replica; update public.inbound_codes c set kept_at = now() - interval '${gap}' from public.revgift_shares s where s.id = c.share_id and s.order_no = '${no}' and c.kept_at is not null; set local session_replication_role = origin; select set_config('request.jwt.claims', '{"role":"service_role"}', true); select public.office_run_expiry('${no}') ->> 'kept_closed'; commit;`,
+        `begin; update public.revgift_sends set settled_at = now() - interval '${gap}' where id = '${send.sendId}'; select set_config('request.jwt.claims', '{"role":"service_role"}', true); select public.office_run_expiry('${no}') ->> 'kept_closed'; commit;`,
       )
         .split(/\r?\n/)
         .slice(-2)[0]!
         .trim(); // 마지막 줄은 COMMIT
     expect(code()).toBe("valid");
-    expect(keepThenExpiry("167 hours 59 minutes 59 seconds")).toBe("0");
+    keptSince(no, 200); // 옛 시계(살려 둔 때 + 168시간)는 이미 지났다
+    expect(paidThenExpiry("719 hours 59 minutes 59 seconds")).toBe("0");
     expect(code()).toBe("valid");
     expect(due()).toBe("none");
-    expect(keepThenExpiry("168 hours")).toBe("1");
+    expect(paidThenExpiry("720 hours")).toBe("1");
     expect(code()).toBe("void");
     expect(due()).toBe("6900");
   });
@@ -360,7 +363,7 @@ describe("INV-R11: 기한 처리로 받지 않음이 된 몫의 환불은 그 �
     await payTestRevgift(send);
     backdateSettlement(send, 168, 1);
     await (await signedInClient("fankkuk_staff")).rpc("office_run_expiry", { p_order_no: send.orderNos[2] });
-    keptSince(send.orderNos[2]!, 169);
+    backdateSettlement(send, 720, 1);
     await (await signedInClient("fankkuk_staff")).rpc("office_run_expiry", { p_order_no: send.orderNos[2] });
     expect(send.orderNos.map((no) => due(no))).toEqual(["none", "none", "6900"]);
     expect(await claim(shareIdOf(send.orderNos[2]!))).toEqual({ amount: 6900, code: null });
@@ -388,7 +391,7 @@ describe("INV-R11: 기한 처리로 받지 않음이 된 몫의 환불은 그 �
       await payTestRevgift(send);
       backdateSettlement(send, 168, 1);
       await staff.rpc("office_run_expiry", { p_order_no: send.orderNos[0] });
-      keptSince(send.orderNos[0]!, 169);
+      backdateSettlement(send, 720, 1);
       await staff.rpc("office_run_expiry", { p_order_no: send.orderNos[0] });
     }
     const first = shareIdOf(one.orderNos[0]!);
