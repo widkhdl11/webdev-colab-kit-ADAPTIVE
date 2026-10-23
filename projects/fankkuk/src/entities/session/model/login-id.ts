@@ -9,6 +9,11 @@ import { isProduction, type DeployEnv } from "@/shared/lib/env/is-production";
 export const LOGIN_ID_PATTERN = /^[a-z0-9_]{4,30}$/;
 export const SIGNUP_LOGIN_ID_PATTERN = /^[a-z0-9_]{4,20}$/;
 
+/** INV-U6: 탈퇴 처리가 쓰는 아이디 — 가명 계정 `withdrawn_<16자리>`·같이 쓰는 `withdrawn_shared`. 가입으로는 받지 않는다(DB 트리거도 막는다). */
+export function isReservedLoginId(loginId: string): boolean {
+  return loginId.trim().startsWith("withdrawn_");
+}
+
 const TEST_LOGIN_DOMAIN = "fankkuk.test";
 const ACCOUNT_LOGIN_DOMAIN = "login.fankkuk.invalid";
 

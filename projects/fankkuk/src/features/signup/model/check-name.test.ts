@@ -35,6 +35,14 @@ describe("INV-U14: 아이디·닉네임 미리 확인 — 앱 서버", () => {
     expect(await checkSignupName(h.deps, { kind: "loginId", value: "haru_creator" }, HASH)).toEqual({ status: 429, body: { result: "rate_limited" } });
   });
 
+  it("INV-U6·U14 (실패경로): 탈퇴 처리가 쓰는 아이디(withdrawn_ 로 시작)는 DB 를 부르지 않고 taken. 밑줄 없는 withdrawn 은 DB 에 묻는다", async () => {
+    const h = harness();
+    expect(await checkSignupName(h.deps, { kind: "loginId", value: "withdrawn_shared" }, HASH)).toEqual({ status: 200, body: { result: "taken" } });
+    expect(h.calls).toEqual([]);
+    expect(await checkSignupName(h.deps, { kind: "loginId", value: "withdrawnfan" }, HASH)).toEqual({ status: 200, body: { result: "available" } });
+    expect(h.calls.length).toBe(1);
+  });
+
   it("INV-U14: 형식이 틀린 값은 DB 를 부르지 않고 invalid", async () => {
     const h = harness();
     for (const body of [

@@ -177,6 +177,18 @@ describe("INV-U3·U11: 중복은 칸 단위로만 알려 준다", () => {
     expect(b.deleted).toEqual([USER_ID]);
   });
 
+  it("INV-U6 (실패경로): 탈퇴 처리가 쓰는 아이디(withdrawn_ 로 시작)는 「쓰는 아이디」 — 로그인 정보를 만들지 않는다. 밑줄 없는 withdrawn 은 받는다", async () => {
+    const taken = { ok: false, status: 409, field: "loginId", message: "이미 쓰는 아이디예요." };
+    // 가명 아이디(withdrawn_ + 16자리)는 가입 한도 20자를 넘어 꼴에서 먼저 걸린다 — 20자 안의 꼴을 본다
+    for (const loginId of ["withdrawn_shared", "withdrawn_0a1b2c"]) {
+      const h = harness();
+      expect(await signUp(h.deps, body({ loginId }))).toEqual(taken);
+      expect(h.created).toEqual([]);
+    }
+    const ok = harness();
+    expect((await signUp(ok.deps, body({ loginId: "withdrawnfan" }))).ok).toBe(true);
+  });
+
   it("INV-U3 (S3b, 동시): 같은 아이디가 동시에 만들어지는 중이면 Auth 가 코드 없는 오류를 준다 — 한 번 더 시도해 「쓰는 아이디」로 알린다", async () => {
     const h = harness();
     const answers = [{ code: undefined }, { code: "email_exists" }];

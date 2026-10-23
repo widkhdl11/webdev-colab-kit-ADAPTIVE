@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { tagFilterMessage } from "@/entities/creator/model/creator-tags";
-import { accountLoginEmail } from "@/entities/session/model/login-id";
+import { accountLoginEmail, isReservedLoginId } from "@/entities/session/model/login-id";
 import { nicknameRejection } from "@/entities/session/model/nickname-rule";
 import type { SendMail } from "@/shared/api/mail/smtp";
 import type { Utm } from "@/shared/lib/attribution/utm";
@@ -84,6 +84,8 @@ export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = 
 
   const loginEmail = accountLoginEmail(input.loginId);
   if (!loginEmail) return { ok: false, status: 400, field: "loginId", message: "아이디를 확인해 주세요." };
+  // INV-U6: 탈퇴 처리가 쓰는 아이디는 이미 쓰는 아이디로 알린다 — 로그인 정보를 만들기 전에
+  if (isReservedLoginId(input.loginId)) return ID_TAKEN;
 
   const attrs = { email: loginEmail, password: input.password, email_confirm: true };
   let created = await deps.admin.auth.admin.createUser(attrs);

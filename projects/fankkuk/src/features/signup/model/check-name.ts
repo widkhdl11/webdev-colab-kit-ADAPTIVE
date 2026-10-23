@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SIGNUP_LOGIN_ID_PATTERN } from "@/entities/session/model/login-id";
+import { isReservedLoginId, SIGNUP_LOGIN_ID_PATTERN } from "@/entities/session/model/login-id";
 import { nicknameSchema } from "@/entities/session/model/nickname-rule";
 
 // 아이디·닉네임 미리 확인의 앱 서버 판정(signup INV-U14).
@@ -32,6 +32,8 @@ export async function checkSignupName(deps: CheckNameDeps, body: unknown, ipHash
 
   const shapeOk = kind === "loginId" ? SIGNUP_LOGIN_ID_PATTERN.test(value) : nicknameSchema.safeParse(value).success;
   if (!shapeOk) return { status: 200, body: { result: "invalid" } };
+  // INV-U6: 탈퇴 처리가 쓰는 아이디 — 가입 처리도 같은 답(이미 쓰는 아이디)을 준다
+  if (kind === "loginId" && isReservedLoginId(value)) return { status: 200, body: { result: "taken" } };
 
   const { data, error } = await deps.admin.rpc("signup_name_check", { p_ip_hash: ipHash, p_kind: DB_KIND[kind], p_value: value });
   if (error) throw new Error(`미리 확인을 하지 못했다: ${error.code ?? "코드 없음"}`);

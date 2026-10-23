@@ -136,6 +136,18 @@ describe("탈퇴 처리 — 가명 처리 (my-account INV-A15)", () => {
     expect(fanOf(abandoned.orderId)).toBe((r.data as { pseudonym: string }).pseudonym);
   });
 
+  it("signup INV-U6 (실패경로): 탈퇴하지 않은 계정은 아이디를 withdrawn_ 로 시작하게 바꿀 수 없다(FKU03). 이미 그런 아이디인 줄도 닉네임은 고칠 수 있고, 탈퇴 처리는 가명 아이디를 만든다", async () => {
+    const a = await createTestAccount({ tag: "wdresv", phone: "01090005555" });
+    expect(psqlError(`update public.profiles set login_id = 'withdrawn_shared' where id = '${a.userId}'`)).toContain("탈퇴 처리가 쓰는 아이디");
+    expect(psqlError(`update public.profiles set login_id = 'withdrawnfan${Math.floor(Math.random() * 9000 + 1000)}' where id = '${a.userId}'`)).toBeNull();
+    backdate(`update public.profiles set login_id = 'withdrawn_legacy${Math.floor(Math.random() * 9000 + 1000)}' where id = '${a.userId}'`);
+    expect(psqlError(`update public.profiles set nickname = '예약${Math.floor(Math.random() * 9000 + 1000)}' where id = '${a.userId}'`)).toBeNull();
+    const fan = await createTestAccount({ tag: "wdresv2", phone: "01090005556" });
+    const r = await withdraw(fan.loginId);
+    expect(r.error).toBeNull();
+    expect(psql(`select login_id from public.profiles where id = '${(r.data as { pseudonym: string }).pseudonym}'`)).toMatch(/^withdrawn_[0-9a-f]{16}$/);
+  });
+
   it("INV-A15 · reverse-gift INV-R15: 결제가 닫힌 역조공 보내기의 몫은 진행 중인 역조공이 아니다 — 승인 중인 보내기의 몫은 받는 팬을 막고, 닫히면 팬·크리에이터 둘 다 탈퇴된다", async () => {
     const acc = await createTestAccount({ tag: "wdrgcr", phone: "01090004444" });
     const creatorId = makeCreator(acc);
