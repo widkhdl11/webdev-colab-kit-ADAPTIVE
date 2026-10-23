@@ -24,6 +24,21 @@ export async function resolveCreatorHandle(client: Pick<SupabaseClient, "rpc">, 
   return row ? { creatorId: row.creator_id, handle: row.handle } : null;
 }
 
+/**
+ * 링크 주소(지금·옛 아이디) 또는 크리에이터 ID 가 탈퇴한 크리에이터인지(approval-signature INV-S15 — 크리에이터 페이지는 「탈퇴한 크리에이터입니다.」).
+ * 탈퇴하면 본인 확인이 꺼져 링크 찾기가 빈 결과를 주므로, 없는 페이지로 가기 직전에만 묻는다. 꼴이 틀리면 묻지 않는다.
+ */
+export async function readWithdrawnCreator(
+  client: Pick<SupabaseClient, "rpc">,
+  target: { handle: string } | { creatorId: string },
+): Promise<boolean> {
+  const args = "handle" in target ? (isHandleShape(target.handle) ? { p_handle: target.handle } : null) : z.guid().safeParse(target.creatorId).success ? { p_creator: target.creatorId } : null;
+  if (!args) return false;
+  const { data, error } = await client.rpc("withdrawn_creator", args);
+  if (error) throw new Error(`탈퇴한 크리에이터인지 읽지 못했다: ${error.code}`);
+  return data === true;
+}
+
 /** 이번 달(한국 시간) 결제가 끝난 선물을 보낸 서로 다른 팬 수. 본인 확인 전이면 0. */
 export async function readCreatorMonthFans(client: Pick<SupabaseClient, "rpc">, creatorId: string): Promise<number> {
   const { data, error } = await client.rpc("creator_month_fan_total", { p_creator_id: creatorId });

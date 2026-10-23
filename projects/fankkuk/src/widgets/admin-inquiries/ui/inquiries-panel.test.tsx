@@ -73,3 +73,20 @@ describe("관리자 1:1 문의 — 문의 제한 표시와 버튼 (INV-K12)", ()
     }
   });
 });
+
+describe("관리자 1:1 문의 — 회원 탈퇴 칸 (my-account INV-A15, UX 명세 admin-inquiries)", () => {
+  it("INV-A15: 대표 화면에는 문의 목록 위에 「회원 탈퇴」 칸과 「회원 탈퇴 처리하기」 버튼이 있다", () => {
+    act(() => root.render(<InquiriesPanel inquiries={[inquiry(false)]} canRestrict />));
+    const heading = [...host.querySelectorAll("h2")].find((h) => h.textContent === "회원 탈퇴");
+    expect(heading).toBeDefined();
+    expect(buttons()).toContain("회원 탈퇴 처리하기");
+    const list = host.querySelector('section[aria-label="문의 목록"]')!;
+    expect(heading!.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("INV-A15 (실패경로): 직원 화면에는 칸 자체가 없다", () => {
+    act(() => root.render(<InquiriesPanel inquiries={[inquiry(false)]} canRestrict={false} />));
+    expect([...host.querySelectorAll("h2")].some((h) => h.textContent === "회원 탈퇴")).toBe(false);
+    expect(buttons()).not.toContain("회원 탈퇴 처리하기");
+  });
+});

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { AdminInquiry } from "@/entities/inquiry/model/admin-inquiry";
 import type { InquiryStatus } from "@/entities/inquiry/model/inquiry-row";
 import { INQUIRY_KIND_LABELS } from "@/entities/inquiry/model/inquiry-kind";
+import { WithdrawForm } from "@/features/admin-account-withdraw/ui/withdraw-form";
 import { AnswerForm } from "@/features/admin-inquiry-answer/ui/answer-form";
 import { RestrictionForm } from "@/features/admin-inquiry-restrict/ui/restriction-form";
 import { formatStamp } from "@/shared/lib/format/datetime";
@@ -59,6 +60,12 @@ export function InquiriesPanel({ inquiries, canRestrict }: { inquiries: readonly
           <p>쓴 사람과 운영자만 볼 수 있는 글이에요. 답을 달면 쓴 사람이 고칠 수 없어요.</p>
         </div>
       </div>
+
+      {canRestrict && (
+        <div style={{ marginBottom: 16 }}>
+          <WithdrawForm />
+        </div>
+      )}
 
       <div className={`${a.split} ${a.splitList}`}>
         <section aria-label="문의 목록">
