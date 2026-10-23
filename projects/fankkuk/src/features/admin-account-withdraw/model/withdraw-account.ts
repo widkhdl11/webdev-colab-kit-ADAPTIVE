@@ -12,7 +12,7 @@ import { MESSAGE_LOGIN_ID, shapeLoginId } from "./login-id";
 export const MESSAGE_WITHDRAW_OWNER_ONLY = "회원 탈퇴는 대표만 처리할 수 있어요.";
 export { MESSAGE_LOGIN_ID } from "./login-id";
 export const MESSAGE_NOT_MEMBER = "탈퇴할 수 있는 회원이 아니에요. 아이디를 확인해 주세요.";
-export const MESSAGE_OPEN_WORK = "진행 중인 선물이나 역조공이 있어 탈퇴할 수 없어요. 먼저 끝내 주세요.";
+export const MESSAGE_OPEN_WORK = "진행 중인 선물·역조공이 있거나 환불이 끝나지 않아 탈퇴할 수 없어요. 먼저 끝내 주세요.";
 export const MESSAGE_KAKAO_SIGNATURE = "카카오 서명 기록이 있어 아직 탈퇴를 처리할 수 없어요.";
 export const MESSAGE_PHOTOS_LEFT = "탈퇴는 처리됐지만 사진을 지우지 못했어요. 개발 담당에게 알려 주세요.";
 const MESSAGE_FAILED = "탈퇴를 처리하지 못했어요. 잠시 뒤 다시 해 주세요.";

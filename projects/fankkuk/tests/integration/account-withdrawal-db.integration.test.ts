@@ -173,6 +173,124 @@ describe("탈퇴 처리 — 가명 처리 (my-account INV-A15)", () => {
     }
   });
 
+  // 환불 줄을 운영자 화면 없이 바로 넣는다 — 누르기 전(줄 없음)·처리 중·실패·완료 넷을 차례로 본다
+  const ownerId = () => psql(`select id from public.profiles where login_id = 'fankkuk_admin'`);
+  // unit 의 첫 칸이 그 환불 줄을 가리킨다(상자 환불은 box_id, 결제 칸도 함께 넣는다)
+  const refundStates = async (unit: Record<string, string>, amount: number, blocked: () => Promise<unknown>) => {
+    const [key, id] = Object.entries(unit)[0]!;
+    const seen: unknown[] = [await blocked()];
+    psql(
+      `insert into public.refunds (${Object.keys(unit).join(", ")}, amount_krw, requested_by) values (${Object.values(unit).map((v) => `'${v}'`).join(", ")}, ${amount}, '${ownerId()}')`,
+    );
+    seen.push(await blocked());
+    psql(`update public.refunds set status = 'failed', last_error = '시험' where ${key} = '${id}'`);
+    seen.push(await blocked());
+    psql(`update public.refunds set status = 'done', settled_at = now(), last_error = null where ${key} = '${id}'`);
+    return seen;
+  };
+
+  it("INV-A15 (S15d, 실패경로): 거절로 끝난 선물의 환불이 끝나지 않았으면 — 누르기 전·처리 중·실패 — 보낸 팬도 받은 크리에이터도 탈퇴되지 않는다. 환불이 완료되면 둘 다 탈퇴된다", async () => {
+    const acc = await createTestAccount({ tag: "wdrfcr", phone: "01090006661" });
+    const creatorId = makeCreator(acc);
+    const fan = await createTestAccount({ tag: "wdrffan", phone: "01090006662" });
+    const o = await registerTestOrder(1, { senderId: fan.userId, creatorId });
+    await payTestOrder(o);
+    backdate(`update public.orders set status = 'rejected' where id = '${o.orderId}'`);
+    const paymentId = psql(`select id from public.payments where order_id = '${o.orderId}' and kind = 'initial'`);
+    const due = Number(psql(`select coalesce(public.refund_due_of_payment('${paymentId}'), 0)`));
+    expect(due).toBeGreaterThan(0);
+    const blocked = async () => [(await withdraw(fan.loginId)).error?.code, (await withdraw(acc.loginId)).error?.code];
+    expect(await refundStates({ payment_id: paymentId }, due, blocked)).toEqual(Array(3).fill(["55000", "55000"]));
+    const f = await withdraw(fan.loginId);
+    const c = await withdraw(acc.loginId);
+    expect([f.error, c.error]).toEqual([null, null]);
+  });
+
+  it("INV-A15 (S15d, 실패경로): 도착하지 않음으로 닫힌 상자의 환불이 끝나지 않았으면 출고까지 끝난 주문이어도 팬이 탈퇴되지 않는다. 완료되면 탈퇴된다", async () => {
+    const fan = await createTestAccount({ tag: "wdrfbox", phone: "01090006663" });
+    const o = await shippedOrder({ senderId: fan.userId });
+    backdate(`update public.boxes set missing_at = now() where order_id = '${o.orderId}'`);
+    const boxId = psql(`select id from public.boxes where order_id = '${o.orderId}'`);
+    const paymentId = psql(`select id from public.payments where order_id = '${o.orderId}' and kind = 'initial'`);
+    const due = Number(psql(`select coalesce(public.refund_due_of_box('${boxId}'), 0)`));
+    expect(due).toBeGreaterThan(0);
+    const blocked = async () => (await withdraw(fan.loginId)).error?.code;
+    expect(await refundStates({ box_id: boxId, payment_id: paymentId }, due, blocked)).toEqual(["55000", "55000", "55000"]);
+    expect((await withdraw(fan.loginId)).error).toBeNull();
+  });
+
+  it("INV-A15 (S15d, 실패경로): 거절로 끝난 주문에 6자리를 살려 둔 상자가 있으면 주문 환불을 끝내도 탈퇴되지 않는다 — 닫히면 배송비 칸 환불이 생긴다. 상자 환불만 끝나고 주문 환불이 남아도 막는다. 둘 다 끝나면 탈퇴된다", async () => {
+    const fan = await createTestAccount({ tag: "wdrfkept", phone: "01090006666" });
+    const o = await registerTestOrder(1, { senderId: fan.userId });
+    await payTestOrder(o);
+    const boxId = psql(`select id from public.boxes where order_id = '${o.orderId}'`);
+    const paymentId = psql(`select id from public.payments where order_id = '${o.orderId}' and kind = 'initial'`);
+    backdate(`update public.orders set status = 'rejected' where id = '${o.orderId}'; update public.inbound_codes set kept_at = now() where box_id = '${boxId}' and state = 'valid'`);
+    expect(psql(`select count(*) from public.inbound_codes where box_id = '${boxId}' and kept_at is not null and state = 'valid'`)).toBe("1");
+    const orderDue = Number(psql(`select coalesce(public.refund_due_of_payment('${paymentId}'), 0)`));
+    expect(orderDue).toBeGreaterThan(0);
+    const refund = (cols: Record<string, string>, amount: number) =>
+      psql(
+        `insert into public.refunds (${Object.keys(cols).join(", ")}, amount_krw, requested_by, status, settled_at) values (${Object.values(cols).map((v) => `'${v}'`).join(", ")}, ${amount}, '${ownerId()}', 'done', now())`,
+      );
+    // 살려 둔 6자리가 유효한 동안: 상자 환불은 아직 정해지지 않았다
+    const twin = await createTestAccount({ tag: "wdrfkep2", phone: "01090006667" });
+    const o2 = await registerTestOrder(1, { senderId: twin.userId });
+    await payTestOrder(o2);
+    const box2 = psql(`select id from public.boxes where order_id = '${o2.orderId}'`);
+    const pay2 = psql(`select id from public.payments where order_id = '${o2.orderId}' and kind = 'initial'`);
+    backdate(`update public.orders set status = 'rejected' where id = '${o2.orderId}'; update public.inbound_codes set kept_at = now() where box_id = '${box2}' and state = 'valid'`);
+    refund({ payment_id: pay2 }, Number(psql(`select public.refund_due_of_payment('${pay2}')`)));
+    expect((await withdraw(twin.loginId)).error?.code).toBe("55000");
+    // 닫힘: 주문 환불과 상자 환불(배송비 칸)이 한 결제에 같이 있다 — 상자 환불만 끝나면 주문 환불 때문에 막힌다
+    backdate(`update public.inbound_codes set state = 'void', voided_at = now() where box_id = '${boxId}'; update public.boxes set missing_at = now() where id = '${boxId}'`);
+    const boxDue = Number(psql(`select coalesce(public.refund_due_of_box('${boxId}'), 0)`));
+    expect(boxDue).toBeGreaterThan(0);
+    refund({ box_id: boxId, payment_id: paymentId }, boxDue);
+    expect((await withdraw(fan.loginId)).error?.code).toBe("55000");
+    refund({ payment_id: paymentId }, orderDue);
+    expect((await withdraw(fan.loginId)).error).toBeNull();
+  });
+
+  it("INV-A15 (S15d, 실패경로): 받지 않음이 된 역조공 몫에 6자리를 살려 둔 동안(환불 금액이 아직 안 정해짐)에도 받는 팬·보낸 크리에이터가 탈퇴되지 않는다", async () => {
+    const acc = await createTestAccount({ tag: "wdrfrkc", phone: "01090006668" });
+    const creatorId = makeCreator(acc);
+    const fan = await createTestAccount({ tag: "wdrfrkf", phone: "01090006669" });
+    const send = makeSend({ profileId: acc.userId, creatorId }, [{ fanId: fan.userId }]);
+    const shareId = send.shareIds[0]!;
+    try {
+      backdate(
+        `update public.revgift_shares set reply = 'declined', received_at = null, inspected_at = null, shipped_at = null where id = '${shareId}';
+         insert into public.inbound_codes (code, share_id, kept_at) values (public.inbound_code_draw(), '${shareId}', now())`,
+      );
+      expect(psql(`select coalesce(public.refund_due_of_share('${shareId}')::text, 'none')`)).toBe("none");
+      expect([(await withdraw(fan.loginId)).error?.code, (await withdraw(acc.loginId)).error?.code]).toEqual(["55000", "55000"]);
+    } finally {
+      backdate(`delete from public.inbound_codes where share_id = '${shareId}'`);
+      cleanSends();
+    }
+  });
+
+  it("INV-A15 (S15d, 실패경로): 받지 않음이 된 역조공 몫의 환불이 끝나지 않았으면 받는 팬도 보낸 크리에이터도 탈퇴되지 않는다. 완료되면 둘 다 탈퇴된다", async () => {
+    const acc = await createTestAccount({ tag: "wdrfrgc", phone: "01090006664" });
+    const creatorId = makeCreator(acc);
+    const fan = await createTestAccount({ tag: "wdrfrgf", phone: "01090006665" });
+    const send = makeSend({ profileId: acc.userId, creatorId }, [{ fanId: fan.userId }]);
+    const shareId = send.shareIds[0]!;
+    try {
+      backdate(`update public.revgift_shares set reply = 'declined', received_at = null, inspected_at = null, shipped_at = null where id = '${shareId}'`);
+      expect(psql(`select coalesce(public.refund_due_of_share('${shareId}'), 0)`)).toBe("1");
+      const blocked = async () => [(await withdraw(fan.loginId)).error?.code, (await withdraw(acc.loginId)).error?.code];
+      expect(await refundStates({ share_id: shareId }, 1, blocked)).toEqual(Array(3).fill(["55000", "55000"]));
+      const f = await withdraw(fan.loginId);
+      const c = await withdraw(acc.loginId);
+      expect([f.error, c.error]).toEqual([null, null]);
+    } finally {
+      backdate(`delete from public.refunds where share_id = '${shareId}'`);
+      cleanSends();
+    }
+  });
+
   it("INV-A15 (S15c, 실패경로): 탈퇴 처리 도중 기록 하나의 가명 바꾸기가 실패하면 계정·연락처·주문이 그대로 남는다(일부만 지운 상태가 없다)", async () => {
     const fan = await createTestAccount({ tag: "wdatom", phone: "01090003333" });
     const a = await shippedOrder({ senderId: fan.userId });
