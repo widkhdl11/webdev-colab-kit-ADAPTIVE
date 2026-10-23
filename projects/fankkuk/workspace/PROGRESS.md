@@ -5,7 +5,7 @@
 - **오늘의 목표**: retention-withdrawal-specs·account-withdrawal — 처리방침·약관 [확인 필요](법정 보존 기간·탈퇴 뒤 기록) 채우기 + 회원 탈퇴 구현(카드 d121·d122)
 - **완료**: 처리방침 2절·약관 제5조 문장, 스펙 approval-signature INV-S14·S15 / my-account INV-A15·A16 승인(d121, e2cc6ad3·7ec6943e) · 탈퇴 DB(마이그레이션 20261023000002 로컬 적용 + manual/0025 사용자 적용)·대표 처리 경로·통합 시험 10/10·장치 변이(651eaff9·dce6131c) · UX 명세 handle·admin-inquiries 승인(d122, 표시 「탈퇴한 크리에이터입니다.」, 7a17ab97)
 - **멈춘 지점**: account-withdrawal 화면 둘 구현 전 — 경로 `/api/admin/accounts/withdraw` 와 모델은 있음, 화면 칸(문의 관리자 화면)·크리에이터 페이지 「탈퇴한 크리에이터입니다.」(StatusPage 설명 생략 가능하게)는 아직 없음
-- **다음 할 일**: 승인된 UX 명세 docs/ux/pages/handle.md·admin-inquiries.md 대로 탈퇴 화면 둘을 만들고(ux → ui 리뷰) 2단계 기간 지난 가명 기록 자동 삭제(my-account INV-A16, S16~S16c)를 이어 한다
+- **다음 할 일**: 프론티어 spec 이 dirty 인 까닭은 승인한 my-account INV-A16(기간 지난 가명 기록 자동 삭제)에 시험이 없어서다 — 먼저 INV-A16·approval-signature S14c 시험과 매일 자동 삭제 작업(2단계)을 만들어 spec 을 풀고, 그다음 승인된 UX 명세 docs/ux/pages/handle.md·admin-inquiries.md 대로 탈퇴 화면 둘(ux → ui 리뷰)
 - **대기 중인 결정**: 없음 (운영 DB 는 배포 때 마이그레이션 20261023000002 → manual/0025 순, 사람이 적용)
 
 ## 로그
