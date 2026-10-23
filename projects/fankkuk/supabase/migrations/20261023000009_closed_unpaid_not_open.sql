@@ -33,6 +33,8 @@ as $$
                 and (p.id is null or p.state not in ('returned', 'disposed', 'police_handed'))
             ))
         or (o.status = 'pending_payment'
+            -- 첫 결제 줄이 없으면 닫혔다고 볼 근거가 없다(등록 함수로는 생기지 않는다 — 보안 리뷰 낮음)
+            and exists (select 1 from public.payments p where p.order_id = o.id and p.kind = 'initial')
             and not exists (
               select 1 from public.payments p
               where p.order_id = o.id and p.kind = 'initial'

@@ -18,6 +18,14 @@
 --      · 크리에이터가 탈퇴했고 몫이 모두 지워진 보내기는 지운다(검수 취소 기록은 DB 가 함께 지운다).
 --      사무실 상자 기록을 바꾸고 지우는 문장은 선물 상자와 역조공 상자를 한 목록으로 본다(retention_unlink_parcels · retention_del_parcels).
 --      나머지 본문은 20261023000008 그대로다. 지운 건수에 revgift_shares·revgift_sends·revgift_unlinked 를 더한다.
+--   0) 「보내기 하나에 팬 한 명당 몫 하나」 고유값은 같이 쓰는 「탈퇴한 회원」 줄을 뺀다 — 한 보내기에서 팬 둘 이상이 탈퇴하면
+--      두 몫이 모두 같이 쓰는 표시가 되어야 하는데, 그대로면 자동 삭제 회차 전체가 고유값 충돌로 멈춘다(코드 리뷰 high). 회원끼리는 그대로 하나다.
+
+-- ── 0) 몫 고유값 ───────────────────────────────────────
+
+alter table public.revgift_shares drop constraint if exists revgift_shares_send_id_fan_id_key;
+create unique index if not exists revgift_shares_send_fan_key on public.revgift_shares (send_id, fan_id)
+  where fan_id <> 'ffffffff-0000-4000-8000-000000000001';
 
 -- ── 1) 끝난 보내기 ─────────────────────────────────────
 
@@ -55,6 +63,8 @@ as $$
        parcel as (select op.* from public.office_parcels op where op.share_id in (select id from sh))
   select greatest(
     d.created_at, d.settled_at, d.confirming_at, d.review_at,
+    -- 닫힌(실패) 결제는 닫은 시각 칸이 없다 — 닫기는 만든 지 24시간이 지나야 일어나므로 그 시각을 아래 한도로 둔다(코드 리뷰 low)
+    case when d.status = 'failed' then d.created_at + interval '24 hours' end,
     (select max(greatest(s.replied_at, s.received_at, s.inspected_at, s.shipped_at, s.returned_at, s.cancelled_at, s.delivered_at, s.disposed_at)) from sh s),
     (select max(greatest(r.created_at, r.claimed_at, r.settled_at)) from public.refunds r where r.share_id in (select id from sh)),
     (select max(rr.created_at) from public.revgift_refunds rr where rr.share_id in (select id from sh)),
@@ -230,6 +240,7 @@ begin
     select p.id from public.payments p where p.order_id in (select id from retention_del_orders) or p.box_id in (select id from retention_del_boxes);
 
   delete from public.office_held_links where parcel_id in (select id from retention_del_parcels) or unmatched_id in (select id from retention_del_unmatched);
+  -- 지우는 몫을 가리키는 옮기기 기록은 남는 몫 쪽 상자의 것이어도 함께 지운다(두 칸 모두 그 몫을 가리켜야 하는 외래 키라 남길 수 없다)
   delete from public.office_share_moves where parcel_id in (select id from retention_del_parcels) or unmatched_id in (select id from retention_del_unmatched)
      or from_share_id in (select id from retention_del_shares) or to_share_id in (select id from retention_del_shares);
   delete from public.office_unmatched_look_edits where unmatched_id in (select id from retention_del_unmatched);

@@ -131,6 +131,11 @@ describe("탈퇴 처리 — 가명 처리 (my-account INV-A15)", () => {
     psql(`update public.payments set status = 'confirming', confirming_at = now() where order_id = '${stuck.orderId}'`);
     expect((await withdraw(fan.loginId)).error?.code).toBe("55000");
     psql(`update public.payments set status = 'failed', settled_at = now() where order_id = '${stuck.orderId}'`);
+    // 첫 결제 줄이 없는 결제 대기 주문(등록 함수로는 생기지 않는다)은 닫혔다고 볼 근거가 없다 — 진행 중
+    const orphan = await registerTestOrder(1, { senderId: fan.userId });
+    backdate(`delete from public.payments where order_id = '${orphan.orderId}'`);
+    expect((await withdraw(fan.loginId)).error?.code).toBe("55000");
+    backdate(`delete from public.boxes where order_id = '${orphan.orderId}'; delete from public.orders where id = '${orphan.orderId}'`);
     const r = await withdraw(fan.loginId);
     expect(r.error).toBeNull();
     expect(fanOf(abandoned.orderId)).toBe((r.data as { pseudonym: string }).pseudonym);
@@ -618,6 +623,20 @@ describe("기간 지난 역조공 기록 자동 삭제 (my-account INV-A16, 카�
     expect(psql(`select fan_id from public.revgift_shares where send_id = '${s.sendId}'`)).toBe(SHARED_FAN);
     expect(psql(`select creator_id from public.revgift_sends where id = '${s.sendId}'`)).toBe(s.creatorId);
     expect(referencesTo(fanGone)).toEqual([]);
+  });
+
+  it("INV-A16 (d123, 실패경로): 한 보내기에서 팬 둘이 탈퇴했으면 두 몫 모두 같이 쓰는 「탈퇴한 회원」이 된다 — 자동 삭제가 몫 고유값에 걸려 멈추지 않는다. 회원끼리는 여전히 한 보내기에 팬 한 명당 몫 하나다", async () => {
+    const s = await sendTo("wdg6", 2);
+    await pseudonymOf(s.fans[0].loginId);
+    await pseudonymOf(s.fans[1].loginId);
+    ageSend(s.sendId, "5 years 1 day");
+    expect(purge().revgift_unlinked).toBe(2);
+    expect(psql(`select string_agg(fan_id::text, ',' order by seq) from public.revgift_shares where send_id = '${s.sendId}'`)).toBe(`${SHARED_FAN},${SHARED_FAN}`);
+    const member = await createTestAccount({ tag: "wdg6m", phone: null });
+    const dup = (seq: number) =>
+      `insert into public.revgift_shares (send_id, seq, order_no, fan_id, tier, amount_krw, shipping_fee_krw) values ('${s.sendId}', ${seq}, 'RG-IT${rand(6)}', '${member.userId}', 'small', 1, 0)`;
+    expect(psqlError(dup(3))).toBeNull();
+    expect(psqlError(dup(4))).toContain("revgift_shares_send_fan_key");
   });
 
   it("INV-A16 (S16b): 둘 다 탈퇴했어도 보내기의 마지막 기록이 5년보다 하루 덜 됐으면 그대로다", async () => {
