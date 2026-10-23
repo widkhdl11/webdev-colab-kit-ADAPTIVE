@@ -83,6 +83,10 @@ export function WithdrawForm() {
           </>
         )}
       </div>
+      {/* 거절 문장을 읽어 주는 칸 — 단계가 바뀌어도 늘 자리에 있어야 스크린리더가 새 문장을 읽는다(처음부터 문장을 품고 생긴 칸은 안 읽힐 때가 많다) */}
+      <p className="sr-only" role="status">
+        {step === "open" && error ? error : ""}
+      </p>
       {step === "closed" && (
         <button
           ref={toggleRef}
@@ -116,7 +120,7 @@ export function WithdrawForm() {
               }}
             />
           </div>
-          <div role="status">
+          <div>
             {error && (
               <p className={a.errorLine} id={`${FIELD_ID}-error`}>
                 <span className={a.errorMark} aria-hidden="true">
@@ -138,7 +142,7 @@ export function WithdrawForm() {
       )}
       {step === "confirm" && shaped && (
         <div className={a.stack} style={{ gap: 8 }} role="alertdialog" aria-labelledby={`${FIELD_ID}-confirm`}>
-          <p id={`${FIELD_ID}-confirm`} className={a.hint}>
+          <p id={`${FIELD_ID}-confirm`} className={a.note}>
             {shaped} 계정을 탈퇴 처리할까요? 되돌릴 수 없어요.
           </p>
           <div className={a.btnRow}>
@@ -148,6 +152,7 @@ export function WithdrawForm() {
             <button
               type="button"
               className={`${a.btn} ${a.btnSm} ${a.btnLine}`}
+              aria-disabled={busy}
               onClick={() => {
                 if (busy) return;
                 setStep("open");

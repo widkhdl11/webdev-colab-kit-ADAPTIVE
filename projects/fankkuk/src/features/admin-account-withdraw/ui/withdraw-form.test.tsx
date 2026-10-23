@@ -98,6 +98,9 @@ describe("대표의 회원 탈퇴 칸 (INV-A15)", () => {
     expect(input()?.value).toBe("haru_creator");
     expect(input()?.getAttribute("aria-invalid")).toBe("true");
     expect(buttons()).toEqual(["탈퇴 처리", "닫기"]);
+    // 거절 문장은 단계가 바뀌어도 늘 있던 읽기 칸이 알린다(처음부터 문장을 품고 생긴 칸은 안 읽힐 수 있다)
+    const live = [...host.querySelectorAll('[role="status"]')].find((el) => el.textContent?.includes("진행 중인 선물"));
+    expect(live?.classList.contains("sr-only")).toBe(true);
   });
 
   it("INV-A15 (실패경로): 아이디 꼴이 틀리면(비었거나 짧음) 확인을 묻지 않고 아이디 안내를 띄운다", async () => {

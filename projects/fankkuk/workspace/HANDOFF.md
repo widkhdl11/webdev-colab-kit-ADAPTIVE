@@ -27,11 +27,11 @@
   },
   "implement": {
     "status": "clean",
-    "hash": "a8f98b32585a"
+    "hash": "a4d456ff3a25"
   },
   "qa": {
     "status": "clean",
-    "hash": "87211d3ef646"
+    "hash": "685da2339498"
   },
   "review": {
     "status": "dirty",
