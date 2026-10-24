@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// 관리자 「결제·환불」 내역의 줄 (admin-console INV-K1·K7·K8). DB 읽기 함수 admin_payment_rows 의 열다섯 칸만 받는다 —
+// 관리자 「결제·환불」 내역의 줄 (admin-console INV-K1·K7·K8). DB 읽기 함수 admin_payment_rows 의 열여섯 칸만 받는다 —
 // 칸이 하나라도 더 오면(주소·전화 같은) 통째로 받지 않는다.
 // 팬 선물은 결제 한 건이 한 줄(첫 결제·차액 결제), 역조공은 몫 하나가 한 줄.
 // 도착하지 않음으로 닫힌 팬 선물 상자(office-workflow INV-W10)는 상자 하나가 한 줄 — 상자 환불(payment INV-M8·M9)의 단위다.
@@ -26,6 +26,8 @@ export type PaymentRow = {
   refund: { status: RefundStatus; amountKrw: number | null; error: string | null };
   /** INV-M19: 결제사와 금액이 달라 확인 필요 — 사람이 결제사 관리 화면에서 처리한다 */
   needsReview: boolean;
+  /** INV-K7 (S7f): 처음 누른 지 14일이 지나 「다시 시도」가 막힌 환불 — 「직접 환불함」만 보인다 */
+  retryClosed: boolean;
 };
 
 const won = z.number().int().min(0);
@@ -46,6 +48,7 @@ const rowShape = z
     refund_krw: won.nullable(),
     refund_error: z.string().nullable(),
     needs_review: z.boolean(),
+    refund_retry_closed: z.boolean(),
   })
   .strict();
 
@@ -66,5 +69,6 @@ export function paymentRowsFrom(data: unknown): PaymentRow[] | null {
     paidAt: r.paid_at,
     refund: { status: r.refund_status, amountKrw: r.refund_krw, error: r.refund_error },
     needsReview: r.needs_review,
+    retryClosed: r.refund_retry_closed,
   }));
 }

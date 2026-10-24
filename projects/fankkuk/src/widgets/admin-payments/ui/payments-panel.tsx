@@ -185,7 +185,7 @@ export function PaymentsPanel({ rows, pendingBoxes, reviewPayments, access }: Pr
                         {r.needsReview && <span className={a.sub}> (승인 시도)</span>}
                       </td>
                       <td className={`${a.act} ${a.stickyEnd}`}>
-                        {canRefund(access, r.refund.status, r.needsReview) && r.refund.amountKrw !== null && (
+                        {canRefund(access, { status: r.refund.status, needsReview: r.needsReview, retryClosed: r.retryClosed }) && r.refund.amountKrw !== null && (
                           <RefundButton
                             unitKind={r.unitKind}
                             unitId={r.unitId}

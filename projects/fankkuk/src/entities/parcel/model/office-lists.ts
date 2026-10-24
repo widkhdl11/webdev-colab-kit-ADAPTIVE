@@ -299,6 +299,8 @@ export type RevgiftShare = {
   deadlineAt: string;
   receivedAt: string | null;
   refundStatus: ShareRefundStatus | null;
+  /** INV-K7 (S7f): 처음 누른 지 14일이 지나 「다시 시도」가 막힌 환불 — 「직접 환불함」만 보인다 */
+  retryClosed: boolean;
 };
 
 const shareRow = z.object({
@@ -311,6 +313,7 @@ const shareRow = z.object({
   deadline_at: z.string(),
   received_at: z.string().nullable(),
   refund_status: z.enum(SHARE_REFUND_STATUSES).nullable(),
+  refund_retry_closed: z.boolean(),
 });
 
 export function revgiftSharesFromRows(rows: unknown): RevgiftShare[] | null {
@@ -326,6 +329,7 @@ export function revgiftSharesFromRows(rows: unknown): RevgiftShare[] | null {
     deadlineAt: r.deadline_at,
     receivedAt: r.received_at,
     refundStatus: r.refund_status,
+    retryClosed: r.refund_retry_closed,
   }));
 }
 

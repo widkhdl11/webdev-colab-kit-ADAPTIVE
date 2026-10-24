@@ -12,6 +12,7 @@ const base: RevgiftShare = {
   deadlineAt: "2026-10-10T00:00:00+00:00",
   receivedAt: null,
   refundStatus: null,
+  retryClosed: false,
 };
 const rows: RevgiftShare[] = [base, { ...base, shareId: "s2", orderNo: "RG-2", reply: "declined", fanNickname: "별빛" }];
 

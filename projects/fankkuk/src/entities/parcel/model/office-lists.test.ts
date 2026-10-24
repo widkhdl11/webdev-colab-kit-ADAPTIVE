@@ -77,6 +77,7 @@ const SHARE = {
   deadline_at: "2026-10-10T01:00:00+00:00",
   received_at: null,
   refund_status: null,
+  refund_retry_closed: false,
 };
 
 describe("보류 상자 읽기 (office-workflow INV-W5·W6·W7, inbound-address-code INV-C9)", () => {
@@ -255,6 +256,7 @@ describe("역조공 몫 읽기 (office-workflow INV-W3·W6)", () => {
         deadlineAt: SHARE.deadline_at,
         receivedAt: null,
         refundStatus: null,
+        retryClosed: false,
       },
     ]);
   });
@@ -262,6 +264,12 @@ describe("역조공 몫 읽기 (office-workflow INV-W3·W6)", () => {
   it("INV-W3 (실패경로): 모르는 답·환불 상태는 null", () => {
     expect(revgiftSharesFromRows([{ ...SHARE, reply: "maybe" }])).toBeNull();
     expect(revgiftSharesFromRows([{ ...SHARE, refund_status: "due" }])).toBeNull();
+  });
+
+  it("INV-K7 (S7f): 처음 누른 지 14일이 지나 다시 시도가 막힌 몫은 표시를 단다 — 빠지면 받지 않는다", () => {
+    expect(revgiftSharesFromRows([{ ...SHARE, refund_status: "failed", refund_retry_closed: true }])?.[0]?.retryClosed).toBe(true);
+    const { refund_retry_closed: _drop, ...missing } = SHARE;
+    expect(revgiftSharesFromRows([missing])).toBeNull();
   });
 });
 

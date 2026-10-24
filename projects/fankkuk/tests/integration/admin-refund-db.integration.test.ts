@@ -403,6 +403,8 @@ describe("INV-K1 · INV-K8: 결제·환불 내역 읽기", () => {
     "payment_kind",
     "refund_error",
     "refund_krw",
+    // INV-K7 (S7f): 처음 누른 지 14일이 지나 다시 시도가 막힌 줄
+    "refund_retry_closed",
     "refund_status",
     "service_fee_krw",
     "shipping_fee_krw",

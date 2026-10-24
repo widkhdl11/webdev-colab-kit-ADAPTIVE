@@ -19,6 +19,7 @@ const row = {
   refund_krw: 6900,
   refund_error: null,
   needs_review: false,
+  refund_retry_closed: false,
 };
 
 describe("INV-K8: 정해진 칸으로만 받는다", () => {
@@ -38,6 +39,7 @@ describe("INV-K8: 정해진 칸으로만 받는다", () => {
         paidAt: row.paid_at,
         refund: { status: "due", amountKrw: 6900, error: null },
         needsReview: false,
+        retryClosed: false,
       },
     ]);
   });
@@ -70,6 +72,12 @@ describe("INV-K8: 정해진 칸으로만 받는다", () => {
   it("INV-M19 (S19d): 결제사와 금액이 달라 확인 필요인 줄은 표시를 단다 — 빠지면 받지 않는다", () => {
     expect(paymentRowsFrom([{ ...row, refund_status: "none", refund_krw: null, needs_review: true }])?.[0]?.needsReview).toBe(true);
     const { needs_review: _drop, ...missing } = row;
+    expect(paymentRowsFrom([missing])).toBeNull();
+  });
+
+  it("INV-K7 (S7f): 처음 누른 지 14일이 지나 다시 시도가 막힌 줄은 표시를 단다 — 빠지면 받지 않는다", () => {
+    expect(paymentRowsFrom([{ ...row, refund_status: "failed", refund_retry_closed: true }])?.[0]?.retryClosed).toBe(true);
+    const { refund_retry_closed: _drop, ...missing } = row;
     expect(paymentRowsFrom([missing])).toBeNull();
   });
 

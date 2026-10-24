@@ -23,7 +23,7 @@ afterAll(() => {
 
 type Claim = { refund_id: string; payment_key: string; amount_krw: number };
 
-async function asOwner(kind: "gift" | "revgift", unitId: string) {
+async function asOwner(kind: "gift" | "gift_box" | "revgift", unitId: string) {
   const client = await signedInClient("fankkuk_admin");
   const { data, error } = await client.rpc("admin_claim_refund", { p_kind: kind, p_unit_id: unitId });
   return { claim: ((data ?? []) as Claim[])[0] ?? null, code: error?.code ?? null };
@@ -211,5 +211,56 @@ describe("INV-K1: 내역의 금액·순서", () => {
     expect(iNew).toBeLessThan(iOld);
     const settledNew = psql(`select floor(extract(epoch from settled_at))::bigint from public.payments where id = '${newer.paymentId}'`);
     expect(Math.floor(Date.parse(String(rows[iNew]!.paid_at)) / 1000)).toBe(Number(settledNew));
+  });
+});
+
+describe("INV-K7 (S7f): 처음 누른 지 14일이 지나 다시 시도가 막힌 줄은 목록이 알려 준다 (카드 d126)", () => {
+  async function shareRows() {
+    const client = await signedInClient("fankkuk_admin");
+    const { data, error } = await client.rpc("admin_revgift_shares");
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Record<string, unknown>[];
+  }
+
+  it("INV-K7 (S7f): 결제 목록 — 14일이 지나면 표시가 서고, 13일이거나 아직 누르지 않았으면 서지 않는다", async () => {
+    const g = await rejectedGift();
+    const before = (await readRows()).find((r) => r.unit_id === g.paymentId);
+    expect(before).toMatchObject({ refund_status: "due", refund_retry_closed: false });
+    const first = (await asOwner("gift", g.paymentId)).claim!;
+    await settle(first.refund_id, false, "결제사 오류");
+    psql(`update public.refunds set created_at = now() - interval '13 days' where id = '${first.refund_id}'`);
+    expect((await readRows()).find((r) => r.unit_id === g.paymentId)).toMatchObject({ refund_status: "failed", refund_retry_closed: false });
+    psql(`update public.refunds set created_at = now() - interval '14 days 1 minute' where id = '${first.refund_id}'`);
+    expect((await readRows()).find((r) => r.unit_id === g.paymentId)).toMatchObject({ refund_status: "failed", refund_retry_closed: true });
+    // 표시가 선 줄은 DB 도 다시 시도를 거부한다 — 화면과 DB 의 기준이 같다
+    expect((await asOwner("gift", g.paymentId)).code).toBe("P0025");
+  });
+
+  it("INV-K7 (S7f): 도착하지 않음으로 닫힌 상자의 환불 줄도 같다 — 14일이 지나면 표시가 서고, 13일이면 서지 않는다", async () => {
+    const o = await registerTestOrder(2);
+    await payTestOrder(o);
+    const boxId = psql(`select id from public.boxes where order_id = '${o.orderId}' order by seq limit 1`);
+    psql(`begin; set local session_replication_role = replica; update public.boxes set missing_at = now() where id = '${boxId}'; commit;`);
+    const first = (await asOwner("gift_box", boxId)).claim!;
+    await settle(first.refund_id, false, "결제사 오류");
+    psql(`update public.refunds set created_at = now() - interval '13 days' where id = '${first.refund_id}'`);
+    expect((await readRows()).find((r) => r.unit_id === boxId)).toMatchObject({ unit_kind: "gift_box", refund_status: "failed", refund_retry_closed: false });
+    psql(`update public.refunds set created_at = now() - interval '14 days 1 minute' where id = '${first.refund_id}'`);
+    expect((await readRows()).find((r) => r.unit_id === boxId)).toMatchObject({ unit_kind: "gift_box", refund_status: "failed", refund_retry_closed: true });
+  });
+
+  it("INV-K7 (S7f): 역조공 몫 목록도 같다 — 14일이 지나면 표시가 서고, 그 전에는 서지 않는다", async () => {
+    const send = await registerTestRevgift([{ fanId: PROFILE.gureumppang, tier: "small" }]);
+    await payTestRevgift(send);
+    const id = shareId(send.orderNos[0]);
+    psql(`update public.revgift_shares set reply = 'declined', replied_at = now() where id = '${id}'`);
+    closeKeptShares(`s.id = '${id}'`);
+    expect((await shareRows()).find((r) => r.share_id === id)).toMatchObject({ refund_status: null, refund_retry_closed: false });
+    const first = (await asOwner("revgift", id)).claim!;
+    await settle(first.refund_id, false, "결제사 오류");
+    psql(`update public.refunds set created_at = now() - interval '13 days' where id = '${first.refund_id}'`);
+    expect((await shareRows()).find((r) => r.share_id === id)).toMatchObject({ refund_status: "failed", refund_retry_closed: false });
+    psql(`update public.refunds set created_at = now() - interval '14 days 1 minute' where id = '${first.refund_id}'`);
+    expect((await shareRows()).find((r) => r.share_id === id)).toMatchObject({ refund_status: "failed", refund_retry_closed: true });
   });
 });

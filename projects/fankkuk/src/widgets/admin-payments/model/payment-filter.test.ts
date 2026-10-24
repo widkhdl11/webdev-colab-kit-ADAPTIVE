@@ -17,6 +17,7 @@ function row(orderNo: string, payer: string, status: RefundStatus, needsReview =
     paidAt: "2026-10-04T03:20:00Z",
     refund: { status, amountKrw: status === "none" ? null : 6900, error: null },
     needsReview,
+    retryClosed: false,
   };
 }
 
