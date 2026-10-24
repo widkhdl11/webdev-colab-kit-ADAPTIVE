@@ -1,9 +1,23 @@
 ---
 project: fankkuk
 status: passed
-basis: cf19c97013a1
-reviewers: [security-reviewer, code-reviewer, ux-reviewer, ui-reviewer]
+basis: 0fb7367aa775
+reviewers: [security-reviewer, code-reviewer, ux-reviewer]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-24, 14일 지난 환불 줄에는 「직접 환불함」만 — f205e56b, 카드 d126 · S7f)
+
+- 범위: 1e048903 뒤 커밋 하나. DB 목록 함수 admin_payment_rows·admin_revgift_shares 에 refund_retry_closed(20261024000003) · 파서 둘 · 노출 규칙 canRefund·canRefundShare ·
+  결제 화면 호출 · UX 명세 admin-payments 상태표 한 행 · INV-K7 한 문장·S7f. ui-reviewer 는 뺐다 — 시각 변경 없이 버튼 하나가 조건에 따라 빠질 뿐이다.
+- security-reviewer: 지적 없음(definer·search_path·is_operator·권한이 직전 정의와 같고, 나가는 칸은 불리언 하나, refunds.share_id unique 라 left join 으로 줄이 늘지 않음).
+- code-reviewer: low 2 → canRefund 를 객체 인자로(불리언 둘 순서 실수) · 상자 환불 줄 시험 추가. 경계(정확히 14일·처리 중·상자 줄)는 화면과 DB 기준이 같다고 확인.
+- ux-reviewer: 지적 없음. 기준 밖 관찰 하나(「다시 시도」가 사라진 이유가 화면에 없다) — 시안에 없는 안내 문구는 덧붙이지 않는 규칙이라 넣지 않고 사용자에게 알림.
+- 실행 근거: 통합 admin-refund-retry 18/18 · admin-refund-db·office-reads·payment-reconcile·admin-refund-manual·creator-display-name 93/93 · 유닛 311파일 2,585/2,585 · tsc 0 · copy:lint 0.
+  고치기 전 red: 유닛 8 실패 · 통합 S7f 2 실패. 변이 아홉(결제 목록 13일·항상 false · 몫 목록 13일·항상 false · canRefund·canRefundShare 14일 무시 · 파서 둘 항상 false · 상자 줄 시각 지움) 모두 잡힘.
+  화면: 로컬 DB 에 실패 기록 둘(15일 전·1일 전)을 넣고 /admin/payments 에서 15일 줄은 「직접 환불함」만, 1일 줄은 「다시 시도」·「직접 환불함」 확인 뒤 지움.
+  partial-reject-db 4 실패는 이번 변경과 무관(자동 닫기만 부르는 시험, 10-21 기한 정리를 못 따라감 — BACKLOG).
+
+## 이전 사인오프
 
 # 리뷰 사인오프 — fankkuk (2026-10-24 밤, 「직접 환불함」 — 15456baf, 카드 d126)
 
