@@ -70,7 +70,7 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
           {meta}
           {notice}
           <DocSummary
-            heading={guide ? "먼저 알아 두세요" : "먼저 세 가지만 알아 두세요"}
+            heading={guide ? "먼저 알아 두세요" : "주요 내용"}
             lines={doc.summary}
             targets={targets}
             onGo={(id) => nav.goTo(id, { focus: true, push: true, showAll: true })}

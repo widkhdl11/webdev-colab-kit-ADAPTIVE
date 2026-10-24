@@ -40,10 +40,10 @@ describe("약관·개인정보처리방침 글", () => {
     for (const doc of withGroups) expect(doc.tocGroups?.flatMap((g) => g.ids), doc.title).toEqual(doc.sections.map((s) => s.id));
   });
 
-  it("notifications INV-N6: 꺼도 가는 알림의 예시는 설정 화면의 이름 그대로이고, 이유는 「조치가 필요하거나 돈·상자가 걸려 있기 때문」", () => {
+  it("notifications INV-N6: 꺼도 가는 알림의 예시는 설정 화면의 이름 그대로이고, 이유는 「회원의 조치가 필요하거나 결제 및 상자 처리에 관한 필수 알림」", () => {
     const names = new Set([...mustDeliverLabels("fan"), ...mustDeliverLabels("creator")]);
     for (const doc of docs) {
-      const line = JSON.stringify(doc).match(/다만 ([^"]+?) 같은 알림은 조치가 필요하거나 돈·상자가 걸려 있기 때문에 꺼도 갑니다/);
+      const line = JSON.stringify(doc).match(/다만 ([^"]+?) 등 회원의 조치가 필요하거나 결제 및 상자 처리에 관한 필수 알림은 수신 설정과 관계없이 발송합니다/);
       expect(line, doc.title).not.toBeNull();
       const examples = line![1]!.split("·");
       expect(examples).toContain("추가 결제 취소");
@@ -55,7 +55,7 @@ describe("약관·개인정보처리방침 글", () => {
     const fields = [termsDoc(prices), refundDoc(prices)].flatMap((doc) =>
       doc.sections.flatMap((sec) => sec.blocks.flatMap((b) => (b.kind === "rows" ? b.rows.flatMap((r) => r.fields.map((f) => [doc.title, r.title, ...f] as const)) : []))),
     );
-    const expected = (v: string) => (v.includes("전액") ? "full" : /^없음$|환불 금액 없음|환불 금액이 없습니다/.test(v) ? "none" : undefined);
+    const expected = (v: string) => (v.includes("전액") ? "full" : /^없음$|환불 금액 없음|환불 금액이 없습니다|(?<!추가 )환불 금액은 없습니다/.test(v) ? "none" : undefined);
     expect(fields.filter(([, , , , tone]) => tone === "full").length).toBeGreaterThan(0);
     expect(fields.filter(([, , , , tone]) => tone === "none").length).toBeGreaterThan(0);
     for (const [doc, row, k, v, tone] of fields) expect([doc, row, k, tone], v).toEqual([doc, row, k, expected(v)]);

@@ -33,9 +33,9 @@ describe("classifyParcel — 상자 크기·무게 → 구간 (사용자 결정 
 
 describe("PARCEL_TIER_GUIDE — 화면 안내 문구가 판정 기준과 같다", () => {
   it("INV-K6: 소형·중형·대형·초과 문구", () => {
-    expect(PARCEL_TIER_GUIDE.small.rule).toBe("세 변 합 100cm·5kg 이하");
-    expect(PARCEL_TIER_GUIDE.medium.rule).toBe("세 변 합 100cm·10kg 이하");
-    expect(PARCEL_TIER_GUIDE.large.rule).toBe("세 변 합 160cm·20kg 이하");
-    expect(OVERSIZE_RULE).toBe("세 변 합 160cm나 20kg를 넘는 상자");
+    expect(PARCEL_TIER_GUIDE.small.rule).toBe("세 변의 합 100cm 이하·무게 5kg 이하");
+    expect(PARCEL_TIER_GUIDE.medium.rule).toBe("세 변의 합 100cm 이하·무게 10kg 이하");
+    expect(PARCEL_TIER_GUIDE.large.rule).toBe("세 변의 합 160cm 이하·무게 20kg 이하");
+    expect(OVERSIZE_RULE).toBe("세 변의 합이 160cm를 넘거나 무게가 20kg을 넘는 상자");
   });
 });

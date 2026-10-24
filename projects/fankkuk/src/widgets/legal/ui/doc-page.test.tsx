@@ -77,7 +77,8 @@ describe("선택 칸이 없는 글은 지금처럼 그린다", () => {
   it("칩 줄 · 「주요」 · 최종 수정일 · 요약 링크 없이, 조와 요약 문장은 전부", () => {
     render(<DocPage doc={base} variant="policy" />);
     expect(q('[role="group"][aria-label="분류"]')).toBeNull();
-    expect(host.textContent).not.toContain("주요");
+    // 약관 요약 판 제목 「주요 내용」은 배지가 아니다
+    expect(host.textContent?.replace("주요 내용", "")).not.toContain("주요");
     expect(host.textContent).not.toContain("최종 수정일");
     expect(qa("ol li").filter((li) => li.textContent?.startsWith("요약")).map((li) => [li.textContent, li.querySelector("a")])).toEqual([
       ["요약 하나", null],
