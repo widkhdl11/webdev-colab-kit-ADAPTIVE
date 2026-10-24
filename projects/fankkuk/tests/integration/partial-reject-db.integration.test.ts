@@ -86,9 +86,20 @@ const pendingAlerts = (orderId: string) =>
  * 살려 둔 시각을 「지금 − gap」으로 옮기고 같은 처리 안에서 자동 처리를 돌린다(돌려주는 값은 닫은 수).
  * 한 처리 안의 now() 는 한 값이라 경계를 밀리초 오차 없이 본다 — 따로 돌리면 그 사이 흐른 시간만큼 기한이 지나 버린다.
  */
-function keepThenExpiry(boxId: string, orderNo: string, gap: string): string {
+/** 살려 둔 시각을 hours 시간 전으로 — 2026-10-21 전의 시계(살려 둔 때 + 168시간)로 닫는 처리면 빨간불이 나게 넉넉히 옮긴다 */
+function keptSince(boxIds: string[], hours: number) {
+  psql(`begin; set local session_replication_role = replica; update public.inbound_codes set kept_at = now() - interval '${hours} hours' where box_id in ('${boxIds.join("','")}'); commit;`);
+}
+
+/** 주문 결제 완료 시각을 옮긴다 — 살려 둔 상자는 결제 완료 + 720시간에 닫는다(payment INV-M18 ③, 2026-10-21 기한 정리) */
+function paidSince(orderId: string, gap: string) {
+  psql(`update public.orders set registered_at = now() - interval '${gap}' where id = '${orderId}'`);
+}
+
+/** 결제 완료 시각을 옮기고 같은 처리 안에서 자동 처리를 돌린다 — 한 처리 안의 now() 는 한 값이라 경계를 오차 없이 본다 */
+function paidThenExpiry(orderId: string, orderNo: string, gap: string): string {
   const out = psql(
-    `begin; set local session_replication_role = replica; update public.inbound_codes set kept_at = now() - interval '${gap}' where box_id = '${boxId}'; set local session_replication_role = origin; select set_config('request.jwt.claims', '{"role":"service_role"}', true); select public.office_run_expiry('${orderNo}') ->> 'kept_closed'; commit;`,
+    `begin; update public.orders set registered_at = now() - interval '${gap}' where id = '${orderId}'; select set_config('request.jwt.claims', '{"role":"service_role"}', true); select public.office_run_expiry('${orderNo}') ->> 'kept_closed'; commit;`,
   );
   const lines = out.split(/\r?\n/);
   return lines[lines.length - 2]!.trim(); // 마지막 줄은 COMMIT
@@ -385,16 +396,17 @@ describe("거절 때 아직 안 온 상자 (payment INV-M18 · INV-M8 · inbound
     expect(Number(orderRefundDue(g.orderId))).toBe(2900);
   });
 
-  it("INV-M18·C3 (S18h·S3e): 살려 둔 상자는 168시간 안에 안 오면 자동 처리가 닫는다 — 167시간이면 그대로, 두 번 돌려도 한 번", async () => {
+  it("INV-M18·C3 (S18h·S3e): 살려 둔 상자는 결제 완료 + 720시간 안에 안 오면 자동 처리가 닫는다 — 719시간이면 그대로(살려 둔 지 168시간이 지났어도), 두 번 돌려도 한 번", async () => {
     const op = await staff();
     const g = await paidGift(2);
     await aArrived(g);
     expect(await declineAs("haru_creator", g.requestId)).toBe("declined");
-    psql(`begin; set local session_replication_role = replica; update public.inbound_codes set kept_at = now() - interval '167 hours' where box_id = '${g.boxIds[1]}'; commit;`);
+    keptSince([g.boxIds[1]!], 200);
+    paidSince(g.orderId, "719 hours");
     expect((await runExpiry(g.orderNo)).kept_closed).toBe(0);
     expect(missing(g.boxIds[1]!)).toBe("f");
     expect(codeState(g.boxIds[1]!)).toBe("valid");
-    psql(`begin; set local session_replication_role = replica; update public.inbound_codes set kept_at = now() - interval '169 hours' where box_id = '${g.boxIds[1]}'; commit;`);
+    paidSince(g.orderId, "721 hours");
     expect((await runExpiry(g.orderNo)).kept_closed).toBe(1);
     expect((await runExpiry(g.orderNo)).kept_closed).toBe(0);
     expect(missing(g.boxIds[1]!)).toBe("t");
@@ -405,20 +417,21 @@ describe("거절 때 아직 안 온 상자 (payment INV-M18 · INV-M8 · inbound
     expect(late.data).toMatchObject({ result: "hold", reason: "void_code" });
   });
 
-  it("INV-M18 (S18h, 경계): 살려 둔 때부터 168시간 「안에」 안 오면 닫는다 — 167시간 59분 59초면 그대로, 정확히 168시간이면 닫힌다", async () => {
+  it("INV-M18 (S18h, 경계): 결제 완료부터 720시간 「안에」 안 오면 닫는다 — 719시간 59분 59초면 그대로, 정확히 720시간이면 닫힌다", async () => {
     const g = await paidGift(2);
     await aArrived(g);
     expect(await declineAs("haru_creator", g.requestId)).toBe("declined");
-    expect(keepThenExpiry(g.boxIds[1]!, g.orderNo, "167 hours 59 minutes 59 seconds")).toBe("0");
+    keptSince([g.boxIds[1]!], 200); // 옛 시계(살려 둔 때 + 168시간)는 이미 지났다
+    expect(paidThenExpiry(g.orderId, g.orderNo, "719 hours 59 minutes 59 seconds")).toBe("0");
     expect(missing(g.boxIds[1]!)).toBe("f");
     expect(codeState(g.boxIds[1]!)).toBe("valid");
-    expect(keepThenExpiry(g.boxIds[1]!, g.orderNo, "168 hours")).toBe("1");
+    expect(paidThenExpiry(g.orderId, g.orderNo, "720 hours")).toBe("1");
     expect(missing(g.boxIds[1]!)).toBe("t");
     expect(codeState(g.boxIds[1]!)).toBe("void");
     expect(Number(boxRefundDue(g.boxIds[1]!))).toBe(4000);
   });
 
-  it("INV-M18 ③ (S16d·S17 뒤): 취소로 살려 둔 상자도 168시간 안에 안 오면 자동 처리가 닫는다 — 팬의 취소(「먼저 보내기」 뒤)·대표의 입고 뒤 취소 둘 다", async () => {
+  it("INV-M18 ③ (S16d·S17 뒤): 취소로 살려 둔 상자도 결제 완료 + 720시간 안에 안 오면 자동 처리가 닫는다 — 팬의 취소(「먼저 보내기」 뒤)·대표의 입고 뒤 취소 둘 다", async () => {
     const op = await staff();
     const fan = await signedInClient("byeolbit_fan");
     const byFan = await paidGift(2);
@@ -432,7 +445,13 @@ describe("거절 때 아직 안 온 상자 (payment INV-M18 · INV-M8 · inbound
     const fanOrderDue = orderRefundDue(byFan.orderId);
     const ownerOrderDue = orderRefundDue(byOwner.orderId);
 
-    psql(`begin; set local session_replication_role = replica; update public.inbound_codes set kept_at = now() - interval '169 hours' where box_id in ('${keptBoxes.join("','")}'); commit;`);
+    keptSince(keptBoxes, 200);
+    paidSince(byFan.orderId, "719 hours");
+    paidSince(byOwner.orderId, "719 hours");
+    expect((await runExpiry(byFan.orderNo)).kept_closed).toBe(0);
+    expect((await runExpiry(byOwner.orderNo)).kept_closed).toBe(0);
+    paidSince(byFan.orderId, "721 hours");
+    paidSince(byOwner.orderId, "721 hours");
     expect((await runExpiry(byFan.orderNo)).kept_closed).toBe(2);
     expect((await runExpiry(byOwner.orderNo)).kept_closed).toBe(1);
     expect(keptBoxes.map(missing)).toEqual(["t", "t", "t"]);
@@ -455,13 +474,15 @@ describe("거절 때 아직 안 온 상자 (payment INV-M18 · INV-M8 · inbound
 });
 
 describe("거절·반려된 주문의 안 온 상자와 30일 닫기 (office-workflow INV-W10)", () => {
-  it("INV-W10 (S10d): A 만 도착한 채 거절된 주문의 B 는 30일 닫기 대상이 아니다 — 결제 + 720시간이어도 살려 둔 지 168시간 전이면 그대로, 도착하면 입고 → 검수 → 반송 대기", async () => {
+  it("INV-W10 (S10d): A 만 도착한 채 거절된 주문의 B 는 거절 + 168시간에 닫지 않는다(시계는 결제 완료) — 결제 + 719시간이면 그대로, 도착하면 입고 → 검수 → 반송 대기", async () => {
     const op = await staff();
     const g = await paidGift(2);
     await aArrived(g);
     expect(await declineAs("haru_creator", g.requestId)).toBe("declined");
-    psql(`update public.orders set registered_at = now() - interval '721 hours' where id = '${g.orderId}'`);
+    keptSince([g.boxIds[1]!], 200);
+    paidSince(g.orderId, "719 hours");
     const ran = await runExpiry(g.orderNo);
+    expect(ran.kept_closed).toBe(0);
     expect(ran.boxes_missing).toBe(0);
     expect(missing(g.boxIds[1]!)).toBe("f");
     expect(codeState(g.boxIds[1]!)).toBe("valid");
