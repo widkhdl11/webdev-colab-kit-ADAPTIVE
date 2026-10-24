@@ -1,4 +1,4 @@
-import { OPERATOR_NAME, PROMISE } from "@/shared/config/site-copy";
+import { OPERATOR_NAME } from "@/shared/config/site-copy";
 import { orBlank, SITE_INFO, type SiteInfo } from "@/shared/config/site-info";
 import { TO_DECIDE, type LegalDoc } from "./legal-doc";
 
@@ -11,7 +11,7 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
   const vendor = (label: string, name: string) => (name.trim() === "" ? `${label} ${orBlank(name)}` : `${label} — ${name}`);
   return {
   title: "개인정보처리방침",
-  lead: `이 방침은 팬꾹(이하 「회사」라 합니다)의 개인정보 수집·이용 목적, 보유 및 파기 기준, 처리 위탁과 보호 조치를 안내합니다. ${PROMISE.address}`,
+  lead: `이 방침은 팬꾹(이하 「회사」라 합니다)의 개인정보 수집·이용 목적, 보유 및 파기 기준, 처리 위탁과 보호 조치를 안내합니다. 크리에이터의 주소는 승인 전까지 공개되지 않습니다.`,
   summary: [
     "회사는 회원가입과 선물 배송에 필요한 개인정보만 수집합니다. 크리에이터와 팬의 주소는 해당 회원의 브라우저에서 암호화한 상태로 전송받습니다.",
     "주소는 송장 출력 시에만 열람하며, 해당 회원은 본인 주소의 열람 기록을 확인할 수 있습니다.",

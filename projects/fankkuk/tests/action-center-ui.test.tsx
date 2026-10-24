@@ -281,11 +281,11 @@ describe("INV-J1·J4·J13: 상세 「지금 할 일」 칸의 처리와 지금 �
   it("INV-J4: 도착하지 않은 상자 — 찾기 양식이 그 상자로 정해져 붙는다(고르는 칸·위 안내 문단 없음, 송장번호·택배사 두 칸 — 이름 첫 글자 칸은 없다, inbound-address-code INV-C4 ②-가)", () => {
     const el = card("missing_box");
     expect(el.querySelector("h2")?.textContent).toBe("도착이 늦어요");
-    const form = el.querySelector('form[aria-label="받는 주소 없이 보낸 상자 찾기"]');
+    const form = el.querySelector('form[aria-label="팬꾹 주소 없이 보낸 상자 찾기"]');
     expect(form).not.toBeNull();
     expect(form?.querySelectorAll("select")).toHaveLength(1); // 택배사만 — 「어느 상자인가요」 없음
     expect(el.textContent).not.toContain("어느 상자인가요");
-    expect(el.textContent).not.toContain("받는 주소를 쓰지 않고");
+    expect(el.textContent).not.toContain("팬꾹 주소를 쓰지 않고");
     expect([...(form?.querySelectorAll("label") ?? [])].map((l) => l.textContent)).toEqual([
       "택배사",
       "송장번호",

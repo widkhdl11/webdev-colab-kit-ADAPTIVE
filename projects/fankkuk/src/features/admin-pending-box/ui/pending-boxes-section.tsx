@@ -150,7 +150,7 @@ function CloseButton({ box, onDone }: { box: PendingBox; onDone: (failure: strin
             <b className={a.mono}>{won.format(box.amountKrw)}원</b>
           </div>
           <p className={a.hint}>
-            팬이 상자를 보내지 않았는지 확인한 뒤에 눌러 주세요. 처리하면 이 상자의 받는 주소 6자리가 무효가 되고, 그 뒤에 상자가 오면 보류 상자로 운영자 확인 목록에
+            팬이 상자를 보내지 않았는지 확인한 뒤에 눌러 주세요. 처리하면 이 상자의 팬꾹 주소 6자리가 무효가 되고, 그 뒤에 상자가 오면 보류 상자로 운영자 확인 목록에
             올라가 원래 송장 주소로 착불 반송돼요. 되돌릴 수 없어요.
           </p>
           <div role="status">

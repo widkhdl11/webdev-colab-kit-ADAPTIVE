@@ -71,7 +71,7 @@ export function UnmatchedPanel({ rows, flags, metrics, now }: Props) {
       <div className={a.pageHead}>
         <div>
           <h1>보류 상자</h1>
-          <p>받는 주소 6자리로 입고되지 않아 보류된 상자와, 분쟁·「제가 보낸 게 아니에요」로 출고를 멈춘 상자예요. 출고 목록에는 나오지 않아요.</p>
+          <p>팬꾹 주소 6자리로 입고되지 않아 보류된 상자와, 분쟁·「제가 보낸 게 아니에요」로 출고를 멈춘 상자예요. 출고 목록에는 나오지 않아요.</p>
         </div>
       </div>
       <div className={a.stack}>

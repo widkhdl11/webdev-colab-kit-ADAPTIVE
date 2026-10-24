@@ -237,9 +237,9 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
       // 링크는 DB 가 고른 줄이 정한다(INV-N21, 카드 d96 ③): 팬 선물 주문이면 선물 상세의 「지금 할 일」 칸(#todo — 송장번호 입력, action-center INV-J13),
       // 역조공 몫(RG-)이면 보낸 역조공 화면(줄마다 「내 상자 찾기」). 몫 번호는 본문에 쓰지 않는다
       return {
-        subject: "[팬꾹] 받는 주소 없이 보낸 상자가 있어요",
-        lines: [greet, "받는 주소 없이 보낸 상자가 있어요."],
-        buttonLabel: REVGIFT_ORDER_NO.test(orderNo) ? "내 상자 찾기" : "받는 주소 없이 보냈어요",
+        subject: "[팬꾹] 팬꾹 주소 없이 보낸 상자가 있어요",
+        lines: [greet, "팬꾹 주소 없이 보낸 상자가 있어요."],
+        buttonLabel: REVGIFT_ORDER_NO.test(orderNo) ? "내 상자 찾기" : "팬꾹 주소 없이 보냈어요",
         path: REVGIFT_ORDER_NO.test(orderNo) ? "/creator/revgifts" : giftDetailHref(orderNo, true),
       };
     case "difference_due":

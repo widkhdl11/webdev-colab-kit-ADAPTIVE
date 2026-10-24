@@ -33,7 +33,7 @@ export function ReceivingAddress({ officeAddress, code, boxName, multiple = fals
   return (
     <div className={s.addr} role="group" aria-labelledby={`${id}-title`}>
       <p className={s["addr-title"]} id={`${id}-title`}>
-        이 선물의 받는 주소{multiple ? <span className="sr-only"> · {boxName}</span> : null}
+        이 선물의 팬꾹 주소{multiple ? <span className="sr-only"> · {boxName}</span> : null}
       </p>
       <dl>
         <div>
@@ -58,7 +58,7 @@ export function ReceivingAddress({ officeAddress, code, boxName, multiple = fals
         </div>
       </dl>
       <div className={s["addr-actions"]}>
-        <button type="button" className="btn btn--line btn--sm" aria-label={`${boxName} 받는 주소 끝 6자리 ${shown ? "가리기" : "보기"}`} onClick={() => setShown((v) => !v)}>
+        <button type="button" className="btn btn--line btn--sm" aria-label={`${boxName} 팬꾹 주소 끝 6자리 ${shown ? "가리기" : "보기"}`} onClick={() => setShown((v) => !v)}>
           {shown ? "6자리 가리기" : "6자리 보기"}
         </button>
         <div>

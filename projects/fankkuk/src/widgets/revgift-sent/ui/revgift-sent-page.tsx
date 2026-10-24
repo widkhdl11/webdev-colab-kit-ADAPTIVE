@@ -160,10 +160,10 @@ function AddressGuide({ headId }: { headId: string }) {
   return (
     <div className={s.guide} role="group" aria-labelledby={headId}>
       <p className={s.guideT} id={headId}>
-        팬마다 받는 주소가 달라요
+        팬마다 팬꾹 주소가 달라요
       </p>
       <p>
-        팬 한 명마다 상자를 따로 포장하고, 아래 팬마다 나온 받는 주소를 끝 6자리까지 그대로 써서 보내 주세요. 팬이 받기를 누를 때까지 기다리지 않고 보내셔도 돼요. 받지 않은 팬의
+        팬 한 명마다 상자를 따로 포장하고, 아래 팬마다 나온 팬꾹 주소를 끝 6자리까지 그대로 써서 보내 주세요. 팬이 받기를 누를 때까지 기다리지 않고 보내셔도 돼요. 받지 않은 팬의
         상자는 돌려보내고 그 상자 요금은 환불돼요.
       </p>
     </div>
@@ -260,7 +260,7 @@ export function RevgiftSentPage({
         <div className={s.paid} role="status">
           <img className={s.peek} src="/images/home/icon-truck.webp" alt="" aria-hidden="true" width={80} height={80} />
           <p>
-            <strong>결제가 끝났어요.</strong> 팬마다 상자를 따로 포장하고, 아래 팬마다 나온 받는 주소로 보내 주세요.
+            <strong>결제가 끝났어요.</strong> 팬마다 상자를 따로 포장하고, 아래 팬마다 나온 팬꾹 주소로 보내 주세요.
           </p>
         </div>
       ) : null}
@@ -288,7 +288,7 @@ export function RevgiftSentPage({
             <li>「받지 않음」은 팬이 받지 않기를 누른 경우와 7일이 지난 경우를 구분하지 않아요.</li>
             <li>받지 않은 상자는 보낸 사무실 쪽에서 돌려보내고, 그 상자 요금만 환불돼요.</li>
             <li>한 팬이 받지 않아도 같은 묶음의 다른 팬 선물은 그대로 가요.</li>
-            <li>상자를 더 보내려면 새로 보내기를 해 주세요. 상자마다 받는 주소가 달라요.</li>
+            <li>상자를 더 보내려면 새로 보내기를 해 주세요. 상자마다 팬꾹 주소가 달라요.</li>
           </ul>
         </div>
       </details>

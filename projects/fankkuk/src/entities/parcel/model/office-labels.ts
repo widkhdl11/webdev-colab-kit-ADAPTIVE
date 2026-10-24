@@ -59,7 +59,7 @@ export const NEXT_STEP_TEXT: Record<NextStep, string> = {
 
 /** 보류 사유 (inbound-address-code INV-C5·C7·C8). 운영자 화면에만 쓴다 — 팬·크리에이터 화면에는 보류 목록이 없다(INV-C10). */
 export const HOLD_REASON_LABEL: Record<HoldReason, string> = {
-  no_code: "받는 주소 6자리 없음",
+  no_code: "팬꾹 주소 6자리 없음",
   unknown_code: "발급되지 않은 6자리",
   void_code: "무효가 된 6자리(거절·반려·취소)",
   used_code: "이미 쓰인 6자리(첫 상자 출고 뒤)",

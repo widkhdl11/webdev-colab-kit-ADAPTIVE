@@ -41,7 +41,7 @@ export function EarlySendGate({ orderNo, creatorName, focusAfterId }: Props) {
         <strong>{creatorName}님이 아직 승인하지 않았어요.</strong>
       </p>
       <p>선물을 미리 보내면 배송 기간을 줄일 수 있지만, 크리에이터가 거절하면 다시 반송될 수 있어요. 그래도 먼저 보내시겠어요?</p>
-      <p className="hint">거절돼 반송되면 반송 택배비를 뺀 금액을 돌려드려요. 승인을 기다렸다가 보내셔도 돼요 — 승인되면 받는 주소가 바로 보여요.</p>
+      <p className="hint">거절돼 반송되면 반송 택배비를 뺀 금액을 돌려드려요. 승인을 기다렸다가 보내셔도 돼요 — 승인되면 팬꾹 주소가 바로 보여요.</p>
       <div className={s["early-row"]}>
         <button type="button" className="btn btn--sm" aria-disabled={busy} onClick={() => void send()}>
           {busy ? "여는 중…" : "먼저 보내기"}

@@ -59,7 +59,7 @@ export const NOTIFICATION_POLICY: Record<NotificationKind, Policy> = {
   payment_canceled: { mustDeliver: true, label: "결제 취소", audience: "fan" },
   difference_canceled: { mustDeliver: true, label: "추가 결제 취소", audience: "fan" },
   // 6자리 없이 온 상자가 닉네임과 맞았을 때(INV-N21, 카드 d94) — 도착부터 720시간(30일, 2026-10-21) 안에 찾지 않으면 착불 반송
-  box_no_code: { mustDeliver: true, label: "받는 주소 없이 보낸 상자", audience: "fan" },
+  box_no_code: { mustDeliver: true, label: "팬꾹 주소 없이 보낸 상자", audience: "fan" },
   // 역조공 몫 결제 완료 때·72시간 뒤 받는 팬에게(INV-N20, 2026-10-16) — 7일 안에 정하지 않으면 받지 않음이 된다
   revgift_offer: { mustDeliver: true, label: "역조공 받기", audience: "fan" },
   // 반송 주소를 확인하지 않으면 반송되지 않고 30일 뒤 처분된다(INV-N22). 이름은 용어집 return_address 행의 카드 제목 — 첫 알림과 재알림이 한 이름으로 보인다

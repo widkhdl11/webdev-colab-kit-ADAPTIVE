@@ -125,7 +125,7 @@ describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
     const un = rows()[3]!;
     expect(un.textContent).toContain("모카님 상자가 아직 안 왔어요");
     // 카드 d96 ②: 14일 줄은 찾기를 권하지 않는다 — 「아직 도착하지 않은 상자」만, 버튼은 「내 상자 찾기」
-    expect(un.textContent).not.toMatch(/받는 주소 없이 보냈다면/);
+    expect(un.textContent).not.toMatch(/팬꾹 주소 없이 보냈다면/);
     expect(button(un, "내 상자 찾기")).toBeDefined();
     expect(un.textContent).toContain("10월 2일 보낸 역조공");
     expect(un.textContent).not.toMatch(/상자가 있어요|사무실 도착|미확인|코드 없이/);

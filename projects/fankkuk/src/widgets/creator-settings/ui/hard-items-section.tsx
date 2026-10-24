@@ -138,7 +138,7 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
           ))}
         </div>
         <p className="t-meta hint" id="hard-action-hint">
-          「안내만」을 고르면 팬이 결제 전에 안내를 보고 그대로 보낼 수도 있어요. 「등록 막기」를 고르면 그 품목으로는 선물을 보낼 수 없어요. 어느 쪽이든 승인한 선물만 배송합니다.
+          「안내만」을 고르면 팬이 결제 전에 안내를 보고 그대로 보낼 수도 있어요. 「등록 막기」를 고르면 그 품목으로는 선물을 보낼 수 없어요. 어느 쪽이든 승인한 선물만 배송해요.
         </p>
       </fieldset>
 

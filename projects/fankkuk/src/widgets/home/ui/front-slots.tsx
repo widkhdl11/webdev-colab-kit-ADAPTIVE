@@ -164,7 +164,7 @@ const STEPS = [
   { icon: "icon-gift", num: "1. 등록", title: "선물을 등록해요", body: "결제하면 팬꾹 주소가 바로 나와요. 승인 전에도 먼저 보낼 수 있어요." },
   { icon: "icon-approve", num: "2. 승인", title: "크리에이터가 승인해요", body: PROMISE.approval },
   { icon: "icon-inspect", num: "3. 검수", title: "모든 선물을 검수해요", body: PROMISE.inspectionOpen },
-  { icon: "icon-truck", num: "4. 배송", title: "팬꾹이 대신 보내요", body: "승인과 검수를 모두 통과한 선물만 출고합니다." },
+  { icon: "icon-truck", num: "4. 배송", title: "팬꾹이 대신 보내요", body: "승인과 검수를 모두 통과한 선물만 출고해요." },
 ] as const;
 
 /** ③ 사이트 소개(로그인 전만) — 흰 바탕, 왼쪽 머리 + 2×2 줄(그림 64 · 번호 · 제목 · 설명, 767 이하 한 줄에 하나) + 상태 흐름.
@@ -362,9 +362,9 @@ function LineIcon({ name, className }: { name: IconName; className?: string }) {
 }
 
 const PROMISES = [
-  { icon: "lock", title: "주소는 잠긴 채 보관합니다", body: "승인된 선물의 송장을 출력할 때만 열려요." },
-  { icon: "eye", title: "주소가 열린 기록은 모두 공개합니다", body: "언제, 어느 주문에서 열렸는지 크리에이터가 직접 볼 수 있어요." },
-  { icon: "inspect", title: "모든 선물을 검수합니다", body: PROMISE.inspectionOpen },
+  { icon: "lock", title: "주소는 잠긴 채 보관해요", body: "승인된 선물의 송장을 출력할 때만 열려요." },
+  { icon: "eye", title: "주소가 열린 기록은 모두 공개해요", body: "언제, 어느 주문에서 열렸는지 크리에이터가 직접 볼 수 있어요." },
+  { icon: "inspect", title: "모든 선물을 검수해요", body: PROMISE.inspectionOpen },
   { icon: "message", title: "승인은 한 건씩, 카카오톡으로", body: "한꺼번에 승인하는 버튼은 없어요. 받지 않은 이유는 팬에게 알리지 않아요." },
 ] as const satisfies readonly { icon: IconName; title: string; body: string }[];
 
@@ -386,7 +386,7 @@ export function PromiseSlot({ withSignup, band = false }: { withSignup: boolean;
         </h2>
         <p className="t-lead">{PROMISE.address}</p>
       </div>
-      <figure className={s.mock} aria-label="예시 화면: 주소 열람 기록. 언제 어느 주문에서 주소가 열렸는지 한 줄씩 남습니다.">
+      <figure className={s.mock} aria-label="예시 화면: 주소 열람 기록. 언제 어느 주문에서 주소가 열렸는지 한 줄씩 남아요.">
         <div aria-hidden="true">
           <div className={s.mockBar}>
             <span>주소 열람 기록</span>

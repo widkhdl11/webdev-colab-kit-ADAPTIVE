@@ -197,8 +197,8 @@ export function RevgiftSendForm({
               2
             </span>
             <div>
-              <strong>결제하면 팬마다 받는 주소가 안내돼요</strong>
-              <p>팬마다 상자를 따로 포장해서, 그 팬의 받는 주소를 끝까지 그대로 써서 보내 주세요.</p>
+              <strong>결제하면 팬마다 팬꾹 주소가 안내돼요</strong>
+              <p>팬마다 상자를 따로 포장해서, 그 팬의 팬꾹 주소를 끝까지 그대로 써서 보내 주세요.</p>
             </div>
           </li>
           <li>

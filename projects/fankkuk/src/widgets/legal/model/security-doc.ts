@@ -6,7 +6,7 @@ import type { LegalDoc } from "./legal-doc";
 
 /** 그림용 네 칸 — 선물이 가는 길과 주소가 열리는 때 */
 export const SECURITY_FLOW: readonly { title: string; text: string }[] = [
-  { title: "팬", text: "받는 주소로 팬꾹 사무실에 상자를 보내요. 크리에이터 주소는 보이지 않아요." },
+  { title: "팬", text: "팬꾹 주소로 팬꾹 사무실에 상자를 보내요. 크리에이터 주소는 보이지 않아요." },
   { title: "팬꾹 사무실", text: "상자를 받아 검수해요. 이때 크리에이터 주소는 열리지 않아요." },
   { title: "송장을 출력할 때만 주소 열람", text: "승인과 검수가 끝난 상자의 송장을 출력할 때만 주소가 열려요." },
   { title: "크리에이터", text: "상자를 받고, 주소가 열린 기록을 열람 기록 화면에서 봐요." },

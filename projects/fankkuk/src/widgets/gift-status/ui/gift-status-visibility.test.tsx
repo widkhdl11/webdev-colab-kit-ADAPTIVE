@@ -111,10 +111,10 @@ const sec = (title: string) =>
     ?.closest("[data-sec]") ?? null;
 const ADDRESS_SHOWN_FOLDS = [
   "이 상자를 보낸 택배 송장번호",
-  "받는 주소 없이 보냈다면",
+  "팬꾹 주소 없이 보냈다면",
 ];
 
-describe("B-2·B-3·B-8: 송장번호 칸과 찾기 칸은 받는 주소가 보인 뒤에만", () => {
+describe("B-2·B-3·B-8: 송장번호 칸과 찾기 칸은 팬꾹 주소가 보인 뒤에만", () => {
   it("B-2·B-3 (실패경로): 승인 전 · 먼저 보내기 전이면 두 칸 모두 없고 「먼저 보내기」 안내만 남는다", () => {
     render({
       view: viewOf({ approved_at: null }),
@@ -126,17 +126,17 @@ describe("B-2·B-3·B-8: 송장번호 칸과 찾기 칸은 받는 주소가 보�
     ).toContain("먼저 보내기");
   });
 
-  it("B-2·B-3: 받는 주소가 보이면(승인됨) 두 칸이 접힌 채 보인다", () => {
+  it("B-2·B-3: 팬꾹 주소가 보이면(승인됨) 두 칸이 접힌 채 보인다", () => {
     render();
     expect(summaries()).toEqual(ADDRESS_SHOWN_FOLDS);
   });
 
   it("B-3 (실패경로): 입고 전 상자가 하나도 없으면 찾기 칸을 그리지 않는다 — 고를 상자가 없다", () => {
     render({ boxes: [box({ state: "received", addressCode: null })] });
-    expect(summaries()).not.toContain("받는 주소 없이 보냈다면");
+    expect(summaries()).not.toContain("팬꾹 주소 없이 보냈다면");
   });
 
-  it("B-2: 상자마다 — 받는 주소가 보인 상자만 송장번호 칸이 있다", () => {
+  it("B-2: 상자마다 — 팬꾹 주소가 보인 상자만 송장번호 칸이 있다", () => {
     render({
       boxes: [
         box(),
@@ -168,10 +168,10 @@ describe("B-1: 결제 직후 안내", () => {
     );
   });
 
-  it("B-1: 결제하고 돌아왔고 받는 주소가 보이면 받는 주소를 가리킨다", () => {
+  it("B-1: 결제하고 돌아왔고 팬꾹 주소가 보이면 팬꾹 주소를 가리킨다", () => {
     render({ paid: true });
     expect(host.querySelector("main [data-paid-line]")?.textContent).toBe(
-      "결제가 끝났어요. 아래 받는 주소로 상자를 보내 주세요.",
+      "결제가 끝났어요. 아래 팬꾹 주소로 상자를 보내 주세요.",
     );
   });
 
@@ -231,7 +231,7 @@ describe("B-5: 거절 반송 안내는 승인 전에만", () => {
 describe("B-6: 거절·기한 지남 안내는 상자 상태에 맞는 문단만", () => {
   const ARRIVED = "사무실에 도착한 상자는";
   const NOT_YET = "아직 도착하지 않은 상자는";
-  const BEFORE = "받는 주소가 보이기 전에 끝났다면";
+  const BEFORE = "팬꾹 주소가 보이기 전에 끝났다면";
 
   it("B-6: 도착한 상자만 있으면 도착한 상자 문단만(첫 문단은 늘)", () => {
     render({

@@ -132,7 +132,7 @@ describe("승인 창 — 시안 dlg-d 의 칸과 단계 (INV-J8)", () => {
     const d = openApprove();
     const btns = button(d, "카카오톡으로 승인하기")?.parentElement;
     // 글자까지 고정한다 — 상수에서 읽으면 약속 문장이 바뀌어도 통과한다
-    expect(btns?.previousElementSibling?.textContent).toBe("크리에이터 주소는 팬에게 공개되지 않습니다. 모든 선물은 팬꾹에서 검수한 뒤 보냅니다.");
+    expect(btns?.previousElementSibling?.textContent).toBe("크리에이터 주소는 팬에게 공개하지 않아요. 모든 선물은 팬꾹에서 검수한 뒤 보내요.");
   });
 
   it("INV-S7: 서명 요청을 보내 서버가 승인을 저장한 뒤에만 「승인 완료」 — 승인 내역으로 가는 링크, 확인을 누르면 목록을 새로 읽는다", async () => {
@@ -180,7 +180,7 @@ describe("승인 창의 주소 단계 (INV-S13·P16)", () => {
   });
 
   it("INV-S13 (실패경로): 서버가 「주소 없음」으로 거부하면 초점이 「주소를 입력해 주세요」로 간다", async () => {
-    sendApprove.mockResolvedValue({ kind: "refused", message: "받는 주소를 먼저 등록해 주세요.", noAddress: true });
+    sendApprove.mockResolvedValue({ kind: "refused", message: "팬꾹 주소를 먼저 등록해 주세요.", noAddress: true });
     render(HOME);
     const d = openApprove();
     await act(async () => button(d, "카카오톡으로 승인하기")?.click());
@@ -260,7 +260,7 @@ describe("승인 창의 주소 단계 (INV-S13·P16)", () => {
   });
 
   it("INV-S13 (실패경로): 서버가 「주소 없음」으로 거부하면 창은 열린 채 입력 폼으로 돌아간다", async () => {
-    sendApprove.mockResolvedValue({ kind: "refused", message: "받는 주소를 먼저 등록해 주세요.", noAddress: true });
+    sendApprove.mockResolvedValue({ kind: "refused", message: "팬꾹 주소를 먼저 등록해 주세요.", noAddress: true });
     render(HOME);
     const d = openApprove();
     await act(async () => button(d, "카카오톡으로 승인하기")?.click());

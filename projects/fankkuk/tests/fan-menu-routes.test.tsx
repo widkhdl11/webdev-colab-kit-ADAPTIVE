@@ -324,7 +324,7 @@ describe("INV-J13: 상세 맨 위 「지금 할 일」 칸은 처리할 일 읽�
     expect([...host.querySelectorAll("main button")].map((b) => b.textContent)).not.toContain("받기");
   });
 
-  it("INV-J13 (실패경로): 칸의 「도착이 늦어요」 상자는 아래 「받는 주소 없이 보냈어요」에서 고를 수 없고, 칸에 없는 상자는 아래에서 찾는다", async () => {
+  it("INV-J13 (실패경로): 칸의 「도착이 늦어요」 상자는 아래 「팬꾹 주소 없이 보냈어요」에서 고를 수 없고, 칸에 없는 상자는 아래에서 찾는다", async () => {
     const B1 = "22222222-2222-4222-8222-222222222222";
     const B2 = "44444444-4444-4444-8444-444444444444";
     const giftBox = (boxId: string, seq: number) => ({ boxId, label: `FC-7K3M9-${seq}`, tier: "small" as const, waybillNo: null, state: "no_waybill" as const, addressCode: null, sendAckNeeded: false });
@@ -332,7 +332,7 @@ describe("INV-J13: 상세 맨 위 「지금 할 일」 칸은 처리할 일 읽�
     state.actions = [{ ...difference("FC-7K3M9"), kind: "missing_box", box_id: B1, box_label: "FC-7K3M9-1", box_seq: 1, measured_tier: null, amount_krw: null }];
     const r = await draw(detail("FC-7K3M9"));
     expect(r.todo?.querySelector("form")).not.toBeNull();
-    const below = [...host.querySelectorAll("main summary")].find((h) => h.textContent === "받는 주소 없이 보냈다면")?.closest("[data-sec]");
+    const below = [...host.querySelectorAll("main summary")].find((h) => h.textContent === "팬꾹 주소 없이 보냈다면")?.closest("[data-sec]");
     expect(below?.querySelector("form")).not.toBeNull();
     expect(below?.textContent).not.toContain("FC-7K3M9-1");
   });

@@ -29,12 +29,12 @@ const LOG_EXAMPLE = [
 ] as const;
 
 const NOTS = [
-  { title: "승인 전에는 주소를 열지 않습니다", body: PROMISE.addressFan },
-  { title: "한꺼번에 승인하지 않습니다", body: "선물마다 카카오톡으로 따로 확인해요." },
-  { title: "받지 않은 이유를 팬에게 알리지 않습니다", body: "크리에이터가 받지 않은 선물은 배송하지 않아요." },
-  { title: "필요 없이 상자를 열지 않습니다", body: "탐지기 반응이 있는 상자는 열어서 확인해요." },
-  { title: "크리에이터에게 가는 송장번호는 공개하지 않습니다", body: "팬에게 보이는 주소는 팬꾹 주소뿐이에요." },
-  { title: "검수를 뺀 요금제는 만들지 않습니다", body: "모든 요금에 검수가 포함돼요." },
+  { title: "승인 전에는 주소를 열지 않아요", body: PROMISE.addressFan },
+  { title: "한꺼번에 승인하지 않아요", body: "선물마다 카카오톡으로 따로 확인해요." },
+  { title: "받지 않은 이유를 팬에게 알리지 않아요", body: "크리에이터가 받지 않은 선물은 배송하지 않아요." },
+  { title: "필요 없이 상자를 열지 않아요", body: "탐지기 반응이 있는 상자는 열어서 확인해요." },
+  { title: "크리에이터에게 가는 송장번호는 공개하지 않아요", body: "팬에게 보이는 주소는 팬꾹 주소뿐이에요." },
+  { title: "검수를 뺀 요금제는 만들지 않아요", body: "모든 요금에 검수가 포함돼요." },
 ] as const;
 
 const CROSS = (
@@ -100,7 +100,7 @@ export function AboutPage() {
           <div className="panel">
             <div className="sec-head">
               <h2 id="once-title">
-                주소는 송장을 출력할 때만 <span className="accent">열립니다</span>
+                주소는 송장을 출력할 때만 <span className="accent">열려요</span>
               </h2>
               <p className="t-lead t-desc">{PROMISE.address} 승인한 선물도 송장을 출력할 때만 열려요.</p>
             </div>

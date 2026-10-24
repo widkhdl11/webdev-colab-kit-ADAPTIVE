@@ -156,7 +156,7 @@ export function GiftStatusPage({
           {paid ? (
             // 처음 그릴 때부터 있는 글이라 role="status" 를 두지 않는다 — status 는 바뀔 때만 읽힌다(ui-reviewer 2026-10-22 지적 6)
             <p className={s.paidline} data-paid-line="">
-              {earlySendAck ? "결제가 끝났어요. 먼저 보내려면 아래 「먼저 보내기」를 눌러 주세요." : anyAddress ? "결제가 끝났어요. 아래 받는 주소로 상자를 보내 주세요." : "결제가 끝났어요."}
+              {earlySendAck ? "결제가 끝났어요. 먼저 보내려면 아래 「먼저 보내기」를 눌러 주세요." : anyAddress ? "결제가 끝났어요. 아래 팬꾹 주소로 상자를 보내 주세요." : "결제가 끝났어요."}
             </p>
           ) : null}
           {/* 맨 위 하늘 판 — 지금 상태 · 도착 예정일 · 6단계 진행(시안 v35-part1/gift-detail.html .dhero, design-rules 22절) */}
@@ -215,7 +215,7 @@ export function GiftStatusPage({
           <div className={s.sec} data-sec="">
             <h2 className={s.secTitle}>이 선물은 보내지 마세요</h2>
             {/* 거절·자동 반려 모두 같은 안내 — 거절인지 기간 지남인지는 위 한 줄이 말한다(decline-block INV-D5). 상자마다 돌려준다(payment INV-M8·M18, 2026-10-10 늦게 오는 상자) */}
-            <p className={s.desc}>받는 주소가 보이기 전에 끝났다면 결제 금액을 모두 돌려드려요.</p>
+            <p className={s.desc}>팬꾹 주소가 보이기 전에 끝났다면 결제 금액을 모두 돌려드려요.</p>
             {anyArrived ? <p className={s.more}>사무실에 도착한 상자는 보낸 주소로 돌려보내 드리고, 그 상자의 반송 택배비를 뺀 금액을 돌려드려요.</p> : null}
             {anyNotYet ? (
               <p className={s.more}>
@@ -237,7 +237,7 @@ export function GiftStatusPage({
               </h2>
               {earlySendAck ? <EarlySendGate orderNo={view.orderNo} creatorName={view.creatorName} focusAfterId="box-status-title" /> : null}
               {anyAddress ? (
-                <p className={s.note}>상자마다 받는 주소가 달라요. 상자에 맞는 주소를 끝 6자리까지 그대로 써서 보내 주세요. 승인은 출고 전까지만 나면 돼요.</p>
+                <p className={s.note}>상자마다 팬꾹 주소가 달라요. 상자에 맞는 주소를 끝 6자리까지 그대로 써서 보내 주세요. 승인은 출고 전까지만 나면 돼요.</p>
               ) : null}
               <div className={s.boxes}>
                 {boxes.map((b) => {
@@ -308,9 +308,9 @@ export function GiftStatusPage({
               {inProgress ? (
                 <KeepShown key={view.orderNo} show={showFinder}>
                   <details className={s.fold} data-sec="" data-finder="">
-                    <summary>받는 주소 없이 보냈다면</summary>
+                    <summary>팬꾹 주소 없이 보냈다면</summary>
                     <div className={s.in}>
-                      <p className="hint">받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호와 택배사가 맞으면 찾아요.</p>
+                      <p className="hint">팬꾹 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호와 택배사가 맞으면 찾아요.</p>
                       <FindMyBox boxes={belowFinder} />
                       <p className="hint">틀린 입력은 하루에 다섯 번까지예요.</p>
                     </div>
@@ -401,7 +401,7 @@ export function GiftStatusPage({
         {anyAddress && view.canEnterTrackingNo ? (
           <div className={s.sec} data-sec="">
             <h2 className={s.secTitle}>보내기 전에 알아 두세요</h2>
-            <p className={s.desc}>상자를 더 보내려면 새로 등록해 주세요. 상자마다 받는 주소가 달라요.</p>
+            <p className={s.desc}>상자를 더 보내려면 새로 등록해 주세요. 상자마다 팬꾹 주소가 달라요.</p>
             {/* 거절·7일 반송 안내는 승인 전에만(B-5) — 이미 승인된 선물에는 해당하지 않는다 */}
             {view.approval.state !== "done" ? <p className={s.more}>{RETURN_ON_REJECT_NOTICE}</p> : null}
           </div>

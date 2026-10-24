@@ -96,10 +96,10 @@ export function FindMyBox(props: Props) {
   return (
     <div className={s.finder}>
       {/* 바로 위에 「받는 주소 없이 보냈어요」 제목이 있다 — 같은 뜻의 제목을 한 단계 더 두지 않고 안내 문단으로 둔다. 상자가 정해진 카드에는 없다 */}
-      {fixed ? null : <p className={s["finder-q"]}>받는 주소를 쓰지 않고 상자를 보냈다면</p>}
+      {fixed ? null : <p className={s["finder-q"]}>팬꾹 주소를 쓰지 않고 상자를 보냈다면</p>}
       {current ? (
         <form
-          aria-label="받는 주소 없이 보낸 상자 찾기"
+          aria-label="팬꾹 주소 없이 보낸 상자 찾기"
           noValidate
           onSubmit={(e) => {
             e.preventDefault();

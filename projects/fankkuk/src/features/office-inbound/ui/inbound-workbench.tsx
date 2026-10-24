@@ -46,7 +46,7 @@ function announceOf(card: Card | null): string {
     case "labeled":
       return `라벨 붙임 확인 ${card.orderNo}`;
     case "code":
-      return card.error ? `다시 입력: ${card.error}` : "받는 주소 끝 6자리를 입력하세요";
+      return card.error ? `다시 입력: ${card.error}` : "팬꾹 주소 끝 6자리를 입력하세요";
     case "details":
       return card.error ? `보류 기록 안 됨: ${card.error}` : "보류로 넣을 값을 적어 주세요";
     case "hold_saved":
@@ -241,7 +241,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
         id="inbound-scan"
         label={pending ? "라벨 QR 스캔 (붙임 확인)" : "원래 송장 바코드 스캔"}
         placeholder="스캐너로 읽으면 여기에 들어가요"
-        hint="상자에 붙은 택배 송장 바코드를 스캐너로 읽은 뒤, 받는 주소 끝 6자리를 입력해요. 라벨을 붙였으면 라벨 QR 을 읽혀요. 주문번호나 상태를 손으로 고르는 칸은 없어요."
+        hint="상자에 붙은 택배 송장 바코드를 스캐너로 읽은 뒤, 팬꾹 주소 끝 6자리를 입력해요. 라벨을 붙였으면 라벨 QR 을 읽혀요. 주문번호나 상태를 손으로 고르는 칸은 없어요."
         busy={busy}
         onScan={onScan}
       />
@@ -254,19 +254,19 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
           <section className={w.result} aria-labelledby="inbound-code">
             <div className={w.resultHead}>
               <span className={`${a.tag} ${a.tagBrand}`}>2단계</span>
-              <h2 id="inbound-code">받는 주소 끝 6자리 입력</h2>
+              <h2 id="inbound-code">팬꾹 주소 끝 6자리 입력</h2>
               <span className={`${a.faint} ${a.mono}`}>송장 {formatWaybill(card.barcode)}</span>
             </div>
             <form
               className={w.scan}
-              aria-label="받는 주소 6자리 입력"
+              aria-label="팬꾹 주소 6자리 입력"
               noValidate
               onSubmit={(e) => {
                 e.preventDefault();
                 void submitInbound(card.barcode, card.at, code, null);
               }}
             >
-              <label htmlFor="inbound-code-input">원래 송장의 받는 주소 맨 끝 6자리</label>
+              <label htmlFor="inbound-code-input">원래 송장의 팬꾹 주소 맨 끝 6자리</label>
               <div className={w.scanRow}>
                 <input
                   ref={codeInput}
@@ -294,7 +294,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
             </form>
             <div className={a.btnRow}>
               <button className={`${a.btn} ${a.btnLine}`} type="button" aria-disabled={busy} onClick={() => void submitInbound(card.barcode, card.at, "", null)}>
-                받는 주소 끝에 6자리가 없어요
+                팬꾹 주소 끝에 6자리가 없어요
               </button>
             </div>
           </section>
@@ -458,7 +458,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
           <div className={a.note}>
             <InfoIcon />
             <p>
-              <strong>이미 보류로 기록된 상자예요.</strong> 선반에 그대로 두세요. 주인이 「받는 주소 없이 보냈어요」로 찾으면 입고돼요.
+              <strong>이미 보류로 기록된 상자예요.</strong> 선반에 그대로 두세요. 주인이 「팬꾹 주소 없이 보냈어요」로 찾으면 입고돼요.
             </p>
           </div>
         )}

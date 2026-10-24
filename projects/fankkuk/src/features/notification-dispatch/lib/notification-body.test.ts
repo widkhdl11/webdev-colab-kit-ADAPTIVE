@@ -244,16 +244,16 @@ describe("알림 링크 (INV-N9)", () => {
     for (const word of ["별빛", "블루투스", "RF", "추적", "전자"]) expect([word, b.text.includes(word) || b.subject.includes(word)]).toEqual([word, false]);
   });
 
-  it("INV-N21 (S12): 코드 없이 온 상자 알림 — 「받는 주소 없이 보낸 상자가 있어요」(용어집)와 「받는 주소 없이 보냈어요」 화면(선물 상세) 링크뿐, 꼭 가는 알림", () => {
+  it("INV-N21 (S12): 코드 없이 온 상자 알림 — 「팬꾹 주소 없이 보낸 상자가 있어요」(용어집)와 「팬꾹 주소 없이 보냈어요」 화면(선물 상세) 링크뿐, 꼭 가는 알림", () => {
     const b = buildNotificationBody(inputFor("box_no_code"));
-    expect(b.subject).toBe("[팬꾹] 받는 주소 없이 보낸 상자가 있어요");
-    expect(b.buttonLabel).toBe("받는 주소 없이 보냈어요");
+    expect(b.subject).toBe("[팬꾹] 팬꾹 주소 없이 보낸 상자가 있어요");
+    expect(b.buttonLabel).toBe("팬꾹 주소 없이 보냈어요");
     expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
     // 선물 상세의 「지금 할 일」 칸(송장번호 입력 — action-center INV-J13)
     expect(new URL(b.link).hash).toBe("#todo");
     const lines = b.text.split("\n");
     // 인사 · 문구 한 줄 · (빈 줄) · 링크 · (빈 줄) · 공통 꼬리말 · 꺼도 간다는 안내 — 주문번호 줄·도착일·기한 문장은 없다
-    expect(lines.slice(0, 2)).toEqual(["하루님,", "받는 주소 없이 보낸 상자가 있어요."]);
+    expect(lines.slice(0, 2)).toEqual(["하루님,", "팬꾹 주소 없이 보낸 상자가 있어요."]);
     expect(lines[3]).toBe(b.link);
     expect(b.text).toContain("이 알림은 꺼 두어도 가요.");
     expect(b.text).not.toContain("주문번호");
@@ -300,7 +300,7 @@ describe("알림 링크 (INV-N9)", () => {
     expect(new URL(b.link).pathname).toBe("/creator/revgifts");
   });
 
-  it("INV-C2 (S2b): 상자 도착 알림 본문에 받는 주소 6자리·사무실 주소가 없다 — 틀에 그 칸이 없다", () => {
+  it("INV-C2 (S2b): 상자 도착 알림 본문에 팬꾹 주소 6자리·사무실 주소가 없다 — 틀에 그 칸이 없다", () => {
     const b = buildNotificationBody({
       ...inputFor("box_arrived"),
       // @ts-expect-error 본문 틀에는 받는 주소 칸이 없다
@@ -387,20 +387,20 @@ describe("역조공 받기 알림 (INV-N20 · reverse-gift INV-R12)", () => {
   });
 });
 
-describe("받는 주소 없이 보낸 상자 알림 — 크리에이터 (INV-N21 · 카드 d96 ③)", () => {
+describe("팬꾹 주소 없이 보낸 상자 알림 — 크리에이터 (INV-N21 · 카드 d96 ③)", () => {
   it("INV-N21: 몫 번호(RG-)를 가리키는 줄은 보낸 역조공 화면의 「내 상자 찾기」로 잇고, 본문은 같은 한 줄뿐", () => {
     const b = buildNotificationBody({ ...inputFor("box_no_code"), orderNo: "RG-7K3M90" });
     expect(new URL(b.link).pathname).toBe("/creator/revgifts");
     expect(b.buttonLabel).toBe("내 상자 찾기");
-    expect(b.text.split("\n").slice(0, 2)).toEqual(["하루님,", "받는 주소 없이 보낸 상자가 있어요."]);
+    expect(b.text.split("\n").slice(0, 2)).toEqual(["하루님,", "팬꾹 주소 없이 보낸 상자가 있어요."]);
     expect(b.text).not.toContain("RG-7K3M90");
     expect(b.text).toContain("이 알림은 꺼 두어도 가요.");
   });
 
-  it("INV-N21 (실패경로): 팬 선물 주문이면 지금처럼 선물 상세의 「받는 주소 없이 보냈어요」로", () => {
+  it("INV-N21 (실패경로): 팬 선물 주문이면 지금처럼 선물 상세의 「팬꾹 주소 없이 보냈어요」로", () => {
     const b = buildNotificationBody(inputFor("box_no_code"));
     expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
-    expect(b.buttonLabel).toBe("받는 주소 없이 보냈어요");
+    expect(b.buttonLabel).toBe("팬꾹 주소 없이 보냈어요");
   });
 });
 
