@@ -1,12 +1,13 @@
 import { DIFFERENCE_DEADLINE_DAYS } from "@/entities/payment/config/difference-deadline";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
-import { OPERATOR_NAME } from "@/shared/config/site-copy";
+import { OPERATOR_NAME, SERVICE_PERIOD } from "@/shared/config/site-copy";
 import type { LegalDoc } from "./legal-doc";
 
 // 요금 안내(/pricing). 결제대행사 가맹 심사에서 상품·가격을 공개 페이지로 확인한다(2026-10-22 사용자).
 // 문장은 이용 안내(guide-fan-doc·guide-creator-doc)에 이미 있는 것을 그대로 쓴다 — 두 글과 이 글이 다른 말을 하지 않게.
 // 요금 숫자는 page 가 읽어 넘긴 공개 요금표(결제와 같은 DB 값).
+// 역조공 요금 열은 2026-10-24 카드사 심사 때 뺐다(사용자) — 역조공 요금은 크리에이터 이용 안내에 남아 있다.
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
@@ -27,11 +28,11 @@ export function pricingDoc(prices: PublicPriceTable): LegalDoc {
         blocks: [
           {
             kind: "prices",
-            columns: ["선물", "역조공"],
+            columns: ["선물"],
             rows: PRICED_TIERS.map((t) => ({
               name: PARCEL_TIER_GUIDE[t].name,
               rule: PARCEL_TIER_GUIDE[t].rule,
-              amounts: [won(prices[t].priceKrw), won(prices[t].revgiftPriceKrw)],
+              amounts: [won(prices[t].priceKrw)],
             })),
           },
           {
@@ -39,7 +40,7 @@ export function pricingDoc(prices: PublicPriceTable): LegalDoc {
             items: [
               "상자 크기는 세 변의 합과 무게를 각각 보고 더 큰 쪽으로 정해요.",
               `${OVERSIZE_RULE}는 받지 않아요.`,
-              "역조공 요금은 팬 선물 요금에서 검수비를 뺀 금액이에요. 역조공 상자는 추적 장치 검사 없이 겉면과 보낼 수 없는 물품만 확인해요.",
+              SERVICE_PERIOD,
               "요금이 바뀌면 바뀐 뒤에 등록한 선물부터 새 요금이 적용돼요.",
             ],
           },

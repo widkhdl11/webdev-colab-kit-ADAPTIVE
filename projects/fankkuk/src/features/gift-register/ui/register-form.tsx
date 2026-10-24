@@ -25,7 +25,7 @@ import { creatorBlockNotice, stopReason } from "../model/receiving-notice";
 import { summarizeBoxes } from "../model/box-summary";
 import { movingNotice } from "../model/sender-rule";
 import { MAX_BOX_COUNT, registerFormSchema, type RegisterFormOutput, type RegisterFormValues } from "../model/register-input";
-import { PROMISE } from "@/shared/config/site-copy";
+import { PROMISE, SERVICE_PERIOD } from "@/shared/config/site-copy";
 import f from "./register-form.module.css";
 
 /** 고를 수 있는 크리에이터 한 명. 소개 칸(태그·채널 이름·로마자 이름)이 없으면 목록 한 줄에 플랫폼 이름만 보인다. */
@@ -933,7 +933,7 @@ export function RegisterForm({
                 검수 포함
               </span>
             </p>
-            <p className={f["pay-note"]}>배송비가 포함된 금액이에요. 선물이 사무실에 도착하기 전에 거절되면 전액 돌려드려요.</p>
+            <p className={f["pay-note"]}>배송비가 포함된 금액이에요. 선물이 사무실에 도착하기 전에 거절되면 전액 돌려드려요. {SERVICE_PERIOD}</p>
             {step === 4 ? (
               <div className={f.consent}>
                 <PaymentConsent

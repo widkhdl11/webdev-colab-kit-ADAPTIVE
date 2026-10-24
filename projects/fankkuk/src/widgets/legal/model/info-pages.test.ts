@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SERVICE_PERIOD } from "@/shared/config/site-copy";
 import { SITE_INFO } from "@/shared/config/site-info";
 import { disputeDoc } from "./dispute-doc";
 import { faqDoc } from "./faq-doc";
@@ -57,13 +58,16 @@ describe("안내·법정 페이지 공통", () => {
     expect(JSON.stringify(faqDoc(prices))).toContain("8,222원");
   });
 
-  it("요금 안내 표는 구간마다 선물·역조공 요금을 넘겨받은 요금표에서 그린다", () => {
+  it("요금 안내 표는 구간마다 선물 요금만 넘겨받은 요금표에서 그린다 — 역조공 열은 없다(2026-10-24 카드사 심사)", () => {
     const table = docs.pricing!.sections.flatMap((s) => s.blocks).find((b) => b.kind === "prices");
+    expect(table && table.kind === "prices" ? table.columns : null).toEqual(["선물"]);
     expect(table && table.kind === "prices" ? table.rows.map((r) => [r.name, ...r.amounts]) : null).toEqual([
-      [expect.any(String), "6,111원", "5,111원"],
-      [expect.any(String), "8,222원", "7,222원"],
-      [expect.any(String), "12,333원", "9,333원"],
+      [expect.any(String), "6,111원"],
+      [expect.any(String), "8,222원"],
+      [expect.any(String), "12,333원"],
     ]);
+    expect(text(docs.pricing!)).not.toContain("역조공");
+    expect(text(docs.pricing!)).toContain(SERVICE_PERIOD);
   });
 
   it("이용약관 분류·주요·요약 링크는 확정한 표대로다(2026-10-23) — 요약 줄은 있는 조를 가리킨다", () => {
