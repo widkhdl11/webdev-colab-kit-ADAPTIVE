@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>팬꾹 5파트 — 지금 / 바꾼 뒤 비교</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<link rel="stylesheet" href="compare.css">
+</head><body><main class="doc">
+<!-- 결정 카드 d131 용 비교 시안. 근거: docs/design/redesign-2026-10-25-part5.md 6절. 값은 사이트 tokens.css·부품 CSS 에서 옮김 -->
+<h1>5파트 메인·크리에이터 공개 화면 — 지금 / 바꾼 뒤</h1>
+<p class="top">배치는 그대로 — 값만 바뀝니다</p>
+<p class="lead">왼쪽이 지금 사이트, 오른쪽이 고친 뒤입니다. 열 곳을 묶음별로 보여 드려요.</p>
+
+<section class="group" aria-labelledby="g1"><h2 id="g1">묶음 1 · 글자 굵기 일곱 곳</h2>
+
+<div class="row" id="r1">
+  <p class="cap">1. 크리에이터 카드의 플랫폼 칩<small>굵기 700 → 600 (글자 12, 팬덤 뱃지는 원래 600). 찾기·팔로우한 크리에이터 등 칩이 나오는 모든 곳이 같이 바뀝니다.</small></p>
+  <div class="pair">
+    <section class="side now" aria-label="지금"><span class="lab">지금</span><div class="ccard-wrap">
+<div class="ccard"><div class="who"><span class="face" aria-hidden="true">하</span><div><b>하루</b><div class="ctags" style="margin-top:4px"><span class="fb">하늘 팬클럽</span></div></div></div>
+<div class="ctags"><span class="ctag"><i></i>치지직</span><span class="ctag"><i></i>SOOP</span></div></div></div></section>
+    <section class="side after" aria-label="바꾼 뒤"><span class="lab">바꾼 뒤</span><div class="ccard-wrap">
+<div class="ccard"><div class="who"><span class="face" aria-hidden="true">하</span><div><b>하루</b><div class="ctags" style="margin-top:4px"><span class="fb">하늘 팬클럽</span></div></div></div>
+<div class="ctags"><span class="ctag"><i></i>치지직</span><span class="ctag"><i></i>SOOP</span></div></div></div></section>
+  </div>
+</div>
+
+<div class="row" id="r2">
+  <p class="cap">2. 요금 안내의 금액<small>굵기 700 → 800 (6,900·8,900·10,900).</small></p>
+  <div class="pair">
+    <section class="side now" aria-label="지금"><span class="lab">지금</span><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="price"><div class="art"><span></span></div><h3>작은 상자</h3><p class="amount">6,900<span>원</span></p><p>배송비 포함</p></div><div class="price"><div class="art"><span></span></div><h3>중간 상자</h3><p class="amount">8,900<span>원</span></p><p>배송비 포함</p></div></div></section>
+    <section class="side after" aria-label="바꾼 뒤"><span class="lab">바꾼 뒤</span><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="price"><div class="art"><span></span></div><h3>작은 상자</h3><p class="amount">6,900<span>원</span></p><p>배송비 포함</p></div><div class="price"><div class="art"><span></span></div><h3>중간 상자</h3><p class="amount">8,900<span>원</span></p><p>배송비 포함</p></div></div></section>
+  </div>
+</div>
+
+<div class="row" id="r3">
+  <p class="cap">3. 구간 설명 줄<small>굵기 500 → 400 (「크리에이터가 승인한 선물만 배송해요.」 같은 줄).</small></p>
+  <div class="pair">
+    <section class="side now" aria-label="지금"><span class="lab">지금</span><div class="sec-head"><h2>배송 요금 안내</h2><p class="t-lead">박스 크기와 무게에 따라 선택해주세요.</p></div></section>
+    <section class="side after" aria-label="바꾼 뒤"><span class="lab">바꾼 뒤</span><div class="sec-head"><h2>배송 요금 안내</h2><p class="t-lead">박스 크기와 무게에 따라 선택해주세요.</p></div></section>
+  </div>
+</div>
+
+<div class="row" id="r4">
+  <p class="cap">4. 공지 줄 제목<small>굵기 500 → 600.</small></p>
+  <div class="pair">
+    <section class="side now" aria-label="지금"><span class="lab">지금</span><ul class="nlist"><li><a href="#"><b>10월 배송 일정 안내</b><span class="t-meta">2026.10.20</span></a></li><li><a href="#"><b>추석 연휴 이후 검수 지연 안내</b><span class="t-meta">2026.10.08</span></a></li><li><a href="#"><b>새 크리에이터 12명이 들어왔어요</b><span class="t-meta">2026.09.30</span></a></li></ul></section>
+    <section class="side after" aria-label="바꾼 뒤"><span class="lab">바꾼 뒤</span><ul class="nlist"><li><a href="#"><b>10월 배송 일정 안내</b><span class="t-meta">2026.10.20</span></a></li><li><a href="#"><b>추석 연휴 이후 검수 지연 안내</b><span class="t-meta">2026.10.08</span></a></li><li><a href="#"><b>새 크리에이터 12명이 들어왔어요</b><span class="t-meta">2026.09.30</span></a></li></ul></section>
+  </div>
+</div>
+
+<div class="row" id="r6">
+  <p class="cap">6. 광고 배너의 「보러 가기」와 「광고」 꼬리표<small>굵기 700 → 600 (글자 14).</small></p>
+  <div class="pair">
+    <section class="side now" aria-label="지금"><span class="lab">지금</span>
+<div class="banner"><div class="txt"><span class="tag">광고</span><p class="title">첫 선물, 이렇게 보내요</p><p class="sub">상자 고르는 법을 알려드려요.</p><a class="go" href="#">보러 가기 ›</a></div><div class="img" aria-hidden="true"></div></div></section>
+    <section class="side after" aria-label="바꾼 뒤"><span class="lab">바꾼 뒤</span>
+<div class="banner"><div class="txt"><span class="tag">광고</span><p class="title">첫 선물, 이렇게 보내요</p><p class="sub">상자 고르는 법을 알려드려요.</p><a class="go" href="#">보러 가기 ›</a></div><div class="img" aria-hidden="true"></div></div></section>
+  </div>
+</div>
+
+<div class="row" id="r7">
+  <p class="cap">7. 크리에이터 찾기의 플랫폼 거르개 칩<small>굵기 500 → 400, 켜진 칩만 600 (글자 14).</small></p>
+  <div class="pair">
+    <section class="side now" aria-label="지금"><span class="lab">지금</span><div class="fchips"><button class="fchip" type="button" aria-pressed="true">전체</button><button class="fchip" type="button" aria-pressed="false">SOOP</button><button class="fchip" type="button" aria-pressed="false">치지직</button><button class="fchip" type="button" aria-pressed="false">유튜브</button><button class="fchip" type="button" aria-pressed="false">트위치</button></div><p class="fcount">전체 12명</p></section>
+    <section class="side after" aria-label="바꾼 뒤"><span class="lab">바꾼 뒤</span><div class="fchips"><button class="fchip" type="button" aria-pressed="true">전체</button><button class="fchip" type="button" aria-pressed="false">SOOP</button><button class="fchip" type="button" aria-pressed="false">치지직</button><button class="fchip" type="button" aria-pressed="false">유튜브</button><button class="fchip" type="button" aria-pressed="false">트위치</button></div><p class="fcount">전체 12명</p></section>
+  </div>
+</div>
+
+<div class="row" id="r8">
+  <p class="cap">8. 상세 정보 칸의 값과 이름<small>값 20 / 700 → 600, 이름 14 / 500 → 400.</small></p>
+  <div class="pair">
+    <section class="side now" aria-label="지금"><span class="lab">지금</span><div class="infoGrid">
+<div class="info"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg><h3>받는 상태</h3><p class="big">지금 선물을 받고 있어요</p></div>
+<div class="info"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v5l3 2M12 3a9 9 0 100 18 9 9 0 000-18z"/></svg><h3>평균 승인 시간 (최근 30일)</h3><p class="big">약 2시간</p></div>
+<div class="info"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8l3 8 4-8 4 8 3-8M4 11h16M4 14h16"/></svg><h3>상자마다 배송비 포함</h3><p class="big">6,900원부터</p></div></div></section>
+    <section class="side after" aria-label="바꾼 뒤"><span class="lab">바꾼 뒤</span><div class="infoGrid">
+<div class="info"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg><h3>받는 상태</h3><p class="big">지금 선물을 받고 있어요</p></div>
+<div class="info"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v5l3 2M12 3a9 9 0 100 18 9 9 0 000-18z"/></svg><h3>평균 승인 시간 (최근 30일)</h3><p class="big">약 2시간</p></div>
+<div class="info"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8l3 8 4-8 4 8 3-8M4 11h16M4 14h16"/></svg><h3>상자마다 배송비 포함</h3><p class="big">6,900원부터</p></div></div></section>
+  </div>
+</div>
+</section>
+
+<section class="group" aria-labelledby="g3"><h2 id="g3">묶음 2 · 상세 넷째 정보 칸</h2>
+
+<div class="row" id="r9">
+  <p class="cap">9. 넷째 칸에 이름 줄이 생깁니다<small>하트 아이콘만 있던 줄 → 다른 칸처럼 아이콘 + 이름. 이름 문구는 아직 정해지지 않았습니다.</small></p>
+  <div class="pair">
+    <section class="side now" aria-label="지금"><span class="lab">지금</span><div class="infoGrid two">
+<div class="info"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v5l3 2M12 3a9 9 0 100 18 9 9 0 000-18z"/></svg><h3>평균 승인 시간 (최근 30일)</h3><p class="big">약 2시간</p></div>
+<div class="info"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg><p class="big">이번 달 <span>3명</span>의 팬이 마음을 보냈어요</p></div></div></section>
+    <section class="side after" aria-label="바꾼 뒤"><span class="lab">바꾼 뒤</span><div class="infoGrid two">
+<div class="info"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v5l3 2M12 3a9 9 0 100 18 9 9 0 000-18z"/></svg><h3>평균 승인 시간 (최근 30일)</h3><p class="big">약 2시간</p></div>
+<div class="info"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg><h3>이번 달 마음을 보낸 팬<span class="todo">문구 미정 — 예시</span></h3><p class="big">이번 달 <span>3명</span>의 팬이 마음을 보냈어요</p></div></div></section>
+  </div>
+</div>
+</section>
+
+<section class="group" aria-labelledby="g4"><h2 id="g4">묶음 3 · 상세 채운 버튼 둘 (로그인 전)</h2>
+
+<div class="row" id="r10">
+  <p class="cap">10. 아래 판의 버튼이 테두리 버튼이 됩니다<small>머리의 채운 버튼은 그대로, 아래 판 버튼만 채움 → 테두리. 판 자체는 그대로 둡니다.</small></p>
+  <div class="pair">
+    <section class="side now" aria-label="지금"><span class="lab">지금</span><div style="transform-origin:top left"><div class="pf"><div class="cover"></div><span class="photo" aria-hidden="true">하</span><p class="nm">하루</p><span class="fb">하늘 팬클럽</span><div class="ctags" style="justify-content:center"><span class="ctag ctag--lg"><i></i>치지직</span></div><p>매일 저녁 게임 방송을 해요.</p><a class="btn" href="#">팔로우하고 선물 보내기</a><p style="font-size:14px">팔로우하면 선물을 보낼 수 있어요.</p></div><div class="sheet"><h3>하루님에게 선물을 보내보세요</h3><a class="btn" href="#">팔로우하고 선물 보내기</a></div></div></section>
+    <section class="side after" aria-label="바꾼 뒤"><span class="lab">바꾼 뒤</span><div style="transform-origin:top left"><div class="pf"><div class="cover"></div><span class="photo" aria-hidden="true">하</span><p class="nm">하루</p><span class="fb">하늘 팬클럽</span><div class="ctags" style="justify-content:center"><span class="ctag ctag--lg"><i></i>치지직</span></div><p>매일 저녁 게임 방송을 해요.</p><a class="btn" href="#">팔로우하고 선물 보내기</a><p style="font-size:14px">팔로우하면 선물을 보낼 수 있어요.</p></div><div class="sheet"><h3>하루님에게 선물을 보내보세요</h3><a class="btn btn--line" href="#">팔로우하고 선물 보내기</a></div></div></section>
+  </div>
+</div>
+</section>
+
+<section class="group" aria-labelledby="g5"><h2 id="g5">묶음 4 · 상세 이름 크기와 390 「전체 보기」</h2>
+
+<div class="row" id="r11-가">
+  <p class="cap">11-가. 로그인 후 이름 크기<small>24 → 32 (로그인 전과 같게). 390 폭은 24 그대로입니다.</small></p>
+  <div class="pair">
+    <section class="side now" aria-label="지금"><span class="lab">지금</span><div class="headL"><span class="photo" aria-hidden="true">하</span><div><p class="nm">하루</p><span class="fb">하늘 팬클럽</span></div><a class="btn" href="#">선물 보내기</a></div></section>
+    <section class="side after" aria-label="바꾼 뒤"><span class="lab">바꾼 뒤</span><div class="headL"><span class="photo" aria-hidden="true">하</span><div><p class="nm">하루</p><span class="fb">하늘 팬클럽</span></div><a class="btn" href="#">선물 보내기</a></div></section>
+  </div>
+</div>
+
+<div class="row" id="r11-나">
+  <p class="cap">11-나. 390 폭의 「전체 보기」 자리<small>제목 줄 오른쪽 → 목록 아래 오른쪽 (홈 세 화면과 같게).</small></p>
+  <div class="pair">
+    <section class="side now f390" aria-label="지금"><span class="lab">지금</span><div class="frame390"><div class="others-head"><h3>이런 크리에이터도 있어요</h3><a href="#">전체 보기</a></div><div class="others"><div class="other"><span class="face" aria-hidden="true">모</span><div><b>모모</b><div class="ctags"><span class="fb">팬클럽</span></div></div></div><div class="other"><span class="face" aria-hidden="true">유</span><div><b>유나</b><div class="ctags"><span class="fb">팬클럽</span></div></div></div><div class="other"><span class="face" aria-hidden="true">도</span><div><b>도윤</b><div class="ctags"><span class="fb">팬클럽</span></div></div></div></div></div></section>
+    <section class="side after f390" aria-label="바꾼 뒤"><span class="lab">바꾼 뒤</span><div class="frame390"><div class="others-head"><h3>이런 크리에이터도 있어요</h3></div><div class="others"><div class="other"><span class="face" aria-hidden="true">모</span><div><b>모모</b><div class="ctags"><span class="fb">팬클럽</span></div></div></div><div class="other"><span class="face" aria-hidden="true">유</span><div><b>유나</b><div class="ctags"><span class="fb">팬클럽</span></div></div></div><div class="other"><span class="face" aria-hidden="true">도</span><div><b>도윤</b><div class="ctags"><span class="fb">팬클럽</span></div></div></div></div><div class="more-bottom"><a href="#">전체 보기</a></div></div></section>
+  </div>
+</div>
+</section>
+
+<section class="fixed" aria-labelledby="g6"><h2 id="g6">이번에 손대지 않는 것</h2>
+<ul>
+<li>B-1 · 390 폭에서 소개 배너 그림 속 글자가 작아지는 것</li>
+<li>B-2 · 390 폭 「배송 요금 안내」 세 칸이 길게 쌓이는 것</li>
+<li>B-3 · 크리에이터 홈의 빈 구간 둘과 「진행 중인 선물」 목록 모양</li>
+<li>B-4 · 390 폭 크리에이터 찾기의 칩 세 줄 (첫 카드가 화면 아래로 밀리는 것)</li>
+<li>B-5 · 크리에이터 상세 머리 모양이 로그인 전·후에 다른 것</li>
+</ul></section>
+</main></body></html>
