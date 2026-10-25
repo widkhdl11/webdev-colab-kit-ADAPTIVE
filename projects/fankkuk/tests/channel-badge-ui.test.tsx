@@ -82,11 +82,11 @@ describe("링크 페이지 — 팬덤 이름 감사 문장 (추가분 4-1)", () 
 });
 
 describe("링크 페이지 — 채널 아이콘 링크 (추가분 4-3)", () => {
-  it("닉네임 바로 아래 채널 아이콘 하나가 새 탭으로 채널을 열고, 올리면 「@핸들 · 날짜 확인」", () => {
+  it("이름 줄(이름 + 팬덤 뱃지 옆, design-rules 31절)에 채널 아이콘 하나가 새 탭으로 채널을 열고, 올리면 「@핸들 · 날짜 확인」", () => {
     renderLink({ channel });
-    // 공개 이름은 팬덤 뱃지와 한 줄(design-rules 12절) — 그 줄 바로 아래가 채널 아이콘 줄
+    // 2026-10-25 재디자인: 이름 + 팬덤 뱃지 + 채널 아이콘이 한 줄
     const name = host.querySelector("h1#creator-name");
-    const row = name?.closest("[data-name-line]")?.nextElementSibling;
+    const row = name?.closest("[data-name-line]");
     const links = row?.querySelectorAll("a") ?? [];
     expect(links).toHaveLength(1);
     const a = links[0] as HTMLAnchorElement;

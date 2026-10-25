@@ -71,23 +71,15 @@ function renderProfile(send: LinkPageSend, followMode: FollowMode) {
   );
 }
 
-describe("팔로우 닉네임 안내 — 크리에이터 페이지 (INV-R2)", () => {
-  it("팔로우하지 않은 로그인 팬에게는 「보낼 수 있어요」와 닉네임 안내를 한 줄로 보인다", () => {
-    renderProfile("needs_follow", "save");
-    const lines = paragraphs().filter((t) => t.includes(NEEDS_FOLLOW_TO_SEND));
-    expect(lines).toEqual([`${NEEDS_FOLLOW_TO_SEND} ${FOLLOW_NICKNAME_NOTICE_SHORT}`]);
-  });
-
-  it("(실패경로) 로그인하지 않은 사람에게는 닉네임 안내가 없다", () => {
-    renderProfile("needs_follow", "login");
-    expect(paragraphs().filter((t) => t.includes(NEEDS_FOLLOW_TO_SEND))).toEqual([NEEDS_FOLLOW_TO_SEND]);
-    expect(host.textContent).not.toContain(FOLLOW_NICKNAME_NOTICE_SHORT);
-  });
-
-  it("(실패경로) 이미 팔로우해 보낼 수 있으면 두 문장 다 없다", () => {
-    renderProfile("open", "save");
-    expect(host.textContent).not.toContain(NEEDS_FOLLOW_TO_SEND);
-    expect(host.textContent).not.toContain(FOLLOW_NICKNAME_NOTICE_SHORT);
+describe("팔로우 닉네임 안내 — 크리에이터 페이지 (INV-R2, 2026-10-25 재디자인)", () => {
+  // UX 명세 docs/ux/pages/handle.md 「2026-10-25 재디자인」: 버튼 아래 안내 줄을 뺐다(사용자 「불필요한 설명은 빼라」).
+  // 닉네임 안내는 크리에이터 찾기·팔로우한 크리에이터 화면에 남는다(아래 두 묶음).
+  it("팔로우하지 않은 로그인 팬·로그인 전·보낼 수 있는 팬 누구에게도 버튼 아래 안내 줄이 없다", () => {
+    for (const [send, mode] of [["needs_follow", "save"], ["needs_follow", "login"], ["open", "save"]] as const) {
+      renderProfile(send, mode);
+      expect(host.textContent, `${send}/${mode}`).not.toContain(NEEDS_FOLLOW_TO_SEND);
+      expect(host.textContent, `${send}/${mode}`).not.toContain(FOLLOW_NICKNAME_NOTICE_SHORT);
+    }
   });
 });
 

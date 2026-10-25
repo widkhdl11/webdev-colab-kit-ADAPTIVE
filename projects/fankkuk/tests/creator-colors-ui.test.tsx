@@ -78,7 +78,7 @@ describe("크리에이터 페이지 — 테마 색이 쓰이는 자리 (INV-E13)
   });
 
   it("INV-E13 S12: 버튼(선물 보내기)에는 색 변수가 붙지 않는다 — 하늘색 규칙 그대로", () => {
-    renderPage({ personal: "#DCEBFF" });
+    renderPage({ personal: "#DCEBFF" }, "달빛지기", "save"); // 「선물 보내기」는 팔로우한 로그인 팬에게 보인다(로그인 전은 「팔로우」 하나)
     const send = [...host.querySelectorAll<HTMLAnchorElement>("a.btn")].find((a) => a.textContent === "선물 보내기")!;
     expect(send).toBeTruthy();
     for (let el: HTMLElement | null = send; el && el !== head(); el = el.parentElement) {

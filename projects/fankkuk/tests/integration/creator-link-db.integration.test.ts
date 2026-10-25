@@ -21,7 +21,7 @@ import { adminClient, anonClient, deleteTestOrders, psql, SEED } from "./helpers
 // 크리에이터는 본인 확인 시험 계정(cvt_*) — 시험 동안만 확인된 상태로 둔다(hard-items 시험과 같은 방식).
 // 주문은 psql 로 바로 넣는다(물품 이름 「시험 선물」 — deleteTestOrders 가 같이 지운다). 상태·결제 시각을 마음대로 정해야 해서다.
 
-// 페이지를 Next 밖에서 그린다 — 주 버튼(팔로우하고 선물 보내기)이 쓰는 라우터만 빈 것으로 둔다. 검사 대상(읽기·그리기)은 그대로다.
+// 페이지를 Next 밖에서 그린다 — 주 버튼(「팔로우」 → 「선물 보내기」+「팔로우 중」)이 쓰는 라우터만 빈 것으로 둔다. 검사 대상(읽기·그리기)은 그대로다.
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: () => undefined, refresh: () => undefined }) }));
 
 const A = CV.haru;
@@ -412,7 +412,9 @@ describe("INV-E7: 공개 화면에는 정해진 칸만", () => {
       expect([who, page !== null]).toEqual([who, true]);
       const html = renderToStaticMarkup(createElement(CreatorProfilePage, page!.props));
       const data = JSON.stringify(page);
-      expect(html).toContain("fankkuk.kr/haru_s7");
+      // 2026-10-25 재디자인으로 화면의 링크 주소 줄을 뺐다 — 이 크리에이터의 페이지가 그려졌는지는 아이디·이름 칸으로 본다
+      expect(page!.props.creator.handle).toBe("haru_s7");
+      expect(html).toContain(`id="creator-name">${page!.props.creator.name}</h1>`);
       for (const text of [html, data]) {
         expect([who, text.match(/FC-[0-9A-Z]{3,}/g)]).toEqual([who, null]);
         for (const bad of [...orders, "581234567890", "581234567891", "6012345678901", "별빛", "달토끼", "byeolbit_fan", "daltokki_fan", A.login]) {

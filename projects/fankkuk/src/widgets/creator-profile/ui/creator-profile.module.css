@@ -1,127 +1,128 @@
-/* 선물 링크 페이지(크리에이터 페이지) 화면 전용 — 시안 docs/design/mockups/site/v18/link.html(로그인 전, v18-pub.css 「선물 링크 페이지」) ·
-   creator.html(로그인 후, v18-fan.css .pf·.info·.quote·.cta·.other). 카드·태그·접기 목록은 공통 클래스 */
-.pub { padding-bottom: var(--section-gap); }
+/* 크리에이터 상세 화면 전용 — 2026-10-25 재디자인(design-rules 31절). 값의 정본: docs/design/mockups/site/profile-codex-2026-10-25/profile.css
+   카드 그림자 없음 · 면은 옅은 회색(--surface) 하나. 로그인 후는 사이드바 껍데기 안이라 화면 폭이 아니라 칸 폭(컨테이너 쿼리)으로 나눈다 — 1080 은 최대 폭 */
+.pub { padding-top: var(--space-8); padding-bottom: var(--section-gap); }
 .app { padding-bottom: var(--section-gap); }
-/* 로그인 후도 로그인 전과 같은 880 한 기둥(tokens --col-profile, DECISIONS 2026-10-18 재진단) — 가운데 틀 1200 을 좁힌다 */
 .app:global(.page-centered) { max-width: calc(var(--col-profile) + 2 * var(--gutter)); }
-.sec { margin-top: var(--space-12); }
-.head:global(.sec-head) { margin-bottom: var(--space-6); }
-.head :global(h2) { font-size: var(--fs-page); line-height: 1.3; }
-.head :global(.t-lead) { margin-top: var(--space-2); font-size: var(--fs-body); font-weight: 400; line-height: 1.6; }
+.pub .col { max-width: calc(var(--col-profile) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
+.col { container-type: inline-size; min-width: 0; }
 
-/* ---------- 프로필 머리 ---------- */
-.pfSec { padding-top: var(--space-10); }
-.app .pfSec { padding-top: 0; }
-.name { font-size: var(--fs-title); line-height: 1.3; } /* 로그인 전·후 같은 크기 32(767 이하 24 — 토큰이 바꾼다) */
-.channel { display: flex; margin-top: var(--space-2); }
-.pub .channel { justify-content: center; }
-.handle { margin-top: var(--space-2); font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
-.intro { margin-top: var(--space-2); color: var(--gray-600); }
-.tags { align-items: center; margin-top: var(--space-4); }
-.symbol { display: block; width: 56px; height: 56px; margin-top: var(--space-4); border-radius: var(--r-btn); object-fit: cover; box-shadow: inset 0 0 0 1px var(--gray-200); }
-.thanks { margin-top: var(--space-4); font-weight: var(--fw-btn); color: var(--brand-ink); }
-.note { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
-/* 프로필 배경사진 칸 2.5:1(방송 배너 표준 1200×480 — 시안 v24-creator-card pubhead-alt, DECISIONS d102). 프로필 사진이 아래 가장자리에 걸치고 흰 테두리로 갈린다.
-   사진이 없으면 테마 색(--personal, creator-link INV-E13) 면 그대로(파스텔 8색이라 섞지 않는다 — design-rules 17절), 그것도 없으면 크리에이터마다 정해진 파스텔(--pastel) + 흐린 고양이(creator-cover-art) */
-.cover { position: relative; overflow: hidden; aspect-ratio: 5 / 2; background: var(--pastel, var(--primary-50)); }
+/* ---------- 머리: 배경 사진 면 · 큰 원형 사진(왼쪽 아래 걸침) · 글 ---------- */
+.pf { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--space-12); padding-bottom: var(--space-10); }
+/* 배경 사진 칸 — 사진이 없으면 테마 색(--personal, creator-link INV-E13) 면 그대로, 그것도 없으면 크리에이터마다 정해진 파스텔 + 흐린 고양이 */
+.cover { grid-column: 1 / -1; position: relative; overflow: hidden; height: 280px; border-radius: var(--r-panel); background: var(--pastel, var(--primary-50)); }
 .ringed .cover { background: var(--personal); }
-.photo { position: relative; box-shadow: 0 0 0 4px var(--white); }
-.ringed .photo { box-shadow: 0 0 0 4px var(--personal), 0 0 0 8px var(--white); }
-/* 공개 이름 + 팬덤 뱃지 한 줄 — 좁으면 뱃지가 아래로 */
-.nameLine { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
-.pub .nameLine { justify-content: center; }
-/* 「채널 소유 확인」 체크와 글자 사이 */
-.verified svg { margin-right: 4px; }
+/* 사진: 흰 테두리 6 — 테마 색이 있으면 안쪽에 테마 색 테두리 */
+.photo:global(.face) { position: relative; grid-column: 1; width: 184px; height: 184px; margin: -84px 0 0 var(--space-2); box-shadow: 0 0 0 6px var(--white); font-size: var(--fs-title); font-weight: var(--fw-title); font-family: var(--font-round); object-fit: cover; }
+.ringed .photo:global(.face) { box-shadow: 0 0 0 4px var(--personal), 0 0 0 10px var(--white); }
+.pfMain { grid-column: 2; min-width: 0; padding-top: var(--space-4); }
+.nameLine { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.name { min-width: 0; font-size: var(--fs-title); line-height: 1.35; overflow-wrap: anywhere; }
+.channel { margin: 0; }
+.tags { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-3); }
+.verified { display: inline-flex; align-items: center; gap: 6px; color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.6; }
+.intro { margin-top: var(--space-4); font-size: var(--fs-card); font-weight: 400; line-height: 1.6; overflow-wrap: anywhere; }
+.symbol { display: block; width: 56px; height: 56px; margin-top: var(--space-4); border-radius: var(--r-btn); object-fit: cover; }
+.thanks { margin-top: var(--space-1); color: var(--sub); font-weight: 400; }
+/* 버튼 — 글자 폭, 높이 48(누름 칸 44 이상). 채운 버튼은 하나뿐 */
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-6); }
+.actions :global(.btn) { white-space: nowrap; }
+.actions :global(.btn svg) { width: 20px; height: 20px; }
+.selfTag:global(.tag) { font-weight: var(--fw-btn); }
+.restLine { margin-top: var(--space-6); color: var(--sub); font-weight: 400; }
 
-/* 로그인 전 — 머리·통계·접는 칸·선물 보내기·비슷한 크리에이터를 880 한 기둥에(v23 감사표 2절) */
-.pub :global(.pub-inner) { max-width: calc(var(--col-profile) + 2 * var(--gutter)); }
-.pub .pf { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); max-width: var(--col-profile); margin-inline: auto; padding: var(--space-12) var(--panel-pad) var(--space-8); border-radius: var(--r-panel); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); text-align: center; }
-.pub .cover { align-self: stretch; margin: calc(var(--space-12) * -1) calc(var(--panel-pad) * -1) 0; border-radius: var(--r-panel) var(--r-panel) 0 0; }
-.pub .photo { width: 88px; height: 88px; margin-top: calc(-44px - var(--space-2)); font-size: var(--fs-page); }
-.pub .pfMain { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
-/* 네 묶음 — 이름+팬덤 뱃지 / 칩 줄 / 소개·인사말 / 버튼+안내(시안 v24 pubhead-alt). 사진↔이름 8 · 이름↔칩 8 · 칩↔소개 16 · 소개↔인사말 8 · 본문↔버튼 16 · 버튼↔안내 8 */
-.pub .pfMain > * { margin-top: 0; margin-bottom: 0; }
-.pub .pfMain > :global(.ctags) + * { margin-top: var(--space-2); }
-.pub .pfMain > :is(.handle, .intro) + :is(.intro, .thanks) { margin-top: 0; }
-.pub .act { margin-top: var(--space-2); }
-.pub .act + .note { margin-top: 0; }
-/* 이름 아래 단독 채널 아이콘 — 칩 줄에 같은 정보가 있어 숨긴다 */
-.pub .channel { display: none; }
-.pub .name { font-size: var(--fs-title); }
-.pub .tags { justify-content: center; }
-.pub .act :global(.btn) { min-width: 240px; }
+/* ---------- 받기 어려운 품목 한 줄 알림 ---------- */
+.alert { display: flex; align-items: baseline; gap: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-btn); background: var(--surface); }
+.alert h2 { flex: none; font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.6; letter-spacing: 0; white-space: nowrap; }
+.alert p { min-width: 0; color: var(--sub); font-weight: 400; overflow-wrap: anywhere; }
 
-/* 로그인 후 — 왼쪽 정렬 머리: 사진 | 글 | 오른쪽 주 버튼 */
-.app .pf { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: var(--space-2) var(--space-6); }
-.app .cover { grid-column: 1 / -1; grid-row: 1; margin-bottom: var(--space-2); border-radius: var(--r-card); }
-.app .photo { grid-row: 2; width: 72px; height: 72px; margin-top: calc(-36px - var(--space-4)); margin-left: var(--space-6); }
-.app .pfMain { grid-row: 2; }
-.app .act { grid-column: 3; grid-row: 2; }
-.app .note { grid-column: 2 / -1; }
+/* ---------- 숫자 띠: 값 크게 · 단위 작게 ---------- */
+.stats { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr); gap: var(--space-8); margin-top: var(--space-12); }
+.stat dt { margin-bottom: var(--space-2); color: var(--sub); font-size: var(--fs-small); font-weight: 400; }
+.stat dd { margin: 0; font-size: var(--fs-title); font-weight: var(--fw-btn); line-height: 1.35; }
+.unit { margin-left: 2px; font-size: var(--fs-body); }
+.anniversary.anniversary { font-size: var(--fs-card); overflow-wrap: anywhere; }
+.date { color: var(--sub); font-size: var(--fs-body); white-space: nowrap; }
+.countdown { display: inline-flex; align-items: center; margin-left: var(--space-2); padding: var(--space-1) var(--space-2); border-radius: var(--r-icon); background: var(--gray-100); font-size: var(--fs-small); white-space: nowrap; }
+.fanLine { display: flex; align-items: center; gap: var(--space-3); padding-top: var(--space-8); }
+.fanLine svg { flex: none; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
-/* ---------- 정보 카드 · 답장 · 비슷한 크리에이터 ---------- */
-/* 통계 카드 — 2열 × 2줄. 안: 아이콘+라벨 한 줄(14) · 값 20/600 · 라벨 14/400(design-rules 30절), 라벨 ↔ 값 8 */
-.infoGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
-/* 카드 수가 홀수(3·5)면 마지막 한 장을 두 칸으로 — 마지막 줄에 빈칸이 남지 않게 */
-.infoGrid > :last-child:nth-child(odd) { grid-column: 1 / -1; }
-.infoGrid :global(.card.info) { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; align-content: start; gap: var(--space-2); padding: var(--card-pad); border-radius: var(--r-card); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); background: var(--card-fx);}
-.infoGrid :global(.info .ic) { width: var(--icon-xs); height: var(--icon-xs); margin: 0; }
-.infoGrid :global(.info h3) { margin: 0; justify-content: flex-start; font-family: var(--font); font-size: var(--fs-small); font-weight: 400; line-height: var(--lh-caption); color: var(--gray-600); }
-.infoGrid :global(.card.info .big) { grid-column: 1 / -1; margin: 0; font-size: var(--fs-card); font-weight: var(--fw-btn); line-height: 1.4; }
-.infoGrid :global(.card.info .dd) { grid-column: 1 / -1; margin-top: 0; }
-/* 받기 어려운 품목은 크리에이터가 고른 문장이라 큰 글씨가 아니라 본문 글씨 */
-.plain:global(.big) { font-weight: 400; font-size: var(--fs-body); }
+/* ---------- 구간 ---------- */
+.sec { margin-top: calc(var(--space-10) * 2); }
+.secTitle { margin-bottom: var(--space-6); font-size: var(--fs-page); line-height: 1.35; }
 
-.quoteGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
-.quoteGrid :global(.card.quote) { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--card-pad); border-radius: var(--r-card); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); }
-.quoteGrid :global(.quote q) { font-weight: 400; }
-.quoteGrid :global(.quote .by) { margin-top: 0; }
-/* 답장 한 줄은 크리에이터가 쓴 글이라 긴 낱말도 칸 안에서 줄을 바꾼다 */
-.quote q { overflow-wrap: anywhere; }
+/* 감사 답장 3열 */
+.replies { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-6); list-style: none; padding: 0; }
+.reply { display: flex; flex-direction: column; min-height: 184px; padding: 28px var(--space-6) var(--space-6); border-radius: var(--r-card); background: var(--surface); }
+.reply blockquote { margin: 0; font-size: var(--fs-card); font-weight: 400; line-height: 1.6; overflow-wrap: anywhere; }
+.by { margin-top: auto; padding-top: 28px; color: var(--sub); font-size: var(--fs-small); font-weight: 400; }
 
-/* 비슷한 크리에이터 — 880 기둥에 3열 · 간격 16 */
-.otherGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
-.other { display: flex; align-items: center; gap: var(--space-3); height: 100%; padding: var(--card-pad); border-radius: var(--r-card); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); color: var(--gray-900); text-decoration: none; }
-.other:hover { box-shadow: inset 0 0 0 1px var(--gray-400); }
+/* 보내기 전 안내 — 접는 줄 둘 */
+.guide { padding: var(--space-2) var(--space-6); border-radius: var(--r-card); background: var(--surface); }
+.guide details + details { margin-top: var(--space-1); }
+.guide summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 64px; font-weight: var(--fw-btn); cursor: pointer; list-style: none; }
+.guide summary::-webkit-details-marker { display: none; }
+.chevron { flex: none; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.15s; }
+.guide details[open] .chevron { transform: rotate(180deg); }
+.answer { padding-bottom: var(--space-6); }
+.prohibited { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-6); list-style: none; padding: 0; }
+.prohibited li { display: flex; align-items: center; gap: var(--space-2); font-weight: 400; }
+.prohibited svg { flex: none; width: 16px; height: 16px; fill: none; stroke: var(--sub); stroke-width: 1.8; stroke-linecap: round; }
+.desc { color: var(--sub); }
+.inspection { display: grid; gap: var(--space-3); max-width: var(--prose-max); list-style: none; padding: 0; color: var(--sub); font-weight: 400; }
+
+/* 비슷한 크리에이터 — 4열 · 간격 16 */
+.similarHead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6); }
+.similarHead .secTitle { margin-bottom: 0; }
+.otherGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); list-style: none; padding: 0; }
+.other { display: flex; align-items: center; gap: var(--space-4); height: 100%; min-height: 100px; padding: var(--space-6) var(--space-4); border-radius: var(--r-card); background: var(--surface); color: var(--ink); text-decoration: none; transition: background-color 0.15s; }
+.other:hover { background: var(--gray-100); }
+.otherFace:global(.face) { width: 56px; height: 56px; font-weight: var(--fw-btn); }
 .otherWho { display: grid; gap: var(--space-2); min-width: 0; }
-.otherWho b { font-weight: var(--fw-btn); }
+.otherWho b { font-size: var(--fs-card); font-weight: var(--fw-btn); overflow-wrap: anywhere; }
 .otherTags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-
-/* ---------- 마지막 선물 보내기 ---------- */
-/* 로그인 후 — 옅은 빨강 둥근 상자 */
-/* 로그인 전 — 880 기둥 안 옅은 하늘 큰 판(반경 24, 제목 24) + 오른쪽 아래 장식 둘(1120 이하 숨김) */
-.sheet { margin-top: var(--section-gap); }
-.sheetIn { position: relative; overflow: hidden; padding: var(--panel-pad); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
-.sheet h2 { margin: 0 0 var(--space-4); }
-.sheet h2, .sheet h2 :global(.accent) { font-size: var(--fs-page); line-height: 1.3; }
-.pdeco { position: absolute; width: 96px; height: 96px; object-fit: contain; opacity: 0.5; pointer-events: none; }
-.pdecoL { right: calc(96px + var(--space-8)); bottom: var(--space-2); transform: rotate(-12deg); }
-.pdecoR { right: var(--space-2); bottom: var(--space-2); transform: rotate(10deg); }
-.sheet + section { margin-top: 64px; }
-
-/* 「이런 크리에이터도 있어요」의 「전체 보기」 — 좁은 폭에서는 목록 아래 오른쪽(홈 front.module.css 와 같은 방식) */
 .moreBottom:global(.more-link) { display: none; }
-@media (max-width: 767px) {
+
+/* 칸 폭이 좁아지면(사이드바 안·태블릿) */
+@container (max-width: 1000px) {
+  .stats { gap: var(--space-6); }
+  .stat dd { font-size: var(--fs-page); }
+  .anniversary.anniversary { font-size: var(--fs-body); }
+  .otherGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .replies { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* 휴대폰 폭(칸 폭 720 미만) — 사진이 위, 글이 아래 */
+@container (max-width: 719px) {
+  .pf { grid-template-columns: minmax(0, 1fr); padding-bottom: var(--space-8); }
+  .cover { height: 176px; border-radius: var(--r-card); }
+  .photo:global(.face) { width: 128px; height: 128px; margin-top: -60px; }
+  .pfMain { grid-column: 1; }
+  .actions { margin-top: var(--space-6); }
+  .alert { display: block; padding: var(--space-4); }
+  .alert p { margin-top: var(--space-1); }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6) var(--space-4); margin-top: var(--space-8); }
+  .stat dt { margin-bottom: var(--space-1); }
+  .stat:nth-child(3) { grid-column: 1 / -1; }
+  .anniversary.anniversary { font-size: var(--fs-card); }
+  .date { font-size: var(--fs-small); }
+  .fanLine { align-items: flex-start; gap: var(--space-2); padding-top: var(--space-6); }
+  .fanLine svg { width: 20px; height: 20px; margin-top: 2px; }
+  .sec { margin-top: var(--space-12); }
+  .replies { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
+  .reply { min-height: 0; padding: var(--space-6); }
+  .by { padding-top: var(--space-4); }
+  .guide { padding: var(--space-1) var(--space-4); }
+  .prohibited { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .otherGrid { gap: var(--space-3); }
+  .other { display: block; padding: var(--space-6) var(--space-4); }
+  .otherFace:global(.face) { width: 48px; height: 48px; margin-bottom: var(--space-3); }
   .moreTop:global(.more-link) { display: none; }
   .moreBottom:global(.more-link) { display: flex; width: fit-content; margin: var(--space-4) 0 0 auto; }
 }
 
-@media (max-width: 1120px) {
-  .pdeco { display: none; }
-}
-@media (max-width: 1023px) {
-  .otherGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
 @media (max-width: 767px) {
-  .pfSec { padding-top: var(--space-4); }
-  .pub .pf { padding: var(--space-8) var(--space-6) var(--space-6); }
-  .pub .photo { width: 72px; height: 72px; margin-top: calc(-36px - var(--space-2)); }
-  .pub .cover { margin-top: calc(var(--space-8) * -1); margin-inline: calc(var(--space-6) * -1); }
-  .pub .act, .pub .act :global(.btn) { width: 100%; min-width: 0; }
-  .app .pf { grid-template-columns: auto minmax(0, 1fr); }
-  .app .act { grid-column: 1 / -1; grid-row: auto; }
-  .app .photo { margin-left: var(--space-4); }
-  .app .act :global(.btn) { width: 100%; }
-  .app .note { grid-column: 1 / -1; }
-  .infoGrid, .quoteGrid, .otherGrid { grid-template-columns: minmax(0, 1fr); }
+  .pub { padding-top: var(--space-4); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chevron, .other { transition: none; }
 }

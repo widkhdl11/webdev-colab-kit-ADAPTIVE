@@ -229,13 +229,15 @@ describe("다음 기념일 칸·선물 보내기 (INV-F5)", () => {
 });
 
 describe("「선물 보내기」 — 크리에이터 페이지와 같은 판정 (INV-F5)", () => {
-  /** 화면의 보내기 자리: 「선물 보내기」 링크가 있는가 · 「팔로우하고 선물 보내기」 버튼이 있는가. 없는 페이지면 둘 다 없음. */
+  /** 화면의 보내기 자리: 「선물 보내기」 링크가 있는가 · 팔로우부터 해야 하는 버튼이 있는가(함께한 시간 = 「팔로우하고 선물 보내기」,
+   *  크리에이터 페이지 = 「팔로우」 — 2026-10-25 재디자인, UX 명세 handle.md). 없는 페이지면 둘 다 없음. */
   async function sendSpot(path: string): Promise<[boolean, boolean] | "missing"> {
     const res = await open(path, "fanA");
     if (res.status === 404) return "missing";
     expect(res.status, path).toBe(200);
     const page = await res.text();
-    return [page.includes(`href="/gifts/new?creator=${A.creatorId}"`), page.includes(`aria-label="${A.name}님 팔로우하고 선물 보내기"`)];
+    const followFirst = page.includes(`aria-label="${A.name}님 팔로우하고 선물 보내기"`) || page.includes(`aria-label="${A.name}님 팔로우"`);
+    return [page.includes(`href="/gifts/new?creator=${A.creatorId}"`), followFirst];
   }
   const spotOf = (r: [boolean, boolean] | "missing"): [boolean, boolean] => (r === "missing" ? [false, false] : r);
 
