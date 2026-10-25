@@ -89,6 +89,22 @@ try {
   record(r.ctx.includes("다른 세션 1개가 이 레포에서 활동 중"), "프로브: 지금 활동 중인 다른 세션이 잡힌다", r.ctx.slice(0, 120));
   r = run("start", "C");
   record(r.ctx.includes("다른 세션 2개가 최근 이 레포에서 일했다"), "프로브: 새 세션 시작 때 최근 활동한 다른 세션이 잡힌다", r.ctx.slice(0, 120));
+  record(r.ctx.includes("사용자에게 묻지 말고 직접 확인한다") && !r.ctx.includes("사용자에게 다른 세션에서 진행 중인지"),
+    "시작 경고는 사용자에게 되묻지 않고 직접 확인하라고 한다", r.ctx.slice(0, 160));
+
+  // 프로브: C 창에서 /clear → 새 세션 D. 직전 세션 C 는 같은 창이라 세지 않는다(A·B 만)
+  clock += 60_000;
+  run("stop", "C");
+  clock += 30_000;
+  r = run("start", "D", JSON.stringify({ session_id: "D", source: "clear" }));
+  record(r.ctx.includes("다른 세션 2개가") && !r.ctx.includes("3개"), "프로브: /clear 직후에는 같은 창의 이전 세션을 세지 않는다", r.ctx.slice(0, 120));
+  r = run("start", "E", JSON.stringify({ session_id: "E", source: "startup" }));
+  record(r.ctx.includes("다른 세션 3개가"), "새 창(startup)은 이전 세션을 닫지 않는다(A·B·D)", r.ctx.slice(0, 120));
+  // 닫힌 C 가 실제로는 살아 있던 다른 창이었다면 다음 턴에 다시 잡힌다
+  clock += 60_000;
+  run("prompt", "C");
+  r = run("prompt", "D");
+  record(/다른 세션 [3-9]개가 이 레포에서 활동 중/.test(r.ctx), "닫혔던 세션이 다시 돌면 다시 활동 중으로 잡힌다", r.ctx.slice(-120));
 
   // 오래된 세션은 「활동 중」이 아니다
   clock += 2 * 60 * 60_000;

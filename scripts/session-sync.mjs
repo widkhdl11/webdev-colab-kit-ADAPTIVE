@@ -65,9 +65,18 @@ function otherSessions(withinMs) {
     const s = readJson(p);
     if (!s || typeof s.at !== "number") continue;
     if (now - s.at > EXPIRE_MS) { try { rmSync(p); } catch { /* 다른 세션이 동시에 지웠을 수 있다 */ } continue; }
+    if (s.closed_by) continue; // /clear 로 끝난 같은 창의 이전 세션 — 그 창이 다시 돌면 save() 가 이 표시를 지운다
     if (s.session_id !== sessionId && now - s.at <= withinMs) out.push(s);
   }
   return out.sort((a, b) => b.at - a.at);
+}
+
+// /clear 는 같은 창에 새 session_id 를 준다. 직전에 활동한 세션을 이 창의 이전 세션으로 보고 닫아 둔다
+// (2026-10-25: 다른 창이 없는데 /clear 직후마다 「다른 세션이 일했다」가 떠서 사용자에게 되물었다).
+// 틀렸으면(실제로 다른 창이었으면) 그 창의 다음 턴이 기록을 다시 써서 다시 잡힌다.
+function closePredecessor() {
+  const [prev] = otherSessions(RECENT_MS);
+  if (prev) writeFileSync(statePath(prev.session_id), JSON.stringify({ ...prev, closed_by: sessionId }, null, 2));
 }
 
 const ago = (ms) => {
@@ -98,11 +107,13 @@ if (mode === "stop") {
 }
 
 if (mode === "start") {
+  if (input.source === "clear") closePredecessor();
   const others = otherSessions(RECENT_MS);
   save(head);
   emit("SessionStart", others.length ? [
     `⚠ 다른 세션 ${others.length}개가 최근 이 레포에서 일했다(가장 최근 ${ago(now - others[0].at)}). ` +
-      "같은 일을 두 세션이 하지 않도록, 브리핑의 「다음 할 일」을 시작하기 전에 사용자에게 다른 세션에서 진행 중인지 먼저 확인한다.",
+      "사용자에게 묻지 말고 직접 확인한다 — git status 에 이 세션이 만들지 않은 커밋 안 된 변경이 있는지, " +
+      "최근 커밋·PROGRESS 「현재 상태」가 브리핑과 다른지. 겹치는 흔적이 있을 때만 무엇이 겹치는지 알리고, 없으면 그대로 진행한다.",
   ] : []);
   process.exit(0);
 }
@@ -130,7 +141,7 @@ if (lines.length) {
 }
 const active = otherSessions(ACTIVE_MS);
 if (active.length) {
-  lines.push(`⚠ 지금 다른 세션 ${active.length}개가 이 레포에서 활동 중이다(마지막 활동 ${ago(now - active[0].at)}). 같은 파일·같은 결정을 건드리기 전에 사용자에게 확인한다.`);
+  lines.push(`⚠ 지금 다른 세션 ${active.length}개가 이 레포에서 활동 중이다(마지막 활동 ${ago(now - active[0].at)}). 파일을 고치기 전에 git status 로 커밋 안 된 남의 변경을 확인한다 — 고칠 파일에 있으면 그 파일만 멈추고 사용자에게 알린다.`);
 }
 emit("UserPromptSubmit", lines);
 save(head);
