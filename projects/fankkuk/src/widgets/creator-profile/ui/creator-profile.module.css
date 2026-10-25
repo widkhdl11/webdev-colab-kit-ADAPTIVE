@@ -12,7 +12,7 @@
 /* ---------- 프로필 머리 ---------- */
 .pfSec { padding-top: var(--space-10); }
 .app .pfSec { padding-top: 0; }
-.name { font-size: var(--fs-page); line-height: 1.3; }
+.name { font-size: var(--fs-title); line-height: 1.3; } /* 로그인 전·후 같은 크기 32(767 이하 24 — 토큰이 바꾼다) */
 .channel { display: flex; margin-top: var(--space-2); }
 .pub .channel { justify-content: center; }
 .handle { margin-top: var(--space-2); font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
@@ -66,8 +66,8 @@
 .infoGrid > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 .infoGrid :global(.card.info) { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; align-content: start; gap: var(--space-2); padding: var(--card-pad); border-radius: var(--r-card); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); background: var(--card-fx);}
 .infoGrid :global(.info .ic) { width: var(--icon-xs); height: var(--icon-xs); margin: 0; }
-.infoGrid :global(.info h3) { margin: 0; justify-content: flex-start; font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-nav); line-height: var(--lh-caption); color: var(--gray-600); }
-.infoGrid :global(.card.info .big) { grid-column: 1 / -1; margin: 0; font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; }
+.infoGrid :global(.info h3) { margin: 0; justify-content: flex-start; font-family: var(--font); font-size: var(--fs-small); font-weight: 400; line-height: var(--lh-caption); color: var(--gray-600); }
+.infoGrid :global(.card.info .big) { grid-column: 1 / -1; margin: 0; font-size: var(--fs-card); font-weight: var(--fw-btn); line-height: 1.4; }
 .infoGrid :global(.card.info .dd) { grid-column: 1 / -1; margin-top: 0; }
 /* 받기 어려운 품목은 크리에이터가 고른 문장이라 큰 글씨가 아니라 본문 글씨 */
 .plain:global(.big) { font-weight: 400; font-size: var(--fs-body); }
@@ -98,6 +98,13 @@
 .pdecoL { right: calc(96px + var(--space-8)); bottom: var(--space-2); transform: rotate(-12deg); }
 .pdecoR { right: var(--space-2); bottom: var(--space-2); transform: rotate(10deg); }
 .sheet + section { margin-top: 64px; }
+
+/* 「이런 크리에이터도 있어요」의 「전체 보기」 — 좁은 폭에서는 목록 아래 오른쪽(홈 front.module.css 와 같은 방식) */
+.moreBottom:global(.more-link) { display: none; }
+@media (max-width: 767px) {
+  .moreTop:global(.more-link) { display: none; }
+  .moreBottom:global(.more-link) { display: flex; width: fit-content; margin: var(--space-4) 0 0 auto; }
+}
 
 @media (max-width: 1120px) {
   .pdeco { display: none; }

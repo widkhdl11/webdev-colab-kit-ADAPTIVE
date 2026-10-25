@@ -44,7 +44,7 @@ afterEach(() => {
   host.remove();
 });
 
-function renderProfile(send: LinkPageSend, followMode: FollowMode) {
+function renderProfile(send: LinkPageSend, followMode: FollowMode, monthFans = 0) {
   act(() =>
     root.render(
       <CreatorProfilePage
@@ -54,7 +54,7 @@ function renderProfile(send: LinkPageSend, followMode: FollowMode) {
         send={send}
         prices={prices}
         prohibited={[]}
-        monthFans={0}
+        monthFans={monthFans}
         today={{ year: 2026, month: 10, day: 12 }}
       />,
     ),
@@ -79,5 +79,25 @@ describe("크리에이터 페이지 — 주 버튼 하나(재진단 2026-10-18)"
     renderProfile("self", "hidden");
     const tags = [...host.querySelectorAll("span")].filter((s) => s.textContent === "내 크리에이터 페이지예요");
     expect(tags).toHaveLength(1);
+  });
+});
+
+describe("크리에이터 페이지 — 5파트 정돈(2026-10-25)", () => {
+  it("로그인 전 아래 장식 판의 버튼은 테두리 버튼이고, 채운 버튼은 머리의 하나뿐이다", () => {
+    renderProfile("open", "login");
+    const links = sendLinks();
+    expect(links).toHaveLength(2);
+    const sheetBtn = host.querySelector("#send-h")?.closest("section")?.querySelector("a.btn");
+    expect(sheetBtn?.classList.contains("btn--line")).toBe(true);
+    const filled = links.filter((a) => !a.classList.contains("btn--line"));
+    expect(filled).toHaveLength(1);
+  });
+
+  it("넷째 정보 칸(이번 달 팬 수)은 다른 칸처럼 아이콘 다음에 이름 줄 「선물한 팬」을 둔다", () => {
+    renderProfile("open", "save", 3);
+    const big = [...host.querySelectorAll(".card.info .big")].find((p) => p.textContent?.includes("마음을 보냈어요"));
+    const h3 = big?.previousElementSibling;
+    expect(h3?.tagName).toBe("H3");
+    expect(h3?.textContent).toBe("선물한 팬");
   });
 });

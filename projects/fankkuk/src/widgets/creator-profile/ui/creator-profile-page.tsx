@@ -104,16 +104,18 @@ function Chevron() {
 }
 
 /** 주 버튼 — 보낼 수 있으면 「선물 보내기」, 팔로우하지 않았으면 「팔로우하고 선물 보내기」, 자기 페이지면 안내 태그. 쉬는 중이면 그리지 않는다. */
-function SendButton({ shown, creator, followMode }: { shown: LinkPageSend; creator: CreatorLinkView; followMode: FollowMode }) {
+// line: 테두리 버튼(로그인 전 아래 장식 판 — 채운 주 버튼은 머리의 하나뿐, tokens 0-1)
+function SendButton({ shown, creator, followMode, line = false }: { shown: LinkPageSend; creator: CreatorLinkView; followMode: FollowMode; line?: boolean }) {
+  const cls = line ? "btn btn--line btn--wide" : "btn btn--wide";
   if (shown === "open") {
     return (
-      <Link className="btn btn--wide" href={`/gifts/new?creator=${creator.id}`}>
+      <Link className={cls} href={`/gifts/new?creator=${creator.id}`}>
         선물 보내기
       </Link>
     );
   }
   if (shown === "needs_follow") {
-    return <FollowThenSend creatorId={creator.id} creatorName={creator.name} signedIn={followMode !== "login"} className="btn btn--wide" />;
+    return <FollowThenSend creatorId={creator.id} creatorName={creator.name} signedIn={followMode !== "login"} className={cls} />;
   }
   if (shown === "self") return <span className="tag">내 크리에이터 페이지예요</span>;
   return null;
@@ -257,6 +259,7 @@ export function CreatorProfilePage({
             {monthFans > 0 ? (
               <div className="card info">
                 <Icon d={PATH.heart} />
+                <h3>선물한 팬</h3>
                 <p className="big">
                   이번 달 <span className="accent">{monthFans.toLocaleString("ko-KR")}명</span>의 팬이 마음을 보냈어요
                 </p>
@@ -356,7 +359,7 @@ export function CreatorProfilePage({
                   <span className="accent">선물 보내기</span>
                 </h2>
                 {restingText ? <p className="t-lead t-desc">{restingText}</p> : null}
-                <SendButton shown={send} creator={creator} followMode={followMode} />
+                <SendButton shown={send} creator={creator} followMode={followMode} line />
               </div>
             </div>
           </div>
@@ -368,7 +371,7 @@ export function CreatorProfilePage({
           <div className={wrap}>
             <div className={`sec-head head-row ${s.head}`}>
               <h2 id="similar-title">이런 크리에이터도 있어요</h2>
-              <Link className="more-link" href="/creators">
+              <Link className={`more-link ${s.moreTop}`} href="/creators">
                 전체 보기
               </Link>
             </div>
@@ -391,6 +394,10 @@ export function CreatorProfilePage({
                 </li>
               ))}
             </ul>
+            {/* 767 이하에서는 목록 아래 오른쪽 — 홈과 같은 방식: 화면 순서와 Tab 순서가 같게 목록 뒤에 링크를 하나 더 두고 폭에 따라 하나만 보인다 */}
+            <Link className={`more-link ${s.moreBottom}`} href="/creators">
+              전체 보기
+            </Link>
           </div>
         </section>
       ) : null}

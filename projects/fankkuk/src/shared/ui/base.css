@@ -559,7 +559,7 @@ img.asset { display: block; object-fit: contain; }
    글자 13px 은 캡션(시안 --fs-caption 자리: .t-meta·.hint·.tag·표 머리)에만 — 00절의 예외. 시안의 14px(작은 버튼·칩)은 예외가 아니라 16 으로 둔다. */
 
 /* 글자 */
-:is(.t-lead, .t-desc):where(:not(.admin-area *)) { font-size: var(--fs-lead); font-weight: var(--fw-sub); line-height: 1.5; color: var(--gray-600); }
+:is(.t-lead, .t-desc):where(:not(.admin-area *)) { font-size: var(--fs-lead); font-weight: 400; line-height: 1.5; color: var(--gray-600); }
 :is(.part, .card) :is(.t-lead, .t-desc):where(:not(.admin-area *)) { font-size: var(--fs-body); font-weight: 400; line-height: 1.6; }
 .t-meta:where(:not(.admin-area *)) { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
 .t-strong:where(:not(.admin-area *)) { font-weight: var(--fw-btn); color: var(--gray-900); }

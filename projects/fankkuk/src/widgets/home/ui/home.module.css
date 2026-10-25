@@ -46,7 +46,7 @@
 .notices :global(.nlist) li + li { border-top: 1px solid var(--gray-200); }
 .notices :global(.nlist) a { min-height: 64px; padding: var(--space-3) var(--space-4); border-radius: 0; box-shadow: none; }
 .notices :global(.nlist) a { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
-.notices :global(.nlist) b { min-width: 0; font-weight: var(--fw-nav); }
+.notices :global(.nlist) b { min-width: 0; font-weight: var(--fw-btn); }
 .notices :global(.nlist) :global(.t-meta) { flex-shrink: 0; }
 /* 좁은 폭 — 「모두 보기」가 제목 줄에 안 들어가므로 목록 바로 아래 오른쪽으로 내린다 */
 @media (max-width: 767px) {
