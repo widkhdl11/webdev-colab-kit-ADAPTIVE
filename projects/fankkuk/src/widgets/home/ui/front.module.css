@@ -293,7 +293,7 @@
 .moreBottom:global(.more-link) { display: none; }
 @media (max-width: 767px) {
   .moreTop:global(.more-link) { display: none; }
-  .moreBottom:global(.more-link) { display: block; width: fit-content; margin: var(--space-4) 0 0 auto; }
+  .moreBottom:global(.more-link) { display: flex; width: fit-content; margin: var(--space-4) 0 0 auto; }
 }
 
 /* v31 승인: 세 역할 모두 같은 히어로·바로가기·배너를 사용한다. */

@@ -226,7 +226,7 @@
   --art-step: 56px; /* 단계 카드 그림 */
   --art-empty: 160px; /* 빈 상태 그림 (휴대폰 128) */
   --icon-xs: 20px;
-  --fw-sub: 500; /* 리드·설명 글 (시안 --fw-subtitle) */
+  --fw-sub: 500; /* 시안 --fw-subtitle. 리드·설명 글은 2026-10-25 부터 400(design-rules 28·30절) — 남은 쓰임은 BACKLOG 「입력 칸 라벨이 굵기 700」 */
   --lh-caption: 1.5;
 
   /* 23절 카드 면 효과·마이크로 디테일(2026-10-21 승인, design-rules 23-1·23-2 · 시안 docs/design/mockups/site/v37-part2/v37.css 맨 아래 세 블록 값 그대로).
