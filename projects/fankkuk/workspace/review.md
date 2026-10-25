@@ -1,9 +1,25 @@
 ---
 project: fankkuk
 status: passed
-basis: 5be2140aed73
+basis: 24126c91a45b
 reviewers: [ux-reviewer, ui-reviewer, security-reviewer, code-reviewer]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-25, 5파트 값 맞춤 + 크리에이터 상세 재디자인)
+
+- 범위: a54f84fb 뒤 3e959940·3b6aa487(5파트, 카드 d131, design-rules 30절) · c3c0e450·68bb322c·3598a9ed(크리에이터 상세 재디자인, 카드 d134 Codex 시안, design-rules 31절, UX handle.md) · 예약어 pricing 마이그레이션 20261025000001.
+- ui-reviewer: 5파트 high 0·low 6 → 3b6aa487. 상세 중간 2(상단 바 880/본문 1080 · 간격 80)·낮음 5 → 68bb322c.
+- ux-reviewer: 상세 중간 1(팔로우 실패가 화면에 안 보임)·낮음 3(저장 중·쉬는 날짜 없음·포커스) → 68bb322c, 명세에 저장 중·저장 실패·운영자 행.
+- code-reviewer: 상세 medium 2(저장 전 화면·장치 셋 시험 없음)·low 5 → 68bb322c · 재리뷰 medium 1(FollowThenSend 겉 동작 시험)·low 1 → 3598a9ed.
+- security-reviewer: 중간 이상 0, 낮음 1(운영자에게 팔로우 버튼) → 68bb322c · 재리뷰(함께한 시간 권한 시험을 본문 판정으로) 낮음 2 → 3598a9ed.
+- qa-classifier: 원래 있던 통합 실패 4건 — 함께한 시간 3건은 로딩 화면 때문에 상태 코드만 200(남의 화면은 안 열림, 시험 impl) → 본문 판정 · pricing 예약어 누락(코드 impl, d2157b41) → 마이그레이션.
+- 실행 근거: tsc 0 · copy:lint 0 · 단위 324파일 2670 통과 · 통합 together-routes·creator-link-db 60/60. 변이: 팔로우 장치 넷(재누름·401·저장 중 보내기·성공 전 전환) 각각 잡힘 · FollowThenSend 성공 이동 잡힘.
+  화면(개발 서버): 5파트 다섯 화면 × 1440·390 굵기 700 0·넘침 0 · 상세 로그인 전 1440·1024·390 넘침 0, 상단 바와 본문 왼쪽 끝 같은 선(x172), 이름 20자 + 긴 팬덤 이름 390·736 넘침 0, 새로 연 상세 콘솔 오류 0. 사용자 5파트 화면 확인.
+  못 본 것: 팔로우·취소 실제 누르기(로컬 DB 를 바꿔서 — 단위 시험으로 대신), /[handle] 주소 페이지(로컬에 링크용 아이디 있는 크리에이터 없음 — 상세와 같은 부품). pricing 예약어는 로컬 DB 만(원격은 사람).
+
+## 이전 사인오프
+
+
 
 # 리뷰 사인오프 — fankkuk (2026-10-25, 6파트 로그인·가입·비밀번호 + 로그인 상태 유지 INV-L15 + 줄바꿈·체크박스 사이트 전체)
 
