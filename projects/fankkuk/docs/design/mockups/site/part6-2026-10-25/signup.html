@@ -5,7 +5,7 @@
  근거: design-rules 00000(가입 720)·18절(판 위 96, 390 은 64)·21절(강조 하나 — 하늘 면은 고른 유형 카드와 지금 단계 알약에만)·28절 양식 모양(칸 48 · 반경 12 · 칸 사이 24 · 칸↔안내 8 · 라벨 600).
  바뀐 곳(빨간 번호): 1 머리 설명 16/500 -> 16/400 (머리는 지금도 카드 밖) · 2 단계 표시는 알약 줄 하나 — 카드 머리 번호 동그라미와 390 「1 / 3 단계」 글줄을 뺌, 390 도 한 줄(알약 셋 1/3씩) ·
    3 「크리에이터로 가입하면 …」 안내는 「크리에이터예요」를 골랐을 때만 · 4 크리에이터 하늘 판 -> 구분선 + 소제목 묶음(계정 정보 · 연락처 · 채널 정보 · 마무리), 크리에이터 칸은 지금 순서 그대로(휴대폰 뒤) ·
-   5 갈 곳 없는 회색 「보기」(이벤트·소식 알림) 뺌 · 6 굵기 700 -> 600(유형 카드 이름·안내 첫 구절·@·칸 오류·3단계 번호 강조).
+   5 갈 곳 없는 회색 「보기」(이벤트⁠·⁠소식 알림) 뺌 · 6 굵기 700 -> 600(유형 카드 이름⁠·⁠안내 첫 구절⁠·⁠@⁠·⁠칸 오류⁠·⁠3단계 번호 강조).
  문구 후보(노란 표시): 소제목 넷(계정 정보 · 연락처 · 채널 정보 · 마무리). 그 밖 모든 문장은 지금 사이트 그대로. 칸 오류 줄은 칸 검사가 돌려주는 말 중 대표 문구를 같게 넣었다(시안은 모양만 본다).
  시안에서 뺀 것: 태그 칩 앞 플랫폼 아이콘(실제 화면에는 있음 — 모양 변경 없음).
 -->
@@ -39,57 +39,57 @@
   <label class="choice"><input type="radio" name="kind" value="fan" ><span><strong>팬이에요</strong><span>응원하는 크리에이터에게 선물을 보내고 싶어요.</span></span></label>
   <label class="choice"><input type="radio" name="kind" value="creator" checked><span><strong>크리에이터예요</strong><span>팬이 보내는 선물을 안전하게 받고 싶어요.</span></span></label>
  </div>
- <p class="crnote mkp"><i class="mk tl" aria-hidden="true">3</i><strong>크리에이터로 가입하면</strong> 가입한 뒤에 활동 채널 주인이 맞는지 한 번 더 확인해요. 유튜브·치지직은 그 계정으로 로그인하면 바로 끝나요(인스타그램은 프로페셔널 계정만). SOOP 은 인증 코드를 채널 소개란에 붙이거나 팬꾹 계정 DM 으로 보내면 운영자가 확인해요. 확인이 끝나야 「크리에이터 찾기」에 나타나요.</p>
+ <p class="crnote mkp"><i class="mk tl" aria-hidden="true">3</i><strong>크리에이터로 가입하면</strong> 가입한 뒤에 활동 채널 주인이 맞는지 한 번 더 확인해요.<span class="brk">유튜브⁠·⁠치지직은 그 계정으로 로그인하면 바로 끝나요(인스타그램은 프로페셔널 계정만). SOOP 은 인증 코드를 채널 소개란에 붙이거나 팬꾹 계정 DM 으로 보내면 운영자가 확인해요.</span><span class="brk">확인이 끝나야 <span class="nw">「크리에이터 찾기」에</span> 나타나요.</span></p>
  <div class="actions solo"><button class="btn next" type="submit">다음</button></div>
 </div>
 <div class="stepcard" data-only="s2-fan s2-creator s2-err">
- <h2>정보를 입력해 주세요</h2>
+ <h2>정보를 입력해 주세요</h2>
  <div class="grp mkp"><i class="mk tl" aria-hidden="true">4</i><h3>계정 정보<em class="cand">문구 후보</em></h3><div class="form">
-  <div><label class="label" for="sid">아이디</label><input class="field" id="sid" type="text"><p class="live bad" data-only="s2-err">형식이 맞지 않아요.</p><p class="hint">영문 소문자·숫자·밑줄(_)로 4~20자예요. 가입한 뒤에는 아이디를 바꿀 수 없어요.</p></div>
-  <div><label class="label" for="snick">닉네임</label><input class="field" id="snick" type="text"><p class="live bad" data-only="s2-err">형식이 맞지 않아요.</p><p class="hint">팬꾹에서 보이는 이름이에요. 12자까지, 다른 사람이 쓰는 닉네임은 쓸 수 없어요. 가입한 뒤 계정 설정에서 바꿀 수 있어요.</p></div>
-  <div><label class="label" for="smail">이메일</label><div class="email"><input class="field" id="smail" type="text" placeholder="앞부분"><span class="at" aria-hidden="true">@</span><select class="field" aria-label="이메일 주소 고르기(@ 뒤)"><option>주소 고르기</option><option>naver.com</option><option>gmail.com</option><option>daum.net</option><option>hanmail.net</option><option>kakao.com</option><option>nate.com</option><option>직접 입력</option></select></div><p class="live bad" data-only="s2-err">형식이 맞지 않아요.</p><p class="hint">가입하면 확인 메일을 보내 드려요. 메일의 링크를 눌러야 이 주소로 선물 소식을 받아요.</p></div>
-  <div><label class="label" for="spw">비밀번호</label><input class="field" id="spw" type="password"><p class="live bad" data-only="s2-err">형식이 맞지 않아요.</p><p class="hint">8자 이상, 영문·숫자·특수문자를 모두 섞고 아이디와 다르게 적어 주세요.</p></div>
+  <div><label class="label" for="sid">아이디</label><input class="field" id="sid" type="text"><p class="live bad" data-only="s2-err">형식이 맞지 않아요.</p><p class="hint">영문 소문자⁠·⁠숫자⁠·⁠밑줄(_)로 4~20자예요.<span class="brk">가입한 뒤에는 아이디를 바꿀 수 없어요.</span></p></div>
+  <div><label class="label" for="snick">닉네임</label><input class="field" id="snick" type="text"><p class="live bad" data-only="s2-err">형식이 맞지 않아요.</p><p class="hint">팬꾹에서 보이는 이름이에요.<span class="brk">12자까지, 다른 사람이 쓰는 닉네임은 쓸 수 없어요.</span><span class="brk">가입한 뒤 계정 설정에서 바꿀 수 있어요.</span></p></div>
+  <div><label class="label" for="smail">이메일</label><div class="email"><input class="field" id="smail" type="text" placeholder="앞부분"><span class="at" aria-hidden="true">@</span><select class="field" aria-label="이메일 주소 고르기(@ 뒤)"><option>주소 고르기</option><option>naver.com</option><option>gmail.com</option><option>daum.net</option><option>hanmail.net</option><option>kakao.com</option><option>nate.com</option><option>직접 입력</option></select></div><p class="live bad" data-only="s2-err">형식이 맞지 않아요.</p><p class="hint">가입하면 확인 메일을 보내 드려요.<span class="brk">메일의 링크를 눌러야 이 주소로 선물 소식을 받아요.</span></p></div>
+  <div><label class="label" for="spw">비밀번호</label><input class="field" id="spw" type="password"><p class="live bad" data-only="s2-err">형식이 맞지 않아요.</p><p class="hint">8자 이상, 영문⁠·⁠숫자⁠·⁠특수문자를 모두 섞고 아이디와 다르게 적어 주세요.</p></div>
   <div><label class="label" for="spw2">비밀번호 확인</label><input class="field" id="spw2" type="password" placeholder="비밀번호를 한 번 더 입력해 주세요"><p class="live bad" data-only="s2-err">비밀번호가 서로 달라요.</p></div>
  </div></div>
  <div class="grp"><h3>연락처<em class="cand">문구 후보</em></h3><div class="form">
-  <div><label class="label" for="stel">휴대폰 번호</label><input class="field" id="stel" type="tel" placeholder="010-0000-0000"><p class="live bad" data-only="s2-err">형식이 맞지 않아요.</p><p class="hint">선물 소식을 카카오톡 알림톡으로 보내 드릴 번호예요. 실명·주소처럼 따로 나눠 보관해요.</p></div>
+  <div><label class="label" for="stel">휴대폰 번호</label><input class="field" id="stel" type="tel" placeholder="010-0000-0000"><p class="live bad" data-only="s2-err">형식이 맞지 않아요.</p><p class="hint">선물 소식을 카카오톡 알림톡으로 보내 드릴 번호예요.<span class="brk">실명⁠·⁠주소처럼 따로 나눠 보관해요.</span></p></div>
  </div></div>
  <div class="grp mkp" data-only="s2-creator s2-err"><i class="mk tl" aria-hidden="true">4</i><h3>채널 정보<em class="cand">문구 후보</em></h3><div class="form">
-  <div><label class="label" for="scn">공개 이름</label><input class="field" id="scn" type="text"><p class="live bad" data-only="s2-err">크리에이터 정보를 적어 주세요.</p><p class="hint">팬에게 보이는 이름이에요. 20자까지 적을 수 있어요.</p></div>
-  <div><label class="label" for="sch">채널 이름</label><input class="field" id="sch" type="text" placeholder="예: 꿀단지TV"><p class="live bad" data-only="s2-err">크리에이터 정보를 적어 주세요.</p><p class="hint">채널 주소는 가입한 뒤 본인 확인 때 받아요.</p></div>
-  <div><label class="label" for="sfn">팬덤 이름 <span class="opt">(선택)</span></label><input class="field" id="sfn" type="text" placeholder="예: 꿀벌단"><p class="hint">팬을 부르는 이름이에요. 10자까지, 비워 둬도 돼요. 가입한 뒤 내 팬꾹 꾸미기에서 바꿀 수 있어요.</p></div>
-  <div><p class="label">태그</p><div class="chips"><span class="chip">SOOP</span><span class="chip">치지직</span><span class="chip">유튜브</span><span class="chip">알플레이</span><span class="chip">인스타그램</span><span class="chip">X</span><span class="chip">스레드</span><span class="chip">틱톡</span><span class="chip">버추얼</span></div><div style="margin-top:16px"><label class="label" for="scu" style="font-weight:400">직접 입력 (목록에 없을 때 한 개)</label><input class="field" id="scu" type="text" placeholder="예: 팝콘TV"></div><p class="hint">활동하는 곳과 방송 종류를 골라 주세요. 고른 것과 직접 입력을 합쳐 1~5개(지금 0개), 직접 입력은 20자까지예요. 직접 입력한 태그는 고른 태그 뒤에 보여요. 욕설·연락처·주소는 쓸 수 없어요.</p></div>
+  <div><label class="label" for="scn">공개 이름</label><input class="field" id="scn" type="text"><p class="live bad" data-only="s2-err">크리에이터 정보를 적어 주세요.</p><p class="hint">팬에게 보이는 이름이에요.<span class="brk">20자까지 적을 수 있어요.</span></p></div>
+  <div><label class="label" for="sch">채널 이름</label><input class="field" id="sch" type="text" placeholder="예: 꿀단지TV"><p class="live bad" data-only="s2-err">크리에이터 정보를 적어 주세요.</p><p class="hint">채널 주소는 가입한 뒤 본인 확인 때 받아요.</p></div>
+  <div><label class="label" for="sfn">팬덤 이름 <span class="opt">(선택)</span></label><input class="field" id="sfn" type="text" placeholder="예: 꿀벌단"><p class="hint">팬을 부르는 이름이에요.<span class="brk">10자까지, 비워 둬도 돼요.</span><span class="brk">가입한 뒤 내 팬꾹 꾸미기에서 바꿀 수 있어요.</span></p></div>
+  <div><p class="label">태그</p><div class="chips"><span class="chip">SOOP</span><span class="chip">치지직</span><span class="chip">유튜브</span><span class="chip">알플레이</span><span class="chip">인스타그램</span><span class="chip">X</span><span class="chip">스레드</span><span class="chip">틱톡</span><span class="chip">버추얼</span></div><div style="margin-top:16px"><label class="label" for="scu" style="font-weight:400">직접 입력 (목록에 없을 때 한 개)</label><input class="field" id="scu" type="text" placeholder="예: 팝콘TV"></div><p class="hint">활동하는 곳과 방송 종류를 골라 주세요.<span class="brk">고른 것과 직접 입력을 합쳐 1~5개(지금 0개), 직접 입력은 20자까지예요.</span><span class="brk">직접 입력한 태그는 고른 태그 뒤에 보여요.</span><span class="brk">욕설⁠·⁠연락처⁠·⁠주소는 쓸 수 없어요.</span></p></div>
  </div></div>
  <div class="grp"><h3>마무리<em class="cand">문구 후보</em></h3><div class="form">
-  <div><label class="label" for="sheard">어디서 팬꾹을 알게 되셨나요? <span class="opt">(선택)</span></label><select class="field" id="sheard"><option>고르지 않을래요</option><option>X</option><option>크리에이터 방송</option><option>팬 커뮤니티</option><option>지인</option><option>기타</option></select><p class="hint">답하지 않아도 가입돼요. 어떤 길로 많이 찾아오시는지만 모아서 봐요.</p></div>
+  <div><label class="label" for="sheard">어디서 팬꾹을 알게 되셨나요? <span class="opt">(선택)</span></label><select class="field" id="sheard"><option>고르지 않을래요</option><option>X</option><option>크리에이터 방송</option><option>팬 커뮤니티</option><option>지인</option><option>기타</option></select><p class="hint">답하지 않아도 가입돼요.<span class="brk">어떤 길로 많이 찾아오시는지만 모아서 봐요.</span></p></div>
   <div role="group" aria-labelledby="tl"><p class="label" id="tl">약관 동의</p><div class="terms">
    <div class="check"><input type="checkbox" id="tall"><label for="tall">전체 동의</label></div>
    <div class="trow"><div class="check"><input type="checkbox" id="t1"><label for="t1"><span class="req">[필수]</span> 이용약관</label></div><a class="view" href="#" aria-label="이용약관 보기 (새 창)">보기</a></div>
-   <div class="trow"><div class="check"><input type="checkbox" id="t2"><label for="t2"><span class="req">[필수]</span> 개인정보 수집·이용</label></div><a class="view" href="#" aria-label="개인정보 수집·이용 보기 (새 창)">보기</a></div>
-   <div class="trow mkp"><i class="mk tr" aria-hidden="true">5</i><div class="check"><input type="checkbox" id="t3"><label for="t3">[선택] 이벤트·소식 알림 받기</label></div></div>
+   <div class="trow"><div class="check"><input type="checkbox" id="t2"><label for="t2"><span class="req">[필수]</span> 개인정보 수집⁠·⁠이용</label></div><a class="view" href="#" aria-label="개인정보 수집·이용 보기 (새 창)">보기</a></div>
+   <div class="trow mkp"><i class="mk tr" aria-hidden="true">5</i><div class="check"><input type="checkbox" id="t3"><label for="t3">[선택] 이벤트⁠·⁠소식 알림 받기</label></div></div>
   </div></div>
-  <p class="err" role="alert" data-only="s2-err">필수 약관에 동의해 주세요.</p>
+  <p class="err" role="alert" data-only="s2-err">필수 약관에 동의해 주세요.</p>
  </div></div>
  <div class="actions"><button class="btn line" type="button">이전</button><button class="btn next" type="submit">다음</button></div>
 </div>
 <div class="stepcard" data-only="s3">
  <h2>카카오톡으로 본인 확인</h2>
- <p class="desc">휴대폰 번호의 주인이 맞는지 카카오톡 인증으로 확인해요. 인증이 끝나면 가입이 마무리돼요.</p>
+ <p class="desc">휴대폰 번호의 주인이 맞는지 카카오톡 인증으로 확인해요.<span class="brk">인증이 끝나면 가입이 마무리돼요.</span></p>
  <ol class="kakao-list" style="margin-top:0">
-  <li><span>아래 버튼을 누르면 <strong>010-9999-0000</strong>의 카카오톡으로 인증 요청이 가요.</span></li>
-  <li><span>카카오톡에서 요청을 열고 인증을 눌러 주세요.</span></li>
-  <li><span>팬꾹으로 돌아와 「인증했어요, 가입하기」를 누르면 가입 완료예요.</span></li>
+  <li><span>아래 버튼을 누르면 <strong><span class="nw">010-9999-0000</span></strong>의 카카오톡으로 인증 요청이 가요.</span></li>
+  <li><span>카카오톡에서 요청을 열고 인증을 눌러 주세요.</span></li>
+  <li><span>팬꾹으로 돌아와 <span class="nw">「인증했어요, 가입하기」를</span> 누르면 가입 완료예요.</span></li>
  </ol>
  
  <div class="actions"><button class="btn line" type="button">이전</button><button class="btn kakao next" type="submit"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 4C7 4 3 7.1 3 10.9c0 2.4 1.6 4.5 4 5.7l-1 3.6c-.1.3.2.5.5.4l4.3-2.8c.4 0 .8.1 1.2.1 5 0 9-3.1 9-6.9S17 4 12 4z"/></svg>카카오톡으로 인증 요청 보내기</button></div>
 </div>
 <div class="stepcard" data-only="s3-sent">
  <h2>카카오톡으로 본인 확인</h2>
- <p class="desc">휴대폰 번호의 주인이 맞는지 카카오톡 인증으로 확인해요. 인증이 끝나면 가입이 마무리돼요.</p>
+ <p class="desc">휴대폰 번호의 주인이 맞는지 카카오톡 인증으로 확인해요.<span class="brk">인증이 끝나면 가입이 마무리돼요.</span></p>
  <ol class="kakao-list" style="margin-top:0">
-  <li class="sent"><span class="tick"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8.5 3.2 3.2L13 4.8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>아래 버튼을 누르면 <strong>010-9999-0000</strong>의 카카오톡으로 인증 요청이 가요. <strong>요청을 보냈어요.</strong></span></li>
-  <li><span>카카오톡에서 요청을 열고 인증을 눌러 주세요.</span></li>
-  <li><span>팬꾹으로 돌아와 「인증했어요, 가입하기」를 누르면 가입 완료예요.</span></li>
+  <li class="sent"><span class="tick"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8.5 3.2 3.2L13 4.8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>아래 버튼을 누르면 <strong><span class="nw">010-9999-0000</span></strong>의 카카오톡으로 인증 요청이 가요. <strong>요청을 보냈어요.</strong></span></li>
+  <li><span>카카오톡에서 요청을 열고 인증을 눌러 주세요.</span></li>
+  <li><span>팬꾹으로 돌아와 <span class="nw">「인증했어요, 가입하기」를</span> 누르면 가입 완료예요.</span></li>
  </ol>
  <p class="again">요청이 오지 않았나요? <button class="text-btn" type="button">다시 보내기</button></p>
  <div class="actions"><button class="btn line" type="button">이전</button><button class="btn kakao next" type="submit"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 4C7 4 3 7.1 3 10.9c0 2.4 1.6 4.5 4 5.7l-1 3.6c-.1.3.2.5.5.4l4.3-2.8c.4 0 .8.1 1.2.1 5 0 9-3.1 9-6.9S17 4 12 4z"/></svg>인증했어요, 가입하기</button></div>
@@ -100,8 +100,8 @@
 </main>
 <footer class="pg-foot"><div class="pg-wrap">
 <div><a class="pg-logo" href="#"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
-<dl><dt>상호</dt><dd>팬꾹</dd><dt>대표자</dt><dd>정재원</dd><dt>사업자등록번호</dt><dd>260-12-03086</dd><dt>통신판매업 신고번호</dt><dd>제2026-서울강남-05946호</dd><dt>사업장 주소</dt><dd>서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)</dd><dt>고객센터</dt><dd>support@fankkuk.com · 0502-1931-8289</dd><dt>호스팅 제공자</dt><dd>Vercel Inc.</dd></dl></div>
-<nav aria-label="약관과 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></nav>
+<dl><dt>상호</dt><dd>팬꾹</dd><dt>대표자</dt><dd>정재원</dd><dt>사업자등록번호</dt><dd>260-12-03086</dd><dt>통신판매업 신고번호</dt><dd>제2026-서울강남-05946호</dd><dt>사업장 주소</dt><dd>서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)</dd><dt>고객센터</dt><dd><span class="nw">support@fankkuk.com</span> · <span class="nw">0502-1931-8289</span></dd><dt>호스팅 제공자</dt><dd>Vercel Inc.</dd></dl></div>
+<nav aria-label="약관과 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">취소⁠·⁠환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고⁠·⁠문의</a><a href="#">고객센터</a></nav>
 <nav aria-label="안내"><a href="#">팬꾹 소개</a><a href="#">요금 안내</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></nav>
 <p class="cp">© 2026 팬꾹. All rights reserved.</p></div></footer>
 <script src="part6.js"></script></body></html>
