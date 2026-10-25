@@ -7,7 +7,7 @@ import { checkInquiryInput } from "./inquiry-input";
 // 로그인한 사람의 세션 클라이언트로 DB 를 부르면 DB 가 그 토큰의 사람으로 기록한다.
 // 입력은 여기서 한 번, DB 함수에서 한 번 더 검사한다(같은 경계).
 
-export const MESSAGE_SIGN_IN = "로그인하고 문의를 남겨 주세요.";
+const MESSAGE_SIGN_IN = "로그인하고 문의를 남겨 주세요.";
 const MESSAGE_FAILED = "보내지 못했어요. 잠시 뒤 다시 해 주세요.";
 export const MESSAGE_RESTRICTED = "지금은 1:1 문의를 남길 수 없어요.";
 

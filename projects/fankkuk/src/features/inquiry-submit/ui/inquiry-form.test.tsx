@@ -30,6 +30,7 @@ describe("1:1 문의 양식 — 로그인 전 (design-rules 28절 · session-log
     const links = [...host.querySelectorAll("a")];
     expect(links).toHaveLength(1);
     expect(links[0]?.getAttribute("href")).toBe("/login?next=/support");
+    expect(links[0]?.textContent).toBe("로그인하고 문의하기");
   });
 });
 

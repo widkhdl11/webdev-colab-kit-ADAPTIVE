@@ -37,7 +37,9 @@ describe("AboutPage", () => {
     const items = sec?.querySelectorAll("ul > li") ?? [];
     expect(items).toHaveLength(6);
     for (const li of items) {
-      expect(li.querySelector("[aria-hidden='true'] svg")).not.toBeNull();
+      // × 아이콘(about-icons 의 x — 대각선 두 줄)인지 경로로 확인한다. 다른 아이콘이 들어가면 실패한다
+      const paths = [...li.querySelectorAll("[aria-hidden='true'] svg path")].map((el) => el.getAttribute("d"));
+      expect(paths).toEqual(["M18 6 6 18", "m6 6 12 12"]);
       expect(li.querySelector("h3")?.textContent).toBeTruthy();
     }
     expect(sec?.querySelector(".card")).toBeNull();
