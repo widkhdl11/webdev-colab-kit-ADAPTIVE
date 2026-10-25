@@ -29,7 +29,7 @@ body.w390 .cmp{grid-template-columns:repeat(2,minmax(0,390px));justify-content:c
 <script>
 // [슬러그, 이름, 주소, 바뀐 점, 시안 파일, [[상태 이름, 시안 상태 식별자, 시안 캡처 이름, 지금 캡처 이름 또는 null]]]
 const pages = [
-  ['login','로그인','/login',['머리를 카드 밖 위로, 선물 그림 뺌, 설명 16/500 → 16/400','「로그인 상태 유지」 확인칸 뺌(동작이 없던 입력)','접는 「비밀번호를 잊으셨나요?」 칸 → 카드 아래 가운데 링크 한 줄(따로 열리는 화면으로)'],'login',[
+  ['login','로그인','/login',['머리를 카드 밖 위로, 선물 그림 뺌, 설명 16/500 → 16/400','「로그인 상태 유지」 확인칸은 남기고 실제로 동작하게(끄면 브라우저를 닫을 때 로그인이 풀림, 기본 꺼짐)','접는 「비밀번호를 잊으셨나요?」 칸 → 카드 아래 가운데 링크 한 줄(따로 열리는 화면으로)'],'login',[
     ['처음','idle','login','login'],['보내는 중','busy','login-busy',null],['오류 · 빈 칸','empty','login-empty','login-empty'],['오류 · 틀림','wrong','login-wrong',null],['잠김','locked','login-locked','login-locked-dom']]],
   ['password-forgot','비밀번호 찾기','/password/forgot (새 화면, 가칭)',['로그인 접는 칸 안의 재설정 요청을 따로 열리는 화면으로 — 한 카드에 아이디 칸이 두 번 나오던 것이 없어짐','「재설정 링크 보내기」가 이 화면의 채운 버튼 하나','제목 「비밀번호 찾기」·링크 「로그인으로 돌아가기」는 문구 후보'],'password-forgot',[
     ['요청 처음','request','forgot','login-reset-open'],['보내는 중','sending','forgot-sending',null],['오류 · 빈 칸','error','forgot-empty','login-reset-empty'],['메일 보냄','answered','forgot-sent','login-reset-sent-dom']]],
