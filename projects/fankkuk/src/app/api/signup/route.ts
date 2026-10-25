@@ -7,7 +7,7 @@ import { createSmtpSender } from "@/shared/api/mail/smtp";
 import { createAdminSupabase } from "@/shared/api/supabase/admin";
 import { createDeferredRequestSupabase } from "@/shared/api/supabase/server";
 import { sessionOnlyMarker } from "@/shared/api/supabase/session-cookies";
-import { KEEP_SIGNED_IN_DEFAULT } from "@/shared/config/keep-signed-in";
+import { KEEP_SIGNED_IN_DEFAULT } from "@/entities/session/model/keep-signed-in";
 import { decodeUtm, UTM_COOKIE, utmCookieOptions } from "@/shared/lib/attribution/utm";
 import { isProduction } from "@/shared/lib/env/is-production";
 import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";

@@ -19,9 +19,6 @@ export type ResetPasswordResult =
   | { ok: true; message?: string }
   | { ok: false; status: 400 | 502; field: "link" | "password" | "passwordConfirm"; message: string };
 
-// 링크 오류 문장은 화면과 같이 쓴다(reset-messages.ts) — 시험이 여기서 읽던 이름은 그대로 내보낸다
-export { RESET_LINK_INVALID };
-
 const inputSchema = z.object({
   token: z.string().max(200),
   password: z.string().max(200),

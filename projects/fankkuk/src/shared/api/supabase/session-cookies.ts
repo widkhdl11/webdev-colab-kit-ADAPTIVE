@@ -75,7 +75,12 @@ export function deferSessionCookieWrites(setAll: SetAll): { setAll: SetAll; deci
       if (decided !== null) return;
       decided = sessionOnly;
       const list = pending.splice(0);
-      if (list.length > 0) void write(list, lastHeaders, sessionOnly);
+      if (list.length === 0) return;
+      // 여기 쓰기는 기다리는 쪽이 없다 — setAll 이 Promise 를 돌려주면 실패를 삼키지 않고 남긴다.
+      const result = write(list, lastHeaders, sessionOnly);
+      if (result instanceof Promise) {
+        result.catch((error: unknown) => console.error("[session-cookies] 미뤄 둔 로그인 쿠키 쓰기가 실패했다", error));
+      }
     },
   };
 }

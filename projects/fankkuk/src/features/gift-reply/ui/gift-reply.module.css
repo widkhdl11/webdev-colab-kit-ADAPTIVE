@@ -82,7 +82,7 @@
 .check { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; }
 .check input { margin: 0; } /* 칸 모양은 base.css 18) 체크박스 */
 .check input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.check-hint { margin-left: 34px; color: var(--sub); }
+.check-hint { margin-left: 38px; /* 칸 26 + 사이 12 */ color: var(--sub); }
 .reply-foot { display: flex; justify-content: flex-end; margin-top: 24px; }
 .share { margin-top: 16px; padding: 24px; border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); }
 .share-sizes { display: flex; flex-wrap: wrap; gap: 12px; }

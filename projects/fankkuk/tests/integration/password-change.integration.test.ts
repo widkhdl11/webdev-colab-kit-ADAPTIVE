@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { changePassword, CURRENT_PASSWORD_WRONG } from "@/features/password-change/model/change-password";
 import { accountPasswordDeps, canSignIn, createTestAccount, device, FIXTURE_PASSWORD, removeTestAccounts, stillSignedIn, testEmail } from "./account-fixtures";
 import { psql } from "./helpers";
-import { PASSWORD_WEAK } from "@/entities/session/model/password-rule";
+import { PASSWORD_SAME_AS_ID, PASSWORD_WEAK } from "@/entities/session/model/password-rule";
 
 // 로그인한 사람의 비밀번호 바꾸기(session-login INV-L12)를 실제 Auth 로 돈다. 시험 전용 계정(it_ 접두어)만 쓴다.
 // 「기기」는 그 계정으로 로그인한 클라이언트 하나다. 바꾸기는 그 기기의 세션으로 부른다 — 앱 서버의 라우트가 요청한 사람의 세션 클라이언트를 넘기는 자리.
@@ -40,7 +40,7 @@ describe("INV-L12: 비밀번호 바꾸기는 로그인한 사람 자신의 것�
     expect(await change(d, me, { ...base, newPassword: d.loginId, newPasswordConfirm: d.loginId })).toMatchObject({
       ok: false,
       field: "newPassword",
-      message: "비밀번호를 아이디와 다르게 적어 주세요.",
+      message: PASSWORD_SAME_AS_ID,
     });
     expect(await change(d, me, { ...base, newPassword: "new-pass-bound-1", newPasswordConfirm: "new-pass-bound-2" })).toMatchObject({
       ok: false,

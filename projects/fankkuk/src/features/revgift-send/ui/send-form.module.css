@@ -13,9 +13,8 @@
 .fan { position: relative; min-width: 0; padding: var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--white); }
 .fan.on { border-color: var(--brand-line); background: var(--tint); box-shadow: inset 0 0 0 1px var(--brand-line); }
 .fan.locked { background: var(--surface-muted); color: var(--sub); }
-.pick { display: grid; grid-template-columns: 24px 40px minmax(0, 1fr); gap: var(--space-3); align-items: center; min-height: 44px; cursor: pointer; }
+.pick { display: grid; grid-template-columns: var(--check-size) 40px minmax(0, 1fr); gap: var(--space-3); align-items: center; min-height: 44px; cursor: pointer; }
 .pick input { margin: 0; } /* 칸 모양은 base.css 18) 체크박스 */
-.pick input:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 .locked .pick { cursor: not-allowed; }
 .locked .pick input { cursor: not-allowed; }
 .face.face { width: 40px; height: 40px; }
@@ -74,8 +73,7 @@
 /* 결제 전 동의 — 공통 동의 칸(entities/payment PaymentConsent)을 띠 안 모양으로 (시안 .consent2 · .check2 · .hint2) */
 .consent :global(.check) { display: flex; align-items: flex-start; gap: var(--space-3); min-height: 44px; padding: 0; cursor: pointer; }
 .consent :global(.check) input { flex: none; margin: 0; }
-.consent :global(.check) input:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
-.consent :global(.hint) { margin-top: 0; padding-left: 36px; font-size: var(--fs-small); color: var(--sub); }
+.consent :global(.hint) { margin-top: 0; padding-left: 38px; /* 칸 26 + 사이 12 */ font-size: var(--fs-small); color: var(--sub); }
 .consent :global(.hint) a { color: var(--on-brand); text-decoration: underline; }
 
 /* 오류 한 줄 — 빨강 면 + 「!」 동그라미 (시안 .errline) */

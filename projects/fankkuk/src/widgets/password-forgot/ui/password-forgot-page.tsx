@@ -9,7 +9,7 @@ import s from "./password-forgot.module.css";
 export function PasswordForgotPage() {
   return (
     <main id="main">
-      <section className={s.page} aria-labelledby="forgot-title">
+      <section className="auth-page" aria-labelledby="forgot-title">
         <div className={`container auth ${s.box}`}>
           <div className="head">
             <h1 className="t-title" id="forgot-title">

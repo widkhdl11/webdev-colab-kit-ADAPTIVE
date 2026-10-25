@@ -969,9 +969,23 @@ input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):focus-vis
 input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):disabled { border-color: var(--gray-300); background: var(--gray-100); box-shadow: none; transform: none; cursor: not-allowed; }
 input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):disabled:checked { border-color: var(--gray-400); background: var(--gray-200); }
 input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):disabled::before { background: var(--gray-600); }
+/* 고대비 모드(forced-colors)는 배경색을 지워 체크가 사라진다 — 글자색(CanvasText)으로 칠해 보이게 */
+@media (forced-colors: active) {
+  input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *))::before { background: CanvasText; }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   :is(input[type="checkbox"]:active, label:active > input[type="checkbox"]):not([role="switch"], :disabled):where(:not(.admin-area *)) { transform: none; }
   input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):checked:active { transform: translateY(-1px); }
   :is(a.card, .ccard, a.tile, .btn, .avatar-stack .face):hover { transform: none !important; }
+}
+
+/* 인증 화면 틀(design-rules 29절) — 로그인·비밀번호 찾기·새 비밀번호가 같이 쓴다. 맨 끝에 두어 위의 .auth 규칙을 이긴다.
+   상단 바 아래 96(휴대폰 64), 바닥글까지 --section-gap. 가운데 기둥 480(양옆 여백 포함). 머리(카드 밖)와 카드 사이 32, 설명 16/400 */
+.auth-page { padding: var(--space-24) 0 var(--section-gap); }
+.auth-page > .auth { max-width: calc(var(--col-auth) + 2 * var(--gutter)); }
+.auth-page .head { margin-bottom: var(--space-8); }
+.auth-page .head .t-lead { margin-top: var(--space-2); font-size: var(--fs-body); font-weight: 400; line-height: 1.5; }
+@media (max-width: 767px) {
+  .auth-page { padding-top: var(--space-16); }
 }

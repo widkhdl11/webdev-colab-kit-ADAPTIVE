@@ -2,7 +2,8 @@ import { fakePasswordAttempts } from "@/entities/session/api/password-attempts-f
 import { PASSWORD_LOCKED_MESSAGE } from "@/entities/session/api/password-attempts";
 import { describe, expect, it, vi } from "vitest";
 import { PASSWORD_CHANGED_RELOGIN, type DetachedAuth } from "@/entities/session/api/account-password";
-import { RESET_LINK_INVALID, resetPassword } from "./reset-password";
+import { RESET_LINK_INVALID } from "./reset-messages";
+import { resetPassword } from "./reset-password";
 
 // session-login INV-L11 — 실제 DB·Auth 로 도는 시험은 tests/integration/password-reset.integration.test.ts.
 // 여기서는 실제 Auth 가 대신 해 주는 일 때문에 통합 시험으로는 드러나지 않는 「우리 코드가 직접 하는 일」을 붙든다:

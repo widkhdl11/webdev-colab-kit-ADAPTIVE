@@ -12,7 +12,8 @@ import s from "./reset-password.module.css";
 // 새 비밀번호를 적고 저장해야 바뀐다 — 링크를 여는 것만으로는 아무것도 바뀌지 않는다.
 // 링크 값의 꼴·만료·한 번만 쓰기는 서버와 DB 가 본다. 이 화면은 값을 저장 요청에 실어 보내기만 한다.
 // 바뀌면 이 계정의 모든 기기에서 로그아웃되므로 로그인으로 안내하고, 로그인 링크로 포커스를 옮긴다.
-// 링크가 없거나 죽었으면 「비밀번호 찾기」(/password/forgot)에서 메일을 다시 받게 하고, 그 링크로 포커스를 옮긴다.
+// 링크가 없거나 죽었으면 「비밀번호 찾기」(/password/forgot)에서 메일을 다시 받게 한다. 저장해 본 뒤 죽은 것이 드러나면 그 링크로 포커스를 옮기고,
+// 처음부터 링크가 없으면 옮기지 않는다 — 화면을 열자마자 포커스를 옮기지 않는다(접근성 관례).
 // 저장이 실패하면 틀린 칸 바로 아래에 「!」 줄(가입 2단계와 같은 모양)을 띄우고 그 칸으로 포커스를 옮긴다(aria-describedby 로 그 줄을 가리킨다).
 // 칸을 모르는 실패(연결 실패 등)는 버튼 위 상자 — 포커스는 새 비밀번호 칸.
 
@@ -169,7 +170,7 @@ export function ResetPasswordPanel({ token }: { token: string }) {
   }
 
   return (
-    <section className={s.page} aria-labelledby={f("title")}>
+    <section className="auth-page" aria-labelledby={f("title")}>
       <div className={`container auth ${s.box}`}>
         <div className="head">
           <h1 className="t-title" id={f("title")}>

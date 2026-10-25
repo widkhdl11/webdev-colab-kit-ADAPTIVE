@@ -101,7 +101,6 @@ section.step.step { margin-top: 0; }
 /* 기념일 표시 체크 (시안 .check2) */
 .check { display: flex; align-items: flex-start; gap: var(--space-3); min-height: 44px; padding: var(--space-2) 0; cursor: pointer; }
 .check input { flex: none; margin: 0; } /* 칸 모양은 base.css 18) 체크박스 */
-.check input:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 /* 선물 사진(선택) — 파일 칸은 sr-only 로 숨기고 라벨을 버튼 모양으로. 키보드 포커스는 라벨에 그린다 */
 .photo-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .photo-file:focus-visible + .photo-pick { outline: 3px solid var(--focus); outline-offset: 3px; }
@@ -160,11 +159,10 @@ section.step.step { margin-top: 0; }
 .tag-line :global(.tag) { background: var(--white); }
 .tag-line svg { margin-right: var(--space-1); vertical-align: -3px; }
 .pay-note { margin-top: var(--space-3); font-size: var(--fs-small); color: var(--sub); }
-/* 결제 전 동의 — 체크 24 + 사이 12, 규정 링크는 체크 글자 줄에 맞춰 36 들임 (시안 .consent2) */
+/* 결제 전 동의 — 체크 26(--check-size) + 사이 12, 규정 링크는 체크 글자 줄에 맞춰 38 들임 (시안 .consent2) */
 .consent { margin-top: var(--space-6); }
 .consent :global(.check) { align-items: flex-start; gap: var(--space-3); min-height: 44px; padding: var(--space-2) 0; }
-.consent :global(.check) input { width: 24px; height: 24px; }
-.consent :global(.hint) { margin-top: 0; padding-left: 36px; font-size: var(--fs-small); }
+.consent :global(.hint) { margin-top: 0; padding-left: 38px; font-size: var(--fs-small); }
 .consent :global(.hint) a { text-decoration: underline; }
 
 /* ── 휴대폰 (시안 v39.css 767 이하) ── */

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useId, useState, type FormEvent } from "react";
 import { safeNextPath } from "@/entities/session/model/safe-next-path";
-import { KEEP_SIGNED_IN_DEFAULT } from "@/shared/config/keep-signed-in";
+import { KEEP_SIGNED_IN_DEFAULT } from "@/entities/session/model/keep-signed-in";
 import { Sentences } from "@/shared/ui/sentences";
 import s from "./login.module.css";
 
@@ -55,7 +55,7 @@ export function LoginPage({ next }: { next?: string }) {
 
   return (
     <main id="main">
-      <section className={s.page} aria-labelledby={f("title")}>
+      <section className="auth-page" aria-labelledby={f("title")}>
         <div className={`container auth ${s.box}`}>
           <div className="head">
             <h1 className="t-title" id={f("title")}>

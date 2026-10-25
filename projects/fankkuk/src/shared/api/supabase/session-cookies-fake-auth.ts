@@ -43,13 +43,18 @@ export function unitSessionCookieValue(expiresInSeconds: number): string {
 
 const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
 
-/** passwordOk false: 비밀번호 로그인(grant_type=password)만 Auth 처럼 400 invalid_credentials 로 답한다. 토큰 갱신은 그대로 성공. */
-export function fakeAuthFetch(opts: { passwordOk?: boolean } = {}) {
+/**
+ * passwordOk false: 비밀번호 로그인(grant_type=password)만 Auth 처럼 400 invalid_credentials 로 답한다. 토큰 갱신은 그대로 성공.
+ * passwordDelayMs: 비밀번호 로그인 답을 그만큼 늦게 준다 — 시작 때 건 토큰 갱신의 쿠키 쓰기가 응답 전에 끝나는 경우를 만든다.
+ */
+export function fakeAuthFetch(opts: { passwordOk?: boolean; passwordDelayMs?: number } = {}) {
   const passwordOk = opts.passwordOk !== false;
+  const passwordDelayMs = opts.passwordDelayMs ?? 0;
   const calls: string[] = [];
   const fetch = async (input: RequestInfo | URL): Promise<Response> => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     calls.push(url);
+    if (passwordDelayMs > 0 && url.includes("grant_type=password")) await new Promise((r) => setTimeout(r, passwordDelayMs));
     if (!passwordOk && url.includes("/auth/v1/token") && url.includes("grant_type=password")) {
       return new Response(JSON.stringify({ code: "invalid_credentials", error_code: "invalid_credentials", msg: "Invalid login credentials" }), {
         status: 400,

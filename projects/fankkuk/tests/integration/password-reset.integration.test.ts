@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { requestPasswordReset, RESET_REQUESTED_MESSAGE } from "@/features/password-reset/model/request-reset";
-import { RESET_LINK_INVALID, resetPassword } from "@/features/password-reset/model/reset-password";
+import { RESET_LINK_INVALID } from "@/features/password-reset/model/reset-messages";
+import { resetPassword } from "@/features/password-reset/model/reset-password";
 import { changePassword } from "@/features/password-change/model/change-password";
-import { PASSWORD_WEAK } from "@/entities/session/model/password-rule";
+import { PASSWORD_SAME_AS_ID, PASSWORD_WEAK } from "@/entities/session/model/password-rule";
 import {
   accountPasswordDeps,
   canSignIn,
@@ -264,7 +265,7 @@ describe("INV-L11: 재설정 링크는 한 번·1시간·그 계정 하나, 끝�
     const a = await createTestAccount({ tag: "bounds7", email: mail });
     const token = issueReset(a.userId);
     expect(await reset(token, "short-9")).toMatchObject({ ok: false, field: "password" });
-    expect(await reset(token, a.loginId)).toMatchObject({ ok: false, field: "password", message: "비밀번호를 아이디와 다르게 적어 주세요." });
+    expect(await reset(token, a.loginId)).toMatchObject({ ok: false, field: "password", message: PASSWORD_SAME_AS_ID });
     expect(await reset(token, "new-pass-bounds-7", { passwordConfirm: "new-pass-other-7" })).toMatchObject({ ok: false, field: "passwordConfirm" });
     expect(await canSignIn(a.loginEmail, FIXTURE_PASSWORD)).toBe(true);
     expect(await reset(token, "new-pass-bounds-7")).toEqual({ ok: true });

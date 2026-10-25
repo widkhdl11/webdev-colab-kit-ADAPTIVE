@@ -38,14 +38,24 @@ function post(body: unknown): NextRequest {
   return new NextRequest(`${SITE}/api/auth/login`, { method: "POST", headers, body: JSON.stringify(body) });
 }
 const creds = { loginId: "byeolbit_fan", password: "pw-1234" };
-/** 라이브러리가 시작 때 건 토큰 갱신은 응답과 따로 끝날 수 있다 — 그 쓰기까지 기다린다. */
-const settle = () => new Promise((r) => setTimeout(r, 30));
-const authWrites = () => sets.filter((s) => s.name.startsWith(UNIT_AUTH_COOKIE) && s.value !== "");
+/**
+ * 라우트가 응답을 돌려준 그 시점까지 쓰인 쿠키만 본다. 응답 뒤에 끝나는 쓰기(store.set)는 실제 Next 에서
+ * 브라우저에 가지 않으므로(쓰기 오류를 server.ts 가 삼킨다) 기다려서 세지 않는다.
+ */
+async function postNow(body: unknown): Promise<{ res: Response; written: typeof sets }> {
+  return POST(post(body)).then((res) => ({ res, written: sets.slice() }));
+}
+const authWrites = (written: typeof sets) => written.filter((s) => s.name.startsWith(UNIT_AUTH_COOKIE) && s.value !== "");
 const markerLines = (res: Response) => res.headers.getSetCookie().filter((l) => l.startsWith(`${SESSION_ONLY_COOKIE}=`));
 const FOUR_HUNDRED_DAYS = 400 * 24 * 60 * 60;
 
+/**
+ * 실패 쪽 시험은 비밀번호 확인 답을 늦게 준다. 그래야 시작 때 건 토큰 갱신의 쿠키 쓰기가 응답 전에 끝나
+ * 실패 응답에 실린다(S13e 가 막으려는 자리). 늦추지 않으면 그 쓰기는 응답 뒤에 끝나 브라우저에 가지 않는다.
+ */
+const SLOW_PASSWORD_MS = 20;
 function useAuth(passwordOk: boolean) {
-  const auth = fakeAuthFetch({ passwordOk });
+  const auth = fakeAuthFetch({ passwordOk, passwordDelayMs: passwordOk ? 0 : SLOW_PASSWORD_MS });
   vi.stubGlobal("fetch", auth.fetch);
   return auth;
 }
@@ -67,27 +77,25 @@ describe("INV-L15: 로그인 실패 응답의 로그인 쿠키는 원래 표시�
     requestCookies.set(SESSION_ONLY_COOKIE, "1");
     requestCookies.set(UNIT_AUTH_COOKIE, unitSessionCookieValue(5)); // 곧 만료 → 시작 때 갱신
     const auth = useAuth(false);
-    const res = await POST(post({ ...creds, keepSignedIn: true }));
-    await settle();
+    const { res, written } = await postNow({ ...creds, keepSignedIn: true });
     expect(res.status).toBe(401);
     expect(auth.calls.some((u) => u.includes("grant_type=refresh_token"))).toBe(true);
-    expect(authWrites().length).toBeGreaterThan(0);
-    for (const c of authWrites()) {
+    expect(authWrites(written).length).toBeGreaterThan(0);
+    for (const c of authWrites(written)) {
       expect(c.options?.maxAge).toBeUndefined();
       expect(c.options?.expires).toBeUndefined();
     }
     expect(markerLines(res)).toEqual([]);
-    expect(sets.filter((s) => s.name === SESSION_ONLY_COOKIE)).toEqual([]);
+    expect(written.filter((s) => s.name === SESSION_ONLY_COOKIE)).toEqual([]);
   });
 
   it("INV-L15 (S13e, 실패경로): 표시가 없는(켜고 로그인한) 사람이 끄고 틀리면 갱신 쿠키는 원래대로 만료 시각이 붙는다", async () => {
     requestCookies.set(UNIT_AUTH_COOKIE, unitSessionCookieValue(5));
     useAuth(false);
-    const res = await POST(post({ ...creds, keepSignedIn: false }));
-    await settle();
+    const { res, written } = await postNow({ ...creds, keepSignedIn: false });
     expect(res.status).toBe(401);
-    expect(authWrites().length).toBeGreaterThan(0);
-    for (const c of authWrites()) expect(c.options?.maxAge).toBe(FOUR_HUNDRED_DAYS);
+    expect(authWrites(written).length).toBeGreaterThan(0);
+    for (const c of authWrites(written)) expect(c.options?.maxAge).toBe(FOUR_HUNDRED_DAYS);
     expect(markerLines(res)).toEqual([]);
   });
 
@@ -105,10 +113,10 @@ describe("INV-L15: 로그인 실패 응답의 로그인 쿠키는 원래 표시�
 describe("INV-L15: 로그인 성공 응답의 로그인 쿠키는 고른 값대로 쓴다", () => {
   it("INV-L15 (S13): 끄고 성공하면 표시가 없어도 로그인 쿠키에 만료 시각이 없다", async () => {
     useAuth(true);
-    const res = await POST(post({ ...creds, keepSignedIn: false }));
+    const { res, written } = await postNow({ ...creds, keepSignedIn: false });
     expect(res.status).toBe(200);
-    expect(authWrites().length).toBeGreaterThan(0);
-    for (const c of authWrites()) {
+    expect(authWrites(written).length).toBeGreaterThan(0);
+    for (const c of authWrites(written)) {
       expect(c.options?.maxAge).toBeUndefined();
       expect(c.options?.expires).toBeUndefined();
     }
@@ -118,10 +126,9 @@ describe("INV-L15: 로그인 성공 응답의 로그인 쿠키는 고른 값대�
     requestCookies.set(SESSION_ONLY_COOKIE, "1");
     requestCookies.set(UNIT_AUTH_COOKIE, unitSessionCookieValue(5));
     useAuth(true);
-    const res = await POST(post({ ...creds, keepSignedIn: true }));
-    await settle();
+    const { res, written } = await postNow({ ...creds, keepSignedIn: true });
     expect(res.status).toBe(200);
-    expect(authWrites().length).toBeGreaterThan(0);
-    for (const c of authWrites()) expect(c.options?.maxAge).toBe(FOUR_HUNDRED_DAYS);
+    expect(authWrites(written).length).toBeGreaterThan(0);
+    for (const c of authWrites(written)) expect(c.options?.maxAge).toBe(FOUR_HUNDRED_DAYS);
   });
 });

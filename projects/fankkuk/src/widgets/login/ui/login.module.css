@@ -1,16 +1,10 @@
 /* 로그인 — 시안 docs/design/mockups/site/part6-2026-10-25/login.html · part6.css(design-rules 29절).
    가운데 기둥 480(양옆 여백 포함 528). 위에서부터 머리(카드 밖) → 카드 → 「비밀번호를 잊으셨나요?」 → 가입 줄.
    상단 바 아래 96(휴대폰 64), 아래 바닥글까지 --section-gap.
-   카드·머리·폼·확인칸·오류(.err)·아래 줄(.foot-line)은 전역 클래스 */
-.page { padding: var(--space-24) 0 var(--section-gap); }
-:global(.auth).box { max-width: calc(var(--col-auth) + 2 * var(--gutter)); }
-.box :global(.head) { margin-bottom: var(--space-8); }
-.box :global(.head .t-lead) { margin-top: var(--space-2); font-size: var(--fs-body); font-weight: 400; line-height: 1.5; }
+   카드·머리·폼·확인칸·오류(.err)·아래 줄(.foot-line)은 전역 클래스.
+   틀(위아래 여백·기둥 폭·머리 간격)은 base.css 의 .auth-page */
 /* 카드 아래 가운데 링크 한 줄 — 누를 칸 44 */
 .under { display: flex; flex-direction: column; align-items: center; margin-top: var(--space-4); }
 .link { display: inline-flex; align-items: center; min-height: 44px; padding-inline: var(--space-2); font-weight: var(--fw-btn); color: var(--ink); text-underline-offset: 4px; }
 .box :global(.foot-line) { margin-top: 0; color: var(--sub); }
 .box :global(.foot-line a) { font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
-@media (max-width: 767px) {
-  .page { padding-top: var(--space-16); }
-}

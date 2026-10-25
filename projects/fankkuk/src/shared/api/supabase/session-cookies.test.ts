@@ -3,6 +3,7 @@ import type { CookieMethodsServer, CookieOptions } from "@supabase/ssr";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createSessionClient,
+  deferSessionCookieWrites,
   isSessionOnly,
   SESSION_ONLY_COOKIE,
   sessionCookieOptions,
@@ -149,5 +150,69 @@ describe("INV-L15: 어느 쪽으로 로그인했는지는 표시 쿠키 하나�
     expect(m.value).toBe("");
     expect(m.options.maxAge).toBe(0);
     expect(m.options.httpOnly).toBe(true);
+  });
+});
+
+describe("INV-L15: 쓰기 규칙을 나중에 정하는 쿠키 쓰기(deferSessionCookieWrites)", () => {
+  type Item = Parameters<NonNullable<CookieMethodsServer["setAll"]>>[0][number];
+  const long = (name: string): Item => ({ name, value: "v", options: { path: "/", httpOnly: true, maxAge: LIBRARY_MAX_AGE } });
+  function recorder() {
+    const calls: Item[][] = [];
+    return { calls, setAll: (list: Item[]) => void calls.push(list.map((c) => ({ ...c, options: { ...c.options } }))) };
+  }
+
+  it("INV-L15 (S13e): decide 전의 쓰기는 모아 두었다가 decide 때 그 규칙으로 한꺼번에 쓴다", () => {
+    const r = recorder();
+    const d = deferSessionCookieWrites(r.setAll);
+    d.setAll([long("a")], {});
+    d.setAll([long("b")], {});
+    expect(r.calls).toEqual([]);
+    d.decide(true);
+    expect(r.calls).toHaveLength(1);
+    expect(r.calls[0].map((c) => c.name)).toEqual(["a", "b"]);
+    for (const c of r.calls[0]) expect(c.options.maxAge).toBeUndefined();
+  });
+
+  it("INV-L15 (S13e): 켬으로 decide 하면 모아 둔 쓰기에 만료 시각이 그대로 붙는다", () => {
+    const r = recorder();
+    const d = deferSessionCookieWrites(r.setAll);
+    d.setAll([long("a")], {});
+    d.decide(false);
+    expect(r.calls).toHaveLength(1);
+    expect(r.calls[0][0].options.maxAge).toBe(LIBRARY_MAX_AGE);
+  });
+
+  it("INV-L15: decide 뒤의 쓰기는 모으지 않고 바로 그 규칙으로 쓴다", () => {
+    const r = recorder();
+    const d = deferSessionCookieWrites(r.setAll);
+    d.decide(true);
+    expect(r.calls).toEqual([]);
+    d.setAll([long("late")], {});
+    expect(r.calls).toHaveLength(1);
+    expect(r.calls[0][0].name).toBe("late");
+    expect(r.calls[0][0].options.maxAge).toBeUndefined();
+  });
+
+  it("INV-L15 (실패경로): 처음 decide 한 값만 이긴다 — 다시 decide 해도 규칙이 안 바뀌고 모아 둔 쓰기를 두 번 쓰지 않는다", () => {
+    const r = recorder();
+    const d = deferSessionCookieWrites(r.setAll);
+    d.setAll([long("a")], {});
+    d.decide(true);
+    d.decide(false);
+    expect(r.calls).toHaveLength(1);
+    d.setAll([long("late")], {});
+    expect(r.calls).toHaveLength(2);
+    expect(r.calls[1][0].options.maxAge).toBeUndefined();
+  });
+
+  it("INV-L15 (실패경로): 모아 둔 쓰기가 Promise 로 실패하면 삼키지 않고 오류로 남긴다", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const boom = new Error("write failed");
+    const d = deferSessionCookieWrites(() => Promise.reject(boom));
+    d.setAll([long("a")], {});
+    d.decide(true);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(error).toHaveBeenCalledWith(expect.any(String), boom);
+    error.mockRestore();
   });
 });
