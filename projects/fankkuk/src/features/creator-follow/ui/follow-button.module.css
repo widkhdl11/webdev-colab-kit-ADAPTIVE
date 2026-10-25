@@ -7,3 +7,21 @@
 @keyframes pop { 0% { transform: scale(1); } 45% { transform: scale(1.14); } 100% { transform: scale(1); } }
 .pop { animation: pop 0.2s var(--ease-micro); }
 @media (prefers-reduced-motion: reduce) { .pop { animation: none; } }
+/* 크리에이터 상세 버튼 묶음 마이크로 디테일(2026-10-25 사용자 「버튼 디테일 살려줘. 마우스 오버했을때 효과」 — 23-2절 공통 효과 위에 덧붙인다).
+   선물 보내기 = 화살표가 2px 앞으로(23-2 「2px 이하」) · 팔로우 = 「+」가 90도 · 팔로우 중 = 체크가 ×로 바뀌고 글자가 빨강(누르면 취소 확인 창). 움직임은 마우스 기기에서만, 움직임 줄이기면 끈다 */
+.ico { display: inline-flex; transition: transform var(--dur-hover) var(--ease-micro); }
+.swap { position: relative; display: inline-flex; width: 18px; height: 18px; }
+.swap > svg { position: absolute; inset: 0; transition: opacity var(--dur-hover), transform var(--dur-hover) var(--ease-micro); }
+.swap > svg + svg { opacity: 0; transform: rotate(-90deg) scale(0.6); }
+.following { transition: color var(--dur-hover); }
+@media (hover: hover) {
+  .gift:hover .ico { transform: translateX(2px); }
+  .follow:hover .ico { transform: rotate(90deg); }
+  .following:hover { color: var(--danger); }
+  .following:hover .swap > svg:first-child { opacity: 0; transform: rotate(90deg) scale(0.6); }
+  .following:hover .swap > svg + svg { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ico, .swap > svg, .following { transition: none; }
+  .gift:hover .ico, .follow:hover .ico { transform: none; }
+}

@@ -108,6 +108,24 @@ describe("크리에이터 상세 — 버튼 자리 상태표 (UX 명세 2026-10-
     expect(document.activeElement).toBe(gift);
   });
 
+  // 버튼 디테일(2026-10-25 사용자 「버튼 디테일 살려줘」, design-rules 24절과 같은 튐) — 처음 그릴 때는 튀지 않고, 저장이 성공해 바뀐 뒤에만 새 글자가 튄다
+  const popped = () => [...host.querySelectorAll<HTMLElement>("a.btn span, button.btn span")].filter((el) => /pop/.test(el.className)).map((el) => el.textContent);
+  it("처음 그릴 때는 버튼 글자가 튀지 않고, 「팔로우」 저장이 성공한 뒤 새 버튼 글자만 튄다", async () => {
+    renderProfile("needs_follow", "save");
+    expect(popped()).toEqual([]);
+    act(() => buttonByText("팔로우")!.click());
+    await flush();
+    expect(popped()).toEqual(["선물 보내기", "팔로우 중"]);
+  });
+
+  it("(실패경로) 저장이 실패하면 글자가 튀지 않는다", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 500 }));
+    renderProfile("needs_follow", "save");
+    act(() => buttonByText("팔로우")!.click());
+    await flush();
+    expect(popped()).toEqual([]);
+  });
+
   it("(실패경로) 팔로우 저장에 실패하면 「팔로우」 그대로 두고 알린다 — 「선물 보내기」가 보이지 않는다", async () => {
     fetchMock.mockImplementation(async () => new Response("{}", { status: 500 }));
     renderProfile("needs_follow", "save");

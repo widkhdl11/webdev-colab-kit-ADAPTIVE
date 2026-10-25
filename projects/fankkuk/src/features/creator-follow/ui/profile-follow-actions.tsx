@@ -16,13 +16,18 @@ import { useFollowSave } from "./use-follow-save";
 // 저장하는 동안은 버튼 글자를 그대로 두고 흐리게(사이트 공통 aria-disabled 모양) 누를 수 없게 한다.
 // 저장이 실패하면 버튼 묶음 바로 아래에 한 줄(읽기 프로그램에도 알린다). 저장·실패 처리는 useFollowSave(「팔로우하고 선물 보내기」와 같이 쓴다).
 
-function ArrowIcon() {
+// 버튼 아이콘 — 꾸밈이라 읽지 않는다. 마우스를 올렸을 때의 움직임은 follow-button.module.css(사용자 「버튼 디테일 살려줘」)
+function Icon({ d }: { d: string }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 12h14m-5-5 5 5-5 5" />
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d={d} />
     </svg>
   );
 }
+const ARROW = "M5 12h14m-5-5 5 5-5 5";
+const PLUS = "M12 5v14M5 12h14";
+const CHECK = "m5 12.5 4.5 4.5L19 7.5";
+const CROSS = "M6.5 6.5l11 11m0-11-11 11";
 
 export function ProfileFollowActions({
   creatorId,
@@ -39,6 +44,9 @@ export function ProfileFollowActions({
 }) {
   const router = useRouter();
   const [following, setFollowing] = useState(initialFollowing);
+  // 상태가 바뀐 뒤에만 새 버튼 글자가 한 번 튄다(design-rules 24절 「팔로우」 버튼과 같은 효과) — 처음 그릴 때는 튀지 않는다
+  const [changed, setChanged] = useState(false);
+  const lbl = changed ? `${s.lbl} ${s.pop}` : s.lbl;
   const { save, saving, isSaving, failText } = useFollowSave(creatorId);
   const unfollowConfirm = useUnfollowConfirm();
   // 상태가 바뀌면 누른 버튼이 사라진다 — 바뀐 뒤 초점을 옮길 자리(팔로우 → 「선물 보내기」, 팔로우 취소 → 「팔로우」)
@@ -54,7 +62,10 @@ export function ProfileFollowActions({
 
   if (!signedIn) {
     return (
-      <Link className="btn" href="/login" aria-label={`${creatorName}님 팔로우 — 로그인이 필요해요`}>
+      <Link className={`btn ${s.follow}`} href="/login" aria-label={`${creatorName}님 팔로우 — 로그인이 필요해요`}>
+        <span className={s.ico}>
+          <Icon d={PLUS} />
+        </span>
         팔로우
       </Link>
     );
@@ -64,6 +75,7 @@ export function ProfileFollowActions({
     if (!(await save(next))) return;
     focusNextRef.current = next ? "gift" : "follow";
     setFollowing(next);
+    setChanged(true);
     // 받는 상태·보내기 자리는 서버가 다시 정한다(쉬는 중이 되었으면 버튼 자리가 안내 한 줄로 바뀐다)
     router.refresh();
   };
@@ -85,22 +97,31 @@ export function ProfileFollowActions({
         <>
           <Link
             ref={giftRef}
-            className="btn"
+            className={`btn ${s.gift}`}
             href={`/gifts/new?creator=${encodeURIComponent(creatorId)}`}
             aria-label={`${creatorName}님 선물 보내기`}
             aria-disabled={busy}
             onClick={blockWhileSaving}
           >
-            선물 보내기
-            <ArrowIcon />
+            <span className={lbl}>선물 보내기</span>
+            <span className={s.ico}>
+              <Icon d={ARROW} />
+            </span>
           </Link>
-          <button className="btn btn--line" type="button" aria-label={`${creatorName}님 팔로우 중`} aria-disabled={busy} aria-busy={busy} onClick={onUnfollow}>
-            팔로우 중
+          <button className={`btn btn--line ${s.following}`} type="button" aria-label={`${creatorName}님 팔로우 중`} aria-disabled={busy} aria-busy={busy} onClick={onUnfollow}>
+            <span className={s.swap}>
+              <Icon d={CHECK} />
+              <Icon d={CROSS} />
+            </span>
+            <span className={lbl}>팔로우 중</span>
           </button>
         </>
       ) : (
-        <button ref={followRef} className="btn" type="button" aria-label={`${creatorName}님 팔로우`} aria-disabled={busy} aria-busy={busy} onClick={onFollow}>
-          팔로우
+        <button ref={followRef} className={`btn ${s.follow}`} type="button" aria-label={`${creatorName}님 팔로우`} aria-disabled={busy} aria-busy={busy} onClick={onFollow}>
+          <span className={s.ico}>
+            <Icon d={PLUS} />
+          </span>
+          <span className={lbl}>팔로우</span>
         </button>
       )}
       {/* 저장 실패 알림 — 늘 같은 칸(읽기 프로그램이 바뀐 글자를 읽는다). 비었을 때는 자리를 차지하지 않고, 실패하면 버튼 묶음 아래 한 줄로 보인다 */}
