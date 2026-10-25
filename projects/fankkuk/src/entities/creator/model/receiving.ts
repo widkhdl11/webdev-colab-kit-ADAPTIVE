@@ -93,11 +93,14 @@ export function isResting(resumeOn: string | null, today: CalendarDate): boolean
   return r !== null && serial(r) > serial(today);
 }
 
+/** INV-B2: 쉬는 중 안내의 앞부분 — 다시 받는 날을 모를 때는 이것만 보인다. */
+export const RESTING_SHORT = "잠시 선물 받기를 쉬고 있어요";
+
 /** INV-B2: 쉬는 중 안내 — 「잠시 선물 받기를 쉬고 있어요. 10월 20일부터 다시 받을게요」. */
 export function restingMessage(resumeOn: string): string {
   const r = parseIsoDate(resumeOn);
   const when = r ? `${r.month}월 ${r.day}일` : resumeOn;
-  return `잠시 선물 받기를 쉬고 있어요. ${when}부터 다시 받을게요`;
+  return `${RESTING_SHORT}. ${when}부터 다시 받을게요`;
 }
 
 /** INV-B2: 쉬는 중이면 그 안내, 아니면 null — 크리에이터 페이지·등록 화면 목록·고른 크리에이터 안내가 같이 쓴다. */

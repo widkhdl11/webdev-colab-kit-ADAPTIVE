@@ -51,12 +51,31 @@ async function html(path: string, who: Who): Promise<string> {
   return res.text();
 }
 
-/** 넘기기 응답의 상태와 넘어갈 경로(+물음표 뒤). */
-async function redirectOf(path: string, who: Who | null): Promise<[number, string]> {
+// 상태 코드가 아니라 본문으로 판정한다. 함께한 시간 경로에는 로딩 화면(loading.tsx)이 있어서, 서버가 그 뼈대를 먼저 보내면서
+// 상태 코드 200 이 확정된다 — 그 뒤에 나는 「없는 페이지」·「넘기기」는 본문 안의 Next 표시로만 남는다(처음부터 404·307 로 오는 경우도 같이 받는다).
+
+/** 넘어갈 경로(+물음표 뒤) — location 머리줄, 또는 본문의 Next 넘김 표시(<meta id="__next-page-redirect" ... content="1;url=...">). 넘김이 없으면 "". */
+async function redirectOf(path: string, who: Who | null): Promise<string> {
   const res = await open(path, who);
-  const loc = res.headers.get("location");
-  const u = loc ? new URL(loc, APP) : null;
-  return [res.status, u ? `${u.pathname}${u.search}` : ""];
+  const loc = res.headers.get("location") ?? (await res.text()).match(/<meta id="__next-page-redirect" http-equiv="refresh" content="\d+;url=([^"]+)"/)?.[1] ?? null;
+  const u = loc ? new URL(loc.replaceAll("&amp;", "&"), APP) : null;
+  return u ? `${u.pathname}${u.search}` : "";
+}
+
+/** 없는 페이지인가 — 상태 404, 또는 본문에 Next 의 없는 페이지 표시(NEXT_HTTP_ERROR_FALLBACK;404)와 검색 제외 메타가 둘 다 있다. */
+function isNotFound(status: number, body: string): boolean {
+  return status === 404 || (body.includes("NEXT_HTTP_ERROR_FALLBACK;404") && body.includes('<meta name="robots" content="noindex"/>'));
+}
+
+/** 없는 페이지이고, 그 주문의 기록(크리에이터 이름·「함께한 시간」 글자·사진 주소)이 본문 어디에도(스크립트 포함) 없다. */
+async function expectMissing(path: string, who: Who, label: string, orderNo?: string): Promise<void> {
+  const res = await open(path, who);
+  const body = await res.text();
+  expect(isNotFound(res.status, body), `${label} 없는 페이지`).toBe(true);
+  // 그 크리에이터 본인은 상단 바에 자기 이름이 있으니 이름 검사에서 뺀다
+  if (who !== "creator") expect(body, `${label} 크리에이터 이름`).not.toContain(A.name);
+  expect(body, `${label} 함께한 시간`).not.toContain("함께한 시간");
+  if (orderNo) expect(body, `${label} 사진 주소`).not.toContain(`/api/gifts/photo/${orderNo}`);
 }
 
 /** 화면 HTML 안의 보이는 글자 — 태그·스크립트를 걷어 낸다. */
@@ -119,7 +138,10 @@ describe("함께한 시간 화면 — 본인만 (INV-F1)", () => {
   it("INV-F1 S1: 보낸 팬은 링크 주소로 자기 기록을 본다 — 이름·처음 선물한 날·숫자", async () => {
     paidOrder(fanA.userId, A.creatorId, "now() - interval '3 days'");
     giftBoxes(fanA.userId, A.creatorId, 1);
-    const text = visibleText(await html(`/gifts/with/${HANDLE}`, "fanA"));
+    const page = await html(`/gifts/with/${HANDLE}`, "fanA");
+    // 본인은 기록이 있다 — 아래 「없는 페이지」 판정이 이 응답에는 걸리지 않음을 같이 본다
+    expect(isNotFound(200, page)).toBe(false);
+    const text = visibleText(page);
     expect(text).toContain(`${A.name}님과 함께한 시간`);
     expect(text).toContain("나만 볼 수 있어요");
     expect(text).toMatch(/함께한 선물 2\s*개/);
@@ -127,27 +149,19 @@ describe("함께한 시간 화면 — 본인만 (INV-F1)", () => {
   });
 
   it("INV-F1 S1 (실패경로): 다른 팬·그 크리에이터가 같은 주소를 열면 없는 페이지, 로그인 안 함은 로그인으로", async () => {
-    paidOrder(fanA.userId, A.creatorId, "now() - interval '3 days'");
+    const orderNo = paidOrder(fanA.userId, A.creatorId, "now() - interval '3 days'");
     for (const who of ["fanB", "creator"] as const) {
-      const res = await open(`/gifts/with/${HANDLE}`, who);
-      expect(res.status, who).toBe(404);
-      expect(visibleText(await res.text()), who).not.toContain("함께한 시간");
+      await expectMissing(`/gifts/with/${HANDLE}`, who, who, orderNo);
       // ID 주소는 기록을 읽기 전에 공개 링크 주소로 넘긴다(링크 주소는 크리에이터 페이지 주소라 공개다) — 넘겨진 주소에서 없는 페이지
-      expect(await redirectOf(`/gifts/with/${A.creatorId}`, who), `${who} id`).toEqual([307, `/gifts/with/${HANDLE}`]);
+      expect(await redirectOf(`/gifts/with/${A.creatorId}`, who), `${who} id`).toBe(`/gifts/with/${HANDLE}`);
     }
-    const [status, to] = await redirectOf(`/gifts/with/${HANDLE}`, null);
-    expect(status).toBe(307);
-    expect(to).toBe(`/login?next=/gifts/with/${HANDLE}`);
+    expect(await redirectOf(`/gifts/with/${HANDLE}`, null)).toBe(`/login?next=/gifts/with/${HANDLE}`);
   });
 
   it("INV-F1·F2 (실패경로): 운영자 세션으로 함께한 시간 화면과 사진 주소를 열면 404", async () => {
     const orderNo = paidOrder(fanA.userId, A.creatorId, "now() - interval '3 days'");
     expect((await upload(orderNo, "fanA", await jpegWithGps(640, 480))).status).toBe(200);
-    for (const path of [`/gifts/with/${HANDLE}`, `/gifts/with/${A.creatorId}`]) {
-      const res = await open(path, "operator");
-      expect(res.status, path).toBe(404);
-      expect(visibleText(await res.text()), path).not.toContain("함께한 시간");
-    }
+    for (const path of [`/gifts/with/${HANDLE}`, `/gifts/with/${A.creatorId}`]) await expectMissing(path, "operator", path, orderNo);
     const photo = await open(`/api/gifts/photo/${orderNo}`, "operator");
     expect(photo.status).toBe(404);
     expect(photo.headers.get("location")).toBeNull();
@@ -155,8 +169,11 @@ describe("함께한 시간 화면 — 본인만 (INV-F1)", () => {
 
   it("INV-F1: 크리에이터 ID 주소로 열면 링크 주소로 넘긴다 · 꼴이 틀린 주소는 없는 페이지", async () => {
     paidOrder(fanA.userId, A.creatorId, "now() - interval '3 days'");
-    expect(await redirectOf(`/gifts/with/${A.creatorId}`, "fanA")).toEqual([307, `/gifts/with/${HANDLE}`]);
-    expect((await open("/gifts/with/NOT-A-HANDLE", "fanA")).status).toBe(404);
+    expect(await redirectOf(`/gifts/with/${A.creatorId}`, "fanA")).toBe(`/gifts/with/${HANDLE}`);
+    // 넘김 표시가 없는 주소에서는 ""(판정 함수가 아무 응답에나 경로를 돌려주지 않음을 같이 본다)
+    expect(await redirectOf(`/gifts/with/${HANDLE}`, "fanA")).toBe("");
+    const res = await open("/gifts/with/NOT-A-HANDLE", "fanA");
+    expect(isNotFound(res.status, await res.text())).toBe(true);
   });
 });
 
@@ -229,14 +246,14 @@ describe("다음 기념일 칸·선물 보내기 (INV-F5)", () => {
 });
 
 describe("「선물 보내기」 — 크리에이터 페이지와 같은 판정 (INV-F5)", () => {
-  /** 화면의 보내기 자리: 「선물 보내기」 링크가 있는가 · 팔로우부터 해야 하는 버튼이 있는가(함께한 시간 = 「팔로우하고 선물 보내기」,
-   *  크리에이터 페이지 = 「팔로우」 — 2026-10-25 재디자인, UX 명세 handle.md). 없는 페이지면 둘 다 없음. */
-  async function sendSpot(path: string): Promise<[boolean, boolean] | "missing"> {
+  /** 화면의 보내기 자리: 「선물 보내기」 링크가 있는가 · 팔로우부터 해야 하는 버튼이 있는가. 팔로우 버튼 이름은 화면마다 하나로 정해져 있다 —
+   *  크리에이터 페이지 = 「OO님 팔로우」(2026-10-25 재디자인, UX 명세 handle.md), 함께한 시간 = 「OO님 팔로우하고 선물 보내기」. 없는 페이지면 둘 다 없음. */
+  async function sendSpot(path: string, followLabel: string): Promise<[boolean, boolean] | "missing"> {
     const res = await open(path, "fanA");
-    if (res.status === 404) return "missing";
-    expect(res.status, path).toBe(200);
     const page = await res.text();
-    const followFirst = page.includes(`aria-label="${A.name}님 팔로우하고 선물 보내기"`) || page.includes(`aria-label="${A.name}님 팔로우"`);
+    if (isNotFound(res.status, page)) return "missing";
+    expect(res.status, path).toBe(200);
+    const followFirst = page.includes(`aria-label="${followLabel}"`);
     return [page.includes(`href="/gifts/new?creator=${A.creatorId}"`), followFirst];
   }
   const spotOf = (r: [boolean, boolean] | "missing"): [boolean, boolean] => (r === "missing" ? [false, false] : r);
@@ -273,8 +290,8 @@ describe("「선물 보내기」 — 크리에이터 페이지와 같은 판정 
            birthday_day = extract(day from public.receiving_today() + 12)::smallint where id = '${A.creatorId}'`,
       );
       st.setup();
-      const creatorPage = spotOf(await sendSpot(`/${HANDLE}`));
-      const together = await sendSpot(st.togetherPath);
+      const creatorPage = spotOf(await sendSpot(`/${HANDLE}`, `${A.name}님 팔로우`));
+      const together = await sendSpot(st.togetherPath, `${A.name}님 팔로우하고 선물 보내기`);
       expect(together, "함께한 시간은 기록이 있으니 열린다").not.toBe("missing");
       expect(creatorPage, "크리에이터 페이지").toEqual(st.expected);
       expect(together, "함께한 시간").toEqual(creatorPage);

@@ -5,15 +5,17 @@
 .app:global(.page-centered) { max-width: calc(var(--col-profile) + 2 * var(--gutter)); }
 .pub .col { max-width: calc(var(--col-profile) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
 .col { container-type: inline-size; min-width: 0; }
+/* 이 화면에서만 로그인 전 상단 바·바닥글 폭도 본문 기둥(1080 + 양옆 여백)에 맞춘다 — 전역 --pub-max 값은 그대로. 지역 클래스(.pub)를 넣어야 CSS 모듈이 받는다 */
+:global(body):has(main[data-wide-pub].pub) { --pub-max: calc(var(--col-profile) + 2 * var(--gutter)); }
 
 /* ---------- 머리: 배경 사진 면 · 큰 원형 사진(왼쪽 아래 걸침) · 글 ---------- */
 .pf { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--space-12); padding-bottom: var(--space-10); }
 /* 배경 사진 칸 — 사진이 없으면 테마 색(--personal, creator-link INV-E13) 면 그대로, 그것도 없으면 크리에이터마다 정해진 파스텔 + 흐린 고양이 */
 .cover { grid-column: 1 / -1; position: relative; overflow: hidden; height: 280px; border-radius: var(--r-panel); background: var(--pastel, var(--primary-50)); }
 .ringed .cover { background: var(--personal); }
-/* 사진: 흰 테두리 6 — 테마 색이 있으면 안쪽에 테마 색 테두리 */
-.photo:global(.face) { position: relative; grid-column: 1; width: 184px; height: 184px; margin: -84px 0 0 var(--space-2); box-shadow: 0 0 0 6px var(--white); font-size: var(--fs-title); font-weight: var(--fw-title); font-family: var(--font-round); object-fit: cover; }
-.ringed .photo:global(.face) { box-shadow: 0 0 0 4px var(--personal), 0 0 0 10px var(--white); }
+/* 사진: 겉지름 184 안쪽에 흰 테두리 6(시안 .avatar) — 테마 색이 있으면 그 안쪽에 테마 색 테두리 3 */
+.photo:global(.face) { position: relative; grid-column: 1; box-sizing: border-box; width: 184px; height: 184px; margin: -84px 0 0 var(--space-2); border: 6px solid var(--white); font-size: var(--fs-title); font-weight: var(--fw-title); font-family: var(--font-round); object-fit: cover; }
+.ringed .photo:global(.face) { outline: 3px solid var(--personal); outline-offset: -9px; }
 .pfMain { grid-column: 2; min-width: 0; padding-top: var(--space-4); }
 .nameLine { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .name { min-width: 0; font-size: var(--fs-title); line-height: 1.35; overflow-wrap: anywhere; }
@@ -47,14 +49,14 @@
 .fanLine svg { flex: none; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ---------- 구간 ---------- */
-.sec { margin-top: calc(var(--space-10) * 2); }
+.sec { margin-top: var(--space-16); }
 .secTitle { margin-bottom: var(--space-6); font-size: var(--fs-page); line-height: 1.35; }
 
 /* 감사 답장 3열 */
 .replies { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-6); list-style: none; padding: 0; }
-.reply { display: flex; flex-direction: column; min-height: 184px; padding: 28px var(--space-6) var(--space-6); border-radius: var(--r-card); background: var(--surface); }
+.reply { display: flex; flex-direction: column; min-height: 184px; padding: var(--space-6); border-radius: var(--r-card); background: var(--surface); }
 .reply blockquote { margin: 0; font-size: var(--fs-card); font-weight: 400; line-height: 1.6; overflow-wrap: anywhere; }
-.by { margin-top: auto; padding-top: 28px; color: var(--sub); font-size: var(--fs-small); font-weight: 400; }
+.by { margin-top: auto; padding-top: var(--space-6); color: var(--sub); font-size: var(--fs-small); font-weight: 400; }
 
 /* 보내기 전 안내 — 접는 줄 둘 */
 .guide { padding: var(--space-2) var(--space-6); border-radius: var(--r-card); background: var(--surface); }
@@ -65,7 +67,8 @@
 .guide details[open] .chevron { transform: rotate(180deg); }
 .answer { padding-bottom: var(--space-6); }
 .prohibited { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-6); list-style: none; padding: 0; }
-.prohibited li { display: flex; align-items: center; gap: var(--space-2); font-weight: 400; }
+.prohibited li { display: flex; align-items: center; gap: var(--space-2); min-width: 0; font-weight: 400; }
+.prohibited li > span { min-width: 0; overflow-wrap: anywhere; }
 .prohibited svg { flex: none; width: 16px; height: 16px; fill: none; stroke: var(--sub); stroke-width: 1.8; stroke-linecap: round; }
 .desc { color: var(--sub); }
 .inspection { display: grid; gap: var(--space-3); max-width: var(--prose-max); list-style: none; padding: 0; color: var(--sub); font-weight: 400; }
@@ -75,7 +78,7 @@
 .similarHead .secTitle { margin-bottom: 0; }
 .otherGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); list-style: none; padding: 0; }
 .other { display: flex; align-items: center; gap: var(--space-4); height: 100%; min-height: 100px; padding: var(--space-6) var(--space-4); border-radius: var(--r-card); background: var(--surface); color: var(--ink); text-decoration: none; transition: background-color 0.15s; }
-.other:hover { background: var(--gray-100); }
+.other:hover { background: var(--surface-hover); }
 .otherFace:global(.face) { width: 56px; height: 56px; font-weight: var(--fw-btn); }
 .otherWho { display: grid; gap: var(--space-2); min-width: 0; }
 .otherWho b { font-size: var(--fs-card); font-weight: var(--fw-btn); overflow-wrap: anywhere; }

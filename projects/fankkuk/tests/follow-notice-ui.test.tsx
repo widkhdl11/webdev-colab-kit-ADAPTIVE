@@ -5,13 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
 
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
-import {
-  FOLLOW_NICKNAME_NOTICE,
-  FOLLOW_NICKNAME_NOTICE_SHORT,
-  FOLLOWING_NICKNAME_NOTICE,
-  NEEDS_FOLLOW_TO_SEND,
-} from "@/features/creator-follow/model/follow-notice";
-import type { FollowMode } from "@/features/creator-follow/ui/follow-button";
+import { FOLLOW_NICKNAME_NOTICE, FOLLOWING_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
+import type { FollowMode } from "@/features/creator-follow/model/follow-mode";
 import type { LinkPageSend } from "@/features/gift-register/model/sender-rule";
 import { CreatorProfilePage } from "@/widgets/creator-profile/ui/creator-profile-page";
 import { CreatorSearchPage } from "@/widgets/creator-search/ui/creator-search-page";
@@ -77,8 +72,10 @@ describe("팔로우 닉네임 안내 — 크리에이터 페이지 (INV-R2, 2026
   it("팔로우하지 않은 로그인 팬·로그인 전·보낼 수 있는 팬 누구에게도 버튼 아래 안내 줄이 없다", () => {
     for (const [send, mode] of [["needs_follow", "save"], ["needs_follow", "login"], ["open", "save"]] as const) {
       renderProfile(send, mode);
-      expect(host.textContent, `${send}/${mode}`).not.toContain(NEEDS_FOLLOW_TO_SEND);
-      expect(host.textContent, `${send}/${mode}`).not.toContain(FOLLOW_NICKNAME_NOTICE_SHORT);
+      // 지운 문구를 글자 그대로 — 상수가 없어져도 다시 들어오면 잡는다
+      expect(host.textContent, `${send}/${mode}`).not.toContain("팔로우한 크리에이터에게만 보낼 수 있어요");
+      expect(host.textContent, `${send}/${mode}`).not.toContain("팔로우하면 내 닉네임이 보여요");
+      expect(host.textContent, `${send}/${mode}`).not.toContain("닉네임");
     }
   });
 });

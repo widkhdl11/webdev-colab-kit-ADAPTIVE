@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { creatorPagePath } from "@/entities/creator/model/creator-handle";
-import { addDays, restingNotice, upcomingDday, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
+import { addDays, RESTING_SHORT, restingNotice, upcomingDday, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
 import { hardItemsNotice, type HardItems } from "@/entities/gift-item/model/hard-items";
 import type { WallReply } from "@/entities/gift-reply/api/gift-reply-reads";
 import { ANONYMOUS_FAN, dotDate, REPLY_PHRASE_TEXT } from "@/entities/gift-reply/model/reply";
@@ -22,7 +22,7 @@ import type { PublicCreatorLook } from "@/entities/creator/model/link-images";
 import type { ProhibitedItem } from "@/entities/parcel/model/prohibited-item";
 import { lowestPriceKrw, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { ProfileFollowActions } from "@/features/creator-follow/ui/profile-follow-actions";
-import type { FollowMode } from "@/features/creator-follow/ui/follow-button";
+import type { FollowMode } from "@/features/creator-follow/model/follow-mode";
 import type { LinkPageSend } from "@/features/gift-register/model/sender-rule";
 import s from "./creator-profile.module.css";
 
@@ -99,9 +99,11 @@ function StatValue({ text }: { text: string }) {
   );
 }
 
-/** 버튼 자리(UX 명세 상태표) — needs_follow·open 은 팔로우 묶음, self 는 꼬리표, hidden(쉬는 중)은 쉬는 기간 한 줄. */
+/** 버튼 자리(UX 명세 상태표) — needs_follow·open 은 팔로우 묶음(운영자에게는 없음), self 는 꼬리표, hidden(쉬는 중)은 쉬는 기간 한 줄. */
 function Actions({ send, creator, followMode, restingText }: { send: LinkPageSend; creator: CreatorLinkView; followMode: FollowMode; restingText: string | null }) {
   if (send === "open" || send === "needs_follow") {
+    // 운영자(followMode hidden)는 팔로우하지 않는다(set_follow 도 막는다) — 버튼 자리를 비운다
+    if (followMode === "hidden") return null;
     return (
       <div className={s.actions}>
         <ProfileFollowActions creatorId={creator.id} creatorName={creator.name} initialFollowing={send === "open"} signedIn={followMode !== "login"} />
@@ -115,7 +117,8 @@ function Actions({ send, creator, followMode, restingText }: { send: LinkPageSen
       </div>
     );
   }
-  return restingText ? <p className={s.restLine}>{restingText}</p> : null;
+  // 다시 받는 날을 모르면(날짜 없음) 쉬고 있다는 앞부분만 — 빈칸으로 두지 않는다
+  return <p className={s.restLine}>{restingText ?? RESTING_SHORT}</p>;
 }
 
 export function CreatorProfilePage({
@@ -138,7 +141,7 @@ export function CreatorProfilePage({
   // INV-B2: 쉬는 중이면 버튼 자리에 쉬는 기간 한 줄, 받기 어려운 품목 알림을 숨긴다. 버튼을 비울지는 send 가 이미 정해 왔다.
   const restingText = restingNotice(receiving?.resumeOn ?? null, today);
   // hard-items INV-H6: 정해진 틀의 문구 한 줄 — 설정이 살아 있고 받는 중일 때만
-  const showHardItems = !restingText && hardItemsNotice(hardItems) !== null;
+  const showHardItems = !restingText && send !== "hidden" && hardItemsNotice(hardItems) !== null;
   // INV-B8: 가장 가까운 생일·기념일 하나를 D-30 ~ D-day 동안 — 등록 화면과 같은 계산 함수
   const dday = receiving ? upcomingDday(today, receiving.birthday, receiving.anniversaries) : null;
   const ddayDate = dday ? addDays(today, dday.daysLeft) : null;
@@ -148,7 +151,8 @@ export function CreatorProfilePage({
   const ringed = hasThemeVars(colorVars);
 
   return (
-    <main id="main" className={guest ? s.pub : `page-centered ${s.app}`}>
+    // data-wide-pub: 이 화면에서만 상단 바·바닥글 폭도 본문 기둥(1080)에 맞춘다(creator-profile.module.css)
+    <main id="main" className={guest ? s.pub : `page-centered ${s.app}`} data-wide-pub="">
       <div className={s.col}>
         <section className={`${s.pf} ${ringed ? s.ringed : ""}`} style={colorVars as CSSProperties} data-creator-colors="" aria-labelledby="creator-name">
           {/* 배경 사진 칸 — 없으면 테마 색 면 또는 파스텔 + 흐린 고양이(DECISIONS d101·d102). 꾸밈이라 읽지 않는다 */}

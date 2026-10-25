@@ -118,6 +118,101 @@ describe("크리에이터 상세 — 버튼 자리 상태표 (UX 명세 2026-10-
     expect(router.push).not.toHaveBeenCalled();
   });
 
+  it("(실패경로) 누른 직후 저장이 끝나기 전에는 여전히 「팔로우」만 — 「선물 보내기」가 먼저 나오지 않는다", async () => {
+    fetchMock.mockImplementation(() => new Promise<Response>(() => {}));
+    renderProfile("needs_follow", "save");
+    act(() => buttonByText("팔로우")!.click());
+    await flush();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(actionsText()).toEqual(["팔로우"]);
+    // 저장 중 — 글자는 그대로, 흐린 모양(aria-disabled)
+    expect(buttonByText("팔로우")?.getAttribute("aria-disabled")).toBe("true");
+    expect(router.refresh).not.toHaveBeenCalled();
+  });
+
+  it("(실패경로) 저장 중에 「팔로우」를 다시 눌러도 저장은 한 번만 보낸다", async () => {
+    let finish: (r: Response) => void = () => {};
+    fetchMock.mockImplementation(() => new Promise<Response>((res) => (finish = res)));
+    renderProfile("needs_follow", "save");
+    act(() => buttonByText("팔로우")!.click());
+    act(() => buttonByText("팔로우")!.click());
+    act(() => buttonByText("팔로우")!.click());
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    finish(new Response("{}", { status: 200 }));
+    await flush();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(actionsText()).toEqual(["선물 보내기", "팔로우 중"]);
+  });
+
+  it("(실패경로) 세션이 끝나 401 이면 로그인 화면으로 가고 버튼은 「팔로우」 그대로", async () => {
+    fetchMock.mockImplementation(async () => new Response("{}", { status: 401 }));
+    renderProfile("needs_follow", "save");
+    act(() => buttonByText("팔로우")!.click());
+    await flush();
+    expect(router.push).toHaveBeenCalledWith("/login");
+    expect(actionsText()).toEqual(["팔로우"]);
+  });
+
+  it("(실패경로) 팔로우 취소를 저장하는 동안 「선물 보내기」를 눌러도 보내기 화면으로 넘어가지 않는다", async () => {
+    renderProfile("open", "save");
+    const gift = () => host.querySelector<HTMLAnchorElement>("a.btn")!;
+    // 저장 중이 아닐 때는 막지 않는다(아래 막힘이 늘 막혀 있어서가 아님을 보인다)
+    expect(gift().dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }))).toBe(true);
+    fetchMock.mockImplementation(() => new Promise<Response>(() => {}));
+    act(() => buttonByText("팔로우 중")!.click());
+    act(() => buttonByText("취소하기")!.click());
+    await flush();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(gift().getAttribute("aria-disabled")).toBe("true");
+    let notPrevented = true;
+    act(() => {
+      notPrevented = gift().dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    });
+    expect(notPrevented).toBe(false);
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it("팔로우 취소가 저장되면 초점이 「팔로우」로 옮겨 간다", async () => {
+    renderProfile("open", "save");
+    act(() => buttonByText("팔로우 중")!.click());
+    act(() => buttonByText("취소하기")!.click());
+    await flush();
+    expect(actionsText()).toEqual(["팔로우"]);
+    expect(document.activeElement).toBe(buttonByText("팔로우"));
+  });
+
+  it("(실패경로) 저장이 실패하면 버튼 묶음 바로 아래에 보이는 한 줄로 알린다", async () => {
+    fetchMock.mockImplementation(async () => new Response("{}", { status: 500 }));
+    renderProfile("needs_follow", "save");
+    const status = () => host.querySelector<HTMLElement>('[role="status"]')!;
+    expect(status().textContent).toBe("");
+    expect(status().classList.contains("sr-only")).toBe(true);
+    act(() => buttonByText("팔로우")!.click());
+    await flush();
+    expect(status().textContent).toBe("팔로우를 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.");
+    expect(status().classList.contains("sr-only")).toBe(false);
+    expect(status().parentElement).toBe(buttonByText("팔로우")!.parentElement);
+  });
+
+  it("(실패경로) 팔로우 취소 저장이 실패하면 「팔로우 중」 그대로 두고 취소 실패 문구를 보인다", async () => {
+    fetchMock.mockImplementation(async () => new Response("{}", { status: 500 }));
+    const status = () => host.querySelector<HTMLElement>('[role="status"]')!;
+    renderProfile("open", "save");
+    act(() => buttonByText("팔로우 중")!.click());
+    act(() => buttonByText("취소하기")!.click());
+    await flush();
+    expect(actionsText()).toEqual(["선물 보내기", "팔로우 중"]);
+    expect(status().textContent).toBe("팔로우 취소를 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.");
+    expect(status().classList.contains("sr-only")).toBe(false);
+  });
+
+  it("(실패경로) 운영자에게는 팔로우·선물 보내기 버튼이 없다", () => {
+    for (const send of ["open", "needs_follow"] as const) {
+      renderProfile(send, "hidden");
+      expect(actionsText(), send).toEqual([]);
+    }
+  });
+
   it("open: 「선물 보내기」(채움) + 「팔로우 중」(테두리) — 채운 버튼은 하나", () => {
     renderProfile("open", "save");
     expect(actionsText()).toEqual(["선물 보내기", "팔로우 중"]);
@@ -155,6 +250,14 @@ describe("크리에이터 상세 — 버튼 자리 상태표 (UX 명세 2026-10-
     expect(actionsText()).toEqual([]);
     const line = [...host.querySelectorAll("p")].find((p) => p.textContent === restingMessage("2026-11-03"));
     expect(line?.textContent).toContain("11월 3일");
+    expect(line?.closest("section")?.querySelector("#creator-name")).not.toBeNull();
+    expect(host.textContent).not.toContain("받기 어려운 품목");
+  });
+
+  it("(실패경로) 쉬는 중인데 다시 받는 날을 모르면 빈칸 대신 「잠시 선물 받기를 쉬고 있어요」 한 줄", () => {
+    renderProfile("hidden", "save", { receiving: null, hardItems });
+    expect(actionsText()).toEqual([]);
+    const line = [...host.querySelectorAll("p")].find((p) => p.textContent === "잠시 선물 받기를 쉬고 있어요");
     expect(line?.closest("section")?.querySelector("#creator-name")).not.toBeNull();
     expect(host.textContent).not.toContain("받기 어려운 품목");
   });

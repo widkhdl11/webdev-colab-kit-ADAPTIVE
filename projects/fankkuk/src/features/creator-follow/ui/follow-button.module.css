@@ -1,6 +1,4 @@
-/* 저장 실패 알림 — 화면 낭독기에만 읽힌다(버튼 글자가 원래대로 돌아가는 것이 눈에 보이는 알림) */
-.sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-/* 카드 띠의 저장 실패 알림 — 버튼 아래 띠 폭 한 줄(14 · 빨강 #B42318, 파스텔 8색 위 대비 5:1 이상). 끊을 곳 없는 글자도 줄을 바꾼다.
+/* 카드 띠·크리에이터 페이지 버튼 묶음의 저장 실패 알림 — 버튼 아래 한 줄(14 · 빨강 #B42318, 파스텔 8색 위 대비 5:1 이상). 끊을 곳 없는 글자도 줄을 바꾼다.
    비었을 때는 화면 낭독기 전용 모양으로 자리를 차지하지 않는다 — 떴을 때만 그 카드가 한 줄 높아진다(실패 순간이라 허용, design-rules 17절) */
 .cardNotice { flex: 0 0 100%; min-width: 0; margin: 0; color: var(--danger); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: var(--lh-caption); overflow-wrap: anywhere; }
 .cardNotice:empty { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { CardButtonLabel } from "@/entities/creator/ui/creator-card-head";
 import { saveFollow } from "../api/save-follow";
 import type { FollowMode } from "../model/follow-mode";
+import { FOLLOW_SAVE_FAILED } from "../model/follow-notice";
 import s from "./follow-button.module.css";
 import { useUnfollowConfirm } from "./unfollow-dialog";
 
@@ -129,8 +130,8 @@ export function FollowButton({
   // 저장 실패 알림 — 라이브 칸 하나. 카드 띠에서는 화면에도 보이는 한 줄(띠 아래쪽, 비었을 때는 자리를 차지하지 않는다),
   // 그 밖은 화면 낭독기에만(버튼 글자가 원래대로 돌아가는 것이 눈에 보이는 알림). 팔로우·팔로우 취소 실패 모두 같은 문구
   const notice = (
-    <span className={variant === "card" ? s.cardNotice : s.sr} role="status" data-card-notice={variant === "card" ? "" : undefined}>
-      {failed ? "팔로우를 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요." : ""}
+    <span className={variant === "card" ? s.cardNotice : "sr-only"} role="status" data-card-notice={variant === "card" ? "" : undefined}>
+      {failed ? FOLLOW_SAVE_FAILED : ""}
     </span>
   );
 
