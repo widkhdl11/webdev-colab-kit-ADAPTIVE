@@ -72,10 +72,22 @@ async function expectMissing(path: string, who: Who, label: string, orderNo?: st
   const res = await open(path, who);
   const body = await res.text();
   expect(isNotFound(res.status, body), `${label} 없는 페이지`).toBe(true);
-  // 그 크리에이터 본인은 상단 바에 자기 이름이 있으니 이름 검사에서 뺀다
+  expectNoRecord(body, who, label);
+  if (orderNo) expect(body, `${label} 사진 주소`).not.toContain(`/api/gifts/photo/${orderNo}`);
+}
+
+/** 본문(스크립트 포함)에 함께한 시간 화면의 글자가 없다 — 크리에이터 이름·「함께한 시간」·머리의 「함께한 선물」 개수 칸·「처음 선물한 날」. */
+function expectNoRecord(body: string, who: Who | null, label: string): void {
+  // 그 크리에이터 본인은 상단 바에 자기 이름이 있으니 이름 검사에서 뺀다 — 대신 아래 화면 고유 글자 둘이 그 자리를 붙든다
   if (who !== "creator") expect(body, `${label} 크리에이터 이름`).not.toContain(A.name);
   expect(body, `${label} 함께한 시간`).not.toContain("함께한 시간");
-  if (orderNo) expect(body, `${label} 사진 주소`).not.toContain(`/api/gifts/photo/${orderNo}`);
+  expect(body, `${label} 함께한 선물`).not.toContain("함께한 선물");
+  expect(body, `${label} 처음 선물한 날`).not.toContain("처음 선물한 날");
+}
+
+/** 넘김 응답의 본문 — 넘기기 전에 기록이 실려 나가지 않았는지 볼 때 쓴다. */
+async function bodyOf(path: string, who: Who | null): Promise<string> {
+  return (await open(path, who)).text();
 }
 
 /** 화면 HTML 안의 보이는 글자 — 태그·스크립트를 걷어 낸다. */
@@ -154,8 +166,10 @@ describe("함께한 시간 화면 — 본인만 (INV-F1)", () => {
       await expectMissing(`/gifts/with/${HANDLE}`, who, who, orderNo);
       // ID 주소는 기록을 읽기 전에 공개 링크 주소로 넘긴다(링크 주소는 크리에이터 페이지 주소라 공개다) — 넘겨진 주소에서 없는 페이지
       expect(await redirectOf(`/gifts/with/${A.creatorId}`, who), `${who} id`).toBe(`/gifts/with/${HANDLE}`);
+      expectNoRecord(await bodyOf(`/gifts/with/${A.creatorId}`, who), who, `${who} id 넘김 본문`);
     }
     expect(await redirectOf(`/gifts/with/${HANDLE}`, null)).toBe(`/login?next=/gifts/with/${HANDLE}`);
+    expectNoRecord(await bodyOf(`/gifts/with/${HANDLE}`, null), null, "로그인 안 함 넘김 본문");
   });
 
   it("INV-F1·F2 (실패경로): 운영자 세션으로 함께한 시간 화면과 사진 주소를 열면 404", async () => {
