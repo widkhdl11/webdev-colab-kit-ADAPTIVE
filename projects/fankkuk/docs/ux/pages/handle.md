@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 # 크리에이터 페이지 UX 명세 — `/[handle]` · `/creators/[id]`
 
@@ -49,7 +49,7 @@ status: draft
 
 ---
 
-## 2026-10-25 재디자인 — 평소 화면의 상태 (초안, 사용자 승인 대기)
+## 2026-10-25 재디자인 — 평소 화면의 상태 (승인 — 카드 d134, 사용자 「끝나면 알려줘」로 Codex 시안 진행)
 
 참고 사진 `external-material-box/toss-path-capture/profile_01.png` 와 사용자 지시(「팝업창은 제외」·「필요없는 요소 빼주고 레이아웃 재배치」·「불필요한 설명은 빼라」·「팔로우 버튼이 너무 길다. 짧게」·버튼은 소개 아래 왼쪽). 시안: `docs/design/mockups/site/profile-redesign-2026-10-25/`(4판) · Codex 시안 `profile-codex-2026-10-25/`.
 
