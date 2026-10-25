@@ -1,10 +1,17 @@
 ---
 project: fankkuk
 status: deployed
-basis: 92889a794fed
+basis: 120f356de230
 ---
 
 # 배포 기록 — fankkuk
+
+## 2026-10-26 — 10-21~10-26 정돈 묶음 + 헤더 선물 목록 제거·Referrer-Policy
+
+- main 333609ae..cda7c991 push(10-26 00:3x) → Vercel 셋 성공. 그 전에 시험 사이트 DB 에 20261025000001(pricing 예약어)이 들어간 것을 원격 목록으로 확인(사람 적용).
+- main cda7c991..5d497dc6 push → Vercel 성공. 헤더가 쓰지 않던 선물 목록 제거(0db63a94), 모든 주소에 Referrer-Policy.
+- 배포 전: tsc 0 · copy:lint 0(심은 금지어 잡힘) · 단위 2677 통과 · security-reviewer 지적 0.
+- 배포 후: 시험 사이트 공개 화면 16개 200, 응답 헤더 Referrer-Policy: strict-origin-when-cross-origin 확인. CSP 기록 모드 위반은 Zod 떠보기 eval 하나(BACKLOG). 운영 계정 로그인 검사는 하지 않았다 — 05-6 결제 확인 캡처는 사람이.
 
 ## 2026-10-20 — 바로가기 보조 문구 간격
 
