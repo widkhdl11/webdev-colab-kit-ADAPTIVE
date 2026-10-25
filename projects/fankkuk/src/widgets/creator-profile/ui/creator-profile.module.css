@@ -9,7 +9,7 @@
 :global(body):has(main[data-wide-pub].pub) { --pub-max: calc(var(--col-profile) + 2 * var(--gutter)); }
 
 /* ---------- 머리: 배경 사진 면 · 큰 원형 사진(왼쪽 아래 걸침) · 글 ---------- */
-.pf { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--space-12); padding-bottom: var(--space-10); }
+.pf { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: var(--space-12); padding-bottom: var(--space-10); }
 /* 배경 사진 칸 — 사진이 없으면 테마 색(--personal, creator-link INV-E13) 면 그대로, 그것도 없으면 크리에이터마다 정해진 파스텔 + 흐린 고양이 */
 .cover { grid-column: 1 / -1; position: relative; overflow: hidden; height: 280px; border-radius: var(--r-panel); background: var(--pastel, var(--primary-50)); }
 .ringed .cover { background: var(--personal); }
@@ -31,6 +31,10 @@
 .actions :global(.btn svg) { width: 20px; height: 20px; }
 .selfTag:global(.tag) { font-weight: var(--fw-btn); }
 .restLine { margin-top: var(--space-6); color: var(--sub); font-weight: 400; }
+/* 버튼 칸 — 넓은 칸에서는 머리 오른쪽, 이름 줄 높이(글 위 여백과 같은 16)에 맞춘다 */
+.side { grid-column: 3; min-width: 0; max-width: 320px; padding-top: var(--space-4); }
+.side .actions { justify-content: flex-end; margin-top: 0; }
+.side .restLine { margin-top: 0; text-align: right; }
 
 /* ---------- 받기 어려운 품목 한 줄 알림 ---------- */
 .alert { display: flex; align-items: baseline; gap: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-btn); background: var(--surface); }
@@ -100,7 +104,9 @@
   .cover { height: 176px; border-radius: var(--r-card); }
   .photo:global(.face) { width: 128px; height: 128px; margin-top: -60px; }
   .pfMain { grid-column: 1; }
-  .actions { margin-top: var(--space-6); }
+  .side { grid-column: 1; max-width: none; padding-top: 0; }
+  .side .actions { justify-content: flex-start; margin-top: var(--space-6); }
+  .side .restLine { margin-top: var(--space-6); text-align: left; }
   .alert { display: block; padding: var(--space-4); }
   .alert p { margin-top: var(--space-1); }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6) var(--space-4); margin-top: var(--space-8); }

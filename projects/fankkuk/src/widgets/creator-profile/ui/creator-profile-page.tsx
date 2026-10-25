@@ -183,6 +183,9 @@ export function CreatorProfilePage({
             {creator.intro ? <p className={s.intro}>{creator.intro}</p> : null}
             {symbolUrl && !fanName ? <img className={s.symbol} src={symbolUrl} alt="팬덤 심볼" width={512} height={512} /> : null}
             <p className={s.thanks}>{thanksLine(fanName)}</p>
+          </div>
+          {/* 버튼 묶음 — 넓은 칸에서는 머리 오른쪽(2026-10-25 사용자 「팔로우 버튼은 오른쪽 쯤」), 좁은 칸에서는 소개 아래. 읽는 순서는 글 다음 그대로 */}
+          <div className={s.side}>
             <Actions send={send} creator={creator} followMode={followMode} restingText={restingText} />
           </div>
         </section>
