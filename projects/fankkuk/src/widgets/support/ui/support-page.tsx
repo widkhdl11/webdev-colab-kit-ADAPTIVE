@@ -10,12 +10,13 @@ import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/pr
 import { InquiryForm } from "@/features/inquiry-submit/ui/inquiry-form";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import { PROMISE } from "@/shared/config/site-copy";
-import { orBlank, SITE_INFO, SITE_INFO_BLANK } from "@/shared/config/site-info";
+import { SITE_INFO } from "@/shared/config/site-info";
 import s from "./support.module.css";
 
-// 고객센터. 시안: docs/design/mockups/site/v18/support.html — 로그인 전 880 선, 페이지 머리 + 구간 넷(질문·문의·내 문의·연락처) 사이 48
-// 1:1 문의: 로그인하지 않았으면 버튼이 로그인 화면으로 가고, 로그인했으면 실제로 접수한다(결정 d25).
-// 그 아래 「내 문의」는 자주 묻는 질문과 같은 펼치는 줄로 보인다(쓴 사람 본인 것만 — DB 가 거른다).
+// 고객센터. 시안: docs/design/mockups/site/part7-2026-10-22/support.html (design-rules 28절, UX 명세 docs/ux/pages/support.md)
+// 머리 → 자주 묻는 질문(탭 줄 880, 펼친 답 680) → 1:1 문의(화면 폭 크림 띠 안 680 한 기둥) → 연락처 사실 한 줄.
+// 1:1 문의: 로그인하지 않았으면 칸 없이 로그인 버튼 하나, 로그인했으면 실제로 접수한다(결정 d25).
+// 양식 아래 「내 문의」는 자주 묻는 질문과 같은 펼치는 줄로 보인다(쓴 사람 본인 것만 — DB 가 거른다).
 // 요금 답변의 숫자는 결제와 같은 DB 요금표(서버 page 가 읽어 넘긴다)를, 구간 기준은 size-tier 를 읽는다.
 
 type Faq = { q: string; a: string };
@@ -106,13 +107,15 @@ const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
   },
 ];
 
-// 연락처는 사이트 하단과 같은 설정값(shared/config/site-info)을 읽는다. 점심 시간은 아직 설정값이 없다.
-const CONTACT: readonly (readonly [string, string])[] = [
-  ["운영 시간", orBlank(SITE_INFO.supportHours)],
-  ["점심 시간", SITE_INFO_BLANK],
-  ["전화", orBlank(SITE_INFO.supportPhone)],
-  ["이메일", orBlank(SITE_INFO.supportEmail)],
-];
+// 연락처는 사이트 하단과 같은 설정값(shared/config/site-info)을 읽는다. 값이 빈 칸은 그리지 않는다(design-rules 28절) —
+// 점심 시간은 설정값이 없어 줄에서 뺐다.
+const CONTACT: readonly (readonly [string, string])[] = (
+  [
+    ["운영 시간", SITE_INFO.supportHours],
+    ["전화", SITE_INFO.supportPhone],
+    ["이메일", SITE_INFO.supportEmail],
+  ] as const
+).filter(([, v]) => v.trim() !== "");
 
 function Chevron() {
   return (
@@ -124,7 +127,7 @@ function Chevron() {
 
 function MyInquiries({ inquiries }: { inquiries: readonly MyInquiry[] }) {
   return (
-    <section aria-labelledby="mine-title">
+    <section className={s.mine} aria-labelledby="mine-title">
       <h3 id="mine-title">내 문의</h3>
       {inquiries.length === 0 ? (
         <p className="t-meta">아직 남긴 문의가 없어요.</p>
@@ -255,16 +258,17 @@ export function SupportPage({
         </div>
       </section>
 
-      <section className={s.sec} aria-labelledby="inquiry-title">
+      <section className={s.band} aria-labelledby="inquiry-title">
         <div className="pub-inner">
-          <div className="sec-head">
-            <h2 id="inquiry-title">1:1 문의</h2>
-            <p className="t-lead t-desc">1:1 문의는 접수된 순서대로 답변해 드려요. 답변은 「내 문의」에서 확인할 수 있어요.</p>
-          </div>
-          <div className={`stack ${s.col}`}>
-            <div className={`card ${s.ask}`}>
-              <InquiryForm signedIn={signedIn} restricted={inquiryRestricted} />
+          <div className={s.col}>
+            <div className="sec-head">
+              <h2 id="inquiry-title">1:1 문의</h2>
+              {/* 「내 문의」는 로그인해야 보이므로 로그인 전에는 뒷문장을 뺀다 */}
+              <p className="t-lead t-desc">
+                1:1 문의는 접수된 순서대로 답변해 드려요.{signedIn && " 답변은 「내 문의」에서 확인할 수 있어요."}
+              </p>
             </div>
+            <InquiryForm signedIn={signedIn} restricted={inquiryRestricted} />
             {signedIn && <MyInquiries inquiries={myInquiries} />}
           </div>
         </div>
@@ -275,9 +279,9 @@ export function SupportPage({
           <div className="sec-head">
             <h2 id="contact-title">운영 시간 및 연락처</h2>
           </div>
-          <dl className={s.hours}>
+          <dl className={s.fact}>
             {CONTACT.map(([k, v]) => (
-              <div key={k} className="card">
+              <div key={k}>
                 <dt>{k}</dt>
                 <dd>{v}</dd>
               </div>

@@ -5,13 +5,14 @@
 /* 펼친 글 — 왼쪽에서 시작하고 한 줄 길이는 680 까지 */
 .list :global(.prose) { max-width: none; margin-inline: 0; }
 .list :global(.prose) > * { max-width: var(--prose-max); }
-.list :global(.prose h3) { font-size: var(--fs-card); }
+/* 본문 안 소제목 16/600 — 줄 제목(16/600)보다 커 보이지 않게(시안 part7-2026-10-22/notices.html 2번, design-rules 28절) */
+.list :global(.prose h3) { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-h3); line-height: 1.5; }
 
 /* 본문 안 링크 */
 .link { color: var(--brand-ink); font-weight: var(--fw-btn); text-underline-offset: 4px; }
 
 /* 쪽 넘김 */
-.pager { display: flex; justify-content: center; gap: var(--space-2); margin-top: var(--space-12); }
+.pager { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); margin-top: var(--space-12); }
 .pager a, .pager span { display: grid; place-items: center; min-width: var(--touch); height: var(--touch); border-radius: var(--r-btn); text-decoration: none; }
 .pager a:hover { background: var(--gray-100); }
 .pager a[aria-current="page"] { background: var(--gray-900); color: var(--white); font-weight: var(--fw-btn); }

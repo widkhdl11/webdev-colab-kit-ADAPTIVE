@@ -7,6 +7,7 @@ import s from "./report-form.module.css";
 
 // 신고·문의 양식 — 고객센터 1:1 문의 양식과 같은 칸 모양. 보내기를 누르면 이메일 앱이 열린다(서버에 저장하지 않는다).
 // 이메일 앱이 안 열리는 환경도 있어, 받는 이메일을 양식 아래에 늘 보여 준다.
+// 버튼을 누르면 무엇이 일어나는지는 버튼 바로 위 한 줄로 알린다(design-rules 28절 — 예전에는 머리 아래 요약 판에 있었다).
 
 type Props = { to: string; toLabel: string };
 
@@ -49,7 +50,7 @@ export function ReportForm({ to, toLabel }: Props) {
   }
 
   return (
-    <form onSubmit={submit} noValidate>
+    <form className={s.form} onSubmit={submit} noValidate>
       <div className="field">
         <label htmlFor="r-kind">분류</label>
         <div className={s["select-wrap"]}>
@@ -116,23 +117,27 @@ export function ReportForm({ to, toLabel }: Props) {
           onChange={(e) => edit("body", e.target.value)}
         />
         <p className="hint" id="r-body-hint">
-          {REPORT_BODY_MAX.toLocaleString("ko-KR")}자까지 적을 수 있어요. 이 화면에서는 파일을 첨부할 수 없어요.
+          {REPORT_BODY_MAX.toLocaleString("ko-KR")}자까지 적을 수 있어요.
         </p>
       </div>
-      <div role="alert">
-        {error && (
-          <p className={s.error} id="r-error">
-            {error.message}
-          </p>
-        )}
+      {/* 오류·열림 문장과 버튼 위 안내는 버튼과 한 묶음 — 빈 알림 영역이 칸 사이 간격을 더 벌리지 않게 */}
+      <div>
+        <div role="alert">
+          {error && (
+            <p className={s.error} id="r-error">
+              {error.message}
+            </p>
+          )}
+        </div>
+        <div role="status">{opened && <p className={s.done}>이메일 앱을 열었어요. 열리지 않으면 {toLabel}로 보내 주세요.</p>}</div>
+        <p className={`hint ${s.btnHint}`}>「이메일로 보내기」를 누르면 적은 내용이 담긴 이메일 앱이 열려요. 이 화면에서는 파일을 첨부할 수 없어요.</p>
+        <button type="submit" className="btn btn--block">
+          이메일로 보내기
+        </button>
+        <p className={`t-meta ${s.to}`}>
+          받는 이메일: {toLabel} · 회원은 <Link href="/support">고객센터의 1:1 문의</Link>도 이용할 수 있어요.
+        </p>
       </div>
-      <div role="status">{opened && <p className={s.done}>이메일 앱을 열었어요. 열리지 않으면 {toLabel}로 보내 주세요.</p>}</div>
-      <button type="submit" className="btn btn--block">
-        이메일로 보내기
-      </button>
-      <p className={`t-meta ${s.to}`}>
-        받는 이메일: {toLabel} · 회원은 <Link href="/support">고객센터의 1:1 문의</Link>도 이용할 수 있어요.
-      </p>
     </form>
   );
 }

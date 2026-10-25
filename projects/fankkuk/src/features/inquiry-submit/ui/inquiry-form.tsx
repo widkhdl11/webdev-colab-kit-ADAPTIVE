@@ -9,8 +9,8 @@ import { checkInquiryInput, type InquiryField } from "../model/inquiry-input";
 import { MESSAGE_RESTRICTED } from "../model/submit-inquiry";
 import s from "./inquiry-form.module.css";
 
-// 1:1 문의 양식 (admin-console INV-K11, 결정 d25). 시안: docs/design/mockups/site/v18/support.html
-// 로그인하지 않았으면 칸은 보이되 버튼이 로그인 화면으로 간다. 로그인했으면 실제로 보낸다 —
+// 1:1 문의 양식 (admin-console INV-K11, 결정 d25). 시안: docs/design/mockups/site/part7-2026-10-22/support.html (design-rules 28절)
+// 로그인하지 않았으면 칸을 그리지 않고 로그인 화면으로 가는 버튼 하나만 둔다. 로그인했으면 실제로 보낸다 —
 // 보내기 전에 서버와 같은 검사를 하고, 성공하면 칸을 비우고 화면을 다시 읽어 「내 문의」에 새 문의가 보이게 한다.
 // 문의가 제한된 계정이면(admin-console INV-K12) 양식 대신 안내만 보인다 — 다 적고 나서 거부되지 않게.
 
@@ -23,8 +23,6 @@ function Chevron({ className }: { className: string }) {
 }
 
 type Draft = { kind: string; orderNo: string; title: string; body: string };
-
-const MESSAGE_NEED_SIGN_IN = "로그인이 필요해요. 로그인하고 문의를 남겨 주세요.";
 
 const EMPTY: Draft = { kind: "", orderNo: "", title: "", body: "" };
 
@@ -48,11 +46,6 @@ export function InquiryForm({ signedIn, restricted = false }: { signedIn: boolea
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (busy) return;
-    if (!signedIn) {
-      // 로그인 전에는 버튼 대신 로그인 링크가 있지만, 칸에서 Enter 로도 제출될 수 있다 — 조용히 끝내지 않는다
-      setError({ field: null, message: MESSAGE_NEED_SIGN_IN });
-      return;
-    }
     const checked = checkInquiryInput(draft);
     if (!checked.ok) {
       setError({ field: checked.field, message: checked.message });
@@ -75,7 +68,16 @@ export function InquiryForm({ signedIn, restricted = false }: { signedIn: boolea
     router.refresh(); // 「내 문의」에 방금 남긴 문의가 보이게 다시 읽는다
   }
 
-  if (signedIn && restricted) {
+  if (!signedIn) {
+    // 로그인한 뒤 고객센터로 돌아온다 — 로그인 링크에는 경로만 싣는다(session-login INV-L13)
+    return (
+      <Link className="btn btn--block" href="/login?next=/support">
+        로그인하고 문의하기
+      </Link>
+    );
+  }
+
+  if (restricted) {
     return (
       <p className={s.error} role="note">
         {MESSAGE_RESTRICTED} 지난 문의와 답변은 아래 「내 문의」에서 볼 수 있어요.
@@ -84,7 +86,7 @@ export function InquiryForm({ signedIn, restricted = false }: { signedIn: boolea
   }
 
   return (
-    <form onSubmit={submit} noValidate>
+    <form className={s.form} onSubmit={submit} noValidate>
       <div className="field">
         <label htmlFor="q-cat">분류</label>
         <div className={s["select-wrap"]}>
@@ -152,25 +154,21 @@ export function InquiryForm({ signedIn, restricted = false }: { signedIn: boolea
           onChange={(e) => edit("body", e.target.value)}
         />
       </div>
-      {/* 오류는 바로 읽히게(alert), 성공은 차례를 기다려 읽히게(status). 영역은 늘 있어야 바뀐 내용이 읽힌다 */}
-      <div role="alert">
-        {error && (
-          <p className={s.error} id="q-error">
-            {error.message}
-          </p>
-        )}
-      </div>
-      <div role="status">{done && <p className={s.done}>문의를 남겼어요. 답변이 달리면 아래 「내 문의」에서 볼 수 있어요.</p>}</div>
-      {signedIn ? (
+      {/* 오류는 바로 읽히게(alert), 성공은 차례를 기다려 읽히게(status). 영역은 늘 있어야 바뀐 내용이 읽힌다.
+          빈 영역이 칸 사이 간격을 더 벌리지 않게 버튼과 한 묶음으로 둔다 */}
+      <div>
+        <div role="alert">
+          {error && (
+            <p className={s.error} id="q-error">
+              {error.message}
+            </p>
+          )}
+        </div>
+        <div role="status">{done && <p className={s.done}>문의를 남겼어요. 답변이 달리면 아래 「내 문의」에서 볼 수 있어요.</p>}</div>
         <button type="submit" className="btn btn--block" aria-disabled={busy}>
           {busy ? "보내는 중…" : "문의 남기기"}
         </button>
-      ) : (
-        // 로그인한 뒤 고객센터로 돌아온다 — 로그인 링크에는 경로만 싣는다(session-login INV-L13)
-        <Link className="btn btn--block" href="/login?next=/support">
-          로그인하고 문의하기
-        </Link>
-      )}
+      </div>
     </form>
   );
 }

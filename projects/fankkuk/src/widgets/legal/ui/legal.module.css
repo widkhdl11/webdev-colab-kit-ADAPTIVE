@@ -1,21 +1,17 @@
 /* 안내 글 · 신고·문의에 남은 것 — 머리·요약·목차·조·글 모양은 공통 틀 doc-page.module.css 로 옮겼다(문서형 C12).
-   신고·문의(report-page)는 v18 머리 + 요약 카드 + 양식 카드 그대로. 상단 바 아래 40, 바닥글까지 96(휴대폰 64) */
+   신고·문의(report-page)는 머리 + 안내 한 줄 + 양식 카드(28절). 상단 바 아래 40, 바닥글까지 96(휴대폰 64) */
 .page { padding: var(--space-10) 0 var(--section-gap); }
 
 @media (max-width: 767px) {
   .page { padding-top: var(--space-4); }
 }
 
-/* 옅은 판 — 공개 화면 시안(v18-pub.css .card--soft)은 옅은 빨강. 전역 기본(회색)은 로그인 후 화면 값이다 */
-.page :global(.card--soft) { background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
-.prose { max-width: none; margin-inline: 0; }
-.prose > * { max-width: var(--prose-max); }
-
-/* 세 줄 요약 */
-.summary { margin-bottom: var(--space-6); }
-.summary ul { margin-top: var(--space-2); }
-/* 신고·문의 양식 카드 — 폼 한 기둥(design-rules 정렬: 폼은 가운데 한 기둥 560~720) */
-.formCard { max-width: 640px; margin-inline: auto; }
+/* 신고·문의 — 머리 아래 주소 안내 한 줄, 양식 카드는 머리와 같은 시작선·680 한 기둥(design-rules 28절, 시안 part7-2026-10-22/report.html) */
+.page :global(.page-head) .noAsk { margin-top: var(--space-2); font-size: var(--fs-caption); }
+.formCard { max-width: var(--prose-max); }
+@media (max-width: 767px) {
+  .formCard { padding: var(--space-6) var(--space-4); }
+}
 
 /* 보안 안내 그림 — 네 칸이 차례로(오른쪽 화살표), 1023 이하에서는 위아래(아래 화살표) */
 .figure { margin: 0; }
