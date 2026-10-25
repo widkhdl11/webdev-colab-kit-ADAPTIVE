@@ -33,7 +33,7 @@
 .restLine { margin-top: var(--space-6); color: var(--sub); font-weight: 400; }
 /* 버튼 칸 — 넓은 칸에서는 머리 오른쪽, 이름 줄 높이(글 위 여백과 같은 16)에 맞춘다 */
 .side { grid-column: 3; min-width: 0; max-width: 320px; padding-top: var(--space-4); }
-.side .actions { justify-content: flex-end; margin-top: 0; }
+.side .actions { justify-content: flex-end; margin-top: 0; text-align: right; }
 .side .restLine { margin-top: 0; text-align: right; }
 
 /* ---------- 받기 어려운 품목 한 줄 알림 ---------- */
@@ -99,14 +99,18 @@
 }
 
 /* 휴대폰 폭(칸 폭 720 미만) — 사진이 위, 글이 아래 */
+/* 버튼 칸은 사진 열보다 먼저(칸 879 이하) 소개 아래로 — 오른쪽 칸이 버튼 둘(약 270)을 차지하면 이름 칸이 130~180 으로 좁아져 20자 이름이 서너 줄로 접힌다(ui 재리뷰) */
+@container (max-width: 879px) {
+  .side { grid-column: 2; max-width: none; padding-top: 0; }
+  .side .actions { justify-content: flex-start; margin-top: var(--space-6); text-align: left; }
+  .side .restLine { margin-top: var(--space-6); text-align: left; }
+}
 @container (max-width: 719px) {
+  .side { grid-column: 1; }
   .pf { grid-template-columns: minmax(0, 1fr); padding-bottom: var(--space-8); }
   .cover { height: 176px; border-radius: var(--r-card); }
   .photo:global(.face) { width: 128px; height: 128px; margin-top: -60px; }
   .pfMain { grid-column: 1; }
-  .side { grid-column: 1; max-width: none; padding-top: 0; }
-  .side .actions { justify-content: flex-start; margin-top: var(--space-6); }
-  .side .restLine { margin-top: var(--space-6); text-align: left; }
   .alert { display: block; padding: var(--space-4); }
   .alert p { margin-top: var(--space-1); }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6) var(--space-4); margin-top: var(--space-8); }
