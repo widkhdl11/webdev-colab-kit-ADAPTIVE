@@ -9,7 +9,8 @@
 @media (max-width: 767px) { .page { padding-top: calc(var(--space-4) + var(--space-12)); } }
 
 /* 단계 표시 — 시안의 번호 동그라미(.sh .no)와 같은 모양의 알약 줄. 지금 단계는 선택 면, 지난 단계는 초록 */
-.steps-wrap { margin-bottom: 24px; }
+/* 「다음」으로 단계를 옮기면 이 줄로 스크롤한다 — 위에 붙은 상단 바(--header-h) 밑에 깔리지 않게 비켜 선다(base.css 의 구간 규칙과 같은 값) */
+.steps-wrap { margin-bottom: 24px; scroll-margin-top: calc(var(--header-h) + 24px); }
 .step-count { display: none; margin-bottom: 12px; font-weight: var(--fw-bold); }
 .step-count span { color: var(--gray-600); font-weight: 400; }
 .steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
