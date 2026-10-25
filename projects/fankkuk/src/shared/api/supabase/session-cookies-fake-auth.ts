@@ -43,11 +43,19 @@ export function unitSessionCookieValue(expiresInSeconds: number): string {
 
 const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
 
-export function fakeAuthFetch() {
+/** passwordOk false: 비밀번호 로그인(grant_type=password)만 Auth 처럼 400 invalid_credentials 로 답한다. 토큰 갱신은 그대로 성공. */
+export function fakeAuthFetch(opts: { passwordOk?: boolean } = {}) {
+  const passwordOk = opts.passwordOk !== false;
   const calls: string[] = [];
   const fetch = async (input: RequestInfo | URL): Promise<Response> => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     calls.push(url);
+    if (!passwordOk && url.includes("/auth/v1/token") && url.includes("grant_type=password")) {
+      return new Response(JSON.stringify({ code: "invalid_credentials", error_code: "invalid_credentials", msg: "Invalid login credentials" }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
+    }
     if (url.includes("/auth/v1/token")) return json(unitSession(3600, "unit-refresh-2"));
     if (url.includes("/auth/v1/user")) return json(UNIT_USER);
     if (url.includes("/auth/v1/logout")) return new Response(null, { status: 204 });

@@ -5,7 +5,9 @@ import { signUp } from "@/features/signup/model/sign-up";
 import { readMailConfig } from "@/shared/api/mail/config";
 import { createSmtpSender } from "@/shared/api/mail/smtp";
 import { createAdminSupabase } from "@/shared/api/supabase/admin";
-import { createRequestSupabase } from "@/shared/api/supabase/server";
+import { createDeferredRequestSupabase } from "@/shared/api/supabase/server";
+import { sessionOnlyMarker } from "@/shared/api/supabase/session-cookies";
+import { KEEP_SIGNED_IN_DEFAULT } from "@/shared/config/keep-signed-in";
 import { decodeUtm, UTM_COOKIE, utmCookieOptions } from "@/shared/lib/attribution/utm";
 import { isProduction } from "@/shared/lib/env/is-production";
 import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
@@ -17,24 +19,38 @@ import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
 export async function POST(req: NextRequest) {
   return handlePrivateJsonPost(req, async (body) => {
     const jar = await cookies();
-    const supabase = await createRequestSupabase();
-    const result = await signUp(
-      {
-        env: process.env,
-        admin: createAdminSupabase(),
-        auth: supabase.auth,
-        getMailer: () => {
-          const mail = readMailConfig(process.env);
-          return { send: createSmtpSender(mail), appOrigin: mail.appOrigin };
+    // session-login INV-L15 (S13f): 자동 로그인 쿠키는 로그인 화면의 기본값과 같은 쪽으로 쓴다.
+    // 쓰기 규칙은 결과를 안 뒤에 정한다 — 자동 로그인이 됐으면 기본값, 아니면(예외 포함) 요청에 남은 표시.
+    const { supabase, storedSessionOnly, decide } = await createDeferredRequestSupabase();
+    const sessionOnly = !KEEP_SIGNED_IN_DEFAULT;
+    let loggedIn = false;
+    try {
+      const result = await signUp(
+        {
+          env: process.env,
+          admin: createAdminSupabase(),
+          auth: supabase.auth,
+          getMailer: () => {
+            const mail = readMailConfig(process.env);
+            return { send: createSmtpSender(mail), appOrigin: mail.appOrigin };
+          },
         },
-      },
-      withVerificationFromCookie(body, jar.get(VERIFICATION_COOKIE)?.value),
-      // metrics INV-Q4: 처음 들어온 공유 링크의 utm 은 쿠키에서만 읽고 다시 거른다
-      decodeUtm(jar.get(UTM_COOKIE)?.value),
-    );
-    if (!result.ok) return { status: result.status, body: { field: result.field, message: result.message } };
-    jar.set(VERIFICATION_COOKIE, "", { ...verificationCookieOptions(process.env), maxAge: 0 });
-    jar.set(UTM_COOKIE, "", { ...utmCookieOptions(isProduction(process.env)), maxAge: 0 });
-    return { status: 200, body: { loggedIn: result.loggedIn, mailSent: result.mailSent } };
+        withVerificationFromCookie(body, jar.get(VERIFICATION_COOKIE)?.value),
+        // metrics INV-Q4: 처음 들어온 공유 링크의 utm 은 쿠키에서만 읽고 다시 거른다
+        decodeUtm(jar.get(UTM_COOKIE)?.value),
+      );
+      if (!result.ok) return { status: result.status, body: { field: result.field, message: result.message } };
+      jar.set(VERIFICATION_COOKIE, "", { ...verificationCookieOptions(process.env), maxAge: 0 });
+      jar.set(UTM_COOKIE, "", { ...utmCookieOptions(isProduction(process.env)), maxAge: 0 });
+      loggedIn = result.loggedIn;
+      // INV-L15: 자동 로그인이 됐을 때만 표시 쿠키를 쓴다 — 다음 요청부터 갱신(proxy)이 이 표시를 본다
+      if (loggedIn) {
+        const marker = sessionOnlyMarker(sessionOnly, process.env);
+        jar.set(marker.name, marker.value, marker.options);
+      }
+      return { status: 200, body: { loggedIn: result.loggedIn, mailSent: result.mailSent } };
+    } finally {
+      decide(loggedIn ? sessionOnly : storedSessionOnly);
+    }
   });
 }

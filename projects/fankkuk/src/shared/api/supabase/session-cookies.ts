@@ -46,6 +46,40 @@ export function sessionOnlyWriteOptions(options: CookieOptions, sessionOnly: boo
   return rest;
 }
 
+type SetAll = NonNullable<CookieMethodsServer["setAll"]>;
+
+/**
+ * INV-L15: 쓰기 규칙(만료 시각을 뗄지)을 나중에 정한다. 정하기 전의 로그인 쿠키 쓰기는 모아 두었다가
+ * decide 때 그 규칙으로 한꺼번에 쓰고, 정한 뒤의 쓰기는 바로 그 규칙으로 쓴다. 처음 decide 한 값만 이긴다.
+ * 로그인처럼 결과(성공이면 고른 값, 실패면 원래 표시)를 알기 전에 라이브러리가 쿠키를 쓸 수 있는 곳에서 쓴다.
+ */
+export function deferSessionCookieWrites(setAll: SetAll): { setAll: SetAll; decide(sessionOnly: boolean): void } {
+  let decided: boolean | null = null;
+  const pending: Parameters<SetAll>[0] = [];
+  let lastHeaders: Parameters<SetAll>[1] = {};
+  const write = (list: Parameters<SetAll>[0], headers: Parameters<SetAll>[1], sessionOnly: boolean) =>
+    setAll(
+      list.map((c) => ({ ...c, options: sessionOnlyWriteOptions(c.options, sessionOnly) })),
+      headers,
+    );
+  return {
+    setAll: (list, headers) => {
+      if (decided === null) {
+        pending.push(...list);
+        lastHeaders = headers;
+        return;
+      }
+      return write(list, headers, decided);
+    },
+    decide: (sessionOnly) => {
+      if (decided !== null) return;
+      decided = sessionOnly;
+      const list = pending.splice(0);
+      if (list.length > 0) void write(list, lastHeaders, sessionOnly);
+    },
+  };
+}
+
 /**
  * 요청마다 새로 만든다 — 클라이언트를 요청 사이에 나눠 쓰면 남의 세션이 섞인다.
  * sessionOnly(INV-L15): 로그인 쿠키를 쓰는 모든 경로(로그인·요청마다 갱신·화면 읽기)가 이 함수로 쓰므로 여기 한 곳에서 뗀다.
