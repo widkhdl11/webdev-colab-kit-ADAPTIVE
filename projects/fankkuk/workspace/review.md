@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: passed
-basis: 24126c91a45b
+basis: 66e066c07cc2
 reviewers: [ux-reviewer, ui-reviewer, security-reviewer, code-reviewer]
 ---
 
@@ -15,6 +15,7 @@ reviewers: [ux-reviewer, ui-reviewer, security-reviewer, code-reviewer]
 - qa-classifier: 원래 있던 통합 실패 4건 — 함께한 시간 3건은 로딩 화면 때문에 상태 코드만 200(남의 화면은 안 열림, 시험 impl) → 본문 판정 · pricing 예약어 누락(코드 impl, d2157b41) → 마이그레이션.
 - 실행 근거: tsc 0 · copy:lint 0 · 단위 324파일 2670 통과 · 통합 together-routes·creator-link-db 60/60. 변이: 팔로우 장치 넷(재누름·401·저장 중 보내기·성공 전 전환) 각각 잡힘 · FollowThenSend 성공 이동 잡힘.
   화면(개발 서버): 5파트 다섯 화면 × 1440·390 굵기 700 0·넘침 0 · 상세 로그인 전 1440·1024·390 넘침 0, 상단 바와 본문 왼쪽 끝 같은 선(x172), 이름 20자 + 긴 팬덤 이름 390·736 넘침 0, 새로 연 상세 콘솔 오류 0. 사용자 5파트 화면 확인.
+  버튼 자리 변경(사용자 「팔로우 버튼은 오른쪽 쯤」) 6b8b0bd4·이 커밋: ui-reviewer 재리뷰 중간 1(칸 720~880 에서 이름 칸이 좁아짐)·하 1(실패 줄 정렬) 반영. 보안·흐름 표면은 바뀌지 않아(버튼 칸 위치와 CSS) security·ux·code 는 다시 돌리지 않았다. 실측: 1440 머리 오른쪽 끝·이름 줄 높이 · 칸 737(1040) 소개 아래, 20자 이름 두 줄 · 1009 · 375 넘침 0. 단위 2670 통과.
   못 본 것: 팔로우·취소 실제 누르기(로컬 DB 를 바꿔서 — 단위 시험으로 대신), /[handle] 주소 페이지(로컬에 링크용 아이디 있는 크리에이터 없음 — 상세와 같은 부품). pricing 예약어는 로컬 DB 만(원격은 사람).
 
 ## 이전 사인오프
