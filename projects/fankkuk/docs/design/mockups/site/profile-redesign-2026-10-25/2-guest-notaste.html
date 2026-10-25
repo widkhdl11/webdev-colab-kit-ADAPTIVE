@@ -1,6 +1,6 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>로그인 전 · 취향 없음 · 크리에이터 상세 재디자인 시안</title><link rel="stylesheet" href="profile.css"></head>
 <!-- 화면 2 — 로그인 전, 취향 없음. 취향 자리는 정보 칸 + 감사 답장 모음.
- 시안 전용 표시: 노란 「문구 미정」 = 용어집·지금 화면에 없는 새 문구, 연한 노랑 「새 기능 — 아직 없음」 = 1번 화면에만 있는 취향. 둘 다 구현 땐 뺀다.
+ 시안 전용 표시: 노란 「문구 미정」 = 용어집·지금 화면에 없는 새 문구(지금은 1번 취향 설명 한 곳), 연한 노랑 「새 기능 — 아직 없음」 = 1번 화면에만 있는 취향. 둘 다 구현 땐 뺀다.
  값 근거: tokens.css 그대로(하늘색 면 버튼, 반경 24·16·12, 굵기 800·600·500·400). 주소 문장 = site-copy PROMISE.address 그대로. -->
 <body>
 <header class="top"><div class="wrap"><a class="logo" href="#" aria-label="팬꾹 처음으로"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
@@ -15,10 +15,8 @@
 <p class="handle">fankkuk.kr/haneul</p>
 <div class="chips"><span class="chip ok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 12.5l3 3 5-6"/></svg>채널 소유 확인</span><span class="chip">게임</span><span class="chip">일상</span></div>
 <p class="intro">함께 웃는 하루를 만들어요.</p>
-<p class="thanks">하늘이네 여러분의 마음 늘 감사해요</p></div></div>
-<aside class="gift" aria-labelledby="gift-h"><img class="gi" src="../../../../../public/img/icon-gift.png" alt="" width="56" height="56">
-<h2 id="gift-h">하늘님께 선물을 보내세요 <span class="mk mk--copy">문구 미정</span></h2><p class="note">팔로우한 크리에이터에게만 보낼 수 있어요.</p>
-<div class="btns"><a class="btn btn--fill" href="#">팔로우하고 선물 보내기</a></div><p class="promise"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span>크리에이터가 승인하기 전에는 주소가 공개되지 않아요.</span></p></aside></section></div>
+<p class="thanks">하늘이네 여러분의 마음 늘 감사해요</p>
+<div class="act"><div class="btns"><a class="btn btn--fill" href="#">팔로우하고 선물 보내기</a></div><p class="note">팔로우한 크리에이터에게만 보낼 수 있어요.</p><p class="promise"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span>크리에이터가 승인하기 전에는 주소가 공개되지 않아요.</span></p></div></div></div></section></div>
 <div class="wrap sec" style="margin-top:var(--section-gap)">
 <div class="body"><div class="main"><section aria-labelledby="state-h"><h2 class="sr-only" id="state-h">받는 상태와 요금</h2><div class="info-grid"><div class="card info span2"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 12.5l3 3 5-6"/></svg></span><h3>받는 상태</h3><p class="v">지금 선물을 받고 있어요</p></div>
 <div class="card info"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2"/></svg></span><h3>평균 승인 시간 (최근 30일)</h3><p class="v">2시간 10분</p></div>
