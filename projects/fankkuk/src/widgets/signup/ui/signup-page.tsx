@@ -206,7 +206,9 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     return (
       <p className={`${s.live} ${s[`live-${m.tone}`]}`} id={liveId(field)}>
         {m.tone === "ok" ? <CheckIcon size={16} /> : null}
-        {m.message}
+        <span>
+          <Sentences text={m.message} />
+        </span>
       </p>
     );
   };
@@ -343,7 +345,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     }
     return (
       <p className={`err ${s.error}`} id={f("error")} role="alert" key={errorSeq}>
-        {error.message}
+        <Sentences text={error.message} />
       </p>
     );
   };

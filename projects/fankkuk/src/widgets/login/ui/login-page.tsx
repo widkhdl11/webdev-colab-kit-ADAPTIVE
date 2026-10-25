@@ -45,9 +45,9 @@ export function LoginPage({ next }: { next?: string }) {
         window.location.assign(safeNextPath(body.next));
         return;
       }
-      setError(body.message ?? "로그인하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
+      setError(body.message ?? "로그인하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
     } catch {
-      setError("로그인하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
+      setError("로그인하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
     } finally {
       setPending(false);
     }

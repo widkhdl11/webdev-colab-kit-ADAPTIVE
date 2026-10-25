@@ -34,7 +34,7 @@ const linkInvalid = { ok: false, status: 400, field: "link", message: RESET_LINK
 
 export async function resetPassword(deps: ResetPasswordDeps, body: unknown): Promise<ResetPasswordResult> {
   const parsed = inputSchema.safeParse(body);
-  if (!parsed.success) return { ok: false, status: 400, field: "password", message: "새 비밀번호를 적어 주세요." };
+  if (!parsed.success) return { ok: false, status: 400, field: "password", message: "새 비밀번호를 적어 주세요." };
   const { token, password, passwordConfirm } = parsed.data;
   if (!TOKEN_SHAPE.test(token)) return linkInvalid;
 
