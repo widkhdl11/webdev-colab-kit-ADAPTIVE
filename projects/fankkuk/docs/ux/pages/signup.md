@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 > 2026-10-25 초안(6파트 진단 `docs/design/redesign-2026-10-25-part6.md` 2절). 위 세 절은 **지금 코드 그대로**다(역진단, 근거 `src/widgets/signup/ui/signup-page.tsx` 의 줄 번호 — 아래 `:n`). 바꾸자는 것은 맨 아래 「바꿀 것」에만 적었고, 진단 문서 5절 3·4번 선택에 따라 달라진다.
 > 판정 기준 문서 중 `docs/ux/principles.md`·`docs/ux/task-pages.md` 가 아직 없다 — UX 기준 문서 없음.

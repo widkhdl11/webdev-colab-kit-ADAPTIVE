@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 > 2026-10-25 초안(6파트 진단 `docs/design/redesign-2026-10-25-part6.md` 1절). 위 세 절(브리프·상태표·요소 목록)은 **지금 코드 그대로**다(역진단, 근거는 파일:줄). 바꾸자는 것은 맨 아래 「바꿀 것」 절에만 적었고, 진단 문서 5절의 선택(1·2·5번)에 따라 달라진다.
 > 판정 기준 문서 중 `docs/ux/principles.md`·`docs/ux/task-pages.md` 가 아직 없다 — UX 기준 문서 없음. 「적용한 규칙」은 design-rules 와 UX 진단 기준(`docs/ux/diagnosis-2026-10-22-pilot.md`)으로 적었다.

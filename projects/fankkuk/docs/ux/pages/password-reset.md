@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 > 2026-10-25 초안(6파트 진단 `docs/design/redesign-2026-10-25-part6.md` 3절). 위 세 절은 **지금 코드 그대로**다(근거 `src/features/password-reset/ui/reset-password-panel.tsx` 의 줄 번호 — 아래 `:n`). 바꾸자는 것은 맨 아래 「바꿀 것」에만 적었다.
 > 비밀번호 찾기의 **요청 부분(아이디·이메일 → 메일 보냄)은 지금 이 주소가 아니라 `/login` 안의 접는 칸**이다 — 그 상태는 `login.md` 상태표(`reset_*`)에 적었고, 진단 문서 5절 1번에서 ①을 고르면 아래 「바꿀 것」대로 새 화면으로 옮긴다.
