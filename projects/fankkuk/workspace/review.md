@@ -1,9 +1,23 @@
 ---
 project: fankkuk
 status: passed
-basis: 0fb7367aa775
-reviewers: [security-reviewer, code-reviewer, ux-reviewer]
+basis: da9820471f7c
+reviewers: [ux-reviewer, ui-reviewer, security-reviewer, code-reviewer]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-25, 7파트 남은 네 화면 정돈 — 소개·고객센터·공지·신고, 28절·카드 d116)
+
+- 범위: 333609ae 뒤 4c7467fd·616a28d9·e16931cd. 고객센터 UX 명세 docs/ux/pages/support.md(28절을 옮김).
+- ux-reviewer: 막을 지적 없음, low 3 — 로그인 전 띠 안내의 「내 문의」 문장 뺌 · 버튼 이름은 코드 문구로(명세·28절에 이유) · 신고 명세 칸 이름(10-23 변경을 명세가 못 따라감).
+- ui-reviewer: high 1(문의 입력 테두리 #9ca3af 실제 2.5:1 → 공통 --field 4.8:1, 28절 정정) · medium 2(390 질문 탭 포커스 테두리 잘림 · 라벨 700 은 공통 스타일이라 BACKLOG) · low 2(공지 쪽 넘김 줄 바꿈 · 소개 설명 16, 칸 안내 14 는 BACKLOG).
+- security-reviewer: 지적 없음(로그인 전 분기에 문의를 보내는 길 없음, 서버는 42501→401 로 따로 막음, INV-K12 분기 그대로, mailto 조립 그대로).
+- code-reviewer: low 3 반영(401 문구 export 뺌 · × 아이콘 경로 단언 · 링크 글자 단언).
+- 실행 근거: `npx vitest run` 관련 8곳 143 통과, 반영 뒤 about·inquiry-submit 30 통과 · tsc·copy:lint 통과 · 변이 셋 각각 실패(로그인 전 분기 끄기 · 하지 않는 것 카드로 · × 를 lock 으로).
+  화면(개발 서버, Playwright): /about·/support·/notices·/report 를 390·1440 에서 가로 넘침 0 · 글자 대비 미달 0(전 요소 계산). 쿠키 없는 새 창 /support — 입력 칸 0, 「로그인하고 문의하기」 1개(높이 48, /login?next=/support). 로그인 창 — 칸 넷 + 내 문의. 공지 펼친 본문 줄 680 · 소제목 16/600. 「내용」 칸 여백 24 가 다른 칸과 8 어긋나 16 으로(616a28d9).
+  못 본 것: 문의 제한 계정 화면(시험 계정 없음 — 코드 변경 없고 기존 시험이 분기를 붙듦), 최대 길이 데이터(이번 diff 에 새 가변 칸 없음).
+
+## 이전 사인오프
+
 
 # 리뷰 사인오프 — fankkuk (2026-10-24, 14일 지난 환불 줄에는 「직접 환불함」만 — f205e56b, 카드 d126 · S7f)
 
