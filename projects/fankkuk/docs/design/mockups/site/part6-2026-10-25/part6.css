@@ -1,0 +1,166 @@
+/* 6파트 정돈 시안 2026-10-25 — 로그인·비밀번호 찾기·새 비밀번호·가입 네 장이 같이 쓰는 CSS.
+   값은 tokens.css·base.css(글자 48·32·24·20·16·14, 간격 4·8·12·16·24·32·40·48·64·96, 반경 24·16·12, 굵기 800·600·500·400)와
+   design-rules 00000절(로그인 480 · 가입 720), 18절(판 위 96, 390 은 64) 그대로. 새 색·새 반경 없음.
+   껍데기(상단 바·바닥글)는 part7 시안과 같다. 시안 전용: .mockbar(회색 막대) · .mk(빨간 번호) · .cand(노란 「문구 후보」). */
+@font-face{font-family:Pretendard;src:url("../v34-part1/Pretendard-Medium.woff") format("woff");font-weight:400 500;font-display:swap}
+@font-face{font-family:Pretendard;src:url("../v34-part1/Pretendard-SemiBold.woff") format("woff");font-weight:600;font-display:swap}
+@font-face{font-family:Pretendard;src:url("../v34-part1/Pretendard-Bold.woff") format("woff");font-weight:700 800;font-display:swap}
+@font-face{font-family:Round;src:url("../../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2");font-weight:800;font-display:swap}
+:root{
+  --primary:#89cff0;--primary-50:#e0f2fe;--primary-700:#6bbfe6;--tint:#f0f8ff;
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-500:#6b7280;--gray-600:#4b5563;--gray-900:#1f2937;
+  --ink:#1f2937;--sub:#4b5563;--faint:#6b7280;--white:#fff;--on-brand:#1f2937;--brand-line:#1f2937;
+  --kakao:#fee500;--kakao-ink:#191919;--kakao-hover:#f3d900;
+  --field:inset 0 0 0 1px #6b7280;--hair:inset 0 0 0 1px #e5e7eb;--shadow:0 1px 3px rgb(0 0 0 / .06);
+  --r-card:16px;--r-btn:12px;--r-pill:9999px;
+  --font:Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",sans-serif;--font-round:Round,var(--font)
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{color:var(--ink);background:#fff;font-family:var(--font);font-size:16px;line-height:1.6;word-break:keep-all}
+body{margin:0}
+h1,h2,h3,p,ol,ul,dl,dd{margin:0}
+ol,ul{padding:0;list-style:none}
+a{color:var(--ink)}
+:is(a,button,input,select,summary):focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+:is(input,select).field:focus{outline:2px solid var(--ink);outline-offset:0}
+
+/* ---- 시안 전용: 회색 막대 · 번호 · 문구 후보 ---- */
+.mockbar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px 16px;background:#1f2937;color:#fff;font:600 14px/1.4 var(--font)}
+.mockbar .grp{display:flex;flex-wrap:wrap;gap:8px}
+.mockbar button{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid #9ca3af;background:transparent;color:#fff;font:600 14px/1 var(--font);cursor:pointer}
+.mockbar button[aria-pressed="true"]{background:#fff;color:#1f2937}
+.mockbar button:focus-visible{outline:3px solid #89cff0;outline-offset:2px}
+.mockbar .sp{margin-left:auto}
+body.shot .mockbar{display:none}
+.mk{display:none;position:absolute;z-index:3;width:22px;height:22px;border-radius:50%;background:#b42318;color:#fff;font:600 14px/1 sans-serif;font-style:normal;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 0 0 2px #fff}
+body.show-mk .mk{display:flex}
+.mkp{position:relative}
+.mk.tl{left:-8px;top:-8px}.mk.tr{right:-8px;top:-8px}.mk.ml{left:-32px;top:0}
+.cand{display:inline-flex;align-items:center;height:22px;margin-left:8px;padding:0 8px;border-radius:9999px;background:#fde68a;color:#78350f;font:600 14px/1 var(--font);letter-spacing:0;vertical-align:middle;white-space:nowrap;font-style:normal}
+.cand.blk{display:flex;width:max-content;margin:8px auto 0}
+
+/* ---- 껍데기: 로그인 전 상단 바 · 바닥글 (part7 과 같음) ---- */
+.pg-wrap{max-width:928px;padding-inline:24px;margin-inline:auto;width:100%}
+.pg-top{height:64px;border-bottom:1px solid #e5e7eb;background:#fff}
+.pg-top .pg-wrap{height:100%;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.pg-logo{display:flex;align-items:center;gap:8px;font-family:var(--font-round);font-weight:800;font-size:24px;white-space:nowrap;text-decoration:none}
+.pg-logo img{width:32px;height:32px;border-radius:22%}
+.pg-nav{display:flex;gap:8px;font-size:16px;font-weight:500;height:100%}
+.pg-nav a{display:inline-flex;align-items:center;height:100%;padding-inline:12px;text-decoration:none}
+.pg-auth{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:600;white-space:nowrap}
+.pg-auth a{display:inline-flex;align-items:center;min-height:44px;padding-inline:8px;text-decoration:none}
+.pg-auth i{width:1px;height:16px;background:#e5e7eb}
+.pg-menu{display:none;width:44px;height:44px;border:0;border-radius:12px;background:none;align-items:center;justify-content:center;color:var(--ink)}
+.pg-menu svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.pg-foot{background:#f9fafb;padding:48px 0 40px;font-size:14px;color:var(--sub)}
+.pg-foot .pg-wrap{display:grid;grid-template-columns:minmax(0,1fr) 168px 200px;gap:24px}
+.pg-foot .pg-logo{font-size:20px;color:var(--ink);margin-bottom:12px}
+.pg-foot dl{display:grid;grid-template-columns:140px minmax(0,1fr);gap:8px 12px}
+.pg-foot dt{font-weight:600;color:var(--ink)}
+.pg-foot dd{overflow-wrap:anywhere}
+.pg-foot nav{display:flex;flex-direction:column}
+.pg-foot nav a{display:flex;align-items:center;min-height:44px;text-decoration:none;color:var(--sub)}
+.pg-foot .cp{grid-column:1/-1;margin-top:8px}
+
+/* ---- 인증 화면 틀 (세 화면 같은 머리: 카드 밖 위 가운데, 제목 32/800 · 설명 16/400, 그림 없음) ---- */
+.auth-page{padding:96px 24px}
+.auth-col{width:100%;max-width:480px;margin-inline:auto}
+.auth-col.wide{max-width:720px}
+.head{text-align:center;margin-bottom:32px}
+.head h1{font-family:var(--font-round);font-weight:800;font-synthesis:none;font-size:32px;line-height:1.3;letter-spacing:-.02em}
+.head p{margin:8px auto 0;max-width:480px;font-weight:400;color:var(--sub)}
+.card{padding:40px;border-radius:var(--r-card);background:#fff;box-shadow:var(--hair),var(--shadow)}
+.form{display:grid;gap:24px}
+.label{display:block;margin-bottom:8px;font-weight:600}
+.label .opt{font-weight:400;color:var(--sub)}
+:is(input,select).field{display:block;width:100%;min-width:0;min-height:48px;padding:0 16px;border:0;border-radius:var(--r-btn);background:#fff;box-shadow:var(--field);font:400 16px/1.5 var(--font);color:var(--ink)}
+:is(input,select).field::placeholder{color:var(--faint);opacity:1}
+select.field{appearance:auto}
+.hint{margin-top:8px;font-size:14px;line-height:1.5;color:var(--sub)}
+/* 칸 아래 한 줄 — 틀림은 본문색 600 + 원 안 「!」, 맞음은 회색 14 + 체크 (가입 지금 모양, 로그인 전 세 화면이 같은 모양) */
+.live{display:flex;align-items:flex-start;gap:8px;margin-top:8px}
+.live.bad{color:var(--ink);font-weight:600}
+.live.bad::before{content:"!";flex:none;display:grid;place-items:center;width:24px;height:24px;margin-top:2px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--ink);font-weight:600;line-height:1}
+.live.ok{align-items:center;color:var(--sub);font-size:14px;line-height:1.5}
+.err,.okmsg{padding:16px;border-radius:var(--r-btn);font-weight:600}
+.err{background:var(--primary-50);color:var(--ink)}
+.okmsg{background:var(--gray-50);box-shadow:var(--hair);color:var(--ink)}
+.desc{color:var(--sub)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:var(--r-btn);background:var(--primary);color:var(--on-brand);font:600 16px/1.25 var(--font);text-align:center;text-decoration:none;cursor:pointer}
+.btn:hover{background:var(--primary-700)}
+.btn.block{width:100%}
+.btn.line{background:#fff;box-shadow:var(--hair)}
+.btn.line:hover{background:var(--gray-50)}
+.btn.kakao{background:var(--kakao);color:var(--kakao-ink)}
+.btn.kakao:hover{background:var(--kakao-hover)}
+.btn[aria-disabled="true"]{background:var(--gray-100);color:var(--gray-600);cursor:not-allowed}
+/* 카드 아래 한 줄들 — 가운데, 누를 칸 44 */
+.under{display:flex;flex-direction:column;align-items:center;margin-top:16px}
+.under .lnk{display:inline-flex;align-items:center;min-height:44px;padding-inline:8px;font-weight:600;color:var(--ink);text-underline-offset:4px}
+.foot-line{margin-top:8px;text-align:center;color:var(--sub)}
+.foot-line a{font-weight:600;color:var(--ink);text-decoration:underline;text-underline-offset:4px}
+.under + .foot-line{margin-top:0}
+.text-btn{min-height:44px;padding:0 4px;border:0;background:none;color:var(--ink);font:600 16px/1.5 var(--font);text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+
+/* ---- 가입 ---- */
+.steps{display:flex;gap:8px;margin-bottom:24px}
+.steps li{flex:1 1 0;min-width:0}
+.st{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;padding:0 8px;border:0;border-radius:var(--r-pill);background:var(--gray-100);color:var(--gray-600);font:400 16px/1.2 var(--font);white-space:nowrap;cursor:default}
+.dot{flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#fff;color:var(--gray-600);font-weight:600;line-height:1}
+.st.done{background:var(--primary-50);color:var(--ink);cursor:pointer}
+.st.done .dot{color:var(--ink)}
+.st[aria-current="step"]{background:var(--primary-50);color:var(--ink);font-weight:600}
+.st[aria-current="step"] .dot{background:var(--gray-900);color:#fff}
+.stepcard h2{font-family:var(--font-round);font-weight:800;font-synthesis:none;font-size:20px;line-height:1.4;margin-bottom:24px}
+.stepcard h2 + .desc{margin:-16px 0 24px}
+.choices{display:grid;gap:16px}
+.choice{display:flex;align-items:flex-start;gap:16px;padding:24px;border-radius:var(--r-card);box-shadow:var(--hair);background:#fff;cursor:pointer}
+.choice:has(input:checked){background:var(--primary-50);box-shadow:inset 0 0 0 1px var(--brand-line)}
+.choice input{width:24px;height:24px;margin:2px 0 0;flex:none;accent-color:var(--brand-line)}
+.choice strong{display:block;font-weight:600}
+.choice span span{display:block;color:var(--sub)}
+.crnote{margin-top:16px;color:var(--sub)}
+.crnote strong{font-weight:600}
+/* 2단계 묶음 — 하늘 판 대신 구분선 + 소제목 16/600, 묶음 사이 위아래 32 */
+.grp + .grp{margin-top:32px;padding-top:32px;border-top:1px solid var(--gray-200)}
+.grp > h3{font-size:16px;line-height:1.5;font-weight:600;margin-bottom:24px}
+.email{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px}
+.email .at{font-weight:600;color:var(--gray-600)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:0;border-radius:var(--r-pill);background:#fff;box-shadow:var(--hair);font:400 16px/1.2 var(--font);color:var(--ink)}
+.terms{display:grid;gap:4px}
+.check{display:flex;align-items:center;gap:8px;min-height:44px}
+.check input{width:24px;height:24px;margin:0;flex:none;accent-color:var(--brand-line)}
+.trow{display:flex;align-items:center;gap:12px}
+.trow .check{flex:1;min-width:0}
+.trow .view{display:inline-flex;align-items:center;min-height:44px;padding-inline:16px;border-radius:var(--r-btn);font-weight:600;text-decoration:none;color:var(--ink)}
+.req{font-weight:600}
+.actions{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--gray-200)}
+.actions .btn{min-width:120px}
+.actions .next{margin-left:auto}
+.kakao-list{display:grid;gap:16px;counter-reset:k}
+.kakao-list li{position:relative;min-height:28px;padding-left:40px;counter-increment:k}
+.kakao-list li::before{content:counter(k);position:absolute;left:0;top:0;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--primary-50);color:var(--ink);font-weight:600}
+.kakao-list li.sent::before{content:none}
+.kakao-list .tick{position:absolute;left:0;top:0;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--primary);color:var(--on-brand)}
+.kakao-list strong{font-weight:600}
+.again{margin-top:16px;color:var(--sub);font-size:14px;line-height:1.5}
+.again .text-btn{font-size:14px}
+.stack-err{margin-top:24px}
+
+@media (max-width:767px){
+  .pg-nav,.pg-auth{display:none}
+  .pg-menu{display:inline-flex}
+  .pg-foot .pg-wrap{grid-template-columns:1fr}
+  .pg-foot dl{grid-template-columns:112px minmax(0,1fr)}
+  .auth-page{padding:64px 24px}
+  .head h1{font-size:24px}
+  .card{padding:24px}
+  .st{font-size:14px;gap:6px;padding:0 8px}
+  .dot{width:24px;height:24px;font-size:14px}
+  .actions{display:grid;grid-template-columns:1fr 2fr}
+  .actions.solo{grid-template-columns:1fr}
+  .actions .btn{min-width:0}
+  .actions .next{margin-left:0}
+}
