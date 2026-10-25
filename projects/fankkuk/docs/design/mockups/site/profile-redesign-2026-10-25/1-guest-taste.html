@@ -1,0 +1,46 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>로그인 전 · 취향 있음 · 크리에이터 상세 재디자인 시안</title><link rel="stylesheet" href="profile.css"></head>
+<!-- 화면 1 — 로그인 전, 취향 칸 있음(참고 사진 구성). 취향은 새 기능이라 이 시안에만 있다.
+ 시안 전용 표시: 노란 「문구 미정」 = 용어집·지금 화면에 없는 새 문구, 연한 노랑 「새 기능 — 아직 없음」 = 1번 화면에만 있는 취향. 둘 다 구현 땐 뺀다.
+ 값 근거: tokens.css 그대로(하늘색 면 버튼, 반경 24·16·12, 굵기 800·600·500·400). 주소 문장 = site-copy PROMISE.address 그대로. -->
+<body>
+<header class="top"><div class="wrap"><a class="logo" href="#" aria-label="팬꾹 처음으로"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
+<nav class="nav" aria-label="주 메뉴"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">고객센터</a></nav>
+<div class="auth"><a href="#">로그인</a><a href="#">회원가입</a></div>
+<button class="menu" type="button" aria-label="메뉴 열기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div></header>
+<main id="main">
+<div class="wrap"><div class="cover" aria-hidden="true"><img src="../../../../../public/images/mascot-basic.png" alt=""></div>
+<section class="head" aria-labelledby="creator-name"><div class="ident">
+<div class="photo" aria-hidden="true"><img src="../../../../../public/images/mascot-basic.png" alt=""></div>
+<div class="who"><div class="nameline"><h1 class="name" id="creator-name">하늘</h1><span class="fandom">하늘이네</span><a class="chan" href="#" aria-label="유튜브 채널 열기" title="@haneul · 2026.10.14 확인"><img src="../../../../../public/brand/youtube.svg" alt=""></a></div>
+<p class="handle">fankkuk.kr/haneul</p>
+<div class="chips"><span class="chip ok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 12.5l3 3 5-6"/></svg>채널 소유 확인</span><span class="chip">게임</span><span class="chip">일상</span></div>
+<p class="intro">함께 웃는 하루를 만들어요.</p>
+<p class="thanks">하늘이네 여러분의 마음 늘 감사해요</p></div></div>
+<aside class="gift" aria-labelledby="gift-h"><img class="gi" src="../../../../../public/img/icon-gift.png" alt="" width="56" height="56">
+<h2 id="gift-h">하늘님께 선물을 보내세요 <span class="mk mk--copy">문구 미정</span></h2><p class="note">팔로우한 크리에이터에게만 보낼 수 있어요.</p>
+<div class="btns"><a class="btn btn--fill" href="#">팔로우하고 선물 보내기</a></div><p class="promise"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span>크리에이터가 승인하기 전에는 주소가 공개되지 않아요.</span></p></aside></section></div>
+<div class="wrap sec" style="margin-top:var(--section-gap)">
+<div class="body"><div class="main"><section aria-labelledby="taste-h"><div class="sec-head"><h2 id="taste-h">하늘님의 취향</h2><span class="mk mk--new">새 기능 — 아직 없음</span>
+<p class="desc">선물을 고를 때 참고해 주세요 <span class="mk mk--copy">문구 미정</span></p></div>
+<div class="taste">
+<article class="card tcard big"><div class="ph ph--a" aria-hidden="true"><img src="../../../../../public/images/mascot-gift.png" alt=""></div><div class="tx"><h3>게임과 귀여운 소품</h3><p>게임도 좋아하고, 귀여운 캐릭터 소품을 보면 늘 기분이 좋아져요.</p><div class="chips"><span class="chip">하늘색</span><span class="chip">고양이</span><span class="chip">문구</span></div></div></article>
+<div class="tpair">
+<article class="card tcard"><div class="ph ph--b" aria-hidden="true"><img src="../../../../../public/images/mascot-box.png" alt=""></div><div class="tx"><h3>기록하는 걸 좋아해요</h3><p>예쁜 노트나 다이어리, 귀여운 스티커 같은 문구를 좋아해요.</p></div></article>
+<article class="card tcard"><div class="ph ph--c" aria-hidden="true"><img src="../../../../../public/images/mascot-basic.png" alt=""></div><div class="tx"><h3>손편지는 언제나 좋아요</h3><p>짧은 응원 메시지나 손편지도 정말 소중해요.</p></div></article>
+</div></div></section></div><div class="side"><aside class="muted hard" aria-labelledby="hard-h"><h2 id="hard-h">받기 어려운 품목</h2><p>지금은 부피가 큰 선물을 받기 어려워요 ㅠㅠ 이사 중이라 둘 곳이 없어요</p><img src="../../../../../public/images/mascot-box.png" alt="" width="128" height="128"></aside></div></div>
+</div>
+<div class="wrap sec"><section aria-labelledby="state-h"><h2 class="sr-only" id="state-h">받는 상태와 요금</h2><div class="info-row"><div class="card info"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 12.5l3 3 5-6"/></svg></span><h3>받는 상태</h3><p class="v">지금 선물을 받고 있어요</p></div>
+<div class="card info"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2"/></svg></span><h3>평균 승인 시간 (최근 30일)</h3><p class="v">2시간 10분</p></div>
+<div class="card info"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 9l2 6 2-4 2 4 2-6"/></svg></span><h3>상자마다 배송비 포함</h3><p class="v">6,900원부터</p></div>
+<div class="card info"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><h3>선물한 팬</h3><p class="v">이번 달 <span class="acc">3명</span>의 팬이 마음을 보냈어요</p></div>
+<div class="card info"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 5h11a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-11a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3zM8 3v4M16 3v4M3.5 10h17"/></svg></span><h3>다가오는 기념일</h3><p class="v">데뷔 기념일 (11월 9일)</p><p class="dd"><span aria-hidden="true">D-15</span><span class="sr-only">15일 남음</span></p></div></div></section></div><div class="wrap sec"><section aria-labelledby="replies-h"><div class="sec-head"><h2 id="replies-h">감사 답장 모음</h2><p class="desc">하늘님이 팬에게 남긴 답장 중, 팬이 공개를 허락한 것만 보여요. 최신순이에요.</p></div>
+<ul class="quotes"><li class="card quote"><q>선물 잘 받았어요. 덕분에 힘이 났어요.</q><p class="by">별빛님에게 · 2026.10.21</p></li><li class="card quote"><q>보내 주신 마음 오래 기억할게요.</q><p class="by">익명의 팬에게 · 2026.10.18</p></li></ul></section></div>
+<div class="wrap sec"><section aria-labelledby="guide-h"><div class="guide"><h2 id="guide-h">보내기 전 안내</h2>
+<a class="gl" href="#"><img src="../../../../../public/img/icon-help.png" alt="" width="48" height="48"><span><b>보낼 수 없는 것<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></b><span class="d">음식물, 액체류, 현금·상품권</span></span></a>
+<a class="gl" href="#"><img src="../../../../../public/img/icon-inspect.png" alt="" width="48" height="48"><span><b>상자는 이렇게 확인해요<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></b><span class="d">모든 선물은 팬꾹에서 검수한 뒤 보내요.</span></span></a></div></section></div>
+<div class="wrap sec"><section aria-labelledby="similar-title"><div class="sec-head"><h2 id="similar-title">이런 크리에이터도 있어요</h2><a class="more more-top" href="#">전체 보기</a></div>
+<ul class="others"><li><a class="card other" href="#" aria-label="봄이님의 선물 링크 페이지"><span class="face" style="background:#fbe3a8" aria-hidden="true">봄</span><span class="w"><b>봄이</b><span class="t">일상 · 먹방</span></span></a></li><li><a class="card other" href="#" aria-label="달오님의 선물 링크 페이지"><span class="face" style="background:#dcd3f6" aria-hidden="true">달</span><span class="w"><b>달오</b><span class="t">게임</span></span></a></li><li><a class="card other" href="#" aria-label="도담님의 선물 링크 페이지"><span class="face" style="background:#cfe3fa" aria-hidden="true">도</span><span class="w"><b>도담</b><span class="t">그림 · 일상</span></span></a></li><li><a class="card other" href="#" aria-label="새벽빛님의 선물 링크 페이지"><span class="face" style="background:#c9ecdd" aria-hidden="true">새</span><span class="w"><b>새벽빛</b><span class="t">음악</span></span></a></li></ul>
+<a class="more-bottom" href="#">전체 보기</a></section></div>
+</main>
+<footer class="foot"><div class="wrap"><nav aria-label="약관과 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">취소·환불 규정</a><a href="#">고객센터</a></nav><p>© 2026 팬꾹. All rights reserved.</p></div></footer>
+</body></html>
