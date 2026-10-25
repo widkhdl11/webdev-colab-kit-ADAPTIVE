@@ -25,7 +25,7 @@ export default async function Page() {
     readSentBoxCandidates(supabase).catch(() => []),
     readMyAddressStatus(supabase).catch(() => null),
   ]);
-  const header = await readSiteHeader(supabase, viewer, CREATOR_ACTION_CENTER_HREF, undefined, items);
+  const header = await readSiteHeader(supabase, viewer, CREATOR_ACTION_CENTER_HREF, items);
   return (
     <>
       <SiteHeader {...header} />

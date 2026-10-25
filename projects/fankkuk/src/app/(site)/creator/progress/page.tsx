@@ -24,7 +24,7 @@ export default async function Page() {
     readCreatorActionItems(supabase),
     readSentBoxCandidates(supabase).catch(() => []),
   ]);
-  const header = await readSiteHeader(supabase, viewer, CREATOR_GIFT_PROGRESS_HREF, undefined, items);
+  const header = await readSiteHeader(supabase, viewer, CREATOR_GIFT_PROGRESS_HREF, items);
   return (
     <>
       <SiteHeader {...header} />

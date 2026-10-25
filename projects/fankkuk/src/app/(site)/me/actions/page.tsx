@@ -18,7 +18,7 @@ export default async function Page() {
   if (viewer?.role === "creator") redirect(CREATOR_HOME);
   if (viewer?.role !== "fan") redirect("/login");
   const items = await readActionItems(supabase);
-  const header = await readSiteHeader(supabase, viewer, ACTION_CENTER_HREF, undefined, items);
+  const header = await readSiteHeader(supabase, viewer, ACTION_CENTER_HREF, items);
   return (
     <>
       <SiteHeader {...header} />

@@ -51,7 +51,7 @@ export default async function Page() {
     .map(({ id, title, date }) => ({ id, title, date }));
   return (
     <>
-      <SiteHeader {...await readSiteHeader(supabase, viewer, "/home", all, actions)} />
+      <SiteHeader {...await readSiteHeader(supabase, viewer, "/home", actions)} />
       <HomePage
         nickname={fanProfile?.nickname ?? viewer.nickname ?? ""}
         gifts={gifts}

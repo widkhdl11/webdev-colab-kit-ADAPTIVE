@@ -23,7 +23,7 @@ afterEach(() => {
   host.remove();
 });
 
-const fan: SiteHeaderProps = { role: "fan", current: "/me/following", nickname: "별빛", gifts: [], actionCount: 3 };
+const fan: SiteHeaderProps = { role: "fan", current: "/me/following", nickname: "별빛", actionCount: 3 };
 
 /** 페이지 하나(상단 바 + 본문) → 로딩 화면으로 바뀌는 흐름. Next 가 loading.tsx 로 페이지 자리를 바꾸는 것과 같은 모양이다. */
 function show(screen: "page" | "loading", props: SiteHeaderProps = fan) {

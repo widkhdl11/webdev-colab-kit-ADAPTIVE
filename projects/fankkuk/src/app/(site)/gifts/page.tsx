@@ -40,7 +40,7 @@ export default async function Page() {
     giftsRead,
     togetherRead,
     readCreatorCards(supabase, { signedIn: true }),
-    Promise.all([giftsRead, todoRead]).then(([g, t]) => readSiteHeader(supabase, viewer, "/gifts", g, t.header)),
+    todoRead.then((t) => readSiteHeader(supabase, viewer, "/gifts", t.header)),
     todoRead,
   ]);
   const faceToneByName = Object.fromEntries(cards.map((c) => [c.name, c.faceTone]));

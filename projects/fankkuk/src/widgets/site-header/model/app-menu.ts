@@ -44,14 +44,13 @@ export type AppMenuItem = {
   also?: readonly string[];
   sub?: readonly AppMenuSub[];
 };
-export type AppBadge = "gifts" | "actions";
+export type AppBadge = "actions";
 
 /**
  * 숫자 뱃지의 뜻 — 낭독기용(숫자 자체는 aria-hidden). 링크 이름은 「칸 이름, 이 말」로 읽힌다.
  * 지금 할 일은 칸 이름이 이미 뜻이라 수만 붙인다(시안 뱃지 aria-label="3건") — 「지금 할 일 지금 할 일 3건」이 되지 않게.
  */
 export const BADGE_SPEECH: Readonly<Record<AppBadge, (n: number) => string>> = {
-  gifts: (n) => `진행 중 ${n}건`,
   actions: (n) => `${n}건`,
 };
 

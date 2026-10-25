@@ -52,7 +52,7 @@ async function revgiftDetail({ supabase, viewer }: Session, orderNo: string) {
   if (!item) notFound();
   return (
     <>
-      <SiteHeader {...await readSiteHeader(supabase, viewer, "/me/revgifts", undefined, actions)} />
+      <SiteHeader {...await readSiteHeader(supabase, viewer, "/me/revgifts", actions)} />
       <RevgiftReceivePage
         item={item}
         todo={actions !== null && actionItemsOfOrder(actions, item.orderNo).length > 0}
@@ -103,7 +103,7 @@ async function giftDetail({ supabase, viewer }: Session, orderNo: string, differ
   const todoItems = actions.items;
   return (
     <>
-      <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts", gifts, actions.header)} />
+      <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts", actions.header)} />
       <GiftStatusPage
         view={view}
         boxes={boxes}
@@ -146,7 +146,7 @@ async function unpaidDetail({ supabase, viewer }: Session, orderNo: string, gift
   const addressStatus = viewer.role === "fan" ? await readMyFanAddressStatus(supabase).catch(() => null) : null;
   return (
     <>
-      <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts", gifts, actions.header)} />
+      <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts", actions.header)} />
       <MyShell width="form">
         <UnpaidGiftPage
           items={todoItems}

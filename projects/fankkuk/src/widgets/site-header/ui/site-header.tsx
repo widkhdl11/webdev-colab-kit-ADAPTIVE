@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
-import type { HeaderGiftState } from "@/entities/order/ui/fan-stage-copy";
 import { CREATOR_HOME, FAN_HOME } from "@/entities/session/model/home-path";
 import { LogoMark } from "@/shared/ui/logo";
 import { CREATOR_APP_MENU, FAN_APP_MENU } from "../model/app-menu";
@@ -13,8 +12,6 @@ import { AppSidebar } from "./app-sidebar";
 
 // 사이트 머리(design-rules 00절, 시안 v18). 로그인 전 = 위쪽 상단 바(높이 64, 767 이하 햄버거) ·
 // 로그인 후 = 왼쪽 앱 사이드바(app-sidebar.tsx). 시안: v18/landing.html(상단 바) · home-fan.html·home-creator.html(사이드바)
-
-export type HeaderGift = { orderNo: string; creatorName: string; state: HeaderGiftState; label: string };
 
 type NavItem = { href: string; label: string };
 
@@ -28,7 +25,7 @@ const SITE_NAV: NavItem[] = [
 
 export type SiteHeaderProps =
   | { role: "guest"; current?: string }
-  | { role: "fan"; current?: string; nickname: string; gifts: HeaderGift[]; actionCount: number }
+  | { role: "fan"; current?: string; nickname: string; actionCount: number }
   | { role: "creator"; current?: string; nickname: string; actionCount: number };
 
 function GuestTopBar({ current }: { current?: string }) {
@@ -142,7 +139,7 @@ function SiteHeaderView(props: SiteHeaderProps) {
         current={props.current}
         homeHref={FAN_HOME}
         nickname={props.nickname}
-        counts={{ gifts: props.gifts.length, actions: props.actionCount }}
+        counts={{ actions: props.actionCount }}
       />
     );
   }

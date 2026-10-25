@@ -136,7 +136,7 @@ const PRICES: PublicPriceTable = { small: tierPrice(6900), medium: tierPrice(890
 async function counts(rows: readonly unknown[]) {
   const { client, calls } = fakeClient(rows);
   const items = await readActionItems(client);
-  const header = await readSiteHeader(client, viewer, "/me/actions", [], items);
+  const header = await readSiteHeader(client, viewer, "/me/actions", items);
   if (header.role !== "fan") throw new Error("팬 헤더가 아니다");
 
   act(() => root.render(<SiteHeader {...header} />));
@@ -203,7 +203,7 @@ describe("INV-J2·J13: 숫자는 한 읽기 결과의 줄 수 — 사이드바·
 
   it("INV-J2: 화면이 결과를 넘기지 않으면 헤더가 같은 읽기 함수를 스스로 한 번 부른다(따로 세는 함수가 없다)", async () => {
     const { client, calls } = fakeClient([ROWS.revgift]);
-    const header = await readSiteHeader(client, viewer, "/home", []);
+    const header = await readSiteHeader(client, viewer, "/home");
     expect(calls).toEqual(["my_action_items"]);
     expect(header.role === "fan" && header.actionCount).toBe(1);
   });
@@ -213,14 +213,14 @@ describe("INV-J2·J13: 숫자는 한 읽기 결과의 줄 수 — 사이드바·
     const failing = { rpc } as unknown as Parameters<typeof readActionItems>[0];
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
     try {
-      const header = await readSiteHeader(failing, viewer, "/home", []);
+      const header = await readSiteHeader(failing, viewer, "/home");
       expect(header.role === "fan" && header.actionCount).toBe(0);
       act(() => root.render(<SiteHeader {...header} />));
       const link = host.querySelector('a[href="/me/actions"]');
       expect(link).not.toBeNull();
       expect(link?.querySelector(".badge")).toBeNull();
       // 넘겨받은 결과가 실패(null)였어도 같다 — 다시 읽지 않는다
-      const passed = await readSiteHeader(failing, viewer, "/home", [], null);
+      const passed = await readSiteHeader(failing, viewer, "/home", null);
       expect(passed.role === "fan" && passed.actionCount).toBe(0);
       expect(rpc.mock.calls.filter(([fn]) => fn === "my_action_items")).toHaveLength(1);
     } finally {

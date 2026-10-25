@@ -35,6 +35,9 @@ const nextConfig: NextConfig = {
           { key: "Content-Security-Policy-Report-Only", value: csp },
           // 다른 사이트가 이 화면을 끼워 넣지 못하게 — CSP 의 frame-ancestors 는 기록만 하는 모드라 막지 않으므로 이 헤더로 지금 막는다(보안 리뷰 2026-10-14)
           { key: "X-Frame-Options", value: "DENY" },
+          // 다른 사이트로 가는 요청에는 출처(https://fankkuk.com)만 보낸다 — 비밀번호 재설정·이메일 확인 화면은 주소에 링크 값을 담으므로
+          // 경로까지 넘어가면 안 된다. 요즘 브라우저 기본값과 같지만 브라우저마다 다를 수 있어 적어 둔다(v18 보안 리뷰 낮음 ②, OWASP 권장값)
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },
     ];

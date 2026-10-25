@@ -234,7 +234,7 @@ describe("INV-J1 결제 미완료: 결제 대기로 처음 만든 지 24시간 �
     const before = await readActionItems(client);
     const o = await registerTestOrder();
     const items = await readActionItems(client);
-    const header = await readSiteHeader(client, { userId: SEED.fanId, role: "fan", nickname: "별빛" }, "/me/actions", [], items);
+    const header = await readSiteHeader(client, { userId: SEED.fanId, role: "fan", nickname: "별빛" }, "/me/actions", items);
     expect(items).toHaveLength(before.length + 1);
     expect(header.role === "fan" ? header.actionCount : -1).toBe(items.length);
     expect(actionItemsOfOrder(items, o.orderNo).map((it) => it.kind)).toEqual(["unpaid"]);
@@ -276,7 +276,7 @@ describe("INV-M22 ⑤ · INV-J5·J6: 크리에이터 계정이 보낸 결제 대
     const before = await readCreatorActionItems(client);
     const o = await registerTestOrder(1, { senderId: HARU, creatorId: MOMO_CREATOR });
     const items = await readCreatorActionItems(client);
-    const header = await readSiteHeader(client, { userId: HARU, role: "creator", nickname: "하루" }, "/gifts", undefined, items);
+    const header = await readSiteHeader(client, { userId: HARU, role: "creator", nickname: "하루" }, "/gifts", items);
     expect(items).toHaveLength(before.length + 1);
     expect(header.role === "creator" ? header.actionCount : -1).toBe(items.length);
     expect(items.filter((it) => it.orderNo === o.orderNo).map((it) => it.kind)).toEqual(["unpaid"]);
