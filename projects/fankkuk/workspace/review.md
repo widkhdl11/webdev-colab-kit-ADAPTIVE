@@ -1,9 +1,23 @@
 ---
 project: fankkuk
 status: passed
-basis: da9820471f7c
+basis: 5be2140aed73
 reviewers: [ux-reviewer, ui-reviewer, security-reviewer, code-reviewer]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-25, 6파트 로그인·가입·비밀번호 + 로그인 상태 유지 INV-L15 + 줄바꿈·체크박스 사이트 전체)
+
+- 범위: d4f94a37 뒤 51d2d48e(가입 단계 줄 깔림)·939e2e66(로그인 상태 유지)·773c5a29(보안 낮음 2)·6f288143(6파트 화면·/password/forgot·줄바꿈·젤리 체크박스)·9eac0a4b·247e5c32. 카드 d128·d129·d130.
+- security-reviewer: 939e2e66 낮음 2(실패 시 쿠키·가입 직후 로그인) → 773c5a29 로 고침 → 재리뷰 지적 없음(decide 를 finally 에서, 만료 시각 떼기 한 곳, INV-L5 동일 응답, 표시 쿠키 옵션).
+- ux-reviewer: 명세와 다른 곳 없음, 줄바꿈 2(가입 오류 상자·「~해 주세요」) → 9eac0a4b.
+- ui-reviewer: 중간 2(결제 동의 체크박스 24·창 칸 44 미달)·낮음 4(포커스 3px·들여쓰기 38·.pick 칸·고대비) → 247e5c32.
+- code-reviewer: medium 3(늦은 쿠키 쓰기를 통과로 치던 시험·기본값 상수 shared → entities·미루기 함수 직접 시험)·low 4 → 247e5c32.
+- 실행 근거: 전체 유닛 323파일 2647 통과 · 통합 session·admin-session·password-attempts·가입 4·password-reset·password-change 통과 · tsc·copy:lint 통과 · 변이 INV-L15 24 + 후속 6 + 리뷰 반영 18 모두 잡힘.
+  화면(개발 서버, 쿠키 없는 새 창): /login·/password/forgot·/password/reset·/signup × 390·1440 가로 넘침 0 · 글자 대비 미달 0 · 「 」 글자 노출 0 · 체크박스 26·모서리 10 · 로그인에 /password/forgot 링크. 가입 「다음」 뒤 단계 줄 위 88(고치기 전 0).
+  못 본 것: 실제 브라우저를 닫았다 열어 로그인이 풀리는지(쿠키 만료 시각 없음은 실제 로컬 Auth 통합 시험으로 확인) — 사용자 화면 확인 중. 고대비 모드 화면.
+
+## 이전 사인오프
+
 
 # 리뷰 사인오프 — fankkuk (2026-10-25, 7파트 남은 네 화면 정돈 — 소개·고객센터·공지·신고, 28절·카드 d116)
 
