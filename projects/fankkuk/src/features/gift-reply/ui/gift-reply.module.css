@@ -80,7 +80,7 @@
 .reply .more { margin-top: 8px; font-size: var(--fs-body); overflow-wrap: anywhere; }
 .consent { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--divider); }
 .check { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; }
-.check input { width: 22px; height: 22px; margin: 0; accent-color: var(--brand-line); }
+.check input { margin: 0; } /* 칸 모양은 base.css 18) 체크박스 */
 .check input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .check-hint { margin-left: 34px; color: var(--sub); }
 .reply-foot { display: flex; justify-content: flex-end; margin-top: 24px; }

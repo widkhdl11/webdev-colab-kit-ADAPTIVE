@@ -9,7 +9,8 @@ export const PASSWORD_MAX = 72;
 export const PASSWORD_TOO_SHORT = `비밀번호는 ${PASSWORD_MIN}자 이상으로 적어 주세요.`;
 export const PASSWORD_TOO_LONG = `비밀번호는 ${PASSWORD_MAX}자까지 쓸 수 있어요.`;
 export const PASSWORD_WEAK = "영문·숫자·특수문자를 모두 섞어 적어 주세요.";
-export const PASSWORD_HINT = `${PASSWORD_MIN}자 이상, 영문·숫자·특수문자를 모두 섞고 아이디와 다르게 적어 주세요.`;
+// 화면 안내 줄 — 가운뎃점 덩어리는 \u2060 로 붙이고 「적어 주세요」는 줄이 안 바뀌는 띄어쓰기(design-rules 29절 줄바꿈 1·2)
+export const PASSWORD_HINT = `${PASSWORD_MIN}자 이상, 영문\u2060·\u2060숫자\u2060·\u2060특수문자를 모두 섞고 아이디와 다르게 적어\u00a0주세요.`;
 export const PASSWORD_SAME_AS_ID = "비밀번호를 아이디와 다르게 적어 주세요.";
 
 /** 지금 비밀번호 확인이 틀렸을 때의 하나의 문구(INV-L5 와 같은 방식 — 무엇이 틀렸는지 더 알려 주지 않는다). 비밀번호 바꾸기·번호 바꾸기가 같이 쓴다. */

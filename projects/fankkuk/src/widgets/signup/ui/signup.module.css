@@ -1,44 +1,54 @@
-/* 회원가입 — 시안 docs/design/mockups/site/v18/signup.html · v18-pub.css 「로그인 · 가입 · 새 비밀번호」. 기둥(.auth)·머리(.auth .head)·카드·폼·확인칸(.check)·오류(.err)·아래 줄(.foot-line)은 전역 클래스.
-   가운데 기둥 720(양옆 여백 포함 768). 상단 바 아래 88, 바닥글까지 96(휴대폰 64). 색은 빨강 한 색 + 회색(끝난 단계도 초록 대신 옅은 빨강).
+/* 회원가입 — 시안 docs/design/mockups/site/part6-2026-10-25/signup.html · part6.css 「가입」(design-rules 29절, 2026-10-25 승인). 기둥(.auth)·머리(.auth .head)·카드·폼·확인칸(.check)·오류(.err)·아래 줄(.foot-line)은 전역 클래스.
+   가운데 기둥 720(양옆 여백 포함 768). 상단 바 아래 96, 바닥글까지 96(휴대폰 64). 색은 하늘 한 색 + 회색.
    시안은 세 단계 카드를 쌓아 보이지만 가입은 한 단계씩 넘기는 흐름이라, 카드 한 장 안에 지금 단계만 보이고 위에 단계 표시 줄이 있다 */
 
 .page { padding: var(--space-24) 0 var(--section-gap); } /* 위 96(간격 단계, 2026-10-18 재진단 — 88 이던 것) */
 :global(.auth).box { max-width: calc(var(--col-form) + 2 * var(--gutter)); }
 .box :global(.head) { margin-bottom: var(--space-8); }
-.box :global(.head .t-lead) { margin-top: var(--space-2); font-size: var(--fs-lead); font-weight: var(--fw-sub); line-height: 1.5; }
+.box :global(.head .t-lead) { margin-top: var(--space-2); font-size: var(--fs-lead); font-weight: 400; line-height: 1.5; } /* 설명 16/400(29절 세 화면 같은 머리) */
+.box :global(:is(.err, .okmsg)) { font-weight: var(--fw-btn); }
 @media (max-width: 767px) { .page { padding-top: calc(var(--space-4) + var(--space-12)); } }
 
-/* 단계 표시 — 시안의 번호 동그라미(.sh .no)와 같은 모양의 알약 줄. 지금 단계는 선택 면, 지난 단계는 초록 */
+/* 단계 표시 — 알약 셋이 한 줄에 같은 폭(글자는 가운데, 줄바꿈 없음). 지금 단계·지난 단계는 옅은 하늘 면 */
 /* 「다음」으로 단계를 옮기면 이 줄로 스크롤한다 — 위에 붙은 상단 바(--header-h) 밑에 깔리지 않게 비켜 선다(base.css 의 구간 규칙과 같은 값) */
 .steps-wrap { margin-bottom: 24px; scroll-margin-top: calc(var(--header-h) + 24px); }
-.step-count { display: none; margin-bottom: 12px; font-weight: var(--fw-bold); }
-.step-count span { color: var(--gray-600); font-weight: 400; }
-.steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.st { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px 0 8px; border: 0; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); cursor: default; }
-.dot { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--white); color: var(--gray-600); font-weight: var(--fw-btn); line-height: 1; }
+.steps { display: flex; gap: 8px; }
+.steps li { flex: 1 1 0; min-width: 0; }
+.st { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; padding: 0 8px; border: 0; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font: 400 16px/1.2 var(--font); white-space: nowrap; cursor: default; }
+.dot { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--white); color: var(--gray-600); font-weight: var(--fw-btn); line-height: 1; }
 .st.is-done { background: var(--primary-50); color: var(--brand-ink); cursor: pointer; }
 .st.is-done .dot { color: var(--brand-ink); }
 .st.is-done:hover .lbl { text-decoration: underline; text-underline-offset: 4px; }
 .st[aria-current="step"] { background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
 .st[aria-current="step"] .dot { background: var(--gray-900); color: var(--white); }
 .st[disabled] { opacity: 1; }
-@media (max-width: 767px) { .step-count { display: block; text-align: center; } .st { flex: 1 1 calc(50% - 8px); } }
+@media (max-width: 767px) {
+  .st { gap: 6px; font-size: 14px; }
+  .dot { width: 24px; height: 24px; font-size: 14px; }
+}
 
 /* 단계 카드 — 입력과 「이전」「다음」이 한 카드 안 */
 .step { margin: 0; padding: 0; border: 0; min-width: 0; }
+.step > h2 { margin-bottom: 24px; }
+.step > h2:has(+ .lead) { margin-bottom: 8px; } /* 제목 아래 설명이 있으면 제목과 8, 설명 아래 24 */
+.lead { margin: 0 0 24px; }
 .focusable { scroll-margin-top: 160px; }
 .focusable:focus { outline: none; }
 .focusable:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
-.sh { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-.no { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--gray-900); color: var(--white); font-weight: var(--fw-btn); line-height: 1; flex-shrink: 0; }
-.step-actions { display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-200); }
-.step-actions :global(.btn) { min-width: 120px; }
-.step-actions .next { margin-left: auto; } /* 「다음」은 모든 단계에서 카드 오른쪽 아래 */
+/* 버튼 글자는 한 줄 — 둘이 한 줄에 안 들어가면 주 버튼이 다음 줄을 꽉 채운다 */
+.step-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-200); }
+.step-actions :global(.btn) { min-width: 120px; white-space: nowrap; }
+.step-actions .next { flex: 1 0 auto; margin-left: auto; } /* 「다음」은 모든 단계에서 카드 오른쪽 아래 */
 @media (max-width: 767px) {
   .step-actions { display: grid; grid-template-columns: 1fr 2fr; }
   .step-actions.no-prev { grid-template-columns: 1fr; }
   .step-actions .next { margin-left: 0; }
   .step-actions :global(.btn) { min-width: 0; }
+}
+/* 휴대폰 폭: 「이전 | 다음」은 1:2 그대로, 글자가 긴 카카오 버튼 줄만 위아래로(주 버튼 위) */
+@media (max-width: 480px) {
+  .step-actions.kakao-row { grid-template-columns: 1fr; }
+  .step-actions.kakao-row .next { order: -1; }
 }
 
 /* 1단계 — 유형 선택 */
@@ -48,12 +58,14 @@
 .choice:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 .choice input { width: var(--icon-xs); height: var(--icon-xs); margin: 2px 0 0; flex-shrink: 0; accent-color: var(--brand-line); }
 .choice input:focus-visible { outline: none; }
-.choice strong { display: block; }
+.choice strong { display: block; font-weight: var(--fw-btn); }
 .choice :global(.t-meta) { display: block; }
 .note { margin-top: var(--space-4); color: var(--gray-600); }
+.note strong { font-weight: var(--fw-btn); }
 
-/* 2단계 — 정보 입력 */
-.cr { display: grid; gap: 24px; padding: 24px; border-radius: var(--r-card); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
+/* 2단계 — 정보 입력. 묶음은 하늘 판 대신 구분선 + 소제목 16/600, 묶음 사이 위아래 32 */
+.grp + .grp { margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--gray-200); }
+.grp-title { margin: 0 0 24px; font-family: var(--font); font-size: 16px; line-height: 1.5; font-weight: var(--fw-h3); }
 .opt { font-weight: 400; }
 .terms { display: grid; gap: 4px; }
 .row { display: flex; align-items: center; gap: 12px; }
@@ -61,24 +73,24 @@
 .req { color: var(--brand-ink); font-weight: var(--fw-btn); }
 /* 칸별 안내 — 칸 바로 아래. 틀림은 다른 폼과 같은 「본문색 굵은 글자 + 원 안의 !」(creator-address 폼), 맞음은 회색 작은 글자 + 체크 */
 .live { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; }
-.live-bad { color: var(--ink); font-weight: var(--fw-bold); }
-.live-bad::before { content: "!" / ""; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: var(--fs-body); font-weight: var(--fw-bold); line-height: 1; }
+.live-bad { color: var(--ink); font-weight: var(--fw-btn); }
+.live-bad::before { content: "!" / ""; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1; }
 .live-ok { align-items: center; color: var(--gray-600); font-size: var(--fs-caption); line-height: var(--lh-caption); }
 .live-ok svg { flex-shrink: 0; }
 .live-wait { color: var(--gray-600); font-size: var(--fs-caption); line-height: var(--lh-caption); } /* 미리 확인 중·잠시 뒤에 — 틀렸다는 표시가 아니다 */
 /* 이메일 — 앞부분 @ 주소 고르기 한 줄, 「직접 입력」이면 아래에 주소 칸 */
 .email { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; }
-.at { font-weight: var(--fw-bold); color: var(--gray-600); }
+.at { font-weight: var(--fw-btn); color: var(--gray-600); }
 .email-custom { margin-top: 8px; }
-.link-off { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 14px; color: var(--gray-600); } /* 아직 갈 곳이 없는 「보기」 — 링크처럼 보이지 않게 */
 
 /* 3단계 — 카카오톡 본인 확인 */
 .kakao { display: grid; gap: 16px; counter-reset: k; }
 .kakao li { position: relative; min-height: 28px; padding-left: 40px; counter-increment: k; }
 .kakao li::before { content: counter(k); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
 .kakao li.is-done::before { content: none; }
+.kakao strong { font-weight: var(--fw-btn); }
 .mark { position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: var(--on-brand); }
-.sent { font-weight: var(--fw-bold); }
+.sent { font-weight: var(--fw-btn); }
 .again { margin-top: 16px; }
 .text-btn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--brand-ink); font: inherit; font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .step > .error { margin-top: 24px; }

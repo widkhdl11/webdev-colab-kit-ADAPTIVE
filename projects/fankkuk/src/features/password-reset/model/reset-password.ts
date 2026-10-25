@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { endAllSessions, PASSWORD_CHANGED_RELOGIN, retryOnce, type AccountPasswordDeps } from "@/entities/session/api/account-password";
 import { newPasswordProblem } from "@/entities/session/model/password-rule";
+import { RESET_LINK_INVALID, RESET_SAVE_FAILED } from "./reset-messages";
 
 // 재설정 링크로 새 비밀번호 정하기(session-login INV-L11).
 // 계정은 링크가 정한다 — 본문의 계정 ID·아이디는 읽지 않는다. 링크 확인과 사용 표시는 DB 함수 claim_password_reset 이 한 처리에서 한다.
@@ -18,7 +19,8 @@ export type ResetPasswordResult =
   | { ok: true; message?: string }
   | { ok: false; status: 400 | 502; field: "link" | "password" | "passwordConfirm"; message: string };
 
-export const RESET_LINK_INVALID = "이 링크는 쓸 수 없어요. 로그인 화면에서 재설정 메일을 다시 받아 주세요.";
+// 링크 오류 문장은 화면과 같이 쓴다(reset-messages.ts) — 시험이 여기서 읽던 이름은 그대로 내보낸다
+export { RESET_LINK_INVALID };
 
 const inputSchema = z.object({
   token: z.string().max(200),
@@ -54,7 +56,7 @@ export async function resetPassword(deps: ResetPasswordDeps, body: unknown): Pro
 
   const updated = await deps.authAdmin.updateUserById(accountId, { password });
   if (updated.error) {
-    return { ok: false, status: 502, field: "link", message: "비밀번호를 바꾸지 못했어요. 로그인 화면에서 재설정 메일을 다시 받아 주세요." };
+    return { ok: false, status: 502, field: "link", message: RESET_SAVE_FAILED };
   }
   // INV-L14: 재설정이 끝났으니 그 아이디의 비밀번호 확인 막힘을 푼다 — 못 풀어도 비밀번호는 이미 바뀌었다(15분 뒤 풀린다)
   await retryOnce("password-reset: 확인 막힘 풀기", () => deps.attempts.clear(loginId));

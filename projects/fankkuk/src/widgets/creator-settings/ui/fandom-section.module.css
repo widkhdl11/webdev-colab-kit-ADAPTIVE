@@ -27,7 +27,7 @@
 .swNone:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
 .chk input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .chk { display: flex; gap: var(--space-3); align-items: center; min-height: 44px; font-size: var(--fs-small); cursor: pointer; } /* 라벨 줄 전체가 누름 칸 44 */
-.chk input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--brand-line); }
+.chk input { flex: none; margin: 0; } /* 칸 모양은 base.css 18) 체크박스 */
 
 /* 판 끝 — 저장 결과 안내(role=status) 한 줄 자리 + 되돌리기·저장 */
 .end { display: grid; gap: var(--space-2); padding: var(--space-4) var(--space-6) var(--space-6); }

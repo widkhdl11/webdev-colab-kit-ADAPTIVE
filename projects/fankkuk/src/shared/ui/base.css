@@ -655,7 +655,6 @@ textarea.field:where(:not(.admin-area *)) { padding-block: var(--space-4); }
 .hint:where(:not(.admin-area *)) { margin-top: var(--space-2); font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
 .form:where(:not(.admin-area *)) { gap: var(--space-6); }
 .check:where(:not(.admin-area *)) { min-height: var(--touch); gap: var(--space-2); }
-.check input:where(:not(.admin-area *)) { width: var(--icon-xs); height: var(--icon-xs); accent-color: var(--brand-line); }
 .opt:where(:not(.admin-area *)) { min-height: var(--btn-h); padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
 .opt input:where(:not(.admin-area *)) { width: var(--icon-xs); height: var(--icon-xs); accent-color: var(--brand-line); }
 .opt:has(input:checked):where(:not(.admin-area *)) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
@@ -916,7 +915,63 @@ section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.sta
 /* 12) 링크 밑줄은 3px 띄우고 1px 두께, 글자 선택 색 */
 a { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 ::selection { background: var(--selection); color: var(--ink); }
+/* ---------- 17. 줄바꿈 (2026-10-25 design-rules 29절 「줄바꿈」 — 사이트 전체) ----------
+   1 덩어리(전화번호·이메일·「버튼 이름」+조사·「1:1 문의」 같은 화면 이름)는 .nw 로 묶어 쪼개지 않는다.
+   2 붙여 쓰는 말(「~할 수 있어요」·「~해 주세요」·꾸밈말+이름)은 문자열 안에서 "\u00a0"(줄이 안 바뀌는 띄어쓰기), 가운뎃점 덩어리는 "\u2060·\u2060".
+   3 짧은 여러 문장 안내는 문장마다 줄 — .brk(블록 한 줄). 문자열은 shared/ui/sentences 의 <Sentences> 가 문장마다 .brk 로 나눈다.
+   4 문단은 마지막 줄에 낱말 하나만 남지 않게(text-wrap: pretty). 낱말 단위 줄바꿈(word-break: keep-all, 1절)은 그대로 */
+p, .hint, li, dd, label, legend { text-wrap: pretty; }
+.nw { white-space: nowrap; }
+.brk { display: block; }
+/* ---------- 18. 체크박스 — B 젤리 네모 (2026-10-25 design-rules 29절 체크박스 줄, 카드 d130, 시안 part6-2026-10-25/checkbox-options.html B) ----------
+   마크업은 그대로(<input type="checkbox">) 두고 appearance: none 으로 칸을 그린다 — 진짜 input 이라 키보드·스크린리더 동작이 그대로다.
+   스위치(role="switch", 각 화면이 따로 그림)와 운영자 화면(design-rules 8절, 옛 모양 유지)은 뺀다.
+   선택자 무게(0,2,1)가 화면별 `.check input`(0,1,1) 보다 무거워 크기·색은 여기 한 곳에서 정해진다 */
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)) {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: var(--check-size);
+  height: var(--check-size);
+  margin: 0;
+  border: 2px solid var(--check-line);
+  border-radius: var(--r-check);
+  background: var(--white);
+  box-shadow: var(--check-shadow);
+  vertical-align: middle;
+  cursor: pointer;
+  transition: transform var(--dur-check) var(--ease-pop), background-color var(--dur-hover), border-color var(--dur-hover), box-shadow var(--dur-hover);
+}
+/* 짙은 회색 굵은 둥근 체크 — 모양은 마스크, 색은 토큰(하늘 면 위 8.8:1) */
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *))::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  background: var(--on-brand);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.5 8.5 3 3 6-7' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.5 8.5 3 3 6-7' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity var(--dur-hover), transform var(--dur-check) var(--ease-pop);
+}
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):checked {
+  background: var(--primary);
+  border-color: var(--brand-line);
+  box-shadow: var(--check-shadow-on);
+  transform: translateY(-1px);
+}
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):checked::before { opacity: 1; transform: scale(1); }
+/* 누르면 살짝 눌림 — 칸을 눌러도, 글자(label)를 눌러도 */
+:is(input[type="checkbox"]:active, label:active > input[type="checkbox"]):not([role="switch"], :disabled):where(:not(.admin-area *)) { transform: scale(0.9); }
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):disabled { border-color: var(--gray-300); background: var(--gray-100); box-shadow: none; transform: none; cursor: not-allowed; }
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):disabled:checked { border-color: var(--gray-400); background: var(--gray-200); }
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):disabled::before { background: var(--gray-600); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+  :is(input[type="checkbox"]:active, label:active > input[type="checkbox"]):not([role="switch"], :disabled):where(:not(.admin-area *)) { transform: none; }
+  input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):checked:active { transform: translateY(-1px); }
   :is(a.card, .ccard, a.tile, .btn, .avatar-stack .face):hover { transform: none !important; }
 }

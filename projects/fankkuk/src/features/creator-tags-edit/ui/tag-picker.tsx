@@ -71,9 +71,15 @@ export function TagPicker({ idBase, options, picked, custom, onPickedChange, onC
           aria-invalid={invalid ? true : undefined}
         />
       </div>
+      {/* 문장마다 줄을 나눈다(design-rules 29절 줄바꿈 3) — 「직접 입력」·「골라 주세요」·「쓸 수 없어요」는 줄이 안 바뀌는 띄어쓰기 */}
       <p className="hint" id={hintId}>
-        활동하는 곳과 방송 종류를 골라 주세요. 고른 것과 직접 입력을 합쳐 1~{TAG_TOTAL_MAX}개(지금 {count}개), 직접 입력은 {TAG_CUSTOM_MAX}자까지예요
-        {charCount(custom.trim()) > 0 ? `(${charCount(custom.trim())}자)` : ""}. 직접 입력한 태그는 고른 태그 뒤에 보여요. 욕설·연락처·주소는 쓸 수 없어요.
+        {"활동하는 곳과 방송 종류를 골라\u00a0주세요."}
+        <span className="brk">
+          {` 고른 것과 직접\u00a0입력을 합쳐 1~${TAG_TOTAL_MAX}개(지금 ${count}개), 직접\u00a0입력은 ${TAG_CUSTOM_MAX}자까지예요`}
+          {charCount(custom.trim()) > 0 ? `(${charCount(custom.trim())}자)` : ""}.
+        </span>
+        <span className="brk">{" 직접\u00a0입력한 태그는 고른 태그 뒤에 보여요."}</span>
+        <span className="brk">{" 욕설\u2060·\u2060연락처\u2060·\u2060주소는 쓸\u00a0수\u00a0없어요."}</span>
       </p>
     </div>
   );

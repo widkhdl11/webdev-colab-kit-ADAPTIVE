@@ -1,17 +1,16 @@
-/* 로그인 — 시안 docs/design/mockups/site/v18/login.html · v18-pub.css 「로그인 · 가입 · 새 비밀번호」.
-   가운데 카드 480(양옆 여백 포함 528). 상단 바 아래 88(본문 위 40 + 구간 위 48), 아래 바닥글까지 96(휴대폰 64).
+/* 로그인 — 시안 docs/design/mockups/site/part6-2026-10-25/login.html · part6.css(design-rules 29절).
+   가운데 기둥 480(양옆 여백 포함 528). 위에서부터 머리(카드 밖) → 카드 → 「비밀번호를 잊으셨나요?」 → 가입 줄.
+   상단 바 아래 96(휴대폰 64), 아래 바닥글까지 --section-gap.
    카드·머리·폼·확인칸·오류(.err)·아래 줄(.foot-line)은 전역 클래스 */
-.page { padding: var(--space-24) 0 var(--section-gap); } /* 위 96(간격 단계, 2026-10-18 재진단 — 88 이던 것) */
+.page { padding: var(--space-24) 0 var(--section-gap); }
 :global(.auth).box { max-width: calc(var(--col-auth) + 2 * var(--gutter)); }
 .box :global(.head) { margin-bottom: var(--space-8); }
-.box :global(.head .t-lead) { margin-top: var(--space-2); font-size: var(--fs-lead); font-weight: var(--fw-sub); line-height: 1.5; }
-.reset summary { display: flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: var(--touch); cursor: pointer; list-style: none; font-weight: var(--fw-btn); }
-.reset summary::-webkit-details-marker { display: none; }
-.reset summary svg { width: var(--icon-xs); height: var(--icon-xs); transition: transform var(--dur-w); }
-.reset[open] summary svg { transform: rotate(180deg); }
-.reset :global(.form) { margin-top: var(--space-4); padding-top: var(--space-6); border-top: 1px solid var(--gray-200); }
-:global(.form) + .reset { margin-top: var(--space-6); }
-.link { color: var(--brand-ink); font-weight: var(--fw-btn); text-underline-offset: 4px; }
+.box :global(.head .t-lead) { margin-top: var(--space-2); font-size: var(--fs-body); font-weight: 400; line-height: 1.5; }
+/* 카드 아래 가운데 링크 한 줄 — 누를 칸 44 */
+.under { display: flex; flex-direction: column; align-items: center; margin-top: var(--space-4); }
+.link { display: inline-flex; align-items: center; min-height: 44px; padding-inline: var(--space-2); font-weight: var(--fw-btn); color: var(--ink); text-underline-offset: 4px; }
+.box :global(.foot-line) { margin-top: 0; color: var(--sub); }
+.box :global(.foot-line a) { font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
 @media (max-width: 767px) {
-  .page { padding-top: calc(var(--space-4) + var(--space-12)); }
+  .page { padding-top: var(--space-16); }
 }

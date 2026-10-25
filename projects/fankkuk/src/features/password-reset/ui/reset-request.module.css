@@ -1,0 +1,2 @@
+/* 재설정 요청 칸 — 시안 docs/design/mockups/site/part6-2026-10-25/password-forgot.html. 폼·칸·상자·버튼은 전역 클래스 */
+.link { color: var(--brand-ink); font-weight: var(--fw-btn); text-underline-offset: 4px; }

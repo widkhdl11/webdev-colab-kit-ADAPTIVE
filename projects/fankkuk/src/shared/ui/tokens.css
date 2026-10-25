@@ -121,6 +121,14 @@
   --r-bar: 3px; /* 진행 막대 칸(높이 6)의 둥근 끝 — design-rules 13절 선물 현황 */
   --r-mark: 3px; /* 작은 팬덤 뱃지(높이 22) 안 팬마크 14 의 모서리 — 시안 v25-card-align */
   --r-pill: 9999px;
+  /* 체크박스 B 젤리 네모(design-rules 29절 체크박스 줄, 카드 d130, 시안 part6-2026-10-25/checkbox-options.html B) — 작은 표시 모양이라 반경 셈에서 뺀다 */
+  --check-size: 26px;
+  --r-check: 10px;
+  --check-line: var(--gray-500); /* 꺼진 칸 테두리 — 흰 바탕 4.8:1 */
+  --check-shadow: inset 0 -2px 0 color-mix(in srgb, var(--gray-900) 6%, transparent);
+  --check-shadow-on: inset 0 -3px 0 color-mix(in srgb, var(--gray-900) 18%, transparent);
+  --ease-pop: cubic-bezier(0.3, 1.6, 0.5, 1); /* 체크가 튀어 나타나는 곡선 */
+  --dur-check: 180ms;
 
   /* 간격 — 4px 기준 10단계(tokens.md 1절). 20 은 뺐다: 16·20·24 가 함께 있으면 구분이 안 된다.
      한 묶음 안의 간격은 그 묶음과 바깥 사이 간격의 절반 이하 */
@@ -257,7 +265,7 @@
   :root { --nav-gap: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  :root { --dur-w: 0s; --dur-fade: 0s; --dur-fade-out: 0s; --delay-fade: 0s; --dur-hover: 0s; --dur-press: 0s; }
+  :root { --dur-w: 0s; --dur-fade: 0s; --dur-fade-out: 0s; --delay-fade: 0s; --dur-hover: 0s; --dur-press: 0s; --dur-check: 0s; }
 }
 @media (max-width: 767px) {
   :root {

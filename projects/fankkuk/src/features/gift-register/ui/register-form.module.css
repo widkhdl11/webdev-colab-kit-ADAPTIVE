@@ -100,7 +100,7 @@ section.step.step { margin-top: 0; }
 .hardnote:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 /* 기념일 표시 체크 (시안 .check2) */
 .check { display: flex; align-items: flex-start; gap: var(--space-3); min-height: 44px; padding: var(--space-2) 0; cursor: pointer; }
-.check input { flex: none; width: 24px; height: 24px; margin: 0; accent-color: var(--brand-line); }
+.check input { flex: none; margin: 0; } /* 칸 모양은 base.css 18) 체크박스 */
 .check input:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 /* 선물 사진(선택) — 파일 칸은 sr-only 로 숨기고 라벨을 버튼 모양으로. 키보드 포커스는 라벨에 그린다 */
 .photo-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }

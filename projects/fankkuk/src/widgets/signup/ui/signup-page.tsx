@@ -29,9 +29,10 @@ import {
   type LiveValues,
 } from "@/features/signup/model/signup-input";
 import { KakaoBubble } from "@/shared/ui/kakao-bubble";
+import { Sentences } from "@/shared/ui/sentences";
 import s from "./signup.module.css";
 
-// 회원가입 3단계. 시안: docs/design/mockups/site/v18/signup.html (가운데 기둥 .auth, 단계 카드에 번호 동그라미 + 제목) · 스펙: docs/specs/signup.md
+// 회원가입 3단계. 시안: docs/design/mockups/site/part6-2026-10-25/signup.html (design-rules 29절 — 머리는 카드 밖, 단계 표시는 알약 줄 하나, 2단계는 구분선 + 소제목 묶음 넷) · 스펙: docs/specs/signup.md
 // 시안은 세 단계를 한 화면에 쌓아 보이지만, 가입은 한 번에 한 단계씩 넘기는 흐름을 그대로 둔다 — 지금 단계의 카드 한 장만 보인다.
 // 3단계: 「인증 요청 보내기」로 카카오톡에 요청 → 카카오톡에서 인증 → 「인증했어요, 가입하기」.
 // 브라우저는 번호표만 들고 있다 — 인증됐는지는 서버가 카카오에게 묻는다(INV-U1).
@@ -39,6 +40,7 @@ import s from "./signup.module.css";
 // 2단계 칸은 입력하거나 칸을 떠난 뒤부터 바로 아래에 안내를 띄운다(맞으면 짧은 확인, 틀리면 무엇이 틀렸는지 — 판정은 checkField).
 // 아이디·닉네임은 형식이 맞으면 입력을 멈춘 뒤 0.4초에 서버에 미리 묻는다(INV-U14) — 확인 중… / 쓸 수 있어요 / 이미 쓰고 있어요 /
 // 형식이 맞지 않아요 / 잠시 뒤에 다시 확인해 주세요. 입력이 바뀌면 이전 답은 버린다. 최종 판정은 가입 때 서버가 한다(INV-U13).
+// 줄바꿈(29절): 칸 안내는 문장마다 줄(<Sentences>), 붙여 쓰는 말은 \u00a0, 가운뎃점 덩어리는 \u2060 으로 붙인다.
 
 const STEPS = ["유형 선택", "정보 입력", "본인 확인"] as const;
 const LAST = STEPS.length;
@@ -62,11 +64,21 @@ const LIVE_IDS: Record<LiveField, string> = {
 const LIVE_FIELDS = Object.keys(LIVE_IDS) as LiveField[];
 const isLiveField = (x: ErrorField): x is LiveField => Object.hasOwn(LIVE_IDS, x);
 
-// href 가 없는 항목(선택 동의)의 「보기」는 링크가 아니라 흐린 글자로 둔다. 전문 화면이 생기면 href 만 채운다.
-const TERMS: ReadonlyArray<{ key: TermKey; label: string; required: boolean; href?: string }> = [
+// href 가 없는 항목(선택 동의)은 「보기」를 그리지 않는다(갈 곳이 없다 — UX 명세 signup.md 바꿀 것 2). 전문 화면이 생기면 href 만 채운다.
+const TERMS: ReadonlyArray<{
+  key: TermKey;
+  label: string;
+  required: boolean;
+  href?: string;
+}> = [
   { key: "service", label: "이용약관", required: true, href: "/terms" },
-  { key: "privacy", label: "개인정보 수집·이용", required: true, href: "/privacy" },
-  { key: "news", label: "이벤트·소식 알림 받기", required: false },
+  {
+    key: "privacy",
+    label: "개인정보 수집\u2060·\u2060이용",
+    required: true,
+    href: "/privacy",
+  },
+  { key: "news", label: "이벤트\u2060·\u2060소식 알림 받기", required: false },
 ];
 
 /** 완료 표시 — design-rules §3: 체크는 단색 SVG, 글자색을 따라간다. 화면 낭독기에는 읽히지 않는다. */
@@ -89,7 +101,11 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   const [role, setRole] = useState<Role>("fan");
   const [loginId, setLoginId] = useState("");
   const [nickname, setNickname] = useState("");
-  const [emailParts, setEmailParts] = useState<EmailParts>({ local: "", choice: "", custom: "" });
+  const [emailParts, setEmailParts] = useState<EmailParts>({
+    local: "",
+    choice: "",
+    custom: "",
+  });
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [phone, setPhone] = useState("");
@@ -100,7 +116,11 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   const [customTag, setCustomTag] = useState("");
   // 팬덤 이름(추가 요청 3) — 선택. 비우면 없음
   const [fanName, setFanName] = useState("");
-  const [agreed, setAgreed] = useState<Record<TermKey, boolean>>({ service: false, privacy: false, news: false });
+  const [agreed, setAgreed] = useState<Record<TermKey, boolean>>({
+    service: false,
+    privacy: false,
+    news: false,
+  });
   // metrics INV-Q4: 「어디서 알게 되셨나요」 — 고르지 않아도 가입된다
   const [heardFrom, setHeardFrom] = useState<HeardFrom | null>(null);
   // 인증 요청을 보냈는가. 번호표 자체는 서버가 쿠키로 들고 있다(INV-U1). 번호를 고치면 요청부터 다시 —
@@ -108,7 +128,11 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   const [requested, setRequested] = useState(false);
   const [busy, setBusy] = useState(false);
   // server: 가입 요청에서 서버가 돌려준 오류(칸별 안내 칸이라도 낭독기에 알린다)
-  const [error, setError] = useState<{ field: ErrorField; message: string; server?: boolean } | null>(null);
+  const [error, setError] = useState<{
+    field: ErrorField;
+    message: string;
+    server?: boolean;
+  } | null>(null);
   // 한 번이라도 입력했거나 떠난 칸 — 그 전에는 안내를 띄우지 않는다
   const [touched, setTouched] = useState<Partial<Record<LiveField, boolean>>>({});
   // 오류를 띄울 때마다 오르는 번호 — 같은 문구가 연달아 나와도 새로 붙여 다시 읽히게 한다.
@@ -136,7 +160,16 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   };
 
   const email = joinEmail(emailParts);
-  const liveValues: LiveValues = { loginId, nickname, email: emailParts, password, passwordConfirm, phone, creatorName, channelTitle };
+  const liveValues: LiveValues = {
+    loginId,
+    nickname,
+    email: emailParts,
+    password,
+    passwordConfirm,
+    phone,
+    creatorName,
+    channelTitle,
+  };
   const touch = (field: LiveField) => setTouched((t) => (t[field] ? t : { ...t, [field]: true }));
   // 칸을 고치면 그 칸에 걸려 있던 「다음」·서버 오류를 내리고 실시간 안내로 돌아간다
   const edited = (field: LiveField) => {
@@ -162,7 +195,10 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   const liveAttrs = (field: LiveField, hintId?: string) => {
     const m = liveOf(field);
     const describedBy = [hintId, m ? liveId(field) : null].filter(Boolean).join(" ");
-    return { "aria-describedby": describedBy || undefined, "aria-invalid": m?.tone === "bad" ? true : undefined };
+    return {
+      "aria-describedby": describedBy || undefined,
+      "aria-invalid": m?.tone === "bad" ? true : undefined,
+    };
   };
   const liveLine = (field: LiveField) => {
     const m = liveOf(field);
@@ -195,11 +231,26 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     if (role !== "creator") return undefined;
     const t = tagSelection();
     return t.ok
-      ? { name: creatorName, channelTitle, tagIds: t.tagIds, customTag: t.customTag ?? "", fanName }
+      ? {
+          name: creatorName,
+          channelTitle,
+          tagIds: t.tagIds,
+          customTag: t.customTag ?? "",
+          fanName,
+        }
       : { name: creatorName, channelTitle, tagIds, customTag, fanName };
   };
   const details = (): { field: DetailsField; message: string } | null => {
-    const problem = checkDetails({ loginId, nickname, email, password, passwordConfirm, phone, terms: agreed, creator: creatorProfile() });
+    const problem = checkDetails({
+      loginId,
+      nickname,
+      email,
+      password,
+      passwordConfirm,
+      phone,
+      terms: agreed,
+      creator: creatorProfile(),
+    });
     if (problem || role !== "creator") return problem;
     const t = tagSelection();
     return t.ok ? null : { field: "tags", message: t.message };
@@ -338,11 +389,6 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
       {text}
     </h2>
   );
-  const stepNo = (n: number) => (
-    <span className={s.no} aria-hidden="true">
-      {n}
-    </span>
-  );
 
   return (
     <main id="main">
@@ -356,9 +402,6 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
           </div>
 
           <nav className={s["steps-wrap"]} aria-label="가입 단계" ref={navRef}>
-            <p className={s["step-count"]}>
-              {step} / {LAST} <span>단계</span>
-            </p>
             <ol className={s.steps}>
               {STEPS.map((label, i) => {
                 const k = i + 1;
@@ -394,10 +437,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
           <form className="card" onSubmit={onSubmit} aria-label="회원가입 입력" noValidate>
             <fieldset className={s.step} hidden={step !== 1}>
               <legend className="sr-only">회원 유형</legend>
-              <div className={s.sh}>
-                {stepNo(1)}
-                <div>{heading(1, "어떤 분이세요?")}</div>
-              </div>
+              {heading(1, "어떤 분이세요?")}
               <div className={s.choices}>
                 <label className={s.choice}>
                   <input type="radio" name="kind" value="fan" checked={role === "fan"} onChange={() => setRole("fan")} />
@@ -414,201 +454,219 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                   </span>
                 </label>
               </div>
-              <p className={s.note}>
-                <strong>크리에이터로 가입하면</strong> 가입한 뒤에 활동 채널 주인이 맞는지 한 번 더 확인해요. 유튜브·치지직은 그 계정으로
-                로그인하면 바로 끝나요(인스타그램은 프로페셔널 계정만). SOOP 은 인증 코드를 채널 소개란에 붙이거나 팬꾹 계정 DM 으로 보내면
-                운영자가 확인해요. 확인이 끝나야 「크리에이터 찾기」에 나타나요.
-              </p>
+              {/* 크리에이터를 골랐을 때만(UX 명세 signup.md 바꿀 것 1) */}
+              {role === "creator" ? (
+                <p className={s.note}>
+                  <strong>크리에이터로 가입하면</strong> 가입한 뒤에 활동 채널 주인이 맞는지 한 번 더 확인해요.
+                  <span className="brk">
+                    {
+                      " 유튜브\u2060·\u2060치지직은 그 계정으로 로그인하면 바로 끝나요(인스타그램은 프로페셔널\u00a0계정만). SOOP 은 인증\u00a0코드를 채널\u00a0소개란에 붙이거나 팬꾹\u00a0계정 DM 으로 보내면 운영자가 확인해요."
+                    }
+                  </span>
+                  <span className="brk">
+                    {" 확인이 끝나야 "}
+                    <span className="nw">「크리에이터 찾기」에</span> 나타나요.
+                  </span>
+                </p>
+              ) : null}
             </fieldset>
 
             <fieldset className={s.step} hidden={step !== 2}>
               <legend className="sr-only">가입 정보</legend>
-              <div className={s.sh}>
-                {stepNo(2)}
-                <div>{heading(2, "정보를 입력해 주세요")}</div>
-              </div>
-              <div className="form">
-                <div>
-                  <label className="label" htmlFor={f("id")}>
-                    아이디
-                  </label>
-                  <input
-                    className="field"
-                    id={f("id")}
-                    type="text"
-                    autoComplete="username"
-                    autoCapitalize="none"
-                    spellCheck={false}
-                    value={loginId}
-                    onChange={(e) => {
-                      setLoginId(e.target.value);
-                      edited("loginId");
-                    }}
-                    onBlur={() => touch("loginId")}
-                    {...liveAttrs("loginId", f("id-h"))}
-                  />
-                  {liveLine("loginId")}
-                  <p className="hint" id={f("id-h")}>
-                    영문 소문자·숫자·밑줄(_)로 4~20자예요. 가입한 뒤에는 아이디를 바꿀 수 없어요.
-                  </p>
-                </div>
-                <div>
-                  <label className="label" htmlFor={f("nick")}>
-                    닉네임
-                  </label>
-                  <input
-                    className="field"
-                    id={f("nick")}
-                    type="text"
-                    autoComplete="nickname"
-                    spellCheck={false}
-                    value={nickname}
-                    onChange={(e) => {
-                      setNickname(e.target.value);
-                      edited("nickname");
-                    }}
-                    onBlur={() => touch("nickname")}
-                    {...liveAttrs("nickname", f("nick-h"))}
-                  />
-                  {liveLine("nickname")}
-                  <p className="hint" id={f("nick-h")}>
-                    팬꾹에서 보이는 이름이에요. 12자까지, 다른 사람이 쓰는 닉네임은 쓸 수 없어요. 가입한 뒤 계정 설정에서 바꿀 수 있어요.
-                  </p>
-                </div>
-                <div>
-                  <label className="label" htmlFor={f("mail")}>
-                    이메일
-                  </label>
-                  <div className={s.email}>
+              {heading(2, "정보를 입력해\u00a0주세요")}
+              <div className={s.grp}>
+                <h3 className={s["grp-title"]}>계정 정보</h3>
+                <div className="form">
+                  <div>
+                    <label className="label" htmlFor={f("id")}>
+                      아이디
+                    </label>
                     <input
                       className="field"
-                      id={f("mail")}
+                      id={f("id")}
                       type="text"
-                      inputMode="email"
-                      autoComplete="email"
+                      autoComplete="username"
                       autoCapitalize="none"
                       spellCheck={false}
-                      placeholder="앞부분"
-                      value={emailParts.local}
-                      onChange={(e) => onEmailLocalChange(e.target.value)}
-                      onBlur={() => touch("email")}
-                      {...liveAttrs("email", f("mail-h"))}
-                    />
-                    <span className={s.at} aria-hidden="true">
-                      @
-                    </span>
-                    <select
-                      className="field"
-                      aria-label="이메일 주소 고르기(@ 뒤)"
-                      value={emailParts.choice}
+                      value={loginId}
                       onChange={(e) => {
-                        const choice = e.currentTarget.value;
-                        setEmailParts((p) => ({ ...p, choice }));
-                        edited("email");
-                        if (choice === EMAIL_CUSTOM) requestAnimationFrame(() => document.getElementById(f("mail-custom"))?.focus());
+                        setLoginId(e.target.value);
+                        edited("loginId");
                       }}
-                      onBlur={() => touch("email")}
-                      {...liveAttrs("email")}
-                    >
-                      <option value="">주소 고르기</option>
-                      {EMAIL_DOMAINS.map((d) => (
-                        <option key={d} value={d}>
-                          {d}
-                        </option>
-                      ))}
-                      <option value={EMAIL_CUSTOM}>직접 입력</option>
-                    </select>
+                      onBlur={() => touch("loginId")}
+                      {...liveAttrs("loginId", f("id-h"))}
+                    />
+                    {liveLine("loginId")}
+                    <p className="hint" id={f("id-h")}>
+                      <Sentences text={"영문 소문자\u2060·\u2060숫자\u2060·\u2060밑줄(_)로 4~20자예요. 가입한 뒤에는 아이디를 바꿀\u00a0수\u00a0없어요."} />
+                    </p>
                   </div>
-                  {emailParts.choice === EMAIL_CUSTOM ? (
+                  <div>
+                    <label className="label" htmlFor={f("nick")}>
+                      닉네임
+                    </label>
                     <input
-                      className={`field ${s["email-custom"]}`}
-                      id={f("mail-custom")}
+                      className="field"
+                      id={f("nick")}
                       type="text"
-                      inputMode="url"
-                      autoCapitalize="none"
+                      autoComplete="nickname"
                       spellCheck={false}
-                      aria-label="이메일 주소 직접 입력(@ 뒤)"
-                      placeholder="예: example.co.kr"
-                      value={emailParts.custom}
+                      value={nickname}
                       onChange={(e) => {
-                        const custom = e.target.value;
-                        setEmailParts((p) => ({ ...p, custom }));
-                        edited("email");
+                        setNickname(e.target.value);
+                        edited("nickname");
                       }}
-                      onBlur={() => touch("email")}
-                      {...liveAttrs("email")}
+                      onBlur={() => touch("nickname")}
+                      {...liveAttrs("nickname", f("nick-h"))}
                     />
-                  ) : null}
-                  {liveLine("email")}
-                  <p className="hint" id={f("mail-h")}>
-                    가입하면 확인 메일을 보내 드려요. 메일의 링크를 눌러야 이 주소로 선물 소식을 받아요.
-                  </p>
+                    {liveLine("nickname")}
+                    <p className="hint" id={f("nick-h")}>
+                      <Sentences text={"팬꾹에서 보이는 이름이에요. 12자까지, 다른 사람이 쓰는 닉네임은 쓸\u00a0수\u00a0없어요. 가입한 뒤 계정\u00a0설정에서 바꿀\u00a0수\u00a0있어요."} />
+                    </p>
+                  </div>
+                  <div>
+                    <label className="label" htmlFor={f("mail")}>
+                      이메일
+                    </label>
+                    <div className={s.email}>
+                      <input
+                        className="field"
+                        id={f("mail")}
+                        type="text"
+                        inputMode="email"
+                        autoComplete="email"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        placeholder="앞부분"
+                        value={emailParts.local}
+                        onChange={(e) => onEmailLocalChange(e.target.value)}
+                        onBlur={() => touch("email")}
+                        {...liveAttrs("email", f("mail-h"))}
+                      />
+                      <span className={s.at} aria-hidden="true">
+                        @
+                      </span>
+                      <select
+                        className="field"
+                        aria-label="이메일 주소 고르기(@ 뒤)"
+                        value={emailParts.choice}
+                        onChange={(e) => {
+                          const choice = e.currentTarget.value;
+                          setEmailParts((p) => ({ ...p, choice }));
+                          edited("email");
+                          if (choice === EMAIL_CUSTOM) requestAnimationFrame(() => document.getElementById(f("mail-custom"))?.focus());
+                        }}
+                        onBlur={() => touch("email")}
+                        {...liveAttrs("email")}
+                      >
+                        <option value="">주소 고르기</option>
+                        {EMAIL_DOMAINS.map((d) => (
+                          <option key={d} value={d}>
+                            {d}
+                          </option>
+                        ))}
+                        <option value={EMAIL_CUSTOM}>직접 입력</option>
+                      </select>
+                    </div>
+                    {emailParts.choice === EMAIL_CUSTOM ? (
+                      <input
+                        className={`field ${s["email-custom"]}`}
+                        id={f("mail-custom")}
+                        type="text"
+                        inputMode="url"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        aria-label="이메일 주소 직접 입력(@ 뒤)"
+                        placeholder="예: example.co.kr"
+                        value={emailParts.custom}
+                        onChange={(e) => {
+                          const custom = e.target.value;
+                          setEmailParts((p) => ({ ...p, custom }));
+                          edited("email");
+                        }}
+                        onBlur={() => touch("email")}
+                        {...liveAttrs("email")}
+                      />
+                    ) : null}
+                    {liveLine("email")}
+                    <p className="hint" id={f("mail-h")}>
+                      <Sentences text={"가입하면 확인 메일을 보내\u00a0드려요. 메일의 링크를 눌러야 이 주소로 선물\u00a0소식을 받아요."} />
+                    </p>
+                  </div>
+                  <div>
+                    <label className="label" htmlFor={f("pw")}>
+                      비밀번호
+                    </label>
+                    <input
+                      className="field"
+                      id={f("pw")}
+                      type="password"
+                      autoComplete="new-password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        edited("password");
+                      }}
+                      onBlur={() => touch("password")}
+                      {...liveAttrs("password", f("pw-h"))}
+                    />
+                    {liveLine("password")}
+                    <p className="hint" id={f("pw-h")}>
+                      {PASSWORD_HINT}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="label" htmlFor={f("pw2")}>
+                      비밀번호 확인
+                    </label>
+                    <input
+                      className="field"
+                      id={f("pw2")}
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder="비밀번호를 한 번 더 입력해 주세요"
+                      value={passwordConfirm}
+                      onChange={(e) => {
+                        setPasswordConfirm(e.target.value);
+                        edited("passwordConfirm");
+                      }}
+                      onBlur={() => touch("passwordConfirm")}
+                      {...liveAttrs("passwordConfirm")}
+                    />
+                    {liveLine("passwordConfirm")}
+                  </div>
                 </div>
-                <div>
-                  <label className="label" htmlFor={f("pw")}>
-                    비밀번호
-                  </label>
-                  <input
-                    className="field"
-                    id={f("pw")}
-                    type="password"
-                    autoComplete="new-password"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      edited("password");
-                    }}
-                    onBlur={() => touch("password")}
-                    {...liveAttrs("password", f("pw-h"))}
-                  />
-                  {liveLine("password")}
-                  <p className="hint" id={f("pw-h")}>
-                    {PASSWORD_HINT}
-                  </p>
+              </div>
+              <div className={s.grp}>
+                <h3 className={s["grp-title"]}>연락처</h3>
+                <div className="form">
+                  <div>
+                    <label className="label" htmlFor={f("tel")}>
+                      휴대폰 번호
+                    </label>
+                    <input
+                      className="field"
+                      id={f("tel")}
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="tel"
+                      placeholder="010-0000-0000"
+                      value={phone}
+                      onChange={onPhoneChange}
+                      onBlur={() => touch("phone")}
+                      {...liveAttrs("phone", f("tel-h"))}
+                    />
+                    {liveLine("phone")}
+                    <p className="hint" id={f("tel-h")}>
+                      <Sentences text={"선물\u00a0소식을 카카오톡 알림톡으로 보내\u00a0드릴 번호예요. 실명\u2060·\u2060주소처럼 따로 나눠 보관해요."} />
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <label className="label" htmlFor={f("pw2")}>
-                    비밀번호 확인
-                  </label>
-                  <input
-                    className="field"
-                    id={f("pw2")}
-                    type="password"
-                    autoComplete="new-password"
-                    placeholder="비밀번호를 한 번 더 입력해 주세요"
-                    value={passwordConfirm}
-                    onChange={(e) => {
-                      setPasswordConfirm(e.target.value);
-                      edited("passwordConfirm");
-                    }}
-                    onBlur={() => touch("passwordConfirm")}
-                    {...liveAttrs("passwordConfirm")}
-                  />
-                  {liveLine("passwordConfirm")}
-                </div>
-                <div>
-                  <label className="label" htmlFor={f("tel")}>
-                    휴대폰 번호
-                  </label>
-                  <input
-                    className="field"
-                    id={f("tel")}
-                    type="tel"
-                    inputMode="numeric"
-                    autoComplete="tel"
-                    placeholder="010-0000-0000"
-                    value={phone}
-                    onChange={onPhoneChange}
-                    onBlur={() => touch("phone")}
-                    {...liveAttrs("phone", f("tel-h"))}
-                  />
-                  {liveLine("phone")}
-                  <p className="hint" id={f("tel-h")}>
-                    선물 소식을 카카오톡 알림톡으로 보내 드릴 번호예요. 실명·주소처럼 따로 나눠 보관해요.
-                  </p>
-                </div>
-                {role === "creator" ? (
-                  <div className={s.cr}>
+              </div>
+              {role === "creator" ? (
+                <div className={s.grp}>
+                  <h3 className={s["grp-title"]}>채널 정보</h3>
+                  <div className="form">
                     <div>
                       <label className="label" htmlFor={f("cr-name")}>
                         공개 이름
@@ -629,7 +687,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                       />
                       {liveLine("creatorName")}
                       <p className="hint" id={f("cr-name-h")}>
-                        팬에게 보이는 이름이에요. {CREATOR_PROFILE_LIMITS.name}자까지 적을 수 있어요.
+                        <Sentences text={`팬에게 보이는 이름이에요. ${CREATOR_PROFILE_LIMITS.name}자까지 적을\u00a0수\u00a0있어요.`} />
                       </p>
                     </div>
                     <div>
@@ -676,7 +734,9 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                         aria-invalid={error?.field === "fanName" ? true : undefined}
                       />
                       <p className="hint" id={f("cr-fan-h")}>
-                        팬을 부르는 이름이에요. {FAN_NAME_MAX}자까지, 비워 둬도 돼요. 가입한 뒤 내 팬꾹 꾸미기에서 바꿀 수 있어요.
+                        <Sentences
+                          text={`팬을 부르는 이름이에요. ${FAN_NAME_MAX}자까지, 비워 둬도 돼요. 가입한 뒤 내\u00a0팬꾹\u00a0꾸미기에서 바꿀\u00a0수\u00a0있어요.`}
+                        />
                       </p>
                     </div>
                     <TagPicker
@@ -689,85 +749,88 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                       invalid={error?.field === "tags" ? { describedBy: f("error") } : null}
                     />
                   </div>
-                ) : null}
-                <div>
-                  <label className="label" htmlFor={f("heard")}>
-                    어디서 팬꾹을 알게 되셨나요? <span className={`t-meta ${s.opt}`}>(선택)</span>
-                  </label>
-                  <select
-                    className="field"
-                    id={f("heard")}
-                    value={heardFrom ?? ""}
-                    onChange={(e) => setHeardFrom(isHeardFrom(e.currentTarget.value) ? e.currentTarget.value : null)}
-                    aria-describedby={f("heard-h")}
-                  >
-                    <option value="">고르지 않을래요</option>
-                    {HEARD_FROM.map((k) => (
-                      <option key={k} value={k}>
-                        {HEARD_FROM_LABEL[k]}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="hint" id={f("heard-h")}>
-                    답하지 않아도 가입돼요. 어떤 길로 많이 찾아오시는지만 모아서 봐요.
-                  </p>
                 </div>
-                <div role="group" aria-labelledby={f("terms")}>
-                  <p className="label" id={f("terms")}>
-                    약관 동의
-                  </p>
-                  <div className={s.terms}>
-                    <div>
-                      <label className="check">
-                        <input type="checkbox" checked={allAgreed} onChange={(e) => setAll(e.target.checked)} /> 전체 동의
-                      </label>
-                    </div>
-                    {TERMS.map((t) => (
-                      <div key={t.key} className={s.row}>
-                        <label className="check">
-                          <input
-                            type="checkbox"
-                            aria-required={t.required || undefined}
-                            checked={agreed[t.key]}
-                            onChange={(e) => setAgreed((prev) => ({ ...prev, [t.key]: e.target.checked }))}
-                            {...(t.required ? invalid("terms") : {})}
-                          />
-                          <span>
-                            {t.required ? <span className={s.req}>[필수]</span> : "[선택]"} {t.label}
-                          </span>
-                        </label>
-                        {t.href ? (
-                          <Link
-                            className="btn btn--text btn--sm"
-                            href={t.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`${t.label} 보기 (새 창)`}
-                          >
-                            보기
-                          </Link>
-                        ) : (
-                          <span className={s["link-off"]}>
-                            보기<span className="sr-only"> — {t.label} 전문은 준비 중이에요</span>
-                          </span>
-                        )}
-                      </div>
-                    ))}
+              ) : null}
+              <div className={s.grp}>
+                <h3 className={s["grp-title"]}>마무리</h3>
+                <div className="form">
+                  <div>
+                    <label className="label" htmlFor={f("heard")}>
+                      어디서 팬꾹을 알게 되셨나요? <span className={`t-meta ${s.opt}`}>(선택)</span>
+                    </label>
+                    <select
+                      className="field"
+                      id={f("heard")}
+                      value={heardFrom ?? ""}
+                      onChange={(e) => setHeardFrom(isHeardFrom(e.currentTarget.value) ? e.currentTarget.value : null)}
+                      aria-describedby={f("heard-h")}
+                    >
+                      <option value="">고르지 않을래요</option>
+                      {HEARD_FROM.map((k) => (
+                        <option key={k} value={k}>
+                          {HEARD_FROM_LABEL[k]}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="hint" id={f("heard-h")}>
+                      <Sentences text="답하지 않아도 가입돼요. 어떤 길로 많이 찾아오시는지만 모아서 봐요." />
+                    </p>
                   </div>
+                  <div role="group" aria-labelledby={f("terms")}>
+                    <p className="label" id={f("terms")}>
+                      약관 동의
+                    </p>
+                    <div className={s.terms}>
+                      <div>
+                        <label className="check">
+                          <input type="checkbox" checked={allAgreed} onChange={(e) => setAll(e.target.checked)} /> 전체 동의
+                        </label>
+                      </div>
+                      {TERMS.map((t) => (
+                        <div key={t.key} className={s.row}>
+                          <label className="check">
+                            <input
+                              type="checkbox"
+                              aria-required={t.required || undefined}
+                              checked={agreed[t.key]}
+                              onChange={(e) =>
+                                setAgreed((prev) => ({
+                                  ...prev,
+                                  [t.key]: e.target.checked,
+                                }))
+                              }
+                              {...(t.required ? invalid("terms") : {})}
+                            />
+                            <span>
+                              {t.required ? <span className={s.req}>[필수]</span> : "[선택]"} {t.label}
+                            </span>
+                          </label>
+                          {t.href ? (
+                            <Link
+                              className="btn btn--text btn--sm"
+                              href={t.href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`${t.label} 보기 (새 창)`}
+                            >
+                              보기
+                            </Link>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {errorLine(step === 2)}
                 </div>
-                {errorLine(step === 2)}
               </div>
             </fieldset>
 
             <fieldset className={s.step} hidden={step !== 3}>
               <legend className="sr-only">카카오톡 본인 확인</legend>
-              <div className={s.sh}>
-                {stepNo(3)}
-                <div>
-                  {heading(3, "카카오톡으로 본인 확인")}
-                  <p className="t-desc">휴대폰 번호의 주인이 맞는지 카카오톡 인증으로 확인해요. 인증이 끝나면 가입이 마무리돼요.</p>
-                </div>
-              </div>
+              {heading(3, "카카오톡으로 본인 확인")}
+              <p className={`t-desc ${s.lead}`}>
+                <Sentences text={"휴대폰 번호의 주인이 맞는지 카카오톡\u00a0인증으로 확인해요. 인증이 끝나면 가입이 마무리돼요."} />
+              </p>
               <ol className={s.kakao}>
                 <li className={requested ? s["is-done"] : undefined}>
                   {requested ? (
@@ -776,15 +839,17 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     </span>
                   ) : null}
                   <span>
-                    아래 버튼을 누르면 <strong>{phone || "입력한 번호"}</strong>의 카카오톡으로 인증 요청이 가요.
+                    아래 버튼을 누르면 <strong className="nw">{phone || "입력한 번호"}</strong>의 카카오톡으로 인증 요청이 가요.
                     {requested ? <span className={s.sent}> 요청을 보냈어요.</span> : null}
                   </span>
                 </li>
                 <li>
-                  <span>카카오톡에서 요청을 열고 인증을 눌러 주세요.</span>
+                  <span>{"카카오톡에서 요청을 열고 인증을 눌러\u00a0주세요."}</span>
                 </li>
                 <li>
-                  <span>팬꾹으로 돌아와 「인증했어요, 가입하기」를 누르면 가입 완료예요.</span>
+                  <span>
+                    팬꾹으로 돌아와 <span className="nw">「인증했어요, 가입하기」를</span> 누르면 가입 완료예요.
+                  </span>
                 </li>
               </ol>
               {requested ? (
@@ -798,7 +863,10 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
               {errorLine(step === 3)}
             </fieldset>
 
-            <div className={step === 1 ? `${s["step-actions"]} ${s["no-prev"]}` : s["step-actions"]}>
+            {/* 휴대폰 폭에서 글자가 긴 카카오 버튼 줄은 위아래로 쌓고 주 버튼이 위(29절 줄바꿈 5) */}
+            <div
+              className={[s["step-actions"], step === 1 ? s["no-prev"] : "", step === LAST ? s["kakao-row"] : ""].filter(Boolean).join(" ")}
+            >
               {step > 1 ? (
                 <button
                   className="btn btn--line"
