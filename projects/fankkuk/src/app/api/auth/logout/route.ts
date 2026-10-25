@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { signOut } from "@/features/auth/model/sign-out";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
+import { sessionOnlyMarker } from "@/shared/api/supabase/session-cookies";
 import { isSameOriginJson } from "@/shared/lib/http/same-origin";
 
 // 로그아웃: 서버에서 세션을 끝내고 쿠키를 지운다(INV-L7). 로그인하지 않았어도 같은 응답.
@@ -11,5 +12,9 @@ export async function POST(req: NextRequest) {
   }
   const supabase = await createRequestSupabase();
   await signOut(supabase.auth);
-  return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
+  const response = NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
+  // session-login INV-L15·INV-L7: 「로그인 상태 유지」 표시도 지운다
+  const marker = sessionOnlyMarker(false, process.env);
+  response.cookies.set(marker.name, marker.value, marker.options);
+  return response;
 }

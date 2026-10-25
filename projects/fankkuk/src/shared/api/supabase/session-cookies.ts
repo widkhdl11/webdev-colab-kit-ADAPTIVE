@@ -1,4 +1,4 @@
-import { createServerClient, type CookieMethodsServer } from "@supabase/ssr";
+import { createServerClient, type CookieMethodsServer, type CookieOptions } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SupabaseConfig } from "./config";
 
@@ -13,7 +13,60 @@ export function sessionCookieOptions(env: EnvLike) {
   return { path: "/", sameSite: "lax", httpOnly: true, secure: production } as const;
 }
 
-/** 요청마다 새로 만든다 — 클라이언트를 요청 사이에 나눠 쓰면 남의 세션이 섞인다. */
-export function createSessionClient(config: SupabaseConfig, cookies: CookieMethodsServer, env: EnvLike): SupabaseClient {
-  return createServerClient(config.url, config.anonKey, { cookies, cookieOptions: sessionCookieOptions(env) });
+/**
+ * session-login INV-L15: 「로그인 상태 유지」를 끄고 로그인했다는 표시. 값이 이것일 때만 끔이다.
+ * 쿠키를 어떻게 쓸지만 정한다 — 누가 로그인했는지 판정에는 쓰지 않는다(INV-L2).
+ */
+export const SESSION_ONLY_COOKIE = "fk_session_only";
+const SESSION_ONLY_VALUE = "1";
+
+type CookieReader = { get(name: string): { value: string } | undefined };
+
+/** INV-L15: 요청 쿠키에 표시가 있으면 끔(브라우저를 닫으면 지워지는 쿠키로 쓴다). proxy·라우트가 같은 판정을 쓴다. */
+export function isSessionOnly(cookies: CookieReader): boolean {
+  return cookies.get(SESSION_ONLY_COOKIE)?.value === SESSION_ONLY_VALUE;
+}
+
+/** INV-L15·INV-L1: 끔이면 표시를 만료 시각 없이 쓰고, 켬이면 지운다(만료 0). */
+export function sessionOnlyMarker(sessionOnly: boolean, env: EnvLike): { name: string; value: string; options: CookieOptions } {
+  const base = sessionCookieOptions(env);
+  return sessionOnly
+    ? { name: SESSION_ONLY_COOKIE, value: SESSION_ONLY_VALUE, options: { ...base } }
+    : { name: SESSION_ONLY_COOKIE, value: "", options: { ...base, maxAge: 0 } };
+}
+
+/**
+ * INV-L15: 끔이면 쓰기 옵션에서 만료 시각(maxAge·expires)을 뗀다. 지우는 쓰기(maxAge 0 이하)는 그대로 둔다.
+ * 라이브러리(@supabase/ssr)는 쓸 때마다 maxAge 를 400일로 강제하고 cookieOptions 로는 못 덮는다 — 그래서 쓰는 자리에서 뗀다.
+ */
+export function sessionOnlyWriteOptions(options: CookieOptions, sessionOnly: boolean): CookieOptions {
+  if (!sessionOnly) return options;
+  if (typeof options.maxAge === "number" && options.maxAge <= 0) return options;
+  const { maxAge: _maxAge, expires: _expires, ...rest } = options;
+  return rest;
+}
+
+/**
+ * 요청마다 새로 만든다 — 클라이언트를 요청 사이에 나눠 쓰면 남의 세션이 섞인다.
+ * sessionOnly(INV-L15): 로그인 쿠키를 쓰는 모든 경로(로그인·요청마다 갱신·화면 읽기)가 이 함수로 쓰므로 여기 한 곳에서 뗀다.
+ */
+export function createSessionClient(
+  config: SupabaseConfig,
+  cookies: CookieMethodsServer,
+  env: EnvLike,
+  opts: { sessionOnly?: boolean } = {},
+): SupabaseClient {
+  const sessionOnly = opts.sessionOnly === true;
+  const setAll = cookies.setAll;
+  const methods: CookieMethodsServer = setAll
+    ? {
+        ...cookies,
+        setAll: (list, headers) =>
+          setAll(
+            list.map((c) => ({ ...c, options: sessionOnlyWriteOptions(c.options, sessionOnly) })),
+            headers,
+          ),
+      }
+    : cookies;
+  return createServerClient(config.url, config.anonKey, { cookies: methods, cookieOptions: sessionCookieOptions(env) });
 }

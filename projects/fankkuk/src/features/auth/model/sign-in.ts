@@ -22,7 +22,14 @@ const inputSchema = z.object({
   password: z.string().max(200),
   /** 로그인 뒤 돌아갈 주소 — 꼴 검사는 safeNextPath 하나가 한다(INV-L13). 성공 뒤에만 쓴다. */
   next: z.unknown().optional(),
+  /** 「로그인 상태 유지」(INV-L15). 꼴 검사는 keepSignedInOf 하나가 한다 — 꼴이 틀려도 로그인 판정은 바꾸지 않는다. */
+  keepSignedIn: z.unknown().optional(),
 });
+
+/** INV-L15: 본문의 keepSignedIn 이 true 일 때만 켬. 없거나 boolean 이 아니면 끔(만료 시각 없는 쿠키). */
+export function keepSignedInOf(input: unknown): boolean {
+  return typeof input === "object" && input !== null && (input as { keepSignedIn?: unknown }).keepSignedIn === true;
+}
 
 const failed = { ok: false, status: 401, message: SIGN_IN_FAILED_MESSAGE } as const;
 

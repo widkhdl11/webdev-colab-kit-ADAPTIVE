@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { readVerifiedUserId } from "@/entities/session/model/viewer";
 import { readSupabaseConfig } from "@/shared/api/supabase/config";
-import { createSessionClient } from "@/shared/api/supabase/session-cookies";
+import { createSessionClient, isSessionOnly } from "@/shared/api/supabase/session-cookies";
 import { firstTouchUtmCookie, UTM_COOKIE, utmCookieOptions } from "@/shared/lib/attribution/utm";
 import { isProduction } from "@/shared/lib/env/is-production";
 
@@ -43,6 +43,8 @@ async function refreshSession(request: NextRequest): Promise<NextResponse> {
       },
     },
     process.env,
+    // session-login INV-L15: 끄고 로그인한 사람은 갱신해 다시 쓰는 로그인 쿠키에도 만료 시각을 붙이지 않는다
+    { sessionOnly: isSessionOnly(request.cookies) },
   );
 
   // getUser 가 필요하면 토큰을 갱신하고 setAll 로 쿠키를 다시 쓴다(INV-L2 의 확인도 같은 호출).

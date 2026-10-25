@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fakePasswordAttempts } from "@/entities/session/api/password-attempts-fake";
 import { PASSWORD_LOCKED_MESSAGE } from "@/entities/session/api/password-attempts";
-import { SIGN_IN_FAILED_MESSAGE, signIn, type PasswordAuth } from "./sign-in";
+import { keepSignedInOf, SIGN_IN_FAILED_MESSAGE, signIn, type PasswordAuth } from "./sign-in";
 
 // 비밀번호 확인 자체는 Supabase Auth 가 한다. 여기서 보는 것은 그 앞뒤의 판정 — 무엇을 넘기고, 실패를 어떻게 돌려주나.
 function recordingAuth(result: "ok" | "invalid_credentials" | "user_not_found") {
@@ -148,5 +148,26 @@ describe("INV-L14: 비밀번호 확인 횟수 — 아이디마다", () => {
     const { auth, calls } = recordingAuth("ok");
     await expect(signIn({ attempts: fakePasswordAttempts({ broken: true }).attempts, auth, env: dev }, { loginId: "byeolbit_fan", password: "pw" })).rejects.toThrow();
     expect(calls).toEqual([]);
+  });
+});
+
+describe("INV-L15: 「로그인 상태 유지」 고른 값 읽기", () => {
+  it("INV-L15: keepSignedIn 이 true 일 때만 켬이다", () => {
+    expect(keepSignedInOf({ loginId: "a", password: "b", keepSignedIn: true })).toBe(true);
+  });
+
+  it("INV-L15 (실패경로): 없거나 boolean 이 아니면 끔이다", () => {
+    expect(keepSignedInOf({ loginId: "a", password: "b" })).toBe(false);
+    expect(keepSignedInOf({ keepSignedIn: false })).toBe(false);
+    expect(keepSignedInOf({ keepSignedIn: "true" })).toBe(false);
+    expect(keepSignedInOf({ keepSignedIn: 1 })).toBe(false);
+    expect(keepSignedInOf(null)).toBe(false);
+    expect(keepSignedInOf("keepSignedIn")).toBe(false);
+  });
+
+  it("INV-L15: keepSignedIn 이 붙어도(꼴이 틀려도) 로그인 판정은 그대로다", async () => {
+    const { auth } = recordingAuth("ok");
+    const r = await signIn({ attempts: fakePasswordAttempts().attempts, auth, env: dev }, { loginId: "newfan", password: "pw", keepSignedIn: "yes" });
+    expect(r).toEqual({ ok: true, next: "/" });
   });
 });

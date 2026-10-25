@@ -9,11 +9,14 @@ import s from "./login.module.css";
 // 로그인. 시안: docs/design/mockups/site/v18/login.html (가운데 카드 480 한 장)
 // 아이디·비밀번호를 앱 서버(/api/auth/login)로 보낸다. 토큰은 서버가 HttpOnly 쿠키로만 쓰고 이 화면은 받지 않는다(INV-L1).
 // 입력칸에 name 을 두지 않아 스크립트가 꺼진 채 기본 제출이 일어나도 값이 주소창에 실리지 않는다.
-// 「로그인 상태 유지」는 아직 겉모양만 있다(지금은 늘 유지).
+// 「로그인 상태 유지」는 고른 값을 keepSignedIn 으로 보낸다. 끄면 서버가 로그인 쿠키를 브라우저를 닫으면 지워지는 쿠키로 쓴다(session-login INV-L15).
 // 돌아갈 주소(next)는 주소창 값을 그대로 서버에 보내고, 서버가 검사해 돌려준 경로로만 간다(session-login INV-L13).
 // 비밀번호 재설정은 아이디와 가입 이메일을 함께 보낸다(INV-L10). 응답은 언제나 같은 문구이고, 메일이 안 오면 1:1 문의로 안내한다.
 
 type LoginResponse = { ok?: boolean; message?: string; next?: string };
+
+/** INV-L15: 「로그인 상태 유지」 기본값 — 꺼짐(결정 카드 d129 덧붙임). 바꾸려면 이 값만. */
+const KEEP_SIGNED_IN_DEFAULT = false;
 
 export function LoginPage({ next }: { next?: string }) {
   const id = useId();
@@ -21,6 +24,7 @@ export function LoginPage({ next }: { next?: string }) {
 
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [keepSignedIn, setKeepSignedIn] = useState(KEEP_SIGNED_IN_DEFAULT);
   const [resetBusy, setResetBusy] = useState(false);
   const [resetMsg, setResetMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -49,7 +53,7 @@ export function LoginPage({ next }: { next?: string }) {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ loginId, password, next }),
+        body: JSON.stringify({ loginId, password, next, keepSignedIn }),
       });
       const body = (await res.json().catch(() => ({}))) as LoginResponse;
       if (res.ok) {
@@ -108,7 +112,7 @@ export function LoginPage({ next }: { next?: string }) {
                 />
               </div>
               <label className="check">
-                <input type="checkbox" /> 로그인 상태 유지
+                <input type="checkbox" checked={keepSignedIn} onChange={(e) => setKeepSignedIn(e.currentTarget.checked)} /> 로그인 상태 유지
               </label>
               {error && (
                 <p className="err" id={f("error")} role="alert">
