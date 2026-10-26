@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { boxTierName, fanBoxStateTag, hasArrived, isMissing, isWaybillEditable, parseGiftBoxRows, parseShareBoxRows } from "./box-rows";
+import { boxSizeName, boxTierName, fanBoxStateTag, giftBoxName, tierCountText, hasArrived, isMissing, isWaybillEditable, parseGiftBoxRows, parseShareBoxRows } from "./box-rows";
 
 const EXTRA = { address_code: null, reported_not_mine: false } as const;
 // 팬 선물 상자 줄에만 있는 칸 — 「먼저 보내기」 전인가(approval-signature INV-S9)
@@ -99,5 +99,20 @@ describe("fanBoxStateTag — 상자 칸 배지(office-workflow INV-W14·W15, 용
   });
   it("그 밖의 상태는 따로 배지가 없다(null — 입고됨·도착 전 칸이 그대로)", () => {
     for (const s of ["awaiting", "received", "inspected", "return_waiting", "shipped", "missing"] as const) expect(fanBoxStateTag(s)).toBeNull();
+  });
+});
+
+describe("상자 이름·크기별 개수 — 선물 상세·선물 보내기가 같은 글자를 쓴다(design-rules 33절)", () => {
+  it("상자 이름은 「상자 N」(0부터 센 순서 + 1), 크기는 짧은 이름", () => {
+    expect(giftBoxName(0)).toBe("상자 1");
+    expect(giftBoxName(2)).toBe("상자 3");
+    expect(boxSizeName("medium")).toBe("중형");
+    expect(boxSizeName(null)).toBeNull();
+  });
+
+  it("크기별 개수는 소형·중형·대형 순, 0개는 빼고, 단위를 뺄 수 있다", () => {
+    expect(tierCountText({ small: 1, medium: 0, large: 2 })).toBe("소형 1개 · 대형 2개");
+    expect(tierCountText({ small: 0, medium: 3, large: 0 }, "")).toBe("중형 3");
+    expect(tierCountText({ small: 0, medium: 0, large: 0 })).toBe("");
   });
 });

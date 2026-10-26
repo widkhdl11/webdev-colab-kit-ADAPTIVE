@@ -21,3 +21,14 @@
 .status :global(.btn) { margin-top: var(--space-6); }
 /* 선물 사진을 올리지 못했을 때 결제창 위 한 줄 — 결제는 그대로 진행한다 */
 .photo-note { margin: var(--space-8) 0 var(--space-4); font-weight: var(--fw-bold); }
+/* 입력 폼이 보일 때 — 입력 기둥 + 오른쪽 「보낼 선물」 칸 288, 사이 32, 합쳐 1040(선물 상세와 같은 넓은 폭, design-rules 33절 · 시안 v41 .gn3).
+   칸을 띄울지는 화면 폭이 아니라 본문 칸 폭으로 정한다 — 사이드바가 있는 1000~1183 폭에서는 칸을 띄우면 입력 기둥이 376까지 줄어 상자 칸 버튼이 겹친다.
+   본문 칸 880 이상(입력 기둥 560 이상)일 때만 칸, 아니면 휴대폰과 같이 720 한 기둥 + 3단계 아래 합계 줄(gift-summary.module.css 와 폼의 4단계 금액 줄이 같은 이름 gift-send 를 본다) */
+.page { container: gift-send / inline-size; }
+.col.wide { max-width: 1040px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 288px; gap: var(--space-8); align-items: start; }
+.main { min-width: 0; }
+@container gift-send (max-width: 879px) {
+  .col.wide { max-width: 720px; }
+  .grid { grid-template-columns: minmax(0, 1fr); }
+}

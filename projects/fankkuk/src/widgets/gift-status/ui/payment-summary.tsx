@@ -2,17 +2,26 @@ import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import type { GiftDifference } from "@/entities/payment/model/difference-rows";
 import { paymentLines, type GiftPayment } from "@/entities/payment/model/gift-payment";
 import { formatDate } from "@/shared/lib/format/datetime";
+import { statusTagClass } from "@/shared/ui/status-tone";
 import s from "./gift-status.module.css";
 
-// 결제 내역 — 시안 docs/design/mockups/site/v35-part1/gift-detail.html 의 「결제」 카드 안(큰 금액 아래 상자 줄 · 검수 포함 · 결제한 날). 카드와 큰 금액은 부르는 쪽이 그린다.
+// 결제 내역 — 선물 정보 카드 안 「결제」 묶음(시안 v41-user-fixes/s/detail-after.html .ginfo .grp, design-rules 33절):
+// 상자별 금액 줄 → 결제 금액(24) → 추가 결제 꼬리표 → 검수 포함 → 결제한 날 문장. 묶음 제목·취소하기는 부르는 쪽이 그린다.
 // 금액은 결제할 때 저장한 값만 보인다(payment INV-M14) — 지금 요금표로 다시 계산하지 않는다.
 // 차액은 상자별 차액 결제 줄(my_difference_payments)에서 결제를 마친 것만, 환불은 서버가 정한 금액과 상태 그대로.
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
-type Props = { payment: GiftPayment; differences: readonly GiftDifference[] };
+type Props = {
+  payment: GiftPayment;
+  differences: readonly GiftDifference[];
+  /** 진행 중 주문인가 — 차액 안내 문장은 아직 상자를 잴 수 있는 진행 중에만 */
+  inProgress?: boolean;
+  /** 아직 내지 않은 차액의 합 — 결제는 맨 위 칸에서만 한다(INV-J13). 0 이면 꼬리표 없음 */
+  dueKrw?: number;
+};
 
-export function PaymentSummary({ payment, differences }: Props) {
+export function PaymentSummary({ payment, differences, dueKrw = 0, inProgress = false }: Props) {
   const lines = paymentLines(payment.boxes);
   const paidDifferences = differences.filter((d) => d.state === "paid");
   return (
@@ -42,6 +51,14 @@ export function PaymentSummary({ payment, differences }: Props) {
           </div>
         ))}
       </dl>
+      <p className={s.paytot}>
+        <span>결제 금액</span>
+        <b>
+          {payment.paidKrw.toLocaleString("ko-KR")}
+          <small>원</small>
+        </b>
+      </p>
+      {dueKrw > 0 ? <span className={statusTagClass("warn", s.duetag)}>추가 결제 {won(dueKrw)}</span> : null}
       <p className={s.ok}>
         <span className="tag">
           <svg width={16} height={16} viewBox="0 0 24 24" aria-hidden="true">
@@ -52,8 +69,12 @@ export function PaymentSummary({ payment, differences }: Props) {
       </p>
       <p className={s.payNote}>
         {formatDate(payment.paidAt)}에 결제했어요.
-        <br />
-        도착한 상자를 재어 보니 구간이 더 크면, 차액만 따로 결제해요.
+        {inProgress ? (
+          <>
+            <br />
+            도착한 상자를 재어 보니 상자 크기가 더 크면, 차액만 따로 결제해요.
+          </>
+        ) : null}
       </p>
     </>
   );

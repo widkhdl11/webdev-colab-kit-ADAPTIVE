@@ -59,3 +59,35 @@
 .early p:not(:global(.hint)) { color: var(--ink); }
 .early p + p { margin-top: 8px; }
 .early-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+
+/* 팬 선물 상세의 상자별 팬꾹 주소 — 6자리를 따로 큰 칸으로 (시안 v41-user-fixes/v41.css .addr3, design-rules 33절).
+   하늘 면은 위 .addr 과 같은 효과, 6자리는 한 글자씩 흰 칸(글자 32 · 휴대폰 24). 기본은 가림(INV-C2) */
+.addr3 { container: addr3 / inline-size; padding: var(--space-6); border-radius: var(--r-card); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-sheen); }
+.codebox { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-2) var(--space-4); }
+.code-lab { grid-column: 1 / -1; font-size: var(--fs-small); font-weight: var(--fw-bold); color: var(--ink); }
+.code6 { display: flex; flex-wrap: nowrap; gap: var(--space-1); min-width: 0; } /* 6자리는 한 줄 — 5+1 로 꺾이면 다른 글자로 읽힌다(ui 리뷰 2026-10-26) */
+.code6 > span[aria-hidden] { display: grid; place-items: center; width: 44px; height: 56px; border: 1px solid var(--ink); border-radius: var(--r-btn); background: var(--white); font-family: var(--font-round); font-size: var(--fs-title); font-weight: var(--fw-title); line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.code6.masked > span[aria-hidden] { color: var(--sub); font-size: var(--fs-page); }
+.addr3dl { display: grid; gap: var(--space-2); margin: var(--space-4) 0 0; padding-top: var(--space-4); border-top: 1px solid var(--tint-line); font-size: var(--fs-small); }
+.addr3dl > div { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: var(--space-3); }
+.addr3dl dt { color: var(--sub); }
+.addr3dl dd { margin: 0; font-weight: var(--fw-btn); overflow-wrap: anywhere; }
+/* 받는 곳 줄 끝 6자리 — 위 큰 칸과 같은 글자라는 것을 테두리로 잇는다 */
+.tail { display: inline-block; padding: 0 var(--space-1); border-radius: var(--r-icon); background: var(--white); box-shadow: inset 0 0 0 1px var(--ink); font-weight: var(--fw-bold); letter-spacing: 1px; }
+.acts { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-2) var(--space-3); margin-top: var(--space-4); }
+
+/* 짧은 줄 목록 — 6자리 아래 · 먼저 보내기 전 안내(design-rules 33절 「짧은 줄 안내」: 14, 줄 사이 4) */
+.pts { display: grid; gap: var(--space-1); margin: var(--space-2) 0 0; padding: 0; list-style: none; font-size: var(--fs-small); color: var(--ink); }
+.pts li { position: relative; padding-left: 14px; }
+.pts li::before { content: ""; position: absolute; left: 2px; top: 0.65em; width: 4px; height: 4px; border-radius: var(--r-pill); background: currentColor; }
+.addr3 .pts { margin-top: var(--space-3); color: var(--sub); }
+
+/* 상자 칸이 좁으면(사이드바가 있는 1000~1090 폭의 2:1 나눔 포함) 「6자리 보기」를 6칸 아래로 내린다 — 화면 폭이 아니라 칸 폭으로 */
+@container addr3 (max-width: 419px) {
+  .codebox { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 767px) {
+  .addr3 { padding: var(--space-4); }
+  .code6 > span[aria-hidden] { width: 40px; height: 48px; font-size: var(--fs-page); }
+  .addr3dl > div { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}

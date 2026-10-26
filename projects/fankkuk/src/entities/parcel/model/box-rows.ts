@@ -66,6 +66,26 @@ export function boxTierName(t: BoxTier): string | null {
   return t ? `${PARCEL_TIER_GUIDE[t].name} 상자` : null;
 }
 
+/** 상자 크기 짧은 이름 「소형」 — 상자 이름 「상자 N · 소형」의 뒤쪽(용어집 6절 「상자 크기」). 크기를 모르면 null */
+export function boxSizeName(t: BoxTier): string | null {
+  return t ? PARCEL_TIER_GUIDE[t].name : null;
+}
+
+/** 팬 선물 상자 이름 「상자 N」(index 는 0부터) — 주문번호를 상자 이름으로 쓰지 않는다(design-rules 33절).
+ *  읽기 함수(my_gift_boxes)가 상자 순번 순서로 주고 순번 칸은 따로 주지 않아, 목록 순서로 번호를 센다 */
+export function giftBoxName(index: number): string {
+  return `상자 ${index + 1}`;
+}
+
+const SIZE_ORDER = ["small", "medium", "large"] as const;
+
+/** 크기별 개수 한 줄 「소형 1개 · 중형 1개」 — 0개인 크기는 뺀다. 하나도 없으면 빈 글자. unit 은 휴대폰 합계 줄처럼 「개」를 빼는 자리에서 "" */
+export function tierCountText(counts: Readonly<Record<(typeof SIZE_ORDER)[number], number>>, unit = "개"): string {
+  return SIZE_ORDER.filter((t) => counts[t] > 0)
+    .map((t) => `${PARCEL_TIER_GUIDE[t].name} ${counts[t]}${unit}`)
+    .join(" · ");
+}
+
 // 받는 주소 6자리(inbound-address-code INV-C2): DB 가 로그인한 주문 주인에게만, 아직 유효할 때만 준다(거절·반려·취소·입고 뒤엔 null).
 const addressCode = z.string().regex(ADDRESS_CODE_PATTERN).nullable();
 

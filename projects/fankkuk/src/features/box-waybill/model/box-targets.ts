@@ -1,4 +1,4 @@
-import { boxTierName, isWaybillEditable, type GiftBox, type ShareBox } from "@/entities/parcel/model/box-rows";
+import { boxSizeName, giftBoxName, isWaybillEditable, type GiftBox, type ShareBox } from "@/entities/parcel/model/box-rows";
 import type { SentRevgift } from "@/entities/revgift/model/revgift-rows";
 
 // 상자 화면이 「어느 상자를 찾기(받는 주소 없이 보냈어요) 대상으로 고를 수 있나」·「어느 상자에 받는 주소를 그리나」를 정하는 판정
@@ -9,18 +9,18 @@ import type { SentRevgift } from "@/entities/revgift/model/revgift-rows";
 
 export type BoxTarget = { kind: "box"; id: string } | { kind: "share"; id: string };
 
-/** label = 상자 번호(FC-7K3M9-2), name = 고르는 칸에 보이는 이름(번호 · 구간) */
+/** label = 상자 이름(상자 2), name = 고르는 칸에 보이는 이름(상자 2 · 소형) — 선물 상세 상자 줄과 같은 이름(design-rules 33절, 주문번호를 상자 이름으로 쓰지 않는다) */
 export type FinderBox = { target: BoxTarget; label: string; name: string };
 
-/** 팬 선물: 진행 중 주문의 입고 전 상자만 찾기 대상 */
+/** 팬 선물: 진행 중 주문의 입고 전 상자만 찾기 대상. 번호는 거르기 전 목록 순서(읽기 함수가 상자 순번 순서로 준다) — 상세 상자 줄의 「상자 N」과 같다 */
 export function giftFinderBoxes(boxes: readonly GiftBox[], inProgress: boolean): FinderBox[] {
   if (!inProgress) return [];
-  return boxes
-    .filter((b) => isWaybillEditable(b.state))
-    .map((b) => {
-      const tierName = boxTierName(b.tier);
-      return { target: { kind: "box", id: b.boxId }, label: b.label, name: tierName ? `${b.label} · ${tierName}` : b.label };
-    });
+  return boxes.flatMap((b, i) => {
+    if (!isWaybillEditable(b.state)) return [];
+    const label = giftBoxName(i);
+    const size = boxSizeName(b.tier);
+    return [{ target: { kind: "box", id: b.boxId }, label, name: size ? `${label} · ${size}` : label }];
+  });
 }
 
 /**

@@ -14,6 +14,11 @@ function msLeft(registeredAt: string, now: string): number {
   return Date.parse(registeredAt) + DEADLINE_MS - Date.parse(now);
 }
 
+/** 승인 기한 시각 — 결제 완료(등록) 시각 + 168시간(approval-signature INV-S6). 팬 선물 상세 「기한 ○월 ○일 (요일)까지」. */
+export function approvalDeadlineAt(registeredAt: string): string {
+  return new Date(Date.parse(registeredAt) + DEADLINE_MS).toISOString();
+}
+
 /** 승인 기한이 지났는가 — 지났으면 승인 버튼을 두지 않는다. */
 export function isApprovalDeadlinePassed(registeredAt: string, now: string): boolean {
   return msLeft(registeredAt, now) <= 0;

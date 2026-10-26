@@ -1,11 +1,12 @@
-import { statusTagClass, type StatusTone } from "@/shared/ui/status-tone";
+import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import type { FanGiftView, FanStep } from "@/entities/order/model/fan-view";
+import { withApprovalDeadline, type FanGiftView, type FanStep } from "@/entities/order/model/fan-view";
 import {
   APPROVAL_LABEL,
+  awaitsApproval,
   FAN_STEP_LABEL,
-  fanBadge,
+  fanDetailBadges,
   fanHeadline,
   fanProgress,
   fanStepDetail,
@@ -13,16 +14,17 @@ import {
   RETURN_ON_REJECT_NOTICE,
   showsSteps,
 } from "@/entities/order/ui/fan-stage-copy";
-import { boxTierName, fanBoxStateTag, hasArrived, isMissing, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
+import { boxSizeName, fanBoxStateTag, giftBoxName, tierCountText, hasArrived, isMissing, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
 import { finderBoxesBelowTodo, giftAddressCode, giftFinderBoxes, needsEarlySendAck } from "@/features/box-waybill/model/box-targets";
 import { EarlySendGate } from "@/features/box-waybill/ui/early-send-gate";
 import { canCancelGift } from "@/features/gift-cancel/model/cancellable";
 import { CancelGiftButton } from "@/features/gift-cancel/ui/cancel-gift-button";
 import { ReturnConfirmedNotice } from "@/features/return-address/ui/return-confirmed-notice";
 import { RETURN_ON_INSPECTION_NOTICE } from "@/entities/parcel/model/size-tier";
+import { approvalDeadlineAt } from "@/entities/order/model/approval-time-left";
+import { BoxAddressCode } from "@/features/box-waybill/ui/box-address-code";
 import { formatWaybill } from "@/entities/parcel/model/waybill-no";
 import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
-import { ReceivingAddress } from "@/features/box-waybill/ui/receiving-address";
 import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
 import { formatDate, formatDateTime, formatMonthDayKo } from "@/shared/lib/format/datetime";
 import { differencesBelowTodo, visibleDifferences, type GiftDifference } from "@/entities/payment/model/difference-rows";
@@ -47,9 +49,12 @@ import s from "./gift-status.module.css";
 // 받는 주소(inbound-address-code INV-C2·C3): 결제가 끝난 진행 중 주문의 상자마다 「이 선물의 받는 주소」(사무실 주소 + 6자리).
 //   6자리는 my_gift_boxes 가 로그인한 주인에게, 유효할 때만 준다 — 없으면 그 상자의 주소 칸을 그리지 않는다. 6자리 빠진 기본 사무실 주소는 그리지 않는다.
 // 송장번호는 배송 조회를 보고 싶을 때만 넣는 선택 칸이다(INV-C7). 받는 주소 없이 보낸 상자는 「받는 주소 없이 보냈어요」로 찾는다(INV-C4 ②).
-// 크리에이터 승인은 줄 세운 단계가 아니라 출고의 조건이다 — 주문 정보 카드 안 한 줄로 그린다.
-// 결제 내역은 결제할 때 저장한 금액만 보인다(payment INV-M14, my_gift_payment) — 결제 카드 안.
-// 진행 중이고 도착한 상자가 없으면 결제 카드(결제 기록이 없으면 주문 정보 카드) 끝에 「취소하기」(payment INV-M16, 판정은 features/gift-cancel/model/cancellable.ts).
+// v41(2026-10-26 d136, design-rules 33절 · UX 명세 docs/ux/pages/gifts-orderNo.md, 시안 v41-user-fixes/s/detail-after.html):
+//   크리에이터 승인은 줄 세운 단계가 아니라 출고의 조건이다(INV-S9) — 승인 전이면 상태 판 배지 「OO님 승인 대기」(먼저 보내기 뒤에도 남는다)와
+//   진행 줄 「출고」 아래 「승인 필요」, 오른쪽 「선물 정보」 카드 안 노란 칸 「OO님의 승인 상태」(지금 · 필요한 때 · 기한 — INV-S6 168시간). 승인되면 「승인됨 · 날짜」 한 줄.
+//   결제·주문 정보 두 카드는 「선물 정보」 카드 하나로 합쳤다. 주문번호는 그 카드의 「주문번호」 줄에만 — 상자 이름은 「상자 N · 크기」.
+// 결제 내역은 결제할 때 저장한 금액만 보인다(payment INV-M14, my_gift_payment) — 선물 정보 카드 안 「결제」 묶음.
+// 진행 중이고 도착한 상자가 없으면 선물 정보 카드 끝에 「취소하기」(payment INV-M16, 판정은 features/gift-cancel/model/cancellable.ts).
 
 function Check({ size = 18 }: { size?: number }) {
   return (
@@ -61,16 +66,18 @@ function Check({ size = 18 }: { size?: number }) {
 
 const STEP_CLASS = { done: s.done, current: s.next, stopped: s.stopped, todo: undefined } as const;
 
-const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
-
-const APPROVAL_TEXT = { done: "승인됨", waiting: "승인 대기", todo: "출고 전에 받아요" } as const;
-
-const APPROVAL_TONE = { done: "success", waiting: "warn", todo: "plain" } as const satisfies Record<keyof typeof APPROVAL_TEXT, StatusTone>;
+/** 선물 정보 카드 「상자」 줄 — 「소형 1개 · 중형 1개」. 크기를 모르는 상자가 있으면 개수만 */
+function boxSummary(boxes: readonly GiftBox[], boxCount: number): string {
+  if (boxes.length === 0 || boxes.some((b) => b.tier === null)) return `${boxCount}개`;
+  const count = (t: "small" | "medium" | "large") => boxes.filter((b) => b.tier === t).length;
+  return tierCountText({ small: count("small"), medium: count("medium"), large: count("large") });
+}
 
 type DifferenceProps = { differences: readonly GiftDifference[]; notice: DifferenceNotice };
 
 export function GiftStatusPage({
-  view,
+  view: readView,
+  now,
   boxes,
   difference,
   payment = null,
@@ -83,6 +90,8 @@ export function GiftStatusPage({
   paid = false,
 }: {
   view: FanGiftView;
+  /** 화면을 그리는 서버의 지금 시각 — 승인 기한이 지났는데 자동 처리 전인 주문을 「기한 지남」으로 보이는 데 쓴다(INV-S6 S6c). 라우트가 넘긴다, 없으면 기한을 보지 않는다 */
+  now?: string;
   boxes: readonly GiftBox[];
   difference?: DifferenceProps;
   /** 결제 금액(저장된 값). 없으면 결제 내역을 그리지 않는다. */
@@ -102,6 +111,8 @@ export function GiftStatusPage({
   /** 결제를 마치고 돌아온 직후(`?paid=1`) — 상태 판 위 안내 줄(UX 시범 B-1). 라우트가 주소의 물음표 값으로 넘긴다 */
   paid?: boolean;
 }) {
+  // 기한이 지났는데 자동 처리 전인 승인 전 주문은 자동 반려와 같게(INV-S6 S6c) — 아래 판정은 모두 이 view 로
+  const view = now ? withApprovalDeadline(readView, now) : readView;
   const progress = fanProgress(view);
   // 배지의 「N/6」은 지금 있는 단계 번호다 — 끝낸 단계 수(4)를 쓰면 아래 진행 줄의 현재 단계(5번 배송중)와 숫자가 어긋났다(2026-10-09 디자인 점검)
   const currentIdx = view.steps.findIndex((st) => st.state === "current");
@@ -118,7 +129,9 @@ export function GiftStatusPage({
   // 처음 그림에서 보인 구간은 마지막 상자를 찾은 뒤에도 결과 안내 자리로 남는다(KeepShown)
   const showFinder = !earlySendAck && belowFinder.length > 0;
   // 「먼저 보내기」 전이면 위쪽도 승인 대기로 보인다 — 판정은 fan-stage-copy(view.earlySendPending, INV-S9)
-  const badge = fanBadge(view);
+  const badges = fanDetailBadges(view);
+  // 승인 전 진행 중 — 출고 아래 「승인 필요」, 선물 정보 카드의 노란 칸(INV-S9)
+  const approvalPending = awaitsApproval(view);
   const headline = fanHeadline(view);
   const anyAddress = officeAddress !== null && boxes.some((b) => giftAddressCode(b, officeAddress, inProgress) !== null);
   // 차액 줄은 고른 뒤의 길이로 섹션을 그릴지 정한다 — 끝난 주문에 낸 기록이 없으면 빈 섹션을 그리지 않는다.
@@ -163,7 +176,7 @@ export function GiftStatusPage({
           <section className={s.dhero} aria-labelledby="g-title">
             <img className={s.peek} src="/images/home/icon-truck.webp" alt="" aria-hidden="true" width={96} height={96} />
             <p className={s.meta}>
-              주문번호 {view.orderNo} · 등록 {formatDate(view.registeredAt)}
+              등록 {formatDate(view.registeredAt)}
             </p>
             <h1 className={s.title} id="g-title" tabIndex={-1}>
               {view.creatorName}님께 보내는 선물
@@ -173,7 +186,13 @@ export function GiftStatusPage({
             </p>
             <div className={s.now}>
               <div className={s.when}>
-                <span className={statusTagClass(badge.tone)}>{badge.text}</span>
+                <p className={s.tagrow} data-badges="">
+                  {badges.map((b) => (
+                    <span key={b.text} className={statusTagClass(b.tone)}>
+                      {b.text}
+                    </span>
+                  ))}
+                </p>
                 {view.expectedArrivalDate ? (
                   <p className={`num-big ${s.big}`}>
                     {formatDate(view.expectedArrivalDate)}
@@ -196,6 +215,11 @@ export function GiftStatusPage({
                       {FAN_STEP_LABEL[st.key]}
                       {st.state === "done" ? <span className="sr-only"> 완료</span> : null}
                       {st.state === "stopped" ? <span className="sr-only"> 멈춤</span> : null}
+                      {st.key === "shipped" && approvalPending ? (
+                        <span className={s.apv} data-approval-needed="">
+                          <span className={statusTagClass("warn")}>승인 필요</span>
+                        </span>
+                      ) : null}
                       {note ? <small>{note}</small> : null}
                     </li>
                   );
@@ -227,7 +251,7 @@ export function GiftStatusPage({
         ) : null}
 
         {/* 상자 칸 8 + 오른쪽 한 열(결제 위 · 주문 정보 아래 — 시안 ux-pilot .dgrid.split·.dside). 주문 정보는 덜 중요한 회색 카드.
-            상자 칸이 없는 주문(끝남·상자 없음)은 오른쪽 열만 — 두 카드를 나란히 */}
+            상자 칸이 없는 주문(끝남·상자 없음)은 오른쪽 열만 — 「선물 정보」 카드 하나가 PC 반 폭(오른쪽 반은 비움, design-rules 33절) */}
         <div className={showsProgress && boxes.length > 0 ? `${s.dgrid} ${s.split}` : s.dgrid}>
           {showsProgress && boxes.length > 0 ? (
             <section className={s.dcard} aria-labelledby="box-status-title">
@@ -237,19 +261,21 @@ export function GiftStatusPage({
               </h2>
               {earlySendAck ? <EarlySendGate orderNo={view.orderNo} creatorName={view.creatorName} focusAfterId="box-status-title" /> : null}
               {anyAddress ? (
-                <p className={s.note}>상자마다 팬꾹 주소가 달라요. 상자에 맞는 주소를 끝 6자리까지 그대로 써서 보내 주세요. 승인은 출고 전까지만 나면 돼요.</p>
+                <p className={s.note}>상자마다 팬꾹 주소가 달라요.</p>
               ) : null}
               <div className={s.boxes}>
-                {boxes.map((b) => {
-                  const tierName = boxTierName(b.tier);
+                {boxes.map((b, i) => {
+                  // 상자 번호 — 목록 순서로 센다(giftBoxName). 「팬꾹 주소 없이 보냈다면」 고르는 칸도 같은 번호(giftFinderBoxes)
+                  const boxName = giftBoxName(i);
+                  const size = boxSizeName(b.tier);
                   const addressCode = giftAddressCode(b, officeAddress, inProgress);
                   const stateTag = fanBoxStateTag(b.state);
                   return (
                     <div key={b.boxId} className={s.box}>
                       <div className={s.boxline}>
                         <h3 className={s.boxName}>
-                          {b.label}
-                          {tierName ? <span> · {tierName}</span> : null}
+                          {boxName}
+                          {size ? <span> · {size}</span> : null}
                         </h3>
                         {stateTag ? (
                           <span className={statusTagClass(stateTag.tone)}>{stateTag.text}</span>
@@ -271,7 +297,7 @@ export function GiftStatusPage({
                         <p className="hint">결제하고 30일이 지나도 도착하지 않아 이 상자는 닫혔어요. 이 상자 금액을 돌려드려요. 이제 이 상자를 보내도 받지 않고 돌려보내요.</p>
                       ) : null}
                       {officeAddress && addressCode ? (
-                        <ReceivingAddress officeAddress={officeAddress} code={addressCode} boxName={b.label} multiple={boxes.length > 1} />
+                        <BoxAddressCode officeAddress={officeAddress} code={addressCode} boxName={boxName} />
                       ) : null}
                       {isWaybillEditable(b.state) && inProgress && !b.sendAckNeeded ? (
                         // 송장번호 입력은 접어 둔다(시안 v35 .fold) — 배송 조회를 보고 싶을 때만 넣는 선택 칸(INV-C7).
@@ -281,7 +307,7 @@ export function GiftStatusPage({
                           <div className={s.in}>
                             <WaybillEditor
                               target={{ kind: "box", id: b.boxId }}
-                              boxName={b.label}
+                              boxName={boxName}
                               initial={b.waybillNo}
                               layout="box"
                               hint="선택이에요. 넣으면 배송 조회로 팬꾹까지 오는 길을 보여 드려요."
@@ -321,48 +347,72 @@ export function GiftStatusPage({
           ) : null}
 
           <div className={s.dside} data-detail-side="">
-            {payment ? (
-              <section className={s.dcard} aria-labelledby="pay-title">
-                <h2 className={s.cardTitle} id="pay-title">
-                  결제
-                </h2>
-                <p className={s.amount}>{won(payment.paidKrw)}</p>
-                {/* 아직 내지 않은 차액의 합 — 결제는 맨 위 칸에서만 한다(INV-J13) */}
-                {dueKrw > 0 ? <span className={`${statusTagClass("warn")} ${s.duetag}`}>추가 결제 {won(dueKrw)}</span> : null}
-                <PaymentSummary payment={payment} differences={difference?.differences ?? []} />
-                {cancelable ? (
-                  <div className={s.cancel}>
-                    <CancelGiftButton orderNo={view.orderNo} addressShown={!view.earlySendPending} />
-                  </div>
-                ) : null}
-              </section>
-            ) : null}
-
-            <section className={`${s.dcard} ${s.muted}`} aria-labelledby="info-title">
+            {/* 선물 정보 — 결제·주문 정보를 합친 카드 하나(design-rules 33절, 22절에서 벗어남). 모든 상태에 같은 카드, 승인 칸은 진행 중에만 */}
+            <section className={`${s.dcard} ${s.ginfo}`} aria-labelledby="info-title">
               <h2 className={s.cardTitle} id="info-title">
-                주문 정보
+                선물 정보
               </h2>
-              {/* 주문번호·크리에이터·선물·상자 수는 위 상태 판에 있다 — 여기는 상태 판에 없는 두 줄만(UX 시범 B-9) */}
               <dl className={s.kv}>
                 <div>
-                  <dt>등록</dt>
-                  <dd>{formatDateTime(view.registeredAt)}</dd>
+                  <dt>받는 크리에이터</dt>
+                  <dd>{view.creatorName}님</dd>
                 </div>
-                {/* 크리에이터 승인은 줄 세운 단계가 아니라 출고의 조건이다 — 주문 정보 안 한 줄(design-rules 22절) */}
-                {view.outcome === "in_progress" ? (
-                  <div>
+                <div>
+                  <dt>선물</dt>
+                  <dd>{memo?.title ?? view.itemKind}</dd>
+                </div>
+                <div>
+                  <dt>상자</dt>
+                  <dd>{boxSummary(boxes, view.boxCount)}</dd>
+                </div>
+                <div>
+                  <dt>주문번호</dt>
+                  <dd className={s.plain}>{view.orderNo}</dd>
+                </div>
+                <div>
+                  <dt>등록</dt>
+                  <dd className={s.plain}>{formatDateTime(view.registeredAt)}</dd>
+                </div>
+                {/* 승인된 진행 중 선물 — 노란 칸 대신 한 줄 */}
+                {view.outcome === "in_progress" && !approvalPending ? (
+                  <div data-approval-done="">
                     <dt>{APPROVAL_LABEL}</dt>
-                    <dd>
-                      {view.approval.state === "done" && view.approval.at ? (
-                        formatDate(view.approval.at)
-                      ) : (
-                        <span className={statusTagClass(APPROVAL_TONE[view.approval.state])}>{APPROVAL_TEXT[view.approval.state]}</span>
-                      )}
-                    </dd>
+                    <dd>{view.approval.at ? `승인됨 · ${formatDate(view.approval.at)}` : "승인됨"}</dd>
                   </div>
                 ) : null}
               </dl>
-              {payment ? null : (
+              {/* 승인 전 — 노란 칸(대기 면). 승인은 출고 전에만 있으면 된다(INV-S9), 기한은 결제 완료부터 168시간(INV-S6) */}
+              {approvalPending ? (
+                <div className={`${s.grp} ${s.apvGrp}`} role="group" aria-labelledby="approval-title" data-approval-box="">
+                  <h3 className={s.grpTitle} id="approval-title">
+                    {view.creatorName}님의 승인 상태
+                  </h3>
+                  <dl className={s.kv}>
+                    <div>
+                      <dt>지금</dt>
+                      <dd>
+                        <span className={statusTagClass("warn")}>승인 대기</span>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>필요한 때</dt>
+                      <dd>출고 전</dd>
+                    </div>
+                    <div>
+                      <dt>기한</dt>
+                      <dd>{formatDate(approvalDeadlineAt(view.registeredAt))}까지</dd>
+                    </div>
+                  </dl>
+                </div>
+              ) : null}
+              {payment ? (
+                <div className={s.grp} role="group" aria-labelledby="pay-title">
+                  <h3 className={s.grpTitle} id="pay-title">
+                    결제
+                  </h3>
+                  <PaymentSummary payment={payment} differences={difference?.differences ?? []} dueKrw={dueKrw} inProgress={inProgress} />
+                </div>
+              ) : (
                 <p className={s["tag-line"]}>
                   <span className="tag">
                     <Check size={16} />
@@ -371,7 +421,7 @@ export function GiftStatusPage({
                 </p>
               )}
               {hasShipped(view) ? <p className={s.note}>{PROMISE.addressFan} 그래서 크리에이터에게 가는 송장번호도 알려 드리지 않아요.</p> : null}
-              {!payment && cancelable ? (
+              {cancelable ? (
                 <div className={s.cancel}>
                   <CancelGiftButton orderNo={view.orderNo} addressShown={!view.earlySendPending} />
                 </div>
@@ -403,7 +453,7 @@ export function GiftStatusPage({
             <h2 className={s.secTitle}>보내기 전에 알아 두세요</h2>
             <p className={s.desc}>상자를 더 보내려면 새로 등록해 주세요. 상자마다 팬꾹 주소가 달라요.</p>
             {/* 거절·7일 반송 안내는 승인 전에만(B-5) — 이미 승인된 선물에는 해당하지 않는다 */}
-            {view.approval.state !== "done" ? <p className={s.more}>{RETURN_ON_REJECT_NOTICE}</p> : null}
+            {approvalPending ? <p className={s.more}>{RETURN_ON_REJECT_NOTICE}</p> : null}
           </div>
         ) : null}
 

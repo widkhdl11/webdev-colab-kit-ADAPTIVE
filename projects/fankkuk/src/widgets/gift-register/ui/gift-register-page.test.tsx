@@ -17,6 +17,8 @@ import { GiftRegisterPage } from "./gift-register-page";
 let host: HTMLDivElement;
 let root: Root;
 beforeEach(() => {
+  // jsdom 에는 화면 이동이 없다 — 폼이 단계를 바꿀 때 부른다
+  Element.prototype.scrollIntoView = () => {};
   host = document.createElement("div");
   document.body.appendChild(host);
   root = createRoot(host);
@@ -105,5 +107,114 @@ describe("d113 D-3: 결제 실패로 돌아온 화면 — 오류 줄 아래 「�
     renderFailed(null);
     expect([...host.querySelectorAll('[role="alert"]')].some((el) => el.textContent?.includes(FAILED))).toBe(true);
     expect([...host.querySelectorAll("a")].some((a) => a.textContent === "결제하기 ›")).toBe(false);
+  });
+});
+
+// design-rules 33절 · UX 명세 gifts-new: PC 오른쪽 「보낼 선물」 칸(1~4단계), 휴대폰 3단계 아래 합계 줄, 4단계 금액 줄은 넓은 화면에서 칸에만.
+// 넓은/좁은 화면 나눔은 CSS(1000 기준)라 여기서는 DOM 구조(어느 칸이 있고 무엇이 표시돼 숨는지)를 보고, 실제 보임은 브라우저에서 본다.
+describe("33절: 「보낼 선물」 합계 칸", () => {
+  const settle = async () => {
+    for (let i = 0; i < 5; i += 1) await act(async () => await new Promise((r) => setTimeout(r, 0)));
+  };
+  const click = async (el: Element | null | undefined) => {
+    if (!el) throw new Error("누를 요소가 없다");
+    await act(async () => (el as HTMLElement).click());
+    await settle();
+  };
+  const button = (text: string) => [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === text);
+  const aside = () => host.querySelector<HTMLElement>("aside[data-gift-summary]");
+  const kv = (label: string) =>
+    [...(aside()?.querySelectorAll("dt") ?? [])].find((dt) => dt.textContent === label)?.nextElementSibling?.textContent;
+  const lineTiers = () => [...(aside()?.querySelectorAll("li[data-tier]") ?? [])].map((li) => li.getAttribute("data-tier"));
+  const line = (tier: string) => aside()?.querySelector(`li[data-tier="${tier}"]`);
+  const asideTotal = () => aside()?.querySelector("[data-gift-total] b")?.textContent;
+  const sumbar = () => host.querySelector<HTMLElement>("[data-gift-sumbar]");
+  const qty = (label: string) => host.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`);
+
+  const toStep3 = async () => {
+    await act(async () =>
+      root.render(<GiftRegisterPage creators={[HARU, DAL]} prices={PRICES} initialCreatorId={HARU.id} clientKey="" today={TODAY} />),
+    );
+    await settle();
+    await click(button("다음"));
+    await click(host.querySelector('input[type="radio"][value="doll"]'));
+    await click(host.querySelector('input[type="radio"][value="no"]'));
+    await click(button("다음"));
+  };
+
+  it("1단계: 이름 있는 영역 「보낼 선물」 — 받는 크리에이터만 채워지고, 상자 줄 없이 합계 0원(기본 1개는 고른 값이 아니다)", async () => {
+    await act(async () =>
+      root.render(<GiftRegisterPage creators={[HARU, DAL]} prices={PRICES} initialCreatorId={HARU.id} clientKey="" today={TODAY} />),
+    );
+    await settle();
+    const a = aside();
+    expect(a).not.toBeNull();
+    const heading = host.querySelector(`#${a?.getAttribute("aria-labelledby")}`);
+    expect(heading?.tagName).toBe("H2");
+    expect(heading?.textContent).toBe("보낼 선물");
+    expect(a?.contains(heading!)).toBe(true);
+    expect(kv("받는 크리에이터")).toBe("하루님");
+    expect(kv("선물 종류")).toBe("—");
+    expect(lineTiers()).toEqual([]);
+    expect(asideTotal()).toBe("0원");
+    // 합계 한 줄에만 aria-live
+    expect(a?.querySelectorAll("[aria-live]").length).toBe(1);
+    expect(a?.querySelector("[aria-live]")?.hasAttribute("data-gift-total")).toBe(true);
+    // 1단계에는 휴대폰 아래 합계 줄이 없다
+    expect(sumbar()).toBeNull();
+  });
+
+  it("3단계: 상자 수를 바꾸면 크기별 줄·합계·아래 합계 줄이 바로 바뀌고, 0개인 크기는 줄이 없다", async () => {
+    await toStep3();
+    expect(kv("선물 종류")).toBe("인형·쿠션");
+    expect(lineTiers()).toEqual(["small"]);
+    expect(asideTotal()).toBe("9,000원");
+
+    await click(qty("중형 상자 하나 늘리기"));
+    await click(qty("중형 상자 하나 늘리기"));
+    expect(lineTiers()).toEqual(["small", "medium"]);
+    expect(line("medium")?.querySelector("small")?.textContent).toBe("12,000원 × 2");
+    expect(line("medium")?.lastElementChild?.textContent).toBe("24,000원");
+    expect(asideTotal()).toBe("33,000원");
+
+    // (실패경로) 소형을 0개로 줄이면 소형 줄이 사라진다
+    await click(qty("소형 상자 하나 줄이기"));
+    expect(lineTiers()).toEqual(["medium"]);
+    expect(asideTotal()).toBe("24,000원");
+
+    // 휴대폰 아래 합계 줄 — 입력 기둥(폼과 같은 칸) 맨 끝, 버튼 없음
+    const bar = sumbar();
+    expect(bar).not.toBeNull();
+    expect(bar?.previousElementSibling?.querySelector("form")).not.toBeNull();
+    expect(bar?.parentElement?.nextElementSibling).toBe(aside());
+    expect(bar?.querySelector("b")?.textContent).toBe("상자 2개");
+    expect(bar?.querySelector("span")?.textContent).toBe("중형 2");
+    expect(bar?.querySelector("[aria-live]")?.textContent).toBe("24,000원");
+    expect(bar?.querySelector("button")).toBeNull();
+  });
+
+  it("4단계: 결제 칸의 금액 줄은 「넓은 화면에서 숨김」 표시를 달고, 표시 없이 보이는 합계는 오른쪽 칸 하나뿐 · 아래 합계 줄 없음", async () => {
+    await toStep3();
+    await click(qty("중형 상자 하나 늘리기"));
+    await click(button("다음"));
+    expect(sumbar()).toBeNull();
+    const pay = host.querySelector('[aria-label="결제 금액"]');
+    const covered = pay?.querySelector("[data-side-covered]");
+    expect(covered).not.toBeNull();
+    // 결제 칸의 합계 줄은 그 표시 안에 있다
+    const payTotal = [...(pay?.querySelectorAll("span") ?? [])].find((el) => el.textContent === "합계");
+    expect(covered?.contains(payTotal!)).toBe(true);
+    // 표시 밖에 있는 「합계」 글자는 오른쪽 칸의 것 하나
+    const uncovered = [...host.querySelectorAll("span")].filter((el) => el.textContent === "합계" && !el.closest("[data-side-covered]"));
+    expect(uncovered.length).toBe(1);
+    expect(aside()?.contains(uncovered[0]!)).toBe(true);
+    expect(asideTotal()).toBe("21,000원");
+    expect(button("21,000원 결제하기")).toBeDefined();
+  });
+
+  it("(실패경로) 고를 사람이 없으면(상태 카드) 「보낼 선물」 칸이 없다", () => {
+    act(() => root.render(<GiftRegisterPage creators={[]} prices={PRICES} clientKey="" today={TODAY} />));
+    expect(aside()).toBeNull();
+    expect(host.querySelector("[data-side-covered]")).toBeNull();
   });
 });

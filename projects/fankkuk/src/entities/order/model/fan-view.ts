@@ -1,3 +1,4 @@
+import { isApprovalDeadlinePassed } from "./approval-time-left";
 import type { OrderRecord } from "./order-record";
 
 // 팬 상태 화면이 받는 모양. 주문 기록에서 팬이 봐도 되는 칸만 골라낸다.
@@ -87,5 +88,25 @@ export function toFanView(r: FanOrderRecord, officeAddress: string): FanGiftView
     expectedArrivalDate: r.expectedArrivalDate,
     earlySendPending: outcome === "in_progress" && r.approvedAt === null && r.fanSendAckAt === null,
     inspectionChecking: outcome === "in_progress" && r.inspection?.result === "checking",
+  };
+}
+
+/**
+ * 승인 기한이 지났는데 자동 처리가 아직 돌지 않은 승인 전 주문(approval-signature INV-S6 S6c — 「기한 지남」으로 답하고 승인하지 않는다).
+ * 주문 기록은 아직 진행 중이지만 화면은 자동 반려(expired)와 같게 보인다 — 승인 대기 배지·지난 기한·「먼저 보내기」·팬꾹 주소가 남지 않게.
+ * 기준 시각(now)은 화면을 그리는 서버가 넘긴다. 승인된 주문·이미 끝난 주문은 그대로.
+ */
+export function withApprovalDeadline(view: FanGiftView, now: string): FanGiftView {
+  if (view.outcome !== "in_progress" || view.approval.state === "done") return view;
+  if (!isApprovalDeadlinePassed(view.registeredAt, now)) return view;
+  return {
+    ...view,
+    outcome: "expired",
+    steps: view.steps.map((st) => (st.state === "current" ? { ...st, state: "todo" } : st)),
+    approval: { state: "todo", at: null },
+    officeAddress: null,
+    canEnterTrackingNo: false,
+    earlySendPending: false,
+    inspectionChecking: false,
   };
 }

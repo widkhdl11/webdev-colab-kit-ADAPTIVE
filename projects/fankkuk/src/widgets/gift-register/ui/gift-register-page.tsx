@@ -16,8 +16,10 @@ import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import {
   RegisterForm,
   type CreatorOption,
+  type RegisterDraft,
   type RegisteredGift,
 } from "@/features/gift-register/ui/register-form";
+import { GiftSumBar, GiftSummaryCard } from "./gift-summary";
 import s from "./gift-register-page.module.css";
 
 // 선물 보내기 본문(팬·크리에이터). 시안: docs/design/mockups/site/v39-part3/gifts-new-b.html (design-rules 25절 B안 — 맨 위 하늘 단계 판 + 흰 입력 판 한 기둥 720). 로그인 전·팔로우 없음·쉬는 중은 흰 상태 카드
@@ -25,6 +27,7 @@ import s from "./gift-register-page.module.css";
 // 헤더·푸터는 라우트(app)가 붙인다 — 위젯끼리 import 하지 않게.
 // 선물 사진(선택)을 골랐으면 등록 직후 그 주문에 올린 뒤 결제창을 연다(together INV-F2 — 서버가 열어 보고 사진 정보를 지워 저장한다).
 // 사진을 올리지 못해도 결제는 그대로 진행하고 「함께한 시간」에서 다시 올릴 수 있다고 알린다.
+// 입력 폼이 보이는 동안 PC 는 오른쪽 「보낼 선물」 칸(1~4단계), 휴대폰은 3단계 아래 합계 줄(design-rules 33절, UX 명세 docs/ux/pages/gifts-new.md). 결제창·상태 카드에는 없다.
 // 맨 위 한 줄(추가분 4-4): 크리에이터 페이지에서 미리 고르고 왔으면 「{닉네임}님의 {플랫폼} 채널 주인이 확인된 페이지예요」. 플랫폼 값이 없으면 줄을 그리지 않는다.
 export function GiftRegisterPage({
   creators,
@@ -74,6 +77,9 @@ export function GiftRegisterPage({
   const blockedNotice = pickOther ? null : preselectedNotice;
   // 폼에서 지금 고른 크리에이터 — 미리 고른 사람과 다르면 맨 위 한 줄을 숨긴다(다른 크리에이터의 채널 정보는 이 화면에서 읽어 오지 않는다)
   const [pickedId, setPickedId] = useState(initialCreatorId ?? "");
+  // 폼이 알린 지금 입력 — 「보낼 선물」 칸과 아래 합계 줄이 그린다
+  const [draft, setDraft] = useState<RegisterDraft | null>(null);
+  const showForm = creators.length > 0 && !registered && !(blockedNotice && preselected);
   const ownerSource = preselected ?? followFirst;
   const ownerLine =
     pickOther || pickedId !== (initialCreatorId ?? "") || !ownerSource
@@ -81,8 +87,8 @@ export function GiftRegisterPage({
       : channelOwnerLine({ name: ownerSource.name, platform: channelPlatformOfLabel(ownerSource.platform) });
 
   return (
-    <main id="main" className="page-centered">
-      <div className={s.col}>
+    <main id="main" className={`page-centered ${s.page}`}>
+      <div className={`${s.col} ${showForm ? s.wide : ""}`}>
         <header className={`page-head ${s.head}`}>
           <h1 className="ph-title">선물 보내기</h1>
           {registered ? (
@@ -200,16 +206,23 @@ export function GiftRegisterPage({
             </div>
           </div>
         ) : (
-          <RegisterForm
-            creators={creators}
-            prices={prices}
-            initialCreatorId={pickOther ? "" : initialCreatorId}
-            notice={notice}
-            resumeHref={resumeHref}
-            onRegistered={onRegistered}
-            onCreatorChange={setPickedId}
-            today={today}
-          />
+          <div className={s.grid}>
+            <div className={s.main}>
+              <RegisterForm
+                creators={creators}
+                prices={prices}
+                initialCreatorId={pickOther ? "" : initialCreatorId}
+                notice={notice}
+                resumeHref={resumeHref}
+                onRegistered={onRegistered}
+                onCreatorChange={setPickedId}
+                onDraftChange={setDraft}
+                today={today}
+              />
+              {draft?.step === 3 ? <GiftSumBar draft={draft} /> : null}
+            </div>
+            <GiftSummaryCard draft={draft} />
+          </div>
         )}
       </div>
     </main>

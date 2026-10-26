@@ -36,9 +36,31 @@ export const CHECKING_LABEL = "확인 중";
 
 const currentKey = (view: FanGiftView) => view.steps.find((st) => st.state === "current")?.key;
 
-/** 승인 전 주문에서 「먼저 보내기」를 아직 누르지 않았을 때의 상단 표시(approval-signature INV-S9) — 받는 주소가 아직 없으니 「보내 주세요」라고 하지 않는다. */
-export const EARLY_SEND_WAIT_BADGE: { text: string; tone: StatusTone } = { text: "승인 대기", tone: "warn" };
-export const EARLY_SEND_WAIT_HEADLINE = "크리에이터가 아직 승인하지 않았어요";
+/** 팬 화면 상태 배지. kind 는 승인 대기 배지에만 — 상세 화면이 이 배지를 이름 붙은 승인 대기 배지로 바꿔 끼울 때 알아본다(fanDetailBadges) */
+export type FanBadge = { text: string; tone: StatusTone; kind?: "approval_wait" };
+
+/** 승인 전 주문에서 「먼저 보내기」를 아직 누르지 않았을 때, 그리고 검수 뒤 승인만 기다릴 때의 상단 표시(approval-signature INV-S9) — 받는 주소가 아직 없으니 「보내 주세요」라고 하지 않는다. */
+export const EARLY_SEND_WAIT_BADGE: FanBadge = { text: "승인 대기", tone: "warn", kind: "approval_wait" };
+
+/** 「먼저 보내기」 전 큰 줄 — 용어집 3절 문장 꼴 「OO님이 아직 승인하지 않았어요」(UX 명세 gifts-orderNo, 2026-10-26 d136) */
+export function notApprovedYetText(creatorName: string): string {
+  return `${creatorName}님이 아직 승인하지 않았어요`;
+}
+
+/** 크리에이터 승인을 아직 기다리는 진행 중 선물인가 — 승인은 줄 세운 단계가 아니라 출고의 조건이다(INV-S9 「승인은 출고 전에만 있으면 된다」).
+ *  먼저 보내기를 눌렀어도 승인 전이면 참이다. */
+export function awaitsApproval(view: FanGiftView): boolean {
+  return view.outcome === "in_progress" && view.approval.state !== "done";
+}
+
+/** 상세 상태 판의 배지들(2026-10-26 d136, design-rules 33절) — 승인 전이면 「OO님 승인 대기」를 늘 함께 둔다(먼저 보내기를 누른 뒤에도).
+ *  기본 배지가 이미 승인 대기면 이름 붙은 하나로 바꾼다. 목록은 그대로 fanBadge 하나만 쓴다. */
+export function fanDetailBadges(view: FanGiftView): FanBadge[] {
+  const base = fanBadge(view);
+  if (!awaitsApproval(view)) return [base];
+  const wait: FanBadge = { text: `${view.creatorName}님 승인 대기`, tone: "warn", kind: "approval_wait" };
+  return base.kind === "approval_wait" ? [wait] : [base, wait];
+}
 
 /** 지금 상황 한 줄. "지금 단계"는 아직 끝나지 않은 단계라, 그 단계를 기다리는 말로 쓴다. */
 export function fanHeadline(view: FanGiftView): string {
@@ -48,7 +70,7 @@ export function fanHeadline(view: FanGiftView): string {
   if (view.outcome === "canceled") return "취소된 선물이에요";
   switch (currentKey(view)) {
     case "received":
-      if (view.earlySendPending) return EARLY_SEND_WAIT_HEADLINE;
+      if (view.earlySendPending) return notApprovedYetText(view.creatorName);
       return view.fanTrackingNo ? "보내 주셨군요! 사무실 도착을 기다려요" : "사무실로 보내 주세요";
     case "inspected":
       return "사무실에 도착했어요. 검수하고 있어요";
@@ -64,7 +86,7 @@ export function fanHeadline(view: FanGiftView): string {
 }
 
 /** 목록의 짧은 상태 표시. 색 갈래: 끝남 success · 팬/크리에이터를 기다림 warn · 거절·반송 danger · 진행 단계 info · 취소·등록 plain. */
-export function fanBadge(view: FanGiftView): { text: string; tone: StatusTone } {
+export function fanBadge(view: FanGiftView): FanBadge {
   if (view.outcome === "declined") return { text: "거절", tone: "danger" };
   if (view.outcome === "expired") return { text: "기한 지남", tone: "danger" };
   if (view.outcome === "returned") return { text: "반송", tone: "danger" };
@@ -73,7 +95,7 @@ export function fanBadge(view: FanGiftView): { text: string; tone: StatusTone } 
   if (!current) return { text: "수령", tone: "success" };
   // INV-W14: 추적기 보관·신고 보관·경찰 인계 — 팬에게는 「확인 중」뿐(용어집 tracker_hold·report_hold·police_handover 행 팬 열)
   if (view.inspectionChecking) return { text: CHECKING_LABEL, tone: "warn" };
-  if (current === "shipped" && view.approval.state !== "done") return { text: "승인 대기", tone: "warn" };
+  if (current === "shipped" && view.approval.state !== "done") return EARLY_SEND_WAIT_BADGE;
   if (current === "received" && view.earlySendPending) return EARLY_SEND_WAIT_BADGE;
   if (current === "received") return { text: view.fanTrackingNo ? "도착 대기" : "보내 주세요", tone: "warn" };
   const lastDone = [...view.steps].reverse().find((st) => st.state === "done");

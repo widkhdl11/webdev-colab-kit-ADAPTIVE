@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FanApproval, FanGiftView, FanStep, FanStepKey } from "../model/fan-view";
-import { fanBadge, fanGiftBucket, fanHeadline, fanStepDetail, headerGiftState } from "./fan-stage-copy";
+import { awaitsApproval, fanBadge, fanDetailBadges, fanGiftBucket, fanHeadline, fanStepDetail, headerGiftState } from "./fan-stage-copy";
 
 const KEYS: FanStepKey[] = ["registered", "received", "inspected", "shipped", "in_transit", "delivered"];
 
@@ -35,8 +35,21 @@ function view(
 describe("INV-S9: 「먼저 보내기」 전 표시", () => {
   it("INV-S9: 입고 전·승인 전이고 「먼저 보내기」를 아직 누르지 않았으면 「승인 대기 · 아직 승인하지 않았어요」 — 「보내 주세요」라고 하지 않는다", () => {
     const v = { ...view(1), earlySendPending: true };
-    expect(fanBadge(v)).toEqual({ text: "승인 대기", tone: "warn" });
-    expect(fanHeadline(v)).toBe("크리에이터가 아직 승인하지 않았어요");
+    expect(fanBadge(v)).toEqual({ text: "승인 대기", tone: "warn", kind: "approval_wait" });
+    expect(fanHeadline(v)).toBe("하루님이 아직 승인하지 않았어요");
+  });
+
+  it("INV-S9: 상세 배지 — 먼저 보내기 전·검수 뒤 승인 대기는 이름 붙은 하나, 먼저 보내기 뒤 승인 전이면 기본 배지 + 이름 붙은 승인 대기", () => {
+    expect(fanDetailBadges({ ...view(1), earlySendPending: true }).map((b) => b.text)).toEqual(["하루님 승인 대기"]);
+    expect(fanDetailBadges(view(3, "in_progress", { state: "waiting", at: null })).map((b) => b.text)).toEqual(["하루님 승인 대기"]);
+    expect(fanDetailBadges(view(1)).map((b) => b.text)).toEqual(["보내 주세요", "하루님 승인 대기"]);
+  });
+
+  it("INV-S9 (실패경로): 승인됐거나 끝난 선물은 기본 배지 하나 — 목록 배지(fanBadge)는 그대로", () => {
+    expect(fanDetailBadges(view(1, "in_progress", { state: "done", at: null })).map((b) => b.text)).toEqual(["보내 주세요"]);
+    expect(fanDetailBadges(view(1, "declined")).map((b) => b.text)).toEqual(["거절"]);
+    expect(awaitsApproval(view(1, "expired"))).toBe(false);
+    expect(fanBadge({ ...view(1), earlySendPending: true }).text).toBe("승인 대기");
   });
 
   it("INV-S9 (실패경로): 누른 뒤에는 그대로 「보내 주세요」", () => {

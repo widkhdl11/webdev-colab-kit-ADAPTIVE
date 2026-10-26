@@ -36,12 +36,17 @@ const sent = (over: Partial<SentRevgift>): SentRevgift => ({
 });
 
 describe("INV-C4 ② 찾기 대상 — 팬 선물", () => {
-  it("진행 중 주문의 입고 전 상자만 고를 수 있고, 이름에 구간이 붙는다", () => {
+  it("진행 중 주문의 입고 전 상자만 고를 수 있고, 이름은 상세 상자 줄과 같은 「상자 N · 크기」 — 주문번호가 없다", () => {
     const boxes = [gift({ boxId: "a", state: "no_waybill" }), gift({ boxId: "b", state: "awaiting", tier: null }), gift({ boxId: "c", state: "received" })];
     expect(giftFinderBoxes(boxes, true)).toEqual([
-      { target: { kind: "box", id: "a" }, label: "FC-7K3M9-1", name: "FC-7K3M9-1 · 소형 상자" },
-      { target: { kind: "box", id: "b" }, label: "FC-7K3M9-1", name: "FC-7K3M9-1" },
+      { target: { kind: "box", id: "a" }, label: "상자 1", name: "상자 1 · 소형" },
+      { target: { kind: "box", id: "b" }, label: "상자 2", name: "상자 2" },
     ]);
+  });
+
+  it("번호는 거르기 전 목록 순서 — 앞 상자가 이미 입고돼 빠져도 뒤 상자는 「상자 2」 그대로", () => {
+    const boxes = [gift({ boxId: "a", state: "received" }), gift({ boxId: "b", state: "no_waybill", tier: "medium" })];
+    expect(giftFinderBoxes(boxes, true).map((b) => b.name)).toEqual(["상자 2 · 중형"]);
   });
 
   it("(실패경로) 끝난 주문(거절·반려 등)은 입고 전 상자가 있어도 대상이 없다", () => {

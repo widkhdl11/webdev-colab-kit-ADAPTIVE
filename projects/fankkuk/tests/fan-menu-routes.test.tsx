@@ -329,12 +329,18 @@ describe("INV-J13: 상세 맨 위 「지금 할 일」 칸은 처리할 일 읽�
     const B2 = "44444444-4444-4444-8444-444444444444";
     const giftBox = (boxId: string, seq: number) => ({ boxId, label: `FC-7K3M9-${seq}`, tier: "small" as const, waybillNo: null, state: "no_waybill" as const, addressCode: null, sendAckNeeded: false });
     vi.mocked(readMyGiftBoxes).mockResolvedValueOnce([giftBox(B1, 1), giftBox(B2, 2)]);
+    // 승인된 주문 — 승인 전이면 등록 뒤 7일이 지난 이 날짜는 기한 지남(S6c)으로 바뀌어 찾기 칸 자체가 없다. 이 시험은 찾기 목록만 본다
+    state.gifts = [giftRow("FC-7K3M9", "하루", { approved_at: "2026-10-02T02:00:00+00:00" })];
     state.actions = [{ ...difference("FC-7K3M9"), kind: "missing_box", box_id: B1, box_label: "FC-7K3M9-1", box_seq: 1, measured_tier: null, amount_krw: null }];
     const r = await draw(detail("FC-7K3M9"));
     expect(r.todo?.querySelector("form")).not.toBeNull();
     const below = [...host.querySelectorAll("main summary")].find((h) => h.textContent === "팬꾹 주소 없이 보냈다면")?.closest("[data-sec]");
-    expect(below?.querySelector("form")).not.toBeNull();
-    expect(below?.textContent).not.toContain("FC-7K3M9-1");
+    expect(below).toBeInstanceOf(HTMLElement);
+    expect(below?.querySelector("form")).toBeInstanceOf(HTMLElement);
+    // 고르는 칸의 이름은 「상자 N · 크기」(design-rules 33절) — 칸에 있는 상자 1은 빠지고 상자 2만 남는다
+    const options = [...(below?.querySelectorAll("option, label") ?? [])].map((o) => o.textContent ?? "");
+    expect(options.some((o) => o.includes("상자 2"))).toBe(true);
+    expect(options.some((o) => o.includes("상자 1"))).toBe(false);
   });
 
   it("INV-J13 S13c (실패경로): 지금 할 일 페이지의 카드 안에는 결제·찾기·주소 입력 칸이 없다 — 상세로 가는 줄뿐", async () => {

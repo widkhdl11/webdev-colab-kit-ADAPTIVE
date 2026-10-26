@@ -3,13 +3,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorTag } from "@/entities/creator/ui/creator-tag";
 import { RETURN_ON_REJECT_NOTICE } from "@/entities/order/ui/fan-stage-copy";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE, RETURN_ON_INSPECTION_NOTICE } from "@/entities/parcel/model/size-tier";
+import { tierCountText } from "@/entities/parcel/model/box-rows";
 import { PRICE_CHANGED_MESSAGE, PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { formatDuration } from "@/shared/lib/format/datetime";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
@@ -22,7 +23,7 @@ import { PAYMENT_CONSENT_MISSING, PaymentConsent } from "@/entities/payment/ui/p
 import { PHOTO_ACCEPT } from "@/shared/lib/image/photo-limits";
 import { photoPickProblem } from "@/shared/lib/image/photo-pick";
 import { creatorBlockNotice, stopReason } from "../model/receiving-notice";
-import { summarizeBoxes } from "../model/box-summary";
+import { summarizeBoxes, type BoxSummary } from "../model/box-summary";
 import { movingNotice } from "../model/sender-rule";
 import { MAX_BOX_COUNT, registerFormSchema, type RegisterFormOutput, type RegisterFormValues } from "../model/register-input";
 import { PROMISE, SERVICE_PERIOD } from "@/shared/config/site-copy";
@@ -63,6 +64,18 @@ const STEP_FIELDS: Record<Exclude<StepNo, 4>, (keyof RegisterFormValues)[]> = {
 /** 등록이 끝나 결제창으로 넘길 값. 금액은 서버가 계산한 것이다. */
 export type RegisteredGift = { orderId: string; orderNo: string; amountKrw: number };
 
+/**
+ * 오른쪽 「보낼 선물」 칸·휴대폰 아래 합계 줄(위젯)이 그리는 지금 입력. 금액은 이 폼과 같은 summarizeBoxes 결과다(design-rules 33절).
+ * boxesChosen — 3단계에 들어간 적이 있는가. 그 전의 상자 수(기본 소형 1개)는 팬이 고른 값이 아니라 합계에 넣지 않는다(UX 명세 gifts-new 「0원」).
+ */
+export type RegisterDraft = {
+  step: 1 | 2 | 3 | 4;
+  creatorName: string | null;
+  itemText: string | null;
+  boxesChosen: boolean;
+  summary: BoxSummary;
+};
+
 type RegisterResponse = Partial<RegisteredGift> & { message?: string; reason?: "hard_item" };
 
 // 선물 보내기 4단계(크리에이터·선물·상자·결제 확인). 「결제하기」를 누르면 서버(/api/gifts)에 등록하고 결제창으로 넘긴다.
@@ -79,6 +92,7 @@ export function RegisterForm({
   resumeHref = null,
   onRegistered,
   onCreatorChange,
+  onDraftChange,
   today,
 }: {
   creators: readonly CreatorOption[];
@@ -94,6 +108,8 @@ export function RegisterForm({
   onRegistered: (gift: RegisteredGift, photo: File | null) => void | Promise<void>;
   /** 1단계에서 크리에이터를 바꿔 고르면 — 고른 크리에이터 ID 를 알린다(선물 보내기 맨 위 한 줄이 미리 고른 사람일 때만 보이게) */
   onCreatorChange?: (creatorId: string) => void;
+  /** 입력이 바뀔 때마다 지금 입력을 알린다. 넘기면 바깥에 「보낼 선물」 칸이 있다는 뜻이라, 넓은 화면의 4단계 결제 칸에서는 금액 줄을 숨긴다(같은 합계 두 번 없음 — 33절) */
+  onDraftChange?: (draft: RegisterDraft) => void;
   /** 한국 시간 오늘 — 서버가 정해 넘긴다(쉬는 중·기념일 7일·다음 달 1일 계산, creator-receiving) */
   today: CalendarDate;
 }) {
@@ -159,11 +175,14 @@ export function RegisterForm({
   const memoTitle = useWatch({ control, name: "memoTitle" }) ?? "";
   const memoBody = useWatch({ control, name: "memoBody" }) ?? "";
   const metal = useWatch({ control, name: "electronicsOrMetal" });
-  const summary = summarizeBoxes(prices, {
-    small: useWatch({ control, name: "smallCount" }),
-    medium: useWatch({ control, name: "mediumCount" }),
-    large: useWatch({ control, name: "largeCount" }),
-  });
+  const smallRaw = useWatch({ control, name: "smallCount" });
+  const mediumRaw = useWatch({ control, name: "mediumCount" });
+  const largeRaw = useWatch({ control, name: "largeCount" });
+  // 같은 입력이면 같은 결과 객체 — 바깥에 알리는 효과가 그릴 때마다 다시 돌지 않게
+  const summary = useMemo(
+    () => summarizeBoxes(prices, { small: smallRaw, medium: mediumRaw, large: largeRaw }),
+    [prices, smallRaw, mediumRaw, largeRaw],
+  );
 
   const go = (n: StepNo, focus: "heading" | "hard-note" = "heading") => {
     pendingFocus.current = focus;
@@ -319,12 +338,15 @@ export function RegisterForm({
   if (step === 2 && hardOverlap && itemCategory && creatorId && noticed?.creatorId !== creatorId) setNoticed({ creatorId, category: itemCategory });
   const itemText = itemCategory === null ? "" : itemCategory === "other" ? itemOther.trim() || ITEM_CATEGORY_LABEL.other : ITEM_CATEGORY_LABEL[itemCategory];
   const metalForced = forcesMetalReport(itemCategory);
+  const pickedName = picked?.name ?? null;
+  const boxesChosen = reached >= 3;
+  useEffect(() => {
+    onDraftChange?.({ step, creatorName: pickedName, itemText: itemText || null, boxesChosen, summary });
+  }, [onDraftChange, step, pickedName, itemText, boxesChosen, summary]);
   const metalText = metal === "yes" ? "네, 있어요" : metal === "no" ? "아니요, 없어요" : "아직 안 골랐어요";
   const boxesText =
-    PRICED_TIERS.filter((t) => summary.counts[t] > 0)
-      .map((t) => `${PARCEL_TIER_GUIDE[t].name} ${summary.counts[t]}개`)
-      .join(" · ") || "없음";
-  const totalText = summary.totalKrw !== null ? won(summary.totalKrw) : summary.overLimit ? `${MAX_BOX_COUNT}개 초과` : "—";
+tierCountText(summary.counts) || "없음";
+  const totalText = summary.totalKrw !== null ? won(summary.totalKrw) : summary.overLimit ? `${MAX_BOX_COUNT}개 초과` : won(0); // 0개면 0원 — 「보낼 선물」 칸과 같은 표시(UX 명세 gifts-new 요소 목록)
   const boxError = errors.smallCount?.message ?? errors.mediumCount?.message ?? errors.largeCount?.message;
 
   const pickPhoto = (file: File | undefined) => {
@@ -351,7 +373,7 @@ export function RegisterForm({
   const stepText: Record<StepNo, readonly [string, string]> = {
     1: ["누구에게 보낼까요?", "팔로우한 크리에이터 중에서 골라요."],
     2: ["어떤 선물인가요?", "크리에이터가 승인할 때 이 내용을 봐요. 검수에서 추적 장치와 구분하는 데도 써요."],
-    3: ["상자는 몇 개인가요?", `상자마다 배송비가 포함돼 있어요. 모두 합쳐 ${MAX_BOX_COUNT}개까지 한 번에 보낼 수 있어요.`],
+    3: ["상자는 몇 개인가요?", `상자마다 택배비가 포함돼 있어요. 모두 합쳐 ${MAX_BOX_COUNT}개까지 한 번에 보낼 수 있어요.`],
     4: ["확인하고 결제해요", "맞는지 한 번 더 봐 주세요. 틀린 곳은 「고치기」로 돌아갈 수 있어요."],
   };
 
@@ -897,9 +919,10 @@ export function RegisterForm({
               </>
             ) : null}
           </div>
-          {/* 요금은 배송비를 포함한 한 금액(사용자 결정 d7) — 서비스료·배송비 나눔은 기록에만 있다 */}
+          {/* 요금은 택배비를 포함한 한 금액(사용자 결정 d7) — 서비스료·배송비 나눔은 기록에만 있다 */}
           <div className={f.paybox} aria-label="결제 금액">
-            <div className={f.lines}>
+            {/* 바깥에 「보낼 선물」 칸이 있으면 넓은 화면에서는 이 금액 줄을 숨긴다 — 휴대폰은 그대로(33절) */}
+            <div className={f.lines} data-side-covered={onDraftChange ? "" : undefined}>
               {summary.lines.map((l) => (
                 <div key={l.tier} className={f.ln}>
                   <span>
@@ -933,7 +956,7 @@ export function RegisterForm({
                 검수 포함
               </span>
             </p>
-            <p className={f["pay-note"]}>배송비가 포함된 금액이에요. 선물이 사무실에 도착하기 전에 거절되면 전액 돌려드려요. {SERVICE_PERIOD}</p>
+            <p className={f["pay-note"]}>택배비가 포함된 금액이에요. 선물이 사무실에 도착하기 전에 거절되면 전액 돌려드려요. {SERVICE_PERIOD}</p>
             {step === 4 ? (
               <div className={f.consent}>
                 <PaymentConsent

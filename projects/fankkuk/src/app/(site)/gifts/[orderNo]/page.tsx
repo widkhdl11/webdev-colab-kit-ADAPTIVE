@@ -106,6 +106,8 @@ async function giftDetail({ supabase, viewer }: Session, orderNo: string, differ
       <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts", actions.header)} />
       <GiftStatusPage
         view={view}
+        // 승인 기한이 지났는데 자동 처리 전인 주문을 「기한 지남」으로(approval-signature INV-S6 S6c)
+        now={new Date().toISOString()}
         boxes={boxes}
         difference={{ differences, notice }}
         dueKrw={differenceDueKrw(todoItems)}

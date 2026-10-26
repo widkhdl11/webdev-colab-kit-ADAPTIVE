@@ -182,6 +182,14 @@ section.step.step { margin-top: 0; }
   .paybox { padding: var(--space-4); }
 }
 
+/* 입력 판이 좁아지면(사이드바 옆 + 오른쪽 칸) 상자 칸 셋을 한 줄씩 — 칸 하나에 −/+ 묶음(152)+안쪽 여백 32 = 184 가 필요해 셋이면 584. 그보다 좁으면 옆 칸에 겹친다. 화면 폭이 아니라 판 폭으로 본다 */
+.panel { container: gift-panel / inline-size; }
+@container gift-panel (max-width: 583px) {
+  .qtiles { grid-template-columns: minmax(0, 1fr); }
+  .qtile { flex-direction: row; justify-content: space-between; padding: var(--space-4); text-align: left; }
+  .qtile-text { flex: 1; }
+}
+
 /* 움직임 줄이기 — 막대 차오름·카드 면 바뀜을 끈다 */
 @media (prefers-reduced-motion: reduce) {
   .fsteps .done button::before { animation: none; }
@@ -200,3 +208,9 @@ section.step.step { margin-top: 0; }
 .notice { margin-bottom: var(--space-6); }
 .notice > .error { margin-top: 0; }
 .notice > p + p { margin-top: var(--space-1); }
+/* 바깥 「보낼 선물」 칸이 보이는 폭(위젯 본문 칸 gift-send 880 이상)이면 4단계 결제 칸에는 검수 포함·안내·동의만(design-rules 33절, 시안 v41 .gn3[data-step="4"]).
+   바깥 칸이 없는 화면(gift-send 컨테이너 없음)에서는 이 조건이 맞지 않아 금액 줄이 그대로 보인다 */
+@container gift-send (min-width: 880px) {
+  .lines[data-side-covered] { display: none; }
+  .lines[data-side-covered] + .tag-line { margin-top: 0; }
+}

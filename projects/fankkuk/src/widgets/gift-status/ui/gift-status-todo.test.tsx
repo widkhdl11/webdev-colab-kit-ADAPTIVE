@@ -115,15 +115,15 @@ describe("INV-J13: 팬꾹 주소 없이 보냈어요 — 칸에 있는 상자는
     const sec = section("팬꾹 주소 없이 보냈다면");
     expect(sec?.querySelector("form")).not.toBeNull();
     // 고를 상자가 하나면 고르는 칸 없이 그 상자로 정해질 수 있다 — 어느 쪽이든 칸의 상자 이름은 구간에 없다
-    expect(sec?.textContent).not.toContain(`${ORDER}-1`);
-    expect(options().some((t) => t.includes(`${ORDER}-1`))).toBe(false);
+    expect(sec?.textContent).not.toContain("상자 1 ·");
+    expect(options().some((t) => t.startsWith("상자 1"))).toBe(false);
   });
 
   it("INV-J13: 칸에 아무 상자도 없으면 두 상자 모두 고를 수 있다", () => {
     render({ boxes: [box(B1, 1), box(B2, 2)], todoBoxIds: [] });
     const all = options().join(" ");
-    expect(all).toContain(`${ORDER}-1`);
-    expect(all).toContain(`${ORDER}-2`);
+    expect(all).toContain("상자 1 · 소형");
+    expect(all).toContain("상자 2 · 소형");
   });
 
   it("INV-J13 (실패경로): 고를 상자가 모두 칸에 있으면 아래 구간을 그리지 않는다 — 같은 상자를 두 곳에서 찾지 않는다", () => {

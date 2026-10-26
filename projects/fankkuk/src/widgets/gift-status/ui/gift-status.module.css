@@ -1,7 +1,8 @@
 /* 선물 하나 상세(보낸 선물) — 시안 docs/design/mockups/site/v35-part1/gift-detail.html · v35.css .dhero·.dsteps·.dgrid·.dcard (design-rules 22절).
    맨 위 「지금 할 일」 칸(전체 폭) → 하늘 상태 판(지금 상태·도착 예정일 48·6단계) → 상자 칸 8 + 오른쪽 한 열(결제 위·주문 정보 아래)
    (UX 정돈 시범 2026-10-22, 시안 ux-pilot-2026-10-22 ux.css .dgrid.split·.dside — 999 이하 상자 칸 아래 둘 나란히, 767 이하 한 줄씩).
-   주문 정보는 덜 중요한 회색 카드. 메모·답장·차액 기록·안내는 그 아래 테두리 없는 구간(위 1px 선) */
+   v41(2026-10-26 d136, design-rules 33절, 시안 v41-user-fixes/v41.css .tagrow·.apv·.ginfo): 결제·주문 정보 두 카드를 흰 「선물 정보」 카드 하나로 합쳤다 —
+   승인 전이면 그 안 노란 칸(대기 면 --alert-50/--alert-200). 메모·답장·차액 기록·안내는 그 아래 테두리 없는 구간(위 1px 선) */
 
 .page { padding-bottom: var(--section-gap); }
 /* 넓은 틀 — 시안 .wrap.wide 1120 에서 좌우 안쪽 40 을 뺀 1040 */
@@ -23,7 +24,10 @@
 .what { font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
 .now { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: var(--space-4) var(--space-8); margin-top: var(--space-6); }
 .when { min-width: 0; }
-.when :global(.tag) { background: var(--white); white-space: nowrap; }
+/* 배지 줄 — 지금 상태 + 승인 전이면 「OO님 승인 대기」(시안 .tagrow). 크리에이터 이름이 길면 배지가 줄을 바꾼다 */
+.tagrow { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.when :global(.tag) { max-width: 100%; background: var(--white); overflow-wrap: anywhere; }
+.when :global(.tag.tag--warn) { background: var(--warn-soft); color: var(--warn-ink); }
 .big.big { margin-top: var(--space-2); overflow-wrap: anywhere; }
 .msg { min-width: 0; font-weight: var(--fw-btn); overflow-wrap: anywhere; }
 
@@ -43,26 +47,40 @@
 /* 멈춘 단계(돌려보냄) — 빨강 대신 본문색 막대 */
 .steps > li.stopped::before { background: var(--gray-900); }
 .steps small { display: block; font-size: var(--fs-small); font-weight: 400; color: var(--sub); }
+/* 출고 아래 「승인 필요」(시안 .dsteps .apv — 뱃지 12) — 승인 전 진행 중에만 */
+.apv { display: flex; margin-top: var(--space-1); }
+.apv :global(.tag.tag--warn) { display: inline-flex; align-items: center; min-height: 22px; padding: 0 var(--space-2); background: var(--warn-soft); color: var(--warn-ink); font-size: var(--fs-badge); font-weight: var(--fw-bold); white-space: nowrap; }
 
-/* 카드 — 사이 16, 위 24, 높이는 내용대로 (시안 .dgrid · .dcard). 상자 칸이 있으면 2:1(8+4), 오른쪽 열은 결제·주문 정보를 위아래로 쌓는다(시안 ux-pilot .dgrid.split·.dside).
-   상자 칸이 없는 주문은 오른쪽 열만 — 두 카드를 나란히 */
+/* 카드 — 사이 16, 위 24, 높이는 내용대로 (시안 .dgrid · .dcard). 상자 칸이 있으면 2:1(8+4), 오른쪽 열은 「선물 정보」 카드 하나(시안 v41 .dside .ginfo).
+   상자 칸이 없는 주문은 오른쪽 열만 — 카드가 반 폭(767 이하 한 줄) */
 .dgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); align-items: start; margin-top: var(--space-6); }
 .dgrid.split { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
 .dside { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); align-items: start; min-width: 0; }
-/* 세로로 쌓을 때는 두 카드가 열 폭을 채운다 — 위 격자용 align-items: start 가 남으면 주문 정보 카드가 내용 폭으로 줄어든다 */
+/* 세로로 쌓을 때는 카드가 열 폭을 채운다 — 위 격자용 align-items: start 가 남으면 카드가 내용 폭으로 줄어든다 */
 .split .dside { display: flex; flex-direction: column; align-items: stretch; }
 /* 카드끼리 위 여백 없음 — 전역 「구간 + 구간」 여백보다 앞서게 */
 .dgrid .dcard.dcard { margin-top: 0; }
 .dcard { min-width: 0; padding: var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--card-shadow); }
-.dcard.muted { border-color: var(--surface-muted); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
 .cardTitle.cardTitle { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; }
 .cardTitle:focus { outline: none; }
-.muted .cardTitle { color: var(--sub); }
-.amount { margin-top: var(--space-2); font-family: var(--font-round); font-size: var(--fs-title); font-weight: var(--fw-title); letter-spacing: var(--ls-title); line-height: 1.2; font-variant-numeric: tabular-nums; }
 .duetag.duetag { display: inline-flex; margin-top: var(--space-2); white-space: normal; }
-.ok { margin-top: var(--space-4); }
+.ok { margin-top: var(--space-3); }
 .ok :global(.tag) { gap: 6px; }
-.payNote { margin-top: var(--space-3); font-size: var(--fs-small); color: var(--sub); }
+.payNote { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+
+/* 선물 정보 카드 안 — 값은 굵게(번호·날짜는 보통), 묶음 사이 1px 선, 승인 전 노란 칸 (시안 v41 .ginfo) */
+.ginfo .kv dd { font-weight: var(--fw-btn); }
+.ginfo .kv dd.plain { font-weight: 400; }
+.grp { margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
+.grpTitle.grpTitle { font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.5; color: var(--sub); }
+.grp .kv { margin-top: var(--space-2); }
+.grp.apvGrp { padding: var(--space-4); border: 1px solid var(--alert-200); border-radius: var(--r-btn); background: var(--alert-50); }
+.apvGrp .grpTitle { color: var(--ink); overflow-wrap: anywhere; }
+.apvGrp :global(.tag.tag--warn) { background: var(--warn-soft); color: var(--warn-ink); box-shadow: inset 0 0 0 1px var(--alert-200); }
+.paytot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--space-2) var(--space-4); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--gray-200); }
+.paytot span { font-size: var(--fs-small); font-weight: var(--fw-bold); }
+.paytot b { font-family: var(--font-round); font-size: var(--fs-page); font-weight: var(--fw-title); line-height: 1.2; font-variant-numeric: tabular-nums; }
+.paytot small { margin-left: 2px; font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); }
 
 /* 접는 칸 — 송장번호 입력·받는 주소 없이 보냈다면 (시안 v33.css .fold + v35 .dcard .fold) */
 .fold { margin-top: var(--space-4); border-top: 1px solid var(--gray-200); }
@@ -90,7 +108,9 @@
 .box + .box { border-top: 1px solid var(--gray-200); }
 .box > * + * { margin-top: var(--space-3); }
 .boxline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); }
-.boxName.boxName { min-width: 0; font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); letter-spacing: 0; line-height: 1.6; overflow-wrap: anywhere; }
+/* 상자 이름 「상자 N · 크기」 — 주문번호를 상자 이름으로 쓰지 않는다(시안 v41 .bx .boxline h3) */
+.boxName.boxName { min-width: 0; font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; overflow-wrap: anywhere; }
+.boxName span { font-weight: 400; color: var(--sub); }
 .boxline :global(.tag) { flex: none; gap: 6px; white-space: nowrap; }
 .inv-fixed { margin-top: var(--space-3); }
 .no { font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
@@ -99,12 +119,12 @@
 .kv { margin: var(--space-3) 0 0; font-size: var(--fs-small); }
 .kv > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); }
 .kv > div + div { margin-top: var(--space-2); }
-.kv dt { min-width: 0; font-weight: 400; color: var(--sub); overflow-wrap: anywhere; }
+.kv dt { flex: none; white-space: nowrap; font-weight: 400; color: var(--sub); overflow-wrap: anywhere; }
 .kv dd { min-width: 0; margin: 0; text-align: right; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 .kv dd :global(.tag) { white-space: nowrap; }
 .tag-line { margin-top: var(--space-3); }
 .tag-line :global(.tag) { gap: 6px; }
-.cancel { margin-top: var(--space-6); }
+.cancel { margin-top: var(--space-4); }
 
 /* 맨 아래 「1:1 문의하기」 글자 링크(UX 시범 B-7, 시안 .bottomlink·.textlink) — 누름 칸 44, 회색 14 밑줄 */
 .bottomlink { margin-top: var(--space-8); }
@@ -123,7 +143,6 @@
 
 @media (max-width: 999px) {
   .dgrid.split { grid-template-columns: minmax(0, 1fr); }
-  .split .dside { display: grid; }
 }
 @media (max-width: 767px) {
   .dhero { padding: var(--space-6); }
