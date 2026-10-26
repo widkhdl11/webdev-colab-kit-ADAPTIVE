@@ -70,6 +70,8 @@ const TERMS: ReadonlyArray<{
   label: string;
   required: boolean;
   href?: string;
+  /** 체크 칸 아래 한 줄 — 무엇을 어디로 받는지(전문 화면이 없는 선택 동의) */
+  detail?: string;
 }> = [
   { key: "service", label: "이용약관", required: true, href: "/terms" },
   {
@@ -78,7 +80,7 @@ const TERMS: ReadonlyArray<{
     required: true,
     href: "/privacy",
   },
-  { key: "news", label: "이벤트\u2060·\u2060소식 알림 받기", required: false },
+  { key: "news", label: "이벤트\u2060·\u2060소식 알림 받기", required: false, detail: "팬꾹 이벤트와 새 소식을 이메일로 보내 드려요." },
 ];
 
 /** 완료 표시 — design-rules §3: 체크는 단색 SVG, 글자색을 따라간다. 화면 낭독기에는 읽히지 않는다. */
@@ -754,18 +756,17 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                 </div>
               ) : null}
               <div className={s.grp}>
-                <h3 className={s["grp-title"]}>마무리</h3>
+                <h3 className={s["grp-title"]}>선택 입력 사항</h3>
                 <div className="form">
                   <div>
                     <label className="label" htmlFor={f("heard")}>
-                      어디서 팬꾹을 알게 되셨나요? <span className={`t-meta ${s.opt}`}>(선택)</span>
+                      어디서 팬꾹을 알게 되셨나요?
                     </label>
                     <select
                       className="field"
                       id={f("heard")}
                       value={heardFrom ?? ""}
                       onChange={(e) => setHeardFrom(isHeardFrom(e.currentTarget.value) ? e.currentTarget.value : null)}
-                      aria-describedby={f("heard-h")}
                     >
                       <option value="">고르지 않을래요</option>
                       {HEARD_FROM.map((k) => (
@@ -774,14 +775,15 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                         </option>
                       ))}
                     </select>
-                    <p className="hint" id={f("heard-h")}>
-                      <Sentences text="답하지 않아도 가입돼요. 어떤 길로 많이 찾아오시는지만 모아서 봐요." />
-                    </p>
                   </div>
+                </div>
+              </div>
+              <div className={s.grp}>
+                <h3 className={s["grp-title"]} id={f("terms")}>
+                  약관 동의
+                </h3>
+                <div className="form">
                   <div role="group" aria-labelledby={f("terms")}>
-                    <p className="label" id={f("terms")}>
-                      약관 동의
-                    </p>
                     <div className={s.terms}>
                       <div>
                         <label className="check">
@@ -805,6 +807,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                             />
                             <span>
                               {t.required ? <span className={s.req}>[필수]</span> : "[선택]"} {t.label}
+                              {t.detail ? <span className={`t-meta ${s["term-detail"]}`}>{t.detail}</span> : null}
                             </span>
                           </label>
                           {t.href ? (

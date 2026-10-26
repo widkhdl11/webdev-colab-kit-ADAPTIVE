@@ -147,7 +147,8 @@ async function unpaidDetail({ supabase, viewer }: Session, orderNo: string, gift
   return (
     <>
       <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts", actions.header)} />
-      <MyShell width="form">
+      {/* 지금 할 일(목록형 880)의 「바로 하기」로 오는 화면 — 같은 폭이라야 같은 칸이 같은 크기로 보인다(2026-10-26 사용자) */}
+      <MyShell width="list">
         <UnpaidGiftPage
           items={todoItems}
           creatorName={unpaid.creatorName}
