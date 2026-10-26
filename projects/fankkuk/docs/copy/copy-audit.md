@@ -2750,7 +2750,6 @@
 | src/shared/api/toss-payments/cancel-outcome.ts:45 | `"결제사 응답을 알아볼 수 없음"` | 서버 응답·기록 문구 | 공통 |
 | src/shared/api/toss-payments/client.ts:60 | `"결제 비밀 키가 공개 환경 변수(NEXT_PUBLIC_)로 설정돼 있다 — 지우고 다시 시작한다"` | 에러(throw — 화면 노출 여부 미확인) | 공통 |
 | src/shared/api/toss-payments/client.ts:63 | `"TOSS_SECRET_KEY 가 없다"` | 에러(throw — 화면 노출 여부 미확인) | 공통 |
-| src/shared/api/toss-payments/client.ts:75 | `"운영 환경에서 결제 테스트 키를 쓸 수 없다"` | 에러(throw — 화면 노출 여부 미확인) | 공통 |
 | src/shared/config/site-copy.ts:7 | `"크리에이터가 승인한 선물만 배송합니다."` | 코드 상수(화면 문구로 쓰임 추정) | 공통 |
 | src/shared/config/site-copy.ts:9 | `"승인 전까지 주소는 노출되지 않습니다."` | 코드 상수(화면 문구로 쓰임 추정) | 공통 |
 | src/shared/config/site-copy.ts:11 | `"크리에이터 주소는 팬에게 공개되지 않습니다."` | 코드 상수(화면 문구로 쓰임 추정) | 공통 |
