@@ -106,7 +106,7 @@ describe("팔로우한 크리에이터 — 줄 목록", () => {
     await act(async () => root.render(<MyFollowingPanel creators={[base, second]} />));
     expect(count()).toBe("2명");
     await act(async () => rows()[0]!.querySelector<HTMLButtonElement>('[data-card-btn="sub"]')!.click());
-    const confirm = [...host.querySelectorAll("dialog button")].find((b) => b.textContent === "취소하기") as HTMLButtonElement;
+    const confirm = [...host.querySelectorAll("dialog button")].find((b) => b.textContent === "팔로우 취소") as HTMLButtonElement;
     await act(async () => confirm.click());
     expect(saveFollow).toHaveBeenLastCalledWith(base.id, false);
     expect(rows()).toHaveLength(1);
@@ -119,7 +119,7 @@ describe("팔로우한 크리에이터 — 줄 목록", () => {
     saveFollow.mockResolvedValue("failed");
     await act(async () => root.render(<MyFollowingPanel creators={[base]} />));
     await act(async () => rows()[0]!.querySelector<HTMLButtonElement>('[data-card-btn="sub"]')!.click());
-    const confirm = [...host.querySelectorAll("dialog button")].find((b) => b.textContent === "취소하기") as HTMLButtonElement;
+    const confirm = [...host.querySelectorAll("dialog button")].find((b) => b.textContent === "팔로우 취소") as HTMLButtonElement;
     await act(async () => confirm.click());
     expect(rows()).toHaveLength(1);
     expect(count()).toBe("1명");
@@ -148,9 +148,9 @@ describe("팔로우한 크리에이터 — 빈 상태(0명)", () => {
     act(() => root.render(<MyFollowingPanel creators={[]} />));
     expect(host.querySelector("ul")).toBeNull();
     expect(host.querySelector('img[src="/img/illust-empty-follow.png"]')).not.toBeNull();
-    expect(host.querySelector("h2")?.textContent).toBe("아직 팔로우한 크리에이터가 없어요");
-    expect(host.textContent).toContain("좋아하는 크리에이터를 팔로우하면 여기에 모아 두고, 바로 선물을 보낼 수 있어요.");
-    const go = [...host.querySelectorAll("a")].find((a) => a.textContent === "나의 크리에이터 찾으러 가기");
+    expect(host.querySelector("h2")?.textContent).toBe("팔로우한 크리에이터가 없습니다");
+    expect(host.textContent).toContain("선물을 보낼 크리에이터를 찾아 팔로우해 주세요.");
+    const go = [...host.querySelectorAll("a")].find((a) => a.textContent === "크리에이터 찾기");
     expect(go?.getAttribute("href")).toBe("/creators");
     expect(count()).toBe("0명");
   });

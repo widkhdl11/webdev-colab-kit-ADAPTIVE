@@ -20,7 +20,7 @@ export function RevgiftTabs({ tabs }: { tabs: readonly RevgiftTab[] }) {
 
   return (
     <>
-      <div className="tabs tabs--line" role="tablist" aria-label="받은 역조공 분류">
+      <div className="tabs tabs--line" role="tablist" aria-label="받은 선물 분류">
         {tabs.map((t, i) => (
           <button
             key={t.id}

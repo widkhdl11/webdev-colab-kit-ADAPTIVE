@@ -50,13 +50,13 @@ describe("FollowThenSend — 팔로우하고 선물 보내기 (INV-L9)", () => {
     expect(router.push).toHaveBeenCalledWith(`/gifts/new?creator=${CREATOR_ID}`);
   });
 
-  it("INV-L9 (실패경로): 저장이 500 으로 실패하면 이동하지 않고 「팔로우를 저장하지 못했어요」를 알린다", async () => {
+  it("INV-L9 (실패경로): 저장이 500 으로 실패하면 이동하지 않고 「팔로우 설정을 저장하지 못했습니다」를 알린다", async () => {
     fetchMock.mockImplementation(async () => new Response("{}", { status: 500 }));
     renderAndPress();
     await flush();
     expect(router.push).not.toHaveBeenCalled();
     const status = host.querySelector<HTMLElement>('[role="status"]');
-    expect(status?.textContent).toContain("팔로우를 저장하지 못했어요");
+    expect(status?.textContent).toContain("팔로우 설정을 저장하지 못했습니다");
   });
 
   it("INV-L9 (실패경로): 세션이 끝나 401 이면 보내기 화면이 아니라 로그인 화면으로 간다", async () => {

@@ -53,14 +53,14 @@ export function WaybillEditor({ target, boxName, initial, layout, hint }: Props)
           <button
             type="button"
             className="btn btn--soft btn--sm"
-            aria-label={`${boxName} 송장번호 고치기`}
+            aria-label={`${boxName} 송장번호 ${layout === "box" ? "수정" : "고치기"}`}
             onClick={() => {
               moved.current = true;
               setError(null);
               setEditing(true);
             }}
           >
-            고치기
+            {layout === "box" ? "수정" : "고치기"}
           </button>
         </div>
       </div>
@@ -101,7 +101,7 @@ export function WaybillEditor({ target, boxName, initial, layout, hint }: Props)
         }}
       >
         <label htmlFor={`${id}-no`} className={layout === "share" ? "sr-only" : undefined}>
-          {layout === "share" ? `${boxName} 송장번호` : "이 상자를 보낸 택배 송장번호"}
+          {layout === "share" ? `${boxName} 송장번호` : "팬꾹으로 보낸 송장번호 (선택)"}
         </label>
         <div className={s.inv}>
           <input
@@ -113,12 +113,12 @@ export function WaybillEditor({ target, boxName, initial, layout, hint }: Props)
             inputMode="numeric"
             autoComplete="off"
             defaultValue={saved ? formatWaybill(saved) : ""}
-            placeholder={layout === "share" ? "이 상자의 송장번호 (숫자만)" : "숫자만 입력해요"}
+            placeholder={layout === "share" ? "이 상자의 송장번호 (숫자만)" : "숫자만 입력"}
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? `${id}-hint ${id}-error` : `${id}-hint`}
           />
           <button type="submit" className="btn btn--sm" aria-disabled={busy}>
-            {busy ? "저장하는 중…" : saved ? "저장" : "등록"}
+            {busy ? "저장 중…" : saved ? "저장" : "등록"}
           </button>
         </div>
         {error ? (
@@ -130,7 +130,7 @@ export function WaybillEditor({ target, boxName, initial, layout, hint }: Props)
           </p>
         ) : null}
         <p className="hint" id={`${id}-hint`}>
-          {saved ? "사무실에 도착하기 전까지만 고칠 수 있어요." : hint}
+          {saved ? (layout === "box" ? "팬꾹 도착 전까지 수정 가능" : "사무실에 도착하기 전까지만 고칠 수 있어요.") : hint}
         </p>
       </form>
     </div>

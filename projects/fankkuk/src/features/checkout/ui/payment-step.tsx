@@ -53,7 +53,7 @@ export function PaymentStep({ clientKey, pending, route }: { clientKey: string; 
           setReady(true);
         }
       } catch {
-        if (!cancelled) setError("결제 화면을 불러오지 못했어요. 새로고침해 주세요.");
+        if (!cancelled) setError("결제 화면을 불러오지 못했습니다. 새로고침해 주세요.");
       }
     });
     return () => {
@@ -84,7 +84,7 @@ export function PaymentStep({ clientKey, pending, route }: { clientKey: string; 
         failUrl: `${window.location.origin}${to.failPath}`,
       });
     } catch {
-      setError("결제를 마치지 못했어요. 다시 시도해 주세요.");
+      setError("결제를 완료하지 못했습니다. 다시 시도해 주세요.");
     }
   }
 
@@ -92,7 +92,7 @@ export function PaymentStep({ clientKey, pending, route }: { clientKey: string; 
     <section className={s.section} aria-labelledby={`pay-h-${id}`}>
       <div className={s.card}>
         <h2 id={`pay-h-${id}`} className={s.title} ref={title} tabIndex={-1}>
-          결제 수단을 골라 주세요
+          결제 수단 선택
         </h2>
         <p className={s.sum}>
           <span>결제 금액</span>

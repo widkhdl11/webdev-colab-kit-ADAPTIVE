@@ -14,7 +14,7 @@ import { sendReturnConfirm, type ReturnRefusal } from "../api/send-return-confir
 // 「확인」은 기존 확인 처리(/api/me/return-address)를 그대로 부르고, 끝나면 창을 닫고 다시 읽는다 — 카드·줄은 상자 상태로 사라진다(J4).
 // 다시 읽는 방법은 부르는 쪽이 정할 수 있다(onConfirmed) — 선물 상세 칸은 확인했다는 한 줄을 보이려고 쿼리를 붙여 다시 읽는다(2026-10-22 d113 진단 C-3).
 // 주소 입력 칸은 위젯이 넘긴다 — 팬은 받을 주소 등록, 크리에이터는 크리에이터 주소 등록(기능끼리는 서로 import 하지 않는다 — FSD).
-// 글자는 용어집 return_address 행: 창 제목 「돌려받을 주소 확인」, 버튼 「확인」「바꾸기」.
+// 글자는 문구 3 다듬은본(2026-10-26): 창 제목 「반송 주소 확인」, 버튼 「주소 확인」「주소 변경」.
 
 export type ReturnAddressStep = {
   /** 로그인한 사람의 등록 주소 상태(등록 여부·이름표·바꾼 시각만). 읽지 못했으면 null */
@@ -30,12 +30,12 @@ export type ReturnAddressStep = {
 export type ReturnTarget = { orderNo: string; boxSeq: number | null };
 
 const REFUSED_TEXT: Record<Exclude<ReturnRefusal, "no_address">, string> = {
-  not_found: "찾을 수 없는 상자예요.",
-  expired: "기한이 지나 확인할 수 없어요.",
-  closed: "지금은 확인할 수 없는 상자예요.",
-  retry: "잠시 뒤 다시 해 주세요.",
+  not_found: "상자를 찾을 수 없습니다.",
+  expired: "확인 기한이 지났습니다.",
+  closed: "현재 확인할 수 없는 상자입니다.",
+  retry: "잠시 후 다시 시도해 주세요.",
 };
-const FAILED_TEXT = "확인하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const FAILED_TEXT = "확인하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 export function ReturnAddressWindow({
   target,
@@ -110,7 +110,7 @@ export function ReturnAddressWindow({
   }
 
   function body() {
-    if (!status) return <p className="err">주소 정보를 읽지 못했어요. 새로 고침한 뒤 다시 해 주세요.</p>;
+    if (!status) return <p className="err">주소 정보를 불러오지 못했습니다. 새로고침한 뒤 다시 시도해 주세요.</p>;
     if (confirming) {
       return (
         <>
@@ -134,10 +134,10 @@ export function ReturnAddressWindow({
                 setEditing(true);
               }}
             >
-              바꾸기
+              주소 변경
             </button>
             <button ref={confirmRef} className="btn" type="button" disabled={busy} aria-busy={busy || undefined} onClick={() => void confirm()}>
-              확인
+              주소 확인
             </button>
           </div>
         </>
@@ -155,7 +155,7 @@ export function ReturnAddressWindow({
       autoFocusFirst: true,
       onSaved: (label) => {
         // 서버에 저장된 뒤에만 바뀐다 — 이어서 같은 창에서 「확인」을 누른다
-        setSavedMsg(registered ? "주소를 바꿨어요." : "주소를 등록했어요.");
+        setSavedMsg(registered ? "주소가 변경되었습니다." : "주소가 등록되었습니다.");
         setError(null);
         setStatus({ registered: true, label, updatedAt: new Date().toISOString() });
         setEditing(false);
@@ -170,9 +170,9 @@ export function ReturnAddressWindow({
   }
 
   return (
-    <BottomSheet open={open} title="돌려받을 주소 확인" meta={meta} busy={busy} onClose={onClose}>
+    <BottomSheet open={open} title="반송 주소 확인" meta={meta} busy={busy} onClose={onClose}>
       <div className={d.stack}>
-        {confirming ? null : <h3 className="t-card">{registered ? "새 주소를 입력해 주세요" : "주소를 입력해 주세요"}</h3>}
+        {confirming ? null : <h3 className="t-card">{registered ? "주소 변경" : "주소 등록"}</h3>}
         {body()}
         <div role="alert">
           {error ? (

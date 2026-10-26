@@ -11,7 +11,6 @@ import {
   fanProgress,
   fanStepDetail,
   hasShipped,
-  RETURN_ON_REJECT_NOTICE,
   showsSteps,
 } from "@/entities/order/ui/fan-stage-copy";
 import { boxSizeName, fanBoxStateTag, giftBoxName, tierCountText, hasArrived, isMissing, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
@@ -20,7 +19,6 @@ import { EarlySendGate } from "@/features/box-waybill/ui/early-send-gate";
 import { canCancelGift } from "@/features/gift-cancel/model/cancellable";
 import { CancelGiftButton } from "@/features/gift-cancel/ui/cancel-gift-button";
 import { ReturnConfirmedNotice } from "@/features/return-address/ui/return-confirmed-notice";
-import { RETURN_ON_INSPECTION_NOTICE } from "@/entities/parcel/model/size-tier";
 import { approvalDeadlineAt } from "@/entities/order/model/approval-time-left";
 import { BoxAddressCode } from "@/features/box-waybill/ui/box-address-code";
 import { formatWaybill } from "@/entities/parcel/model/waybill-no";
@@ -169,7 +167,7 @@ export function GiftStatusPage({
           {paid ? (
             // 처음 그릴 때부터 있는 글이라 role="status" 를 두지 않는다 — status 는 바뀔 때만 읽힌다(ui-reviewer 2026-10-22 지적 6)
             <p className={s.paidline} data-paid-line="">
-              {earlySendAck ? "결제가 끝났어요. 먼저 보내려면 아래 「먼저 보내기」를 눌러 주세요." : anyAddress ? "결제가 끝났어요. 아래 팬꾹 주소로 상자를 보내 주세요." : "결제가 끝났어요."}
+              {earlySendAck ? "결제가 완료되었습니다. 승인 전에 팬꾹으로 발송하려면 ‘먼저 보내기’를 눌러 주세요." : anyAddress ? "결제가 완료되었습니다. 아래 팬꾹 주소로 상자를 보내 주세요." : "결제가 완료되었습니다."}
             </p>
           ) : null}
           {/* 맨 위 하늘 판 — 지금 상태 · 도착 예정일 · 6단계 진행(시안 v35-part1/gift-detail.html .dhero, design-rules 22절) */}
@@ -231,20 +229,28 @@ export function GiftStatusPage({
 
         {view.outcome === "returned" ? (
           <div className={s.sec} data-sec="">
-            <h2 className={s.secTitle}>돌려보내 드렸어요</h2>
-            <p className={s.desc}>{RETURN_ON_INSPECTION_NOTICE}</p>
+            <h2 className={s.secTitle}>반송 완료</h2>
+            {/* 문구 3 다듬은본 — 크기·무게는 그 문서 기준(INV-M11 과의 불일치는 확인 필요 항목) */}
+            <p className={s.desc}>
+              추적 장치 등 금지 물품이 발견되거나 상자가 접수 한도를 초과하면 반송됩니다.
+              <br />
+              접수 한도: 세 변의 합 160cm 이하 · 무게 20kg 이하
+              <br />
+              이 경우 검수비와 반송 배송비가 차감되어 환불 금액이 없습니다.
+            </p>
           </div>
         ) : null}
         {view.outcome === "declined" || view.outcome === "expired" ? (
           <div className={s.sec} data-sec="">
-            <h2 className={s.secTitle}>이 선물은 보내지 마세요</h2>
+            <h2 className={s.secTitle}>이 선물은 발송하지 마세요</h2>
             {/* 거절·자동 반려 모두 같은 안내 — 거절인지 기간 지남인지는 위 한 줄이 말한다(decline-block INV-D5). 상자마다 돌려준다(payment INV-M8·M18, 2026-10-10 늦게 오는 상자) */}
-            <p className={s.desc}>팬꾹 주소가 보이기 전에 끝났다면 결제 금액을 모두 돌려드려요.</p>
-            {anyArrived ? <p className={s.more}>사무실에 도착한 상자는 보낸 주소로 돌려보내 드리고, 그 상자의 반송 택배비를 뺀 금액을 돌려드려요.</p> : null}
+            <p className={s.desc}>팬꾹 주소가 표시되기 전에 취소·거절·기한 만료로 종료된 경우 전액 환불됩니다.</p>
+            {anyArrived ? <p className={s.more}>도착한 상자는 확인한 반송 주소로 배송됩니다. 해당 상자 금액에서 반송 배송비를 차감해 환불합니다.</p> : null}
             {anyNotYet ? (
               <p className={s.more}>
-                아직 도착하지 않은 상자는 택배비를 뺀 금액을 먼저 돌려드려요. 이미 보내셨다면 도착하는 대로 돌려보내 드리고, 7일 안에 도착하지 않으면
-                택배비도 돌려드려요.
+                미도착 상자는 반송 배송비를 제외한 금액을 먼저 환불합니다. 이미 발송한 상자는 도착 후 반송됩니다.
+                <br />
+                결제 완료 후 30일 이내에 도착하지 않으면 남은 배송비도 환불합니다.
               </p>
             ) : null}
           </div>
@@ -261,7 +267,11 @@ export function GiftStatusPage({
               </h2>
               {earlySendAck ? <EarlySendGate orderNo={view.orderNo} creatorName={view.creatorName} focusAfterId="box-status-title" /> : null}
               {anyAddress ? (
-                <p className={s.note}>상자마다 팬꾹 주소가 달라요.</p>
+                <p className={s.note}>
+                  상자별 팬꾹 주소가 다릅니다. 해당 상자의 주소를 끝 6자리까지 빠짐없이 입력해 주세요.
+                  <br />
+                  승인 전에도 팬꾹으로 보낼 수 있지만, 크리에이터에게 배송하려면 결제 후 7일 이내 승인이 필요합니다.
+                </p>
               ) : null}
               <div className={s.boxes}>
                 {boxes.map((b, i) => {
@@ -285,7 +295,7 @@ export function GiftStatusPage({
                             입고됨
                           </span>
                         ) : isMissing(b.state) ? (
-                          <span className={statusTagClass("warn")}>도착하지 않음</span>
+                          <span className={statusTagClass("warn")}>미도착</span>
                         ) : b.notSentAt ? (
                           // 「아직 보내지 않음」을 누른 상자 — 지금 할 일 줄은 없어지고 누른 날만 여기 남는다(UX 시범 C-1, office-workflow INV-W10)
                           <span className="tag">아직 보내지 않음 · {formatMonthDayKo(b.notSentAt)}</span>
@@ -294,7 +304,11 @@ export function GiftStatusPage({
                         )}
                       </div>
                       {isMissing(b.state) ? (
-                        <p className="hint">결제하고 30일이 지나도 도착하지 않아 이 상자는 닫혔어요. 이 상자 금액을 돌려드려요. 이제 이 상자를 보내도 받지 않고 돌려보내요.</p>
+                        <p className="hint">
+                          결제 완료 후 30일이 지나도록 도착하지 않아 이 상자의 접수가 종료되었습니다. 해당 상자 금액은 환불됩니다.
+                          <br />
+                          더 이상 발송하지 마세요. 이후 도착하는 상자는 반송됩니다.
+                        </p>
                       ) : null}
                       {officeAddress && addressCode ? (
                         <BoxAddressCode officeAddress={officeAddress} code={addressCode} boxName={boxName} />
@@ -303,14 +317,14 @@ export function GiftStatusPage({
                         // 송장번호 입력은 접어 둔다(시안 v35 .fold) — 배송 조회를 보고 싶을 때만 넣는 선택 칸(INV-C7).
                         // 그 상자에 받는 주소가 보인 뒤에만 — 먼저 보내기 전에는 보낼 주소가 없다(UX 시범 B-2)
                         <details className={s.fold}>
-                          <summary>이 상자를 보낸 택배 송장번호</summary>
+                          <summary>팬꾹으로 보낸 송장번호 (선택)</summary>
                           <div className={s.in}>
                             <WaybillEditor
                               target={{ kind: "box", id: b.boxId }}
                               boxName={boxName}
                               initial={b.waybillNo}
                               layout="box"
-                              hint="선택이에요. 넣으면 배송 조회로 팬꾹까지 오는 길을 보여 드려요."
+                              hint="송장번호를 등록하면 팬꾹까지의 배송 현황을 조회할 수 있습니다."
                             />
                           </div>
                         </details>
@@ -322,7 +336,7 @@ export function GiftStatusPage({
                               <dd className={s.no}>{formatWaybill(b.waybillNo)}</dd>
                             </div>
                           </dl>
-                          {hasArrived(b.state) ? <p className="hint">입고된 상자는 송장번호를 고칠 수 없어요.</p> : null}
+                          {hasArrived(b.state) ? <p className="hint">입고 후에는 송장번호를 수정할 수 없습니다.</p> : null}
                         </>
                       ) : null}
                     </div>
@@ -334,11 +348,11 @@ export function GiftStatusPage({
               {inProgress ? (
                 <KeepShown key={view.orderNo} show={showFinder}>
                   <details className={s.fold} data-sec="" data-finder="">
-                    <summary>팬꾹 주소 없이 보냈다면</summary>
+                    <summary>주소 끝 6자리 없이 보낸 상자 찾기</summary>
                     <div className={s.in}>
-                      <p className="hint">팬꾹 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호와 택배사가 맞으면 찾아요.</p>
+                      <p className="hint">팬꾹 주소 끝 6자리를 누락했다면 송장번호와 택배사로 도착한 상자를 찾아 주세요.</p>
                       <FindMyBox boxes={belowFinder} />
-                      <p className="hint">틀린 입력은 하루에 다섯 번까지예요.</p>
+                      <p className="hint">입력 오류 허용 횟수: 하루 최대 5회</p>
                     </div>
                   </details>
                 </KeepShown>
@@ -420,7 +434,7 @@ export function GiftStatusPage({
                   </span>
                 </p>
               )}
-              {hasShipped(view) ? <p className={s.note}>{PROMISE.addressFan} 그래서 크리에이터에게 가는 송장번호도 알려 드리지 않아요.</p> : null}
+              {hasShipped(view) ? <p className={s.note}>{PROMISE.addressFan} 크리에이터행 송장번호도 공개하지 않습니다.</p> : null}
               {cancelable ? (
                 <div className={s.cancel}>
                   <CancelGiftButton orderNo={view.orderNo} addressShown={!view.earlySendPending} />
@@ -436,9 +450,9 @@ export function GiftStatusPage({
         {replies.length > 0 ? (
           <section className={s.sec} data-sec="" aria-labelledby="reply-title">
             <h2 className={s.secTitle} id="reply-title">
-              받았어요 · 답장
+              수령 확인·답장
             </h2>
-            <p className={s.desc}>크리에이터가 상자를 받았다고 남기면 날짜가 보여요. 답장이 오면 공개할지 정하고 카드로 공유할 수 있어요.</p>
+            <p className={s.desc}>크리에이터의 수령 확인일과 답장을 볼 수 있습니다. 답장의 공개 여부를 선택하거나 이미지 카드로 공유해 주세요.</p>
             <div className={s.inner}>
               <FanBoxReplies rows={replies} photoBase={photoBase} returnPath={`/gifts/${view.orderNo}`} />
             </div>
@@ -450,10 +464,18 @@ export function GiftStatusPage({
         {/* 결제가 끝난 진행 중 주문 — 상자를 더 보내는 길은 없다(스펙 비범위: 상자 추가). 도착한 뒤에는 더 보낼 일이 없어 접는다 */}
         {anyAddress && view.canEnterTrackingNo ? (
           <div className={s.sec} data-sec="">
-            <h2 className={s.secTitle}>보내기 전에 알아 두세요</h2>
-            <p className={s.desc}>상자를 더 보내려면 새로 등록해 주세요. 상자마다 팬꾹 주소가 달라요.</p>
+            <h2 className={s.secTitle}>발송 전 확인 사항</h2>
+            <p className={s.desc}>추가 상자는 새로 등록해 주세요. 팬꾹 주소는 상자마다 다릅니다.</p>
             {/* 거절·7일 반송 안내는 승인 전에만(B-5) — 이미 승인된 선물에는 해당하지 않는다 */}
-            {approvalPending ? <p className={s.more}>{RETURN_ON_REJECT_NOTICE}</p> : null}
+            {approvalPending ? (
+              <p className={s.more} data-reject-notice="">
+                크리에이터가 거절하거나 결제 후 7일 이내에 승인하지 않으면 선물 전달이 취소됩니다.
+                <br />
+                도착한 상자: 확인한 반송 주소로 반송 · 반송 배송비 차감 후 환불
+                <br />
+                미도착 상자: 반송 배송비 차감 후 먼저 환불 · 결제 완료 후 30일 이내 미도착 시 남은 배송비도 환불
+              </p>
+            ) : null}
           </div>
         ) : null}
 

@@ -72,16 +72,15 @@ export function BoxAddressCode({ officeAddress, code, boxName }: Props) {
         <CopyButton
           className="btn btn--sm"
           text={full}
-          label="주소 한 번에 복사"
-          ariaLabel={`${boxName} 주소 한 번에 복사`}
-          copiedMessage="끝 6자리까지 전체 주소를 복사했어요."
-          failedMessage="복사하지 못했어요. 6자리 보기를 누르고 주소를 끝까지 옮겨 적어 주세요."
+          label="전체 주소 복사"
+          ariaLabel={`${boxName} 전체 주소 복사`}
+          copiedMessage="끝 6자리를 포함한 전체 주소가 복사되었습니다."
+          failedMessage="주소를 복사하지 못했습니다. ‘6자리 보기’를 누르고 전체 주소를 직접 입력해 주세요."
         />
       </div>
       <ul className={s.pts}>
-        <li>끝 6자리까지 그대로 적어 주세요</li>
-        <li>보내는 분: 팬꾹 닉네임</li>
-        <li>6자리는 다른 사람에게 알려 주지 마세요</li>
+        <li>주소 끝 6자리는 상자를 확인하는 데 필요합니다. 빠짐없이 입력하고 다른 사람에게 공유하지 마세요.</li>
+        <li>송장의 ‘보내는 분’에는 팬꾹 닉네임을 입력해 주세요.</li>
       </ul>
     </div>
   );

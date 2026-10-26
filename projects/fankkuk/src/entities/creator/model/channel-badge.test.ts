@@ -64,9 +64,9 @@ describe("channelPlatformOfLabel — 크리에이터 카드의 플랫폼 이름�
 });
 
 describe("channelOwnerLine — 선물 보내기 맨 위 한 줄", () => {
-  it("「{닉네임}님의 {플랫폼} 채널 주인이 확인된 페이지예요」 — 코드를 받아 화면 이름으로", () => {
-    expect(channelOwnerLine({ name: "하루", platform: "youtube" })).toBe("하루님의 유튜브 채널 주인이 확인된 페이지예요");
-    expect(channelOwnerLine({ name: "하루", platform: "soop" })).toBe("하루님의 SOOP 채널 주인이 확인된 페이지예요");
+  it("「{닉네임}님의 {플랫폼} 채널 소유자 확인 완료」 — 코드를 받아 화면 이름으로", () => {
+    expect(channelOwnerLine({ name: "하루", platform: "youtube" })).toBe("하루님의 유튜브 채널 소유자 확인 완료");
+    expect(channelOwnerLine({ name: "하루", platform: "soop" })).toBe("하루님의 SOOP 채널 소유자 확인 완료");
   });
 
   it("(실패경로) 크리에이터가 없거나 이름이 비었거나 플랫폼이 네 코드가 아니면 null", () => {

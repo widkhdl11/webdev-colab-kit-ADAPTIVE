@@ -86,14 +86,14 @@ describe("INV-H8: 「등록 막기」 품목이면 2단계에서 넘어가지 �
     await click(button("다음"));
     expect(visibleStep()).toEqual([2]);
     const note = host.querySelector("#hard-note");
-    expect(note?.textContent).toContain("하루님이 지금 꽃은 받기 어렵대요. 다른 선물을 골라 주세요.");
+    expect(note?.textContent).toContain("하루님이 현재 받지 않는 선물입니다: 꽃. 다른 종류를 선택해 주세요.");
     expect(document.activeElement).toBe(note);
   });
 
   it("INV-H8 S8: 안내만 + 꽃이면 안내가 보이고 3단계로 넘어간다", async () => {
     await render("notice");
     await toStep2("flower");
-    expect(host.querySelector("#hard-note")?.textContent).toContain("하루님이 지금 꽃은 받기 어렵대요. 다른 선물을 고르시겠어요?");
+    expect(host.querySelector("#hard-note")?.textContent).toContain("하루님이 현재 받기 어려운 선물입니다: 꽃.");
     await click(button("다음"));
     expect(visibleStep()).toEqual([3]);
   });
@@ -123,7 +123,7 @@ describe("결제 직전에 다시 본다 — 4단계까지 간 뒤 크리에이�
     await agreeAndPay();
     expect(fetchMock).not.toHaveBeenCalled();
     expect(visibleStep()).toEqual([2]);
-    expect(host.querySelector("#hard-note")?.textContent).toContain("다른 선물을 골라 주세요.");
+    expect(host.querySelector("#hard-note")?.textContent).toContain("다른 종류를 선택해 주세요.");
   });
 
   it("INV-B2 (실패경로): 쉬는 중인 크리에이터는 4단계에서 돌아가도 고를 수 없다 — 눌러도 고른 사람이 그대로이고 결제는 원래 고른 사람으로 간다(d113 D-2)", async () => {
@@ -162,11 +162,11 @@ describe("d113 D-2: 지금 보낼 수 없는 크리에이터(이사 중·쉬는 
 
   it("D-2: 한도에 닿은 크리에이터 — 둘째 줄이 한도 안내(다음 달 1일), 라디오가 비활성, 이사 중·쉬는 중과 같은 회색 카드", async () => {
     await show();
-    expect(card(LIMIT)?.textContent).toContain("이번 달은 이미 마음을 충분히 보내셨어요. 11월 1일부터 다시 보낼 수 있어요");
+    expect(card(LIMIT)?.textContent).toContain("이번 달 선물 한도에 도달했습니다. 11월 1일부터 다시 보낼 수 있습니다.");
     expect(radio(LIMIT)?.disabled).toBe(true);
     expect(radio(NARU)?.disabled).toBe(true);
     expect(radio(MOVE)?.disabled).toBe(true);
-    expect(card(MOVE)?.textContent).toContain("모아의 방 · 채널 이사 중 · 지금은 선물을 받지 않아요");
+    expect(card(MOVE)?.textContent).toContain("모아의 방 · 채널 변경 확인 중 · 선물 받기 중단");
     expect(card(MOVE)?.className).not.toBe(card(MOMO)?.className);
     expect(card(LIMIT)?.className).toBe(card(MOVE)?.className);
     expect(card(NARU)?.className).toBe(card(MOVE)?.className);
@@ -304,13 +304,13 @@ describe("together INV-F7: 2단계 「나만 보는 메모」(선물 이름·내
   const title = () => host.querySelector<HTMLInputElement>("#memoTitle");
   const body = () => host.querySelector<HTMLTextAreaElement>("#memoBody");
 
-  it("INV-F7: 메모 칸 둘은 2단계에 있고, 시안의 「나만 볼 수 있는 메모예요」 안내가 붙는다 — 「기타」 물품 이름 칸에는 공개 안내를 붙이지 않는다", async () => {
+  it("INV-F7: 메모 칸 둘은 2단계에 있고, 「나에게만 공개」 안내가 붙는다 — 「기타」 물품 이름 칸에는 공개 안내를 붙이지 않는다", async () => {
     await render("notice", MOMO);
     await toStep2("other");
     const memo = title()?.closest("section");
     expect(memo?.closest("[hidden]")).toBeNull();
     expect(memo?.querySelector("h2, h3")?.textContent).toContain("나만 보는 메모");
-    expect(memo?.textContent).toContain("나만 볼 수 있");
+    expect(memo?.textContent).toContain("나에게만 공개");
     expect(memo?.contains(body())).toBe(true);
     expect(host.querySelector('label[for="memoTitle"]')?.textContent).toContain("선물 이름");
     expect(host.querySelector('label[for="memoBody"]')?.textContent).toContain("내용");

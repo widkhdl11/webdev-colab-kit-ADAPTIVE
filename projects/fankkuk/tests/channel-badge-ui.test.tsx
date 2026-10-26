@@ -127,7 +127,7 @@ function renderSend(opts: { initialCreatorId?: string; followFirst?: { id: strin
 }
 
 describe("선물 보내기 맨 위 한 줄 (추가분 4-4)", () => {
-  const LINE = "하루님의 유튜브 채널 주인이 확인된 페이지예요";
+  const LINE = "하루님의 유튜브 채널 소유자 확인 완료";
 
   it("크리에이터 페이지에서 미리 고르고 왔으면 머리말 안에 한 줄", () => {
     renderSend({ initialCreatorId: card.id });

@@ -10,7 +10,7 @@ import type { JsonReply } from "@/shared/lib/http/private-json";
 // 성공하면 주문은 취소된다. 받는 주소가 보인 적이 없으면 6자리는 무효·환불 대상은 결제 금액 전액, 보인 적이 있으면 안 온 상자의 6자리를 살려 두고
 // 상자마다 배송비 칸을 뺀다(payment INV-M16·M18). 환불은 대표가 눌러야 나간다.
 
-export const MESSAGE_CANCEL_UNAVAILABLE = "지금은 취소할 수 없는 선물이에요. 새로고침해 주세요.";
+export const MESSAGE_CANCEL_UNAVAILABLE = "현재 취소할 수 없는 선물입니다. 새로고침해 주세요.";
 
 const body = z.object({ orderNo: z.string().regex(ORDER_NO_PATTERN) }).strict();
 
@@ -27,7 +27,7 @@ export async function cancelMyGift(deps: Deps, input: unknown): Promise<JsonRepl
   if (error) {
     // 남의 주문이거나 그 사이 상자가 입고됨 — 화면이 낡았다(409 면 화면이 다시 읽는다)
     if (error.code === "P0002") return { status: 409, body: { message: MESSAGE_CANCEL_UNAVAILABLE } };
-    return pgErrorReply(error.code, { limit: "잘못된 요청이에요.", failed: "취소하지 못했어요. 잠시 뒤 다시 해 주세요." });
+    return pgErrorReply(error.code, { limit: "잘못된 요청이에요.", failed: "취소하지 못했습니다. 잠시 후 다시 시도해 주세요." });
   }
   return { status: 200, body: { canceled: true } };
 }

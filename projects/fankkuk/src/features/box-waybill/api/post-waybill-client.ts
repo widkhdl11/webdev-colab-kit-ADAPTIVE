@@ -18,10 +18,10 @@ export function postWaybill(target: WaybillTarget, waybill: string): Promise<Pos
 export function postFind(target: WaybillTarget, waybill: string, carrier: Carrier): Promise<PostJsonOutcome> {
   const common = { waybill, carrier };
   const write: FindHeldWrite = target.kind === "box" ? { boxId: target.id, ...common } : { shareId: target.id, ...common };
-  return postJson("/api/gifts/boxes/match", write, "찾지 못했어요. 잠시 뒤 다시 해 주세요.");
+  return postJson("/api/gifts/boxes/match", write, "상자를 조회하지 못했습니다. 잠시 후 다시 시도해 주세요.");
 }
 
 /** 「먼저 보내기」(approval-signature INV-S9) — 승인 전 주문의 받는 주소를 연다. 주문번호만 보낸다. */
 export function postEarlySend(orderNo: string): Promise<PostJsonOutcome> {
-  return postJson("/api/gifts/early-send", { orderNo }, "처리하지 못했어요. 잠시 뒤 다시 해 주세요.");
+  return postJson("/api/gifts/early-send", { orderNo }, "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.");
 }

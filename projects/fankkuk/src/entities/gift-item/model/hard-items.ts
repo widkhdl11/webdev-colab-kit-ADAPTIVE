@@ -1,4 +1,4 @@
-import { ITEM_CATEGORY_LABEL, sortCategories, withObjectParticle, withTopicParticle, type ItemCategory } from "./item-category";
+import { ITEM_CATEGORY_LABEL, sortCategories, withObjectParticle, type ItemCategory } from "./item-category";
 
 // 받기 어려운 품목 — 화면 쪽 문구·판정 (docs/specs/hard-items.md INV-H4·H5·H6·H8).
 // 크리에이터는 고르기만 하고, 공개 문구는 여기 정해진 틀로만 만든다(추가분 불변식 21 — 문장 직접 쓰는 칸 없음).
@@ -55,12 +55,14 @@ export function hardItemsNotice(h: Pick<HardItems, "categories" | "reason"> | nu
 }
 
 /**
- * INV-H8: 등록 화면 안내 — 「{공개 이름}님이 지금 {품목}은 받기 어렵대요. 다른 선물을 고르시겠어요?」(받침에 따라 은/는).
- * 「등록 막기」면 그대로 보낼 수 없으니 묻지 않고 「… 받기 어렵대요. 다른 선물을 골라 주세요.」로 끝낸다.
+ * INV-H8: 등록 화면 안내 — 「{공개 이름}님이 현재 받기 어려운 선물입니다: {품목}.」(문구 3 다듬은본).
+ * 「등록 막기」면 「{공개 이름}님이 현재 받지 않는 선물입니다: {품목}. 다른 종류를 선택해 주세요.」.
  */
 export function hardItemFanMessage(creatorName: string, category: ItemCategory, blocks = false): string {
-  const head = `${creatorName}님이 지금 ${withTopicParticle(ITEM_CATEGORY_LABEL[category])} 받기 어렵대요.`;
-  return blocks ? `${head} 다른 선물을 골라 주세요.` : `${head} 다른 선물을 고르시겠어요?`;
+  const item = ITEM_CATEGORY_LABEL[category];
+  return blocks
+    ? `${creatorName}님이 현재 받지 않는 선물입니다: ${item}. 다른 종류를 선택해 주세요.`
+    : `${creatorName}님이 현재 받기 어려운 선물입니다: ${item}.`;
 }
 
 /**

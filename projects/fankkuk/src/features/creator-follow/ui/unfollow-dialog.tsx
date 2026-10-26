@@ -6,7 +6,7 @@ import s from "./unfollow-dialog.module.css";
 
 // 팔로우 취소 확인 창 — 시안 docs/design/mockups/site/v21-addendum3/fan-unfollow-modal.html (design-rules 12절).
 // 열면 「계속 팔로우」에 초점, Tab 은 창 안에서만 돈다(브라우저 주소창으로도 나가지 않게 처음·끝에서 되감는다).
-// Esc·바깥 누름·「계속 팔로우」는 그냥 닫고, 창을 연 버튼으로 초점을 돌려보낸다. 「취소하기」만 onConfirm 을 부른다.
+// Esc·바깥 누름·「계속 팔로우」는 그냥 닫고, 창을 연 버튼으로 초점을 돌려보낸다. 「팔로우 취소」만 onConfirm 을 부른다.
 // 창 밖 화면은 <dialog>.showModal() 이 막는다(뒤 화면은 눌리지도 읽히지도 않는다).
 
 type Pending = { onConfirm: () => void; opener: HTMLElement | null };
@@ -64,14 +64,14 @@ export function useUnfollowConfirm(): { ask: (name: string, onConfirm: () => voi
       <div className={s.box}>
         <LogoMark size={56} />
         <h2 id={`${uid}-t`} className={s.title}>
-          정말 팔로우를 취소하시겠어요?
+          팔로우를 취소할까요?
         </h2>
         <p id={`${uid}-d`} className={s.desc}>
-          {name}님이 슬퍼하실 거예요.
+          팔로우 목록에서 {name}님이 삭제됩니다. 다시 팔로우할 수 있습니다.
         </p>
         <div className={s.actions}>
           <button className="btn btn--line" type="button" onClick={confirm}>
-            취소하기
+            팔로우 취소
           </button>
           <button ref={keepRef} className="btn" type="button" onClick={() => ref.current?.close()}>
             계속 팔로우

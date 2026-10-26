@@ -11,7 +11,8 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { parseFanGiftRows } from "@/entities/order/api/fan-gift-rows";
-import { RETURN_ON_REJECT_NOTICE } from "@/entities/order/ui/fan-stage-copy";
+/** 승인 전에만 보이는 거절·기한 안내 첫 줄(문구 3 다듬은본) */
+const RETURN_ON_REJECT_NOTICE = "크리에이터가 거절하거나 결제 후 7일 이내에 승인하지 않으면 선물 전달이 취소됩니다.";
 import type { GiftBox } from "@/entities/parcel/model/box-rows";
 import type { GiftPayment } from "@/entities/payment/model/gift-payment";
 import { GiftStatusPage } from "./gift-status-page";
@@ -111,8 +112,8 @@ const sec = (title: string) =>
     .find((h) => h.textContent === title)
     ?.closest("[data-sec]") ?? null;
 const ADDRESS_SHOWN_FOLDS = [
-  "이 상자를 보낸 택배 송장번호",
-  "팬꾹 주소 없이 보냈다면",
+  "팬꾹으로 보낸 송장번호 (선택)",
+  "주소 끝 6자리 없이 보낸 상자 찾기",
 ];
 
 describe("B-2·B-3·B-8: 송장번호 칸과 찾기 칸은 팬꾹 주소가 보인 뒤에만", () => {
@@ -134,7 +135,7 @@ describe("B-2·B-3·B-8: 송장번호 칸과 찾기 칸은 팬꾹 주소가 보�
 
   it("B-3 (실패경로): 입고 전 상자가 하나도 없으면 찾기 칸을 그리지 않는다 — 고를 상자가 없다", () => {
     render({ boxes: [box({ state: "received", addressCode: null })] });
-    expect(summaries()).not.toContain("팬꾹 주소 없이 보냈다면");
+    expect(summaries()).not.toContain("주소 끝 6자리 없이 보낸 상자 찾기");
   });
 
   it("B-2: 상자마다 — 팬꾹 주소가 보인 상자만 송장번호 칸이 있다", () => {
@@ -150,7 +151,7 @@ describe("B-2·B-3·B-8: 송장번호 칸과 찾기 칸은 팬꾹 주소가 보�
       ],
     });
     expect(
-      summaries().filter((t) => t === "이 상자를 보낸 택배 송장번호"),
+      summaries().filter((t) => t === "팬꾹으로 보낸 송장번호 (선택)"),
     ).toHaveLength(1);
   });
 });
@@ -165,14 +166,14 @@ describe("B-1: 결제 직후 안내", () => {
     expect(
       host.querySelector('main [data-paid-line]')?.textContent,
     ).toBe(
-      "결제가 끝났어요. 먼저 보내려면 아래 「먼저 보내기」를 눌러 주세요.",
+      "결제가 완료되었습니다. 승인 전에 팬꾹으로 발송하려면 ‘먼저 보내기’를 눌러 주세요.",
     );
   });
 
   it("B-1: 결제하고 돌아왔고 팬꾹 주소가 보이면 팬꾹 주소를 가리킨다", () => {
     render({ paid: true });
     expect(host.querySelector("main [data-paid-line]")?.textContent).toBe(
-      "결제가 끝났어요. 아래 팬꾹 주소로 상자를 보내 주세요.",
+      "결제가 완료되었습니다. 아래 팬꾹 주소로 상자를 보내 주세요.",
     );
   });
 
@@ -200,19 +201,19 @@ describe("B-4: 「취소하기」는 글자 링크 모양", () => {
     expect(trigger.classList.contains("btn")).toBe(false);
     act(() => (trigger as HTMLButtonElement).click());
     expect(host.querySelector("main")?.textContent).toContain(
-      "이 선물을 취소할까요?",
+      "선물 전달을 취소할까요?",
     );
     expect(
       [...host.querySelectorAll("main button")].map((b) => b.textContent),
-    ).toContain("네, 취소할게요");
+    ).toContain("선물 취소");
   });
 });
 
 describe("B-5: 거절 반송 안내는 승인 전에만", () => {
   it("B-5 (실패경로): 이미 승인된 선물에는 둘째 문단이 없다 — 첫 문단은 그대로", () => {
     render();
-    const s = sec("보내기 전에 알아 두세요");
-    expect(s?.textContent).toContain("상자를 더 보내려면 새로 등록해 주세요.");
+    const s = sec("발송 전 확인 사항");
+    expect(s?.textContent).toContain("추가 상자는 새로 등록해 주세요.");
     expect(s?.textContent).not.toContain(RETURN_ON_REJECT_NOTICE);
   });
 
@@ -223,23 +224,23 @@ describe("B-5: 거절 반송 안내는 승인 전에만", () => {
         fan_send_ack_at: "2026-10-22T02:00:00+00:00",
       }),
     });
-    expect(sec("보내기 전에 알아 두세요")?.textContent).toContain(
+    expect(sec("발송 전 확인 사항")?.textContent).toContain(
       RETURN_ON_REJECT_NOTICE,
     );
   });
 });
 
 describe("B-6: 거절·기한 지남 안내는 상자 상태에 맞는 문단만", () => {
-  const ARRIVED = "사무실에 도착한 상자는";
-  const NOT_YET = "아직 도착하지 않은 상자는";
-  const BEFORE = "팬꾹 주소가 보이기 전에 끝났다면";
+  const ARRIVED = "도착한 상자는 확인한 반송 주소로";
+  const NOT_YET = "미도착 상자는";
+  const BEFORE = "팬꾹 주소가 표시되기 전에";
 
   it("B-6: 도착한 상자만 있으면 도착한 상자 문단만(첫 문단은 늘)", () => {
     render({
       view: viewOf({ status: "rejected" }),
       boxes: [box({ state: "return_waiting", addressCode: null })],
     });
-    const t = sec("이 선물은 보내지 마세요")?.textContent ?? "";
+    const t = sec("이 선물은 발송하지 마세요")?.textContent ?? "";
     expect(t).toContain(BEFORE);
     expect(t).toContain(ARRIVED);
     expect(t).not.toContain(NOT_YET);
@@ -250,7 +251,7 @@ describe("B-6: 거절·기한 지남 안내는 상자 상태에 맞는 문단만
       view: viewOf({ status: "expired" }),
       boxes: [box({ addressCode: null })],
     });
-    const t = sec("이 선물은 보내지 마세요")?.textContent ?? "";
+    const t = sec("이 선물은 발송하지 마세요")?.textContent ?? "";
     expect(t).toContain(BEFORE);
     expect(t).toContain(NOT_YET);
     expect(t).not.toContain(ARRIVED);
@@ -269,7 +270,7 @@ describe("B-6: 거절·기한 지남 안내는 상자 상태에 맞는 문단만
         }),
       ],
     });
-    const t = sec("이 선물은 보내지 마세요")?.textContent ?? "";
+    const t = sec("이 선물은 발송하지 마세요")?.textContent ?? "";
     expect(t).toContain(ARRIVED);
     expect(t).toContain(NOT_YET);
   });
@@ -391,7 +392,7 @@ describe("v41 INV-S9: 승인 전 표시 — 상태 판 배지 · 출고 아래 �
     ["거절", { status: "rejected", approved_at: null }],
     ["기한 지남", { status: "expired", approved_at: null }],
     ["취소", { status: "canceled", approved_at: null }],
-  ])("INV-S9 (실패경로): 끝난 선물(%s)에는 승인 칸·「승인 필요」·승인 대기 배지가 없다 — 선물 정보 카드는 그대로", (_n, over) => {
+  ])("INV-S9 (실패경로): 완료된 선물(%s)에는 승인 칸·「승인 필요」·승인 대기 배지가 없다 — 선물 정보 카드는 그대로", (_n, over) => {
     render({ view: viewOf(over), boxes: [box({ addressCode: null })], payment: PAYMENT });
     expect(approvalBox()).toBeNull();
     expect(host.querySelector("main [data-approval-done]")).toBeNull();
@@ -421,9 +422,8 @@ describe("v41: 두 코드 가르기 — 상자 이름에 주문번호가 없다"
     act(() => toggle.click());
     expect(cells()).toBe("K7M3XA");
     expect([...(addr?.querySelectorAll("ul > li") ?? [])].map((l) => l.textContent)).toEqual([
-      "끝 6자리까지 그대로 적어 주세요",
-      "보내는 분: 팬꾹 닉네임",
-      "6자리는 다른 사람에게 알려 주지 마세요",
+      "주소 끝 6자리는 상자를 확인하는 데 필요합니다. 빠짐없이 입력하고 다른 사람에게 공유하지 마세요.",
+      "송장의 ‘보내는 분’에는 팬꾹 닉네임을 입력해 주세요.",
     ]);
   });
 });
@@ -450,7 +450,7 @@ describe("INV-S6 S6c: 승인 기한(결제 완료 + 168시간)이 지났는데 �
     expect(host.querySelector("main [data-approval-needed]")).toBeNull();
     expect(host.querySelector("main [data-box-address]")).toBeNull();
     expect(buttons()).not.toContain("먼저 보내기");
-    expect(sec("이 선물은 보내지 마세요")).not.toBeNull();
+    expect(sec("이 선물은 발송하지 마세요")).not.toBeNull();
   });
 
   it("INV-S6 S6c (실패경로): 승인된 주문은 기한이 지나도 그대로 진행 중", () => {
@@ -460,7 +460,7 @@ describe("INV-S6 S6c: 승인 기한(결제 완료 + 168시간)이 지났는데 �
   });
 });
 
-describe("v41: 「팬꾹 주소 없이 보냈다면」 고르는 칸도 「상자 N · 크기」", () => {
+describe("v41: 「주소 끝 6자리 없이 보낸 상자 찾기」 고르는 칸도 「상자 N · 크기」", () => {
   it("v41: 상자 고르기 목록에 주문번호가 없고 상세 상자 줄과 같은 번호", () => {
     render({ boxes: [box({ state: "received", addressCode: null }), box({ boxId: B2, label: `${ORDER}-2`, tier: "medium" })] });
     const options = [...(host.querySelector("main [data-finder] select")?.querySelectorAll("option") ?? [])].map((o) => o.textContent);
@@ -472,25 +472,25 @@ describe("결제 안내 문장 — 차액 안내는 진행 중에만", () => {
   const note = () => host.querySelector("#pay-title")?.closest("[role=group]")?.textContent ?? "";
   it("진행 중이면 결제한 날 + 차액 안내", () => {
     render({ payment: PAYMENT });
-    expect(note()).toContain("10월 22일 (목)에 결제했어요.");
-    expect(note()).toContain("차액만 따로 결제해요");
+    expect(note()).toContain("결제일: 10월 22일 (목)");
+    expect(note()).toContain("차액이 청구됩니다");
   });
-  it("(실패경로) 끝난 선물에는 결제한 날만 — 차액 안내가 없다", () => {
+  it("(실패경로) 완료된 선물에는 결제한 날만 — 차액 안내가 없다", () => {
     render({ view: viewOf({ status: "rejected" }), boxes: [box({ addressCode: null })], payment: PAYMENT });
-    expect(note()).toContain("10월 22일 (목)에 결제했어요.");
-    expect(note()).not.toContain("차액만 따로 결제해요");
+    expect(note()).toContain("결제일: 10월 22일 (목)");
+    expect(note()).not.toContain("차액이 청구됩니다");
   });
 });
 
 describe("INV-S9: 먼저 보내기 전 안내는 짧은 줄 셋", () => {
-  it("INV-S9: 「하루님이 아직 승인하지 않았어요」 + 줄 셋 + 「먼저 보내기」", () => {
+  it("INV-S9: 「하루님의 승인 대기 중입니다.」 + 줄 셋 + 「먼저 보내기」", () => {
     render({ view: viewOf({ approved_at: null }), boxes: [box({ addressCode: null, sendAckNeeded: true })] });
     const gate = host.querySelector('main [role="group"][aria-labelledby]');
-    expect(gate?.querySelector("strong")?.textContent).toBe("하루님이 아직 승인하지 않았어요");
+    expect(gate?.querySelector("strong")?.textContent).toBe("하루님의 승인 대기 중입니다.");
     expect([...(gate?.querySelectorAll("ul > li") ?? [])].map((l) => l.textContent)).toEqual([
-      "지금 보내면 더 빨리 도착해요",
-      "받지 않으면 반송 택배비를 빼고 돌려드려요",
-      "기다리면 승인 뒤 주소가 바로 보여요",
+      "승인 전에도 팬꾹으로 선물을 발송할 수 있습니다. 크리에이터가 거절하면 반송됩니다.",
+      "반송 시 반송 배송비를 차감해 환불합니다.",
+      "승인을 기다린 뒤 발송해도 됩니다. 승인되면 팬꾹 주소가 표시됩니다.",
     ]);
     expect(gate?.querySelector("button")?.textContent).toBe("먼저 보내기");
   });
@@ -521,12 +521,12 @@ describe("C-1: 「아직 보내지 않음」을 누른 상자는 상자 줄에 �
   });
 });
 
-describe("C-3: 돌려받을 주소 확인 뒤 안내는 할 일 칸이 없어져도 보인다", () => {
+describe("C-3: 반송 주소 확인 뒤 안내는 할 일 칸이 없어져도 보인다", () => {
   // 확인하면 그 할 일 줄이 원천 상태로 사라진다 — 그 주문의 마지막 할 일이면 칸이 통째로 없다(ui-reviewer 2026-10-22 지적 1).
-  it("C-3: ?address=confirmed 로 열린 상세는 할 일 칸이 없어도 맨 위에 「돌려받을 주소를 확인했어요.」", () => {
+  it("C-3: ?address=confirmed 로 열린 상세는 할 일 칸이 없어도 맨 위에 「반송 주소가 확인되었습니다.」", () => {
     query = "address=confirmed";
     render();
-    const line = [...host.querySelectorAll("main [role=status]")].find((p) => p.textContent === "돌려받을 주소를 확인했어요.");
+    const line = [...host.querySelectorAll("main [role=status]")].find((p) => p.textContent === "반송 주소가 확인되었습니다.");
     expect(line).toBeDefined();
     // 상태 판(하늘 판)보다 위
     expect(line!.compareDocumentPosition(host.querySelector("#g-title")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -534,6 +534,6 @@ describe("C-3: 돌려받을 주소 확인 뒤 안내는 할 일 칸이 없어져
 
   it("C-3 (실패경로): 쿼리가 없으면 안내가 없다", () => {
     render();
-    expect(host.querySelector("main")?.textContent).not.toContain("돌려받을 주소를 확인했어요.");
+    expect(host.querySelector("main")?.textContent).not.toContain("반송 주소가 확인되었습니다.");
   });
 });

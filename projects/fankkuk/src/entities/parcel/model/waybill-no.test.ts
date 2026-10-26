@@ -20,7 +20,7 @@ describe("원 송장번호 — 상자를 사무실로 보낸 택배의 송장번
   });
 
   it("비어 있으면 적어 달라고 한다", () => {
-    expect(parseWaybillInput("   ")).toEqual({ ok: false, message: "송장번호를 적어 주세요." });
+    expect(parseWaybillInput("   ")).toEqual({ ok: false, message: "송장번호를 입력해 주세요." });
   });
 
   it("화면에는 네 자리씩 띄어 보여 준다", () => {

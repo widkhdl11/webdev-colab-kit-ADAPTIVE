@@ -29,7 +29,7 @@ const notAccepted: Filter = (g) => fanGiftBucket(g) === "not_accepted";
 
 /** 카드 꼬리표 — 진행이 끝까지 간 선물은 「끝난 선물」(시안), 그 밖은 목록 꼬리표 그대로(거절·기한 지남은 따로 — decline-block INV-D5) */
 function cardBadge(gift: FanGiftView): { text: string; tone: StatusTone } {
-  if (gift.outcome === "in_progress" && fanGiftBucket(gift) === "ended") return { text: "끝난 선물", tone: "success" };
+  if (gift.outcome === "in_progress" && fanGiftBucket(gift) === "ended") return { text: "완료된 선물", tone: "success" };
   return fanBadge(gift);
 }
 
@@ -70,7 +70,7 @@ function GiftCard({ gift, faceTone, todo }: { gift: FanGiftView; faceTone: strin
         </p>
       </div>
       {notAccepted ? (
-        <p className={s.stop}>받지 않은 선물이에요 · {formatMonthDayKo(gift.registeredAt)} 등록</p>
+        <p className={s.stop}>전달되지 않은 선물 · {formatMonthDayKo(gift.registeredAt)} 등록</p>
       ) : (
         <div>
           <span
@@ -242,16 +242,16 @@ const unpaidOf = (todos: readonly ActionItem[]) => todos.filter((it): it is Unpa
 function OngoingPanel({ gifts, ...rest }: PanelProps) {
   const rows = gifts.filter(ongoing);
   const unpaid = unpaidOf(rest.todos);
-  return rows.length + unpaid.length === 0 ? <Empty text="지금 진행 중인 선물이 없어요." /> : <Grid rows={rows} unpaid={unpaid} {...rest} />;
+  return rows.length + unpaid.length === 0 ? <Empty text="진행 중인 선물이 없습니다." /> : <Grid rows={rows} unpaid={unpaid} {...rest} />;
 }
 
 /** 완료 탭 — 끝난 선물과 받지 않은 선물을 따로 모은다(시안). 둘 다 같은 카드, 각각 최근 등록 순 */
 function DonePanel({ gifts, ...rest }: PanelProps) {
   const parts = [
-    { id: "ended", label: "끝난 선물", rows: gifts.filter(ended) },
-    { id: "not-accepted", label: "받지 않은 선물", rows: gifts.filter(notAccepted) },
+    { id: "ended", label: "완료된 선물", rows: gifts.filter(ended) },
+    { id: "not-accepted", label: "전달되지 않은 선물", rows: gifts.filter(notAccepted) },
   ].filter((p) => p.rows.length > 0);
-  if (parts.length === 0) return <Empty text="아직 완료된 선물이 없어요." />;
+  if (parts.length === 0) return <Empty text="완료된 선물이 없습니다." />;
   return (
     <>
       {parts.map((p) => (
@@ -306,7 +306,7 @@ export function GiftListPage({
             선물 보내기
           </Link>
         </div>
-        <p className="ph-desc">크리에이터별로 보낸 선물과 받은 답장을 한곳에서 볼 수 있어요.</p>
+        <p className="ph-desc">크리에이터별 선물 기록과 답장을 확인해 주세요.</p>
       </header>
       {tabs}
       {creators.length > 0 ? <Creators creators={creators} faceToneByName={faceToneByName} /> : null}

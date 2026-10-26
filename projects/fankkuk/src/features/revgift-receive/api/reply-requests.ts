@@ -15,11 +15,11 @@ async function post(path: string, body: unknown): Promise<ReplyOutcome> {
     return {
       ok: false,
       status: res.status,
-      message: parsed.success ? parsed.data.message : "저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.",
+      message: parsed.success ? parsed.data.message : "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
       noAddress: res.status === 422 && parsed.success && parsed.data.reason === "no_address",
     };
   } catch {
-    return { ok: false, status: 0, message: "저장하지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.", noAddress: false };
+    return { ok: false, status: 0, message: "저장하지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.", noAddress: false };
   }
 }
 

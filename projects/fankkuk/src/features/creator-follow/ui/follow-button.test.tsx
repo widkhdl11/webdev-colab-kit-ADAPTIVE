@@ -98,7 +98,7 @@ describe("카드 띠 팔로우 — 누르면 그 자리에서 바뀐다", () => 
     host.remove();
   });
 
-  it("「팔로우」 → 「선물 보내기」+「팔로우 취소」 → 확인 창(닫으면 초점 복귀) → 「취소하기」 → 다시 「팔로우」 하나", async () => {
+  it("「팔로우」 → 「선물 보내기」+「팔로우 취소」 → 확인 창(닫으면 초점 복귀) → 「팔로우 취소」 → 다시 「팔로우」 하나", async () => {
     await act(async () => root.render(<FollowButton creatorId={ID} creatorName="모모" initialFollowing={false} variant="card" mode="save" />));
     await act(async () => cardButtons(host)[0]!.click());
     expect(saveFollow).toHaveBeenLastCalledWith(ID, true);
@@ -113,7 +113,7 @@ describe("카드 띠 팔로우 — 누르면 그 자리에서 바뀐다", () => 
     await act(async () => keep.click());
     expect(document.activeElement).toBe(unfollowBtn);
     await act(async () => unfollowBtn.click());
-    const confirm = Array.from(host.querySelectorAll("dialog button")).find((b) => b.textContent === "취소하기") as HTMLButtonElement;
+    const confirm = Array.from(host.querySelectorAll("dialog button")).find((b) => b.textContent === "팔로우 취소") as HTMLButtonElement;
     await act(async () => confirm.click());
     expect(saveFollow).toHaveBeenLastCalledWith(ID, false);
     expect(cardButtons(host).map((b) => b.textContent)).toEqual(["팔로우"]);
@@ -125,7 +125,7 @@ describe("카드 띠 팔로우 — 누르면 그 자리에서 바뀐다", () => 
     await act(async () => cardButtons(host)[0]!.click());
     expect(document.activeElement?.textContent).toBe("선물 보내기");
     await act(async () => cardButtons(host)[1]!.click());
-    const confirm = Array.from(host.querySelectorAll("dialog button")).find((b) => b.textContent === "취소하기") as HTMLButtonElement;
+    const confirm = Array.from(host.querySelectorAll("dialog button")).find((b) => b.textContent === "팔로우 취소") as HTMLButtonElement;
     await act(async () => confirm.click());
     expect(document.activeElement).toBe(cardButtons(host)[0]);
     expect(document.activeElement?.textContent).toBe("팔로우");
@@ -150,7 +150,7 @@ describe("카드 띠 팔로우 — 누르면 그 자리에서 바뀐다", () => 
     await act(async () => root.render(<FollowButton creatorId={ID} creatorName="모모" initialFollowing variant="card" mode="save" onUnfollowed={onUnfollowed} />));
     const unfollowOnce = async () => {
       await act(async () => cardButtons(host)[1]!.click());
-      const confirm = Array.from(host.querySelectorAll("dialog button")).find((b) => b.textContent === "취소하기") as HTMLButtonElement;
+      const confirm = Array.from(host.querySelectorAll("dialog button")).find((b) => b.textContent === "팔로우 취소") as HTMLButtonElement;
       await act(async () => confirm.click());
     };
     saveFollow.mockResolvedValueOnce("failed");
@@ -170,7 +170,7 @@ describe("카드 띠 팔로우 — 누르면 그 자리에서 바뀐다", () => 
     await act(async () => cardButtons(host)[0]!.click());
     expect(regions().length).toBe(1);
     const msg = regions()[0]!;
-    expect(msg.textContent).toBe("팔로우를 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.");
+    expect(msg.textContent).toBe("팔로우 설정을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
     // 화면에 보이는 칸 — 화면 낭독기 전용(sr) 모양이 아니다
     expect(msg.hasAttribute("data-card-notice")).toBe(true);
     expect(cardButtons(host).map((b) => b.textContent)).toEqual(["팔로우"]);

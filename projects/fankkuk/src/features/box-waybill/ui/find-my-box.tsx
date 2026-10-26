@@ -63,7 +63,7 @@ export function FindMyBox(props: Props) {
       return;
     }
     if (!carrier) {
-      setError("택배사를 골라 주세요.");
+      setError("택배사를 선택해 주세요.");
       setErrorField("carrier");
       setResult(null);
       carrierSelect.current?.focus();
@@ -85,7 +85,7 @@ export function FindMyBox(props: Props) {
         return;
       }
       // 못 찾은 것은 실패가 아니라 찾기의 결과다
-      setResult({ kind: "no", message: typeof outcome.body.message === "string" ? outcome.body.message : "맞는 상자를 못 찾았어요." });
+      setResult({ kind: "no", message: typeof outcome.body.message === "string" ? outcome.body.message : "일치하는 상자가 없습니다." });
       return;
     }
     setError(outcome.message);
@@ -96,10 +96,10 @@ export function FindMyBox(props: Props) {
   return (
     <div className={s.finder}>
       {/* 바로 위에 「받는 주소 없이 보냈어요」 제목이 있다 — 같은 뜻의 제목을 한 단계 더 두지 않고 안내 문단으로 둔다. 상자가 정해진 카드에는 없다 */}
-      {fixed ? null : <p className={s["finder-q"]}>팬꾹 주소를 쓰지 않고 상자를 보냈다면</p>}
+      {fixed ? null : <p className={s["finder-q"]}>주소 끝 6자리 없이 보낸 상자 찾기</p>}
       {current ? (
         <form
-          aria-label="팬꾹 주소 없이 보낸 상자 찾기"
+          aria-label="주소 끝 6자리 없이 보낸 상자 찾기"
           noValidate
           onSubmit={(e) => {
             e.preventDefault();
@@ -108,7 +108,7 @@ export function FindMyBox(props: Props) {
         >
           {fixed ? null : (
             <div className="field">
-              <label htmlFor={`${id}-box`}>어느 상자인가요</label>
+              <label htmlFor={`${id}-box`}>상자 선택</label>
               <select
                 id={`${id}-box`}
                 className="input"
@@ -123,7 +123,7 @@ export function FindMyBox(props: Props) {
                 ))}
               </select>
               <p className="hint" id={`${id}-box-hint`}>
-                아직 입고되지 않은 내 상자만 보여요.
+                입고 전인 내 상자만 표시
               </p>
             </div>
           )}
@@ -138,7 +138,7 @@ export function FindMyBox(props: Props) {
               aria-invalid={errorField === "carrier" ? true : undefined}
               aria-describedby={errorField === "carrier" ? `${id}-error` : undefined}
             >
-              <option value="">고르세요</option>
+              <option value="">택배사 선택</option>
               {CARRIERS.map((c) => (
                 <option key={c} value={c}>
                   {CARRIER_LABEL[c]}
@@ -155,7 +155,7 @@ export function FindMyBox(props: Props) {
               type="text"
               inputMode="numeric"
               autoComplete="off"
-              placeholder="숫자만 입력해요"
+              placeholder="숫자만 입력"
               ref={waybillInput}
               aria-invalid={errorField === "waybill" ? true : undefined}
               aria-describedby={errorField === "waybill" ? `${id}-error` : undefined}
@@ -170,17 +170,17 @@ export function FindMyBox(props: Props) {
             </p>
           ) : null}
           <button type="submit" className="btn" aria-disabled={busy}>
-            {busy ? "찾는 중…" : "찾기"}
+            {busy ? "조회 중…" : "찾기"}
           </button>
         </form>
       ) : (
-        <p className={s["finder-none"]}>아직 입고되지 않은 상자가 없어요.</p>
+        <p className={s["finder-none"]}>입고 전인 상자가 없습니다.</p>
       )}
       <div role="status">
         {result?.kind === "ok" ? (
           <div ref={resultRef} tabIndex={-1} className={`${s.result} ${s["result--ok"]}`}>
-            <strong>도착 완료</strong>
-            <p>{result.label} · 곧 검수로 넘어가요.</p>
+            <strong>도착 확인</strong>
+            <p>{result.label} · 검수 예정</p>
           </div>
         ) : null}
         {result?.kind === "no" ? (

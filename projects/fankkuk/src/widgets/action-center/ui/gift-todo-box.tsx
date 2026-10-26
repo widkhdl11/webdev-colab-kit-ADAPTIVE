@@ -1,4 +1,4 @@
-import { disposeDueText, type ActionItem } from "@/entities/action-item/model/action-items";
+import { FAN_TODO_TITLE, type ActionItem } from "@/entities/action-item/model/action-items";
 import { TodoBox, TodoTask } from "@/entities/action-item/ui/todo-box";
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { Suspense } from "react";
@@ -22,7 +22,7 @@ import s from "./action-center.module.css";
 
 type Props = { items: readonly ActionItem[]; clientKey: string; now: string; address: FanReturnAddress };
 
-export const RESUME_FAILED_TEXT = "결제를 마치지 못했어요. 다시 결제해 주세요.";
+export const RESUME_FAILED_TEXT = "결제가 완료되지 않았습니다. 다시 결제해 주세요.";
 
 // 처리가 끝나 칸이 사라지면 포커스를 옮길 자리 — 선물 상세 상자 칸 제목(「먼저 보내기」와 같은 자리, gift-status-page 의 tabIndex -1 제목).
 // 상자 칸은 진행 중·돌려보냄 주문에만 그려진다 — 거절·기한 지남이면 늘 있는 페이지 제목으로(ui 재리뷰 2026-10-22)
@@ -47,7 +47,7 @@ function Task({ item, clientKey, now, address }: { item: ActionItem; clientKey: 
       <TodoTask
         kind={item.kind}
         titleId={titleId}
-        title="추가 결제"
+        title={FAN_TODO_TITLE.difference}
         // 기한은 검수 완료 스캔 뒤에 생긴다(payment INV-M13) — 그 전이면 상자만
         sub={item.dueAt ? `상자 ${item.boxSeq} · ${dueLine(item.dueAt, now)}` : `상자 ${item.boxSeq}`}
         figure={<p className="num-big num-big--32">{won(item.amountKrw)}</p>}
@@ -61,7 +61,7 @@ function Task({ item, clientKey, now, address }: { item: ActionItem; clientKey: 
       <TodoTask
         kind={item.kind}
         titleId={titleId}
-        title="도착이 늦어요"
+        title={FAN_TODO_TITLE.missing_box}
         sub={`상자 ${item.boxSeq} (${tier}) · ${dueLine(item.dueAt, now)}`}
         wide
         action={
@@ -84,8 +84,9 @@ function Task({ item, clientKey, now, address }: { item: ActionItem; clientKey: 
       <TodoTask
         kind={item.kind}
         titleId={titleId}
-        title="돌려받을 주소 확인"
-        sub={`상자 ${item.boxSeq} · ${disposeDueText(item.dueAt)}`}
+        title={FAN_TODO_TITLE.return_address}
+        // 기한이 지나면 바로 처분하지 않고 처분 대상이 된다(office-workflow INV-W15) — 문구 3 다듬은본
+        sub={`상자 ${item.boxSeq} · ${formatMonthDayKo(item.dueAt)}까지 반송 주소를 확인하지 않으면 처분 대상이 됩니다.`}
         action={<ReturnAddressButton target={{ orderNo: item.orderNo, boxSeq: item.boxSeq }} meta={meta} address={address} focusAfterIds={FOCUS_AFTER_IDS} />}
       />
     );
@@ -95,7 +96,7 @@ function Task({ item, clientKey, now, address }: { item: ActionItem; clientKey: 
       <TodoTask
         kind={item.kind}
         titleId={titleId}
-        title="결제를 마치지 않은 선물"
+        title={FAN_TODO_TITLE.unpaid}
         // 기한 = 처음 결제 대기 + 24시간 — 이어 하기로 늘어나지 않는다(payment INV-M22 ④)
         sub={dueLine(item.dueAt, now)}
         figure={<p className="num-big num-big--32">{won(item.amountKrw)}</p>}

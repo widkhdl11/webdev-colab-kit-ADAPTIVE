@@ -7,19 +7,19 @@ import s from "./revgift-access-log.module.css";
 // 받은 역조공 상세 — 내 주소 열람 기록(reverse-gift INV-R16). 연 줄·지운 줄이 한 줄씩 보인다.
 // 접은 칸 하나(시안 v35-part1/revgift-detail.html .rv-folds, design-rules 22절) — 머리에 연 횟수, 펼치면 안내·기록. 접혀 있어도 기록은 문서 안에 있다.
 // 거부된 시도와 대표·직원 구분은 운영자 내부 기록에만 있어 「누가」 칸이 없다(2026-10-12 문제집 D12).
-// 크리에이터 열람 기록 화면(widgets/access-log)과 같은 표·문구를 쓴다. 주소 값·운송장 번호는 이 화면에 오지 않는다.
+// 크리에이터 열람 기록 화면(widgets/access-log)과 같은 표를 쓴다. 주소 값·송장번호는 이 화면에 오지 않는다.
 // 문구 한계(design-rules 6절): 주소는 「송장을 출력할 때만」 열린다고 쓰고 「절대 유출되지 않습니다」는 쓰지 않는다.
 
 const DELETE_TEXT: Record<RevgiftDeleteOutcome, string> = {
-  shipped: "출고되어 주소를 지웠어요",
-  returned: "반송되어 주소를 지웠어요",
-  cancelled: "취소되어 주소를 지웠어요",
-  disposed: "처분되어 주소를 지웠어요",
+  shipped: "배송용 주소 사본 삭제",
+  returned: "반송에 따른 주소 사본 삭제",
+  cancelled: "취소에 따른 주소 사본 삭제",
+  disposed: "처분에 따른 주소 사본 삭제",
 };
 
 function ResultTag({ e }: { e: FanAccessEntry }) {
-  if (e.kind === "opened") return <span className={statusTagClass("info")}>열림</span>;
-  return <span className={statusTagClass("plain")}>지움</span>;
+  if (e.kind === "opened") return <span className={statusTagClass("info")}>열람</span>;
+  return <span className={statusTagClass("plain")}>삭제</span>;
 }
 
 function Note({ e }: { e: FanAccessEntry }) {
@@ -43,15 +43,19 @@ export function RevgiftAccessLog({ entries, finished }: { entries: readonly FanA
       </summary>
       <div className={s.in}>
       <p className={s.lead}>
-        내 주소는 송장을 출력할 때만 열리고, 재출력을 합쳐 최대 {REVGIFT_MAX_DECRYPTS}번까지예요. 출고·반송·취소·처분이 되면 주소를 지워요.
+        이 선물의 주소는 송장 출력 시에만 확인하며, 재출력 포함 최대 {REVGIFT_MAX_DECRYPTS}회입니다.
+        <br />
+        배송용 주소 사본은 택배사 집하 확인 시 삭제합니다. 집하 확인이 연동되기 전에는 출고 72시간 후 삭제됩니다. 반송·취소 등으로 종료된 경우에는 해당 처리에 따라 삭제됩니다.
+        <br />
+        계정 설정에 등록한 주소는 유지됩니다.
       </p>
       {entries === null ? (
         <p className={s.empty} role="status">
-          열람 기록을 지금 불러오지 못했어요. 잠시 뒤 새로고침해 주세요.
+          주소 열람 기록을 불러오지 못했습니다. 잠시 후 새로고침해 주세요.
         </p>
       ) : entries.length === 0 ? (
         <p className={s.empty}>
-          {finished ? "이 선물에서는 주소가 열린 적이 없어요." : "아직 주소가 열린 적이 없어요."}
+          {finished ? "이 선물의 주소 열람 기록이 없습니다." : "주소 열람 기록이 없습니다."}
         </p>
       ) : (
         <>

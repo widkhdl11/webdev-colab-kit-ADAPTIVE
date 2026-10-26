@@ -17,8 +17,8 @@ import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 export const dynamic = "force-dynamic";
 
 const PAYMENT_NOTICE: Record<string, string> = {
-  failed: "결제를 마치지 못해 선물이 등록되지 않았어요. 다시 시도해 주세요.",
-  in_progress: "같은 결제를 처리하는 중이에요. 잠시 뒤 보낸 선물을 확인해 주세요.",
+  failed: "결제가 완료되지 않아 선물이 등록되지 않았습니다. 다시 시도해 주세요.",
+  in_progress: "결제 처리 중입니다. 잠시 후 ‘보낸 선물’에서 결과를 확인해 주세요.",
 };
 
 // 크리에이터 목록은 DB(본인 확인을 마친 크리에이터)에서 읽는다. 평균 승인 시간은 승인 기록으로 계산한 값,

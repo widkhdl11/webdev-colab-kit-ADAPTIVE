@@ -61,5 +61,5 @@ export function channelOwnerLine(creator: { name: string; platform: string | nul
   const name = creator?.name.trim() ?? "";
   const platform = creator?.platform ?? "";
   if (!name || !isChannelPlatform(platform)) return null;
-  return `${name}님의 ${CHANNEL_PLATFORM_LABEL[platform]} 채널 주인이 확인된 페이지예요`;
+  return `${name}님의 ${CHANNEL_PLATFORM_LABEL[platform]} 채널 소유자 확인 완료`;
 }

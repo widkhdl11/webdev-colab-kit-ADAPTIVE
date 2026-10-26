@@ -94,24 +94,24 @@ describe("받기 — 등록한 받을 주소 확인 (INV-R4·R6, INV-P16)", () =
     acceptRevgift.mockResolvedValue({ ok: true });
     render(HOME);
     await click("받기");
-    expect(stepHead()).toBe("주소를 확인해 주세요");
+    expect(stepHead()).toBe("받을 주소 확인");
     expect(host.querySelector("[data-address-on-file]")?.textContent).toContain("집 · ");
     expect(host.querySelector("[data-form]")).toBeNull();
     await click("이 주소로 받기");
     expect(acceptRevgift).toHaveBeenCalledWith(ORDER_NO);
     expect(acceptRevgift.mock.calls[0]).toHaveLength(1);
-    expect(host.textContent).toContain("받기가 끝났어요");
+    expect(host.textContent).toContain("선물 수락 완료");
   });
 
-  it("INV-R6 S6: 받기 판에서 주소 바꾸기를 누르면 「새 주소를 입력해 주세요」, 저장하면 바꾼 이름표로 다시 확인한다", async () => {
+  it("INV-R6 S6: 받기 판에서 주소 변경을 누르면 「받을 주소 변경」, 저장하면 바꾼 이름표로 다시 확인한다", async () => {
     render(HOME);
     await click("받기");
-    await click("주소 바꾸기");
-    expect(stepHead()).toBe("새 주소를 입력해 주세요");
+    await click("주소 변경");
+    expect(stepHead()).toBe("받을 주소 변경");
     await click("가짜 저장");
-    expect(stepHead()).toBe("주소를 확인해 주세요");
+    expect(stepHead()).toBe("받을 주소 확인");
     expect(host.querySelector("[data-address-on-file]")?.textContent).toContain("작업실");
-    expect(host.textContent).toContain("주소를 바꿨어요.");
+    expect(host.textContent).toContain("주소가 변경되었습니다.");
     expect(acceptRevgift).not.toHaveBeenCalled();
   });
 });
@@ -121,12 +121,12 @@ describe("받기 — 등록 전이면 그 자리에서 입력 (INV-R4, INV-P17)"
     acceptRevgift.mockResolvedValue({ ok: true });
     render(NONE);
     await click("받기");
-    expect(stepHead()).toBe("주소를 입력해 주세요");
+    expect(stepHead()).toBe("받을 주소 입력");
     expect(host.querySelector("[data-form]")).not.toBeNull();
     expect(button("이 주소로 받기")).toBeUndefined();
     await click("가짜 저장");
-    expect(stepHead()).toBe("주소를 확인해 주세요");
-    expect(host.textContent).toContain("주소를 등록했어요.");
+    expect(stepHead()).toBe("받을 주소 확인");
+    expect(host.textContent).toContain("주소가 등록되었습니다.");
     await click("이 주소로 받기");
     expect(acceptRevgift).toHaveBeenCalledWith(ORDER_NO);
   });
@@ -136,10 +136,10 @@ describe("받기 — 등록 전이면 그 자리에서 입력 (INV-R4, INV-P17)"
     render(HOME);
     await click("받기");
     await click("이 주소로 받기");
-    expect(stepHead()).toBe("주소를 입력해 주세요");
+    expect(stepHead()).toBe("받을 주소 입력");
     expect(host.querySelector("[data-form]")).not.toBeNull();
     expect(host.textContent).toContain("받을 주소를 먼저 입력해 주세요.");
-    expect(host.textContent).not.toContain("받기가 끝났어요");
+    expect(host.textContent).not.toContain("선물 수락 완료");
   });
 
   it("INV-R4 (실패경로): 입력을 그만두면 판이 닫히고 받기·받지 않기로 돌아간다", async () => {
@@ -163,7 +163,7 @@ describe("받기 — 등록 전이면 그 자리에서 입력 (INV-R4, INV-P17)"
   it("INV-P17 (실패경로): 받을 주소를 읽지 못했으면 받기 버튼 대신 안내", () => {
     render(null);
     expect(button("받기")).toBeUndefined();
-    expect(host.textContent).toContain("받을 주소를 읽지 못했어요");
+    expect(host.textContent).toContain("받을 주소를 불러오지 못했습니다");
   });
 });
 
@@ -186,16 +186,16 @@ describe("끝난 역조공의 결과 (office-workflow INV-W15)", () => {
     );
   }
 
-  it("INV-W15: 처분된 몫은 「상자를 처분했어요」 — 크리에이터에게 돌려보냈다는 말이 없다", () => {
+  it("INV-W15: 처분된 몫은 「상자 처분 완료」 — 크리에이터에게 돌려보냈다는 말이 없다", () => {
     renderSettled("disposed");
-    expect(host.querySelector("#rv-result-title")?.textContent).toBe("상자를 처분했어요");
-    expect(host.textContent).not.toContain("돌려보냈");
+    expect(host.querySelector("#rv-result-title")?.textContent).toBe("상자 처분 완료");
+    expect(host.textContent).not.toContain("반송");
   });
 
-  it("INV-W15 (실패경로): 반송된 몫은 그대로 「상자를 돌려보냈어요」", () => {
+  it("INV-W15 (실패경로): 반송된 몫은 그대로 「반송 완료」", () => {
     renderSettled("returned");
-    expect(host.querySelector("#rv-result-title")?.textContent).toBe("상자를 돌려보냈어요");
-    expect(host.textContent).toContain("상자를 하루님에게 돌려보냈어요.");
+    expect(host.querySelector("#rv-result-title")?.textContent).toBe("반송 완료");
+    expect(host.textContent).toContain("하루님에게 상자가 반송되었습니다.");
   });
 });
 
@@ -221,7 +221,7 @@ describe("받기 칸은 「지금 할 일」 칸 안에만 (action-center INV-J1
   it("INV-J13: 처리할 일 읽기 결과에 있는 몫이면 받기·받지 않기가 #todo 칸 안에 있다", () => {
     renderWaiting(true);
     const box = host.querySelector("#todo");
-    expect(box?.querySelector("h2")?.textContent).toBe("받을지 정해 주세요");
+    expect(box?.querySelector("h2")?.textContent).toBe("선물 수락 여부 선택");
     expect([...(box?.querySelectorAll("button") ?? [])].map((b) => b.textContent)).toEqual(["받기", "받지 않기"]);
   });
 

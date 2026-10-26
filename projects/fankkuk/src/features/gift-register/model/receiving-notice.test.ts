@@ -7,8 +7,8 @@ const today = { year: 2026, month: 10, day: 10 };
 const open = { resumeOn: null, birthday: null, anniversaries: [] };
 
 describe("receivingNotice — 고른 크리에이터의 받는 상태 안내", () => {
-  it("INV-B2: 쉬는 중이면 「잠시 선물 받기를 쉬고 있어요. {날짜}부터 다시 받을게요」", () => {
-    expect(receivingNotice({ receiving: { ...open, resumeOn: "2026-10-20" } }, today)).toBe("잠시 선물 받기를 쉬고 있어요. 10월 20일부터 다시 받을게요");
+  it("INV-B2: 쉬는 중이면 「선물 받기 일시 중단 · {날짜}부터 재개」", () => {
+    expect(receivingNotice({ receiving: { ...open, resumeOn: "2026-10-20" } }, today)).toBe("선물 받기 일시 중단 · 10월 20일부터 재개");
   });
 
   it("INV-B2 S2c: 다시 받는 날이 오늘이면 안내 없음", () => {
@@ -16,11 +16,11 @@ describe("receivingNotice — 고른 크리에이터의 받는 상태 안내", (
   });
 
   it("INV-B6 S6b: 한도에 닿았으면 문구 하나(다음 달 1일)", () => {
-    expect(receivingNotice({ receiving: open, limitReached: true }, today)).toBe("이번 달은 이미 마음을 충분히 보내셨어요. 11월 1일부터 다시 보낼 수 있어요");
+    expect(receivingNotice({ receiving: open, limitReached: true }, today)).toBe("이번 달 선물 한도에 도달했습니다. 11월 1일부터 다시 보낼 수 있습니다.");
   });
 
   it("INV-B2·B6: 쉬는 중이면서 한도에도 닿았으면 쉬는 중을 먼저 — 받는 상태 정보가 없거나 고르지 않았으면 null", () => {
-    expect(receivingNotice({ receiving: { ...open, resumeOn: "2026-10-20" }, limitReached: true }, today)).toMatch(/^잠시/);
+    expect(receivingNotice({ receiving: { ...open, resumeOn: "2026-10-20" }, limitReached: true }, today)).toMatch(/^선물 받기 일시 중단/);
     expect(receivingNotice({}, today)).toBeNull();
     expect(receivingNotice(undefined, today)).toBeNull();
   });
@@ -49,6 +49,6 @@ describe("stopReason · creatorBlockNotice — 지금 보낼 수 없는 크리�
     for (const c of [moving, resting, limit, { receiving: open }, { ...resting, limitReached: true }, undefined]) {
       expect(stopReason(c, today) === null).toBe(creatorBlockNotice(c, today) === null);
     }
-    expect(creatorBlockNotice(moving, today)).toContain("채널을 옮기는 중");
+    expect(creatorBlockNotice(moving, today)).toContain("채널 변경 확인 중");
   });
 });

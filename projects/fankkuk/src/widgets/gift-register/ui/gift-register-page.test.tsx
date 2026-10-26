@@ -36,7 +36,7 @@ const PRICES: PublicPriceTable = {
 const HARU: CreatorOption = { id: "11111111-1111-4111-8111-111111111111", name: "하루", platform: "유튜브", approvalMinutes: null };
 const DAL: CreatorOption = { id: "22222222-2222-4222-8222-222222222222", name: "달", platform: "치지직", approvalMinutes: null };
 const TODAY = { year: 2026, month: 10, day: 14 };
-const LINE = "하루님의 유튜브 채널 주인이 확인된 페이지예요";
+const LINE = "하루님의 유튜브 채널 소유자 확인 완료";
 
 const render = (initialCreatorId: string) =>
   act(() =>
@@ -45,7 +45,7 @@ const render = (initialCreatorId: string) =>
 const header = () => host.querySelector("header.page-head");
 const radio = (id: string) => host.querySelector<HTMLInputElement>(`input[type="radio"][value="${id}"]`);
 
-describe("GiftRegisterPage — 맨 위 「채널 주인이 확인된 페이지」 한 줄", () => {
+describe("GiftRegisterPage — 맨 위 「채널 소유자 확인 완료」 한 줄", () => {
   it("미리 고르고 오면 그 크리에이터의 줄이 머리말 안에 보인다", () => {
     render(HARU.id);
     expect(radio(HARU.id)?.checked).toBe(true);
@@ -56,20 +56,20 @@ describe("GiftRegisterPage — 맨 위 「채널 주인이 확인된 페이지�
     render(HARU.id);
     act(() => radio(DAL.id)?.click());
     expect(radio(DAL.id)?.checked).toBe(true);
-    expect(header()?.textContent).not.toContain("채널 주인이 확인된 페이지예요");
+    expect(header()?.textContent).not.toContain("채널 소유자 확인 완료");
     act(() => radio(HARU.id)?.click());
     expect(header()?.textContent).toContain(LINE);
   });
 
   it("(실패경로) 미리 고르지 않고 오면 줄이 없고, 폼에서 골라도 생기지 않는다", () => {
     render("");
-    expect(header()?.textContent).not.toContain("채널 주인이 확인된 페이지예요");
+    expect(header()?.textContent).not.toContain("채널 소유자 확인 완료");
     act(() => radio(HARU.id)?.click());
-    expect(header()?.textContent).not.toContain("채널 주인이 확인된 페이지예요");
+    expect(header()?.textContent).not.toContain("채널 소유자 확인 완료");
   });
 });
 
-const TOP_LINE = "팔로우한 크리에이터에게만 선물을 보낼 수 있어요.";
+const TOP_LINE = "팔로우한 크리에이터에게만 선물을 보낼 수 있습니다.";
 const FAILED = "결제를 마치지 못해 선물이 등록되지 않았어요. 다시 시도해 주세요.";
 
 describe("d113 D-4: 머리 아래 「팔로우한 크리에이터에게만 …」 줄은 팔로우 0명·로그인 전에서만", () => {

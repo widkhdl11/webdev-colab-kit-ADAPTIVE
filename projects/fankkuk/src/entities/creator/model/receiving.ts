@@ -116,7 +116,7 @@ export function nextMonthFirst(today: CalendarDate): CalendarDate {
 /** INV-B6: 한도에 닿은 팬에게 보이는 문구 하나 — 한도 숫자·남은 개수를 넣지 않는다. */
 export function limitReachedMessage(today: CalendarDate): string {
   const n = nextMonthFirst(today);
-  return `이번 달은 이미 마음을 충분히 보내셨어요. ${n.month}월 ${n.day}일부터 다시 보낼 수 있어요`;
+  return `이번 달 선물 한도에 도달했습니다. ${n.month}월 ${n.day}일부터 다시 보낼 수 있습니다.`;
 }
 
 /** 날짜에 n 일을 더한다. */

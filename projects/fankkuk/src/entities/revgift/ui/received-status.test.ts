@@ -28,7 +28,7 @@ describe("처분된 역조공 (office-workflow INV-W15, 용어집 disposed)", ()
   it("INV-W15: 팬 본인 화면 라벨은 「처분」, 돌려보냈다는 말은 없다", () => {
     const c = settledStageCopy("disposed");
     expect(c.tag).toBe("처분");
-    expect(c.note).toBe("상자를 처분했어요");
+    expect(c.note).toBe("상자 처분 완료");
     expect(`${c.tag} ${c.note}`).not.toContain("돌려보냈");
   });
 });

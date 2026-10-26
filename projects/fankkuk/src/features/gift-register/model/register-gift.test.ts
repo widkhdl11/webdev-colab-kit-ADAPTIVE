@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { createMemoryPaymentStore } from "@/entities/payment/api/memory-payment-store";
 import { InvalidRegistrationError, PriceChangedError, SenderRefusedError, type PaymentStore } from "@/entities/payment/api/payment-store";
-import { PRICE_CHANGED_MESSAGE, type PriceTable } from "@/entities/payment/model/price-table";
+import { type PriceTable } from "@/entities/payment/model/price-table";
+import { GIFT_PRICE_CHANGED_MESSAGE } from "./register-input";
 import type { CreatorRelation } from "./sender-rule";
 import { registerGift } from "./register-gift";
 
@@ -76,14 +77,14 @@ describe("크리에이터가 보내는 선물 (INV-L8·INV-L9)", () => {
   it("INV-L8 (S3d, 실패경로): 자기 자신에게 보내면 403, 아무것도 저장하지 않는다", async () => {
     const { deps, store } = setup(relationIs({ receiverIsSelf: true, senderFollows: true }));
     const r = await registerGift({ ...deps, viewer: CREATOR }, form);
-    expect(r).toMatchObject({ ok: false, status: 403, message: "자기 자신에게는 선물을 보낼 수 없어요." });
+    expect(r).toMatchObject({ ok: false, status: 403, message: "본인에게는 선물을 보낼 수 없습니다." });
     expect(store.registrations()).toEqual([]);
   });
 
   it("INV-L8 (S3d, 실패경로): 실제 관계 읽기처럼 자기 자신이면 팔로우가 false 로 와도 「자기 자신」 이유로 거부한다", async () => {
     const { deps, store } = setup(relationIs({ receiverIsSelf: true, senderFollows: false }));
     const r = await registerGift({ ...deps, viewer: CREATOR }, form);
-    expect(r).toMatchObject({ ok: false, status: 403, message: "자기 자신에게는 선물을 보낼 수 없어요." });
+    expect(r).toMatchObject({ ok: false, status: 403, message: "본인에게는 선물을 보낼 수 없습니다." });
     expect(store.registrations()).toEqual([]);
   });
 
@@ -103,7 +104,7 @@ describe("크리에이터가 보내는 선물 (INV-L8·INV-L9)", () => {
   it("INV-L9 (S3f, 실패경로): 크리에이터가 받는 크리에이터를 팔로우하지 않았으면 403, 아무것도 저장하지 않는다", async () => {
     const { deps, store } = setup(relationIs({ receiverIsSelf: false, senderFollows: false }));
     const r = await registerGift({ ...deps, viewer: CREATOR }, form);
-    expect(r).toMatchObject({ ok: false, status: 403, message: "팔로우한 크리에이터에게만 선물을 보낼 수 있어요." });
+    expect(r).toMatchObject({ ok: false, status: 403, message: "선물을 보낼 크리에이터를 먼저 팔로우해 주세요." });
     expect(store.registrations()).toEqual([]);
   });
 
@@ -114,7 +115,7 @@ describe("크리에이터가 보내는 선물 (INV-L8·INV-L9)", () => {
       return { receiverIsSelf: false, senderFollows: false };
     });
     const r = await registerGift({ ...deps, viewer: FAN }, { ...form, fanId: "fan-daltokki" });
-    expect(r).toMatchObject({ ok: false, status: 403, message: "팔로우한 크리에이터에게만 선물을 보낼 수 있어요." });
+    expect(r).toMatchObject({ ok: false, status: 403, message: "선물을 보낼 크리에이터를 먼저 팔로우해 주세요." });
     expect(store.registrations()).toEqual([]);
     expect(asked).toEqual(["fan-byeolbit"]);
   });
@@ -150,7 +151,7 @@ describe("채널 이사 중인 크리에이터 (creator-verification INV-V12)", 
       const { deps } = setup(relationIs({ receiverIsSelf: false, senderFollows: true }));
       const refusing: PaymentStore = { ...deps.store, create: async () => { throw new SenderRefusedError("moving"); } };
       const r = await registerGift({ ...deps, store: refusing, viewer }, form);
-      expect(r).toEqual({ ok: false, status: 409, message: "채널을 옮기는 중인 크리에이터라 지금은 선물을 받을 수 없어요. 채널 확인이 끝나면 다시 보내 주세요." });
+      expect(r).toEqual({ ok: false, status: 409, message: "채널 변경 확인 중에는 선물을 보낼 수 없습니다. 확인 완료 후 다시 시도해 주세요." });
     }
   });
 });
@@ -169,7 +170,7 @@ describe("요금표 (admin-console INV-K3)", () => {
     const { deps } = setup();
     const refusing: PaymentStore = { ...deps.store, create: async () => { throw new PriceChangedError(); } };
     const r = await registerGift({ ...deps, store: refusing, viewer: FAN }, form);
-    expect(r).toEqual({ ok: false, status: 409, message: PRICE_CHANGED_MESSAGE });
+    expect(r).toEqual({ ok: false, status: 409, message: GIFT_PRICE_CHANGED_MESSAGE });
   });
 
   it("INV-K3 (실패경로): 화면이 보여 준 합계가 등록 순간 요금표의 합계와 다르면 DB 를 부르기 전에 409", async () => {
@@ -177,7 +178,7 @@ describe("요금표 (admin-console INV-K3)", () => {
     // 화면은 22,700 을 보고 있었는데 그 사이 소형이 7,400 으로 올랐다 → 서버 계산은 23,700
     const raised: PriceTable = { ...PRICES, small: { ...PRICES.small, priceKrw: 7400 } };
     const r = await registerGift({ ...deps, viewer: FAN, readPrices: async () => raised }, form);
-    expect(r).toEqual({ ok: false, status: 409, message: PRICE_CHANGED_MESSAGE });
+    expect(r).toEqual({ ok: false, status: 409, message: GIFT_PRICE_CHANGED_MESSAGE });
     expect(store.registrations()).toEqual([]);
   });
 
@@ -219,25 +220,25 @@ describe("받는 양 조절 (creator-receiving INV-B2·B4·B6·B9)", () => {
   it("INV-B2 S2 (실패경로): DB 가 쉬는 중으로 거부하면 409 와 쉬는 중 안내", async () => {
     const { deps } = setup();
     const r = await registerGift({ ...deps, store: refusingStore("resting"), viewer: FAN }, form);
-    expect(r).toEqual({ ok: false, status: 409, message: "지금은 잠시 선물 받기를 쉬고 있는 크리에이터예요." });
+    expect(r).toEqual({ ok: false, status: 409, message: "현재 선물 받기를 중단한 크리에이터입니다." });
   });
 
   it("INV-B6 S6b (실패경로): DB 가 한도로 거부하면 409 와 문구 하나 — 다음 달 1일, 숫자 없음", async () => {
     const { deps } = setup();
     const r = await registerGift({ ...deps, store: refusingStore("limit"), viewer: FAN, now: () => new Date("2026-10-10T03:00:00Z") }, form);
-    expect(r).toEqual({ ok: false, status: 409, message: "이번 달은 이미 마음을 충분히 보내셨어요. 11월 1일부터 다시 보낼 수 있어요" });
+    expect(r).toEqual({ ok: false, status: 409, message: "이번 달 선물 한도에 도달했습니다. 11월 1일부터 다시 보낼 수 있습니다." });
   });
 
   it("INV-B6 S6b: 다음 달 1일은 한국 시간으로 정한다 — UTC 10월 31일 16시(한국 11월 1일 1시)면 「12월 1일」", async () => {
     const { deps } = setup();
     const r = await registerGift({ ...deps, store: refusingStore("limit"), viewer: FAN, now: () => new Date("2026-10-31T16:00:00Z") }, form);
-    expect(r).toEqual({ ok: false, status: 409, message: "이번 달은 이미 마음을 충분히 보내셨어요. 12월 1일부터 다시 보낼 수 있어요" });
+    expect(r).toEqual({ ok: false, status: 409, message: "이번 달 선물 한도에 도달했습니다. 12월 1일부터 다시 보낼 수 있습니다." });
   });
 
   it("INV-H7 S7 (실패경로): DB 가 받기 어려운 품목으로 거부하면 409 와 이유(hard_item) — 화면이 요금 변경과 가른다", async () => {
     const { deps } = setup();
     const r = await registerGift({ ...deps, store: refusingStore("hard_item"), viewer: FAN }, { ...form, itemCategory: "flower" });
-    expect(r).toEqual({ ok: false, status: 409, message: "지금은 이 품목을 받기 어려운 크리에이터예요. 다른 선물을 골라 주세요.", reason: "hard_item" });
+    expect(r).toEqual({ ok: false, status: 409, message: "현재 선택한 종류의 선물을 받지 않는 크리에이터입니다. 다른 종류를 선택해 주세요.", reason: "hard_item" });
   });
 
   it("INV-H7: 다른 409(쉬는 중)에는 이유 칸이 없다", async () => {

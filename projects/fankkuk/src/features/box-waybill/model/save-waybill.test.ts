@@ -32,11 +32,11 @@ describe("상자 송장번호 저장 (팬 선물 상자)", () => {
     expect(g.calls).toEqual([]);
   });
 
-  it("자릿수가 틀리면 DB 를 부르지 않고 400 「송장번호는 숫자 10~14자리예요」", async () => {
+  it("자릿수가 틀리면 DB 를 부르지 않고 400 「송장번호를 숫자 10~14자리로 입력해 주세요.」", async () => {
     const f = fakeClient();
     expect(await saveBoxWaybill({ client: f.client, viewer: FAN }, { boxId: BOX, waybill: "123" })).toEqual({
       status: 400,
-      body: { message: "송장번호는 숫자 10~14자리예요" },
+      body: { message: "송장번호를 숫자 10~14자리로 입력해 주세요." },
     });
     expect(f.calls).toEqual([]);
   });
@@ -59,9 +59,9 @@ describe("상자 송장번호 저장 (팬 선물 상자)", () => {
 
   it("DB 오류를 화면 문구로 바꾼다 — 22023·P0002·55000", async () => {
     const run = async (code: string) => saveBoxWaybill({ client: fakeClient({ code }).client, viewer: FAN }, { boxId: BOX, waybill: "640123457788" });
-    expect(await run("22023")).toEqual({ status: 400, body: { message: "송장번호는 숫자 10~14자리예요" } });
+    expect(await run("22023")).toEqual({ status: 400, body: { message: "송장번호를 숫자 10~14자리로 입력해 주세요." } });
     expect(await run("P0002")).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
-    expect(await run("55000")).toEqual({ status: 409, body: { message: "이미 입고된 상자예요" } });
+    expect(await run("55000")).toEqual({ status: 409, body: { message: "이미 입고된 상자입니다." } });
     expect((await run("XX000")).status).toBe(500);
   });
 
@@ -74,8 +74,8 @@ describe("상자 송장번호 저장 (팬 선물 상자)", () => {
     const run = async (data: unknown, error: { code: string } | null = null) =>
       saveBoxWaybill({ client: fakeClient(error, data).client, viewer: FAN }, { boxId: BOX, waybill: "640123457788" });
     expect(await run("not_found")).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
-    expect(await run("already_received")).toEqual({ status: 409, body: { message: "이미 입고된 상자예요" } });
-    expect(await run(null, { code: "P0045" })).toEqual({ status: 429, body: { message: "오늘은 송장번호를 더 넣을 수 없어요. 내일 다시 해 주세요" } });
+    expect(await run("already_received")).toEqual({ status: 409, body: { message: "이미 입고된 상자입니다." } });
+    expect(await run(null, { code: "P0045" })).toEqual({ status: 429, body: { message: "오늘의 송장번호 등록 횟수를 초과했습니다. 내일 다시 시도해 주세요." } });
   });
 
   it("(실패경로) 등록 함수가 모르는 답을 주면 저장됐다고 하지 않고 500", async () => {
@@ -103,7 +103,7 @@ describe("역조공 몫 송장번호 저장 (보낸 크리에이터)", () => {
 
   it("이미 입고된 몫이면 409", async () => {
     const r = await saveShareWaybill({ client: fakeClient({ code: "55000" }).client, viewer: CREATOR }, { shareId: BOX, waybill: "640199882271" });
-    expect(r).toEqual({ status: 409, body: { message: "이미 입고된 상자예요" } });
+    expect(r).toEqual({ status: 409, body: { message: "이미 입고된 상자입니다." } });
   });
 });
 
@@ -156,14 +156,14 @@ describe("받는 주소 없이 보냈어요 (inbound-address-code INV-C4 ②·C1
 
   it("INV-C10 (S10 실패경로): 하루 5번을 넘으면(P0045) 429 「오늘은 더 찾을 수 없어요」", async () => {
     const r = await findHeldParcel({ client: fakeClient({ code: "P0045" }).client, viewer: FAN }, FIND);
-    expect(r).toEqual({ status: 429, body: { message: "오늘은 더 찾을 수 없어요. 내일 다시 해 주세요" } });
+    expect(r).toEqual({ status: 429, body: { message: "오늘의 조회 횟수를 초과했습니다. 내일 다시 시도해 주세요." } });
   });
 
   it("INV-C4 (실패경로): 찾기 함수가 모르는 답을 주면 이어졌다고 보지 않고 500(입고 화면과 같은 꼴)", async () => {
     for (const data of [true, null, "saved"]) {
       expect(await findHeldParcel({ client: fakeClient(null, data).client, viewer: FAN }, FIND)).toEqual({
         status: 500,
-        body: { message: "찾지 못했어요. 잠시 뒤 다시 해 주세요." },
+        body: { message: "상자를 조회하지 못했습니다. 잠시 후 다시 시도해 주세요." },
       });
     }
   });

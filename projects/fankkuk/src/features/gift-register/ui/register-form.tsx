@@ -8,13 +8,13 @@ import { useForm, useWatch } from "react-hook-form";
 import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorTag } from "@/entities/creator/ui/creator-tag";
-import { RETURN_ON_REJECT_NOTICE } from "@/entities/order/ui/fan-stage-copy";
-import { OVERSIZE_RULE, PARCEL_TIER_GUIDE, RETURN_ON_INSPECTION_NOTICE } from "@/entities/parcel/model/size-tier";
+import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
+import { INTAKE_LIMIT_TEXT, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { tierCountText } from "@/entities/parcel/model/box-rows";
-import { PRICE_CHANGED_MESSAGE, PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
+import { PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { formatDuration } from "@/shared/lib/format/datetime";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
-import { anniversaryInWeek, limitReachedMessage, restingNotice, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
+import { anniversaryInWeek, limitReachedMessage, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
 import { hardItemOverlap, type HardItems } from "@/entities/gift-item/model/hard-items";
 import { forcesMetalReport, isItemCategory, ITEM_CATEGORIES, ITEM_CATEGORY_LABEL, ITEM_OTHER_MAX, type ItemCategory } from "@/entities/gift-item/model/item-category";
 import { charCount } from "@/shared/lib/validation/char-count";
@@ -22,11 +22,12 @@ import { MEMO_BODY_MAX, MEMO_TITLE_MAX } from "@/entities/order/model/gift-memo"
 import { PAYMENT_CONSENT_MISSING, PaymentConsent } from "@/entities/payment/ui/payment-consent";
 import { PHOTO_ACCEPT } from "@/shared/lib/image/photo-limits";
 import { photoPickProblem } from "@/shared/lib/image/photo-pick";
-import { creatorBlockNotice, stopReason } from "../model/receiving-notice";
+import { creatorBlockNotice, restingStopText, stopReason } from "../model/receiving-notice";
+import { SENDER_REFUSAL_MESSAGE } from "../model/sender-rule";
 import { summarizeBoxes, type BoxSummary } from "../model/box-summary";
 import { movingNotice } from "../model/sender-rule";
-import { MAX_BOX_COUNT, registerFormSchema, type RegisterFormOutput, type RegisterFormValues } from "../model/register-input";
-import { PROMISE, SERVICE_PERIOD } from "@/shared/config/site-copy";
+import { GIFT_PRICE_CHANGED_MESSAGE, MAX_BOX_COUNT, registerFormSchema, type RegisterFormOutput, type RegisterFormValues } from "../model/register-input";
+import { PROMISE } from "@/shared/config/site-copy";
 import f from "./register-form.module.css";
 
 /** 고를 수 있는 크리에이터 한 명. 소개 칸(태그·채널 이름·로마자 이름)이 없으면 목록 한 줄에 플랫폼 이름만 보인다. */
@@ -287,24 +288,24 @@ export function RegisterForm({
         await onRegistered({ orderId: body.orderId, orderNo: body.orderNo, amountKrw: body.amountKrw }, photo);
         return;
       }
-      if (res.status === 401) setSubmitError({ message: "로그인하면 선물을 보낼 수 있어요.", needsLogin: true });
-      else if (res.status === 403) setSubmitError({ message: body.message ?? "팬 계정으로 로그인해 주세요.", needsLogin: false });
+      if (res.status === 401) setSubmitError({ message: "로그인이 필요합니다.", needsLogin: true });
+      else if (res.status === 403) setSubmitError({ message: body.message ?? SENDER_REFUSAL_MESSAGE.role, needsLogin: false });
       // 받을 수 없는 크리에이터 — 본인 확인 전이거나 이 사람을 차단했다. 둘을 가르지 않는 서버 문구를 그대로 보인다(decline-block INV-D7)
-      else if (res.status === 404) setSubmitError({ message: body.message ?? "선물을 받을 수 없는 크리에이터예요.", needsLogin: false });
+      else if (res.status === 404) setSubmitError({ message: body.message ?? SENDER_REFUSAL_MESSAGE.unknown_creator, needsLogin: false });
       else if (res.status === 409 && body.reason === "hard_item") {
         // hard-items INV-H7: 화면을 연 뒤 크리에이터가 이 품목을 「등록 막기」로 바꿨다 — 새 설정을 다시 읽고 2단계로 돌아가 안내한다
-        setSubmitError({ message: body.message ?? "다른 선물을 골라 주세요.", needsLogin: false });
+        setSubmitError({ message: body.message ?? SENDER_REFUSAL_MESSAGE.hard_item, needsLogin: false });
         router.refresh();
         go(2, "hard-note");
       }
       else if (res.status === 409) {
         // 화면을 연 뒤 요금이 바뀌었다(INV-K3) — 서버 page 를 다시 그려 새 요금표로 금액을 보여 준다. 고른 값은 그대로 남는다
-        setSubmitError({ message: body.message ?? PRICE_CHANGED_MESSAGE, needsLogin: false });
+        setSubmitError({ message: body.message ?? GIFT_PRICE_CHANGED_MESSAGE, needsLogin: false });
         router.refresh();
       }
       else setSubmitError({ message: "입력한 내용을 다시 확인해 주세요.", needsLogin: false });
     } catch {
-      setSubmitError({ message: "등록하지 못했어요. 잠시 뒤 다시 시도해 주세요.", needsLogin: false });
+      setSubmitError({ message: "선물을 등록하지 못했습니다. 잠시 후 다시 시도해 주세요.", needsLogin: false });
     } finally {
       submittingRef.current = false;
       setSubmitting(false);
@@ -343,7 +344,7 @@ export function RegisterForm({
   useEffect(() => {
     onDraftChange?.({ step, creatorName: pickedName, itemText: itemText || null, boxesChosen, summary });
   }, [onDraftChange, step, pickedName, itemText, boxesChosen, summary]);
-  const metalText = metal === "yes" ? "네, 있어요" : metal === "no" ? "아니요, 없어요" : "아직 안 골랐어요";
+  const metalText = metal === "yes" ? "포함" : metal === "no" ? "미포함" : "미선택";
   const boxesText =
 tierCountText(summary.counts) || "없음";
   const totalText = summary.totalKrw !== null ? won(summary.totalKrw) : summary.overLimit ? `${MAX_BOX_COUNT}개 초과` : won(0); // 0개면 0원 — 「보낼 선물」 칸과 같은 표시(UX 명세 gifts-new 요소 목록)
@@ -371,10 +372,12 @@ tierCountText(summary.counts) || "없음";
 
   // 맨 위 하늘 단계 판의 제목·설명 — 단계마다 하나씩 두고 지금 단계만 보인다(포커스·낭독은 제목 h-1~h-4 그대로)
   const stepText: Record<StepNo, readonly [string, string]> = {
-    1: ["누구에게 보낼까요?", "팔로우한 크리에이터 중에서 골라요."],
-    2: ["어떤 선물인가요?", "크리에이터가 승인할 때 이 내용을 봐요. 검수에서 추적 장치와 구분하는 데도 써요."],
-    3: ["상자는 몇 개인가요?", `상자마다 택배비가 포함돼 있어요. 모두 합쳐 ${MAX_BOX_COUNT}개까지 한 번에 보낼 수 있어요.`],
-    4: ["확인하고 결제해요", "맞는지 한 번 더 봐 주세요. 틀린 곳은 「고치기」로 돌아갈 수 있어요."],
+    1: ["크리에이터 선택", "팔로우한 크리에이터 중 선물 받을 분을 선택해 주세요."],
+    // 다듬은본의 「추적 장치 검수」는 용어집 9절 금지어라 「검수」로 쓴다
+    2: ["선물 정보", "크리에이터의 승인과 검수에 필요한 정보입니다."],
+    // payment INV-M8: 팬이 팬꾹으로 보내는 택배비는 별도 — 포함되는 배송 구간을 밝힌다
+    3: ["상자 선택", `크리에이터에게 보내는 배송비 포함 · 한 번에 최대 ${MAX_BOX_COUNT}개`],
+    4: ["확인 및 결제", "선물 정보와 결제 금액을 확인해 주세요. 변경할 내용은 ‘수정’을 눌러 주세요."],
   };
 
   const heading = (n: StepNo, text: string) => (
@@ -391,8 +394,8 @@ tierCountText(summary.counts) || "없음";
   );
 
   const fix = (n: StepNo, label: string) => (
-    <button className={f.fix} type="button" aria-label={`${label} 고치기`} onClick={() => go(n)}>
-      고치기
+    <button className={f.fix} type="button" aria-label={`${label} 수정`} onClick={() => go(n)}>
+      수정
     </button>
   );
 
@@ -424,7 +427,7 @@ tierCountText(summary.counts) || "없음";
           {submitError.needsLogin ? (
             <>
               {" "}
-              <Link href="/login">로그인하기</Link>
+              <Link href="/login">로그인</Link>
             </>
           ) : null}
         </p>
@@ -500,7 +503,7 @@ tierCountText(summary.counts) || "없음";
             className="field"
             id="pick-q"
             type="search"
-            placeholder="이름이나 채널 이름으로 찾아요"
+            placeholder="이름 또는 채널 이름 검색"
             autoComplete="off"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -525,9 +528,9 @@ tierCountText(summary.counts) || "없음";
               // 이번 달 한도에 닿은 크리에이터는 둘째 줄 전체가 한도 안내다(시안 ux-pilot-2026-10-22 send-2-after)
               const second =
                 reason === "moving"
-                  ? "채널 이사 중 · 지금은 선물을 받지 않아요"
+                  ? "채널 변경 확인 중 · 선물 받기 중단"
                   : reason === "resting"
-                    ? restingNotice(c.receiving?.resumeOn ?? null, today)
+                    ? restingStopText(c.receiving?.resumeOn ?? null, today)
                     : approvalTimeText(c.approvalMinutes);
               const meta = reason === "limit" ? limitReachedMessage(today) : [c.channelTitle ?? c.platform, second].filter(Boolean).join(" · ");
               return (
@@ -581,7 +584,7 @@ tierCountText(summary.counts) || "없음";
           ) : null}
           {matches.length === 0 ? (
             <p className={f["empty-mini"]} role="status">
-              찾는 크리에이터가 없어요. 팔로우한 크리에이터만 고를 수 있어요.
+              검색 결과가 없습니다. 팔로우한 크리에이터만 선택할 수 있습니다.
             </p>
           ) : null}
           {err("creator-error", errors.creatorId?.message)}
@@ -618,7 +621,7 @@ tierCountText(summary.counts) || "없음";
               })}
             </div>
             <p className={f.hint} id="category-hint">
-              음식·음료·냉장·냉동이 필요한 것과 액체는 받지 않아요.
+              보낼 수 없는 물품: 음식·음료·냉장·냉동 보관이 필요한 물품·액체
             </p>
             {err("category-error", errors.itemCategory?.message)}
             {hardOverlap ? (
@@ -645,7 +648,7 @@ tierCountText(summary.counts) || "없음";
                   }}
                 >
                   <strong>{hardOverlap.message}</strong>
-                  <p>그대로 보내도 돼요. 받을지는 크리에이터가 승인할 때 정해요.</p>
+                  <p>등록은 가능하며, 크리에이터가 승인한 경우에만 배송됩니다.</p>
                 </div>
               )
             ) : null}
@@ -654,7 +657,7 @@ tierCountText(summary.counts) || "없음";
             <div className={f.block}>
               <div className={f["field-head"]}>
                 <label className="label" htmlFor="itemOther">
-                  어떤 선물인가요? ({ITEM_OTHER_MAX}자까지)
+                  선물 설명 (최대 {ITEM_OTHER_MAX}자)
                 </label>
                 <span className={f["char-count"]} id="itemOther-count" aria-live="polite" data-over={charCount(itemOther) > ITEM_OTHER_MAX ? "true" : undefined}>
                   {charCount(itemOther)} / {ITEM_OTHER_MAX}자
@@ -682,21 +685,21 @@ tierCountText(summary.counts) || "없음";
             aria-describedby={errors.electronicsOrMetal ? "metal-hint metal-error" : "metal-hint"}
           >
             <p className={f.lb} id="metal-q">
-              전자기기나 금속 제품이 들어 있나요?
+              전자기기·금속 제품 포함 여부
             </p>
             <div className={f.opts}>
               <label className={f.opt}>
-                <input type="radio" value="yes" {...register("electronicsOrMetal")} />네, 있어요
+                <input type="radio" value="yes" {...register("electronicsOrMetal")} />포함
               </label>
               <label className={f.opt}>
                 <input type="radio" value="no" disabled={metalForced} {...register("electronicsOrMetal")} />
-                아니요, 없어요
+                미포함
               </label>
             </div>
             <p className={f.hint} id="metal-hint">
               {metalForced
-                ? "전자기기를 골라서 「있어요」로 정해졌어요. 신고한 상자는 검수에 시간이 조금 더 걸릴 수 있어요."
-                : "검수할 때 참고해요. 신고한 상자는 검수에 시간이 조금 더 걸릴 수 있어요."}
+                ? "전자기기를 선택하면 ‘포함’이 자동 적용됩니다. 검수에 시간이 더 걸릴 수 있습니다."
+                : "전자기기·금속 제품이 포함된 상자는 검수에 시간이 더 걸릴 수 있습니다."}
             </p>
             {err("metal-error", errors.electronicsOrMetal?.message)}
           </div>
@@ -712,7 +715,7 @@ tierCountText(summary.counts) || "없음";
                 <span>「{anniversaryMark} 선물」로 표시해서 보내기</span>
               </label>
               <p className={f.hint} id="mark-hint">
-                {picked?.name}님의 「{anniversaryMark}」까지 7일이 남지 않았어요. 고르면 크리에이터가 승인할 때 이 표시가 보여요.
+                {picked?.name}님의 ‘{anniversaryMark}’ 7일 전부터 선택할 수 있습니다. 크리에이터가 승인할 때 기념일 표시를 확인할 수 있습니다.
               </p>
             </div>
           ) : null}
@@ -740,19 +743,24 @@ tierCountText(summary.counts) || "없음";
                 onChange={(e) => pickPhoto(e.currentTarget.files?.[0])}
               />
               <label className={`btn btn--line btn--sm ${f["photo-pick"]}`} htmlFor="gift-photo">
-                {photo ? "다른 사진 고르기" : "사진 고르기"}
+                {photo ? "사진 변경" : "사진 선택"}
               </label>
               {photo ? (
                 <button className="btn btn--line btn--sm" type="button" onClick={clearPhoto}>
-                  사진 빼기
+                  사진 삭제
                 </button>
               ) : null}
             </div>
             <p className={`${f.hint} ${f["photo-name"]}`} id="photo-name">
-              {photo ? `고른 사진: ${photo.name}` : "고른 사진이 없어요."}
+              {photo ? `선택한 사진: ${photo.name}` : "선택한 사진 없음"}
             </p>
             <p className={f.hint} id="photo-hint">
-              상자·송장이 아니라 선물만 찍어 주세요. jpg·png·webp, 10MB 까지. 촬영 위치 같은 사진 정보는 지우고 저장하고, 크리에이터에게도 보이지 않아요 — 「함께한 시간」에서 나만 봐요.
+              {/* 다듬은본의 「운송장」은 용어집 9절 금지어라 「송장」으로 쓴다 */}
+              JPG·PNG·WebP · 최대 10MB
+              <br />
+              상자나 송장 대신 선물만 촬영해 주세요. 위치 정보 등 사진의 부가 정보는 삭제 후 저장합니다.
+              <br />
+              사진은 ‘함께한 시간’에서 나만 볼 수 있으며, 크리에이터에게 공개되지 않습니다.
             </p>
             {err("photo-error", photoError ?? undefined)}
           </div>
@@ -766,7 +774,7 @@ tierCountText(summary.counts) || "없음";
                 </svg>
                 나만 보는 메모 <span className={f["photo-opt"]}>(선택)</span>
               </h3>
-              <p className={f.hint}>나만 볼 수 있는 메모예요. 나중에 보낸 선물에서 다시 볼 수 있어요.</p>
+              <p className={f.hint}>나에게만 공개 · ‘보낸 선물’에서 다시 확인 가능</p>
             </div>
             <div>
               <div className={f["field-head"]}>
@@ -803,7 +811,7 @@ tierCountText(summary.counts) || "없음";
                 className="field"
                 rows={5}
                 maxLength={MEMO_BODY_MAX}
-                placeholder="무엇을 담았는지, 어떤 마음으로 보냈는지 적어 두세요."
+                placeholder="선물 내용이나 기억하고 싶은 내용을 입력해 주세요."
                 aria-invalid={errors.memoBody ? true : undefined}
                 aria-describedby={errors.memoBody ? "memoBody-count memoBody-error" : "memoBody-count"}
                 {...register("memoBody")}
@@ -853,11 +861,15 @@ tierCountText(summary.counts) || "없음";
           </div>
           {err("box-error", boxError)}
           <div className={`${f.gnote} ${f["gnote-first"]}`}>
-            <h3>상자 크기는 이렇게 정해져요</h3>
+            <h3>상자 크기 기준</h3>
             <ul>
-              <li>크기와 무게 중 큰 쪽으로 정해져요. {OVERSIZE_RULE}는 받지 않아요.</li>
-              <li>도착해서 재 보니 신고보다 큰 상자 크기면 차액을 따로 요청드려요. 차액을 내셔야 출고돼요.</li>
-              <li>재 보니 더 작아도 차액은 돌려드리지 않아요.</li>
+              <li>
+                크기·무게 중 더 큰 요금 구간 적용
+                <br />
+                접수 한도: {INTAKE_LIMIT_TEXT}
+              </li>
+              <li>실측 결과가 선택한 요금 구간을 초과하면 차액이 청구됩니다. 차액 결제 전에는 출고할 수 없습니다.</li>
+              <li>실측 결과가 선택한 요금 구간보다 작아도 차액은 환불되지 않습니다.</li>
             </ul>
           </div>
         </section>
@@ -867,23 +879,23 @@ tierCountText(summary.counts) || "없음";
           <dl className={f.sums}>
             <div className={f["sum-row"]}>
               <dt>받는 크리에이터</dt>
-              <dd>{picked ? `${picked.name}님` : "아직 안 골랐어요"}</dd>
+              <dd>{picked ? `${picked.name}님` : "미선택"}</dd>
               {fix(1, "받는 크리에이터")}
             </div>
             <div className={f["sum-row"]}>
               <dt>선물 종류</dt>
-              <dd>{itemText || "아직 안 골랐어요"}</dd>
+              <dd>{itemText || "미선택"}</dd>
               {fix(2, "선물 종류")}
             </div>
             <div className={f["sum-row"]}>
               <dt>전자기기·금속 제품</dt>
               <dd>{metalText}</dd>
-              {fix(2, "전자기기·금속 제품 신고")}
+              {fix(2, "전자기기·금속 제품")}
             </div>
             <div className={f["sum-row"]}>
               <dt>상자</dt>
               <dd>{boxesText}</dd>
-              {fix(3, "상자 수")}
+              {fix(3, "상자")}
             </div>
             {photo ? (
               <div className={f["sum-row"]}>
@@ -896,25 +908,45 @@ tierCountText(summary.counts) || "없음";
               <div className={f["sum-row"]}>
                 <dt>표시</dt>
                 <dd>「{anniversaryMark} 선물」</dd>
-                {fix(2, "기념일 표시")}
+                {fix(2, "표시")}
               </div>
             ) : null}
           </dl>
           {/* 승인을 기다리지 않고 보내는 대신 거절되면 반송비를 뺀다 — 결제 전에 반드시 보이게 조건 없이 둔다(2026-10-02 사용자 결정). 두 카드를 회색 칸 하나로(25절) */}
           <div className={f.gnote} role="note" aria-labelledby="return-notice-title">
-            <h3 id="return-notice-title">이럴 때는 돌려보내 드려요</h3>
-            <p>{RETURN_ON_REJECT_NOTICE}</p>
-            <p>{RETURN_ON_INSPECTION_NOTICE}</p>
+            <h3 id="return-notice-title">반송·환불 안내</h3>
+            {/* payment INV-M8·M18: 도착한 상자는 반송 택배비(배송비 칸)를 뺀다. 안 온 상자는 팬이 팬꾹 주소를 본 적이 없으면 전액,
+                본 적이 있으면 배송비 칸을 뺀 금액을 먼저, 결제 완료부터 30일(720시간) 안에 안 오면 배송비 칸도 돌려준다 */}
+            <p>
+              크리에이터가 거절하거나 결제 후 {APPROVAL_DEADLINE_DAYS}일 이내에 승인하지 않으면 선물 전달이 취소됩니다.
+              <br />
+              도착한 상자: 확인한 반송 주소로 반송 · 반송 배송비 차감 후 환불
+              <br />
+              미도착·팬꾹 주소 표시 전: 전액 환불
+              <br />
+              미도착·팬꾹 주소 표시 후: 반송 배송비 차감 후 먼저 환불 · 결제 완료 후 30일 이내 미도착 시 남은 배송비도 환불
+            </p>
+            {/* payment INV-M8: 검수 불합격 반송은 상품 대금 칸만(지금은 0) — 검수비·반송 택배비를 뺀다 */}
+            <p>
+              추적 장치 등 금지 물품이 발견되거나 상자가 접수 한도를 초과하면 반송됩니다.
+              <br />
+              접수 한도: {INTAKE_LIMIT_TEXT}
+              <br />
+              이 경우 검수비와 반송 배송비가 차감되어 환불 금액이 없습니다.
+            </p>
             {picked ? (
               <>
                 <hr />
                 <h3>
                   {picked.approvalMinutes === null
-                    ? `${picked.name}님은 아직 승인 기록이 없어요`
-                    : `${picked.name}님은 보통 ${formatDuration(picked.approvalMinutes)} 안에 승인해요`}
+                    ? `${picked.name}님의 승인 기록이 없습니다`
+                    : `${picked.name}님의 평균 승인 소요 시간: ${formatDuration(picked.approvalMinutes)}`}
                 </h3>
                 <p>
-                  크리에이터가 승인하면 팬꾹 주소가 바로 보여요. 기다리지 않고 「먼저 보내기」로 미리 보낼 수도 있어요. {PROMISE.approval}
+                  승인 후 팬꾹 주소가 표시됩니다. 승인 전에는 ‘먼저 보내기’로 팬꾹에 발송할 수 있습니다.
+                  <br />
+                  {/* 용어집 11절 고정 문장 — 다듬은본의 「크리에이터에게는 승인된 선물만 배송됩니다.」 대신 상수를 그대로 쓴다 */}
+                  {PROMISE.approval}
                 </p>
               </>
             ) : null}
@@ -956,7 +988,14 @@ tierCountText(summary.counts) || "없음";
                 검수 포함
               </span>
             </p>
-            <p className={f["pay-note"]}>택배비가 포함된 금액이에요. 선물이 사무실에 도착하기 전에 거절되면 전액 돌려드려요. {SERVICE_PERIOD}</p>
+            {/* payment INV-M8: 팬이 팬꾹으로 보내는 택배비는 팬꾹 결제가 아니라 별도다. 거절 환불은 위 반송·환불 안내 */}
+            <p className={f["pay-note"]}>
+              크리에이터에게 보내는 배송비 포함 · 팬→팬꾹 택배비 별도
+              <br />
+              서비스 제공 기간: 결제일부터 최대 30일
+              <br />
+              거절 시 환불 조건은 위 ‘반송·환불 안내’를 확인해 주세요.
+            </p>
             {step === 4 ? (
               <div className={f.consent}>
                 <PaymentConsent
@@ -964,6 +1003,7 @@ tierCountText(summary.counts) || "없음";
                   checked={consented}
                   invalid={consentMissing}
                   errorId="pay-consent-error"
+                  label="결제 내용과 아래 규정을 확인했으며 결제에 동의합니다 (필수)"
                   onChange={(v) => {
                     setConsented(v);
                     if (v) setConsentMissing(false);

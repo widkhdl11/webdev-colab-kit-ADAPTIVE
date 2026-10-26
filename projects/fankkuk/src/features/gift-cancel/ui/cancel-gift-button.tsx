@@ -29,7 +29,7 @@ export function CancelGiftButton({ orderNo, addressShown }: { orderNo: string; a
   if (done) {
     return (
       <p ref={statusRef} tabIndex={-1} className={`hint ${s.cancel}`} role="status">
-        선물을 취소했어요. 환불은 팬꾹이 확인한 뒤 진행돼요.
+        선물 전달이 취소되었습니다. 팬꾹 확인 후 환불이 진행됩니다.
       </p>
     );
   }
@@ -66,15 +66,22 @@ export function CancelGiftButton({ orderNo, addressShown }: { orderNo: string; a
       ) : (
         <div ref={askRef} tabIndex={-1} className={s.ask} role="group" aria-labelledby={`${id}-q`}>
           <p id={`${id}-q`}>
-            <strong>이 선물을 취소할까요?</strong>{" "}
-            {addressShown
-              ? "상자가 이미 오고 있을 수 있어 택배비를 뺀 금액을 먼저 돌려드려요. 도착한 상자는 돌려보내 드리고, 7일 안에 도착하지 않으면 택배비도 돌려드려요."
-              : "아직 팬꾹 주소가 보이기 전이라 결제 금액을 모두 돌려드려요."}{" "}
-            환불은 팬꾹이 확인한 뒤 진행돼요. 취소는 되돌릴 수 없어요.
+            {/* 주소가 보인 뒤의 환불은 결제 완료부터 30일 기준(payment INV-M16·M18) */}
+            <strong>선물 전달을 취소할까요?</strong>
+            <br />
+            {addressShown ? (
+              <>
+                반송 배송비를 제외한 금액을 먼저 환불합니다. 도착한 상자는 확인한 반송 주소로 보내며, 결제 완료 후 30일 이내에 도착하지 않으면 남은 배송비도 환불합니다.
+                <br />
+                팬꾹 확인 후 환불이 진행되며, 취소한 선물은 복구할 수 없습니다.
+              </>
+            ) : (
+              "팬꾹 주소가 표시되기 전이므로 전액 환불 대상입니다. 팬꾹 확인 후 환불이 진행되며, 취소한 선물은 복구할 수 없습니다."
+            )}
           </p>
           <div className={s.row}>
             <button type="button" className="btn btn--sm" aria-disabled={busy} onClick={() => void confirm()}>
-              {busy ? "취소하는 중…" : "네, 취소할게요"}
+              {busy ? "취소 중…" : "선물 취소"}
             </button>
             <button
               type="button"
@@ -89,7 +96,7 @@ export function CancelGiftButton({ orderNo, addressShown }: { orderNo: string; a
                 requestAnimationFrame(() => triggerRef.current?.focus());
               }}
             >
-              아니요
+              돌아가기
             </button>
           </div>
           {error ? (

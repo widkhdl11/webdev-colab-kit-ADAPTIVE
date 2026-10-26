@@ -86,9 +86,9 @@ export function parseActionItems(data: unknown): ActionItem[] {
 /** 팬 쪽 할 일 줄의 제목 — 지금 할 일 목록 줄과 보낸 선물 카드의 할 일 한 줄이 같은 글자를 쓴다(2026-10-22 리뷰: 두 벌이던 것을 하나로). 받은 역조공 줄은 제목에 이름이 들어가 따로 만든다 */
 export const FAN_TODO_TITLE: Record<Exclude<ActionItem["kind"], "revgift">, string> = {
   difference: "추가 결제",
-  missing_box: "도착이 늦어요",
-  return_address: "돌려받을 주소 확인",
-  unpaid: "결제를 마치지 않은 선물",
+  missing_box: "미도착 상자 확인",
+  return_address: "반송 주소 확인",
+  unpaid: "결제 대기",
 };
 
 /** 선물 상세 맨 위 「지금 할 일」 칸(action-center INV-J13) — 같은 읽기 결과에서 그 주문(역조공은 몫)의 줄만. 상세가 따로 계산하지 않는다 */

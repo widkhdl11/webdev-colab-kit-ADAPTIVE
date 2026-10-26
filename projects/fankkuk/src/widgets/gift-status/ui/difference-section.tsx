@@ -16,17 +16,17 @@ function tierName(t: string): string {
 }
 
 const NOTICE_TEXT: Record<Exclude<DifferenceNotice, null>, string> = {
-  paid: "차액 결제가 끝났어요. 이제 크리에이터에게 보낼 수 있어요.",
-  failed: "차액 결제를 마치지 못했어요. 다시 결제해 주세요.",
-  in_progress: "결제를 확인하고 있어요. 잠시 뒤 화면을 새로고침해 주세요.",
-  closed: "기한이 지났거나 상자를 돌려보내기로 해서 차액을 받을 수 없어요. 결제된 돈은 없어요.",
+  paid: "차액 결제가 완료되었습니다. 나머지 출고 조건이 충족되면 배송됩니다.",
+  failed: "차액 결제가 완료되지 않았습니다. 다시 결제해 주세요.",
+  in_progress: "결제 확인 중입니다. 잠시 후 새로고침해 주세요.",
+  closed: "기한이 지났거나 반송이 결정되어 차액 결제를 진행할 수 없습니다. 차액은 결제되지 않았습니다.",
 };
 
 const STATE_TAG = {
   due: { text: "결제 필요", className: statusTagClass("warn") },
   paying: { text: "결제 확인 중", className: statusTagClass("warn") },
   paid: { text: "결제 완료", className: statusTagClass("success") },
-  closed: { text: "기한 지남", className: statusTagClass("danger") },
+  closed: { text: "기한 만료", className: statusTagClass("danger") },
 } as const;
 
 type Props = { differences: readonly GiftDifference[]; notice: DifferenceNotice };
@@ -36,8 +36,10 @@ export function DifferenceSection({ differences, notice }: Props) {
     <div className={s.sec} data-sec="">
       <h2 className={s.secTitle}>차액 결제</h2>
       <p className={s.desc}>
-        사무실에서 잰 상자가 고른 크기보다 커서 추가 결제가 필요해요. 결제를 마치면 바로 보내 드려요. 기한 안에 결제하지 않으면
-        상자를 돌려보내고 배송비를 환불해 드려요.
+        {/* 차액 결제만으로 출고를 약속하지 않는다 · 미납 반송의 배송비는 반송에 쓰여 환불되지 않는다(payment INV-M8·M12·M13) */}
+        실측 결과가 선택한 요금 구간을 초과해 추가 결제가 필요합니다. 결제 후 승인·검수 등 출고 조건이 충족되면 배송됩니다.
+        <br />
+        기한 내 미결제 시 돌려보낼 상자가 됩니다. 배송비는 반송에 사용되며 환불되지 않습니다.
       </p>
       {notice ? (
         <p className={s.more} role={notice === "failed" || notice === "closed" ? "alert" : "status"}>
@@ -56,9 +58,9 @@ export function DifferenceSection({ differences, notice }: Props) {
                 <span className={tag.className}>{tag.text}</span>
               </div>
               <p className={s.note}>
-                보낼 때 고른 크기 {tierName(d.declaredTier)} → 재어 본 크기 {tierName(d.measuredTier)}
+                선택한 크기 {tierName(d.declaredTier)} → 실측 크기 {tierName(d.measuredTier)}
               </p>
-              {d.state === "closed" ? <p className="hint">기한이 지나 이 상자는 돌려보내 드려요.</p> : null}
+              {d.state === "closed" ? <p className="hint">차액 결제 기한이 지나 반송 예정입니다.</p> : null}
             </div>
           );
         })}

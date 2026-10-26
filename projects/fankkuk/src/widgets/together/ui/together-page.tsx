@@ -7,7 +7,7 @@ import { ALL_GIFTS_PATH } from "@/entities/together/model/together-path";
 import { FOLLOW_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
 import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import { FanBoxReplies } from "@/features/gift-reply/ui/fan-box-replies";
-import { GIFT_PHOTO_RULE, GiftPhotoManager } from "@/features/gift-photo/ui/gift-photo-manager";
+import { GIFT_PHOTO_PRIVATE, GIFT_PHOTO_RULE, GiftPhotoManager } from "@/features/gift-photo/ui/gift-photo-manager";
 import { statusTagClass, type StatusTone } from "@/shared/ui/status-tone";
 import type { TogetherCard, TogetherPageProps } from "../api/load-together";
 import s from "./together.module.css";
@@ -47,7 +47,7 @@ function badgesOf(card: TogetherCard): Array<{ text: string; tone: StatusTone | 
   if (card.anniversaryName) out.push({ text: `${card.anniversaryName} 선물`, tone: "brand" });
   const p = card.progress;
   if (p.kind === "moving") out.push({ text: p.label, tone: p.tone });
-  else if (card.outcome === "declined" || card.outcome === "expired") out.push({ text: "받지 않은 선물", tone: "plain" });
+  else if (card.outcome === "declined" || card.outcome === "expired") out.push({ text: "전달되지 않은 선물", tone: "plain" });
   else if (card.outcome === "returned") out.push({ text: "반송", tone: "plain" });
   return out;
 }
@@ -144,7 +144,7 @@ export function TogetherPage(props: TogetherPageProps) {
         </header>
 
         <p className={s.mnote} role="note">
-          <strong>나만 볼 수 있어요</strong>
+          <strong>{GIFT_PHOTO_PRIVATE}</strong>
           <span>{GIFT_PHOTO_RULE}</span>
         </p>
 
@@ -158,7 +158,6 @@ export function TogetherPage(props: TogetherPageProps) {
                 <span className="sr-only">{anniversary.daysLeft === 0 ? "오늘" : `${anniversary.daysLeft}일 남음`}</span>
               </em>
             </p>
-            <p className="t-lead t-desc">다음 추억을 남겨 볼까요</p>
             <div className={s["ann-foot"]}>
               {props.send === "hidden" && anniversary.resumeText ? <p className={s["rest-msg"]}>{anniversary.resumeText}</p> : <SendSpot props={props} />}
             </div>

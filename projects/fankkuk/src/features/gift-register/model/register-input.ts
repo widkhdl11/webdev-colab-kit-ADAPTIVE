@@ -14,20 +14,20 @@ export const MAX_BOX_COUNT = 10;
 
 const count = z
   .string()
-  .regex(/^[0-9]+$/, "상자 수를 숫자로 적어 주세요.")
+  .regex(/^[0-9]+$/, "상자 수를 숫자로 입력해 주세요.")
   .transform(Number);
 
 export const registerFormSchema = z
   .object({
     // 크리에이터 id 는 DB 의 uuid — 꼴이 다르면 고르지 않은 것과 같다(DB 형식 오류가 서버 오류로 번지지 않게)
-    creatorId: z.string().uuid("선물을 받을 크리에이터를 골라 주세요."),
+    creatorId: z.string().uuid("선물을 받을 크리에이터를 선택해 주세요."),
     // hard-items INV-H1: 물품 종류는 고정 목록에서 고른다. 기타만 30자까지 직접 적는다(아래 superRefine)
-    itemCategory: z.enum(ITEM_CATEGORIES, { message: "선물 종류를 골라 주세요." }),
+    itemCategory: z.enum(ITEM_CATEGORIES, { message: "선물 종류를 선택해 주세요." }),
     itemOther: z.string().trim().optional(),
     smallCount: count,
     mediumCount: count,
     largeCount: count,
-    electronicsOrMetal: z.enum(["yes", "no"], { message: "전자기기나 금속 제품이 들어 있는지 골라 주세요." }),
+    electronicsOrMetal: z.enum(["yes", "no"], { message: "전자기기·금속 제품 포함 여부를 선택해 주세요." }),
     // creator-receiving INV-B9: 「{기념일} 선물」 표시 — 고른 기념일 이름. 7일 안인지는 DB 가 그날 다시 계산한다
     // 길이는 글자 수(코드 포인트)로 센다 — DB char_length 와 같은 기준(INV-B7)
     anniversaryName: z
@@ -40,26 +40,26 @@ export const registerFormSchema = z
     memoTitle: z
       .string()
       .trim()
-      .refine((s) => charCount(s) <= MEMO_TITLE_MAX, `선물 이름은 ${MEMO_TITLE_MAX}자 안으로 적어 주세요.`)
-      .refine((s) => !/[\r\n]/.test(s), "선물 이름은 한 줄로 적어 주세요.")
+      .refine((s) => charCount(s) <= MEMO_TITLE_MAX, `선물 이름은 ${MEMO_TITLE_MAX}자 안으로 입력해 주세요.`)
+      .refine((s) => !/[\r\n]/.test(s), "선물 이름은 한 줄로 입력해 주세요.")
       .optional(),
     memoBody: z
       .string()
       .trim()
-      .refine((s) => charCount(s) <= MEMO_BODY_MAX, `내용은 ${MEMO_BODY_MAX}자 안으로 적어 주세요.`)
+      .refine((s) => charCount(s) <= MEMO_BODY_MAX, `내용은 ${MEMO_BODY_MAX}자 안으로 입력해 주세요.`)
       .optional(),
   })
   .superRefine((v, ctx) => {
     // 기타 글 길이는 글자 수(코드 포인트)로 센다 — DB char_length 와 같은 기준
     if (v.itemCategory === "other") {
       const n = charCount(v.itemOther ?? "");
-      if (n === 0) ctx.addIssue({ code: "custom", path: ["itemOther"], message: "어떤 선물인지 적어 주세요." });
-      else if (n > ITEM_OTHER_MAX) ctx.addIssue({ code: "custom", path: ["itemOther"], message: `${ITEM_OTHER_MAX}자 안으로 적어 주세요.` });
+      if (n === 0) ctx.addIssue({ code: "custom", path: ["itemOther"], message: "선물 내용을 입력해 주세요." });
+      else if (n > ITEM_OTHER_MAX) ctx.addIssue({ code: "custom", path: ["itemOther"], message: `${ITEM_OTHER_MAX}자 안으로 입력해 주세요.` });
     }
     const total = v.smallCount + v.mediumCount + v.largeCount;
-    if (total === 0) ctx.addIssue({ code: "custom", path: ["smallCount"], message: "상자를 하나 이상 골라 주세요." });
+    if (total === 0) ctx.addIssue({ code: "custom", path: ["smallCount"], message: "상자를 하나 이상 선택해 주세요." });
     if (total > MAX_BOX_COUNT) {
-      ctx.addIssue({ code: "custom", path: ["smallCount"], message: `상자는 모두 합쳐 ${MAX_BOX_COUNT}개까지 한 번에 등록할 수 있어요.` });
+      ctx.addIssue({ code: "custom", path: ["smallCount"], message: `상자는 한 번에 최대 ${MAX_BOX_COUNT}개까지 등록할 수 있습니다.` });
     }
   });
 
@@ -125,3 +125,6 @@ export function parseRegisterInput(input: unknown): RegisterParseResult {
     },
   };
 }
+
+/** 화면을 연 뒤 요금이 바뀌었을 때(INV-K3) — 선물 보내기 문구(문구 3 다듬은본). 역조공 보내기는 PRICE_CHANGED_MESSAGE 그대로 */
+export const GIFT_PRICE_CHANGED_MESSAGE = "요금이 변경되었습니다. 금액을 다시 확인한 뒤 결제해 주세요.";

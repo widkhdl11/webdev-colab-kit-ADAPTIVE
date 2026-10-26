@@ -15,7 +15,7 @@ import { useUnfollowConfirm } from "./unfollow-dialog";
 // row = 크리에이터 찾기 목록의 작은 버튼, profile = 크리에이터 페이지의 큰 버튼(시안 creators.html · creator.html),
 // card = 크리에이터 카드 아래 띠(2026-10-18 — 팔로우 안 함은 「팔로우」 하나, 팔로우 중은 「선물 보내기」+「팔로우 취소」(아이콘만), 아이콘 포함).
 // 팔로우한 크리에이터 목록도 card 를 쓴다 — 취소가 저장되면 onUnfollowed 로 목록에서 뺀다(실패 처리는 여기 한 곳).
-// 「팔로우 중」을 누르면 바로 끊지 않고 확인 창(useUnfollowConfirm)을 띄운다 — 「취소하기」를 눌러야 끊는다(design-rules 12절).
+// 「팔로우 중」을 누르면 바로 끊지 않고 확인 창(useUnfollowConfirm)을 띄운다 — 「팔로우 취소」를 눌러야 끊는다(design-rules 12절).
 // 상태는 바뀌는 글자(「팔로우」↔「팔로우 중」)로만 알린다 — 시안이 글자를 바꿔 보여 주므로 aria-pressed 를 같이 달지 않는다
 // (둘 다 달면 화면 낭독기가 「팔로우 중, 눌림」처럼 상태를 두 번 읽는다).
 
@@ -97,7 +97,7 @@ export function FollowButton({
   }
 
   // 저장 중에는 버튼을 막는다 — 요청 순서가 뒤바뀌어 화면과 저장 값이 어긋나지 않게.
-  // 바꿀 값(next)을 직접 받는다 — 확인 창이 열린 사이 앞 저장이 실패해 상태가 되돌아가도, 창의 「취소하기」는 늘 「끊기」만 보낸다
+  // 바꿀 값(next)을 직접 받는다 — 확인 창이 열린 사이 앞 저장이 실패해 상태가 되돌아가도, 창의 「팔로우 취소」는 늘 「끊기」만 보낸다
   const save = async (next: boolean) => {
     if (savingRef.current) return;
     savingRef.current = true;

@@ -5,8 +5,8 @@ import s from "./action-center.module.css";
 
 // 지금 할 일 (action-center INV-J1·J2·J4·J13, design-rules 21절, 시안 v34-part1/todo.html). 본문 틀은 목록형 880 — 라우트가 MyShell(list)로 감싼다.
 // 줄은 처리할 일 읽기 한 번의 결과 그대로 — 제목 옆 숫자는 그 줄 수이고 사이드바 숫자와 같은 결과다(J2). 0건이면 빈 상태.
-// 이 화면에는 처리 칸이 없다(J13): 가장 급한 줄 하나만 강조 칸(남은 날·그림·「바로 하기」), 나머지는 촘촘한 줄 + 작은 「바로 하기」.
-// 「바로 하기」는 그 선물 상세의 「지금 할 일」 칸(#todo)으로 간다 — 처리는 상세 칸에서 기존 처리 함수를 그대로 부른다(J4).
+// 이 화면에는 처리 칸이 없다(J13): 가장 급한 줄 하나만 강조 칸(남은 날·그림·「확인하기」), 나머지는 촘촘한 줄 + 작은 「확인하기」.
+// 「확인하기」는 그 선물 상세의 「지금 할 일」 칸(#todo)으로 간다 — 처리는 상세 칸에서 기존 처리 함수를 그대로 부른다(J4).
 // 처리가 끝나면 다음 읽기에서 줄이 없다 — 줄은 누른 기록이 아니라 원천 상태로 사라진다.
 
 /** now = 남은 날을 셀 기준 시각(라우트가 그린 때) */
@@ -21,7 +21,7 @@ function rowCopy(item: ActionItem): { title: string; meta: string; art: string }
   if (item.kind === "missing_box") return { title: FAN_TODO_TITLE.missing_box, meta: `${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`, art: "/images/home/icon-truck.webp" };
   if (item.kind === "unpaid") return { title: FAN_TODO_TITLE.unpaid, meta: `${item.creatorName}님께 보낼 선물`, art: "/images/home/icon-fee.webp" };
   if (item.kind === "return_address") return { title: FAN_TODO_TITLE.return_address, meta: `${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`, art: "/images/home/icon-truck.webp" };
-  return { title: `${item.creatorName}님이 보낸 선물 받기`, meta: "받을지 정해 주세요", art: "/images/home/icon-gift.webp" };
+  return { title: `${item.creatorName}님이 보낸 선물 받기`, meta: "선물 수락 여부 선택", art: "/images/home/icon-gift.webp" };
 }
 
 /** 남은 날(서울 날짜) — 기한 당일이면 0. 기한이 아직 없으면(검수 완료 스캔 전 차액) null */
@@ -54,8 +54,8 @@ function Featured({ item, now }: { item: ActionItem; now: string }) {
       ) : (
         <span />
       )}
-      <Link className="btn" href={giftDetailHref(item.orderNo, true)} aria-label={`${c.title} 바로 하기 — ${c.meta}`}>
-        바로 하기
+      <Link className="btn" href={giftDetailHref(item.orderNo, true)} aria-label={`${c.title} 확인하기 — ${c.meta}`}>
+        확인하기
       </Link>
     </article>
   );
@@ -75,8 +75,8 @@ function Row({ item, now }: { item: ActionItem; now: string }) {
       </p>
       <div className="lrow-side">
         {days !== null ? <span className="tag tag--warn">{leftText(days)}</span> : null}
-        <Link className="btn btn--line btn--sm" href={giftDetailHref(item.orderNo, true)} aria-label={`${c.title} 바로 하기 — ${c.meta}`}>
-          바로 하기
+        <Link className="btn btn--line btn--sm" href={giftDetailHref(item.orderNo, true)} aria-label={`${c.title} 확인하기 — ${c.meta}`}>
+          확인하기
         </Link>
       </div>
     </li>
@@ -93,7 +93,7 @@ export function ActionCenterPage({ items, now }: Props) {
             지금 할 일{items.length > 0 ? <span className="ph-count">{items.length}</span> : null}
           </h1>
         </div>
-        <p className="ph-desc">끝내면 여기서 사라져요.</p>
+        <p className="ph-desc">확인하거나 처리할 항목입니다. 완료한 항목은 목록에서 제외됩니다.</p>
       </header>
       {first ? (
         <>
@@ -109,8 +109,8 @@ export function ActionCenterPage({ items, now }: Props) {
       ) : (
         <section className={`card ${s.empty}`} aria-labelledby="ac-empty" data-testid="action-empty">
           <img className={s.emptyArt} src="/images/home/icon-approve.webp" alt="" aria-hidden="true" width={72} height={72} />
-          <h2 id="ac-empty">지금 할 일이 없어요</h2>
-          <p>새로 생기면 여기에 알려 드릴게요.</p>
+          <h2 id="ac-empty">확인할 항목이 없습니다</h2>
+          <p>확인할 항목이 생기면 이곳에 표시됩니다.</p>
           <Link className="btn btn--line" href="/gifts">
             보낸 선물 보기
           </Link>

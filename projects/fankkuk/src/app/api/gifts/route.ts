@@ -12,7 +12,7 @@ import { isSameOriginJson } from "@/shared/lib/http/same-origin";
 // 응답에는 결제창에 필요한 결제 orderId·주문번호·금액만 싣는다(칸 나눔은 싣지 않는다, INV-M7).
 export async function POST(req: NextRequest) {
   if (!isSameOriginJson(req.headers)) {
-    return NextResponse.json({ message: "잘못된 요청이에요." }, { status: 403, headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json({ message: "유효하지 않은 요청입니다. 새로고침한 뒤 다시 시도해 주세요." }, { status: 403, headers: { "Cache-Control": "no-store" } });
   }
   let body: unknown = null;
   try {

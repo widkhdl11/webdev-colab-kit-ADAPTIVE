@@ -132,7 +132,7 @@ describe("크리에이터 상세 — 버튼 자리 상태표 (UX 명세 2026-10-
     act(() => buttonByText("팔로우")!.click());
     await flush();
     expect(actionsText()).toEqual(["팔로우"]);
-    expect(host.querySelector('[role="status"]')?.textContent).toContain("팔로우를 저장하지 못했어요");
+    expect(host.querySelector('[role="status"]')?.textContent).toContain("팔로우 설정을 저장하지 못했습니다");
     expect(router.push).not.toHaveBeenCalled();
   });
 
@@ -178,7 +178,7 @@ describe("크리에이터 상세 — 버튼 자리 상태표 (UX 명세 2026-10-
     expect(gift().dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }))).toBe(true);
     fetchMock.mockImplementation(() => new Promise<Response>(() => {}));
     act(() => buttonByText("팔로우 중")!.click());
-    act(() => buttonByText("취소하기")!.click());
+    act(() => buttonByText("팔로우 취소")!.click());
     await flush();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(gift().getAttribute("aria-disabled")).toBe("true");
@@ -193,7 +193,7 @@ describe("크리에이터 상세 — 버튼 자리 상태표 (UX 명세 2026-10-
   it("팔로우 취소가 저장되면 초점이 「팔로우」로 옮겨 간다", async () => {
     renderProfile("open", "save");
     act(() => buttonByText("팔로우 중")!.click());
-    act(() => buttonByText("취소하기")!.click());
+    act(() => buttonByText("팔로우 취소")!.click());
     await flush();
     expect(actionsText()).toEqual(["팔로우"]);
     expect(document.activeElement).toBe(buttonByText("팔로우"));
@@ -207,7 +207,7 @@ describe("크리에이터 상세 — 버튼 자리 상태표 (UX 명세 2026-10-
     expect(status().classList.contains("sr-only")).toBe(true);
     act(() => buttonByText("팔로우")!.click());
     await flush();
-    expect(status().textContent).toBe("팔로우를 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.");
+    expect(status().textContent).toBe("팔로우 설정을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
     expect(status().classList.contains("sr-only")).toBe(false);
     expect(status().parentElement).toBe(buttonByText("팔로우")!.parentElement);
   });
@@ -217,10 +217,10 @@ describe("크리에이터 상세 — 버튼 자리 상태표 (UX 명세 2026-10-
     const status = () => host.querySelector<HTMLElement>('[role="status"]')!;
     renderProfile("open", "save");
     act(() => buttonByText("팔로우 중")!.click());
-    act(() => buttonByText("취소하기")!.click());
+    act(() => buttonByText("팔로우 취소")!.click());
     await flush();
     expect(actionsText()).toEqual(["선물 보내기", "팔로우 중"]);
-    expect(status().textContent).toBe("팔로우 취소를 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.");
+    expect(status().textContent).toBe("팔로우 설정을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
     expect(status().classList.contains("sr-only")).toBe(false);
   });
 
@@ -245,12 +245,12 @@ describe("크리에이터 상세 — 버튼 자리 상태표 (UX 명세 2026-10-
     }
   });
 
-  it("「팔로우 중」은 바로 끊지 않고 확인 창을 띄우고, 「취소하기」를 눌러야 끊어져 「팔로우」로 돌아간다", async () => {
+  it("「팔로우 중」은 바로 끊지 않고 확인 창을 띄우고, 「팔로우 취소」를 눌러야 끊어져 「팔로우」로 돌아간다", async () => {
     renderProfile("open", "save");
     act(() => buttonByText("팔로우 중")!.click());
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(host.querySelector("dialog")?.textContent).toContain("정말 팔로우를 취소하시겠어요?");
-    act(() => buttonByText("취소하기")!.click());
+    expect(host.querySelector("dialog")?.textContent).toContain("팔로우를 취소할까요?");
+    act(() => buttonByText("팔로우 취소")!.click());
     await flush();
     expect(JSON.parse(String((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body))).toEqual({ creatorId: card.id, following: false });
     expect(actionsText()).toEqual(["팔로우"]);

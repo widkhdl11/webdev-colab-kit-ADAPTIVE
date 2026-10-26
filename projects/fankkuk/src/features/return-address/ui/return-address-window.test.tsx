@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// 돌려받을 주소 확인 창 (office-workflow INV-W15, action-center INV-J4, address-protection INV-P16·P17).
+// 반송 주소 확인 창 (office-workflow INV-W15, action-center INV-J4, address-protection INV-P16·P17).
 // 서버로 가는 확인 요청과 주소 입력 칸(봉인·저장)은 가짜로 둔다 — 시험 대상은 창의 단계(확인 / 바꾸기 / 등록 전 입력)와,
 // 확인 요청이 주소 없이 그 상자 하나(주문번호 + 상자 순번)만 보내는지다.
 const sendReturnConfirm = vi.fn();
@@ -80,19 +80,19 @@ async function click(name: string) {
 }
 
 describe("INV-W15: 등록 주소가 있으면 이름표·바꾼 날과 「확인」「바꾸기」", () => {
-  it("INV-W15·P16: 창 제목은 「돌려받을 주소 확인」, 이름표와 등록한 날만 보이고 주소 입력 칸은 없다", () => {
+  it("INV-W15·P16: 창 제목은 「반송 주소 확인」, 이름표와 등록한 날만 보이고 주소 입력 칸은 없다", () => {
     render(HOME);
-    expect(text()).toContain("돌려받을 주소 확인");
+    expect(text()).toContain("반송 주소 확인");
     expect(text()).toContain("집 · ");
-    expect(button("확인")).toBeDefined();
-    expect(button("바꾸기")).toBeDefined();
+    expect(button("주소 확인")).toBeDefined();
+    expect(button("주소 변경")).toBeDefined();
     expect(host.ownerDocument.querySelector("[data-form]")).toBeNull();
   });
 
   it("INV-W15·J4: 「확인」은 주문번호와 상자 순번만 보내고(주소 없음), 끝나면 창을 닫고 다시 읽는다", async () => {
     sendReturnConfirm.mockResolvedValue({ kind: "ok" });
     render(HOME);
-    await click("확인");
+    await click("주소 확인");
     expect(sendReturnConfirm).toHaveBeenCalledWith({ orderNo: "FC-7K3M9", boxSeq: 2 });
     expect(refresh).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
@@ -101,28 +101,28 @@ describe("INV-W15: 등록 주소가 있으면 이름표·바꾼 날과 「확인
   it("INV-W15: 역조공 몫(상자 순번 없음)은 주문번호만 보낸다", async () => {
     sendReturnConfirm.mockResolvedValue({ kind: "ok" });
     render(HOME, null);
-    await click("확인");
+    await click("주소 확인");
     expect(sendReturnConfirm).toHaveBeenCalledWith({ orderNo: "FC-7K3M9" });
   });
 
   it("INV-W15: 「바꾸기」는 입력 칸을 열고, 돌아가면 다시 확인 단계다", async () => {
     render(HOME);
-    await click("바꾸기");
+    await click("주소 변경");
     expect(host.ownerDocument.querySelector("[data-form]")).not.toBeNull();
-    expect(button("확인")).toBeUndefined();
+    expect(button("주소 확인")).toBeUndefined();
     await click("가짜 돌아가기");
-    expect(button("확인")).toBeDefined();
+    expect(button("주소 확인")).toBeDefined();
     // 누른 「돌아가기」가 사라졌다 — 포커스는 입력 칸을 연 「바꾸기」로 돌아온다
-    expect(host.ownerDocument.activeElement).toBe(button("바꾸기"));
+    expect(host.ownerDocument.activeElement).toBe(button("주소 변경"));
   });
 
   it("INV-W15 (실패경로): 기한이 지나 거부되면 그 문장을 보이고 다시 읽는다 — 창은 닫지 않는다", async () => {
     sendReturnConfirm.mockResolvedValue({ kind: "refused", reason: "expired" });
     render(HOME);
-    await click("확인");
+    await click("주소 확인");
     const alert = host.ownerDocument.querySelector("[role=alert]");
     expect(alert).not.toBeNull();
-    expect(alert?.textContent).toBe("!기한이 지나 확인할 수 없어요.");
+    expect(alert?.textContent).toBe("!확인 기한이 지났습니다.");
     expect(refresh).toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
   });
@@ -130,25 +130,25 @@ describe("INV-W15: 등록 주소가 있으면 이름표·바꾼 날과 「확인
   it("INV-W15 (실패경로): 서버가 「등록 주소 없음」으로 거부하면 입력 단계로 바뀐다", async () => {
     sendReturnConfirm.mockResolvedValue({ kind: "refused", reason: "no_address" });
     render(HOME);
-    await click("확인");
-    expect(text()).toContain("주소를 입력해 주세요");
+    await click("주소 확인");
+    expect(text()).toContain("주소 등록");
     expect(host.ownerDocument.querySelector("[data-form]")).not.toBeNull();
   });
 });
 
 describe("INV-W15·P17: 등록 전이면 그 자리에서 입력한 뒤 확인", () => {
-  it("INV-P17: 「주소를 입력해 주세요」와 입력 칸 — 「확인」은 없다", () => {
+  it("INV-P17: 「주소 등록」와 입력 칸 — 「확인」은 없다", () => {
     render(NONE);
-    expect(text()).toContain("주소를 입력해 주세요");
+    expect(text()).toContain("주소 등록");
     expect(host.ownerDocument.querySelector("[data-form]")).not.toBeNull();
-    expect(button("확인")).toBeUndefined();
+    expect(button("주소 확인")).toBeUndefined();
   });
 
   it("INV-P17: 저장되면 확인 단계로 넘어가 「확인」을 누를 수 있다", async () => {
     render(NONE);
     await click("가짜 저장");
     expect(text()).toContain("작업실 · ");
-    expect(button("확인")).toBeDefined();
+    expect(button("주소 확인")).toBeDefined();
   });
 
   it("INV-P17 (실패경로): 봉인 공개키가 없으면 입력 칸 대신 안내만", () => {

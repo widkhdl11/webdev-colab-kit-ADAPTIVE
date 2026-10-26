@@ -8,9 +8,9 @@ import { splitIsoDate } from "@/shared/lib/date/calendar";
 export type SpecialMoment = "tenth" | "thirtieth" | "first_year";
 
 export const SPECIAL_MOMENT_TEXT: Record<SpecialMoment, string> = {
-  tenth: "10번째 선물이에요",
-  thirtieth: "30번째 선물이에요",
-  first_year: "처음 선물한 지 1년째예요",
+  tenth: "10번째 선물",
+  thirtieth: "30번째 선물",
+  first_year: "첫 선물 1주년",
 };
 
 const BY_NUMBER: ReadonlyMap<number, SpecialMoment> = new Map([

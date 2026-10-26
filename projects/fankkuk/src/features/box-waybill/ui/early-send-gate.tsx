@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
-import { notApprovedYetText } from "@/entities/order/ui/fan-stage-copy";
 import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import { postEarlySend } from "../api/post-waybill-client";
 import s from "./box-waybill.module.css";
@@ -39,17 +38,17 @@ export function EarlySendGate({ orderNo, creatorName, focusAfterId }: Props) {
   return (
     <div className={s.early} role="group" aria-labelledby={`${id}-q`}>
       <p id={`${id}-q`}>
-        <strong>{notApprovedYetText(creatorName)}</strong>
+        <strong>{creatorName}님의 승인 대기 중입니다.</strong>
       </p>
       {/* 문단 대신 짧은 줄 셋(design-rules 33절, 사용자 「주절주절 설명하지 말고」 — 시안 v41 detail-after ?state=before) */}
       <ul className={s.pts}>
-        <li>지금 보내면 더 빨리 도착해요</li>
-        <li>받지 않으면 반송 택배비를 빼고 돌려드려요</li>
-        <li>기다리면 승인 뒤 주소가 바로 보여요</li>
+        <li>승인 전에도 팬꾹으로 선물을 발송할 수 있습니다. 크리에이터가 거절하면 반송됩니다.</li>
+        <li>반송 시 반송 배송비를 차감해 환불합니다.</li>
+        <li>승인을 기다린 뒤 발송해도 됩니다. 승인되면 팬꾹 주소가 표시됩니다.</li>
       </ul>
       <div className={s["early-row"]}>
         <button type="button" className="btn btn--sm" aria-disabled={busy} onClick={() => void send()}>
-          {busy ? "여는 중…" : "먼저 보내기"}
+          {busy ? "불러오는 중…" : "먼저 보내기"}
         </button>
       </div>
       {error ? (

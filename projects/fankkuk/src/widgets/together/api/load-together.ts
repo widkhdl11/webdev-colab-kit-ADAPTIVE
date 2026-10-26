@@ -57,7 +57,7 @@ export type TogetherPageProps = {
 function resumeTextOf(resumeOn: string | null, today: ReturnType<typeof kstToday>): string | null {
   if (!resumeOn || !isResting(resumeOn, today)) return null;
   const d = parseIsoDate(resumeOn);
-  return d ? `${d.month}월 ${d.day}일부터 다시 받아요` : null;
+  return d ? `선물 받기 재개: ${d.month}월 ${d.day}일` : null;
 }
 
 function repliesByOrder(rows: readonly FanBoxReply[]): Map<string, FanBoxReply[]> {

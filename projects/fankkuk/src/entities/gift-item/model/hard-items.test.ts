@@ -59,14 +59,14 @@ describe("INV-H8: 등록 화면 안내", () => {
 
   it("INV-H8 S8: 꽃 「안내만」에 꽃을 고르면 안내가 뜨고 막지 않는다", () => {
     expect(hardItemOverlap("하루", hard("notice"), "flower")).toEqual({
-      message: "하루님이 지금 꽃은 받기 어렵대요. 다른 선물을 고르시겠어요?",
+      message: "하루님이 현재 받기 어려운 선물입니다: 꽃.",
       blocks: false,
     });
   });
 
-  it("INV-H8 S8b (실패경로): 「등록 막기」면 묻지 않고 「다른 선물을 골라 주세요」로 끝나는 안내에 막는다", () => {
+  it("INV-H8 S8b (실패경로): 「등록 막기」면 「다른 종류를 선택해 주세요」로 끝나는 안내에 막는다", () => {
     expect(hardItemOverlap("하루", hard("block"), "doll")).toEqual({
-      message: "하루님이 지금 인형·쿠션은 받기 어렵대요. 다른 선물을 골라 주세요.",
+      message: "하루님이 현재 받지 않는 선물입니다: 인형·쿠션. 다른 종류를 선택해 주세요.",
       blocks: true,
     });
   });
@@ -77,8 +77,8 @@ describe("INV-H8: 등록 화면 안내", () => {
     expect(hardItemOverlap("하루", hard("block"), null)).toBeNull();
   });
 
-  it("INV-H8: 받침 없는 품목은 「는」", () => {
-    expect(hardItemFanMessage("여름밤", "clothing")).toBe("여름밤님이 지금 의류는 받기 어렵대요. 다른 선물을 고르시겠어요?");
+  it("INV-H8: 안내는 「{이름}님이 현재 받기 어려운 선물입니다: {품목}.」 — 조사 없이 품목 이름 그대로", () => {
+    expect(hardItemFanMessage("여름밤", "clothing")).toBe("여름밤님이 현재 받기 어려운 선물입니다: 의류.");
   });
 
 });

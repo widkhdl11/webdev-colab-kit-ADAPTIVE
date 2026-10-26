@@ -285,9 +285,9 @@ describe("INV-J13: 상세 맨 위 「지금 할 일」 칸은 처리할 일 읽�
     expect(host.querySelector("main h1 .ph-count")?.textContent).toBe("1");
   });
 
-  it("INV-J13 S13b: 「바로 하기」는 그 상세의 #todo 로 가고, 칸이 펼쳐진 채 열려도 결제는 칸의 버튼을 눌러야 시작된다", async () => {
+  it("INV-J13 S13b: 「확인하기」는 그 상세의 #todo 로 가고, 칸이 펼쳐진 채 열려도 결제는 칸의 버튼을 눌러야 시작된다", async () => {
     await draw(ActionsRoute());
-    const go = [...host.querySelectorAll("main a")].find((a) => a.textContent === "바로 하기");
+    const go = [...host.querySelectorAll("main a")].find((a) => a.textContent === "확인하기");
     expect(go?.getAttribute("href")).toBe("/gifts/FC-R2D8Q#todo");
 
     const r = await draw(detail("FC-R2D8Q"));
@@ -324,7 +324,7 @@ describe("INV-J13: 상세 맨 위 「지금 할 일」 칸은 처리할 일 읽�
     expect([...host.querySelectorAll("main button")].map((b) => b.textContent)).not.toContain("받기");
   });
 
-  it("INV-J13 (실패경로): 칸의 「도착이 늦어요」 상자는 아래 「팬꾹 주소 없이 보냈어요」에서 고를 수 없고, 칸에 없는 상자는 아래에서 찾는다", async () => {
+  it("INV-J13 (실패경로): 칸의 「미도착 상자 확인」 상자는 아래 「팬꾹 주소 없이 보냈어요」에서 고를 수 없고, 칸에 없는 상자는 아래에서 찾는다", async () => {
     const B1 = "22222222-2222-4222-8222-222222222222";
     const B2 = "44444444-4444-4444-8444-444444444444";
     const giftBox = (boxId: string, seq: number) => ({ boxId, label: `FC-7K3M9-${seq}`, tier: "small" as const, waybillNo: null, state: "no_waybill" as const, addressCode: null, sendAckNeeded: false });
@@ -334,7 +334,7 @@ describe("INV-J13: 상세 맨 위 「지금 할 일」 칸은 처리할 일 읽�
     state.actions = [{ ...difference("FC-7K3M9"), kind: "missing_box", box_id: B1, box_label: "FC-7K3M9-1", box_seq: 1, measured_tier: null, amount_krw: null }];
     const r = await draw(detail("FC-7K3M9"));
     expect(r.todo?.querySelector("form")).not.toBeNull();
-    const below = [...host.querySelectorAll("main summary")].find((h) => h.textContent === "팬꾹 주소 없이 보냈다면")?.closest("[data-sec]");
+    const below = [...host.querySelectorAll("main summary")].find((h) => h.textContent === "주소 끝 6자리 없이 보낸 상자 찾기")?.closest("[data-sec]");
     expect(below).toBeInstanceOf(HTMLElement);
     expect(below?.querySelector("form")).toBeInstanceOf(HTMLElement);
     // 고르는 칸의 이름은 「상자 N · 크기」(design-rules 33절) — 칸에 있는 상자 1은 빠지고 상자 2만 남는다
@@ -354,7 +354,7 @@ describe("INV-J13: 상세 맨 위 「지금 할 일」 칸은 처리할 일 읽�
     const main = host.querySelector("main")!;
     expect(main.querySelectorAll("[data-action-row]")).toHaveLength(4);
     expect(main.querySelectorAll("form, input, select, textarea, button, dialog")).toHaveLength(0);
-    const hrefs = [...main.querySelectorAll("a")].filter((a) => a.textContent === "바로 하기").map((a) => a.getAttribute("href"));
+    const hrefs = [...main.querySelectorAll("a")].filter((a) => a.textContent === "확인하기").map((a) => a.getAttribute("href"));
     expect(hrefs.sort()).toEqual(["/gifts/FC-7K3M9#todo", "/gifts/FC-7K3M9#todo", "/gifts/FC-R2D8Q#todo", "/gifts/RG-4F8K2A#todo"]);
   });
 });
@@ -470,7 +470,7 @@ describe("INV-J14: 보낸 선물 — 위 크리에이터 카드 줄 + 아래 묶
     const ing = panel(/^진행 중/);
     const first = ing.querySelectorAll("li")[0]!;
     expect(first.hasAttribute("data-unpaid-row")).toBe(true);
-    expect(first.querySelector("a")?.textContent).toBe("결제를 마치지 않은 선물");
+    expect(first.querySelector("a")?.textContent).toBe("결제 대기");
     expect(first.querySelector("a")?.getAttribute("href")).toBe("/gifts/FC-U8P2K#todo");
     expect(first.textContent).toContain("하루님께 보낼 선물");
     expect(first.textContent).toContain("10월 23일까지");
@@ -487,7 +487,7 @@ describe("INV-J14: 보낸 선물 — 위 크리에이터 카드 줄 + 아래 묶
     await draw(GiftsRoute());
     const ing = panel(/^진행 중/);
     expect(ing.querySelectorAll("[data-unpaid-row]")).toHaveLength(0);
-    expect(ing.textContent).not.toContain("결제를 마치지 않은 선물");
+    expect(ing.textContent).not.toContain("결제 대기");
   });
 
   it("INV-J14 S14c: 진행 중인 결제된 선물이 없어도 결제 미완료 카드는 빈 안내 대신 보인다", async () => {
@@ -495,7 +495,7 @@ describe("INV-J14: 보낸 선물 — 위 크리에이터 카드 줄 + 아래 묶
     await draw(GiftsRoute());
     const ing = panel(/^진행 중/);
     expect(ing.querySelectorAll("[data-unpaid-row]")).toHaveLength(1);
-    expect(ing.textContent).not.toContain("지금 진행 중인 선물이 없어요.");
+    expect(ing.textContent).not.toContain("진행 중인 선물이 없습니다.");
   });
 });
 
@@ -540,7 +540,7 @@ describe("보낸 선물 카드의 하늘 면 — 지금 할 일 줄이 있는 �
     await draw(GiftsRoute());
     const p = ongoingPanel();
     const lineOf = (no: string) => [...(row(p, no)?.querySelector("[data-todo-line]")?.children ?? [])].map((c) => c.textContent);
-    expect(lineOf("FC-7K3M9")).toEqual(["도착이 늦어요", "10월 27일까지"]);
+    expect(lineOf("FC-7K3M9")).toEqual(["미도착 상자 확인", "10월 27일까지"]);
     expect(lineOf("FC-R2D8Q")).toEqual(["추가 결제"]);
   });
 });
@@ -551,9 +551,9 @@ describe("보낸 선물 상세 — 결제 직후 안내(진단 B-1)", () => {
   });
   const paidLine = () => host.querySelector("main [data-paid-line]");
 
-  it("B-1: 결제 성공 뒤 돌아온 주소(?paid=1)로 열면 상태 판 위에 「결제가 끝났어요.」", async () => {
+  it("B-1: 결제 성공 뒤 돌아온 주소(?paid=1)로 열면 상태 판 위에 「결제가 완료되었습니다.」", async () => {
     await draw(GiftRoute({ params: Promise.resolve({ orderNo: "FC-7K3M9" }), searchParams: Promise.resolve({ paid: "1" }) }));
-    expect(paidLine()?.textContent).toMatch(/^결제가 끝났어요\./);
+    expect(paidLine()?.textContent).toMatch(/^결제가 완료되었습니다\./);
   });
 
   it("B-1 (실패경로): 물음표 값 없이 다시 열면 안내 줄이 없다", async () => {

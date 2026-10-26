@@ -29,7 +29,7 @@ describe("INV-M16: 팬의 입고 전 취소", () => {
   it("INV-M16 (S16b, 실패경로): 남의 주문·입고된 상자가 있는 주문(P0002)은 409 와 새로고침 안내", async () => {
     expect(await cancelMyGift({ client: fakeClient({ code: "P0002" }).client, viewer: FAN }, { orderNo: "FC-7K3M9" })).toEqual({
       status: 409,
-      body: { message: "지금은 취소할 수 없는 선물이에요. 새로고침해 주세요." },
+      body: { message: "현재 취소할 수 없는 선물입니다. 새로고침해 주세요." },
     });
   });
 

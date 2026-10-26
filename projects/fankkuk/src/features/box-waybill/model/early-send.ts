@@ -8,7 +8,7 @@ import type { JsonReply } from "@/shared/lib/http/private-json";
 // 팬이 안내(거절되면 반송될 수 있다)를 보고 이 버튼을 눌러야 받는 주소 6자리가 나온다. 누른 시각은 DB 가 주문에 한 번 남긴다.
 // 주문번호만 넘긴다 — 누구 주문인지·결제가 끝난 진행 중 주문인지는 DB 가 로그인 토큰으로 판정한다(남의 주문은 404).
 
-export const MESSAGE_EARLY_SEND_UNAVAILABLE = "지금은 먼저 보낼 수 없는 선물이에요. 새로고침해 주세요.";
+export const MESSAGE_EARLY_SEND_UNAVAILABLE = "현재 먼저 보내기를 이용할 수 없는 선물입니다. 새로고침해 주세요.";
 
 const body = z.object({ orderNo: z.string().regex(/^FC-[0-9A-Z]{3,10}(-[0-9]{1,2})?$/) }).strict();
 
@@ -22,7 +22,7 @@ export async function ackEarlySend(deps: Deps, input: unknown): Promise<JsonRepl
   const { error } = await deps.client.rpc("ack_early_send", { p_order_no: shaped.data.orderNo });
   if (error) {
     if (error.code === "P0002") return { status: 404, body: { message: MESSAGE_EARLY_SEND_UNAVAILABLE } };
-    return pgErrorReply(error.code, { limit: "잘못된 요청이에요.", failed: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." });
+    return pgErrorReply(error.code, { limit: "잘못된 요청이에요.", failed: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." });
   }
   return { status: 200, body: { acknowledged: true } };
 }

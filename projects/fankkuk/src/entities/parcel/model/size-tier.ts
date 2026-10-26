@@ -32,6 +32,8 @@ export function tierName(t: string): string {
 
 export const OVERSIZE_RULE = `세 변의 합이 ${LARGE_MAX_SUM_CM}cm를 넘거나 무게가 ${LARGE_MAX_WEIGHT_KG}kg을 넘는 상자`;
 /** 약관·환불 규정 문체(「초과」) — 기준 숫자는 OVERSIZE_RULE 과 같은 상수 */
+/** 선물 보내기 화면의 접수 한도 한 줄(문구 3 다듬은본) — 기준 숫자는 OVERSIZE_RULE 과 같은 상수 */
+export const INTAKE_LIMIT_TEXT = `세 변의 합 ${LARGE_MAX_SUM_CM}cm 이하 · 무게 ${LARGE_MAX_WEIGHT_KG}kg 이하`;
 export const OVERSIZE_RULE_FORMAL = `세 변의 합이 ${LARGE_MAX_SUM_CM}cm를 초과하거나 무게가 ${LARGE_MAX_WEIGHT_KG}kg을 초과하는 상자`;
 
 /** 보내기 전에 알리는 검수 반송 안내. 추적 장치 등이 나오거나 대형을 넘으면 팬의 위반이라 검수비·반송비를 모두 뺀다(결제 INV-M8).

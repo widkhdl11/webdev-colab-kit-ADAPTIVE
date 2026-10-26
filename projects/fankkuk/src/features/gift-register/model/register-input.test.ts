@@ -50,10 +50,10 @@ describe("parseRegisterInput — 선물 등록 입력 경계", () => {
   it("INV-H1: 기타 글은 앞뒤 공백을 지우고 비어 있으면 거부, 30자(글자 수)까지", () => {
     const other = { ...ok, itemCategory: "other" };
     const empty = parseRegisterInput({ ...other, itemOther: "   " });
-    expect(empty.success ? null : empty.errors.itemOther).toBe("어떤 선물인지 적어 주세요.");
+    expect(empty.success ? null : empty.errors.itemOther).toBe("선물 내용을 입력해 주세요.");
     expect(parseRegisterInput(other).success).toBe(false);
     const long = parseRegisterInput({ ...other, itemOther: "가".repeat(31) });
-    expect(long.success ? null : long.errors.itemOther).toBe("30자 안으로 적어 주세요.");
+    expect(long.success ? null : long.errors.itemOther).toBe("30자 안으로 입력해 주세요.");
     expect(parseRegisterInput({ ...other, itemOther: "🎁".repeat(30) }).success).toBe(true);
     const r = parseRegisterInput({ ...other, itemOther: "  편지와 인형 " });
     expect(r.success && [r.data.itemCategory, r.data.itemOther]).toEqual(["other", "편지와 인형"]);
@@ -67,7 +67,7 @@ describe("parseRegisterInput — 선물 등록 입력 경계", () => {
   it("INV-H1 (실패경로): 목록 밖 종류(냉장·food·빈 값)·옛 자유 입력 칸(itemKind)만 보내면 거부", () => {
     for (const bad of ["food", "냉장", "", "DOLL"]) {
       const r = parseRegisterInput({ ...ok, itemCategory: bad });
-      expect([bad, r.success ? null : r.errors.itemCategory]).toEqual([bad, "선물 종류를 골라 주세요."]);
+      expect([bad, r.success ? null : r.errors.itemCategory]).toEqual([bad, "선물 종류를 선택해 주세요."]);
     }
     const { itemCategory: _drop, ...noCategory } = ok;
     void _drop;

@@ -32,6 +32,13 @@ const MESSAGES: Readonly<Record<string, { status: Refusal["status"]; message: st
   "22023": { status: 400, message: "입력을 확인해 주세요." },
 };
 
+// 팬의 답장 공개 저장 — 팬 화면 문구(문구 3 다듬은본). 상태 코드는 위 표와 같다
+const CONSENT_MESSAGES: Readonly<Record<string, string>> = {
+  "42501": "로그인이 필요합니다.",
+  P0002: "상자를 찾을 수 없습니다. 새로고침해 주세요.",
+  "22023": "입력한 정보를 확인해 주세요.",
+};
+
 function refusalOf(code: string, fn: string): Refusal {
   const known = MESSAGES[code];
   if (known) return { ok: false, ...known };
@@ -81,15 +88,18 @@ export type ReplyConsent = { isPublic: boolean; showNickname: boolean };
  * 저장된 두 값을 돌려준다 — 화면은 이 값을 그린다.
  */
 export async function saveReplyConsent(deps: GiftReplyDeps, body: unknown): Promise<{ ok: true; consent: ReplyConsent } | Refusal> {
-  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
+  if (!deps.viewer) return { ok: false, status: 401, message: CONSENT_MESSAGES["42501"] };
   const parsed = consentSchema.safeParse(body);
-  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청이에요." };
+  if (!parsed.success) return { ok: false, status: 400, message: CONSENT_MESSAGES["22023"] };
   const { data, error } = await deps.client.rpc("set_gift_reply_consent", {
     p_box_id: parsed.data.boxId,
     p_public: parsed.data.isPublic,
     p_show_nickname: parsed.data.showNickname,
   });
-  if (error) return refusalOf(error.code, "set_gift_reply_consent");
+  if (error) {
+    const refusal = refusalOf(error.code, "set_gift_reply_consent");
+    return { ...refusal, message: CONSENT_MESSAGES[error.code] ?? refusal.message };
+  }
   const parsedRow = consentRow.safeParse(data);
   if (!parsedRow.success) throw new Error("공개 동의 저장 결과를 알 수 없다");
   const [row] = parsedRow.data;

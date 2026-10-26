@@ -197,7 +197,7 @@ describe("INV-J2·J13: 숫자는 한 읽기 결과의 줄 수 — 사이드바·
     expect(r.badge).toBeNull();
     expect(r.homeText).toBe("지금 할 일0건");
     expect(r.cardsN).toBe(0);
-    expect(r.empty?.querySelector("h2")?.textContent).toBe("지금 할 일이 없어요");
+    expect(r.empty?.querySelector("h2")?.textContent).toBe("확인할 항목이 없습니다");
     expect(r.detailTasks).toBeNull();
   });
 
@@ -280,11 +280,11 @@ describe("INV-J1·J4·J13: 상세 「지금 할 일」 칸의 처리와 지금 �
 
   it("INV-J4: 도착하지 않은 상자 — 찾기 양식이 그 상자로 정해져 붙는다(고르는 칸·위 안내 문단 없음, 송장번호·택배사 두 칸 — 이름 첫 글자 칸은 없다, inbound-address-code INV-C4 ②-가)", () => {
     const el = card("missing_box");
-    expect(el.querySelector("h2")?.textContent).toBe("도착이 늦어요");
-    const form = el.querySelector('form[aria-label="팬꾹 주소 없이 보낸 상자 찾기"]');
+    expect(el.querySelector("h2")?.textContent).toBe("미도착 상자 확인");
+    const form = el.querySelector('form[aria-label="주소 끝 6자리 없이 보낸 상자 찾기"]');
     expect(form).not.toBeNull();
-    expect(form?.querySelectorAll("select")).toHaveLength(1); // 택배사만 — 「어느 상자인가요」 없음
-    expect(el.textContent).not.toContain("어느 상자인가요");
+    expect(form?.querySelectorAll("select")).toHaveLength(1); // 택배사만 — 「상자 선택」 없음
+    expect(el.textContent).not.toContain("상자 선택");
     expect(el.textContent).not.toContain("팬꾹 주소를 쓰지 않고");
     expect([...(form?.querySelectorAll("label") ?? [])].map((l) => l.textContent)).toEqual([
       "택배사",
@@ -311,13 +311,13 @@ describe("INV-J1·J4·J13: 상세 「지금 할 일」 칸의 처리와 지금 �
     expect(api.find).toHaveBeenCalledWith({ kind: "box", id: ROWS.missing.box_id }, "123456789012", "cj");
   });
 
-  it("INV-J13: 지금 할 일 줄 — 역조공 받기는 그 몫의 선물 상세 칸(#todo)으로 가는 「바로 하기」, 남은 날(서울 날짜)", () => {
+  it("INV-J13: 지금 할 일 줄 — 역조공 받기는 그 몫의 선물 상세 칸(#todo)으로 가는 「확인하기」, 남은 날(서울 날짜)", () => {
     act(() => root.render(<ActionCenterPage items={items} now={NOW} />));
     const el = host.querySelector('[data-action-row][data-kind="revgift"]');
     expect(el?.textContent).toContain("모모님이 보낸 선물 받기");
     const go = el?.querySelector("a.btn");
     expect(go?.getAttribute("href")).toBe("/gifts/RG-T1ABCDE0#todo");
-    expect(go?.textContent).toBe("바로 하기");
+    expect(go?.textContent).toBe("확인하기");
     expect(el?.querySelector(".tag")?.textContent).toBe("4일 남음");
   });
 
@@ -332,7 +332,7 @@ describe("INV-J1·J4·J13: 상세 「지금 할 일」 칸의 처리와 지금 �
     const missingOnly = items.filter((it) => it.kind === "missing_box");
     act(() => root.render(<ActionCenterPage items={missingOnly} now={NOW} />));
     const feat = host.querySelector('.feat[data-action-row][data-kind="missing_box"]');
-    expect(feat?.querySelector("strong")?.textContent).toBe("도착이 늦어요");
+    expect(feat?.querySelector("strong")?.textContent).toBe("미도착 상자 확인");
     expect(feat?.querySelector(".tag")).toBeNull();
     expect(host.textContent).not.toContain("송장번호 입력");
   });

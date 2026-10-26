@@ -13,6 +13,8 @@ type Props = {
   onChange: (checked: boolean) => void;
   invalid?: boolean;
   errorId?: string;
+  /** 체크 칸 글자 — 선물 보내기는 다듬은 문구(문구 3)를 넘긴다. 없으면 기본 문구 */
+  label?: string;
 };
 
 const LEGAL_LINKS: ReadonlyArray<readonly [string, string]> = [
@@ -27,6 +29,7 @@ export function PaymentConsent({
   onChange,
   invalid,
   errorId,
+  label = "결제 내용과 아래 규정을 확인했고 결제에 동의해요 (필수)",
 }: Props) {
   return (
     <div className="field-block">
@@ -41,7 +44,7 @@ export function PaymentConsent({
             .join(" ")}
           onChange={(e) => onChange(e.currentTarget.checked)}
         />
-        결제 내용과 아래 규정을 확인했고 결제에 동의해요 (필수)
+        {label}
       </label>
       <p className="hint" id={`${id}-links`}>
         {LEGAL_LINKS.map(([href, label], i) => (

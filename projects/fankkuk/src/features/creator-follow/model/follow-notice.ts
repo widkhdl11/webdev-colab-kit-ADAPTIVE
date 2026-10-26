@@ -3,13 +3,13 @@
 // 크리에이터 페이지에는 띄우지 않는다(2026-10-25 재디자인 — 버튼 아래 안내 줄을 뺐다).
 
 /** 아직 팔로우하지 않은 사람이 팔로우 버튼 곁에서 보는 안내. */
-export const FOLLOW_NICKNAME_NOTICE = "팔로우하면 크리에이터가 내 닉네임을 볼 수 있어요.";
+export const FOLLOW_NICKNAME_NOTICE = "팔로우 시 내 닉네임이 크리에이터에게 표시됩니다.";
 
 /** 이미 팔로우한 사람이 「팔로우한 크리에이터」 화면에서 보는 안내. */
-export const FOLLOWING_NICKNAME_NOTICE = "팔로우한 크리에이터는 내 닉네임을 볼 수 있어요.";
+export const FOLLOWING_NICKNAME_NOTICE = "팔로우한 크리에이터에게 내 닉네임이 표시됩니다.";
 
 /** 팔로우 저장이 실패했을 때(팔로우 버튼·「팔로우하고 선물 보내기」). */
-export const FOLLOW_SAVE_FAILED = "팔로우를 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.";
+export const FOLLOW_SAVE_FAILED = "팔로우 설정을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
-/** 팔로우 취소 저장이 실패했을 때(크리에이터 페이지 「팔로우 중」 → 확인 창 「취소하기」). */
-export const UNFOLLOW_SAVE_FAILED = "팔로우 취소를 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.";
+/** 팔로우 취소 저장이 실패했을 때(크리에이터 페이지 「팔로우 중」 → 확인 창 「팔로우 취소」). */
+export const UNFOLLOW_SAVE_FAILED = "팔로우 설정을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";

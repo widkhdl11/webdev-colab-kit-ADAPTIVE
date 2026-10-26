@@ -28,7 +28,7 @@ import s from "./gift-register-page.module.css";
 // 선물 사진(선택)을 골랐으면 등록 직후 그 주문에 올린 뒤 결제창을 연다(together INV-F2 — 서버가 열어 보고 사진 정보를 지워 저장한다).
 // 사진을 올리지 못해도 결제는 그대로 진행하고 「함께한 시간」에서 다시 올릴 수 있다고 알린다.
 // 입력 폼이 보이는 동안 PC 는 오른쪽 「보낼 선물」 칸(1~4단계), 휴대폰은 3단계 아래 합계 줄(design-rules 33절, UX 명세 docs/ux/pages/gifts-new.md). 결제창·상태 카드에는 없다.
-// 맨 위 한 줄(추가분 4-4): 크리에이터 페이지에서 미리 고르고 왔으면 「{닉네임}님의 {플랫폼} 채널 주인이 확인된 페이지예요」. 플랫폼 값이 없으면 줄을 그리지 않는다.
+// 맨 위 한 줄(추가분 4-4): 크리에이터 페이지에서 미리 고르고 왔으면 「{닉네임}님의 {플랫폼} 채널 소유자 확인 완료」. 플랫폼 값이 없으면 줄을 그리지 않는다.
 export function GiftRegisterPage({
   creators,
   prices,
@@ -64,7 +64,7 @@ export function GiftRegisterPage({
       setPhotoNote(
         r.kind === "ok"
           ? null
-          : "선물 사진은 올리지 못했어요. 결제한 뒤 「함께한 시간」에서 다시 올릴 수 있어요.",
+          : "선물 사진을 업로드하지 못했습니다. 결제 후 ‘함께한 시간’에서 다시 업로드해 주세요.",
       );
     }
     setRegistered(gift);
@@ -92,10 +92,10 @@ export function GiftRegisterPage({
         <header className={`page-head ${s.head}`}>
           <h1 className="ph-title">선물 보내기</h1>
           {registered ? (
-            <p className="ph-desc">{`주문번호 ${registered.orderNo} — 결제하면 등록이 끝나요.`}</p>
+            <p className="ph-desc">{`주문번호 ${registered.orderNo} · 결제 후 선물 등록 완료`}</p>
           ) : creators.length === 0 ? (
-            // 팔로우 0명·로그인 전에서만(d113 D-4) — 고를 사람이 있으면 1단계 설명 「팔로우한 크리에이터 중에서 골라요.」가 같은 말을 한다
-            <p className={s["top-meta"]}>팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p>
+            // 팔로우 0명·로그인 전에서만(d113 D-4) — 고를 사람이 있으면 1단계 설명이 같은 말을 한다
+            <p className={s["top-meta"]}>팔로우한 크리에이터에게만 선물을 보낼 수 있습니다.</p>
           ) : null}
           {ownerLine ? (
             <p className={s.owner}>
@@ -109,7 +109,7 @@ export function GiftRegisterPage({
         {followFirst && !registered ? (
           <div className={s["follow-first"]} role="status">
             <p className={s["follow-text"]}>
-              <strong>{followFirst.name}님</strong>을 팔로우하면 바로 선물을 보낼 수 있어요.
+              <strong>{followFirst.name}님</strong>에게 선물을 보내려면 먼저 팔로우해 주세요.
               <span>{FOLLOW_NICKNAME_NOTICE}</span>
             </p>
             <FollowThenSend
@@ -133,22 +133,16 @@ export function GiftRegisterPage({
               />
               {signedIn ? (
                 <>
-                  <h2>아직 팔로우한 크리에이터가 없어요</h2>
-                  <p>
-                    선물은 팔로우한 크리에이터에게만 보낼 수 있어요. 좋아하는
-                    크리에이터를 찾아 팔로우해 보세요.
-                  </p>
+                  <h2>팔로우한 크리에이터가 없습니다</h2>
+                  <p>선물을 보낼 크리에이터를 찾아 팔로우해 주세요.</p>
                   <Link className="btn" href="/creators">
                     크리에이터 찾기
                   </Link>
                 </>
               ) : (
                 <>
-                  <h2>로그인하고 선물을 보내 주세요</h2>
-                  <p>
-                    선물은 팔로우한 크리에이터에게만 보낼 수 있어요. 로그인하면
-                    팔로우한 크리에이터가 여기에 나와요.
-                  </p>
+                  <h2>로그인 후 이용해 주세요</h2>
+                  <p>로그인하면 팔로우한 크리에이터에게 선물을 보낼 수 있습니다.</p>
                   <Link className="btn" href="/login">
                     로그인
                   </Link>
@@ -168,7 +162,7 @@ export function GiftRegisterPage({
             </>
           ) : (
             <p role="alert">
-              지금은 결제를 받을 수 없어요. 잠시 뒤 다시 시도해 주세요.
+              현재 결제를 이용할 수 없습니다. 잠시 후 다시 시도해 주세요.
             </p>
           )
         ) : blockedNotice && preselected ? (

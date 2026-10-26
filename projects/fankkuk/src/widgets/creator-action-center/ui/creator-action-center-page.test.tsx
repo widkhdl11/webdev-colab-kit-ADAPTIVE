@@ -326,7 +326,7 @@ describe("보낸 선물의 반송 주소 줄 (action-center INV-J5, office-workf
     for (const [i, want] of [[0, { orderNo: "RG-R5" }], [1, { orderNo: "FC-R6", boxSeq: 2 }]] as const) {
       await act(async () => button(rows()[i]!, "확인하기")!.click());
       const dlg = document.querySelector("dialog[open]")!;
-      await act(async () => button(dlg, "확인")!.click());
+      await act(async () => button(dlg, "주소 확인")!.click());
       expect(sendReturnConfirm).toHaveBeenLastCalledWith(want);
     }
   });

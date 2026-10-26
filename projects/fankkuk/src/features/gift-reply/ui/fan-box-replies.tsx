@@ -62,7 +62,9 @@ function SharePanel({ row, id }: { row: FanBoxReply; id: string }) {
         </a>
       </div>
       <p className={s["share-text"]}>
-        X 글쓰기 창에 「{text}」가 채워져요. 저장한 이미지를 붙여 올려 주세요. 카드에는 주소·주문번호·송장번호가 들어가지 않아요.
+        X 글쓰기 창에 ‘{text}’이 입력됩니다.
+        <br />
+        저장한 이미지를 첨부해 게시해 주세요. 카드에는 주소·주문번호·송장번호가 포함되지 않습니다.
       </p>
     </div>
   );
@@ -120,10 +122,10 @@ function ReplyCard({ row, reply, photoBase, returnPath }: { row: FanBoxReply; re
             aria-describedby={`${uid}-pub-hint${error ? ` ${errId}` : ""}`}
             onChange={(e) => void save({ isPublic: e.currentTarget.checked, showNickname })}
           />
-          공개해도 괜찮아요
+          답장 공개 허용
         </label>
         <p className={`${s["check-hint"]}`} id={`${uid}-pub-hint`}>
-          크리에이터도 답장 모음을 켜 두었다면, 받았어요 3일 뒤부터 링크 페이지에 보여요.
+          크리에이터도 답장 모음을 공개한 경우, 크리에이터의 수령 확인일 3일 후부터 선물 링크 페이지에 표시됩니다.
         </p>
         <label className={s.check}>
           <input
@@ -134,10 +136,10 @@ function ReplyCard({ row, reply, photoBase, returnPath }: { row: FanBoxReply; re
             aria-describedby={`${uid}-nick-hint${error ? ` ${errId}` : ""}`}
             onChange={(e) => void save({ isPublic, showNickname: e.currentTarget.checked })}
           />
-          닉네임도 보이기
+          닉네임 공개
         </label>
         <p className={s["check-hint"]} id={`${uid}-nick-hint`}>
-          끄면 「익명의 팬」으로 보여요.
+          해제 시 ‘익명의 팬’으로 표시됩니다.
         </p>
         {error ? (
           <p className={s.error} id={errId} role="alert">
@@ -177,15 +179,15 @@ export function FanBoxReplies({
           <div className={s["box-head"]}>
             <h3>{row.boxCount > 1 ? `상자 ${row.boxSeq}` : "상자"}</h3>
             {row.received ? (
-              <span className={statusTagClass("success")}>받았어요{row.receivedOn ? ` · ${monthDayText(row.receivedOn)}` : ""}</span>
+              <span className={statusTagClass("success")}>수령 확인{row.receivedOn ? ` · ${monthDayText(row.receivedOn)}` : ""}</span>
             ) : (
-              <span className={statusTagClass("info")}>크리에이터에게 가는 중</span>
+              <span className={statusTagClass("info")}>크리에이터에게 배송 중</span>
             )}
           </div>
           {row.reply ? (
             <ReplyCard row={row} reply={row.reply} photoBase={photoBase} returnPath={returnPath} />
           ) : row.received ? (
-            <p className={s.wait}>답장은 크리에이터가 남기면 여기에 보여요. 답장 없이 받았다고만 확인할 수도 있어요.</p>
+            <p className={s.wait}>수령이 확인되었습니다. 답장이 등록되면 이곳에 표시됩니다.</p>
           ) : null}
         </div>
       ))}

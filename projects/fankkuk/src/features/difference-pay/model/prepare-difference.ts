@@ -12,12 +12,12 @@ export type DifferencePrepareWrite = z.input<typeof bodyShape>;
 const prepared = z.array(z.object({ toss_order_id: z.string().min(6), amount_krw: z.number().int().positive(), order_no: z.string() })).length(1);
 
 const MESSAGE = {
-  shape: "요청 형식이 맞지 않아요.",
-  notFound: "차액 요청을 찾을 수 없어요.",
-  closed: "기한이 지났거나 지금은 낼 수 없는 차액이에요.",
-  paid: "이미 낸 차액이에요.",
-  busy: "결제를 처리하고 있어요. 잠시 뒤 화면을 새로고침해 주세요.",
-  failed: "결제를 준비하지 못했어요. 잠시 뒤 다시 해 주세요.",
+  shape: "요청 형식이 올바르지 않습니다.",
+  notFound: "차액 결제 요청을 찾을 수 없습니다.",
+  closed: "결제 기한이 지났거나 현재 결제할 수 없는 차액입니다.",
+  paid: "이미 결제한 차액입니다.",
+  busy: "결제 처리 중입니다. 잠시 후 새로고침해 주세요.",
+  failed: "결제를 준비하지 못했습니다. 잠시 후 다시 시도해 주세요.",
 } as const;
 
 export async function prepareDifference(client: Pick<SupabaseClient, "rpc">, body: unknown): Promise<JsonReply> {

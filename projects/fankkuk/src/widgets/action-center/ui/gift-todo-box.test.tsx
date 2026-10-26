@@ -92,13 +92,13 @@ function render(items: ActionItem[]) {
 }
 
 describe("INV-J1·J13·W15: 상세 「지금 할 일」 칸 — 반송 주소 확인", () => {
-  it("INV-J1·J13: 칸 머리 「지금 할 일」, 제목 「돌려받을 주소 확인」, 몇 번째 상자인지, 처분 예정 날짜 문장", () => {
+  it("INV-J1·J13: 칸 머리 「지금 할 일」, 제목 「반송 주소 확인」, 몇 번째 상자인지, 처분 대상 날짜 문장", () => {
     render([RETURN]);
     expect(host.querySelector("#todo")?.textContent).toContain("지금 할 일");
     const card = host.querySelector('#todo [data-kind="return_address"]');
-    expect(card?.querySelector("h2")?.textContent).toBe("돌려받을 주소 확인");
+    expect(card?.querySelector("h2")?.textContent).toBe("반송 주소 확인");
     expect(card?.textContent).toContain("상자 2");
-    expect(card?.textContent).toContain("11월 16일까지 확인하지 않으면 상자를 처분해요");
+    expect(card?.textContent).toContain("11월 16일까지 반송 주소를 확인하지 않으면 처분 대상이 됩니다.");
   });
 
   it("INV-J13 (실패경로): 이 주문의 줄이 없으면 칸을 그리지 않는다", () => {
@@ -111,7 +111,7 @@ describe("INV-J1·J13·W15: 상세 「지금 할 일」 칸 — 반송 주소 �
     render([RETURN]);
     const open = host.querySelector<HTMLButtonElement>('[data-kind="return_address"] button');
     await act(async () => open?.click());
-    const ok = [...document.querySelectorAll("dialog button")].find((b) => b.textContent === "확인") as HTMLButtonElement | undefined;
+    const ok = [...document.querySelectorAll("dialog button")].find((b) => b.textContent?.trim() === "주소 확인") as HTMLButtonElement | undefined;
     expect(ok).toBeDefined();
     await act(async () => ok?.click());
     expect(sendReturnConfirm).toHaveBeenCalledWith({ orderNo: "FC-7K3M9", boxSeq: 2 });
@@ -121,7 +121,7 @@ describe("INV-J1·J13·W15: 상세 「지금 할 일」 칸 — 반송 주소 �
     sendReturnConfirm.mockResolvedValue({ kind: "ok" });
     render([RETURN]);
     await act(async () => host.querySelector<HTMLButtonElement>('[data-kind="return_address"] button')?.click());
-    const ok = [...document.querySelectorAll("dialog button")].find((b) => b.textContent === "확인") as HTMLButtonElement | undefined;
+    const ok = [...document.querySelectorAll("dialog button")].find((b) => b.textContent?.trim() === "주소 확인") as HTMLButtonElement | undefined;
     await act(async () => ok?.click());
     expect(replace).toHaveBeenCalledWith("/gifts/FC-7K3M9?address=confirmed", { scroll: false });
   });
@@ -139,7 +139,7 @@ const MISSING: ActionItem = {
   dueAt: "2026-11-21T03:00:00.000Z",
 };
 
-describe("INV-W10·J4 (C-1): 도착이 늦어요 칸 — 찾기 양식 / 「아직 보내지 않음」 두 갈래 + 「1:1 문의하기」", () => {
+describe("INV-W10·J4 (C-1): 미도착 상자 확인 칸 — 찾기 양식 / 「아직 보내지 않음」 두 갈래 + 「1:1 문의하기」", () => {
   it("C-1: 찾기 양식 아래 「아직 보내지 않음」 버튼과 문의 화면으로 가는 텍스트 링크", () => {
     render([MISSING]);
     const task = host.querySelector('#todo [data-kind="missing_box"]');
@@ -183,7 +183,7 @@ describe("INV-M22 (C-2): 결제 이어 하기가 실패로 돌아오면", () => 
     expect(paymentStep).toHaveBeenCalledWith(expect.objectContaining({ route: expect.objectContaining({ failPath: "/gifts/FC-7K3M9?payment=failed" }) }));
   });
 
-  it("C-2: ?payment=failed 로 열리면 칸 위에 「결제를 마치지 못했어요. 다시 결제해 주세요.」 — 쿼리가 없으면 없다", () => {
+  it("C-2: ?payment=failed 로 열리면 칸 위에 「결제가 완료되지 않았습니다. 다시 결제해 주세요.」 — 쿼리가 없으면 없다", () => {
     render([UNPAID]);
     expect(host.textContent).not.toContain("결제를 마치지 못했어요.");
     act(() => root.unmount());
@@ -191,7 +191,7 @@ describe("INV-M22 (C-2): 결제 이어 하기가 실패로 돌아오면", () => 
     query = "payment=failed&code=PAY_PROCESS_CANCELED";
     render([UNPAID]);
     const line = host.querySelector('[role="alert"]');
-    expect(line?.textContent).toBe("결제를 마치지 못했어요. 다시 결제해 주세요.");
+    expect(line?.textContent).toBe("결제가 완료되지 않았습니다. 다시 결제해 주세요.");
     // 칸 위 — 칸(#todo)보다 앞에 있다
     expect(line?.compareDocumentPosition(host.querySelector("#todo")!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
@@ -261,7 +261,7 @@ describe("접근성: 처리가 끝나 칸이 사라지면 포커스는 상자 �
     title.remove();
   });
 
-  it("C-3: 돌려받을 주소 확인이 끝나면 포커스가 상자 칸 제목으로 간다", async () => {
+  it("C-3: 반송 주소 확인이 끝나면 포커스가 상자 칸 제목으로 간다", async () => {
     const title = boxTitle();
     sendReturnConfirm.mockResolvedValue({ kind: "ok" });
     render([RETURN]);
@@ -270,7 +270,7 @@ describe("접근성: 처리가 끝나 칸이 사라지면 포커스는 상자 �
     const opener = host.querySelector<HTMLButtonElement>('[data-kind="return_address"] button');
     opener?.focus();
     await act(async () => opener?.click());
-    const ok = [...document.querySelectorAll("dialog button")].find((b) => b.textContent === "확인") as HTMLButtonElement | undefined;
+    const ok = [...document.querySelectorAll("dialog button")].find((b) => b.textContent?.trim() === "주소 확인") as HTMLButtonElement | undefined;
     ok?.focus();
     await act(async () => ok?.click());
     expect(document.activeElement).toBe(title);
@@ -296,7 +296,7 @@ describe("접근성: 처리가 끝나 칸이 사라지면 포커스는 상자 �
     const opener = host.querySelector<HTMLButtonElement>('[data-kind="return_address"] button');
     opener?.focus();
     await act(async () => opener?.click());
-    const ok = [...document.querySelectorAll("dialog button")].find((b) => b.textContent === "확인") as HTMLButtonElement | undefined;
+    const ok = [...document.querySelectorAll("dialog button")].find((b) => b.textContent?.trim() === "주소 확인") as HTMLButtonElement | undefined;
     ok?.focus();
     await act(async () => ok?.click());
     expect(document.activeElement).toBe(title);
@@ -311,7 +311,7 @@ describe("접근성: 처리가 끝나 칸이 사라지면 포커스는 상자 �
     const opener = host.querySelector<HTMLButtonElement>('[data-kind="return_address"] button');
     opener?.focus();
     await act(async () => opener?.click());
-    const ok = [...document.querySelectorAll("dialog button")].find((b) => b.textContent === "확인") as HTMLButtonElement | undefined;
+    const ok = [...document.querySelectorAll("dialog button")].find((b) => b.textContent?.trim() === "주소 확인") as HTMLButtonElement | undefined;
     ok?.focus();
     await act(async () => ok?.click());
     expect(document.activeElement).toBe(box);

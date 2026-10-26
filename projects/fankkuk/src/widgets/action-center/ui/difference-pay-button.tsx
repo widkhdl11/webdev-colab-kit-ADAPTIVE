@@ -36,7 +36,7 @@ export function DifferencePayButton({ boxId, orderNo, amountKrw, clientKey }: Pr
 
   if (checkout) {
     if (!clientKey) {
-      return <p role="alert">지금은 결제를 받을 수 없어요. 잠시 뒤 다시 시도해 주세요.</p>;
+      return <p role="alert">현재 결제를 이용할 수 없습니다. 잠시 후 다시 시도해 주세요.</p>;
     }
     return (
       <PaymentStep
@@ -59,7 +59,7 @@ export function DifferencePayButton({ boxId, orderNo, amountKrw, clientKey }: Pr
         </p>
       ) : null}
       <button className="btn" type="button" onClick={() => void start()} aria-disabled={busy} aria-busy={busy || undefined}>
-        {busy ? "준비하는 중…" : `${won(amountKrw)} 결제하기`}
+        {busy ? "준비 중…" : `${won(amountKrw)} 결제하기`}
       </button>
     </div>
   );

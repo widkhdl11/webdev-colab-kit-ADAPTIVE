@@ -69,8 +69,8 @@ function splitDays(text: string): ReactNode {
 }
 
 function addressHead(registered: boolean, editing: boolean): string {
-  if (!registered) return "주소를 입력해 주세요";
-  return editing ? "새 주소를 입력해 주세요" : "주소를 확인해 주세요";
+  if (!registered) return "받을 주소 입력";
+  return editing ? "받을 주소 변경" : "받을 주소 확인";
 }
 
 export function ReceiveFlow(props: ReceiveFlowProps) {
@@ -155,14 +155,14 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
   const settled = stage === "waiting" ? null : settledStageCopy(stage);
 
   const addressBody = () => {
-    if (!status) return <p className="err">받을 주소를 읽지 못했어요. 새로 고침한 뒤 다시 해 주세요.</p>;
+    if (!status) return <p className="err">받을 주소를 불러오지 못했습니다. 새로고침한 뒤 다시 시도해 주세요.</p>;
     if (registered && !editing) {
       return (
         <>
           <p className={s.tagrow} data-address-on-file="">
             {addressOnFileText(status)}
           </p>
-          <p className={s.addrNote}>주소는 잠가서 보관해서 여기서도 보이지 않아요. 이사했거나 받는 곳이 바뀌었으면 받기 전에 바꿔 주세요.</p>
+          <p className={s.addrNote}>등록한 주소는 다시 조회할 수 없습니다. 받을 곳이 바뀌었다면 수락 전에 주소를 변경해 주세요.</p>
           <p className={`t-meta ${s["addr-saved"]}`} role="status">
             {savedMsg ?? ""}
           </p>
@@ -182,7 +182,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
                 setEditing(true);
               }}
             >
-              주소 바꾸기
+              주소 변경
             </button>
             <button className="btn btn--line" type="button" onClick={() => setSheetOpen(true)}>
               받지 않기
@@ -201,7 +201,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
     return (
       <>
         <p className={`t-lead t-desc ${s.desc}`}>
-          주소는 이 브라우저에서 암호화돼요. 팬꾹도 송장을 뽑을 때만 열 수 있어요. {creatorName}님에게는 보이지 않아요.
+          주소는 입력한 기기에서 암호화해 전송합니다. 팬꾹은 송장 출력 시에만 주소를 확인하며, {creatorName}님에게는 공개하지 않습니다.
         </p>
         <div role="alert">{submitError ? <p className={`err ${s.alert}`}>{submitError}</p> : null}</div>
         {address.renderForm({
@@ -209,7 +209,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
           autoFocusFirst: registered,
           onSaved: (label) => {
             // 서버에 저장된 뒤에만 바뀐다 — 이어서 같은 판에서 「이 주소로 받기」를 누른다
-            setSavedMsg(registered ? "주소를 바꿨어요." : "주소를 등록했어요.");
+            setSavedMsg(registered ? "주소가 변경되었습니다." : "주소가 등록되었습니다.");
             setSubmitError(null);
             focusNext.current = "step";
             setStatus({ registered: true, label, updatedAt: new Date().toISOString() });
@@ -250,14 +250,14 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
           <>
             <div className={s.ask}>
               <div>
-                <h2 className={s.askTitle}>받을지 정해 주세요</h2>
+                <h2 className={s.askTitle}>선물 수락 여부 선택</h2>
                 <p className={s.askSub}>{deadlineText}</p>
               </div>
               <p className={`num-big ${s.days}`}>{splitDays(daysLeftText)}</p>
             </div>
             {canReceive ? null : (
               <p className={s.warn} role="status">
-                {status === null ? "받을 주소를 읽지 못했어요. 새로 고침한 뒤 다시 해 주세요." : `${address.missingKeyText} 설정이 끝나면 다시 들어와 주세요.`}
+                {status === null ? "받을 주소를 불러오지 못했습니다. 새로고침한 뒤 다시 시도해 주세요." : address.missingKeyText}
               </p>
             )}
             <div className={s.choice}>
@@ -271,7 +271,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
               </button>
             </div>
             <div role="alert">{declineError ? <p className={`err ${s.alert}`}>{declineError}</p> : null}</div>
-            <p className={s.once}>기한 안에 정하지 않으면 자동으로 받지 않음 처리돼요.</p>
+            <p className={s.once}>기한 내 선택하지 않으면 자동으로 수락하지 않은 것으로 처리됩니다.</p>
           </>
         ) : null}
         {/* 「받기」를 누르면 같은 칸이 주소 확인으로 바뀐다(코드 흐름 그대로) */}
@@ -290,24 +290,22 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
           {stage === "accepted" ? (
             <>
               <h2 className={`t-title ${s.focusable}`} id="rv-result-title" ref={resultTitle} tabIndex={-1}>
-                받기가 끝났어요
+                선물 수락 완료
               </h2>
-              <p className={`t-lead t-desc ${s.desc}`}>{creatorName}님의 선물이 곧 준비돼요.</p>
+              <p className={`t-lead t-desc ${s.desc}`}>{creatorName}님의 선물을 받을 주소가 확인되었습니다.</p>
               <ol className={`flow ${s.next}`}>
                 <li>
                   <span className="n">1</span>
-                  <p className="t-strong">상자가 팬꾹에 도착해요</p>
+                  <p className="t-strong">팬꾹 도착 예정</p>
                   <p>{PROMISE.inspection}</p>
                 </li>
                 <li>
                   <span className="n">2</span>
-                  <p className="t-strong">검수가 끝나면 보내 드려요</p>
-                  <p>주소는 송장을 출력할 때만 열려요.</p>
+                  <p className="t-strong">검수 후 배송 · 송장 출력 시에만 주소 확인</p>
                 </li>
                 <li>
                   <span className="n">3</span>
-                  <p className="t-strong">배송이 시작되면 받은 역조공에서 확인할 수 있어요</p>
-                  <p>상태가 「출고됨」으로 바뀌어요.</p>
+                  <p className="t-strong">‘받은 선물’에서 배송 시작 여부를 확인해 주세요. 배송이 시작되면 상태가 ‘출고됨’으로 변경됩니다.</p>
                 </li>
               </ol>
             </>
@@ -321,7 +319,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
           )}
           <div className={`btnrow ${s.links}`}>
             <Link className="btn" href="/me/revgifts">
-              받은 역조공 보기
+              받은 선물 보기
             </Link>
             <Link className="btn btn--line" href={FAN_HOME}>
               메인으로
@@ -372,8 +370,8 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
         {props.children}
       </div>
 
-      <BottomSheet open={sheetOpen} title={`${creatorName}님의 선물을 받지 않을까요?`} onClose={() => setSheetOpen(false)}>
-        <p className="t-desc">받지 않아도 {creatorName}님에게 이유는 알리지 않아요. 한 번 받지 않으면 다시 받을 수 없어요.</p>
+      <BottomSheet open={sheetOpen} title={`${creatorName}님의 선물을 거절할까요?`} onClose={() => setSheetOpen(false)}>
+        <p className="t-desc">거절 사유는 {creatorName}님에게 공개되지 않습니다. 거절 후에는 다시 수락할 수 없습니다.</p>
         <div className={s["sheet-btns"]}>
           <button className="btn btn--line" type="button" onClick={() => setSheetOpen(false)}>
             돌아가기
@@ -388,21 +386,21 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
 }
 
 const RESULT_TITLE: Record<Exclude<ReceivedStage, "waiting" | "accepted">, string> = {
-  declined: "받지 않기로 했어요",
-  expired: "기한이 지나 받지 않음으로 정해졌어요",
-  shipped: "배송이 시작됐어요",
-  returned: "상자를 돌려보냈어요",
-  disposed: "상자를 처분했어요",
-  cancelled: "이 선물은 취소됐어요",
+  declined: "선물 수령 거절",
+  expired: "수락 기한 만료",
+  shipped: "배송 시작",
+  returned: "반송 완료",
+  disposed: "상자 처분 완료",
+  cancelled: "선물 취소",
 };
 
 // 이 선물에 복사해 둔 주소는 출고·반송 때 지운다(reverse-gift INV-R9). 등록한 받을 주소는 그대로라 「주소를 지웠다」고 쓰지 않는다.
 // 처분(office-workflow INV-W15)은 제목 한 줄로 끝난다 — 덧붙일 사실이 없다.
 function resultBody(stage: Exclude<ReceivedStage, "waiting" | "accepted">, creatorName: string): string | null {
   if (stage === "disposed") return null;
-  if (stage === "declined") return `${creatorName}님에게는 받지 않은 이유를 알리지 않아요.`;
-  if (stage === "expired") return `7일 안에 정하지 않아 받지 않음으로 처리됐어요. ${creatorName}님에게는 이유를 알리지 않아요.`;
-  if (stage === "shipped") return "곧 도착해요.";
-  if (stage === "cancelled") return `${creatorName}님이 보낸 이 선물은 더 진행되지 않아요.`;
-  return `상자를 ${creatorName}님에게 돌려보냈어요.`;
+  if (stage === "declined") return `거절 사유는 ${creatorName}님에게 공개되지 않습니다.`;
+  if (stage === "expired") return `7일 이내 선택하지 않아 수락하지 않은 것으로 처리되었습니다. ${creatorName}님에게는 이유를 알리지 않습니다.`;
+  if (stage === "shipped") return "선물이 발송되었습니다.";
+  if (stage === "cancelled") return `${creatorName}님이 보낸 선물의 전달이 취소되었습니다.`;
+  return `${creatorName}님에게 상자가 반송되었습니다.`;
 }

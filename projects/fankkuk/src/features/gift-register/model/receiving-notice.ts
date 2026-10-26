@@ -1,5 +1,16 @@
-import { limitReachedMessage, restingNotice, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
+import { isResting, limitReachedMessage, parseIsoDate, restingNotice, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
 import { movingNotice } from "./sender-rule";
+
+/**
+ * 선물 보내기 화면의 쉬는 중 안내 — 「선물 받기 일시 중단 · 10월 20일부터 재개」(creator-receiving INV-B2, 문구 3 다듬은본).
+ * 쉬는 중인지는 restingNotice 와 같은 판정(isResting)이다. 크리에이터 페이지는 restingNotice 문구를 그대로 쓴다.
+ */
+export function restingStopText(resumeOn: string | null, today: CalendarDate): string | null {
+  if (resumeOn === null || !isResting(resumeOn, today)) return null;
+  const r = parseIsoDate(resumeOn);
+  const when = r ? `${r.month}월 ${r.day}일` : resumeOn;
+  return `선물 받기 일시 중단 · ${when}부터 재개`;
+}
 
 /**
  * 고른 크리에이터에게 지금 보낼 수 없으면 그 안내, 아니면 null (creator-receiving INV-B2·B6).
@@ -10,7 +21,7 @@ export function receivingNotice(
   picked: { receiving?: CreatorReceiving; limitReached?: boolean } | undefined,
   today: CalendarDate,
 ): string | null {
-  const resting = restingNotice(picked?.receiving?.resumeOn ?? null, today);
+  const resting = restingStopText(picked?.receiving?.resumeOn ?? null, today);
   if (resting !== null) return resting;
   if (picked?.limitReached) return limitReachedMessage(today);
   return null;

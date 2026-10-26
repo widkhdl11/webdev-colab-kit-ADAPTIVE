@@ -25,7 +25,7 @@ export function FollowThenSend({
 
   if (!signedIn) {
     return (
-      <Link className={className} href="/login" aria-label={`${label} — 로그인이 필요해요`}>
+      <Link className={className} href="/login" aria-label={`${label} — 로그인 필요`}>
         팔로우하고 선물 보내기
       </Link>
     );

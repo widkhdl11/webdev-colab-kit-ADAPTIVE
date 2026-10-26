@@ -56,7 +56,7 @@ describe("받는 주소 없이 보냈어요 — 오류는 틀린 칸에 (INV-C4 
     const carrier = form.querySelector("select") as HTMLSelectElement;
     const waybill = form.querySelector('input[name="waybill"]') as HTMLInputElement;
     expect(carrier.getAttribute("aria-invalid")).toBe("true");
-    expect(errorTarget(carrier)).toContain("택배사를 골라 주세요.");
+    expect(errorTarget(carrier)).toContain("택배사를 선택해 주세요.");
     expect(document.activeElement).toBe(carrier);
     expect(waybill.getAttribute("aria-invalid")).toBeNull();
     expect(api.find).not.toHaveBeenCalled();

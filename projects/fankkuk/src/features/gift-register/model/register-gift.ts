@@ -2,11 +2,11 @@ import { newOrderNo } from "@/entities/order/model/order-no";
 import { InvalidRegistrationError, OrderNoTakenError, PriceChangedError, SenderRefusedError, type PaymentStore } from "@/entities/payment/api/payment-store";
 import { computeCharge } from "@/entities/payment/model/charge";
 import { z } from "zod";
-import { PRICE_CHANGED_MESSAGE, quotedTotalSchema, type PriceTable } from "@/entities/payment/model/price-table";
+import { quotedTotalSchema, type PriceTable } from "@/entities/payment/model/price-table";
 import type { Viewer } from "@/entities/session/model/viewer";
 import { kstToday, limitReachedMessage } from "@/entities/creator/model/receiving";
 import type { CreatorRelationReader } from "../api/creator-relation";
-import { parseRegisterInput, type RegisterFormValues } from "./register-input";
+import { GIFT_PRICE_CHANGED_MESSAGE, parseRegisterInput, type RegisterFormValues } from "./register-input";
 import { decideSender, refusalStatus, SENDER_REFUSAL_MESSAGE, senderRoleAllowed } from "./sender-rule";
 
 // 선물 등록 = 주문 + 상자 + 결제 대기를 한 번에 만든다. 결제가 끝나야 크리에이터에게 승인 요청이 간다(INV-M6).
@@ -43,7 +43,7 @@ export async function registerGift(
   },
   body: unknown,
 ): Promise<RegisterGiftResult> {
-  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
+  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요합니다." };
   // INV-L3: 운영자는 본문을 읽기 전에 거부한다
   if (!senderRoleAllowed(deps.viewer.role)) return { ok: false, status: 403, message: SENDER_REFUSAL_MESSAGE.role };
 
@@ -60,7 +60,7 @@ export async function registerGift(
   if (!verdict.ok) return { ok: false, status: refusalStatus(verdict.reason), message: SENDER_REFUSAL_MESSAGE[verdict.reason] };
 
   const charge = computeCharge(await deps.readPrices(), { boxes });
-  if (charge.totalKrw !== quoted.data.quotedTotalKrw) return { ok: false, status: 409, message: PRICE_CHANGED_MESSAGE };
+  if (charge.totalKrw !== quoted.data.quotedTotalKrw) return { ok: false, status: 409, message: GIFT_PRICE_CHANGED_MESSAGE };
   // together INV-F7: 메모는 등록과 같은 처리로 저장한다 — 주인은 이 등록의 보낸 사람(fanId, 세션에서 확인한 사람)이다
   const registration = { fanId: deps.viewer.userId, creatorId, itemCategory, itemOther, hasElectronicsOrMetal, boxes, anniversaryName, hardNoticeCategory, memo };
   // 주문번호가 겹치면(다섯 자리 무작위) 새 번호로 두 번까지 다시 시도한다
@@ -70,7 +70,7 @@ export async function registerGift(
       // 결제 기록의 칸 나눔(택배 원가·서비스료)은 돌려주지 않는다 — 팬에게는 한 금액만(INV-M7)
       return { ok: true, orderId: stored.orderId, orderNo: stored.orderNo, amountKrw: stored.amountKrw };
     } catch (e) {
-      if (e instanceof PriceChangedError) return { ok: false, status: 409, message: PRICE_CHANGED_MESSAGE };
+      if (e instanceof PriceChangedError) return { ok: false, status: 409, message: GIFT_PRICE_CHANGED_MESSAGE };
       // 입력 검사를 지나 DB 가 값을 거부했다(22023) — 입력 오류로 돌려준다. 정상 흐름에서는 입력 검사가 먼저 막으므로 남겨 둔다
       if (e instanceof InvalidRegistrationError) {
         console.error(`선물 등록: 입력 검사를 지나 DB 가 값을 받지 않았다 (${e.message})`);

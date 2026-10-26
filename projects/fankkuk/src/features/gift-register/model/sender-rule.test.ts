@@ -45,7 +45,7 @@ describe("선물 보내기 목록 (INV-L8·INV-L9)", () => {
 
 describe("채널 이사 중 안내 (creator-verification INV-V12 화면 표시)", () => {
   it("INV-V12: 고른 크리에이터가 이사 중이면 안내 문구, 아니면·안 골랐으면 null", () => {
-    expect(movingNotice({ moving: true })).toContain("채널을 옮기는 중");
+    expect(movingNotice({ moving: true })).toContain("채널 변경 확인 중");
     expect(movingNotice({ moving: false })).toBeNull();
     expect(movingNotice({})).toBeNull();
     expect(movingNotice(undefined)).toBeNull();

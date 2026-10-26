@@ -31,7 +31,7 @@ export function PaymentSummary({ payment, differences, dueKrw = 0, inProgress = 
           <div key={`${l.tier}-${l.unitKrw}-${l.missing}`}>
             <dt>
               {PARCEL_TIER_GUIDE[l.tier].name} 상자 {won(l.unitKrw)} × {l.count}
-              {l.missing ? " · 도착하지 않음" : ""}
+              {l.missing ? " · 미도착" : ""}
             </dt>
             <dd>{won(l.unitKrw * l.count)}</dd>
           </div>
@@ -68,11 +68,11 @@ export function PaymentSummary({ payment, differences, dueKrw = 0, inProgress = 
         </span>
       </p>
       <p className={s.payNote}>
-        {formatDate(payment.paidAt)}에 결제했어요.
+        결제일: {formatDate(payment.paidAt)}
         {inProgress ? (
           <>
             <br />
-            도착한 상자를 재어 보니 상자 크기가 더 크면, 차액만 따로 결제해요.
+            실측 결과가 선택한 요금 구간을 초과하면 차액이 청구됩니다.
           </>
         ) : null}
       </p>

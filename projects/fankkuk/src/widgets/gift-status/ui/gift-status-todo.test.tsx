@@ -102,17 +102,17 @@ describe("INV-J13: 차액 결제 버튼은 맨 위 칸에서만", () => {
   it("INV-J13: 결제 뒤 돌아온 안내는 줄이 없어도 남는다(결제를 마치지 못했어요)", () => {
     render({ differences: [diff(B1, 1, "due")], notice: "failed" });
     const sec = section("차액 결제");
-    expect(sec?.textContent).toContain("차액 결제를 마치지 못했어요.");
+    expect(sec?.textContent).toContain("차액 결제가 완료되지 않았습니다.");
     expect(sec?.querySelectorAll("button")).toHaveLength(0);
   });
 });
 
 describe("INV-J13: 팬꾹 주소 없이 보냈어요 — 칸에 있는 상자는 아래에서 빠진다", () => {
-  const options = () => [...(section("팬꾹 주소 없이 보냈다면")?.querySelectorAll("option") ?? [])].map((o) => o.textContent ?? "");
+  const options = () => [...(section("주소 끝 6자리 없이 보낸 상자 찾기")?.querySelectorAll("option") ?? [])].map((o) => o.textContent ?? "");
 
-  it("INV-J13: 칸에 없는 상자는 아래에서 찾을 수 있다 — 칸에 있는 상자(도착이 늦어요)는 고를 목록에 없다", () => {
+  it("INV-J13: 칸에 없는 상자는 아래에서 찾을 수 있다 — 칸에 있는 상자(미도착 상자 확인)는 고를 목록에 없다", () => {
     render({ boxes: [box(B1, 1), box(B2, 2)], todoBoxIds: [B1] });
-    const sec = section("팬꾹 주소 없이 보냈다면");
+    const sec = section("주소 끝 6자리 없이 보낸 상자 찾기");
     expect(sec?.querySelector("form")).not.toBeNull();
     // 고를 상자가 하나면 고르는 칸 없이 그 상자로 정해질 수 있다 — 어느 쪽이든 칸의 상자 이름은 구간에 없다
     expect(sec?.textContent).not.toContain("상자 1 ·");
@@ -128,16 +128,16 @@ describe("INV-J13: 팬꾹 주소 없이 보냈어요 — 칸에 있는 상자는
 
   it("INV-J13 (실패경로): 고를 상자가 모두 칸에 있으면 아래 구간을 그리지 않는다 — 같은 상자를 두 곳에서 찾지 않는다", () => {
     render({ boxes: [box(B1, 1)], todoBoxIds: [B1] });
-    expect(section("팬꾹 주소 없이 보냈다면")).toBeNull();
+    expect(section("주소 끝 6자리 없이 보낸 상자 찾기")).toBeNull();
   });
 });
 
 describe("INV-J13: 찾은 뒤 다시 읽어도 결과 안내가 남는다", () => {
   it("INV-J13: 처음에 보인 찾기 구간은 다시 읽어 고를 상자가 칸의 상자만 남아도 사라지지 않는다(결과 안내 자리)", () => {
     render({ boxes: [box(B1, 1), box(B2, 2)], todoBoxIds: [B1] });
-    expect(section("팬꾹 주소 없이 보냈다면")).not.toBeNull();
+    expect(section("주소 끝 6자리 없이 보낸 상자 찾기")).not.toBeNull();
     // B2 를 찾아 입고 → 다시 읽으면 고를 상자는 칸의 B1 뿐
     render({ boxes: [box(B1, 1), { ...box(B2, 2), state: "received" as GiftBox["state"] }], todoBoxIds: [B1] });
-    expect(section("팬꾹 주소 없이 보냈다면")).not.toBeNull();
+    expect(section("주소 끝 6자리 없이 보낸 상자 찾기")).not.toBeNull();
   });
 });

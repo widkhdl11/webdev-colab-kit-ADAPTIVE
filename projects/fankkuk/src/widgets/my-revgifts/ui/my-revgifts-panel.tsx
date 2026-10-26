@@ -11,7 +11,7 @@ import s from "./my-revgifts.module.css";
 
 // 받은 선물 본문(팬 — 크리에이터가 보낸 역조공). 시안: docs/design/mockups/site/v34-part1/revgifts.html (design-rules 21절).
 // 탭 「받는 중」·「완료」 — 나눔은 그대로(받기 대기·수락·출고 / 나머지), 이름만 바뀌었다(2026-10-21 카드 d104).
-// 받을지 정해야 하는 줄만 강조 칸(남은 날·「바로 하기」 → 그 선물 상세의 「지금 할 일」 칸), 나머지는 촘촘한 줄 → 선물 상세(action-center INV-J12).
+// 받을지 정해야 하는 줄만 강조 칸(남은 날·「확인하기」 → 그 선물 상세의 「지금 할 일」 칸), 나머지는 촘촘한 줄 → 선물 상세(action-center INV-J12).
 // 팬 본인에게는 거절과 기한 지남을 나눠 보여 준다.
 
 type Row = { item: ReceivedRevgift; stage: ReceivedStage; copy: ReturnType<typeof receivedStageCopy> };
@@ -41,8 +41,8 @@ function Featured({ row, nowMs }: { row: Row; nowMs: number }) {
         </p>
         <span className="lab">{formatMonthDayKo(item.deadline)}까지</span>
       </div>
-      <Link className="btn" href={giftDetailHref(item.orderNo, true)} aria-label={`${item.creatorName}님이 보낸 선물 받기 — 바로 하기`}>
-        바로 하기
+      <Link className="btn" href={giftDetailHref(item.orderNo, true)} aria-label={`${item.creatorName}님이 보낸 선물 받기 — 확인하기`}>
+        확인하기
       </Link>
     </article>
   );
@@ -102,28 +102,28 @@ export function MyRevgiftsPanel({ items, nowMs }: { items: readonly ReceivedRevg
     <div>
       <header className="page-head">
         <h1 className="ph-title">받은 선물</h1>
-        <p className="ph-desc">내가 팔로우한 크리에이터가 나에게 보낸 선물이에요.</p>
+        <p className="ph-desc">팔로우한 크리에이터가 내게 보낸 선물입니다.</p>
       </header>
       {rows.length === 0 ? (
         <div className={s.epanel}>
           <img src="/images/home/creator-cat.webp" alt="" aria-hidden="true" width={160} height={160} />
           <p>
-            아직 받은 선물이 없어요.
+            받은 선물이 없습니다.
             <br />
-            크리에이터가 선물을 보내면 여기에 나와요.
+            크리에이터가 보낸 선물은 이곳에 표시됩니다.
           </p>
         </div>
       ) : (
         <RevgiftTabs
           tabs={[
-            { id: "ongoing", label: `받는 중 ${ongoing.length}`, panel: <Panel rows={ongoing} nowMs={nowMs} empty="지금 받는 중인 선물이 없어요." /> },
+            { id: "ongoing", label: `받는 중 ${ongoing.length}`, panel: <Panel rows={ongoing} nowMs={nowMs} empty="받는 중인 선물이 없습니다." /> },
             {
               id: "past",
               label: `완료 ${past.length}`,
               panel: (
                 <>
-                  <Panel rows={past} nowMs={nowMs} empty="아직 완료된 선물이 없어요." />
-                  <p className={`t-meta ${s["past-note"]}`}>받지 않은 선물의 상자는 크리에이터에게 돌아가요. 크리에이터에게는 받지 않은 이유를 알리지 않아요.</p>
+                  <Panel rows={past} nowMs={nowMs} empty="완료된 선물이 없습니다." />
+                  <p className={`t-meta ${s["past-note"]}`}>수락하지 않은 선물은 크리에이터에게 반송됩니다. 수락하지 않은 이유는 크리에이터에게 공개하지 않습니다.</p>
                 </>
               ),
             },

@@ -12,11 +12,11 @@ import type { JsonReply } from "@/shared/lib/http/private-json";
 // 송장번호는 배송 조회용 선택 입력이다(inbound-address-code INV-C7) — 상자를 찾는 열쇠가 아니다. 계정마다 24시간에 10번까지(DB 판정, 429).
 //   같은 번호가 다른 상자에 있어도 거부하지 않고 늘 같은 「등록됐어요」로 답한다 — 남의 송장번호가 등록돼 있는지 떠볼 수 없게.
 
-export const MESSAGE_ALREADY_RECEIVED = "이미 입고된 상자예요";
-export const MESSAGE_NO_MATCH = "맞는 상자를 못 찾았어요. 송장번호와 택배사를 다시 확인해 주세요. 사무실에 도착한 지 30일이 지나면 원래 송장 주소로 돌려보내요";
-export const MESSAGE_MATCH_LIMIT = "오늘은 더 찾을 수 없어요. 내일 다시 해 주세요";
-export const MESSAGE_WAYBILL_LIMIT = "오늘은 송장번호를 더 넣을 수 없어요. 내일 다시 해 주세요";
-export const MESSAGE_FIND_DETAILS = "송장번호를 넣고 택배사를 골라 주세요.";
+export const MESSAGE_ALREADY_RECEIVED = "이미 입고된 상자입니다.";
+export const MESSAGE_NO_MATCH = "일치하는 상자가 없습니다. 송장번호와 택배사를 확인해 주세요. 주인을 확인하지 못한 상자는 팬꾹 도착 후 30일이 지나면 원래 송장 주소로 반송됩니다.";
+export const MESSAGE_MATCH_LIMIT = "오늘의 조회 횟수를 초과했습니다. 내일 다시 시도해 주세요.";
+export const MESSAGE_WAYBILL_LIMIT = "오늘의 송장번호 등록 횟수를 초과했습니다. 내일 다시 시도해 주세요.";
+export const MESSAGE_FIND_DETAILS = "송장번호를 넣고 택배사를 선택해 주세요.";
 
 /** 찾기 함수의 답. 남의 상자·두 값 중 하나라도 다름·닉네임이 맞지 않은 상자·기한 지남·남의 6자리가 붙은 상자는 모두 not_found 하나다(INV-C4·C10). */
 const matchAnswer = z.enum(["matched", "not_found"]);
@@ -27,7 +27,7 @@ const matchAnswer = z.enum(["matched", "not_found"]);
  */
 const waybillAnswer = z.enum(["saved", "not_found", "already_received"]);
 
-const FAILED = "저장하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const FAILED = "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 const waybillField = z.string().max(40);
 const boxBody = z.object({ boxId: z.guid(), waybill: waybillField }).strict();
@@ -130,10 +130,10 @@ export async function findHeldParcel(deps: Deps, body: unknown): Promise<JsonRep
     p_carrier: input.carrier,
   });
   if (error?.code === "P0045") return { status: 429, body: { message: MESSAGE_MATCH_LIMIT } };
-  if (error) return pgErrorReply(error.code, { limit: MESSAGE_FIND_DETAILS, failed: "찾지 못했어요. 잠시 뒤 다시 해 주세요." });
+  if (error) return pgErrorReply(error.code, { limit: MESSAGE_FIND_DETAILS, failed: "상자를 조회하지 못했습니다. 잠시 후 다시 시도해 주세요." });
   const answer = matchAnswer.safeParse(data);
   // 모르는 답이면 500 — 입고 화면(scan-inbound)과 같은 꼴. 이어졌는지 단정하지 않는다
-  if (!answer.success) return { status: 500, body: { message: "찾지 못했어요. 잠시 뒤 다시 해 주세요." } };
+  if (!answer.success) return { status: 500, body: { message: "상자를 조회하지 못했습니다. 잠시 후 다시 시도해 주세요." } };
   // 못 찾은 것은 오류가 아니라 찾기의 결과다 — 200 으로 돌려주고 화면이 결과 칸에 보여 준다
   return answer.data === "matched"
     ? { status: 200, body: { matched: true } }

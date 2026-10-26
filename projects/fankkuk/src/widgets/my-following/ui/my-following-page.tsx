@@ -88,13 +88,12 @@ export function MyFollowingPanel({
                 width={96}
                 height={96}
               />
-              <h2 className="t-card">아직 팔로우한 크리에이터가 없어요</h2>
+              <h2 className="t-card">팔로우한 크리에이터가 없습니다</h2>
               <p className="t-desc">
-                좋아하는 크리에이터를 팔로우하면 여기에 모아 두고, 바로 선물을 보낼
-                수 있어요.
+                선물을 보낼 크리에이터를 찾아 팔로우해 주세요.
               </p>
               <Link className="btn" href="/creators">
-                나의 크리에이터 찾으러 가기
+                크리에이터 찾기
               </Link>
             </div>
           )}

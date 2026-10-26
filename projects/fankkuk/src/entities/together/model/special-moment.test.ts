@@ -73,6 +73,6 @@ describe("specialMoments — 처음 선물한 지 1년", () => {
   });
 
   it("INV-F4: 문구 — 본인 화면에만 쓰는 말", () => {
-    expect(SPECIAL_MOMENT_TEXT).toEqual({ tenth: "10번째 선물이에요", thirtieth: "30번째 선물이에요", first_year: "처음 선물한 지 1년째예요" });
+    expect(SPECIAL_MOMENT_TEXT).toEqual({ tenth: "10번째 선물", thirtieth: "30번째 선물", first_year: "첫 선물 1주년" });
   });
 });
