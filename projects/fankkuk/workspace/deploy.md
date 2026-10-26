@@ -6,6 +6,11 @@ basis: 120f356de230
 
 # 배포 기록 — fankkuk
 
+## 2026-10-26 — 운영 테스트 키 막음 삭제 · 문구 2 교체 (basis 는 그대로 — d136 커밋 셋이 push 전이라 다음 배포가 갱신)
+
+- main ..e2635677 push → 시험 사이트 반영. 배포 전 단위 2675 통과 · copy:lint 0 · security-reviewer high·medium 0. 배포 후 fankkuk.com/api/checkout/success(테스트 paymentKey, 로그인 없이) 500 → 303 /gifts/new?payment=failed — 결제 모듈 생성 단계를 통과한다. DB·환경 변경 없음.
+- main ..9cd916b0 push(다른 세션 커밋 a9f82bd7·8ccdee35·68505c59 함께) → 반영. /login 「아이디와 비밀번호로 로그인해 주세요.」 · /password/forgot 새 설명 확인. 로그인 뒤 화면은 시험으로만(2694/2696, 실패 2개는 그때 커밋 전이던 d136 파일). DB·환경 변경 없음.
+
 ## 2026-10-26 — 10-21~10-26 정돈 묶음 + 헤더 선물 목록 제거·Referrer-Policy
 
 - main 333609ae..cda7c991 push(10-26 00:3x) → Vercel 셋 성공. 그 전에 시험 사이트 DB 에 20261025000001(pricing 예약어)이 들어간 것을 원격 목록으로 확인(사람 적용).
