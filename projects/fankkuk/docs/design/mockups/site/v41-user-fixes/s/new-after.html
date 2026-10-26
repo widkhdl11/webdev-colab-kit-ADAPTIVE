@@ -1,0 +1,61 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>선물 보내기 · 바꾼 뒤 · 팬꾹 v41 시안</title><link rel="stylesheet" href="../../v34-part1/styles.css"><link rel="stylesheet" href="../../v34-part1/v33.css"><link rel="stylesheet" href="../../v34-part1/v33b.css"><link rel="stylesheet" href="../../v34-part1/v34.css"><link rel="stylesheet" href="../../v35-part1/v35.css"><link rel="stylesheet" href="../../v37-part2/v37.css"><link rel="stylesheet" href="../../v39-part3/v39.css"><link rel="stylesheet" href="../../ux-pilot-2026-10-22/ux.css"><link rel="stylesheet" href="../v41.css"></head>
+<!-- v41 — /gifts/new 바꾼 뒤. 주소 끝 ?step=1|3|4 로 단계를 바꿔 본다(기본 3). 모양은 v39 B안 그대로, 오른쪽 「보낼 선물」 칸(PC)과 휴대폰 아래 합계 줄(3단계)만 새로 생긴다. 이름·금액은 예시(요금은 로컬 공개 요금표 값). -->
+<body class="member after" id="top"><aside class="sidebar"><a class="logo" href="#top"><img src="../../../../../../public/images/logo-mark.png" alt="">팬꾹</a><nav aria-label="주 메뉴"><a href="#"><span class="nav-glyph" aria-hidden="true">⌂</span>홈</a><a href="#"><span class="nav-glyph" aria-hidden="true">☑</span>지금 할 일<span class="nav-count" aria-label="2건">2</span></a><a href="#"><span class="nav-glyph" aria-hidden="true">⌕</span>크리에이터 찾기</a><a href="#" class="active" aria-current="page"><span class="nav-glyph" aria-hidden="true">◇</span>선물 보내기</a><a href="#"><span class="nav-glyph" aria-hidden="true">□</span>보낸 선물</a><a href="#"><span class="nav-glyph" aria-hidden="true">↗</span>받은 선물</a><a href="#"><span class="nav-glyph" aria-hidden="true">♡</span>팔로우한 크리에이터</a><a href="#"><span class="nav-glyph" aria-hidden="true">?</span>문의</a></nav><div class="account"><span class="avatar">별</span><div><strong>별빛님</strong><small>팬 · 계정 설정</small></div></div></aside><div class="page"><header class="mobile-bar"><a class="logo" href="#top"><img src="../../../../../../public/images/logo-mark.png" alt="">팬꾹</a><button type="button" aria-label="메뉴 열기">☰</button></header><main id="main"><div class="wrap wide">
+<header class="ph"><h1>선물 보내기</h1></header>
+<div class="gn3" data-step="3" data-gn3>
+<div class="main">
+<section class="fhero" aria-labelledby="hero-t">
+<img class="peek" src="../../../../../../public/images/home/icon-gift.webp" alt="">
+<div class="row"><p class="big n48" style="margin:0"><span data-stepcount>3</span><small>/ 4 단계</small></p><div><h2 class="fh" id="hero-t" data-hero-title>상자는 몇 개인가요?</h2><p class="flead" data-hero-lead>상자마다 택배비가 포함돼 있어요. 모두 합쳐 10개까지 한 번에 보낼 수 있어요.</p></div></div>
+<nav aria-label="선물 보내기 단계"><ol class="fsteps"><li data-fs="1"><button type="button"><span class="n" aria-hidden="true">1</span>크리에이터</button></li><li data-fs="2"><button type="button"><span class="n" aria-hidden="true">2</span>선물</button></li><li data-fs="3"><button type="button"><span class="n" aria-hidden="true">3</span>상자</button></li><li data-fs="4"><button type="button"><span class="n" aria-hidden="true">4</span>결제</button></li></ol></nav>
+</section>
+<form class="fpanel" onsubmit="return false" aria-label="선물 보내기 입력" novalidate>
+<fieldset class="fs" data-step="1" hidden><legend class="sr-only">받는 크리에이터</legend>
+<label class="sr-only" for="pick-q">크리에이터 검색</label><input class="input" id="pick-q" type="search" placeholder="이름이나 채널 이름으로 찾아요" autocomplete="off">
+<div class="pickhead"><strong>팔로우한 크리에이터</strong><p>전체 7명</p></div>
+<ul class="plist one"><li><label class="pcard"><input type="radio" name="creator" value="haru" checked><span class="face c1">하</span><span class="tx"><strong>하루</strong><span class="ptags"><span class="tag sm12">치지직</span><span class="tag sm12">버튜버</span></span><span class="pm">하루의 놀이터 · 평균 승인 약 2시간</span></span></label></li><li><label class="pcard"><input type="radio" name="creator" value="momo"><span class="face c2">모</span><span class="tx"><strong>모모</strong><span class="ptags"><span class="tag sm12">유튜브</span><span class="tag sm12">인스타그램</span></span><span class="pm">모모네 거실 · 평균 승인 약 22시간</span></span></label></li></ul>
+<div class="actions2"><button class="btn fill" type="button">다음</button></div>
+</fieldset>
+<section data-step="3" aria-labelledby="hero-t">
+<div class="qtiles"><div class="qtile"><div class="tx"><p class="qn">소형 상자</p><p class="qm">세 변의 합 100cm 이하·무게 5kg 이하</p><p class="qm">6,900원</p></div><div class="qty" role="group" aria-label="소형 상자 수"><button type="button" aria-label="소형 상자 하나 줄이기">−</button><output>1</output><button type="button" aria-label="소형 상자 하나 늘리기">+</button></div></div><div class="qtile"><div class="tx"><p class="qn">중형 상자</p><p class="qm">세 변의 합 100cm 이하·무게 10kg 이하</p><p class="qm">8,900원</p></div><div class="qty" role="group" aria-label="중형 상자 수"><button type="button" aria-label="중형 상자 하나 줄이기">−</button><output>2</output><button type="button" aria-label="중형 상자 하나 늘리기">+</button></div></div><div class="qtile zero"><div class="tx"><p class="qn">대형 상자</p><p class="qm">세 변의 합 160cm 이하·무게 20kg 이하</p><p class="qm">10,900원</p></div><div class="qty" role="group" aria-label="대형 상자 수"><button type="button" aria-label="대형 상자 하나 줄이기" aria-disabled="true">−</button><output>0</output><button type="button" aria-label="대형 상자 하나 늘리기">+</button></div></div></div>
+<div class="gnote first"><h3>상자 크기는 이렇게 정해져요</h3><ul><li>크기와 무게 중 큰 쪽으로 정해져요. 세 변의 합이 160cm를 넘거나 무게가 20kg을 넘는 상자는 받지 않아요.</li><li>도착해서 재 보니 신고보다 큰 상자 크기면 차액을 따로 요청드려요. 차액을 내셔야 출고돼요.</li><li>재 보니 더 작아도 차액은 돌려드리지 않아요.</li></ul></div>
+<div class="actions2"><button class="btn ghost" type="button">이전</button><button class="btn fill" type="button">다음</button></div>
+</section>
+<section data-step="4" hidden aria-labelledby="hero-t"><dl class="sums">
+<div class="sr"><dt>받는 크리에이터</dt><dd>하루님</dd><button class="fixlink" type="button" aria-label="받는 크리에이터 고치기">고치기</button></div>
+<div class="sr"><dt>선물 종류</dt><dd>인형·쿠션</dd><button class="fixlink" type="button" aria-label="선물 종류 고치기">고치기</button></div>
+<div class="sr"><dt>전자기기·금속 제품</dt><dd>아니요, 없어요</dd><button class="fixlink" type="button" aria-label="전자기기·금속 제품 신고 고치기">고치기</button></div>
+<div class="sr"><dt>상자</dt><dd>소형 1개 · 중형 2개</dd><button class="fixlink" type="button" aria-label="상자 수 고치기">고치기</button></div>
+</dl>
+<div class="gnote" role="note" style="margin-top:24px"><h3>이럴 때는 돌려보내 드려요</h3><p>크리에이터가 받지 않기로 하거나 7일 안에 승인하지 않으면, 선물은 보낸 주소로 돌려보내 드리고 결제 금액에서 반송 택배비를 뺀 금액을 돌려드려요.</p><p>검수에서 추적 장치처럼 보낼 수 없는 물품이 나오거나 세 변의 합이 160cm를 넘거나 무게가 20kg을 넘는 상자면 돌려보내 드려요. 이때는 검수비와 택배비를 빼면 환불 금액이 남지 않아요.</p><hr><h3>하루님은 보통 약 2시간 안에 승인해요</h3><p>크리에이터가 승인하면 팬꾹 주소가 바로 보여요. 기다리지 않고 「먼저 보내기」로 미리 보낼 수도 있어요. 크리에이터가 승인한 선물만 배송해요.</p></div>
+<div class="paybox" aria-label="결제 금액"><div class="lines2"><div class="ln"><span>소형 상자 1개 <small>6,900원 × 1</small></span><span>6,900원</span></div><div class="ln"><span>중형 상자 2개 <small>8,900원 × 2</small></span><span>17,800원</span></div><div class="tot"><span style="font-weight:700">합계</span><b>24,700<small>원</small></b></div></div>
+<p style="margin-top:12px"><span class="tag brand">검수 포함</span></p><p class="pn2">택배비가 포함된 금액이에요. 선물이 사무실에 도착하기 전에 거절되면 전액 돌려드려요.</p><div class="consent2"><label class="check2" for="pay-consent"><input type="checkbox" id="pay-consent"><span>결제 내용과 아래 규정을 확인했고 결제에 동의해요 (필수)</span></label><p class="hint2"><a href="#">이용약관</a> · <a href="#">개인정보처리방침</a> · <a href="#">취소·환불 규정</a></p></div></div>
+<div class="actions2"><button class="btn ghost" type="button">이전</button><button class="btn fill" type="button">24,700원 결제하기</button></div>
+</section>
+</form>
+<div class="sumbar" role="status" aria-label="고른 상자 합계"><div class="l"><b>상자 3개</b><span>소형 1 · 중형 2</span></div><p class="r">24,700<small>원</small></p></div>
+</div>
+<aside class="sumcard" aria-labelledby="sum-h"><h2 id="sum-h">보낼 선물</h2>
+<dl class="kv"><div><dt>받는 크리에이터</dt><dd data-s1>하루님</dd></div><div><dt>선물 종류</dt><dd data-s2>인형·쿠션</dd></div></dl>
+<hr>
+<div class="lines2" data-lines><div class="ln"><span>소형 상자 1개 <small>6,900원 × 1</small></span><span>6,900원</span></div><div class="ln"><span>중형 상자 2개 <small>8,900원 × 2</small></span><span>17,800원</span></div><div class="tot"><span style="font-weight:700">합계</span><b>24,700<small>원</small></b></div></div>
+<div class="lines2" data-lines-empty hidden><div class="tot" style="border-top:0;margin-top:0;padding-top:0"><span style="font-weight:700">합계</span><b>0<small>원</small></b></div></div>
+<p><span class="tag brand">검수 포함</span></p>
+</aside>
+</div>
+</div></main></div>
+<script>
+(function(){
+var step=Number(new URLSearchParams(location.search).get('step')||3);
+var g=document.querySelector('[data-gn3]');g.dataset.step=String(step);
+var T={1:['누구에게 보낼까요?','팔로우한 크리에이터 중에서 골라요.'],3:['상자는 몇 개인가요?','상자마다 택배비가 포함돼 있어요. 모두 합쳐 10개까지 한 번에 보낼 수 있어요.'],4:['확인하고 결제해요','맞는지 한 번 더 봐 주세요. 틀린 곳은 「고치기」로 돌아갈 수 있어요.']};
+document.querySelector('[data-stepcount]').textContent=step;
+document.querySelector('[data-hero-title]').textContent=T[step][0];
+document.querySelector('[data-hero-lead]').textContent=T[step][1];
+document.querySelectorAll('.fpanel [data-step]').forEach(function(s){s.hidden=Number(s.dataset.step)!==step;});
+document.querySelectorAll('[data-fs]').forEach(function(li){var n=Number(li.dataset.fs);li.className=n===step?'on':n<step?'done':'';if(n<step)li.querySelector('.n').textContent='✓';});
+if(step===1){document.querySelector('[data-s2]').textContent='—';document.querySelector('[data-lines]').hidden=true;document.querySelector('[data-lines-empty]').hidden=false;}
+document.querySelectorAll('a[href="#"]').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();});});
+})();
+</script>
+</body></html>

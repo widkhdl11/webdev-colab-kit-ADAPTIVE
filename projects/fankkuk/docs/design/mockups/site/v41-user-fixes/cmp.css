@@ -1,0 +1,32 @@
+/* 비교 페이지 틀 — 시안 전용. 색은 tokens.css 값(#1f2937·#4b5563·#d1d5db·#eef1f4·#fff·#b42318·#f0f8ff). */
+.cmp{background:#eef1f4;color:#1f2937}
+.cmp-top{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 24px;padding:16px 24px;background:#fff;border-bottom:1px solid #d1d5db}
+.cmp-top h1{font-family:inherit;font-size:20px;font-weight:700;letter-spacing:0;line-height:1.4}
+.cmp-top p{font-size:14px;color:#4b5563}
+.cmp-top nav{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px}
+.cmp-top nav a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:4px}
+.cmp-top nav a[aria-current=page]{font-weight:700;text-decoration:none}
+.cmp-body{max-width:1600px;margin:0 auto;padding:24px 24px 96px}
+.cmp-card{margin-top:32px;padding:24px;border:1px solid #d1d5db;border-radius:16px;background:#fff}
+.cmp-card:first-child{margin-top:0}
+.cmp-card h2{font-family:inherit;font-size:20px;font-weight:700;letter-spacing:0}
+.cmp-card ol,.cmp-card ul{margin:12px 0 0;padding-left:24px;list-style:decimal}
+.cmp-card ul{list-style:disc}
+.cmp-card li{font-size:16px}
+.cmp-card li+li{margin-top:8px}
+.cmp-card li span{display:block;font-size:14px;color:#4b5563}
+.cmp-card .rec{display:inline-block;margin-left:8px;padding:0 8px;border-radius:999px;background:#1f2937;color:#fff;font-size:12px;font-weight:700;vertical-align:middle}
+.cmp-sec{margin-top:40px}
+.cmp-sec>h2{font-family:inherit;font-size:20px;font-weight:700;letter-spacing:0}
+.cmp-sec>p{margin-top:4px;font-size:14px;color:#4b5563}
+.cmp-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:16px;align-items:start}
+.cmp-row.phone{grid-template-columns:repeat(2,minmax(0,390px));justify-content:center;gap:48px}
+.cmp-row.phone3{grid-template-columns:repeat(3,minmax(0,390px));justify-content:center;gap:32px}
+.cmp-col{min-width:0}
+.cmp-lab{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:8px;font-size:14px;font-weight:700}
+.cmp-lab a{font-weight:400;text-decoration:underline;text-underline-offset:4px;color:#4b5563}
+.cmp-lab .after{color:#1f2937}
+.shot{position:relative;overflow:hidden;border:1px solid #d1d5db;border-radius:12px;background:#fff}
+.shot iframe,.shot img{position:absolute;left:0;top:0;border:0;display:block;max-width:none;transform-origin:top left}
+.shot.vh iframe{pointer-events:auto}
+@media(max-width:999px){.cmp-row,.cmp-row.phone,.cmp-row.phone3{grid-template-columns:minmax(0,1fr)}.cmp-body{padding:16px 16px 64px}.cmp-top{padding:16px}}

@@ -1,0 +1,111 @@
+/* v41 사용자 지시 두 화면 — ../v34-part1/ 네 파일, ../v35-part1/v35.css, ../v37-part2/v37.css, ../v39-part3/v39.css, ../ux-pilot-2026-10-22/ux.css 위에 차이만.
+   값은 00000절 그대로: 글자 48·32·24·20·16·14(뱃지 12) / 간격 4·8·12·16·24·32·40·48 / 반경 24·16·12·알약 / 누름 칸 44 이상.
+   색은 tokens.css 값만: 글자 #1f2937 · 보조 #4b5563 · 하늘 #89cff0 · 옅은 하늘 #f0f8ff·#e0f2fe · 테두리 #bfe3f7·#e5e7eb · 경고 #fff5db/#805b16.
+   새 모양 셋: (1) 선물 보내기 오른쪽 「보낼 선물」 칸(흰 카드, 288, 위에 붙어 따라옴) (2) 휴대폰 아래 합계 줄 (3) 팬꾹 주소 6자리 칸(32 글자, 흰 바탕 칸). */
+
+/* ── 선물 보내기: 입력 기둥 + 오른쪽 요약 칸 ───────────────── */
+.gn3{display:grid;grid-template-columns:minmax(0,1fr) 288px;gap:32px;align-items:start}
+.gn3>.main{min-width:0}
+.gn3 .fhero{margin-top:48px}
+.sumcard{position:sticky;top:32px;margin-top:48px;padding:24px;border:1px solid #e5e7eb;border-radius:24px;background:linear-gradient(180deg,#fff 0%,#fbfcfe 100%);box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(31,41,55,.04),0 4px 12px rgba(31,41,55,.04)}
+.sumcard h2{font-family:inherit;font-size:16px;font-weight:700;letter-spacing:0;color:#1f2937}
+.sumcard .kv{margin:12px 0 0;font-size:14px}
+.sumcard .kv div{display:flex;justify-content:space-between;gap:16px}
+.sumcard .kv div+div{margin-top:8px}
+.sumcard .kv dt{color:#4b5563;flex:none}
+.sumcard .kv dd{margin:0;font-weight:600;text-align:right;min-width:0;overflow-wrap:anywhere}
+.sumcard hr{border:0;border-top:1px solid #e5e7eb;margin:16px 0}
+.sumcard .lines2{margin-top:0}
+.sumcard .lines2 .ln{font-size:14px;padding:4px 0}
+.sumcard .lines2 .ln small{display:block;margin:0}
+.sumcard .lines2 .tot{margin-top:8px;padding-top:12px}
+.sumcard .lines2 .tot b{font-size:32px}
+.sumcard .empty-ln{font-size:14px;color:#4b5563}
+.sumcard .tag{margin-top:12px}
+/* PC 4단계 — 금액 줄은 오른쪽 칸이 맡고 가운데 결제 칸에는 동의·버튼만 */
+.gn3[data-step="4"] .paybox .lines2{display:none}
+.gn3[data-step="4"] .paybox{margin-top:24px}
+
+/* 휴대폰 아래 합계 줄 — 3단계에서만. 입력 기둥 안에 붙어 따라온다(sticky) */
+.sumbar{display:none}
+@media(max-width:999px){
+ .gn3{grid-template-columns:minmax(0,1fr)}
+ .gn3 .sumcard{display:none}
+ .gn3[data-step="4"] .paybox .lines2{display:block}
+ .gn3[data-step="3"] .sumbar{display:flex}
+ .sumbar{position:sticky;bottom:0;z-index:3;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap;margin:24px -16px 0;padding:12px 16px 16px;border-top:1px solid #bfe3f7;background:#fff;box-shadow:0 -4px 12px rgba(31,41,55,.06)}
+ .sumbar .l{min-width:0}
+ .sumbar .l b{display:block;font-size:14px;font-weight:700;color:#1f2937}
+ .sumbar .l span{display:block;font-size:14px;color:#4b5563;overflow-wrap:anywhere}
+ .sumbar .r{font-family:Round,sans-serif;font-weight:800;font-size:24px;line-height:1.2;font-variant-numeric:tabular-nums;white-space:nowrap}
+ .sumbar .r small{font-family:Pretendard,sans-serif;font-size:14px;font-weight:600;margin-left:2px}
+}
+
+/* ── 선물 상세: 상태 판의 승인 표시 ─────────────────────────── */
+.tagrow{display:flex;flex-wrap:wrap;gap:8px}
+.tagrow .tag{background:#fff}
+.tagrow .tag.warn,.dsteps .tag.warn{background:#fff5db;color:#805b16}
+.dsteps li .apv{display:inline-flex;margin-top:4px}
+.dsteps li .apv .tag{font-size:12px;min-height:22px;padding:0 8px}
+
+/* 선물 정보 카드 — 오른쪽 한 열에 하나(결제·주문 정보 합침) */
+.ginfo h2{font-family:inherit;font-size:16px;font-weight:700;letter-spacing:0;line-height:1.6}
+.ginfo .kv{margin:12px 0 0;font-size:14px}
+.ginfo .kv div{display:flex;justify-content:space-between;align-items:baseline;gap:16px}
+.ginfo .kv div+div{margin-top:8px}
+.ginfo .kv dt{color:#4b5563;min-width:0}
+.ginfo .kv dd{margin:0;text-align:right;min-width:0;overflow-wrap:anywhere;font-weight:600;font-variant-numeric:tabular-nums}
+.ginfo .kv dd.plain{font-weight:400}
+.ginfo .grp{margin-top:16px;padding-top:16px;border-top:1px solid #e5e7eb}
+.ginfo .grp h3{font-family:inherit;font-size:14px;font-weight:700;letter-spacing:0;color:#4b5563}
+.ginfo .grp .kv{margin-top:8px}
+.ginfo .grp.apv-grp{margin-top:16px;padding:16px;border:1px solid #fde68a;border-radius:12px;background:#fffbeb}
+.ginfo .grp.apv-grp h3{color:#1f2937}
+.ginfo .grp.apv-grp .kv dt{color:#4b5563}
+.ginfo .grp.apv-grp .tag.warn{background:#fff5db;color:#805b16;box-shadow:inset 0 0 0 1px #fde68a}
+.ginfo .paytot{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid #e5e7eb}
+.ginfo .paytot span{font-size:14px;font-weight:700}
+.ginfo .paytot b{font-family:Round,sans-serif;font-weight:800;font-size:24px;line-height:1.2;font-variant-numeric:tabular-nums}
+.ginfo .paytot b small{font-family:Pretendard,sans-serif;font-size:14px;font-weight:600;margin-left:2px}
+.ginfo .ok{margin-top:12px}
+.ginfo .pay-note{margin-top:8px;font-size:14px;color:#4b5563}
+.ginfo .cancel{margin-top:16px}
+
+/* 상자 줄 — 상자 번호·크기만(주문번호를 상자 이름으로 쓰지 않는다) */
+.bx{padding:16px 0}
+.bx+.bx{border-top:1px solid #e5e7eb}
+.bx .boxline{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 16px}
+.bx .boxline h3{font-family:inherit;font-size:16px;font-weight:700;letter-spacing:0}
+.bx .boxline h3 span{font-weight:400;color:#4b5563}
+
+/* 팬꾹 주소 — 6자리를 따로 큰 칸으로 */
+.addr3{margin-top:12px;padding:24px;border-radius:16px;background:linear-gradient(135deg,#f0f8ff 0%,#e0f2fe 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+.addr3 .codebox{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;align-items:center}
+.addr3 .codebox .lab{grid-column:1/-1;font-size:14px;font-weight:700;color:#1f2937}
+.addr3 .code6{display:flex;gap:4px;min-width:0}
+.addr3 .code6 span{display:grid;place-items:center;width:44px;height:56px;border:1px solid #1f2937;border-radius:12px;background:#fff;font-family:Round,sans-serif;font-size:32px;font-weight:800;line-height:1;color:#1f2937;font-variant-numeric:tabular-nums}
+.addr3 .code6.masked span{color:#4b5563;font-size:24px}
+.addr3 dl{display:grid;gap:8px;margin:16px 0 0;padding-top:16px;border-top:1px solid #bfe3f7;font-size:14px}
+.addr3 dl div{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px}
+.addr3 dt{color:#4b5563}
+.addr3 dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.addr3 dd .tail{display:inline-block;padding:0 4px;border-radius:4px;background:#fff;box-shadow:inset 0 0 0 1px #1f2937;font-weight:700;letter-spacing:1px}
+.addr3 .acts{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:16px}
+.addr3 .addr-note{margin-top:12px;font-size:14px;color:#4b5563}
+.boxnote{margin-top:8px;font-size:14px;color:#4b5563}
+
+@media(max-width:767px){
+ .addr3{padding:16px}
+ .addr3 .codebox{grid-template-columns:minmax(0,1fr)}
+ .addr3 .code6 span{width:40px;height:48px;font-size:24px}
+ .addr3 dl div{grid-template-columns:minmax(0,1fr);gap:0}
+ .addr3 .acts .btn{flex:1 1 auto}
+}
+
+/* 시안 전용 — hidden 속성이 클래스 display 에 밀리지 않게 */
+[hidden]{display:none!important}
+
+/* 짧은 줄 목록 — 6자리 아래·먼저 보내기 전 안내(2026-10-26 사용자 「주절주절 설명하지 말고」) */
+.pts{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:4px;font-size:14px;color:#374151}
+.pts li{position:relative;padding-left:14px}
+.pts li::before{content:"";position:absolute;left:2px;top:.65em;width:4px;height:4px;border-radius:50%;background:currentColor}

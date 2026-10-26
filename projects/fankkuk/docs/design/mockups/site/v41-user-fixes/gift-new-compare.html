@@ -1,0 +1,31 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>선물 보내기 비교 · 팬꾹 v41 시안</title><link rel="stylesheet" href="../v34-part1/styles.css"><link rel="stylesheet" href="cmp.css"></head>
+<!-- v41 사용자 지시 — 선물 보내기 /gifts/new. 왼쪽 「지금」은 개발 서버 화면 캡처(2026-10-26, 3단계 · 하루님 · 소형 1 · 중형 2), 오른쪽 「바꾼 뒤」는 s/new-after.html. 명세: docs/ux/pages/gifts-new.md -->
+<body class="cmp">
+<header class="cmp-top"><div><h1>선물 보내기 /gifts/new — 지금과 바꾼 뒤</h1><p>상자를 고르면 합계가 바로 보이게. 모양(색·간격·글자)은 지금 사이트 그대로예요. 이름·금액은 예시예요.</p></div><nav aria-label="시안 이동"><a href="gift-new-compare.html" aria-current="page">선물 보내기</a><a href="gift-detail-compare.html">선물 상세</a></nav></header>
+<main class="cmp-body">
+<section class="cmp-card"><h2>바뀌는 것</h2><ol>
+<li><b>PC — 오른쪽에 따라오는 「보낼 선물」 칸</b><span>받는 크리에이터 · 선물 종류 · 상자 크기별 개수와 금액 · 합계(32) · 검수 포함. 상자 수를 바꾸면 그 자리에서 합계가 바뀌고, 화면을 내려도 위에 붙어 따라와요. 1단계부터 4단계까지 같은 자리에 있어서 단계를 넘겨도 화면 폭이 흔들리지 않아요.</span></li>
+<li><b>휴대폰 — 3단계에서만 화면 아래 합계 줄</b><span>「상자 3개 · 소형 1 · 중형 2」와 합계를 한 줄로. 상자를 고르는 동안 화면 아래에 붙어 있어요. 4단계에는 결제 칸에 금액 줄이 그대로 있어서 띄우지 않아요. 팬에게 보내기 화면의 아래 결제 띠와 같은 방식이에요(design-rules 25절).</span></li>
+<li><b>PC 4단계 — 금액 줄은 오른쪽 칸에만</b><span>같은 합계가 두 군데 나오지 않게 가운데 결제 칸에는 「검수 포함」·동의·결제 버튼만 남겨요. 휴대폰 4단계는 지금 그대로예요.</span></li>
+<li><b>문구 「배송비」 → 「택배비」</b><span>3단계 설명과 결제 칸 아래 줄. 용어집 6절이 팬 화면에서 「배송비」를 쓰지 않는 말로 정해 두었어요.</span></li>
+</ol></section>
+
+<section class="cmp-card"><h2>정해 주실 것</h2><ul>
+<li><b>오른쪽 칸을 언제 보일까요?</b> ① 1~4단계 모두 <span class="rec">추천</span> ② 3·4단계만<span>① 은 쇼핑몰 주문서에서 흔한 방식이고, 단계를 넘겨도 입력 칸 폭이 그대로예요. ② 는 1·2단계 화면이 지금과 같지만 3단계로 넘어갈 때 입력 칸이 좁아져요. 승인된 기준(design-rules 25절 「1~3단계에 오른쪽 요약 칸을 새로 두지 않는다」)을 이번 지시로 바꾸는 것이라, 승인되면 그 줄을 고쳐요.</span></li>
+<li><b>휴대폰 아래 줄에 「다음」 버튼도 넣을까요?</b> ① 합계만 <span class="rec">추천</span> ② 합계 + 「다음」<span>① 은 지금 버튼 자리를 그대로 둬서 바뀌는 게 적어요. ② 는 손가락이 닿기 쉽지만 같은 버튼이 두 군데 생겨요.</span></li>
+</ul></section>
+
+<section class="cmp-sec"><h2>PC 1440 · 3단계</h2><p>상자 수를 바꾸면 오른쪽 합계가 바로 바뀌어요.</p>
+<div class="cmp-row"><div class="cmp-col"><p class="cmp-lab">지금 사이트 <a href="now/gift-new-step3-1440.png" target="_blank" rel="noopener noreferrer">크게 보기 ↗</a></p><div class="shot" data-shot data-w="1440"><img src="now/gift-new-step3-1440.png" alt="지금 사이트 선물 보내기 3단계 PC 화면"></div></div>
+<div class="cmp-col"><p class="cmp-lab"><span class="after">바꾼 뒤</span> <a href="s/new-after.html?step=3" target="_blank" rel="noopener noreferrer">크게 보기 ↗</a></p><div class="shot" data-shot data-w="1440"><iframe title="바꾼 뒤 3단계 PC" src="s/new-after.html?step=3"></iframe></div></div></div></section>
+
+<section class="cmp-sec"><h2>휴대폰 390 · 3단계</h2><p>휴대폰 칸은 화면 한 장 높이(844)예요. 칸 안을 내려 보면 아래 합계 줄이 따라와요.</p>
+<div class="cmp-row phone"><div class="cmp-col"><p class="cmp-lab">지금 사이트 <a href="now/gift-new-step3-390.png" target="_blank" rel="noopener noreferrer">크게 보기 ↗</a></p><div class="shot" data-shot data-w="390"><img src="now/gift-new-step3-390.png" alt="지금 사이트 선물 보내기 3단계 휴대폰 화면"></div></div>
+<div class="cmp-col"><p class="cmp-lab"><span class="after">바꾼 뒤</span> <a href="s/new-after.html?step=3" target="_blank" rel="noopener noreferrer">크게 보기 ↗</a></p><div class="shot vh" data-shot data-w="390" data-vh="844"><iframe title="바꾼 뒤 3단계 휴대폰" src="s/new-after.html?step=3"></iframe></div></div></div></section>
+
+<section class="cmp-sec"><h2>바꾼 뒤 · PC 1단계와 4단계</h2><p>1단계는 아직 고른 상자가 없어 합계가 0원이에요. 4단계는 금액 줄이 오른쪽 칸에만 있어요.</p>
+<div class="cmp-row"><div class="cmp-col"><p class="cmp-lab"><span class="after">1단계</span> <a href="s/new-after.html?step=1" target="_blank" rel="noopener noreferrer">크게 보기 ↗</a></p><div class="shot" data-shot data-w="1440"><iframe title="바꾼 뒤 1단계 PC" src="s/new-after.html?step=1"></iframe></div></div>
+<div class="cmp-col"><p class="cmp-lab"><span class="after">4단계</span> <a href="s/new-after.html?step=4" target="_blank" rel="noopener noreferrer">크게 보기 ↗</a></p><div class="shot" data-shot data-w="1440"><iframe title="바꾼 뒤 4단계 PC" src="s/new-after.html?step=4"></iframe></div></div></div></section>
+</main>
+<script src="cmp.js"></script>
+</body></html>
