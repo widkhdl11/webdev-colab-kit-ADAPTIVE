@@ -100,7 +100,7 @@ describe("팬 받을 주소 입력 (INV-P1·P16·P17)", () => {
     fill();
     await submit();
     expect(sendFanAddress).not.toHaveBeenCalled();
-    expect(host.textContent).toContain("이름표를 하나 골라 주세요");
+    expect(host.textContent).toContain("주소 별칭을 선택해 주세요");
   });
 
   it("INV-P1 (실패경로): 칸이 틀리면 보내지 않고 그 칸에 오류를 붙인다", async () => {
@@ -118,12 +118,12 @@ describe("팬 받을 주소 입력 (INV-P1·P16·P17)", () => {
     act(() =>
       root.render(<FanAddressForm accountId={ACCOUNT} sealingKeyPem={publicPem} onSaved={() => {}} onCancel={() => {}} onLoginExpired={() => {}} />),
     );
-    expect(hint()).toBe("주소는 등록한 뒤에 다시 보이지 않아요. 크리에이터가 보낸 선물을 받을 때 이 이름표와 등록한 날로 확인해요.");
+    expect(hint()).toBe("등록한 주소는 다시 조회할 수 없습니다. 크리에이터가 보낸 선물을 받을 때 주소 별칭과 등록일로 확인해 주세요.");
     act(() =>
       root.render(
         <FanAddressForm accountId={ACCOUNT} sealingKeyPem={publicPem} receiveHint={false} onSaved={() => {}} onCancel={() => {}} onLoginExpired={() => {}} />,
       ),
     );
-    expect(hint()).toBe("주소는 등록한 뒤에 다시 보이지 않아요.");
+    expect(hint()).toBe("등록한 주소는 다시 조회할 수 없습니다.");
   });
 });

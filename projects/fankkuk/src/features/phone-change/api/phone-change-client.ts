@@ -2,7 +2,7 @@ import { postJson } from "@/shared/lib/http/post-json-client";
 
 // 브라우저에서 번호 바꾸기 단계를 서버에 보낸다. 번호표는 브라우저 스크립트가 만지지 않는다 — 서버가 쿠키로 주고 쿠키에서 읽는다.
 
-const FALLBACK = "잠시 문제가 생겼어요. 조금 뒤 다시 해 주세요.";
+const FALLBACK = "연결이 원활하지 않습니다. 잠시 후 다시 시도해 주세요.";
 
 export type PhoneChangeField = "phone" | "verification" | "currentPassword";
 

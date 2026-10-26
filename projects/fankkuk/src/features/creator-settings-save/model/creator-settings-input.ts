@@ -12,7 +12,7 @@ const themeColorInput = z
   .string()
   .trim()
   .transform((s) => s.toUpperCase())
-  .refine((s) => s === "" || isThemeColor(s), "테마 색은 보기의 8색 가운데 하나를 골라 주세요.");
+  .refine((s) => s === "" || isThemeColor(s), "제공된 테마 색 8개 중 하나를 선택해 주세요.");
 
 // 크리에이터 설정 입력 경계 — 앱 서버가 먼저 검사한다(my-account INV-A9·A11). DB 함수가 같은 규칙으로 다시 검사한다.
 // 본문에서 정해진 칸만 꺼낸다. 크리에이터 ID·채널·본인 확인·계정 ID 칸은 있어도 읽지 않는다.
@@ -45,22 +45,22 @@ export const profileInputSchema = z.object({
   name: z
     .string()
     .trim()
-    .refine((s) => charCount(s) >= 1 && charCount(s) <= PUBLIC_NAME_MAX, `공개 이름은 1~${PUBLIC_NAME_MAX}자로 적어 주세요.`)
-    .refine((s) => !HIDDEN_CHAR.test(s), "공개 이름에 보이지 않는 글자나 줄바꿈은 쓸 수 없어요.")
+    .refine((s) => charCount(s) >= 1 && charCount(s) <= PUBLIC_NAME_MAX, `공개 이름은 1~${PUBLIC_NAME_MAX}자로 입력해 주세요.`)
+    .refine((s) => !HIDDEN_CHAR.test(s), "공개 이름에 보이지 않는 문자나 줄바꿈은 입력할 수 없습니다.")
     .optional(),
   intro: z
     .string()
     .trim()
-    .refine((s) => charCount(s) <= INTRO_MAX, `한 줄 소개는 ${INTRO_MAX}자까지 적을 수 있어요.`)
-    .refine((s) => !HIDDEN_CHAR.test(s) && !/[\u2028\u2029]/.test(s), "한 줄 소개에 줄바꿈이나 보이지 않는 글자는 쓸 수 없어요.")
+    .refine((s) => charCount(s) <= INTRO_MAX, `한 줄 소개는 ${INTRO_MAX}자까지 입력할 수 있습니다.`)
+    .refine((s) => !HIDDEN_CHAR.test(s) && !/[\u2028\u2029]/.test(s), "한 줄 소개에 줄바꿈이나 보이지 않는 문자는 입력할 수 없습니다.")
     .optional(),
   searchable: z.boolean().optional(),
   // 빈 문자열이면 지운다
   fanName: z
     .string()
     .trim()
-    .refine((s) => charCount(s) <= FAN_NAME_MAX, `팬을 부르는 이름은 ${FAN_NAME_MAX}자까지 적을 수 있어요.`)
-    .refine((s) => !HIDDEN_CHAR.test(s) && !/[\u2028\u2029]/.test(s), "팬을 부르는 이름에 줄바꿈이나 보이지 않는 글자는 쓸 수 없어요.")
+    .refine((s) => charCount(s) <= FAN_NAME_MAX, `팬덤 이름은 ${FAN_NAME_MAX}자까지 입력할 수 있습니다.`)
+    .refine((s) => !HIDDEN_CHAR.test(s) && !/[\u2028\u2029]/.test(s), "팬덤 이름에 줄바꿈이나 보이지 않는 문자는 입력할 수 없습니다.")
     .optional(),
   // 테마 색(INV-E13) — 보내지 않으면 그대로, 빈 값이면 기본 모양. 팬컬러·글자색 칸은 없다 — 본문에 있어도 읽지 않는다(INV-E13·E14)
   personalColor: themeColorInput.optional(),

@@ -19,7 +19,7 @@ beforeEach(() => {
   root = createRoot(host);
   vi.stubGlobal("fetch", async (_url: string, init?: RequestInit) => {
     bodies.push(JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>);
-    return new Response(JSON.stringify({ message: "아이디 또는 비밀번호가 맞지 않아요." }), { status: 401 });
+    return new Response(JSON.stringify({ message: "아이디 또는 비밀번호가 일치하지 않습니다." }), { status: 401 });
   });
 });
 

@@ -4,9 +4,9 @@
 export type PhotoProblem = "empty" | "too_large_file" | "not_supported" | "too_many_pixels" | "unreadable";
 
 export const PHOTO_PROBLEM_MESSAGE: Record<PhotoProblem, string> = {
-  empty: "사진 파일을 골라 주세요.",
-  too_large_file: "사진은 10MB 까지 올릴 수 있어요.",
-  not_supported: "jpg·png·webp 사진만 올릴 수 있어요.",
-  too_many_pixels: "사진이 너무 커요. 더 작은 사진으로 올려 주세요.",
-  unreadable: "사진을 열 수 없어요. 다른 사진으로 올려 주세요.",
+  empty: "사진 파일을 선택해 주세요.",
+  too_large_file: "사진은 최대 10MB까지 업로드할 수 있습니다.",
+  not_supported: "JPG·PNG·WebP 파일만 업로드할 수 있습니다.",
+  too_many_pixels: "이미지 크기가 너무 큽니다. 크기를 줄인 뒤 다시 업로드해 주세요.",
+  unreadable: "이미지를 열 수 없습니다. 다른 파일을 선택해 주세요.",
 };

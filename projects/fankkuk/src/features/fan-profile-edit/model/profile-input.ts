@@ -15,12 +15,12 @@ export { FAN_INTRO_MAX };
 export const introField = z
   .string()
   .trim()
-  .refine((s) => charCount(s) <= FAN_INTRO_MAX, `자기소개는 ${FAN_INTRO_MAX}자까지 적을 수 있어요.`)
-  .refine((s) => !HIDDEN_CHAR.test(s) && !LINE_BREAK.test(s), "자기소개에 줄바꿈이나 보이지 않는 글자는 쓸 수 없어요.");
+  .refine((s) => charCount(s) <= FAN_INTRO_MAX, `자기소개는 ${FAN_INTRO_MAX}자까지 입력할 수 있습니다.`)
+  .refine((s) => !HIDDEN_CHAR.test(s) && !LINE_BREAK.test(s), "자기소개에 줄바꿈이나 보이지 않는 문자는 입력할 수 없습니다.");
 
 export const profileInputSchema = z
   .object({ intro: introField.optional(), nickname: nicknameSchema.optional() })
-  .refine((v) => v.intro !== undefined || v.nickname !== undefined, "바뀐 내용이 없어요.");
+  .refine((v) => v.intro !== undefined || v.nickname !== undefined, "변경된 내용이 없습니다.");
 
 export type ProfileInput = z.infer<typeof profileInputSchema>;
 

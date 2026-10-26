@@ -93,7 +93,6 @@
 .kakao li.is-done::before { content: none; }
 .kakao strong { font-weight: var(--fw-btn); }
 .mark { position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: var(--on-brand); }
-.sent { font-weight: var(--fw-btn); }
 .again { margin-top: 16px; }
 .text-btn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--brand-ink); font: inherit; font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .step > .error { margin-top: 24px; }

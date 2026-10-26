@@ -10,7 +10,7 @@ import { sessionOnlyMarker } from "@/shared/api/supabase/session-cookies";
 import { KEEP_SIGNED_IN_DEFAULT } from "@/entities/session/model/keep-signed-in";
 import { decodeUtm, UTM_COOKIE, utmCookieOptions } from "@/shared/lib/attribution/utm";
 import { isProduction } from "@/shared/lib/env/is-production";
-import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
+import { handlePrivateJsonPost, REFINED_PRIVATE_JSON_COPY } from "@/shared/lib/http/private-json";
 
 // 가입(signup 스펙). 같은 사이트의 JSON 만, 응답은 캐시하지 않는다(INV-U11).
 // 번호표는 쿠키에서만 읽는다(S1c). 계정 만들기는 앱 서버 키로 한다 — 가입하는 사람은 아직 로그인 전이다.
@@ -52,5 +52,5 @@ export async function POST(req: NextRequest) {
     } finally {
       decide(loggedIn ? sessionOnly : storedSessionOnly);
     }
-  });
+  }, REFINED_PRIVATE_JSON_COPY);
 }

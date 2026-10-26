@@ -30,7 +30,7 @@ export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
     if (!handleOk) {
       setMsg({
         ok: false,
-        text: "X 계정은 영문·숫자·밑줄 1~15자로 적어 주세요.",
+        text: "X 계정은 영문·숫자·밑줄 1~15자로 입력해 주세요.",
       });
       return;
     }
@@ -50,7 +50,7 @@ export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
       return;
     }
     if (normalized === null) setXTagAllowed(false);
-    setMsg({ ok: true, text: "감사 답장 설정을 저장했어요." });
+    setMsg({ ok: true, text: "감사 답장 설정이 저장되었습니다." });
     router.refresh();
   };
 
@@ -63,8 +63,8 @@ export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
       </div>
       <div className="sw-row">
         <label className={s.txt} htmlFor="reply-wall">
-          <strong className="t-strong">답장 모음 보이기</strong>
-          <span className="t-meta">켜면 팬이 공개를 허락한 답장이 받았어요 3일 뒤부터 링크 페이지에 보여요.</span>
+          <strong className="t-strong">답장 모음 공개</strong>
+          <span className="t-meta">팬이 공개에 동의한 답장을 내 수령 확인일 3일 후부터 선물 링크 페이지에 표시</span>
         </label>
         <input className={s.switch} type="checkbox" role="switch" id="reply-wall" checked={wallVisible} onChange={(e) => setWallVisible(e.currentTarget.checked)} />
       </div>
@@ -91,13 +91,17 @@ export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
           />
         </div>
         <p className="t-meta hint" id="reply-x-hint">
-          영문·숫자·밑줄 1~15자예요. 비우면 등록하지 않아요.
+          영문·숫자·밑줄 1~15자 · 선택 입력
         </p>
       </div>
       <div className="sw-row">
         <label className={s.txt} htmlFor="reply-tag">
-          <strong className="t-strong">태그 허용</strong>
-          <span className="t-meta">켜면 팬이 답장 카드를 X 에 공유할 때 내 계정이 함께 적혀요. 지금 채워지는 글: {preview}</span>
+          <strong className="t-strong">X 계정 태그 허용</strong>
+          <span className="t-meta">
+            팬이 답장 카드를 X에 공유할 때 내 계정 태그 포함
+            <br />
+            공유 문구: {preview}
+          </span>
         </label>
         <input
           className={s.switch}
@@ -111,7 +115,7 @@ export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
       </div>
       <div>
         <button className="btn" type="button" aria-disabled={saving} onClick={() => void save()}>
-          {saving ? "저장하는 중…" : "감사 답장 설정 저장"}
+          {saving ? "저장 중…" : "감사 답장 설정 저장"}
         </button>
         {/* 오류 문구는 reply-set-msg-err 로 그려진다 — X 계정 칸이 그 문구를 가리킨다 */}
         <SaveMessage id="reply-set-msg" msg={msg} />

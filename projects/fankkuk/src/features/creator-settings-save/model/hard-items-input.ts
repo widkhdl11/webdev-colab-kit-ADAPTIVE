@@ -10,7 +10,7 @@ export const hardItemsInputSchema = z.object({
   categories: z
     .array(z.enum(ITEM_CATEGORIES))
     .max(ITEM_CATEGORIES.length)
-    .refine((list) => new Set(list).size === list.length, "같은 품목을 두 번 고를 수 없어요."),
+    .refine((list) => new Set(list).size === list.length, "같은 선물 종류는 중복 선택할 수 없습니다."),
   reason: z.enum(HARD_REASONS),
   period: z.enum(HARD_PERIODS),
   action: z.enum(HARD_ACTIONS),

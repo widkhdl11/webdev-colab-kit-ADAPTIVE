@@ -64,12 +64,12 @@ describe("INV-A12: 저장은 세션의 팬 본인만, 한 번의 DB 호출로", 
 
   it("INV-A12 (실패경로): 닉네임 거부(FKU04 겹침 409·FKU05~07 400)는 닉네임 칸, 소개 거부(FKF01~03)는 소개 칸, 22023 은 칸 없이 400, 42501 은 401", async () => {
     const cases: [string, object][] = [
-      ["FKU04", { status: 409, field: "nickname", message: "이미 쓰는 닉네임이에요." }],
+      ["FKU04", { status: 409, field: "nickname", message: "이미 사용 중인 닉네임입니다." }],
       ["FKU05", { status: 400, field: "nickname" }],
       ["FKU06", { status: 400, field: "nickname" }],
       ["FKU07", { status: 400, field: "nickname" }],
       ["FKF01", { status: 400, field: "intro" }],
-      ["FKF02", { status: 400, field: "intro", message: "자기소개에 전화번호·이메일·인터넷 주소는 쓸 수 없어요." }],
+      ["FKF02", { status: 400, field: "intro", message: "자기소개에 전화번호·이메일·인터넷 주소는 입력할 수 없습니다." }],
       ["FKF03", { status: 400, field: "intro" }],
     ];
     for (const [code, want] of cases) {
@@ -77,7 +77,7 @@ describe("INV-A12: 저장은 세션의 팬 본인만, 한 번의 DB 호출로", 
       expect([code, await saveFanProfile({ client: f.client, viewer: FAN }, { intro: "어떤 말", nickname: "별사탕" })]).toMatchObject([code, { ok: false, ...want }]);
     }
     const bad = await saveFanProfile({ client: fakeClient({ error: { code: "22023" } }).client, viewer: FAN }, { intro: "어떤 말" });
-    expect(bad).toEqual({ ok: false, status: 400, message: "입력을 확인해 주세요." });
+    expect(bad).toEqual({ ok: false, status: 400, message: "입력한 정보를 확인해 주세요." });
     expect(await saveFanProfile({ client: fakeClient({ error: { code: "42501" } }).client, viewer: FAN }, { intro: "어떤 말" })).toMatchObject({ ok: false, status: 401 });
     await expect(saveFanProfile({ client: fakeClient({ error: { code: "XX000" } }).client, viewer: FAN }, { intro: "어떤 말" })).rejects.toThrow();
   });

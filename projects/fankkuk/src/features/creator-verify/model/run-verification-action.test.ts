@@ -103,11 +103,11 @@ describe("채널 주소 검사 (INV-V2)", () => {
     const busy = setup({ replies: { request_creator_verification: { error: { code: "FKV06" } } } });
     expect(await runVerificationAction(busy.deps, { action: "request", channelUrl: "https://www.youtube.com/@ggul" })).toEqual({
       status: 409,
-      body: { message: "이미 확인중인 채널이에요." },
+      body: { message: "이미 확인 중인 채널입니다." },
     });
     const used = setup({ replies: { request_creator_verification: { error: { code: "FKV04" } } } });
     expect((await runVerificationAction(used.deps, { action: "request", channelUrl: "https://www.youtube.com/@ggul" })).body.message).toBe(
-      "이 채널로는 더 신청할 수 없어요. 1:1 문의로 알려 주세요.",
+      "채널 신청 횟수를 초과했습니다. 1:1 문의를 이용해 주세요.",
     );
   });
 });
@@ -129,7 +129,7 @@ describe("다시 받기·확인 요청·거두기 (INV-V4·V5)", () => {
     const s = setup({ replies: { mark_creator_verification_posted: { error: { code: "FKV08" } } } });
     expect(await runVerificationAction(s.deps, { action: "post", applicationId: APP })).toEqual({
       status: 409,
-      body: { message: "확인 기한(7일)이 지났어요. 새로 신청해 주세요." },
+      body: { message: "확인 기한(7일)이 만료되었습니다. 다시 신청해 주세요." },
     });
   });
 });
@@ -154,7 +154,7 @@ describe("코드 자동 확인 (INV-V16)", () => {
       replies: { claim_creator_verification_auto_check: CLAIMED, confirm_creator_verification_auto_check: { data: "not_found" } },
     });
     const r = await runVerificationAction(s.deps, { action: "auto_check", applicationId: APP });
-    expect(r).toEqual({ status: 200, body: { result: "not_found", message: "아직 소개란에서 코드를 찾지 못했어요." } });
+    expect(r).toEqual({ status: 200, body: { result: "not_found", message: "채널 소개란에서 인증 코드를 찾을 수 없습니다." } });
     expect(s.calls.at(-1)).toEqual({ who: "admin", fn: "confirm_creator_verification_auto_check", args: { p_application_id: APP, p_found: false } });
   });
 
@@ -179,7 +179,7 @@ describe("코드 자동 확인 (INV-V16)", () => {
     const s = setup({ replies: { claim_creator_verification_auto_check: { error: { code: "FKV15" } } } });
     expect(await runVerificationAction(s.deps, { action: "auto_check", applicationId: APP })).toEqual({
       status: 429,
-      body: { message: "잠시 뒤 다시 눌러 주세요." },
+      body: { message: "잠시 후 다시 시도해 주세요." },
     });
     expect(s.bioReads).toEqual([]);
     expect(s.calls.map((c) => c.fn)).toEqual(["claim_creator_verification_auto_check"]);
@@ -189,7 +189,7 @@ describe("코드 자동 확인 (INV-V16)", () => {
     const s = setup({ replies: { claim_creator_verification_auto_check: { error: { code: "FKV16" } } } });
     expect(await runVerificationAction(s.deps, { action: "auto_check", applicationId: APP })).toEqual({
       status: 409,
-      body: { message: "운영자 확인으로만 다시 확인할 수 있어요. 코드를 받아 「확인 요청」을 눌러 주세요." },
+      body: { message: "운영자 재확인이 필요합니다. 인증 코드를 받아 ‘확인 요청’을 눌러 주세요." },
     });
     expect(s.bioReads).toEqual([]);
   });
@@ -249,7 +249,7 @@ describe("플랫폼 로그인 확인 (INV-V14)", () => {
   it("INV-V14 (S14c, 실패경로): 다른 계정으로 확인된 채널이면 1:1 문의 안내", async () => {
     const s = setup({ replies: { confirm_creator_channel_by_login: { error: { code: "FKV05" } } } });
     expect((await runVerificationAction(s.deps, { action: "login", channelUrl: "https://www.youtube.com/@ggul" })).body.message).toBe(
-      "이미 등록한 채널이에요. 1:1 문의로 알려 주세요.",
+      "이미 등록된 채널입니다. 1:1 문의를 이용해 주세요.",
     );
   });
 });

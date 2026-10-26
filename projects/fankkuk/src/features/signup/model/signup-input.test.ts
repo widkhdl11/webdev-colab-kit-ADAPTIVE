@@ -96,9 +96,9 @@ describe("INV-U6: 칸별 실시간 안내 — 다음을 누를 때와 같은 규
   });
 
   it("INV-U6 (실패경로): 이메일은 어느 부분이 비었는지 알려 준다", () => {
-    expect(checkField("email", { ...live, email: { local: "", choice: "naver.com", custom: "" } }).message).toBe("이메일 앞부분을 적어 주세요.");
-    expect(checkField("email", { ...live, email: { local: "fan", choice: "", custom: "" } }).message).toBe("@ 뒤 주소를 골라 주세요.");
-    expect(checkField("email", { ...live, email: { local: "fan", choice: "custom", custom: " " } }).message).toBe("@ 뒤 주소를 적어 주세요.");
+    expect(checkField("email", { ...live, email: { local: "", choice: "naver.com", custom: "" } }).message).toBe("이메일의 @ 앞부분을 입력해 주세요.");
+    expect(checkField("email", { ...live, email: { local: "fan", choice: "", custom: "" } }).message).toBe("이메일 도메인(@ 뒤)을 선택해 주세요.");
+    expect(checkField("email", { ...live, email: { local: "fan", choice: "custom", custom: " " } }).message).toBe("이메일 도메인(@ 뒤)을 입력해 주세요.");
   });
 
   it("INV-U6 (실패경로): 비밀번호 확인이 비었거나 다르면 확인 문구가 아니다, 크리에이터 칸도 같은 규칙", () => {

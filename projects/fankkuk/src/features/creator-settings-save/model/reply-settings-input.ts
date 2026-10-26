@@ -11,6 +11,6 @@ export const replySettingsInputSchema = z
     const xHandle = normalizeXHandle(v.xHandle);
     return { wallVisible: v.wallVisible, xHandle, xTagAllowed: xHandle !== null && v.xTagAllowed };
   })
-  .refine((v) => v.xHandle === null || X_HANDLE_PATTERN.test(v.xHandle), "X 계정은 영문·숫자·밑줄 1~15자로 적어 주세요.");
+  .refine((v) => v.xHandle === null || X_HANDLE_PATTERN.test(v.xHandle), "X 계정은 영문·숫자·밑줄 1~15자로 입력해 주세요.");
 
 export type ReplySettingsInput = z.input<typeof replySettingsInputSchema>;

@@ -118,7 +118,7 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
     if (resting && resumeOn === "") {
       setRecvMsg({
         ok: false,
-        text: "쉬는 동안에는 다시 받는 날을 꼭 골라 주세요.",
+        text: "쉬는 동안에는 다시 받는 날을 꼭 선택해 주세요.",
         field: "resumeOn",
       });
       resumeRef.current?.focus();
@@ -140,7 +140,7 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
       return;
     }
     if (!resting) setResumeOn("");
-    setRecvMsg({ ok: true, text: "선물 받기 설정을 저장했어요." });
+    setRecvMsg({ ok: true, text: "선물 받기 설정이 저장되었습니다." });
     router.refresh();
   };
 
@@ -165,7 +165,7 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
       setDaysMsg({ ok: false, text: r.message });
       return;
     }
-    setDaysMsg({ ok: true, text: "생일과 기념일을 저장했어요." });
+    setDaysMsg({ ok: true, text: "생일과 기념일이 저장되었습니다." });
     router.refresh();
   };
 
@@ -210,13 +210,15 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
               aria-describedby={resumeInvalid ? "recv-resume-hint recv-msg-err" : "recv-resume-hint"}
             />
             <p className="t-meta hint" id="recv-resume-hint">
-              내일부터 1년 안으로 골라요. 이날 0시부터 다시 받아요. 쉬는 동안에도 이미 받은 선물의 승인·거절은 그대로 할 수 있어요.
+              선택 가능: 내일~1년 이내 · 선택한 날짜 0시에 선물 받기 재개
+              <br />
+              쉬는 동안에도 기존 선물의 승인·거절은 가능합니다.
             </p>
           </div>
         ) : null}
         <div>
           <label className="label" htmlFor="recv-limit">
-            팬 한 명이 한 달에 보낼 수 있는 선물
+            팬 1명당 월 선물 한도
           </label>
           <select
             id="recv-limit"
@@ -233,12 +235,12 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
             ))}
           </select>
           <p className="t-meta hint" id="recv-limit-hint">
-            정해 두면 이번 달에 그만큼 보낸 팬은 다음 달 1일부터 다시 보낼 수 있어요. 이 숫자는 크리에이터 페이지에 보이지 않아요.
+            한도에 도달한 팬은 다음 달 1일부터 다시 보낼 수 있습니다. 설정한 한도는 크리에이터 페이지에 표시되지 않습니다.
           </p>
         </div>
         <div>
           <button className="btn" type="button" aria-disabled={recvSaving} onClick={() => void saveReceiving()}>
-            {recvSaving ? "저장하는 중…" : "선물 받기 저장"}
+            {recvSaving ? "저장 중…" : "선물 받기 설정 저장"}
           </button>
           <SaveMessage id="recv-msg" msg={recvMsg} />
         </div>
@@ -250,7 +252,7 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
             생일과 기념일
           </h3>
         </div>
-        <p>적어 두면 크리에이터 페이지에 30일 전부터 D-day 가 보여요. 연도는 받지 않아요.</p>
+        <p>크리에이터 페이지에 30일 전부터 D-day 표시 · 월·일만 입력</p>
         <div>
           <span className="label" id="bday-label">
             생일
@@ -269,7 +271,7 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
         </div>
         <div>
           <span className="label">기념일 ({ANNIVERSARY_MAX}개까지)</span>
-          {anniversaries.length === 0 ? <p className="t-meta">아직 적은 기념일이 없어요.</p> : null}
+          {anniversaries.length === 0 ? <p className="t-meta">등록된 기념일이 없습니다.</p> : null}
           <ul className={s["ann-list"]}>
             {anniversaries.map((a, i) => (
               <li key={a.key} className={s["ann-row"]}>
@@ -298,10 +300,10 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
                 <button
                   className="btn btn--line btn--sm"
                   type="button"
-                  aria-label={`기념일 ${i + 1} 빼기`}
+                  aria-label={`기념일 ${i + 1} 삭제`}
                   onClick={() => setAnniversaries((list) => list.filter((x) => x.key !== a.key))}
                 >
-                  빼기
+                  삭제
                 </button>
               </li>
             ))}
@@ -323,14 +325,18 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
                 setNextKey((k) => k + 1);
               }}
             >
-              기념일 더하기
+              기념일 추가
             </button>
           ) : null}
-          <p className="t-meta hint">이름은 {ANNIVERSARY_NAME_MAX}자까지예요. 기념일 7일 전부터는 팬이 「기념일 선물」 표시를 붙여 보낼 수 있어요.</p>
+          <p className="t-meta hint">
+            기념일 이름: 최대 {ANNIVERSARY_NAME_MAX}자
+            <br />
+            기념일 7일 전부터 팬이 ‘기념일 선물’ 표시를 선택할 수 있습니다.
+          </p>
         </div>
         <div>
           <button className="btn" type="button" aria-disabled={daysSaving} onClick={() => void saveDays()}>
-            {daysSaving ? "저장하는 중…" : "생일·기념일 저장"}
+            {daysSaving ? "저장 중…" : "생일·기념일 저장"}
           </button>
           <SaveMessage id="days-msg" msg={daysMsg} />
         </div>

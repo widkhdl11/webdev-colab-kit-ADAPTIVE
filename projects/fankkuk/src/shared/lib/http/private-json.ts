@@ -9,9 +9,24 @@ export type JsonReply = { status: number; body: Record<string, unknown> };
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
-export async function handlePrivateJsonPost(req: Request, run: (body: unknown) => Promise<JsonReply>): Promise<Response> {
+/** 다른 사이트에서 온 요청(403)과 처리 중 예외(500)에 내보내는 문구. 화면마다 문구를 다듬는 중이라 다듬은 화면은 copy 로 넘긴다. */
+export type PrivateJsonCopy = { forbidden: string; failed: string };
+
+const DEFAULT_COPY: PrivateJsonCopy = { forbidden: "잘못된 요청이에요.", failed: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." };
+
+/** 다듬은 문구(문구 2 다듬은본) — 가입·로그인·비밀번호 찾기 화면이 쓴다 */
+export const REFINED_PRIVATE_JSON_COPY: PrivateJsonCopy = {
+  forbidden: "유효하지 않은 요청입니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.",
+  failed: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+};
+
+export async function handlePrivateJsonPost(
+  req: Request,
+  run: (body: unknown) => Promise<JsonReply>,
+  copy: PrivateJsonCopy = DEFAULT_COPY,
+): Promise<Response> {
   if (!isSameOriginJson(req.headers)) {
-    return Response.json({ message: "잘못된 요청이에요." }, { status: 403, headers: NO_STORE });
+    return Response.json({ message: copy.forbidden }, { status: 403, headers: NO_STORE });
   }
   let body: unknown = null;
   try {
@@ -24,7 +39,7 @@ export async function handlePrivateJsonPost(req: Request, run: (body: unknown) =
     reply = await run(body);
   } catch (e) {
     console.error("private-json: 처리 중 예외", e instanceof Error ? e.name : typeof e);
-    reply = { status: 500, body: { message: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." } };
+    reply = { status: 500, body: { message: copy.failed } };
   }
   return Response.json(reply.body, { status: reply.status, headers: NO_STORE });
 }

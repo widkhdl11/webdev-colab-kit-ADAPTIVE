@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { saveCreatorHardItems } from "./save-creator-settings";
 
-// 받기 어려운 품목 저장 — 앱 서버 경계 (hard-items INV-H3·H4). DB 판정은 통합 시험(hard-items-db)이 본다.
+// 받기 어려운 선물 저장 — 앱 서버 경계 (hard-items INV-H3·H4). DB 판정은 통합 시험(hard-items-db)이 본다.
 
 const HARU = { userId: "creator-haru", role: "creator" } as const;
 const ok = { categories: ["flower", "doll"], reason: "many", period: "week1", action: "block" };
@@ -66,6 +66,6 @@ describe("INV-H4: 고르는 값으로만", () => {
 
   it("INV-H4: DB 가 22023 으로 거부하면 400 과 안내 문구", async () => {
     const f = fakeClient({ code: "22023" });
-    expect(await saveCreatorHardItems({ client: f.client, viewer: HARU }, ok)).toEqual({ ok: false, status: 400, message: "품목·이유·기간·동작을 목록에서 골라 주세요." });
+    expect(await saveCreatorHardItems({ client: f.client, viewer: HARU }, ok)).toEqual({ ok: false, status: 400, message: "선물 종류·이유·기간·제한 방식을 목록에서 선택해 주세요." });
   });
 });

@@ -127,7 +127,7 @@ export function CreatorAccountPage({
       return;
     }
     if (r.kind === "ok") {
-      setMsg({ ok: true, text: "알림 설정을 저장했어요." });
+      setMsg({ ok: true, text: "알림 설정이 저장되었습니다." });
       return;
     }
     setAlarm(before);
@@ -140,7 +140,7 @@ export function CreatorAccountPage({
         <div className="ph-row">
           <h1 className="ph-title">계정 설정</h1>
         </div>
-        <p className="ph-desc">로그인과 내 정보, 알림을 관리해요.</p>
+        <p className="ph-desc">보안·채널 소유자 확인·알림을 관리합니다.</p>
       </header>
 
       <section className={s.grp} aria-labelledby={f("sec1")} data-ca-group="security">
@@ -160,7 +160,7 @@ export function CreatorAccountPage({
                 aria-controls={f("pw-panel")}
                 onClick={() => toggle("password")}
               >
-                바꾸기
+                변경
               </button>
             </div>
             {open === "password" && (
@@ -182,7 +182,7 @@ export function CreatorAccountPage({
                 aria-controls={f("tel-panel")}
                 onClick={() => toggle("phone")}
               >
-                바꾸기
+                변경
               </button>
             </div>
             {open === "phone" && (
@@ -194,7 +194,7 @@ export function CreatorAccountPage({
           <div className={s.item} id="verify">
             <div className={s.row}>
               <p className={s.txt}>
-                <span className={s.k}>채널 본인 확인</span>
+                <span className={s.k}>채널 소유자 확인</span>
                 <span className={s.v}>{verifyMeta(verification.state)}</span>
               </p>
               <button
@@ -224,8 +224,8 @@ export function CreatorAccountPage({
           {/* 스위치 이름은 팬 계정 설정과 같다(design-rules 12절 「계정 설정」) */}
           <Switch
             id={f("n1")}
-            title="카카오 알림톡으로 받기"
-            desc="그 밖의 소식을 카카오톡으로 받아요."
+            title="카카오톡 알림"
+            desc="필수 알림 외 소식을 알림톡으로 수신"
             on={alarm.kakao}
             busy={saving}
             describedBy={f("must")}
@@ -233,8 +233,8 @@ export function CreatorAccountPage({
           />
           <Switch
             id={f("n2")}
-            title="이메일로 받기"
-            desc="같은 소식을 확인된 이메일로 받아요."
+            title="이메일 알림"
+            desc="동일한 소식을 확인된 이메일로 수신"
             on={alarm.email}
             busy={saving}
             describedBy={f("must")}
@@ -247,7 +247,7 @@ export function CreatorAccountPage({
             className={s.must}
             titleClassName={s.mustT}
             bodyClassName={s.mustL}
-            extra={`승인 요청은 놓치면 ${APPROVAL_DEADLINE_DAYS}일 뒤 자동으로 반려돼요.`}
+            extra={`승인 요청은 ${APPROVAL_DEADLINE_DAYS}일 동안 응답하지 않으면 자동 반려됩니다.`}
           />
           {/* 저장 결과 — 바뀐 스위치 가까이, 알림 묶음 끝. 실패는 alert, 성공은 status 두 줄(팬 계정 설정과 같다).
               늘 두고 글자만 바꾼다(빈 칸은 공통 .err:empty·.okmsg:empty) */}
@@ -263,18 +263,18 @@ export function CreatorAccountPage({
       </section>
 
       <p className={s.more} role="note">
-        받는 주소 · 차단한 팬 · 받기 설정은{" "}
+        받는 주소·차단한 팬·선물 받기는 ‘
         <Link className={s.moreLink} href={`${CREATOR_SETTINGS}#more`}>
           상세 설정
         </Link>
-        에 있어요.
+        ’에서 관리해 주세요.
       </p>
 
       <div className={s.quit} data-ca-group="leave">
         <div className={s.row}>
           <p className={s.txt}>
             <span className={s.k}>회원 탈퇴</span>
-            <span className={s.sub}>계정과 프로필을 삭제해요</span>
+            <span className={s.sub}>탈퇴 문의 및 절차 안내</span>
           </p>
           <button
             className={`btn btn--sm ${s.danger}`}
@@ -283,7 +283,7 @@ export function CreatorAccountPage({
             aria-controls={f("leave-panel")}
             onClick={() => toggle("leave")}
           >
-            탈퇴하기
+            탈퇴 안내
           </button>
         </div>
         {open === "leave" && (

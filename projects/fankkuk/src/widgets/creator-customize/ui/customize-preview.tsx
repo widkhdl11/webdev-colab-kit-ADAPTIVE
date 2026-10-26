@@ -17,7 +17,7 @@ export type ShareCardValues = {
 export function ShareCard({ v }: { v: ShareCardValues }) {
   return (
     <div className={s.share}>
-      <p className={s.cap}>링크를 공유하면 이렇게 보여요</p>
+      <p className={s.cap}>링크 공유 미리보기</p>
       <div className={s.shCard} data-share-card="">
         <div className={s.shImg} aria-hidden="true">
           {v.pick === "symbol" && v.symbolUrl ? (

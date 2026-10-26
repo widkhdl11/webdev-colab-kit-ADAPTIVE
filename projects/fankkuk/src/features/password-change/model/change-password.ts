@@ -43,7 +43,7 @@ const inputSchema = z.object({
 export async function changePassword(deps: ChangePasswordDeps, body: unknown): Promise<ChangePasswordResult> {
   if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
   const parsed = inputSchema.safeParse(body);
-  if (!parsed.success) return { ok: false, status: 400, message: "입력을 확인해 주세요." };
+  if (!parsed.success) return { ok: false, status: 400, message: "입력한 정보를 확인해 주세요." };
   const { currentPassword, newPassword, newPasswordConfirm } = parsed.data;
   if (currentPassword === "") return { ok: false, status: 400, field: "currentPassword", message: CURRENT_PASSWORD_EMPTY };
 
@@ -53,7 +53,7 @@ export async function changePassword(deps: ChangePasswordDeps, body: unknown): P
 
   const problem = newPasswordProblem(newPassword, loginIdOfEmail(email));
   if (problem) return { ok: false, status: 400, field: "newPassword", message: problem };
-  if (newPassword !== newPasswordConfirm) return { ok: false, status: 400, field: "newPasswordConfirm", message: "새 비밀번호가 서로 달라요." };
+  if (newPassword !== newPasswordConfirm) return { ok: false, status: 400, field: "newPasswordConfirm", message: "새 비밀번호가 일치하지 않습니다." };
 
   const check = await passwordMatches(deps, userId, currentPassword);
   // INV-L14: 아이디별 확인 횟수를 넘겼으면 묻지 않았다

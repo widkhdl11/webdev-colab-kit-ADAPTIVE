@@ -128,9 +128,9 @@ describe("INV-T7: 태그 필터 거부 사유 → 화면 문구", () => {
     const banned = tagFilterMessage("P0081");
     const contact = tagFilterMessage("P0082");
     const symbols = tagFilterMessage("P0083");
-    expect(banned).toBe("쓸 수 없는 말이 들어 있어요. 다른 말로 적어 주세요.");
-    expect(contact).toBe("전화번호·이메일·인터넷 주소는 태그에 쓸 수 없어요.");
-    expect(symbols).toBe("글자나 숫자를 넣어 적어 주세요.");
+    expect(banned).toBe("사용할 수 없는 표현이 포함되어 있습니다. 다른 내용을 입력해 주세요.");
+    expect(contact).toBe("태그에 전화번호·이메일·인터넷 주소를 입력할 수 없습니다.");
+    expect(symbols).toBe("글자나 숫자를 하나 이상 포함해 주세요.");
   });
 
   it("INV-T7 (실패경로): 필터 사유가 아닌 코드는 null — 부르는 쪽이 원래 처리를 한다", () => {

@@ -21,15 +21,15 @@ export type AvailabilityTone = "ok" | "bad" | "wait";
 /** 미리 확인의 답 → 칸 아래 안내. 「잠시 뒤에」는 틀렸다는 뜻이 아니라 흐린 안내로 둔다. */
 export const AVAILABILITY_LINE: Record<AvailabilityState["status"], { tone: AvailabilityTone; message: string }> = {
   checking: { tone: "wait", message: "확인 중…" },
-  available: { tone: "ok", message: "쓸 수 있어요." },
-  taken: { tone: "bad", message: "이미 쓰고 있어요." },
-  invalid: { tone: "bad", message: "형식이 맞지 않아요." },
-  rate_limited: { tone: "wait", message: "잠시 뒤에 다시 확인해 주세요." },
-  error: { tone: "wait", message: "잠시 뒤에 다시 확인해 주세요." },
+  available: { tone: "ok", message: "사용 가능합니다." },
+  taken: { tone: "bad", message: "이미 사용 중입니다." },
+  invalid: { tone: "bad", message: "입력 형식을 확인해 주세요." },
+  rate_limited: { tone: "wait", message: "잠시 후 다시 확인해 주세요." },
+  error: { tone: "wait", message: "잠시 후 다시 확인해 주세요." },
 };
 
 /** 「다음」을 눌렀는데 지금 값의 답을 끝내 받지 못했을 때(기다리는 사이 값이 바뀜) */
-export const NAME_STILL_CHECKING = "확인 중이에요. 잠시 뒤에 다시 눌러 주세요.";
+export const NAME_STILL_CHECKING = "아이디와 닉네임을 확인 중입니다. 완료 후 다시 눌러 주세요.";
 
 /** 지금 칸 값에 대한 안내 — 답이 없거나 이전 값의 답이면 「확인 중」 */
 export function availabilityLine(state: AvailabilityState | null, value: string): { tone: AvailabilityTone; message: string } {

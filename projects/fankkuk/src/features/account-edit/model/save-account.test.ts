@@ -97,9 +97,9 @@ describe("내 정보 저장", () => {
     expect(await saveAccount(t.deps, VALID)).toMatchObject({ ok: false, status: 400 });
   });
 
-  it("INV-U13 (실패경로): DB 가 같은 닉네임이 있다고 하면(FKU04) 닉네임 칸 「이미 쓰는 닉네임」 409", async () => {
+  it("INV-U13 (실패경로): DB 가 같은 닉네임이 있다고 하면(FKU04) 닉네임 칸 「이미 사용 중인 닉네임」 409", async () => {
     const t = setup({ update: { data: null, error: { code: "FKU04" } } });
-    expect(await saveAccount(t.deps, VALID)).toEqual({ ok: false, status: 409, field: "nickname", message: "이미 쓰는 닉네임이에요." });
+    expect(await saveAccount(t.deps, VALID)).toEqual({ ok: false, status: 409, field: "nickname", message: "이미 사용 중인 닉네임입니다." });
     expect(t.admin.calls).toEqual([]);
   });
 

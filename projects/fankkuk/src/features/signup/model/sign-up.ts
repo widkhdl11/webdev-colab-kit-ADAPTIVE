@@ -51,15 +51,15 @@ const CLOSED = {
   ok: false,
   status: 503,
   field: "form",
-  message: "지금은 가입을 받고 있지 않아요. 준비가 끝나면 알려 드릴게요.",
+  message: "현재 회원가입을 이용할 수 없습니다.",
 } as const;
-const REVERIFY = { ok: false, status: 400, field: "verification", message: "본인 확인을 다시 해 주세요." } as const;
-const ID_TAKEN = { ok: false, status: 409, field: "loginId", message: "이미 쓰는 아이디예요." } as const;
-const PHONE_TAKEN = { ok: false, status: 409, field: "phone", message: "이미 가입된 휴대폰 번호예요. 로그인해 주세요." } as const;
+const REVERIFY = { ok: false, status: 400, field: "verification", message: "본인 확인을 다시 시도해 주세요." } as const;
+const ID_TAKEN = { ok: false, status: 409, field: "loginId", message: "이미 사용 중인 아이디입니다." } as const;
+const PHONE_TAKEN = { ok: false, status: 409, field: "phone", message: "이미 가입된 휴대폰 번호입니다. 로그인해 주세요." } as const;
 
 const FAN_NAME_FILTER: Record<string, string> = {
-  P0084: "팬덤 이름에 쓸 수 없는 말이 들어 있어요.",
-  P0085: "팬덤 이름에 전화번호·이메일·인터넷 주소는 쓸 수 없어요.",
+  P0084: "팬덤 이름에 사용할 수 없는 표현이 포함되어 있습니다.",
+  P0085: "팬덤 이름에 전화번호·이메일·인터넷 주소는 입력할 수 없습니다.",
   P0086: "팬덤 이름에 글자나 숫자를 하나 이상 넣어 주세요.",
 };
 
@@ -74,7 +74,7 @@ export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = 
     const issue = parsed.error.issues[0];
     const path = issue?.path ?? [];
     const field: SignUpField = path[0] === "verificationId" ? "verification" : (detailsFieldOf(path) ?? "form");
-    return { ok: false, status: 400, field, message: issue?.message ?? "입력을 확인해 주세요." };
+    return { ok: false, status: 400, field, message: issue?.message ?? "입력한 정보를 확인해 주세요." };
   }
   const input = parsed.data;
 
@@ -145,8 +145,8 @@ export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = 
     // 이름·채널 이름은 위에서 같은 규칙으로 걸렀다 — DB 가 거부하면 태그다(그 사이 숨긴 선택지 등, creator-tags INV-T3)
     if (account.error.code === "22023")
       return input.role === "creator"
-        ? { ok: false, status: 400, field: "tags", message: "고를 수 없는 태그가 있어요. 새로 고침한 뒤 다시 골라 주세요." }
-        : { ok: false, status: 400, field: "form", message: "입력을 확인해 주세요." };
+        ? { ok: false, status: 400, field: "tags", message: "선택할 수 없는 태그가 포함되어 있습니다. 새로고침한 뒤 다시 선택해 주세요." }
+        : { ok: false, status: 400, field: "form", message: "입력한 정보를 확인해 주세요." };
     throw new Error(`계정을 만들지 못했다: ${account.error.code}`);
   }
 

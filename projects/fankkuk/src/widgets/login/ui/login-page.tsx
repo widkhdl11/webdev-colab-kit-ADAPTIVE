@@ -61,7 +61,7 @@ export function LoginPage({ next }: { next?: string }) {
             <h1 className="t-title" id={f("title")}>
               로그인
             </h1>
-            <p className="t-lead t-desc">다시 만나서 반가워요.</p>
+            <p className="t-lead t-desc">아이디와 비밀번호로 로그인해 주세요.</p>
           </div>
           <div className="card">
             <form className="form" onSubmit={onSubmit}>

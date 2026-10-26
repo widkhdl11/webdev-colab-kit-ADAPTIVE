@@ -8,7 +8,7 @@ export type SaveAccountOutcome =
   | { kind: "login" }
   | { kind: "failed"; message: string; field?: "nickname" };
 
-const FALLBACK = "저장하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const FALLBACK = "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 export async function postAccount(input: AccountInput): Promise<SaveAccountOutcome> {
   try {

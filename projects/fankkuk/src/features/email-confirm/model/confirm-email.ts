@@ -11,19 +11,19 @@ export type ConfirmEmailResult =
   | { ok: true; email: string }
   | { ok: false; status: 400 | 401; message: string };
 
-const UNUSABLE = "쓸 수 없는 링크예요. 내 팬꾹의 개인정보에서 이메일을 다시 저장하면 새 확인 메일이 가요.";
+const UNUSABLE = "사용할 수 없는 링크입니다. 계정 설정에서 이메일을 다시 저장해 새 확인 메일을 받아 주세요.";
 
 export async function confirmEmail(
   deps: { client: Pick<SupabaseClient, "rpc">; viewer: Viewer | null },
   body: unknown,
 ): Promise<ConfirmEmailResult> {
-  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
+  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요합니다." };
   const parsed = inputSchema.safeParse(body);
   if (!parsed.success) return { ok: false, status: 400, message: UNUSABLE };
 
   const { data, error } = await deps.client.rpc("confirm_my_email", { p_token: parsed.data.token });
   if (!error && typeof data === "string") return { ok: true, email: data };
   if (error?.code === "P0002") return { ok: false, status: 400, message: UNUSABLE };
-  if (error?.code === "42501") return { ok: false, status: 401, message: "로그인이 필요해요." };
+  if (error?.code === "42501") return { ok: false, status: 401, message: "로그인이 필요합니다." };
   throw new Error(`이메일 확인을 저장하지 못했다: ${error?.code ?? "응답 꼴"}`);
 }

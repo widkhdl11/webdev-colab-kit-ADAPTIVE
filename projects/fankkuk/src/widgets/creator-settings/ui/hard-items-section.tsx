@@ -7,9 +7,10 @@ import {
   HARD_ACTIONS,
   HARD_PERIOD_LABEL,
   HARD_PERIODS,
-  HARD_REASON_LABEL,
+  HARD_REASON_OPTION_LABEL,
   HARD_REASONS,
   hardItemsNotice,
+  hardItemsPreview,
   hardItemsRemaining,
   type HardAction,
   type HardPeriod,
@@ -35,7 +36,7 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<SaveMsg>(null);
 
-  const preview = hardItemsNotice({ categories, reason });
+  const preview = hardItemsPreview({ categories, reason });
   const toggle = (c: ItemCategory, on: boolean) => setCategories((list) => sortCategories(on ? [...list, c] : list.filter((x) => x !== c)));
 
   const save = async (clear: boolean) => {
@@ -43,7 +44,7 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
     setMsg(null);
     // 저장된 설정이 없는데 아무것도 고르지 않고 저장하면 지울 것도 없다 — 「해제했어요」 대신 고르라고 안내한다
     if (!clear && !initial && categories.length === 0) {
-      setMsg({ ok: false, text: "받기 어려운 품목을 하나 이상 골라 주세요." });
+      setMsg({ ok: false, text: "받기 어려운 선물을 하나 이상 선택해 주세요." });
       return;
     }
     setSaving(true);
@@ -65,7 +66,7 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
     if (clear) setCategories([]);
     setMsg({
       ok: true,
-      text: clear || categories.length === 0 ? "받기 어려운 품목을 해제했어요." : "받기 어려운 품목을 저장했어요.",
+      text: clear || categories.length === 0 ? "받기 어려운 선물 설정이 해제되었습니다." : "받기 어려운 선물이 설정되었습니다.",
     });
     router.refresh();
   };
@@ -74,22 +75,22 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
     <section id="hard" className={`card ${s.set}`} aria-labelledby="hard-h">
       <div className={s["set-head"]}>
         <h3 className="t-card" id="hard-h">
-          받기 어려운 품목
+          받기 어려운 선물
         </h3>
       </div>
-      <p>고르면 크리에이터 페이지에 정해진 문장으로 한 줄 보여요. 문장은 직접 쓰지 않아요.</p>
+      <p>선택한 선물 종류와 이유가 크리에이터 페이지에 안내 문구로 표시됩니다. 문구는 직접 입력할 수 없습니다.</p>
       {initial ? (
         <div className={`card card--soft ${s.inner}`}>
-          <p className="t-meta">지금 보이는 문구</p>
+          <p className="t-meta">현재 안내 문구</p>
           <p className="t-strong">{hardItemsNotice(initial)}</p>
           <p className={`t-meta ${s["body-gap"]}`}>
-            {HARD_ACTION_LABEL[initial.action]} · {hardItemsRemaining(initial.endsOn, today)} · 남은 기간은 나에게만 보여요.
+            {HARD_ACTION_LABEL[initial.action]} · {hardItemsRemaining(initial.endsOn, today)} · 남은 기간은 나에게만 표시됩니다.
           </p>
         </div>
       ) : null}
 
       <fieldset className="fs">
-        <legend className="label">품목 (여러 개 고를 수 있어요)</legend>
+        <legend className="label">선물 종류 (복수 선택)</legend>
         <div className="grid cols-4">
           {ITEM_CATEGORIES.map((c) => (
             <label key={c} className="opt">
@@ -106,7 +107,7 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
           {HARD_REASONS.map((r) => (
             <label key={r} className="opt">
               <input type="radio" name="hard-reason" checked={reason === r} onChange={() => setReason(r)} />
-              <span>{HARD_REASON_LABEL[r]}</span>
+              <span>{HARD_REASON_OPTION_LABEL[r]}</span>
             </label>
           ))}
         </div>
@@ -123,12 +124,12 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
           ))}
         </div>
         <p className="t-meta hint" id="hard-period-hint">
-          저장한 날부터 계산해요. 다시 저장하면 그날부터 다시 계산하고, 기간이 끝나면 문구가 저절로 사라져요.
+          저장일부터 적용됩니다. 다시 저장하면 기간이 새로 시작되며, 종료 시 안내 문구가 자동으로 사라집니다.
         </p>
       </fieldset>
 
       <fieldset className="fs" aria-describedby="hard-action-hint">
-        <legend className="label">팬이 이 품목을 고르면</legend>
+        <legend className="label">해당 선물 선택 시</legend>
         <div className="grid cols-2">
           {HARD_ACTIONS.map((a) => (
             <label key={a} className="opt">
@@ -138,20 +139,36 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
           ))}
         </div>
         <p className="t-meta hint" id="hard-action-hint">
-          「안내만」을 고르면 팬이 결제 전에 안내를 보고 그대로 보낼 수도 있어요. 「등록 막기」를 고르면 그 품목으로는 선물을 보낼 수 없어요. 어느 쪽이든 승인한 선물만 배송해요.
+          안내만 표시: 결제 전 안내 후 선물 등록 가능
+          <br />
+          선물 등록 제한: 해당 종류의 선물 등록 불가
+          <br />
+          두 설정 모두 크리에이터가 승인한 선물만 배송됩니다.
         </p>
       </fieldset>
 
       <div className={`card ${s.inner}`}>
         <p className="t-meta">미리보기</p>
         {/* 고를 때마다 바뀌는 미리보기라 알림(role=status)으로 읽히게 하지 않는다 — 알리는 것은 저장 결과 줄뿐이다 */}
-        <p>{preview ?? "품목을 고르면 여기에 문구가 보여요."}</p>
+        {preview ? (
+          <p>
+            {preview.items}
+            {preview.reason ? (
+              <>
+                <br />
+                {preview.reason}
+              </>
+            ) : null}
+          </p>
+        ) : (
+          <p>선물 종류를 선택하면 안내 문구가 표시됩니다.</p>
+        )}
       </div>
 
       <div>
         <div className="btn-stack">
           <button className="btn" type="button" aria-disabled={saving} onClick={() => void save(false)}>
-            {saving ? "저장하는 중…" : "받기 어려운 품목 저장"}
+            {saving ? "저장 중…" : "받기 어려운 선물 저장"}
           </button>
           {initial ? (
             <button className="btn btn--line" type="button" aria-disabled={saving} onClick={() => void save(true)}>

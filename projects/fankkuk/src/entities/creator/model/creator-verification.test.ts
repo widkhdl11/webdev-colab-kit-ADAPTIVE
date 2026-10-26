@@ -54,7 +54,7 @@ describe("사유 문구 (creator-verification INV-V9·V14)", () => {
   it("INV-V9: 상태가 사유의 종류를 정한다 — 반려됨은 반려 사유, 승인됨+사유는 취소 사유, 닫힘은 닫힘 사유", () => {
     expect(reasonLabel("rejected", "code_not_found")).toBe("코드를 찾지 못함");
     expect(reasonLabel("approved", "code_removed")).toBe("채널에서 코드가 사라짐");
-    expect(reasonLabel("closed", "owner_confirmed_elsewhere")).toBe("다른 계정이 채널 주인 확인을 마쳤어요");
+    expect(reasonLabel("closed", "owner_confirmed_elsewhere")).toBe("다른 계정에서 채널 소유자 확인을 완료했습니다.");
     expect(eventReasonLabel("revoke", "not_owner_confirmed")).toBe("채널 주인이 아니라는 문의가 확인됨");
     expect(eventReasonLabel("reject", "profile_mismatch")).toBe("채널과 가입 정보가 맞지 않음");
   });
@@ -148,14 +148,14 @@ describe("크리에이터 확인 칸의 판단 (INV-V4·V5·V15)", () => {
     const p = myVerificationPanel({ verified: true }, rows);
     expect(p).toMatchObject({ mode: "move", live: null, canRequest: true, canWithdraw: false });
     expect(p.last?.id).toBe("new");
-    expect(lastOutcomeText(p.last!)).toBe("반려됐어요 — 코드를 찾지 못함");
+    expect(lastOutcomeText(p.last!)).toBe("승인이 반려되었습니다 — 코드를 찾지 못함");
   });
 
   it("INV-V9·V10: 승인 취소·닫힘·기간 지남의 알림 문구, 취소 안 된 승인은 알릴 것이 없다", () => {
-    expect(lastOutcomeText(mine({ status: "approved", reasonCode: "policy_violation" }))).toBe("승인이 취소됐어요 — 이용 규칙 위반");
+    expect(lastOutcomeText(mine({ status: "approved", reasonCode: "policy_violation" }))).toBe("승인이 취소되었습니다 — 이용 규칙 위반");
     expect(lastOutcomeText(mine({ status: "approved" }))).toBeNull();
-    expect(lastOutcomeText(mine({ status: "closed", reasonCode: "owner_confirmed_elsewhere" }))).toContain("다른 계정이 채널 주인 확인을 마쳤어요");
-    expect(lastOutcomeText(mine({ status: "expired" }))).toBe("7일 안에 확인을 마치지 않아 기간이 지났어요");
+    expect(lastOutcomeText(mine({ status: "closed", reasonCode: "owner_confirmed_elsewhere" }))).toContain("다른 계정에서 채널 소유자 확인을 완료했습니다.");
+    expect(lastOutcomeText(mine({ status: "expired" }))).toBe("확인 기한(7일)이 만료되었습니다");
   });
 });
 
@@ -264,11 +264,11 @@ describe("위반 취소 뒤 운영자 확인만 (INV-V10, 결정 d32)", () => {
 describe("panelOutcomeText — 확인 칸 맨 위 한 줄 (INV-V10, 결정 d32)", () => {
   it("INV-V10 (S10d): 운영자 확인만이고 확인 전이면, 지난 신청이 거둠이어도 위반 취소를 알린다", () => {
     expect(panelOutcomeText({ verified: false, operatorOnly: true }, mine({ status: "withdrawn" }))).toBe(
-      "이용 규칙 위반으로 승인이 취소됐어요. 다시 확인은 운영자가 해요.",
+      "이용 규칙 위반으로 승인이 취소되었습니다. 재확인은 운영자가 진행합니다.",
     );
   });
   it("INV-V10 (S10f): 운영자 확인만이 아니면 지난 신청의 한 줄 그대로", () => {
-    expect(panelOutcomeText({ verified: false, operatorOnly: false }, mine({ status: "withdrawn" }))).toBe("신청을 거뒀어요");
+    expect(panelOutcomeText({ verified: false, operatorOnly: false }, mine({ status: "withdrawn" }))).toBe("신청이 취소되었습니다");
     expect(panelOutcomeText({ verified: false, operatorOnly: false }, null)).toBeNull();
   });
 });

@@ -8,10 +8,10 @@ import { HIDDEN_CHAR, LINE_BREAK } from "@/shared/lib/validation/hidden-char";
 
 export const NICKNAME_MAX = 12;
 
-const LENGTH_MESSAGE = `닉네임은 1~${NICKNAME_MAX}자로 적어 주세요.`;
-const HIDDEN_MESSAGE = "닉네임에 줄바꿈이나 보이지 않는 글자는 쓸 수 없어요.";
+const LENGTH_MESSAGE = `닉네임은 1~${NICKNAME_MAX}자로 입력해 주세요.`;
+const HIDDEN_MESSAGE = "닉네임에 줄바꿈이나 보이지 않는 문자는 입력할 수 없습니다.";
 
-export const NICKNAME_TAKEN = "이미 쓰는 닉네임이에요.";
+export const NICKNAME_TAKEN = "이미 사용 중인 닉네임입니다.";
 
 /** 앞뒤 공백을 뺀 닉네임. 틀리면 화면 문구로 거부한다. */
 export const nicknameSchema = z
@@ -21,8 +21,8 @@ export const nicknameSchema = z
   .refine((s) => !HIDDEN_CHAR.test(s) && !LINE_BREAK.test(s), HIDDEN_MESSAGE);
 
 const FILTER_MESSAGES: Record<string, string> = {
-  FKU05: "닉네임에 쓸 수 없는 말이 들어 있어요. 다른 닉네임을 적어 주세요.",
-  FKU06: "닉네임에 전화번호·이메일·인터넷 주소는 쓸 수 없어요.",
+  FKU05: "닉네임에 사용할 수 없는 표현이 포함되어 있습니다. 다른 닉네임을 입력해 주세요.",
+  FKU06: "닉네임에 전화번호·이메일·인터넷 주소는 입력할 수 없습니다.",
   FKU07: "닉네임에 글자나 숫자를 하나 이상 넣어 주세요.",
 };
 

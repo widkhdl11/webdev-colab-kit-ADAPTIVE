@@ -92,7 +92,7 @@ describe("INV-U12: 번호 바꾸기는 로그인한 사람 자신의 번호만",
 
   it("INV-U12 S12b (실패경로): DB 의 거부를 사람 말로 — 확인을 쓸 수 없음·이미 가입된 번호", async () => {
     expect(await changePhone(fakes({ rpcCode: "FKU01" }).deps, body, TICKET)).toEqual({ ok: false, status: 400, field: "verification", message: VERIFY_AGAIN });
-    expect(await changePhone(fakes({ rpcCode: "FKU02" }).deps, body, TICKET)).toEqual({ ok: false, status: 409, field: "phone", message: "이미 가입된 번호예요." });
+    expect(await changePhone(fakes({ rpcCode: "FKU02" }).deps, body, TICKET)).toEqual({ ok: false, status: 409, field: "phone", message: "이미 가입된 휴대폰 번호입니다." });
     expect(await changePhone(fakes({ rpcCode: "FKU03" }).deps, body, TICKET)).toEqual({ ok: false, status: 400, field: "phone", message: SAME_AS_CURRENT_PHONE });
   });
 });
@@ -113,7 +113,7 @@ describe("INV-U12: 번호 바꾸기 1단계 — 지금 번호와 같으면 카�
     return { deps, rpcCalls };
   }
 
-  it("INV-U12 (실패경로): 지금 번호와 같으면 400 「지금 번호와 같아요」 — 세션의 사람으로 묻고, 본문의 계정은 읽지 않는다", async () => {
+  it("INV-U12 (실패경로): 지금 번호와 같으면 400 「현재 번호와 같습니다」 — 세션의 사람으로 묻고, 본문의 계정은 읽지 않는다", async () => {
     const { deps, rpcCalls } = startFakes(true);
     expect(await checkPhoneChangeStart(deps, { phone: "010-9000-1234", accountId: OTHER })).toEqual({
       ok: false,

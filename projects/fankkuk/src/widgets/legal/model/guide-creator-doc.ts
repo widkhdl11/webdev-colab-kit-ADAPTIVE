@@ -2,7 +2,7 @@ import { HANDLE_LOCK_DAYS, HANDLE_MAX, HANDLE_MIN, HANDLE_RETIRE_DAYS } from "@/
 import { VERIFICATION_CODE_DAYS, VERIFICATION_TRIES } from "@/entities/creator/model/creator-verification";
 import { ANNIVERSARY_MARK_DAYS, DDAY_WINDOW_DAYS, MONTHLY_LIMIT_MAX } from "@/entities/creator/model/receiving";
 import { REPLY_LINE_MAX, REPLY_PHRASE_TEXT, REPLY_PHRASES } from "@/entities/gift-reply/model/reply";
-import { HARD_ACTION_LABEL, HARD_PERIOD_LABEL, HARD_PERIODS, HARD_REASON_LABEL, HARD_REASONS } from "@/entities/gift-item/model/hard-items";
+import { HARD_ACTION_LABEL, HARD_PERIOD_LABEL, HARD_PERIODS, HARD_REASON_OPTION_LABEL, HARD_REASONS } from "@/entities/gift-item/model/hard-items";
 import { MAX_DECRYPTS_PER_BOX } from "@/entities/address/model/access-log";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { CREATOR_CHECK_DAYS } from "@/entities/parcel/model/creator-check";
@@ -276,16 +276,16 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
             kind: "steps",
             items: [
               "「상세 설정」의 「받기 설정」 칸 아래쪽에서 받기 어려운 선물 종류를 하나 이상 골라요.",
-              `「이유」를 골라요. ${quoteList(HARD_REASONS.map((r) => HARD_REASON_LABEL[r]))} 가운데 하나예요.`,
+              `「이유」를 골라요. ${quoteList(HARD_REASONS.map((r) => HARD_REASON_OPTION_LABEL[r]))} 가운데 하나예요.`,
               `「기간」을 골라요. ${quoteList(HARD_PERIODS.map((p) => HARD_PERIOD_LABEL[p]))} 가운데 하나예요.`,
-              `「팬이 이 품목을 고르면」에서 「${HARD_ACTION_LABEL.notice}」이나 「${HARD_ACTION_LABEL.block}」를 골라요.`,
+              `「해당 선물 선택 시」에서 「${HARD_ACTION_LABEL.notice}」나 「${HARD_ACTION_LABEL.block}」을 골라요.`,
               "미리보기에서 문장을 확인하고 저장해요. 그만 알리려면 「해제」를 눌러요.",
             ],
           },
           {
             kind: "list",
             items: [
-              `「${HARD_ACTION_LABEL.notice}」을 고르면 팬이 결제 전에 안내를 보고 그대로 보낼 수도 있어요. 「${HARD_ACTION_LABEL.block}」를 고르면 그 종류로는 선물을 보낼 수 없어요.`,
+              `「${HARD_ACTION_LABEL.notice}」를 고르면 팬이 결제 전에 안내를 보고 그대로 보낼 수도 있어요. 「${HARD_ACTION_LABEL.block}」을 고르면 그 종류로는 선물을 보낼 수 없어요.`,
               "기간은 저장한 날부터 계산해요. 다시 저장하면 그날부터 새로 계산하며, 기간이 끝나면 안내 문구가 자동으로 사라져요.",
               "남은 기간은 크리에이터 본인에게만 보여요.",
               `어느 쪽을 선택하더라도 ${PROMISE.approval}`,

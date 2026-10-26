@@ -16,18 +16,18 @@ export type PhotoDeps = { admin: Pick<SupabaseClient, "rpc" | "storage">; viewer
 export type PhotoFailure = { ok: false; status: 400 | 401 | 403 | 409; message: string };
 
 /** 무엇을 바꾸는지 — 거부 문구에 쓴다. */
-export type PhotoWhat = "프로필 사진" | "배경사진" | "팬덤 심볼";
+export type PhotoWhat = "프로필 사진" | "배경사진" | "팬마크";
 
-export const PHOTO_BUSY = "다른 곳에서 사진을 바꾸는 중이에요. 잠시 뒤 다시 해 주세요.";
-export const NO_CREATOR: PhotoFailure = { ok: false, status: 403, message: "크리에이터 정보를 찾지 못했어요." };
+export const PHOTO_BUSY = "다른 화면에서 사진 변경을 진행 중입니다. 잠시 후 다시 시도해 주세요.";
+export const NO_CREATOR: PhotoFailure = { ok: false, status: 403, message: "크리에이터 정보를 찾을 수 없습니다." };
 const BUSY: PhotoFailure = { ok: false, status: 409, message: PHOTO_BUSY };
 
 const nextSchema = z.array(z.object({ creator_id: z.guid(), next_version: z.number().int().positive() }));
 
 /** 사진을 바꿀 수 있는 사람인가 — 로그인한 크리에이터만. 라우트가 본문(파일)을 읽기 전에 먼저 부르고, 저장·지우기도 다시 부른다. */
 export function photoGate(viewer: Viewer | null, what: PhotoWhat): PhotoFailure | null {
-  if (!viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
-  if (viewer.role !== "creator") return { ok: false, status: 403, message: `크리에이터 계정만 ${what}을 바꿀 수 있어요.` };
+  if (!viewer) return { ok: false, status: 401, message: "로그인이 필요합니다." };
+  if (viewer.role !== "creator") return { ok: false, status: 403, message: `크리에이터 계정만 ${what}${what === "팬마크" ? "를" : "을"} 변경할 수 있습니다.` };
   return null;
 }
 

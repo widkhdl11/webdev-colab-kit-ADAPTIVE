@@ -45,16 +45,16 @@ describe("INV-E4: 아이디 잠금 남은 날", () => {
   it("INV-E4 S4 (실패경로): 잠겨 있으면 남은 날이 칸 안내로 보이고, 입력은 막히고 바꾸기 버튼이 없다", async () => {
     await render({ initial: { handle: "haru", lockedDays: 12, photoPath: null }, verified: true });
     const hint = host.querySelector("#link-handle-hint");
-    expect(hint?.textContent).toBe("링크 주소는 12일 뒤에 바꿀 수 있어요.");
+    expect(hint?.textContent).toBe("링크 주소 변경까지 12일 남았습니다.");
     expect(handleInput()?.disabled).toBe(true);
     expect(describedTexts(handleInput())).toContain(hint);
-    expect(button("링크 주소 바꾸기")).toBeUndefined();
+    expect(button("링크 주소 변경")).toBeUndefined();
   });
 
   it("INV-E4: 잠금이 없으면 바꾸기 버튼이 있고, 안내에 남은 날 대신 꼴과 주소 앞부분이 보인다", async () => {
     await render({ initial: { handle: "haru", lockedDays: 0, photoPath: null }, verified: true });
     expect(handleInput()?.disabled).toBe(false);
-    expect(button("링크 주소 바꾸기")).toBeDefined();
+    expect(button("링크 주소 변경")).toBeDefined();
     const hint = host.querySelector("#link-handle-hint")?.textContent ?? "";
     expect(hint).not.toMatch(/일 뒤에/);
     // 화면에 보이는 「fankkuk.kr/」 앞부분을 읽어 주는 안내에도 넣는다
@@ -69,8 +69,8 @@ describe("INV-E4: 아이디 잠금 남은 날", () => {
       setter.call(input, "  HARU ");
       input.dispatchEvent(new Event("input", { bubbles: true }));
     });
-    await act(async () => button("링크 주소 바꾸기")!.click());
-    expect(host.querySelector("#link-msg")?.textContent).toContain("지금 쓰는 링크 주소와 같아요.");
+    await act(async () => button("링크 주소 변경")!.click());
+    expect(host.querySelector("#link-msg")?.textContent).toContain("현재 링크 주소와 같습니다.");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

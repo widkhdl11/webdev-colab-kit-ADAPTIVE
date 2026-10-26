@@ -21,7 +21,7 @@ export type SignupBody = {
   heardFrom: HeardFrom | null;
 };
 
-const FALLBACK = "잠시 문제가 생겼어요. 조금 뒤 다시 해 주세요.";
+const FALLBACK = "연결이 원활하지 않습니다. 잠시 후 다시 시도해 주세요.";
 
 const FIELDS: readonly SignUpField[] = [
   "verification",

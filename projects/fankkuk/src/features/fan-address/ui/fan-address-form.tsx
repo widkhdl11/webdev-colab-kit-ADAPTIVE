@@ -11,9 +11,9 @@ import { sendFanAddress } from "../api/send-fan-address";
 
 const LABEL_OPTIONS = ADDRESS_LABELS.map((value) => ({ value, name: ADDRESS_LABEL_NAME[value] }));
 
-const HINT_HIDDEN = "주소는 등록한 뒤에 다시 보이지 않아요.";
+const HINT_HIDDEN = "등록한 주소는 다시 조회할 수 없습니다.";
 // 받을 주소로 쓰는 자리(설정·역조공 받기)에서만 붙는다 — 반송 주소 확인 창에서는 맞지 않는 말이라 뺀다(office-workflow INV-W15)
-const HINT_RECEIVE = "크리에이터가 보낸 선물을 받을 때 이 이름표와 등록한 날로 확인해요.";
+const HINT_RECEIVE = "크리에이터가 보낸 선물을 받을 때 주소 별칭과 등록일로 확인해 주세요.";
 
 export type FanAddressFormProps = {
   /** 로그인한 팬의 계정 ID — 봉인할 내용에 묶는다 */
@@ -39,7 +39,7 @@ export function FanAddressForm({ accountId, sealingKeyPem, initialLabel = null, 
       labelHint={receiveHint ? `${HINT_HIDDEN} ${HINT_RECEIVE}` : HINT_HIDDEN}
       send={sendFanAddress}
       submitClassName="btn"
-      submitContent={(busy) => (busy ? "저장하는 중…" : "저장하기")}
+      submitContent={(busy) => (busy ? "저장 중…" : "저장")}
       autoFocusFirst={autoFocusFirst}
       onSaved={onSaved}
       onCancel={onCancel}

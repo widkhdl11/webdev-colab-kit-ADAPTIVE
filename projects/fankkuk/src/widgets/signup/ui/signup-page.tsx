@@ -34,12 +34,12 @@ import s from "./signup.module.css";
 
 // 회원가입 3단계. 시안: docs/design/mockups/site/part6-2026-10-25/signup.html (design-rules 29절 — 머리는 카드 밖, 단계 표시는 알약 줄 하나, 2단계는 구분선 + 소제목 묶음 넷) · 스펙: docs/specs/signup.md
 // 시안은 세 단계를 한 화면에 쌓아 보이지만, 가입은 한 번에 한 단계씩 넘기는 흐름을 그대로 둔다 — 지금 단계의 카드 한 장만 보인다.
-// 3단계: 「인증 요청 보내기」로 카카오톡에 요청 → 카카오톡에서 인증 → 「인증했어요, 가입하기」.
+// 3단계: 「카카오톡 인증 요청」으로 카카오톡에 요청 → 카카오톡에서 인증 → 「가입 완료」. 순서 1 은 요청 전·후 문장을 바꿔 보인다(덧붙이지 않는다).
 // 브라우저는 번호표만 들고 있다 — 인증됐는지는 서버가 카카오에게 묻는다(INV-U1).
 // 입력칸에 name 을 두지 않는다 — 폼 기본 제출이 일어나도 값이 주소창에 실리지 않게.
 // 2단계 칸은 입력하거나 칸을 떠난 뒤부터 바로 아래에 안내를 띄운다(맞으면 짧은 확인, 틀리면 무엇이 틀렸는지 — 판정은 checkField).
-// 아이디·닉네임은 형식이 맞으면 입력을 멈춘 뒤 0.4초에 서버에 미리 묻는다(INV-U14) — 확인 중… / 쓸 수 있어요 / 이미 쓰고 있어요 /
-// 형식이 맞지 않아요 / 잠시 뒤에 다시 확인해 주세요. 입력이 바뀌면 이전 답은 버린다. 최종 판정은 가입 때 서버가 한다(INV-U13).
+// 아이디·닉네임은 형식이 맞으면 입력을 멈춘 뒤 0.4초에 서버에 미리 묻는다(INV-U14) — 문구는 name-availability.ts.
+// 입력이 바뀌면 이전 답은 버린다. 최종 판정은 가입 때 서버가 한다(INV-U13).
 // 줄바꿈(29절): 칸 안내는 문장마다 줄(<Sentences>), 붙여 쓰는 말은 \u00a0, 가운뎃점 덩어리는 \u2060 으로 붙인다.
 
 const STEPS = ["유형 선택", "정보 입력", "본인 확인"] as const;
@@ -402,7 +402,6 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
             <h1 className="t-title" id={f("title")}>
               회원가입
             </h1>
-            <p className="t-lead t-desc">세 단계면 끝나요.</p>
           </div>
 
           <nav className={s["steps-wrap"]} aria-label="가입 단계" ref={navRef}>
@@ -441,43 +440,42 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
           <form className="card" onSubmit={onSubmit} aria-label="회원가입 입력" noValidate>
             <fieldset className={s.step} hidden={step !== 1}>
               <legend className="sr-only">회원 유형</legend>
-              {heading(1, "어떤 분이세요?")}
+              {heading(1, "회원 유형 선택")}
               <div className={s.choices}>
                 <label className={s.choice}>
                   <input type="radio" name="kind" value="fan" checked={role === "fan"} onChange={() => setRole("fan")} />
                   <span>
-                    <strong>팬이에요</strong>
-                    <span className="t-meta">응원하는 크리에이터에게 선물을 보내고 싶어요.</span>
+                    <strong>팬</strong>
+                    <span className="t-meta">좋아하는 크리에이터에게 선물 보내기</span>
                   </span>
                 </label>
                 <label className={s.choice}>
                   <input type="radio" name="kind" value="creator" checked={role === "creator"} onChange={() => setRole("creator")} />
                   <span>
-                    <strong>크리에이터예요</strong>
-                    <span className="t-meta">팬이 보내는 선물을 안전하게 받고 싶어요.</span>
+                    <strong>크리에이터</strong>
+                    <span className="t-meta">팬이 보내는 선물 받기</span>
                   </span>
                 </label>
               </div>
               {/* 크리에이터를 골랐을 때만(UX 명세 signup.md 바꿀 것 1) */}
               {role === "creator" ? (
                 <p className={s.note}>
-                  <strong>크리에이터로 가입하면</strong> 가입한 뒤에 활동 채널 주인이 맞는지 한 번 더 확인해요.
-                  <span className="brk">
-                    {
-                      " 유튜브\u2060·\u2060치지직은 그 계정으로 로그인하면 바로 끝나요(인스타그램은 프로페셔널\u00a0계정만). SOOP 은 인증\u00a0코드를 채널\u00a0소개란에 붙이거나 팬꾹\u00a0계정 DM 으로 보내면 운영자가 확인해요."
-                    }
-                  </span>
-                  <span className="brk">
-                    {" 확인이 끝나야 "}
-                    <span className="nw">「크리에이터 찾기」에</span> 나타나요.
-                  </span>
+                  {"가입 후 활동 채널의 소유자 확인이 필요합니다. 확인을 마치면 "}
+                  <span className="nw">‘크리에이터 찾기’에</span>
+                  {" 표시됩니다."}
+                  <br />
+                  {"유튜브\u2060·\u2060치지직: 해당 계정으로 로그인"}
+                  <br />
+                  {"인스타그램: 프로페셔널 계정으로 로그인"}
+                  <br />
+                  {"SOOP: 인증\u00a0코드를 채널\u00a0소개란에 입력하거나 팬꾹\u00a0계정으로 DM을 보내 운영자 확인"}
                 </p>
               ) : null}
             </fieldset>
 
             <fieldset className={s.step} hidden={step !== 2}>
               <legend className="sr-only">가입 정보</legend>
-              {heading(2, "정보를 입력해\u00a0주세요")}
+              {heading(2, "회원 정보 입력")}
               <div className={s.grp}>
                 <h3 className={s["grp-title"]}>계정 정보</h3>
                 <div className="form">
@@ -502,7 +500,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     />
                     {liveLine("loginId")}
                     <p className="hint" id={f("id-h")}>
-                      <Sentences text={"영문 소문자\u2060·\u2060숫자\u2060·\u2060밑줄(_)로 4~20자예요. 가입한 뒤에는 아이디를 바꿀\u00a0수\u00a0없어요."} />
+                      {"영문 소문자\u2060·\u2060숫자\u2060·\u2060밑줄(_) 4~20자 · 가입 후 변경\u00a0불가"}
                     </p>
                   </div>
                   <div>
@@ -525,7 +523,9 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     />
                     {liveLine("nickname")}
                     <p className="hint" id={f("nick-h")}>
-                      <Sentences text={"팬꾹에서 보이는 이름이에요. 12자까지, 다른 사람이 쓰는 닉네임은 쓸\u00a0수\u00a0없어요. 가입한 뒤 계정\u00a0설정에서 바꿀\u00a0수\u00a0있어요."} />
+                      {"팬꾹에서 사용할 이름 · 최대 12자 · 중복 사용\u00a0불가"}
+                      <br />
+                      {"가입 후 ‘프로필 수정’에서 변경할\u00a0수\u00a0있습니다."}
                     </p>
                   </div>
                   <div>
@@ -541,7 +541,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                         autoComplete="email"
                         autoCapitalize="none"
                         spellCheck={false}
-                        placeholder="앞부분"
+                        placeholder="이메일 아이디"
                         value={emailParts.local}
                         onChange={(e) => onEmailLocalChange(e.target.value)}
                         onBlur={() => touch("email")}
@@ -552,7 +552,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                       </span>
                       <select
                         className="field"
-                        aria-label="이메일 주소 고르기(@ 뒤)"
+                        aria-label="이메일 도메인 선택(@ 뒤)"
                         value={emailParts.choice}
                         onChange={(e) => {
                           const choice = e.currentTarget.value;
@@ -563,7 +563,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                         onBlur={() => touch("email")}
                         {...liveAttrs("email")}
                       >
-                        <option value="">주소 고르기</option>
+                        <option value="">이메일 도메인 선택</option>
                         {EMAIL_DOMAINS.map((d) => (
                           <option key={d} value={d}>
                             {d}
@@ -594,7 +594,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     ) : null}
                     {liveLine("email")}
                     <p className="hint" id={f("mail-h")}>
-                      <Sentences text={"가입하면 확인 메일을 보내\u00a0드려요. 메일의 링크를 눌러야 이 주소로 선물\u00a0소식을 받아요."} />
+                      <Sentences text={"가입 후 확인 메일을 발송합니다. 메일의 링크에서 주소를 확인하면 선물\u00a0소식을 이메일로 받을\u00a0수\u00a0있습니다."} />
                     </p>
                   </div>
                   <div>
@@ -662,7 +662,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     />
                     {liveLine("phone")}
                     <p className="hint" id={f("tel-h")}>
-                      <Sentences text={"선물\u00a0소식을 카카오톡 알림톡으로 보내\u00a0드릴 번호예요. 실명\u2060·\u2060주소처럼 따로 나눠 보관해요."} />
+                      <Sentences text={"선물 관련 알림톡을 받을 번호입니다. 실명\u2060·\u2060주소와 마찬가지로 별도 보관합니다."} />
                     </p>
                   </div>
                 </div>
@@ -691,7 +691,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                       />
                       {liveLine("creatorName")}
                       <p className="hint" id={f("cr-name-h")}>
-                        <Sentences text={`팬에게 보이는 이름이에요. ${CREATOR_PROFILE_LIMITS.name}자까지 적을\u00a0수\u00a0있어요.`} />
+                        {`팬에게 표시되는 이름 · 최대 ${CREATOR_PROFILE_LIMITS.name}자`}
                       </p>
                     </div>
                     <div>
@@ -715,7 +715,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                       />
                       {liveLine("channelTitle")}
                       <p className="hint" id={f("cr-channel-h")}>
-                        채널 주소는 가입한 뒤 본인 확인 때 받아요.
+                        채널 주소는 가입 후 채널 소유자 확인 시 입력합니다.
                       </p>
                     </div>
                     <div>
@@ -738,9 +738,9 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                         aria-invalid={error?.field === "fanName" ? true : undefined}
                       />
                       <p className="hint" id={f("cr-fan-h")}>
-                        <Sentences
-                          text={`팬을 부르는 이름이에요. ${FAN_NAME_MAX}자까지, 비워 둬도 돼요. 가입한 뒤 내\u00a0팬꾹\u00a0꾸미기에서 바꿀\u00a0수\u00a0있어요.`}
-                        />
+                        {`팬을 부르는 이름 · 최대 ${FAN_NAME_MAX}자 · 선택 입력`}
+                        <br />
+                        {"가입 후 ‘상세 설정 > 팬덤’에서 변경할\u00a0수\u00a0있습니다."}
                       </p>
                     </div>
                     <TagPicker
@@ -760,21 +760,25 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                 <div className="form">
                   <div>
                     <label className="label" htmlFor={f("heard")}>
-                      어디서 팬꾹을 알게 되셨나요?
+                      팬꾹을 알게 된 경로 <span className={`t-meta ${s.opt}`}>(선택)</span>
                     </label>
                     <select
                       className="field"
                       id={f("heard")}
+                      aria-describedby={f("heard-h")}
                       value={heardFrom ?? ""}
                       onChange={(e) => setHeardFrom(isHeardFrom(e.currentTarget.value) ? e.currentTarget.value : null)}
                     >
-                      <option value="">고르지 않을래요</option>
+                      <option value="">선택 안 함</option>
                       {HEARD_FROM.map((k) => (
                         <option key={k} value={k}>
                           {HEARD_FROM_LABEL[k]}
                         </option>
                       ))}
                     </select>
+                    <p className="hint" id={f("heard-h")}>
+                      서비스 유입 경로를 파악하기 위한 선택 항목입니다.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -787,8 +791,17 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     <div className={s.terms}>
                       <div>
                         <label className="check">
-                          <input type="checkbox" checked={allAgreed} onChange={(e) => setAll(e.target.checked)} /> 전체 동의
+                          <input
+                            type="checkbox"
+                            checked={allAgreed}
+                            onChange={(e) => setAll(e.target.checked)}
+                            aria-describedby={f("all-h")}
+                          />{" "}
+                          전체 동의
                         </label>
+                        <p className={`t-meta ${s["term-detail"]}`} id={f("all-h")}>
+                          {"선택 항목 동의가 포함됩니다. 선택 항목에 동의하지 않아도 가입할\u00a0수\u00a0있습니다."}
+                        </p>
                       </div>
                       {TERMS.map((t) => (
                         <div key={t.key} className={s.row}>
@@ -834,7 +847,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
               <legend className="sr-only">카카오톡 본인 확인</legend>
               {heading(3, "카카오톡으로 본인 확인")}
               <p className={`t-desc ${s.lead}`}>
-                <Sentences text={"휴대폰 번호의 주인이 맞는지 카카오톡\u00a0인증으로 확인해요. 인증이 끝나면 가입이 마무리돼요."} />
+                <Sentences text={"입력한 휴대폰 번호의 소유자를 카카오톡\u00a0인증으로 확인합니다."} />
               </p>
               <ol className={s.kakao}>
                 <li className={requested ? s["is-done"] : undefined}>
@@ -843,17 +856,24 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                       <CheckIcon size={16} />
                     </span>
                   ) : null}
-                  <span>
-                    아래 버튼을 누르면 <strong className="nw">{phone || "입력한 번호"}</strong>의 카카오톡으로 인증 요청이 가요.
-                    {requested ? <span className={s.sent}> 요청을 보냈어요.</span> : null}
-                  </span>
+                  {/* 요청 전·후 문장을 바꿔 보인다 — 보낸 뒤 문장을 앞 문장에 덧붙이지 않는다(다듬은본 반영 사항 2) */}
+                  {requested ? (
+                    <span>
+                      <strong className="nw">{phone || "입력한 번호"}</strong>의 카카오톡으로 인증 요청을 보냈습니다.
+                    </span>
+                  ) : (
+                    <span>
+                      ‘카카오톡 인증 요청’을 누르면 <strong className="nw">{phone || "입력한 번호"}</strong>의 카카오톡으로 인증 요청을
+                      보냅니다.
+                    </span>
+                  )}
                 </li>
                 <li>
-                  <span>{"카카오톡에서 요청을 열고 인증을 눌러\u00a0주세요."}</span>
+                  <span>{"카카오톡에서 요청을 열고 인증을 완료해\u00a0주세요."}</span>
                 </li>
                 <li>
                   <span>
-                    팬꾹으로 돌아와 <span className="nw">「인증했어요, 가입하기」를</span> 누르면 가입 완료예요.
+                    인증 후 팬꾹으로 돌아와 <span className="nw">‘가입 완료’를</span> 눌러 주세요.
                   </span>
                 </li>
               </ol>
@@ -892,7 +912,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
               ) : (
                 <button className={`btn btn--kakao ${s.next}`} type="submit" aria-disabled={busy} aria-busy={busy || undefined}>
                   <KakaoBubble size={24} />
-                  {requested ? "인증했어요, 가입하기" : "카카오톡으로 인증 요청 보내기"}
+                  {requested ? "가입 완료" : "카카오톡 인증 요청"}
                 </button>
               )}
             </div>

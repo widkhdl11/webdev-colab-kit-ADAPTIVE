@@ -71,14 +71,14 @@ export function CreatorCustomizePage(p: CreatorCustomizeProps) {
       setPick(before);
       return setPickMsg({ ok: false, text: r.message });
     }
-    setPickMsg({ ok: true, text: next === "symbol" ? "링크 미리보기에 팬덤 심볼을 써요." : "링크 미리보기에 프로필 사진을 써요." });
+    setPickMsg({ ok: true, text: next === "symbol" ? "링크 미리보기 이미지가 팬마크로 설정되었습니다." : "링크 미리보기 이미지가 프로필 사진으로 설정되었습니다." });
   };
 
   return (
     <div className={s.root}>
       <header className="page-head">
         <h1 className="ph-title">내 팬꾹 꾸미기</h1>
-        <p className="ph-desc">팬이 보게 될 내 선물 링크 페이지를 직접 다듬어요.</p>
+        <p className="ph-desc">선물 링크의 공유 이미지와 공지 이미지를 설정합니다.</p>
       </header>
 
       <section className={s.grp} aria-labelledby="h-og">
@@ -87,7 +87,7 @@ export function CreatorCustomizePage(p: CreatorCustomizeProps) {
         </h2>
         <div className={s.rows}>
           <p className={s.sub} id="cz-og-h">
-            메신저나 SNS에 내 링크를 붙여 넣으면 보이는 그림이에요.
+            메신저·SNS에 선물 링크를 공유할 때 표시되는 이미지입니다.
           </p>
           <div className={s.picks} role="radiogroup" aria-labelledby="h-og" aria-describedby="cz-og-h cz-pick-msg" aria-busy={pickSaving}>
             <label className={s.pickOpt}>
@@ -105,10 +105,10 @@ export function CreatorCustomizePage(p: CreatorCustomizeProps) {
                 onChange={() => void choosePick("symbol")}
               />
               <span>
-                팬덤 심볼
+                팬마크
                 {symbolPath === null ? (
                   <small className={s.pickHint} id="cz-pick-hint">
-                    <a href={`${CREATOR_SETTINGS}#fandom`}>심볼을 올리면</a> 고를 수 있어요
+                    <a href={`${CREATOR_SETTINGS}#fandom`}>팬마크 등록</a> 후 선택 가능
                   </small>
                 ) : null}
               </span>
@@ -123,12 +123,15 @@ export function CreatorCustomizePage(p: CreatorCustomizeProps) {
 
       <section className={s.grp} aria-labelledby="h-notice">
         <h2 className={s.nm} id="h-notice">
-          공지 이미지 받기
+          공지 이미지 다운로드
         </h2>
         <div className={s.rows}>
           <p className={s.sub}>
-            인스타·유튜브 같은 내 채널에 올려 내 링크를 알리는 이미지예요. 프로필 배경사진·사진·이름·소개가 나오고, 아래에 작은 글씨로 「팬꾹으로 선물 보내기」와 링크 주소가
-            들어가요. 스토리에 올릴 때는 이미지 속 주소를 누를 수 없으니 링크 스티커를 붙여 주세요.
+            내 채널에 선물 링크를 알릴 때 사용하는 이미지입니다.
+            <br />
+            배경 사진·프로필 사진·이름·소개·‘팬꾹으로 선물 보내기’ 문구·링크 주소가 포함됩니다.
+            <br />
+            스토리에서는 이미지 속 주소를 누를 수 없으니 링크 스티커를 추가해 주세요.
           </p>
           <NoticeSizes creatorId={p.creatorId} ready={canDownloadNotice({ handle: p.handle, verified: p.verified })} siteOrigin={p.siteOrigin} />
         </div>

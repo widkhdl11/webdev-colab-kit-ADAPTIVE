@@ -61,7 +61,7 @@ describe("프로필 수정 — 저장은 예전 두 경로 그대로 (INV-A9)", 
     const calls = fetchMock.mock.calls.map(([url, init]) => [url, JSON.parse(String((init as RequestInit).body))]);
     expect(calls[0]).toEqual(["/api/creator/profile", { name: "하루", intro: "느긋한 방송", searchable: false }]);
     expect(calls[1]?.[0]).toBe("/api/creator/tags");
-    expect(host.querySelector("#pe-msg")?.textContent).toBe("저장했어요.");
+    expect(host.querySelector("#pe-msg")?.textContent).toBe("저장되었습니다.");
   });
 
   it("INV-E13: 위 머리 미리보기에 테마 색(띠·테두리)과 팬덤 뱃지(테마 색 면)가 보인다", async () => {
@@ -92,11 +92,11 @@ describe("프로필 수정 — 배치 (design-rules 27절 「4파트 나머지�
     const form = host.querySelector("form")!;
     expect(form.contains(photo)).toBe(false);
     expect(photo.contains(form)).toBe(false);
-    expect(photo.textContent).toContain("배경 사진 바꾸기");
-    expect(photo.textContent).toContain("프로필 사진 바꾸기");
+    expect(photo.textContent).toContain("배경 사진 변경");
+    expect(photo.textContent).toContain("프로필 사진 변경");
     expect(form.querySelector("h2")?.textContent?.trim()).toBe("소개");
     for (const id of ["pe-name", "pe-bio", "pe-find"]) expect(form.querySelector(`#${id}`)).not.toBeNull();
-    expect(form.textContent).not.toContain("배경 사진 바꾸기");
+    expect(form.textContent).not.toContain("배경 사진 변경");
   });
 
   it("결과 안내(role=status)와 [취소][저장]은 소개 판 안 맨 끝", async () => {
@@ -129,7 +129,7 @@ describe("프로필 수정 — 배치 (design-rules 27절 「4파트 나머지�
 
   it("머리 설명은 「미리보기 모양이 그대로 보여요」, 미리보기는 입력하는 대로 바뀐다", async () => {
     await render();
-    expect(host.querySelector("header p")?.textContent).toBe("팬에게 보이는 내 프로필이에요. 미리보기 모양이 그대로 보여요.");
+    expect(host.querySelector("header p")?.textContent).toBe("팬에게 공개되는 프로필입니다. 변경할 내용을 미리보기에서 확인해 주세요.");
     const input = host.querySelector<HTMLInputElement>("#pe-name")!;
     const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
     act(() => {

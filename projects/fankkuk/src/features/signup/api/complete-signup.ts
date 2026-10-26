@@ -9,7 +9,7 @@ export type CompleteSignupOutcome =
   | { ok: true; loggedIn: boolean }
   | { ok: false; field: SignUpField; message: string; dropVerification: boolean };
 
-export const NOT_YET_VERIFIED = "아직 인증이 확인되지 않았어요. 카카오톡에서 인증을 누른 뒤 다시 눌러 주세요.";
+export const NOT_YET_VERIFIED = "카카오톡 인증이 완료되지 않았습니다. 인증을 마친 뒤 ‘가입 완료’를 눌러 주세요.";
 
 export async function completeSignup(body: SignupBody): Promise<CompleteSignupOutcome> {
   const checked = await checkPhoneVerification();

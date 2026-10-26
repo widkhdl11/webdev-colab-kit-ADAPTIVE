@@ -55,10 +55,11 @@ describe("계정 설정(팬) — 묶음 순서", () => {
     expect(sectionTitles()).toEqual(["보안", "받을 주소", "개인정보", "알림"]);
   });
 
-  it("저장 줄은 알림 바로 뒤, 그 위가 개인정보(이메일)다 — 저장하기가 보내는 칸이 저장 줄 바로 위에 있다", () => {
+  it("저장 줄은 알림 바로 뒤, 그 위가 개인정보(이메일)다 — 저장이 보내는 칸이 저장 줄 바로 위에 있다", () => {
     render();
     const form = saveForm();
-    expect(form.textContent).toContain("저장하기");
+    expect(form.textContent).toContain("저장");
+    expect(buttonByText("저장")?.closest("form")).toBe(form);
     const notify = form.previousElementSibling as HTMLElement;
     expect(notify.querySelector("h2")?.textContent?.trim()).toBe("알림");
     expect(notify.querySelectorAll('[role="switch"]')).toHaveLength(2);
@@ -72,13 +73,13 @@ describe("계정 설정(팬) — 묶음 순서", () => {
     const after = saveForm().nextElementSibling as HTMLElement;
     expect(after).not.toBeNull();
     expect(after.textContent).toContain("회원 탈퇴");
-    expect(after.querySelector("button")?.textContent?.trim()).toBe("탈퇴하기");
-    for (const sec of host.querySelectorAll("section")) expect(sec.textContent).not.toContain("탈퇴하기");
+    expect(after.querySelector("button")?.textContent?.trim()).toBe("탈퇴 안내");
+    for (const sec of host.querySelectorAll("section")) expect(sec.textContent).not.toContain("탈퇴 안내");
   });
 
-  it("탈퇴하기를 누르면 그 아래 탈퇴 문의 링크가 펼쳐진다", () => {
+  it("탈퇴 안내를 누르면 그 아래 탈퇴 문의 링크가 펼쳐진다", () => {
     render();
-    const leave = buttonByText("탈퇴하기")!;
+    const leave = buttonByText("탈퇴 안내")!;
     expect(leave.getAttribute("aria-expanded")).toBe("false");
     act(() => leave.click());
     expect(leave.getAttribute("aria-expanded")).toBe("true");
@@ -93,7 +94,7 @@ describe("계정 설정(팬) — 뺀 문장과 남은 칸", () => {
     const editLinks = host.querySelectorAll(`a[href="${FAN_PROFILE_EDIT}"]`);
     expect(editLinks).toHaveLength(1);
     expect(editLinks[0].closest("header")).not.toBeNull();
-    expect(host.querySelector(".ph-desc")?.textContent).toBe("로그인·받을 주소·알림에 관한 설정이에요. 닉네임은 프로필 수정에서 바꿔요.");
+    expect(host.querySelector(".ph-desc")?.textContent).toBe("보안·받을 주소·알림을 관리합니다. 닉네임은 ‘프로필 수정’에서 변경해 주세요.");
   });
 
   it("아이디는 개인정보 묶음에 이름·값으로 보인다", () => {
@@ -116,32 +117,34 @@ describe("계정 설정(팬) — 뺀 문장과 남은 칸", () => {
     render({ account: { ...account, pendingEmail: "new@example.com" } });
     const input = host.querySelector('input[name="email"]') as HTMLInputElement;
     const help = document.getElementById(input.getAttribute("aria-describedby")!)!;
-    expect(help.textContent).toBe("새 주소(new@example.com)로 확인 메일을 보냈어요. 메일의 링크를 누르면 그 주소로 바뀌어요.");
+    expect(help.textContent).toBe("새 이메일(new@example.com)로 확인 메일을 보냈습니다. 메일의 링크에서 확인을 마치면 변경됩니다.");
   });
 });
 
 describe("계정 설정(팬) — 받을 주소 상태", () => {
-  it("등록돼 있으면 바꾸기·지우기, 지우기를 누르면 그 아래 확인 칸이 펼쳐진다", () => {
+  it("등록돼 있으면 변경·삭제, 삭제를 누르면 그 아래 확인 칸이 펼쳐진다", () => {
     render();
-    expect(buttonByText("바꾸기") ?? null).not.toBeNull();
-    const del = buttonByText("지우기")!;
+    const addrButtons = [...host.querySelectorAll('[data-me-group="address"] button')].map((b) => b.textContent?.trim());
+    expect(addrButtons).toEqual(["변경", "삭제"]);
+    const del = buttonByText("삭제")!;
     act(() => del.click());
-    // 확인 칸은 지우기 버튼이 가리키는 자리에 펼쳐진다
+    // 확인 칸은 삭제 버튼이 가리키는 자리에 펼쳐진다
     const panel = document.getElementById(del.getAttribute("aria-controls")!)!;
-    expect(panel.textContent).toContain("이미 받기를 누른 선물은 그때 등록한 주소로 가요.");
-    expect(buttonByText("주소 지우기")).toBeDefined();
+    expect(panel.textContent).toContain("이미 ‘받기’를 누른 선물은 당시 등록된 주소로 배송됩니다.");
+    expect(buttonByText("주소 삭제")).toBeDefined();
+    expect(buttonByText("취소")).toBeDefined();
   });
 
-  it("없으면 「등록한 주소가 없어요」와 등록하기만", () => {
+  it("없으면 「등록된 주소 없음」과 등록만", () => {
     render({ address: { registered: false, label: null, updatedAt: null } });
-    expect(host.querySelector("[data-address-on-file]")?.textContent).toBe("등록한 주소가 없어요");
-    expect(buttonByText("등록하기")).toBeDefined();
-    expect(buttonByText("지우기")).toBeUndefined();
+    expect(host.querySelector("[data-address-on-file]")?.textContent).toBe("등록된 주소 없음");
+    expect(buttonByText("등록")).toBeDefined();
+    expect(buttonByText("삭제")).toBeUndefined();
   });
 
   it("읽지 못했으면 안내만 있고 버튼이 없다", () => {
     render({ address: null });
-    expect(host.querySelector("[data-address-on-file]")?.textContent).toBe("받을 주소를 읽지 못했어요");
+    expect(host.querySelector("[data-address-on-file]")?.textContent).toBe("주소 정보를 불러오지 못했습니다");
     expect(host.querySelectorAll('[data-me-group="address"] button').length).toBe(0);
   });
 });
@@ -152,8 +155,8 @@ describe("계정 설정(팬) — 알림", () => {
     const [kakao, mail] = [...host.querySelectorAll<HTMLButtonElement>('[role="switch"]')];
     const label = document.getElementById(kakao.getAttribute("aria-labelledby")!)!;
     expect(kakao.contains(label)).toBe(true);
-    expect(label.textContent).toContain("카카오 알림톡으로 받기");
-    expect(label.textContent).toContain("승인·배송처럼 선물 소식을 카카오톡으로 받아요.");
+    expect(label.textContent).toContain("카카오톡 알림");
+    expect(label.textContent).toContain("승인·배송 등 선물 관련 알림톡 수신");
     expect(kakao.getAttribute("aria-checked")).toBe("true");
     expect(mail.getAttribute("aria-checked")).toBe("false");
     act(() => mail.click());
@@ -174,14 +177,14 @@ describe("계정 설정(팬) — 알림", () => {
     expect(email.value).toBe(first);
   });
 
-  it("끌 수 없는 알림은 접지 않고 알림 묶음 안에 제목과 목록 문장으로 늘 보인다", () => {
+  it("필수 알림 안내는 접지 않고 알림 묶음 안에 제목과 목록으로 늘 보인다", () => {
     render();
     const notify = saveForm().previousElementSibling as HTMLElement;
     const must = notify.querySelector("strong")!;
-    expect(must.textContent).toBe("끌 수 없는 알림");
+    expect(must.textContent).toBe("필수 알림은 수신 설정과 관계없이 발송됩니다.");
     expect(must.closest("details")).toBeNull();
     const body = must.nextElementSibling as HTMLElement;
-    expect(body.textContent).toContain("꺼 두어도 가요.");
+    expect(body.textContent).toContain("반송할 상자 · 미도착 상자");
   });
 
   it("저장 결과 안내 자리(role=alert·status)는 저장 폼 안에 늘 있다", () => {

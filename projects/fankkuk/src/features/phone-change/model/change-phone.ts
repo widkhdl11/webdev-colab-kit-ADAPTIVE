@@ -24,9 +24,9 @@ export type ChangePhoneField = "phone" | "verification" | "currentPassword";
 
 export type ChangePhoneResult = { ok: true } | { ok: false; status: 400 | 401 | 409 | 429 | 503; field?: ChangePhoneField; message: string };
 
-export const PHONE_CHANGE_CLOSED = "지금은 휴대폰 번호를 바꿀 수 없어요. 준비가 끝나면 알려 드릴게요.";
-export const VERIFY_AGAIN = "본인 확인을 다시 해 주세요.";
-export const SAME_AS_CURRENT_PHONE = "지금 번호와 같아요. 바꿀 새 번호를 적어 주세요.";
+export const PHONE_CHANGE_CLOSED = "현재 휴대폰 번호를 변경할 수 없습니다.";
+export const VERIFY_AGAIN = "본인 확인을 다시 시도해 주세요.";
+export const SAME_AS_CURRENT_PHONE = "현재 번호와 같습니다. 새 휴대폰 번호를 입력해 주세요.";
 const LOGIN_NEEDED = "로그인이 필요해요.";
 const CHECK_PHONE = "휴대폰 번호를 확인해 주세요.";
 
@@ -63,7 +63,7 @@ export async function changePhone(deps: ChangePhoneDeps, body: unknown, verifica
   });
   if (changed.error) {
     if (changed.error.code === "FKU01") return { ok: false, status: 400, field: "verification", message: VERIFY_AGAIN };
-    if (changed.error.code === "FKU02") return { ok: false, status: 409, field: "phone", message: "이미 가입된 번호예요." };
+    if (changed.error.code === "FKU02") return { ok: false, status: 409, field: "phone", message: "이미 가입된 휴대폰 번호입니다." };
     if (changed.error.code === "FKU03") return { ok: false, status: 400, field: "phone", message: SAME_AS_CURRENT_PHONE };
     if (changed.error.code === "22023") return { ok: false, status: 400, field: "phone", message: CHECK_PHONE };
     if (changed.error.code === "42501") return { ok: false, status: 401, message: LOGIN_NEEDED };

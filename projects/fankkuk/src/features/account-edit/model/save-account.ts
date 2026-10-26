@@ -28,16 +28,16 @@ export type SaveAccountResult =
 
 const issuedSchema = z.array(z.object({ token: z.string(), email: z.string(), nickname: z.string() })).length(1);
 
-const TOO_MANY = "확인 메일을 너무 자주 보냈어요. 한 시간 뒤에 다시 해 주세요.";
+const TOO_MANY = "확인 메일 발송 횟수를 초과했습니다. 1시간 후 다시 시도해 주세요.";
 
 export async function saveAccount(deps: SaveAccountDeps, body: unknown): Promise<SaveAccountResult> {
-  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
-  if (deps.viewer.role !== "fan") return { ok: false, status: 403, message: "팬 계정의 개인정보만 여기서 고칠 수 있어요." };
+  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요합니다." };
+  if (deps.viewer.role !== "fan") return { ok: false, status: 403, message: "팬 계정의 개인정보만 변경할 수 있습니다." };
 
   const parsed = accountInputSchema.safeParse(body);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
-    const message = issue?.message ?? "입력을 확인해 주세요.";
+    const message = issue?.message ?? "입력한 정보를 확인해 주세요.";
     return issue?.path[0] === "nickname" ? { ok: false, status: 400, field: "nickname", message } : { ok: false, status: 400, message };
   }
   const input = parsed.data;
@@ -51,9 +51,9 @@ export async function saveAccount(deps: SaveAccountDeps, body: unknown): Promise
   if (updated.error) {
     const nick = nicknameRejection(updated.error.code);
     if (nick) return { ok: false, status: nick.status, field: "nickname", message: nick.message };
-    if (updated.error.code === "22023") return { ok: false, status: 400, message: "입력을 확인해 주세요." };
+    if (updated.error.code === "22023") return { ok: false, status: 400, message: "입력한 정보를 확인해 주세요." };
     if (updated.error.code === "FK429") return { ok: false, status: 429, message: TOO_MANY };
-    if (updated.error.code === "42501") return { ok: false, status: 401, message: "로그인이 필요해요." };
+    if (updated.error.code === "42501") return { ok: false, status: 401, message: "로그인이 필요합니다." };
     throw new Error(`내 정보를 저장하지 못했다: ${updated.error.code}`);
   }
   if (updated.data !== true) return { ok: true, pendingEmail: null };
@@ -74,7 +74,7 @@ export async function saveAccount(deps: SaveAccountDeps, body: unknown): Promise
     return {
       ok: false,
       status: 502,
-      message: "다른 정보는 저장했지만 확인 메일을 보내지 못했어요. 잠시 뒤 다시 저장해 주세요.",
+      message: "다른 정보는 저장되었지만 확인 메일을 발송하지 못했습니다. 잠시 후 다시 저장해 주세요.",
     };
   }
   return { ok: true, pendingEmail: row.email };

@@ -20,8 +20,8 @@ export type ParsedChannel = { platform: ChannelPlatform; channelKey: string; cha
 export type ChannelUrlResult = { ok: true; channel: ParsedChannel } | { ok: false; reason: "unsupported" | "shape" };
 
 export const CHANNEL_URL_MESSAGE = {
-  unsupported: "아직 받지 않는 플랫폼이에요. 1:1 문의로 알려 주세요.",
-  shape: "채널 주소를 확인해 주세요. 받는 주소 꼴은 아래에 있어요.",
+  unsupported: "지원하지 않는 플랫폼입니다. 1:1 문의를 이용해 주세요.",
+  shape: "아래 예시를 참고해 채널 주소를 확인해 주세요.",
 } as const;
 
 /** 화면 안내용 — 플랫폼마다 받는 주소 꼴(INV-V2 표). */

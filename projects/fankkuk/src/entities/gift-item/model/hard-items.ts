@@ -18,13 +18,29 @@ export const HARD_REASON_LABEL: Record<HardReason, string> = {
   away: "잠시 집을 비워요",
   none: "이유 표시 안 함",
 };
+/** 설정 화면의 이유 선택지 이름(문구 다듬은본 10-26) — 공개 문구에 붙는 문장은 위 HARD_REASON_LABEL 그대로다. */
+export const HARD_REASON_OPTION_LABEL: Record<HardReason, string> = {
+  many: "이미 많이 받음",
+  storage: "보관 공간 부족",
+  away: "일시 부재",
+  none: "이유 표시 안 함",
+};
 export const HARD_PERIOD_LABEL: Record<HardPeriod, string> = { week1: "1주", week2: "2주", month1: "한 달", manual: "직접 해제할 때까지" };
-export const HARD_ACTION_LABEL: Record<HardAction, string> = { notice: "안내만", block: "등록 막기" };
+export const HARD_ACTION_LABEL: Record<HardAction, string> = { notice: "안내만 표시", block: "선물 등록 제한" };
 
 /** 공개 설정 — 크리에이터 페이지·등록 화면이 읽는다. 끝나는 날은 없다(INV-H6). 살아 있는 설정만 온다(INV-H5). */
 export type HardItems = { categories: readonly ItemCategory[]; reason: HardReason; action: HardAction };
 /** 크리에이터 본인 설정 — 기간과 끝나는 날(YYYY-MM-DD, 직접 해제면 null)은 이 화면에만. */
 export type MyHardItems = HardItems & { period: HardPeriod; endsOn: string | null };
+
+/**
+ * 설정 화면 미리보기 두 줄 — 「현재 받기 어려운 선물: {품목들}」과 이유(고르지 않았으면 null). 품목이 없으면 null.
+ */
+export function hardItemsPreview(h: Pick<HardItems, "categories" | "reason">): { items: string; reason: string | null } | null {
+  const labels = sortCategories(h.categories).map((c) => ITEM_CATEGORY_LABEL[c]);
+  if (labels.length === 0) return null;
+  return { items: `현재 받기 어려운 선물: ${labels.join(", ")}`, reason: h.reason === "none" ? null : HARD_REASON_OPTION_LABEL[h.reason] };
+}
 
 /**
  * INV-H6: 「지금은 {품목들}을 받기 어려워요 ㅠㅠ {이유}」. 품목은 목록 순서로 「, 」로 잇고 마지막 품목 받침에 따라 을/를.

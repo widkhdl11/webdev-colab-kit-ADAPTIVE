@@ -69,7 +69,7 @@ describe("팬 받을 주소 등록·변경 (address-protection INV-P1·P16·P17)
       expect(await saveFanAddress({ client: f.client, viewer: BYEOLBIT }, { address: envelope, label })).toEqual({
         ok: false,
         status: 400,
-        message: "주소 이름표를 골라 주세요.",
+        message: "주소 별칭을 선택해 주세요.",
       });
       expect(f.calls).toEqual([]);
     }

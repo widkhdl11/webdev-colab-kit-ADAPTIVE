@@ -51,9 +51,9 @@ describe("INV-E10: 링크 미리보기 이미지 고르기", () => {
     await render();
     const symbol = host.querySelector<HTMLInputElement>("input[name='cz-og'][value='symbol']")!;
     expect(symbol.disabled).toBe(true);
-    expect(host.querySelector(`#${symbol.getAttribute("aria-describedby")}`)?.textContent).toBe("심볼을 올리면 고를 수 있어요");
+    expect(host.querySelector(`#${symbol.getAttribute("aria-describedby")}`)?.textContent).toBe("팬마크 등록 후 선택 가능");
     // 심볼을 올리는 곳(상세 설정 · 팬덤)으로 가는 링크가 그 문장에 걸려 있다
-    expect(host.querySelector("a[href='/creator/settings#fandom']")?.textContent).toBe("심볼을 올리면");
+    expect(host.querySelector("a[href='/creator/settings#fandom']")?.textContent).toBe("팬마크 등록");
   });
 
   it("INV-E10: 심볼이 있으면 고를 수 있고 고르는 즉시 저장한다", async () => {
@@ -87,7 +87,7 @@ describe("INV-E10: 고르기를 빠르게 두 번 눌러도 마지막 화면 값
   });
 });
 
-describe("INV-E10: 공지 이미지 받기", () => {
+describe("INV-E10: 공지 이미지 다운로드", () => {
   it("INV-E10 S10: 세 크기마다 내려받기와 링크 복사 — 주소는 공개 공지 이미지 주소", async () => {
     await render();
     const links = [...host.querySelectorAll<HTMLAnchorElement>("a[download]")].map((a) => a.getAttribute("href"));
@@ -119,7 +119,7 @@ describe("배치 (design-rules 27절 「4파트 나머지 다섯 화면」 다�
     const group = host.querySelector("section[aria-labelledby='h-og']")!;
     const radios = group.querySelector("[role='radiogroup']")!;
     const msg = group.querySelector("#cz-pick-msg")!;
-    const cap = [...group.querySelectorAll("p")].find((x) => x.textContent === "링크를 공유하면 이렇게 보여요");
+    const cap = [...group.querySelectorAll("p")].find((x) => x.textContent === "링크 공유 미리보기");
     expect(cap).toBeDefined();
     expect(radios.compareDocumentPosition(msg) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(msg.compareDocumentPosition(cap!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -134,14 +134,14 @@ describe("배치 (design-rules 27절 「4파트 나머지 다섯 화면」 다�
 
   it("2026-10-22: 머리 설명은 한 문장 — 「바꾸는 즉시 미리보기에서…」는 없다", async () => {
     await render();
-    expect(host.querySelector(".ph-desc")?.textContent).toBe("팬이 보게 될 내 선물 링크 페이지를 직접 다듬어요.");
+    expect(host.querySelector(".ph-desc")?.textContent).toBe("선물 링크의 공유 이미지와 공지 이미지를 설정합니다.");
   });
 
   it("2026-10-22: 공지 이미지를 받을 수 없으면 안내 속 「설정」이 상세 설정의 선물 링크 칸으로 가는 링크", async () => {
     await render({ handle: null });
-    const a = [...host.querySelectorAll<HTMLAnchorElement>("a")].find((x) => x.textContent === "「설정」");
+    const a = [...host.querySelectorAll<HTMLAnchorElement>("a")].find((x) => x.textContent === "상세 설정 > 선물 링크");
     expect(a?.getAttribute("href")).toBe("/creator/settings#link");
-    expect(a?.closest("p")?.textContent).toBe("본인 확인을 마치고 「설정」에서 링크 주소를 정하면 받을 수 있어요.");
+    expect(a?.closest("p")?.textContent).toBe("채널 소유자 확인 후 ‘상세 설정 > 선물 링크’에서 링크 주소를 등록하면 다운로드할 수 있습니다.");
   });
 
   it("2026-10-22: 받을 수 있으면 세 크기 줄 — 이름·크기·내려받기·링크 복사", async () => {
@@ -149,7 +149,7 @@ describe("배치 (design-rules 27절 「4파트 나머지 다섯 화면」 다�
     const rows = [...host.querySelectorAll("section[aria-labelledby='h-notice'] li")];
     expect(rows.map((r) => r.querySelector("[data-size-title]")?.textContent)).toEqual(["정사각", "세로 (스토리용)", "가로"]);
     expect(rows.map((r) => r.querySelector("[data-size-px]")?.textContent)).toEqual(["1080 × 1080", "1080 × 1920", "1200 × 675"]);
-    for (const r of rows) expect([...r.querySelectorAll("a, button")].map((x) => x.textContent)).toEqual(["내려받기", "링크 복사"]);
+    for (const r of rows) expect([...r.querySelectorAll("a, button")].map((x) => x.textContent)).toEqual(["다운로드", "링크 복사"]);
   });
 
   it("2026-10-16 옮김: 이 화면에는 사진·이름·소개·팬덤 이름·심볼 편집 칸이 없다(프로필 수정·상세 설정으로)", async () => {

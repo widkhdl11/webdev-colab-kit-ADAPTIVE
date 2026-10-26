@@ -31,7 +31,7 @@ async function run(req: Request, ctx: Ctx, work: Work): Promise<Response> {
   try {
     const viewer = await readViewer(await createRequestSupabase());
     const denied = fanImageGate(viewer);
-    if (denied || !viewer) return reply(denied ?? { ok: false, status: 401, message: "로그인이 필요해요." });
+    if (denied || !viewer) return reply(denied ?? { ok: false, status: 401, message: "로그인이 필요합니다." });
     const result = await work({ admin: createAdminSupabase(), viewer }, kind);
     return result instanceof Response ? result : reply(result);
   } catch (e) {

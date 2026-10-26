@@ -18,7 +18,7 @@ export type RequestResetDeps = {
   defer: (task: () => Promise<void>) => void;
 };
 
-export const RESET_REQUESTED_MESSAGE = "입력한 정보가 맞으면 메일을 보냈어요.";
+export const RESET_REQUESTED_MESSAGE = "입력한 정보가 가입 정보와 일치하면 재설정 메일이 발송됩니다.";
 
 export type RequestResetResult = { status: 200 | 400; message: string };
 

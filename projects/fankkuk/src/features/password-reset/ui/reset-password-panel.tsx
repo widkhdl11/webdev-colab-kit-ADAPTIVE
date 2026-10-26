@@ -28,7 +28,7 @@ type State =
       at: number;
     };
 
-const DONE_MESSAGE = "비밀번호를 바꿨어요. 모든 기기에서 로그아웃됐으니 새\u00a0비밀번호로 로그인해\u00a0주세요.";
+const DONE_MESSAGE = "비밀번호가 변경되어 모든 기기에서 로그아웃되었습니다. 새\u00a0비밀번호로 로그인해\u00a0주세요.";
 const KEEP = [FORGOT_SCREEN_NAME] as const;
 
 export function ResetPasswordPanel({ token }: { token: string }) {
@@ -110,7 +110,7 @@ export function ResetPasswordPanel({ token }: { token: string }) {
           <Sentences text={state.message ?? DONE_MESSAGE} />
         </p>
         <Link className="btn btn--block" href="/login" ref={nextRef}>
-          로그인하러 가기
+          로그인
         </Link>
       </div>
     );
@@ -163,7 +163,7 @@ export function ResetPasswordPanel({ token }: { token: string }) {
           aria-disabled={state.kind === "sending"}
           aria-busy={state.kind === "sending" || undefined}
         >
-          {state.kind === "sending" ? "바꾸는 중" : "비밀번호 바꾸기"}
+          {state.kind === "sending" ? "변경 중" : "비밀번호 변경"}
         </button>
       </form>
     );
@@ -174,9 +174,9 @@ export function ResetPasswordPanel({ token }: { token: string }) {
       <div className={`container auth ${s.box}`}>
         <div className="head">
           <h1 className="t-title" id={f("title")}>
-            새 비밀번호 정하기
+            비밀번호 재설정
           </h1>
-          <p className="t-lead t-desc">{"새\u00a0비밀번호로 바꾸면 모든 기기에서 로그아웃돼요."}</p>
+          <p className="t-lead t-desc">{"비밀번호를 재설정하면 모든 기기에서 로그아웃됩니다."}</p>
         </div>
         <div className="card">{body}</div>
       </div>

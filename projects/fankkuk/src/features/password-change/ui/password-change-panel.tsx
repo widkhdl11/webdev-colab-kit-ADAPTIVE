@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState, type KeyboardEvent } from "react";
+import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { PASSWORD_HINT } from "@/entities/session/model/password-rule";
 import { sendPasswordChange, type ChangePasswordField } from "../api/change-password-client";
 import s from "./password-change.module.css";
@@ -37,7 +37,7 @@ export function PasswordChangePanel({ id, onLoginExpired }: { id: string; onLogi
       return;
     }
     setValues(EMPTY);
-    setNotice({ kind: "ok", text: r.message ?? "비밀번호를 바꿨어요. 다른 기기에서는 로그아웃됐어요." });
+    setNotice({ kind: "ok", text: r.message ?? "비밀번호가 변경되어 다른 기기에서 로그아웃되었습니다." });
   };
 
   const onEnter = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -46,7 +46,7 @@ export function PasswordChangePanel({ id, onLoginExpired }: { id: string; onLogi
     void submit();
   };
 
-  const field = (key: ChangePasswordField, label: string, autoComplete: string, hint?: string) => {
+  const field = (key: ChangePasswordField, label: string, autoComplete: string, hint?: ReactNode) => {
     const invalid = notice?.kind === "error" && notice.field === key;
     const describedBy = [hint ? f(`${key}-h`) : null, invalid ? f("err") : null].filter(Boolean).join(" ");
     return (
@@ -78,8 +78,13 @@ export function PasswordChangePanel({ id, onLoginExpired }: { id: string; onLogi
 
   return (
     <div className={s.panel} id={id} role="group" aria-label="비밀번호 변경">
-      {field("currentPassword", "지금 비밀번호", "current-password")}
-      {field("newPassword", "새 비밀번호", "new-password", `${PASSWORD_HINT} 바꾸면 다른 기기에서는 로그아웃돼요.`)}
+      {field("currentPassword", "현재 비밀번호", "current-password")}
+      {field("newPassword", "새 비밀번호", "new-password", <>
+          {PASSWORD_HINT}
+          <br />
+          변경 시 다른 기기에서 로그아웃됩니다.
+        </>,
+      )}
       {field("newPasswordConfirm", "새 비밀번호 확인", "new-password")}
       <div>
         <p className={s.error} id={f("err")} role="alert">
@@ -91,7 +96,7 @@ export function PasswordChangePanel({ id, onLoginExpired }: { id: string; onLogi
       </div>
       <div className={s.actions}>
         <button className="btn" type="button" onClick={() => void submit()} aria-disabled={busy} aria-busy={busy || undefined}>
-          {busy ? "바꾸는 중" : "비밀번호 바꾸기"}
+          {busy ? "변경 중" : "비밀번호 변경"}
         </button>
       </div>
     </div>

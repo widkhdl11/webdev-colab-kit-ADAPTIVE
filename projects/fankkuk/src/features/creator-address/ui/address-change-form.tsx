@@ -35,13 +35,13 @@ export function AddressChangeForm({ creatorId, sealingKeyPem, initialLabel = nul
       toPlaintext={(f) => creatorAddressPlaintext({ creatorId, ...f })}
       labelOptions={LABEL_OPTIONS}
       initialLabel={initialLabel}
-      labelHint={approvalHint ? "주소는 등록한 뒤에 다시 보이지 않아요. 승인할 때 이 이름표와 등록한 날로 확인해요." : "주소는 등록한 뒤에 다시 보이지 않아요."}
+      labelHint={approvalHint ? "등록한 주소는 다시 조회할 수 없습니다. 선물 승인 시 주소 별칭과 등록일로 확인해 주세요." : "등록한 주소는 다시 조회할 수 없습니다."}
       send={sendCreatorAddress}
       submitClassName="btn btn--kakao"
       submitContent={(busy) => (
         <>
           <KakaoBubble />
-          {busy ? "저장하는 중…" : "카카오톡으로 서명하기"}
+          {busy ? "저장 중…" : "카카오톡 서명"}
         </>
       )}
       autoFocusFirst={autoFocusFirst}

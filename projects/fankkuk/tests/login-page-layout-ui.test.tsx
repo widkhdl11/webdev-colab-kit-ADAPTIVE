@@ -8,7 +8,7 @@ import { LoginPage } from "@/widgets/login/ui/login-page";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-const LOCKED = "비밀번호를 여러 번 틀려 잠시 확인할 수 없어요. 15분 뒤 다시 하거나 비밀번호를 재설정해 주세요.";
+const LOCKED = "비밀번호 입력 오류가 반복되어 잠시 이용이 제한됩니다. 15분 후 다시 시도하거나 비밀번호를 재설정해 주세요.";
 
 let host: HTMLDivElement;
 let root: Root;
@@ -58,6 +58,6 @@ describe("로그인 화면 구조", () => {
     expect(err?.textContent).toBe(LOCKED);
     const lines = err?.querySelectorAll(".brk");
     expect(lines).toHaveLength(1);
-    expect(lines?.[0].textContent?.trim()).toBe("15분 뒤 다시 하거나 비밀번호를 재설정해 주세요.");
+    expect(lines?.[0].textContent?.trim()).toBe("15분 후 다시 시도하거나 비밀번호를 재설정해 주세요.");
   });
 });

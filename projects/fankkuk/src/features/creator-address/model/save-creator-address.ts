@@ -15,16 +15,16 @@ const resultSchema = z.enum(["saved", "not_creator", "method_refused"]);
 
 export type SaveCreatorAddressResult = { ok: true } | { ok: false; status: 400 | 401 | 403 | 503; message: string };
 
-const UNAVAILABLE = { ok: false, status: 503, message: "지금은 주소를 바꿀 수 없어요. 잠시 뒤 다시 해 주세요." } as const;
-const CREATOR_ONLY = { ok: false, status: 403, message: "크리에이터 계정만 할 수 있어요." } as const;
+const UNAVAILABLE = { ok: false, status: 503, message: "현재 주소를 변경할 수 없습니다. 잠시 후 다시 시도해 주세요." } as const;
+const CREATOR_ONLY = { ok: false, status: 403, message: "크리에이터 계정만 이용할 수 있습니다." } as const;
 const NOT_SEALED = { ok: false, status: 400, message: "주소를 다시 입력해 주세요." } as const;
-const NO_LABEL = { ok: false, status: 400, message: "주소 이름표를 골라 주세요." } as const;
+const NO_LABEL = { ok: false, status: 400, message: "주소 별칭을 선택해 주세요." } as const;
 
 export async function saveCreatorAddress(
   deps: { admin: Pick<SupabaseClient, "rpc">; viewer: Viewer | null; signer: ApprovalSigner | null },
   body: unknown,
 ): Promise<SaveCreatorAddressResult> {
-  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
+  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요합니다." };
   if (deps.viewer.role !== "creator") return CREATOR_ONLY;
   // INV-P13: 창구가 없으면(운영) 로그인만으로 주소를 바꾸지 못한다
   if (!deps.signer) return UNAVAILABLE;

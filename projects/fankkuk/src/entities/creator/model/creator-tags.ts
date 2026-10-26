@@ -20,12 +20,12 @@ export function tagKey(text: string): string {
 
 /** 직접 입력의 꼴 — 앞뒤 공백을 뺀 1~20자, 보이지 않는 글자 없음. 틀리면 화면 문구. */
 function customTagProblem(custom: string): string | null {
-  if (charCount(custom) > TAG_CUSTOM_MAX) return `직접 입력은 ${TAG_CUSTOM_MAX}자까지 적을 수 있어요.`;
-  if (HIDDEN_CHAR.test(custom)) return "직접 입력에 보이지 않는 글자나 줄바꿈은 쓸 수 없어요.";
+  if (charCount(custom) > TAG_CUSTOM_MAX) return `직접 입력한 태그는 최대 ${TAG_CUSTOM_MAX}자까지 가능합니다.`;
+  if (HIDDEN_CHAR.test(custom)) return "직접 입력에 보이지 않는 문자나 줄바꿈은 입력할 수 없습니다.";
   return null;
 }
 
-export const TAG_COUNT_MESSAGE = `태그를 1~${TAG_TOTAL_MAX}개 골라 주세요.`;
+export const TAG_COUNT_MESSAGE = `태그를 1~${TAG_TOTAL_MAX}개 선택해 주세요.`;
 
 export type TagSelection = { ok: true; tagIds: string[]; customTag: string | null; count: number } | { ok: false; message: string };
 
@@ -63,8 +63,8 @@ export function hasPickedTag(card: { tags: readonly string[] }, tag: string | nu
  * 직접 입력이 선택지 이름과 같으면 그 선택지를 고른 것으로 센다(S3c, DB 와 같다). 어기면 문구.
  */
 export function resolveTagSelection(options: readonly TagOption[], picked: readonly string[], customInput: string): TagSelection {
-  if (new Set(picked).size !== picked.length) return { ok: false, message: "같은 태그를 두 번 고를 수 없어요." };
-  if (!picked.every((id) => options.some((o) => o.id === id))) return { ok: false, message: "고를 수 없는 태그가 있어요. 새로 고침해 주세요." };
+  if (new Set(picked).size !== picked.length) return { ok: false, message: "동일한 태그는 중복 선택할 수 없습니다." };
+  if (!picked.every((id) => options.some((o) => o.id === id))) return { ok: false, message: "선택할 수 없는 태그가 포함되어 있습니다. 새로고침해 주세요." };
   const custom = customInput.trim();
   if (custom !== "") {
     const problem = customTagProblem(custom);
@@ -84,7 +84,7 @@ export const tagSelectionFields = {
     tagIds: z
       .array(z.guid())
       .max(TAG_TOTAL_MAX, TAG_COUNT_MESSAGE)
-      .refine((ids) => new Set(ids).size === ids.length, "같은 태그를 두 번 고를 수 없어요."),
+      .refine((ids) => new Set(ids).size === ids.length, "동일한 태그는 중복 선택할 수 없습니다."),
     customTag: z
       .string()
       .trim()
@@ -125,9 +125,9 @@ export type CustomTagCount = { tag: string; creatorCount: number };
  * P0081 금칙어 · P0082 전화번호·이메일·인터넷 주소 꼴 · P0083 글자·숫자 없음. 어느 금칙어에 걸렸는지는 말하지 않는다.
  */
 const TAG_FILTER_MESSAGES: Record<string, string> = {
-  P0081: "쓸 수 없는 말이 들어 있어요. 다른 말로 적어 주세요.",
-  P0082: "전화번호·이메일·인터넷 주소는 태그에 쓸 수 없어요.",
-  P0083: "글자나 숫자를 넣어 적어 주세요.",
+  P0081: "사용할 수 없는 표현이 포함되어 있습니다. 다른 내용을 입력해 주세요.",
+  P0082: "태그에 전화번호·이메일·인터넷 주소를 입력할 수 없습니다.",
+  P0083: "글자나 숫자를 하나 이상 포함해 주세요.",
 };
 
 export function tagFilterMessage(code: string | undefined): string | null {

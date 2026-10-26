@@ -109,13 +109,13 @@ describe("INV-U12: 번호 바꾸기는 로그인한 사람 자신의 번호만, 
       ok: false,
       status: 409,
       field: "phone",
-      message: "이미 가입된 번호예요.",
+      message: "이미 가입된 휴대폰 번호입니다.",
     });
     expect(phoneOf(f)).toBe(fPhone);
     expect(phoneOf(g)).toBe(gPhone);
   });
 
-  it("INV-U12 (실패경로): 지금 번호와 같은 번호로 바꾸면 「지금 번호와 같아요」 — 확인을 쓰지 않고 기록도 남기지 않는다", async () => {
+  it("INV-U12 (실패경로): 지금 번호와 같은 번호로 바꾸면 「현재 번호와 같습니다」 — 확인을 쓰지 않고 기록도 남기지 않는다", async () => {
     const mine = testPhone();
     const f = await createTestAccount({ tag: "s12same", email: testEmail("s12same"), phone: mine });
     const ticket = await verified(mine);

@@ -82,7 +82,7 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
       router.refresh(); // 공개 이름은 저장됐다 — 사이드바 이름도 새로
       return;
     }
-    setMsg({ ok: true, text: "저장했어요." });
+    setMsg({ ok: true, text: "저장되었습니다." });
     router.refresh(); // 사이드바 이름 메뉴도 새 공개 이름으로
   };
 
@@ -90,7 +90,7 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
     <div className={`stack ${s.col}`}>
       <header className="page-head">
         <h1 className="ph-title">프로필 수정</h1>
-        <p className="ph-desc">팬에게 보이는 내 프로필이에요. 미리보기 모양이 그대로 보여요.</p>
+        <p className="ph-desc">팬에게 공개되는 프로필입니다. 변경할 내용을 미리보기에서 확인해 주세요.</p>
       </header>
 
       <div className={s.grid}>
@@ -105,16 +105,22 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
                 id="pe-bg"
                 label="배경 사진"
                 hasImage={bgPath !== null}
-                pickLabel="배경 사진 바꾸기"
-                removeLabel="배경을 테마 색으로 되돌리기"
-                hint="배경 사진은 가로로 긴 사진이 잘 어울려요(JPG·PNG·WebP). 올리면 위치 정보 같은 숨은 정보는 지워져요. 사진이 없으면 테마 색이 보여요."
+                pickLabel="배경 사진 변경"
+                removeLabel="배경 사진 삭제"
+                hint={
+                  <>
+                    JPG·PNG·WebP · 가로형 사진 권장
+                    <br />
+                    업로드 시 위치 정보 등 사진에 포함된 부가 정보는 삭제됩니다. 사진 미등록 시 테마 색이 표시됩니다.
+                  </>
+                }
                 sizeHint="권장 크기 1200×600px"
                 upload={(f) => sendCreatorImage("background", f, { rightsChecked: false })}
                 remove={() => deleteCreatorImage("background")}
                 onSaved={setBgPath}
                 onLogin={toLogin}
-                savedText="배경 사진을 바꿨어요."
-                removedText="배경을 테마 색으로 되돌렸어요."
+                savedText="배경 사진이 변경되었습니다."
+                removedText="배경에 테마 색이 적용되었습니다."
               />
             </div>
             <div className={`${s.sub} ${s.last}`}>
@@ -122,14 +128,14 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
                 id="pe-photo"
                 label="프로필 사진"
                 hasImage={photoPath !== null}
-                pickLabel="프로필 사진 바꾸기"
-                removeLabel="사진 지우기"
+                pickLabel="프로필 사진 변경"
+                removeLabel="사진 삭제"
                 upload={async (f) => photoOut(await sendCreatorPhoto(f))}
                 remove={async () => photoOut(await deleteCreatorPhoto())}
                 onSaved={setPhotoPath}
                 onLogin={toLogin}
-                savedText="프로필 사진을 바꿨어요."
-                removedText="프로필 사진을 지웠어요."
+                savedText="프로필 사진이 변경되었습니다."
+                removedText="프로필 사진이 삭제되었습니다."
               />
             </div>
           </section>
@@ -161,7 +167,7 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
                 aria-describedby="pe-name-h"
               />
               <p className={s.hint} id="pe-name-h">
-                팬에게 보이는 이름이에요.
+                팬에게 표시되는 이름
               </p>
             </div>
             <div className={s.sub}>
@@ -217,7 +223,7 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
                   취소
                 </Link>
                 <button className="btn" type="submit" aria-disabled={saving} aria-busy={saving}>
-                  {saving ? "저장하는 중…" : "저장"}
+                  {saving ? "저장 중…" : "저장"}
                 </button>
               </div>
             </div>

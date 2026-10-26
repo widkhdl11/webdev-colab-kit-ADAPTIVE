@@ -101,7 +101,7 @@ describe("INV-A12: 팬 프로필은 그 팬 본인만 바꾼다", () => {
     const direct = await byeol.rpc("update_my_fan_profile", { p_intro: "바뀌면 안 되는 소개", p_nickname: "달토끼" });
     expect(direct.error?.code).toBe("FKU04");
     const viaServer = await saveFanProfile({ client: byeol, viewer: fanViewer(BYEOL) }, { intro: "바뀌면 안 되는 소개", nickname: "달토끼" });
-    expect(viaServer).toEqual({ ok: false, status: 409, field: "nickname", message: "이미 쓰는 닉네임이에요." });
+    expect(viaServer).toEqual({ ok: false, status: 409, field: "nickname", message: "이미 사용 중인 닉네임입니다." });
     expect([introOf(BYEOL), colOf(BYEOL, "nickname")]).toEqual(["", "별빛"]);
     // 영문 대소문자·앞뒤 공백만 다른 닉네임도 겹친다(내 정보 고치기와 같은 판정)
     psql(`update public.profiles set nickname = 'Moon' where id = '${DAL}'`);
@@ -284,7 +284,7 @@ describe("INV-A14: 사진은 서버가 다시 그려 공개 저장소에 서버 
     const leftover = await sharp({ create: { width: 8, height: 8, channels: 3, background: "#fff" } }).webp().toBuffer();
     expect((await adminClient().storage.from(BUCKET).upload(`${BYEOL}/p-1.webp`, leftover, { contentType: "image/webp" })).error).toBeNull();
     const fresh = await saveFanImage(deps(), "photo", blob(await photoWithGps(300, 300)));
-    expect(fresh).toEqual({ ok: false, status: 409, message: "다른 곳에서 사진을 바꾸는 중이에요. 잠시 뒤 다시 해 주세요." });
+    expect(fresh).toEqual({ ok: false, status: 409, message: "다른 화면에서 사진 변경을 진행 중입니다. 잠시 후 다시 시도해 주세요." });
     expect([colOf(BYEOL, "fan_photo_version"), await storedNames(BYEOL)]).toEqual(["0", ["p-1.webp"]]);
     // 10분 뒤 — 남은 파일로 보고 치운 뒤 같은 판으로 다시 올려 붙인다
     const later = await saveFanImage({ ...deps(), now: () => Date.now() + 10 * 60_000 }, "photo", blob(await photoWithGps(300, 300)));

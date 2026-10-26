@@ -120,7 +120,7 @@ describe("주소 이름표 (address-protection INV-P16)", () => {
     for (const label of [undefined, null, "", "서울 강남구 집", "HOME", "집"]) {
       const f = fakeAdmin();
       const r = await saveCreatorAddress({ admin: f.admin, viewer: HARU, signer }, { address: envelope, label });
-      expect(r).toMatchObject({ ok: false, status: 400, message: "주소 이름표를 골라 주세요." });
+      expect(r).toMatchObject({ ok: false, status: 400, message: "주소 별칭을 선택해 주세요." });
       expect(f.calls).toEqual([]);
     }
   });

@@ -174,7 +174,7 @@ describe("INV-U13: 가입 때 받은 닉네임으로 계정이 생긴다", () =>
     expect(r).toMatchObject({ ok: true });
     const p2 = phone();
     const again = await signUp(signUpDeps(), signupBody("it_nk_taken2", " haru ", p2, await verified(p2)));
-    expect(again).toEqual({ ok: false, status: 409, field: "nickname", message: "이미 쓰는 닉네임이에요." });
+    expect(again).toEqual({ ok: false, status: 409, field: "nickname", message: "이미 사용 중인 닉네임입니다." });
     expect(authCount("it_nk_taken2")).toBe("0");
     expect(nicknameOfLogin("it_nk_taken")).toBe("HARU");
   });
@@ -302,7 +302,7 @@ describe("INV-U13·my-account INV-A5: 내 정보에서 닉네임을 바꿀 때�
       },
       { nickname: "달토끼", email: "byeolbit.fan@example.com", notifyKakao: true, notifyEmail: true },
     );
-    expect(r).toEqual({ ok: false, status: 409, field: "nickname", message: "이미 쓰는 닉네임이에요." });
+    expect(r).toEqual({ ok: false, status: 409, field: "nickname", message: "이미 사용 중인 닉네임입니다." });
     expect(nicknameOf(SEED.fanId)).toBe("별빛");
   });
 });

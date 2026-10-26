@@ -51,18 +51,17 @@ export function ResetRequestForm() {
       </p>
       {result?.ok ? (
         <p className="t-desc">
-          {"링크는 1시간 동안 한 번만 쓸\u00a0수\u00a0있어요."}
-          <span className="brk">
-            {" 메일이 오지 않으면 "}
-            <Link className={`nw ${s.link}`} href="/support">
-              1:1 문의
-            </Link>
-            {"로 알려\u00a0주세요."}
-          </span>
+          {"링크 유효 시간: 1시간 · 1회 사용 가능"}
+          <br />
+          {"메일이 도착하지 않으면 "}
+          <Link className={`nw ${s.link}`} href="/support">
+            1:1 문의
+          </Link>
+          {"를 이용해\u00a0주세요."}
         </p>
       ) : null}
       <button className="btn btn--block" type="submit" aria-disabled={busy} aria-busy={busy || undefined}>
-        {busy ? "보내는 중" : "재설정 링크 보내기"}
+        {busy ? "발송 중" : "재설정 링크 보내기"}
       </button>
     </form>
   );

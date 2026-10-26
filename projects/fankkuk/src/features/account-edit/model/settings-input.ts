@@ -8,11 +8,11 @@ export type SettingsDraft = { nickname: string; email: string; notifyKakao: bool
 
 export type SettingsPlan = { ok: true; input: AccountInput } | { ok: false; message: string };
 
-export const NICKNAME_ELSEWHERE = "닉네임을 프로필 수정에서 먼저 고쳐 주세요.";
+export const NICKNAME_ELSEWHERE = "‘프로필 수정’에서 닉네임을 입력 규칙에 맞게 변경해 주세요.";
 
 export function planAccountSettingsSave(draft: SettingsDraft): SettingsPlan {
   const parsed = accountInputSchema.safeParse(draft);
   if (parsed.success) return { ok: true, input: parsed.data };
   const issue = parsed.error.issues[0];
-  return { ok: false, message: issue?.path[0] === "nickname" ? NICKNAME_ELSEWHERE : (issue?.message ?? "입력을 확인해 주세요.") };
+  return { ok: false, message: issue?.path[0] === "nickname" ? NICKNAME_ELSEWHERE : (issue?.message ?? "입력한 정보를 확인해 주세요.") };
 }

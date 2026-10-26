@@ -12,7 +12,7 @@ export type ChangePasswordOutcome =
 const FIELDS: readonly string[] = ["currentPassword", "newPassword", "newPasswordConfirm"];
 
 export async function sendPasswordChange(input: { currentPassword: string; newPassword: string; newPasswordConfirm: string }): Promise<ChangePasswordOutcome> {
-  const r = await postJson("/api/me/password", input, "비밀번호를 바꾸지 못했어요. 잠시 뒤 다시 해 주세요.");
+  const r = await postJson("/api/me/password", input, "비밀번호를 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.");
   // 바뀌었지만 다른 기기 로그아웃을 못 했으면 서버가 다시 로그인하라는 문구를 싣는다
   if (r.kind === "ok") return { kind: "ok", message: typeof r.body.message === "string" ? r.body.message : null };
   if (r.status === 401) return { kind: "login" };

@@ -274,7 +274,7 @@ describe("승인 창의 주소 단계 (INV-S13·P16)", () => {
   it("INV-S13 (실패경로): 봉인 키가 없으면 입력 폼 대신 안내만, 서명 버튼도 없다", () => {
     render(NONE, null);
     const d = openApprove();
-    expect(d.textContent).toContain("주소 보호 설정이 아직 안 돼 있어요");
+    expect(d.textContent).toContain("현재 주소를 안전하게 저장할 수 없어 등록이 제한됩니다.");
     expect(d.querySelector("[data-form]")).toBeNull();
     expect(button(d, "카카오톡으로 승인하기")).toBeUndefined();
   });

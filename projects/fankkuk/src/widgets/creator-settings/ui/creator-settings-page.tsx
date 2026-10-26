@@ -22,7 +22,6 @@ import { FandomSection, type FandomSectionProps } from "./fandom-section";
 import type { ReplySettings } from "@/entities/gift-reply/api/gift-reply-reads";
 import type { MyCreatorLink } from "@/entities/creator/api/creator-link-reads";
 import type { MyHardItems } from "@/entities/gift-item/model/hard-items";
-import { PROMISE, NO_ADDRESS_ASK } from "@/shared/config/site-copy";
 import s from "./creator-settings.module.css";
 
 // 크리에이터 상세 설정 (design-rules 12절 · 27절, 시안 docs/design/mockups/site/pilot-2026-10-22/settings.html). 틀 폭 1200 — 「팬덤」은 12열 7 + 5, 「주소와 설정」은 880 한 기둥.
@@ -135,14 +134,14 @@ export function CreatorSettingsPage({
       router.push("/login");
       return;
     }
-    setUnblockError(r.kind === "refused" ? r.message : "저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
+    setUnblockError(r.kind === "refused" ? r.message : "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
   };
 
   return (
     <div className={s.root}>
       <header className="page-head">
         <h1 className="ph-title">상세 설정</h1>
-        <p className="ph-desc">주소와 설정을 한곳에서 관리해요.</p>
+        <p className="ph-desc">팬덤·받는 주소·선물 받기·차단한 팬·선물 링크·감사 답장을 관리합니다.</p>
       </header>
 
       <nav className={s.jump} aria-label="상세 설정 구간">
@@ -160,12 +159,14 @@ export function CreatorSettingsPage({
           <Fold id="address" title="받는 주소" meta={addressRegistered ? "등록됨" : "등록 전"}>
             <div className={`card card--soft ${s.inner}`}>
               <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={72} height={72} />
-              <p className="t-strong">{addressRegistered ? "주소를 잠가서 등록해 뒀어요" : "아직 주소를 등록하지 않았어요"}</p>
+              <p className="t-strong">{addressRegistered ? "주소 등록 완료" : "등록된 주소 없음"}</p>
               {addressRegistered ? <p data-address-on-file="">{addressOnFileText(addressOnFile)}</p> : null}
-              <p className={s["body-gap"]}>{addressRegistered ? `주소는 잠가서 보관해요. ${PROMISE.address}` : `등록하면 바로 잠가서 보관해요. ${PROMISE.address}`}</p>
+              <p className={s["body-gap"]}>{addressRegistered
+                  ? "주소는 암호화해 보관합니다. 선물 승인 후 배송에 필요한 경우에만 확인합니다."
+                  : "등록한 주소는 암호화해 보관합니다. 선물 승인 후 배송에 필요한 경우에만 확인합니다."}</p>
             </div>
-            <p className="t-meta">{addressRegistered ? "아직 출력하지 않은 주문은 바뀐 주소로 나가요." : "등록하면 아직 출력하지 않은 주문부터 이 주소로 나가요."}</p>
-            <p className="t-meta">{NO_ADDRESS_ASK}</p>
+            <p className="t-meta">{addressRegistered ? "송장 출력 전인 선물부터 변경된 주소로 배송됩니다." : "송장 출력 전인 선물부터 등록한 주소로 배송됩니다."}</p>
+            <p className="t-meta">팬꾹은 채팅·이메일·전화로 주소를 요청하지 않습니다. 주소 재입력을 요구하는 연락에 응답하지 마세요.</p>
             <div>
               <button
                 className="btn btn--line"
@@ -175,7 +176,7 @@ export function CreatorSettingsPage({
                   setSheet({ kind: "address" });
                 }}
               >
-                {addressRegistered ? "주소 바꾸기" : "주소 등록하기"}
+                {addressRegistered ? "주소 변경" : "주소 등록"}
               </button>
               <p className={`t-meta ${s.msg}`} role="status">
                 {addressMsg ?? ""}
@@ -190,7 +191,7 @@ export function CreatorSettingsPage({
 
           <Fold id="blocked" title="차단한 팬" meta={`${blocked.length}명`}>
             {blocked.length === 0 ? (
-              <p className="t-meta">차단한 팬이 없어요.</p>
+              <p className="t-meta">차단한 팬이 없습니다.</p>
             ) : (
               <ul className="grid cols-2">
                 {blocked.map((f, i) => (
@@ -206,20 +207,20 @@ export function CreatorSettingsPage({
                       <button
                         className="btn btn--line btn--sm btn--block"
                         type="button"
-                        aria-label={`${f.fanNickname}님 차단 풀기`}
+                        aria-label={`${f.fanNickname}님 차단 해제`}
                         onClick={() => {
                           setUnblockError(null);
                           setSheet({ kind: "unblock", fan: f });
                         }}
                       >
-                        차단 풀기
+                        차단 해제
                       </button>
                     </div>
                   </li>
                 ))}
               </ul>
             )}
-            <p className="t-meta">차단을 풀어도 주소는 열리지 않아요. 새 선물도 한 건씩 카카오톡 서명으로 승인해야 나가요.</p>
+            <p className="t-meta">차단을 해제해도 주소는 공개되지 않습니다. 새 선물은 건별로 카카오톡 서명을 거쳐 승인해야 배송됩니다.</p>
           </Fold>
 
           <Fold id="gift-link" title="선물 링크">
@@ -235,13 +236,13 @@ export function CreatorSettingsPage({
 
       <BottomSheet
         open={sheet !== null}
-        title={sheet?.kind === "unblock" ? `${sheet.fan.fanNickname}님의 차단을 풀까요?` : addressRegistered ? "주소를 바꿀까요?" : "주소를 등록할까요?"}
+        title={sheet?.kind === "unblock" ? `${sheet.fan.fanNickname}님의 차단을 해제할까요?` : addressRegistered ? "주소를 바꿀까요?" : "주소를 등록할까요?"}
         onClose={() => setSheet(null)}
       >
         {sheet?.kind === "unblock" ? (
           <>
-            <p>풀면 이 팬이 다시 선물을 보낼 수 있어요. 받지 않은 지난 선물은 그대로예요.</p>
-            <p className={`t-meta ${s["sheet-sub"]}`}>새로 온 선물도 한 건씩 카카오톡 서명으로 승인해야 주소가 열려요.</p>
+            <p>차단을 해제하면 이 팬이 다시 선물을 보낼 수 있습니다. 기존 선물의 처리 상태는 변경되지 않습니다.</p>
+            <p className={`t-meta ${s["sheet-sub"]}`}>새 선물도 건별로 카카오톡 서명을 거쳐 승인해야 배송을 위해 주소를 확인할 수 있습니다.</p>
             {unblockError ? (
               <p className={`err ${s["sheet-err"]}`} role="alert">
                 {unblockError}
@@ -249,20 +250,20 @@ export function CreatorSettingsPage({
             ) : null}
             <div className={s["sheet-btns"]}>
               <button className="btn btn--line" type="button" onClick={() => setSheet(null)}>
-                돌아가기
+                취소
               </button>
               <button className="btn" type="button" aria-disabled={saving} onClick={() => void confirmUnblock(sheet.fan)}>
-                {saving ? "저장하는 중…" : "차단 풀기"}
+                {saving ? "저장 중…" : "차단 해제"}
               </button>
             </div>
           </>
         ) : (
           <>
-            <p>주소를 {addressRegistered ? "바꾸" : "등록하"}려면 카카오톡 인증서 서명이 필요해요. 로그인만으로는 바꿀 수 없어요.</p>
+            <p>주소 {addressRegistered ? "변경" : "등록"}에는 카카오톡 인증서 서명이 필요합니다. 로그인만으로는 처리할 수 없습니다.</p>
             <p className={`t-meta ${s["sheet-sub"]}`}>
               {addressRegistered
-                ? "새 주소도 이 브라우저에서 잠가서 보내요. 아직 출력하지 않은 주문은 바뀐 주소로 나가요."
-                : "주소는 이 브라우저에서 잠가서 보내요. 등록하면 아직 출력하지 않은 주문부터 이 주소로 나가요."}
+                ? "새 주소는 입력한 기기에서 암호화한 뒤 전송합니다. 송장 출력 전인 선물부터 변경된 주소로 배송됩니다."
+                : "주소는 입력한 기기에서 암호화한 뒤 전송합니다. 송장 출력 전인 선물부터 등록한 주소로 배송됩니다."}
             </p>
             {sealingKeyPem ? (
               <AddressChangeForm
@@ -271,7 +272,7 @@ export function CreatorSettingsPage({
                 initialLabel={addressOnFile.label}
                 onSaved={(label) => {
                   // 서버에 저장된 뒤에만 「등록됨」으로 바꾼다
-                  setAddressMsg(addressRegistered ? "주소를 바꿨어요." : "주소를 등록했어요.");
+                  setAddressMsg(addressRegistered ? "주소가 변경되었습니다." : "주소가 등록되었습니다.");
                   setAddressRegistered(true);
                   setAddressOnFile({ label, updatedAt: new Date().toISOString() });
                   setSheet(null);
@@ -287,7 +288,7 @@ export function CreatorSettingsPage({
                 </p>
                 <div className={s["sheet-btns"]}>
                   <button className="btn btn--line" type="button" onClick={() => setSheet(null)}>
-                    돌아가기
+                    취소
                   </button>
                 </div>
               </>

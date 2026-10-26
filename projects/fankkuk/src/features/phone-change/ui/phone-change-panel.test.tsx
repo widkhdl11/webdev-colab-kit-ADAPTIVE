@@ -56,28 +56,28 @@ async function startVerified() {
   act(() => root.render(<PhoneChangePanel id="p" onLoginExpired={() => {}} onChanged={() => {}} />));
   api.requestPhoneChangeVerification.mockResolvedValue({ kind: "ok" });
   typeInto("새 휴대폰 번호", "01055502006");
-  await click("카카오톡으로 인증 요청 보내기");
+  await click("카카오톡 인증 요청");
 }
 
 describe("번호 바꾸기 화면 — 카카오 인증 확인은 한 번만 (signup INV-U12)", () => {
-  it("지금 비밀번호를 틀린 뒤 다시 누르면 인증 확인을 다시 보내지 않고 바꾸기만 다시 보낸다", async () => {
+  it("현재 비밀번호를 틀린 뒤 다시 누르면 인증 확인을 다시 보내지 않고 바꾸기만 다시 보낸다", async () => {
     await startVerified();
     api.checkPhoneChangeVerification.mockResolvedValue({ kind: "ok", verified: true });
     api.sendPhoneChange
-      .mockResolvedValueOnce({ kind: "failed", field: "currentPassword", message: "지금 비밀번호가 맞지 않아요." })
+      .mockResolvedValueOnce({ kind: "failed", field: "currentPassword", message: "현재 비밀번호가 일치하지 않습니다." })
       .mockResolvedValueOnce({ kind: "ok" });
 
-    typeInto("지금 비밀번호", "WrongPass!2026");
-    await click("인증했어요, 번호 바꾸기");
-    expect(host.querySelector('[role="alert"]')?.textContent).toBe("지금 비밀번호가 맞지 않아요.");
+    typeInto("현재 비밀번호", "WrongPass!2026");
+    await click("번호 변경");
+    expect(host.querySelector('[role="alert"]')?.textContent).toBe("현재 비밀번호가 일치하지 않습니다.");
 
-    typeInto("지금 비밀번호", "RightPass!2026");
-    await click("인증했어요, 번호 바꾸기");
+    typeInto("현재 비밀번호", "RightPass!2026");
+    await click("번호 변경");
 
     expect(api.checkPhoneChangeVerification).toHaveBeenCalledTimes(1);
     expect(api.sendPhoneChange).toHaveBeenCalledTimes(2);
     expect(api.sendPhoneChange).toHaveBeenLastCalledWith("01055502006", "RightPass!2026");
-    expect(host.querySelector('[role="status"]')?.textContent).toBe("휴대폰 번호를 바꿨어요.");
+    expect(host.querySelector('[role="status"]')?.textContent).toBe("휴대폰 번호가 변경되었습니다.");
   });
 
   it("실패경로: 인증이 아직이면 바꾸기를 보내지 않고, 다음 누름에 확인부터 다시 한다", async () => {
@@ -85,11 +85,11 @@ describe("번호 바꾸기 화면 — 카카오 인증 확인은 한 번만 (sig
     api.checkPhoneChangeVerification.mockResolvedValueOnce({ kind: "ok", verified: false }).mockResolvedValueOnce({ kind: "ok", verified: true });
     api.sendPhoneChange.mockResolvedValue({ kind: "ok" });
 
-    typeInto("지금 비밀번호", "RightPass!2026");
-    await click("인증했어요, 번호 바꾸기");
+    typeInto("현재 비밀번호", "RightPass!2026");
+    await click("번호 변경");
     expect(api.sendPhoneChange).not.toHaveBeenCalled();
 
-    await click("인증했어요, 번호 바꾸기");
+    await click("번호 변경");
     expect(api.checkPhoneChangeVerification).toHaveBeenCalledTimes(2);
     expect(api.sendPhoneChange).toHaveBeenCalledTimes(1);
   });
@@ -97,27 +97,27 @@ describe("번호 바꾸기 화면 — 카카오 인증 확인은 한 번만 (sig
   it("실패경로: 바꾸기가 본인 확인을 쓸 수 없다고 하면 다음 누름에 확인부터 다시 한다", async () => {
     await startVerified();
     api.checkPhoneChangeVerification.mockResolvedValue({ kind: "ok", verified: true });
-    api.sendPhoneChange.mockResolvedValue({ kind: "failed", field: "verification", message: "본인 확인을 다시 해 주세요." });
+    api.sendPhoneChange.mockResolvedValue({ kind: "failed", field: "verification", message: "본인 확인을 다시 시도해 주세요." });
 
-    typeInto("지금 비밀번호", "RightPass!2026");
-    await click("인증했어요, 번호 바꾸기");
-    await click("인증했어요, 번호 바꾸기");
+    typeInto("현재 비밀번호", "RightPass!2026");
+    await click("번호 변경");
+    await click("번호 변경");
 
     expect(api.checkPhoneChangeVerification).toHaveBeenCalledTimes(2);
   });
 
-  it("실패경로: 「번호 다시 적기」 뒤 새로 요청하면 확인부터 다시 한다", async () => {
+  it("실패경로: 「번호 다시 입력」 뒤 새로 요청하면 확인부터 다시 한다", async () => {
     await startVerified();
     api.checkPhoneChangeVerification.mockResolvedValue({ kind: "ok", verified: true });
-    api.sendPhoneChange.mockResolvedValueOnce({ kind: "failed", field: "currentPassword", message: "지금 비밀번호가 맞지 않아요." });
+    api.sendPhoneChange.mockResolvedValueOnce({ kind: "failed", field: "currentPassword", message: "현재 비밀번호가 일치하지 않습니다." });
 
-    typeInto("지금 비밀번호", "WrongPass!2026");
-    await click("인증했어요, 번호 바꾸기");
-    await click("번호 다시 적기");
-    await click("카카오톡으로 인증 요청 보내기");
+    typeInto("현재 비밀번호", "WrongPass!2026");
+    await click("번호 변경");
+    await click("번호 다시 입력");
+    await click("카카오톡 인증 요청");
     api.sendPhoneChange.mockResolvedValueOnce({ kind: "ok" });
-    typeInto("지금 비밀번호", "RightPass!2026");
-    await click("인증했어요, 번호 바꾸기");
+    typeInto("현재 비밀번호", "RightPass!2026");
+    await click("번호 변경");
 
     expect(api.checkPhoneChangeVerification).toHaveBeenCalledTimes(2);
   });

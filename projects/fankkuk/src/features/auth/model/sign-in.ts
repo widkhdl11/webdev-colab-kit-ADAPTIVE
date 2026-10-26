@@ -15,7 +15,7 @@ export type PasswordAuth = {
 export type SignInResult = { ok: true; next: string } | { ok: false; status: 400 | 401 | 429; message: string };
 
 /** INV-L5: 아이디가 없든 비밀번호가 틀렸든 이 문구 하나. */
-export const SIGN_IN_FAILED_MESSAGE = "아이디 또는 비밀번호가 맞지 않아요.";
+export const SIGN_IN_FAILED_MESSAGE = "아이디 또는 비밀번호가 일치하지 않습니다.";
 
 const inputSchema = z.object({
   loginId: z.string().max(100),

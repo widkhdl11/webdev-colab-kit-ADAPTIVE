@@ -107,7 +107,7 @@ describe("금칙어·직접 입력 지우기 (creator-tags INV-T7·T8)", () => {
   it("INV-T7 S7c (실패경로): 선택지 이름이 필터에 걸리면 400 과 사유 문구", async () => {
     expect(await saveTagOptions(fakeClient({ error: { code: "P0082" } }).client, { kind: "add", name: "a@b.kr" })).toEqual({
       status: 400,
-      body: { message: "전화번호·이메일·인터넷 주소는 태그에 쓸 수 없어요." },
+      body: { message: "태그에 전화번호·이메일·인터넷 주소를 입력할 수 없습니다." },
     });
   });
 });

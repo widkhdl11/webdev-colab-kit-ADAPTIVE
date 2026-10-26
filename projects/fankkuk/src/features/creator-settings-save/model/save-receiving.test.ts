@@ -72,7 +72,7 @@ describe("INV-B3·B5: 받는 상태 입력 경계", () => {
   it("INV-B3: DB 가 날짜 범위로 거부(22023)하면 400 과 범위 안내", async () => {
     const f = fakeClient({ code: "22023" });
     const r = await saveCreatorReceiving({ client: f.client, viewer: HARU }, { resting: true, resumeOn: "2020-01-01", monthlyLimit: null });
-    expect(r).toEqual({ ok: false, status: 400, message: "다시 받는 날은 내일부터 1년 안으로, 한도는 1~10개로 골라 주세요." });
+    expect(r).toEqual({ ok: false, status: 400, message: "다시 받는 날은 내일부터 1년 안으로, 한도는 1~10개로 선택해 주세요." });
   });
 });
 
@@ -101,6 +101,6 @@ describe("INV-B7: 생일·기념일 입력 경계", () => {
   it("INV-B7 S7 (실패경로): DB 필터 거부는 사유별 문구로 — 연락처 꼴(P0082)", async () => {
     const f = fakeClient({ code: "P0082" });
     const r = await saveCreatorDays({ client: f.client, viewer: HARU }, { birthday: null, anniversaries: [{ name: "01012345678", month: 1, day: 1 }] });
-    expect(r).toEqual({ ok: false, status: 400, message: "기념일 이름에 전화번호·이메일·인터넷 주소는 쓸 수 없어요." });
+    expect(r).toEqual({ ok: false, status: 400, message: "기념일 이름에 전화번호·이메일·인터넷 주소는 입력할 수 없습니다." });
   });
 });

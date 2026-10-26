@@ -17,7 +17,7 @@ export type PhoneVerificationDeps = {
 
 type Fail = { ok: false; status: 400 | 429 | 503; message: string };
 
-const CLOSED: Fail = { ok: false, status: 503, message: "지금은 가입을 받고 있지 않아요. 준비가 끝나면 알려 드릴게요." };
+const CLOSED: Fail = { ok: false, status: 503, message: "현재 회원가입을 이용할 수 없습니다." };
 const RETRY: Fail = { ok: false, status: 400, message: "본인 확인을 다시 요청해 주세요." };
 
 const startSchema = z.object({ phone: phoneSchema });
@@ -36,7 +36,7 @@ export async function startPhoneVerification(
   const recorded = await deps.admin.rpc("request_phone_verification", { p_phone: phone });
   if (recorded.error) {
     if (recorded.error.code === "FK429") {
-      return { ok: false, status: 429, message: "본인 확인을 너무 자주 요청했어요. 한 시간 뒤에 다시 해 주세요." };
+      return { ok: false, status: 429, message: "본인 확인 요청 횟수를 초과했습니다. 1시간 후 다시 시도해 주세요." };
     }
     if (recorded.error.code === "22023") return { ok: false, status: 400, message: "휴대폰 번호를 확인해 주세요." };
     throw new Error(`본인 확인 요청을 기록하지 못했다: ${recorded.error.code}`);

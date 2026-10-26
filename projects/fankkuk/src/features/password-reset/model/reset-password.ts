@@ -31,7 +31,7 @@ const linkInvalid = { ok: false, status: 400, field: "link", message: RESET_LINK
 
 export async function resetPassword(deps: ResetPasswordDeps, body: unknown): Promise<ResetPasswordResult> {
   const parsed = inputSchema.safeParse(body);
-  if (!parsed.success) return { ok: false, status: 400, field: "password", message: "새 비밀번호를 적어 주세요." };
+  if (!parsed.success) return { ok: false, status: 400, field: "password", message: "새 비밀번호를 입력해 주세요." };
   const { token, password, passwordConfirm } = parsed.data;
   if (!TOKEN_SHAPE.test(token)) return linkInvalid;
 
@@ -42,7 +42,7 @@ export async function resetPassword(deps: ResetPasswordDeps, body: unknown): Pro
 
   const problem = newPasswordProblem(password, loginId);
   if (problem) return { ok: false, status: 400, field: "password", message: problem };
-  if (password !== passwordConfirm) return { ok: false, status: 400, field: "passwordConfirm", message: "비밀번호가 서로 달라요." };
+  if (password !== passwordConfirm) return { ok: false, status: 400, field: "passwordConfirm", message: "비밀번호가 일치하지 않습니다." };
 
   const claimed = await deps.admin.rpc("claim_password_reset", { p_token: token });
   if (claimed.error) {

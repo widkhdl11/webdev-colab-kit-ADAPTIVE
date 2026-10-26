@@ -76,11 +76,11 @@ describe("크리에이터 태그 저장 (creator-tags INV-T2·T3)", () => {
     expect(await saveCreatorTags({ client: fakeClient({ code: "P0081" }).client, viewer: HARU }, { tagIds: [CHZZK], customTag: "x" })).toEqual({
       ok: false,
       status: 400,
-      message: "쓸 수 없는 말이 들어 있어요. 다른 말로 적어 주세요.",
+      message: "사용할 수 없는 표현이 포함되어 있습니다. 다른 내용을 입력해 주세요.",
     });
     expect(await saveCreatorTags({ client: fakeClient({ code: "P0083" }).client, viewer: HARU }, { tagIds: [CHZZK], customTag: "x" })).toMatchObject({
       status: 400,
-      message: "글자나 숫자를 넣어 적어 주세요.",
+      message: "글자나 숫자를 하나 이상 포함해 주세요.",
     });
   });
 

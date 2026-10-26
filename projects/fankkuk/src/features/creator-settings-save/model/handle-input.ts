@@ -8,7 +8,7 @@ export const handleInputSchema = z.object({
   handle: z
     .string()
     .transform(normalizeHandle)
-    .refine(isHandleShape, `영문·숫자·밑줄(_)로 ${HANDLE_MIN}~${HANDLE_MAX}자를 적어 주세요.`),
+    .refine(isHandleShape, `영문·숫자·밑줄(_)로 ${HANDLE_MIN}~${HANDLE_MAX}자를 입력해 주세요.`),
 });
 
 export type HandleInput = z.input<typeof handleInputSchema>;

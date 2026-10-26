@@ -175,10 +175,10 @@ describe("INV-U14: 「다음」 판정 — availabilityBlock", () => {
   });
 
   it.each([
-    ["loginId", "taken", "이미 쓰고 있어요."],
-    ["loginId", "invalid", "형식이 맞지 않아요."],
-    ["nickname", "taken", "이미 쓰고 있어요."],
-    ["nickname", "invalid", "형식이 맞지 않아요."],
+    ["loginId", "taken", "이미 사용 중입니다."],
+    ["loginId", "invalid", "입력 형식을 확인해 주세요."],
+    ["nickname", "taken", "이미 사용 중입니다."],
+    ["nickname", "invalid", "입력 형식을 확인해 주세요."],
   ] as const)("INV-U14 (실패경로): %s 가 %s 면 그 칸에서 막는다", (field, status, message) => {
     const states = { loginId: ok("haru"), nickname: ok("하루"), [field]: { value: values[field], status } };
     expect(availabilityBlock(states, values)).toEqual({ field, message });

@@ -102,7 +102,7 @@ describe("INV-A14: 팬 사진은 팬 본인만, 서버가 다시 그려서", () 
     const f = fakeAdmin(2, null, [{ name: "p-2.webp", created_at: new Date(NOW - 5_000).toISOString() }]);
     f.upload.mockResolvedValue({ data: null, error: DUPLICATE });
     const r = await saveFanImage({ admin: f.admin, viewer: FAN, now: () => NOW }, "photo", blob(await jpegWithGps()));
-    expect(r).toEqual({ ok: false, status: 409, message: "다른 곳에서 사진을 바꾸는 중이에요. 잠시 뒤 다시 해 주세요." });
+    expect(r).toEqual({ ok: false, status: 409, message: "다른 화면에서 사진 변경을 진행 중입니다. 잠시 후 다시 시도해 주세요." });
     expect([f.upload.mock.calls.length, f.remove.mock.calls.length]).toEqual([1, 0]);
     expect(f.rpc.mock.calls.map((c) => c[0])).toEqual(["fan_image_next"]);
   });

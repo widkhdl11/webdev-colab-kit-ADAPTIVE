@@ -70,7 +70,7 @@ export async function endAllSessions(deps: AccountPasswordDeps, userId: string, 
 }
 
 /** 비밀번호는 바뀌었는데 세션을 끝내지 못했을 때 사람에게 주는 문구 — 바뀐 사실은 알리고, 새 비밀번호로 다시 들어오게 한다. */
-export const PASSWORD_CHANGED_RELOGIN = "비밀번호는 바뀌었어요. 새 비밀번호로 로그인해 주세요.";
+export const PASSWORD_CHANGED_RELOGIN = "비밀번호는 변경되었지만 다른 기기의 로그아웃은 완료하지 못했습니다. 새 비밀번호로 로그인해 주세요.";
 
 /**
  * 일을 한 번 하고, 실패하면(예외) 한 번 더 한다. 두 번 다 실패하면 false 를 돌려주고 로그를 남긴다(값 없이 이름만).

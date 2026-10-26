@@ -163,12 +163,12 @@ describe("INV-U3·U11: 중복은 칸 단위로만 알려 준다", () => {
   it("INV-U3 (S3, 실패경로): 이미 가입된 번호(FKU02)면 그 문구, 로그인 정보는 지운다", async () => {
     const h = harness({ createAccountError: { code: "FKU02" } });
     const r = await signUp(h.deps, body());
-    expect(r).toEqual({ ok: false, status: 409, field: "phone", message: "이미 가입된 휴대폰 번호예요. 로그인해 주세요." });
+    expect(r).toEqual({ ok: false, status: 409, field: "phone", message: "이미 가입된 휴대폰 번호입니다. 로그인해 주세요." });
     expect(h.deleted).toEqual([USER_ID]);
   });
 
   it("INV-U3 (S3b, 실패경로): 같은 아이디(로그인 주소 중복 또는 FKU03)면 아이디 칸 문구", async () => {
-    const taken = { ok: false, status: 409, field: "loginId", message: "이미 쓰는 아이디예요." };
+    const taken = { ok: false, status: 409, field: "loginId", message: "이미 사용 중인 아이디입니다." };
     const a = harness({ createUserError: { code: "email_exists" } });
     expect(await signUp(a.deps, body())).toEqual(taken);
     expect(a.rpcCalls.some((c) => c.fn === "create_account")).toBe(false);
@@ -178,7 +178,7 @@ describe("INV-U3·U11: 중복은 칸 단위로만 알려 준다", () => {
   });
 
   it("INV-U6 (실패경로): 탈퇴 처리가 쓰는 아이디(withdrawn_ 로 시작)는 「쓰는 아이디」 — 로그인 정보를 만들지 않는다. 밑줄 없는 withdrawn 은 받는다", async () => {
-    const taken = { ok: false, status: 409, field: "loginId", message: "이미 쓰는 아이디예요." };
+    const taken = { ok: false, status: 409, field: "loginId", message: "이미 사용 중인 아이디입니다." };
     // 가명 아이디(withdrawn_ + 16자리)는 가입 한도 20자를 넘어 꼴에서 먼저 걸린다 — 20자 안의 꼴을 본다
     for (const loginId of ["withdrawn_shared", "withdrawn_0a1b2c"]) {
       const h = harness();
@@ -196,7 +196,7 @@ describe("INV-U3·U11: 중복은 칸 단위로만 알려 준다", () => {
       h.created.push(a);
       return { data: { user: null }, error: answers.shift() ?? { code: "email_exists" } };
     };
-    expect(await signUp(h.deps, body())).toEqual({ ok: false, status: 409, field: "loginId", message: "이미 쓰는 아이디예요." });
+    expect(await signUp(h.deps, body())).toEqual({ ok: false, status: 409, field: "loginId", message: "이미 사용 중인 아이디입니다." });
     expect(h.created).toHaveLength(2);
   });
 
@@ -397,7 +397,7 @@ describe("크리에이터 가입 — 공개 정보 행 (creator-verification INV
   it("creator-tags INV-T7 (실패경로): 직접 입력이 태그 필터에 걸리면 태그 칸에 사유 문구, 방금 만든 로그인 정보는 지운다", async () => {
     const h = harness({ createAccountError: { code: "P0082" } });
     const r = await signUp(h.deps, body({ role: "creator", creator }));
-    expect(r).toEqual({ ok: false, status: 400, field: "tags", message: "전화번호·이메일·인터넷 주소는 태그에 쓸 수 없어요." });
+    expect(r).toEqual({ ok: false, status: 400, field: "tags", message: "태그에 전화번호·이메일·인터넷 주소를 입력할 수 없습니다." });
     expect(h.deleted).toEqual([USER_ID]);
   });
 
@@ -429,7 +429,7 @@ describe("INV-U13: 가입 닉네임", () => {
 
   it("INV-U13 (실패경로): DB 가 같은 닉네임이 있다고 하면(FKU04) 닉네임 칸 「이미 쓰는 닉네임」 409, 방금 만든 로그인 정보는 지운다", async () => {
     const h = harness({ createAccountError: { code: "FKU04" } });
-    expect(await signUp(h.deps, body())).toEqual({ ok: false, status: 409, field: "nickname", message: "이미 쓰는 닉네임이에요." });
+    expect(await signUp(h.deps, body())).toEqual({ ok: false, status: 409, field: "nickname", message: "이미 사용 중인 닉네임입니다." });
     expect(h.deleted).toEqual([USER_ID]);
   });
 

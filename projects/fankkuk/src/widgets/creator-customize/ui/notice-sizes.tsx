@@ -31,7 +31,7 @@ export function NoticeSizes({ creatorId, ready, siteOrigin }: { creatorId: strin
   if (!ready)
     return (
       <p className={s.lock}>
-        본인 확인을 마치고 <a href={LINK_SETTING}>「설정」</a>에서 링크 주소를 정하면 받을 수 있어요.
+        채널 소유자 확인 후 ‘<a href={LINK_SETTING}>상세 설정 &gt; 선물 링크</a>’에서 링크 주소를 등록하면 다운로드할 수 있습니다.
       </p>
     );
   return (
@@ -51,16 +51,16 @@ export function NoticeSizes({ creatorId, ready, siteOrigin }: { creatorId: strin
               </span>
             </span>
             <span className={s.szBtns}>
-              <a className="btn btn--line btn--sm" href={noticeImagePath(creatorId, size, { download: true })} download={`fankkuk-notice-${size}.png`} aria-label={`${title} 공지 이미지 내려받기`}>
-                내려받기
+              <a className="btn btn--line btn--sm" href={noticeImagePath(creatorId, size, { download: true })} download={`fankkuk-notice-${size}.png`} aria-label={`${title} 공지 이미지 다운로드`}>
+                다운로드
               </a>
               <CopyButton
                 className="btn btn--line btn--sm"
                 text={`${siteOrigin}${path}`}
                 label="링크 복사"
                 ariaLabel={`${title} 공지 이미지 링크 복사`}
-                copiedMessage={`「${title}」 이미지 링크를 복사했어요.`}
-                failedMessage="복사가 막혀 있어요. 내려받기로 받아 주세요."
+                copiedMessage={`‘${title}’ 이미지 링크가 복사되었습니다.`}
+                failedMessage="링크를 복사하지 못했습니다. 이미지를 다운로드해 주세요."
               />
             </span>
           </li>

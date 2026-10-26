@@ -69,7 +69,7 @@ describe("INV-E12: 팬마크(팬덤 심볼)는 권리 확인 체크 뒤에만 �
     await render();
     expect(symbolFile().disabled).toBe(true);
     expect((symbolFile().getAttribute("aria-describedby") ?? "").split(" ")).toContain("fd-sym-right");
-    expect(host.querySelector("#fd-sym-right")?.textContent).toBe("내가 만들었거나 쓸 권리가 있는 이미지예요");
+    expect(host.querySelector("#fd-sym-right")?.textContent).toBe("직접 제작했거나 사용 권한이 있는 이미지입니다");
     expect([...host.querySelectorAll("button")].some((b) => /신고/.test(b.textContent ?? ""))).toBe(false);
   });
 
@@ -82,7 +82,7 @@ describe("INV-E12: 팬마크(팬덤 심볼)는 권리 확인 체크 뒤에만 �
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("/api/creator/image/symbol");
     expect((init.body as FormData).get("rights")).toBe("1");
-    expect(host.querySelector("#fd-sym-msg")?.textContent).toBe("팬마크를 올렸어요.");
+    expect(host.querySelector("#fd-sym-msg")?.textContent).toBe("팬마크가 등록되었습니다.");
     // 올린 마크가 미리보기 뱃지에 들어간다
     expect(host.querySelector(`[data-fandom-badge] img[src*="sym-1.webp"]`)).not.toBeNull();
   });
@@ -224,7 +224,7 @@ describe("입력 한 판 + 미리보기 두 단(design-rules 27절)", () => {
     expect(status.textContent).toBe("");
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
     await act(async () => saveBtn().click());
-    expect(status.textContent).toBe("저장했어요.");
+    expect(status.textContent).toBe("저장되었습니다.");
   });
   it("팬마크 칸 묶음은 보이는 소제목으로 이름을 읽는다 — 같은 이름을 숨긴 글자로 한 번 더 두지 않는다", async () => {
     await render();

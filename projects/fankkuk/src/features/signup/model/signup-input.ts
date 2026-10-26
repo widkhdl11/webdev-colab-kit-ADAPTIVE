@@ -27,13 +27,13 @@ export const phoneSchema = z
   .transform((s) => s.replace(/[\s-]/g, ""))
   .refine((s) => MOBILE_PHONE_SHAPE.test(s), "휴대폰 번호를 확인해 주세요.");
 
-export const verificationIdSchema = z.string().uuid("본인 확인을 다시 해 주세요.");
+export const verificationIdSchema = z.string().uuid("본인 확인을 다시 시도해 주세요.");
 
 const detailsObject = z.object({
   loginId: z
     .string()
     .trim()
-    .refine((s) => SIGNUP_LOGIN_ID_PATTERN.test(s), "아이디는 영문 소문자·숫자·밑줄(_) 4~20자로 적어 주세요."),
+    .refine((s) => SIGNUP_LOGIN_ID_PATTERN.test(s), "아이디는 영문 소문자·숫자·밑줄(_) 4~20자로 입력해 주세요."),
   nickname: nicknameSchema,
   email: z
     .string()
@@ -66,16 +66,16 @@ const trimmedWithin = (max: number, message: string) =>
     .refine((s) => charCount(s) >= 1 && charCount(s) <= max, message);
 
 const creatorProfileObject = z.object({
-  name: trimmedWithin(CREATOR_PROFILE_LIMITS.name, `공개 이름을 1~${CREATOR_PROFILE_LIMITS.name}자로 적어 주세요.`),
-  channelTitle: trimmedWithin(CREATOR_PROFILE_LIMITS.channelTitle, `채널 이름을 1~${CREATOR_PROFILE_LIMITS.channelTitle}자로 적어 주세요.`),
+  name: trimmedWithin(CREATOR_PROFILE_LIMITS.name, `공개 이름을 1~${CREATOR_PROFILE_LIMITS.name}자로 입력해 주세요.`),
+  channelTitle: trimmedWithin(CREATOR_PROFILE_LIMITS.channelTitle, `채널 이름을 1~${CREATOR_PROFILE_LIMITS.channelTitle}자로 입력해 주세요.`),
   ...tagSelectionFields,
   // 팬덤 이름(PRODUCT 「추가 요청 3」) — 선택, 0~10자. 내 팬꾹 꾸미기의 「팬을 부르는 이름」과 같은 칸(creators.fan_name)·같은 규칙.
   // 금칙어·연락처 필터는 DB 함수 create_creator_account 가 본다(P0084~P0086).
   fanName: z
     .string()
     .trim()
-    .refine((s) => charCount(s) <= FAN_NAME_MAX, `팬덤 이름은 ${FAN_NAME_MAX}자까지 적을 수 있어요.`)
-    .refine((s) => !HIDDEN_CHAR.test(s) && !LINE_BREAK.test(s), "팬덤 이름에 줄바꿈이나 보이지 않는 글자는 쓸 수 없어요.")
+    .refine((s) => charCount(s) <= FAN_NAME_MAX, `팬덤 이름은 ${FAN_NAME_MAX}자까지 입력할 수 있습니다.`)
+    .refine((s) => !HIDDEN_CHAR.test(s) && !LINE_BREAK.test(s), "팬덤 이름에 줄바꿈이나 보이지 않는 문자는 입력할 수 없습니다.")
     .optional(),
 });
 
@@ -87,7 +87,7 @@ export type CreatorProfileInput = z.infer<typeof creatorProfileSchema>;
 /** 화면이 보내는 크리에이터 공개 정보 — 태그는 고른 선택지 id 와 직접 입력(없으면 ""). */
 export type CreatorProfileBody = { name: string; channelTitle: string; tagIds: readonly string[]; customTag: string; fanName?: string };
 
-const CREATOR_REQUIRED = { message: "크리에이터 정보를 적어 주세요.", path: ["creator", "name"] };
+const CREATOR_REQUIRED = { message: "크리에이터 정보를 입력해 주세요.", path: ["creator", "name"] };
 const creatorWhenCreator = (v: { role?: string; creator?: unknown }) => v.role !== "creator" || v.creator !== undefined;
 
 const passwordNotLoginId = <T extends { loginId: string; password: string }>(v: T) => v.password !== v.loginId;
@@ -95,12 +95,12 @@ const PASSWORD_IS_ID = { message: PASSWORD_SAME_AS_ID, path: ["password"] };
 
 export const signupInputSchema = detailsObject
   .extend({
-    role: z.enum(["fan", "creator"], { message: "회원 유형을 골라 주세요." }),
+    role: z.enum(["fan", "creator"], { message: "회원 유형을 선택해 주세요." }),
     verificationId: verificationIdSchema,
     // 팬이면 와도 쓰지 않는다(sign-up 이 크리에이터일 때만 넘긴다)
     creator: creatorProfileSchema.optional(),
     // metrics INV-Q4: 「어디서 알게 되셨나요」 — 고르는 것 하나, 답하지 않아도 된다(빈 값 = 고르지 않음). DB 가 같은 목록으로 다시 검사한다
-    heardFrom: z.enum(HEARD_FROM, { message: "어디서 알게 되셨는지는 목록에서 골라 주세요." }).nullable().optional(),
+    heardFrom: z.enum(HEARD_FROM, { message: "팬꾹을 알게 된 경로를 목록에서 선택해 주세요." }).nullable().optional(),
   })
   .refine(passwordNotLoginId, PASSWORD_IS_ID)
   .refine(creatorWhenCreator, CREATOR_REQUIRED);
@@ -155,9 +155,9 @@ export function checkDetails(v: {
     .safeParse(v);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
-    return { field: detailsFieldOf(issue?.path ?? []) ?? "loginId", message: issue?.message ?? "입력을 확인해 주세요." };
+    return { field: detailsFieldOf(issue?.path ?? []) ?? "loginId", message: issue?.message ?? "입력한 정보를 확인해 주세요." };
   }
-  if (v.password !== v.passwordConfirm) return { field: "passwordConfirm", message: "비밀번호가 서로 달라요." };
+  if (v.password !== v.passwordConfirm) return { field: "passwordConfirm", message: "비밀번호가 일치하지 않습니다." };
   return null;
 }
 
@@ -177,27 +177,27 @@ export type LiveValues = {
 };
 
 // 비밀번호 칸의 확인 문구 — 표 안에 글자로 바로 두면 비밀 값 검사가 비밀번호로 잘못 잡는다(2026-10-15)
-const PW_FIELD_OK = "쓸 수 있는 비밀번호예요.";
+const PW_FIELD_OK = "사용 가능한 비밀번호입니다.";
 
 /** 맞을 때의 짧은 확인. 아이디·닉네임은 형식만 본 것이라 「쓸 수 있다」고 하지 않는다 — 겹침은 미리 확인(INV-U14)이 따로 알린다. */
 const LIVE_OK: Record<LiveField, string> = {
-  loginId: "형식이 맞아요.",
-  nickname: "형식이 맞아요.",
-  email: "형식이 맞아요.",
+  loginId: "올바른 형식입니다.",
+  nickname: "올바른 형식입니다.",
+  email: "올바른 형식입니다.",
   password: PW_FIELD_OK,
-  passwordConfirm: "비밀번호가 같아요.",
-  phone: "번호 형식이 맞아요.",
-  creatorName: "좋아요.",
-  channelTitle: "좋아요.",
+  passwordConfirm: "비밀번호가 일치합니다.",
+  phone: "올바른 번호 형식입니다.",
+  creatorName: "올바른 형식입니다.",
+  channelTitle: "올바른 형식입니다.",
 };
 
 const firstMessage = (r: { success: boolean; error?: { issues: { message: string }[] } }): string | null =>
-  r.success ? null : (r.error?.issues[0]?.message ?? "입력을 확인해 주세요.");
+  r.success ? null : (r.error?.issues[0]?.message ?? "입력한 정보를 확인해 주세요.");
 
 function emailPartsProblem(p: EmailParts): string | null {
-  if (p.local.trim() === "") return "이메일 앞부분을 적어 주세요.";
-  if (p.choice === "") return "@ 뒤 주소를 골라 주세요.";
-  if (p.choice === EMAIL_CUSTOM && p.custom.trim() === "") return "@ 뒤 주소를 적어 주세요.";
+  if (p.local.trim() === "") return "이메일의 @ 앞부분을 입력해 주세요.";
+  if (p.choice === "") return "이메일 도메인(@ 뒤)을 선택해 주세요.";
+  if (p.choice === EMAIL_CUSTOM && p.custom.trim() === "") return "이메일 도메인(@ 뒤)을 입력해 주세요.";
   return null;
 }
 
@@ -223,7 +223,7 @@ export function checkField(field: LiveField, v: LiveValues): { ok: boolean; mess
       problem = firstMessage(shape.password.safeParse(v.password)) ?? (v.password === v.loginId.trim() ? PASSWORD_SAME_AS_ID : null);
       break;
     case "passwordConfirm":
-      problem = v.passwordConfirm === "" ? "비밀번호를 한 번 더 입력해 주세요." : v.passwordConfirm !== v.password ? "비밀번호가 서로 달라요." : null;
+      problem = v.passwordConfirm === "" ? "비밀번호를 한 번 더 입력해 주세요." : v.passwordConfirm !== v.password ? "비밀번호가 일치하지 않습니다." : null;
       break;
     case "phone":
       problem = firstMessage(phoneSchema.safeParse(v.phone));

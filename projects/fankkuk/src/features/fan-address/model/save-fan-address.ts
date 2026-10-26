@@ -13,10 +13,10 @@ export type FanAddressResult = { ok: true } | { ok: false; status: 400 | 401 | 4
 
 type Deps = { client: Pick<SupabaseClient, "rpc">; viewer: Viewer | null };
 
-const LOGIN = { ok: false, status: 401, message: "로그인이 필요해요." } as const;
-const FAN_ONLY = { ok: false, status: 403, message: "팬 계정만 할 수 있어요." } as const;
+const LOGIN = { ok: false, status: 401, message: "로그인이 필요합니다." } as const;
+const FAN_ONLY = { ok: false, status: 403, message: "팬 계정만 이용할 수 있습니다." } as const;
 const NOT_SEALED = { ok: false, status: 400, message: "주소를 다시 입력해 주세요." } as const;
-const NO_LABEL = { ok: false, status: 400, message: "주소 이름표를 골라 주세요." } as const;
+const NO_LABEL = { ok: false, status: 400, message: "주소 별칭을 선택해 주세요." } as const;
 
 const saveResult = z.enum(["saved", "not_fan"]);
 const deleteResult = z.enum(["deleted", "none", "not_fan"]);

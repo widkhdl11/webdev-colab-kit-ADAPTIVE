@@ -49,14 +49,14 @@ describe("이메일 확인 — 화면마다 제목 h1 하나", () => {
     await renderAs({ role: "fan", userId: "u1" });
     expect(headings("h1")).toEqual(["이메일 확인"]);
     expect(headings("h2")).toEqual([]);
-    expect(host.querySelector("button")?.textContent?.trim()).toBe("이 주소 확인하기");
+    expect(host.querySelector("button")?.textContent?.trim()).toBe("이메일 주소 확인");
   });
 
   it("크리에이터: h1 「이메일 확인」 하나 — 제목이 두 번 보이지 않는다", async () => {
     await renderAs({ role: "creator", userId: "u2" });
     expect(headings("h1")).toEqual(["이메일 확인"]);
     expect(headings("h2")).toEqual([]);
-    expect(host.querySelector("button")?.textContent?.trim()).toBe("이 주소 확인하기");
+    expect(host.querySelector("button")?.textContent?.trim()).toBe("이메일 주소 확인");
   });
 
   it("팬·크리에이터 모두 다른 설정 화면과 같은 880 틀(목록형 본문 틀)에 들어간다", async () => {
@@ -100,7 +100,7 @@ describe("이메일 확인 — 결과가 나오면 포커스가 다음 링크로
     const next = [...host.querySelectorAll("a")].find((a) => a.textContent?.trim() === "내 팬꾹으로 가기")!;
     expect(next).toBeDefined();
     expect(document.activeElement).toBe(next);
-    expect(host.textContent).toContain("이메일 주소(fan@example.com)를 확인했어요.");
+    expect(host.textContent).toContain("이메일 주소(fan@example.com)가 확인되었습니다.");
   });
 
   it("실패: 알림이 나오고 포커스가 「내 팬꾹으로 가기」로 간다", async () => {

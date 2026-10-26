@@ -58,7 +58,7 @@ export function TagPicker({ idBase, options, picked, custom, onPickedChange, onC
         })}
       </div>
       <div className={s.custom}>
-        <label htmlFor={`${idBase}-custom`}>직접 입력 (목록에 없을 때 한 개)</label>
+        <label htmlFor={`${idBase}-custom`}>태그 직접 입력 (최대 1개)</label>
         <input
           className="input"
           id={`${idBase}-custom`}
@@ -71,15 +71,16 @@ export function TagPicker({ idBase, options, picked, custom, onPickedChange, onC
           aria-invalid={invalid ? true : undefined}
         />
       </div>
-      {/* 문장마다 줄을 나눈다(design-rules 29절 줄바꿈 3) — 「직접 입력」·「골라 주세요」·「쓸 수 없어요」는 줄이 안 바뀌는 띄어쓰기 */}
+      {/* 줄마다 나눈다(문구 2 다듬은본) — 현재 글자 수는 직접 입력이 있을 때만 */}
       <p className="hint" id={hintId}>
-        {"활동하는 곳과 방송 종류를 골라\u00a0주세요."}
-        <span className="brk">
-          {` 고른 것과 직접\u00a0입력을 합쳐 1~${TAG_TOTAL_MAX}개(지금 ${count}개), 직접\u00a0입력은 ${TAG_CUSTOM_MAX}자까지예요`}
-          {charCount(custom.trim()) > 0 ? `(${charCount(custom.trim())}자)` : ""}.
-        </span>
-        <span className="brk">{" 직접\u00a0입력한 태그는 고른 태그 뒤에 보여요."}</span>
-        <span className="brk">{" 욕설\u2060·\u2060연락처\u2060·\u2060주소는 쓸\u00a0수\u00a0없어요."}</span>
+        {"활동 플랫폼과 방송 분야를 선택해\u00a0주세요."}
+        <br />
+        {`선택\u2060·\u2060직접 입력 합계: 1~${TAG_TOTAL_MAX}개 · 현재 ${count}개`}
+        <br />
+        {`직접 입력: 최대 ${TAG_CUSTOM_MAX}자`}
+        {charCount(custom.trim()) > 0 ? ` · 현재 ${charCount(custom.trim())}자` : ""}
+        <br />
+        {"직접 입력한 태그는 선택한 태그 뒤에 표시됩니다. 욕설\u2060·\u2060연락처\u2060·\u2060주소는 입력할\u00a0수\u00a0없습니다."}
       </p>
     </div>
   );

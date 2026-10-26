@@ -33,16 +33,16 @@ const SIZE: Record<FanImageKind, Reencode> = {
   background: { kind: "fit", longSide: FAN_BACKGROUND_LONG_SIDE },
 };
 
-const BUSY: FanImageFailure = { ok: false, status: 409, message: "다른 곳에서 사진을 바꾸는 중이에요. 잠시 뒤 다시 해 주세요." };
-const NO_FAN: FanImageFailure = { ok: false, status: 403, message: "팬 정보를 찾지 못했어요." };
+const BUSY: FanImageFailure = { ok: false, status: 409, message: "다른 화면에서 사진 변경을 진행 중입니다. 잠시 후 다시 시도해 주세요." };
+const NO_FAN: FanImageFailure = { ok: false, status: 403, message: "팬 정보를 찾을 수 없습니다." };
 
 /** 다음 판 번호 — 팬 계정이 아니면 null. */
 const nextSchema = z.number().int().positive().nullable();
 
 /** 팬 사진을 바꿀 수 있는 사람인가 — 로그인한 팬만. 라우트가 본문(파일)을 읽기 전에 먼저 부르고, 저장·지우기도 다시 부른다. */
 export function fanImageGate(viewer: Viewer | null): FanImageResult | null {
-  if (!viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
-  if (viewer.role !== "fan") return { ok: false, status: 403, message: "팬 계정만 팬 프로필 사진을 바꿀 수 있어요." };
+  if (!viewer) return { ok: false, status: 401, message: "로그인이 필요합니다." };
+  if (viewer.role !== "fan") return { ok: false, status: 403, message: "팬 계정만 팬 프로필 사진을 변경할 수 있습니다." };
   return null;
 }
 

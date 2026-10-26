@@ -26,12 +26,12 @@ const SIZE: Record<CreatorImageKind, Reencode> = {
 const FILE_PREFIX: Record<CreatorImageKind, string> = { background: "bg-", symbol: "sym-" };
 
 /** 사진 종류의 이름 — 거부 문구에 쓴다. */
-export const IMAGE_LABEL: Record<CreatorImageKind, PhotoWhat> = { background: "배경사진", symbol: "팬덤 심볼" };
+export const IMAGE_LABEL: Record<CreatorImageKind, PhotoWhat> = { background: "배경사진", symbol: "팬마크" };
 
 export type ImageResult = { ok: true; path: string | null; previewPick: PreviewPick } | PhotoFailure;
 
 /** 심볼 권리 확인 체크가 없을 때의 문구(INV-E12). */
-export const SYMBOL_RIGHTS_REQUIRED = "「내가 만들었거나 쓸 권리가 있는 이미지예요」에 체크해야 올릴 수 있어요.";
+export const SYMBOL_RIGHTS_REQUIRED = "「직접 제작했거나 사용 권한이 있는 이미지입니다」에 동의해야 업로드할 수 있습니다.";
 
 const RIGHTS_REFUSED: PhotoFailure = { ok: false, status: 400, message: SYMBOL_RIGHTS_REQUIRED };
 
@@ -51,7 +51,7 @@ export async function saveCreatorImage(
   const denied = photoGate(deps.viewer, IMAGE_LABEL[kind]);
   if (denied) return denied;
   if (kind === "symbol" && !opts.rightsChecked) return RIGHTS_REFUSED;
-  if (!file) return { ok: false, status: 400, message: "사진 파일을 골라 주세요." };
+  if (!file) return { ok: false, status: 400, message: "사진 파일을 선택해 주세요." };
   const processed = await reencodePhoto(new Uint8Array(await file.arrayBuffer()), SIZE[kind]);
   if (!processed.ok) return { ok: false, status: 400, message: PHOTO_PROBLEM_MESSAGE[processed.problem] };
 

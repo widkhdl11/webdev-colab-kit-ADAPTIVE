@@ -49,7 +49,7 @@ function PhotoField({
   title: string;
   view: ReactNode;
   hasImage: boolean;
-  help: string;
+  help: ReactNode;
   onSaved: (path: string | null) => void;
   onLogin: () => void;
 }) {
@@ -57,7 +57,7 @@ function PhotoField({
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
-  // 지우기 뒤 초점을 올리기 버튼으로 — 「지우기」 버튼이 사라져 초점이 맨 앞으로 빠지지 않게. 파일 칸이 다시 켜진 뒤에 옮긴다
+  // 삭제 뒤 초점을 업로드 버튼으로 — 「삭제」 버튼이 사라져 초점이 맨 앞으로 빠지지 않게. 파일 칸이 다시 켜진 뒤에 옮긴다
   const [focusPick, setFocusPick] = useState(false);
   useEffect(() => {
     if (!focusPick || busy) return;
@@ -84,14 +84,14 @@ function PhotoField({
     }
     setBusy(true);
     setMsg(null);
-    finish(await sendFanImage(kind, file), `${title}을 바꿨어요.`);
+    finish(await sendFanImage(kind, file), `${title} 변경 완료`);
   };
 
   const removeNow = async () => {
     if (busy) return;
     setBusy(true);
     setMsg(null);
-    finish(await deleteFanImage(kind), `${title}을 지웠어요.`, true);
+    finish(await deleteFanImage(kind), `${title} 삭제 완료`, true);
   };
 
   const bad = msg !== null && !msg.ok;
@@ -99,7 +99,7 @@ function PhotoField({
   // 버튼 묶음 — 프로필 사진은 줄 오른쪽, 배경 사진은 이름 줄 오른쪽(시안 pilot .me-act)
   const actions = (
     <div className={s.act}>
-      {/* 이름 = 칸 이름 + 버튼 글자(「프로필 사진 사진 올리기」) — 두 파일 칸의 이름이 같지 않게 */}
+      {/* 이름 = 칸 이름 + 버튼 글자(「프로필 사진 사진 업로드」) — 두 파일 칸의 이름이 같지 않게 */}
       <input
         className={`sr-only ${s.file}`}
         id={`${id}-f`}
@@ -113,11 +113,11 @@ function PhotoField({
         onChange={(e) => void picked(e.currentTarget.files?.[0])}
       />
       <label className={`btn btn--line btn--sm ${s.pick}`} id={`${id}-l`} htmlFor={`${id}-f`} aria-disabled={busy}>
-        {busy ? "저장하는 중…" : hasImage ? "사진 바꾸기" : "사진 올리기"}
+        {busy ? "저장 중…" : hasImage ? "사진 변경" : "사진 업로드"}
       </label>
       {hasImage ? (
         <button className={`btn btn--sm ${s.danger}`} type="button" aria-disabled={busy} onClick={() => void removeNow()}>
-          지우기
+          삭제
         </button>
       ) : null}
     </div>
@@ -197,7 +197,7 @@ export function FanProfileEditPage(p: FanProfileEditProps) {
 
     const plan = planFanProfileSave({ nickname, intro }, saved.current);
     if (plan.kind === "invalid") return plan.field === "nickname" ? setNickErr(plan.message) : setIntroErr(plan.message);
-    if (plan.kind === "unchanged") return setNotice({ ok: true, text: "바뀐 내용이 없어요." });
+    if (plan.kind === "unchanged") return setNotice({ ok: true, text: "변경된 내용이 없습니다." });
 
     setSaving(true);
     try {
@@ -216,7 +216,7 @@ export function FanProfileEditPage(p: FanProfileEditProps) {
         saved.current.nickname = r.nickname;
         setNickname(r.nickname);
       }
-      setNotice({ ok: true, text: "저장했어요." });
+      setNotice({ ok: true, text: "저장되었습니다." });
       router.refresh(); // 사이드바 이름 메뉴의 닉네임도 새 값으로
     } finally {
       setSaving(false);
@@ -229,7 +229,7 @@ export function FanProfileEditPage(p: FanProfileEditProps) {
         <h1 className="ph-title" id={`${id}-h1`}>
           프로필 수정
         </h1>
-        <p className="ph-desc">사진과 소개를 바꾸고 닉네임도 여기서 고쳐요.</p>
+        <p className="ph-desc">프로필 사진·배경 사진·닉네임·자기소개를 수정합니다.</p>
       </header>
 
       <section className={s.grp} aria-labelledby={`${id}-g1`} data-pf-group="photo">
@@ -246,7 +246,13 @@ export function FanProfileEditPage(p: FanProfileEditProps) {
               </span>
             }
             hasImage={photoPath !== null}
-            help="사진이 없으면 닉네임 첫 글자가 보여요. JPG·PNG·WebP, 10MB까지."
+            help={
+              <>
+                JPG·PNG·WebP · 최대 10MB
+                <br />
+                사진 미등록 시 닉네임 첫 글자 표시
+              </>
+            }
             onSaved={setPhotoPath}
             onLogin={toLogin}
           />
@@ -255,11 +261,11 @@ export function FanProfileEditPage(p: FanProfileEditProps) {
             title="배경 사진"
             view={
               <span className={s.banner} aria-hidden="true">
-                {bgUrl ? <img src={bgUrl} alt="" width={1280} height={427} /> : <span className={s.bannerEmpty}>배경 사진이 없어요</span>}
+                {bgUrl ? <img src={bgUrl} alt="" width={1280} height={427} /> : <span className={s.bannerEmpty}>등록된 배경 사진 없음</span>}
               </span>
             }
             hasImage={bgPath !== null}
-            help="가로로 긴 사진이 잘 어울려요. 없으면 기본 하늘색 띠가 나와요."
+            help="가로형 사진 권장 · 미등록 시 기본 하늘색 배경 표시"
             onSaved={setBgPath}
             onLogin={toLogin}
           />
@@ -335,7 +341,7 @@ export function FanProfileEditPage(p: FanProfileEditProps) {
               </p>
             ) : null}
             <p className={s.sub} id={`${id}-bio-h`}>
-              짧게 나를 소개해 주세요. {FAN_INTRO_MAX}자까지 쓸 수 있어요.
+              최대 {FAN_INTRO_MAX}자
             </p>
           </div>
         </div>
@@ -351,7 +357,7 @@ export function FanProfileEditPage(p: FanProfileEditProps) {
             취소
           </Link>
           <button className="btn" type="submit" aria-disabled={saving} aria-busy={saving}>
-            {saving ? "저장하는 중…" : "저장하기"}
+            {saving ? "저장 중…" : "저장"}
           </button>
         </div>
       </form>

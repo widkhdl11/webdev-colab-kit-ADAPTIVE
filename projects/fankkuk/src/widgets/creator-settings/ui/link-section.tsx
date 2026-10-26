@@ -34,7 +34,7 @@ export function LinkSection({
   const askSave = () => {
     setMsg(null);
     if (isSameHandle(draft, handle)) {
-      setMsg({ ok: false, text: "지금 쓰는 링크 주소와 같아요." });
+      setMsg({ ok: false, text: "현재 링크 주소와 같습니다." });
       return;
     }
     setConfirming(true);
@@ -59,7 +59,7 @@ export function LinkSection({
     setLockedDays(HANDLE_LOCK_DAYS);
     setMsg({
       ok: true,
-      text: `링크 주소를 ${linkText(r.handle)} 로 정했어요.`,
+      text: `링크 주소가 ${linkText(r.handle)}로 설정되었습니다.`,
     });
     router.refresh();
   };
@@ -94,14 +94,22 @@ export function LinkSection({
           />
         </div>
         <p className="t-meta hint" id="link-handle-hint">
-          {locked
-            ? `링크 주소는 ${lockedDays}일 뒤에 바꿀 수 있어요.`
-            : `${LINK_HOST}/ 뒤에 붙는 주소예요. 영문·숫자·밑줄(_)로 3~${HANDLE_MAX}자. 방송·SNS 에 붙일 주소라 로그인 아이디와 다른 값으로 정해 주세요.`}
+          {locked ? (
+            `링크 주소 변경까지 ${lockedDays}일 남았습니다.`
+          ) : (
+            <>
+              선물 링크 주소: {LINK_HOST}/입력한주소
+              <br />
+              영문·숫자·밑줄(_) 3~{HANDLE_MAX}자 · 로그인 아이디와 다르게 설정
+              <br />
+              방송·SNS에 공개되는 주소입니다.
+            </>
+          )}
         </p>
         {handle ? (
           <div className={s["link-now"]}>
             <p className={`t-strong ${s["link-text"]}`}>{linkText(handle)}</p>
-            <p className="t-meta">{verified ? "지금 이 주소로 내 페이지가 열려요." : "본인 확인을 마치면 이 주소로 내 페이지가 열려요."}</p>
+            <p className="t-meta">{verified ? "이 주소로 내 페이지에 접속할 수 있습니다." : "채널 소유자 확인 후 이 주소로 내 페이지에 접속할 수 있습니다."}</p>
           </div>
         ) : null}
       </div>
@@ -113,13 +121,13 @@ export function LinkSection({
               text={`https://${linkText(handle)}`}
               label="복사"
               ariaLabel="링크 주소 복사"
-              copiedMessage="링크 주소를 복사했어요."
-              failedMessage="복사가 막혀 있어요. 주소를 직접 옮겨 적어 주세요."
+              copiedMessage="링크 주소가 복사되었습니다."
+              failedMessage="주소를 복사하지 못했습니다. 주소를 선택해 직접 복사해 주세요."
             />
           ) : null}
           {!locked ? (
             <button className="btn btn--sm" type="button" aria-disabled={saving} onClick={askSave}>
-              {handle ? "링크 주소 바꾸기" : "링크 주소 정하기"}
+              {handle ? "링크 주소 변경" : "링크 주소 등록"}
             </button>
           ) : null}
         </div>
@@ -129,23 +137,24 @@ export function LinkSection({
       </p>
 
       <p className="t-meta">
-        프로필 사진·배경사진은 <a className={s["text-link"]} href={CREATOR_PROFILE_EDIT}>
+        프로필 사진·배경 사진은 ‘
+        <a className={s["text-link"]} href={CREATOR_PROFILE_EDIT}>
           프로필 수정
         </a>
-        에서 바꿔요.
+        ’에서 변경해 주세요.
       </p>
 
       <BottomSheet open={confirming} title={`${linkText(normalizeHandle(draft) || "…")} 로 정할까요?`} onClose={() => setConfirming(false)}>
-        <p>정하면 {HANDLE_LOCK_DAYS}일 동안 바꿀 수 없어요.</p>
+        <p>설정 후 {HANDLE_LOCK_DAYS}일 동안 변경할 수 없습니다.</p>
         <p className={`t-meta ${s["sheet-sub"]}`}>
-          {handle ? `지금 주소(${linkText(handle)})로 들어온 팬은 ${HANDLE_RETIRE_DAYS}일 동안 새 주소로 넘겨 드려요.` : "방송·SNS 에 붙이기 전에 철자를 한 번 더 확인해 주세요."}
+          {handle ? `기존 주소(${linkText(handle)})로 접속하면 ${HANDLE_RETIRE_DAYS}일 동안 새 주소로 자동 연결됩니다.` : "공유하기 전 주소의 철자를 확인해 주세요."}
         </p>
         <div className={s["sheet-btns"]}>
           <button className="btn btn--line" type="button" onClick={() => setConfirming(false)}>
-            돌아가기
+            취소
           </button>
           <button className="btn" type="button" aria-disabled={saving} onClick={() => void saveHandle()}>
-            {saving ? "저장하는 중…" : "정하기"}
+            {saving ? "저장 중…" : "정하기"}
           </button>
         </div>
       </BottomSheet>

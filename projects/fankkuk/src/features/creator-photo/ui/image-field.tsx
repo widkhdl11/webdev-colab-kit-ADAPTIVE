@@ -40,7 +40,7 @@ export function ImageField({
   pickLabel: string;
   removeLabel: string;
   /** 칸 아래 안내 — 시안에 없으면 넘기지 않는다 */
-  hint?: string;
+  hint?: ReactNode;
   /** 안내 아래 권장 크기 한 줄(배경 사진 「권장 크기 1200×480」 — 시안 v24-creator-card cprofile) */
   sizeHint?: string;
   /** 고를 수 없는 까닭의 설명 요소 id — 있으면 파일 칸을 끈다 */
@@ -108,7 +108,7 @@ export function ImageField({
             onChange={(e) => void picked(e.currentTarget.files?.[0])}
           />
           <label className={`btn btn--line btn--sm ${s.pick}`} htmlFor={id} aria-disabled={off}>
-            {busy ? "저장하는 중…" : pickLabel}
+            {busy ? "저장 중…" : pickLabel}
           </label>
           {hasImage ? (
             <button className="btn btn--line btn--sm" type="button" aria-disabled={busy} onClick={() => void removeNow()}>

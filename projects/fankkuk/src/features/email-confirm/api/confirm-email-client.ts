@@ -2,7 +2,7 @@
 
 export type ConfirmEmailOutcome = { kind: "ok"; email: string } | { kind: "failed"; message: string };
 
-const FALLBACK = "확인하지 못했어요. 메일의 링크를 다시 눌러 주세요.";
+const FALLBACK = "이메일을 확인하지 못했습니다. 메일의 링크를 다시 눌러 주세요.";
 
 export async function postEmailConfirm(token: string): Promise<ConfirmEmailOutcome> {
   try {

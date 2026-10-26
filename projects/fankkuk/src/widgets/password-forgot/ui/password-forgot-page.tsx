@@ -16,9 +16,8 @@ export function PasswordForgotPage() {
               비밀번호 찾기
             </h1>
             <p className="t-lead t-desc">
-              {"아이디와 가입할 때 적은 이메일을 넣으면, 확인된\u00a0이메일로 "}
-              <span className="nw">{"비밀번호 재설정\u00a0링크"}</span>
-              {"를 보내\u00a0드려요."}
+              {"아이디와 가입 이메일을 입력해\u00a0주세요. "}
+              {"정보가 일치하면 확인된 이메일로 재설정 링크를 발송합니다."}
             </p>
           </div>
           <div className="card">

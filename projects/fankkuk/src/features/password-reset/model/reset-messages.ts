@@ -5,11 +5,11 @@
 export const FORGOT_PATH = "/password/forgot";
 export const FORGOT_SCREEN_NAME = "비밀번호 찾기";
 
-const GET_NEW_MAIL = `${FORGOT_SCREEN_NAME}에서 재설정\u00a0메일을 다시 받아\u00a0주세요.`;
+const GET_NEW_MAIL = "비밀번호 재설정\u00a0메일을 다시 요청해\u00a0주세요.";
 
 /** 주소에 링크 값이 없을 때 */
-export const RESET_NO_TOKEN = `링크가 올바르지 않아요. ${GET_NEW_MAIL}`;
+export const RESET_NO_TOKEN = `올바르지 않은 링크입니다. ${GET_NEW_MAIL}`;
 /** 링크 꼴이 틀림·만료·이미 씀·다른 요청으로 무효(session-login INV-L11) */
-export const RESET_LINK_INVALID = `이 링크는 쓸\u00a0수\u00a0없어요. ${GET_NEW_MAIL}`;
+export const RESET_LINK_INVALID = `사용할 수 없는 링크입니다. ${GET_NEW_MAIL}`;
 /** 링크는 썼지만 비밀번호 바꾸기가 실패 */
-export const RESET_SAVE_FAILED = `비밀번호를 바꾸지 못했어요. ${GET_NEW_MAIL}`;
+export const RESET_SAVE_FAILED = "비밀번호를 재설정하지 못했습니다. 재설정\u00a0메일을 다시 요청해\u00a0주세요.";

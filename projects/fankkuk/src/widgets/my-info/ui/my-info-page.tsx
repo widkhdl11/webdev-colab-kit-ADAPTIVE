@@ -21,15 +21,15 @@ import s from "./my-info.module.css";
 // 카드 없이 880 기둥 안 12열 4 + 8 묶음 넷 — 왼쪽 구간 이름, 오른쪽 줄(버튼은 줄 오른쪽). 순서는
 // 보안 → 받을 주소 → 개인정보(아이디·이메일) → 알림 → 저장 줄 → 회원 탈퇴. 저장하기가 보내는 이메일·알림을 저장 줄 바로 위에 둔다.
 // 지금 있는 기능만 옮겨 담았다:
-// - 비밀번호 변경(session-login INV-L12)·번호 바꾸기(카카오 재인증, signup INV-U12)는 「바꾸기」를 눌러야 그 줄 아래에 칸이 펼쳐진다. 두 칸은 저장하기와 따로 서버에 보낸다.
-// - 이메일·알림 둘은 아래 「저장하기」로 보낸다(/api/me). 이메일은 바로 바뀌지 않고 확인 메일의 링크를 눌러야 바뀐다(my-account INV-A7).
+// - 비밀번호 변경(session-login INV-L12)·번호 변경(카카오 재인증, signup INV-U12)은 「변경」을 눌러야 그 줄 아래에 칸이 펼쳐진다. 두 칸은 저장과 따로 서버에 보낸다.
+// - 이메일·알림 둘은 아래 「저장」으로 보낸다(/api/me). 이메일은 바로 바뀌지 않고 확인 메일의 링크를 눌러야 바뀐다(my-account INV-A7).
 //   닉네임은 프로필 수정 화면에서 고친다 — 여기서는 지금 값을 그대로 실어 보낸다(내 정보 저장이 닉네임 칸을 같이 받는다).
-// - 회원 탈퇴는 다른 줄처럼 「탈퇴하기」를 눌러야 펼쳐진다. 탈퇴 기능이 아직 없어 펼친 안에는 고객센터로 가는 링크만 둔다.
+// - 회원 탈퇴는 다른 줄처럼 「탈퇴 안내」를 눌러야 펼쳐진다(문의만으로 삭제가 끝나는 것처럼 보이지 않게, 문구 다듬은본 10-26). 탈퇴 기능이 아직 없어 펼친 안에는 고객센터로 가는 링크만 둔다.
 // - 알림 스위치 설명은 시안의 스위치별 문구 그대로다. 시안에 없는 안내 문구는 두지 않는다(2026-10-16 사용자 — 문구 남발 금지).
 //   「아이디는 바꿀 수 없어요 …」 문장은 머리 설명·「프로필 수정」 버튼과 겹쳐 뺐다(카드 d114).
 // 「되돌리기」는 폼 기본 동작(reset)으로 처음 값에 돌아가고, 알림 스위치도 처음 값으로 돌린다.
 // - 받을 주소(address-protection INV-P17, 2026-10-17 카드 d100): 크리에이터 설정의 받는 주소와 같은 흐름 — 주소는 다시 보이지 않고 이름표와 등록한 날만.
-//   「등록하기/바꾸기」를 누르면 그 줄 아래에 입력 칸이 펼쳐지고, 저장은 아래 저장하기와 따로 서버에 보낸다(이 브라우저에서 봉인한 값만).
+//   「등록/변경」을 누르면 그 줄 아래에 입력 칸이 펼쳐지고, 저장은 아래 저장하기와 따로 서버에 보낸다(이 브라우저에서 봉인한 값만).
 //   주소 입력도 폼이라 폼 안에 폼이 들어가지 않게, 계정 저장 폼은 아래 저장 줄만 감싸고 이메일 칸은 form 속성으로 그 폼에 붙인다.
 
 type Notice = { tone: "ok" | "error"; text: string } | null;
@@ -96,7 +96,7 @@ export function MyInfoPanel({
     if (outcome.kind === "failed") return setNotice({ tone: "error", text: outcome.message });
     setNotice({
       tone: "ok",
-      text: outcome.pendingEmail ? `저장했어요. 새 주소(${outcome.pendingEmail})로 확인 메일을 보냈어요.` : "저장했어요.",
+      text: outcome.pendingEmail ? `저장되었습니다. 새 이메일(${outcome.pendingEmail})로 확인 메일을 보냈습니다.` : "저장되었습니다.",
     });
     router.refresh();
   };
@@ -108,11 +108,11 @@ export function MyInfoPanel({
     setAddressBusy(false);
     if (outcome.kind === "login") return toLogin();
     if (outcome.kind !== "ok") {
-      return setAddressMsg({ tone: "error", text: outcome.kind === "refused" ? outcome.message : "지우지 못했어요. 잠시 뒤 다시 해 주세요." });
+      return setAddressMsg({ tone: "error", text: outcome.kind === "refused" ? outcome.message : "삭제하지 못했습니다. 잠시 후 다시 시도해 주세요." });
     }
     setAddressOnFile({ registered: false, label: null, updatedAt: null });
     setOpen(null);
-    setAddressMsg({ tone: "ok", text: "받을 주소를 지웠어요." });
+    setAddressMsg({ tone: "ok", text: "받을 주소가 삭제되었습니다." });
     router.refresh();
   };
 
@@ -129,7 +129,7 @@ export function MyInfoPanel({
             프로필 수정
           </Link>
         </div>
-        <p className="ph-desc">로그인·받을 주소·알림에 관한 설정이에요. 닉네임은 프로필 수정에서 바꿔요.</p>
+        <p className="ph-desc">보안·받을 주소·알림을 관리합니다. 닉네임은 ‘프로필 수정’에서 변경해 주세요.</p>
       </header>
 
       <section className={s.grp} aria-labelledby={f("sec1")} data-me-group="security">
@@ -143,7 +143,7 @@ export function MyInfoPanel({
                 <span className={s.k}>비밀번호</span>
               </p>
               <button className="btn btn--line btn--sm" type="button" aria-expanded={open === "password"} aria-controls={f("pw-panel")} onClick={() => toggle("password")}>
-                바꾸기
+                변경
               </button>
             </div>
             {open === "password" && (
@@ -158,10 +158,10 @@ export function MyInfoPanel({
                 <span className={s.k} id={f("tel-l")}>
                   휴대폰 번호
                 </span>
-                <span className={s.v}>{account.phoneMasked ?? "등록된 번호가 없어요"}</span>
+                <span className={s.v}>{account.phoneMasked ?? "등록된 번호 없음"}</span>
               </p>
               <button className="btn btn--line btn--sm" type="button" aria-expanded={open === "phone"} aria-controls={f("tel-panel")} onClick={() => toggle("phone")}>
-                바꾸기
+                변경
               </button>
             </div>
             {open === "phone" && (
@@ -182,13 +182,13 @@ export function MyInfoPanel({
             <div className={s.row}>
               <p className={s.txt}>
                 <span className={s.v} data-address-on-file="">
-                  {addressOnFile === null ? "받을 주소를 읽지 못했어요" : addressRegistered ? addressOnFileText(addressOnFile) : "등록한 주소가 없어요"}
+                  {addressOnFile === null ? "주소 정보를 불러오지 못했습니다" : addressRegistered ? addressOnFileText(addressOnFile) : "등록된 주소 없음"}
                 </span>
               </p>
               {addressOnFile !== null ? (
                 <div className={s.act}>
                   <button className="btn btn--line btn--sm" type="button" aria-expanded={open === "address"} aria-controls={f("addr-panel")} onClick={() => toggle("address")}>
-                    {addressRegistered ? "바꾸기" : "등록하기"}
+                    {addressRegistered ? "변경" : "등록"}
                   </button>
                   {addressRegistered ? (
                     <button
@@ -198,7 +198,7 @@ export function MyInfoPanel({
                       aria-controls={f("addr-del-panel")}
                       onClick={() => toggle("address-delete")}
                     >
-                      지우기
+                      삭제
                     </button>
                   ) : null}
                 </div>
@@ -214,7 +214,7 @@ export function MyInfoPanel({
                     autoFocusFirst
                     onSaved={(label) => {
                       // 서버에 저장된 뒤에만 바뀐다 — 「등록한 날」은 다음에 화면을 열면 서버에 저장된 시각으로 바뀐다
-                      setAddressMsg({ tone: "ok", text: addressRegistered ? "받을 주소를 바꿨어요." : "받을 주소를 등록했어요." });
+                      setAddressMsg({ tone: "ok", text: addressRegistered ? "받을 주소가 변경되었습니다." : "받을 주소가 등록되었습니다." });
                       setAddressOnFile({ registered: true, label, updatedAt: new Date().toISOString() });
                       setOpen(null);
                       router.refresh();
@@ -231,10 +231,10 @@ export function MyInfoPanel({
             )}
             {open === "address-delete" && (
               <div className={s.panel} id={f("addr-del-panel")}>
-                <p className={s.sub}>이미 받기를 누른 선물은 그때 등록한 주소로 가요.</p>
+                <p className={s.sub}>이미 ‘받기’를 누른 선물은 당시 등록된 주소로 배송됩니다.</p>
                 <div className={`btnrow ${s.panelBtns}`}>
                   <button className="btn btn--line btn--sm" type="button" onClick={() => setOpen(null)}>
-                    돌아가기
+                    취소
                   </button>
                   <button
                     className={`btn btn--sm ${s.danger}`}
@@ -243,7 +243,7 @@ export function MyInfoPanel({
                     aria-busy={addressBusy || undefined}
                     onClick={() => void deleteAddress()}
                   >
-                    {addressBusy ? "지우는 중…" : "주소 지우기"}
+                    {addressBusy ? "삭제 중…" : "주소 삭제"}
                   </button>
                 </div>
               </div>
@@ -286,8 +286,8 @@ export function MyInfoPanel({
             />
             <p className={s.sub} id={f("mail-h")}>
               {account.pendingEmail
-                ? `새 주소(${account.pendingEmail})로 확인 메일을 보냈어요. 메일의 링크를 누르면 그 주소로 바뀌어요.`
-                : "바꾸면 새 주소로 확인 메일이 가요. 링크를 눌러야 바뀌어요."}
+                ? `새 이메일(${account.pendingEmail})로 확인 메일을 보냈습니다. 메일의 링크에서 확인을 마치면 변경됩니다.`
+                : "새 이메일로 확인 메일을 발송합니다. 메일의 링크에서 확인을 마치면 변경됩니다."}
             </p>
           </div>
         </div>
@@ -298,8 +298,8 @@ export function MyInfoPanel({
           알림
         </h2>
         <div className={s.rows}>
-          <Switch id={f("n1")} title="카카오 알림톡으로 받기" desc="승인·배송처럼 선물 소식을 카카오톡으로 받아요." on={kakao} onChange={setKakao} />
-          <Switch id={f("n2")} title="이메일로 받기" desc="영수증과 안내 메일을 받아요." on={mail} onChange={setMail} />
+          <Switch id={f("n1")} title="카카오톡 알림" desc="승인·배송 등 선물 관련 알림톡 수신" on={kakao} onChange={setKakao} />
+          <Switch id={f("n2")} title="이메일 알림" desc="영수증·안내 메일 수신" on={mail} onChange={setMail} />
           {/* 꼭 가는 알림은 두 칸을 꺼도 간다(notifications INV-N6 표, 2026-10-12 문제집 D7) — 접지 않고 늘 보인다(my-account INV-A11) */}
           <MustDeliverNotice audience="fan" id={f("noti-must")} className={s.must} titleClassName={s.mustT} bodyClassName={s.mustL} />
         </div>
@@ -327,7 +327,7 @@ export function MyInfoPanel({
             되돌리기
           </button>
           <button className="btn" type="submit" aria-disabled={saving} aria-busy={saving}>
-            {saving ? "저장하는 중" : "저장하기"}
+            {saving ? "저장 중" : "저장"}
           </button>
         </div>
       </form>
@@ -336,10 +336,10 @@ export function MyInfoPanel({
         <div className={s.row}>
           <p className={s.txt}>
             <span className={s.k}>회원 탈퇴</span>
-            <span className={s.sub}>계정과 프로필을 삭제해요</span>
+            <span className={s.sub}>탈퇴 문의 및 절차 안내</span>
           </p>
           <button className={`btn btn--sm ${s.danger}`} type="button" aria-expanded={open === "leave"} aria-controls={f("leave-panel")} onClick={() => toggle("leave")}>
-            탈퇴하기
+            탈퇴 안내
           </button>
         </div>
         {open === "leave" && (

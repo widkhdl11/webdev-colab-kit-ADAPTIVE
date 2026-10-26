@@ -56,7 +56,7 @@ describe("프로필 수정(팬) — 묶음 순서", () => {
         .map((ref) => host.ownerDocument.getElementById(ref)?.textContent?.trim())
         .join(" "),
     );
-    expect(names).toEqual(["프로필 사진 사진 올리기", "배경 사진 사진 올리기"]);
+    expect(names).toEqual(["프로필 사진 사진 업로드", "배경 사진 사진 업로드"]);
   });
 
   it("배경 사진 버튼은 그림 위 이름 줄에 있다(그림 아래 따로 떨어진 줄이 아니다)", () => {
@@ -64,11 +64,11 @@ describe("프로필 수정(팬) — 묶음 순서", () => {
     render({ bgPath: "not-a-stored-path" });
     const [photo] = groups();
     const bgFile = [...photo.querySelectorAll('input[type="file"]')][1] as HTMLInputElement;
-    const img = [...photo.querySelectorAll("span")].find((el) => el.textContent?.trim() === "배경 사진이 없어요") as HTMLElement;
+    const img = [...photo.querySelectorAll("span")].find((el) => el.textContent?.trim() === "등록된 배경 사진 없음") as HTMLElement;
     expect(img).not.toBeNull();
     // 파일 칸이 그림보다 문서에서 앞에 온다
     expect(bgFile.compareDocumentPosition(img) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    const remove = [...photo.querySelectorAll("button")].filter((b) => b.textContent?.trim() === "지우기");
+    const remove = [...photo.querySelectorAll("button")].filter((b) => b.textContent?.trim() === "삭제");
     expect(remove).toHaveLength(1);
     expect(bgFile.compareDocumentPosition(remove[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(remove[0].compareDocumentPosition(img) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -92,24 +92,24 @@ describe("프로필 수정(팬) — 묶음 순서", () => {
     expect(before.tagName).toBe("SECTION");
     expect(before.querySelector("h2")?.textContent?.trim()).toBe("소개");
     expect(form.nextElementSibling).toBeNull();
-    for (const sec of groups()) expect(sec.textContent).not.toContain("저장하기");
+    for (const sec of groups()) expect(sec.textContent).not.toContain("저장");
   });
 
-  it("저장 줄 버튼은 [취소][저장하기] 순서이고, 결과 칸은 버튼 위에 있다", () => {
+  it("저장 줄 버튼은 [취소][저장] 순서이고, 결과 칸은 버튼 위에 있다", () => {
     render();
     const form = saveForm();
     const controls = [...form.querySelectorAll("a, button")].map((el) => el.textContent?.trim());
-    expect(controls).toEqual(["취소", "저장하기"]);
+    expect(controls).toEqual(["취소", "저장"]);
     const status = form.querySelector('[role="status"]') as HTMLElement;
     const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
     expect(status.compareDocumentPosition(btn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("바꾼 것 없이 저장하기를 누르면 「바뀐 내용이 없어요.」 — 저장 동작은 그대로", () => {
+  it("바꾼 것 없이 저장을 누르면 「변경된 내용이 없습니다.」 — 저장 동작은 그대로", () => {
     render();
     act(() => {
       saveForm().requestSubmit();
     });
-    expect(saveForm().querySelector('[role="status"]')?.textContent).toBe("바뀐 내용이 없어요.");
+    expect(saveForm().querySelector('[role="status"]')?.textContent).toBe("변경된 내용이 없습니다.");
   });
 });

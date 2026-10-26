@@ -10,7 +10,7 @@ export type PhotoResult = { ok: true; photoPath: string | null } | PhotoFailure;
 export async function saveCreatorPhoto(deps: PhotoDeps, file: Blob | null): Promise<PhotoResult> {
   const denied = photoGate(deps.viewer, "프로필 사진");
   if (denied) return denied;
-  if (!file) return { ok: false, status: 400, message: "사진 파일을 골라 주세요." };
+  if (!file) return { ok: false, status: 400, message: "사진 파일을 선택해 주세요." };
   const processed = await processProfilePhoto(new Uint8Array(await file.arrayBuffer()));
   if (!processed.ok) return { ok: false, status: 400, message: processed.message };
 

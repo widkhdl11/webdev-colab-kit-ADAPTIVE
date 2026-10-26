@@ -37,28 +37,28 @@ const bodyShape = z.discriminatedUnion("action", [
 
 export type VerificationAction = z.input<typeof bodyShape>;
 
-export const NOT_FOUND_IN_BIO = "아직 소개란에서 코드를 찾지 못했어요.";
+export const NOT_FOUND_IN_BIO = "채널 소개란에서 인증 코드를 찾을 수 없습니다.";
 
 /** DB 오류 코드 → 화면 문구. DB 가 낸 문구는 그대로 내보내지 않는다. */
 const CODE_REPLY: Record<string, JsonReply> = {
   FKV02: { status: 400, body: { message: CHANNEL_URL_MESSAGE.unsupported } },
-  FKV03: { status: 409, body: { message: "이미 진행 중인 신청이 있어요. 지금 신청을 끝내거나 거둔 뒤 새로 신청해 주세요." } },
-  FKV04: { status: 409, body: { message: "이 채널로는 더 신청할 수 없어요. 1:1 문의로 알려 주세요." } },
-  FKV05: { status: 409, body: { message: "이미 등록한 채널이에요." } },
-  FKV06: { status: 409, body: { message: "이미 확인중인 채널이에요." } },
-  FKV07: { status: 409, body: { message: "이 채널로는 코드를 더 받을 수 없어요. 1:1 문의로 알려 주세요." } },
-  FKV08: { status: 409, body: { message: "확인 기한(7일)이 지났어요. 새로 신청해 주세요." } },
-  FKV13: { status: 409, body: { message: "지금 확인된 채널이에요." } },
-  FKV14: { status: 409, body: { message: "이 플랫폼은 자동 확인을 하지 않아요. 코드를 소개란에 붙이거나 팬꾹 계정 DM 으로 보낸 뒤 「확인 요청」을 눌러 주세요." } },
-  FKV15: { status: 429, body: { message: "잠시 뒤 다시 눌러 주세요." } },
-  FKV16: { status: 409, body: { message: "운영자 확인으로만 다시 확인할 수 있어요. 코드를 받아 「확인 요청」을 눌러 주세요." } },
+  FKV03: { status: 409, body: { message: "진행 중인 신청이 있습니다. 기존 신청을 완료하거나 취소한 뒤 다시 신청해 주세요." } },
+  FKV04: { status: 409, body: { message: "채널 신청 횟수를 초과했습니다. 1:1 문의를 이용해 주세요." } },
+  FKV05: { status: 409, body: { message: "이미 등록된 채널입니다." } },
+  FKV06: { status: 409, body: { message: "이미 확인 중인 채널입니다." } },
+  FKV07: { status: 409, body: { message: "이 채널은 인증 코드를 추가 발급받을 수 없습니다. 1:1 문의를 이용해 주세요." } },
+  FKV08: { status: 409, body: { message: "확인 기한(7일)이 만료되었습니다. 다시 신청해 주세요." } },
+  FKV13: { status: 409, body: { message: "현재 소유자 확인이 완료된 채널입니다." } },
+  FKV14: { status: 409, body: { message: "자동 확인을 지원하지 않는 플랫폼입니다. 인증 코드를 채널 소개란에 입력하거나 팬꾹 계정으로 DM을 보낸 뒤 ‘확인 요청’을 눌러 주세요." } },
+  FKV15: { status: 429, body: { message: "잠시 후 다시 시도해 주세요." } },
+  FKV16: { status: 409, body: { message: "운영자 재확인이 필요합니다. 인증 코드를 받아 ‘확인 요청’을 눌러 주세요." } },
   "22023": { status: 400, body: { message: CHANNEL_URL_MESSAGE.shape } },
   "42501": { status: 403, body: { message: MESSAGE_FORBIDDEN } },
   P0002: { status: 404, body: { message: MESSAGE_NOT_FOUND } },
-  "55000": { status: 409, body: { message: "이미 처리됐어요. 새로 고침해 주세요." } },
+  "55000": { status: 409, body: { message: "이미 처리된 요청입니다. 페이지를 새로고침해 주세요." } },
 };
-const FAILED: JsonReply = { status: 500, body: { message: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." } };
-const UNAVAILABLE: JsonReply = { status: 503, body: { message: "지금은 이 방법으로 확인할 수 없어요. 「운영자에게 확인 요청」을 써 주세요." } };
+const FAILED: JsonReply = { status: 500, body: { message: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." } };
+const UNAVAILABLE: JsonReply = { status: 503, body: { message: "현재 이 방법으로 확인할 수 없습니다. ‘운영자에게 확인 요청’을 이용해 주세요." } };
 const OK: JsonReply = { status: 200, body: { ok: true } };
 
 function errorReply(code: string | undefined): JsonReply {
@@ -78,7 +78,7 @@ async function autoCheck(deps: VerificationActionDeps, userId: string, applicati
   const claimed = claimedShape.parse(claim.data);
   // ② 소개란 칸만 읽는다
   const profile = await reader.readProfile({ platform: claimed.platform, channelKey: claimed.channel_key, codeForFake: claimed.code });
-  if (!profile) return { status: 502, body: { message: "채널 정보를 읽지 못했어요. 잠시 뒤 다시 해 주세요." } };
+  if (!profile) return { status: 502, body: { message: "채널 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." } };
   // ③ 꼴 그대로 있는지
   const found = bioHasVerificationCode(profile.bio, claimed.code);
   // ④ 찾았는지만 넘긴다
@@ -94,15 +94,15 @@ async function loginConfirm(deps: VerificationActionDeps, userId: string, url: s
   const parsed = parseChannelUrl(url);
   if (!parsed.ok) return { status: 400, body: { message: CHANNEL_URL_MESSAGE[parsed.reason] } };
   const owned = await verifier.ownedChannel({ accountId: userId, platform: parsed.channel.platform, requestedChannelKey: parsed.channel.channelKey });
-  if (!owned) return { status: 403, body: { message: "이 로그인으로는 그 채널의 주인으로 확인되지 않았어요." } };
+  if (!owned) return { status: 403, body: { message: "로그인한 계정으로 채널 소유자를 확인하지 못했습니다." } };
   const { error } = await deps.admin.rpc("confirm_creator_channel_by_login", {
     p_account_id: userId,
     p_platform: owned.platform,
     p_channel_key: owned.channelKey,
   });
   if (!error) return OK;
-  if (error.code === "FKV05") return { status: 409, body: { message: "이미 등록한 채널이에요. 1:1 문의로 알려 주세요." } };
-  if (error.code === "22023") return { status: 400, body: { message: "이 플랫폼은 로그인으로 확인할 수 없어요." } };
+  if (error.code === "FKV05") return { status: 409, body: { message: "이미 등록된 채널입니다. 1:1 문의를 이용해 주세요." } };
+  if (error.code === "22023") return { status: 400, body: { message: "로그인 확인을 지원하지 않는 플랫폼입니다." } };
   return errorReply(error.code);
 }
 
@@ -113,9 +113,9 @@ async function sessionCall(deps: VerificationActionDeps, fn: string, args: Recor
 
 export async function runVerificationAction(deps: VerificationActionDeps, body: unknown): Promise<JsonReply> {
   if (!deps.viewer) return { status: 401, body: { message: "로그인이 필요해요." } };
-  if (deps.viewer.role !== "creator") return { status: 403, body: { message: "크리에이터 계정만 할 수 있어요." } };
+  if (deps.viewer.role !== "creator") return { status: 403, body: { message: "크리에이터 계정만 이용할 수 있습니다." } };
   const shaped = bodyShape.safeParse(body);
-  if (!shaped.success) return { status: 400, body: { message: "잘못된 요청이에요." } };
+  if (!shaped.success) return { status: 400, body: { message: "유효하지 않은 요청입니다. 페이지를 새로고침한 뒤 다시 시도해 주세요." } };
   const d = shaped.data;
   const userId = deps.viewer.userId;
   switch (d.action) {

@@ -31,7 +31,7 @@ async function run(req: Request, ctx: Ctx, work: Work): Promise<Response> {
   try {
     const viewer = await readViewer(await createRequestSupabase());
     const denied = photoGate(viewer, IMAGE_LABEL[kind]);
-    if (denied || !viewer) return reply(denied ?? { ok: false, status: 401, message: "로그인이 필요해요." });
+    if (denied || !viewer) return reply(denied ?? { ok: false, status: 401, message: "로그인이 필요합니다." });
     const result = await work({ admin: createAdminSupabase(), viewer }, kind);
     return result instanceof Response ? result : reply(result);
   } catch (e) {
@@ -46,7 +46,7 @@ export async function POST(req: Request, ctx: Ctx) {
     if (declared === null || !/^\d+$/.test(declared)) {
       return Response.json({ message: "사진 크기를 알 수 없는 요청이에요. 다시 올려 주세요." }, { status: 411, headers: NO_STORE });
     }
-    if (Number(declared) > PHOTO_BODY_LIMIT) return Response.json({ message: "사진은 10MB 까지 올릴 수 있어요." }, { status: 413, headers: NO_STORE });
+    if (Number(declared) > PHOTO_BODY_LIMIT) return Response.json({ message: "사진은 최대 10MB까지 업로드할 수 있습니다." }, { status: 413, headers: NO_STORE });
     let file: Blob | null = null;
     let rightsChecked = false;
     try {

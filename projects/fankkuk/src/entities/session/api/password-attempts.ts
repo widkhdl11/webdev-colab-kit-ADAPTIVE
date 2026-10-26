@@ -15,7 +15,7 @@ export type PasswordAttempts = {
 };
 
 /** INV-L14: 막혔을 때의 안내 하나 — 있는 아이디든 없는 아이디든 같다(INV-L5). */
-export const PASSWORD_LOCKED_MESSAGE = "비밀번호를 여러 번 틀려 잠시 확인할 수 없어요. 15분 뒤 다시 하거나 비밀번호를 재설정해 주세요.";
+export const PASSWORD_LOCKED_MESSAGE = "비밀번호 입력 오류가 반복되어 잠시 이용이 제한됩니다. 15분 후 다시 시도하거나 비밀번호를 재설정해 주세요.";
 
 /** 세는 열쇠 — 앞뒤 공백을 떼고 소문자로(DB 도 같은 꼴만 받는다). */
 export function passwordLoginKey(loginId: string): string {

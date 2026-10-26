@@ -40,17 +40,17 @@ const button = (text: string) => [...host.querySelectorAll("button")].find((b) =
 describe("INV-H4: 받기 어려운 품목 설정 칸", () => {
   it("INV-H4 (실패경로): 저장된 설정이 없는데 품목 없이 저장하면 보내지 않고 「골라 주세요」", async () => {
     act(() => root.render(<HardItemsSection initial={null} today={today} />));
-    await click(button("받기 어려운 품목 저장"));
+    await click(button("받기 어려운 선물 저장"));
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(host.querySelector("[role=alert]")?.textContent).toContain("받기 어려운 품목을 하나 이상 골라 주세요.");
+    expect(host.querySelector("[role=alert]")?.textContent).toContain("받기 어려운 선물을 하나 이상 선택해 주세요.");
   });
 
   it("INV-H4: 품목을 고르면 고른 값 넷만 보내고 「저장했어요」", async () => {
     act(() => root.render(<HardItemsSection initial={null} today={today} />));
     await click([...host.querySelectorAll("label")].find((l) => l.textContent?.trim() === "꽃")?.querySelector("input"));
-    await click(button("받기 어려운 품목 저장"));
+    await click(button("받기 어려운 선물 저장"));
     expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({ categories: ["flower"], reason: "many", period: "week1", action: "notice" });
-    expect(host.textContent).toContain("받기 어려운 품목을 저장했어요.");
+    expect(host.textContent).toContain("받기 어려운 선물이 설정되었습니다.");
   });
 
   it("INV-H4: 문장을 쓰는 칸이 없다(글 입력 칸·글 상자 0개)", () => {

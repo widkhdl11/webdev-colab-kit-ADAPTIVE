@@ -10,13 +10,13 @@ export const VERIFICATION_STATUSES = ["issued", "posted", "approved", "rejected"
 export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
 
 export const VERIFICATION_STATUS_LABEL: Record<VerificationStatus, string> = {
-  issued: "코드 받음",
+  issued: "코드 발급 완료",
   posted: "확인 대기",
-  approved: "승인됨",
-  rejected: "반려됨",
-  withdrawn: "거둠",
-  closed: "닫힘",
-  expired: "기한 지남",
+  approved: "승인 완료",
+  rejected: "승인 반려",
+  withdrawn: "신청 취소",
+  closed: "신청 종료",
+  expired: "기한 만료",
 };
 
 /** INV-V13: 「인증 코드」(운영자 확인) · 「코드 자동 확인」 · 「플랫폼 로그인」. 읽기 함수는 승인된 신청이면 승인 기록의 방법을 준다. */
@@ -53,7 +53,7 @@ export const REVOKE_REASON_LABEL: Record<RevokeReason, string> = {
   policy_violation: "이용 규칙 위반",
   other: "그 밖",
 };
-export const CLOSE_REASON_LABEL = "다른 계정이 채널 주인 확인을 마쳤어요";
+export const CLOSE_REASON_LABEL = "다른 계정에서 채널 소유자 확인을 완료했습니다.";
 /** 지금은 고를 수 없지만 예전 기록에 남아 있을 수 있는 취소 사유 — 읽을 때만 쓴다. */
 const LEGACY_REVOKE_REASON_LABEL: Record<string, string> = { code_removed: "채널에서 코드가 사라짐" };
 
@@ -260,18 +260,18 @@ export function verifyRoutes(platform: string, apiPlatforms: ReadonlySet<string>
  * 지난 신청 줄로는 「취소됐다」까지만 알릴 수 있고, 다시 확인을 운영자만 한다는 안내는 이 상태에서만 붙는다.
  */
 export function panelOutcomeText(state: Pick<MyVerificationState, "verified" | "operatorOnly">, last: MyVerification | null): string | null {
-  if (!state.verified && state.operatorOnly) return "이용 규칙 위반으로 승인이 취소됐어요. 다시 확인은 운영자가 해요.";
+  if (!state.verified && state.operatorOnly) return "이용 규칙 위반으로 승인이 취소되었습니다. 재확인은 운영자가 진행합니다.";
   return last ? lastOutcomeText(last) : null;
 }
 
 /** 지난 신청이 화면에 알릴 한 줄 — 승인 취소·반려·닫힘·기간 지남·거둠. 승인됐고 취소되지 않았으면 null. */
 export function lastOutcomeText(v: MyVerification): string | null {
   const reason = reasonLabel(v.status, v.reasonCode);
-  if (v.status === "approved") return reason ? `승인이 취소됐어요 — ${reason}` : null;
-  if (v.status === "rejected") return reason ? `반려됐어요 — ${reason}` : "반려됐어요";
-  if (v.status === "closed") return `신청이 닫혔어요 — ${reason ?? CLOSE_REASON_LABEL}`;
-  if (v.status === "expired") return `${VERIFICATION_CODE_DAYS}일 안에 확인을 마치지 않아 기간이 지났어요`;
-  if (v.status === "withdrawn") return "신청을 거뒀어요";
+  if (v.status === "approved") return reason ? `승인이 취소되었습니다 — ${reason}` : null;
+  if (v.status === "rejected") return reason ? `승인이 반려되었습니다 — ${reason}` : "승인이 반려되었습니다";
+  if (v.status === "closed") return `신청이 종료되었습니다. ${reason ?? CLOSE_REASON_LABEL}`;
+  if (v.status === "expired") return `확인 기한(${VERIFICATION_CODE_DAYS}일)이 만료되었습니다`;
+  if (v.status === "withdrawn") return "신청이 취소되었습니다";
   return null;
 }
 

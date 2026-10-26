@@ -16,20 +16,20 @@ export type SaveProfileResult =
   | { ok: false; status: 400 | 401 | 403 | 409; message: string; field?: ProfileField };
 
 const INTRO_REFUSALS: Readonly<Record<string, string>> = {
-  FKF01: "자기소개에 쓸 수 없는 말이 들어 있어요.",
-  FKF02: "자기소개에 전화번호·이메일·인터넷 주소는 쓸 수 없어요.",
+  FKF01: "자기소개에 사용할 수 없는 표현이 포함되어 있습니다.",
+  FKF02: "자기소개에 전화번호·이메일·인터넷 주소는 입력할 수 없습니다.",
   FKF03: "자기소개에 글자나 숫자를 하나 이상 넣어 주세요.",
 };
 
 export async function saveFanProfile(deps: SaveProfileDeps, body: unknown): Promise<SaveProfileResult> {
-  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
-  if (deps.viewer.role !== "fan") return { ok: false, status: 403, message: "팬 계정만 팬 프로필을 고칠 수 있어요." };
+  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요합니다." };
+  if (deps.viewer.role !== "fan") return { ok: false, status: 403, message: "팬 계정만 팬 프로필을 수정할 수 있습니다." };
 
   const parsed = profileInputSchema.safeParse(body);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     const field = profileFieldOf(issue?.path);
-    const message = issue?.message ?? "입력을 확인해 주세요.";
+    const message = issue?.message ?? "입력한 정보를 확인해 주세요.";
     return field ? { ok: false, status: 400, field, message } : { ok: false, status: 400, message };
   }
   const intro = parsed.data.intro ?? null;
@@ -41,7 +41,7 @@ export async function saveFanProfile(deps: SaveProfileDeps, body: unknown): Prom
   if (nick) return { ok: false, status: nick.status, field: "nickname", message: nick.message };
   const introRefusal = Object.hasOwn(INTRO_REFUSALS, error.code) ? INTRO_REFUSALS[error.code] : undefined;
   if (introRefusal) return { ok: false, status: 400, field: "intro", message: introRefusal };
-  if (error.code === "22023") return { ok: false, status: 400, message: "입력을 확인해 주세요." };
-  if (error.code === "42501") return { ok: false, status: 401, message: "로그인이 필요해요." };
+  if (error.code === "22023") return { ok: false, status: 400, message: "입력한 정보를 확인해 주세요." };
+  if (error.code === "42501") return { ok: false, status: 401, message: "로그인이 필요합니다." };
   throw new Error(`팬 프로필을 저장하지 못했다: ${error.code}`);
 }

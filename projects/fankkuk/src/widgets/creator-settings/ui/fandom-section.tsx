@@ -56,7 +56,7 @@ function ThemeField({ value, onChange }: { value: ThemeColor | null; onChange: (
         <span id="fd-theme-l">테마 색</span>
       </h3>
       <p className={s.hint} id="fd-theme-h">
-        배경 사진이 없을 때 카드 바탕과 팬덤 뱃지에 쓰여요. 사이트의 버튼과 글자는 그대로예요.
+        배경 사진이 없을 때 카드 배경과 팬덤 배지에 적용됩니다. 사이트 버튼과 글자에는 적용되지 않습니다.
       </p>
       <div className={s.sws} role="radiogroup" aria-labelledby="fd-theme-l" aria-describedby="fd-theme-h">
         {THEME_COLORS.map((c) => (
@@ -98,7 +98,7 @@ export function FandomSection(p: FandomSectionProps) {
     const next = { fanName: name, theme };
     setSaved(next);
     setFanName(next.fanName);
-    setMsg({ ok: true, text: "저장했어요." });
+    setMsg({ ok: true, text: "저장되었습니다." });
     router.refresh();
   };
 
@@ -134,7 +134,9 @@ export function FandomSection(p: FandomSectionProps) {
               onChange={(e) => setFanName(clipChars(oneLine(e.currentTarget.value), FAN_NAME_MAX))}
             />
             <p className={s.hint} id="fd-name-h">
-              가입할 때 정한 이름이에요. 여기서 바꿀 수 있고, 팬 뱃지에 그대로 보여요. 쓸 수 없는 말은 걸러져요.
+              팬 배지에 표시되는 이름 · 최대 {FAN_NAME_MAX}자
+              <br />
+              사용할 수 없는 표현은 저장되지 않습니다.
             </p>
           </div>
 
@@ -151,20 +153,26 @@ export function FandomSection(p: FandomSectionProps) {
                 </span>
               }
               hasImage={symbolUrl !== null}
-              pickLabel="팬마크 올리기"
-              removeLabel="지우기"
-              hint="정사각 그림을 올려 주세요(JPG·PNG). 뱃지에는 작게 줄어서 들어가요."
+              pickLabel="팬마크 업로드"
+              removeLabel="삭제"
+              hint={
+                <>
+                  JPG·PNG · 정사각형 이미지 권장
+                  <br />
+                  팬 배지에는 축소해서 표시됩니다.
+                </>
+              }
               blocked={rights ? null : "fd-sym-right"}
               upload={(f) => sendCreatorImage("symbol", f, { rightsChecked: rights })}
               remove={() => deleteCreatorImage("symbol")}
               onSaved={(path) => setSymbolUrl(creatorSymbolUrl(p.photoBase, path))}
               onLogin={() => router.push(LOGIN)}
-              savedText="팬마크를 올렸어요."
-              removedText="팬마크를 지웠어요."
+              savedText="팬마크가 등록되었습니다."
+              removedText="팬마크가 삭제되었습니다."
             />
             <label className={s.chk} htmlFor="fd-rights">
               <input type="checkbox" id="fd-rights" checked={rights} onChange={(e) => setRights(e.currentTarget.checked)} />
-              <span id="fd-sym-right">내가 만들었거나 쓸 권리가 있는 이미지예요</span>
+              <span id="fd-sym-right">직접 제작했거나 사용 권한이 있는 이미지입니다</span>
             </label>
           </div>
 
@@ -180,7 +188,7 @@ export function FandomSection(p: FandomSectionProps) {
                 되돌리기
               </button>
               <button className="btn" type="button" aria-disabled={saving} aria-describedby="fd-msg" onClick={() => void save()}>
-                {saving ? "저장하는 중…" : "저장"}
+                {saving ? "저장 중…" : "저장"}
               </button>
             </div>
           </div>

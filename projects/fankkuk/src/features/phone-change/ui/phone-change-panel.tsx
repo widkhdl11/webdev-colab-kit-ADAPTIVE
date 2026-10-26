@@ -4,10 +4,10 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { checkPhoneChangeVerification, requestPhoneChangeVerification, sendPhoneChange, type PhoneChangeField } from "../api/phone-change-client";
 import s from "./phone-change.module.css";
 
-// 내 정보의 「번호 바꾸기」(signup INV-U12). 새 번호로 카카오톡 본인 확인 → 지금 비밀번호 → 바꾸기.
-// 인증이 됐는지는 서버가 카카오에게 묻는다 — 이 화면은 「인증했어요」를 누르면 서버에 확인을 맡기고, 확인되면 바꾸기를 보낸다.
+// 내 정보의 「번호 변경」(signup INV-U12). 새 번호로 카카오톡 본인 확인 → 현재 비밀번호 → 변경.
+// 인증이 됐는지는 서버가 카카오에게 묻는다 — 이 화면은 「번호 변경」을 누르면 서버에 확인을 맡기고, 확인되면 바꾸기를 보낸다.
 // 내 정보 저장 폼 안에 놓이므로 폼을 따로 두지 않는다(버튼은 type="button", Enter 는 이 칸의 다음 단계).
-// 포커스: 요청을 보내면 「지금 비밀번호」 칸으로, 「번호 다시 적기」를 누르면 번호 칸으로 옮긴다.
+// 포커스: 요청을 보내면 「현재 비밀번호」 칸으로, 「번호 다시 입력」을 누르면 번호 칸으로 옮긴다.
 // 실패하면 문구는 role="alert" 로 읽히고, 서버가 알려 준 칸(입력칸이 없는 본인 확인 실패나 모르면 번호 칸)에 aria-invalid 를 달고 포커스를 옮긴다.
 
 type InputKey = "phone" | "pw";
@@ -51,7 +51,7 @@ export function PhoneChangePanel({ id, onLoginExpired, onChanged }: { id: string
     if (r.kind === "login") return onLoginExpired();
     if (r.kind === "failed") return fail(r.field, r.message);
     setRequested(true);
-    setNotice({ kind: "ok", text: "카카오톡으로 인증 요청을 보냈어요. 카카오톡에서 인증한 뒤 지금 비밀번호를 적고 아래 버튼을 눌러 주세요." });
+    setNotice({ kind: "ok", text: "카카오톡으로 인증 요청을 보냈습니다. 인증 후 현재 비밀번호를 입력하고 ‘번호 변경’을 눌러 주세요." });
     setFocusTo({ input: "pw" });
   };
 
@@ -71,7 +71,7 @@ export function PhoneChangePanel({ id, onLoginExpired, onChanged }: { id: string
       }
       if (!checked.verified) {
         setBusy(false);
-        return fail("verification", "아직 카카오톡 인증이 끝나지 않았어요. 카카오톡에서 인증한 뒤 다시 눌러 주세요.");
+        return fail("verification", "카카오톡 인증이 완료되지 않았습니다. 인증을 마친 뒤 다시 눌러 주세요.");
       }
       setVerified(true);
     }
@@ -84,7 +84,7 @@ export function PhoneChangePanel({ id, onLoginExpired, onChanged }: { id: string
       return fail(r.field, r.message);
     }
     setPassword("");
-    setNotice({ kind: "ok", text: "휴대폰 번호를 바꿨어요." });
+    setNotice({ kind: "ok", text: "휴대폰 번호가 변경되었습니다." });
     onChanged();
   };
 
@@ -98,7 +98,7 @@ export function PhoneChangePanel({ id, onLoginExpired, onChanged }: { id: string
   const describedBy = (input: InputKey, hint?: string) => [hint, invalid(input) ? f("err") : null].filter(Boolean).join(" ") || undefined;
 
   return (
-    <div className={s.panel} id={id} role="group" aria-label="휴대폰 번호 바꾸기">
+    <div className={s.panel} id={id} role="group" aria-label="휴대폰 번호 변경">
       <div className="field">
         <label htmlFor={f("phone")}>새 휴대폰 번호</label>
         <input
@@ -118,12 +118,12 @@ export function PhoneChangePanel({ id, onLoginExpired, onChanged }: { id: string
           aria-describedby={describedBy("phone", f("phone-h"))}
         />
         <p className="hint" id={f("phone-h")}>
-          새 번호의 카카오톡으로 본인 확인을 받아요. 가입할 때와 같은 방법이에요.
+          새 휴대폰 번호로 카카오톡 인증을 진행해 주세요.
         </p>
       </div>
       {requested && (
         <div className="field">
-          <label htmlFor={f("pw")}>지금 비밀번호</label>
+          <label htmlFor={f("pw")}>현재 비밀번호</label>
           <input
             ref={pwRef}
             className="input"
@@ -151,7 +151,7 @@ export function PhoneChangePanel({ id, onLoginExpired, onChanged }: { id: string
         {requested ? (
           <>
             <button className="btn" type="button" onClick={() => void change()} aria-disabled={busy} aria-busy={busy || undefined}>
-              {busy ? "바꾸는 중" : "인증했어요, 번호 바꾸기"}
+              {busy ? "변경 중" : "번호 변경"}
             </button>
             <button
               className="btn btn--text"
@@ -164,12 +164,12 @@ export function PhoneChangePanel({ id, onLoginExpired, onChanged }: { id: string
                 setFocusTo({ input: "phone" });
               }}
             >
-              번호 다시 적기
+              번호 다시 입력
             </button>
           </>
         ) : (
           <button className="btn" type="button" onClick={() => void requestVerification()} aria-disabled={busy} aria-busy={busy || undefined}>
-            {busy ? "보내는 중" : "카카오톡으로 인증 요청 보내기"}
+            {busy ? "발송 중" : "카카오톡 인증 요청"}
           </button>
         )}
       </div>

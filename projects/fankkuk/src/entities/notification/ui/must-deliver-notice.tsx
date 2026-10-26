@@ -1,6 +1,6 @@
 import { mustDeliverLabels, type NotificationAudience } from "../model/delivery-policy";
 
-// 알림 설정 화면의 「끌 수 없는 알림」 안내 (notifications INV-N6, my-account INV-A11, 2026-10-12 문제집 D7).
+// 알림 설정 화면의 필수 알림 안내 (notifications INV-N6, my-account INV-A11, 2026-10-12 문제집 D7).
 // 목록은 종류별 표(delivery-policy) 하나에서 만든다 — 화면마다 따로 적으면 표가 바뀔 때 화면이 옛 목록을 들고 있는다.
 // 실제로 꺼도 보내는 판단은 DB 가 한다. 이 안내는 그것을 알려 줄 뿐이다.
 
@@ -18,9 +18,15 @@ export function MustDeliverNotice({ audience, id, className, titleClassName, bod
   const labels = mustDeliverLabels(audience);
   return (
     <p id={id} className={className}>
-      <strong className={titleClassName}>끌 수 없는 알림</strong>{" "}
+      <strong className={titleClassName}>필수 알림은 수신 설정과 관계없이 발송됩니다.</strong>{" "}
       <span className={bodyClassName}>
-        {labels.join(", ")} — 선물을 진행하는 데 필요하거나 돈·상자가 걸린 일이라 꺼 두어도 가요.{extra ? ` ${extra}` : ""}
+        {labels.join(" · ")}
+        {extra ? (
+          <>
+            <br />
+            {extra}
+          </>
+        ) : null}
       </span>
     </p>
   );
