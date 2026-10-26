@@ -9,6 +9,6 @@ export function checkoutDeps(): CheckoutDeps {
   const env = process.env;
   return {
     store: createSupabasePaymentStore(createAdminSupabase()),
-    toss: createTossPaymentsClient({ secretKey: readTossSecretKey(env), env, fetchImpl: fetch }),
+    toss: createTossPaymentsClient({ secretKey: readTossSecretKey(env), fetchImpl: fetch }),
   };
 }

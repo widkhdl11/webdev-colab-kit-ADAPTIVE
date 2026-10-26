@@ -21,7 +21,7 @@ export function runServerReconcile(orderNo: string | null): Promise<ReconcileRes
   const revgifts = createSupabaseRevgiftPaymentStore(admin);
   let toss: TossPaymentsClient | null = null;
   const tossClient = (): TossPaymentsClient => {
-    toss ??= createTossPaymentsClient({ secretKey: readTossSecretKey(process.env), env: process.env, fetchImpl: fetch });
+    toss ??= createTossPaymentsClient({ secretKey: readTossSecretKey(process.env), fetchImpl: fetch });
     return toss;
   };
 

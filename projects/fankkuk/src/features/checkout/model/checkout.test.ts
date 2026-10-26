@@ -23,7 +23,7 @@ function fakeToss(respond: (body: { orderId: string; amount: number }) => unknow
     await new Promise((r) => setTimeout(r, 5));
     return new Response(JSON.stringify(respond(body)), { status: 200 });
   }) as unknown as typeof fetch;
-  const client = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "test" }, fetchImpl });
+  const client = createTossPaymentsClient({ secretKey: "test_gsk_x", fetchImpl });
   return { client, calls };
 }
 

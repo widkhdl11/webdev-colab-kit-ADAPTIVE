@@ -11,7 +11,7 @@ function fakeToss(respond: (b: { orderId: string; amount: number }) => unknown) 
     await new Promise((r) => setTimeout(r, 5));
     return new Response(JSON.stringify(respond(body)), { status: 200 });
   }) as unknown as typeof fetch;
-  return { client: createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "test" }, fetchImpl }), calls };
+  return { client: createTossPaymentsClient({ secretKey: "test_gsk_x", fetchImpl }), calls };
 }
 
 const done = (b: { orderId: string; amount: number }) => ({ status: "DONE", orderId: b.orderId, totalAmount: b.amount });

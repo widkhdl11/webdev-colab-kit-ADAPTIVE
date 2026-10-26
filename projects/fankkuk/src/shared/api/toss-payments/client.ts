@@ -44,8 +44,6 @@ const paymentShape = z.object({
 const errorShape = z.object({ code: z.string() });
 const NOT_FOUND_CODES = new Set(["NOT_FOUND_PAYMENT", "NOT_FOUND"]);
 
-type EnvLike = { NODE_ENV?: string; VERCEL_ENV?: string };
-
 export type TossPaymentsClient = {
   confirm(req: { paymentKey: string; orderId: string; amount: number; idempotencyKey: string }): Promise<unknown>;
   /** cancelAmount 를 비우면 남은 금액 전부를 취소한다(결제사 문서 「값이 없으면 전액 취소」). */
@@ -66,14 +64,8 @@ export function readTossSecretKey(env: Record<string, string | undefined>): stri
 
 export function createTossPaymentsClient(opts: {
   secretKey: string;
-  env: EnvLike;
   fetchImpl: typeof fetch;
 }): TossPaymentsClient {
-  // INV-M10: 운영에서 테스트 키를 쓰면 가상 승인이 일어난다 — 만드는 순간 실패한다.
-  const production = opts.env.NODE_ENV === "production" || opts.env.VERCEL_ENV === "production";
-  if (production && opts.secretKey.startsWith("test_")) {
-    throw new Error("운영 환경에서 결제 테스트 키를 쓸 수 없다");
-  }
   const authorization = `Basic ${btoa(`${opts.secretKey}:`)}`;
 
   async function post(url: string, body: unknown, idempotencyKey: string, signal?: AbortSignal): Promise<unknown> {

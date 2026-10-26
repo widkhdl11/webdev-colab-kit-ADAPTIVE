@@ -60,7 +60,7 @@ afterAll(() => {
   deleteTestRevgifts();
 });
 
-const toss = () => createTossPaymentsClient({ secretKey: "test_gsk_review_cancel", env: { NODE_ENV: "test" }, fetchImpl: fetch });
+const toss = () => createTossPaymentsClient({ secretKey: "test_gsk_review_cancel", fetchImpl: fetch });
 
 async function cancelAs(login: string, source: "initial" | "difference" | "revgift", tossOrderId: string) {
   return runReviewCancel({ session: await signedInClient(login), admin: adminClient(), toss: toss() }, { source, tossOrderId });

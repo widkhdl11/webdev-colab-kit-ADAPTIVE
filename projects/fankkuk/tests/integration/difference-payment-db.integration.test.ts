@@ -21,7 +21,7 @@ function fakeToss(status = "DONE", totalAmount?: number) {
     idempotencyKeys.push(new Headers(init.headers).get("Idempotency-Key"));
     return new Response(JSON.stringify({ status, orderId: body.orderId, totalAmount: totalAmount ?? body.amount }), { status: 200 });
   }) as unknown as typeof fetch;
-  return { calls, idempotencyKeys, client: createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "test" }, fetchImpl }) };
+  return { calls, idempotencyKeys, client: createTossPaymentsClient({ secretKey: "test_gsk_x", fetchImpl }) };
 }
 
 async function payDifference(boxId: string, toss = fakeToss()) {

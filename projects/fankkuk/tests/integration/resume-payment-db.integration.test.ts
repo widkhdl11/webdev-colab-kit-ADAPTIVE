@@ -25,7 +25,7 @@ function fakeToss() {
     calls.push(body);
     return new Response(JSON.stringify({ status: "DONE", orderId: body.orderId, totalAmount: body.amount }), { status: 200 });
   }) as unknown as typeof fetch;
-  return { calls, client: createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "test" }, fetchImpl }) };
+  return { calls, client: createTossPaymentsClient({ secretKey: "test_gsk_x", fetchImpl }) };
 }
 
 /** 처음 결제 대기를 만든 때를 hours 시간 전으로 — 결제 줄은 주문마다 하나다 */

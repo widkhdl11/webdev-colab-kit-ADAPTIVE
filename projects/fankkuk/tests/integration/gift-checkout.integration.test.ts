@@ -18,7 +18,7 @@ function fakeToss(status = "DONE") {
     calls.push(body);
     return new Response(JSON.stringify({ status, orderId: body.orderId, totalAmount: body.amount }), { status: 200 });
   }) as unknown as typeof fetch;
-  return { calls, client: createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "test" }, fetchImpl }) };
+  return { calls, client: createTossPaymentsClient({ secretKey: "test_gsk_x", fetchImpl }) };
 }
 
 const form = (extra: Record<string, unknown> = {}) => ({

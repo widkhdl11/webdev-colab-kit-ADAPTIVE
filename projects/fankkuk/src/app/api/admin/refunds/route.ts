@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       {
         session: await createRequestSupabase(),
         admin: createAdminSupabase(),
-        toss: createTossPaymentsClient({ secretKey: readTossSecretKey(env), env, fetchImpl: fetch }),
+        toss: createTossPaymentsClient({ secretKey: readTossSecretKey(env), fetchImpl: fetch }),
       },
       body,
     );

@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const outcome = await confirmRevgiftPayment(
     {
       store: createSupabaseRevgiftPaymentStore(createAdminSupabase()),
-      toss: createTossPaymentsClient({ secretKey: readTossSecretKey(env), env, fetchImpl: fetch }),
+      toss: createTossPaymentsClient({ secretKey: readTossSecretKey(env), fetchImpl: fetch }),
     },
     requesterId,
     { orderId: q.get("orderId") ?? "", amount: q.get("amount") ?? "", paymentKey: q.get("paymentKey") ?? "" },

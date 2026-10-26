@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const store = createSupabaseDifferenceStore(createAdminSupabase());
   const orderId = q.get("orderId") ?? "";
   const outcome = await confirmDifferencePayment(
-    { store, toss: createTossPaymentsClient({ secretKey: readTossSecretKey(vars), env: vars, fetchImpl: fetch }) },
+    { store, toss: createTossPaymentsClient({ secretKey: readTossSecretKey(vars), fetchImpl: fetch }) },
     requesterId,
     { orderId, amount: q.get("amount") ?? "", paymentKey: q.get("paymentKey") ?? "" },
   );
