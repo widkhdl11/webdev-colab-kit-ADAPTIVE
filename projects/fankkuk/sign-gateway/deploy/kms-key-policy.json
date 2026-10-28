@@ -1,0 +1,42 @@
+{
+  "Version": "2012-10-17",
+  "Id": "fankkuk-address-key",
+  "Statement": [
+    {
+      "Sid": "AccountAdminsManageButCannotUseKey",
+      "Effect": "Allow",
+      "Principal": { "AWS": "arn:aws:iam::<계정ID-12자리>:root" },
+      "Action": [
+        "kms:Create*",
+        "kms:Describe*",
+        "kms:Enable*",
+        "kms:List*",
+        "kms:Put*",
+        "kms:Update*",
+        "kms:Revoke*",
+        "kms:Disable*",
+        "kms:Get*",
+        "kms:Delete*",
+        "kms:TagResource",
+        "kms:UntagResource",
+        "kms:ScheduleKeyDeletion",
+        "kms:CancelKeyDeletion",
+        "kms:RotateKeyOnDemand"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "OnlySignGatewayUserEncryptsAndDecrypts",
+      "Effect": "Allow",
+      "Principal": { "AWS": "arn:aws:iam::<계정ID-12자리>:user/fankkuk-sign-gateway" },
+      "Action": [
+        "kms:Encrypt",
+        "kms:Decrypt"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "IpAddress": { "aws:SourceIp": "3.34.120.193/32" }
+      }
+    }
+  ]
+}
