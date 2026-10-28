@@ -1,18 +1,16 @@
-// 동그란 얼굴(눈 두 점·웃는 입·볼 두 개) — 시안 v4 의 avatar-face 자리표시. 크기는 전역 .face(48px).
-// 바탕색은 --face-1~6 을 돌려 쓴다 — 목록에서 줄 번호를 넘기면 이웃한 줄끼리 색이 달라진다.
-const FACE_TONES = 6;
-
-/** tone 을 주면 그 색(CSS 값)을, 아니면 index 로 --face-1~6 을 고른다. 크기는 className(기본 전역 .face 48px). */
-export function FaceAvatar({ index = 0, tone, className = "face" }: { index?: number; tone?: string; className?: string }) {
-  const fill = tone ?? `var(--face-${(((index % FACE_TONES) + FACE_TONES) % FACE_TONES) + 1})`;
+// 사진 없는 얼굴 자리표시 — 하늘색 발바닥 그림 한 장(2026-10-28 사용자가 네 후보 중 4번으로 정함).
+// 크기는 전역 .face(48px) 또는 넘겨받은 className. 원형으로 자르기만 한다.
+// index·tone 은 예전 그림(줄마다 바탕색을 돌려 씀)의 인자라 지금은 쓰지 않는다 — 부르는 쪽 12곳을 그대로 두려고 받기만 한다.
+export function FaceAvatar({ className = "face" }: { index?: number; tone?: string; className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-      <circle cx="24" cy="24" r="24" fill={fill} />
-      <circle cx="17" cy="22" r="2.6" fill="var(--ink)" />
-      <circle cx="31" cy="22" r="2.6" fill="var(--ink)" />
-      <path d="M18 29c2.5 3.5 9.5 3.5 12 0" stroke="var(--ink)" strokeWidth="2.6" strokeLinecap="round" fill="none" />
-      <circle cx="12.5" cy="28" r="3" fill="var(--white)" opacity=".45" />
-      <circle cx="35.5" cy="28" r="3" fill="var(--white)" opacity=".45" />
-    </svg>
+    <img
+      className={className}
+      src="/img/default-face/paw.webp"
+      alt=""
+      aria-hidden="true"
+      width={240}
+      height={240}
+      style={{ objectFit: "cover", borderRadius: "50%" }}
+    />
   );
 }
