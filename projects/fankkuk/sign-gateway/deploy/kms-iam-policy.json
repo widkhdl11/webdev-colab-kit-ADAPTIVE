@@ -2,16 +2,18 @@
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "SignGatewayUseOneKmsKeyFromGatewayIpOnly",
+      "Sid": "SignGatewayDecryptOneKmsKeyFromGatewayIpOnly",
       "Effect": "Allow",
       "Action": [
-        "kms:Encrypt",
         "kms:Decrypt"
       ],
       "Resource": "arn:aws:kms:ap-northeast-2:<계정ID-12자리>:key/<KMS키ID>",
       "Condition": {
         "IpAddress": {
           "aws:SourceIp": "3.34.120.193/32"
+        },
+        "StringEquals": {
+          "kms:EncryptionAlgorithm": "RSAES_OAEP_SHA_256"
         }
       }
     }

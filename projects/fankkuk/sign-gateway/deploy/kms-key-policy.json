@@ -5,7 +5,9 @@
     {
       "Sid": "AccountAdminsManageButCannotUseKey",
       "Effect": "Allow",
-      "Principal": { "AWS": "arn:aws:iam::<계정ID-12자리>:root" },
+      "Principal": {
+        "AWS": "arn:aws:iam::<계정ID-12자리>:root"
+      },
       "Action": [
         "kms:Create*",
         "kms:Describe*",
@@ -26,16 +28,22 @@
       "Resource": "*"
     },
     {
-      "Sid": "OnlySignGatewayUserEncryptsAndDecrypts",
+      "Sid": "OnlySignGatewayUserDecrypts",
       "Effect": "Allow",
-      "Principal": { "AWS": "arn:aws:iam::<계정ID-12자리>:user/fankkuk-sign-gateway" },
+      "Principal": {
+        "AWS": "arn:aws:iam::<계정ID-12자리>:user/fankkuk-sign-gateway"
+      },
       "Action": [
-        "kms:Encrypt",
         "kms:Decrypt"
       ],
       "Resource": "*",
       "Condition": {
-        "IpAddress": { "aws:SourceIp": "3.34.120.193/32" }
+        "IpAddress": {
+          "aws:SourceIp": "3.34.120.193/32"
+        },
+        "StringEquals": {
+          "kms:EncryptionAlgorithm": "RSAES_OAEP_SHA_256"
+        }
       }
     }
   ]

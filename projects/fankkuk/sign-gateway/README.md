@@ -72,12 +72,14 @@ sudo certbot renew --dry-run && sudo ufw status                                 
 
 ## KMS 키와 IAM 사용자
 
-정책은 두 겹이다. 둘 다 붙여야 「이 서버의 IAM 사용자만, 이 서버 IP 에서만, 키 하나를 암복호화」가 된다.
+정책은 두 겹이다. 둘 다 붙여야 「이 서버의 IAM 사용자만, 이 서버 IP 에서만, 키 하나로 복호화」가 된다.
+
+공개키는 콘솔에서 한 번 내려받아(키 → 공개 키 탭 → 다운로드) Vercel 환경 변수 `ADDRESS_SEALING_PUBLIC_KEY` 에 넣는다. 앱이 이미 그 값을 읽어 주소 입력 화면에 넘긴다. 그래서 게이트웨이에는 `kms:GetPublicKey` 도 없다.
 
 | 파일 | 붙이는 곳 | 하는 일 |
 |---|---|---|
-| `deploy/kms-key-policy.json` | KMS 키의 키 정책 | 계정 관리자는 키를 **관리만**(켜고 끄기·정책 수정·삭제 예약) 하고 암복호화는 못 한다. 암복호화는 `fankkuk-sign-gateway` 사용자만, 이 서버 IP 에서만. 기본 키 정책(계정 전체에 kms:* 위임)을 이것으로 **바꿔야** 앱 서버 등 다른 자격 증명이 키를 못 쓴다 |
-| `deploy/kms-iam-policy.json` | IAM 사용자 `fankkuk-sign-gateway` | 그 사용자가 할 수 있는 일을 키 하나의 암복호화로 묶는다. 키가 새어도 이 서버 IP 밖에서는 거부된다 |
+| `deploy/kms-key-policy.json` | KMS 키의 키 정책 | 계정 관리자는 키를 **관리만**(켜고 끄기·정책 수정·삭제 예약) 하고 암복호화는 못 한다. 복호화는 `fankkuk-sign-gateway` 사용자만, 이 서버 IP 에서만, 브라우저와 같은 방식(RSA-OAEP SHA-256)으로만. 암호화 권한은 아무에게도 없다 — 브라우저가 공개키로 직접 감싼다. 기본 키 정책(계정 전체에 kms:* 위임)을 이것으로 **바꿔야** 앱 서버 등 다른 자격 증명이 키를 못 쓴다 |
+| `deploy/kms-iam-policy.json` | IAM 사용자 `fankkuk-sign-gateway` | 그 사용자가 할 수 있는 일을 키 하나의 복호화로 묶는다. 키가 새어도 이 서버 IP 밖에서는 거부된다 |
 
 `<계정ID-12자리>`·`<KMS키ID>` 를 실제 값으로 바꿔 붙여 넣는다. 서버 IP 가 바뀌면 두 파일 다 바꾼다.
 키 정책은 사용자 이름(ARN)을 가리키므로 **IAM 사용자를 먼저** 만들어야 저장된다.
