@@ -74,7 +74,7 @@ describe("팔로우한 크리에이터 — 줄 목록", () => {
 
     // 얼굴 — 사진이 있으면 사진, 없으면 얼굴 자리표시(faceTone)
     expect(first!.querySelector("img.face")?.getAttribute("src")).toBe("https://example.test/p.webp");
-    expect(two!.querySelector("img.face")?.getAttribute("src")).toBe("/img/default-face/paw.webp");
+    expect(two!.querySelector("img.face")?.getAttribute("src")).toBe("/img/default-face/cat.webp");
 
     const name = first!.querySelector<HTMLAnchorElement>(`a[href="${creatorPagePath(base)}"]`);
     expect(name?.textContent).toBe("하루");
