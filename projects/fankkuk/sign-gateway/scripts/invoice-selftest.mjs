@@ -18,6 +18,8 @@ if (missing.length > 0) {
   process.exit(1);
 }
 const guarded = createGuardedFetch([new URL(inv.supabaseUrl).hostname]);
+// DB 주소는 비밀이 아니다 — 어느 DB 를 보고 있는지 알아야 결과를 읽을 수 있다
+console.log(`DB 주소: ${new URL(inv.supabaseUrl).hostname} · 시험 사이트 표시: ${inv.testSite ? "켜짐" : "꺼짐"}`);
 const QR = "Q-000000"; // 꼴(Q-숫자 6자리)은 맞고 발급되지 않는 번호
 
 async function rpc(withToken) {

@@ -59,8 +59,10 @@ function optional(env, name) {
 const SUPABASE_URL_PATTERN = /^https:\/\/[a-z0-9]{20}\.supabase\.co\/?$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-/** 시험 사이트용 DB 주소. 여기 없는 DB 와는 시험 사이트 표시를 켤 수 없다. 비어 있으면 게이트웨이에서 가짜 서명은 열리지 않는다. */
-export const TEST_SITE_SUPABASE_HOSTS = Object.freeze([]);
+/** 시험 사이트용 DB 주소. 여기 없는 DB 와는 시험 사이트 표시를 켤 수 없다. 비어 있으면 게이트웨이에서 가짜 서명은 열리지 않는다.
+ *  enpghaykwlklnogcscpw — 2026-10-12 첫 배포 DB = 시험 사이트 DB(deploy-runbook: 실제 운영 DB 로 돌려쓰지 않는다).
+ *  2026-10-28 사용자 지시(시험 사이트에서 게이트웨이·KMS 경유 송장 출력 확인)로 넣었다. 실제 운영 DB 는 여기 넣지 않는다. */
+export const TEST_SITE_SUPABASE_HOSTS = Object.freeze(["enpghaykwlklnogcscpw.supabase.co"]);
 
 function readInvoice(env, testSiteHosts) {
   const supabaseUrl = optional(env, "SUPABASE_URL");

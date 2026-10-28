@@ -6,6 +6,8 @@ import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verific
 import { giftBoxes, resetReplySettings } from "./gift-reply-helpers";
 import { deleteTestBlocks, deleteTestOrders, psql, signedInClient } from "./helpers";
 import { allStoredObjects, clearGiftPhotos, jpegWithGps, kstDateDaysAgo, paidOrder, photoFiles, sessionCookie } from "./together-helpers";
+import { SPECIAL_MOMENT_TEXT } from "@/entities/together/model/special-moment";
+import { GIFT_PHOTO_PRIVATE } from "@/features/gift-photo/ui/gift-photo-manager";
 
 // 함께한 시간 화면·사진 라우트를 떠 있는 개발 서버(기본 http://localhost:3000, FK_TEST_APP_URL)에 실제 HTTP 로 연다
 // (docs/specs/together.md INV-F1·F2·F5·F6, 「내 선물」 묶음). 로그인은 시험 계정으로 받은 세션 쿠키를 Cookie 머리줄에 싣는다.
@@ -155,7 +157,7 @@ describe("함께한 시간 화면 — 본인만 (INV-F1)", () => {
     expect(isNotFound(200, page)).toBe(false);
     const text = visibleText(page);
     expect(text).toContain(`${A.name}님과 함께한 시간`);
-    expect(text).toContain("나만 볼 수 있어요");
+    expect(text).toContain(GIFT_PHOTO_PRIVATE);
     expect(text).toMatch(/함께한 선물 2\s*개/);
     expect(text).toContain(kstDateDaysAgo(5).replaceAll("-", "."));
   });
@@ -225,7 +227,7 @@ describe("다음 기념일 칸·선물 보내기 (INV-F5)", () => {
     );
   }
 
-  it("INV-F5 S5: 크리에이터가 쉬는 중이면 기념일 칸에 「{날짜}부터 다시 받아요」, 선물 보내기 버튼은 없다", async () => {
+  it("INV-F5 S5: 크리에이터가 쉬는 중이면 기념일 칸에 「선물 받기 재개: {날짜}」, 선물 보내기 버튼은 없다", async () => {
     paidOrder(fanA.userId, A.creatorId, "now() - interval '3 days'");
     follow(fanA.userId);
     birthdayInDays(12);
@@ -234,17 +236,17 @@ describe("다음 기념일 칸·선물 보내기 (INV-F5)", () => {
     const page = await html(`/gifts/with/${HANDLE}`, "fanA");
     const text = visibleText(page);
     expect(text).toContain("생일 D-12");
-    expect(text).toContain(`${resume}부터 다시 받아요`);
+    expect(text).toContain(`선물 받기 재개: ${resume}`);
     expect(page).not.toContain(`/gifts/new?creator=${A.creatorId}`);
   });
 
-  it("INV-F5 (실패경로): 받는 중이면 같은 칸에 선물 보내기 버튼이 있고 「다시 받아요」는 없다", async () => {
+  it("INV-F5 (실패경로): 받는 중이면 같은 칸에 선물 보내기 버튼이 있고 「선물 받기 재개」는 없다", async () => {
     paidOrder(fanA.userId, A.creatorId, "now() - interval '3 days'");
     follow(fanA.userId);
     birthdayInDays(12);
     const page = await html(`/gifts/with/${HANDLE}`, "fanA");
     expect(page).toContain(`href="/gifts/new?creator=${A.creatorId}"`);
-    expect(visibleText(page)).not.toContain("다시 받아요");
+    expect(visibleText(page)).not.toContain("선물 받기 재개");
   });
 
   it("INV-F5 (decline-block INV-D7): 크리에이터가 그 팬을 차단해도 버튼을 숨기지 않고 기록도 그대로다", async () => {
@@ -314,11 +316,13 @@ describe("「선물 보내기」 — 크리에이터 페이지와 같은 판정 
 });
 
 describe("특별 카드 화면 (INV-F4)", () => {
-  it("INV-F4 S4: 선물 10개 화면에 「10번째 선물이에요」가 딱 한 번", async () => {
+  it("INV-F4 S4: 선물 10개 화면에 특별 꼬리표 「10번째 선물」이 딱 한 번", async () => {
     for (let i = 10; i >= 1; i--) paidOrder(fanA.userId, A.creatorId, `now() - interval '${i} days'`);
-    const text = visibleText(await html(`/gifts/with/${HANDLE}`, "fanA"));
-    expect(text.split("10번째 선물이에요").length - 1).toBe(1);
-    expect(text).not.toContain("30번째 선물이에요");
+    const page = await html(`/gifts/with/${HANDLE}`, "fanA");
+    // 카드 번호(「10번째 선물」)와 글자가 같아서, 강조 꼬리표 안에 든 것만 센다
+    const tag = (label: string) => page.match(new RegExp(`class="tag tag--brand"[^>]*>${label}</span>`, "g"))?.length ?? 0;
+    expect(tag(SPECIAL_MOMENT_TEXT.tenth)).toBe(1);
+    expect(tag(SPECIAL_MOMENT_TEXT.thirtieth)).toBe(0);
   });
 });
 
