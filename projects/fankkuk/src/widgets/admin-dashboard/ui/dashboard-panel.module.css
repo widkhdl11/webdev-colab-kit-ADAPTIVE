@@ -1,0 +1,18 @@
+/* 관리자 첫 화면 숫자 칸 — 시안 docs/design/mockups/site/v4/admin/index.html 의 .kpis·.kpi (design-rules 8절).
+   글자 크기·간격은 시안 값(34·15·13, 14·2)이 아니라 design-rules 의 단계(32·16·14, 12·4)로 맞췄다. 초점 표시는 전역 규칙(base.css)을 그대로 받는다. */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpi { display: grid; align-content: start; gap: 4px; min-width: 0; padding: 12px 16px; border-radius: var(--r-card); background: var(--surface); color: var(--ink); text-decoration: none; }
+.kpi:hover { background: var(--surface-hover); }
+.lab { color: var(--sub); font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.val { font-size: 32px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; }
+.val small { margin-left: 2px; color: var(--sub); font-size: 16px; font-weight: 600; letter-spacing: 0; }
+.foot { color: var(--sub); font-size: 14px; overflow-wrap: anywhere; }
+.zero .val { color: var(--faint); }
+.hot { background: var(--warn-soft); }
+.hot:hover { background: var(--warn-soft); box-shadow: inset 0 0 0 1px var(--warn-ink); }
+.hot .lab, .hot .foot, .hot .val small { color: var(--warn-ink); }
+.dash { color: var(--faint); }
+.failed { color: var(--sub); font-size: 14px; font-weight: 600; }
+
+@media (max-width: 1279px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 767px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
