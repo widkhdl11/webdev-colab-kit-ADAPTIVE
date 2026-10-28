@@ -6,6 +6,7 @@ import {
   type InvoiceDecryptor,
   type ReturnLabelPrinter,
 } from "@/features/invoice-print/api/invoice-decryptor";
+import { createGatewayLabelPrinters, readGatewayConfig } from "@/features/invoice-print/api/gateway-client";
 import { devWaybillNo } from "@/features/office-outbound/model/dev-waybill";
 import { scanOutbound, type LabelOutcome, type ReturnLabelOutcome } from "@/features/office-outbound/model/scan-outbound";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
@@ -19,9 +20,28 @@ import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
 // 송장번호는 택배사 API 가 아직 없어 개발용 난수(devWaybillNo)로 만든다. 택배사 API 가 붙으면 newWaybill 을 그 호출로 바꾼다.
 
 let decryptor: InvoiceDecryptor | null = null;
+let returnPrinter: ReturnLabelPrinter | null = null;
+
+/** SIGN_GATEWAY_URL 이 있으면 송장 출력을 서명 게이트웨이(KMS 로 주소를 여는 곳)에 맡긴다. 없으면 로컬 송장 출력 함수. 설정이 틀리면 출력 실패. */
+function gatewayPrinters(): boolean {
+  if (decryptor && returnPrinter) return true;
+  let cfg;
+  try {
+    cfg = readGatewayConfig(process.env);
+  } catch (e) {
+    console.error("서명 게이트웨이 설정이 틀렸다", e instanceof Error ? e.message : typeof e);
+    return true; // 설정이 있는데 틀리면 로컬로 넘어가지 않는다 — 출력은 실패로 답한다
+  }
+  if (!cfg) return false;
+  const printers = createGatewayLabelPrinters(cfg);
+  decryptor = printers.printLabel;
+  returnPrinter = printers.printReturnLabel;
+  return true;
+}
 
 /** 송장 출력 함수를 처음 쓸 때 한 번 만든다. 운영 환경·설정 파일 없음이면 만들지 못하고 출력은 실패로 답한다(INV-P12). */
 function invoiceDecryptor(): InvoiceDecryptor | null {
+  if (gatewayPrinters()) return decryptor;
   if (decryptor) return decryptor;
   try {
     decryptor = createInvoiceDecryptor(process.env, readDecryptFile, devWaybillNo);
@@ -32,10 +52,9 @@ function invoiceDecryptor(): InvoiceDecryptor | null {
   return decryptor;
 }
 
-let returnPrinter: ReturnLabelPrinter | null = null;
-
 /** 반송 송장 출력 함수를 처음 쓸 때 한 번 만든다. 만들지 못하면(운영 환경·설정 파일 없음) 실패로 답한다 — 봉투 번호 길로 넘어가지 않는다 */
 function returnLabelPrinter(): ReturnLabelPrinter | null {
+  if (gatewayPrinters()) return returnPrinter;
   if (returnPrinter) return returnPrinter;
   try {
     returnPrinter = createReturnLabelPrinter(process.env, readDecryptFile, devWaybillNo);

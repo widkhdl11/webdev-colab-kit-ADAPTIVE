@@ -7,7 +7,7 @@
       "Action": [
         "kms:Decrypt"
       ],
-      "Resource": "arn:aws:kms:ap-northeast-2:<계정ID-12자리>:key/<KMS키ID>",
+      "Resource": "arn:aws:kms:ap-northeast-2:366925625369:key/4fde605e-bd20-455d-b8c8-5e998e8e5b15",
       "Condition": {
         "IpAddress": {
           "aws:SourceIp": "3.34.120.193/32"

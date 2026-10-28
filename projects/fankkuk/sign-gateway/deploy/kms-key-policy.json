@@ -6,7 +6,7 @@
       "Sid": "AccountAdminsManageButCannotUseKey",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::<계정ID-12자리>:root"
+        "AWS": "arn:aws:iam::366925625369:root"
       },
       "Action": [
         "kms:Create*",
@@ -31,7 +31,7 @@
       "Sid": "OnlySignGatewayUserDecrypts",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::<계정ID-12자리>:user/fankkuk-sign-gateway"
+        "AWS": "arn:aws:iam::366925625369:user/fankkuk-sign-gateway"
       },
       "Action": [
         "kms:Decrypt"

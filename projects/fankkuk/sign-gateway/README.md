@@ -1,16 +1,19 @@
 # 서명 게이트웨이 (sign.fankkuk.com)
 
-카카오 인증서 전자서명 요청을 **고정 IP 서버에서** 드림시큐리티로 보내는 작은 서버다.
-딜러사는 등록된 IP 에서 온 요청만 받으므로, Vercel(IP 가 바뀜)이 직접 부르지 않고 이 서버를 거친다
-(승인 서명 스펙 INV-S10).
+고정 IP 서버에서 두 가지 일을 한다.
+
+1. **카카오 인증서 전자서명** — 딜러사(드림시큐리티)는 등록된 IP 에서 온 요청만 받으므로, Vercel(IP 가 바뀜)이 직접 부르지 않고
+   이 서버를 거친다(승인 서명 스펙 INV-S10).
+2. **주소 열기(송장 출력)** — 크리에이터 주소를 여는 유일한 곳이다(주소 보호 스펙 「복호화 함수」). 판정 코드는 앱의 송장 출력 함수를
+   그대로 묶어 온 `dist/decryptor.mjs` 이고, 키 풀기만 KMS 가 한다. KMS 는 이 서버 IP 에서만 풀린다(키 정책).
 
 ```
-Vercel 앱 서버 ──(HTTPS + 비밀 토큰)──▶ 이 서버 ──(HTTPS, 허용 목록)──▶ 드림시큐리티 / 카카오
+Vercel 앱 서버 ──(HTTPS + 게이트웨이 토큰)──▶ 이 서버 ──(HTTPS, 허용 목록)──▶ 드림시큐리티 / 카카오 / 서울 KMS / 이 프로젝트 DB
 ```
 
-- 드림시큐리티·카카오·KMS 키는 이 서버의 `/etc/sign-gateway/sign-gateway.env` 에만 있다. Vercel·저장소에는 없다.
-  Vercel 에는 이 서버를 부를 토큰(`GATEWAY_TOKEN` 값) 하나만 `SIGN_GATEWAY_TOKEN` 으로 넣는다.
-- 외부 도움 프로그램(npm 패키지)이 하나도 없다. Node 20 이상만 있으면 된다.
+- 드림시큐리티·카카오·KMS 키, 복호화 전용 DB 토큰, 대표 ID 는 이 서버의 환경 변수 파일(`/etc/sign-gateway/` 아래)에만 있다. Vercel·저장소에는 없다.
+  Vercel 에는 `SIGN_GATEWAY_URL`(`https://sign.fankkuk.com`)과 이 서버를 부를 토큰 `SIGN_GATEWAY_TOKEN` 만 넣는다.
+- 서명 쪽은 외부 도움 프로그램(npm 패키지)이 없다. 송장 출력 쪽 묶음에는 앱이 쓰는 supabase-js·zod 가 들어 있다. Node 20 이상.
 
 ## 요청 형식
 
@@ -27,12 +30,24 @@ Vercel 앱 서버 ──(HTTPS + 비밀 토큰)──▶ 이 서버 ──(HTTPS
 - `SIGN_ADAPTER=test` 는 가짜 서명이고 `method: "fake"` 로 나온다. `signer` 에 `{ subjectId, outcome }` 을 넣어
   결과를 고를 수 있다(`signed`·`pending`·`rejected`·`expired`·`tampered`·`badsig`).
 
+| 송장 출력 요청 | 본문 | 응답 |
+|---|---|---|
+| `POST /v1/invoice/label` | `{ qr, accessToken }` | 앱의 송장 출력 함수와 같은 꼴 — `printed`(송장번호·라벨 다섯 칸)·`denied`(사유)·`unauthenticated`·`not_found`·`no_address`·`failed` |
+| `POST /v1/invoice/return-label` | `{ qr, accessToken }` | 반송 송장 — 위와 같고 `no_address` 대신 `not_linked` |
+
+- `accessToken` 은 대표의 로그인 토큰이다. 주소를 열 자격은 이것이 정한다(INV-P8) — 게이트웨이 토큰은 「이 앱 서버가 보냈다」만 증명한다.
+- 판정(대표·서명 재검증·주문번호·검수 단계·상자당 3회·열람 기록)은 묶음 안의 앱 코드가 한다. 로그에는 경로·상태 코드만 남는다.
+- 가짜 서명 재검증은 `FANKKUK_TEST_SITE=1` 과 시험 사이트 주소(`APP_ORIGIN`)가 **둘 다** 이 서버 설정에 있을 때만 받는다.
+  서버 설정의 `NODE_ENV` 와 상관없이 묶음에는 운영으로 넘긴다.
+- 설정 칸이 비었거나 `dist/decryptor.mjs` 가 없으면 송장 출력만 503 `invoice_not_ready` 이고 서명 쪽은 그대로 돈다(로그 둘째 줄에 이유).
+
 ## 새 서버에 올리기
 
 준비: Ubuntu 24.04 이상, 도메인 A 레코드가 그 서버 IP 를 가리킴, 보안 그룹 22(내 IP)·80·443 열림.
 
 ```bash
 # 내 PC 에서 (projects/fankkuk 폴더)
+node sign-gateway/scripts/build-decryptor.mjs        # 송장 출력 함수 묶음 → sign-gateway/dist/ (저장소에는 안 들어감)
 scp -i <키.pem> -r sign-gateway ubuntu@<서버IP>:/tmp/sgw-new/
 ssh -i <키.pem> ubuntu@<서버IP> 'sudo bash /tmp/sgw-new/sign-gateway/deploy/install.sh <도메인>'
 ```
@@ -56,7 +71,28 @@ sudo nano /etc/sign-gateway/sign-gateway.env && sudo systemctl restart sign-gate
 sudo journalctl -u sign-gateway -n 50 --no-pager                                     # 로그 (원문·서명은 남기지 않음)
 sudo grep '^GATEWAY_TOKEN=' /etc/sign-gateway/sign-gateway.env                        # Vercel 에 넣을 토큰 보기
 sudo certbot renew --dry-run && sudo ufw status                                       # 갱신 리허설 → 80 이 다시 닫혔는지
+sudo bash /opt/sign-gateway/scripts/kms-selftest.sh                                   # KMS 자체 시험 (아래)
+sudo bash /opt/sign-gateway/scripts/rotate-token.sh start|finish|status               # 게이트웨이 토큰 교체 (아래)
+sudo node /opt/sign-gateway/scripts/set-decrypt-db-key.mjs                            # 복호화 DB 토큰 넣기 (아래)
 ```
+
+### KMS 자체 시험
+
+서비스와 같은 계정·설정·네트워크 제한으로 두 가지를 본다. ① 공개키(`/etc/sign-gateway/sealing-public-key.pem`)로 RSA-OAEP SHA-256 으로
+감싼 무작위 32바이트를 KMS 가 풀어 원문과 같은지 ② SHA-1 방식은 정책 조건에 막히는지. 실패하면 키 정책(IP·알고리즘 조건) →
+IAM 정책(Resource 의 `key/`) 순으로 원인을 짚고, AWS 원문이 어느 정책을 가리키는지(resource-based / identity-based)도 적는다.
+값 앞뒤에 자리표시 `__` 나 공백이 남은 칸은 칸 이름으로 알려 준다(값은 찍지 않는다).
+
+### 게이트웨이 토큰 교체
+
+`start` → 새 토큰이 `GATEWAY_TOKEN_NEXT` 에 생기고 옛 것·새 것 둘 다 통과 → 새 값을 Vercel `SIGN_GATEWAY_TOKEN` 에 넣고 재배포 →
+`finish` → 새 것이 `GATEWAY_TOKEN` 으로 옮겨지고 옛 것은 401. 토큰 값은 화면에 찍지 않는다. 새 값 보기:
+`sudo grep '^GATEWAY_TOKEN_NEXT=' /etc/sign-gateway/sign-gateway.env`
+
+### 복호화 DB 토큰
+
+Supabase 프로젝트의 JWT 비밀을 붙여 넣으면 복호화 전용 역할(`address_decryptor`) 토큰을 만들어 `DECRYPT_DB_KEY` 칸에 바로 넣는다.
+비밀·토큰은 화면에 찍지 않는다. 유효 기간 365일. 그 DB 에 복호화 전용 역할이 있어야 한다(`supabase/manual/0008`~`0010`).
 
 토큰 교체: 새 값을 `GATEWAY_TOKEN_NEXT` 에 넣고 재시작 → Vercel 을 새 값으로 바꿈 → `GATEWAY_TOKEN` 을 새 값으로 옮기고
 `GATEWAY_TOKEN_NEXT` 를 비운 뒤 재시작.

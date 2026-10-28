@@ -192,3 +192,73 @@ describe("드림시큐리티 어댑터 (명세 전)", () => {
     }
   });
 });
+
+describe("AWS 요청 서명(SigV4)", async () => {
+  const { signV4, amzDates } = await import("../lib/sigv4.mjs");
+  it("AWS 공개 시험 값 get-vanilla 와 같은 서명", () => {
+    const auth = signV4({
+      method: "GET",
+      path: "/",
+      headers: { host: "example.amazonaws.com", "x-amz-date": "20150830T123600Z" },
+      body: "",
+      region: "us-east-1",
+      service: "service",
+      accessKeyId: "AKIDEXAMPLE",
+      secretAccessKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY",
+      amzDate: "20150830T123600Z",
+    });
+    assert.equal(
+      auth,
+      "AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20150830/us-east-1/service/aws4_request, SignedHeaders=host;x-amz-date, Signature=5fa00fa31553b73ebf1942676e86291e8372ff2a2260956d9b8aae1d763fbf31",
+    );
+  });
+  it("날짜 꼴", () => {
+    assert.deepEqual(amzDates(new Date("2026-10-28T05:06:07.890Z")), { amzDate: "20261028T050607Z", dateStamp: "20261028" });
+  });
+});
+
+describe("KMS 복호화 요청", async () => {
+  const { kmsDecrypt, KmsError, KMS_HOST } = await import("../lib/kms.mjs");
+  const kms = { keyId: "arn:aws:kms:ap-northeast-2:123456789012:key/11111111-2222-3333-4444-555555555555", accessKeyId: "AKID", secretAccessKey: "SECRET" };
+  it("서울 KMS 로만, 정해진 방식으로 보내고 풀린 키를 돌려준다", async () => {
+    let seen;
+    const key = await kmsDecrypt(kms, Buffer.from("wrapped"), {
+      request: async (url, opts) => {
+        seen = { url, opts, body: JSON.parse(opts.body) };
+        return { status: 200, headers: {}, body: JSON.stringify({ Plaintext: Buffer.from("dek").toString("base64") }) };
+      },
+    });
+    assert.equal(key.toString(), "dek");
+    assert.equal(seen.url, `https://${KMS_HOST}/`);
+    assert.deepEqual(seen.opts.allowedHosts, ["kms.ap-northeast-2.amazonaws.com"]);
+    assert.equal(seen.body.EncryptionAlgorithm, "RSAES_OAEP_SHA_256");
+    assert.equal(seen.opts.headers["x-amz-target"], "TrentService.Decrypt");
+    assert.match(seen.opts.headers.authorization, /^AWS4-HMAC-SHA256 Credential=AKID\/\d{8}\/ap-northeast-2\/kms\/aws4_request, SignedHeaders=content-type;host;x-amz-date;x-amz-target, Signature=[0-9a-f]{64}$/);
+  });
+  it("거부는 AWS 오류 이름과 원문으로", async () => {
+    await assert.rejects(
+      kmsDecrypt(kms, Buffer.from("x"), {
+        request: async () => ({ status: 400, headers: {}, body: JSON.stringify({ __type: "com.amazonaws.kms#AccessDeniedException", message: "no resource-based policy allows" }) }),
+      }),
+      (err) => err instanceof KmsError && err.type === "AccessDeniedException" && /resource-based/.test(err.awsMessage),
+    );
+  });
+  it("설정이 비면 부르지 않는다", async () => {
+    await assert.rejects(kmsDecrypt({ keyId: null, accessKeyId: null, secretAccessKey: null }, Buffer.from("x"), { request: async () => assert.fail("불렀다") }), KmsError);
+  });
+});
+
+describe("KMS 설정 검사", async () => {
+  const { kmsReady } = await import("../lib/kms.mjs");
+  const ok = { keyId: "arn:aws:kms:ap-northeast-2:123456789012:key/11111111-2222-3333-4444-555555555555", accessKeyId: "AKIA1234", secretAccessKey: "abc/def+ghi" };
+  it("자리표시 __ 가 남은 칸은 이름으로 알린다", () => {
+    assert.equal(kmsReady(ok).ok, true);
+    const r = kmsReady({ ...ok, keyId: `${ok.keyId}__` });
+    assert.equal(r.ok, false);
+    assert.match(r.reason, /KMS_KEY_ID/);
+    assert.doesNotMatch(r.reason, /arn:aws/);
+    assert.equal(kmsReady({ ...ok, accessKeyId: "__AKIA1234" }).ok, false);
+    assert.equal(kmsReady({ ...ok, secretAccessKey: "abc " }).ok, false);
+    assert.equal(kmsReady({ ...ok, region: "us-east-1" }).ok, false);
+  });
+});

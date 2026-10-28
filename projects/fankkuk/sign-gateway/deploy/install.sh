@@ -49,8 +49,15 @@ id "$SERVICE_USER" >/dev/null 2>&1 || useradd --system --no-create-home --shell 
 
 log "코드 복사 → $APP_DIR"
 install -d -m 0755 "$APP_DIR"
-rm -rf "$APP_DIR/lib"
-cp -r "$SRC_DIR/lib" "$SRC_DIR/server.mjs" "$SRC_DIR/package.json" "$APP_DIR/"
+rm -rf "$APP_DIR/lib" "$APP_DIR/scripts" "$APP_DIR/dist"
+cp -r "$SRC_DIR/lib" "$SRC_DIR/scripts" "$SRC_DIR/server.mjs" "$SRC_DIR/package.json" "$APP_DIR/"
+# 송장 출력 함수 묶음 — 내 PC 에서 scripts/build-decryptor.mjs 로 만든 것. 없으면 송장 출력만 503 이다
+if [ -f "$SRC_DIR/dist/decryptor.mjs" ]; then
+  cp -r "$SRC_DIR/dist" "$APP_DIR/"
+else
+  echo "경고: dist/decryptor.mjs 가 없다 — 송장 출력은 준비되지 않는다 (PC 에서 node sign-gateway/scripts/build-decryptor.mjs)"
+fi
+find "$APP_DIR/scripts" -name '*.sh' -exec sed -i 's/\r$//' {} +
 chown -R root:root "$APP_DIR"
 find "$APP_DIR" -type d -exec chmod 0755 {} +
 find "$APP_DIR" -type f -exec chmod 0644 {} +
@@ -62,7 +69,15 @@ if [ ! -f "$ENV_FILE" ]; then
   sed 's/\r$//' "$SRC_DIR/deploy/sign-gateway.env.example" > "$ENV_FILE"
   echo "새로 만듦 (드림시큐리티·카카오·KMS 칸은 비어 있음)"
 else
-  echo "이미 있음 — 그대로 둠"
+  echo "이미 있음 — 있는 값은 그대로 두고, 틀에 새로 생긴 칸만 끝에 덧붙인다"
+  ADDED="$(sed 's/\r$//' "$SRC_DIR/deploy/sign-gateway.env.example" | awk -F= '
+    NR == FNR { have[$1] = 1; next }
+    /^[A-Z_]+=/ && !($1 in have) { print }
+  ' "$ENV_FILE" -)"
+  if [ -n "$ADDED" ]; then
+    printf '\n# ── %s 설치 때 덧붙인 칸 ──\n%s\n' "$(date +%F)" "$ADDED" >> "$ENV_FILE"
+    echo "덧붙인 칸: $(printf '%s\n' "$ADDED" | cut -d= -f1 | paste -sd' ')"
+  fi
 fi
 if grep -q '^GATEWAY_TOKEN=__FILL_ME__$' "$ENV_FILE"; then
   # 토큰을 명령줄 인자로 넘기지 않는다(다른 계정의 ps 에 보인다) — 환경 변수로 awk 에 넘긴다
@@ -75,6 +90,8 @@ if grep -q '^GATEWAY_TOKEN=__FILL_ME__$' "$ENV_FILE"; then
 fi
 chown root:"$SERVICE_USER" "$ENV_FILE"
 chmod 0640 "$ENV_FILE"
+# 주소 봉인 공개키(KMS 에서 내려받은 것) — 공개해도 되는 값이고, KMS 자체 시험이 쓴다
+install -m 0644 -o root -g root "$SRC_DIR/deploy/sealing-public-key.pem" "$ETC_DIR/sealing-public-key.pem"
 
 log "방화벽 (ufw): 22·443 만 들어온다. 80 은 인증서 갱신 때만 잠깐 열린다"
 ufw default deny incoming >/dev/null

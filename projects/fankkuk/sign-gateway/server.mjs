@@ -9,6 +9,7 @@ import https from "node:https";
 import { createAdapter } from "./lib/adapters/index.mjs";
 import { createHandler } from "./lib/app.mjs";
 import { ConfigError, loadConfig } from "./lib/config.mjs";
+import { createInvoicePrinters } from "./lib/invoice.mjs";
 
 let config;
 try {
@@ -22,7 +23,14 @@ try {
 }
 
 const adapter = createAdapter(config);
-const handler = createHandler({ config, adapter });
+// 송장 출력 함수 — 설정이 덜 됐거나 묶음 파일(dist/decryptor.mjs)이 없으면 송장 출력만 503 이고 서명 쪽은 그대로 돈다
+let invoice;
+try {
+  invoice = await createInvoicePrinters(config);
+} catch (err) {
+  invoice = { ready: { ok: false, reason: `송장 출력 함수를 불러오지 못했다 (${err instanceof Error ? err.name : "unknown"})` }, printers: null };
+}
+const handler = createHandler({ config, adapter, invoice });
 
 let server;
 if (config.tlsCertFile && config.tlsKeyFile) {
@@ -45,6 +53,7 @@ server.listen(config.port, config.host, () => {
   console.log(
     `sign-gateway listening ${config.host}:${config.port} adapter=${adapter.name} ready=${ready.ok}${ready.ok ? "" : ` (${ready.reason})`}`,
   );
+  console.log(`invoice ready=${invoice.ready.ok}${invoice.ready.ok ? "" : ` (${invoice.ready.reason})`}`);
 });
 
 for (const signal of ["SIGTERM", "SIGINT"]) {

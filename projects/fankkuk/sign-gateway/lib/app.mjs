@@ -3,6 +3,8 @@
 //   GET  /healthz                              토큰 없이. 살아 있는지만(어댑터 상태는 밖에 알리지 않는다 — 로그에 있다).
 //   POST /v1/sign/requests                     { requestId, plaintext, signer } → { txId, expiresAt }
 //   POST /v1/sign/requests/:requestId/result   { txId, plaintext }  → { state, ... }
+//   POST /v1/invoice/label                     { qr, accessToken }  → 송장 출력 결과(앱 송장 출력 함수와 같은 꼴)
+//   POST /v1/invoice/return-label              { qr, accessToken }  → 반송 송장 출력 결과
 //
 // 결과 조회에서 state 가 signed 이면 어댑터가 서명 값을 직접 검증하고(외부 연결 INV-S3),
 // 검증된 서명의 원문이 앱이 보낸 원문과 바이트 단위로 같을 때만 돌려준다(승인 서명 INV-S2 의 이중 확인).
@@ -93,7 +95,10 @@ function send(res, status, payload) {
   res.end(body);
 }
 
-export function createHandler({ config, adapter, log = console.log }) {
+const INVOICE_PATHS = Object.freeze({ "/v1/invoice/label": "printLabel", "/v1/invoice/return-label": "printReturnLabel" });
+
+/** invoice: createInvoicePrinters 의 결과({ printers }) — 준비 안 됐으면 printers 가 null 이고 송장 출력은 503 */
+export function createHandler({ config, adapter, invoice = null, log = console.log }) {
   async function route(req) {
     const url = new URL(req.url ?? "/", "https://gateway.invalid");
     const path = url.pathname;
@@ -148,6 +153,17 @@ export function createHandler({ config, adapter, log = console.log }) {
           certificate: verified.certificate,
         },
       ];
+    }
+
+    const invoicePrinter = INVOICE_PATHS[path];
+    if (invoicePrinter) {
+      const body = await readJson(req);
+      const qr = requireString(body, "qr", null, 256);
+      const accessToken = requireString(body, "accessToken", null, 8192);
+      const printers = invoice?.printers;
+      if (!printers) throw new HttpError(503, "invoice_not_ready");
+      // 판정·열람 기록은 송장 출력 함수 안에서. 결과(라벨 다섯 칸 포함)는 그대로 돌려주고 로그에는 남기지 않는다
+      return [200, await printers[invoicePrinter]({ qr, accessToken })];
     }
 
     throw new HttpError(404, "not_found");
