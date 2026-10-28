@@ -19,6 +19,10 @@ describe("readGatewayConfig", () => {
     expect(() => readGatewayConfig({ SIGN_GATEWAY_URL: "https://sign.fankkuk.com" })).toThrow();
     expect(() => readGatewayConfig({ SIGN_GATEWAY_URL: "https://sign.fankkuk.com", SIGN_GATEWAY_TOKEN: "short" })).toThrow();
   });
+  it("경로를 붙인 주소는 설정 오류 — 말없이 버리지 않는다", () => {
+    expect(() => readGatewayConfig({ SIGN_GATEWAY_URL: "https://sign.fankkuk.com/v1", SIGN_GATEWAY_TOKEN: TOKEN })).toThrow();
+    expect(() => readGatewayConfig({ SIGN_GATEWAY_URL: "https://sign.fankkuk.com?x=1", SIGN_GATEWAY_TOKEN: TOKEN })).toThrow();
+  });
   it("운영에서는 https 만", () => {
     expect(() => readGatewayConfig({ VERCEL_ENV: "production", SIGN_GATEWAY_URL: "http://sign.fankkuk.com", SIGN_GATEWAY_TOKEN: TOKEN })).toThrow();
     expect(readGatewayConfig({ VERCEL_ENV: "production", SIGN_GATEWAY_URL: "https://sign.fankkuk.com/", SIGN_GATEWAY_TOKEN: TOKEN })).toEqual(cfg);
@@ -63,6 +67,18 @@ describe("createGatewayLabelPrinters", () => {
     ]) {
       const { printLabel } = createGatewayLabelPrinters(cfg, f as unknown as typeof fetch);
       expect(await printLabel({ qr: "Q", accessToken: "A" })).toEqual({ kind: "failed" });
+    }
+  });
+
+  it("실패경로: 반송 송장도 200 이 아니면·꼴이 틀리면·없는 답(no_address)이면 failed", async () => {
+    for (const f of [
+      reply(503, { error: "invoice_not_ready" }),
+      reply(200, { kind: "printed", waybill: "1", reprint: false }), // 라벨 없음
+      reply(200, { kind: "no_address" }), // 반송 송장에는 없는 답
+      reply(200, "not json"),
+    ]) {
+      const { printReturnLabel } = createGatewayLabelPrinters(cfg, f as unknown as typeof fetch);
+      expect(await printReturnLabel({ qr: "Q", accessToken: "A" })).toEqual({ kind: "failed" });
     }
   });
 });

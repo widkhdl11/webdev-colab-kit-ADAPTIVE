@@ -86,6 +86,15 @@ export function createInvoiceDecryptor(env: DecryptorEnv, readFile: () => string
   return invoiceDecryptorFrom(decryptorDeps(env, readFile, newWaybill));
 }
 
+/** 송장·반송 송장 출력 함수 한 쌍. */
+export type LabelPrinters = { printLabel: InvoiceDecryptor; printReturnLabel: ReturnLabelPrinter };
+
+/** 로컬 송장 출력 함수 한 쌍 — 설정 파일을 한 번 읽고 재료를 둘이 같이 쓴다. 운영 환경이면 파일을 읽기 전에 실패한다(INV-P12). */
+export function createLocalLabelPrinters(env: DecryptorEnv, readFile: () => string, newWaybill: () => string): LabelPrinters {
+  const deps = decryptorDeps(env, readFile, newWaybill);
+  return { printLabel: invoiceDecryptorFrom(deps), printReturnLabel: returnLabelPrinterFrom(deps) };
+}
+
 /** 반송 송장 출력 함수를 재료로 만든다. */
 export function returnLabelPrinterFrom(deps: DecryptorDeps): ReturnLabelPrinter {
   const { signer: _signer, ...rest } = deps;

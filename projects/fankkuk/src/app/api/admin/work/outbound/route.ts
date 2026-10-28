@@ -1,12 +1,7 @@
 import type { NextRequest } from "next/server";
-import {
-  createInvoiceDecryptor,
-  createReturnLabelPrinter,
-  readDecryptFile,
-  type InvoiceDecryptor,
-  type ReturnLabelPrinter,
-} from "@/features/invoice-print/api/invoice-decryptor";
-import { createGatewayLabelPrinters, readGatewayConfig } from "@/features/invoice-print/api/gateway-client";
+import { chooseLabelPrinters } from "@/features/invoice-print/api/choose-label-printers";
+import { createGatewayLabelPrinters } from "@/features/invoice-print/api/gateway-client";
+import { createLocalLabelPrinters, readDecryptFile, type LabelPrinters } from "@/features/invoice-print/api/invoice-decryptor";
 import { devWaybillNo } from "@/features/office-outbound/model/dev-waybill";
 import { scanOutbound, type LabelOutcome, type ReturnLabelOutcome } from "@/features/office-outbound/model/scan-outbound";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
@@ -17,66 +12,33 @@ import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
 // 관리자 키를 쓰면 DB 의 대표 판정이 서버 계정 기준이 되어 직원도 주소를 연다.
 // 팬 선물의 송장 출력은 송장 출력 함수(주소를 여는 유일한 서버 코드, address-protection INV-P4)에 로그인 토큰을 넘겨 맡긴다 —
 // 그 함수가 토큰을 스스로 검증하고 자기 설정의 대표 ID 로 판단한다(INV-P8). 앱 서버는 키·복호화 자격을 갖지 않는다.
+// 어디서 뽑을지(서명 게이트웨이·로컬)는 chooseLabelPrinters 한 곳이 정한다.
 // 송장번호는 택배사 API 가 아직 없어 개발용 난수(devWaybillNo)로 만든다. 택배사 API 가 붙으면 newWaybill 을 그 호출로 바꾼다.
 
-let decryptor: InvoiceDecryptor | null = null;
-let returnPrinter: ReturnLabelPrinter | null = null;
+let printers: LabelPrinters | null = null;
 
-/** SIGN_GATEWAY_URL 이 있으면 송장 출력을 서명 게이트웨이(KMS 로 주소를 여는 곳)에 맡긴다. 없으면 로컬 송장 출력 함수. 설정이 틀리면 출력 실패. */
-function gatewayPrinters(): boolean {
-  if (decryptor && returnPrinter) return true;
-  let cfg;
-  try {
-    cfg = readGatewayConfig(process.env);
-  } catch (e) {
-    console.error("서명 게이트웨이 설정이 틀렸다", e instanceof Error ? e.message : typeof e);
-    return true; // 설정이 있는데 틀리면 로컬로 넘어가지 않는다 — 출력은 실패로 답한다
-  }
-  if (!cfg) return false;
-  const printers = createGatewayLabelPrinters(cfg);
-  decryptor = printers.printLabel;
-  returnPrinter = printers.printReturnLabel;
-  return true;
-}
-
-/** 송장 출력 함수를 처음 쓸 때 한 번 만든다. 운영 환경·설정 파일 없음이면 만들지 못하고 출력은 실패로 답한다(INV-P12). */
-function invoiceDecryptor(): InvoiceDecryptor | null {
-  if (gatewayPrinters()) return decryptor;
-  if (decryptor) return decryptor;
-  try {
-    decryptor = createInvoiceDecryptor(process.env, readDecryptFile, devWaybillNo);
-  } catch (e) {
-    console.error("송장 출력 함수를 만들지 못했다", e instanceof Error ? e.message : typeof e);
-    return null;
-  }
-  return decryptor;
-}
-
-/** 반송 송장 출력 함수를 처음 쓸 때 한 번 만든다. 만들지 못하면(운영 환경·설정 파일 없음) 실패로 답한다 — 봉투 번호 길로 넘어가지 않는다 */
-function returnLabelPrinter(): ReturnLabelPrinter | null {
-  if (gatewayPrinters()) return returnPrinter;
-  if (returnPrinter) return returnPrinter;
-  try {
-    returnPrinter = createReturnLabelPrinter(process.env, readDecryptFile, devWaybillNo);
-  } catch (e) {
-    console.error("반송 송장 출력 함수를 만들지 못했다", e instanceof Error ? e.message : typeof e);
-    return null;
-  }
-  return returnPrinter;
+/** 송장·반송 송장 출력 함수를 처음 쓸 때 한 번 정한다. 정하지 못하면(설정 틀림·운영 환경·설정 파일 없음) 출력은 실패로 답하고 다음 요청에서 다시 본다. */
+function labelPrinters(): LabelPrinters | null {
+  printers ??= chooseLabelPrinters(process.env, {
+    gateway: (cfg) => createGatewayLabelPrinters(cfg),
+    local: () => createLocalLabelPrinters(process.env, readDecryptFile, devWaybillNo),
+  });
+  return printers;
 }
 
 export async function POST(req: NextRequest) {
   return handlePrivateJsonPost(req, async (body) => {
     const client = await createRequestSupabase();
     const printLabel = async (qr: string): Promise<LabelOutcome> => {
-      const run = invoiceDecryptor();
+      const run = labelPrinters()?.printLabel;
       if (!run) return { kind: "failed" };
       const { data } = await client.auth.getSession();
       return run({ qr, accessToken: data.session?.access_token ?? "" });
     };
-    // 반송 송장 — 주문에 이어진 상자는 보낸 사람이 확인한 주소를 여는 반송 송장 출력 함수에 같은 방식(로그인 토큰)으로 맡긴다(address-protection INV-P18)
+    // 반송 송장 — 주문에 이어진 상자는 보낸 사람이 확인한 주소를 여는 반송 송장 출력 함수에 같은 방식(로그인 토큰)으로 맡긴다(address-protection INV-P18).
+    // 만들지 못하면 실패로 답한다 — 봉투 번호 길로 넘어가지 않는다
     const printReturnLabel = async (qr: string): Promise<ReturnLabelOutcome> => {
-      const run = returnLabelPrinter();
+      const run = labelPrinters()?.printReturnLabel;
       if (!run) return { kind: "failed" };
       const { data } = await client.auth.getSession();
       return run({ qr, accessToken: data.session?.access_token ?? "" });

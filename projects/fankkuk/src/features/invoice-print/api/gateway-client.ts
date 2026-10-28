@@ -37,6 +37,8 @@ export function readGatewayConfig(env: DeployEnv & Record<string, string | undef
   if (token.length < 32) throw new Error("SIGN_GATEWAY_TOKEN 이 없거나 짧다");
   const url = new URL(raw);
   if (url.protocol !== "https:" && isProduction(env)) throw new Error("SIGN_GATEWAY_URL 은 https 여야 한다");
+  // 경로를 붙여 두면 말없이 버려진다 — 주소만 받는다
+  if (url.pathname !== "/" || url.search !== "" || url.hash !== "") throw new Error("SIGN_GATEWAY_URL 은 주소만(경로 없이) 적는다");
   return { url: url.origin, token };
 }
 
