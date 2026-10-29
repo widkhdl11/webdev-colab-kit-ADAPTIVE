@@ -28,11 +28,11 @@ export type ConfirmReturnResult =
 const REFUSED: Record<Refusal, 404 | 409> = { not_found: 404, no_address: 409, expired: 409, closed: 409 };
 
 export async function confirmReturnAddress(deps: { client: Pick<SupabaseClient, "rpc">; viewer: Viewer | null }, body: unknown): Promise<ConfirmReturnResult> {
-  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
+  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요합니다." };
   // 보내는 사람은 팬 또는 크리에이터(보낸 역조공·보낸 팬 선물). 운영자는 남의 반송 주소를 정하지 않는다
   if (deps.viewer.role === "operator") return { ok: false, status: 403, message: "operator" };
   const parsed = inputSchema.safeParse(body);
-  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청이에요." };
+  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청입니다." };
   const { orderNo, boxSeq } = parsed.data;
   const { data, error } = await deps.client.rpc("confirm_return_address", { p_order_no: orderNo, p_box_seq: boxSeq ?? null });
   // 잠그는 사이 상자 연결이 바뀌었다(office_lock_parcel 의 40001) — 다시 하면 된다. 복사되지 않았다

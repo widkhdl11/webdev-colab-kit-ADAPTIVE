@@ -14,7 +14,7 @@ export const NOTICE_BODY_MAX = 5000;
 
 const MESSAGES = {
   limit: `제목은 1~${NOTICE_TITLE_MAX}자, 본문은 ${NOTICE_BODY_MAX}자까지 적을 수 있어요. 본문은 비울 수 없어요.`,
-  failed: "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+  failed: "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
 };
 
 const bodyShape = z

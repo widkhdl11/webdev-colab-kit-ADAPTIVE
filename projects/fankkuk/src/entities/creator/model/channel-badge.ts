@@ -44,13 +44,13 @@ function channelSubject(badge: Pick<ChannelBadge, "platform" | "channelKey">): s
 
 /**
  * 마우스를 올리면 보이는 풀이 — 「@핸들 · 2026.10.14 확인」(유튜브·인스타그램), 「아이디 · …」(SOOP), 「치지직 채널 · …」.
- * 날짜가 없으면 「… · 채널 소유 확인」(치지직은 「치지직 채널 소유 확인」).
+ * 날짜가 없으면 「… · 채널 소유 확인」(치지직은 「치지직 채널 소유자 확인」).
  */
 export function channelBadgeTitle(badge: Pick<ChannelBadge, "platform" | "channelKey" | "verifiedOn">): string {
   const subject = channelSubject(badge);
   const date = badge.verifiedOn ? dotted(badge.verifiedOn) : "";
   if (date) return `${subject} · ${date} 확인`;
-  return badge.platform === "chzzk" ? `${subject} 소유 확인` : `${subject} · 채널 소유 확인`;
+  return badge.platform === "chzzk" ? `${subject} 소유자 확인` : `${subject} · 채널 소유자 확인`;
 }
 
 /**

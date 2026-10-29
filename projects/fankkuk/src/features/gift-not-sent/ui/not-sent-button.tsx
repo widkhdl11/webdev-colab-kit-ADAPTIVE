@@ -8,7 +8,7 @@ import { sendNotSent } from "../api/send-not-sent";
 // 기존 기록 처리(/api/gifts/not-sent)를 그대로 부른다 — 그 주문에 누른 시각만 남고 기한은 바뀌지 않는다.
 // 끝나면 다시 읽는다 — 지금 할 일의 「도착이 늦어요」 줄은 누른 기록이 있는 주문에서 빠지므로(action-center INV-J1) 칸이 원천 상태로 사라진다.
 
-const FAILED_TEXT = "처리하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const FAILED_TEXT = "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 /** focusAfterIds: 끝나서 이 칸이 사라지면 포커스를 옮길, 새로 읽어도 남는 요소(tabIndex -1)의 id 후보 — 앞에서부터 그려져 있는 첫 요소로. 하나도 없으면 포커스가 페이지 맨 앞으로 떨어진다 */
 export function NotSentButton({ orderNo, focusAfterIds = [], className = "btn btn--line" }: { orderNo: string; focusAfterIds?: readonly string[]; className?: string }) {

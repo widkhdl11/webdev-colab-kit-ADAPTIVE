@@ -58,7 +58,7 @@ const totalText = () => [...host.querySelectorAll("p")].find((p) => p.textConten
 // 결제 버튼은 「합계 + 결제하기」(시안 v39) — 금액 부분까지 보도록 버튼 글자 전체를 따로 본다
 const payButton = () => [...host.querySelectorAll("button")].find((b) => b.textContent?.trim().endsWith("결제하기"));
 
-describe("역조공 받을 팬 고르기 (INV-R2·R3)", () => {
+describe("역조공 받는 팬 선택 (INV-R2·R3)", () => {
   it("한 번에 고를 수 있는 팬은 10명이다", () => {
     expect(MAX_REVGIFT_SHARES).toBe(10);
   });
@@ -80,7 +80,7 @@ describe("역조공 받을 팬 고르기 (INV-R2·R3)", () => {
     // 고른 칸은 잠기지 않는다(풀 수 있다)
     expect(box("팬1").getAttribute("aria-disabled")).toBeNull();
     const max = host.querySelector("#rv-fans-max");
-    expect(max?.textContent).toContain("10명을 모두 골랐어요");
+    expect(max?.textContent).toContain("10명 선택 완료");
     expect(max?.getAttribute("aria-live")).toBe("polite");
   });
 
@@ -111,10 +111,10 @@ describe("역조공 받을 팬 고르기 (INV-R2·R3)", () => {
 
   it("팔로워가 없으면 상자 크기 안내를 숨긴다 — 있으면 보인다", () => {
     render([]);
-    expect(host.textContent).toContain("아직 나를 팔로우한 팬이 없어요");
-    expect(host.textContent).not.toContain("상자는 팬마다 고를 수 있어요");
+    expect(host.textContent).toContain("팔로워가 없습니다");
+    expect(host.textContent).not.toContain("팬마다 상자 크기를 선택할 수 있습니다");
     render(followersOf([1]));
-    expect(host.textContent).toContain("상자는 팬마다 고를 수 있어요");
+    expect(host.textContent).toContain("팬마다 상자 크기를 선택할 수 있습니다");
   });
 
   it("(실패경로) 목록에서 빠졌던 팬이 다시 나타나도 고른 팬은 10명을 넘지 않는다", () => {

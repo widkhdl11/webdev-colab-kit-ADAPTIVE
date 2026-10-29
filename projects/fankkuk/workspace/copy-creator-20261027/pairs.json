@@ -1,0 +1,2270 @@
+[
+  {
+    "index": 1,
+    "section": "### 크리에이터 홈 — `/creator`",
+    "label": "머리 위 한 줄",
+    "old": "팬들이 전한 마음을 확인해보세요",
+    "new": "팬들이 보낸 선물과 승인 요청을 확인해 주세요",
+    "note": "늘",
+    "files": [
+      "src/app/(site)/creator/page.tsx",
+      "src/widgets/home/ui/creator-home-page.tsx"
+    ]
+  },
+  {
+    "index": 11,
+    "section": "### 크리에이터 홈 — `/creator`",
+    "label": "바로가기 3",
+    "old": "내가 보낸 선물 / ${N}개",
+    "new": "보낸 선물 / ${N}개",
+    "note": "늘",
+    "files": [
+      "src/app/(site)/creator/page.tsx",
+      "src/widgets/home/ui/creator-home-page.tsx"
+    ]
+  },
+  {
+    "index": 12,
+    "section": "### 크리에이터 홈 — `/creator`",
+    "label": "바로가기 4",
+    "old": "열람 기록 / 내 정보 열람을 확인해요",
+    "new": "주소 열람 기록 / 배송지 열람 내역",
+    "note": "늘",
+    "files": [
+      "src/app/(site)/creator/page.tsx",
+      "src/widgets/home/ui/creator-home-page.tsx"
+    ]
+  },
+  {
+    "index": 18,
+    "section": "### 크리에이터 홈 — `/creator`",
+    "label": "줄 상태",
+    "old": "승인 대기 / 확인할 선물 / 내 상자 찾기 / 추가 결제 / 반송 주소 확인 / 결제를 마치지 않은 선물",
+    "new": "승인 대기 / 확인할 선물 / 내 상자 찾기 / 추가 결제 / 반송 주소 확인 / 결제 대기",
+    "note": "할 일 종류에 따라",
+    "files": [
+      "src/app/(site)/creator/page.tsx",
+      "src/widgets/home/ui/creator-home-page.tsx"
+    ]
+  },
+  {
+    "index": 19,
+    "section": "### 크리에이터 홈 — `/creator`",
+    "label": "빈 상태",
+    "old": "지금 할 일이 없어요.",
+    "new": "현재 처리할 일이 없습니다.",
+    "note": "할 일이 없을 때",
+    "files": [
+      "src/app/(site)/creator/page.tsx",
+      "src/widgets/home/ui/creator-home-page.tsx"
+    ]
+  },
+  {
+    "index": 20,
+    "section": "### 크리에이터 홈 — `/creator`",
+    "label": "오류",
+    "old": "지금 할 일을 불러오지 못했어요.",
+    "new": "지금 할 일을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    "note": "할 일을 못 읽었을 때",
+    "files": [
+      "src/app/(site)/creator/page.tsx",
+      "src/widgets/home/ui/creator-home-page.tsx"
+    ]
+  },
+  {
+    "index": 23,
+    "section": "### 크리에이터 홈 — `/creator`",
+    "label": "줄 제목",
+    "old": "${닉네임}님이 보내신 선물",
+    "new": "${닉네임}님이 보낸 선물",
+    "note": "받은 선물이 진행 중일 때(최대 3줄)",
+    "files": [
+      "src/app/(site)/creator/page.tsx",
+      "src/widgets/home/ui/creator-home-page.tsx"
+    ]
+  },
+  {
+    "index": 27,
+    "section": "### 크리에이터 홈 — `/creator`",
+    "label": "빈 상태",
+    "old": "지금 진행 중인 선물이 없어요.",
+    "new": "진행 중인 선물이 없습니다.",
+    "note": "진행 중인 선물이 없을 때",
+    "files": [
+      "src/app/(site)/creator/page.tsx",
+      "src/widgets/home/ui/creator-home-page.tsx"
+    ]
+  },
+  {
+    "index": 28,
+    "section": "### 크리에이터 홈 — `/creator`",
+    "label": "오류",
+    "old": "선물 현황을 불러오지 못했어요.",
+    "new": "선물 현황을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    "note": "현황을 못 읽었을 때",
+    "files": [
+      "src/app/(site)/creator/page.tsx",
+      "src/widgets/home/ui/creator-home-page.tsx"
+    ]
+  },
+  {
+    "index": 31,
+    "section": "### 크리에이터 홈 — `/creator`",
+    "label": "줄 제목",
+    "old": "내 배송 정보가 열렸어요",
+    "new": "배송지 열람 기록",
+    "note": "열람 기록이 있을 때(1줄) · 반영 메모: 열람 기록에는 출력 실패 기록도 있으므로 출력 성공을 단정하지 않는 제목을 사용합니다.",
+    "files": [
+      "src/app/(site)/creator/page.tsx",
+      "src/widgets/home/ui/creator-home-page.tsx"
+    ]
+  },
+  {
+    "index": 34,
+    "section": "### 크리에이터 홈 — `/creator`",
+    "label": "빈 상태",
+    "old": "아직 주소가 열린 적이 없어요.",
+    "new": "주소 열람 기록이 없습니다.",
+    "note": "열람 기록이 없을 때",
+    "files": [
+      "src/app/(site)/creator/page.tsx",
+      "src/widgets/home/ui/creator-home-page.tsx"
+    ]
+  },
+  {
+    "index": 35,
+    "section": "### 크리에이터 홈 — `/creator`",
+    "label": "안내",
+    "old": "팬꾹은 채팅·메일·전화로 주소를 묻지 않아요. 주소를 다시 알려 달라는 연락은 팬꾹이 아니에요.",
+    "new": "팬꾹은 채팅·메일·전화로 주소를 요청하지 않습니다. 주소는 팬꾹 사이트에서만 입력해 주세요.",
+    "note": "늘",
+    "files": [
+      "src/app/(site)/creator/page.tsx",
+      "src/widgets/home/ui/creator-home-page.tsx"
+    ]
+  },
+  {
+    "index": 39,
+    "section": "### 크리에이터 홈 — `/creator`",
+    "label": "빈 상태",
+    "old": "아직 공지가 없어요.",
+    "new": "등록된 공지사항이 없습니다.",
+    "note": "공지가 없을 때",
+    "files": [
+      "src/app/(site)/creator/page.tsx",
+      "src/widgets/home/ui/creator-home-page.tsx"
+    ]
+  },
+  {
+    "index": 42,
+    "section": "### 승인 내역 — `/creator/requests`",
+    "label": "제목",
+    "old": "승인 내역 ${N}",
+    "new": "승인 내역 ${N}건",
+    "note": "늘",
+    "files": [
+      "src/widgets/approval-requests/ui/approval-requests-page.tsx",
+      "src/features/approval-request/ui/decided-request-list.tsx"
+    ]
+  },
+  {
+    "index": 45,
+    "section": "### 승인 내역 — `/creator/requests`",
+    "label": "요약 한 줄",
+    "old": "가장 최근 처리 ${날짜}",
+    "new": "최근 처리일 ${날짜}",
+    "note": "처리한 요청이 있을 때",
+    "files": [
+      "src/widgets/approval-requests/ui/approval-requests-page.tsx",
+      "src/features/approval-request/ui/decided-request-list.tsx"
+    ]
+  },
+  {
+    "index": 46,
+    "section": "### 승인 내역 — `/creator/requests`",
+    "label": "결과별 수 묶음 이름(스크린리더)",
+    "old": "결과별 수",
+    "new": "결과별 건수",
+    "note": "늘",
+    "files": [
+      "src/widgets/approval-requests/ui/approval-requests-page.tsx",
+      "src/features/approval-request/ui/decided-request-list.tsx"
+    ]
+  },
+  {
+    "index": 47,
+    "section": "### 승인 내역 — `/creator/requests`",
+    "label": "결과별 수 칸",
+    "old": "승인함 ${N} / 받지 않음 ${N} / 자동 반려 ${N} / 차단함 ${N}",
+    "new": "승인 ${N} / 거절 ${N} / 기한 만료 ${N} / 차단 ${N}",
+    "note": "늘",
+    "files": [
+      "src/widgets/approval-requests/ui/approval-requests-page.tsx",
+      "src/features/approval-request/ui/decided-request-list.tsx"
+    ]
+  },
+  {
+    "index": 48,
+    "section": "### 승인 내역 — `/creator/requests`",
+    "label": "빈 상태",
+    "old": "아직 처리한 요청이 없어요.",
+    "new": "처리한 요청이 없습니다.",
+    "note": "처리한 요청이 없을 때",
+    "files": [
+      "src/widgets/approval-requests/ui/approval-requests-page.tsx",
+      "src/features/approval-request/ui/decided-request-list.tsx"
+    ]
+  },
+  {
+    "index": 52,
+    "section": "### 승인 내역 — `/creator/requests`",
+    "label": "줄 결과 태그",
+    "old": "승인함 / 받지 않음 / 차단함 / 자동 반려",
+    "new": "승인 / 거절 / 차단 / 기한 만료",
+    "note": "결과에 따라",
+    "files": [
+      "src/widgets/approval-requests/ui/approval-requests-page.tsx",
+      "src/features/approval-request/ui/decided-request-list.tsx"
+    ]
+  },
+  {
+    "index": 54,
+    "section": "### 승인 내역 — `/creator/requests`",
+    "label": "접기 제목",
+    "old": "자동 반려",
+    "new": "승인 기한 만료",
+    "note": "자동 반려가 1건 이상일 때",
+    "files": [
+      "src/widgets/approval-requests/ui/approval-requests-page.tsx",
+      "src/features/approval-request/ui/decided-request-list.tsx"
+    ]
+  },
+  {
+    "index": 55,
+    "section": "### 승인 내역 — `/creator/requests`",
+    "label": "접기 본문",
+    "old": "${승인 기한 일수}일 안에 정하지 않아 자동으로 받지 않음 처리됐어요.",
+    "new": "${승인 기한 일수}일 이내에 승인 여부를 선택하지 않아 자동으로 거절 처리되었습니다.",
+    "note": "위 접기를 열었을 때",
+    "files": [
+      "src/widgets/approval-requests/ui/approval-requests-page.tsx",
+      "src/features/approval-request/ui/decided-request-list.tsx"
+    ]
+  },
+  {
+    "index": 56,
+    "section": "### 승인 내역 — `/creator/requests`",
+    "label": "접기 제목",
+    "old": "차단함",
+    "new": "팬 차단",
+    "note": "차단함이 1건 이상일 때",
+    "files": [
+      "src/widgets/approval-requests/ui/approval-requests-page.tsx",
+      "src/features/approval-request/ui/decided-request-list.tsx"
+    ]
+  },
+  {
+    "index": 57,
+    "section": "### 승인 내역 — `/creator/requests`",
+    "label": "접기 본문",
+    "old": "앞으로 이 팬의 선물은 받지 않아요. 풀려면 [주소와 설정]에서 해요.",
+    "new": "차단한 팬은 새 선물을 등록할 수 없습니다. 차단 해제는 ‘상세 설정 > 주소와 설정 > 차단한 팬’에서 할 수 있습니다.",
+    "note": "위 접기를 열었을 때(‘차단한 팬’은 상세 설정의 해당 항목으로 연결) · 반영 메모: 차단 해제 경로를 ‘상세 설정 > 주소와 설정 > 차단한 팬’으로 명시합니다. 링크도 해당 설정을 가리켜야 합니다.",
+    "files": [
+      "src/widgets/approval-requests/ui/approval-requests-page.tsx",
+      "src/features/approval-request/ui/decided-request-list.tsx"
+    ]
+  },
+  {
+    "index": 60,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "제목",
+    "old": "선물 현황 진행 중 ${N}건",
+    "new": "선물 현황 · 진행 중 ${N}건",
+    "note": "늘",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 62,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "승인 대기 판 제목",
+    "old": "승인을 기다리는 선물",
+    "new": "승인 대기 선물",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 63,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "승인 대기 판 한 줄",
+    "old": "가장 가까운 기한 ${N}일 남음(또는 오늘까지) · ${닉네임}님의 선물",
+    "new": "가장 빠른 승인 기한: ${N}일 남음(또는 오늘까지) · ${닉네임}님의 선물",
+    "note": "위와 같이 + 지금 할 일에 그 요청이 있을 때",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 72,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "빈 상태",
+    "old": "진행 중인 선물이 없어요",
+    "new": "진행 중인 선물이 없습니다.",
+    "note": "받는 선물이 없을 때",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 75,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "묶음 머리",
+    "old": "${날짜 시각} 보낸 역조공 팬 ${N}명",
+    "new": "${날짜 시각} 결제 완료 · 팬 ${N}명",
+    "note": "보낸 역조공이 있을 때(보낸 때마다) · 반영 메모: 날짜 수정: 역조공 sentAt은 my_sent_revgifts 조회의 settled_at(결제 완료 시각)입니다. 택배 발송일로 읽히는 ‘보냄’ 대신 결제 완료일로 표시합니다.",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 82,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "빈 상태",
+    "old": "진행 중인 선물이 없어요",
+    "new": "진행 중인 선물이 없습니다.",
+    "note": "보내는 선물이 없을 때",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 83,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "단계 이름",
+    "old": "승인 대기 / 사무실로 오는 중 / 검수 중 / 검수 완료 / 출고 / 배송 중 / 수락 대기 / 받지 않음 / 아직 도착하지 않았어요 / 반송 / 처분 예정",
+    "new": "승인 대기 / 팬꾹 도착 대기 / 검수 중 / 검수 완료 / 출고 / 배송 중 / 수락 대기 / 받지 않음 / 미도착 / 반송 / 처분 예정",
+    "note": "단계에 따라(홈 「진행 중인 선물」 줄도 같은 이름) · 반영 메모: ‘팬꾹 도착 대기’는 결제·승인 후 입고 전 상태입니다. 실제 택배 발송 확인을 뜻하지 않으므로 ‘배송 중’으로 단정하지 않습니다.",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 85,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "창 제목",
+    "old": "도착하지 않았어요",
+    "new": "배송 조회",
+    "note": "늘",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 86,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "창 제목 아래",
+    "old": "${닉네임}님 · ${크기} 상자 · ${M월 D일} 보냄",
+    "new": "${닉네임}님 · ${크기} 상자 · ${M월 D일} 결제 완료",
+    "note": "늘 · 반영 메모: 날짜 수정: 역조공 sentAt은 my_sent_revgifts 조회의 settled_at(결제 완료 시각)입니다. 택배 발송일로 읽히는 ‘보냄’ 대신 결제 완료일로 표시합니다.",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 88,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "고르기 첫 칸",
+    "old": "고르세요",
+    "new": "택배사 선택",
+    "note": "늘",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 91,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "자리표시",
+    "old": "숫자만 입력해요",
+    "new": "숫자만 입력",
+    "note": "늘",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 95,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "창 제목 아래",
+    "old": "${M월 D일} 보냄",
+    "new": "${M월 D일} 결제 완료",
+    "note": "늘 · 반영 메모: 날짜 수정: 역조공 sentAt은 my_sent_revgifts 조회의 settled_at(결제 완료 시각)입니다. 택배 발송일로 읽히는 ‘보냄’ 대신 결제 완료일로 표시합니다.",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 96,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "입력 라벨",
+    "old": "택배사 (고르세요 + 택배사 이름 전부, 끝에 「그 밖의 택배사」)",
+    "new": "택배사 (택배사 선택 + 택배사 이름 전부, 끝에 「그 밖의 택배사」)",
+    "note": "늘",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 98,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "자리표시",
+    "old": "숫자만 입력해요",
+    "new": "숫자만 입력",
+    "note": "늘",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 99,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "묶음 질문",
+    "old": "어느 팬에게 보낸 상자인가요?",
+    "new": "받는 팬 선택",
+    "note": "늘",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 101,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "입력 오류",
+    "old": "택배사를 골라 주세요.",
+    "new": "택배사를 선택해 주세요.",
+    "note": "택배사를 안 골랐을 때",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 102,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "입력 오류",
+    "old": "송장번호를 적어 주세요.",
+    "new": "송장번호를 입력해 주세요.",
+    "note": "송장번호가 비었을 때",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 103,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "입력 오류",
+    "old": "송장번호는 숫자 10~14자리예요",
+    "new": "송장번호는 숫자 10\\~14자리로 입력해 주세요.",
+    "note": "송장번호 꼴이 틀렸을 때",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 104,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "입력 오류",
+    "old": "어느 팬에게 보낸 상자인지 골라 주세요.",
+    "new": "상자를 받을 팬을 선택해 주세요.",
+    "note": "팬을 안 골랐을 때",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 105,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "버튼",
+    "old": "선택 완료 / 찾는 중…",
+    "new": "상자 찾기 / 찾는 중…",
+    "note": "늘 / 보내는 중",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 106,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "결과(못 찾음)",
+    "old": "아직 못 찾았어요 / 맞는 상자를 못 찾았어요. 송장번호와 택배사를 다시 확인해 주세요. 사무실에 도착한 지 30일이 지나면 원래 송장 주소로 돌려보내요",
+    "new": "일치하는 상자 없음 / 송장번호와 택배사를 확인해 주세요. 입고 후 30일 이내에 선물과 연결되지 않은 상자는 원래 송장의 보낸 사람 주소로 반송합니다.",
+    "note": "맞는 상자가 없을 때 · 반영 메모: 상자 조회 실패와 서버 오류를 구분합니다. 30일 반송 기준은 도착한 모든 상자가 아니라 선물과 연결되지 않은 상자에 해당합니다.",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 107,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "오류",
+    "old": "오늘은 더 찾을 수 없어요. 내일 다시 해 주세요",
+    "new": "오늘의 조회 가능 횟수를 모두 사용했습니다. 내일 다시 시도해 주세요.",
+    "note": "하루 다섯 번을 넘었을 때",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 108,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "오류",
+    "old": "송장번호를 넣고 택배사를 골라 주세요.",
+    "new": "송장번호를 입력하고 택배사를 선택해 주세요.",
+    "note": "서버가 입력을 거부했을 때",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 109,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "오류",
+    "old": "찾지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "new": "상자를 조회하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    "note": "서버 오류",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 110,
+    "section": "### 선물 현황 — `/creator/progress`",
+    "label": "성공",
+    "old": "사무실에 도착했어요 / ${닉네임}님 선물",
+    "new": "상자 확인 완료 / ${닉네임}님 선물",
+    "note": "찾았을 때",
+    "files": [
+      "src/widgets/creator-gift-progress/ui/gift-progress-page.tsx",
+      "src/features/box-waybill/ui/track-box-button.tsx"
+    ]
+  },
+  {
+    "index": 114,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "제목",
+    "old": "받은 선물 ${N}",
+    "new": "받은 선물 ${N}개",
+    "note": "늘",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 115,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "빈 상태",
+    "old": "아직 출고된 선물이 없어요. 사무실에서 보내면 여기에 상자마다 보여요.",
+    "new": "출고된 선물이 없습니다. 팬꾹에서 출고하면 상자별로 표시됩니다.",
+    "note": "출고된 상자가 없을 때",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 121,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "아래 한 줄",
+    "old": "${M월 D일} 출고 · 확인만 함",
+    "new": "${M월 D일} 출고 · 수령 확인",
+    "note": "답장 없이 확인만 했을 때",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 123,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "아래 한 줄",
+    "old": "${M월 D일} 출고 · 답장 지움",
+    "new": "${M월 D일} 출고 · 답장 삭제",
+    "note": "답장을 지웠을 때",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 126,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "버튼(링크 꼴)",
+    "old": "답장 지우기 / 지우는 중…",
+    "new": "답장 삭제 / 삭제 중…",
+    "note": "답장한 상자",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 127,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "확인 창",
+    "old": "이 답장을 지울까요? 지우면 팬의 기록과 공개 모음에서도 사라지고, 이 상자에는 다시 답장할 수 없어요.",
+    "new": "답장을 삭제할까요? 팬의 기록과 공개 답장 모음에서도 삭제되며, 이 상자에는 다시 답장할 수 없습니다.",
+    "note": "「답장 삭제」를 눌렀을 때",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 128,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "답장 칸 제목",
+    "old": "${팬 닉네임}님에게 감사의 메시지를 전해 보세요!",
+    "new": "${팬 닉네임}님께 답장",
+    "note": "「받았어요」·「답장 남기기」를 눌렀을 때",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 133,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "접기 제목",
+    "old": "이 한 줄은 누가 보나요",
+    "new": "답장 공개 범위",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 134,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "접기 본문",
+    "old": "이 한 줄은 ${팬 닉네임}님 한 명에게만 가요. 팬이 공개를 허락하고 내가 설정에서 「답장 모음 보이기」를 켜 두면, 받았어요를 남기고 3일 뒤부터 링크 페이지에도 보여요. 전화번호·이메일·인터넷 주소는 쓸 수 없어요.",
+    "new": "답장은 ${팬 닉네임}님께 전달됩니다. 팬이 공개에 동의하고 ‘답장 모음 보이기’를 켠 경우, ‘받았어요’로 수령을 확인한 날부터 3일 뒤에 크리에이터 페이지에도 공개됩니다.<br>전화번호·이메일·인터넷 주소는 입력할 수 없습니다.",
+    "note": "접기를 열었을 때 · 반영 메모: 답장 공개는 팬 동의와 크리에이터 공개 설정을 모두 충족해야 합니다. gift-reply INV-G7에 맞춰 직접 수령 확인한 날부터 3일 뒤로 안내합니다.",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 137,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "입력 오류",
+    "old": "보낼 답장 문구를 하나 골라 주세요.",
+    "new": "답장 문구를 선택해 주세요.",
+    "note": "문구 없이 「답장 보내기」",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 138,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "입력 오류",
+    "old": "한 줄은 80자까지 쓸 수 있어요.",
+    "new": "한 줄 답장은 최대 80자까지 입력할 수 있습니다.",
+    "note": "80자를 넘었을 때",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 139,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "입력 오류",
+    "old": "한 줄에는 줄바꿈이나 보이지 않는 글자를 쓸 수 없어요.",
+    "new": "줄바꿈이나 보이지 않는 문자는 입력할 수 없습니다.",
+    "note": "금지 글자가 있을 때",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 140,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "서버 오류",
+    "old": "한 줄에 쓸 수 없는 말이 들어 있어요. / 한 줄에 전화번호·이메일·인터넷 주소는 쓸 수 없어요. / 상자를 찾을 수 없어요. 새로 고침해 주세요. / 아직 출고되지 않은 상자예요. 출고된 뒤에 받았어요를 남길 수 있어요. / 이미 답장한 상자예요. 답장은 고칠 수 없고 지울 수만 있어요. / 지운 답장은 다시 쓸 수 없어요. / 지울 답장이 없어요. 새로 고침해 주세요. / 입력을 확인해 주세요. / 선물을 받은 크리에이터만 할 수 있어요. / 저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "new": "사용할 수 없는 표현이 포함되어 있습니다. / 전화번호·이메일·인터넷 주소는 입력할 수 없습니다. / 상자를 찾을 수 없습니다. 새로고침해 주세요. / 출고 후 수령을 확인할 수 있습니다. / 이미 답장한 상자입니다. 답장은 수정할 수 없고 삭제만 가능합니다. / 삭제한 답장은 다시 작성할 수 없습니다. / 삭제할 답장이 없습니다. 새로고침해 주세요. / 입력 내용을 확인해 주세요. / 선물을 받은 크리에이터만 이용할 수 있습니다. / 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    "note": "저장이 거부·실패했을 때",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 141,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "성공 알림(스크린리더)",
+    "old": "${팬 닉네임}님께 답장을 보냈어요. / 받았어요를 남겼어요. / 답장을 지웠어요.",
+    "new": "${팬 닉네임}님께 답장을 보냈습니다. / 수령이 확인되었습니다. / 답장이 삭제되었습니다.",
+    "note": "저장했을 때",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 142,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "상한 안내",
+    "old": "최근에 출고된 200개까지 보여요. 아직 답장 안 한 선물 수는 그보다 오래된 상자까지 모두 센 숫자예요.",
+    "new": "최근 출고된 상자 200개까지 표시됩니다. ‘답장하지 않은 선물’ 수에는 이전에 출고된 상자도 포함됩니다.",
+    "note": "상자가 200개에 닿았을 때 · 반영 메모: 최근 200개는 목록 표시 한도입니다. 답장하지 않은 선물 수의 집계 한도와 구분합니다.",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 143,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "옆 칸 제목",
+    "old": "아직 답장 안 한 선물",
+    "new": "답장하지 않은 선물",
+    "note": "늘",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 145,
+    "section": "### 받은 선물 — `/creator/boxes`",
+    "label": "옆 칸 안내",
+    "old": "답장은 꼭 남기지 않아도 돼요. 이 숫자는 나만 볼 수 있어요.",
+    "new": "답장은 선택 사항이며, 이 숫자는 본인에게만 표시됩니다.",
+    "note": "늘",
+    "files": [
+      "src/widgets/approval-requests/ui/received-boxes-page.tsx",
+      "src/features/gift-reply/ui/received-box-list.tsx"
+    ]
+  },
+  {
+    "index": 149,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "빈 상태 제목",
+    "old": "지금 할 일이 없어요",
+    "new": "현재 처리할 일이 없습니다",
+    "note": "할 일이 없을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 152,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "줄 제목",
+    "old": "${닉네임}님 선물에서 추적 장치가 나왔어요",
+    "new": "${닉네임}님 선물 · 추적 장치 발견",
+    "note": "추적 장치가 나온 상자",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 156,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "줄 제목",
+    "old": "${닉네임}님 선물에서 ${블루투스 / 무선(RF) / 블루투스·무선(RF)} 기기가 나왔어요",
+    "new": "${닉네임}님 선물 · ${블루투스 / 무선(RF) / 블루투스·무선(RF)} 기기 발견",
+    "note": "블루투스 기기가 나온 상자",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 157,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "줄 설명",
+    "old": "블루투스 발견 · ${N}일 남음 · ${선물 종류} · ${상자 위치} · 추적 장치 아님",
+    "new": "기기 발견 · ${N}일 남음 · ${선물 종류} · ${상자 위치} · 추적 장치 아님",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 160,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "줄 취소 오류",
+    "old": "취소하지 못했어요. 잠시 뒤 다시 해 주세요. (또는 서버 문구 — 아래 확인 창 오류 참고)",
+    "new": "선택을 취소하지 못했습니다. 잠시 후 다시 시도해 주세요. (또는 서버 문구 — 아래 확인 창 오류 참고)",
+    "note": "줄의 「취소」가 실패했을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 162,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "강조 판 제목",
+    "old": "${닉네임}님이 선물을 보내려고 해요",
+    "new": "${닉네임}님의 선물 승인 요청",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 164,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "지난 선물 이력",
+    "old": "처음 보내는 팬이에요 / 지난 선물 ${N}건 · 모두 검수 통과 / 지난 선물 ${N}건 · 검수 통과 ${N}건 · 검수 반송 ${N}건 · 검수 결과 없음 ${N}건",
+    "new": "첫 선물 요청 / 지난 선물 ${N}건 · 모두 검수 통과 / 지난 선물 ${N}건 · 검수 통과 ${N}건 · 검수 반송 ${N}건 · 검수 결과 없음 ${N}건",
+    "note": "이력에 따라(승인·확인 창도 같은 문구)",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 167,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "강조 판 기한",
+    "old": "정할 때까지 / ${N}일 남음 (오늘까지) / ${날짜 시각}까지",
+    "new": "승인 기한 / ${N}일 남음 (오늘까지) / ${날짜 시각}까지",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 169,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "카드 제목",
+    "old": "${닉네임}님이 선물을 보내려고 해요",
+    "new": "${닉네임}님의 선물 승인 요청",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 175,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "줄 설명",
+    "old": "돌려받을 주소 확인 · ${M월 D일}까지 확인하지 않으면 상자를 처분해요",
+    "new": "반송 주소 확인 · ${M월 D일}까지 미확인 시 처분 대상",
+    "note": "위와 같이 · 반영 메모: 기한이 지나면 처분 대상이 되며, 실제 처분은 운영자 처리 시점입니다(office-workflow INV-W15). 날짜 도달 즉시 처분됐다고 단정하지 않습니다.",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 177,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "줄 제목",
+    "old": "${닉네임}님 상자가 아직 안 왔어요",
+    "new": "${닉네임}님께 보낸 상자 미도착",
+    "note": "보낸 역조공 상자가 오래 안 왔을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 178,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "줄 설명",
+    "old": "아직 도착하지 않은 상자 · ${M월 D일} 보낸 역조공",
+    "new": "미도착 상자 · ${M월 D일} 결제 완료",
+    "note": "위와 같이 · 반영 메모: 날짜 수정: 역조공 sentAt은 my_sent_revgifts 조회의 settled_at(결제 완료 시각)입니다. 택배 발송일로 읽히는 ‘보냄’ 대신 결제 완료일로 표시합니다.",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 181,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "줄 설명",
+    "old": "결제를 마치지 않은 선물 · ${N}일 남음 · ${금액}원",
+    "new": "결제 대기 · ${N}일 남음 · ${금액}원",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 186,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "줄 설명",
+    "old": "아직 도착하지 않은 상자 · ${N}일 남음 · ${크기}",
+    "new": "미도착 상자 · ${N}일 남음 · ${크기}",
+    "note": "보낸 상자가 안 왔을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 187,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "줄 버튼",
+    "old": "찾기",
+    "new": "상자 찾기",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 194,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "단계 머리",
+    "old": "주소를 입력해 주세요 / 새 주소를 입력해 주세요 / 주소를 확인해 주세요",
+    "new": "배송지 등록 / 배송지 변경 / 등록된 배송지 확인",
+    "note": "승인 단계(주소 없음 / 바꾸는 중 / 등록됨)",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 195,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "등록된 주소",
+    "old": "${집·작업실·사무실·기타} · ${날짜}에 등록한 주소 (이름표가 없으면 앞부분 없음)",
+    "new": "${집·작업실·사무실·기타} · ${날짜} 등록 (이름표가 없으면 앞부분 없음)",
+    "note": "주소가 등록돼 있을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 196,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "주소 안내",
+    "old": "주소는 잠가서 보관해서 여기서도 보이지 않아요. 이사했거나 받는 곳이 바뀌었으면 승인하기 전에 바꿔 주세요.",
+    "new": "주소는 암호화해 보관하며 이 화면에 표시되지 않습니다. 배송지가 바뀌었다면 승인 전에 변경해 주세요.",
+    "note": "위와 같이 · 반영 메모: 승인 단계의 주소 확인은 등록 여부·이름표 확인입니다. 암호화된 주소를 이 화면에서 다시 보여 주는 것으로 안내하지 않습니다.",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 197,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "버튼",
+    "old": "주소 바꾸기",
+    "new": "주소 변경",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 198,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "저장 알림",
+    "old": "주소를 바꿨어요. / 주소를 등록했어요.",
+    "new": "주소가 변경되었습니다. / 주소가 등록되었습니다.",
+    "note": "창 안에서 주소를 저장했을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 199,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "입력 안내",
+    "old": "승인한 선물은 이 주소로 보내요. 받는 주소가 있어야 승인할 수 있어요.",
+    "new": "선물을 승인하려면 배송지를 등록해 주세요. 승인한 선물은 이 주소로 배송됩니다.",
+    "note": "주소가 없을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 200,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "입력 안내",
+    "old": "새 주소를 입력하면 지금 주소를 덮어써요. 아직 송장을 뽑지 않은 선물부터 새 주소로 나가요.",
+    "new": "새 주소를 저장하면 기존 배송지가 변경됩니다. 아직 송장을 출력하지 않은 선물부터 적용됩니다.",
+    "note": "주소를 바꾸는 중",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 201,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "입력 안내",
+    "old": "주소는 이 브라우저에서 잠가서 보내요. 주소 서명을 마치면 이어서 승인 서명을 따로 받아요.",
+    "new": "주소는 이 브라우저에서 암호화해 전송합니다. 주소 등록 인증 후 선물 승인 인증을 별도로 진행합니다.",
+    "note": "주소 입력 칸이 보일 때 · 반영 메모: 주소 등록 서명과 선물 승인 서명은 별도 절차입니다. 두 번의 확인이 필요한 이유를 짧게 명시합니다.",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 203,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "오류",
+    "old": "주소 정보를 읽지 못했어요. 새로 고침한 뒤 다시 해 주세요.",
+    "new": "주소 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.",
+    "note": "주소 상태를 못 읽었을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 204,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "오류",
+    "old": "주소 보호 설정이 아직 안 돼 있어요. 지금은 주소를 등록할 수 없어요.",
+    "new": "현재 주소를 등록할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+    "note": "주소 봉인 키가 없을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 205,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "단계 머리",
+    "old": "카카오톡으로 승인해 주세요",
+    "new": "카카오톡으로 선물 승인",
+    "note": "주소가 준비됐을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 206,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "약속 문장",
+    "old": "크리에이터 주소는 팬에게 공개하지 않아요. 모든 선물은 팬꾹에서 검수한 뒤 보내요.",
+    "new": "크리에이터의 주소는 팬에게 공개되지 않습니다. 팬이 보낸 모든 선물은 검수 후 배송합니다.",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 207,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "버튼",
+    "old": "돌아가기 / 카카오톡으로 승인하기 (보내는 중…)",
+    "new": "돌아가기 / 카카오톡으로 승인하기 (요청 중…)",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 208,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "받지 않기 질문",
+    "old": "이 선물을 받지 않을까요?",
+    "new": "이 선물을 거절할까요?",
+    "note": "「받지 않기」 단계 · 반영 메모: ‘받지 않을까요?’는 거절을 권하는 표현으로 읽힐 수 있습니다. 사용자가 선택한 거절 행동을 확인하는 질문으로 바꿉니다.",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 210,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "버튼",
+    "old": "돌아가기 / 받지 않기 (저장하는 중…)",
+    "new": "돌아가기 / 받지 않기 (저장 중…)",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 211,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "성공",
+    "old": "승인 완료 / 받지 않기 완료",
+    "new": "승인 완료 / 거절 완료",
+    "note": "처리했을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 213,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "오류",
+    "old": "승인하지 못했어요. 잠시 뒤 다시 해 주세요. / 저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "new": "승인하지 못했습니다. 잠시 후 다시 시도해 주세요. / 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    "note": "승인·받지 않기가 실패했을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 214,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "서버 오류",
+    "old": "찾을 수 없는 요청이에요. / 크리에이터 계정만 할 수 있어요. / 지금은 승인할 수 없어요. 잠시 뒤 다시 해 주세요. / 서명을 확인하지 못했어요. 다시 해 주세요. / 이미 처리된 요청이에요. 새로 고침하면 결과가 보여요. / 지금은 승인할 수 없는 선물이에요. 새로 고침해 주세요. / 지금은 받지 않기로 할 수 없는 선물이에요. 새로 고침해 주세요. / 잘못된 요청이에요.",
+    "new": "승인 요청을 찾을 수 없습니다. / 크리에이터 계정만 이용할 수 있습니다. / 현재 승인할 수 없습니다. 잠시 후 다시 시도해 주세요. / 서명을 확인하지 못했습니다. 다시 인증해 주세요. / 이미 처리된 요청입니다. 새로고침해 결과를 확인해 주세요. / 현재 승인할 수 없는 선물입니다. 새로고침해 주세요. / 현재 거절할 수 없는 선물입니다. 새로고침해 주세요. / 잘못된 요청입니다.",
+    "note": "서버가 거부했을 때(「받는 주소를 먼저 등록해 주세요.」는 글 대신 주소 입력 단계로 돌아감)",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 215,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "창 제목",
+    "old": "추적 장치 발견 / 블루투스 기기가 발견된 선물",
+    "new": "추적 장치 발견 / 탐지기 반응 물품 확인",
+    "note": "창 종류에 따라",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 218,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "항목",
+    "old": "선물 종류 / 상자 ${N}개(${N}개 중 ${n}번) · ${크기} / 보낸 날 ${M월 D일} / 사무실 도착 ${M월 D일}",
+    "new": "선물 종류 / 상자 ${N}개(${N}개 중 ${n}번) · ${크기} / 등록일 ${M월 D일} / 팬꾹 도착일 ${M월 D일}",
+    "note": "늘(사무실 도착은 도착했을 때) · 반영 메모: creator-action-center 조회의 sent_at은 orders.registered_at입니다. ‘보낸 날’ 대신 ‘등록일’로 표시합니다.",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 219,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "항목(블루투스만)",
+    "old": "발견된 것 ${블루투스} 기기 / 검수 결과 추적 장치 아님",
+    "new": "발견 물품 ${블루투스} 기기 / 검수 결과 추적 장치 아님",
+    "note": "블루투스 창",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 221,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "질문(추적 장치만)",
+    "old": "신고할지 정해 주세요",
+    "new": "신고 여부를 선택해 주세요",
+    "note": "아직 안 골랐을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 225,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "안내",
+    "old": "팬꾹이 처리하기 전까지 취소할 수 있어요.",
+    "new": "팬꾹이 처리하기 전까지 선택을 취소할 수 있습니다.",
+    "note": "방금 골랐을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 226,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "버튼",
+    "old": "취소 / 확인",
+    "new": "선택 취소 / 확인",
+    "note": "골랐을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 227,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "오류",
+    "old": "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "new": "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    "note": "저장 실패",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 228,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "서버 오류",
+    "old": "찾을 수 없는 상자예요. / 이미 골랐어요. 바꾸려면 먼저 취소해 주세요. / 고른 것이 없어요. / 팬꾹이 이미 처리했어요. / 7일이 지나 바꿀 수 없어요. / 선물이 끝나 더 정할 수 없어요. / 잠시 뒤 다시 시도해 주세요.",
+    "new": "상자를 찾을 수 없습니다. / 이미 선택한 항목이 있습니다. 변경하려면 먼저 선택을 취소해 주세요. / 취소할 선택 내역이 없습니다. / 팬꾹에서 이미 처리한 상자입니다. / 선택 기한인 7일이 지나 변경할 수 없습니다. / 처리 대상이 아닌 상자입니다. / 잠시 후 다시 시도해 주세요.",
+    "note": "서버가 거부했을 때 · 반영 메모: 종료 오류는 해당 요청이 더 이상 처리 대상이 아닐 때의 문구입니다. 추적 장치 처리는 선물 거절·취소 뒤에도 계속될 수 있으므로 ‘선물이 끝나’로 일반화하지 않습니다.",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 230,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "창 제목",
+    "old": "돌려받을 주소 확인",
+    "new": "반송 주소 확인",
+    "note": "늘",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 232,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "입력 머리",
+    "old": "주소를 입력해 주세요 / 새 주소를 입력해 주세요",
+    "new": "배송지 등록 / 배송지 변경",
+    "note": "주소가 없을 때 / 바꾸는 중",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 233,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "등록된 주소",
+    "old": "${이름표} · ${날짜}에 등록한 주소",
+    "new": "${이름표} · ${날짜} 등록",
+    "note": "주소가 등록돼 있을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 234,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "버튼",
+    "old": "바꾸기 / 확인",
+    "new": "주소 변경 / 확인",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 235,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "저장 알림",
+    "old": "주소를 바꿨어요. / 주소를 등록했어요.",
+    "new": "주소가 변경되었습니다. / 주소가 등록되었습니다.",
+    "note": "창 안에서 주소를 저장했을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 237,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "오류",
+    "old": "주소 정보를 읽지 못했어요. 새로 고침한 뒤 다시 해 주세요. / 주소 보호 설정이 아직 안 돼 있어요. 지금은 주소를 등록할 수 없어요.",
+    "new": "주소 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요. / 현재 주소를 등록할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+    "note": "주소 상태를 못 읽었을 때 / 봉인 키가 없을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 238,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "오류",
+    "old": "찾을 수 없는 상자예요. / 기한이 지나 확인할 수 없어요. / 지금은 확인할 수 없는 상자예요. / 잠시 뒤 다시 해 주세요. / 확인하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "new": "상자를 찾을 수 없습니다. / 확인 기한이 만료되었습니다. / 현재 주소를 확인할 수 없는 상자입니다. / 잠시 후 다시 시도해 주세요. / 반송 주소를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    "note": "확인이 거부·실패했을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 239,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "창 제목",
+    "old": "아직 도착하지 않은 상자",
+    "new": "미도착 상자 찾기",
+    "note": "늘",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 241,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "폼 이름(스크린리더)",
+    "old": "팬꾹 주소 없이 보낸 상자 찾기",
+    "new": "주소 끝 6자리 없이 보낸 상자 찾기",
+    "note": "늘 · 반영 메모: 전체 팬꾹 주소가 아니라 주소 끝 6자리 누락을 설명합니다. 앞선 팬 화면 문구안과 맞췄습니다.",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 242,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "입력 라벨",
+    "old": "택배사 (고르세요 + 택배사 이름) / 송장번호",
+    "new": "택배사 (택배사 선택 + 택배사 이름) / 송장번호",
+    "note": "늘",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 243,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "자리표시",
+    "old": "숫자만 입력해요",
+    "new": "숫자만 입력",
+    "note": "늘",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 244,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "입력 오류",
+    "old": "송장번호를 적어 주세요. / 송장번호는 숫자 10~14자리예요 / 택배사를 골라 주세요.",
+    "new": "송장번호를 입력해 주세요. / 송장번호는 숫자 10\\~14자리로 입력해 주세요. / 택배사를 선택해 주세요.",
+    "note": "입력이 틀렸을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 245,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "버튼",
+    "old": "찾기 / 찾는 중…",
+    "new": "상자 찾기 / 찾는 중…",
+    "note": "늘 / 보내는 중",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 246,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "성공",
+    "old": "도착 완료 / ${상자 이름} · 곧 검수로 넘어가요.",
+    "new": "상자 확인 완료 / ${상자 이름} · 선물에 연결되었습니다.",
+    "note": "찾았을 때 · 반영 메모: 상자를 찾은 사실과 다음 검수 시점을 구분합니다. 조회 성공만으로 ‘곧 검수’라고 약속하지 않습니다.",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 247,
+    "section": "### 지금 할 일 — `/creator/actions`",
+    "label": "결과(못 찾음)",
+    "old": "아직 못 찾았어요 / ${서버 문구 — 내 상자 찾기 창과 같음}",
+    "new": "일치하는 상자 없음 / ${서버 문구 — 내 상자 찾기 창과 같음}",
+    "note": "못 찾았을 때",
+    "files": [
+      "src/widgets/creator-action-center/ui/creator-action-center-page.tsx",
+      "src/features/approval-request/ui/approval-window.tsx",
+      "src/features/creator-check/ui/*-window.tsx",
+      "src/features/return-address/ui/return-address-window.tsx"
+    ]
+  },
+  {
+    "index": 249,
+    "section": "### 주소 열람 기록 — `/creator/log`",
+    "label": "제목",
+    "old": "주소 열람 기록 ${N}",
+    "new": "주소 열람 기록 ${N}건",
+    "note": "늘",
+    "files": [
+      "src/widgets/access-log/ui/access-log-page.tsx"
+    ]
+  },
+  {
+    "index": 250,
+    "section": "### 주소 열람 기록 — `/creator/log`",
+    "label": "설명",
+    "old": "크리에이터가 승인하기 전에는 주소가 공개되지 않아요. 열린 기록은 전부 여기에 보여요.",
+    "new": "주소는 승인·검수 후 송장 출력에만 사용합니다. 주소 열람 시각과 출력 내역을 확인할 수 있습니다. 크리에이터의 주소는 팬에게 공개되지 않습니다.",
+    "note": "늘(앞 문장 굵게) · 반영 메모: 승인 후 팬에게 주소가 공개되는 것으로 오해하지 않도록 열람 주체·용도를 구분합니다. 거절된 열람 시도는 내부 기록이며 이 목록의 공개 범위가 아닙니다.",
+    "files": [
+      "src/widgets/access-log/ui/access-log-page.tsx"
+    ]
+  },
+  {
+    "index": 252,
+    "section": "### 주소 열람 기록 — `/creator/log`",
+    "label": "요약 숫자",
+    "old": "주소 열림 ${N}번 / 승인 ${N}건 / 재출력 ${N}번",
+    "new": "주소 열람 ${N}회 / 승인 ${N}건 / 재출력 ${N}회",
+    "note": "늘",
+    "files": [
+      "src/widgets/access-log/ui/access-log-page.tsx"
+    ]
+  },
+  {
+    "index": 253,
+    "section": "### 주소 열람 기록 — `/creator/log`",
+    "label": "규칙 안내",
+    "old": "주소는 선물 상자마다 첫 출력과 재출력을 합쳐 최대 3번까지 열려요. 택배 기사가 상자를 가져가면 남은 횟수가 있어도 그 상자로는 더 열리지 않아요.",
+    "new": "주소 열람은 상자별 첫 출력·재출력을 합쳐 최대 3회 가능합니다. 택배사 연동 후에는 집하가 확인되면 남은 횟수와 관계없이 추가 열람이 제한됩니다.",
+    "note": "늘 · 반영 메모: 택배사 연동 전에는 집하 확인 시점이 없어 이 차단 조건을 확인할 수 없습니다. address-protection INV-P4·P5에 따라 연동 후 적용되는 조건으로 표시합니다.",
+    "files": [
+      "src/widgets/access-log/ui/access-log-page.tsx"
+    ]
+  },
+  {
+    "index": 255,
+    "section": "### 주소 열람 기록 — `/creator/log`",
+    "label": "빈 상태",
+    "old": "아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요.",
+    "new": "주소 열람 기록이 없습니다. 송장 출력 시 기록됩니다.",
+    "note": "기록이 없을 때",
+    "files": [
+      "src/widgets/access-log/ui/access-log-page.tsx"
+    ]
+  },
+  {
+    "index": 263,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "구간 제목",
+    "old": "받을 팬 고르기",
+    "new": "받는 팬 선택",
+    "note": "팬 고르기 단계",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 264,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "안내",
+    "old": "나를 팔로우하는 팬이에요. 받을 팬을 체크해 주세요.",
+    "new": "팔로워 목록에서 선물을 받을 팬을 선택해 주세요.",
+    "note": "위와 같이",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 265,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "알림(결제 실패)",
+    "old": "결제를 마치지 못해 역조공이 보내지지 않았어요. 받을 팬을 다시 골라 주세요.",
+    "new": "결제가 완료되지 않았습니다. 다시 진행하려면 받을 팬을 선택해 주세요.",
+    "note": "결제창에서 실패해 돌아왔을 때(팬을 고르면 사라짐)",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 266,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "알림(결제 처리 중)",
+    "old": "같은 결제를 처리하는 중이에요. 잠시 뒤 보낸 역조공을 확인해 주세요.",
+    "new": "결제를 처리 중입니다. 잠시 후 ‘보낸 역조공’에서 결과를 확인해 주세요.",
+    "note": "같은 결제가 처리 중일 때",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 267,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "인원 안내",
+    "old": "최대 10명까지 한 번에 보낼 수 있어요",
+    "new": "한 번에 최대 10명 선택 가능",
+    "note": "10명 미만을 골랐을 때",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 268,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "인원 안내",
+    "old": "10명을 모두 골랐어요. 더 보내려면 결제한 뒤 새로 보내 주세요.",
+    "new": "10명 선택 완료 · 더 보내려면 결제 후 새로 신청해 주세요.",
+    "note": "10명을 골랐을 때",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 271,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "빈 상태",
+    "old": "아직 나를 팔로우한 팬이 없어요. 팬이 팔로우하면 여기에 나와요.",
+    "new": "팔로워가 없습니다. 팬이 팔로우하면 목록에 표시됩니다.",
+    "note": "팔로워가 없을 때",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 272,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "안내 칸 제목",
+    "old": "이렇게 진행돼요",
+    "new": "진행 절차",
+    "note": "늘",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 273,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "단계 1",
+    "old": "팬이 「받기」를 누를 때 주소를 직접 입력해요 / 크리에이터에게는 팬의 주소가 보이지 않아요.",
+    "new": "팬이 ‘받기’를 누르면 배송지를 확인합니다. 등록된 주소가 없으면 직접 입력합니다. / 팬의 주소는 크리에이터에게 공개되지 않습니다.",
+    "note": "늘 · 반영 메모: 팬은 등록된 배송지를 확인할 수 있고, 등록 전일 때만 입력합니다(reverse-gift INV-R4). 매번 새 주소를 입력하는 것으로 안내하지 않습니다.",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 274,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "단계 2",
+    "old": "결제하면 팬마다 팬꾹 주소가 안내돼요 / 팬마다 상자를 따로 포장해서, 그 팬의 팬꾹 주소를 끝까지 그대로 써서 보내 주세요.",
+    "new": "결제 후 팬별 팬꾹 주소 발급 / 팬마다 상자를 따로 포장하고, 해당 팬의 팬꾹 주소를 끝까지 입력해 보내 주세요.",
+    "note": "늘",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 275,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "단계 3",
+    "old": "7일 안에 받지 않으면 그 상자만 돌려보내고 환불해요 / 한 팬이 받지 않아도 다른 팬의 선물은 그대로 가요.",
+    "new": "결제 후 7일 이내 팬 수락 필요 / 팬이 거절하거나 기한 내 수락하지 않으면 해당 상자만 반송·환불 대상이 됩니다. 다른 팬의 선물은 그대로 진행됩니다.",
+    "note": "늘 · 반영 메모: 7일은 배송 완료 기한이 아니라 결제 후 팬의 수락 기한입니다. 반송·환불은 팬별로 처리하며, 입고 여부에 따른 별도 시점·공제 기준을 적용합니다(reverse-gift INV-R10·R11).",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 276,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "크기 안내",
+    "old": "상자는 팬마다 고를 수 있어요. 소형은 세 변의 합 100cm 이하·무게 5kg 이하, 중형은 세 변의 합 100cm 이하·무게 10kg 이하, 대형은 세 변의 합 160cm 이하·무게 20kg 이하예요. 크기와 무게 중 큰 쪽으로 정해요.",
+    "new": "팬마다 상자 크기를 선택할 수 있습니다.<br>• 소형: 세 변의 합 100cm 이하 · 무게 5kg 이하<br>• 중형: 세 변의 합 100cm 이하 · 무게 10kg 이하<br>• 대형: 세 변의 합 160cm 이하 · 무게 20kg 이하<br>크기·무게 중 더 높은 요금 구간을 선택해 주세요.",
+    "note": "팔로워가 있을 때 · 반영 메모: 확인 필요: 추출본에는 대형이 있으나 reverse-gift INV-R3의 요금 예시는 소형·중형만 나옵니다. 원문의 구간·수치는 유지했으며 공개 전 요금 기준을 맞춰야 합니다.",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 277,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "안내",
+    "old": "팬 목록에는 팬의 닉네임만 보여요. 팬의 주소와 연락처는 보이지 않아요.",
+    "new": "팬의 닉네임만 표시됩니다. 주소·연락처는 공개되지 않습니다.",
+    "note": "늘",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 282,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "결제 띠 안내",
+    "old": "배송비와 검수 포함",
+    "new": "배송비 포함 · 검수비 제외",
+    "note": "늘 · 반영 메모: 역조공은 팬 선물 요금에서 검수비를 제외합니다. 겉면·금지 물품 확인은 하지만 추적 장치 검사와 크기·무게 실측은 하지 않습니다(reverse-gift INV-R3). ‘검수 포함’으로 동일 서비스라고 읽히지 않게 구분했습니다.",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 283,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "동의 체크",
+    "old": "결제 내용과 아래 규정을 확인했고 결제에 동의해요 (필수)",
+    "new": "결제 내용과 아래 규정을 확인했으며, 결제에 동의합니다. (필수)",
+    "note": "늘",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 286,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "버튼 아래",
+    "old": "결제는 한 번이에요. 팬이 받지 않으면 그 팬의 상자 요금만 환불돼요.",
+    "new": "한 번에 결제 · 환불은 팬별 처리<br>받지 않은 팬의 상자만 환불 대상입니다. 반송 시 택배비를 차감하며, 입고 전 환불 시점은 취소·환불 규정에 따릅니다.",
+    "note": "늘 · 반영 메모: 받지 않은 팬의 상자만 환불 대상입니다. 전액·즉시 환불을 약속하지 않으며, 버튼 아래는 요약하고 기존 취소·환불 규정 링크에서 상세 시점과 공제 기준을 안내합니다.",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 288,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "오류",
+    "old": "요금이 방금 바뀌었어요. 금액을 다시 확인하고 결제해 주세요.",
+    "new": "요금이 변경되었습니다. 금액을 확인한 뒤 결제해 주세요.",
+    "note": "요금이 바뀌었을 때",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 289,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "오류",
+    "old": "나를 팔로우한 팬에게만 보낼 수 있어요.",
+    "new": "나를 팔로우한 팬에게만 선물을 보낼 수 있습니다.",
+    "note": "고른 팬이 팔로우를 끊었을 때",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 290,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "오류",
+    "old": "받을 팬과 상자를 다시 확인해 주세요. 한 번에 10명까지, 같은 팬은 한 번만 넣을 수 있어요.",
+    "new": "받을 팬과 상자를 확인해 주세요. 한 번에 최대 10명까지 선택할 수 있으며, 같은 팬을 중복 선택할 수 없습니다.",
+    "note": "서버가 입력을 거부했을 때",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 291,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "오류",
+    "old": "역조공은 크리에이터만 보낼 수 있어요.",
+    "new": "역조공은 크리에이터 계정만 이용할 수 있습니다.",
+    "note": "크리에이터가 아닐 때",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 292,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "오류",
+    "old": "보내기를 등록하지 못했어요. 잠시 뒤 다시 시도해 주세요.",
+    "new": "역조공 신청을 등록하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    "note": "그 밖의 실패",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 293,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "설명(결제 단계)",
+    "old": "팬 ${N}명에게 보내요 — 결제하면 보내기가 끝나요.",
+    "new": "팬 ${N}명에게 보낼 선물입니다. 결제 후 안내된 팬꾹 주소로 상자를 보내 주세요.",
+    "note": "등록 뒤 결제 단계 · 반영 메모: 결제 완료는 역조공 신청 완료입니다. 상자 발송·검수·팬 수령이 완료되는 것으로 안내하지 않습니다.",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 294,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "결제 단계 제목",
+    "old": "결제 수단을 골라 주세요",
+    "new": "결제 수단 선택",
+    "note": "위와 같이",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 298,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "오류",
+    "old": "결제 화면을 불러오지 못했어요. 새로고침해 주세요. / 결제를 마치지 못했어요. 다시 시도해 주세요.",
+    "new": "결제 화면을 불러오지 못했습니다. 새로고침해 주세요. / 결제를 완료하지 못했습니다. 다시 시도해 주세요.",
+    "note": "결제창을 못 열었을 때 / 결제 요청 실패",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 299,
+    "section": "### 팬에게 보내기(역조공) — `/creator/revgifts/new`",
+    "label": "오류",
+    "old": "지금은 결제를 받을 수 없어요. 잠시 뒤 다시 시도해 주세요.",
+    "new": "현재 결제를 이용할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+    "note": "결제 키가 설정되지 않았을 때",
+    "files": [
+      "src/app/(site)/creator/revgifts/new/page.tsx",
+      "src/features/revgift-send/ui/send-form.tsx",
+      "src/features/checkout/ui/payment-step.tsx"
+    ]
+  },
+  {
+    "index": 302,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "제목",
+    "old": "보낸 역조공 ${묶음 수}",
+    "new": "보낸 역조공 ${묶음 수}묶음",
+    "note": "늘",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 304,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "결제 완료 알림",
+    "old": "결제가 끝났어요. 팬마다 상자를 따로 포장하고, 아래 팬마다 나온 팬꾹 주소로 보내 주세요.",
+    "new": "결제가 완료되었습니다. 팬마다 상자를 따로 포장해 아래에 안내된 팬별 팬꾹 주소로 보내 주세요.",
+    "note": "결제 직후(`?paid=1`)",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 307,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "안심 안내",
+    "old": "팬의 주소와 실명은 보이지 않아요. / 팬이 직접 입력하고, 팬꾹만 송장을 뽑을 때 열어요.",
+    "new": "팬의 주소와 실명은 크리에이터에게 공개되지 않습니다. / 팬이 확인한 배송지는 팬꾹에서 송장 출력 시에만 열람합니다.",
+    "note": "늘",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 308,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "빈 상태 제목",
+    "old": "아직 보낸 역조공이 없어요",
+    "new": "보낸 역조공이 없습니다",
+    "note": "보낸 역조공이 없을 때",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 309,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "빈 상태 본문",
+    "old": "나를 팔로우한 팬을 골라 선물을 보낼 수 있어요.",
+    "new": "나를 팔로우한 팬을 선택해 선물을 보낼 수 있습니다.",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 310,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "묶음 제목",
+    "old": "${날짜 시각} 보낸 역조공",
+    "new": "${날짜 시각} 결제 완료",
+    "note": "묶음마다(맨 위 묶음만 펼쳐짐) · 반영 메모: 날짜 수정: 역조공 sentAt은 my_sent_revgifts 조회의 settled_at(결제 완료 시각)입니다. 택배 발송일로 읽히는 ‘보냄’ 대신 결제 완료일로 표시합니다.",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 312,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "묶음 요약 뒤",
+    "old": "(받지 않은 상자 요금은 환불돼요)",
+    "new": "(받지 않은 팬의 상자는 환불 대상 · 반송 시 택배비 차감)",
+    "note": "받지 않은 팬이 있을 때 · 반영 메모: 팬의 거절은 환불 완료 상태가 아닙니다. ‘환불 대상’과 ‘환불 완료’를 구분합니다.",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 313,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "주소 안내 제목",
+    "old": "팬마다 팬꾹 주소가 달라요",
+    "new": "팬별 팬꾹 주소",
+    "note": "묶음에 아직 보낼 상자가 있을 때",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 314,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "주소 안내 본문",
+    "old": "팬 한 명마다 상자를 따로 포장하고, 아래 팬마다 나온 팬꾹 주소를 끝 6자리까지 그대로 써서 보내 주세요. 팬이 받기를 누를 때까지 기다리지 않고 보내셔도 돼요. 받지 않은 팬의 상자는 돌려보내고 그 상자 요금은 환불돼요.",
+    "new": "팬마다 상자를 따로 포장하고, 해당 팬의 팬꾹 주소를 끝 6자리까지 모두 입력해 보내 주세요. 팬의 수락 전에도 발송할 수 있습니다.<br>받지 않은 팬의 상자는 반송하며, 반송 택배비를 제외한 금액을 환불합니다. 입고 전 환불 시점은 아래 ‘반송·환불 안내’에서 확인해 주세요.",
+    "note": "위와 같이 · 반영 메모: 팬별 주소로 따로 발송할 의무와 수락 대기 없이 발송 가능한 점을 유지합니다. 반송 시 전액 환불로 오해하지 않게 공제 기준을 명시합니다.",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 315,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "팬 줄 목록 이름(스크린리더)",
+    "old": "${날짜 시각} 묶음 팬별 지금 상태",
+    "new": "${날짜 시각} 결제 묶음의 팬별 상태",
+    "note": "묶음마다",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 318,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "받는 주소 칸 제목",
+    "old": "이 선물의 팬꾹 주소",
+    "new": "팬꾹 주소",
+    "note": "그 팬의 상자를 아직 보낼 때",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 319,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "받는 주소",
+    "old": "받는 곳 ${사무실 주소} •••••• (스크린리더: 끝 6자리 가려짐) / 받는 사람 팬꾹",
+    "new": "팬꾹 주소 ${사무실 주소} •••••• (스크린리더: 끝 6자리 가려짐) / 받는 사람 팬꾹",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 321,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "버튼",
+    "old": "주소 한 번에 복사",
+    "new": "전체 주소 복사",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 322,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "복사 알림",
+    "old": "끝 6자리까지 전체 주소를 복사했어요. / 복사하지 못했어요. 6자리 보기를 누르고 주소를 끝까지 옮겨 적어 주세요.",
+    "new": "끝 6자리까지 전체 주소가 복사되었습니다. / 주소를 복사하지 못했습니다. ‘6자리 보기’를 눌러 전체 주소를 직접 입력해 주세요.",
+    "note": "복사 성공 / 실패",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 323,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "받는 주소 안내",
+    "old": "끝 6자리까지 꼭 그대로 적어 주세요. 이 6자리로 사무실에서 이 상자를 찾아요. 다른 사람에게 알려 주지 마세요. 송장의 보내는 분에는 팬꾹 닉네임을 써 주세요.",
+    "new": "주소 끝 6자리로 상자를 구분합니다. 6자리를 포함한 전체 주소를 입력하고, 다른 사람과 공유하지 마세요.<br>송장의 보내는 분에는 팬꾹 닉네임을 입력해 주세요.",
+    "note": "위와 같이",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 324,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "접기 제목",
+    "old": "송장번호 적기 (선택)",
+    "new": "송장번호 등록 (선택)",
+    "note": "송장 칸을 둘 팬이 있을 때",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 325,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "접기 안내",
+    "old": "상자가 사무실에 도착하기 전까지만 고칠 수 있고, 도착하면 「도착 완료」로 바뀌고 잠겨요.",
+    "new": "입고 전까지 송장번호를 수정할 수 있습니다. 입고 후에는 ‘도착 완료’로 표시되며 수정할 수 없습니다.",
+    "note": "접기를 열었을 때",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 328,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "버튼",
+    "old": "등록 / 저장 / 저장하는 중…",
+    "new": "등록 / 저장 / 저장 중…",
+    "note": "처음 / 고칠 때 / 보내는 중",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 329,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "송장 칸 아래",
+    "old": "선택이에요. 넣으면 배송 조회로 팬꾹까지 오는 길을 보여 드려요.",
+    "new": "선택 사항입니다. 입력하면 팬꾹으로 보내는 상자의 배송 상황을 조회할 수 있습니다.",
+    "note": "아직 안 넣었을 때",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 330,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "송장 칸 아래",
+    "old": "사무실에 도착하기 전까지만 고칠 수 있어요.",
+    "new": "입고 전까지 수정할 수 있습니다.",
+    "note": "넣은 뒤",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 331,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "등록된 송장",
+    "old": "송장번호 ${번호} 등록됨 / 고치기",
+    "new": "송장번호 ${번호} 등록 완료 / 수정",
+    "note": "이미 넣었을 때",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 332,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "입력 오류",
+    "old": "송장번호를 적어 주세요. / 송장번호는 숫자 10~14자리예요",
+    "new": "송장번호를 입력해 주세요. / 송장번호는 숫자 10\\~14자리로 입력해 주세요.",
+    "note": "입력이 틀렸을 때",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 333,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "서버 오류",
+    "old": "이미 입고된 상자예요 / 오늘은 송장번호를 더 넣을 수 없어요. 내일 다시 해 주세요 / 저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "new": "이미 입고된 상자입니다. / 오늘의 송장번호 입력 가능 횟수를 모두 사용했습니다. 내일 다시 시도해 주세요. / 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    "note": "저장이 거부·실패했을 때",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 334,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "도착 태그",
+    "old": "도착 완료 / 사무실에 도착해 확인했어요",
+    "new": "도착 완료 / 팬꾹 입고 확인",
+    "note": "사무실에 도착한 상자",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 335,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "미도착 태그",
+    "old": "도착하지 않음 / 결제하고 30일이 지나도 도착하지 않아 이 상자는 닫혔어요",
+    "new": "미도착으로 종료 / 결제 후 30일 이내에 도착하지 않아 종료되었습니다.",
+    "note": "30일이 지나 닫힌 상자 · 반영 메모: 30일은 결제 완료 시점부터 계산합니다. 실제 환불 완료 여부를 확인하지 않은 상태에서 환불 완료 문구를 추가하지 않습니다.",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 336,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "접기 제목",
+    "old": "알아 두세요",
+    "new": "반송·환불 안내",
+    "note": "늘",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  },
+  {
+    "index": 337,
+    "section": "### 보낸 역조공 — `/creator/revgifts`",
+    "label": "접기 본문",
+    "old": "「받지 않음」은 팬이 받지 않기를 누른 경우와 7일이 지난 경우를 구분하지 않아요. / 받지 않은 상자는 보낸 사무실 쪽에서 돌려보내고, 그 상자 요금만 환불돼요. / 한 팬이 받지 않아도 같은 묶음의 다른 팬 선물은 그대로 가요. / 상자를 더 보내려면 새로 보내기를 해 주세요. 상자마다 팬꾹 주소가 달라요.",
+    "new": "‘받지 않음’에는 팬이 거절하거나 결제 후 7일 이내에 수락하지 않은 경우가 포함됩니다.<br>• 입고된 상자: 크리에이터에게 반송 후 반송 택배비를 제외한 금액 환불<br>• 입고 전: 결제 후 30일까지 환불 보류. 기간 내 도착하면 반송 택배비를 제외해 환불하고, 미도착 시 해당 상자 요금 전액 환불<br>• 다른 팬의 선물은 그대로 진행<br>상자를 추가로 보내려면 새로 신청해 주세요. 팬꾹 주소는 상자마다 다릅니다.",
+    "note": "접기를 열었을 때 · 반영 메모: 반송 택배비 공제와 입고 전 환불 보류를 구분합니다. 기존 7일 수락 기한과 별도로 결제 후 30일 미도착 기준을 명시했습니다.",
+    "files": [
+      "src/widgets/revgift-sent/ui/revgift-sent-page.tsx",
+      "src/features/box-waybill/ui/receiving-address.tsx"
+    ]
+  }
+]

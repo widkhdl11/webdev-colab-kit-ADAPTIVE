@@ -42,6 +42,6 @@ export async function cancelForCreator(client: Pick<SupabaseClient, "rpc">, body
   const { error } = await client.rpc("admin_cancel_for_creator", { p_order_no: orderNo, p_reason: reason });
   if (error?.code === "42501") return { status: 403, body: { message: MESSAGE_CREATOR_CANCEL_OWNER_ONLY } };
   if (error?.code === "P0002") return { status: 409, body: { message: MESSAGE_CREATOR_CANCEL_NOT_CANCELABLE } };
-  if (error) return pgErrorReply(error.code, { limit: MESSAGE_REASON, failed: "취소하지 못했어요. 잠시 뒤 다시 해 주세요." });
+  if (error) return pgErrorReply(error.code, { limit: MESSAGE_REASON, failed: "취소하지 못했습니다. 잠시 후 다시 시도해 주세요." });
   return { status: 200, body: { ok: true } };
 }

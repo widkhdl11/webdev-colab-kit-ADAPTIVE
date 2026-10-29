@@ -70,7 +70,7 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
           {meta}
           {notice}
           <DocSummary
-            heading={guide ? "먼저 알아 두세요" : "주요 내용"}
+            heading={guide ? "핵심 안내" : "주요 내용"}
             lines={doc.summary}
             targets={targets}
             onGo={(id) => nav.goTo(id, { focus: true, push: true, showAll: true })}
@@ -128,9 +128,9 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
               {ask ? (
                 <div className={s.ask}>
                   <h2 className={s.summaryT}>{doc.title}에서 이해가 안 되는 부분이 있나요?</h2>
-                  <p className={s.sub}>고객센터에 물어보시면 쉬운 말로 다시 설명해 드려요.</p>
+                  <p className={s.sub}>고객센터로 문의해 주세요.</p>
                   <Link className="btn" href="/support">
-                    고객센터 가기
+                    고객센터
                   </Link>
                 </div>
               ) : null}

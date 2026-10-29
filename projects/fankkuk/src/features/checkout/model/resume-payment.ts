@@ -14,11 +14,11 @@ export type ResumePaymentWrite = z.input<typeof bodyShape>;
 const prepared = z.array(z.object({ toss_order_id: z.string().min(6), amount_krw: z.number().int().positive(), order_no: z.string() })).length(1);
 
 const MESSAGE = {
-  shape: "요청 형식이 맞지 않아요.",
+  shape: "요청 형식이 올바르지 않습니다.",
   // 남의 주문·없는 주문·닫힌 주문·결제가 끝난 주문은 같은 문구(INV-M22 ⑤) — 어느 쪽인지 드러나지 않는다
-  notFound: "결제할 선물을 찾을 수 없어요.",
-  busy: "결제를 처리하고 있어요. 잠시 뒤 화면을 새로고침해 주세요.",
-  failed: "결제를 준비하지 못했어요. 잠시 뒤 다시 해 주세요.",
+  notFound: "결제할 선물을 찾을 수 없습니다.",
+  busy: "결제 처리 중입니다. 잠시 후 새로고침해 주세요.",
+  failed: "결제를 준비하지 못했습니다. 잠시 후 다시 시도해 주세요.",
 } as const;
 
 export async function prepareResume(client: Pick<SupabaseClient, "rpc">, body: unknown): Promise<JsonReply> {

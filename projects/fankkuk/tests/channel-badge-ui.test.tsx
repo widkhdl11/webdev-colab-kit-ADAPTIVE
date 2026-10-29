@@ -71,12 +71,12 @@ describe("링크 페이지 — 팬덤 이름 감사 문장 (추가분 4-1)", () 
   it("팬덤 이름이 있으면 「{팬덤 이름} 여러분의 마음 늘 감사해요」", () => {
     renderLink({ fanName: "꿀벌단" });
     expect(host.textContent).toContain("꿀벌단 여러분의 마음 늘 감사해요");
-    expect(host.textContent).not.toContain("보내주시는 마음 늘 감사해요");
+    expect(host.textContent).not.toContain("보내 주시는 마음 늘 감사해요");
   });
 
   it("(실패경로) 없으면 기본 문장", () => {
     renderLink({ fanName: null });
-    expect(host.textContent).toContain("보내주시는 마음 늘 감사해요");
+    expect(host.textContent).toContain("보내 주시는 마음 늘 감사해요");
     expect(host.textContent).not.toContain("여러분의 마음");
   });
 });
@@ -99,14 +99,14 @@ describe("링크 페이지 — 채널 아이콘 링크 (추가분 4-3)", () => {
 
   it("「채널 소유 확인」 뱃지에도 같은 풀이", () => {
     renderLink({ channel });
-    const badge = [...host.querySelectorAll("span")].find((el) => el.textContent?.trim() === "채널 소유 확인");
+    const badge = [...host.querySelectorAll("span")].find((el) => el.textContent?.trim() === "채널 소유자 확인");
     expect(badge?.getAttribute("title")).toBe(TITLE);
   });
 
   it("(실패경로) 확인된 채널 값이 없으면 아이콘도 뱃지 풀이도 없다", () => {
     renderLink({ channel: null });
     expect(host.querySelector('a[target="_blank"]')).toBeNull();
-    const badge = [...host.querySelectorAll("span")].find((el) => el.textContent?.trim() === "채널 소유 확인");
+    const badge = [...host.querySelectorAll("span")].find((el) => el.textContent?.trim() === "채널 소유자 확인");
     expect(badge?.hasAttribute("title")).toBe(false);
   });
 });

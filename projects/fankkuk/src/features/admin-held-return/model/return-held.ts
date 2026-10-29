@@ -11,7 +11,7 @@ import type { JsonReply } from "@/shared/lib/http/private-json";
 // 운영자가 아니면 404. 이어졌거나 이미 반송 대상인지는 DB 가 행 잠금 뒤 다시 본다(55000 → 409).
 
 export const MESSAGE_ALREADY_CLOSED = "이미 입고됐거나 반송 대기가 됐거나, 아직 주인의 확인을 기다리는 상자예요.";
-const FAILED = "처리하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const FAILED = "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 const returnShape = z.object({ kind: z.literal("return"), source: z.enum(["unmatched", "parcel"]), id: z.guid() }).strict();
 
@@ -20,9 +20,9 @@ export type HeldReturnWrite = z.input<typeof returnShape>;
 export async function returnHeld(client: Pick<SupabaseClient, "rpc">, body: unknown): Promise<JsonReply> {
   if ((await readAdminAccess(client)) === "not_found") return { status: 404, body: { message: MESSAGE_NOT_FOUND } };
   const shaped = returnShape.safeParse(body);
-  if (!shaped.success) return { status: 400, body: { message: "잘못된 요청이에요." } };
+  if (!shaped.success) return { status: 400, body: { message: "유효하지 않은 요청입니다." } };
   const fn = shaped.data.source === "parcel" ? "admin_return_held_parcel" : "admin_return_unmatched";
   const { error } = await client.rpc(fn, { p_id: shaped.data.id });
-  if (error) return pgErrorReply(error.code, { limit: "잘못된 요청이에요.", conflict: MESSAGE_ALREADY_CLOSED, failed: FAILED });
+  if (error) return pgErrorReply(error.code, { limit: "유효하지 않은 요청입니다.", conflict: MESSAGE_ALREADY_CLOSED, failed: FAILED });
   return { status: 200, body: { ok: true } };
 }

@@ -1,0 +1,817 @@
+[
+  [
+    "src\\features\\approval-request\\model\\decline-gift.ts",
+    "지금은 받지 않기로 할 수 없는 선물이에요. 새로 고침해 주세요.",
+    "현재 거절할 수 없는 선물입니다. 새로고침해 주세요."
+  ],
+  [
+    "src\\features\\approval-request\\model\\decline-gift.ts",
+    "이미 처리된 요청이에요. 새로 고침하면 결과가 보여요.",
+    "이미 처리된 요청입니다. 새로고침해 결과를 확인해 주세요."
+  ],
+  [
+    "src\\features\\approval-request\\model\\decline-gift.ts",
+    "크리에이터 계정만 할 수 있어요.",
+    "크리에이터 계정만 이용할 수 있습니다."
+  ],
+  [
+    "src\\features\\approval-request\\model\\decline-gift.ts",
+    "찾을 수 없는 요청이에요.",
+    "승인 요청을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\approval-request\\model\\decline-gift.ts",
+    "잘못된 요청이에요.",
+    "잘못된 요청입니다."
+  ],
+  [
+    "src\\features\\creator-check\\ui\\tracker-window.tsx",
+    "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\creator-check\\ui\\tracker-window.tsx",
+    "팬꾹이 처리하기 전까지 취소할 수 있어요.",
+    "팬꾹이 처리하기 전까지 선택을 취소할 수 있습니다."
+  ],
+  [
+    "src\\features\\creator-check\\ui\\tracker-window.tsx",
+    "신고할지 정해 주세요",
+    "신고 여부를 선택해 주세요"
+  ],
+  [
+    "src\\widgets\\revgift-sent\\ui\\revgift-sent-page.tsx",
+    "상자가 사무실에 도착하기 전까지만 고칠 수 있고, 도착하면 「도착 완료」로 바뀌고 잠겨요.",
+    "입고 전까지 송장번호를 수정할 수 있습니다. 입고 후에는 ‘도착 완료’로 표시되며 수정할 수 없습니다."
+  ],
+  [
+    "src\\widgets\\revgift-sent\\ui\\revgift-sent-page.tsx",
+    "선택이에요. 넣으면 배송 조회로 팬꾹까지 오는 길을 보여 드려요.",
+    "선택 사항입니다. 입력하면 팬꾹으로 보내는 상자의 배송 상황을 조회할 수 있습니다."
+  ],
+  [
+    "src\\widgets\\revgift-sent\\ui\\revgift-sent-page.tsx",
+    "결제하고 30일이 지나도 도착하지 않아 이 상자는 닫혔어요",
+    "결제 후 30일 이내에 도착하지 않아 종료되었습니다."
+  ],
+  [
+    "src\\widgets\\revgift-sent\\ui\\revgift-sent-page.tsx",
+    "팬이 직접 입력하고, 팬꾹만 송장을 뽑을 때 열어요.",
+    "팬이 확인한 배송지는 팬꾹에서 송장 출력 시에만 열람합니다."
+  ],
+  [
+    "src\\widgets\\revgift-sent\\ui\\revgift-sent-page.tsx",
+    "나를 팔로우한 팬을 골라 선물을 보낼 수 있어요.",
+    "나를 팔로우한 팬을 선택해 선물을 보낼 수 있습니다."
+  ],
+  [
+    "src\\widgets\\revgift-sent\\ui\\revgift-sent-page.tsx",
+    "팬의 주소와 실명은 보이지 않아요.",
+    "팬의 주소와 실명은 크리에이터에게 공개되지 않습니다."
+  ],
+  [
+    "src\\widgets\\revgift-sent\\ui\\revgift-sent-page.tsx",
+    "(받지 않은 상자 요금은 환불돼요)",
+    "(받지 않은 팬의 상자는 환불 대상 · 반송 시 택배비 차감)"
+  ],
+  [
+    "src\\widgets\\revgift-sent\\ui\\revgift-sent-page.tsx",
+    "아직 보낸 역조공이 없어요",
+    "보낸 역조공이 없습니다"
+  ],
+  [
+    "src\\widgets\\revgift-sent\\ui\\revgift-sent-page.tsx",
+    "팬마다 팬꾹 주소가 달라요",
+    "팬별 팬꾹 주소"
+  ],
+  [
+    "src\\widgets\\revgift-sent\\ui\\revgift-sent-page.tsx",
+    "사무실에 도착해 확인했어요",
+    "팬꾹 입고 확인"
+  ],
+  [
+    "src\\widgets\\revgift-sent\\ui\\revgift-sent-page.tsx",
+    "송장번호 적기 (선택)",
+    "송장번호 등록 (선택)"
+  ],
+  [
+    "src\\features\\creator-check\\model\\choose-check.ts",
+    "이미 골랐어요. 바꾸려면 먼저 취소해 주세요.",
+    "이미 선택한 항목이 있습니다. 변경하려면 먼저 선택을 취소해 주세요."
+  ],
+  [
+    "src\\features\\creator-check\\model\\choose-check.ts",
+    "크리에이터 계정만 할 수 있어요.",
+    "크리에이터 계정만 이용할 수 있습니다."
+  ],
+  [
+    "src\\features\\creator-check\\model\\choose-check.ts",
+    "선물이 끝나 더 정할 수 없어요.",
+    "처리 대상이 아닌 상자입니다."
+  ],
+  [
+    "src\\features\\creator-check\\model\\choose-check.ts",
+    "잠시 뒤 다시 시도해 주세요.",
+    "잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\creator-check\\model\\choose-check.ts",
+    "찾을 수 없는 상자예요.",
+    "상자를 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\creator-check\\model\\choose-check.ts",
+    "팬꾹이 이미 처리했어요.",
+    "팬꾹에서 이미 처리한 상자입니다."
+  ],
+  [
+    "src\\features\\creator-check\\model\\choose-check.ts",
+    "잘못된 요청이에요.",
+    "잘못된 요청입니다."
+  ],
+  [
+    "src\\features\\creator-check\\model\\choose-check.ts",
+    "고른 것이 없어요.",
+    "취소할 선택 내역이 없습니다."
+  ],
+  [
+    "src\\features\\gift-reply\\model\\gift-reply-actions.ts",
+    "아직 출고되지 않은 상자예요. 출고된 뒤에 받았어요를 남길 수 있어요.",
+    "출고 후 수령을 확인할 수 있습니다."
+  ],
+  [
+    "src\\features\\gift-reply\\model\\gift-reply-actions.ts",
+    "이미 답장한 상자예요. 답장은 고칠 수 없고 지울 수만 있어요.",
+    "이미 답장한 상자입니다. 답장은 수정할 수 없고 삭제만 가능합니다."
+  ],
+  [
+    "src\\features\\gift-reply\\model\\gift-reply-actions.ts",
+    "한 줄에 전화번호·이메일·인터넷 주소는 쓸 수 없어요.",
+    "전화번호·이메일·인터넷 주소는 입력할 수 없습니다."
+  ],
+  [
+    "src\\features\\gift-reply\\model\\gift-reply-actions.ts",
+    "상자를 찾을 수 없어요. 새로 고침해 주세요.",
+    "상자를 찾을 수 없습니다. 새로고침해 주세요."
+  ],
+  [
+    "src\\features\\gift-reply\\model\\gift-reply-actions.ts",
+    "지울 답장이 없어요. 새로 고침해 주세요.",
+    "삭제할 답장이 없습니다. 새로고침해 주세요."
+  ],
+  [
+    "src\\features\\gift-reply\\model\\gift-reply-actions.ts",
+    "한 줄에 쓸 수 없는 말이 들어 있어요.",
+    "사용할 수 없는 표현이 포함되어 있습니다."
+  ],
+  [
+    "src\\features\\gift-reply\\model\\gift-reply-actions.ts",
+    "선물을 받은 크리에이터만 할 수 있어요.",
+    "선물을 받은 크리에이터만 이용할 수 있습니다."
+  ],
+  [
+    "src\\features\\gift-reply\\model\\gift-reply-actions.ts",
+    "지운 답장은 다시 쓸 수 없어요.",
+    "삭제한 답장은 다시 작성할 수 없습니다."
+  ],
+  [
+    "src\\features\\gift-reply\\model\\gift-reply-actions.ts",
+    "입력을 확인해 주세요.",
+    "입력 내용을 확인해 주세요."
+  ],
+  [
+    "src\\features\\gift-reply\\model\\gift-reply-actions.ts",
+    "잘못된 요청이에요.",
+    "잘못된 요청입니다."
+  ],
+  [
+    "src\\widgets\\creator-gift-progress\\ui\\gift-progress-page.tsx",
+    "진행 중인 선물이 없어요",
+    "진행 중인 선물이 없습니다."
+  ],
+  [
+    "src\\widgets\\creator-gift-progress\\ui\\gift-progress-page.tsx",
+    "아직 도착하지 않았어요",
+    "미도착"
+  ],
+  [
+    "src\\widgets\\creator-gift-progress\\ui\\gift-progress-page.tsx",
+    "승인을 기다리는 선물",
+    "승인 대기 선물"
+  ],
+  [
+    "src\\widgets\\creator-gift-progress\\ui\\gift-progress-page.tsx",
+    "사무실로 오는 중",
+    "팬꾹 도착 대기"
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\box-address-code.tsx",
+    "주소 한 번에 복사",
+    "전체 주소 복사"
+  ],
+  [
+    "src\\features\\revgift-send\\model\\register-revgift.test.ts",
+    "나를 팔로우한 팬에게만 보낼 수 있어요.",
+    "나를 팔로우한 팬에게만 선물을 보낼 수 있습니다."
+  ],
+  [
+    "src\\features\\approval-request\\model\\decline-gift.test.ts",
+    "찾을 수 없는 요청이에요.",
+    "승인 요청을 찾을 수 없습니다."
+  ],
+  [
+    "src\\widgets\\creator-gift-progress\\model\\gift-progress.test.ts",
+    "사무실로 오는 중",
+    "팬꾹 도착 대기"
+  ],
+  [
+    "src\\features\\approval-request\\model\\approve-gift.test.ts",
+    "찾을 수 없는 요청이에요.",
+    "승인 요청을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\approval-request\\ui\\decided-request-list.tsx",
+    "아직 처리한 요청이 없어요.",
+    "처리한 요청이 없습니다."
+  ],
+  [
+    "src\\features\\box-waybill\\model\\save-waybill.ts",
+    "잘못된 요청이에요.",
+    "잘못된 요청입니다."
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\creator-action-center-page.tsx",
+    "결제를 마치지 않은 선물",
+    "결제 대기"
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\creator-action-center-page.tsx",
+    "아직 도착하지 않은 상자",
+    "미도착 상자 찾기"
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\creator-action-center-page.tsx",
+    "지금 할 일이 없어요",
+    "현재 처리할 일이 없습니다"
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\creator-action-center-page.tsx",
+    "돌려받을 주소 확인",
+    "반송 주소 확인"
+  ],
+  [
+    "src\\app\\(site)\\creator\\page.tsx",
+    "내가 보낸 선물",
+    "보낸 선물"
+  ],
+  [
+    "src\\features\\return-address\\model\\confirm-return-address.ts",
+    "잘못된 요청이에요.",
+    "잘못된 요청입니다."
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\waybill-editor.tsx",
+    "사무실에 도착하기 전까지만 고칠 수 있어요.",
+    "입고 전까지 수정할 수 있습니다."
+  ],
+  [
+    "src\\widgets\\home\\ui\\home-notices.tsx",
+    "아직 공지가 없어요.",
+    "등록된 공지사항이 없습니다."
+  ],
+  [
+    "src\\entities\\order\\model\\prior-history.ts",
+    "처음 보내는 팬이에요",
+    "첫 선물 요청"
+  ],
+  [
+    "src\\features\\revgift-send\\model\\register-revgift.ts",
+    "나를 팔로우한 팬에게만 보낼 수 있어요.",
+    "나를 팔로우한 팬에게만 선물을 보낼 수 있습니다."
+  ],
+  [
+    "src\\features\\revgift-send\\model\\register-revgift.ts",
+    "역조공은 크리에이터만 보낼 수 있어요.",
+    "역조공은 크리에이터 계정만 이용할 수 있습니다."
+  ],
+  [
+    "src\\features\\revgift-send\\ui\\send-form.tsx",
+    "팬마다 상자를 따로 포장해서, 그 팬의 팬꾹 주소를 끝까지 그대로 써서 보내 주세요.",
+    "팬마다 상자를 따로 포장하고, 해당 팬의 팬꾹 주소를 끝까지 입력해 보내 주세요."
+  ],
+  [
+    "src\\features\\revgift-send\\ui\\send-form.tsx",
+    "팬 목록에는 팬의 닉네임만 보여요. 팬의 주소와 연락처는 보이지 않아요.",
+    "팬의 닉네임만 표시됩니다. 주소·연락처는 공개되지 않습니다."
+  ],
+  [
+    "src\\features\\revgift-send\\ui\\send-form.tsx",
+    "아직 나를 팔로우한 팬이 없어요. 팬이 팔로우하면 여기에 나와요.",
+    "팔로워가 없습니다. 팬이 팔로우하면 목록에 표시됩니다."
+  ],
+  [
+    "src\\features\\revgift-send\\ui\\send-form.tsx",
+    "보내기를 등록하지 못했어요. 잠시 뒤 다시 시도해 주세요.",
+    "역조공 신청을 등록하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\revgift-send\\ui\\send-form.tsx",
+    "나를 팔로우하는 팬이에요. 받을 팬을 체크해 주세요.",
+    "팔로워 목록에서 선물을 받을 팬을 선택해 주세요."
+  ],
+  [
+    "src\\features\\revgift-send\\ui\\send-form.tsx",
+    "7일 안에 받지 않으면 그 상자만 돌려보내고 환불해요",
+    "결제 후 7일 이내 팬 수락 필요"
+  ],
+  [
+    "src\\features\\revgift-send\\ui\\send-form.tsx",
+    "한 팬이 받지 않아도 다른 팬의 선물은 그대로 가요.",
+    "팬이 거절하거나 기한 내 수락하지 않으면 해당 상자만 반송·환불 대상이 됩니다. 다른 팬의 선물은 그대로 진행됩니다."
+  ],
+  [
+    "src\\features\\revgift-send\\ui\\send-form.tsx",
+    "팬이 「받기」를 누를 때 주소를 직접 입력해요",
+    "팬이 ‘받기’를 누르면 배송지를 확인합니다. 등록된 주소가 없으면 직접 입력합니다."
+  ],
+  [
+    "src\\features\\revgift-send\\ui\\send-form.tsx",
+    "크리에이터에게는 팬의 주소가 보이지 않아요.",
+    "팬의 주소는 크리에이터에게 공개되지 않습니다."
+  ],
+  [
+    "src\\features\\revgift-send\\ui\\send-form.tsx",
+    "결제하면 팬마다 팬꾹 주소가 안내돼요",
+    "결제 후 팬별 팬꾹 주소 발급"
+  ],
+  [
+    "src\\features\\revgift-send\\ui\\send-form.tsx",
+    "배송비와 검수 포함",
+    "배송비 포함 · 검수비 제외"
+  ],
+  [
+    "src\\features\\revgift-send\\ui\\send-form.tsx",
+    "받을 팬 고르기",
+    "받는 팬 선택"
+  ],
+  [
+    "src\\features\\revgift-send\\ui\\send-form.tsx",
+    "이렇게 진행돼요",
+    "진행 절차"
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\approval-window-with-address.tsx",
+    "주소는 잠가서 보관해서 여기서도 보이지 않아요. 이사했거나 받는 곳이 바뀌었으면 승인하기 전에 바꿔 주세요.",
+    "주소는 암호화해 보관하며 이 화면에 표시되지 않습니다. 배송지가 바뀌었다면 승인 전에 변경해 주세요."
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\approval-window-with-address.tsx",
+    "새 주소를 입력하면 지금 주소를 덮어써요. 아직 송장을 뽑지 않은 선물부터 새 주소로 나가요.",
+    "새 주소를 저장하면 기존 배송지가 변경됩니다. 아직 송장을 출력하지 않은 선물부터 적용됩니다."
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\approval-window-with-address.tsx",
+    "주소는 이 브라우저에서 잠가서 보내요. 주소 서명을 마치면 이어서 승인 서명을 따로 받아요.",
+    "주소는 이 브라우저에서 암호화해 전송합니다. 주소 등록 인증 후 선물 승인 인증을 별도로 진행합니다."
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\approval-window-with-address.tsx",
+    "승인한 선물은 이 주소로 보내요. 받는 주소가 있어야 승인할 수 있어요.",
+    "선물을 승인하려면 배송지를 등록해 주세요. 승인한 선물은 이 주소로 배송됩니다."
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\approval-window-with-address.tsx",
+    "주소 정보를 읽지 못했어요. 새로 고침한 뒤 다시 해 주세요.",
+    "주소 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\approval-window-with-address.tsx",
+    "주소를 등록했어요.",
+    "주소가 등록되었습니다."
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\approval-window-with-address.tsx",
+    "주소를 바꿨어요.",
+    "주소가 변경되었습니다."
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\receiving-address.tsx",
+    "복사하지 못했어요. 6자리 보기를 누르고 주소를 끝까지 옮겨 적어 주세요.",
+    "주소를 복사하지 못했습니다. ‘6자리 보기’를 눌러 전체 주소를 직접 입력해 주세요."
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\receiving-address.tsx",
+    "끝 6자리까지 전체 주소를 복사했어요.",
+    "끝 6자리까지 전체 주소가 복사되었습니다."
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\receiving-address.tsx",
+    "이 선물의 팬꾹 주소",
+    "팬꾹 주소"
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\receiving-address.tsx",
+    "주소 한 번에 복사",
+    "전체 주소 복사"
+  ],
+  [
+    "src\\features\\return-address\\ui\\return-confirmed-notice.tsx",
+    "돌려받을 주소 확인",
+    "반송 주소 확인"
+  ],
+  [
+    "src\\features\\approval-request\\ui\\approval-window.tsx",
+    "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\approval-request\\ui\\approval-window.tsx",
+    "승인하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "승인하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\approval-request\\ui\\approval-window.tsx",
+    "카카오톡으로 승인해 주세요",
+    "카카오톡으로 선물 승인"
+  ],
+  [
+    "src\\features\\approval-request\\ui\\approval-window.tsx",
+    "이 선물을 받지 않을까요?",
+    "이 선물을 거절할까요?"
+  ],
+  [
+    "src\\features\\approval-request\\ui\\approval-window.tsx",
+    "새 주소를 입력해 주세요",
+    "배송지 변경"
+  ],
+  [
+    "src\\features\\approval-request\\ui\\approval-window.tsx",
+    "주소를 입력해 주세요",
+    "배송지 등록"
+  ],
+  [
+    "src\\features\\approval-request\\ui\\approval-window.tsx",
+    "주소를 확인해 주세요",
+    "등록된 배송지 확인"
+  ],
+  [
+    "src\\features\\approval-request\\ui\\approval-window.tsx",
+    "받지 않기 완료",
+    "거절 완료"
+  ],
+  [
+    "src\\widgets\\revgift-sent\\ui\\revgift-sent-page.test.tsx",
+    "송장번호 적기 (선택)",
+    "송장번호 등록 (선택)"
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\track-box-button.tsx",
+    "도착하지 않았어요",
+    "배송 조회"
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\track-box-button.tsx",
+    "숫자만 입력해요",
+    "숫자만 입력"
+  ],
+  [
+    "src\\features\\gift-reply\\ui\\received-box-list.tsx",
+    "이 답장을 지울까요? 지우면 팬의 기록과 공개 모음에서도 사라지고, 이 상자에는 다시 답장할 수 없어요.",
+    "답장을 삭제할까요? 팬의 기록과 공개 답장 모음에서도 삭제되며, 이 상자에는 다시 답장할 수 없습니다."
+  ],
+  [
+    "src\\features\\gift-reply\\ui\\received-box-list.tsx",
+    "아직 출고된 선물이 없어요. 사무실에서 보내면 여기에 상자마다 보여요.",
+    "출고된 선물이 없습니다. 팬꾹에서 출고하면 상자별로 표시됩니다."
+  ],
+  [
+    "src\\features\\gift-reply\\ui\\received-box-list.tsx",
+    "답장은 꼭 남기지 않아도 돼요. 이 숫자는 나만 볼 수 있어요.",
+    "답장은 선택 사항이며, 이 숫자는 본인에게만 표시됩니다."
+  ],
+  [
+    "src\\features\\gift-reply\\ui\\received-box-list.tsx",
+    "이 한 줄은 누가 보나요",
+    "답장 공개 범위"
+  ],
+  [
+    "src\\features\\gift-reply\\ui\\received-box-list.tsx",
+    "아직 답장 안 한 선물",
+    "답장하지 않은 선물"
+  ],
+  [
+    "src\\features\\gift-reply\\ui\\received-box-list.tsx",
+    "받았어요를 남겼어요.",
+    "수령이 확인되었습니다."
+  ],
+  [
+    "src\\features\\gift-reply\\ui\\received-box-list.tsx",
+    "답장을 지웠어요.",
+    "답장이 삭제되었습니다."
+  ],
+  [
+    "src\\widgets\\home\\ui\\creator-home-page.tsx",
+    "지금 할 일을 불러오지 못했어요.",
+    "지금 할 일을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\widgets\\home\\ui\\creator-home-page.tsx",
+    "팬들이 전한 마음을 확인해보세요",
+    "팬들이 보낸 선물과 승인 요청을 확인해 주세요"
+  ],
+  [
+    "src\\widgets\\home\\ui\\creator-home-page.tsx",
+    "지금 진행 중인 선물이 없어요.",
+    "진행 중인 선물이 없습니다."
+  ],
+  [
+    "src\\widgets\\home\\ui\\creator-home-page.tsx",
+    "선물 현황을 불러오지 못했어요.",
+    "선물 현황을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\widgets\\home\\ui\\creator-home-page.tsx",
+    "아직 주소가 열린 적이 없어요.",
+    "주소 열람 기록이 없습니다."
+  ],
+  [
+    "src\\widgets\\home\\ui\\creator-home-page.tsx",
+    "내 정보 열람을 확인해요",
+    "배송지 열람 내역"
+  ],
+  [
+    "src\\widgets\\home\\ui\\creator-home-page.tsx",
+    "결제를 마치지 않은 선물",
+    "결제 대기"
+  ],
+  [
+    "src\\widgets\\home\\ui\\creator-home-page.tsx",
+    "내 배송 정보가 열렸어요",
+    "배송지 열람 기록"
+  ],
+  [
+    "src\\widgets\\home\\ui\\creator-home-page.tsx",
+    "지금 할 일이 없어요.",
+    "현재 처리할 일이 없습니다."
+  ],
+  [
+    "src\\widgets\\home\\ui\\creator-home-page.tsx",
+    "내가 보낸 선물",
+    "보낸 선물"
+  ],
+  [
+    "src\\features\\gift-reply\\api\\send-gift-reply.ts",
+    "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\app\\(site)\\creator\\revgifts\\new\\page.tsx",
+    "결제를 마치지 못해 역조공이 보내지지 않았어요. 받을 팬을 다시 골라 주세요.",
+    "결제가 완료되지 않았습니다. 다시 진행하려면 받을 팬을 선택해 주세요."
+  ],
+  [
+    "src\\app\\(site)\\creator\\revgifts\\new\\page.tsx",
+    "같은 결제를 처리하는 중이에요. 잠시 뒤 보낸 역조공을 확인해 주세요.",
+    "결제를 처리 중입니다. 잠시 후 ‘보낸 역조공’에서 결과를 확인해 주세요."
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\find-sent-box.tsx",
+    "어느 팬에게 보낸 상자인지 골라 주세요.",
+    "상자를 받을 팬을 선택해 주세요."
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\find-sent-box.tsx",
+    "어느 팬에게 보낸 상자인가요?",
+    "받는 팬 선택"
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\find-sent-box.tsx",
+    "택배사를 골라 주세요.",
+    "택배사를 선택해 주세요."
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\find-sent-box.tsx",
+    "사무실에 도착했어요",
+    "상자 확인 완료"
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\find-sent-box.tsx",
+    "아직 못 찾았어요",
+    "일치하는 상자 없음"
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\find-sent-box.tsx",
+    "숫자만 입력해요",
+    "숫자만 입력"
+  ],
+  [
+    "src\\entities\\payment\\model\\price-table.ts",
+    "요금이 방금 바뀌었어요. 금액을 다시 확인하고 결제해 주세요.",
+    "요금이 변경되었습니다. 금액을 확인한 뒤 결제해 주세요."
+  ],
+  [
+    "src\\features\\return-address\\ui\\return-address-window.tsx",
+    "주소를 입력해 주세요",
+    "배송지 등록"
+  ],
+  [
+    "src\\features\\return-address\\ui\\return-address-window.tsx",
+    "돌려받을 주소 확인",
+    "반송 주소 확인"
+  ],
+  [
+    "src\\features\\revgift-send\\ui\\send-form.test.tsx",
+    "받을 팬 고르기",
+    "받는 팬 선택"
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\creator-action-center-page.test.tsx",
+    "팬꾹이 처리하기 전까지 취소할 수 있어요.",
+    "팬꾹이 처리하기 전까지 선택을 취소할 수 있습니다."
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\creator-action-center-page.test.tsx",
+    "블루투스 기기가 발견된 선물",
+    "탐지기 반응 물품 확인"
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\creator-action-center-page.test.tsx",
+    "이 선물을 받지 않을까요?",
+    "이 선물을 거절할까요?"
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\creator-action-center-page.test.tsx",
+    "팬꾹이 이미 처리했어요.",
+    "팬꾹에서 이미 처리한 상자입니다."
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\creator-action-center-page.test.tsx",
+    "아직 도착하지 않은 상자",
+    "미도착 상자 찾기"
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\creator-action-center-page.test.tsx",
+    "지금 할 일이 없어요",
+    "현재 처리할 일이 없습니다"
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\creator-action-center-page.test.tsx",
+    "신고할지 정해 주세요",
+    "신고 여부를 선택해 주세요"
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\creator-action-center-page.test.tsx",
+    "돌려받을 주소 확인",
+    "반송 주소 확인"
+  ],
+  [
+    "src\\features\\creator-check\\ui\\bluetooth-window.tsx",
+    "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\creator-check\\ui\\bluetooth-window.tsx",
+    "팬꾹이 처리하기 전까지 취소할 수 있어요.",
+    "팬꾹이 처리하기 전까지 선택을 취소할 수 있습니다."
+  ],
+  [
+    "src\\features\\creator-check\\ui\\bluetooth-window.tsx",
+    "블루투스 기기가 발견된 선물",
+    "탐지기 반응 물품 확인"
+  ],
+  [
+    "src\\features\\creator-check\\ui\\bluetooth-window.tsx",
+    "잠시 뒤 다시 해 주세요.",
+    "잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\find-my-box.tsx",
+    "아직 못 찾았어요",
+    "일치하는 상자 없음"
+  ],
+  [
+    "src\\widgets\\access-log\\ui\\access-log-page.tsx",
+    "아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요.",
+    "주소 열람 기록이 없습니다. 송장 출력 시 기록됩니다."
+  ],
+  [
+    "src\\entities\\payment\\ui\\payment-consent.tsx",
+    "결제 내용과 아래 규정을 확인했고 결제에 동의해요 (필수)",
+    "결제 내용과 아래 규정을 확인했으며, 결제에 동의합니다. (필수)"
+  ],
+  [
+    "src\\features\\box-waybill\\model\\early-send.ts",
+    "잘못된 요청이에요.",
+    "잘못된 요청입니다."
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\find-sent-box-button.tsx",
+    "아직 도착하지 않은 상자",
+    "미도착 상자 찾기"
+  ],
+  [
+    "src\\features\\box-waybill\\ui\\find-sent-box-button.tsx",
+    "사무실에 도착했어요",
+    "상자 확인 완료"
+  ],
+  [
+    "src\\widgets\\creator-gift-progress\\ui\\gift-progress-page.test.tsx",
+    "아직 도착하지 않았어요",
+    "미도착"
+  ],
+  [
+    "src\\widgets\\creator-gift-progress\\ui\\gift-progress-page.test.tsx",
+    "승인을 기다리는 선물",
+    "승인 대기 선물"
+  ],
+  [
+    "src\\widgets\\creator-gift-progress\\ui\\gift-progress-page.test.tsx",
+    "사무실에 도착했어요",
+    "상자 확인 완료"
+  ],
+  [
+    "src\\widgets\\creator-gift-progress\\ui\\gift-progress-page.test.tsx",
+    "사무실로 오는 중",
+    "팬꾹 도착 대기"
+  ],
+  [
+    "src\\widgets\\creator-gift-progress\\ui\\gift-progress-page.test.tsx",
+    "도착하지 않았어요",
+    "배송 조회"
+  ],
+  [
+    "src\\features\\approval-request\\model\\approve-gift.ts",
+    "지금은 승인할 수 없는 선물이에요. 새로 고침해 주세요.",
+    "현재 승인할 수 없는 선물입니다. 새로고침해 주세요."
+  ],
+  [
+    "src\\features\\approval-request\\model\\approve-gift.ts",
+    "이미 처리된 요청이에요. 새로 고침하면 결과가 보여요.",
+    "이미 처리된 요청입니다. 새로고침해 결과를 확인해 주세요."
+  ],
+  [
+    "src\\features\\approval-request\\model\\approve-gift.ts",
+    "지금은 승인할 수 없어요. 잠시 뒤 다시 해 주세요.",
+    "현재 승인할 수 없습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\approval-request\\model\\approve-gift.ts",
+    "서명을 확인하지 못했어요. 다시 해 주세요.",
+    "서명을 확인하지 못했습니다. 다시 인증해 주세요."
+  ],
+  [
+    "src\\features\\approval-request\\model\\approve-gift.ts",
+    "크리에이터 계정만 할 수 있어요.",
+    "크리에이터 계정만 이용할 수 있습니다."
+  ],
+  [
+    "src\\features\\approval-request\\model\\approve-gift.ts",
+    "찾을 수 없는 요청이에요.",
+    "승인 요청을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\approval-request\\model\\approve-gift.ts",
+    "잘못된 요청이에요.",
+    "잘못된 요청입니다."
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\approval-window-with-address.test.tsx",
+    "크리에이터 주소는 팬에게 공개하지 않아요. 모든 선물은 팬꾹에서 검수한 뒤 보내요.",
+    "크리에이터의 주소는 팬에게 공개되지 않습니다. 팬이 보낸 모든 선물은 검수 후 배송합니다."
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\approval-window-with-address.test.tsx",
+    "카카오톡으로 승인해 주세요",
+    "카카오톡으로 선물 승인"
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\approval-window-with-address.test.tsx",
+    "이 선물을 받지 않을까요?",
+    "이 선물을 거절할까요?"
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\approval-window-with-address.test.tsx",
+    "새 주소를 입력해 주세요",
+    "배송지 변경"
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\approval-window-with-address.test.tsx",
+    "주소를 입력해 주세요",
+    "배송지 등록"
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\approval-window-with-address.test.tsx",
+    "주소를 확인해 주세요",
+    "등록된 배송지 확인"
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\approval-window-with-address.test.tsx",
+    "주소를 등록했어요.",
+    "주소가 등록되었습니다."
+  ],
+  [
+    "src\\widgets\\creator-action-center\\ui\\approval-window-with-address.test.tsx",
+    "받지 않기 완료",
+    "거절 완료"
+  ]
+]

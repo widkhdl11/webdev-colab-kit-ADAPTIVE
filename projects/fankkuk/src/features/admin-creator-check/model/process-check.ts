@@ -44,13 +44,13 @@ export async function readCreatorCheckChoices(client: Rpc): Promise<CreatorCheck
 export async function processCreatorCheck(client: Rpc, body: unknown): Promise<JsonReply> {
   if ((await readAdminAccess(client)) === "not_found") return { status: 404, body: { message: MESSAGE_NOT_FOUND } };
   const shaped = processShape.safeParse(body);
-  if (!shaped.success) return { status: 400, body: { message: "잘못된 요청이에요." } };
+  if (!shaped.success) return { status: 400, body: { message: "유효하지 않은 요청입니다." } };
   const { data, error } = await client.rpc("office_process_creator_check", { p_qr: shaped.data.qr, p_seen_choice: shaped.data.seen });
   if (error?.code === "40001") return { status: 409, body: { message: "잠시 뒤 다시 해 주세요." } };
-  if (error) return pgErrorReply(error.code, { limit: "잘못된 요청이에요.", failed: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." });
+  if (error) return pgErrorReply(error.code, { limit: "유효하지 않은 요청입니다.", failed: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." });
   const reply = replySchema.safeParse(data);
   // 모르는 답이면 처리됐다고 단정하지 않는다
-  if (!reply.success) return { status: 500, body: { message: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." } };
+  if (!reply.success) return { status: 500, body: { message: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." } };
   if (reply.data === "accepted" || reply.data === "returned" || reply.data === "reported" || reply.data === "not_reported") return { status: 200, body: { result: reply.data } };
   return { status: reply.data === "not_found" ? 404 : 409, body: { message: REFUSED[reply.data] } };
 }

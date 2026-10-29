@@ -8,7 +8,7 @@ import { PROMISE } from "@/shared/config/site-copy";
 
 export function creatorLinkMetadata(c: PublicCreatorLink, origin: string, look: PublicCreatorLook): Metadata {
   const title = `${c.name}님에게 선물 보내기 · 팬꾹`;
-  const description = `${PROMISE.approval} ${PROMISE.inspection} ${PROMISE.address}`;
+  const description = `크리에이터가 승인한 선물을 팬꾹에서 검수 후 배송합니다. ${PROMISE.addressFan}`;
   const image = { url: previewImagePath(c, look), width: 1200, height: 630, alt: `${c.name}님의 미리보기 이미지` };
   return {
     metadataBase: new URL(origin),

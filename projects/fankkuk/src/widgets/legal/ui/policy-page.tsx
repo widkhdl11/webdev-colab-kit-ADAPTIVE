@@ -42,7 +42,7 @@ export function PolicyPage({ kind, doc, history, pastVersion }: Props) {
       notice={
         pastVersion ? (
           <p className={s.past} role="note">
-            지난 버전이에요. 지금 시행 중인 글은 <Link href={current?.href ?? "/"}>최신 버전</Link>에서 볼 수 있어요.
+            이전 버전입니다. 현재 시행 중인 내용은 <Link href={current?.href ?? "/"}>최신 버전</Link>에서 확인해 주세요.
           </p>
         ) : null
       }
@@ -64,7 +64,7 @@ export function PolicyPage({ kind, doc, history, pastVersion }: Props) {
               </li>
             ))}
           </ul>
-          {history.length === 1 ? <p className={s.note}>지난 버전은 아직 없어요.</p> : null}
+          {history.length === 1 ? <p className={s.note}>이전 버전이 없습니다.</p> : null}
         </section>
       }
     />

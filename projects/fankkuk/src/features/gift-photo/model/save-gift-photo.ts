@@ -29,9 +29,9 @@ export type GiftPhotoDeps = {
 type Refusal = { ok: false; status: 400 | 401 | 404 | 409; message: string };
 export type GiftPhotoResult = { ok: true; version: number | null } | Refusal;
 
-const LOGIN: Refusal = { ok: false, status: 401, message: "로그인이 필요해요." };
+const LOGIN: Refusal = { ok: false, status: 401, message: "로그인이 필요합니다." };
 const NOT_FOUND: Refusal = { ok: false, status: 404, message: "선물을 찾지 못했어요." };
-const BUSY: Refusal = { ok: false, status: 409, message: "다른 곳에서 사진을 바꾸는 중이에요. 잠시 뒤 다시 해 주세요." };
+const BUSY: Refusal = { ok: false, status: 409, message: "다른 화면에서 사진 변경을 진행 중입니다. 잠시 후 다시 시도해 주세요." };
 
 const slotSchema = z.array(z.object({ order_id: z.guid(), photo_path: z.string().nullable(), photo_version: z.number().int().nonnegative() }).strict()).max(1);
 const versionSchema = z.array(z.object({ old_path: z.string().nullable(), version: z.number().int().positive() }).strict()).length(1);

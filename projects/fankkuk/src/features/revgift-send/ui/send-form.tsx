@@ -28,7 +28,7 @@ const FACES_SHOWN = 6;
 
 const TIERS: readonly { tier: PricedTier; name: string }[] = PRICED_TIERS.map((tier) => ({ tier, name: PARCEL_TIER_GUIDE[tier].name }));
 
-const SIZE_NOTE = `상자는 팬마다 고를 수 있어요. ${PRICED_TIERS.map((t) => `${PARCEL_TIER_GUIDE[t].name}은 ${PARCEL_TIER_GUIDE[t].rule}`).join(", ")}예요. 크기와 무게 중 큰 쪽으로 정해요.`;
+const SIZE_NOTE = <>팬마다 상자 크기를 선택할 수 있습니다.{PRICED_TIERS.map((t) => <span key={t}><br />• {PARCEL_TIER_GUIDE[t].name}: {PARCEL_TIER_GUIDE[t].rule}</span>)}<br />크기·무게 중 더 높은 요금 구간을 선택해 주세요.</>;
 
 export function RevgiftSendForm({
   prices,
@@ -98,7 +98,7 @@ export function RevgiftSendForm({
         // 화면을 연 뒤 요금이 바뀌었다(INV-K3) — 서버 page 를 다시 그려 새 요금표로 금액을 보여 준다. 고른 팬은 그대로 남는다
         setPayError(result.message ?? PRICE_CHANGED_MESSAGE);
         router.refresh();
-      } else setPayError(result.message ?? "보내기를 등록하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
+      } else setPayError(result.message ?? "역조공 신청을 등록하지 못했습니다. 잠시 후 다시 시도해 주세요.");
       return;
     }
     const { tossOrderId, amountKrw, orderNos } = result.value;
@@ -114,9 +114,9 @@ export function RevgiftSendForm({
     <div>
       <section id="count" aria-labelledby="rv-add-title">
         <h2 className={s.secH} id="rv-add-title">
-          받을 팬 고르기
+          받는 팬 선택
         </h2>
-        <p className={s.lead}>나를 팔로우하는 팬이에요. 받을 팬을 체크해 주세요.</p>
+        <p className={s.lead}>팔로워 목록에서 선물을 받을 팬을 선택해 주세요.</p>
         <div role="alert">
           {notice && noticeShown ? (
             <p className={`${s.errline} ${s.notice}`}>
@@ -126,7 +126,7 @@ export function RevgiftSendForm({
           ) : null}
         </div>
         <p className={s.maxline} id="rv-fans-max" aria-live="polite">
-          {full ? `${MAX_REVGIFT_SHARES}명을 모두 골랐어요. 더 보내려면 결제한 뒤 새로 보내 주세요.` : `최대 ${MAX_REVGIFT_SHARES}명까지 한 번에 보낼 수 있어요`}
+          {full ? `${MAX_REVGIFT_SHARES}명 선택 완료 · 더 보내려면 결제 후 새로 신청해 주세요.` : `한 번에 최대 ${MAX_REVGIFT_SHARES}명 선택 가능`}
         </p>
         {followers.length > 0 ? (
           <fieldset className="fs">
@@ -173,14 +173,14 @@ export function RevgiftSendForm({
             </ul>
           </fieldset>
         ) : (
-          <p className={s.none}>아직 나를 팔로우한 팬이 없어요. 팬이 팔로우하면 여기에 나와요.</p>
+          <p className={s.none}>팔로워가 없습니다. 팬이 팔로우하면 목록에 표시됩니다.</p>
         )}
       </section>
 
       {/* 진행 순서와 상자 크기·닉네임 안내를 회색 칸 하나로(시안 .gnote.howcard) */}
       <div className={s.how}>
         <h2 className={s.howH} id="rv-how-title">
-          이렇게 진행돼요
+          진행 절차
         </h2>
         <ol className={s.steps} aria-labelledby="rv-how-title">
           <li>
@@ -188,8 +188,8 @@ export function RevgiftSendForm({
               1
             </span>
             <div>
-              <strong>팬이 「받기」를 누를 때 주소를 직접 입력해요</strong>
-              <p>크리에이터에게는 팬의 주소가 보이지 않아요.</p>
+              <strong>팬이 ‘받기’를 누르면 배송지를 확인합니다. 등록된 주소가 없으면 직접 입력합니다.</strong>
+              <p>팬의 주소는 크리에이터에게 공개되지 않습니다.</p>
             </div>
           </li>
           <li>
@@ -197,8 +197,8 @@ export function RevgiftSendForm({
               2
             </span>
             <div>
-              <strong>결제하면 팬마다 팬꾹 주소가 안내돼요</strong>
-              <p>팬마다 상자를 따로 포장해서, 그 팬의 팬꾹 주소를 끝까지 그대로 써서 보내 주세요.</p>
+              <strong>결제 후 팬별 팬꾹 주소 발급</strong>
+              <p>팬마다 상자를 따로 포장하고, 해당 팬의 팬꾹 주소를 끝까지 입력해 보내 주세요.</p>
             </div>
           </li>
           <li>
@@ -206,14 +206,14 @@ export function RevgiftSendForm({
               3
             </span>
             <div>
-              <strong>7일 안에 받지 않으면 그 상자만 돌려보내고 환불해요</strong>
-              <p>한 팬이 받지 않아도 다른 팬의 선물은 그대로 가요.</p>
+              <strong>결제 후 7일 이내 팬 수락 필요</strong>
+              <p>팬이 거절하거나 기한 내 수락하지 않으면 해당 상자만 반송·환불 대상이 됩니다. 다른 팬의 선물은 그대로 진행됩니다.</p>
             </div>
           </li>
         </ol>
         <hr className={s.rule} />
         {followers.length > 0 ? <p>{SIZE_NOTE}</p> : null}
-        <p>팬 목록에는 팬의 닉네임만 보여요. 팬의 주소와 연락처는 보이지 않아요.</p>
+        <p>팬의 닉네임만 표시됩니다. 주소·연락처는 공개되지 않습니다.</p>
       </div>
 
       {/* 화면 아래에 붙어 따라오는 하늘 결제 띠(시안 .tray) — 받을 팬 수 · 결제 금액 · 동의와 결제 */}
@@ -254,7 +254,7 @@ export function RevgiftSendForm({
               </strong>
             </p>
           </div>
-          <p className={s.inc}>배송비와 검수 포함</p>
+          <p className={s.inc}>배송비 포함 · 검수비 제외</p>
         </div>
         <div className={s.rt}>
           <div className={s.consent}>
@@ -280,7 +280,7 @@ export function RevgiftSendForm({
           <button className={`btn btn--block ${s.payBtn}`} type="button" onClick={pay} disabled={picked.length === 0} aria-busy={paying || undefined}>
             {won(total)} 결제하기
           </button>
-          <p className={s.after}>결제는 한 번이에요. 팬이 받지 않으면 그 팬의 상자 요금만 환불돼요.</p>
+          <p className={s.after}>한 번에 결제 · 환불은 팬별 처리<br />받지 않은 팬의 상자만 환불 대상입니다. 반송 시 택배비를 차감하며, 입고 전 환불 시점은 취소·환불 규정에 따릅니다.</p>
         </div>
       </section>
     </div>

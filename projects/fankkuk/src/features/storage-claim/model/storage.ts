@@ -18,7 +18,7 @@ import type { JsonReply } from "@/shared/lib/http/private-json";
 
 export const MESSAGE_STORAGE_NOT_FOUND = "물품을 찾을 수 없어요";
 /** 「받는 주소 없이 보냈어요」와 같은 문장(그날 틀린 시도를 같이 센다) */
-export const MESSAGE_CLAIM_LIMIT = "오늘은 더 찾을 수 없어요. 내일 다시 해 주세요";
+export const MESSAGE_CLAIM_LIMIT = "오늘은 더 요청한 항목을 찾을 수 없습니다. 내일 다시 해 주세요";
 const MESSAGE_CLAIM_DETAILS = "택배사를 고르고 송장번호를 넣은 뒤 선물을 선택해 주세요.";
 const READ_FAILED = "물품을 읽지 못했어요. 잠시 뒤 다시 해 주세요.";
 const FAILED = "확인 요청을 보내지 못했어요. 잠시 뒤 다시 해 주세요.";
@@ -58,12 +58,12 @@ export type StorageCandidate = { boxId: string; label: string; itemKind: string;
 type Deps = { client: Pick<SupabaseClient, "rpc">; viewer: Viewer | null };
 
 export async function storageRequest(deps: Deps, input: unknown): Promise<JsonReply> {
-  if (!deps.viewer) return { status: 401, body: { message: "로그인이 필요해요." } };
-  if (deps.viewer.role !== "fan" && deps.viewer.role !== "creator") return { status: 403, body: { message: "권한이 없어요." } };
+  if (!deps.viewer) return { status: 401, body: { message: "로그인이 필요합니다." } };
+  if (deps.viewer.role !== "fan" && deps.viewer.role !== "creator") return { status: 403, body: { message: "이 작업을 수행할 권한이 없습니다." } };
   const kind = typeof input === "object" && input !== null ? (input as { kind?: unknown }).kind : undefined;
   if (kind === "claim") return claimStorage(deps.client, input);
   const shaped = listBody.safeParse(input);
-  if (!shaped.success) return { status: 400, body: { message: "잘못된 요청이에요." } };
+  if (!shaped.success) return { status: 400, body: { message: "유효하지 않은 요청입니다." } };
   return shaped.data.kind === "list" ? readStorage(deps.client) : readCandidates(deps.client);
 }
 

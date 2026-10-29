@@ -185,7 +185,7 @@ describe("보낸 선물의 반송 주소 줄 (action-center INV-J5·J3, office-w
   });
 });
 
-describe("보낸 팬 선물의 결제를 마치지 않은 선물 (action-center INV-J5·J6 · payment INV-M22 ⑤)", () => {
+describe("보낸 팬 선물의 결제 대기 (action-center INV-J5·J6 · payment INV-M22 ⑤)", () => {
   const unpaid = { ...EMPTY, kind: "unpaid", board: "sent", order_no: "FC-U1", nickname: "모모", amount_krw: 6900, sent_at: "2026-10-21T01:00:00Z", due_at: "2026-10-22T01:00:00Z" };
 
   it("INV-M22 ⑤ · INV-J5: 크리에이터 계정이 보낸 결제 대기 주문 — 보낸 선물 판, 금액·기한(처음 결제 대기 + 24시간)을 옮긴다", () => {

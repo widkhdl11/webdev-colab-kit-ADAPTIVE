@@ -4,7 +4,7 @@ import type { PricingRow } from "../model/save-pricing";
 
 export type SavePricingOutcome = { kind: "ok" } | { kind: "failed"; message: string };
 
-const FALLBACK = "저장하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const FALLBACK = "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 export async function postPricing(rows: PricingRow[]): Promise<SavePricingOutcome> {
   try {

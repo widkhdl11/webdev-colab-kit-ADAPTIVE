@@ -53,14 +53,14 @@ describe("승인된 세 역할 홈", () => {
 
   it("읽기 실패는 0건·빈 목록으로 오해시키지 않고 공개 페이지가 없으면 내 페이지 링크를 숨긴다", () => {
     draw(creator({ actions: null, actionCount: null, ongoingCount: null, publicHref: null }));
-    expect(host.querySelector('[aria-labelledby="creator-actions-title"]')!.textContent).toContain("불러오지 못했어요");
-    expect(host.querySelector('[aria-labelledby="creator-progress-title"]')!.textContent).toContain("불러오지 못했어요");
+    expect(host.querySelector('[aria-labelledby="creator-actions-title"]')!.textContent).toContain("불러오지 못했습니다");
+    expect(host.querySelector('[aria-labelledby="creator-progress-title"]')!.textContent).toContain("불러오지 못했습니다");
     expect(host.querySelector('ul[aria-label="내 바로가기"]')!.children[0]!.textContent).not.toContain("0건");
     expect([...host.querySelectorAll("a")].some((a) => a.textContent === "내 페이지 보기")).toBe(false);
   });
 
   it("공개 페이지와 단계·출력 실패를 이미 읽은 값 그대로 표시한다", () => {
-    draw(creator({ publicHref: "/haru", progressRows: [{ id: "FC-1", title: "별빛님이 보내신 선물", description: "목도리", status: "검수 완료" }], ongoingCount: 1, accessLog: [{ orderNo: "FC-1", at: "2026-10-20T00:00:00Z", printNo: 1, released: true }] }));
+    draw(creator({ publicHref: "/haru", progressRows: [{ id: "FC-1", title: "별빛님이 보낸 선물", description: "목도리", status: "검수 완료" }], ongoingCount: 1, accessLog: [{ orderNo: "FC-1", at: "2026-10-20T00:00:00Z", printNo: 1, released: true }] }));
     expect(host.querySelector('a[href="/haru"]')?.textContent).toBe("내 페이지 보기");
     expect(host.querySelector('[aria-labelledby="creator-progress-title"]')!.textContent).toContain("검수 완료");
     expect(host.querySelector('[aria-labelledby="creator-log-title"]')!.textContent).toContain("출력 실패");

@@ -3,7 +3,7 @@
 
 export const FAN_NAME_MAX = 10;
 
-const THANKS_DEFAULT = "보내주시는 마음 늘 감사해요";
+const THANKS_DEFAULT = "보내 주시는 마음 늘 감사해요";
 
 /** 링크 페이지 감사 문장 — 팬덤 이름이 있으면 「{팬덤 이름} 여러분의 마음 늘 감사해요」. */
 export function thanksLine(fanName: string | null | undefined): string {

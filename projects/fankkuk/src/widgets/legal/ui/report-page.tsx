@@ -20,7 +20,7 @@ export function ReportPage() {
               </h1>
             </div>
             <p className="ph-desc">
-              팬꾹 사칭 페이지, 사진 권리 침해를 신고하거나 일반 문의를 남길 수 있어요.
+              팬꾹 사칭 페이지, 사진 권리 침해를 신고하거나 일반 문의를 남길 수 있습니다.
             </p>
             <p className={`t-meta ${s.noAsk}`}>{NO_ADDRESS_ASK}</p>
           </header>

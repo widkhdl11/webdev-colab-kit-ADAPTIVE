@@ -32,7 +32,7 @@ describe("공지 쓰기·고치기 (INV-K11)", () => {
 
   it("INV-K11 (실패경로): 운영자가 아니면 404 — 공지 저장 함수를 부르지 않는다", async () => {
     const { calls, client } = fakeClient({ error: null }, { operator: false, owner: false });
-    expect(await saveNotice(client, { slug: null, title: "제목", body: "본문", pinned: false })).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+    expect(await saveNotice(client, { slug: null, title: "제목", body: "본문", pinned: false })).toEqual({ status: 404, body: { message: "요청한 항목을 찾을 수 없습니다." } });
     expect(calls).toEqual([]);
   });
 

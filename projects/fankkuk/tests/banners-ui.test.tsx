@@ -110,7 +110,7 @@ describe("배너 한 장 (INV-Y3·Y6·Y7)", () => {
     expect(ext.getAttribute("href")).toBe("https://youtube.com/@haru");
     expect(ext.getAttribute("target")).toBe("_blank");
     expect(ext.getAttribute("rel")).toBe("noopener noreferrer");
-    expect(ext.textContent).toContain("보러 가기");
+    expect(ext.textContent).toContain("자세히 보기");
   });
 
   it("INV-Y3 (실패경로): 규칙 밖 주소(javascript:·//다른곳)가 와도 링크를 그리지 않는다 — 그리는 부품이 다시 가른다", () => {

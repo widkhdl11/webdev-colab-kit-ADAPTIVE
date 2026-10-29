@@ -12,7 +12,7 @@ export type PriorGiftHistory = {
 };
 
 export function priorHistoryLabel(h: PriorGiftHistory): string {
-  if (h.gifts === 0) return "처음 보내는 팬이에요";
+  if (h.gifts === 0) return "첫 선물 요청";
   const head = `지난 선물 ${h.gifts}건`;
   if (h.returned === 0 && h.passed === h.gifts) return `${head} · 모두 검수 통과`;
   const rest = h.gifts - h.passed - h.returned;

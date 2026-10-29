@@ -54,7 +54,7 @@ export function ApprovalWindowWithAddress({
   }, [refocusChange]);
 
   const renderStep = (closeSheet: () => void) => {
-    if (!status) return <p className="err">주소 정보를 읽지 못했어요. 새로 고침한 뒤 다시 해 주세요.</p>;
+    if (!status) return <p className="err">주소 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.</p>;
     if (registered && !editing) {
       return (
         <>
@@ -62,10 +62,10 @@ export function ApprovalWindowWithAddress({
             <p className="t-strong" data-address-on-file="">
               {addressOnFileText(status)}
             </p>
-            <p className="t-meta">주소는 잠가서 보관해서 여기서도 보이지 않아요. 이사했거나 받는 곳이 바뀌었으면 승인하기 전에 바꿔 주세요.</p>
+            <p className="t-meta">주소는 암호화해 보관하며 이 화면에 표시되지 않습니다. 배송지가 바뀌었다면 승인 전에 변경해 주세요.</p>
             <div>
               <button ref={changeRef} className="btn btn--line btn--sm" type="button" onClick={() => setEditing(true)}>
-                주소 바꾸기
+                주소 변경
               </button>
             </div>
           </div>
@@ -86,10 +86,10 @@ export function ApprovalWindowWithAddress({
       <>
         <p className="sub">
           {registered
-            ? "새 주소를 입력하면 지금 주소를 덮어써요. 아직 송장을 뽑지 않은 선물부터 새 주소로 나가요."
-            : "승인한 선물은 이 주소로 보내요. 받는 주소가 있어야 승인할 수 있어요."}
+            ? "새 주소를 저장하면 기존 배송지가 변경됩니다. 아직 송장을 출력하지 않은 선물부터 적용됩니다."
+            : "선물을 승인하려면 배송지를 등록해 주세요. 승인한 선물은 이 주소로 배송됩니다."}
         </p>
-        <p className="t-meta">주소는 이 브라우저에서 잠가서 보내요. 주소 서명을 마치면 이어서 승인 서명을 따로 받아요.</p>
+        <p className="t-meta">주소는 이 브라우저에서 암호화해 전송합니다. 주소 등록 인증 후 선물 승인 인증을 별도로 진행합니다.</p>
         <AddressChangeForm
           creatorId={status.creatorId}
           sealingKeyPem={sealingKeyPem}
@@ -97,7 +97,7 @@ export function ApprovalWindowWithAddress({
           autoFocusFirst={registered}
           onSaved={(label) => {
             // 서버에 저장된 뒤에만 바뀐다 — 이어서 같은 창에 승인 서명 칸이 붙고, 목록이 그 머리로 포커스를 옮긴다
-            setSavedMsg(registered ? "주소를 바꿨어요." : "주소를 등록했어요.");
+            setSavedMsg(registered ? "주소가 변경되었습니다." : "주소가 등록되었습니다.");
             setStatus({ ...status, registered: true, label, updatedAt: new Date().toISOString() });
             setEditing(false);
           }}

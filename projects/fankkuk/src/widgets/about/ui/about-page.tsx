@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { OPERATOR_NAME, PROMISE } from "@/shared/config/site-copy";
-import { withSubjectParticle } from "@/shared/lib/format/subject-particle";
+import { PROMISE } from "@/shared/config/site-copy";
 import { AboutIcon } from "./about-icons";
 import s from "./about.module.css";
 
@@ -9,18 +8,18 @@ import s from "./about.module.css";
 // 강조 판은 「주소는 송장을 출력할 때만」 하나. 문구는 10-24 다듬은 코드 쪽이 정본, 약속 문장은 shared/config/site-copy 를 그대로 읽는다.
 
 const FLOW: readonly { title: string; body: string; once?: true }[] = [
-  { title: "입력하자마자 잠가요", body: "크리에이터가 입력한 주소는 팬꾹으로 오기 전에 잠겨요." },
-  { title: "잠긴 채 보관해요", body: PROMISE.address },
-  { title: "크리에이터가 직접 승인해요", body: "선물마다 카카오톡으로 한 번 더 확인해요." },
-  { title: "송장 출력 때만 열려요", body: "주소가 열릴 때마다 기록을 남겨요.", once: true },
-  { title: "팬꾹 송장으로 출고해요", body: "크리에이터의 승인과 검수를 모두 마친 선물만 출고해요." },
+  { title: "입력 즉시 암호화", body: "주소는 입력한 기기에서 암호화한 뒤 팬꾹으로 전송합니다." },
+  { title: "암호화 상태로 보관", body: "승인 전에는 주소를 열람할 수 없습니다." },
+  { title: "선물별 직접 승인", body: "크리에이터가 선물마다 카카오톡 인증으로 승인합니다." },
+  { title: "송장 출력 시 열람", body: "주소를 열람할 때마다 기록을 남깁니다.", once: true },
+  { title: "팬꾹 송장으로 출고", body: "승인과 검수가 완료된 선물을 출고합니다." },
 ];
 
 /** 검수 네 칸 — 넷째(개봉 검수)만 위 줄 굵게 */
 const INSPECT: readonly { title: string; body: string; open?: true }[] = [
-  { title: "송장 제거", body: "상자에 붙어 있던 송장은 떼어 따로 보관해요. 상자를 돌려보내거나 크리에이터에게 보낼 때, 상자를 처분하거나 경찰에 넘길 때 파쇄해요." },
-  { title: "겉면 검사", body: "상자 겉면에 숨겨진 연락처나 의심스러운 부착물이 있는지 확인해요." },
-  { title: "추적 장치 탐지", body: "팬이 보낸 모든 상자를 탐지기로 검사해요." },
+  { title: "송장 제거", body: "상자에 붙어 있던 송장은 떼어 따로 보관합니다. 상자를 돌려보내거나 크리에이터에게 보낼 때, 상자를 처분하거나 경찰에 넘길 때 파쇄합니다." },
+  { title: "겉면 검사", body: "상자 겉면에 숨겨진 연락처나 의심스러운 부착물이 있는지 확인합니다." },
+  { title: "추적 장치 탐지", body: "팬이 보낸 모든 상자를 탐지기로 검사합니다." },
   { title: "탐지기 반응 시 개봉 검수", body: PROMISE.inspectionOpen, open: true },
 ];
 
@@ -32,12 +31,12 @@ const LOG_EXAMPLE = [
 ] as const;
 
 const NOTS = [
-  { title: "승인 전에는 주소를 열지 않아요", body: PROMISE.addressFan },
-  { title: "한꺼번에 승인하지 않아요", body: "선물마다 카카오톡으로 따로 확인해요." },
-  { title: "받지 않은 이유를 팬에게 알리지 않아요", body: "크리에이터가 받지 않은 선물은 배송하지 않아요." },
-  { title: "필요 없이 상자를 열지 않아요", body: "탐지기 반응이 있는 상자는 열어서 확인해요." },
-  { title: "크리에이터에게 가는 송장번호는 공개하지 않아요", body: "팬에게 보이는 주소는 팬꾹 주소뿐이에요." },
-  { title: "검수를 뺀 요금제는 만들지 않아요", body: "모든 요금에 검수가 포함돼요." },
+  { title: "승인 전 주소 열람 제한", body: `승인 후에도 ${PROMISE.addressFan}` },
+  { title: "일괄 승인 없음", body: "선물마다 카카오톡 인증으로 승인합니다." },
+  { title: "거절 사유 비공개", body: "크리에이터가 거절한 선물은 배송하지 않습니다." },
+  { title: "탐지기 반응 시 개봉 검수", body: "검사 결과에 따라 상자를 개봉해 확인합니다." },
+  { title: "크리에이터 배송 송장번호 비공개", body: "팬에게는 선물을 보낼 팬꾹 주소만 안내합니다." },
+  { title: "팬 선물 요금에 검수 포함", body: "팬이 보내는 모든 선물은 검수 후 배송합니다." },
 ] as const;
 
 export function AboutPage() {
@@ -51,11 +50,10 @@ export function AboutPage() {
           <h1 className="t-hero" id="about-title">
             선물에 담긴 마음은 그대로,
             <br />
-            주소는 소중하게
+            주소는 비공개로
           </h1>
           <p className={`t-lead ${s.heroLead}`}>
-            팬꾹은 팬이 보낸 선물을 검수한 뒤 크리에이터에게 대신 보내는 서비스예요. {PROMISE.addressFan} {withSubjectParticle(OPERATOR_NAME)}{" "}
-            만들고 운영해요.
+            팬꾹은 팬이 보낸 선물을 검수한 뒤 크리에이터에게 배송하는 서비스입니다. {PROMISE.addressFan}
           </p>
         </div>
       </section>
@@ -67,16 +65,13 @@ export function AboutPage() {
             <h2 id="why-title">&ldquo;선물은 받고 싶지만, 주소가 알려질까 걱정돼요&rdquo;</h2>
             <div className={s.story}>
               <p>
-                팬이 보내 주는 선물은 늘 고맙지만, 상자에 붙은 송장에는 크리에이터의 이름과 집 주소가 적혀 있어요. 배송 중에도,
-                상자를 버린 뒤에도 다른 사람에게 보일 수 있어요.
+                선물을 직접 받으면 상자의 송장에 이름과 주소가 남습니다. 배송 중이나 상자를 버린 뒤에도 이 정보가 다른 사람에게 보일 수 있습니다.
               </p>
               <p>
-                그래서 선물 받기를 망설이거나 주소를 숨기려고 번거로운 방법을 쓰는 크리에이터가 있어요. 팬도 마음을 전하고 싶지만,
-                어디로 보내야 할지 몰라 선물을 포기하기도 하고요.
+                크리에이터에게는 주소 공개가 부담이 되고, 팬에게는 선물을 보낼 곳을 알기 어렵다는 문제가 있습니다.
               </p>
               <p>
-                그래서 팬꾹이 팬과 크리에이터 사이에 들어가기로 했어요. 팬은 크리에이터의 주소를 몰라도 선물을 보낼 수 있고,
-                크리에이터는 팬에게 주소를 공개하지 않고 선물을 받을 수 있어요.
+                팬은 팬꾹 주소로 선물을 보내고, 팬꾹이 검수 후 크리에이터에게 전달합니다. 크리에이터는 팬에게 주소를 공개하지 않고 선물을 받을 수 있습니다.
               </p>
             </div>
           </div>
@@ -88,9 +83,9 @@ export function AboutPage() {
         <div className="pub-inner">
           <div className={s.key}>
             <h2 id="once-title">
-              주소는 송장을 출력할 때만 <span className={s.hl}>열려요</span>
+              송장 출력에만 사용하는 <span className={s.hl}>주소</span>
             </h2>
-            <p className={s.lead}>{PROMISE.address} 승인한 선물도 송장을 출력할 때만 열려요.</p>
+            <p className={s.lead}>주소는 암호화해 보관하며, 승인과 검수가 완료된 상자의 송장 출력에만 사용합니다.</p>
             <div className={s.scene} role="group" aria-label="주소가 잠겨 있다가 송장 출력 때만 열리는 예시 그림">
               <img className={s.mascot} src="/img/icon-address-lock.png" width={96} height={96} alt="" aria-hidden="true" />
               <div className={s.sceneCard} aria-hidden="true">
@@ -135,7 +130,7 @@ export function AboutPage() {
       <section className={`${s.blk} ${s.sec}`} aria-labelledby="inspect-title">
         <div className="pub-inner">
           <img className={s.art} src="/img/icon-inspect.png" width={64} height={64} alt="" aria-hidden="true" />
-          <h2 id="inspect-title">선물은 이렇게 검수해요</h2>
+          <h2 id="inspect-title">선물 검수 절차</h2>
           <p className={s.lead}>{PROMISE.inspection}</p>
           <ol className={s.ins}>
             {INSPECT.map((it, i) => (
@@ -155,10 +150,9 @@ export function AboutPage() {
       <section className={`${s.blk} ${s.sec}`} aria-labelledby="log-title">
         <div className="pub-inner">
           <img className={s.art} src="/img/icon-log.png" width={64} height={64} alt="" aria-hidden="true" />
-          <h2 id="log-title">주소 열람 기록을 직접 확인할 수 있어요</h2>
+          <h2 id="log-title">직접 확인하는 주소 열람 기록</h2>
           <p className={`${s.lead} ${s.col}`}>
-            크리에이터는 언제, 어느 주문의 주소가 열렸는지, 송장을 몇 번째 출력했는지 확인할 수 있어요. 승인하지 않은 주문의 열람 기록이
-            있는지도 살펴볼 수 있어요.
+            크리에이터는 자신의 선물에 대한 주소 열람 시각·주문번호·송장 출력 차수를 확인할 수 있습니다.
           </p>
           <div className={`table-wrap ${s.table}`} tabIndex={0} role="region" aria-label="주소 열람 기록 예시 표">
             <table className="table">
@@ -181,10 +175,10 @@ export function AboutPage() {
               </tbody>
             </table>
           </div>
-          <p className={`t-meta ${s.tableNote}`}>이해를 돕기 위한 예시예요. 실제 기록은 크리에이터 화면에서 확인할 수 있어요.</p>
+          <p className={`t-meta ${s.tableNote}`}>이해를 돕기 위한 예시입니다. 실제 기록은 크리에이터 화면의 ‘열람 기록’에서 확인해 주세요.</p>
           <div className={s.foot}>
             <Link className="btn" href="/signup">
-              크리에이터로 가입하기
+              크리에이터 가입
             </Link>
           </div>
         </div>
@@ -194,8 +188,8 @@ export function AboutPage() {
       <section className={`${s.blk} ${s.sec}`} aria-labelledby="not-title">
         <div className="pub-inner">
           <div className={s.col}>
-            <h2 id="not-title">팬꾹이 하지 않는 것</h2>
-            <p className={s.lead}>약속만큼 중요한 건 하지 않는 일이에요.</p>
+            <h2 id="not-title">팬꾹이 지키는 기준</h2>
+            <p className={s.lead}>주소 보호와 선물 전달을 위해 지키는 기준입니다.</p>
             <ul className={s.nots}>
               {NOTS.map((n) => (
                 <li key={n.title}>

@@ -33,7 +33,7 @@ describe("INV-M21: 크리에이터 사정으로 취소", () => {
 
   it("INV-M21 (S21b, 실패경로): 운영자가 아니면 404, 직원 운영자는 403(owner_only) — 둘 다 DB 함수를 부르지 않는다", async () => {
     const guest = fakeClient(null, { operator: false, owner: false });
-    expect(await cancelForCreator(guest.client, { orderNo: "FC-7K3M9", reason: "x" })).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+    expect(await cancelForCreator(guest.client, { orderNo: "FC-7K3M9", reason: "x" })).toEqual({ status: 404, body: { message: "요청한 항목을 찾을 수 없습니다." } });
     expect(guest.calls).toEqual([]);
     const staff = fakeClient(null, { operator: true, owner: false });
     expect(await cancelForCreator(staff.client, { orderNo: "FC-7K3M9", reason: "x" })).toEqual(OWNER_ONLY_REPLY);

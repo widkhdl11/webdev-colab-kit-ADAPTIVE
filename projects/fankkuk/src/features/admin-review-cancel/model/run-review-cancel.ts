@@ -29,13 +29,13 @@ export type ReviewCancelDeps = {
 const CANCEL_REASON = "결제 금액 확인 불가로 전액 취소";
 
 const MESSAGE = {
-  notFound: "찾을 수 없어요.",
+  notFound: "요청한 항목을 찾을 수 없습니다.",
   ownerOnly: "결제 취소는 대표만 할 수 있어요.",
-  badRequest: "잘못된 요청이에요.",
+  badRequest: "유효하지 않은 요청입니다.",
   notCancelable: "지금 상태에서는 취소할 수 없어요. 결제사 관리 화면에서 확인해 주세요.",
   alreadyDone: "이미 취소했어요.",
   inProgress: "취소를 처리하고 있어요. 잠시 뒤 새로고침해 주세요.",
-  failed: "취소하지 못했어요. 잠시 뒤 다시 해 주세요.",
+  failed: "취소하지 못했습니다. 잠시 후 다시 시도해 주세요.",
   unrecorded: "결제사 결과를 기록하지 못했어요. 2분 뒤 새로고침해서 상태를 확인해 주세요.",
   settledElsewhere: "다른 요청이 먼저 결과를 남겼어요. 새로고침해서 상태를 확인해 주세요.",
   pgFailed: "결제사 취소가 실패했어요. 다시 누르면 같은 요청으로 다시 시도해요.",

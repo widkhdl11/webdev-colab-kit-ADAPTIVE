@@ -60,7 +60,7 @@ describe("상자 송장번호 저장 (팬 선물 상자)", () => {
   it("DB 오류를 화면 문구로 바꾼다 — 22023·P0002·55000", async () => {
     const run = async (code: string) => saveBoxWaybill({ client: fakeClient({ code }).client, viewer: FAN }, { boxId: BOX, waybill: "640123457788" });
     expect(await run("22023")).toEqual({ status: 400, body: { message: "송장번호를 숫자 10~14자리로 입력해 주세요." } });
-    expect(await run("P0002")).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+    expect(await run("P0002")).toEqual({ status: 404, body: { message: "요청한 항목을 찾을 수 없습니다." } });
     expect(await run("55000")).toEqual({ status: 409, body: { message: "이미 입고된 상자입니다." } });
     expect((await run("XX000")).status).toBe(500);
   });
@@ -73,7 +73,7 @@ describe("상자 송장번호 저장 (팬 선물 상자)", () => {
   it("INV-C10 (실패경로): DB 가 값으로 준 실패(남의 상자 not_found · 입고 뒤 already_received)는 404·409, 하루 10번 초과(P0045)는 429", async () => {
     const run = async (data: unknown, error: { code: string } | null = null) =>
       saveBoxWaybill({ client: fakeClient(error, data).client, viewer: FAN }, { boxId: BOX, waybill: "640123457788" });
-    expect(await run("not_found")).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+    expect(await run("not_found")).toEqual({ status: 404, body: { message: "요청한 항목을 찾을 수 없습니다." } });
     expect(await run("already_received")).toEqual({ status: 409, body: { message: "이미 입고된 상자입니다." } });
     expect(await run(null, { code: "P0045" })).toEqual({ status: 429, body: { message: "오늘의 송장번호 등록 횟수를 초과했습니다. 내일 다시 시도해 주세요." } });
   });

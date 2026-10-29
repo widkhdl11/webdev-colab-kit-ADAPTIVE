@@ -5,9 +5,9 @@ const M = { limit: "글자 수를 확인해 주세요.", conflict: "이미 처�
 
 describe("DB 오류 코드 → 응답", () => {
   it("42501 은 403, 22023 은 400(한도 문구), P0002 는 404, 55000 은 409(겹침 문구)", () => {
-    expect(pgErrorReply("42501", M)).toEqual({ status: 403, body: { message: "권한이 없어요." } });
+    expect(pgErrorReply("42501", M)).toEqual({ status: 403, body: { message: "이 작업을 수행할 권한이 없습니다." } });
     expect(pgErrorReply("22023", M)).toEqual({ status: 400, body: { message: M.limit } });
-    expect(pgErrorReply("P0002", M)).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+    expect(pgErrorReply("P0002", M)).toEqual({ status: 404, body: { message: "요청한 항목을 찾을 수 없습니다." } });
     expect(pgErrorReply("55000", M)).toEqual({ status: 409, body: { message: M.conflict } });
   });
 

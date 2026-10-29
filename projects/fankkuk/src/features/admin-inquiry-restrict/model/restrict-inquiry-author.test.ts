@@ -33,7 +33,7 @@ describe("1:1 문의 제한·풀기 (INV-K12)", () => {
 
   it("INV-K12 (실패경로): 운영자가 아니면 404, 직원 운영자는 403 — 둘 다 DB 함수를 부르지 않는다", async () => {
     const guest = fakeClient(null, { operator: false, owner: false });
-    expect(await restrictInquiryAuthor(guest.client, { id: ID, restricted: true, reason: "x" })).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+    expect(await restrictInquiryAuthor(guest.client, { id: ID, restricted: true, reason: "x" })).toEqual({ status: 404, body: { message: "요청한 항목을 찾을 수 없습니다." } });
     expect(guest.calls).toEqual([]);
     const staff = fakeClient(null, { operator: true, owner: false });
     expect(await restrictInquiryAuthor(staff.client, { id: ID, restricted: true, reason: "x" })).toEqual({

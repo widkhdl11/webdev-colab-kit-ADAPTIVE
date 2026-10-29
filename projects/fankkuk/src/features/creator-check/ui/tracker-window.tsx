@@ -14,7 +14,7 @@ import { boxPlace } from "./bluetooth-window";
 
 // 추적 장치가 나온 선물 창 (office-workflow INV-W14, action-center INV-J5·J8). 블루투스 발견 창과 같은 장치 — 고르기·취소·운영자 처리·기한이 같고
 // 선택지만 「신고하기」「신고하지 않기」다. 고르기만 한다 — 상자는 팬꾹이 처리하거나 기한이 지나야 움직이고, 그 전까지는 취소할 수 있다.
-// 글자는 용어집 tracker_hold·report_choice 행(크리에이터 화면): 라벨 「추적 장치 발견」, 문장 「신고할지 정해 주세요」, 버튼 「신고하기」「신고하지 않기」.
+// 글자는 용어집 tracker_hold·report_choice 행(크리에이터 화면): 라벨 「추적 장치 발견」, 문장 「신고 여부를 선택해 주세요」, 버튼 「신고하기」「신고하지 않기」.
 
 type Step = "ask" | "chosen" | "picked";
 
@@ -70,7 +70,7 @@ export function TrackerWindow({ item, now, open, onClose }: { item: TrackerItem;
       router.push("/login");
       return;
     }
-    setError(r.kind === "refused" ? r.message : "저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
+    setError(r.kind === "refused" ? r.message : "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
     router.refresh();
   }
 
@@ -98,12 +98,12 @@ export function TrackerWindow({ item, now, open, onClose }: { item: TrackerItem;
             </dd>
           </div>
           <div className={d.kv}>
-            <dt>보낸 날</dt>
+            <dt>등록일</dt>
             <dd>{formatMonthDayKo(item.sentAt)}</dd>
           </div>
           {item.receivedAt ? (
             <div className={d.kv}>
-              <dt>사무실 도착</dt>
+              <dt>팬꾹 도착일</dt>
               <dd>{formatMonthDayKo(item.receivedAt)}</dd>
             </div>
           ) : null}
@@ -126,7 +126,7 @@ export function TrackerWindow({ item, now, open, onClose }: { item: TrackerItem;
 
         {lapsed ? null : step === "ask" ? (
           <>
-            <p className={d.q}>신고할지 정해 주세요</p>
+            <p className={d.q}>신고 여부를 선택해 주세요</p>
             <div className={`${d.btns} ${d.two}`}>
               <button className="btn btn--line" type="button" disabled={busy} onClick={() => void send({ action: "choose", choice: "no_report" })}>
                 신고하지 않기
@@ -142,10 +142,10 @@ export function TrackerWindow({ item, now, open, onClose }: { item: TrackerItem;
               <CheckIcon />
               {trackerChoiceText(chosen)}
             </p>
-            {step === "chosen" ? <p className={d.note}>팬꾹이 처리하기 전까지 취소할 수 있어요.</p> : null}
+            {step === "chosen" ? <p className={d.note}>팬꾹이 처리하기 전까지 선택을 취소할 수 있습니다.</p> : null}
             <div className={`${d.btns} ${d.two}`}>
               <button className="btn btn--line" type="button" disabled={busy} onClick={() => void send({ action: "cancel" })}>
-                취소
+                선택 취소
               </button>
               <button ref={focusRef} className="btn" type="button" onClick={onClose}>
                 확인

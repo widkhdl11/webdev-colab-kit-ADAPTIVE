@@ -38,7 +38,7 @@ export const MESSAGE_CODE_CHECK = "팬꾹 주소 끝 6자리가 맞지 않아요
 export const MESSAGE_LOOK = `포장 모양은 ${LOOK_MAX}자까지 적어 주세요.`;
 export const MESSAGE_PHONE_LAST4 = "전화번호 뒤 4자리는 숫자 4개로 적어 주세요.";
 export const MESSAGE_PHONE_LAST4_UNAVAILABLE = "전화번호 뒤 4자리는 아직 저장할 수 없어요. 칸을 비우고 다시 해 주세요.";
-const FAILED = "처리하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const FAILED = "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 const optionalText = z
   .string()

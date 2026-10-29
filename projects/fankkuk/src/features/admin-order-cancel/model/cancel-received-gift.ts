@@ -48,6 +48,6 @@ export async function cancelReceivedGift(client: Pick<SupabaseClient, "rpc">, bo
   if (error?.code === "42501") return { status: 403, body: { message: MESSAGE_OWNER_ONLY } };
   if (error?.code === "P0002") return { status: 409, body: { message: MESSAGE_NOT_CANCELABLE } };
   if (error?.code === "P0061") return { status: 409, body: { message: MESSAGE_CAUGHT_BOX } };
-  if (error) return pgErrorReply(error.code, { limit: MESSAGE_REASON, failed: "취소하지 못했어요. 잠시 뒤 다시 해 주세요." });
+  if (error) return pgErrorReply(error.code, { limit: MESSAGE_REASON, failed: "취소하지 못했습니다. 잠시 후 다시 시도해 주세요." });
   return { status: 200, body: { ok: true } };
 }

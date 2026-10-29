@@ -15,14 +15,14 @@ const body = z.object({ orderNo: z.string().regex(/^FC-[0-9A-Z]{3,10}(-[0-9]{1,2
 type Deps = { client: Pick<SupabaseClient, "rpc">; viewer: Viewer | null };
 
 export async function ackEarlySend(deps: Deps, input: unknown): Promise<JsonReply> {
-  if (!deps.viewer) return { status: 401, body: { message: "로그인이 필요해요." } };
-  if (deps.viewer.role !== "fan" && deps.viewer.role !== "creator") return { status: 403, body: { message: "권한이 없어요." } };
+  if (!deps.viewer) return { status: 401, body: { message: "로그인이 필요합니다." } };
+  if (deps.viewer.role !== "fan" && deps.viewer.role !== "creator") return { status: 403, body: { message: "이 작업을 수행할 권한이 없습니다." } };
   const shaped = body.safeParse(input);
-  if (!shaped.success) return { status: 400, body: { message: "잘못된 요청이에요." } };
+  if (!shaped.success) return { status: 400, body: { message: "잘못된 요청입니다." } };
   const { error } = await deps.client.rpc("ack_early_send", { p_order_no: shaped.data.orderNo });
   if (error) {
     if (error.code === "P0002") return { status: 404, body: { message: MESSAGE_EARLY_SEND_UNAVAILABLE } };
-    return pgErrorReply(error.code, { limit: "잘못된 요청이에요.", failed: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." });
+    return pgErrorReply(error.code, { limit: "잘못된 요청입니다.", failed: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." });
   }
   return { status: 200, body: { acknowledged: true } };
 }

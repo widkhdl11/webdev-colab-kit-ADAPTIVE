@@ -12,8 +12,8 @@ export type PgErrorMessages = {
   failed: string;
 };
 
-export const MESSAGE_FORBIDDEN = "권한이 없어요.";
-export const MESSAGE_NOT_FOUND = "찾을 수 없어요.";
+export const MESSAGE_FORBIDDEN = "이 작업을 수행할 권한이 없습니다.";
+export const MESSAGE_NOT_FOUND = "요청한 항목을 찾을 수 없습니다.";
 
 export function pgErrorReply(code: string | undefined, messages: PgErrorMessages): JsonReply {
   if (code === "42501") return { status: 403, body: { message: MESSAGE_FORBIDDEN } };

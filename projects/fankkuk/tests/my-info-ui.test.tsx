@@ -181,9 +181,9 @@ describe("계정 설정(팬) — 알림", () => {
     render();
     const notify = saveForm().previousElementSibling as HTMLElement;
     const must = notify.querySelector("strong")!;
-    expect(must.textContent).toBe("필수 알림은 수신 설정과 관계없이 발송됩니다.");
+    expect(must.textContent).toContain("필수 알림:");
     expect(must.closest("details")).toBeNull();
-    const body = must.nextElementSibling as HTMLElement;
+    const body = must.parentElement as HTMLElement;
     expect(body.textContent).toContain("반송할 상자 · 미도착 상자");
   });
 

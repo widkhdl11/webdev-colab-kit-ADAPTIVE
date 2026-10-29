@@ -14,7 +14,7 @@ describe("역조공 수락 라벨", () => {
   it("팬 본인 화면(받은 역조공) — 아직 정하지 않았으면 「받을지 정해 주세요」와 남은 날·기한", () => {
     const now = Date.parse("2026-10-03T00:00:00Z");
     const c = receivedStageCopy("waiting", "2026-10-08T06:00:00Z", now);
-    expect([c.tag, c.note]).toEqual(["받을지 정해 주세요", "6일 남음 · 10.08까지"]);
+    expect([c.tag, c.note]).toEqual(["수락 대기", "6일 남음 · 10.08까지"]);
   });
 
   it("(실패경로) 쓰지 않는 말 — 「기다리는 중」(단독)·「받기 기다리는 중」은 어느 라벨에도 없다", () => {
@@ -27,8 +27,8 @@ describe("역조공 수락 라벨", () => {
 describe("처분된 역조공 (office-workflow INV-W15, 용어집 disposed)", () => {
   it("INV-W15: 팬 본인 화면 라벨은 「처분」, 돌려보냈다는 말은 없다", () => {
     const c = settledStageCopy("disposed");
-    expect(c.tag).toBe("처분");
-    expect(c.note).toBe("상자 처분 완료");
+    expect(c.tag).toBe("처분 완료");
+    expect(c.note).toBe("상자 처분이 완료되었습니다");
     expect(`${c.tag} ${c.note}`).not.toContain("돌려보냈");
   });
 });

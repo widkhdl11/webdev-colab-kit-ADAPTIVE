@@ -104,15 +104,15 @@ export function CreatorSearchPage({
       <header className="page-head">
         <div className="ph-row">
           <h1 className="ph-title" id="find-title">
-            나의 크리에이터를 찾아요
+            선물을 보낼 크리에이터 찾기
           </h1>
         </div>
         <p className="ph-desc">
-          이름이나 채널 이름을 입력하면 아래 목록이 바로 걸러져요.
+          크리에이터 이름 또는 채널 이름으로 검색해 주세요.
         </p>
         <p className={s.verify}>
           <CheckIcon />
-          활동 채널 본인 확인을 마친 크리에이터만 보여요.
+          활동 채널 소유자 확인을 완료한 크리에이터만 표시됩니다.
         </p>
       </header>
       <div className={`search ${s.search}`}>
@@ -149,7 +149,7 @@ export function CreatorSearchPage({
       </div>
       {/* 칩 줄 제목 — 칩이 검색창 바로 아래 한 줄로 와서 눈에는 보이지 않게 두고 문서 개요에만 남긴다 */}
       <h2 className="sr-only">태그</h2>
-      <div className={s.chips} role="group" aria-label="태그로 걸러 보기">
+      <div className={s.chips} role="group" aria-label="태그별 보기">
         {["", ...chips].map((t) => (
           <button
             key={t || "all"}
@@ -215,13 +215,12 @@ export function CreatorSearchPage({
               width={96}
               height={96}
             />
-            <h2 className="t-card">찾는 크리에이터가 아직 없어요</h2>
+            <h2 className="t-card">검색 결과가 없습니다</h2>
             <p className="t-desc">
-              이름 철자를 다시 확인해 보세요. 본인 확인을 마치지 않은
-              크리에이터는 검색되지 않아요.
+              검색어와 선택한 태그를 확인해 주세요. 채널 소유자 확인 전인 크리에이터는 검색되지 않습니다.
             </p>
             <Link className="btn btn--line" href="/support">
-              크리에이터를 초대하고 싶어요
+              크리에이터 초대 문의
             </Link>
           </div>
         )}

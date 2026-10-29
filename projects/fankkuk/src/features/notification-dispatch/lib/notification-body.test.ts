@@ -62,7 +62,7 @@ describe("알림 본문 틀 (INV-N1)", () => {
   it("INV-N8: 승인 요청은 차례마다 제목이 다르고, 셋 다 「꺼도 간다」는 안내를 붙인다", () => {
     const subjects = ([1, 2, 3] as const).map((r) => buildNotificationBody(inputFor("approval_request", r)).subject);
     expect(new Set(subjects).size).toBe(3);
-    for (const r of [1, 2, 3] as const) expect(buildNotificationBody(inputFor("approval_request", r)).text).toContain("이 알림은 꺼 두어도 가요.");
+    for (const r of [1, 2, 3] as const) expect(buildNotificationBody(inputFor("approval_request", r)).text).toContain("서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.");
     expect(buildNotificationBody(inputFor("arrived")).text).not.toContain("꺼 두어도 가요");
   });
 
@@ -112,10 +112,10 @@ describe("알림 링크 (INV-N9)", () => {
       fanNickname: "별빛",
     });
     expect(new URL(b.link).pathname).toBe("/creator/actions");
-    expect(b.subject).toBe("[팬꾹] 추적 장치가 나온 상자가 있어요");
-    expect(b.text).toContain("추적 장치가 나온 상자가 있어요.");
+    expect(b.subject).toBe("[팬꾹] 추적 장치 발견 안내");
+    expect(b.text).toContain("검수 중 추적 장치가 발견되었습니다.");
     // 스펙 문장의 「보낸 분」은 용어집 2절에서 쓰지 않는 말이라 「보낸 사람」으로 쓴다
-    expect(b.text).toContain("신고할지 정해 주세요. 7일 안에 정하지 않으면 보낸 사람에게 돌려보내요.");
+    expect(b.text).toContain("신고 여부를 선택해 주세요. 검수 완료 후 7일 이내에 선택하지 않으면 반송 처리됩니다.");
     for (const word of ["위치 추적기", "블루투스", "보관", "별빛", "보낸 분에게"]) expect([word, b.text.includes(word) || b.subject.includes(word)]).toEqual([word, false]);
   });
 
@@ -158,7 +158,7 @@ describe("알림 링크 (INV-N9)", () => {
     expect(b.text).toContain("보내신 상자가 신청하신 크기보다 커서 추가 결제가 필요해요.");
     expect(b.text).toContain("추가 결제가 끝나면 크리에이터에게 보내 드려요.");
     expect(b.text).toContain("7일 안에 결제하지 않으면 보내신 주소로 돌려보내요.");
-    expect(b.text).toContain("이 알림은 꺼 두어도 가요."); // 꼭 가는 알림이다(INV-N6, 2026-10-12)
+    expect(b.text).toContain("서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다."); // 꼭 가는 알림이다(INV-N6, 2026-10-12)
     for (const word of ["2000", "2,000", "원", "중형", "medium", "소형", "대형"]) expect(b.text).not.toContain(word);
   });
 
@@ -170,7 +170,7 @@ describe("알림 링크 (INV-N9)", () => {
     expect(b.text).toContain("카드사에 따라 돌려받기까지 며칠 걸릴 수 있어요.");
     expect(b.text).toContain("선물을 보내시려면 다시 등록해 주세요.");
     expect(b.text).not.toMatch(/\d[\d,]*원/);
-    expect(b.text).toContain("이 알림은 꺼 두어도 가요."); // 꼭 가는 알림이다(INV-N6, 2026-10-12)
+    expect(b.text).toContain("서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다."); // 꼭 가는 알림이다(INV-N6, 2026-10-12)
   });
 
   it("INV-N19 (S19): 차액 결제 전액 취소 안내 — 선물 상세 링크, 추가 결제를 다시 해 달라는 말", () => {
@@ -180,7 +180,7 @@ describe("알림 링크 (INV-N9)", () => {
     expect(b.text).toContain("추가 결제를 다시 해 주세요.");
     expect(b.text).not.toContain("다시 등록");
     expect(b.text).not.toMatch(/\d[\d,]*원/);
-    expect(b.text).toContain("이 알림은 꺼 두어도 가요."); // 꼭 가는 알림이다(INV-N6, 2026-10-12)
+    expect(b.text).toContain("서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다."); // 꼭 가는 알림이다(INV-N6, 2026-10-12)
   });
 
   it("INV-N17 (S17): 아직 안 온 상자 안내 — 선물 상세 링크, 택배비 뺀 금액을 먼저 돌려준다·늦게 오면 반송·7일 안에 안 오면 택배비도라는 말뿐이고 거절 종류·6자리는 없다", () => {
@@ -201,7 +201,7 @@ describe("알림 링크 (INV-N9)", () => {
     expect(b.text).not.toMatch(/[3479ACDEFHJKMNPRTWXY]{6}/);
   });
 
-  it("INV-N17 ② (S2) · decline-block INV-D5: 직접·차단 거절 알림 — 화면(C2)과 같은 「선물을 원하지 않아요」와 결제 금액을 돌려준다는 말, 차단·크리에이터 닉네임·6자리는 없다", () => {
+  it("INV-N17 ② (S2) · decline-block INV-D5: 직접·차단 거절 알림 — 화면(C2)과 같은 「선물 수령을 거절했습니다」와 결제 금액을 돌려준다는 말, 차단·크리에이터 닉네임·6자리는 없다", () => {
     const b = buildNotificationBody({
       ...inputFor("gift_undelivered"),
       // @ts-expect-error 본문 틀에는 차단 칸이 없다 — 차단 거절도 사유 값은 declined 다(DB 가 주문 상태로만 정한다)
@@ -209,18 +209,18 @@ describe("알림 링크 (INV-N9)", () => {
       creatorNickname: "별빛",
     });
     expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
-    expect(b.subject).toBe("[팬꾹] 크리에이터가 선물을 원하지 않아요");
-    expect(b.text).toContain("크리에이터가 선물을 원하지 않아요.");
+    expect(b.subject).toBe("[팬꾹] 크리에이터가 선물 수령을 거절했습니다");
+    expect(b.text).toContain("크리에이터가 선물 수령을 거절했습니다.");
     expect(b.text).toContain("결제 금액은 돌려드려요.");
     for (const word of ["차단", "기간", "반려", "별빛", "true"]) expect([word, b.text.includes(word) || b.subject.includes(word)]).toEqual([word, false]);
     expect(b.text).not.toMatch(/[3479ACDEFHJKMNPRTWXY]{6}/);
   });
 
-  it("INV-N17 ② (S2) · decline-block INV-D5: 7일 자동 반려 알림 — 「기간이 지나 반려됐어요」와 결제 금액을 돌려준다는 말, 거절했다는 말은 없다", () => {
+  it("INV-N17 ② (S2) · decline-block INV-D5: 7일 자동 반려 알림 — 「승인 기한이 지나 자동 반려되었습니다」와 결제 금액을 돌려준다는 말, 거절했다는 말은 없다", () => {
     const b = buildNotificationBody({ ...inputFor("gift_undelivered"), undeliveredReason: "expired" });
     expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
-    expect(b.subject).toBe("[팬꾹] 보낸 선물이 기간이 지나 반려됐어요");
-    expect(b.text).toContain("보내신 선물이 기간이 지나 반려됐어요.");
+    expect(b.subject).toBe("[팬꾹] 보낸 선물의 승인 기한이 지나 자동 반려되었습니다");
+    expect(b.text).toContain("보내신 선물의 승인 기한이 지나 자동 반려되었습니다.");
     expect(b.text).toContain("결제 금액은 돌려드려요.");
     for (const word of ["원하지", "차단", "거절"]) expect([word, b.text.includes(word)]).toEqual([word, false]);
   });
@@ -237,10 +237,10 @@ describe("알림 링크 (INV-N9)", () => {
       detected: "블루투스",
     });
     expect(new URL(b.link).pathname).toBe("/creator/actions");
-    expect(b.subject).toBe("[팬꾹] 받을지 정해 주실 선물이 있어요");
-    expect(b.text).toContain("받을지 정해 주실 상자가 있어요.");
-    expect(b.text).toContain("7일 안에 정하지 않으면 보낸 사람에게 돌려보내요.");
-    expect(b.text).toContain("이 알림은 꺼 두어도 가요.");
+    expect(b.subject).toBe("[팬꾹] 선물 수령 여부 확인 요청");
+    expect(b.text).toContain("수령 여부를 확인할 상자가 있습니다.");
+    expect(b.text).toContain("검수 완료 후 7일 이내에 선택하지 않으면 반송 처리됩니다.");
+    expect(b.text).toContain("서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.");
     for (const word of ["별빛", "블루투스", "RF", "추적", "전자"]) expect([word, b.text.includes(word) || b.subject.includes(word)]).toEqual([word, false]);
   });
 
@@ -255,7 +255,7 @@ describe("알림 링크 (INV-N9)", () => {
     // 인사 · 문구 한 줄 · (빈 줄) · 링크 · (빈 줄) · 공통 꼬리말 · 꺼도 간다는 안내 — 주문번호 줄·도착일·기한 문장은 없다
     expect(lines.slice(0, 2)).toEqual(["하루님,", "팬꾹 주소 없이 보낸 상자가 있어요."]);
     expect(lines[3]).toBe(b.link);
-    expect(b.text).toContain("이 알림은 꺼 두어도 가요.");
+    expect(b.text).toContain("서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.");
     expect(b.text).not.toContain("주문번호");
     for (const word of ["송장", "택배", "CJ", "도착한", "크리에이터"]) expect([word, b.text.includes(word)]).toEqual([word, false]);
   });
@@ -265,7 +265,7 @@ describe("알림 링크 (INV-N9)", () => {
       const b = buildNotificationBody(inputFor(kind));
       const all = [b.subject, b.text, b.buttonLabel].join("\n");
       expect([kind, all.includes("보낸 분"), all.includes("받는 분")]).toEqual([kind, false, false]);
-      expect([kind, b.text.includes("선물 내용과 보낸 사람·받는 사람 정보를 담지 않아요.")]).toEqual([kind, true]);
+      expect([kind, b.text.includes("선물 상세 정보는 알림에 표시하지 않습니다.")]).toEqual([kind, true]);
     }
   });
 
@@ -273,25 +273,25 @@ describe("알림 링크 (INV-N9)", () => {
     for (const kind of SENDABLE) {
       const text = buildNotificationBody(inputFor(kind)).text;
       const must = isMustDeliver(kind);
-      expect([kind, text.includes("이 알림은 꺼 두어도 가요.")]).toEqual([kind, must]);
-      expect([kind, text.includes("알림은 내 팬꾹에서 끌 수 있어요.")]).toEqual([kind, !must]);
+      expect([kind, text.includes("서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.")]).toEqual([kind, must]);
+      expect([kind, text.includes("알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다.")]).toEqual([kind, !must]);
     }
   });
 
   it("INV-N6: 「꺼 두어도 가요」는 꺼낸 줄의 꼭 가는 알림 표시(DB 판정)를 따른다 — 앱 목록과 달라도 줄의 값대로", () => {
-    expect(buildNotificationBody({ ...inputFor("arrived"), mustDeliver: true }).text).toContain("이 알림은 꺼 두어도 가요.");
+    expect(buildNotificationBody({ ...inputFor("arrived"), mustDeliver: true }).text).toContain("서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.");
     const optional = buildNotificationBody({ ...inputFor("difference_due"), mustDeliver: false }).text;
     expect(optional).not.toContain("꺼 두어도 가요");
-    expect(optional).toContain("알림은 내 팬꾹에서 끌 수 있어요.");
+    expect(optional).toContain("알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다.");
   });
 
   it("INV-N6: 끌 수 있는 알림의 안내는 받는 사람의 설정 자리를 가리킨다 — 팬은 내 팬꾹, 크리에이터는 주소와 설정", () => {
-    expect(buildNotificationBody(inputFor("shipped")).text).toContain("알림은 내 팬꾹에서 끌 수 있어요.");
+    expect(buildNotificationBody(inputFor("shipped")).text).toContain("알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다.");
     // 역조공 상자 도착은 보낸 크리에이터가 받는다
     const revgift = buildNotificationBody({ ...inputFor("box_arrived"), orderNo: "RG-7K3M9" }).text;
-    expect(revgift).toContain("알림은 내 팬꾹의 주소와 설정에서 끌 수 있어요.");
+    expect(revgift).toContain("알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다.");
     const creator = buildNotificationBody({ ...inputFor("approval_request"), mustDeliver: false }).text;
-    expect(creator).toContain("알림은 내 팬꾹의 주소와 설정에서 끌 수 있어요.");
+    expect(creator).toContain("알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다.");
     for (const kind of SENDABLE) expect(buildNotificationBody(inputFor(kind)).text).not.toContain("내 정보에서");
   });
 
@@ -326,13 +326,13 @@ describe("알림 링크 (INV-N9)", () => {
 });
 
 describe("받았어요·답장 알림 (gift-reply INV-G5)", () => {
-  it("INV-G5 S5: gift_reply 는 「답장이 왔어요」, gift_received 는 「보낸 선물이 도착했다고 확인됐어요」 — 선물 상세로 잇는다", () => {
+  it("INV-G5 S5: gift_reply 는 「답장이 도착했습니다」, gift_received 는 「보낸 선물이 도착했다고 확인됐어요」 — 선물 상세로 잇는다", () => {
     const reply = buildNotificationBody(inputFor("gift_reply"));
-    expect(reply.subject).toBe("[팬꾹] 보낸 선물에 답장이 왔어요");
-    expect(reply.text).toContain("답장이 왔어요");
+    expect(reply.subject).toBe("[팬꾹] 선물 답장 도착");
+    expect(reply.text).toContain("답장이 도착했습니다");
     expect(reply.link).toBe(`${ORIGIN}/gifts/FC-7K3M9`);
     const received = buildNotificationBody(inputFor("gift_received"));
-    expect(received.subject).toBe("[팬꾹] 보낸 선물이 도착했다고 확인됐어요");
+    expect(received.subject).toBe("[팬꾹] 크리에이터 수령 확인");
     expect(received.text).not.toContain("답장");
     expect(received.link).toBe(`${ORIGIN}/gifts/FC-7K3M9`);
   });
@@ -367,7 +367,7 @@ describe("역조공 받기 알림 (INV-N20 · reverse-gift INV-R12)", () => {
     expect(b.text).toContain("모모님");
     expect(b.text).not.toContain("주문번호");
     expect(b.text).not.toMatch(/소형|중형|대형|\d{1,3},\d{3}/);
-    expect(b.text).toContain("이 알림은 꺼 두어도 가요.");
+    expect(b.text).toContain("서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.");
   });
 
   it("INV-N20 (S20b): 72시간 재알림은 제목이 다르다", () => {
@@ -394,7 +394,7 @@ describe("팬꾹 주소 없이 보낸 상자 알림 — 크리에이터 (INV-N21
     expect(b.buttonLabel).toBe("내 상자 찾기");
     expect(b.text.split("\n").slice(0, 2)).toEqual(["하루님,", "팬꾹 주소 없이 보낸 상자가 있어요."]);
     expect(b.text).not.toContain("RG-7K3M90");
-    expect(b.text).toContain("이 알림은 꺼 두어도 가요.");
+    expect(b.text).toContain("서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.");
   });
 
   it("INV-N21 (실패경로): 팬 선물 주문이면 지금처럼 선물 상세의 「팬꾹 주소 없이 보냈어요」로", () => {
@@ -411,8 +411,8 @@ describe("반송 주소 알림 (INV-N22)", () => {
     expect(gift.subject).toBe("[팬꾹] 돌려보낼 상자가 있어요");
     expect(gift.text).toContain("돌려보낼 상자가 있어요.");
     expect(gift.text).toContain("돌려받을 주소를 확인해 주세요. 30일 안에 확인하지 않으면 상자를 처분해요.");
-    expect(gift.buttonLabel).toBe("돌려받을 주소 확인하기");
-    expect(gift.text).toContain("이 알림은 꺼 두어도 가요.");
+    expect(gift.buttonLabel).toBe("반송 주소 확인하기");
+    expect(gift.text).toContain("서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.");
     for (const word of ["return_address", "dispose_due", "반송지", "폐기"]) expect(gift.text + gift.subject + gift.buttonLabel).not.toContain(word);
     // 보낸 역조공 반송 주소는 크리에이터 처리할 일의 줄에서 확인한다(action-center INV-J5)
     const share = buildNotificationBody({ ...inputFor("return_address"), orderNo: "RG-7K3M90" });

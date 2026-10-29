@@ -29,7 +29,7 @@ export function PaymentConsent({
   onChange,
   invalid,
   errorId,
-  label = "결제 내용과 아래 규정을 확인했고 결제에 동의해요 (필수)",
+  label = "결제 내용과 아래 규정을 확인했으며, 결제에 동의합니다. (필수)",
 }: Props) {
   return (
     <div className="field-block">

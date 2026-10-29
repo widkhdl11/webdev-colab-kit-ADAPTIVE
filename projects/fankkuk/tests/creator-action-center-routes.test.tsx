@@ -147,7 +147,7 @@ describe("INV-J6: 실제 라우트 — 사이드바 숫자·홈 「처리할 일
     expect([...host.querySelectorAll("main a")].find((a) => a.textContent?.startsWith("지금 할 일"))?.textContent).toBe("지금 할 일0건");
     reads.calls = 0;
     expect((await draw(CreatorActionsRoute())).badge).toBeNull();
-    expect(host.textContent).toContain("지금 할 일이 없어요");
+    expect(host.textContent).toContain("현재 처리할 일이 없습니다");
   });
 });
 
@@ -156,7 +156,7 @@ describe("INV-J6·J11: 선물 현황 라우트 — 「처리할 일」 버튼은
     const r = await draw(CreatorProgressRoute());
     expect(reads.calls).toBe(1);
     expect(r.badge).toBe("3");
-    expect(host.querySelector("h1")?.textContent).toBe("선물 현황진행 중 3건");
+    expect(host.querySelector("h1")?.textContent).toBe("선물 현황· 진행 중 3건");
     // v37: 승인 대기(다온)는 하늘 판 하나로 모이고 그 판의 버튼, 보내는 선물은 줄의 버튼
     const go = [...host.querySelectorAll("main a")].filter((a) => a.textContent === "지금 할 일" && a.closest("section[data-waiting], li"));
     expect(go.map((a) => (a.closest("li") ? a.closest("li")?.querySelector("[data-title]")?.textContent : "승인 대기 판"))).toEqual(["승인 대기 판", "모카님"]);
@@ -180,19 +180,19 @@ describe("INV-J6·J11: 선물 현황 라우트 — 「처리할 일」 버튼은
     expect(actions?.getAttribute("href")).toBe("/creator/actions");
     const summary = host.querySelector('[aria-labelledby="creator-progress-title"]')!;
     expect(summary.querySelectorAll("li")).toHaveLength(3);
-    expect(summary.textContent).toContain("다온님이 보내신 선물");
+    expect(summary.textContent).toContain("다온님이 보낸 선물");
     expect(summary.textContent).toContain("승인 대기");
-    expect(summary.textContent).toContain("보리님이 보내신 선물");
-    expect(summary.textContent).toContain("사무실로 오는 중");
+    expect(summary.textContent).toContain("보리님이 보낸 선물");
+    expect(summary.textContent).toContain("팬꾹 도착 대기");
     expect(summary.textContent).toContain("모카님께 보낸 선물");
-    expect(summary.textContent).toContain("아직 도착하지 않았어요");
+    expect(summary.textContent).toContain("미도착");
     expect([...summary.querySelectorAll("li a")].every((a) => a.getAttribute("href") === "/creator/progress")).toBe(true);
   });
 
   it("선물 현황 읽기 실패는 실제 홈 본문에도 실패 안내로 표시하고 건수를 비운다", async () => {
     vi.mocked(readMyGiftProgress).mockRejectedValueOnce(new Error("read failed"));
     await draw(CreatorHomeRoute());
-    expect(host.querySelector('[aria-labelledby="creator-progress-title"]')!.textContent).toContain("불러오지 못했어요");
+    expect(host.querySelector('[aria-labelledby="creator-progress-title"]')!.textContent).toContain("불러오지 못했습니다");
     const tile = [...host.querySelectorAll('ul[aria-label="내 바로가기"] a')].find((a) => a.getAttribute("href") === "/creator/progress");
     expect(tile?.textContent).toBe("선물 현황");
   });
@@ -230,3 +230,4 @@ describe("선물 현황 라우트 — 크리에이터만", () => {
     expect(host.querySelector("h1")?.textContent).toContain("선물 현황");
   });
 });
+

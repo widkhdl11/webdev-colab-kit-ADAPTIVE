@@ -4,7 +4,7 @@
 
 export type SendGiftPhotoOutcome = { kind: "ok"; version: number | null } | { kind: "login" } | { kind: "failed"; message: string };
 
-const FALLBACK = "사진을 저장하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const FALLBACK = "사진을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 /** 화면이 그리는 사진 주소 — 서버가 본인에게만 짧은 서명 주소로 넘겨준다. 판 번호를 붙여 바꾼 사진이 바로 보이게. */
 export function giftPhotoSrc(orderNo: string, version: number): string {

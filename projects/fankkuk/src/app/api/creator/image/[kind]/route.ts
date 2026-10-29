@@ -25,7 +25,7 @@ function reply(result: ImageResult): Response {
 type Work = (deps: { admin: ReturnType<typeof createAdminSupabase>; viewer: Viewer }, kind: CreatorImageKind) => Promise<ImageResult | Response>;
 
 async function run(req: Request, ctx: Ctx, work: Work): Promise<Response> {
-  if (!isSameOrigin(req.headers)) return Response.json({ message: "잘못된 요청이에요." }, { status: 403, headers: NO_STORE });
+  if (!isSameOrigin(req.headers)) return Response.json({ message: "유효하지 않은 요청입니다." }, { status: 403, headers: NO_STORE });
   const kind = parseImageKind((await ctx.params).kind);
   if (!kind) return Response.json({ message: "없는 주소예요." }, { status: 404, headers: NO_STORE });
   try {
@@ -36,7 +36,7 @@ async function run(req: Request, ctx: Ctx, work: Work): Promise<Response> {
     return result instanceof Response ? result : reply(result);
   } catch (e) {
     console.error("creator-image: 처리 중 예외", e instanceof Error ? e.name : typeof e);
-    return Response.json({ message: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." }, { status: 500, headers: NO_STORE });
+    return Response.json({ message: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500, headers: NO_STORE });
   }
 }
 
@@ -44,7 +44,7 @@ export async function POST(req: Request, ctx: Ctx) {
   return run(req, ctx, async (deps, kind) => {
     const declared = req.headers.get("content-length");
     if (declared === null || !/^\d+$/.test(declared)) {
-      return Response.json({ message: "사진 크기를 알 수 없는 요청이에요. 다시 올려 주세요." }, { status: 411, headers: NO_STORE });
+      return Response.json({ message: "이미지 크기를 확인할 수 없습니다. 파일을 다시 업로드해 주세요." }, { status: 411, headers: NO_STORE });
     }
     if (Number(declared) > PHOTO_BODY_LIMIT) return Response.json({ message: "사진은 최대 10MB까지 업로드할 수 있습니다." }, { status: 413, headers: NO_STORE });
     let file: Blob | null = null;

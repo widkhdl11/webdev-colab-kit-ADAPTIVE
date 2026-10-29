@@ -39,7 +39,7 @@ const countNote = (n: number | null) => (n === null ? "" : `${n}건`);
 /** ①-2 내 바로가기 넷(용어집 12절) */
 export function memberTiles({ gifts, actionCount, receivedCount }: Pick<Props, "gifts" | "actionCount" | "receivedCount">): FrontTile[] {
   return [
-    { href: "/gifts/new", label: "선물 보내기", note: "팬꾹 주소로 먼저 보내요", icon: "icon-gift" },
+    { href: "/gifts/new", label: "선물 보내기", note: "상자별 팬꾹 주소 안내", icon: "icon-gift" },
     { href: "/gifts", label: "보낸 선물", note: `진행 중 ${gifts.length}건`, icon: "icon-truck" },
     { href: ACTION_CENTER_HREF, label: "지금 할 일", note: countNote(actionCount), icon: "icon-approve" },
     { href: "/me/revgifts", label: "받은 선물", note: countNote(receivedCount), icon: "icon-gift" },
@@ -48,7 +48,7 @@ export function memberTiles({ gifts, actionCount, receivedCount }: Pick<Props, "
 
 export function HomePage({ nickname, gifts, following, looks, faceToneByName, notices, prices, actionCount, receivedCount, banner = null }: Props) {
   return (
-    <RoleHome hero={<HeroBand title={nickname ? `${nickname}님, 반가워요` : "팬꾹에 오신 걸 환영해요"} eyebrow="오늘도 팬꾹에서 마음을 전해요" />} tiles={memberTiles({ gifts, actionCount, receivedCount })} tilesLabel="내 바로가기" banner={banner}>
+    <RoleHome hero={<HeroBand title={nickname ? `${nickname}님, 반가워요` : "팬꾹에 오신 걸 환영해요"} eyebrow="팬의 마음을, 크리에이터에게" />} tiles={memberTiles({ gifts, actionCount, receivedCount })} tilesLabel="내 바로가기" banner={banner}>
         <GiftsSlot gifts={gifts} faceToneByName={faceToneByName} />
         <CreatorCardsSlot
           id="follow"
@@ -61,7 +61,7 @@ export function HomePage({ nickname, gifts, following, looks, faceToneByName, no
           action={(c) => <FollowButton creatorId={c.id} creatorName={c.name} initialFollowing variant="card" mode="save" />}
           empty={
             <>
-              <p className="t-meta">아직 팔로우한 크리에이터가 없어요.</p>
+              <p className="t-meta">팔로우한 크리에이터가 없습니다.</p>
               <p className={h.secFoot}>
                 <Link className="btn btn--line btn--sm" href="/creators">
                   크리에이터 찾기

@@ -85,6 +85,6 @@ describe("INV-P7 (D12): 운영자 내부 열람 기록 화면", () => {
 
   it("기록이 없으면 빈 줄 안내", () => {
     render([]);
-    expect(host.textContent).toContain("아직 기록이 없어요");
+    expect(host.textContent).toContain("아직 기록이 없어요.");
   });
 });

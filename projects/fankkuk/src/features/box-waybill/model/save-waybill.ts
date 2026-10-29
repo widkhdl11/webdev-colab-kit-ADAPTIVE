@@ -46,11 +46,11 @@ export type FindHeldWrite = z.input<typeof findBody>;
 
 type Deps = { client: Pick<SupabaseClient, "rpc">; viewer: Viewer | null };
 
-const BAD_REQUEST: JsonReply = { status: 400, body: { message: "잘못된 요청이에요." } };
+const BAD_REQUEST: JsonReply = { status: 400, body: { message: "잘못된 요청입니다." } };
 
 function roleRefusal(viewer: Viewer | null, allowed: (role: ViewerRole) => boolean): JsonReply | null {
-  if (!viewer) return { status: 401, body: { message: "로그인이 필요해요." } };
-  if (!allowed(viewer.role)) return { status: 403, body: { message: "권한이 없어요." } };
+  if (!viewer) return { status: 401, body: { message: "로그인이 필요합니다." } };
+  if (!allowed(viewer.role)) return { status: 403, body: { message: "이 작업을 수행할 권한이 없습니다." } };
   return null;
 }
 
@@ -115,7 +115,7 @@ function unitRole(body: { boxId?: unknown; shareId?: unknown }): (role: ViewerRo
  * 계정마다 하루 5번까지 — 넘으면 DB 가 막는다(P0045). 주문번호는 받지 않는다(strict).
  */
 export async function findHeldParcel(deps: Deps, body: unknown): Promise<JsonReply> {
-  if (!deps.viewer) return { status: 401, body: { message: "로그인이 필요해요." } };
+  if (!deps.viewer) return { status: 401, body: { message: "로그인이 필요합니다." } };
   const shaped = findBody.safeParse(body);
   if (!shaped.success) return { status: 400, body: { message: MESSAGE_FIND_DETAILS } };
   const input = shaped.data;

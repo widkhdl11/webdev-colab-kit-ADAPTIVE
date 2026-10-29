@@ -9,10 +9,10 @@ import { readAdminAccess } from "@/entities/session/api/read-admin-access";
 
 export type PricingReply = { status: number; body: Record<string, unknown> };
 
-const MESSAGE_NOT_FOUND = "찾을 수 없어요.";
+const MESSAGE_NOT_FOUND = "요청한 항목을 찾을 수 없습니다.";
 const MESSAGE_OWNER_ONLY = "요금은 대표만 바꿀 수 있어요.";
 const MESSAGE_RULES = "요금표 조건에 맞지 않아요.";
-const MESSAGE_FAILED = "저장하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const MESSAGE_FAILED = "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 const won = z.number().int().min(0).max(10_000_000);
 const rowShape = z.object({ tier: z.enum(PRICED_TIERS), price_krw: won, carrier_cost_krw: won, inspection_fee_krw: won }).strict();

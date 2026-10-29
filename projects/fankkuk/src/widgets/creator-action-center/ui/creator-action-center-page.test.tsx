@@ -99,19 +99,19 @@ describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
     expect(host.querySelector("h1")?.textContent).toBe("지금 할 일4건");
     // v37 A안: 가장 급한 승인 요청은 하늘 판 하나(그 판이 곧 그 줄), 나머지 구간은 머리에 「N건」
     const panels = [...host.querySelectorAll("section")].map((p) => `${p.querySelector("h2")?.textContent}:${p.hasAttribute("data-row") ? 1 : p.querySelectorAll("[data-row]").length}`);
-    expect(panels).toEqual(["받은 선물2건:2", "다온님이 선물을 보내려고 해요:1", "보낸 선물1건:1"]);
+    expect(panels).toEqual(["받은 선물2건:2", "다온님의 선물 승인 요청:1", "보낸 선물1건:1"]);
     expect(rows().map((r) => r.querySelector("[data-title]")?.textContent)).toEqual([
-      "별사탕님 선물에서 블루투스 기기가 나왔어요",
-      "꿀단지님 선물에서 블루투스 기기가 나왔어요",
-      "다온님이 선물을 보내려고 해요",
-      "모카님 상자가 아직 안 왔어요",
+      "별사탕님 선물 · 블루투스 기기 발견",
+      "꿀단지님 선물 · 블루투스 기기 발견",
+      "다온님의 선물 승인 요청",
+      "모카님께 보낸 상자 미도착",
     ]);
   });
 
   it("INV-J5: 줄 아래 글은 「종류 · 남은 날 · 물품·상자」 — 블루투스는 상자 몇 번째와 추적기 아님, 승인은 상자 수", () => {
     render(ALL);
     const [bt, , ap] = rows();
-    expect(bt!.textContent).toContain("블루투스 발견");
+    expect(bt!.textContent).toContain("기기 발견");
     expect(bt!.textContent).toContain("4일 남음");
     expect(bt!.textContent).toContain("인형·쿠션 · 상자 2개 중 1번 · 추적 장치 아님");
     expect(ap!.textContent).toContain("승인 요청");
@@ -120,14 +120,14 @@ describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
     expect([...ap!.querySelectorAll("dt")].map((dt) => `${dt.textContent}=${dt.nextElementSibling?.textContent}`)).toEqual(["선물 종류=문구", "상자=1개", "전자기기·금속=없음"]);
   });
 
-  it("INV-J7 (실패경로): 미확인 상자 줄은 상자가 있다고 말하지 않는다 — 「아직 안 왔어요 · 아직 도착하지 않은 상자」, 도착일·찾기 권유가 없다(카드 d96 ②)", () => {
+  it("INV-J7 (실패경로): 미확인 상자 줄은 상자가 있다고 말하지 않는다 — 「아직 안 왔어요 · 미도착 상자 찾기」, 도착일·찾기 권유가 없다(카드 d96 ②)", () => {
     render(ALL);
     const un = rows()[3]!;
-    expect(un.textContent).toContain("모카님 상자가 아직 안 왔어요");
-    // 카드 d96 ②: 14일 줄은 찾기를 권하지 않는다 — 「아직 도착하지 않은 상자」만, 버튼은 「내 상자 찾기」
+    expect(un.textContent).toContain("모카님께 보낸 상자 미도착");
+    // 카드 d96 ②: 14일 줄은 찾기를 권하지 않는다 — 「미도착 상자 찾기」만, 버튼은 「내 상자 찾기」
     expect(un.textContent).not.toMatch(/팬꾹 주소 없이 보냈다면/);
     expect(button(un, "내 상자 찾기")).toBeDefined();
-    expect(un.textContent).toContain("10월 2일 보낸 역조공");
+    expect(un.textContent).toContain("10월 2일 결제 완료");
     expect(un.textContent).not.toMatch(/상자가 있어요|사무실 도착|미확인|코드 없이/);
   });
 
@@ -137,7 +137,7 @@ describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
     const picked = rows()[1]!;
     expect(picked.textContent).toContain("받기 선택");
     expect(button(picked, "받을지 정하기")).toBeUndefined();
-    await act(async () => button(picked, "취소")!.click());
+    await act(async () => button(picked, "선택 취소")!.click());
     expect(sendCheckChoice).toHaveBeenCalledWith({ action: "cancel", orderNo: "FC-BT2", boxSeq: 1 });
     expect(refresh).toHaveBeenCalled();
   });
@@ -147,25 +147,25 @@ describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
     render(ALL);
     act(() => button(rows()[0]!, "받을지 정하기")!.click());
     const d = host.querySelector("dialog[open]")!;
-    expect(d.querySelector("h2")?.textContent).toBe("블루투스 기기가 발견된 선물");
+    expect(d.querySelector("h2")?.textContent).toBe("탐지기 반응 물품 확인");
     const kv = [...d.querySelectorAll("dt")].map((dt) => `${dt.textContent}=${dt.nextElementSibling?.textContent}`);
-    expect(kv).toEqual(["선물 종류=인형·쿠션", "상자=2개 중 1번 · 중형", "보낸 날=10월 12일", "사무실 도착=10월 13일", "발견된 것=블루투스 기기", "검수 결과=추적 장치 아님", "기한=10월 20일 오후 11시 59분 · 4일 남음"]);
+    expect(kv).toEqual(["선물 종류=인형·쿠션", "상자=2개 중 1번 · 중형", "등록일=10월 12일", "팬꾹 도착일=10월 13일", "발견 물품=블루투스 기기", "검수 결과=추적 장치 아님", "기한=10월 20일 오후 11시 59분 · 4일 남음"]);
     await act(async () => button(d, "받기")!.click());
     expect(sendCheckChoice).toHaveBeenCalledWith({ action: "choose", choice: "accept", orderNo: "FC-BT1", boxSeq: 1 });
     expect(d.textContent).toContain("받기 선택");
-    expect(d.textContent).toContain("팬꾹이 처리하기 전까지 취소할 수 있어요.");
-    await act(async () => button(d, "취소")!.click());
+    expect(d.textContent).toContain("팬꾹이 처리하기 전까지 선택을 취소할 수 있습니다.");
+    await act(async () => button(d, "선택 취소")!.click());
     expect(sendCheckChoice).toHaveBeenLastCalledWith({ action: "cancel", orderNo: "FC-BT1", boxSeq: 1 });
     expect(button(d, "받기")).toBeDefined();
   });
 
   it("INV-W13 (실패경로): 서버가 거부하면(팬꾹이 이미 처리) 단계를 바꾸지 않고 이유를 보인다", async () => {
-    sendCheckChoice.mockResolvedValue({ kind: "refused", message: "팬꾹이 이미 처리했어요." });
+    sendCheckChoice.mockResolvedValue({ kind: "refused", message: "팬꾹에서 이미 처리한 상자입니다." });
     render(ALL);
     act(() => button(rows()[0]!, "받을지 정하기")!.click());
     const d = host.querySelector("dialog[open]")!;
     await act(async () => button(d, "받지 않기")!.click());
-    expect(d.querySelector("[role=alert]")?.textContent).toContain("팬꾹이 이미 처리했어요.");
+    expect(d.querySelector("[role=alert]")?.textContent).toContain("팬꾹에서 이미 처리한 상자입니다.");
     expect(d.textContent).not.toContain("받지 않기 선택");
   });
 
@@ -177,7 +177,7 @@ describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
     expect(d.textContent).not.toContain("사무실 도착");
     expect(d.querySelector<HTMLInputElement>("input[type=radio]")?.checked).toBe(true);
     expect(d.textContent).toContain("모카님 · 소형");
-    expect(button(d, "선택 완료")).toBeDefined();
+    expect(button(d, "상자 찾기")).toBeDefined();
   });
 
   it("INV-J8: 하늘 판의 「받지 않기」는 같은 승인 창을 받지 않기 확인부터 열고, 「승인하기」는 카카오톡 승인 고르기부터 연다", () => {
@@ -185,21 +185,21 @@ describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
     const hero = rows()[2]!;
     act(() => button(hero, "받지 않기")!.click());
     let d = host.querySelector("dialog[open]")!;
-    expect(d.textContent).toContain("이 선물을 받지 않을까요?");
+    expect(d.textContent).toContain("이 선물을 거절할까요?");
     expect(button(d, "돌아가기")).toBeDefined();
     act(() => button(d, "돌아가기")!.click());
     expect(button(d, "카카오톡으로 승인")).toBeDefined();
     act(() => d.querySelector<HTMLButtonElement>('button[aria-label="닫기"]')!.click());
     act(() => button(hero, "승인하기")!.click());
     d = host.querySelector("dialog[open]")!;
-    expect(d.textContent).not.toContain("이 선물을 받지 않을까요?");
+    expect(d.textContent).not.toContain("이 선물을 거절할까요?");
     expect(button(d, "카카오톡으로 승인")).toBeDefined();
   });
 
   it("INV-J6: 줄이 없으면 빈 상태 하나 — 판도 숫자도 없다", () => {
     render([]);
     expect(host.querySelector("h1")?.textContent).toBe("지금 할 일");
-    expect(host.textContent).toContain("지금 할 일이 없어요");
+    expect(host.textContent).toContain("현재 처리할 일이 없습니다");
     expect(rows()).toHaveLength(0);
   });
 });
@@ -241,7 +241,7 @@ describe("리뷰 반영 — 판 숫자 낭독·찾기 창 오류", () => {
     const errId = radios[0]!.getAttribute("aria-describedby");
     expect(errId).toBeTruthy();
     expect(radios.every((r) => r.getAttribute("aria-describedby") === errId)).toBe(true);
-    expect(d.querySelector(`[id="${errId}"]`)?.textContent).toContain("어느 팬에게 보낸 상자인지 골라 주세요");
+    expect(d.querySelector(`[id="${errId}"]`)?.textContent).toContain("상자를 받을 팬을 선택해 주세요");
     expect(document.activeElement).toBe(radios[0]);
   });
 });
@@ -266,7 +266,7 @@ describe("추적 장치 발견 줄 (action-center INV-J5·J8, office-workflow IN
   it("INV-J5: 받은 선물 판 맨 위, 제목·종류는 용어집 표기(추적 장치 발견) — 판 숫자에 들어간다", () => {
     render([TRACKER, BT_OPEN, APPROVAL]);
     const first = rows()[0]!;
-    expect(first.textContent).toContain("새벽님 선물에서 추적 장치가 나왔어요");
+    expect(first.textContent).toContain("새벽님 선물 · 추적 장치 발견");
     expect(first.textContent).toContain("추적 장치 발견");
     expect(first.textContent).not.toContain("위치 추적기");
     // 추적 장치 줄은 받은 선물 구간 숫자에 들어간다(승인 요청은 그 아래 하늘 판)
@@ -278,12 +278,12 @@ describe("추적 장치 발견 줄 (action-center INV-J5·J8, office-workflow IN
     render([TRACKER]);
     await act(async () => button(rows()[0]!, "신고할지 정하기")!.click());
     const dlg = document.querySelector("dialog[open]")!;
-    expect(dlg.textContent).toContain("신고할지 정해 주세요");
+    expect(dlg.textContent).toContain("신고 여부를 선택해 주세요");
     expect(button(dlg, "신고하지 않기")).toBeDefined();
     await act(async () => button(dlg, "신고하기")!.click());
     expect(sendCheckChoice).toHaveBeenCalledWith({ action: "choose", choice: "report", orderNo: "FC-TR1", boxSeq: 1 });
     expect(dlg.textContent).toContain("신고하기 선택");
-    expect(button(dlg, "취소")).toBeDefined();
+    expect(button(dlg, "선택 취소")).toBeDefined();
   });
 
   it("INV-W14: 「신고하지 않기」는 no_report 를 보낸다", async () => {
@@ -301,20 +301,20 @@ describe("추적 장치 발견 줄 (action-center INV-J5·J8, office-workflow IN
     const row = rows()[0]!;
     expect(row.textContent).toContain("신고하기 선택");
     expect(button(row, "신고할지 정하기")).toBeUndefined();
-    await act(async () => button(row, "취소")!.click());
+    await act(async () => button(row, "선택 취소")!.click());
     expect(sendCheckChoice).toHaveBeenCalledWith({ action: "cancel", orderNo: "FC-TR2", boxSeq: 1 });
   });
 });
 
 describe("보낸 선물의 반송 주소 줄 (action-center INV-J5, office-workflow INV-W15)", () => {
-  it("INV-J5: 보낸 역조공·보낸 팬 선물 상자 줄이 보낸 선물 판에 — 종류 「돌려받을 주소 확인」, 처분 예정 날짜 문장", () => {
+  it("INV-J5: 보낸 역조공·보낸 팬 선물 상자 줄이 보낸 선물 판에 — 종류 「반송 주소 확인」, 처분 예정 날짜 문장", () => {
     render([UNCONFIRMED, RETURN_SHARE, RETURN_BOX]);
     const [, share, box] = rows();
     expect(share!.textContent).toContain("별빛님께 보낸 역조공");
     expect(box!.textContent).toContain("하루님께 보낸 선물 · 상자 2");
     for (const r of [share!, box!]) {
-      expect(r.textContent).toContain("돌려받을 주소 확인");
-      expect(r.textContent).toContain("11월 16일까지 확인하지 않으면 상자를 처분해요");
+      expect(r.textContent).toContain("반송 주소 확인");
+      expect(r.textContent).toContain("11월 16일까지 미확인 시 처분 대상");
     }
     expect(host.querySelector("section h2 small")?.textContent).toBe("3건");
   });

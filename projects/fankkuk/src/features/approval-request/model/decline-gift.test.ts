@@ -54,7 +54,7 @@ describe("받지 않기 저장 (decline-block)", () => {
     expect(await declineGift({ client: fakeClient(reply("not_found")).client, viewer: HARU }, { requestId: "apr_FCA", block: true })).toEqual({
       ok: false,
       status: 404,
-      message: "찾을 수 없는 요청이에요.",
+      message: "승인 요청을 찾을 수 없습니다.",
     });
   });
 
@@ -62,12 +62,12 @@ describe("받지 않기 저장 (decline-block)", () => {
     const already = await declineGift({ client: fakeClient(reply("already")).client, viewer: HARU }, { requestId: "apr_FCA", block: false });
     const notDeclinable = await declineGift({ client: fakeClient(reply("not_declinable")).client, viewer: HARU }, { requestId: "apr_FCA", block: false });
     expect(already).toMatchObject({ ok: false, status: 409, message: expect.stringContaining("이미 처리된") });
-    expect(notDeclinable).toMatchObject({ ok: false, status: 409, message: expect.stringContaining("받지 않기로 할 수 없는") });
+    expect(notDeclinable).toMatchObject({ ok: false, status: 409, message: expect.stringContaining("거절할 수 없는") });
   });
 
   it("INV-D2 S2d (실패경로): 168시간이 지난 요청은 409 「기간이 지나 자동으로 반려된 선물이에요」", async () => {
     const r = await declineGift({ client: fakeClient(reply("expired")).client, viewer: HARU }, { requestId: "apr_FCA", block: true });
-    expect(r).toEqual({ ok: false, status: 409, message: "기간이 지나 자동으로 반려된 선물이에요." });
+    expect(r).toEqual({ ok: false, status: 409, message: "승인 기한이 지나 자동 반려된 선물입니다." });
   });
 
   it("모르는 결과 값·꼴이 다른 응답이면 성공으로 치지 않는다", async () => {

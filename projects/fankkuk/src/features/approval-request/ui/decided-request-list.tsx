@@ -12,10 +12,10 @@ import q from "./decided-request-list.module.css";
 // 맨 위 처리 수 + 결과별 숫자 칸 넷(이 목록을 센 수), 아래 달마다 촘촘한 줄(결과 태그는 줄 오른쪽). 결과 설명은 맨 아래 접기로.
 
 const DECIDED_TAG: Record<DecidedOutcome, { text: string; tone: StatusTone }> = {
-  approved: { text: "승인함", tone: "success" },
-  declined: { text: "받지 않음", tone: "danger" },
-  blocked: { text: "차단함", tone: "danger" },
-  expired: { text: "자동 반려", tone: "warn" },
+  approved: { text: "승인", tone: "success" },
+  declined: { text: "거절", tone: "danger" },
+  blocked: { text: "차단", tone: "danger" },
+  expired: { text: "기한 만료", tone: "warn" },
 };
 /** 결과별 숫자 칸 순서(시안 .qgrid) */
 const OUTCOME_ORDER: readonly DecidedOutcome[] = ["approved", "declined", "expired", "blocked"];
@@ -51,9 +51,9 @@ export function DecidedRequestList({ decided }: { decided: readonly DecidedReque
             {decided.length}
             <small>건</small>
           </p>
-          {latest ? <p className={q.line}>가장 최근 처리 {formatDate(latest)}</p> : null}
+          {latest ? <p className={q.line}>최근 처리일 {formatDate(latest)}</p> : null}
         </div>
-        <dl className={q.grid} aria-label="결과별 수">
+        <dl className={q.grid} aria-label="결과별 건수">
           {OUTCOME_ORDER.map((o) => (
             <div key={o}>
               <dt>{DECIDED_TAG[o].text}</dt>
@@ -63,7 +63,7 @@ export function DecidedRequestList({ decided }: { decided: readonly DecidedReque
         </dl>
       </div>
 
-      {decided.length === 0 ? <p className={`empty ${q.empty}`}>아직 처리한 요청이 없어요.</p> : null}
+      {decided.length === 0 ? <p className={`empty ${q.empty}`}>처리한 요청이 없습니다.</p> : null}
 
       {months.map((m) => (
         <div key={m.key} className={q.month} data-month="">
@@ -96,22 +96,23 @@ export function DecidedRequestList({ decided }: { decided: readonly DecidedReque
 
       {counts.expired > 0 ? (
         <details className={q.fold}>
-          <summary>자동 반려</summary>
-          <p>{APPROVAL_DEADLINE_DAYS}일 안에 정하지 않아 자동으로 받지 않음 처리됐어요.</p>
+          <summary>승인 기한 만료</summary>
+          <p>{APPROVAL_DEADLINE_DAYS}일 이내에 승인 여부를 선택하지 않아 자동으로 거절 처리되었습니다.</p>
         </details>
       ) : null}
       {counts.blocked > 0 ? (
         <details className={q.fold}>
-          <summary>차단함</summary>
+          <summary>팬 차단</summary>
           <p>
-            앞으로 이 팬의 선물은 받지 않아요. 풀려면{" "}
+            차단한 팬은 새 선물을 등록할 수 없습니다. 차단 해제는{" "}
             <Link className={a["link-in"]} href="/creator/settings#blocked">
-              주소와 설정
+              상세 설정 &gt; 주소와 설정 &gt; 차단한 팬
             </Link>
-            에서 해요.
+            에서 할 수 있습니다.
           </p>
         </details>
       ) : null}
     </section>
   );
 }
+

@@ -1,0 +1,2294 @@
+--- src\widgets\revgift-sent\ui\revgift-sent-page.test.tsx (4번 작업 전)
++++ src\widgets\revgift-sent\ui\revgift-sent-page.test.tsx (4번 작업 후)
+@@ -74,20 +74,20 @@
+   it("INV-J10: 선물 현황 화면이 생긴 뒤에는 보낸 역조공 줄에 「내 상자 찾기」가 없다 — 줄(팬 닉네임·상태)은 그대로", () => {
+     render();
+     expect(findButtons()).toHaveLength(0);
+-    const names = [...host.querySelectorAll("ul[aria-label$=\"팬별 지금 상태\"] > li")].map((li) => li.querySelector("p")?.textContent);
++    const names = [...host.querySelectorAll("ul[aria-label$=\"팬별 상태\"] > li")].map((li) => li.querySelector("p")?.textContent);
+     expect(names).toEqual(["모카님", "라온님"]);
+   });
+ 
+   it("화면 리뷰 U6: 사무실에 온 상자는 용어집 4절 라벨 「도착 완료」 — 「입고됨」이라 쓰지 않는다", () => {
+     render();
+-    const fold = [...host.querySelectorAll("details")].find((d) => d.querySelector(":scope > summary")?.textContent === "송장번호 적기 (선택)")!;
++    const fold = [...host.querySelectorAll("details")].find((d) => d.querySelector(":scope > summary")?.textContent === "송장번호 등록 (선택)")!;
+     expect(fold.textContent).toContain("도착 완료");
+     expect(host.textContent).not.toContain("입고됨");
+   });
+ 
+   it("역조공 수락 라벨(용어집 7절): 줄 상태·묶음 요약·요약 칸은 「수락 대기」 — 「기다리는 중」을 쓰지 않는다", () => {
+     render();
+-    const tags = [...host.querySelectorAll("ul[aria-label$=\"팬별 지금 상태\"] > li")].map((li) => li.querySelector("[class*=tag]")?.textContent);
++    const tags = [...host.querySelectorAll("ul[aria-label$=\"팬별 상태\"] > li")].map((li) => li.querySelector("[class*=tag]")?.textContent);
+     expect(tags).toEqual(["수락 대기", "수락 대기"]);
+     expect(host.textContent).toContain("팬 2명 · 수락 대기 2명");
+     // 맨 위 상태 띠(design-rules 25절 — 오른쪽 요약 칸을 대신한다): 라벨 세 개와 몫마다 한 칸
+--- src\widgets\revgift-sent\ui\revgift-sent-page.tsx (4번 작업 전)
++++ src\widgets\revgift-sent\ui\revgift-sent-page.tsx (4번 작업 후)
+@@ -63,7 +63,7 @@
+         boxName={`${fanNickname}님 상자`}
+         initial={box.waybillNo}
+         layout="share"
+-        hint="선택이에요. 넣으면 배송 조회로 팬꾹까지 오는 길을 보여 드려요."
++        hint="선택 사항입니다. 입력하면 팬꾹으로 보내는 상자의 배송 상황을 조회할 수 있습니다."
+       />
+     );
+   }
+@@ -71,8 +71,8 @@
+     // 결제 + 30일이 지나도 오지 않아 닫힌 상자(office-workflow INV-W10) — 입고되지 않았다. 문구는 팬 선물 진행 화면과 같은 말
+     return (
+       <p className={`tags ${s["inv-tags"]}`}>
+-        <span className={statusTagClass("warn")}>도착하지 않음</span>
+-        <span className="t-meta">결제하고 30일이 지나도 도착하지 않아 이 상자는 닫혔어요</span>
++        <span className={statusTagClass("warn")}>미도착으로 종료</span>
++        <span className="t-meta">결제 후 30일 이내에 도착하지 않아 종료되었습니다.</span>
+       </p>
+     );
+   }
+@@ -83,7 +83,7 @@
+         <Check />
+         도착 완료
+       </span>
+-      <span className="t-meta">사무실에 도착해 확인했어요</span>
++      <span className="t-meta">팬꾹 입고 확인</span>
+     </p>
+   );
+ }
+@@ -94,9 +94,9 @@
+   if (items.length === 0) return null;
+   return (
+     <details className={`${s.fold} ${s.invFold}`}>
+-      <summary>송장번호 적기 (선택)</summary>
++      <summary>송장번호 등록 (선택)</summary>
+       <div className={s.in}>
+-        <p className={s.hint}>상자가 사무실에 도착하기 전까지만 고칠 수 있고, 도착하면 「도착 완료」로 바뀌고 잠겨요.</p>
++        <p className={s.hint}>입고 전까지 송장번호를 수정할 수 있습니다. 입고 후에는 ‘도착 완료’로 표시되며 수정할 수 없습니다.</p>
+         {items.map(({ x, box }) => (
+           <div key={x.orderNo} className={s.invRow}>
+             <p className={s.invName} title={`${x.fanNickname}님`}>
+@@ -115,7 +115,7 @@
+   const parts = [n.accepted ? `수락 ${n.accepted}명` : "", n.waiting ? `수락 대기 ${n.waiting}명` : "", n.not_received ? `받지 않음 ${n.not_received}명` : ""].filter(
+     Boolean,
+   );
+-  return n.not_received ? `${parts.join(" · ")} (받지 않은 상자 요금은 환불돼요)` : parts.join(" · ");
++  return n.not_received ? `${parts.join(" · ")} (받지 않은 팬의 상자는 환불 대상 · 반송 시 택배비 차감)` : parts.join(" · ");
+ }
+ 
+ const STATE_ORDER: readonly SentRevgift["state"][] = ["accepted", "waiting", "not_received"];
+@@ -160,11 +160,10 @@
+   return (
+     <div className={s.guide} role="group" aria-labelledby={headId}>
+       <p className={s.guideT} id={headId}>
+-        팬마다 팬꾹 주소가 달라요
++        팬별 팬꾹 주소
+       </p>
+       <p>
+-        팬 한 명마다 상자를 따로 포장하고, 아래 팬마다 나온 팬꾹 주소를 끝 6자리까지 그대로 써서 보내 주세요. 팬이 받기를 누를 때까지 기다리지 않고 보내셔도 돼요. 받지 않은 팬의
+-        상자는 돌려보내고 그 상자 요금은 환불돼요.
++        팬마다 상자를 따로 포장하고, 해당 팬의 팬꾹 주소를 끝 6자리까지 모두 입력해 보내 주세요. 팬의 수락 전에도 발송할 수 있습니다.<br />받지 않은 팬의 상자는 반송하며, 반송 택배비를 제외한 금액을 환불합니다. 입고 전 환불 시점은 아래 ‘반송·환불 안내’에서 확인해 주세요.
+       </p>
+     </div>
+   );
+@@ -179,7 +178,7 @@
+       <summary>
+         <div className={s.bHead}>
+           <h2 className={s.bTitle} id={`rv-batch-${bi}`}>
+-            {when} 보낸 역조공
++            {when} 결제 완료
+           </h2>
+           <p className={s.facts}>
+             {/* 한 번 보낸 것 안에서는 같은 팬이 두 번 없다(DB 유일 send_id·fan_id) — 묶음 줄은 「팬 N명」이 맞다 */}
+@@ -197,7 +196,7 @@
+       </summary>
+       <div className={s.bbody}>
+         {b.officeAddress && views.some((v) => v.addressCode) ? <AddressGuide headId={`rv-addr-${bi}`} /> : null}
+-        <ul className={s.rows} aria-label={`${when} 묶음 팬별 지금 상태`}>
++        <ul className={s.rows} aria-label={`${when} 결제 묶음의 팬별 상태`}>
+           {views.map(({ x, addressCode }, i) => {
+             const tag = sentStateTag(x.state);
+             return (
+@@ -251,7 +250,7 @@
+       <header className="page-head">
+         <div className="ph-row">
+           <h1 className="ph-title">
+-            보낸 역조공<span className="ph-count">{batches.length}</span>
++            보낸 역조공<span className="ph-count">{batches.length}묶음</span>
+           </h1>
+         </div>
+       </header>
+@@ -260,7 +259,7 @@
+         <div className={s.paid} role="status">
+           <img className={s.peek} src="/images/home/icon-truck.webp" alt="" aria-hidden="true" width={80} height={80} />
+           <p>
+-            <strong>결제가 끝났어요.</strong> 팬마다 상자를 따로 포장하고, 아래 팬마다 나온 팬꾹 주소로 보내 주세요.
++            <strong>결제가 완료되었습니다.</strong> 팬마다 상자를 따로 포장해 아래에 안내된 팬별 팬꾹 주소로 보내 주세요.
+           </p>
+         </div>
+       ) : null}
+@@ -268,27 +267,28 @@
+       <div className={s.privacy}>
+         <img src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={40} height={40} />
+         <p>
+-          <strong>팬의 주소와 실명은 보이지 않아요.</strong>
+-          <span>팬이 직접 입력하고, 팬꾹만 송장을 뽑을 때 열어요.</span>
++          <strong>팬의 주소와 실명은 크리에이터에게 공개되지 않습니다.</strong>
++          <span>팬이 확인한 배송지는 팬꾹에서 송장 출력 시에만 열람합니다.</span>
+         </p>
+       </div>
+       {batches.length === 0 ? (
+         <section className={s.sempty}>
+           <img src="/images/home/icon-gift.webp" alt="" aria-hidden="true" width={96} height={96} />
+-          <h2 className={s.semptyT}>아직 보낸 역조공이 없어요</h2>
+-          <p>나를 팔로우한 팬을 골라 선물을 보낼 수 있어요.</p>
++          <h2 className={s.semptyT}>보낸 역조공이 없습니다</h2>
++          <p>나를 팔로우한 팬을 선택해 선물을 보낼 수 있습니다.</p>
+         </section>
+       ) : (
+         batches.map((b, bi) => <Batch key={b.sentAt} b={b} bi={bi} boxByOrder={boxByOrder} />)
+       )}
+       <details className={`${s.fold} ${s.knows}`}>
+-        <summary>알아 두세요</summary>
++        <summary>반송·환불 안내</summary>
+         <div className={s.in}>
+           <ul>
+-            <li>「받지 않음」은 팬이 받지 않기를 누른 경우와 7일이 지난 경우를 구분하지 않아요.</li>
+-            <li>받지 않은 상자는 보낸 사무실 쪽에서 돌려보내고, 그 상자 요금만 환불돼요.</li>
+-            <li>한 팬이 받지 않아도 같은 묶음의 다른 팬 선물은 그대로 가요.</li>
+-            <li>상자를 더 보내려면 새로 보내기를 해 주세요. 상자마다 팬꾹 주소가 달라요.</li>
++            <li>‘받지 않음’에는 팬이 거절하거나 결제 후 7일 이내에 수락하지 않은 경우가 포함됩니다.</li>
++            <li>입고된 상자: 크리에이터에게 반송 후 반송 택배비를 제외한 금액 환불</li>
++            <li>입고 전: 결제 후 30일까지 환불 보류. 기간 내 도착하면 반송 택배비를 제외해 환불하고, 미도착 시 해당 상자 요금 전액 환불</li>
++            <li>다른 팬의 선물은 그대로 진행됩니다.</li>
++            <li>상자를 추가로 보내려면 새로 신청해 주세요. 팬꾹 주소는 상자마다 다릅니다.</li>
+           </ul>
+         </div>
+       </details>
+--- src\widgets\revgift-send\ui\revgift-send-page.tsx (4번 작업 전)
++++ src\widgets\revgift-send\ui\revgift-send-page.tsx (4번 작업 후)
+@@ -19,7 +19,7 @@
+       <div className={s.col}>
+         <header className={`page-head ${s.head}`}>
+           <h1 className="ph-title">팬에게 보내기</h1>
+-          {registered ? <p className="ph-desc">{`팬 ${registered.fanCount}명에게 보내요 — 결제하면 보내기가 끝나요.`}</p> : null}
++          {registered ? <p className="ph-desc">{`팬 ${registered.fanCount}명에게 보낼 선물입니다. 결제 후 안내된 팬꾹 주소로 상자를 보내 주세요.`}</p> : null}
+         </header>
+         {registered ? (
+           clientKey ? (
+@@ -34,7 +34,7 @@
+             />
+           ) : (
+             <p className="err" role="alert">
+-              지금은 결제를 받을 수 없어요. 잠시 뒤 다시 시도해 주세요.
++              현재 결제를 이용할 수 없습니다. 잠시 후 다시 시도해 주세요.
+             </p>
+           )
+         ) : (
+--- src\widgets\home\ui\creator-home-page.tsx (4번 작업 전)
++++ src\widgets\home\ui\creator-home-page.tsx (4번 작업 후)
+@@ -43,7 +43,7 @@
+ export const CREATOR_HOME_LOG_ROWS = 1;
+ const ACTION_LABEL: Record<CreatorActionItem["kind"], string> = {
+   approval: "승인 대기", bluetooth: "확인할 선물", tracker: "확인할 선물", unconfirmed: "내 상자 찾기",
+-  difference: "추가 결제", missing_box: "내 상자 찾기", return_address: "반송 주소 확인", unpaid: "결제를 마치지 않은 선물",
++  difference: "추가 결제", missing_box: "내 상자 찾기", return_address: "반송 주소 확인", unpaid: "결제 대기",
+ };
+ const countNote = (n: number | null) => n === null ? "" : `${n}건`;
+ 
+@@ -67,8 +67,8 @@
+   const tiles: FrontTile[] = [
+     { href: CREATOR_ACTION_CENTER_HREF, label: "지금 할 일", note: countNote(actionCount), icon: "icon-approve" },
+     { href: CREATOR_GIFT_PROGRESS_HREF, label: "선물 현황", note: ongoingCount === null ? "" : `진행 중 ${ongoingCount}건`, icon: "icon-gift" },
+-    { href: "/gifts", label: "내가 보낸 선물", note: `${sentGifts.length}개`, icon: "icon-truck" },
+-    { href: "/creator/log", label: "열람 기록", note: "내 정보 열람을 확인해요", icon: "icon-help" },
++    { href: "/gifts", label: "보낸 선물", note: `${sentGifts.length}개`, icon: "icon-truck" },
++    { href: "/creator/log", label: "주소 열람 기록", note: "배송지 열람 내역", icon: "icon-help" },
+   ];
+   const actionRows: HomeProgressRow[] = (actions ?? []).map((item) => ({
+     id: `${item.kind}-${item.orderNo}-${"boxId" in item ? item.boxId ?? "" : "shareId" in item ? item.shareId ?? "" : "boxSeq" in item ? item.boxSeq : ""}`,
+@@ -90,15 +90,15 @@
+     </div>
+   );
+   return (
+-    <RoleHome hero={<HeroBand title={`${profile.name}님, 반가워요`} eyebrow="팬들이 전한 마음을 확인해보세요" control={control} actions={heroActions} />} tiles={tiles} tilesLabel="내 바로가기" banner={banner}>
++    <RoleHome hero={<HeroBand title={`${profile.name}님, 반가워요`} eyebrow="팬들이 보낸 선물과 승인 요청을 확인해 주세요" control={control} actions={heroActions} />} tiles={tiles} tilesLabel="내 바로가기" banner={banner}>
+       <SlotSection id="creator-actions" title="지금 할 일" meta={countNote(actionCount)} more={{ href: CREATOR_ACTION_CENTER_HREF, label: "지금 할 일 모두 보기" }}>
+-        {actionRows.length > 0 ? <SummaryRows rows={actionRows} href={CREATOR_ACTION_CENTER_HREF} /> : <p className="t-meta">{actionCount === null ? "지금 할 일을 불러오지 못했어요." : "지금 할 일이 없어요."}</p>}
++        {actionRows.length > 0 ? <SummaryRows rows={actionRows} href={CREATOR_ACTION_CENTER_HREF} /> : <p className="t-meta">{actionCount === null ? "지금 할 일을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." : "현재 처리할 일이 없습니다."}</p>}
+       </SlotSection>
+       <SlotSection id="creator-progress" title="진행 중인 선물" meta={countNote(ongoingCount)} more={{ href: CREATOR_GIFT_PROGRESS_HREF, label: "선물 현황 모두 보기" }}>
+-        {progressRows.length > 0 ? <SummaryRows rows={progressRows} href={CREATOR_GIFT_PROGRESS_HREF} /> : <p className="t-meta">{ongoingCount === null ? "선물 현황을 불러오지 못했어요." : "지금 진행 중인 선물이 없어요."}</p>}
++        {progressRows.length > 0 ? <SummaryRows rows={progressRows} href={CREATOR_GIFT_PROGRESS_HREF} /> : <p className="t-meta">{ongoingCount === null ? "선물 현황을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." : "진행 중인 선물이 없습니다."}</p>}
+       </SlotSection>
+       <SlotSection id="creator-log" title="최근 열람 기록" more={{ href: "/creator/log", label: "열람 기록 모두 보기" }}>
+-        {accessLog.length > 0 ? <SummaryRows href="/creator/log" rows={accessLog.map((entry) => ({ id: `${entry.orderNo}-${entry.at}-${entry.printNo}`, title: "내 배송 정보가 열렸어요", description: `${entry.orderNo} · ${formatDateTime(entry.at)}`, status: printLabelOf(entry.printNo, entry.released).text }))} /> : <p className="t-meta">아직 주소가 열린 적이 없어요.</p>}
++        {accessLog.length > 0 ? <SummaryRows href="/creator/log" rows={accessLog.map((entry) => ({ id: `${entry.orderNo}-${entry.at}-${entry.printNo}`, title: "배송지 열람 기록", description: `${entry.orderNo} · ${formatDateTime(entry.at)}`, status: printLabelOf(entry.printNo, entry.released).text }))} /> : <p className="t-meta">주소 열람 기록이 없습니다.</p>}
+         <p className="t-meta">{NO_ADDRESS_ASK}</p>
+       </SlotSection>
+       <NoticesSlot notices={notices} />
+--- src\widgets\home\ui\home-notices.tsx (4번 작업 전)
++++ src\widgets\home\ui\home-notices.tsx (4번 작업 후)
+@@ -18,7 +18,7 @@
+         </Link>
+       </div>
+       {notices.length === 0 ? (
+-        <p className="empty">아직 공지가 없어요.</p>
++        <p className="empty">등록된 공지사항이 없습니다.</p>
+       ) : (
+         <ul className="nlist">
+           {notices.map((n) => (
+--- src\widgets\creator-gift-progress\model\gift-progress.test.ts (4번 작업 전)
++++ src\widgets\creator-gift-progress\model\gift-progress.test.ts (4번 작업 후)
+@@ -50,7 +50,7 @@
+ const sent = (over: Partial<SentProgress>): SentProgress => ({ ...parseGiftProgressRows([SENT]).sent[0]!.rows[0]!, ...over });
+ 
+ describe("INV-J9: 다섯 칸 막대와 단계 이름 열쇠 — 기존 읽기의 단계에서만", () => {
+-  it("INV-J9: 받는 선물 — 승인 대기 1칸, 사무실로 오는 중 2칸, 검수 중·검수 완료 3칸, 출고·배송 중 4칸", () => {
++  it("INV-J9: 받는 선물 — 승인 대기 1칸, 팬꾹 도착 대기 2칸, 검수 중·검수 완료 3칸, 출고·배송 중 4칸", () => {
+     expect(receivedStepOf(rec({ stage: "paid", approvalWaiting: true }))).toEqual({ key: "approval_waiting", cells: 1 });
+     expect(receivedStepOf(rec({ stage: "paid", approvalWaiting: false }))).toEqual({ key: "to_office", cells: 2 });
+     expect(receivedStepOf(rec({ stage: "received", approvalWaiting: true }))).toEqual({ key: "inspecting", cells: 3 });
+@@ -68,7 +68,7 @@
+     expect(sentStepOf(sent({ replyState: "accepted", boxState: "labeled", late: false }))).toEqual({ key: "inspecting", cells: 3 });
+     expect(sentStepOf(sent({ replyState: "accepted", boxState: "label_printed", late: false }))).toEqual({ key: "inspected", cells: 3 });
+     expect(sentStepOf(sent({ replyState: "not_received", boxState: "return_waiting", late: false }))).toEqual({ key: "returning", cells: 3 });
+-    // INV-W15: 반송 주소를 30일 확인하지 않아 처분 대상이 된 몫 상자 — 「사무실로 오는 중」이 아니라 처분 예정
++    // INV-W15: 반송 주소를 30일 확인하지 않아 처분 대상이 된 몫 상자 — 「팬꾹 도착 대기」이 아니라 처분 예정
+     expect(sentStepOf(sent({ replyState: "accepted", boxState: "dispose_due", late: false }))).toEqual({ key: "dispose_due", cells: 3 });
+     expect(sentStepOf(sent({ replyState: "not_received", boxState: "dispose_due", late: true }))).toEqual({ key: "dispose_due", cells: 3 });
+     expect(sentStepOf(sent({ replyState: "accepted", boxState: "shipped", late: false }))).toEqual({ key: "shipped", cells: 4 });
+--- src\widgets\creator-gift-progress\ui\gift-progress-page.test.tsx (4번 작업 전)
++++ src\widgets\creator-gift-progress\ui\gift-progress-page.test.tsx (4번 작업 후)
+@@ -97,13 +97,13 @@
+ describe("INV-J9: 판 둘 — 받는 선물은 선물마다, 보내는 선물은 보낸 날별 소제목 아래 팬마다, 줄마다 다섯 칸 막대와 단계 이름", () => {
+   it("INV-J9 S9: 제목 「진행 중 6건」, 승인 대기 판 1건 + 받는 선물 카드 2, 보내는 선물 소제목 둘(팬 2명·팬 1명)", () => {
+     render();
+-    expect(host.querySelector("h1")?.textContent).toBe("선물 현황진행 중 6건");
++    expect(host.querySelector("h1")?.textContent).toBe("선물 현황· 진행 중 6건");
+     const heads = [...host.querySelectorAll("section h2")].map((h) => h.textContent);
+-    expect(heads).toEqual(["승인을 기다리는 선물", "받는 선물2건", "보내는 선물3건"]);
++    expect(heads).toEqual(["승인 대기 선물", "받는 선물2건", "보내는 선물3건"]);
+     expect(waitingPanel()?.querySelector(".num-big")?.textContent).toBe("1건");
+-    expect(waitingPanel()?.textContent).toContain("가장 가까운 기한 6일 남음 · 하루님의 선물");
+-    expect([...host.querySelectorAll("[data-subhead]")].map((p) => p.textContent)).toEqual(["10월 2일 오전 10:00 보낸 역조공팬 2명", "10월 9일 오전 10:00 보낸 역조공팬 1명"]);
+-    expect([...host.querySelectorAll("section ul")].slice(1).map((u) => u.getAttribute("aria-label"))).toEqual(["10월 2일 오전 10:00 보낸 역조공", "10월 9일 오전 10:00 보낸 역조공"]);
++    expect(waitingPanel()?.textContent).toContain("가장 빠른 승인 기한: 6일 남음 · 하루님의 선물");
++    expect([...host.querySelectorAll("[data-subhead]")].map((p) => p.textContent)).toEqual(["10월 2일 오전 10:00 결제 완료 · 팬 2명", "10월 9일 오전 10:00 결제 완료 · 팬 1명"]);
++    expect([...host.querySelectorAll("section ul")].slice(1).map((u) => u.getAttribute("aria-label"))).toEqual(["10월 2일 오전 10:00 결제 완료", "10월 9일 오전 10:00 결제 완료"]);
+     // 승인 대기 선물은 받는 선물 카드에 다시 나오지 않는다 — 판에만
+     expect(rowOf("하루님", "받는 선물")).toBeUndefined();
+     expect(rowOf("보리님", "받는 선물").querySelector("[data-sub]")?.textContent).toBe("상자 1개 · 10월 13일 승인");
+@@ -112,9 +112,9 @@
+ 
+   it("INV-J9: 막대는 다섯 칸, 칠한 칸 수와 단계 이름은 같은 단계에서", () => {
+     render();
+-    expect(step(rowOf("보리님", "받는 선물"))).toEqual({ sr: "5단계 중 2단계, ", on: 2, all: 5, label: "사무실로 오는 중", late: false });
++    expect(step(rowOf("보리님", "받는 선물"))).toEqual({ sr: "5단계 중 2단계, ", on: 2, all: 5, label: "팬꾹 도착 대기", late: false });
+     expect(step(rowOf("소라님", "받는 선물"))).toEqual({ sr: "5단계 중 4단계, ", on: 4, all: 5, label: "배송 중", late: false });
+-    expect(step(rowOf("모카님", "보내는 선물"))).toEqual({ sr: "5단계 중 2단계, ", on: 2, all: 5, label: "아직 도착하지 않았어요", late: true });
++    expect(step(rowOf("모카님", "보내는 선물"))).toEqual({ sr: "5단계 중 2단계, ", on: 2, all: 5, label: "미도착", late: true });
+     expect(step(rowOf("하루님", "보내는 선물"))).toEqual({ sr: "5단계 중 4단계, ", on: 4, all: 5, label: "출고", late: false });
+     expect(step(rowOf("꿀단지님", "보내는 선물"))).toEqual({ sr: "5단계 중 1단계, ", on: 1, all: 5, label: "수락 대기", late: false });
+   });
+@@ -125,7 +125,7 @@
+       { ...ROWS[4]!, sent_at: "2026-10-02T06:30:00Z" },
+     ]);
+     const heads = [...host.querySelectorAll("[data-subhead]")].map((p) => p.textContent);
+-    expect(heads).toEqual(["10월 2일 오전 10:00 보낸 역조공팬 1명", "10월 2일 오후 3:30 보낸 역조공팬 1명"]);
++    expect(heads).toEqual(["10월 2일 오전 10:00 결제 완료 · 팬 1명", "10월 2일 오후 3:30 결제 완료 · 팬 1명"]);
+   });
+ 
+   it("화면 리뷰 U1: 막대 묶음에는 role·aria-label 이 없다 — 단계는 보이는 이름 앞 숨은 글자로 읽힌다", () => {
+@@ -133,7 +133,7 @@
+     const prog = rowOf("보리님", "받는 선물").querySelector("[data-bar]")!.parentElement!;
+     expect([prog.getAttribute("role"), prog.getAttribute("aria-label")]).toEqual([null, null]);
+     // 카드 아래 「n/5」는 화면에만(숨은 글자가 이미 몇 단계인지 읽는다)
+-    expect(prog.textContent).toBe("5단계 중 2단계, 사무실로 오는 중2/5");
++    expect(prog.textContent).toBe("5단계 중 2단계, 팬꾹 도착 대기2/5");
+     expect(prog.querySelector("span[aria-hidden=true]:last-child")?.textContent).toBe("2/5");
+   });
+ 
+@@ -223,7 +223,7 @@
+ });
+ 
+ describe("INV-C4 ②-나: 찾은 뒤", () => {
+-  it("찾으면 창에 「사무실에 도착했어요」가 남고, 목록은 창을 닫을 때 새로 읽는다 — 먼저 읽어 창이 사라지지 않게", async () => {
++  it("찾으면 창에 「상자 확인 완료」가 남고, 목록은 창을 닫을 때 새로 읽는다 — 먼저 읽어 창이 사라지지 않게", async () => {
+     postFind.mockResolvedValue({ kind: "ok", body: { matched: true } });
+     render();
+     act(() => [...rowOf("모카님", "보내는 선물").querySelectorAll("button")].find((b) => b.textContent === "내 상자 찾기")!.click());
+@@ -235,7 +235,7 @@
+     });
+     d.querySelector<HTMLInputElement>("input[name=waybill]")!.value = "123456789012";
+     await act(async () => d.querySelector("form")!.requestSubmit());
+-    expect(d.textContent).toContain("사무실에 도착했어요");
++    expect(d.textContent).toContain("상자 확인 완료");
+     expect(refresh).not.toHaveBeenCalled();
+     act(() => d.querySelector<HTMLButtonElement>('button[aria-label="닫기"]')!.click());
+     expect(refresh).toHaveBeenCalledTimes(1);
+@@ -248,7 +248,7 @@
+     const btn = [...rowOf("모카님", "보내는 선물").querySelectorAll("button")].find((b) => b.textContent === "배송 조회")!;
+     act(() => btn.click());
+     const d = host.querySelector("dialog[open]")!;
+-    expect(d.querySelector("h2")?.textContent).toBe("도착하지 않았어요");
++    expect(d.querySelector("h2")?.textContent).toBe("배송 조회");
+     expect(d.querySelector("a[target=_blank]")).toBeNull();
+     const select = d.querySelector("select")!;
+     // 화면 리뷰 U3: 열리면 첫 초점은 택배사 칸
+--- src\widgets\creator-gift-progress\ui\gift-progress-page.tsx (4번 작업 전)
++++ src\widgets\creator-gift-progress\ui\gift-progress-page.tsx (4번 작업 후)
+@@ -39,17 +39,17 @@
+   now: string;
+ };
+ 
+-// 단계 이름 — 용어집 4절 표기(출고·배송 중·반송·검수). 「사무실로 오는 중」은 용어집에 행이 없어 시안 표기를 임시로 쓴다.
++// 단계 이름 — 용어집 4절 표기(출고·배송 중·반송·검수). 「팬꾹 도착 대기」는 입고 전 상태다.
+ export const PROGRESS_STEP_LABEL: Record<ProgressStepKey, string> = {
+   approval_waiting: "승인 대기",
+-  to_office: "사무실로 오는 중",
++  to_office: "팬꾹 도착 대기",
+   inspecting: "검수 중",
+   inspected: "검수 완료",
+   shipped: "출고",
+   in_transit: "배송 중",
+   reply_waiting: "수락 대기",
+   not_received: "받지 않음",
+-  late: "아직 도착하지 않았어요",
++  late: "미도착",
+   returning: "반송",
+   // 용어집 dispose_due 행 팬·크리에이터 열
+   dispose_due: "처분 예정",
+@@ -127,7 +127,7 @@
+   function sentRow(r: SentProgress, sentAt: string, i: number) {
+     const step = sentStepOf(r);
+     const action = hasActionButton(r, targets);
+-    const meta = `${r.nickname}님 · ${tierName(r.tier)} 상자 · ${formatMonthDayKo(sentAt)} 보냄`;
++    const meta = `${r.nickname}님 · ${tierName(r.tier)} 상자 · ${formatMonthDayKo(sentAt)} 결제 완료`;
+     return (
+       <li key={r.orderNo} className={`lrow ${s.row}`} data-row="">
+         <FaceAvatar index={i} className="face face--sm" />
+@@ -142,7 +142,7 @@
+           </span>
+           {canTrack(r) ? <TrackBoxButton className="btn btn--sm btn--line" meta={meta} label={`배송 조회(${r.nickname}님)`} /> : null}
+           {canFind(r, findable) ? (
+-            <FindSentBoxButton className="btn btn--sm btn--line" candidates={candidates} shareId={r.shareId} meta={`${formatMonthDayKo(sentAt)} 보냄`} label={`내 상자 찾기(${r.nickname}님)`} />
++            <FindSentBoxButton className="btn btn--sm btn--line" candidates={candidates} shareId={r.shareId} meta={`${formatMonthDayKo(sentAt)} 결제 완료`} label={`내 상자 찾기(${r.nickname}님)`} />
+           ) : null}
+           {action ? goActions : null}
+         </div>
+@@ -156,7 +156,7 @@
+       <header className="page-head">
+         <div className="ph-row">
+           <h1 className="ph-title">
+-            선물 현황<span className="ph-count">진행 중 {total}건</span>
++            선물 현황<span className="ph-count">· 진행 중 {total}건</span>
+           </h1>
+         </div>
+       </header>
+@@ -172,10 +172,10 @@
+             <span className={s.lab}>승인 대기</span>
+           </div>
+           <div className={s.mid}>
+-            <h2 id="gp-wait">승인을 기다리는 선물</h2>
++            <h2 id="gp-wait">승인 대기 선물</h2>
+             {nearest ? (
+               <p>
+-                가장 가까운 기한 <span className={s.soon}>{daysLeftOf(nearest.dueAt, now).text}</span> · {nearest.nickname}님의 선물
++                가장 빠른 승인 기한: <span className={s.soon}>{daysLeftOf(nearest.dueAt, now).text}</span> · {nearest.nickname}님의 선물
+               </p>
+             ) : null}
+             <span className={s.faces} aria-hidden="true">
+@@ -204,7 +204,7 @@
+             {moving.map((r) => receivedCard(r, face++))}
+           </ul>
+         ) : (
+-          <p className={s.none}>진행 중인 선물이 없어요</p>
++          <p className={s.none}>진행 중인 선물이 없습니다.</p>
+         )}
+       </section>
+ 
+@@ -219,15 +219,15 @@
+           progress.sent.map((g) => (
+             <div key={g.sentAt}>
+               <p className={s.ghead} data-subhead="">
+-                {formatDateTime(g.sentAt)} 보낸 역조공<span>팬 {g.rows.length}명</span>
++                {formatDateTime(g.sentAt)} 결제 완료<span> · 팬 {g.rows.length}명</span>
+               </p>
+-              <ul className={`lrows ${s.rows}`} aria-label={`${formatDateTime(g.sentAt)} 보낸 역조공`}>
++              <ul className={`lrows ${s.rows}`} aria-label={`${formatDateTime(g.sentAt)} 결제 완료`}>
+                 {g.rows.map((r) => sentRow(r, g.sentAt, face++))}
+               </ul>
+             </div>
+           ))
+         ) : (
+-          <p className={s.none}>진행 중인 선물이 없어요</p>
++          <p className={s.none}>진행 중인 선물이 없습니다.</p>
+         )}
+       </section>
+     </div>
+--- src\widgets\creator-action-center\ui\approval-window-with-address.test.tsx (4번 작업 전)
++++ src\widgets\creator-action-center\ui\approval-window-with-address.test.tsx (4번 작업 후)
+@@ -132,7 +132,7 @@
+     const d = openApprove();
+     const btns = button(d, "카카오톡으로 승인하기")?.parentElement;
+     // 글자까지 고정한다 — 상수에서 읽으면 약속 문장이 바뀌어도 통과한다
+-    expect(btns?.previousElementSibling?.textContent).toBe("크리에이터 주소는 팬에게 공개하지 않아요. 모든 선물은 팬꾹에서 검수한 뒤 보내요.");
++    expect(btns?.previousElementSibling?.textContent).toBe("크리에이터의 주소는 팬에게 공개되지 않습니다. 팬이 보낸 선물은 팬꾹에서 검수 후 배송합니다.");
+   });
+ 
+   it("INV-S7: 서명 요청을 보내 서버가 승인을 저장한 뒤에만 「승인 완료」 — 승인 내역으로 가는 링크, 확인을 누르면 목록을 새로 읽는다", async () => {
+@@ -158,33 +158,33 @@
+     expect(d.querySelector("[role=alert]")?.textContent).toContain("기한이 지나 승인할 수 없어요.");
+   });
+ 
+-  it("INV-D1: 받지 않기 — 확인 단계에서 차단을 고를 수 있고, 저장된 뒤에만 「받지 않기 완료」", async () => {
++  it("INV-D1: 받지 않기 — 확인 단계에서 차단을 고를 수 있고, 저장된 뒤에만 「거절 완료」", async () => {
+     sendDecline.mockResolvedValue({ kind: "ok", alsoDeclinedOrderNos: [] });
+     render(HOME);
+     const d = openWindow();
+     click(d, "받지 않기");
+-    expect(d.textContent).toContain("이 선물을 받지 않을까요?");
++    expect(d.textContent).toContain("이 선물을 거절할까요?");
+     act(() => d.querySelector<HTMLInputElement>("input[type=checkbox]")?.click());
+     const confirm = [...d.querySelectorAll("button")].filter((b) => b.textContent === "받지 않기").pop()!;
+     await act(async () => confirm.click());
+     expect(sendDecline).toHaveBeenCalledWith("apr_FC7K3M9", true);
+-    expect(d.textContent).toContain("받지 않기 완료");
++    expect(d.textContent).toContain("거절 완료");
+   });
+ });
+ 
+ describe("승인 창의 주소 단계 (INV-S13·P16)", () => {
+-  it("INV-S13: 주소 없이 「카카오톡으로 승인」을 누르면 초점이 「주소를 입력해 주세요」로 간다", () => {
++  it("INV-S13: 주소 없이 「카카오톡으로 승인」을 누르면 초점이 「배송지 등록」로 간다", () => {
+     render(NONE);
+     openApprove();
+-    expect(document.activeElement?.textContent).toBe("주소를 입력해 주세요");
+-  });
+-
+-  it("INV-S13 (실패경로): 서버가 「주소 없음」으로 거부하면 초점이 「주소를 입력해 주세요」로 간다", async () => {
++    expect(document.activeElement?.textContent).toBe("배송지 등록");
++  });
++
++  it("INV-S13 (실패경로): 서버가 「주소 없음」으로 거부하면 초점이 「배송지 등록」로 간다", async () => {
+     sendApprove.mockResolvedValue({ kind: "refused", message: "팬꾹 주소를 먼저 등록해 주세요.", noAddress: true });
+     render(HOME);
+     const d = openApprove();
+     await act(async () => button(d, "카카오톡으로 승인하기")?.click());
+-    expect(document.activeElement?.textContent).toBe("주소를 입력해 주세요");
++    expect(document.activeElement?.textContent).toBe("배송지 등록");
+   });
+ 
+   it("처리 중에는 Esc(cancel)·닫기 버튼으로 창이 닫히지 않는다 — 끝나면 다시 닫을 수 있다", async () => {
+@@ -207,17 +207,17 @@
+     expect(esc2.defaultPrevented).toBe(false);
+   });
+ 
+-  it("INV-S13: 주소가 없으면 「주소를 입력해 주세요」와 입력 폼만 — 저장하면 같은 창에 이름표 한 줄과 서명 버튼이 붙고 서명 머리로 포커스가 간다", () => {
++  it("INV-S13: 주소가 없으면 「배송지 등록」와 입력 폼만 — 저장하면 같은 창에 이름표 한 줄과 서명 버튼이 붙고 서명 머리로 포커스가 간다", () => {
+     render(NONE);
+     const d = openApprove();
+-    expect(d.textContent).toContain("주소를 입력해 주세요");
++    expect(d.textContent).toContain("배송지 등록");
+     expect(button(d, "카카오톡으로 승인하기")).toBeUndefined();
+     click(d, "가짜 저장");
+-    expect(d.textContent).toContain("주소를 확인해 주세요");
++    expect(d.textContent).toContain("등록된 배송지 확인");
+     expect(d.querySelector("[data-address-on-file]")?.textContent).toMatch(/^작업실 · /);
+-    expect(d.textContent).toContain("주소를 등록했어요.");
++    expect(d.textContent).toContain("주소가 등록되었습니다.");
+     expect(button(d, "카카오톡으로 승인하기")).toBeDefined();
+-    expect(document.activeElement?.textContent).toContain("카카오톡으로 승인해 주세요");
++    expect(document.activeElement?.textContent).toContain("카카오톡으로 선물 승인");
+   });
+ 
+   it("INV-S13 (실패경로): 주소가 없을 때 입력을 그만두면 창이 닫힌다", () => {
+@@ -227,31 +227,31 @@
+     expect(dialog()).toBeNull();
+   });
+ 
+-  it("INV-P16: 주소가 있으면 「주소를 확인해 주세요」·이름표·등록한 날만 보이고 주소 칸은 없다 — 바로 서명할 수 있다", () => {
+-    render(HOME);
+-    const d = openApprove();
+-    expect(d.textContent).toContain("주소를 확인해 주세요");
+-    expect(d.querySelector("[data-address-on-file]")?.textContent).toBe("집 · 10월 3일 (토)에 등록한 주소");
++  it("INV-P16: 주소가 있으면 「등록된 배송지 확인」·이름표·등록한 날만 보이고 주소 칸은 없다 — 바로 서명할 수 있다", () => {
++    render(HOME);
++    const d = openApprove();
++    expect(d.textContent).toContain("등록된 배송지 확인");
++    expect(d.querySelector("[data-address-on-file]")?.textContent).toBe("집 · 10월 3일 (토) 등록");
+     expect(d.querySelector("[data-form]")).toBeNull();
+     expect(button(d, "카카오톡으로 승인하기")).toBeDefined();
+   });
+ 
+-  it("INV-S13: 「주소 바꾸기」를 누르면 「새 주소를 입력해 주세요」·서명 버튼이 사라지고, 돌아가면 다시 붙고 포커스는 「주소 바꾸기」로", () => {
+-    render(HOME);
+-    const d = openApprove();
+-    click(d, "주소 바꾸기");
+-    expect(d.textContent).toContain("새 주소를 입력해 주세요");
++  it("INV-S13: 「주소 변경」를 누르면 「배송지 변경」·서명 버튼이 사라지고, 돌아가면 다시 붙고 포커스는 「주소 변경」로", () => {
++    render(HOME);
++    const d = openApprove();
++    click(d, "주소 변경");
++    expect(d.textContent).toContain("배송지 변경");
+     expect(button(d, "카카오톡으로 승인하기")).toBeUndefined();
+     click(d, "가짜 돌아가기");
+     expect(dialog()).not.toBeNull();
+     expect(button(d, "카카오톡으로 승인하기")).toBeDefined();
+-    expect(document.activeElement?.textContent).toBe("주소 바꾸기");
++    expect(document.activeElement?.textContent).toBe("주소 변경");
+   });
+ 
+   it("INV-S13: 바꾸던 중에 창을 닫았다 다시 열면 확인 화면부터 — 서명 버튼이 있다", () => {
+     render(HOME);
+     let d = openApprove();
+-    click(d, "주소 바꾸기");
++    click(d, "주소 변경");
+     act(() => d.querySelector<HTMLButtonElement>('button[aria-label="닫기"]')?.click());
+     expect(dialog()).toBeNull();
+     d = openApprove();
+@@ -265,7 +265,7 @@
+     const d = openApprove();
+     await act(async () => button(d, "카카오톡으로 승인하기")?.click());
+     expect(dialog()).not.toBeNull();
+-    expect(d.textContent).toContain("주소를 입력해 주세요");
++    expect(d.textContent).toContain("배송지 등록");
+     expect(d.querySelector("[data-form]")).not.toBeNull();
+     expect(button(d, "카카오톡으로 승인하기")).toBeUndefined();
+     expect(d.textContent).not.toContain("승인 완료");
+@@ -282,7 +282,7 @@
+   it("INV-S13 (실패경로): 주소 상태를 읽지 못했으면 다시 해 달라는 안내만, 서명 버튼은 없다", () => {
+     render(null);
+     const d = openApprove();
+-    expect(d.textContent).toContain("주소 정보를 읽지 못했어요");
++    expect(d.textContent).toContain("주소 정보를 불러오지 못했습니다");
+     expect(button(d, "카카오톡으로 승인하기")).toBeUndefined();
+   });
+ });
+--- src\widgets\creator-action-center\ui\approval-window-with-address.tsx (4번 작업 전)
++++ src\widgets\creator-action-center\ui\approval-window-with-address.tsx (4번 작업 후)
+@@ -54,7 +54,7 @@
+   }, [refocusChange]);
+ 
+   const renderStep = (closeSheet: () => void) => {
+-    if (!status) return <p className="err">주소 정보를 읽지 못했어요. 새로 고침한 뒤 다시 해 주세요.</p>;
++    if (!status) return <p className="err">주소 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.</p>;
+     if (registered && !editing) {
+       return (
+         <>
+@@ -62,10 +62,10 @@
+             <p className="t-strong" data-address-on-file="">
+               {addressOnFileText(status)}
+             </p>
+-            <p className="t-meta">주소는 잠가서 보관해서 여기서도 보이지 않아요. 이사했거나 받는 곳이 바뀌었으면 승인하기 전에 바꿔 주세요.</p>
++            <p className="t-meta">주소는 암호화해 보관하며 이 화면에 표시되지 않습니다. 배송지가 바뀌었다면 승인 전에 변경해 주세요.</p>
+             <div>
+               <button ref={changeRef} className="btn btn--line btn--sm" type="button" onClick={() => setEditing(true)}>
+-                주소 바꾸기
++                주소 변경
+               </button>
+             </div>
+           </div>
+@@ -86,10 +86,10 @@
+       <>
+         <p className="sub">
+           {registered
+-            ? "새 주소를 입력하면 지금 주소를 덮어써요. 아직 송장을 뽑지 않은 선물부터 새 주소로 나가요."
+-            : "승인한 선물은 이 주소로 보내요. 받는 주소가 있어야 승인할 수 있어요."}
++            ? "새 주소를 저장하면 기존 배송지가 변경됩니다. 아직 송장을 출력하지 않은 선물부터 적용됩니다."
++            : "선물을 승인하려면 배송지를 등록해 주세요. 승인한 선물은 이 주소로 배송됩니다."}
+         </p>
+-        <p className="t-meta">주소는 이 브라우저에서 잠가서 보내요. 주소 서명을 마치면 이어서 승인 서명을 따로 받아요.</p>
++        <p className="t-meta">주소는 이 브라우저에서 암호화해 전송합니다. 주소 등록 인증 후 선물 승인 인증을 별도로 진행합니다.</p>
+         <AddressChangeForm
+           creatorId={status.creatorId}
+           sealingKeyPem={sealingKeyPem}
+@@ -97,7 +97,7 @@
+           autoFocusFirst={registered}
+           onSaved={(label) => {
+             // 서버에 저장된 뒤에만 바뀐다 — 이어서 같은 창에 승인 서명 칸이 붙고, 목록이 그 머리로 포커스를 옮긴다
+-            setSavedMsg(registered ? "주소를 바꿨어요." : "주소를 등록했어요.");
++            setSavedMsg(registered ? "주소가 변경되었습니다." : "주소가 등록되었습니다.");
+             setStatus({ ...status, registered: true, label, updatedAt: new Date().toISOString() });
+             setEditing(false);
+           }}
+--- src\widgets\creator-action-center\ui\creator-action-center-page.test.tsx (4번 작업 전)
++++ src\widgets\creator-action-center\ui\creator-action-center-page.test.tsx (4번 작업 후)
+@@ -99,19 +99,19 @@
+     expect(host.querySelector("h1")?.textContent).toBe("지금 할 일4건");
+     // v37 A안: 가장 급한 승인 요청은 하늘 판 하나(그 판이 곧 그 줄), 나머지 구간은 머리에 「N건」
+     const panels = [...host.querySelectorAll("section")].map((p) => `${p.querySelector("h2")?.textContent}:${p.hasAttribute("data-row") ? 1 : p.querySelectorAll("[data-row]").length}`);
+-    expect(panels).toEqual(["받은 선물2건:2", "다온님이 선물을 보내려고 해요:1", "보낸 선물1건:1"]);
++    expect(panels).toEqual(["받은 선물2건:2", "다온님의 선물 승인 요청:1", "보낸 선물1건:1"]);
+     expect(rows().map((r) => r.querySelector("[data-title]")?.textContent)).toEqual([
+-      "별사탕님 선물에서 블루투스 기기가 나왔어요",
+-      "꿀단지님 선물에서 블루투스 기기가 나왔어요",
+-      "다온님이 선물을 보내려고 해요",
+-      "모카님 상자가 아직 안 왔어요",
++      "별사탕님 선물 · 블루투스 기기 발견",
++      "꿀단지님 선물 · 블루투스 기기 발견",
++      "다온님의 선물 승인 요청",
++      "모카님께 보낸 상자 미도착",
+     ]);
+   });
+ 
+   it("INV-J5: 줄 아래 글은 「종류 · 남은 날 · 물품·상자」 — 블루투스는 상자 몇 번째와 추적기 아님, 승인은 상자 수", () => {
+     render(ALL);
+     const [bt, , ap] = rows();
+-    expect(bt!.textContent).toContain("블루투스 발견");
++    expect(bt!.textContent).toContain("기기 발견");
+     expect(bt!.textContent).toContain("4일 남음");
+     expect(bt!.textContent).toContain("인형·쿠션 · 상자 2개 중 1번 · 추적 장치 아님");
+     expect(ap!.textContent).toContain("승인 요청");
+@@ -120,14 +120,14 @@
+     expect([...ap!.querySelectorAll("dt")].map((dt) => `${dt.textContent}=${dt.nextElementSibling?.textContent}`)).toEqual(["선물 종류=문구", "상자=1개", "전자기기·금속=없음"]);
+   });
+ 
+-  it("INV-J7 (실패경로): 미확인 상자 줄은 상자가 있다고 말하지 않는다 — 「아직 안 왔어요 · 아직 도착하지 않은 상자」, 도착일·찾기 권유가 없다(카드 d96 ②)", () => {
++  it("INV-J7 (실패경로): 미확인 상자 줄은 상자가 있다고 말하지 않는다 — 「아직 안 왔어요 · 미도착 상자 찾기」, 도착일·찾기 권유가 없다(카드 d96 ②)", () => {
+     render(ALL);
+     const un = rows()[3]!;
+-    expect(un.textContent).toContain("모카님 상자가 아직 안 왔어요");
+-    // 카드 d96 ②: 14일 줄은 찾기를 권하지 않는다 — 「아직 도착하지 않은 상자」만, 버튼은 「내 상자 찾기」
++    expect(un.textContent).toContain("모카님께 보낸 상자 미도착");
++    // 카드 d96 ②: 14일 줄은 찾기를 권하지 않는다 — 「미도착 상자 찾기」만, 버튼은 「내 상자 찾기」
+     expect(un.textContent).not.toMatch(/팬꾹 주소 없이 보냈다면/);
+     expect(button(un, "내 상자 찾기")).toBeDefined();
+-    expect(un.textContent).toContain("10월 2일 보낸 역조공");
++    expect(un.textContent).toContain("10월 2일 결제 완료");
+     expect(un.textContent).not.toMatch(/상자가 있어요|사무실 도착|미확인|코드 없이/);
+   });
+ 
+@@ -137,7 +137,7 @@
+     const picked = rows()[1]!;
+     expect(picked.textContent).toContain("받기 선택");
+     expect(button(picked, "받을지 정하기")).toBeUndefined();
+-    await act(async () => button(picked, "취소")!.click());
++    await act(async () => button(picked, "선택 취소")!.click());
+     expect(sendCheckChoice).toHaveBeenCalledWith({ action: "cancel", orderNo: "FC-BT2", boxSeq: 1 });
+     expect(refresh).toHaveBeenCalled();
+   });
+@@ -147,25 +147,25 @@
+     render(ALL);
+     act(() => button(rows()[0]!, "받을지 정하기")!.click());
+     const d = host.querySelector("dialog[open]")!;
+-    expect(d.querySelector("h2")?.textContent).toBe("블루투스 기기가 발견된 선물");
++    expect(d.querySelector("h2")?.textContent).toBe("탐지기 반응 물품 확인");
+     const kv = [...d.querySelectorAll("dt")].map((dt) => `${dt.textContent}=${dt.nextElementSibling?.textContent}`);
+-    expect(kv).toEqual(["선물 종류=인형·쿠션", "상자=2개 중 1번 · 중형", "보낸 날=10월 12일", "사무실 도착=10월 13일", "발견된 것=블루투스 기기", "검수 결과=추적 장치 아님", "기한=10월 20일 오후 11시 59분 · 4일 남음"]);
++    expect(kv).toEqual(["선물 종류=인형·쿠션", "상자=2개 중 1번 · 중형", "등록일=10월 12일", "팬꾹 도착일=10월 13일", "발견 물품=블루투스 기기", "검수 결과=추적 장치 아님", "기한=10월 20일 오후 11시 59분 · 4일 남음"]);
+     await act(async () => button(d, "받기")!.click());
+     expect(sendCheckChoice).toHaveBeenCalledWith({ action: "choose", choice: "accept", orderNo: "FC-BT1", boxSeq: 1 });
+     expect(d.textContent).toContain("받기 선택");
+-    expect(d.textContent).toContain("팬꾹이 처리하기 전까지 취소할 수 있어요.");
+-    await act(async () => button(d, "취소")!.click());
++    expect(d.textContent).toContain("팬꾹이 처리하기 전까지 선택을 취소할 수 있습니다.");
++    await act(async () => button(d, "선택 취소")!.click());
+     expect(sendCheckChoice).toHaveBeenLastCalledWith({ action: "cancel", orderNo: "FC-BT1", boxSeq: 1 });
+     expect(button(d, "받기")).toBeDefined();
+   });
+ 
+   it("INV-W13 (실패경로): 서버가 거부하면(팬꾹이 이미 처리) 단계를 바꾸지 않고 이유를 보인다", async () => {
+-    sendCheckChoice.mockResolvedValue({ kind: "refused", message: "팬꾹이 이미 처리했어요." });
++    sendCheckChoice.mockResolvedValue({ kind: "refused", message: "팬꾹에서 이미 처리한 상자입니다." });
+     render(ALL);
+     act(() => button(rows()[0]!, "받을지 정하기")!.click());
+     const d = host.querySelector("dialog[open]")!;
+     await act(async () => button(d, "받지 않기")!.click());
+-    expect(d.querySelector("[role=alert]")?.textContent).toContain("팬꾹이 이미 처리했어요.");
++    expect(d.querySelector("[role=alert]")?.textContent).toContain("팬꾹에서 이미 처리한 상자입니다.");
+     expect(d.textContent).not.toContain("받지 않기 선택");
+   });
+ 
+@@ -177,7 +177,7 @@
+     expect(d.textContent).not.toContain("사무실 도착");
+     expect(d.querySelector<HTMLInputElement>("input[type=radio]")?.checked).toBe(true);
+     expect(d.textContent).toContain("모카님 · 소형");
+-    expect(button(d, "선택 완료")).toBeDefined();
++    expect(button(d, "상자 찾기")).toBeDefined();
+   });
+ 
+   it("INV-J8: 하늘 판의 「받지 않기」는 같은 승인 창을 받지 않기 확인부터 열고, 「승인하기」는 카카오톡 승인 고르기부터 연다", () => {
+@@ -185,21 +185,21 @@
+     const hero = rows()[2]!;
+     act(() => button(hero, "받지 않기")!.click());
+     let d = host.querySelector("dialog[open]")!;
+-    expect(d.textContent).toContain("이 선물을 받지 않을까요?");
++    expect(d.textContent).toContain("이 선물을 거절할까요?");
+     expect(button(d, "돌아가기")).toBeDefined();
+     act(() => button(d, "돌아가기")!.click());
+     expect(button(d, "카카오톡으로 승인")).toBeDefined();
+     act(() => d.querySelector<HTMLButtonElement>('button[aria-label="닫기"]')!.click());
+     act(() => button(hero, "승인하기")!.click());
+     d = host.querySelector("dialog[open]")!;
+-    expect(d.textContent).not.toContain("이 선물을 받지 않을까요?");
++    expect(d.textContent).not.toContain("이 선물을 거절할까요?");
+     expect(button(d, "카카오톡으로 승인")).toBeDefined();
+   });
+ 
+   it("INV-J6: 줄이 없으면 빈 상태 하나 — 판도 숫자도 없다", () => {
+     render([]);
+     expect(host.querySelector("h1")?.textContent).toBe("지금 할 일");
+-    expect(host.textContent).toContain("지금 할 일이 없어요");
++    expect(host.textContent).toContain("현재 처리할 일이 없습니다");
+     expect(rows()).toHaveLength(0);
+   });
+ });
+@@ -241,7 +241,7 @@
+     const errId = radios[0]!.getAttribute("aria-describedby");
+     expect(errId).toBeTruthy();
+     expect(radios.every((r) => r.getAttribute("aria-describedby") === errId)).toBe(true);
+-    expect(d.querySelector(`[id="${errId}"]`)?.textContent).toContain("어느 팬에게 보낸 상자인지 골라 주세요");
++    expect(d.querySelector(`[id="${errId}"]`)?.textContent).toContain("상자를 받을 팬을 선택해 주세요");
+     expect(document.activeElement).toBe(radios[0]);
+   });
+ });
+@@ -266,7 +266,7 @@
+   it("INV-J5: 받은 선물 판 맨 위, 제목·종류는 용어집 표기(추적 장치 발견) — 판 숫자에 들어간다", () => {
+     render([TRACKER, BT_OPEN, APPROVAL]);
+     const first = rows()[0]!;
+-    expect(first.textContent).toContain("새벽님 선물에서 추적 장치가 나왔어요");
++    expect(first.textContent).toContain("새벽님 선물 · 추적 장치 발견");
+     expect(first.textContent).toContain("추적 장치 발견");
+     expect(first.textContent).not.toContain("위치 추적기");
+     // 추적 장치 줄은 받은 선물 구간 숫자에 들어간다(승인 요청은 그 아래 하늘 판)
+@@ -278,12 +278,12 @@
+     render([TRACKER]);
+     await act(async () => button(rows()[0]!, "신고할지 정하기")!.click());
+     const dlg = document.querySelector("dialog[open]")!;
+-    expect(dlg.textContent).toContain("신고할지 정해 주세요");
++    expect(dlg.textContent).toContain("신고 여부를 선택해 주세요");
+     expect(button(dlg, "신고하지 않기")).toBeDefined();
+     await act(async () => button(dlg, "신고하기")!.click());
+     expect(sendCheckChoice).toHaveBeenCalledWith({ action: "choose", choice: "report", orderNo: "FC-TR1", boxSeq: 1 });
+     expect(dlg.textContent).toContain("신고하기 선택");
+-    expect(button(dlg, "취소")).toBeDefined();
++    expect(button(dlg, "선택 취소")).toBeDefined();
+   });
+ 
+   it("INV-W14: 「신고하지 않기」는 no_report 를 보낸다", async () => {
+@@ -301,20 +301,20 @@
+     const row = rows()[0]!;
+     expect(row.textContent).toContain("신고하기 선택");
+     expect(button(row, "신고할지 정하기")).toBeUndefined();
+-    await act(async () => button(row, "취소")!.click());
++    await act(async () => button(row, "선택 취소")!.click());
+     expect(sendCheckChoice).toHaveBeenCalledWith({ action: "cancel", orderNo: "FC-TR2", boxSeq: 1 });
+   });
+ });
+ 
+ describe("보낸 선물의 반송 주소 줄 (action-center INV-J5, office-workflow INV-W15)", () => {
+-  it("INV-J5: 보낸 역조공·보낸 팬 선물 상자 줄이 보낸 선물 판에 — 종류 「돌려받을 주소 확인」, 처분 예정 날짜 문장", () => {
++  it("INV-J5: 보낸 역조공·보낸 팬 선물 상자 줄이 보낸 선물 판에 — 종류 「반송 주소 확인」, 처분 예정 날짜 문장", () => {
+     render([UNCONFIRMED, RETURN_SHARE, RETURN_BOX]);
+     const [, share, box] = rows();
+     expect(share!.textContent).toContain("별빛님께 보낸 역조공");
+     expect(box!.textContent).toContain("하루님께 보낸 선물 · 상자 2");
+     for (const r of [share!, box!]) {
+-      expect(r.textContent).toContain("돌려받을 주소 확인");
+-      expect(r.textContent).toContain("11월 16일까지 확인하지 않으면 상자를 처분해요");
++      expect(r.textContent).toContain("반송 주소 확인");
++      expect(r.textContent).toContain("11월 16일까지 미확인 시 처분 대상");
+     }
+     expect(host.querySelector("section h2 small")?.textContent).toBe("3건");
+   });
+--- src\widgets\creator-action-center\ui\creator-action-center-page.tsx (4번 작업 전)
++++ src\widgets\creator-action-center\ui\creator-action-center-page.tsx (4번 작업 후)
+@@ -103,7 +103,7 @@
+       return (
+         <Row
+           key={keyOf(it)}
+-          title={`${it.nickname}님 선물에서 추적 장치가 나왔어요`}
++          title={`${it.nickname}님 선물 · 추적 장치 발견`}
+           meta={metaOf("추적 장치 발견", due, [`${it.itemKind} · ${boxPlace(it)}`])}
+           action={
+             it.choice ? (
+@@ -123,8 +123,8 @@
+     return (
+       <Row
+         key={keyOf(it)}
+-        title={`${it.nickname}님 선물에서 ${signalThing(it)}가 나왔어요`}
+-        meta={metaOf("블루투스 발견", due, [`${it.itemKind} · ${boxPlace(it)} · 추적 장치 아님`])}
++        title={`${it.nickname}님 선물 · ${signalThing(it)} 발견`}
++        meta={metaOf("기기 발견", due, [`${it.itemKind} · ${boxPlace(it)} · 추적 장치 아님`])}
+         action={
+           it.choice ? (
+             <>
+@@ -148,7 +148,7 @@
+         <div className={s.atop}>
+           <FaceAvatar index={i + 1} className="face face--sm" />
+           <div>
+-            <strong data-title="">{`${it.nickname}님이 선물을 보내려고 해요`}</strong>
++            <strong data-title="">{`${it.nickname}님의 선물 승인 요청`}</strong>
+             <span>{`${it.itemKind} · 상자 ${it.boxCount}개`}</span>
+           </div>
+         </div>
+@@ -170,7 +170,7 @@
+         <Row
+           key={keyOf(it)}
+           title={title}
+-          meta={metaOf("돌려받을 주소 확인", null, [disposeDueText(it.dueAt)])}
++          meta={metaOf("반송 주소 확인", null, [disposeDueText(it.dueAt)])}
+           action={<CreatorReturnAddressButton target={{ orderNo: it.orderNo, boxSeq: it.boxSeq }} meta={title} address={address} sealingKeyPem={sealingKeyPem} />}
+         />
+       );
+@@ -179,15 +179,15 @@
+       return (
+         <Row
+           key={keyOf(it)}
+-          title={`${it.nickname}님 상자가 아직 안 왔어요`}
+-          // 14일이면 받는 주소 없이 온 보류 상자는 이미 반송된 뒤라 찾기를 권하지 않는다 — 「아직 도착하지 않은 상자」로만(카드 d96 ②)
+-          meta={metaOf("아직 도착하지 않은 상자", null, [`${formatMonthDayKo(it.sentAt)} 보낸 역조공`])}
++          title={`${it.nickname}님께 보낸 상자 미도착`}
++          // 14일이면 받는 주소 없이 온 보류 상자는 이미 반송된 뒤라 찾기를 권하지 않는다 — 「미도착 상자 찾기」로만(카드 d96 ②)
++          meta={metaOf("미도착 상자", null, [`${formatMonthDayKo(it.sentAt)} 결제 완료`])}
+           action={
+             <FindSentBoxButton
+               className="btn btn--sm btn--line"
+               candidates={candidates}
+               shareId={it.shareId}
+-              meta={`${formatMonthDayKo(it.sentAt)} 보냄`}
++              meta={`${formatMonthDayKo(it.sentAt)} 결제 완료`}
+               label={`내 상자 찾기(${it.nickname}님)`}
+             />
+           }
+@@ -196,12 +196,12 @@
+     }
+     const due = daysLeftOf(it.dueAt, now);
+     if (it.kind === "unpaid") {
+-      // 결제를 마치지 않은 선물(payment INV-M22 ⑤) — 결제는 선물 상세 맨 위 칸의 「결제하기」에서만 시작된다(INV-J13). 이 줄은 그 칸을 펼친 상세로 간다
++      // 결제 대기(payment INV-M22 ⑤) — 결제는 선물 상세 맨 위 칸의 「결제하기」에서만 시작된다(INV-J13). 이 줄은 그 칸을 펼친 상세로 간다
+       return (
+         <Row
+           key={keyOf(it)}
+           title={`${it.creatorName}님께 보낼 선물`}
+-          meta={metaOf("결제를 마치지 않은 선물", due, [won(it.amountKrw)])}
++          meta={metaOf("결제 대기", due, [won(it.amountKrw)])}
+           action={
+             <Link className="btn btn--sm btn--line" href={giftDetailHref(it.orderNo, true)}>
+               결제하기
+@@ -229,10 +229,10 @@
+       <Row
+         key={keyOf(it)}
+         title={title}
+-        meta={metaOf("아직 도착하지 않은 상자", due, [tierName(it.declaredTier)])}
++        meta={metaOf("미도착 상자", due, [tierName(it.declaredTier)])}
+         action={
+           <button className="btn btn--sm btn--line" type="button" aria-haspopup="dialog" onClick={() => setOpen({ kind: "missing_box", item: it })}>
+-            찾기
++            상자 찾기
+           </button>
+         }
+       />
+@@ -252,7 +252,7 @@
+       {items.length === 0 ? (
+         <section className={s.empty} aria-labelledby="ca-empty">
+           <img className={s.emptyImg} src="/images/home/icon-approve.webp" alt="" width={96} height={96} />
+-          <h2 id="ca-empty">지금 할 일이 없어요</h2>
++          <h2 id="ca-empty">현재 처리할 일이 없습니다</h2>
+           <Link className="btn btn--line" href="/creator">
+             홈으로
+           </Link>
+@@ -275,7 +275,7 @@
+           <div className={s.heroMain}>
+             <p className={s.eyebrow}>승인 요청</p>
+             <h2 className={s.heroH} id="ca-top" data-title="">
+-              {`${top.nickname}님이 선물을 보내려고 해요`}
++              {`${top.nickname}님의 선물 승인 요청`}
+             </h2>
+             <div className={s.who}>
+               <FaceAvatar index={0} className={`face face--sm ${s.whoFace}`} />
+@@ -305,7 +305,7 @@
+             </div>
+           </div>
+           <div className={s.due}>
+-            <span className={s.lab}>정할 때까지</span>
++            <span className={s.lab}>승인 기한</span>
+             <DueBig dueAt={top.dueAt} now={now} />
+             <span className={s.lab}>{formatDateTime(top.dueAt)}까지</span>
+           </div>
+@@ -356,7 +356,7 @@
+         />
+       ) : null}
+       {open?.kind === "missing_box" ? (
+-        <BottomSheet open title="아직 도착하지 않은 상자" meta={`${open.item.creatorName}님께 보낸 선물 · 상자 ${open.item.boxSeq}`} onClose={close}>
++        <BottomSheet open title="미도착 상자 찾기" meta={`${open.item.creatorName}님께 보낸 선물 · 상자 ${open.item.boxSeq}`} onClose={close}>
+           <FindMyBox
+             box={{
+               target: { kind: "box", id: open.item.boxId },
+--- src\widgets\approval-requests\ui\approval-requests-page.tsx (4번 작업 전)
++++ src\widgets\approval-requests\ui\approval-requests-page.tsx (4번 작업 후)
+@@ -11,7 +11,7 @@
+       <header className="page-head">
+         <div className="ph-row">
+           <h1 className="ph-title">
+-            승인 내역<span className="ph-count">{decided.length}</span>
++            승인 내역<span className="ph-count">{decided.length}건</span>
+           </h1>
+         </div>
+       </header>
+--- src\widgets\approval-requests\ui\received-boxes-page.tsx (4번 작업 전)
++++ src\widgets\approval-requests\ui\received-boxes-page.tsx (4번 작업 후)
+@@ -9,7 +9,7 @@
+       <header className="page-head">
+         <div className="ph-row">
+           <h1 className="ph-title">
+-            받은 선물<span className="ph-count">{received.length}</span>
++            받은 선물<span className="ph-count">{received.length}개</span>
+           </h1>
+         </div>
+       </header>
+--- src\widgets\access-log\ui\access-log-page.test.tsx (4번 작업 전)
++++ src\widgets\access-log\ui\access-log-page.test.tsx (4번 작업 후)
+@@ -54,16 +54,16 @@
+     expect(host.textContent).not.toMatch(/대표 계정|권한이 없는 계정|거부/);
+   });
+ 
+-  it("INV-P7 (D12): 이번 달 숫자는 승인·주소 열림·재출력 셋 — 거부 숫자는 없다", () => {
++  it("INV-P7 (D12): 이번 달 숫자는 승인·주소 열람·재출력 셋 — 거부 숫자는 없다", () => {
+     render(ENTRIES);
+-    // v37: 주소 열림이 큰 숫자로 맨 앞, 승인·재출력은 옆 작은 숫자
+-    expect([...host.querySelectorAll("dt")].map((dt) => dt.textContent)).toEqual(["주소 열림", "승인", "재출력"]);
+-    expect([...host.querySelectorAll("dd")].map((dd) => dd.textContent)).toEqual(["3번", "4건", "1번"]);
++    // v37: 주소 열람이 큰 숫자로 맨 앞, 승인·재출력은 옆 작은 숫자
++    expect([...host.querySelectorAll("dt")].map((dt) => dt.textContent)).toEqual(["주소 열람", "승인", "재출력"]);
++    expect([...host.querySelectorAll("dd")].map((dd) => dd.textContent)).toEqual(["3회", "4건", "1회"]);
+   });
+ 
+   it("INV-P7: 기록이 없으면 아직 열린 적이 없다는 안내, 표는 없다", () => {
+     render([]);
+-    expect(host.textContent).toContain("아직 주소가 열린 적이 없어요");
++    expect(host.textContent).toContain("주소 열람 기록이 없습니다");
+     expect(host.querySelector("table")).toBeNull();
+   });
+ });
+--- src\widgets\access-log\ui\access-log-page.tsx (4번 작업 전)
++++ src\widgets\access-log\ui\access-log-page.tsx (4번 작업 후)
+@@ -47,11 +47,11 @@
+       <header className="page-head">
+         <div className="ph-row">
+           <h1 className="ph-title">
+-            주소 열람 기록<span className="ph-count">{entries.length}</span>
++            주소 열람 기록<span className="ph-count">{entries.length}건</span>
+           </h1>
+         </div>
+         <p className="ph-desc">
+-          <strong className={`t-strong ${s.strong}`}>{PROMISE.address}</strong> 열린 기록은 전부 여기에 보여요.
++          <strong className={`t-strong ${s.strong}`}>주소는 승인·검수 후 송장 출력에만 사용합니다.</strong> 주소 열람 시각과 출력 내역을 확인할 수 있습니다. {PROMISE.addressFan}
+         </p>
+       </header>
+ 
+@@ -63,10 +63,10 @@
+           </h2>
+           <dl className={s.nums}>
+             <div className={s.main}>
+-              <dt>주소 열림</dt>
++              <dt>주소 열람</dt>
+               <dd className="num-big">
+                 {summary.openedCount}
+-                <small>번</small>
++                <small>회</small>
+               </dd>
+             </div>
+             <div className={s.subs}>
+@@ -76,15 +76,14 @@
+               </div>
+               <div>
+                 <dt>재출력</dt>
+-                <dd>{summary.reprintCount}번</dd>
++                <dd>{summary.reprintCount}회</dd>
+               </div>
+             </div>
+           </dl>
+         </section>
+         <div className={s.rule}>
+           <p>
+-            주소는 선물 상자마다 첫 출력과 재출력을 합쳐 최대 {MAX_DECRYPTS_PER_BOX}번까지 열려요. 택배 기사가 상자를 가져가면 남은 횟수가 있어도 그 상자로는 더
+-            열리지 않아요.
++            주소 열람은 상자별 첫 출력·재출력을 합쳐 최대 {MAX_DECRYPTS_PER_BOX}회 가능합니다. 택배사 연동 후에는 집하가 확인되면 남은 횟수와 관계없이 추가 열람이 제한됩니다.
+           </p>
+         </div>
+       </div>
+@@ -94,7 +93,7 @@
+           열람 기록
+         </h2>
+         {entries.length === 0 ? (
+-          <p className="empty">아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요.</p>
++          <p className="empty">주소 열람 기록이 없습니다. 송장 출력 시 기록됩니다.</p>
+         ) : (
+           <div className={s.wrap} tabIndex={0} role="region" aria-label="주소 열람 기록 표">
+             <table className={s.table}>
+--- src\features\revgift-send\model\register-revgift.test.ts (4번 작업 전)
++++ src\features\revgift-send\model\register-revgift.test.ts (4번 작업 후)
+@@ -70,7 +70,7 @@
+     const call = (shares: unknown) => registerRevgift({ store, viewer: haru, readPrices }, { shares, quotedTotalKrw: 5400 });
+     expect((await call([])).ok).toBe(false);
+     // 거부 문구의 인원은 한도 상수에서 온다
+-    expect(await call([])).toMatchObject({ status: 400, message: expect.stringContaining(`한 번에 ${MAX_REVGIFT_SHARES}명까지`) });
++    expect(await call([])).toMatchObject({ status: 400, message: expect.stringContaining(`한 번에 최대 ${MAX_REVGIFT_SHARES}명까지`) });
+     expect((await call(Array.from({ length: 11 }, (_, i) => ({ fanId: `${String(i).padStart(8, "0")}-1111-4111-8111-111111111111`, tier: "small" })))).ok).toBe(false);
+     expect((await call([{ fanId: FAN_A, tier: "small" }, { fanId: FAN_A, tier: "medium" }])).ok).toBe(false);
+     expect((await call([{ fanId: FAN_A, tier: "oversize" }])).ok).toBe(false);
+@@ -89,7 +89,7 @@
+   it("INV-R1 S1b (실패경로): DB 가 「나를 팔로우하는 팬이 아니다」로 거부하면 403 과 한 가지 문구", async () => {
+     const { store } = memoryStore({ refuse: "not_follower" });
+     const r = await registerRevgift({ store, viewer: haru, readPrices }, { shares: [{ fanId: FAN_A, tier: "small" }], quotedTotalKrw: 5400 });
+-    expect(r).toEqual({ ok: false, status: 403, message: "나를 팔로우한 팬에게만 보낼 수 있어요." });
++    expect(r).toEqual({ ok: false, status: 403, message: "나를 팔로우한 팬에게만 선물을 보낼 수 있습니다." });
+   });
+ 
+   it("INV-R3: 대형도 고를 수 있다 — 대형 요금 − 대형 검수비", async () => {
+--- src\features\revgift-send\model\register-revgift.ts (4번 작업 전)
++++ src\features\revgift-send\model\register-revgift.ts (4번 작업 후)
+@@ -26,7 +26,7 @@
+   | { ok: true; sendId: string; tossOrderId: string; orderNos: string[]; amountKrw: number }
+   | { ok: false; status: 400 | 401 | 403 | 409; message: string };
+ 
+-const NOT_FOLLOWER_MESSAGE = "나를 팔로우한 팬에게만 보낼 수 있어요.";
++const NOT_FOLLOWER_MESSAGE = "나를 팔로우한 팬에게만 선물을 보낼 수 있습니다.";
+ 
+ const inputSchema = z.object({
+   shares: z
+@@ -58,10 +58,10 @@
+   body: unknown,
+ ): Promise<RegisterRevgiftResult> {
+   if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
+-  if (deps.viewer.role !== "creator") return { ok: false, status: 403, message: "역조공은 크리에이터만 보낼 수 있어요." };
++  if (deps.viewer.role !== "creator") return { ok: false, status: 403, message: "역조공은 크리에이터 계정만 이용할 수 있습니다." };
+ 
+   const parsed = inputSchema.safeParse(body);
+-  if (!parsed.success) return { ok: false, status: 400, message: `받을 팬과 상자를 다시 확인해 주세요. 한 번에 ${MAX_REVGIFT_SHARES}명까지, 같은 팬은 한 번만 넣을 수 있어요.` };
++  if (!parsed.success) return { ok: false, status: 400, message: `받을 팬과 상자를 확인해 주세요. 한 번에 최대 ${MAX_REVGIFT_SHARES}명까지 선택할 수 있으며, 같은 팬을 중복 선택할 수 없습니다.` };
+ 
+   const prices = await deps.readPrices();
+   const tiers = parsed.data.shares.map((s) => s.tier as PricedTier);
+--- src\features\revgift-send\ui\send-form.test.tsx (4번 작업 전)
++++ src\features\revgift-send\ui\send-form.test.tsx (4번 작업 후)
+@@ -58,7 +58,7 @@
+ // 결제 버튼은 「합계 + 결제하기」(시안 v39) — 금액 부분까지 보도록 버튼 글자 전체를 따로 본다
+ const payButton = () => [...host.querySelectorAll("button")].find((b) => b.textContent?.trim().endsWith("결제하기"));
+ 
+-describe("역조공 받을 팬 고르기 (INV-R2·R3)", () => {
++describe("역조공 받는 팬 선택 (INV-R2·R3)", () => {
+   it("한 번에 고를 수 있는 팬은 10명이다", () => {
+     expect(MAX_REVGIFT_SHARES).toBe(10);
+   });
+@@ -80,7 +80,7 @@
+     // 고른 칸은 잠기지 않는다(풀 수 있다)
+     expect(box("팬1").getAttribute("aria-disabled")).toBeNull();
+     const max = host.querySelector("#rv-fans-max");
+-    expect(max?.textContent).toContain("10명을 모두 골랐어요");
++    expect(max?.textContent).toContain("10명 선택 완료");
+     expect(max?.getAttribute("aria-live")).toBe("polite");
+   });
+ 
+@@ -111,10 +111,10 @@
+ 
+   it("팔로워가 없으면 상자 크기 안내를 숨긴다 — 있으면 보인다", () => {
+     render([]);
+-    expect(host.textContent).toContain("아직 나를 팔로우한 팬이 없어요");
+-    expect(host.textContent).not.toContain("상자는 팬마다 고를 수 있어요");
++    expect(host.textContent).toContain("팔로워가 없습니다");
++    expect(host.textContent).not.toContain("팬마다 상자 크기를 선택할 수 있습니다");
+     render(followersOf([1]));
+-    expect(host.textContent).toContain("상자는 팬마다 고를 수 있어요");
++    expect(host.textContent).toContain("팬마다 상자 크기를 선택할 수 있습니다");
+   });
+ 
+   it("(실패경로) 목록에서 빠졌던 팬이 다시 나타나도 고른 팬은 10명을 넘지 않는다", () => {
+--- src\features\revgift-send\ui\send-form.tsx (4번 작업 전)
++++ src\features\revgift-send\ui\send-form.tsx (4번 작업 후)
+@@ -28,7 +28,7 @@
+ 
+ const TIERS: readonly { tier: PricedTier; name: string }[] = PRICED_TIERS.map((tier) => ({ tier, name: PARCEL_TIER_GUIDE[tier].name }));
+ 
+-const SIZE_NOTE = `상자는 팬마다 고를 수 있어요. ${PRICED_TIERS.map((t) => `${PARCEL_TIER_GUIDE[t].name}은 ${PARCEL_TIER_GUIDE[t].rule}`).join(", ")}예요. 크기와 무게 중 큰 쪽으로 정해요.`;
++const SIZE_NOTE = <>팬마다 상자 크기를 선택할 수 있습니다.{PRICED_TIERS.map((t) => <span key={t}><br />• {PARCEL_TIER_GUIDE[t].name}: {PARCEL_TIER_GUIDE[t].rule}</span>)}<br />크기·무게 중 더 높은 요금 구간을 선택해 주세요.</>;
+ 
+ export function RevgiftSendForm({
+   prices,
+@@ -98,7 +98,7 @@
+         // 화면을 연 뒤 요금이 바뀌었다(INV-K3) — 서버 page 를 다시 그려 새 요금표로 금액을 보여 준다. 고른 팬은 그대로 남는다
+         setPayError(result.message ?? PRICE_CHANGED_MESSAGE);
+         router.refresh();
+-      } else setPayError(result.message ?? "보내기를 등록하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
++      } else setPayError(result.message ?? "역조공 신청을 등록하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+       return;
+     }
+     const { tossOrderId, amountKrw, orderNos } = result.value;
+@@ -114,9 +114,9 @@
+     <div>
+       <section id="count" aria-labelledby="rv-add-title">
+         <h2 className={s.secH} id="rv-add-title">
+-          받을 팬 고르기
++          받는 팬 선택
+         </h2>
+-        <p className={s.lead}>나를 팔로우하는 팬이에요. 받을 팬을 체크해 주세요.</p>
++        <p className={s.lead}>팔로워 목록에서 선물을 받을 팬을 선택해 주세요.</p>
+         <div role="alert">
+           {notice && noticeShown ? (
+             <p className={`${s.errline} ${s.notice}`}>
+@@ -126,7 +126,7 @@
+           ) : null}
+         </div>
+         <p className={s.maxline} id="rv-fans-max" aria-live="polite">
+-          {full ? `${MAX_REVGIFT_SHARES}명을 모두 골랐어요. 더 보내려면 결제한 뒤 새로 보내 주세요.` : `최대 ${MAX_REVGIFT_SHARES}명까지 한 번에 보낼 수 있어요`}
++          {full ? `${MAX_REVGIFT_SHARES}명 선택 완료 · 더 보내려면 결제 후 새로 신청해 주세요.` : `한 번에 최대 ${MAX_REVGIFT_SHARES}명 선택 가능`}
+         </p>
+         {followers.length > 0 ? (
+           <fieldset className="fs">
+@@ -173,14 +173,14 @@
+             </ul>
+           </fieldset>
+         ) : (
+-          <p className={s.none}>아직 나를 팔로우한 팬이 없어요. 팬이 팔로우하면 여기에 나와요.</p>
++          <p className={s.none}>팔로워가 없습니다. 팬이 팔로우하면 목록에 표시됩니다.</p>
+         )}
+       </section>
+ 
+       {/* 진행 순서와 상자 크기·닉네임 안내를 회색 칸 하나로(시안 .gnote.howcard) */}
+       <div className={s.how}>
+         <h2 className={s.howH} id="rv-how-title">
+-          이렇게 진행돼요
++          진행 절차
+         </h2>
+         <ol className={s.steps} aria-labelledby="rv-how-title">
+           <li>
+@@ -188,8 +188,8 @@
+               1
+             </span>
+             <div>
+-              <strong>팬이 「받기」를 누를 때 주소를 직접 입력해요</strong>
+-              <p>크리에이터에게는 팬의 주소가 보이지 않아요.</p>
++              <strong>팬이 ‘받기’를 누르면 배송지를 확인합니다. 등록된 주소가 없으면 직접 입력합니다.</strong>
++              <p>팬의 주소는 크리에이터에게 공개되지 않습니다.</p>
+             </div>
+           </li>
+           <li>
+@@ -197,8 +197,8 @@
+               2
+             </span>
+             <div>
+-              <strong>결제하면 팬마다 팬꾹 주소가 안내돼요</strong>
+-              <p>팬마다 상자를 따로 포장해서, 그 팬의 팬꾹 주소를 끝까지 그대로 써서 보내 주세요.</p>
++              <strong>결제 후 팬별 팬꾹 주소 발급</strong>
++              <p>팬마다 상자를 따로 포장하고, 해당 팬의 팬꾹 주소를 끝까지 입력해 보내 주세요.</p>
+             </div>
+           </li>
+           <li>
+@@ -206,14 +206,14 @@
+               3
+             </span>
+             <div>
+-              <strong>7일 안에 받지 않으면 그 상자만 돌려보내고 환불해요</strong>
+-              <p>한 팬이 받지 않아도 다른 팬의 선물은 그대로 가요.</p>
++              <strong>결제 후 7일 이내 팬 수락 필요</strong>
++              <p>팬이 거절하거나 기한 내 수락하지 않으면 해당 상자만 반송·환불 대상이 됩니다. 다른 팬의 선물은 그대로 진행됩니다.</p>
+             </div>
+           </li>
+         </ol>
+         <hr className={s.rule} />
+         {followers.length > 0 ? <p>{SIZE_NOTE}</p> : null}
+-        <p>팬 목록에는 팬의 닉네임만 보여요. 팬의 주소와 연락처는 보이지 않아요.</p>
++        <p>팬의 닉네임만 표시됩니다. 주소·연락처는 공개되지 않습니다.</p>
+       </div>
+ 
+       {/* 화면 아래에 붙어 따라오는 하늘 결제 띠(시안 .tray) — 받을 팬 수 · 결제 금액 · 동의와 결제 */}
+@@ -254,7 +254,7 @@
+               </strong>
+             </p>
+           </div>
+-          <p className={s.inc}>배송비와 검수 포함</p>
++          <p className={s.inc}>배송비 포함 · 검수비 제외</p>
+         </div>
+         <div className={s.rt}>
+           <div className={s.consent}>
+@@ -280,7 +280,7 @@
+           <button className={`btn btn--block ${s.payBtn}`} type="button" onClick={pay} disabled={picked.length === 0} aria-busy={paying || undefined}>
+             {won(total)} 결제하기
+           </button>
+-          <p className={s.after}>결제는 한 번이에요. 팬이 받지 않으면 그 팬의 상자 요금만 환불돼요.</p>
++          <p className={s.after}>한 번에 결제 · 환불은 팬별 처리<br />받지 않은 팬의 상자만 환불 대상입니다. 반송 시 택배비를 차감하며, 입고 전 환불 시점은 취소·환불 규정에 따릅니다.</p>
+         </div>
+       </section>
+     </div>
+--- src\features\return-address\model\confirm-return-address.ts (4번 작업 전)
++++ src\features\return-address\model\confirm-return-address.ts (4번 작업 후)
+@@ -32,7 +32,7 @@
+   // 보내는 사람은 팬 또는 크리에이터(보낸 역조공·보낸 팬 선물). 운영자는 남의 반송 주소를 정하지 않는다
+   if (deps.viewer.role === "operator") return { ok: false, status: 403, message: "operator" };
+   const parsed = inputSchema.safeParse(body);
+-  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청이에요." };
++  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청입니다." };
+   const { orderNo, boxSeq } = parsed.data;
+   const { data, error } = await deps.client.rpc("confirm_return_address", { p_order_no: orderNo, p_box_seq: boxSeq ?? null });
+   // 잠그는 사이 상자 연결이 바뀌었다(office_lock_parcel 의 40001) — 다시 하면 된다. 복사되지 않았다
+--- src\features\return-address\ui\return-address-window.tsx (4번 작업 전)
++++ src\features\return-address\ui\return-address-window.tsx (4번 작업 후)
+@@ -8,9 +8,9 @@
+ import d from "@/shared/ui/dialog-parts.module.css";
+ import { sendReturnConfirm, type ReturnRefusal } from "../api/send-return-confirm";
+ 
+-// 돌려받을 주소 확인 창 (office-workflow INV-W15, action-center INV-J1·J4·J5, address-protection INV-P16·P17).
++// 반송 주소 확인 창 (office-workflow INV-W15, action-center INV-J1·J4·J5, address-protection INV-P16·P17).
+ // 등록 주소가 있으면 이름표와 바꾼 날만 보이고(주소 글자는 다시 보이지 않는다) 「바꾸기」로 새로 등록하거나 그대로 「확인」.
+-// 등록 전이면 「주소를 입력해 주세요」로 그 자리에서 등록한 뒤 확인한다 — 확인 없이 진행되는 길은 없다.
++// 등록 전이면 「배송지 등록」로 그 자리에서 등록한 뒤 확인한다 — 확인 없이 진행되는 길은 없다.
+ // 「확인」은 기존 확인 처리(/api/me/return-address)를 그대로 부르고, 끝나면 창을 닫고 다시 읽는다 — 카드·줄은 상자 상태로 사라진다(J4).
+ // 다시 읽는 방법은 부르는 쪽이 정할 수 있다(onConfirmed) — 선물 상세 칸은 확인했다는 한 줄을 보이려고 쿼리를 붙여 다시 읽는다(2026-10-22 d113 진단 C-3).
+ // 주소 입력 칸은 위젯이 넘긴다 — 팬은 받을 주소 등록, 크리에이터는 크리에이터 주소 등록(기능끼리는 서로 import 하지 않는다 — FSD).
+--- src\features\return-address\ui\return-confirmed-notice.tsx (4번 작업 전)
++++ src\features\return-address\ui\return-confirmed-notice.tsx (4번 작업 후)
+@@ -1,7 +1,7 @@
+ import { Suspense } from "react";
+ import { QueryNotice } from "@/shared/ui/query-notice";
+ 
+-// 돌려받을 주소 확인 창이 끝나면 같은 선물 상세를 ?address=confirmed 로 다시 읽는다(진단 C-3) — 그때 한 번만 보이는 한 줄.
++// 반송 주소 확인 창이 끝나면 같은 선물 상세를 ?address=confirmed 로 다시 읽는다(진단 C-3) — 그때 한 번만 보이는 한 줄.
+ // 확인하면 그 할 일 줄이 원천 상태로 사라지므로(마지막 할 일이면 칸째) 할 일 칸 밖, 상세 맨 위에 둔다(ui-reviewer 2026-10-22 지적 1).
+ export const RETURN_CONFIRMED_TEXT = "반송 주소가 확인되었습니다.";
+ 
+--- src\features\gift-reply\api\send-gift-reply.ts (4번 작업 전)
++++ src\features\gift-reply\api\send-gift-reply.ts (4번 작업 후)
+@@ -5,7 +5,7 @@
+ 
+ export type SendReplyOutcome<T = undefined> = { kind: "ok"; value: T } | { kind: "login" } | { kind: "failed"; message: string };
+ 
+-const FALLBACK = "저장하지 못했어요. 잠시 뒤 다시 해 주세요.";
++const FALLBACK = "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+ 
+ async function post(path: string, body: unknown): Promise<{ kind: "ok"; data: Record<string, unknown> } | { kind: "login" } | { kind: "failed"; message: string }> {
+   try {
+--- src\features\gift-reply\model\gift-reply-actions.test.ts (4번 작업 전)
++++ src\features\gift-reply\model\gift-reply-actions.test.ts (4번 작업 후)
+@@ -60,13 +60,13 @@
+     }
+   });
+ 
+-  it("INV-G1·G2·G3·G4: DB 오류 코드마다 사람이 읽는 문구로 — 남의 상자는 404, 출고 전·이미 답장·지운 답장·필터는 400", async () => {
++  it("INV-G1·G2·G3·G4: DB 오류 코드마다 사람이 읽는 문구로 — 남의 상자는 404, 출고 전·이미 답장·삭제한 답장·필터는 400", async () => {
+     const cases: [string, number, RegExp][] = [
+       ["P0002", 404, /찾을 수 없/],
+       ["P0100", 400, /출고/],
+       ["P0101", 400, /이미 답장/],
+-      ["P0102", 400, /지운 답장/],
+-      ["P0081", 400, /쓸 수 없는 말/],
++      ["P0102", 400, /삭제한 답장/],
++      ["P0081", 400, /사용할 수 없는 표현/],
+       ["P0082", 400, /전화번호/],
+       ["22023", 400, /확인/],
+       ["42501", 401, /로그인/],
+--- src\features\gift-reply\model\gift-reply-actions.ts (4번 작업 전)
++++ src\features\gift-reply\model\gift-reply-actions.ts (4번 작업 후)
+@@ -22,14 +22,14 @@
+ // DB 오류 코드 → 사람이 읽는 문구. 남의 상자와 없는 상자는 같은 404 로(있는지 알리지 않는다).
+ const MESSAGES: Readonly<Record<string, { status: Refusal["status"]; message: string }>> = {
+   "42501": { status: 401, message: "로그인이 필요해요." },
+-  P0002: { status: 404, message: "상자를 찾을 수 없어요. 새로 고침해 주세요." },
+-  P0100: { status: 400, message: "아직 출고되지 않은 상자예요. 출고된 뒤에 받았어요를 남길 수 있어요." },
+-  P0101: { status: 400, message: "이미 답장한 상자예요. 답장은 고칠 수 없고 지울 수만 있어요." },
+-  P0102: { status: 400, message: "지운 답장은 다시 쓸 수 없어요." },
+-  P0103: { status: 400, message: "지울 답장이 없어요. 새로 고침해 주세요." },
+-  P0081: { status: 400, message: "한 줄에 쓸 수 없는 말이 들어 있어요." },
+-  P0082: { status: 400, message: "한 줄에 전화번호·이메일·인터넷 주소는 쓸 수 없어요." },
+-  "22023": { status: 400, message: "입력을 확인해 주세요." },
++  P0002: { status: 404, message: "상자를 찾을 수 없습니다. 새로고침해 주세요." },
++  P0100: { status: 400, message: "출고 후 수령을 확인할 수 있습니다." },
++  P0101: { status: 400, message: "이미 답장한 상자입니다. 답장은 수정할 수 없고 삭제만 가능합니다." },
++  P0102: { status: 400, message: "삭제한 답장은 다시 작성할 수 없습니다." },
++  P0103: { status: 400, message: "삭제할 답장이 없습니다. 새로고침해 주세요." },
++  P0081: { status: 400, message: "사용할 수 없는 표현이 포함되어 있습니다." },
++  P0082: { status: 400, message: "전화번호·이메일·인터넷 주소는 입력할 수 없습니다." },
++  "22023": { status: 400, message: "입력 내용을 확인해 주세요." },
+ };
+ 
+ // 팬의 답장 공개 저장 — 팬 화면 문구(문구 3 다듬은본). 상태 코드는 위 표와 같다
+@@ -47,7 +47,7 @@
+ 
+ function creatorOnly(viewer: Viewer | null): Refusal | null {
+   if (!viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
+-  if (viewer.role !== "creator") return { ok: false, status: 403, message: "선물을 받은 크리에이터만 할 수 있어요." };
++  if (viewer.role !== "creator") return { ok: false, status: 403, message: "선물을 받은 크리에이터만 이용할 수 있습니다." };
+   return null;
+ }
+ 
+@@ -58,7 +58,7 @@
+   const denied = creatorOnly(deps.viewer);
+   if (denied) return denied;
+   const parsed = confirmSchema.safeParse(body);
+-  if (!parsed.success) return { ok: false, status: 400, message: parsed.error.issues[0]?.message ?? "입력을 확인해 주세요." };
++  if (!parsed.success) return { ok: false, status: 400, message: parsed.error.issues[0]?.message ?? "입력 내용을 확인해 주세요." };
+   const { data, error } = await deps.client.rpc("confirm_gift_box", { p_box_id: parsed.data.boxId, p_phrase: parsed.data.phrase, p_line: parsed.data.line });
+   if (error) return refusalOf(error.code, "confirm_gift_box");
+   const result = z.enum(["received", "replied", "unchanged"]).safeParse(data);
+@@ -71,7 +71,7 @@
+   const denied = creatorOnly(deps.viewer);
+   if (denied) return denied;
+   const parsed = z.object({ boxId }).safeParse(body);
+-  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청이에요." };
++  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청입니다." };
+   const { error } = await deps.client.rpc("delete_gift_reply", { p_box_id: parsed.data.boxId });
+   if (error) return refusalOf(error.code, "delete_gift_reply");
+   return { ok: true };
+--- src\features\gift-reply\ui\received-box-list.tsx (4번 작업 전)
++++ src\features\gift-reply\ui\received-box-list.tsx (4번 작업 후)
+@@ -24,10 +24,10 @@
+ import s from "./gift-reply.module.css";
+ 
+ // 크리에이터 — 받은 선물(gift-reply). 시안: docs/design/mockups/site/v37-part2/boxes.html (design-rules 23-3절) — 상자는 달마다, 가장 최근 달은 같은 모양 카드 2열,
+-// 그보다 지난 달은 촘촘한 줄. 오른쪽 288 회색 칸에 「아직 답장 안 한 선물」 수. 「받았어요」를 누른 카드만 한 줄 전체로 넓어져 답장 칸이 열린다(줄은 그 아래로 열린다).
++// 그보다 지난 달은 촘촘한 줄. 오른쪽 288 회색 칸에 「답장하지 않은 선물」 수. 「받았어요」를 누른 카드만 한 줄 전체로 넓어져 답장 칸이 열린다(줄은 그 아래로 열린다).
+ // 출고된 상자마다 카드 하나. 「받았어요」를 누르면 그 자리에 답장 칸이 열리고, 「답장 보내기」나 「답장 없이 확인만」을 눌러야 확정된다(INV-G2 — 여는 것만으로는 아니다).
+ // 확인만 한 상자는 「답장 남기기」로 한 번 더할 수 있고, 답장은 고칠 수 없고 지우기만 된다(INV-G4). 무엇을 할 수 있는지는 replyActionsOf 가 정한다.
+-// 저장은 로그인 세션으로만 — 크리에이터 ID 를 보내지 않는다(INV-G1). 저장된 뒤 서버에서 다시 읽는다(위 「아직 답장 안 한 선물」 숫자도 DB 가 센다, INV-G10).
++// 저장은 로그인 세션으로만 — 크리에이터 ID 를 보내지 않는다(INV-G1). 저장된 뒤 서버에서 다시 읽는다(위 「답장하지 않은 선물」 숫자도 DB 가 센다, INV-G10).
+ // 저장하면 누른 버튼이 사라지므로(답장 칸이 닫히거나 지우기 버튼이 없어진다), 포커스를 그 줄의 제목(늘 남는 요소)으로 옮긴다.
+ 
+ /** 세션이 끝났을 때 — 다시 로그인한 뒤 이 화면으로 돌아온다 */
+@@ -80,13 +80,13 @@
+       setError(r.message);
+       return;
+     }
+-    onDone(withReply ? `${box.senderNickname}님께 답장을 보냈어요.` : "받았어요를 남겼어요.");
++    onDone(withReply ? `${box.senderNickname}님께 답장을 보냈습니다.` : "수령이 확인되었습니다.");
+     router.refresh();
+   };
+ 
+   return (
+     <form className={s.form} aria-labelledby={`${uid}-title`} onSubmit={(e) => e.preventDefault()}>
+-      <h3 id={`${uid}-title`}>{box.senderNickname}님에게 감사의 메시지를 전해 보세요!</h3>
++      <h3 id={`${uid}-title`}>{box.senderNickname}님께 답장</h3>
+       <fieldset aria-describedby={error ? errorId : undefined}>
+         <legend className="sr-only">짧은 답장 고르기</legend>
+         <div className="tags">
+@@ -118,10 +118,9 @@
+         </p>
+       </div>
+       <details className={s.fold}>
+-        <summary>이 한 줄은 누가 보나요</summary>
++        <summary>답장 공개 범위</summary>
+         <p className="t-meta" id={hintId}>
+-          이 한 줄은 {box.senderNickname}님 한 명에게만 가요. 팬이 공개를 허락하고 내가 설정에서 「답장 모음 보이기」를 켜 두면, 받았어요를 남기고 3일 뒤부터 링크
+-          페이지에도 보여요. 전화번호·이메일·인터넷 주소는 쓸 수 없어요.
++          답장은 {box.senderNickname}님께 전달됩니다. 팬이 공개에 동의하고 크리에이터가 ‘답장 모음 보이기’를 켠 경우, ‘받았어요’로 수령을 확인한 날부터 3일 뒤에 크리에이터 페이지에도 공개됩니다.<br />전화번호·이메일·인터넷 주소는 입력할 수 없습니다.
+         </p>
+       </details>
+       {error ? (
+@@ -147,8 +146,8 @@
+ /** 카드 아래·줄 오른쪽 한 줄 — 출고 날 + 답장 상태 */
+ function footText(box: ReceivedBox, dense: boolean): string {
+   const shipped = `${monthDayText(box.shippedOn)} 출고`;
+-  if (box.replyState === "confirmed") return `${shipped} · 확인만 함`;
+-  if (box.replyState === "deleted") return `${shipped} · 답장 지움`;
++  if (box.replyState === "confirmed") return `${shipped} · 수령 확인`;
++  if (box.replyState === "deleted") return `${shipped} · 답장 삭제`;
+   if (box.replyState === "replied" && box.reply) {
+     return dense ? `${shipped} · 「${REPLY_PHRASE_TEXT[box.reply.phrase]}」 답장` : `${shipped} · ${monthDayText(box.reply.repliedOn)} 답장`;
+   }
+@@ -167,7 +166,7 @@
+ 
+   const remove = async () => {
+     if (busy) return;
+-    if (!window.confirm("이 답장을 지울까요? 지우면 팬의 기록과 공개 모음에서도 사라지고, 이 상자에는 다시 답장할 수 없어요.")) return;
++    if (!window.confirm("답장을 삭제할까요? 팬의 기록과 공개 답장 모음에서도 삭제되며, 이 상자에는 다시 답장할 수 없습니다.")) return;
+     setBusy(true);
+     setError(null);
+     const r = await sendDeleteGiftReply(box.boxId);
+@@ -181,7 +180,7 @@
+       return;
+     }
+     title.current?.focus();
+-    onStatus("답장을 지웠어요.");
++    onStatus("답장이 삭제되었습니다.");
+     router.refresh();
+   };
+ 
+@@ -192,7 +191,7 @@
+       </button>
+     ) : actions.remove ? (
+       <button className={s.linkbtn} type="button" aria-disabled={busy} onClick={() => void remove()}>
+-        {busy ? "지우는 중…" : "답장 지우기"}
++        {busy ? "삭제 중…" : "답장 삭제"}
+       </button>
+     ) : null;
+   const errorLine = error ? (
+@@ -292,7 +291,7 @@
+           {status}
+         </p>
+         {boxes.length === 0 ? (
+-          <p className="empty">아직 출고된 선물이 없어요. 사무실에서 보내면 여기에 상자마다 보여요.</p>
++          <p className="empty">출고된 선물이 없습니다. 팬꾹에서 출고하면 상자별로 표시됩니다.</p>
+         ) : (
+           months.map((m, mi) => (
+             <section key={m.key} className={s.month} aria-labelledby={`bm-${m.key}`}>
+@@ -310,20 +309,20 @@
+           ))
+         )}
+         {receivedListCapped(boxes.length) ? (
+-          <p className={`t-meta ${s.capped}`}>최근에 출고된 {RECEIVED_BOXES_MAX}개까지 보여요. 아직 답장 안 한 선물 수는 그보다 오래된 상자까지 모두 센 숫자예요.</p>
++          <p className={`t-meta ${s.capped}`}>최근 출고된 상자 {RECEIVED_BOXES_MAX}개까지 표시됩니다. ‘답장하지 않은 선물’ 수에는 이전에 출고된 상자도 포함됩니다.</p>
+         ) : null}
+       </div>
+       {/* INV-G10: 이 숫자는 본인 화면에만 — DB 본인 읽기 함수가 센다 */}
+       <aside className={s.bside} aria-labelledby="pend-h">
+         <img className={s.bsideImg} src="/images/mascot-gift.png" alt="" width={80} height={80} />
+         <h2 className={s.lab} id="pend-h">
+-          아직 답장 안 한 선물
++          답장하지 않은 선물
+         </h2>
+         <p className="num-big">
+           {pending}
+           <small>개</small>
+         </p>
+-        <p className={s.bsideNote}>답장은 꼭 남기지 않아도 돼요. 이 숫자는 나만 볼 수 있어요.</p>
++        <p className={s.bsideNote}>답장은 선택 사항이며, 이 숫자는 본인에게만 표시됩니다.</p>
+       </aside>
+     </div>
+   );
+--- src\features\creator-check\model\choose-check.ts (4번 작업 전)
++++ src\features\creator-check\model\choose-check.ts (4번 작업 후)
+@@ -21,26 +21,26 @@
+ export type ChooseCheckResult = { ok: true; state: "chosen" | "cancelled" } | { ok: false; status: 400 | 401 | 403 | 404 | 409; message: string };
+ 
+ const REFUSED: Record<Exclude<z.infer<typeof replySchema>, "chosen" | "cancelled">, { status: 404 | 409; message: string }> = {
+-  not_found: { status: 404, message: "찾을 수 없는 상자예요." },
+-  already_chosen: { status: 409, message: "이미 골랐어요. 바꾸려면 먼저 취소해 주세요." },
+-  not_chosen: { status: 409, message: "고른 것이 없어요." },
+-  processed: { status: 409, message: "팬꾹이 이미 처리했어요." },
+-  expired: { status: 409, message: `${CREATOR_CHECK_DAYS}일이 지나 바꿀 수 없어요.` },
+-  closed: { status: 409, message: "선물이 끝나 더 정할 수 없어요." },
++  not_found: { status: 404, message: "상자를 찾을 수 없습니다." },
++  already_chosen: { status: 409, message: "이미 선택한 항목이 있습니다. 변경하려면 먼저 선택을 취소해 주세요." },
++  not_chosen: { status: 409, message: "취소할 선택 내역이 없습니다." },
++  processed: { status: 409, message: "팬꾹에서 이미 처리한 상자입니다." },
++  expired: { status: 409, message: `선택 기한인 ${CREATOR_CHECK_DAYS}일이 지나 변경할 수 없습니다.` },
++  closed: { status: 409, message: "처리 대상이 아닌 상자입니다." },
+ };
+ 
+ export async function chooseCreatorCheck(deps: { client: Pick<SupabaseClient, "rpc">; viewer: Viewer | null }, body: unknown): Promise<ChooseCheckResult> {
+   if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
+-  if (deps.viewer.role !== "creator") return { ok: false, status: 403, message: "크리에이터 계정만 할 수 있어요." };
++  if (deps.viewer.role !== "creator") return { ok: false, status: 403, message: "크리에이터 계정만 이용할 수 있습니다." };
+   const parsed = inputSchema.safeParse(body);
+-  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청이에요." };
++  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청입니다." };
+   const input = parsed.data;
+   const { data, error } =
+     input.action === "choose"
+       ? await deps.client.rpc("choose_creator_check", { p_order_no: input.orderNo, p_box_seq: input.boxSeq, p_choice: input.choice })
+       : await deps.client.rpc("cancel_creator_check", { p_order_no: input.orderNo, p_box_seq: input.boxSeq });
+   // 잠그는 사이 상자 연결이 바뀌었다(office_lock_parcel 의 40001) — 다시 하면 된다. 저장되지 않았다
+-  if (error?.code === "40001") return { ok: false, status: 409, message: "잠시 뒤 다시 시도해 주세요." };
++  if (error?.code === "40001") return { ok: false, status: 409, message: "잠시 후 다시 시도해 주세요." };
+   if (error) throw new Error(`블루투스 상자 선택을 저장하지 못했다: ${error.code}`);
+   // 꼴이 다르면 던진다 — 모르는 결과를 성공으로 치지 않는다
+   const reply = replySchema.parse(data);
+--- src\features\creator-check\ui\bluetooth-window.tsx (4번 작업 전)
++++ src\features\creator-check\ui\bluetooth-window.tsx (4번 작업 후)
+@@ -12,7 +12,7 @@
+ import c from "./creator-check.module.css";
+ import { sendCheckChoice } from "../api/send-check-choice";
+ 
+-// 블루투스 기기가 발견된 선물 창 (office-workflow INV-W13, action-center INV-J8 · 시안 v21-addendum3/cre-action-center-c.html 의 dlg-c).
++// 탐지기 반응 물품 확인 창 (office-workflow INV-W13, action-center INV-J8 · 시안 v21-addendum3/cre-action-center-c.html 의 dlg-c).
+ // 「받기」·「거절」은 고르기만 한다 — 상자는 팬꾹이 처리 버튼을 누를 때(또는 기한에) 움직이고, 그 전까지는 취소할 수 있다.
+ // 서버에 저장된 뒤에만 단계를 바꾼다. 고른 상자를 다시 열면 고른 쪽과 취소가 먼저 보인다. 칸은 처리할 일 읽기가 준 것뿐이다(INV-J7).
+ 
+@@ -76,12 +76,12 @@
+       router.push("/login");
+       return;
+     }
+-    setError(r.kind === "refused" ? r.message : "저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
++    setError(r.kind === "refused" ? r.message : "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+     router.refresh();
+   }
+ 
+   return (
+-    <BottomSheet open={open} title="블루투스 기기가 발견된 선물" meta={`${item.itemKind} · ${boxPlace(item)}`} busy={busy} onClose={onClose}>
++    <BottomSheet open={open} title="탐지기 반응 물품 확인" meta={`${item.itemKind} · ${boxPlace(item)}`} busy={busy} onClose={onClose}>
+       <div className={d.stack}>
+         <div className={d.who}>
+           <span className={d.avatar} aria-hidden="true">
+@@ -104,19 +104,19 @@
+             </dd>
+           </div>
+           <div className={d.kv}>
+-            <dt>보낸 날</dt>
++            <dt>등록일</dt>
+             <dd>{formatMonthDayKo(item.sentAt)}</dd>
+           </div>
+           {item.receivedAt ? (
+             <div className={d.kv}>
+-              <dt>사무실 도착</dt>
++              <dt>팬꾹 도착일</dt>
+               <dd>{formatMonthDayKo(item.receivedAt)}</dd>
+             </div>
+           ) : null}
+         </dl>
+         <dl className={d.boxInfo}>
+           <div className={d.kv}>
+-            <dt>발견된 것</dt>
++            <dt>발견 물품</dt>
+             <dd>{signalThing(item)}</dd>
+           </div>
+           <div className={d.kv}>
+@@ -155,10 +155,10 @@
+               <CheckIcon />
+               {choiceText(chosen)}
+             </p>
+-            {step === "chosen" ? <p className={d.note}>팬꾹이 처리하기 전까지 취소할 수 있어요.</p> : null}
++            {step === "chosen" ? <p className={d.note}>팬꾹이 처리하기 전까지 선택을 취소할 수 있습니다.</p> : null}
+             <div className={`${d.btns} ${d.two}`}>
+               <button className="btn btn--line" type="button" disabled={busy} onClick={() => void send({ action: "cancel" })}>
+-                취소
++                선택 취소
+               </button>
+               <button ref={focusRef} className="btn" type="button" onClick={onClose}>
+                 확인
+@@ -186,13 +186,13 @@
+       router.push("/login");
+       return;
+     }
+-    if (r.kind !== "ok") setError(r.kind === "refused" ? r.message : "취소하지 못했어요. 잠시 뒤 다시 해 주세요.");
++    if (r.kind !== "ok") setError(r.kind === "refused" ? r.message : "선택을 취소하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+     router.refresh();
+   }
+   return (
+     <>
+       <button className={c.lnk} type="button" disabled={busy} aria-label={`${item.nickname}님 선물 ${label} 취소`} onClick={() => void cancel()}>
+-        취소
++        선택 취소
+       </button>
+       {error ? (
+         <span className="t-meta" role="alert">
+--- src\features\creator-check\ui\tracker-window.tsx (4번 작업 전)
++++ src\features\creator-check\ui\tracker-window.tsx (4번 작업 후)
+@@ -14,7 +14,7 @@
+ 
+ // 추적 장치가 나온 선물 창 (office-workflow INV-W14, action-center INV-J5·J8). 블루투스 발견 창과 같은 장치 — 고르기·취소·운영자 처리·기한이 같고
+ // 선택지만 「신고하기」「신고하지 않기」다. 고르기만 한다 — 상자는 팬꾹이 처리하거나 기한이 지나야 움직이고, 그 전까지는 취소할 수 있다.
+-// 글자는 용어집 tracker_hold·report_choice 행(크리에이터 화면): 라벨 「추적 장치 발견」, 문장 「신고할지 정해 주세요」, 버튼 「신고하기」「신고하지 않기」.
++// 글자는 용어집 tracker_hold·report_choice 행(크리에이터 화면): 라벨 「추적 장치 발견」, 문장 「신고 여부를 선택해 주세요」, 버튼 「신고하기」「신고하지 않기」.
+ 
+ type Step = "ask" | "chosen" | "picked";
+ 
+@@ -70,7 +70,7 @@
+       router.push("/login");
+       return;
+     }
+-    setError(r.kind === "refused" ? r.message : "저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
++    setError(r.kind === "refused" ? r.message : "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+     router.refresh();
+   }
+ 
+@@ -98,12 +98,12 @@
+             </dd>
+           </div>
+           <div className={d.kv}>
+-            <dt>보낸 날</dt>
++            <dt>등록일</dt>
+             <dd>{formatMonthDayKo(item.sentAt)}</dd>
+           </div>
+           {item.receivedAt ? (
+             <div className={d.kv}>
+-              <dt>사무실 도착</dt>
++              <dt>팬꾹 도착일</dt>
+               <dd>{formatMonthDayKo(item.receivedAt)}</dd>
+             </div>
+           ) : null}
+@@ -126,7 +126,7 @@
+ 
+         {lapsed ? null : step === "ask" ? (
+           <>
+-            <p className={d.q}>신고할지 정해 주세요</p>
++            <p className={d.q}>신고 여부를 선택해 주세요</p>
+             <div className={`${d.btns} ${d.two}`}>
+               <button className="btn btn--line" type="button" disabled={busy} onClick={() => void send({ action: "choose", choice: "no_report" })}>
+                 신고하지 않기
+@@ -142,10 +142,10 @@
+               <CheckIcon />
+               {trackerChoiceText(chosen)}
+             </p>
+-            {step === "chosen" ? <p className={d.note}>팬꾹이 처리하기 전까지 취소할 수 있어요.</p> : null}
++            {step === "chosen" ? <p className={d.note}>팬꾹이 처리하기 전까지 선택을 취소할 수 있습니다.</p> : null}
+             <div className={`${d.btns} ${d.two}`}>
+               <button className="btn btn--line" type="button" disabled={busy} onClick={() => void send({ action: "cancel" })}>
+-                취소
++                선택 취소
+               </button>
+               <button ref={focusRef} className="btn" type="button" onClick={onClose}>
+                 확인
+--- src\features\box-waybill\api\post-waybill-client.ts (4번 작업 전)
++++ src\features\box-waybill\api\post-waybill-client.ts (4번 작업 후)
+@@ -12,7 +12,7 @@
+     return postJson("/api/gifts/boxes/waybill", write, "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+   }
+   const write: ShareWaybillWrite = { shareId: target.id, waybill };
+-  return postJson("/api/revgifts/shares/waybill", write);
++  return postJson("/api/revgifts/shares/waybill", write, "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+ }
+ 
+ export function postFind(target: WaybillTarget, waybill: string, carrier: Carrier): Promise<PostJsonOutcome> {
+--- src\features\box-waybill\model\early-send.ts (4번 작업 전)
++++ src\features\box-waybill\model\early-send.ts (4번 작업 후)
+@@ -18,11 +18,11 @@
+   if (!deps.viewer) return { status: 401, body: { message: "로그인이 필요해요." } };
+   if (deps.viewer.role !== "fan" && deps.viewer.role !== "creator") return { status: 403, body: { message: "권한이 없어요." } };
+   const shaped = body.safeParse(input);
+-  if (!shaped.success) return { status: 400, body: { message: "잘못된 요청이에요." } };
++  if (!shaped.success) return { status: 400, body: { message: "잘못된 요청입니다." } };
+   const { error } = await deps.client.rpc("ack_early_send", { p_order_no: shaped.data.orderNo });
+   if (error) {
+     if (error.code === "P0002") return { status: 404, body: { message: MESSAGE_EARLY_SEND_UNAVAILABLE } };
+-    return pgErrorReply(error.code, { limit: "잘못된 요청이에요.", failed: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." });
++    return pgErrorReply(error.code, { limit: "잘못된 요청입니다.", failed: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." });
+   }
+   return { status: 200, body: { acknowledged: true } };
+ }
+--- src\features\box-waybill\model\save-waybill.ts (4번 작업 전)
++++ src\features\box-waybill\model\save-waybill.ts (4번 작업 후)
+@@ -46,7 +46,7 @@
+ 
+ type Deps = { client: Pick<SupabaseClient, "rpc">; viewer: Viewer | null };
+ 
+-const BAD_REQUEST: JsonReply = { status: 400, body: { message: "잘못된 요청이에요." } };
++const BAD_REQUEST: JsonReply = { status: 400, body: { message: "잘못된 요청입니다." } };
+ 
+ function roleRefusal(viewer: Viewer | null, allowed: (role: ViewerRole) => boolean): JsonReply | null {
+   if (!viewer) return { status: 401, body: { message: "로그인이 필요해요." } };
+--- src\features\box-waybill\ui\box-address-code.tsx (4번 작업 전)
++++ src\features\box-waybill\ui\box-address-code.tsx (4번 작업 후)
+@@ -8,7 +8,7 @@
+ // 팬 선물 상세의 상자별 팬꾹 주소 (inbound-address-code INV-C2·C3) — 시안 v41-user-fixes/s/detail-after.html .addr3, design-rules 33절.
+ // 6자리를 「팬꾹 주소 6자리」 이름표 + 한 글자씩 흰 칸으로 따로 크게 보인다. 동작은 ReceivingAddress 와 같다:
+ // - 6자리는 기본으로 가려 두고 「6자리 보기」를 눌러야 보인다(INV-C2 — 어깨 너머·화면 공유로 새지 않게).
+-// - 「주소 한 번에 복사」는 가려져 있어도 6자리를 포함한 전체 주소를 복사한다.
++// - 「전체 주소 복사」는 가려져 있어도 6자리를 포함한 전체 주소를 복사한다.
+ // - 부르는 쪽이 DB 가 준 6자리가 있을 때만 그린다(6자리 빠진 기본 사무실 주소는 그리지 않는다).
+ // 받은 역조공 쪽(revgift-sent)은 이번 결정 밖이라 ReceivingAddress 를 그대로 쓴다.
+ 
+--- src\features\box-waybill\ui\find-my-box.tsx (4번 작업 전)
++++ src\features\box-waybill\ui\find-my-box.tsx (4번 작업 후)
+@@ -185,7 +185,7 @@
+         ) : null}
+         {result?.kind === "no" ? (
+           <div ref={resultRef} tabIndex={-1} className={s.result}>
+-            <strong>아직 못 찾았어요</strong>
++            <strong>일치하는 상자 없음</strong>
+             <p>{result.message}</p>
+           </div>
+         ) : null}
+--- src\features\box-waybill\ui\find-sent-box-button.tsx (4번 작업 전)
++++ src\features\box-waybill\ui\find-sent-box-button.tsx (4번 작업 후)
+@@ -6,7 +6,7 @@
+ import { FindSentBox, type SentBoxCandidate } from "./find-sent-box";
+ 
+ // 「내 상자 찾기」 버튼 + 창 (inbound-address-code INV-C4 ②-나 · action-center INV-J8·J10 — 2026-10-16 카드 d96).
+-// 보낸 역조공 화면의 아직 입고 전인 줄마다, 처리할 일의 아직 도착하지 않은 상자 줄에서 같은 창을 연다. 늦지 않아도 누를 수 있다.
++// 보낸 역조공 화면의 아직 입고 전인 줄마다, 처리할 일의 미도착 상자 찾기 줄에서 같은 창을 연다. 늦지 않아도 누를 수 있다.
+ // 창은 그 줄의 팬을 먼저 골라 두고(다른 후보로 바꿀 수 있다) 송장번호·택배사와 함께 한 번에 맞춰 본다. 보내는 중에는 창이 닫히지 않는다.
+ 
+ export function FindSentBoxButton({
+@@ -29,7 +29,7 @@
+   const [busy, setBusy] = useState(false);
+   const [found, setFound] = useState(false);
+   const router = useRouter();
+-  // 찾은 뒤에는 닫을 때 목록을 새로 읽는다 — 먼저 읽으면 이 버튼이 있던 줄이 사라지며 결과(「사무실에 도착했어요」)가 보이기 전에 창도 사라진다
++  // 찾은 뒤에는 닫을 때 목록을 새로 읽는다 — 먼저 읽으면 이 버튼이 있던 줄이 사라지며 결과(「상자 확인 완료」)가 보이기 전에 창도 사라진다
+   const close = () => {
+     setOpen(false);
+     if (found) router.refresh();
+--- src\features\box-waybill\ui\find-sent-box.tsx (4번 작업 전)
++++ src\features\box-waybill\ui\find-sent-box.tsx (4번 작업 후)
+@@ -52,7 +52,7 @@
+     const raw = new FormData(form).get("waybill");
+     const parsed = parseWaybillInput(typeof raw === "string" ? raw : "");
+     if (!carrier) {
+-      setError({ message: "택배사를 골라 주세요.", field: "carrier" });
++      setError({ message: "택배사를 선택해 주세요.", field: "carrier" });
+       carrierSelect.current?.focus();
+       return;
+     }
+@@ -63,7 +63,7 @@
+     }
+     const fan = candidates.find((c) => c.shareId === picked);
+     if (!fan) {
+-      setError({ message: "어느 팬에게 보낸 상자인지 골라 주세요.", field: "fan" });
++      setError({ message: "상자를 받을 팬을 선택해 주세요.", field: "fan" });
+       fanGroup.current?.querySelector("input")?.focus();
+       return;
+     }
+@@ -82,7 +82,7 @@
+         else router.refresh();
+         return;
+       }
+-      setResult({ kind: "no", message: typeof outcome.body.message === "string" ? outcome.body.message : "맞는 상자를 못 찾았어요." });
++      setResult({ kind: "no", message: typeof outcome.body.message === "string" ? outcome.body.message : "일치하는 상자가 없습니다. 송장번호와 택배사를 확인해 주세요." });
+       return;
+     }
+     setError({ message: outcome.message, field: null });
+@@ -96,7 +96,7 @@
+             <circle cx="12" cy="12" r="10" />
+             <path d="m16 9-5.5 5.5L8 12" />
+           </svg>
+-          사무실에 도착했어요
++          상자 확인 완료
+         </p>
+         <p className={d.note}>{result.nickname}님 선물</p>
+       </div>
+@@ -128,7 +128,7 @@
+               aria-invalid={error?.field === "carrier" ? true : undefined}
+               aria-describedby={error?.field === "carrier" ? `${id}-error` : undefined}
+             >
+-              <option value="">고르세요</option>
++              <option value="">택배사 선택</option>
+               {CARRIERS.map((c) => (
+                 <option key={c} value={c}>
+                   {CARRIER_LABEL[c]}
+@@ -148,14 +148,14 @@
+               type="text"
+               inputMode="numeric"
+               autoComplete="off"
+-              placeholder="숫자만 입력해요"
++              placeholder="숫자만 입력"
+               aria-invalid={error?.field === "waybill" ? true : undefined}
+               aria-describedby={error?.field === "waybill" ? `${id}-error` : undefined}
+             />
+           </div>
+         </div>
+         <fieldset ref={fanGroup} className={d.fs}>
+-          <legend className="label">어느 팬에게 보낸 상자인가요?</legend>
++          <legend className="label">받는 팬 선택</legend>
+           <div className={d.fans}>
+             {candidates.map((c) => (
+               <label key={c.shareId} className={d.opt}>
+@@ -185,13 +185,13 @@
+         ) : null}
+         {result?.kind === "no" ? (
+           <div ref={resultRef} tabIndex={-1} role="status">
+-            <p className="t-strong">아직 못 찾았어요</p>
++            <p className="t-strong">일치하는 상자 없음</p>
+             <p className="t-meta">{result.message}</p>
+           </div>
+         ) : null}
+         <div className={d.btns}>
+           <button className="btn" type="submit" aria-disabled={busy}>
+-            {busy ? "찾는 중…" : "선택 완료"}
++            {busy ? "찾는 중…" : "상자 찾기"}
+           </button>
+         </div>
+       </form>
+--- src\features\box-waybill\ui\receiving-address.tsx (4번 작업 전)
++++ src\features\box-waybill\ui\receiving-address.tsx (4번 작업 후)
+@@ -6,7 +6,7 @@
+ 
+ // 이 선물의 받는 주소 (inbound-address-code INV-C2·C3). 상자마다 사무실 주소 끝에 6자리가 붙은 주소가 하나씩이다.
+ // - 끝 6자리는 기본으로 가려 두고 「6자리 보기」를 눌러야 보인다(어깨 너머·화면 공유로 새지 않게).
+-// - 「주소 한 번에 복사」는 가려져 있어도 6자리를 포함한 전체 주소를 복사한다 — 팬은 그대로 붙여 넣어 보내기만 하면 된다.
++// - 「전체 주소 복사」는 가려져 있어도 6자리를 포함한 전체 주소를 복사한다 — 팬은 그대로 붙여 넣어 보내기만 하면 된다.
+ // - 6자리가 빠진 기본 사무실 주소는 따로 보여 주지 않는다. 6자리는 DB 가 로그인한 주문 주인에게, 유효할 때만 준다 —
+ //   거절·반려·취소되거나 상자가 입고되면 이 칸을 그리지 않는다(부르는 쪽이 code 가 있을 때만 그린다).
+ 
+@@ -33,11 +33,11 @@
+   return (
+     <div className={s.addr} role="group" aria-labelledby={`${id}-title`}>
+       <p className={s["addr-title"]} id={`${id}-title`}>
+-        이 선물의 팬꾹 주소{multiple ? <span className="sr-only"> · {boxName}</span> : null}
++        팬꾹 주소{multiple ? <span className="sr-only"> · {boxName}</span> : null}
+       </p>
+       <dl>
+         <div>
+-          <dt>받는 곳</dt>
++          <dt>팬꾹 주소</dt>
+           <dd>
+             {officeAddress}{" "}
+             {shown ? (
+@@ -65,14 +65,14 @@
+           <CopyButton
+             className="btn btn--soft btn--sm"
+             text={full}
+-            label="주소 한 번에 복사"
+-            ariaLabel={multiple ? `${boxName} 주소 한 번에 복사` : undefined}
+-            copiedMessage="끝 6자리까지 전체 주소를 복사했어요."
+-            failedMessage="복사하지 못했어요. 6자리 보기를 누르고 주소를 끝까지 옮겨 적어 주세요."
++            label="전체 주소 복사"
++            ariaLabel={multiple ? `${boxName} 전체 주소 복사` : undefined}
++            copiedMessage="끝 6자리까지 전체 주소가 복사되었습니다."
++            failedMessage="주소를 복사하지 못했습니다. ‘6자리 보기’를 눌러 전체 주소를 직접 입력해 주세요."
+           />
+         </div>
+       </div>
+-      <p className={s["addr-note"]}>끝 6자리까지 꼭 그대로 적어 주세요. 이 6자리로 사무실에서 이 상자를 찾아요. 다른 사람에게 알려 주지 마세요. 송장의 보내는 분에는 팬꾹 닉네임을 써 주세요.</p>
++      <p className={s["addr-note"]}>주소 끝 6자리로 상자를 구분합니다. 6자리를 포함한 전체 주소를 입력하고, 다른 사람과 공유하지 마세요.<br />송장의 보내는 분에는 팬꾹 닉네임을 입력해 주세요.</p>
+     </div>
+   );
+ }
+--- src\features\box-waybill\ui\track-box-button.tsx (4번 작업 전)
++++ src\features\box-waybill\ui\track-box-button.tsx (4번 작업 후)
+@@ -19,7 +19,7 @@
+         배송 조회
+       </button>
+       {open ? (
+-        <BottomSheet open title="도착하지 않았어요" meta={meta} onClose={() => setOpen(false)}>
++        <BottomSheet open title="배송 조회" meta={meta} onClose={() => setOpen(false)}>
+           <TrackBoxForm />
+         </BottomSheet>
+       ) : null}
+@@ -43,7 +43,7 @@
+             택배사
+           </label>
+           <select ref={carrierSelect} id={`${id}-cr`} className="input" value={carrier} onChange={(e) => setCarrier(isCarrier(e.currentTarget.value) ? e.currentTarget.value : "")}>
+-            <option value="">고르세요</option>
++            <option value="">택배사 선택</option>
+             {TRACKABLE_CARRIERS.map((c) => (
+               <option key={c} value={c}>
+                 {CARRIER_LABEL[c]}
+@@ -60,7 +60,7 @@
+             className="input"
+             type="text"
+             inputMode="numeric"
+-            placeholder="숫자만 입력해요"
++            placeholder="숫자만 입력"
+             autoComplete="off"
+             value={waybill}
+             onChange={(e) => setWaybill(e.currentTarget.value)}
+--- src\features\box-waybill\ui\waybill-editor.tsx (4번 작업 전)
++++ src\features\box-waybill\ui\waybill-editor.tsx (4번 작업 후)
+@@ -49,18 +49,18 @@
+           <span ref={resultRef} tabIndex={-1} className={s.no}>
+             {formatWaybill(saved)}
+           </span>
+-          <span className={s.lab}>등록됨</span>
++          <span className={s.lab}>등록 완료</span>
+           <button
+             type="button"
+             className="btn btn--soft btn--sm"
+-            aria-label={`${boxName} 송장번호 ${layout === "box" ? "수정" : "고치기"}`}
++            aria-label={`${boxName} 송장번호 수정`}
+             onClick={() => {
+               moved.current = true;
+               setError(null);
+               setEditing(true);
+             }}
+           >
+-            {layout === "box" ? "수정" : "고치기"}
++            수정
+           </button>
+         </div>
+       </div>
+@@ -130,7 +130,7 @@
+           </p>
+         ) : null}
+         <p className="hint" id={`${id}-hint`}>
+-          {saved ? (layout === "box" ? "팬꾹 도착 전까지 수정 가능" : "사무실에 도착하기 전까지만 고칠 수 있어요.") : hint}
++          {saved ? (layout === "box" ? "팬꾹 도착 전까지 수정 가능" : "입고 전까지 수정할 수 있습니다.") : hint}
+         </p>
+       </form>
+     </div>
+--- src\features\approval-request\model\approve-gift.test.ts (4번 작업 전)
++++ src\features\approval-request\model\approve-gift.test.ts (4번 작업 후)
+@@ -59,7 +59,7 @@
+     expect(await approveGift({ admin: f.admin, viewer: HARU, signer }, { requestId: "apr_FCA" })).toEqual({
+       ok: false,
+       status: 404,
+-      message: "찾을 수 없는 요청이에요.",
++      message: "승인 요청을 찾을 수 없습니다.",
+     });
+     expect(f.calls.map((c) => c.fn)).toEqual(["approval_payload_of"]);
+   });
+--- src\features\approval-request\model\approve-gift.ts (4번 작업 전)
++++ src\features\approval-request\model\approve-gift.ts (4번 작업 후)
+@@ -17,19 +17,19 @@
+ /** code: 화면이 갈래를 나눌 실패 — no_address 면 승인 창이 주소 입력으로 돌아간다(INV-S13) */
+ export type ApproveGiftResult = { ok: true } | { ok: false; status: 400 | 401 | 403 | 404 | 409 | 503; message: string; code?: "no_address" };
+ 
+-const NOT_FOUND = { ok: false, status: 404, message: "찾을 수 없는 요청이에요." } as const;
++const NOT_FOUND = { ok: false, status: 404, message: "승인 요청을 찾을 수 없습니다." } as const;
+ 
+ export async function approveGift(
+   deps: { admin: Pick<SupabaseClient, "rpc">; viewer: Viewer | null; signer: ApprovalSigner | null },
+   body: unknown,
+ ): Promise<ApproveGiftResult> {
+   if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
+-  if (deps.viewer.role !== "creator") return { ok: false, status: 403, message: "크리에이터 계정만 할 수 있어요." };
++  if (deps.viewer.role !== "creator") return { ok: false, status: 403, message: "크리에이터 계정만 이용할 수 있습니다." };
+   // INV-S11: 창구가 없으면(운영, 카카오 연결 전) 승인을 받지 않는다 — 가짜로 넘어가지 않는다
+-  if (!deps.signer) return { ok: false, status: 503, message: "지금은 승인할 수 없어요. 잠시 뒤 다시 해 주세요." };
++  if (!deps.signer) return { ok: false, status: 503, message: "현재 승인할 수 없습니다. 잠시 후 다시 시도해 주세요." };
+ 
+   const parsed = inputSchema.safeParse(body);
+-  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청이에요." };
++  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청입니다." };
+   const requestId = parsed.data.requestId;
+   const actorId = deps.viewer.userId;
+ 
+@@ -41,7 +41,7 @@
+   const signature = await deps.signer.sign({ storedPayload, creatorUserId: actorId });
+   // INV-S2·S4: 원문 일치와 본인 일치를 진짜 서명과 같은 판정으로 본다
+   const check = checkApprovalSignature(storedPayload, signature, deps.signer.registeredSignerIdOf(actorId));
+-  if (!check.ok) return { ok: false, status: 409, message: "서명을 확인하지 못했어요. 다시 해 주세요." };
++  if (!check.ok) return { ok: false, status: 409, message: "서명을 확인하지 못했습니다. 다시 인증해 주세요." };
+ 
+   const { data, error } = await deps.admin.rpc("approve_request", {
+     p_request_id: requestId,
+@@ -55,10 +55,10 @@
+   const result = resultSchema.parse(data);
+   if (result === "approved") return { ok: true };
+   if (result === "not_found") return NOT_FOUND;
+-  if (result === "already") return { ok: false, status: 409, message: "이미 처리된 요청이에요. 새로 고침하면 결과가 보여요." };
++  if (result === "already") return { ok: false, status: 409, message: "이미 처리된 요청입니다. 새로고침해 결과를 확인해 주세요." };
+   // INV-S6: 168시간이 지났으면 자동 처리 전이라도 승인하지 않는다 — 거절과 같은 문구
+   if (result === "expired") return { ok: false, status: 409, message: APPROVAL_EXPIRED_MESSAGE };
+   if (result === "no_address") return { ok: false, status: 409, message: "받는 주소를 먼저 등록해 주세요.", code: "no_address" };
+-  if (result === "not_approvable") return { ok: false, status: 409, message: "지금은 승인할 수 없는 선물이에요. 새로 고침해 주세요." };
+-  return { ok: false, status: 409, message: "서명을 확인하지 못했어요. 다시 해 주세요." };
++  if (result === "not_approvable") return { ok: false, status: 409, message: "현재 승인할 수 없는 선물입니다. 새로고침해 주세요." };
++  return { ok: false, status: 409, message: "서명을 확인하지 못했습니다. 다시 인증해 주세요." };
+ }
+--- src\features\approval-request\model\decline-gift.test.ts (4번 작업 전)
++++ src\features\approval-request\model\decline-gift.test.ts (4번 작업 후)
+@@ -54,7 +54,7 @@
+     expect(await declineGift({ client: fakeClient(reply("not_found")).client, viewer: HARU }, { requestId: "apr_FCA", block: true })).toEqual({
+       ok: false,
+       status: 404,
+-      message: "찾을 수 없는 요청이에요.",
++      message: "승인 요청을 찾을 수 없습니다.",
+     });
+   });
+ 
+@@ -62,7 +62,7 @@
+     const already = await declineGift({ client: fakeClient(reply("already")).client, viewer: HARU }, { requestId: "apr_FCA", block: false });
+     const notDeclinable = await declineGift({ client: fakeClient(reply("not_declinable")).client, viewer: HARU }, { requestId: "apr_FCA", block: false });
+     expect(already).toMatchObject({ ok: false, status: 409, message: expect.stringContaining("이미 처리된") });
+-    expect(notDeclinable).toMatchObject({ ok: false, status: 409, message: expect.stringContaining("받지 않기로 할 수 없는") });
++    expect(notDeclinable).toMatchObject({ ok: false, status: 409, message: expect.stringContaining("거절할 수 없는") });
+   });
+ 
+   it("INV-D2 S2d (실패경로): 168시간이 지난 요청은 409 「기간이 지나 자동으로 반려된 선물이에요」", async () => {
+--- src\features\approval-request\model\decline-gift.ts (4번 작업 전)
++++ src\features\approval-request\model\decline-gift.ts (4번 작업 후)
+@@ -28,10 +28,10 @@
+   body: unknown,
+ ): Promise<DeclineGiftResult> {
+   if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
+-  if (deps.viewer.role !== "creator") return { ok: false, status: 403, message: "크리에이터 계정만 할 수 있어요." };
++  if (deps.viewer.role !== "creator") return { ok: false, status: 403, message: "크리에이터 계정만 이용할 수 있습니다." };
+ 
+   const parsed = inputSchema.safeParse(body);
+-  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청이에요." };
++  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청입니다." };
+ 
+   const { data, error } = await deps.client.rpc("decline_gift", {
+     p_request_id: parsed.data.requestId,
+@@ -40,10 +40,10 @@
+   if (error) throw new Error(`받지 않기를 저장하지 못했다: ${error.code}`);
+   // 꼴이 다르면 던진다 — 모르는 결과를 성공으로 치지 않는다
+   const reply = replySchema.parse(data);
+-  if (reply.result === "not_found") return { ok: false, status: 404, message: "찾을 수 없는 요청이에요." };
+-  if (reply.result === "already") return { ok: false, status: 409, message: "이미 처리된 요청이에요. 새로 고침하면 결과가 보여요." };
++  if (reply.result === "not_found") return { ok: false, status: 404, message: "승인 요청을 찾을 수 없습니다." };
++  if (reply.result === "already") return { ok: false, status: 409, message: "이미 처리된 요청입니다. 새로고침해 결과를 확인해 주세요." };
+   // INV-D2: 168시간이 지났으면 자동 처리 전이라도 거절하지 않는다 — 승인과 같은 문구
+   if (reply.result === "expired") return { ok: false, status: 409, message: APPROVAL_EXPIRED_MESSAGE };
+-  if (reply.result === "not_declinable") return { ok: false, status: 409, message: "지금은 받지 않기로 할 수 없는 선물이에요. 새로 고침해 주세요." };
++  if (reply.result === "not_declinable") return { ok: false, status: 409, message: "현재 거절할 수 없는 선물입니다. 새로고침해 주세요." };
+   return { ok: true, alsoDeclinedOrderNos: reply.also_declined };
+ }
+--- src\features\approval-request\ui\approval-window.tsx (4번 작업 전)
++++ src\features\approval-request\ui\approval-window.tsx (4번 작업 후)
+@@ -36,8 +36,8 @@
+ 
+ /** 서명 단계 머리(INV-S13) — 주소가 없으면 입력, 바꾸는 중이면 새 주소, 준비됐으면 확인 */
+ function addressHead(address: ApprovalAddressStep): string {
+-  if (!address.registered) return "주소를 입력해 주세요";
+-  return address.ready ? "주소를 확인해 주세요" : "새 주소를 입력해 주세요";
++  if (!address.registered) return "배송지 등록";
++  return address.ready ? "등록된 배송지 확인" : "배송지 변경";
+ }
+ 
+ /** 사이드바 「승인 내역」과 같은 자리 — 승인·받지 않기를 마친 요청이 간다 */
+@@ -91,7 +91,7 @@
+   useEffect(() => {
+     if (open) focusRef.current?.focus();
+   }, [open, step]);
+-  // 주소가 없으면(처음부터 없거나 서버가 「주소 없음」으로 돌려보냄) 초점을 주소 단계 머리 「주소를 입력해 주세요」로 — 무엇을 해야 하는지부터 읽히게(INV-S13)
++  // 주소가 없으면(처음부터 없거나 서버가 「주소 없음」으로 돌려보냄) 초점을 주소 단계 머리 「배송지 등록」로 — 무엇을 해야 하는지부터 읽히게(INV-S13)
+   useEffect(() => {
+     if (open && step === "sign" && !address.registered) addressHeadRef.current?.focus();
+   }, [open, step, address.registered]);
+@@ -117,7 +117,7 @@
+     if (r.kind === "ok") return setStep("ok");
+     if (r.kind === "login") return router.push("/login");
+     if (r.kind === "refused" && r.noAddress) return address.onMissing(); // 창은 그대로 두고 주소 입력으로 돌아간다
+-    setError(r.kind === "refused" ? r.message : "승인하지 못했어요. 잠시 뒤 다시 해 주세요.");
++    setError(r.kind === "refused" ? r.message : "승인하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+   }
+ 
+   async function decline() {
+@@ -128,7 +128,7 @@
+     setBusy(false);
+     if (r.kind === "ok") return setStep("noed");
+     if (r.kind === "login") return router.push("/login");
+-    setError(r.kind === "refused" ? r.message : "저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
++    setError(r.kind === "refused" ? r.message : "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+   }
+ 
+   return (
+@@ -202,7 +202,7 @@
+             {address.ready ? (
+               <>
+                 <p ref={signHeadRef} tabIndex={-1} className={d.q}>
+-                  카카오톡으로 승인해 주세요
++                  카카오톡으로 선물 승인
+                 </p>
+                 {/* 승인 버튼 바로 위 — 승인해도 보내는 팬에게 주소가 가지 않는다는 것과 검수를 다시 말한다(2026-10-14 추가분 3, 용어집 11절 고정 문장) */}
+                 <p className="t-strong">
+@@ -214,7 +214,7 @@
+                   </button>
+                   <button ref={focusRef} className="btn btn--kakao" type="button" disabled={busy} onClick={() => void approve()}>
+                     <KakaoBubble />
+-                    {busy ? "보내는 중…" : "카카오톡으로 승인하기"}
++                    {busy ? "요청 중…" : "카카오톡으로 승인하기"}
+                   </button>
+                 </div>
+               </>
+@@ -224,7 +224,7 @@
+ 
+         {step === "no" ? (
+           <div className={d.stack}>
+-            <p className={d.q}>이 선물을 받지 않을까요?</p>
++            <p className={d.q}>이 선물을 거절할까요?</p>
+             {/* 차단은 받지 않기 창에서만 고른다(decline-block — 차단하는 다른 길이 없다) */}
+             <label className={d.check}>
+               <input type="checkbox" checked={block} onChange={(e) => setBlock(e.target.checked)} />
+@@ -235,7 +235,7 @@
+                 돌아가기
+               </button>
+               <button ref={focusRef} className="btn" type="button" disabled={busy} onClick={() => void decline()}>
+-                {busy ? "저장하는 중…" : "받지 않기"}
++                {busy ? "저장 중…" : "받지 않기"}
+               </button>
+             </div>
+           </div>
+@@ -245,7 +245,7 @@
+           <div className={d.stack} role="status">
+             <p className={d.done}>
+               <CheckIcon />
+-              {step === "ok" ? "승인 완료" : "받지 않기 완료"}
++              {step === "ok" ? "승인 완료" : "거절 완료"}
+             </p>
+             <div className={`${d.btns} ${d.two}`}>
+               <Link className="btn btn--line" href={DECIDED_HREF}>
+--- src\features\approval-request\ui\decided-request-list.tsx (4번 작업 전)
++++ src\features\approval-request\ui\decided-request-list.tsx (4번 작업 후)
+@@ -12,10 +12,10 @@
+ // 맨 위 처리 수 + 결과별 숫자 칸 넷(이 목록을 센 수), 아래 달마다 촘촘한 줄(결과 태그는 줄 오른쪽). 결과 설명은 맨 아래 접기로.
+ 
+ const DECIDED_TAG: Record<DecidedOutcome, { text: string; tone: StatusTone }> = {
+-  approved: { text: "승인함", tone: "success" },
+-  declined: { text: "받지 않음", tone: "danger" },
+-  blocked: { text: "차단함", tone: "danger" },
+-  expired: { text: "자동 반려", tone: "warn" },
++  approved: { text: "승인", tone: "success" },
++  declined: { text: "거절", tone: "danger" },
++  blocked: { text: "차단", tone: "danger" },
++  expired: { text: "기한 만료", tone: "warn" },
+ };
+ /** 결과별 숫자 칸 순서(시안 .qgrid) */
+ const OUTCOME_ORDER: readonly DecidedOutcome[] = ["approved", "declined", "expired", "blocked"];
+@@ -51,9 +51,9 @@
+             {decided.length}
+             <small>건</small>
+           </p>
+-          {latest ? <p className={q.line}>가장 최근 처리 {formatDate(latest)}</p> : null}
++          {latest ? <p className={q.line}>최근 처리일 {formatDate(latest)}</p> : null}
+         </div>
+-        <dl className={q.grid} aria-label="결과별 수">
++        <dl className={q.grid} aria-label="결과별 건수">
+           {OUTCOME_ORDER.map((o) => (
+             <div key={o}>
+               <dt>{DECIDED_TAG[o].text}</dt>
+@@ -63,7 +63,7 @@
+         </dl>
+       </div>
+ 
+-      {decided.length === 0 ? <p className={`empty ${q.empty}`}>아직 처리한 요청이 없어요.</p> : null}
++      {decided.length === 0 ? <p className={`empty ${q.empty}`}>처리한 요청이 없습니다.</p> : null}
+ 
+       {months.map((m) => (
+         <div key={m.key} className={q.month} data-month="">
+@@ -96,22 +96,23 @@
+ 
+       {counts.expired > 0 ? (
+         <details className={q.fold}>
+-          <summary>자동 반려</summary>
+-          <p>{APPROVAL_DEADLINE_DAYS}일 안에 정하지 않아 자동으로 받지 않음 처리됐어요.</p>
++          <summary>승인 기한 만료</summary>
++          <p>{APPROVAL_DEADLINE_DAYS}일 이내에 승인 여부를 선택하지 않아 자동으로 거절 처리되었습니다.</p>
+         </details>
+       ) : null}
+       {counts.blocked > 0 ? (
+         <details className={q.fold}>
+-          <summary>차단함</summary>
++          <summary>팬 차단</summary>
+           <p>
+-            앞으로 이 팬의 선물은 받지 않아요. 풀려면{" "}
++            차단한 팬은 새 선물을 등록할 수 없습니다. 차단 해제는{" "}
+             <Link className={a["link-in"]} href="/creator/settings#blocked">
+-              주소와 설정
++              상세 설정 &gt; 주소와 설정 &gt; 차단한 팬
+             </Link>
+-            에서 해요.
++            에서 할 수 있습니다.
+           </p>
+         </details>
+       ) : null}
+     </section>
+   );
+ }
++
+--- src\entities\payment\model\price-table.ts (4번 작업 전)
++++ src\entities\payment\model\price-table.ts (4번 작업 후)
+@@ -20,7 +20,7 @@
+ export type PublicPriceTable = Readonly<Record<PricedTier, PublicTierPrice>>;
+ 
+ /** 앱이 요금표를 읽은 뒤 등록하기 전에 대표가 요금을 바꿔 DB 등록 함수가 금액을 거부했을 때의 문구(INV-K3). */
+-export const PRICE_CHANGED_MESSAGE = "요금이 방금 바뀌었어요. 금액을 다시 확인하고 결제해 주세요.";
++export const PRICE_CHANGED_MESSAGE = "요금이 변경되었습니다. 금액을 확인한 뒤 결제해 주세요.";
+ 
+ /**
+  * 등록 요청에 실려 오는, 화면이 보여 준 결제 금액(합계). 화면을 연 뒤 요금이 바뀌었는지 비교하는 데만 쓴다 —
+--- src\entities\payment\ui\payment-consent.tsx (4번 작업 전)
++++ src\entities\payment\ui\payment-consent.tsx (4번 작업 후)
+@@ -29,7 +29,7 @@
+   onChange,
+   invalid,
+   errorId,
+-  label = "결제 내용과 아래 규정을 확인했고 결제에 동의해요 (필수)",
++  label = "결제 내용과 아래 규정을 확인했으며, 결제에 동의합니다. (필수)",
+ }: Props) {
+   return (
+     <div className="field-block">
+--- src\entities\order\model\prior-history.test.ts (4번 작업 전)
++++ src\entities\order\model\prior-history.test.ts (4번 작업 후)
+@@ -4,7 +4,7 @@
+ // 승인 요청 카드의 지난 검수 내역 문구(decline-block INV-D11, 카드 d80). 세는 것은 DB 가 한다 — 여기는 수를 사실대로 말로 옮기는 것만.
+ describe("priorHistoryLabel — 지난 검수 내역 한 줄 (INV-D11)", () => {
+   it("INV-D11: 지난 주문이 없으면 처음이라고만", () => {
+-    expect(priorHistoryLabel({ gifts: 0, passed: 0, returned: 0 })).toBe("처음 보내는 팬이에요");
++    expect(priorHistoryLabel({ gifts: 0, passed: 0, returned: 0 })).toBe("첫 선물 요청");
+   });
+   it("INV-D11: 모두 통과면 「모두 검수 통과」", () => {
+     expect(priorHistoryLabel({ gifts: 3, passed: 3, returned: 0 })).toBe("지난 선물 3건 · 모두 검수 통과");
+--- src\entities\order\model\prior-history.ts (4번 작업 전)
++++ src\entities\order\model\prior-history.ts (4번 작업 후)
+@@ -12,7 +12,7 @@
+ };
+ 
+ export function priorHistoryLabel(h: PriorGiftHistory): string {
+-  if (h.gifts === 0) return "처음 보내는 팬이에요";
++  if (h.gifts === 0) return "첫 선물 요청";
+   const head = `지난 선물 ${h.gifts}건`;
+   if (h.returned === 0 && h.passed === h.gifts) return `${head} · 모두 검수 통과`;
+   const rest = h.gifts - h.passed - h.returned;
+--- src\entities\gift-reply\model\reply.ts (4번 작업 전)
++++ src\entities\gift-reply\model\reply.ts (4번 작업 후)
+@@ -43,10 +43,10 @@
+ 
+ /** 답장 입력 검사 문구 — 화면(먼저 보기)과 서버(본문 검사)가 같은 글을 쓴다. */
+ export const REPLY_INPUT_MESSAGE = {
+-  phraseMissing: "보낼 답장 문구를 하나 골라 주세요.",
++  phraseMissing: "답장 문구를 선택해 주세요.",
+   lineWithoutPhrase: "한 줄은 답장 문구를 고른 뒤에 쓸 수 있어요.",
+-  tooLong: `한 줄은 ${REPLY_LINE_MAX}자까지 쓸 수 있어요.`,
+-  forbiddenChars: "한 줄에는 줄바꿈이나 보이지 않는 글자를 쓸 수 없어요.",
++  tooLong: `한 줄 답장은 최대 ${REPLY_LINE_MAX}자까지 입력할 수 있습니다.`,
++  forbiddenChars: "줄바꿈이나 보이지 않는 문자는 입력할 수 없습니다.",
+ } as const;
+ 
+ /** 한 줄의 꼴 문제를 사람이 읽는 문구로. 문제가 없으면 null. */
+--- src\entities\address\ui\address-on-file-text.test.ts (4번 작업 전)
++++ src\entities\address\ui\address-on-file-text.test.ts (4번 작업 후)
+@@ -3,11 +3,11 @@
+ 
+ describe("등록한 주소 확인 문구 (INV-P16)", () => {
+   it("INV-P16 S16: 이름표와 바꾼 날만 쓴다", () => {
+-    expect(addressOnFileText({ label: "studio", updatedAt: "2026-10-03T05:00:00Z" })).toBe("작업실 · 10월 3일 (토)에 등록한 주소");
++    expect(addressOnFileText({ label: "studio", updatedAt: "2026-10-03T05:00:00Z" })).toBe("작업실 · 10월 3일 (토) 등록");
+   });
+ 
+   it("INV-P16: 이름표가 없던 옛 등록은 날짜만, 날짜도 없으면 「등록한 주소」", () => {
+-    expect(addressOnFileText({ label: null, updatedAt: "2026-10-03T05:00:00Z" })).toBe("10월 3일 (토)에 등록한 주소");
++    expect(addressOnFileText({ label: null, updatedAt: "2026-10-03T05:00:00Z" })).toBe("10월 3일 (토) 등록");
+     expect(addressOnFileText({ label: null, updatedAt: null })).toBe("등록한 주소");
+   });
+ });
+--- src\entities\address\ui\address-on-file-text.ts (4번 작업 전)
++++ src\entities\address\ui\address-on-file-text.ts (4번 작업 후)
+@@ -4,8 +4,8 @@
+ // 등록한 주소를 본인에게 확인시키는 한 줄(address-protection INV-P16). 주소 자체는 본인에게도 보이지 않는다 —
+ // 고른 이름표와 마지막으로 바꾼 날만 쓴다. 이름표가 생기기 전에 등록한 주소는 이름표 없이 날짜만.
+ 
+-/** "집 · 10월 3일 (금)에 등록한 주소" / "10월 3일 (금)에 등록한 주소" / "등록한 주소" */
++/** "집 · 10월 3일 (금) 등록" / "10월 3일 (금) 등록" / "등록한 주소" */
+ export function addressOnFileText(a: { label: AddressLabel | null; updatedAt: string | null }): string {
+-  const when = a.updatedAt ? `${formatDate(a.updatedAt)}에 등록한 주소` : "등록한 주소";
++  const when = a.updatedAt ? `${formatDate(a.updatedAt)} 등록` : "등록한 주소";
+   return a.label ? `${ADDRESS_LABEL_NAME[a.label]} · ${when}` : when;
+ }
+--- src\entities\action-item\model\action-items.test.ts (4번 작업 전)
++++ src\entities\action-item\model\action-items.test.ts (4번 작업 후)
+@@ -20,9 +20,9 @@
+ });
+ 
+ describe("처분 예정 날짜 문장 (office-workflow INV-W15, 용어집 dispose_due 행)", () => {
+-  it("INV-W15: 기한(반송 대기 + 30일)을 서울 날짜로 — 「○월 ○일까지 확인하지 않으면 상자를 처분해요」", () => {
++  it("INV-W15: 기한(반송 대기 + 30일)을 서울 날짜로 — 「○월 ○일까지 미확인 시 처분 대상」", () => {
+     // 서울 11월 16일 0시 30분 = UTC 11월 15일 15시 30분 — UTC 날짜로 쓰면 하루 이르게 나온다
+-    expect(disposeDueText("2026-11-15T15:30:00.000Z")).toBe("11월 16일까지 확인하지 않으면 상자를 처분해요");
++    expect(disposeDueText("2026-11-15T15:30:00.000Z")).toBe("11월 16일까지 미확인 시 처분 대상");
+   });
+ });
+ 
+--- src\entities\action-item\model\action-items.ts (4번 작업 전)
++++ src\entities\action-item\model\action-items.ts (4번 작업 후)
+@@ -134,5 +134,5 @@
+ 
+ /** 처분 예정 날짜 문장(office-workflow INV-W15, 용어집 dispose_due 행) — 기한은 반송 대기 + 30일, 날짜는 서울 날짜. 팬·크리에이터 처리할 일이 같이 쓴다 */
+ export function disposeDueText(dueAt: string): string {
+-  return `${formatMonthDayKo(dueAt)}까지 확인하지 않으면 상자를 처분해요`;
++  return `${formatMonthDayKo(dueAt)}까지 미확인 시 처분 대상`;
+ }
+--- src\app\(site)\creator\page.tsx (4번 작업 전)
++++ src\app\(site)\creator\page.tsx (4번 작업 후)
+@@ -27,7 +27,7 @@
+ // 크리에이터 메인 — 로그인한 크리에이터의 첫 화면(시안 v21-addendum3/cre-home.html). 맨 앞 프로필 구간은 본인 읽기 —
+ // 공개 이름·소개·팬덤 이름·테마 색(my_creator_settings, creator-link INV-E13)·프로필 사진(my_creator_link)·배경사진·심볼(my_creator_look). 본인 확인 전에도 나온다.
+ // 크리에이터 처리할 일(my_creator_action_items — 사이드바 숫자와 바로가기 「처리할 일」이 같은 결과, action-center INV-J6)·진행 중인 선물 수(선물 현황과 같은 읽기 my_gift_progress — 머리 「진행 중 N건」과 같은 값, action-center INV-J9)·열람 기록(my_access_log)·공지(list_notices)·
+-// 내가 보낸 선물(my_gifts — 로그인한 사람이 보낸 주문)은 DB. 모두 인자 없이 로그인 토큰의 사람 것만 돌려준다.
++// 보낸 선물(my_gifts — 로그인한 사람이 보낸 주문)은 DB. 모두 인자 없이 로그인 토큰의 사람 것만 돌려준다.
+ // 광고 배너는 공개 읽기 한 번 — 본문 맨 위(design-rules 16절 ②), 못 읽으면 칸만 없다(banners INV-Y8).
+ // 팬은 팬 메인으로, 로그인하지 않았으면 로그인으로 보낸다.
+ export default async function Page() {
+@@ -56,7 +56,7 @@
+   const publicHref = publicCreator ? creatorPagePath({ id: publicCreator.creatorId, handle: publicCreator.handle }) : publicCard ? creatorPagePath(publicCard) : null;
+   // 같은 읽기의 순서·기존 단계 표시를 그대로 쓰며 홈에는 앞 세 줄만 보인다.
+   const progressRows: HomeProgressRow[] = progress ? [
+-    ...progress.received.slice(0, 3).map((row) => ({ id: row.orderNo, title: `${row.nickname}님이 보내신 선물`, description: row.itemKind, status: PROGRESS_STEP_LABEL[receivedStepOf(row).key] })),
++    ...progress.received.slice(0, 3).map((row) => ({ id: row.orderNo, title: `${row.nickname}님이 보낸 선물`, description: row.itemKind, status: PROGRESS_STEP_LABEL[receivedStepOf(row).key] })),
+     ...progress.sent.flatMap((group) => group.rows).slice(0, Math.max(0, 3 - progress.received.length)).map((row) => ({ id: row.shareId, title: `${row.nickname}님께 보낸 선물`, description: row.orderNo, status: PROGRESS_STEP_LABEL[sentStepOf(row).key] })),
+   ] : [];
+   const notices = allNotices
+--- src\app\(site)\creator\revgifts\new\page.tsx (4번 작업 전)
++++ src\app\(site)\creator\revgifts\new\page.tsx (4번 작업 후)
+@@ -12,8 +12,8 @@
+ export const metadata: Metadata = { title: "팬에게 보내기 — 팬꾹" };
+ 
+ const PAYMENT_NOTICE: Record<string, string> = {
+-  failed: "결제를 마치지 못해 역조공이 보내지지 않았어요. 받을 팬을 다시 골라 주세요.",
+-  in_progress: "같은 결제를 처리하는 중이에요. 잠시 뒤 보낸 역조공을 확인해 주세요.",
++  failed: "결제가 완료되지 않았습니다. 다시 진행하려면 받을 팬을 선택해 주세요.",
++  in_progress: "결제를 처리 중입니다. 잠시 후 ‘보낸 역조공’에서 결과를 확인해 주세요.",
+ };
+ 
+ // 역조공 보내기(크리에이터만). 받는 팬은 나를 팔로우하는 팬 목록에서 고른다(INV-R2) — 목록은 로그인 토큰으로 DB 가 내 팔로워만 돌려준다.

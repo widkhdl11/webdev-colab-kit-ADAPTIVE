@@ -81,15 +81,15 @@ describe("운영자의 본인 확인 처리 (creator-verification INV-V6·V9·V1
 
   it("INV-V6 (실패경로): 운영자가 아니면 404 — DB 함수를 부르지 않는다", async () => {
     const { calls, client } = fakeClient(null, { operator: false, owner: false });
-    expect(await decideCreatorVerification(client, { action: "approve", applicationId: APP })).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+    expect(await decideCreatorVerification(client, { action: "approve", applicationId: APP })).toEqual({ status: 404, body: { message: "요청한 항목을 찾을 수 없습니다." } });
     expect(calls).toEqual([]);
   });
 
-  it("INV-V6 (실패경로): 이미 처리됨(55000)이면 409 「이미 처리됐어요. 새로 고침해 주세요.」, 42501→403, P0002→404, 22023→400", async () => {
+  it("INV-V6 (실패경로): 이미 처리됨(55000)이면 409 「이미 처리된 요청입니다. 페이지를 새로고침해 주세요.」, 42501→403, P0002→404, 22023→400", async () => {
     const already = fakeClient({ code: "55000" });
     expect(await decideCreatorVerification(already.client, { action: "approve", applicationId: APP })).toEqual({
       status: 409,
-      body: { message: "이미 처리됐어요. 새로 고침해 주세요." },
+      body: { message: "이미 처리된 요청입니다. 페이지를 새로고침해 주세요." },
     });
     for (const [code, status] of [
       ["42501", 403],

@@ -43,10 +43,10 @@ export function replyLineProblem(line: string | null): "too_long" | "forbidden_c
 
 /** 답장 입력 검사 문구 — 화면(먼저 보기)과 서버(본문 검사)가 같은 글을 쓴다. */
 export const REPLY_INPUT_MESSAGE = {
-  phraseMissing: "보낼 답장 문구를 하나 골라 주세요.",
-  lineWithoutPhrase: "한 줄은 답장 문구를 고른 뒤에 쓸 수 있어요.",
-  tooLong: `한 줄은 ${REPLY_LINE_MAX}자까지 쓸 수 있어요.`,
-  forbiddenChars: "한 줄에는 줄바꿈이나 보이지 않는 글자를 쓸 수 없어요.",
+  phraseMissing: "답장 문구를 선택해 주세요.",
+  lineWithoutPhrase: "답장 문구를 선택한 뒤 한 줄 메시지를 입력해 주세요.",
+  tooLong: `한 줄 답장은 최대 ${REPLY_LINE_MAX}자까지 입력할 수 있습니다.`,
+  forbiddenChars: "줄바꿈이나 보이지 않는 문자는 입력할 수 없습니다.",
 } as const;
 
 /** 한 줄의 꼴 문제를 사람이 읽는 문구로. 문제가 없으면 null. */

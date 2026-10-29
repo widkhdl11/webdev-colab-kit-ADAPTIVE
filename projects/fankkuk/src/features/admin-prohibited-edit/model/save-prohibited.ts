@@ -11,7 +11,7 @@ import { charCount } from "@/shared/lib/validation/char-count";
 // 최종 판정(운영자인지·글자 수)과 바꾼 기록은 DB 함수가 한다.
 
 const MESSAGE_LIMIT = `이름은 1~${PROHIBITED_NAME_MAX}자, 설명은 ${PROHIBITED_DESCRIPTION_MAX}자까지 적을 수 있어요.`;
-const MESSAGES = { limit: MESSAGE_LIMIT, failed: "저장하지 못했어요. 잠시 뒤 다시 해 주세요." };
+const MESSAGES = { limit: MESSAGE_LIMIT, failed: "저장하지 못했습니다. 잠시 후 다시 시도해 주세요." };
 
 const name = z
   .string()

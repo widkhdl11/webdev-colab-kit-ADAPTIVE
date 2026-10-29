@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 // 소개 첫 화면(design-rules 16절). 로그인된 상태면 바로 메인으로(PRODUCT ③). 손님 헤더로 남겨 두면 로그인이 풀린 것처럼 보인다.
 // 칸 ②는 사용자 선택 소개 이미지 한 장(2026-10-19). 운영자 광고 배너는 다른 화면에서 기존대로 읽는다.
-// 「새로 들어온 크리에이터」는 크리에이터 찾기와 같은 목록(본인 확인됨 + 찾기 노출 켜짐 — my-account INV-A10)을 최근 순으로 최대 열둘까지 넘겨 본다. 공지는 최신 셋.
+// 「신규 크리에이터」는 크리에이터 찾기와 같은 목록(본인 확인됨 + 찾기 노출 켜짐 — my-account INV-A10)을 최근 순으로 최대 열둘까지 넘겨 본다. 공지는 최신 셋.
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
   const home = signedInHome(viewer);

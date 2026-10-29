@@ -12,7 +12,7 @@ import s from "./sealed-address-form.module.css";
 // 이름표는 고르기만 한다 — 주소는 본인에게도 다시 보이지 않아서, 확인 창은 이 이름표와 바꾼 날로 확인한다(INV-P16).
 
 /** 주소 봉인 공개키가 없을 때(설정 전) — 주소 입력 대신 이 안내만 보인다 */
-export const ADDRESS_KEY_MISSING_TEXT = "현재 주소를 안전하게 저장할 수 없어 등록이 제한됩니다. 잠시 후 다시 시도해 주세요.";
+export const ADDRESS_KEY_MISSING_TEXT = "현재 주소를 등록할 수 없습니다. 고객센터로 문의해 주세요.";
 
 export type AddressFieldName = "zipCode" | "address1" | "address2" | "recipientName" | "phone";
 export type AddressFieldValues = Record<AddressFieldName, string>;
@@ -23,11 +23,11 @@ export type SealedAddressSendOutcome = { kind: "ok" } | { kind: "login" } | { ki
 const FIELD_ORDER: readonly AddressFieldName[] = ["zipCode", "address1", "address2", "recipientName", "phone"];
 
 const FIELD_ERROR: Record<AddressFieldName, string> = {
-  zipCode: "우편번호 다섯 자리를 숫자로 입력해 주세요",
+  zipCode: "우편번호는 숫자 5자리로 입력해 주세요",
   address1: "기본 주소를 입력해 주세요",
-  address2: "상세 주소는 120자 안으로 입력해 주세요",
+  address2: "상세 주소는 120자 이내로 입력해 주세요",
   recipientName: "받는 사람 이름을 입력해 주세요",
-  phone: "휴대폰 번호를 010으로 시작하는 숫자로 입력해 주세요",
+  phone: "휴대폰 번호는 010으로 시작하는 숫자로 입력해 주세요",
 };
 
 const EMPTY: AddressFieldValues = { zipCode: "", address1: "", address2: "", recipientName: "", phone: "" };
@@ -169,10 +169,10 @@ export function SealedAddressForm<L extends string>({
         required: true,
         autoFocus: autoFocusFirst,
       })}
-      {field("address1", "기본 주소", { type: "text", autoComplete: "address-line1", maxLength: 120, placeholder: "도로명 주소나 지번 주소", required: true })}
-      {field("address2", "상세 주소", { type: "text", autoComplete: "address-line2", maxLength: 120, placeholder: "동·호수 등 상세 주소" })}
+      {field("address1", "기본 주소", { type: "text", autoComplete: "address-line1", maxLength: 120, placeholder: "도로명 또는 지번 주소", required: true })}
+      {field("address2", "상세 주소", { type: "text", autoComplete: "address-line2", maxLength: 120, placeholder: "동·호수 등을 입력해 주세요" })}
       <div className={s.two}>
-        {field("recipientName", "받는 사람 이름", { type: "text", autoComplete: "name", maxLength: 30, placeholder: "배송받는 사람의 이름", required: true })}
+        {field("recipientName", "받는 사람 이름", { type: "text", autoComplete: "name", maxLength: 30, placeholder: "송장에 표시할 이름", required: true })}
         {field("phone", "휴대폰 번호", { type: "tel", inputMode: "tel", autoComplete: "tel", maxLength: 13, placeholder: "010-0000-0000", required: true })}
       </div>
       <fieldset className={s.labels}>

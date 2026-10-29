@@ -14,11 +14,11 @@ export async function unblockSender(
   deps: { client: Pick<SupabaseClient, "rpc">; viewer: Viewer | null },
   body: unknown,
 ): Promise<UnblockSenderResult> {
-  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
-  if (deps.viewer.role !== "creator") return { ok: false, status: 403, message: "크리에이터 계정만 할 수 있어요." };
+  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요합니다." };
+  if (deps.viewer.role !== "creator") return { ok: false, status: 403, message: "크리에이터 계정만 이용할 수 있습니다." };
 
   const parsed = inputSchema.safeParse(body);
-  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청이에요." };
+  if (!parsed.success) return { ok: false, status: 400, message: "유효하지 않은 요청입니다." };
 
   const { data, error } = await deps.client.rpc("unblock_sender", { p_block_id: parsed.data.blockId });
   if (error) throw new Error(`차단을 풀지 못했다: ${error.code}`);

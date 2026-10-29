@@ -1,0 +1,1077 @@
+[
+  [
+    "src\\app\\not-found.tsx",
+    "주소가 바뀌었거나 없어진 페이지예요.",
+    "입력한 주소를 확인해 주세요. 페이지가 이동되거나 삭제되었을 수 있습니다."
+  ],
+  [
+    "src\\app\\not-found.tsx",
+    "페이지를 찾을 수 없어요 — 팬꾹",
+    "페이지를 찾을 수 없습니다 — 팬꾹"
+  ],
+  [
+    "src\\app\\not-found.tsx",
+    "페이지를 찾을 수 없어요",
+    "페이지를 찾을 수 없습니다"
+  ],
+  [
+    "src\\widgets\\status-page\\ui\\withdrawn-creator.test.tsx",
+    "주소가 바뀌었거나 없어진 페이지예요.",
+    "입력한 주소를 확인해 주세요. 페이지가 이동되거나 삭제되었을 수 있습니다."
+  ],
+  [
+    "src\\widgets\\status-page\\ui\\withdrawn-creator.test.tsx",
+    "페이지를 찾을 수 없어요",
+    "페이지를 찾을 수 없습니다"
+  ],
+  [
+    "src\\widgets\\gift-status\\ui\\gift-status-visibility.test.tsx",
+    "기간이 지나 반려됐어요",
+    "승인 기한이 지나 자동 반려되었습니다"
+  ],
+  [
+    "src\\widgets\\admin-access-log\\ui\\access-log-panel.test.tsx",
+    "아직 기록이 없어요",
+    "기록 없음"
+  ],
+  [
+    "src\\shared\\ui\\sealed-address-form.tsx",
+    "도로명 주소나 지번 주소",
+    "도로명 또는 지번 주소"
+  ],
+  [
+    "src\\shared\\lib\\http\\pg-error-reply.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\shared\\lib\\http\\pg-error-reply.test.ts",
+    "권한이 없어요.",
+    "이 작업을 수행할 권한이 없습니다."
+  ],
+  [
+    "src\\shared\\lib\\http\\pg-error-reply.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\shared\\lib\\http\\pg-error-reply.ts",
+    "권한이 없어요.",
+    "이 작업을 수행할 권한이 없습니다."
+  ],
+  [
+    "src\\shared\\lib\\http\\post-json-client.ts",
+    "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\shared\\lib\\http\\private-json.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\shared\\lib\\http\\private-json.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\shared\\lib\\http\\schedule-secret.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\storage-claim\\model\\storage.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\features\\storage-claim\\model\\storage.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\storage-claim\\model\\storage.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\storage-claim\\model\\storage.ts",
+    "권한이 없어요.",
+    "이 작업을 수행할 권한이 없습니다."
+  ],
+  [
+    "src\\features\\signup\\model\\check-name.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\features\\revgift-send\\model\\register-revgift.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\return-address\\model\\confirm-return-address.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\phone-change\\model\\change-phone.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\password-change\\model\\change-password.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\office-outbound\\model\\scan-outbound.test.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\office-outbound\\model\\scan-outbound.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\office-outbound\\model\\scan-outbound.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\office-inspect\\model\\scan-inspect.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\office-inbound\\model\\scan-inbound.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\office-inbound\\model\\scan-inbound.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\office-expiry-run\\model\\run-expiry.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.test.ts",
+    "알림은 내 팬꾹의 주소와 설정에서 끌 수 있어요.",
+    "알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.test.ts",
+    "[팬꾹] 보낸 선물이 도착했다고 확인됐어요",
+    "[팬꾹] 크리에이터 수령 확인"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.test.ts",
+    "[팬꾹] 추적 장치가 나온 상자가 있어요",
+    "[팬꾹] 추적 장치 발견 안내"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.test.ts",
+    "[팬꾹] 받을지 정해 주실 선물이 있어요",
+    "[팬꾹] 선물 수령 여부 확인 요청"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.test.ts",
+    "알림은 내 팬꾹에서 끌 수 있어요.",
+    "알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.test.ts",
+    "[팬꾹] 보낸 선물에 답장이 왔어요",
+    "[팬꾹] 선물 답장 도착"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.test.ts",
+    "추적 장치가 나온 상자가 있어요.",
+    "검수 중 추적 장치가 발견되었습니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.test.ts",
+    "받을지 정해 주실 상자가 있어요.",
+    "수령 여부를 확인할 상자가 있습니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.test.ts",
+    "이 알림은 꺼 두어도 가요.",
+    "서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.test.ts",
+    "기간이 지나 반려됐어요",
+    "승인 기한이 지나 자동 반려되었습니다"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.test.ts",
+    "돌려받을 주소 확인",
+    "반송 주소 확인"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "이 알림에는 선물 내용과 보낸 사람·받는 사람 정보를 담지 않아요. 자세한 내용은 로그인한 뒤 위 링크에서 확인해 주세요.",
+    "선물 상세 정보는 알림에 표시하지 않습니다. 로그인 후 위 링크에서 확인해 주세요."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "[팬꾹] 승인을 기다리는 선물이 사무실에 도착했어요",
+    "[팬꾹] 승인 대기 선물 도착"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "알림은 내 팬꾹의 주소와 설정에서 끌 수 있어요.",
+    "알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "보내신 선물을 크리에이터가 받았다고 확인했어요.",
+    "크리에이터가 선물 수령을 확인했습니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "[팬꾹] 보낸 선물이 팬꾹 사무실에 도착했어요",
+    "[팬꾹] 선물 입고 완료"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "[팬꾹] 보낸 상자가 팬꾹 사무실에 도착했어요",
+    "[팬꾹] 상자 입고 완료"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "보내신 상자 하나가 팬꾹 사무실에 도착했어요.",
+    "보내신 상자 하나가 팬꾹에 도착했습니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "[팬꾹] 아직 승인하지 않은 선물이 있어요",
+    "[팬꾹] 선물 승인 기한 안내"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "[팬꾹] 보낸 선물이 도착했다고 확인됐어요",
+    "[팬꾹] 크리에이터 수령 확인"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "[팬꾹] 추적 장치가 나온 상자가 있어요",
+    "[팬꾹] 추적 장치 발견 안내"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "[팬꾹] 받을지 정해 주실 선물이 있어요",
+    "[팬꾹] 선물 수령 여부 확인 요청"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "보내신 선물이 팬꾹 사무실에 도착했어요.",
+    "보내신 선물이 팬꾹에 도착했습니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "보내신 선물이 크리에이터에게 출발했어요.",
+    "보내신 선물이 팬꾹에서 출고 처리되었습니다. 택배사 인계 후 배송이 진행됩니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "[팬꾹] 새 선물 승인 요청이 왔어요",
+    "[팬꾹] 새 선물 승인 요청"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "[팬꾹] 보낸 선물의 검수가 끝났어요",
+    "[팬꾹] 선물 검수 완료"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "알림은 내 팬꾹에서 끌 수 있어요.",
+    "알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "[팬꾹] 보낸 선물에 답장이 왔어요",
+    "[팬꾹] 선물 답장 도착"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "추적 장치가 나온 상자가 있어요.",
+    "검수 중 추적 장치가 발견되었습니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "받을지 정해 주실 상자가 있어요.",
+    "수령 여부를 확인할 상자가 있습니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "보내신 선물의 검수가 끝났어요.",
+    "보내신 선물의 검수가 완료되었습니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "[팬꾹] 보낸 선물이 출고됐어요",
+    "[팬꾹] 선물 출고 완료"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "보내신 선물에 답장이 왔어요.",
+    "보내신 선물에 답장이 도착했습니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "이 알림은 꺼 두어도 가요.",
+    "서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "기간이 지나 반려됐어요",
+    "승인 기한이 지나 자동 반려되었습니다"
+  ],
+  [
+    "src\\features\\notification-dispatch\\lib\\notification-body.ts",
+    "돌려받을 주소 확인",
+    "반송 주소 확인"
+  ],
+  [
+    "src\\features\\notification-dispatch\\model\\dispatch-notifications.test.ts",
+    "이 알림은 꺼 두어도 가요.",
+    "서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다."
+  ],
+  [
+    "src\\features\\notification-dispatch\\model\\dispatch-notifications.test.ts",
+    "기간이 지나 반려됐어요",
+    "승인 기한이 지나 자동 반려되었습니다"
+  ],
+  [
+    "src\\features\\gift-reply\\model\\gift-reply-actions.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\gift-photo\\model\\save-gift-photo.ts",
+    "다른 곳에서 사진을 바꾸는 중이에요. 잠시 뒤 다시 해 주세요.",
+    "다른 화면에서 사진 변경을 진행 중입니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\gift-photo\\model\\save-gift-photo.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\gift-not-sent\\model\\mark-not-sent.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\features\\gift-not-sent\\model\\mark-not-sent.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\gift-not-sent\\model\\mark-not-sent.ts",
+    "권한이 없어요.",
+    "이 작업을 수행할 권한이 없습니다."
+  ],
+  [
+    "src\\features\\gift-cancel\\model\\cancel-gift.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\features\\gift-cancel\\model\\cancel-gift.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\gift-cancel\\model\\cancel-gift.ts",
+    "권한이 없어요.",
+    "이 작업을 수행할 권한이 없습니다."
+  ],
+  [
+    "src\\features\\fan-profile-edit\\api\\send-fan-profile.ts",
+    "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\creator-verify\\api\\send-verification.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\creator-verify\\model\\run-verification-action.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\creator-unblock\\model\\unblock-sender.ts",
+    "크리에이터 계정만 할 수 있어요.",
+    "크리에이터 계정만 이용할 수 있습니다."
+  ],
+  [
+    "src\\features\\creator-unblock\\model\\unblock-sender.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\features\\creator-unblock\\model\\unblock-sender.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\creator-tags-edit\\model\\save-creator-tags.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\creator-follow\\model\\set-follow.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\features\\creator-follow\\model\\set-follow.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\creator-check\\model\\choose-check.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\box-waybill\\model\\early-send.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\box-waybill\\model\\early-send.ts",
+    "권한이 없어요.",
+    "이 작업을 수행할 권한이 없습니다."
+  ],
+  [
+    "src\\features\\box-waybill\\model\\save-waybill.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\box-waybill\\model\\save-waybill.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\box-waybill\\model\\save-waybill.ts",
+    "권한이 없어요.",
+    "이 작업을 수행할 권한이 없습니다."
+  ],
+  [
+    "src\\features\\approval-request\\model\\approve-gift.test.ts",
+    "기간이 지나 자동으로 반려된 선물이에요.",
+    "승인 기한이 지나 자동 반려된 선물입니다."
+  ],
+  [
+    "src\\features\\approval-request\\model\\approve-gift.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\approval-request\\model\\decline-gift.test.ts",
+    "기간이 지나 자동으로 반려된 선물이에요.",
+    "승인 기한이 지나 자동 반려된 선물입니다."
+  ],
+  [
+    "src\\features\\approval-request\\model\\decline-gift.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\features\\admin-storage\\model\\admin-storage.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-storage\\model\\admin-storage.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\features\\admin-shipping-issues\\model\\shipping-issues.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\features\\admin-share-move\\api\\post-share-move-client.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-share-move\\model\\move-share.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-review-cancel\\api\\post-review-cancel-client.ts",
+    "취소하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "취소하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-review-cancel\\model\\run-review-cancel.ts",
+    "취소하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "취소하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-review-cancel\\model\\run-review-cancel.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\features\\admin-review-cancel\\model\\run-review-cancel.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\admin-refund\\model\\mark-manual-refund.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\features\\admin-refund\\model\\mark-manual-refund.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\admin-refund\\model\\run-refund.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\features\\admin-refund\\model\\run-refund.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\admin-prohibited-edit\\model\\save-prohibited.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\admin-prohibited-edit\\model\\save-prohibited.ts",
+    "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-pricing-edit\\api\\post-pricing-client.ts",
+    "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-pricing-edit\\model\\save-pricing.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\admin-pricing-edit\\model\\save-pricing.ts",
+    "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-pricing-edit\\model\\save-pricing.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\admin-pending-box\\model\\close-pending-box.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\admin-order-cancel\\api\\post-creator-cancel-client.ts",
+    "취소하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "취소하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-order-cancel\\api\\post-order-cancel-client.ts",
+    "취소하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "취소하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-order-cancel\\model\\cancel-for-creator.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\admin-order-cancel\\model\\cancel-for-creator.ts",
+    "취소하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "취소하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-order-cancel\\model\\cancel-received-gift.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\admin-order-cancel\\model\\cancel-received-gift.ts",
+    "취소하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "취소하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-notice-edit\\model\\save-notice.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\admin-notice-edit\\model\\save-notice.ts",
+    "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-inquiry-restrict\\api\\post-restriction-client.ts",
+    "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-inquiry-restrict\\model\\restrict-inquiry-author.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\admin-inquiry-restrict\\model\\restrict-inquiry-author.ts",
+    "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-inquiry-answer\\model\\answer-inquiry.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\admin-held-return\\api\\post-held-return-client.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-held-return\\model\\return-held.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-held-return\\model\\return-held.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\features\\admin-held-link\\api\\post-held-link-client.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-held-link\\model\\link-held.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-creator-verify\\api\\post-verify-client.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-creator-verify\\model\\decide-creator-verification.test.ts",
+    "이미 처리됐어요. 새로 고침해 주세요.",
+    "이미 처리된 요청입니다. 페이지를 새로고침해 주세요."
+  ],
+  [
+    "src\\features\\admin-creator-verify\\model\\decide-creator-verification.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\admin-creator-verify\\model\\decide-creator-verification.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-creator-verify\\model\\decide-creator-verification.ts",
+    "이미 처리됐어요. 새로 고침해 주세요.",
+    "이미 처리된 요청입니다. 페이지를 새로고침해 주세요."
+  ],
+  [
+    "src\\features\\admin-creator-tags\\model\\save-tag-options.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\features\\admin-creator-tags\\model\\save-tag-options.ts",
+    "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-creator-check\\api\\post-process-client.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-creator-check\\model\\process-check.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-creator-check\\model\\process-check.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\features\\admin-banner-edit\\api\\banner-client.ts",
+    "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-banner-edit\\model\\banner-messages.ts",
+    "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-account-withdraw\\api\\post-withdraw-client.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\features\\admin-account-withdraw\\model\\withdraw-account.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\entities\\together\\model\\gift-progress.test.ts",
+    "검수에서 보낼 수 없는 물품이 확인돼 돌려보냈어요",
+    "검수 불합격으로 반송 대상이 된 선물입니다"
+  ],
+  [
+    "src\\entities\\together\\model\\gift-progress.test.ts",
+    "사무실에 도착했어요. 검수하고 있어요",
+    "팬꾹 도착 완료 · 검수 중"
+  ],
+  [
+    "src\\entities\\together\\model\\gift-progress.test.ts",
+    "검수를 마쳤어요. 곧 출고해요",
+    "검수 완료 · 출고 대기"
+  ],
+  [
+    "src\\entities\\together\\model\\gift-progress.test.ts",
+    "받지 않은 선물이에요",
+    "전달되지 않은 선물"
+  ],
+  [
+    "src\\entities\\together\\model\\gift-progress.test.ts",
+    "사무실에서 출고했어요",
+    "팬꾹 출고 완료"
+  ],
+  [
+    "src\\entities\\together\\model\\gift-progress.ts",
+    "검수에서 보낼 수 없는 물품이 확인돼 돌려보냈어요",
+    "검수 불합격으로 반송 대상이 된 선물입니다"
+  ],
+  [
+    "src\\entities\\together\\model\\gift-progress.ts",
+    "검수를 마쳤어요. 크리에이터의 승인을 기다려요",
+    "검수 완료 · 크리에이터 승인 대기"
+  ],
+  [
+    "src\\entities\\together\\model\\gift-progress.ts",
+    "사무실에 도착했어요. 검수하고 있어요",
+    "팬꾹 도착 완료 · 검수 중"
+  ],
+  [
+    "src\\entities\\together\\model\\gift-progress.ts",
+    "검수를 마쳤어요. 곧 출고해요",
+    "검수 완료 · 출고 대기"
+  ],
+  [
+    "src\\entities\\together\\model\\gift-progress.ts",
+    "받지 않은 선물이에요",
+    "전달되지 않은 선물"
+  ],
+  [
+    "src\\entities\\together\\model\\gift-progress.ts",
+    "사무실에서 출고했어요",
+    "팬꾹 출고 완료"
+  ],
+  [
+    "src\\entities\\session\\model\\nickname-rule.ts",
+    "닉네임에 글자나 숫자를 하나 이상 넣어 주세요.",
+    "닉네임에 글자 또는 숫자를 하나 이상 포함해 주세요."
+  ],
+  [
+    "src\\entities\\parcel\\api\\post-office-client.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\entities\\parcel\\model\\office-error.test.ts",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\entities\\parcel\\model\\office-error.test.ts",
+    "권한이 없어요.",
+    "이 작업을 수행할 권한이 없습니다."
+  ],
+  [
+    "src\\entities\\order\\config\\approval-deadline.ts",
+    "기간이 지나 자동으로 반려된 선물이에요.",
+    "승인 기한이 지나 자동 반려된 선물입니다."
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.test.ts",
+    "기간이 지나 반려됐어요",
+    "승인 기한이 지나 자동 반려되었습니다"
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.test.ts",
+    "사무실로 보내 주세요",
+    "팬꾹으로 상자를 발송해 주세요"
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.ts",
+    "검수에서 보낼 수 없는 물품이 확인돼 돌려보냈어요",
+    "검수 불합격으로 반송 대상이 된 선물입니다"
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.ts",
+    "검수를 마쳤어요. 크리에이터의 승인을 기다려요",
+    "검수 완료 · 크리에이터 승인 대기"
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.ts",
+    "승인되면 바로 출고하고 알림톡으로 알려 드려요",
+    "크리에이터 승인 등 출고 조건이 충족되면 발송됩니다. 출고 여부는 ‘보낸 선물’에서 확인할 수 있습니다"
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.ts",
+    "보내 주셨군요! 사무실 도착을 기다려요",
+    "송장 등록 완료 · 팬꾹 도착 대기"
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.ts",
+    "사무실에 도착했어요. 검수하고 있어요",
+    "팬꾹 도착 완료 · 검수 중"
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.ts",
+    "출고했어요. 택배사가 곧 가져가요",
+    "출고 완료 · 택배사 인계 대기"
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.ts",
+    "도착하면 날짜가 여기에 표시돼요",
+    "팬꾹 도착 후 입고일 표시"
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.ts",
+    "검수를 마쳤어요. 곧 출고해요",
+    "검수 완료 · 출고 대기"
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.ts",
+    "모든 상자를 탐지기로 검수해요",
+    "모든 상자는 탐지기 검수 후 출고됩니다"
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.ts",
+    "크리에이터에게 가는 중이에요",
+    "크리에이터에게 배송 중입니다"
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.ts",
+    "크리에이터가 선물을 받았어요",
+    "배송이 완료되었습니다"
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.ts",
+    "기간이 지나 반려됐어요",
+    "승인 기한이 지나 자동 반려되었습니다"
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.ts",
+    "사무실로 보내 주세요",
+    "팬꾹으로 상자를 발송해 주세요"
+  ],
+  [
+    "src\\entities\\order\\ui\\fan-stage-copy.ts",
+    "취소된 선물이에요",
+    "취소된 선물입니다"
+  ],
+  [
+    "src\\entities\\gift-reply\\model\\reply.ts",
+    "한 줄은 답장 문구를 고른 뒤에 쓸 수 있어요.",
+    "답장 문구를 선택한 뒤 한 줄 메시지를 입력해 주세요."
+  ],
+  [
+    "src\\entities\\gift-item\\model\\hard-items.test.ts",
+    "보관할 곳이 부족해요",
+    "보관 공간 부족"
+  ],
+  [
+    "src\\entities\\gift-item\\model\\hard-items.test.ts",
+    "이미 많이 받았어요",
+    "이미 많이 받음"
+  ],
+  [
+    "src\\entities\\gift-item\\model\\hard-items.test.ts",
+    "잠시 집을 비워요",
+    "일시 부재"
+  ],
+  [
+    "src\\entities\\gift-item\\model\\hard-items.ts",
+    "보관할 곳이 부족해요",
+    "보관 공간 부족"
+  ],
+  [
+    "src\\entities\\gift-item\\model\\hard-items.ts",
+    "이미 많이 받았어요",
+    "이미 많이 받음"
+  ],
+  [
+    "src\\entities\\gift-item\\model\\hard-items.ts",
+    "잠시 집을 비워요",
+    "일시 부재"
+  ],
+  [
+    "src\\entities\\creator\\model\\channel-badge.ts",
+    "치지직 채널 소유 확인",
+    "치지직 채널 소유자 확인"
+  ],
+  [
+    "src\\entities\\creator\\ui\\approval-time-text.ts",
+    "아직 기록이 없어요",
+    "기록 없음"
+  ],
+  [
+    "src\\entities\\banner\\ui\\banner-slide.tsx",
+    "(새 탭으로 열려요)",
+    "(새 탭에서 열림)"
+  ],
+  [
+    "src\\entities\\action-item\\model\\creator-action-items.test.ts",
+    "결제를 마치지 않은 선물",
+    "결제 대기"
+  ],
+  [
+    "src\\entities\\action-item\\model\\creator-action-items.ts",
+    "결제를 마치지 않은 선물",
+    "결제 대기"
+  ],
+  [
+    "src\\app\\(site)\\error.tsx",
+    "잠시 뒤 다시 시도해 주세요. 계속되면 고객센터로 알려 주세요.",
+    "잠시 후 다시 시도해 주세요. 문제가 계속되면 고객센터로 문의해 주세요."
+  ],
+  [
+    "src\\app\\(site)\\error.tsx",
+    "화면을 열지 못했어요",
+    "화면을 불러오지 못했습니다"
+  ],
+  [
+    "src\\app\\api\\follows\\route.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\app\\api\\me\\profile\\image\\[kind]\\route.ts",
+    "사진 크기를 알 수 없는 요청이에요. 다시 올려 주세요.",
+    "이미지 크기를 확인할 수 없습니다. 파일을 다시 업로드해 주세요."
+  ],
+  [
+    "src\\app\\api\\me\\profile\\image\\[kind]\\route.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\app\\api\\me\\profile\\image\\[kind]\\route.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\app\\api\\me\\phone\\verify\\check\\route.ts",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\app\\api\\gifts\\reply-card\\[boxId]\\route.tsx",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\app\\api\\gifts\\reply-card\\[boxId]\\route.tsx",
+    "로그인이 필요해요.",
+    "로그인이 필요합니다."
+  ],
+  [
+    "src\\app\\api\\gifts\\reply-card\\[boxId]\\route.tsx",
+    "찾을 수 없어요.",
+    "요청한 항목을 찾을 수 없습니다."
+  ],
+  [
+    "src\\app\\api\\gifts\\photo\\[orderNo]\\route.ts",
+    "사진 크기를 알 수 없는 요청이에요. 다시 올려 주세요.",
+    "이미지 크기를 확인할 수 없습니다. 파일을 다시 업로드해 주세요."
+  ],
+  [
+    "src\\app\\api\\gifts\\photo\\[orderNo]\\route.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\app\\api\\gifts\\photo\\[orderNo]\\route.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\app\\api\\creator\\photo\\route.ts",
+    "사진 크기를 알 수 없는 요청이에요. 다시 올려 주세요.",
+    "이미지 크기를 확인할 수 없습니다. 파일을 다시 업로드해 주세요."
+  ],
+  [
+    "src\\app\\api\\creator\\photo\\route.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\app\\api\\creator\\photo\\route.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\app\\api\\creator\\image\\[kind]\\route.ts",
+    "사진 크기를 알 수 없는 요청이에요. 다시 올려 주세요.",
+    "이미지 크기를 확인할 수 없습니다. 파일을 다시 업로드해 주세요."
+  ],
+  [
+    "src\\app\\api\\creator\\image\\[kind]\\route.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\app\\api\\creator\\image\\[kind]\\route.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\app\\api\\auth\\logout\\route.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ],
+  [
+    "src\\app\\api\\admin\\banners\\route.ts",
+    "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+    "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  ],
+  [
+    "src\\app\\api\\admin\\banners\\route.ts",
+    "잘못된 요청이에요.",
+    "유효하지 않은 요청입니다."
+  ]
+]

@@ -12,4 +12,4 @@ export const FOLLOWING_NICKNAME_NOTICE = "팔로우한 크리에이터에게 내
 export const FOLLOW_SAVE_FAILED = "팔로우 설정을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 /** 팔로우 취소 저장이 실패했을 때(크리에이터 페이지 「팔로우 중」 → 확인 창 「팔로우 취소」). */
-export const UNFOLLOW_SAVE_FAILED = "팔로우 설정을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+export const UNFOLLOW_SAVE_FAILED = "팔로우를 취소하지 못했습니다. 잠시 후 다시 시도해 주세요.";

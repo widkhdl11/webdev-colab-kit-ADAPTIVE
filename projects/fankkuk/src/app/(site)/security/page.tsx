@@ -16,7 +16,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <LegalPage tab="security" doc={SECURITY_DOC} flow={SECURITY_FLOW} flowLabel="크리에이터 주소가 열리는 때" icon="/img/icon-address-lock.png" />
+      <LegalPage tab="security" doc={SECURITY_DOC} flow={SECURITY_FLOW} flowLabel="주소 열람 시점" icon="/img/icon-address-lock.png" />
       <SiteFooter />
     </>
   );

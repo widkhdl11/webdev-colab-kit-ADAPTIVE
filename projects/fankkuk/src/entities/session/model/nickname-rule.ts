@@ -23,7 +23,7 @@ export const nicknameSchema = z
 const FILTER_MESSAGES: Record<string, string> = {
   FKU05: "닉네임에 사용할 수 없는 표현이 포함되어 있습니다. 다른 닉네임을 입력해 주세요.",
   FKU06: "닉네임에 전화번호·이메일·인터넷 주소는 입력할 수 없습니다.",
-  FKU07: "닉네임에 글자나 숫자를 하나 이상 넣어 주세요.",
+  FKU07: "닉네임에 글자 또는 숫자를 하나 이상 포함해 주세요.",
 };
 
 /**

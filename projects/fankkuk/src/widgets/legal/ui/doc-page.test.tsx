@@ -98,7 +98,7 @@ describe("검색(C4)", () => {
   ])("%s 블록 글자로 그 조를 찾고 <mark> 로 표시한다", (_, word, id) => {
     render(<DocPage doc={base} variant="policy" />);
     type(q<HTMLInputElement>('input[type="search"]')!, word);
-    expect(q('[aria-live="polite"]')?.textContent).toBe("1개 조에서 발견");
+    expect(q('[aria-live="polite"]')?.textContent).toBe("1개 항목에서 검색됨");
     expect(qa(`#${id} mark`).map((m) => m.textContent)).toEqual(word.split(" ").filter(Boolean));
     expect(qa("mark").every((m) => m.closest("article")?.id === id)).toBe(true);
   });
@@ -106,14 +106,14 @@ describe("검색(C4)", () => {
   it("없으면 그 사실 한 줄, 다음·이전 단추는 없다", () => {
     render(<DocPage doc={base} variant="policy" />);
     type(q<HTMLInputElement>('input[type="search"]')!, "없는낱말");
-    expect(q('[aria-live="polite"]')?.textContent).toBe("찾는 낱말이 있는 조가 없어요.");
+    expect(q('[aria-live="polite"]')?.textContent).toBe("검색 결과가 없습니다.");
     expect(byText("button", "다음")).toBeUndefined();
   });
 
   it("다음 · 이전으로 찾은 조를 차례로 오가며 주소 끝이 그 조가 된다", () => {
     render(<DocPage doc={base} variant="policy" />);
     type(q<HTMLInputElement>('input[type="search"]')!, "조");
-    expect(q('[aria-live="polite"]')?.textContent).toBe("4개 조에서 발견");
+    expect(q('[aria-live="polite"]')?.textContent).toBe("4개 항목에서 검색됨");
     click(byText("button", "다음"));
     expect(window.location.hash).toBe("#intro");
     click(byText("button", "다음"));
@@ -292,7 +292,7 @@ describe("「주요」(C6) · 주소 복사(C8)", () => {
     expect(qa("article").filter((a) => a.querySelector("h2")?.parentElement?.textContent?.includes("주요")).map((a) => a.id)).toEqual(["refund"]);
   });
 
-  it("복사 단추는 지금 주소(검색어 포함)#조id 를 복사하고 「복사됨」을 2초 보인다", async () => {
+  it("복사 단추는 지금 주소(검색어 포함)#조id 를 복사하고 「복사 완료」을 2초 보인다", async () => {
     vi.useFakeTimers();
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
@@ -304,7 +304,7 @@ describe("「주요」(C6) · 주소 복사(C8)", () => {
     });
     expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/terms?v=1.0#refund`);
     const status = q("#refund [role=status]")!;
-    expect(status.textContent).toBe("복사됨");
+    expect(status.textContent).toBe("복사 완료");
     act(() => {
       vi.advanceTimersByTime(2000);
     });
@@ -420,7 +420,7 @@ describe("자주 묻는 질문(C4 · C5 · C8)", () => {
     window.history.replaceState(null, "", "/faq");
     render(<FaqPage {...faq} />);
     type(q<HTMLInputElement>('input[type="search"]')!, "반송택배비");
-    expect(q('[aria-live="polite"]')?.textContent).toBe("1개 질문에서 발견");
+    expect(q('[aria-live="polite"]')?.textContent).toBe("1개 질문에서 검색됨");
     click(byText("button", "다음"));
     expect(q<HTMLDetailsElement>("#decline details")?.open).toBe(true);
     expect(qa("#decline mark").map((m) => m.textContent)).toEqual(["반송택배비"]);

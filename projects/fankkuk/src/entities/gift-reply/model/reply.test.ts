@@ -137,7 +137,7 @@ describe("INV-G9: 카드 크리에이터 이름 글자 크기", () => {
 describe("검사 문구 · 받은 상자 목록 상한", () => {
   it("INV-G3: 한 줄의 꼴 문제를 화면·서버가 같이 쓰는 문구로 — 문제가 없으면 null", () => {
     expect(replyLineMessage("가".repeat(REPLY_LINE_MAX + 1))).toBe(REPLY_INPUT_MESSAGE.tooLong);
-    expect(REPLY_INPUT_MESSAGE.tooLong).toBe("한 줄은 80자까지 쓸 수 있어요.");
+    expect(REPLY_INPUT_MESSAGE.tooLong).toBe("한 줄 답장은 최대 80자까지 입력할 수 있습니다.");
     expect(replyLineMessage("첫 줄" + String.fromCharCode(10) + "둘째 줄")).toBe(REPLY_INPUT_MESSAGE.forbiddenChars);
     expect(replyLineMessage("가".repeat(REPLY_LINE_MAX))).toBeNull();
     expect(replyLineMessage(null)).toBeNull();

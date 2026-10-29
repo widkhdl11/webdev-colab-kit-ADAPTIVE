@@ -21,14 +21,14 @@ export type ReportDraft = { kind: string; replyTo: string; pageUrl: string; body
 export type ReportField = "kind" | "replyTo" | "pageUrl" | "body";
 
 const schema = z.object({
-  kind: z.enum(REPORT_KINDS, { error: "분류를 골라 주세요." }),
+  kind: z.enum(REPORT_KINDS, { error: "분류를 선택해 주세요." }),
   replyTo: z.email({ error: "답변받을 이메일을 확인해 주세요." }),
-  pageUrl: z.union([z.literal(""), z.url({ protocol: /^https?$/, error: "페이지 주소는 http 나 https 로 시작해야 해요." })]),
+  pageUrl: z.union([z.literal(""), z.url({ protocol: /^https?$/, error: "페이지 주소는 http:// 또는 https://로 시작해야 합니다." })]),
   body: z
     .string()
     .trim()
-    .min(1, { error: "내용을 적어 주세요." })
-    .max(REPORT_BODY_MAX, { error: `내용은 ${REPORT_BODY_MAX.toLocaleString("ko-KR")}자까지 적을 수 있어요.` }),
+    .min(1, { error: "내용을 입력해 주세요." })
+    .max(REPORT_BODY_MAX, { error: `내용은 최대 ${REPORT_BODY_MAX.toLocaleString("ko-KR")}자까지 입력할 수 있습니다.` }),
 });
 
 export type ReportMail = { ok: true; href: string } | { ok: false; field: ReportField | null; message: string };
@@ -43,7 +43,7 @@ export function buildReportMail(draft: ReportDraft, to: string): ReportMail {
   }
   // 받는 주소는 설정값이다 — 칸 검사를 먼저 하고 마지막에 본다. 이메일 형식이 아니면(빈 값 포함) 만들지 않는다.
   // 형식을 통과한 주소는 ?·& 가 없어 그대로 붙인다.
-  if (!z.email().safeParse(to.trim()).success) return { ok: false, field: null, message: "고객센터 이메일이 아직 없어요. 로그인했다면 고객센터의 1:1 문의를 써 주세요." };
+  if (!z.email().safeParse(to.trim()).success) return { ok: false, field: null, message: "현재 이메일 문의를 이용할 수 없습니다. 로그인 후 고객센터의 1:1 문의를 이용해 주세요." };
   const d = parsed.data;
   const subject = `[팬꾹 ${REPORT_KIND_LABELS[d.kind]}]`;
   const lines = [`분류: ${REPORT_KIND_LABELS[d.kind]}`, `답변받을 이메일: ${d.replyTo}`];

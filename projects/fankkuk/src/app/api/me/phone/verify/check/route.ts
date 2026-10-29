@@ -13,7 +13,7 @@ import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
 export async function POST(req: NextRequest) {
   return handlePrivateJsonPost(req, async () => {
     const viewer = await readViewer(await createRequestSupabase());
-    if (!viewer) return { status: 401, body: { message: "로그인이 필요해요." } };
+    if (!viewer) return { status: 401, body: { message: "로그인이 필요합니다." } };
     const verifier = choosePhoneVerifier(process.env);
     if (!verifier) return { status: 503, body: { message: PHONE_CHANGE_CLOSED } };
     const ticket = (await cookies()).get(PHONE_CHANGE_COOKIE)?.value;

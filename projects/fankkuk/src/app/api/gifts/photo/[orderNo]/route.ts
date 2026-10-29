@@ -35,7 +35,7 @@ async function depsOf(): Promise<GiftPhotoDeps> {
 
 function failed(e: unknown): Response {
   console.error("gift-photo: 처리 중 예외", e instanceof Error ? e.name : typeof e);
-  return Response.json({ message: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." }, { status: 500, headers: NO_STORE });
+  return Response.json({ message: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500, headers: NO_STORE });
 }
 
 export async function GET(_req: Request, { params }: Ctx) {
@@ -50,7 +50,7 @@ export async function GET(_req: Request, { params }: Ctx) {
 }
 
 export async function POST(req: Request, { params }: Ctx) {
-  if (!isSameOrigin(req.headers)) return Response.json({ message: "잘못된 요청이에요." }, { status: 403, headers: NO_STORE });
+  if (!isSameOrigin(req.headers)) return Response.json({ message: "유효하지 않은 요청입니다." }, { status: 403, headers: NO_STORE });
   const { orderNo } = await params;
   try {
     const deps = await depsOf();
@@ -58,9 +58,9 @@ export async function POST(req: Request, { params }: Ctx) {
     if (denied) return reply(denied);
     const declared = req.headers.get("content-length");
     if (declared === null || !/^\d+$/.test(declared)) {
-      return Response.json({ message: "사진 크기를 알 수 없는 요청이에요. 다시 올려 주세요." }, { status: 411, headers: NO_STORE });
+      return Response.json({ message: "이미지 크기를 확인할 수 없습니다. 파일을 다시 업로드해 주세요." }, { status: 411, headers: NO_STORE });
     }
-    if (Number(declared) > PHOTO_BODY_LIMIT) return Response.json({ message: "사진은 10MB 까지 올릴 수 있어요." }, { status: 413, headers: NO_STORE });
+    if (Number(declared) > PHOTO_BODY_LIMIT) return Response.json({ message: "사진은 최대 10MB까지 업로드할 수 있습니다." }, { status: 413, headers: NO_STORE });
     let file: Blob | null = null;
     try {
       const value = (await req.formData()).get("photo");
@@ -75,7 +75,7 @@ export async function POST(req: Request, { params }: Ctx) {
 }
 
 export async function DELETE(req: Request, { params }: Ctx) {
-  if (!isSameOrigin(req.headers)) return Response.json({ message: "잘못된 요청이에요." }, { status: 403, headers: NO_STORE });
+  if (!isSameOrigin(req.headers)) return Response.json({ message: "유효하지 않은 요청입니다." }, { status: 403, headers: NO_STORE });
   const { orderNo } = await params;
   try {
     return reply(await removeGiftPhoto(await depsOf(), orderNo));

@@ -132,7 +132,7 @@ describe("승인 창 — 시안 dlg-d 의 칸과 단계 (INV-J8)", () => {
     const d = openApprove();
     const btns = button(d, "카카오톡으로 승인하기")?.parentElement;
     // 글자까지 고정한다 — 상수에서 읽으면 약속 문장이 바뀌어도 통과한다
-    expect(btns?.previousElementSibling?.textContent).toBe("크리에이터 주소는 팬에게 공개하지 않아요. 모든 선물은 팬꾹에서 검수한 뒤 보내요.");
+    expect(btns?.previousElementSibling?.textContent).toBe("크리에이터의 주소는 팬에게 공개되지 않습니다. 팬이 보낸 선물은 팬꾹에서 검수 후 배송합니다.");
   });
 
   it("INV-S7: 서명 요청을 보내 서버가 승인을 저장한 뒤에만 「승인 완료」 — 승인 내역으로 가는 링크, 확인을 누르면 목록을 새로 읽는다", async () => {
@@ -158,33 +158,33 @@ describe("승인 창 — 시안 dlg-d 의 칸과 단계 (INV-J8)", () => {
     expect(d.querySelector("[role=alert]")?.textContent).toContain("기한이 지나 승인할 수 없어요.");
   });
 
-  it("INV-D1: 받지 않기 — 확인 단계에서 차단을 고를 수 있고, 저장된 뒤에만 「받지 않기 완료」", async () => {
+  it("INV-D1: 받지 않기 — 확인 단계에서 차단을 고를 수 있고, 저장된 뒤에만 「거절 완료」", async () => {
     sendDecline.mockResolvedValue({ kind: "ok", alsoDeclinedOrderNos: [] });
     render(HOME);
     const d = openWindow();
     click(d, "받지 않기");
-    expect(d.textContent).toContain("이 선물을 받지 않을까요?");
+    expect(d.textContent).toContain("이 선물을 거절할까요?");
     act(() => d.querySelector<HTMLInputElement>("input[type=checkbox]")?.click());
     const confirm = [...d.querySelectorAll("button")].filter((b) => b.textContent === "받지 않기").pop()!;
     await act(async () => confirm.click());
     expect(sendDecline).toHaveBeenCalledWith("apr_FC7K3M9", true);
-    expect(d.textContent).toContain("받지 않기 완료");
+    expect(d.textContent).toContain("거절 완료");
   });
 });
 
 describe("승인 창의 주소 단계 (INV-S13·P16)", () => {
-  it("INV-S13: 주소 없이 「카카오톡으로 승인」을 누르면 초점이 「주소를 입력해 주세요」로 간다", () => {
+  it("INV-S13: 주소 없이 「카카오톡으로 승인」을 누르면 초점이 「배송지 등록」로 간다", () => {
     render(NONE);
     openApprove();
-    expect(document.activeElement?.textContent).toBe("주소를 입력해 주세요");
+    expect(document.activeElement?.textContent).toBe("배송지 등록");
   });
 
-  it("INV-S13 (실패경로): 서버가 「주소 없음」으로 거부하면 초점이 「주소를 입력해 주세요」로 간다", async () => {
+  it("INV-S13 (실패경로): 서버가 「주소 없음」으로 거부하면 초점이 「배송지 등록」로 간다", async () => {
     sendApprove.mockResolvedValue({ kind: "refused", message: "팬꾹 주소를 먼저 등록해 주세요.", noAddress: true });
     render(HOME);
     const d = openApprove();
     await act(async () => button(d, "카카오톡으로 승인하기")?.click());
-    expect(document.activeElement?.textContent).toBe("주소를 입력해 주세요");
+    expect(document.activeElement?.textContent).toBe("배송지 등록");
   });
 
   it("처리 중에는 Esc(cancel)·닫기 버튼으로 창이 닫히지 않는다 — 끝나면 다시 닫을 수 있다", async () => {
@@ -207,17 +207,17 @@ describe("승인 창의 주소 단계 (INV-S13·P16)", () => {
     expect(esc2.defaultPrevented).toBe(false);
   });
 
-  it("INV-S13: 주소가 없으면 「주소를 입력해 주세요」와 입력 폼만 — 저장하면 같은 창에 이름표 한 줄과 서명 버튼이 붙고 서명 머리로 포커스가 간다", () => {
+  it("INV-S13: 주소가 없으면 「배송지 등록」와 입력 폼만 — 저장하면 같은 창에 이름표 한 줄과 서명 버튼이 붙고 서명 머리로 포커스가 간다", () => {
     render(NONE);
     const d = openApprove();
-    expect(d.textContent).toContain("주소를 입력해 주세요");
+    expect(d.textContent).toContain("배송지 등록");
     expect(button(d, "카카오톡으로 승인하기")).toBeUndefined();
     click(d, "가짜 저장");
-    expect(d.textContent).toContain("주소를 확인해 주세요");
+    expect(d.textContent).toContain("등록된 배송지 확인");
     expect(d.querySelector("[data-address-on-file]")?.textContent).toMatch(/^작업실 · /);
-    expect(d.textContent).toContain("주소를 등록했어요.");
+    expect(d.textContent).toContain("주소가 등록되었습니다.");
     expect(button(d, "카카오톡으로 승인하기")).toBeDefined();
-    expect(document.activeElement?.textContent).toContain("카카오톡으로 승인해 주세요");
+    expect(document.activeElement?.textContent).toContain("카카오톡으로 선물 승인");
   });
 
   it("INV-S13 (실패경로): 주소가 없을 때 입력을 그만두면 창이 닫힌다", () => {
@@ -227,31 +227,31 @@ describe("승인 창의 주소 단계 (INV-S13·P16)", () => {
     expect(dialog()).toBeNull();
   });
 
-  it("INV-P16: 주소가 있으면 「주소를 확인해 주세요」·이름표·등록한 날만 보이고 주소 칸은 없다 — 바로 서명할 수 있다", () => {
+  it("INV-P16: 주소가 있으면 「등록된 배송지 확인」·이름표·등록한 날만 보이고 주소 칸은 없다 — 바로 서명할 수 있다", () => {
     render(HOME);
     const d = openApprove();
-    expect(d.textContent).toContain("주소를 확인해 주세요");
-    expect(d.querySelector("[data-address-on-file]")?.textContent).toBe("집 · 10월 3일 (토)에 등록한 주소");
+    expect(d.textContent).toContain("등록된 배송지 확인");
+    expect(d.querySelector("[data-address-on-file]")?.textContent).toBe("집 · 10월 3일 (토) 등록");
     expect(d.querySelector("[data-form]")).toBeNull();
     expect(button(d, "카카오톡으로 승인하기")).toBeDefined();
   });
 
-  it("INV-S13: 「주소 바꾸기」를 누르면 「새 주소를 입력해 주세요」·서명 버튼이 사라지고, 돌아가면 다시 붙고 포커스는 「주소 바꾸기」로", () => {
+  it("INV-S13: 「주소 변경」를 누르면 「배송지 변경」·서명 버튼이 사라지고, 돌아가면 다시 붙고 포커스는 「주소 변경」로", () => {
     render(HOME);
     const d = openApprove();
-    click(d, "주소 바꾸기");
-    expect(d.textContent).toContain("새 주소를 입력해 주세요");
+    click(d, "주소 변경");
+    expect(d.textContent).toContain("배송지 변경");
     expect(button(d, "카카오톡으로 승인하기")).toBeUndefined();
     click(d, "가짜 돌아가기");
     expect(dialog()).not.toBeNull();
     expect(button(d, "카카오톡으로 승인하기")).toBeDefined();
-    expect(document.activeElement?.textContent).toBe("주소 바꾸기");
+    expect(document.activeElement?.textContent).toBe("주소 변경");
   });
 
   it("INV-S13: 바꾸던 중에 창을 닫았다 다시 열면 확인 화면부터 — 서명 버튼이 있다", () => {
     render(HOME);
     let d = openApprove();
-    click(d, "주소 바꾸기");
+    click(d, "주소 변경");
     act(() => d.querySelector<HTMLButtonElement>('button[aria-label="닫기"]')?.click());
     expect(dialog()).toBeNull();
     d = openApprove();
@@ -265,7 +265,7 @@ describe("승인 창의 주소 단계 (INV-S13·P16)", () => {
     const d = openApprove();
     await act(async () => button(d, "카카오톡으로 승인하기")?.click());
     expect(dialog()).not.toBeNull();
-    expect(d.textContent).toContain("주소를 입력해 주세요");
+    expect(d.textContent).toContain("배송지 등록");
     expect(d.querySelector("[data-form]")).not.toBeNull();
     expect(button(d, "카카오톡으로 승인하기")).toBeUndefined();
     expect(d.textContent).not.toContain("승인 완료");
@@ -274,7 +274,7 @@ describe("승인 창의 주소 단계 (INV-S13·P16)", () => {
   it("INV-S13 (실패경로): 봉인 키가 없으면 입력 폼 대신 안내만, 서명 버튼도 없다", () => {
     render(NONE, null);
     const d = openApprove();
-    expect(d.textContent).toContain("현재 주소를 안전하게 저장할 수 없어 등록이 제한됩니다.");
+    expect(d.textContent).toContain("현재 주소를 등록할 수 없습니다. 고객센터로 문의해 주세요.");
     expect(d.querySelector("[data-form]")).toBeNull();
     expect(button(d, "카카오톡으로 승인하기")).toBeUndefined();
   });
@@ -282,7 +282,7 @@ describe("승인 창의 주소 단계 (INV-S13·P16)", () => {
   it("INV-S13 (실패경로): 주소 상태를 읽지 못했으면 다시 해 달라는 안내만, 서명 버튼은 없다", () => {
     render(null);
     const d = openApprove();
-    expect(d.textContent).toContain("주소 정보를 읽지 못했어요");
+    expect(d.textContent).toContain("주소 정보를 불러오지 못했습니다");
     expect(button(d, "카카오톡으로 승인하기")).toBeUndefined();
   });
 });

@@ -24,9 +24,9 @@ export type RefundDeps = {
 const CANCEL_REASON = "팬꾹 환불";
 
 const MESSAGE = {
-  notFound: "찾을 수 없어요.",
+  notFound: "요청한 항목을 찾을 수 없습니다.",
   ownerOnly: "환불은 대표만 할 수 있어요.",
-  badRequest: "잘못된 요청이에요.",
+  badRequest: "유효하지 않은 요청입니다.",
   notRefundable: "지금 상태에서는 환불할 수 없어요.",
   alreadyDone: "이미 환불했어요.",
   inProgress: "환불을 처리하고 있어요. 잠시 뒤 새로고침해 주세요.",

@@ -11,7 +11,7 @@ import { isSameOrigin } from "@/shared/lib/http/same-origin";
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
 export async function POST(req: Request) {
-  if (!isSameOrigin(req.headers)) return Response.json({ message: "잘못된 요청이에요." }, { status: 403, headers: NO_STORE });
+  if (!isSameOrigin(req.headers)) return Response.json({ message: "유효하지 않은 요청입니다." }, { status: 403, headers: NO_STORE });
   try {
     const session = await createRequestSupabase();
     const denied = await bannerGate(session);
@@ -36,6 +36,6 @@ export async function POST(req: Request) {
     return Response.json(reply.body, { status: reply.status, headers: NO_STORE });
   } catch (e) {
     console.error("banner: 처리 중 예외", e instanceof Error ? e.name : typeof e);
-    return Response.json({ message: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." }, { status: 500, headers: NO_STORE });
+    return Response.json({ message: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500, headers: NO_STORE });
   }
 }

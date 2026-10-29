@@ -20,7 +20,7 @@ export type PublicTierPrice = { priceKrw: number; revgiftPriceKrw: number; retur
 export type PublicPriceTable = Readonly<Record<PricedTier, PublicTierPrice>>;
 
 /** 앱이 요금표를 읽은 뒤 등록하기 전에 대표가 요금을 바꿔 DB 등록 함수가 금액을 거부했을 때의 문구(INV-K3). */
-export const PRICE_CHANGED_MESSAGE = "요금이 방금 바뀌었어요. 금액을 다시 확인하고 결제해 주세요.";
+export const PRICE_CHANGED_MESSAGE = "요금이 변경되었습니다. 금액을 확인한 뒤 결제해 주세요.";
 
 /**
  * 등록 요청에 실려 오는, 화면이 보여 준 결제 금액(합계). 화면을 연 뒤 요금이 바뀌었는지 비교하는 데만 쓴다 —

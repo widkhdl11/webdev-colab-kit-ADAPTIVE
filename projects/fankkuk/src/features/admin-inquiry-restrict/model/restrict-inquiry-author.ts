@@ -16,7 +16,7 @@ const MESSAGE_OPERATOR = "운영자 계정은 제한할 수 없어요.";
 const MESSAGES = {
   limit: MESSAGE_REASON,
   conflict: "이미 바뀌었어요. 새로 고침해 주세요.",
-  failed: "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+  failed: "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
 };
 const MESSAGE_OWNER_ONLY = "문의 제한은 대표만 할 수 있어요.";
 

@@ -51,7 +51,7 @@ describe("요금표 저장 응답", () => {
 
   it("INV-K1 S1c (실패경로): 운영자가 아니면(손님 포함) 404 — 관리자 저장 주소가 있는 줄도 모르게, DB 저장 함수를 부르지 않는다", async () => {
     const { calls, client } = fakeClient(null, { operator: false, owner: false });
-    expect(await savePricing(client, { rows: ROWS })).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+    expect(await savePricing(client, { rows: ROWS })).toEqual({ status: 404, body: { message: "요청한 항목을 찾을 수 없습니다." } });
     expect(calls).toEqual([]);
   });
 

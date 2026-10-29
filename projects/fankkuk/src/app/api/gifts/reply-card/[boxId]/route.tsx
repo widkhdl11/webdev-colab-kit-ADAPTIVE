@@ -21,12 +21,12 @@ export async function GET(req: Request, ctx: { params: Promise<{ boxId: string }
   const { boxId } = await ctx.params;
   const url = new URL(req.url);
   const sizeParam = url.searchParams.get("size") ?? "square";
-  if (!BOX_ID.test(boxId) || !isCardSize(sizeParam)) return Response.json({ message: "잘못된 요청이에요." }, { status: 400, headers: NO_STORE });
+  if (!BOX_ID.test(boxId) || !isCardSize(sizeParam)) return Response.json({ message: "유효하지 않은 요청입니다." }, { status: 400, headers: NO_STORE });
   const supabase = await createRequestSupabase();
   const viewer = await readViewer(supabase);
-  if (!viewer) return Response.json({ message: "로그인이 필요해요." }, { status: 401, headers: NO_STORE });
+  if (!viewer) return Response.json({ message: "로그인이 필요합니다." }, { status: 401, headers: NO_STORE });
   const row = await readMyReplyCard(supabase, boxId);
-  if (!row) return Response.json({ message: "답장을 찾을 수 없어요." }, { status: 404, headers: NO_STORE });
+  if (!row) return Response.json({ message: "답장을 요청한 항목을 찾을 수 없습니다." }, { status: 404, headers: NO_STORE });
   const card = replyCardInput(row, { withName: url.searchParams.get("name") === "1", photoUrl: creatorPhotoUrl(readPublicStorageBase(), row.creatorPhotoPath) });
   const [font, logo, photo] = await Promise.all([readImageFont(), readLogoDataUrl(), readPhotoDataUrlCached(card.photoUrl)]);
   const { width, height } = CARD_SIZES[sizeParam];

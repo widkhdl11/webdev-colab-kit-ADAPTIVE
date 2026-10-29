@@ -41,7 +41,7 @@ const inputSchema = z.object({
 });
 
 export async function changePassword(deps: ChangePasswordDeps, body: unknown): Promise<ChangePasswordResult> {
-  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
+  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요합니다." };
   const parsed = inputSchema.safeParse(body);
   if (!parsed.success) return { ok: false, status: 400, message: "입력한 정보를 확인해 주세요." };
   const { currentPassword, newPassword, newPasswordConfirm } = parsed.data;
@@ -49,7 +49,7 @@ export async function changePassword(deps: ChangePasswordDeps, body: unknown): P
 
   const userId = deps.viewer.userId;
   const email = await loginEmailOf(deps.authAdmin, userId);
-  if (!email) return { ok: false, status: 401, message: "로그인이 필요해요." };
+  if (!email) return { ok: false, status: 401, message: "로그인이 필요합니다." };
 
   const problem = newPasswordProblem(newPassword, loginIdOfEmail(email));
   if (problem) return { ok: false, status: 400, field: "newPassword", message: problem };

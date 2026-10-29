@@ -15,18 +15,18 @@ describe("channelBadgeTitle — 마우스를 올리면 보이는 풀이", () => 
 
   it("SOOP — 아이디 그대로(@ 없이)", () => {
     expect(channelBadgeTitle({ platform: "soop", channelKey: "haru01", verifiedOn: "2026-10-14" })).toBe("haru01 · 2026.10.14 확인");
-    expect(channelBadgeTitle({ platform: "soop", channelKey: "haru01", verifiedOn: null })).toBe("haru01 · 채널 소유 확인");
+    expect(channelBadgeTitle({ platform: "soop", channelKey: "haru01", verifiedOn: null })).toBe("haru01 · 채널 소유자 확인");
   });
 
   it("치지직 — 32자 채널 ID 대신 「치지직 채널」", () => {
     const key = "0123456789abcdef0123456789abcdef";
     expect(channelBadgeTitle({ platform: "chzzk", channelKey: key, verifiedOn: "2026-10-14" })).toBe("치지직 채널 · 2026.10.14 확인");
-    expect(channelBadgeTitle({ platform: "chzzk", channelKey: key, verifiedOn: null })).toBe("치지직 채널 소유 확인");
+    expect(channelBadgeTitle({ platform: "chzzk", channelKey: key, verifiedOn: null })).toBe("치지직 채널 소유자 확인");
   });
 
-  it("(실패경로) 확인 날짜가 없거나 꼴이 틀리면 날짜 대신 「채널 소유 확인」", () => {
-    expect(channelBadgeTitle({ platform: "youtube", channelKey: "gguldanji", verifiedOn: null })).toBe("@gguldanji · 채널 소유 확인");
-    expect(channelBadgeTitle({ platform: "youtube", channelKey: "gguldanji", verifiedOn: "2026/10/14" })).toBe("@gguldanji · 채널 소유 확인");
+  it("(실패경로) 확인 날짜가 없거나 꼴이 틀리면 날짜 대신 「채널 소유자 확인」", () => {
+    expect(channelBadgeTitle({ platform: "youtube", channelKey: "gguldanji", verifiedOn: null })).toBe("@gguldanji · 채널 소유자 확인");
+    expect(channelBadgeTitle({ platform: "youtube", channelKey: "gguldanji", verifiedOn: "2026/10/14" })).toBe("@gguldanji · 채널 소유자 확인");
   });
 
   it("「공식·인증된·검증된·안전한」은 쓰지 않는다(design-rules 6절)", () => {

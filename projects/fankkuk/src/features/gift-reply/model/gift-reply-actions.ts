@@ -21,15 +21,15 @@ const confirmSchema = z
 
 // DB 오류 코드 → 사람이 읽는 문구. 남의 상자와 없는 상자는 같은 404 로(있는지 알리지 않는다).
 const MESSAGES: Readonly<Record<string, { status: Refusal["status"]; message: string }>> = {
-  "42501": { status: 401, message: "로그인이 필요해요." },
-  P0002: { status: 404, message: "상자를 찾을 수 없어요. 새로 고침해 주세요." },
-  P0100: { status: 400, message: "아직 출고되지 않은 상자예요. 출고된 뒤에 받았어요를 남길 수 있어요." },
-  P0101: { status: 400, message: "이미 답장한 상자예요. 답장은 고칠 수 없고 지울 수만 있어요." },
-  P0102: { status: 400, message: "지운 답장은 다시 쓸 수 없어요." },
-  P0103: { status: 400, message: "지울 답장이 없어요. 새로 고침해 주세요." },
-  P0081: { status: 400, message: "한 줄에 쓸 수 없는 말이 들어 있어요." },
-  P0082: { status: 400, message: "한 줄에 전화번호·이메일·인터넷 주소는 쓸 수 없어요." },
-  "22023": { status: 400, message: "입력을 확인해 주세요." },
+  "42501": { status: 401, message: "로그인이 필요합니다." },
+  P0002: { status: 404, message: "상자를 찾을 수 없습니다. 새로고침해 주세요." },
+  P0100: { status: 400, message: "출고 후 수령을 확인할 수 있습니다." },
+  P0101: { status: 400, message: "이미 답장한 상자입니다. 답장은 수정할 수 없고 삭제만 가능합니다." },
+  P0102: { status: 400, message: "삭제한 답장은 다시 작성할 수 없습니다." },
+  P0103: { status: 400, message: "삭제할 답장이 없습니다. 새로고침해 주세요." },
+  P0081: { status: 400, message: "사용할 수 없는 표현이 포함되어 있습니다." },
+  P0082: { status: 400, message: "전화번호·이메일·인터넷 주소는 입력할 수 없습니다." },
+  "22023": { status: 400, message: "입력 내용을 확인해 주세요." },
 };
 
 // 팬의 답장 공개 저장 — 팬 화면 문구(문구 3 다듬은본). 상태 코드는 위 표와 같다
@@ -46,8 +46,8 @@ function refusalOf(code: string, fn: string): Refusal {
 }
 
 function creatorOnly(viewer: Viewer | null): Refusal | null {
-  if (!viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
-  if (viewer.role !== "creator") return { ok: false, status: 403, message: "선물을 받은 크리에이터만 할 수 있어요." };
+  if (!viewer) return { ok: false, status: 401, message: "로그인이 필요합니다." };
+  if (viewer.role !== "creator") return { ok: false, status: 403, message: "선물을 받은 크리에이터만 이용할 수 있습니다." };
   return null;
 }
 
@@ -58,7 +58,7 @@ export async function confirmGiftBox(deps: GiftReplyDeps, body: unknown): Promis
   const denied = creatorOnly(deps.viewer);
   if (denied) return denied;
   const parsed = confirmSchema.safeParse(body);
-  if (!parsed.success) return { ok: false, status: 400, message: parsed.error.issues[0]?.message ?? "입력을 확인해 주세요." };
+  if (!parsed.success) return { ok: false, status: 400, message: parsed.error.issues[0]?.message ?? "입력 내용을 확인해 주세요." };
   const { data, error } = await deps.client.rpc("confirm_gift_box", { p_box_id: parsed.data.boxId, p_phrase: parsed.data.phrase, p_line: parsed.data.line });
   if (error) return refusalOf(error.code, "confirm_gift_box");
   const result = z.enum(["received", "replied", "unchanged"]).safeParse(data);
@@ -71,7 +71,7 @@ export async function deleteGiftReply(deps: GiftReplyDeps, body: unknown): Promi
   const denied = creatorOnly(deps.viewer);
   if (denied) return denied;
   const parsed = z.object({ boxId }).safeParse(body);
-  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청이에요." };
+  if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청입니다." };
   const { error } = await deps.client.rpc("delete_gift_reply", { p_box_id: parsed.data.boxId });
   if (error) return refusalOf(error.code, "delete_gift_reply");
   return { ok: true };

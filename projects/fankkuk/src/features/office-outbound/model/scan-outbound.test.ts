@@ -108,7 +108,7 @@ describe("출고 (office-workflow INV-W1·W3·W8)", () => {
     const { calls, client } = fakeClient({});
     expect(await scanOutbound(deps(client, giftPrinter({ kind: "failed" })), { kind: "print_label", qr: "Q-000123" })).toEqual({
       status: 500,
-      body: { message: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." },
+      body: { message: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." },
     });
     expect(calls).toEqual([]);
   });
@@ -218,7 +218,7 @@ describe("출고 (office-workflow INV-W1·W3·W8)", () => {
 
   it("INV-W1 (실패경로): 운영자가 아니면 404 — 쓰기 함수를 부르지 않는다", async () => {
     const { calls, client } = fakeClient({}, { operator: false, owner: false });
-    expect(await scanOutbound(deps(client), { kind: "print_return", qr: "Q-000123" })).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+    expect(await scanOutbound(deps(client), { kind: "print_return", qr: "Q-000123" })).toEqual({ status: 404, body: { message: "요청한 항목을 찾을 수 없습니다." } });
     expect(calls).toEqual([]);
   });
 

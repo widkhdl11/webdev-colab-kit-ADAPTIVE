@@ -80,7 +80,7 @@ export function InquiryForm({ signedIn, restricted = false }: { signedIn: boolea
   if (restricted) {
     return (
       <p className={s.error} role="note">
-        {MESSAGE_RESTRICTED} 지난 문의와 답변은 아래 「내 문의」에서 볼 수 있어요.
+        {MESSAGE_RESTRICTED} 기존 문의와 답변은 ‘내 문의’에서 확인할 수 있습니다.
       </p>
     );
   }
@@ -98,7 +98,7 @@ export function InquiryForm({ signedIn, restricted = false }: { signedIn: boolea
             aria-describedby={describedBy("kind")}
             onChange={(e) => edit("kind", e.target.value)}
           >
-            <option value="">분류를 골라 주세요</option>
+            <option value="">분류 선택</option>
             {INQUIRY_KINDS.map((k) => (
               <option key={k} value={k}>
                 {INQUIRY_KIND_LABELS[k]}
@@ -125,7 +125,7 @@ export function InquiryForm({ signedIn, restricted = false }: { signedIn: boolea
           onChange={(e) => edit("orderNo", e.target.value)}
         />
         <p className="hint" id="q-order-h">
-          선물에 관한 문의라면 주문번호를 함께 입력해 주세요. 더 빠르게 확인할 수 있어요.
+          선물에 관한 문의라면 주문번호를 함께 입력해 주세요. 더 빠르게 확인할 수 있습니다.
         </p>
       </div>
       <div className="field">
@@ -164,9 +164,9 @@ export function InquiryForm({ signedIn, restricted = false }: { signedIn: boolea
             </p>
           )}
         </div>
-        <div role="status">{done && <p className={s.done}>문의를 남겼어요. 답변이 달리면 아래 「내 문의」에서 볼 수 있어요.</p>}</div>
+        <div role="status">{done && <p className={s.done}>문의가 등록되었습니다. 답변은 ‘내 문의’에서 확인할 수 있습니다.</p>}</div>
         <button type="submit" className="btn btn--block" aria-disabled={busy}>
-          {busy ? "보내는 중…" : "문의 남기기"}
+          {busy ? "등록 중…" : "문의 등록"}
         </button>
       </div>
     </form>

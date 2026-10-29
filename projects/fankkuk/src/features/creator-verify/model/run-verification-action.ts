@@ -112,7 +112,7 @@ async function sessionCall(deps: VerificationActionDeps, fn: string, args: Recor
 }
 
 export async function runVerificationAction(deps: VerificationActionDeps, body: unknown): Promise<JsonReply> {
-  if (!deps.viewer) return { status: 401, body: { message: "로그인이 필요해요." } };
+  if (!deps.viewer) return { status: 401, body: { message: "로그인이 필요합니다." } };
   if (deps.viewer.role !== "creator") return { status: 403, body: { message: "크리에이터 계정만 이용할 수 있습니다." } };
   const shaped = bodyShape.safeParse(body);
   if (!shaped.success) return { status: 400, body: { message: "유효하지 않은 요청입니다. 페이지를 새로고침한 뒤 다시 시도해 주세요." } };

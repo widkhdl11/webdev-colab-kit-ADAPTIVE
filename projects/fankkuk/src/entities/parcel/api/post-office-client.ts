@@ -7,7 +7,7 @@ export type OfficePostOutcome =
   | { kind: "ok"; body: Record<string, unknown> }
   | { kind: "failed"; status: number; message: string; reason: OfficeRejectReason | null };
 
-const FALLBACK = "처리하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const FALLBACK = "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 function reasonOf(value: unknown): OfficeRejectReason | null {
   return OFFICE_REJECT_REASONS.find((r) => r === value) ?? null;

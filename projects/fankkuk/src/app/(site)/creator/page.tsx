@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
 // 크리에이터 메인 — 로그인한 크리에이터의 첫 화면(시안 v21-addendum3/cre-home.html). 맨 앞 프로필 구간은 본인 읽기 —
 // 공개 이름·소개·팬덤 이름·테마 색(my_creator_settings, creator-link INV-E13)·프로필 사진(my_creator_link)·배경사진·심볼(my_creator_look). 본인 확인 전에도 나온다.
 // 크리에이터 처리할 일(my_creator_action_items — 사이드바 숫자와 바로가기 「처리할 일」이 같은 결과, action-center INV-J6)·진행 중인 선물 수(선물 현황과 같은 읽기 my_gift_progress — 머리 「진행 중 N건」과 같은 값, action-center INV-J9)·열람 기록(my_access_log)·공지(list_notices)·
-// 내가 보낸 선물(my_gifts — 로그인한 사람이 보낸 주문)은 DB. 모두 인자 없이 로그인 토큰의 사람 것만 돌려준다.
+// 보낸 선물(my_gifts — 로그인한 사람이 보낸 주문)은 DB. 모두 인자 없이 로그인 토큰의 사람 것만 돌려준다.
 // 광고 배너는 공개 읽기 한 번 — 본문 맨 위(design-rules 16절 ②), 못 읽으면 칸만 없다(banners INV-Y8).
 // 팬은 팬 메인으로, 로그인하지 않았으면 로그인으로 보낸다.
 export default async function Page() {
@@ -56,7 +56,7 @@ export default async function Page() {
   const publicHref = publicCreator ? creatorPagePath({ id: publicCreator.creatorId, handle: publicCreator.handle }) : publicCard ? creatorPagePath(publicCard) : null;
   // 같은 읽기의 순서·기존 단계 표시를 그대로 쓰며 홈에는 앞 세 줄만 보인다.
   const progressRows: HomeProgressRow[] = progress ? [
-    ...progress.received.slice(0, 3).map((row) => ({ id: row.orderNo, title: `${row.nickname}님이 보내신 선물`, description: row.itemKind, status: PROGRESS_STEP_LABEL[receivedStepOf(row).key] })),
+    ...progress.received.slice(0, 3).map((row) => ({ id: row.orderNo, title: `${row.nickname}님이 보낸 선물`, description: row.itemKind, status: PROGRESS_STEP_LABEL[receivedStepOf(row).key] })),
     ...progress.sent.flatMap((group) => group.rows).slice(0, Math.max(0, 3 - progress.received.length)).map((row) => ({ id: row.shareId, title: `${row.nickname}님께 보낸 선물`, description: row.orderNo, status: PROGRESS_STEP_LABEL[sentStepOf(row).key] })),
   ] : [];
   const notices = allNotices

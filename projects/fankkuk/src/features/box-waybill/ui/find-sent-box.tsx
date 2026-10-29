@@ -52,7 +52,7 @@ export function FindSentBox({
     const raw = new FormData(form).get("waybill");
     const parsed = parseWaybillInput(typeof raw === "string" ? raw : "");
     if (!carrier) {
-      setError({ message: "택배사를 골라 주세요.", field: "carrier" });
+      setError({ message: "택배사를 선택해 주세요.", field: "carrier" });
       carrierSelect.current?.focus();
       return;
     }
@@ -63,7 +63,7 @@ export function FindSentBox({
     }
     const fan = candidates.find((c) => c.shareId === picked);
     if (!fan) {
-      setError({ message: "어느 팬에게 보낸 상자인지 골라 주세요.", field: "fan" });
+      setError({ message: "상자를 받을 팬을 선택해 주세요.", field: "fan" });
       fanGroup.current?.querySelector("input")?.focus();
       return;
     }
@@ -82,7 +82,7 @@ export function FindSentBox({
         else router.refresh();
         return;
       }
-      setResult({ kind: "no", message: typeof outcome.body.message === "string" ? outcome.body.message : "맞는 상자를 못 찾았어요." });
+      setResult({ kind: "no", message: typeof outcome.body.message === "string" ? outcome.body.message : "일치하는 상자가 없습니다. 송장번호와 택배사를 확인해 주세요." });
       return;
     }
     setError({ message: outcome.message, field: null });
@@ -96,7 +96,7 @@ export function FindSentBox({
             <circle cx="12" cy="12" r="10" />
             <path d="m16 9-5.5 5.5L8 12" />
           </svg>
-          사무실에 도착했어요
+          상자 확인 완료
         </p>
         <p className={d.note}>{result.nickname}님 선물</p>
       </div>
@@ -128,7 +128,7 @@ export function FindSentBox({
               aria-invalid={error?.field === "carrier" ? true : undefined}
               aria-describedby={error?.field === "carrier" ? `${id}-error` : undefined}
             >
-              <option value="">고르세요</option>
+              <option value="">택배사 선택</option>
               {CARRIERS.map((c) => (
                 <option key={c} value={c}>
                   {CARRIER_LABEL[c]}
@@ -148,14 +148,14 @@ export function FindSentBox({
               type="text"
               inputMode="numeric"
               autoComplete="off"
-              placeholder="숫자만 입력해요"
+              placeholder="숫자만 입력"
               aria-invalid={error?.field === "waybill" ? true : undefined}
               aria-describedby={error?.field === "waybill" ? `${id}-error` : undefined}
             />
           </div>
         </div>
         <fieldset ref={fanGroup} className={d.fs}>
-          <legend className="label">어느 팬에게 보낸 상자인가요?</legend>
+          <legend className="label">받는 팬 선택</legend>
           <div className={d.fans}>
             {candidates.map((c) => (
               <label key={c.shareId} className={d.opt}>
@@ -185,13 +185,13 @@ export function FindSentBox({
         ) : null}
         {result?.kind === "no" ? (
           <div ref={resultRef} tabIndex={-1} role="status">
-            <p className="t-strong">아직 못 찾았어요</p>
+            <p className="t-strong">일치하는 상자 없음</p>
             <p className="t-meta">{result.message}</p>
           </div>
         ) : null}
         <div className={d.btns}>
           <button className="btn" type="submit" aria-disabled={busy}>
-            {busy ? "찾는 중…" : "선택 완료"}
+            {busy ? "찾는 중…" : "상자 찾기"}
           </button>
         </div>
       </form>

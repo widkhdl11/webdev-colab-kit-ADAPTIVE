@@ -329,20 +329,20 @@ describe("v41 INV-S9: 승인 전 표시 — 상태 판 배지 · 출고 아래 �
   const BEFORE_SEND = { approved_at: null };
   const AFTER_SEND = { approved_at: null, fan_send_ack_at: "2026-10-22T02:00:00+00:00" };
 
-  it("INV-S9: 먼저 보내기 전 — 배지는 「하루님 승인 대기」 하나, 큰 줄은 「하루님이 아직 승인하지 않았어요」", () => {
+  it("INV-S9: 먼저 보내기 전 — 배지는 「하루님 승인 대기」 하나, 큰 줄은 「크리에이터 승인 대기 중입니다」", () => {
     render({ view: viewOf(BEFORE_SEND), boxes: [box({ addressCode: null, sendAckNeeded: true })] });
     expect(badges()).toEqual(["하루님 승인 대기"]);
-    expect(host.querySelector("#g-title")?.closest("section")?.textContent).toContain("하루님이 아직 승인하지 않았어요");
+    expect(host.querySelector("#g-title")?.closest("section")?.textContent).toContain("크리에이터 승인 대기 중입니다");
   });
 
   it("INV-S9: 먼저 보내기 뒤에도 승인 전이면 「보내 주세요」 옆에 「하루님 승인 대기」가 남는다", () => {
     render({ view: viewOf(AFTER_SEND) });
-    expect(badges()).toEqual(["보내 주세요", "하루님 승인 대기"]);
+    expect(badges()).toEqual(["발송 필요", "하루님 승인 대기"]);
   });
 
   it("INV-S9 (실패경로): 승인된 선물에는 승인 대기 배지가 없다", () => {
     render();
-    expect(badges()).toEqual(["보내 주세요"]);
+    expect(badges()).toEqual(["발송 필요"]);
   });
 
   it("INV-S9: 검수 뒤 승인 대기는 이름 붙은 배지 하나 — 「승인 대기」가 두 번 나오지 않는다", () => {
@@ -390,7 +390,7 @@ describe("v41 INV-S9: 승인 전 표시 — 상태 판 배지 · 출고 아래 �
 
   it.each([
     ["거절", { status: "rejected", approved_at: null }],
-    ["기한 지남", { status: "expired", approved_at: null }],
+    ["기한 만료", { status: "expired", approved_at: null }],
     ["취소", { status: "canceled", approved_at: null }],
   ])("INV-S9 (실패경로): 완료된 선물(%s)에는 승인 칸·「승인 필요」·승인 대기 배지가 없다 — 선물 정보 카드는 그대로", (_n, over) => {
     render({ view: viewOf(over), boxes: [box({ addressCode: null })], payment: PAYMENT });
@@ -444,8 +444,8 @@ describe("INV-S6 S6c: 승인 기한(결제 완료 + 168시간)이 지났는데 �
 
   it("INV-S6 S6c (실패경로): 기한 직후에는 「기한 지남」 — 승인 대기 배지·노란 칸·「승인 필요」·「먼저 보내기」·팬꾹 주소가 없다", () => {
     render({ now: JUST_AFTER, view: viewOf({ approved_at: null, fan_send_ack_at: "2026-10-22T02:00:00+00:00" }), payment: PAYMENT });
-    expect(badges()).toEqual(["기한 지남"]);
-    expect(host.querySelector("#g-title")?.closest("section")?.textContent).toContain("기간이 지나 반려됐어요");
+    expect(badges()).toEqual(["기한 만료"]);
+    expect(host.querySelector("#g-title")?.closest("section")?.textContent).toContain("승인 기한이 지나 자동 반려되었습니다");
     expect(host.querySelector("main [data-approval-box]")).toBeNull();
     expect(host.querySelector("main [data-approval-needed]")).toBeNull();
     expect(host.querySelector("main [data-box-address]")).toBeNull();
@@ -455,7 +455,7 @@ describe("INV-S6 S6c: 승인 기한(결제 완료 + 168시간)이 지났는데 �
 
   it("INV-S6 S6c (실패경로): 승인된 주문은 기한이 지나도 그대로 진행 중", () => {
     render({ now: JUST_AFTER });
-    expect(badges()).toEqual(["보내 주세요"]);
+    expect(badges()).toEqual(["발송 필요"]);
     expect(host.querySelector("main [data-box-address]")).not.toBeNull();
   });
 });

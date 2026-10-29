@@ -38,7 +38,7 @@ describe("보낼 수 없는 물품 저장 (INV-K9)", () => {
 
   it("INV-K9 S9b (실패경로): 운영자가 아니면(손님·크리에이터) 404 — 쓰기 함수를 부르지 않는다", async () => {
     const { calls, client } = fakeClient({ error: null }, { operator: false, owner: false });
-    expect(await saveProhibited(client, { kind: "add", name: "칼", description: "" })).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+    expect(await saveProhibited(client, { kind: "add", name: "칼", description: "" })).toEqual({ status: 404, body: { message: "요청한 항목을 찾을 수 없습니다." } });
     expect(calls).toEqual([]);
   });
 

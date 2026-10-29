@@ -22,7 +22,7 @@ export function LandingPage({ prices, newest, looks, notices, banner = null }: P
   return (
     <RoleHome hero={<HeroBand />} tiles={guestTiles(prices)} tilesLabel="바로가기" banner={banner}>
         <IntroSlot />
-        {newest.length > 0 ? <CreatorCardsSlot id="newest" title="새로 들어온 크리에이터" more={{ href: "/creators", label: "크리에이터 찾기" }} creators={newest} looks={looks} scroll /> : null}
+        {newest.length > 0 ? <CreatorCardsSlot id="newest" title="신규 크리에이터" more={{ href: "/creators", label: "크리에이터 찾기" }} creators={newest} looks={looks} scroll /> : null}
         <PriceSlot prices={prices} joined />
         <NoticesSlot notices={notices} />
     </RoleHome>

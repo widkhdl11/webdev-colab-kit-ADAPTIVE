@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   const headers = { "Cache-Control": "no-store" };
   if (!isSameOriginJson(req.headers)) {
     return NextResponse.json(
-      { message: "잘못된 요청이에요." },
+      { message: "유효하지 않은 요청입니다." },
       { status: 403, headers },
     );
   }

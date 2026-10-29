@@ -513,7 +513,7 @@ describe("보낸 선물 카드의 하늘 면 — 지금 할 일 줄이 있는 �
     const r = await draw(GiftsRoute());
     const p = ongoingPanel();
     const send = row(p, "FC-SEND1")!;
-    expect(send.querySelector(".tag")?.textContent).toBe("보내 주세요");
+    expect(send.querySelector(".tag")?.textContent).toBe("발송 필요");
     expect(send.hasAttribute("data-hi")).toBe(false);
     expect(send.querySelector("a")?.getAttribute("href")).toBe("/gifts/FC-SEND1");
     expect(send.querySelector("[data-todo-line]")).toBeNull();

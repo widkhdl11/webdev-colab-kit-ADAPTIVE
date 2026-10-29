@@ -74,20 +74,20 @@ describe("보낸 역조공 화면 — 「내 상자 찾기」는 선물 현황�
   it("INV-J10: 선물 현황 화면이 생긴 뒤에는 보낸 역조공 줄에 「내 상자 찾기」가 없다 — 줄(팬 닉네임·상태)은 그대로", () => {
     render();
     expect(findButtons()).toHaveLength(0);
-    const names = [...host.querySelectorAll("ul[aria-label$=\"팬별 지금 상태\"] > li")].map((li) => li.querySelector("p")?.textContent);
+    const names = [...host.querySelectorAll("ul[aria-label$=\"팬별 상태\"] > li")].map((li) => li.querySelector("p")?.textContent);
     expect(names).toEqual(["모카님", "라온님"]);
   });
 
   it("화면 리뷰 U6: 사무실에 온 상자는 용어집 4절 라벨 「도착 완료」 — 「입고됨」이라 쓰지 않는다", () => {
     render();
-    const fold = [...host.querySelectorAll("details")].find((d) => d.querySelector(":scope > summary")?.textContent === "송장번호 적기 (선택)")!;
+    const fold = [...host.querySelectorAll("details")].find((d) => d.querySelector(":scope > summary")?.textContent === "송장번호 등록 (선택)")!;
     expect(fold.textContent).toContain("도착 완료");
     expect(host.textContent).not.toContain("입고됨");
   });
 
   it("역조공 수락 라벨(용어집 7절): 줄 상태·묶음 요약·요약 칸은 「수락 대기」 — 「기다리는 중」을 쓰지 않는다", () => {
     render();
-    const tags = [...host.querySelectorAll("ul[aria-label$=\"팬별 지금 상태\"] > li")].map((li) => li.querySelector("[class*=tag]")?.textContent);
+    const tags = [...host.querySelectorAll("ul[aria-label$=\"팬별 상태\"] > li")].map((li) => li.querySelector("[class*=tag]")?.textContent);
     expect(tags).toEqual(["수락 대기", "수락 대기"]);
     expect(host.textContent).toContain("팬 2명 · 수락 대기 2명");
     // 맨 위 상태 띠(design-rules 25절 — 오른쪽 요약 칸을 대신한다): 라벨 세 개와 몫마다 한 칸

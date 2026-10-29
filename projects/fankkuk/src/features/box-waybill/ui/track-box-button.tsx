@@ -19,7 +19,7 @@ export function TrackBoxButton({ meta, label, className = "btn btn--line" }: { m
         배송 조회
       </button>
       {open ? (
-        <BottomSheet open title="도착하지 않았어요" meta={meta} onClose={() => setOpen(false)}>
+        <BottomSheet open title="배송 조회" meta={meta} onClose={() => setOpen(false)}>
           <TrackBoxForm />
         </BottomSheet>
       ) : null}
@@ -43,7 +43,7 @@ function TrackBoxForm() {
             택배사
           </label>
           <select ref={carrierSelect} id={`${id}-cr`} className="input" value={carrier} onChange={(e) => setCarrier(isCarrier(e.currentTarget.value) ? e.currentTarget.value : "")}>
-            <option value="">고르세요</option>
+            <option value="">택배사 선택</option>
             {TRACKABLE_CARRIERS.map((c) => (
               <option key={c} value={c}>
                 {CARRIER_LABEL[c]}
@@ -60,7 +60,7 @@ function TrackBoxForm() {
             className="input"
             type="text"
             inputMode="numeric"
-            placeholder="숫자만 입력해요"
+            placeholder="숫자만 입력"
             autoComplete="off"
             value={waybill}
             onChange={(e) => setWaybill(e.currentTarget.value)}

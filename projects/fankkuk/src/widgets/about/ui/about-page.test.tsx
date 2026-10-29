@@ -43,7 +43,7 @@ describe("AboutPage", () => {
       expect(li.querySelector("h3")?.textContent).toBeTruthy();
     }
     expect(sec?.querySelector(".card")).toBeNull();
-    expect(items[0]?.querySelector("p")?.textContent).toBe(PROMISE.addressFan);
+    expect(items[0]?.querySelector("p")?.textContent).toBe(`승인 후에도 ${PROMISE.addressFan}`);
   });
 
   it("검수는 네 칸 한 줄 목록이고 넷째 칸이 개봉 검수(약속 상수 문장)다", () => {

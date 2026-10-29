@@ -43,7 +43,7 @@ type Props = {
 export const CREATOR_HOME_LOG_ROWS = 1;
 const ACTION_LABEL: Record<CreatorActionItem["kind"], string> = {
   approval: "승인 대기", bluetooth: "확인할 선물", tracker: "확인할 선물", unconfirmed: "내 상자 찾기",
-  difference: "추가 결제", missing_box: "내 상자 찾기", return_address: "반송 주소 확인", unpaid: "결제를 마치지 않은 선물",
+  difference: "추가 결제", missing_box: "내 상자 찾기", return_address: "반송 주소 확인", unpaid: "결제 대기",
 };
 const countNote = (n: number | null) => n === null ? "" : `${n}건`;
 
@@ -67,8 +67,8 @@ export function CreatorHomePage({ profile, publicHref = null, actionCount, actio
   const tiles: FrontTile[] = [
     { href: CREATOR_ACTION_CENTER_HREF, label: "지금 할 일", note: countNote(actionCount), icon: "icon-approve" },
     { href: CREATOR_GIFT_PROGRESS_HREF, label: "선물 현황", note: ongoingCount === null ? "" : `진행 중 ${ongoingCount}건`, icon: "icon-gift" },
-    { href: "/gifts", label: "내가 보낸 선물", note: `${sentGifts.length}개`, icon: "icon-truck" },
-    { href: "/creator/log", label: "열람 기록", note: "내 정보 열람을 확인해요", icon: "icon-help" },
+    { href: "/gifts", label: "보낸 선물", note: `${sentGifts.length}개`, icon: "icon-truck" },
+    { href: "/creator/log", label: "주소 열람 기록", note: "배송지 열람 내역", icon: "icon-help" },
   ];
   const actionRows: HomeProgressRow[] = (actions ?? []).map((item) => ({
     id: `${item.kind}-${item.orderNo}-${"boxId" in item ? item.boxId ?? "" : "shareId" in item ? item.shareId ?? "" : "boxSeq" in item ? item.boxSeq : ""}`,
@@ -90,15 +90,15 @@ export function CreatorHomePage({ profile, publicHref = null, actionCount, actio
     </div>
   );
   return (
-    <RoleHome hero={<HeroBand title={`${profile.name}님, 반가워요`} eyebrow="팬들이 전한 마음을 확인해보세요" control={control} actions={heroActions} />} tiles={tiles} tilesLabel="내 바로가기" banner={banner}>
+    <RoleHome hero={<HeroBand title={`${profile.name}님, 반가워요`} eyebrow="팬들이 보낸 선물과 승인 요청을 확인해 주세요" control={control} actions={heroActions} />} tiles={tiles} tilesLabel="내 바로가기" banner={banner}>
       <SlotSection id="creator-actions" title="지금 할 일" meta={countNote(actionCount)} more={{ href: CREATOR_ACTION_CENTER_HREF, label: "지금 할 일 모두 보기" }}>
-        {actionRows.length > 0 ? <SummaryRows rows={actionRows} href={CREATOR_ACTION_CENTER_HREF} /> : <p className="t-meta">{actionCount === null ? "지금 할 일을 불러오지 못했어요." : "지금 할 일이 없어요."}</p>}
+        {actionRows.length > 0 ? <SummaryRows rows={actionRows} href={CREATOR_ACTION_CENTER_HREF} /> : <p className="t-meta">{actionCount === null ? "지금 할 일을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." : "현재 처리할 일이 없습니다."}</p>}
       </SlotSection>
       <SlotSection id="creator-progress" title="진행 중인 선물" meta={countNote(ongoingCount)} more={{ href: CREATOR_GIFT_PROGRESS_HREF, label: "선물 현황 모두 보기" }}>
-        {progressRows.length > 0 ? <SummaryRows rows={progressRows} href={CREATOR_GIFT_PROGRESS_HREF} /> : <p className="t-meta">{ongoingCount === null ? "선물 현황을 불러오지 못했어요." : "지금 진행 중인 선물이 없어요."}</p>}
+        {progressRows.length > 0 ? <SummaryRows rows={progressRows} href={CREATOR_GIFT_PROGRESS_HREF} /> : <p className="t-meta">{ongoingCount === null ? "선물 현황을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." : "진행 중인 선물이 없습니다."}</p>}
       </SlotSection>
       <SlotSection id="creator-log" title="최근 열람 기록" more={{ href: "/creator/log", label: "열람 기록 모두 보기" }}>
-        {accessLog.length > 0 ? <SummaryRows href="/creator/log" rows={accessLog.map((entry) => ({ id: `${entry.orderNo}-${entry.at}-${entry.printNo}`, title: "내 배송 정보가 열렸어요", description: `${entry.orderNo} · ${formatDateTime(entry.at)}`, status: printLabelOf(entry.printNo, entry.released).text }))} /> : <p className="t-meta">아직 주소가 열린 적이 없어요.</p>}
+        {accessLog.length > 0 ? <SummaryRows href="/creator/log" rows={accessLog.map((entry) => ({ id: `${entry.orderNo}-${entry.at}-${entry.printNo}`, title: "배송지 열람 기록", description: `${entry.orderNo} · ${formatDateTime(entry.at)}`, status: printLabelOf(entry.printNo, entry.released).text }))} /> : <p className="t-meta">주소 열람 기록이 없습니다.</p>}
         <p className="t-meta">{NO_ADDRESS_ASK}</p>
       </SlotSection>
       <NoticesSlot notices={notices} />

@@ -21,7 +21,7 @@ import { DocTocBar } from "./doc-toc-bar";
 import { useDocNav } from "./use-doc-nav";
 import d from "./doc-page.module.css";
 
-// 자주 묻는 질문(/faq) — 머리 + 「먼저 알아 두세요」 판 · 검색 · 분류 칩은 문서형 공통 부품(design-rules 28절, 문서형 C4·C5·C7),
+// 자주 묻는 질문(/faq) — 머리 + 「핵심 안내」 판 · 검색 · 분류 칩은 문서형 공통 부품(design-rules 28절, 문서형 C4·C5·C7),
 // 접기 목록은 공지사항·고객센터와 같은 .acc(<details> 라 스크립트 없이 열고 닫힌다).
 // 질문마다 고정 주소(#id) — 주소로 들어오거나 검색으로 가면 그 질문이 펼쳐진다(C8).
 
@@ -80,7 +80,7 @@ export function FaqPage({
             <h1 className={d.title} id="page-title">
               자주 묻는 질문
             </h1>
-            <p className={d.lead}>팬꾹을 쓰면서 자주 묻는 것을 모았어요.</p>
+            <p className={d.lead}>이용 방법·요금·배송에 관한 질문과 답변입니다.</p>
           </div>
           {updated ? (
             <p className={d.updated}>
@@ -89,7 +89,7 @@ export function FaqPage({
             </p>
           ) : null}
           <DocSummary
-            heading="먼저 알아 두세요"
+            heading="핵심 안내"
             lines={summary}
             targets={targets}
             onGo={(id) => nav.goTo(id, { push: true })}
@@ -151,7 +151,7 @@ export function FaqPage({
                       </svg>
                     </summary>
                     <div className="ans">
-                      <p>
+                      <p style={{ whiteSpace: "pre-line" }}>
                         <Marked text={f.a} words={nav.words} />
                       </p>
                     </div>

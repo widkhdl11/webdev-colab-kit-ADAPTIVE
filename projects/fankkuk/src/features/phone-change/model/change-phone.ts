@@ -27,7 +27,7 @@ export type ChangePhoneResult = { ok: true } | { ok: false; status: 400 | 401 | 
 export const PHONE_CHANGE_CLOSED = "현재 휴대폰 번호를 변경할 수 없습니다.";
 export const VERIFY_AGAIN = "본인 확인을 다시 시도해 주세요.";
 export const SAME_AS_CURRENT_PHONE = "현재 번호와 같습니다. 새 휴대폰 번호를 입력해 주세요.";
-const LOGIN_NEEDED = "로그인이 필요해요.";
+const LOGIN_NEEDED = "로그인이 필요합니다.";
 const CHECK_PHONE = "휴대폰 번호를 확인해 주세요.";
 
 const inputSchema = z.object({

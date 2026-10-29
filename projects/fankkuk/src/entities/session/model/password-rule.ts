@@ -6,7 +6,7 @@ export const PASSWORD_MIN = 8;
 export const PASSWORD_KINDS = 3;
 export const PASSWORD_MAX = 72;
 
-export const PASSWORD_TOO_SHORT = `비밀번호를 ${PASSWORD_MIN}자 이상 입력해 주세요.`;
+export const PASSWORD_TOO_SHORT = `비밀번호는 ${PASSWORD_MIN}자 이상 입력해 주세요.`;
 export const PASSWORD_TOO_LONG = `비밀번호는 최대 ${PASSWORD_MAX}자까지 입력할 수 있습니다.`;
 export const PASSWORD_WEAK = "영문·숫자·특수문자를 모두 포함해 주세요.";
 // 화면 안내 줄 — 가운뎃점 덩어리는 \u2060 로 붙인다(design-rules 29절 줄바꿈 1)

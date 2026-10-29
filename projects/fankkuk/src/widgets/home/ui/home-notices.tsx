@@ -18,7 +18,7 @@ export function HomeNotices({ notices }: { notices: readonly HomeNotice[] }) {
         </Link>
       </div>
       {notices.length === 0 ? (
-        <p className="empty">아직 공지가 없어요.</p>
+        <p className="empty">등록된 공지사항이 없습니다.</p>
       ) : (
         <ul className="nlist">
           {notices.map((n) => (

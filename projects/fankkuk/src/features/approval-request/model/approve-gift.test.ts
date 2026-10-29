@@ -59,7 +59,7 @@ describe("승인 저장 (approval-signature INV-S11·S12)", () => {
     expect(await approveGift({ admin: f.admin, viewer: HARU, signer }, { requestId: "apr_FCA" })).toEqual({
       ok: false,
       status: 404,
-      message: "찾을 수 없는 요청이에요.",
+      message: "승인 요청을 찾을 수 없습니다.",
     });
     expect(f.calls.map((c) => c.fn)).toEqual(["approval_payload_of"]);
   });
@@ -89,7 +89,7 @@ describe("승인 저장 (approval-signature INV-S11·S12)", () => {
     expect(await approveGift({ admin: fakeAdmin(PAYLOAD, "expired").admin, viewer: HARU, signer }, { requestId: "apr_FCA" })).toEqual({
       ok: false,
       status: 409,
-      message: "기간이 지나 자동으로 반려된 선물이에요.",
+      message: "승인 기한이 지나 자동 반려된 선물입니다.",
     });
   });
 

@@ -24,10 +24,10 @@ import { sendConfirmGiftBox, sendDeleteGiftReply } from "../api/send-gift-reply"
 import s from "./gift-reply.module.css";
 
 // 크리에이터 — 받은 선물(gift-reply). 시안: docs/design/mockups/site/v37-part2/boxes.html (design-rules 23-3절) — 상자는 달마다, 가장 최근 달은 같은 모양 카드 2열,
-// 그보다 지난 달은 촘촘한 줄. 오른쪽 288 회색 칸에 「아직 답장 안 한 선물」 수. 「받았어요」를 누른 카드만 한 줄 전체로 넓어져 답장 칸이 열린다(줄은 그 아래로 열린다).
+// 그보다 지난 달은 촘촘한 줄. 오른쪽 288 회색 칸에 「답장하지 않은 선물」 수. 「받았어요」를 누른 카드만 한 줄 전체로 넓어져 답장 칸이 열린다(줄은 그 아래로 열린다).
 // 출고된 상자마다 카드 하나. 「받았어요」를 누르면 그 자리에 답장 칸이 열리고, 「답장 보내기」나 「답장 없이 확인만」을 눌러야 확정된다(INV-G2 — 여는 것만으로는 아니다).
 // 확인만 한 상자는 「답장 남기기」로 한 번 더할 수 있고, 답장은 고칠 수 없고 지우기만 된다(INV-G4). 무엇을 할 수 있는지는 replyActionsOf 가 정한다.
-// 저장은 로그인 세션으로만 — 크리에이터 ID 를 보내지 않는다(INV-G1). 저장된 뒤 서버에서 다시 읽는다(위 「아직 답장 안 한 선물」 숫자도 DB 가 센다, INV-G10).
+// 저장은 로그인 세션으로만 — 크리에이터 ID 를 보내지 않는다(INV-G1). 저장된 뒤 서버에서 다시 읽는다(위 「답장하지 않은 선물」 숫자도 DB 가 센다, INV-G10).
 // 저장하면 누른 버튼이 사라지므로(답장 칸이 닫히거나 지우기 버튼이 없어진다), 포커스를 그 줄의 제목(늘 남는 요소)으로 옮긴다.
 
 /** 세션이 끝났을 때 — 다시 로그인한 뒤 이 화면으로 돌아온다 */
@@ -80,13 +80,13 @@ function ReplyForm({ box, mode, onDone }: { box: ReceivedBox; mode: FormMode; on
       setError(r.message);
       return;
     }
-    onDone(withReply ? `${box.senderNickname}님께 답장을 보냈어요.` : "받았어요를 남겼어요.");
+    onDone(withReply ? `${box.senderNickname}님께 답장을 보냈습니다.` : "수령이 확인되었습니다.");
     router.refresh();
   };
 
   return (
     <form className={s.form} aria-labelledby={`${uid}-title`} onSubmit={(e) => e.preventDefault()}>
-      <h3 id={`${uid}-title`}>{box.senderNickname}님에게 감사의 메시지를 전해 보세요!</h3>
+      <h3 id={`${uid}-title`}>{box.senderNickname}님께 답장</h3>
       <fieldset aria-describedby={error ? errorId : undefined}>
         <legend className="sr-only">짧은 답장 고르기</legend>
         <div className="tags">
@@ -118,10 +118,9 @@ function ReplyForm({ box, mode, onDone }: { box: ReceivedBox; mode: FormMode; on
         </p>
       </div>
       <details className={s.fold}>
-        <summary>이 한 줄은 누가 보나요</summary>
+        <summary>답장 공개 범위</summary>
         <p className="t-meta" id={hintId}>
-          이 한 줄은 {box.senderNickname}님 한 명에게만 가요. 팬이 공개를 허락하고 내가 설정에서 「답장 모음 보이기」를 켜 두면, 받았어요를 남기고 3일 뒤부터 링크
-          페이지에도 보여요. 전화번호·이메일·인터넷 주소는 쓸 수 없어요.
+          답장은 {box.senderNickname}님께 전달됩니다. 팬이 공개에 동의하고 크리에이터가 ‘답장 모음 보이기’를 켠 경우, ‘받았어요’로 수령을 확인한 날부터 3일 뒤에 크리에이터 페이지에도 공개됩니다.<br />전화번호·이메일·인터넷 주소는 입력할 수 없습니다.
         </p>
       </details>
       {error ? (
@@ -147,8 +146,8 @@ function ReplyForm({ box, mode, onDone }: { box: ReceivedBox; mode: FormMode; on
 /** 카드 아래·줄 오른쪽 한 줄 — 출고 날 + 답장 상태 */
 function footText(box: ReceivedBox, dense: boolean): string {
   const shipped = `${monthDayText(box.shippedOn)} 출고`;
-  if (box.replyState === "confirmed") return `${shipped} · 확인만 함`;
-  if (box.replyState === "deleted") return `${shipped} · 답장 지움`;
+  if (box.replyState === "confirmed") return `${shipped} · 수령 확인`;
+  if (box.replyState === "deleted") return `${shipped} · 답장 삭제`;
   if (box.replyState === "replied" && box.reply) {
     return dense ? `${shipped} · 「${REPLY_PHRASE_TEXT[box.reply.phrase]}」 답장` : `${shipped} · ${monthDayText(box.reply.repliedOn)} 답장`;
   }
@@ -167,7 +166,7 @@ function ReceivedRow({ box, index, dense, onStatus }: { box: ReceivedBox; index:
 
   const remove = async () => {
     if (busy) return;
-    if (!window.confirm("이 답장을 지울까요? 지우면 팬의 기록과 공개 모음에서도 사라지고, 이 상자에는 다시 답장할 수 없어요.")) return;
+    if (!window.confirm("답장을 삭제할까요? 팬의 기록과 공개 답장 모음에서도 삭제되며, 이 상자에는 다시 답장할 수 없습니다.")) return;
     setBusy(true);
     setError(null);
     const r = await sendDeleteGiftReply(box.boxId);
@@ -181,7 +180,7 @@ function ReceivedRow({ box, index, dense, onStatus }: { box: ReceivedBox; index:
       return;
     }
     title.current?.focus();
-    onStatus("답장을 지웠어요.");
+    onStatus("답장이 삭제되었습니다.");
     router.refresh();
   };
 
@@ -192,7 +191,7 @@ function ReceivedRow({ box, index, dense, onStatus }: { box: ReceivedBox; index:
       </button>
     ) : actions.remove ? (
       <button className={s.linkbtn} type="button" aria-disabled={busy} onClick={() => void remove()}>
-        {busy ? "지우는 중…" : "답장 지우기"}
+        {busy ? "삭제 중…" : "답장 삭제"}
       </button>
     ) : null;
   const errorLine = error ? (
@@ -292,7 +291,7 @@ export function ReceivedBoxList({ boxes, pending }: { boxes: readonly ReceivedBo
           {status}
         </p>
         {boxes.length === 0 ? (
-          <p className="empty">아직 출고된 선물이 없어요. 사무실에서 보내면 여기에 상자마다 보여요.</p>
+          <p className="empty">출고된 선물이 없습니다. 팬꾹에서 출고하면 상자별로 표시됩니다.</p>
         ) : (
           months.map((m, mi) => (
             <section key={m.key} className={s.month} aria-labelledby={`bm-${m.key}`}>
@@ -310,20 +309,20 @@ export function ReceivedBoxList({ boxes, pending }: { boxes: readonly ReceivedBo
           ))
         )}
         {receivedListCapped(boxes.length) ? (
-          <p className={`t-meta ${s.capped}`}>최근에 출고된 {RECEIVED_BOXES_MAX}개까지 보여요. 아직 답장 안 한 선물 수는 그보다 오래된 상자까지 모두 센 숫자예요.</p>
+          <p className={`t-meta ${s.capped}`}>최근 출고된 상자 {RECEIVED_BOXES_MAX}개까지 표시됩니다. ‘답장하지 않은 선물’ 수에는 이전에 출고된 상자도 포함됩니다.</p>
         ) : null}
       </div>
       {/* INV-G10: 이 숫자는 본인 화면에만 — DB 본인 읽기 함수가 센다 */}
       <aside className={s.bside} aria-labelledby="pend-h">
         <img className={s.bsideImg} src="/images/mascot-gift.png" alt="" width={80} height={80} />
         <h2 className={s.lab} id="pend-h">
-          아직 답장 안 한 선물
+          답장하지 않은 선물
         </h2>
         <p className="num-big">
           {pending}
           <small>개</small>
         </p>
-        <p className={s.bsideNote}>답장은 꼭 남기지 않아도 돼요. 이 숫자는 나만 볼 수 있어요.</p>
+        <p className={s.bsideNote}>답장은 선택 사항이며, 이 숫자는 본인에게만 표시됩니다.</p>
       </aside>
     </div>
   );

@@ -7,7 +7,7 @@ import { CreatorCardActions, CreatorCardFoot, CreatorCardHead, CreatorCardLine, 
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import { FAN_STEP_LABEL, fanBadge } from "@/entities/order/ui/fan-stage-copy";
-import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
+import { INTAKE_LIMIT_TEXT, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { lowestPriceKrw, PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { PROMISE } from "@/shared/config/site-copy";
 import { formatDate } from "@/shared/lib/format/datetime";
@@ -29,7 +29,7 @@ export function GuestIntroBanner() {
       src="/images/banners/launch-01-introduction-no-button.png"
       width={2172}
       height={724}
-      alt="팬꾹. 팬의 마음을, 크리에이터에게. 승인한 선물을 검수해 전달해요."
+      alt="팬꾹. 팬의 마음을, 크리에이터에게. 승인된 선물을 검수 후 전달합니다."
     />
   );
 }
@@ -40,10 +40,10 @@ export type FrontTile = { href: string; label: string; note: string; icon: strin
 /** ① 로그인 전 바로가기 넷(용어집 12절) */
 export function guestTiles(prices: PublicPriceTable): FrontTile[] {
   return [
-    { href: "/gifts/new", label: "선물 보내기", note: "팬꾹 주소로 먼저 보내요", icon: "icon-gift" },
-    { href: "/creators", label: "크리에이터 찾기", note: "본인 확인을 마친 크리에이터", icon: "icon-find" },
-    { href: "#price", label: "요금", note: `검수 포함 ${lowestPriceKrw(prices).toLocaleString("ko-KR")}원부터`, icon: "icon-fee" },
-    { href: "/faq", label: "자주 묻는 질문", note: "처음이라면 여기부터", icon: "icon-help" },
+    { href: "/gifts/new", label: "선물 보내기", note: "상자별 팬꾹 주소 안내", icon: "icon-gift" },
+    { href: "/creators", label: "크리에이터 찾기", note: "채널 소유자 확인 완료", icon: "icon-find" },
+    { href: "#price", label: "요금 안내", note: `검수 포함 ${lowestPriceKrw(prices).toLocaleString("ko-KR")}원부터`, icon: "icon-fee" },
+    { href: "/faq", label: "자주 묻는 질문", note: "이용 방법·요금·배송", icon: "icon-help" },
   ];
 }
 
@@ -62,7 +62,7 @@ function HeroSearch() {
       <label className="sr-only" htmlFor="hero-q">
         크리에이터 검색
       </label>
-      <input id="hero-q" type="search" name="q" placeholder="나의 크리에이터를 찾아보세요" autoComplete="off" />
+      <input id="hero-q" type="search" name="q" placeholder="크리에이터 이름 또는 채널 이름 검색" autoComplete="off" />
       <button className="search-go" type="submit" aria-label="크리에이터 찾기">
         <SearchGlyph />
       </button>
@@ -90,7 +90,7 @@ export function SearchSlot({ eyebrow, tiles, tilesLabel }: { eyebrow?: string; t
       <div className={s.heroText}>
         {eyebrow ? <p className="t-lead">{eyebrow}</p> : null}
         <h1 className="t-hero" id="hero-title">
-          나의 크리에이터를 찾아요
+          선물을 보낼 크리에이터 찾기
         </h1>
         <HeroSearch />
       </div>
@@ -111,7 +111,7 @@ export function SearchSlot({ eyebrow, tiles, tilesLabel }: { eyebrow?: string; t
 }
 
 /** ① 로그인 전 첫 화면 — 화면 끝까지 칠한 그라데이션 띠 안에 880 기둥. 왼쪽 머리말·제목·검색·버튼, 오른쪽 마스코트(767 이하는 위) */
-export function HeroBand({ title = "나의 크리에이터를 찾아요", eyebrow = "크리에이터에게 선물을 보낼 때", control, actions }: { title?: string; eyebrow?: string; control?: ReactNode; actions?: ReactNode }) {
+export function HeroBand({ title = "선물을 보낼 크리에이터 찾기", eyebrow = "크리에이터에게 선물을 보낼 때", control, actions }: { title?: string; eyebrow?: string; control?: ReactNode; actions?: ReactNode }) {
   return (
     <section className={s.heroBand} aria-labelledby="hero-title">
       <div className={`${s.col} ${s.heroIn}`}>
@@ -161,10 +161,10 @@ export function GuestTiles({ tiles, label }: { tiles: readonly FrontTile[]; labe
 }
 
 const STEPS = [
-  { icon: "icon-gift", num: "1. 등록", title: "선물을 등록해요", body: "결제하면 팬꾹 주소가 바로 나와요. 승인 전에도 먼저 보낼 수 있어요." },
-  { icon: "icon-approve", num: "2. 승인", title: "크리에이터가 승인해요", body: PROMISE.approval },
-  { icon: "icon-inspect", num: "3. 검수", title: "모든 선물을 검수해요", body: PROMISE.inspectionOpen },
-  { icon: "icon-truck", num: "4. 배송", title: "팬꾹이 대신 보내요", body: "승인과 검수를 모두 통과한 선물만 출고해요." },
+  { icon: "icon-gift", num: "1. 등록", title: "선물 등록·결제", body: "결제 후 상자별 팬꾹 주소가 발급됩니다. 승인 전에는 ‘먼저 보내기’로 주소를 확인할 수 있습니다." },
+  { icon: "icon-approve", num: "2. 승인", title: "크리에이터 승인", body: PROMISE.approval },
+  { icon: "icon-inspect", num: "3. 검수", title: "팬꾹 검수", body: `팬이 보낸 모든 상자를 검사하고, ${PROMISE.inspectionOpen}` },
+  { icon: "icon-truck", num: "4. 배송", title: "크리에이터에게 배송", body: "승인과 검수가 완료된 선물을 출고합니다." },
 ] as const;
 
 /** ③ 사이트 소개(로그인 전만) — 흰 바탕, 왼쪽 머리 + 2×2 줄(그림 64 · 번호 · 제목 · 설명, 767 이하 한 줄에 하나) + 상태 흐름.
@@ -175,7 +175,7 @@ export function IntroSlot() {
     <section className={s.intro} id="how" aria-labelledby="how-title">
       <div className={s.head}>
         <h2 id="how-title">
-          안전하게 <span className="accent">선물을 나눠봐요</span>
+          주소 공개 없이 <span className="accent">전하는 선물</span>
         </h2>
         <p className="t-lead">{PROMISE.approval}</p>
       </div>
@@ -192,7 +192,7 @@ export function IntroSlot() {
         ))}
       </ol>
       <p className={s.stepsLine}>
-        <span>상태 화면에서는</span>
+        <span>선물 진행 단계:</span>
         {stepLabels.map((label, i) => (
           <Fragment key={label}>
             {i > 0 && <span aria-hidden="true">›</span>}
@@ -243,9 +243,9 @@ function Chev() {
 /** ③-2 진행 중인 선물 — 한 줄 목록. 팬 화면이라 팬용 모양(toFanView)만 받는다 */
 export function GiftsSlot({ gifts, faceToneByName }: { gifts: readonly FanGiftView[]; faceToneByName: Readonly<Record<string, string>> }) {
   return (
-    <SlotSection id="gifts" title="진행 중인 선물" meta={`${gifts.length}개`} more={{ href: "/gifts", label: "보낸 선물 모두 보기" }}>
+    <SlotSection id="gifts" title="진행 중인 선물" meta={`${gifts.length}건`} more={{ href: "/gifts", label: "보낸 선물 모두 보기" }}>
       {gifts.length === 0 ? (
-        <p className="t-meta">지금 진행 중인 선물이 없어요.</p>
+        <p className="t-meta">진행 중인 선물이 없습니다.</p>
       ) : (
         <ul className={h.rows} aria-label="진행 중인 선물">
           {gifts.slice(0, MAX_GIFTS).map((g) => {
@@ -257,7 +257,7 @@ export function GiftsSlot({ gifts, faceToneByName }: { gifts: readonly FanGiftVi
                   <span className={h.w}>
                     <b>{g.creatorName}님께</b>
                     <span>
-                      상자 {g.boxCount}개 · {formatDate(g.registeredAt)}에 보냈어요
+                      상자 {g.boxCount}개 · {formatDate(g.registeredAt)} 등록
                     </span>
                   </span>
                   <span className={statusTagClass(badge.tone)}>{badge.text}</span>
@@ -364,7 +364,7 @@ function LineIcon({ name, className }: { name: IconName; className?: string }) {
 const PROMISES = [
   { icon: "lock", title: "주소는 잠긴 채 보관해요", body: "승인된 선물의 송장을 출력할 때만 열려요." },
   { icon: "eye", title: "주소가 열린 기록은 모두 공개해요", body: "언제, 어느 주문에서 열렸는지 크리에이터가 직접 볼 수 있어요." },
-  { icon: "inspect", title: "모든 선물을 검수해요", body: PROMISE.inspectionOpen },
+  { icon: "inspect", title: "팬꾹 검수", body: `팬이 보낸 모든 상자를 검사하고, ${PROMISE.inspectionOpen}` },
   { icon: "message", title: "승인은 한 건씩, 카카오톡으로", body: "한꺼번에 승인하는 버튼은 없어요. 받지 않은 이유는 팬에게 알리지 않아요." },
 ] as const satisfies readonly { icon: IconName; title: string; body: string }[];
 
@@ -464,7 +464,7 @@ export function PriceSlot({ prices, joined = false }: { prices: PublicPriceTable
         <h2 id="price-title">
           배송 요금 안내
         </h2>
-        <p className="t-lead">박스 크기와 무게에 따라 선택해주세요.</p>
+        <p className="t-lead">상자 크기·무게 중 더 높은 요금 구간을 선택해 주세요.</p>
       </div>
       <div className={joined ? s.priceJoined : s.grid3}>
         {PRICED_TIERS.map((tier) => (
@@ -488,8 +488,8 @@ export function PriceSlot({ prices, joined = false }: { prices: PublicPriceTable
         ))}
       </div>
       <ul className={s.notes}>
-        <li>{OVERSIZE_RULE}는 받지 않아요.</li>
-        <li>사무실에서 잰 크기가 더 크면, 차액은 따로 결제해요.</li>
+        <li>접수 한도: {INTAKE_LIMIT_TEXT}</li>
+        <li>실측 요금 구간이 선택한 구간을 초과하면 차액이 청구됩니다.</li>
       </ul>
     </section>
   );
@@ -505,7 +505,7 @@ export function NoticesSlot({ notices }: { notices: readonly FrontNotice[] }) {
   return (
     <SlotSection id="notice" title="공지사항" more={{ href: "/notices", label: "전체 보기" }}>
       {notices.length === 0 ? (
-        <p className="empty">아직 공지가 없어요.</p>
+        <p className="empty">등록된 공지사항이 없습니다.</p>
       ) : (
         <ul className={`nlist ${s.notices}`}>
           {notices.map((n) => (

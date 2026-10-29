@@ -1,4 +1,4 @@
-import { ITEM_CATEGORY_LABEL, sortCategories, withObjectParticle, type ItemCategory } from "./item-category";
+import { ITEM_CATEGORY_LABEL, sortCategories, withObjectParticle, withTopicParticle, type ItemCategory } from "./item-category";
 
 // 받기 어려운 품목 — 화면 쪽 문구·판정 (docs/specs/hard-items.md INV-H4·H5·H6·H8).
 // 크리에이터는 고르기만 하고, 공개 문구는 여기 정해진 틀로만 만든다(추가분 불변식 21 — 문장 직접 쓰는 칸 없음).
@@ -13,9 +13,9 @@ export type HardAction = (typeof HARD_ACTIONS)[number];
 
 /** INV-H4: 이유 넷 — 「표시 안 함」은 공개 문구에 이유를 붙이지 않는다. */
 export const HARD_REASON_LABEL: Record<HardReason, string> = {
-  many: "이미 많이 받았어요",
-  storage: "보관할 곳이 부족해요",
-  away: "잠시 집을 비워요",
+  many: "이미 많이 받음",
+  storage: "보관 공간 부족",
+  away: "일시 부재",
   none: "이유 표시 안 함",
 };
 /** 설정 화면의 이유 선택지 이름(문구 다듬은본 10-26) — 공개 문구에 붙는 문장은 위 HARD_REASON_LABEL 그대로다. */
@@ -43,15 +43,15 @@ export function hardItemsPreview(h: Pick<HardItems, "categories" | "reason">): {
 }
 
 /**
- * INV-H6: 「지금은 {품목들}을 받기 어려워요 ㅠㅠ {이유}」. 품목은 목록 순서로 「, 」로 잇고 마지막 품목 받침에 따라 을/를.
- * 이유 「표시 안 함」이면 「ㅠㅠ」까지만. 품목이 없으면 null(문구 없음).
+ * INV-H6: 「현재 {품목들}을 받기 어렵습니다 · {이유}」. 품목은 목록 순서로 「, 」로 잇고 마지막 품목 받침에 따라 을/를.
+ * 이유 「표시 안 함」이면 이유를 덧붙이지 않는다. 품목이 없으면 null(문구 없음).
  */
 export function hardItemsNotice(h: Pick<HardItems, "categories" | "reason"> | null | undefined): string | null {
   if (!h) return null;
   const labels = sortCategories(h.categories).map((c) => ITEM_CATEGORY_LABEL[c]);
   if (labels.length === 0) return null;
-  const head = `지금은 ${withObjectParticle(labels.join(", "))} 받기 어려워요 ㅠㅠ`;
-  return h.reason === "none" ? head : `${head} ${HARD_REASON_LABEL[h.reason]}`;
+  const head = `현재 ${withObjectParticle(labels.join(", "))} 받기 어렵습니다`;
+  return h.reason === "none" ? head : `${head} · ${HARD_REASON_LABEL[h.reason]}`;
 }
 
 /**
@@ -61,8 +61,8 @@ export function hardItemsNotice(h: Pick<HardItems, "categories" | "reason"> | nu
 export function hardItemFanMessage(creatorName: string, category: ItemCategory, blocks = false): string {
   const item = ITEM_CATEGORY_LABEL[category];
   return blocks
-    ? `${creatorName}님이 현재 받지 않는 선물입니다: ${item}. 다른 종류를 선택해 주세요.`
-    : `${creatorName}님이 현재 받기 어려운 선물입니다: ${item}.`;
+    ? `${withTopicParticle(item)} 현재 ${creatorName}님이 받기 어려운 선물입니다. 다른 선물을 선택해 주세요.`
+    : `${withTopicParticle(item)} 현재 ${creatorName}님이 받기 어려운 선물입니다. 다른 선물을 선택할까요?`;
 }
 
 /**

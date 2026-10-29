@@ -12,7 +12,7 @@ import d from "@/shared/ui/dialog-parts.module.css";
 import c from "./creator-check.module.css";
 import { sendCheckChoice } from "../api/send-check-choice";
 
-// 블루투스 기기가 발견된 선물 창 (office-workflow INV-W13, action-center INV-J8 · 시안 v21-addendum3/cre-action-center-c.html 의 dlg-c).
+// 탐지기 반응 물품 확인 창 (office-workflow INV-W13, action-center INV-J8 · 시안 v21-addendum3/cre-action-center-c.html 의 dlg-c).
 // 「받기」·「거절」은 고르기만 한다 — 상자는 팬꾹이 처리 버튼을 누를 때(또는 기한에) 움직이고, 그 전까지는 취소할 수 있다.
 // 서버에 저장된 뒤에만 단계를 바꾼다. 고른 상자를 다시 열면 고른 쪽과 취소가 먼저 보인다. 칸은 처리할 일 읽기가 준 것뿐이다(INV-J7).
 
@@ -76,12 +76,12 @@ export function BluetoothWindow({ item, now, open, onClose }: { item: BluetoothI
       router.push("/login");
       return;
     }
-    setError(r.kind === "refused" ? r.message : "저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
+    setError(r.kind === "refused" ? r.message : "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
     router.refresh();
   }
 
   return (
-    <BottomSheet open={open} title="블루투스 기기가 발견된 선물" meta={`${item.itemKind} · ${boxPlace(item)}`} busy={busy} onClose={onClose}>
+    <BottomSheet open={open} title="탐지기 반응 물품 확인" meta={`${item.itemKind} · ${boxPlace(item)}`} busy={busy} onClose={onClose}>
       <div className={d.stack}>
         <div className={d.who}>
           <span className={d.avatar} aria-hidden="true">
@@ -104,19 +104,19 @@ export function BluetoothWindow({ item, now, open, onClose }: { item: BluetoothI
             </dd>
           </div>
           <div className={d.kv}>
-            <dt>보낸 날</dt>
+            <dt>등록일</dt>
             <dd>{formatMonthDayKo(item.sentAt)}</dd>
           </div>
           {item.receivedAt ? (
             <div className={d.kv}>
-              <dt>사무실 도착</dt>
+              <dt>팬꾹 도착일</dt>
               <dd>{formatMonthDayKo(item.receivedAt)}</dd>
             </div>
           ) : null}
         </dl>
         <dl className={d.boxInfo}>
           <div className={d.kv}>
-            <dt>발견된 것</dt>
+            <dt>발견 물품</dt>
             <dd>{signalThing(item)}</dd>
           </div>
           <div className={d.kv}>
@@ -155,10 +155,10 @@ export function BluetoothWindow({ item, now, open, onClose }: { item: BluetoothI
               <CheckIcon />
               {choiceText(chosen)}
             </p>
-            {step === "chosen" ? <p className={d.note}>팬꾹이 처리하기 전까지 취소할 수 있어요.</p> : null}
+            {step === "chosen" ? <p className={d.note}>팬꾹이 처리하기 전까지 선택을 취소할 수 있습니다.</p> : null}
             <div className={`${d.btns} ${d.two}`}>
               <button className="btn btn--line" type="button" disabled={busy} onClick={() => void send({ action: "cancel" })}>
-                취소
+                선택 취소
               </button>
               <button ref={focusRef} className="btn" type="button" onClick={onClose}>
                 확인
@@ -186,13 +186,13 @@ export function CancelChoiceButton({ item, label }: { item: Pick<BluetoothItem, 
       router.push("/login");
       return;
     }
-    if (r.kind !== "ok") setError(r.kind === "refused" ? r.message : "취소하지 못했어요. 잠시 뒤 다시 해 주세요.");
+    if (r.kind !== "ok") setError(r.kind === "refused" ? r.message : "선택을 취소하지 못했습니다. 잠시 후 다시 시도해 주세요.");
     router.refresh();
   }
   return (
     <>
       <button className={c.lnk} type="button" disabled={busy} aria-label={`${item.nickname}님 선물 ${label} 취소`} onClick={() => void cancel()}>
-        취소
+        선택 취소
       </button>
       {error ? (
         <span className="t-meta" role="alert">

@@ -11,7 +11,7 @@ export function ApprovalRequestsPage({ decided }: { decided: readonly DecidedReq
       <header className="page-head">
         <div className="ph-row">
           <h1 className="ph-title">
-            승인 내역<span className="ph-count">{decided.length}</span>
+            승인 내역<span className="ph-count">{decided.length}건</span>
           </h1>
         </div>
       </header>

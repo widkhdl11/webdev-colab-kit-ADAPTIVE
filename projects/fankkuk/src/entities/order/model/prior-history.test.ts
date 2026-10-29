@@ -4,7 +4,7 @@ import { priorHistoryLabel } from "./prior-history";
 // 승인 요청 카드의 지난 검수 내역 문구(decline-block INV-D11, 카드 d80). 세는 것은 DB 가 한다 — 여기는 수를 사실대로 말로 옮기는 것만.
 describe("priorHistoryLabel — 지난 검수 내역 한 줄 (INV-D11)", () => {
   it("INV-D11: 지난 주문이 없으면 처음이라고만", () => {
-    expect(priorHistoryLabel({ gifts: 0, passed: 0, returned: 0 })).toBe("처음 보내는 팬이에요");
+    expect(priorHistoryLabel({ gifts: 0, passed: 0, returned: 0 })).toBe("첫 선물 요청");
   });
   it("INV-D11: 모두 통과면 「모두 검수 통과」", () => {
     expect(priorHistoryLabel({ gifts: 3, passed: 3, returned: 0 })).toBe("지난 선물 3건 · 모두 검수 통과");

@@ -10,5 +10,5 @@ export function postMoveCandidates(id: string): Promise<PostJsonOutcome> {
 
 export function postShareMove(id: string, shareId: string): Promise<PostJsonOutcome> {
   const write: ShareMoveWrite = { kind: "move", id, shareId };
-  return postJson("/api/admin/work/unmatched", write, "처리하지 못했어요. 잠시 뒤 다시 해 주세요.");
+  return postJson("/api/admin/work/unmatched", write, "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.");
 }

@@ -26,7 +26,7 @@ const DB_KIND = { loginId: "login_id", nickname: "nickname" } as const;
 
 export async function checkSignupName(deps: CheckNameDeps, body: unknown, ipHash: string): Promise<CheckNameReply> {
   const parsed = bodySchema.safeParse(body);
-  if (!parsed.success) return { status: 400, body: { message: "잘못된 요청이에요." } };
+  if (!parsed.success) return { status: 400, body: { message: "유효하지 않은 요청입니다." } };
   const { kind } = parsed.data;
   const value = parsed.data.value.trim();
 

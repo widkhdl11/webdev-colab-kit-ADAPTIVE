@@ -39,17 +39,17 @@ type Props = {
   now: string;
 };
 
-// 단계 이름 — 용어집 4절 표기(출고·배송 중·반송·검수). 「사무실로 오는 중」은 용어집에 행이 없어 시안 표기를 임시로 쓴다.
+// 단계 이름 — 용어집 4절 표기(출고·배송 중·반송·검수). 「팬꾹 도착 대기」는 입고 전 상태다.
 export const PROGRESS_STEP_LABEL: Record<ProgressStepKey, string> = {
   approval_waiting: "승인 대기",
-  to_office: "사무실로 오는 중",
+  to_office: "팬꾹 도착 대기",
   inspecting: "검수 중",
   inspected: "검수 완료",
   shipped: "출고",
   in_transit: "배송 중",
   reply_waiting: "수락 대기",
   not_received: "받지 않음",
-  late: "아직 도착하지 않았어요",
+  late: "미도착",
   returning: "반송",
   // 용어집 dispose_due 행 팬·크리에이터 열
   dispose_due: "처분 예정",
@@ -127,7 +127,7 @@ export function GiftProgressPage({ progress, items, candidates, now }: Props) {
   function sentRow(r: SentProgress, sentAt: string, i: number) {
     const step = sentStepOf(r);
     const action = hasActionButton(r, targets);
-    const meta = `${r.nickname}님 · ${tierName(r.tier)} 상자 · ${formatMonthDayKo(sentAt)} 보냄`;
+    const meta = `${r.nickname}님 · ${tierName(r.tier)} 상자 · ${formatMonthDayKo(sentAt)} 결제 완료`;
     return (
       <li key={r.orderNo} className={`lrow ${s.row}`} data-row="">
         <FaceAvatar index={i} className="face face--sm" />
@@ -142,7 +142,7 @@ export function GiftProgressPage({ progress, items, candidates, now }: Props) {
           </span>
           {canTrack(r) ? <TrackBoxButton className="btn btn--sm btn--line" meta={meta} label={`배송 조회(${r.nickname}님)`} /> : null}
           {canFind(r, findable) ? (
-            <FindSentBoxButton className="btn btn--sm btn--line" candidates={candidates} shareId={r.shareId} meta={`${formatMonthDayKo(sentAt)} 보냄`} label={`내 상자 찾기(${r.nickname}님)`} />
+            <FindSentBoxButton className="btn btn--sm btn--line" candidates={candidates} shareId={r.shareId} meta={`${formatMonthDayKo(sentAt)} 결제 완료`} label={`내 상자 찾기(${r.nickname}님)`} />
           ) : null}
           {action ? goActions : null}
         </div>
@@ -156,7 +156,7 @@ export function GiftProgressPage({ progress, items, candidates, now }: Props) {
       <header className="page-head">
         <div className="ph-row">
           <h1 className="ph-title">
-            선물 현황<span className="ph-count">진행 중 {total}건</span>
+            선물 현황<span className="ph-count">· 진행 중 {total}건</span>
           </h1>
         </div>
       </header>
@@ -172,10 +172,10 @@ export function GiftProgressPage({ progress, items, candidates, now }: Props) {
             <span className={s.lab}>승인 대기</span>
           </div>
           <div className={s.mid}>
-            <h2 id="gp-wait">승인을 기다리는 선물</h2>
+            <h2 id="gp-wait">승인 대기 선물</h2>
             {nearest ? (
               <p>
-                가장 가까운 기한 <span className={s.soon}>{daysLeftOf(nearest.dueAt, now).text}</span> · {nearest.nickname}님의 선물
+                가장 빠른 승인 기한: <span className={s.soon}>{daysLeftOf(nearest.dueAt, now).text}</span> · {nearest.nickname}님의 선물
               </p>
             ) : null}
             <span className={s.faces} aria-hidden="true">
@@ -204,7 +204,7 @@ export function GiftProgressPage({ progress, items, candidates, now }: Props) {
             {moving.map((r) => receivedCard(r, face++))}
           </ul>
         ) : (
-          <p className={s.none}>진행 중인 선물이 없어요</p>
+          <p className={s.none}>진행 중인 선물이 없습니다.</p>
         )}
       </section>
 
@@ -219,15 +219,15 @@ export function GiftProgressPage({ progress, items, candidates, now }: Props) {
           progress.sent.map((g) => (
             <div key={g.sentAt}>
               <p className={s.ghead} data-subhead="">
-                {formatDateTime(g.sentAt)} 보낸 역조공<span>팬 {g.rows.length}명</span>
+                {formatDateTime(g.sentAt)} 결제 완료<span> · 팬 {g.rows.length}명</span>
               </p>
-              <ul className={`lrows ${s.rows}`} aria-label={`${formatDateTime(g.sentAt)} 보낸 역조공`}>
+              <ul className={`lrows ${s.rows}`} aria-label={`${formatDateTime(g.sentAt)} 결제 완료`}>
                 {g.rows.map((r) => sentRow(r, g.sentAt, face++))}
               </ul>
             </div>
           ))
         ) : (
-          <p className={s.none}>진행 중인 선물이 없어요</p>
+          <p className={s.none}>진행 중인 선물이 없습니다.</p>
         )}
       </section>
     </div>

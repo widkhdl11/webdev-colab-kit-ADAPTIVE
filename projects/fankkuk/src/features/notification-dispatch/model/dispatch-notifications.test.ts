@@ -227,8 +227,8 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     });
     await dispatchNotifications(deps(admin, { email, kakao: null }));
     const subject = (id: string) => email.sent.find((m) => m.outboxId === id)?.subject;
-    expect(subject("declined")).toBe("[팬꾹] 크리에이터가 선물을 원하지 않아요");
-    expect(subject("expired")).toBe("[팬꾹] 보낸 선물이 기간이 지나 반려됐어요");
+    expect(subject("declined")).toBe("[팬꾹] 크리에이터가 선물 수령을 거절했습니다");
+    expect(subject("expired")).toBe("[팬꾹] 보낸 선물의 승인 기한이 지나 자동 반려되었습니다");
     expect(subject("missing")).toBeUndefined();
     const missing = finishes(calls).find((a) => (a as { p_id: string }).p_id === "missing") as { p_outcome: string; p_error_code: string };
     expect(`${missing.p_outcome}:${missing.p_error_code}`).toBe("skipped:body_unavailable");
@@ -245,7 +245,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     });
     await dispatchNotifications(deps(admin, { email, kakao: null }));
     const text = (id: string) => email.sent.find((m) => m.outboxId === id)!.text;
-    expect(text("must")).toContain("이 알림은 꺼 두어도 가요.");
+    expect(text("must")).toContain("서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.");
     expect(text("optional")).not.toContain("꺼 두어도 가요");
   });
 

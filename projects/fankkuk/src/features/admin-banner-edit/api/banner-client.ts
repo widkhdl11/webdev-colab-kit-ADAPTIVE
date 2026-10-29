@@ -4,7 +4,7 @@ import type { BannerInput } from "../model/save-banner";
 // 브라우저에서 광고 배너를 올리고(/api/admin/banners — 그림과 글 칸을 한 양식으로), 순서를 바꾸고, 내린다.
 // 저장소로 바로 올리는 길은 없다 — 서버가 그림을 열어 보고 다시 만든다(banners INV-Y4).
 
-const FALLBACK = "저장하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const FALLBACK = "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 export async function sendBanner(input: BannerInput, image: File | null): Promise<PostJsonOutcome> {
   const form = new FormData();

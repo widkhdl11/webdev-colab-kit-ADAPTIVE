@@ -14,7 +14,7 @@ function fakeClient(error: { code: string } | null) {
 
 const OK = { kind: "gift", title: " 선물 문의 ", body: "본문", orderNo: "fc-7k3m9" };
 
-describe("1:1 문의 남기기 (INV-K11, 결정 d25)", () => {
+describe("1:1 문의 등록 (INV-K11, 결정 d25)", () => {
   it("다듬은 값으로 DB 함수를 부르고 200 — 쓴 사람은 넘기지 않는다", async () => {
     const { calls, client } = fakeClient(null);
     expect(await submitInquiry(client, OK)).toEqual({ status: 200, body: { ok: true } });
@@ -25,7 +25,7 @@ describe("1:1 문의 남기기 (INV-K11, 결정 d25)", () => {
     const { calls, client } = fakeClient(null);
     expect(await submitInquiry(client, { ...OK, orderNo: "AB-1234" })).toEqual({
       status: 400,
-      body: { message: "주문번호는 FC-7K3M9 형식으로 적어 주세요.", field: "orderNo" },
+      body: { message: "주문번호는 FC-7K3M9 형식으로 입력해 주세요.", field: "orderNo" },
     });
     expect(calls).toEqual([]);
   });
@@ -40,10 +40,10 @@ describe("1:1 문의 남기기 (INV-K11, 결정 d25)", () => {
     expect((await submitInquiry(fakeClient({ code: "XX000" }).client, OK)).status).toBe(500);
   });
 
-  it("INV-K12 (실패경로): 문의가 제한된 계정(DB P0051)이면 403 「지금은 1:1 문의를 남길 수 없어요.」", async () => {
+  it("INV-K12 (실패경로): 문의가 제한된 계정(DB P0051)이면 403 「현재 1:1 문의 이용이 제한되어 있습니다.」", async () => {
     expect(await submitInquiry(fakeClient({ code: "P0051" }).client, OK)).toEqual({
       status: 403,
-      body: { message: "지금은 1:1 문의를 남길 수 없어요." },
+      body: { message: "현재 1:1 문의 이용이 제한되어 있습니다." },
     });
   });
 });

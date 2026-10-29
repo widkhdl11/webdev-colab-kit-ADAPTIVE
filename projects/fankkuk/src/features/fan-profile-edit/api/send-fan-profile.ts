@@ -7,7 +7,7 @@ import type { ProfileField } from "../model/profile-input";
 
 export type SendOutcome<T> = ({ kind: "ok" } & T) | { kind: "login" } | { kind: "failed"; message: string; field?: ProfileField };
 
-const FALLBACK = "저장하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const FALLBACK = "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 async function send<T>(url: string, init: RequestInit, pick: (data: Record<string, unknown>) => T): Promise<SendOutcome<T>> {
   try {

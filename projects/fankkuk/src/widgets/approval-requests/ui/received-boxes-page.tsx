@@ -9,7 +9,7 @@ export function ReceivedBoxesPage({ received, replyPending }: { received: readon
       <header className="page-head">
         <div className="ph-row">
           <h1 className="ph-title">
-            받은 선물<span className="ph-count">{received.length}</span>
+            받은 선물<span className="ph-count">{received.length}개</span>
           </h1>
         </div>
       </header>

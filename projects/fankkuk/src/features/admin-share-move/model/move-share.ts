@@ -11,7 +11,7 @@ import type { JsonReply } from "@/shared/lib/http/private-json";
 
 export const MESSAGE_MOVE_NOT_CANDIDATE = "그 크리에이터가 보낸, 아직 입고 전인 다른 팬별 선물이 아니에요. 다시 골라 주세요.";
 export const MESSAGE_MOVE_CLOSED = "상자 찾기로 입고된 상자가 아니거나 이미 검수를 마친 상자라 옮길 수 없어요.";
-const FAILED = "처리하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const FAILED = "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 const READ_FAILED = "팬별 선물을 읽지 못했어요. 잠시 뒤 다시 해 주세요.";
 
 const moveShape = z.object({ kind: z.literal("move"), id: z.guid(), shareId: z.guid() }).strict();

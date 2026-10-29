@@ -49,18 +49,18 @@ export function WaybillEditor({ target, boxName, initial, layout, hint }: Props)
           <span ref={resultRef} tabIndex={-1} className={s.no}>
             {formatWaybill(saved)}
           </span>
-          <span className={s.lab}>등록됨</span>
+          <span className={s.lab}>등록 완료</span>
           <button
             type="button"
             className="btn btn--soft btn--sm"
-            aria-label={`${boxName} 송장번호 ${layout === "box" ? "수정" : "고치기"}`}
+            aria-label={`${boxName} 송장번호 수정`}
             onClick={() => {
               moved.current = true;
               setError(null);
               setEditing(true);
             }}
           >
-            {layout === "box" ? "수정" : "고치기"}
+            수정
           </button>
         </div>
       </div>
@@ -130,7 +130,7 @@ export function WaybillEditor({ target, boxName, initial, layout, hint }: Props)
           </p>
         ) : null}
         <p className="hint" id={`${id}-hint`}>
-          {saved ? (layout === "box" ? "팬꾹 도착 전까지 수정 가능" : "사무실에 도착하기 전까지만 고칠 수 있어요.") : hint}
+          {saved ? (layout === "box" ? "팬꾹 도착 전까지 수정 가능" : "입고 전까지 수정할 수 있습니다.") : hint}
         </p>
       </form>
     </div>

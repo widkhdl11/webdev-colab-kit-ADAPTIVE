@@ -62,7 +62,7 @@ export function ReportForm({ to, toLabel }: Props) {
             aria-describedby={describedBy("kind")}
             onChange={(e) => edit("kind", e.target.value)}
           >
-            <option value="">분류를 골라 주세요</option>
+            <option value="">분류 선택</option>
             {REPORT_KINDS.map((k) => (
               <option key={k} value={k}>
                 {REPORT_KIND_LABELS[k]}
@@ -101,7 +101,7 @@ export function ReportForm({ to, toLabel }: Props) {
           onChange={(e) => edit("pageUrl", e.target.value)}
         />
         <p className="hint" id="r-page-hint">
-          신고할 페이지나 사진이 있는 페이지의 주소를 적어 주세요.
+          신고할 페이지나 사진이 있는 페이지의 주소를 입력해 주세요.
         </p>
       </div>
       <div className="field">
@@ -117,7 +117,7 @@ export function ReportForm({ to, toLabel }: Props) {
           onChange={(e) => edit("body", e.target.value)}
         />
         <p className="hint" id="r-body-hint">
-          {REPORT_BODY_MAX.toLocaleString("ko-KR")}자까지 적을 수 있어요.
+          최대 {REPORT_BODY_MAX.toLocaleString("ko-KR")}자
         </p>
       </div>
       {/* 오류·열림 문장과 버튼 위 안내는 버튼과 한 묶음 — 빈 알림 영역이 칸 사이 간격을 더 벌리지 않게 */}
@@ -129,13 +129,13 @@ export function ReportForm({ to, toLabel }: Props) {
             </p>
           )}
         </div>
-        <div role="status">{opened && <p className={s.done}>이메일 앱을 열었어요. 열리지 않으면 {toLabel}로 보내 주세요.</p>}</div>
-        <p className={`hint ${s.btnHint}`}>「이메일로 보내기」를 누르면 적은 내용이 담긴 이메일 앱이 열려요. 이 화면에서는 파일을 첨부할 수 없어요.</p>
+        <div role="status">{opened && <p className={s.done}>이메일 앱에서 내용을 확인하고 전송해 주세요. 앱이 열리지 않으면 {toLabel}으로 직접 보내 주세요.</p>}</div>
+        <p className={`hint ${s.btnHint}`}>버튼을 누르면 작성한 내용을 이메일 앱으로 전달합니다. 이메일 앱에서 내용을 확인하고 직접 전송해 주세요. 파일은 이메일 앱에서 첨부할 수 있습니다.</p>
         <button type="submit" className="btn btn--block">
           이메일로 보내기
         </button>
         <p className={`t-meta ${s.to}`}>
-          받는 이메일: {toLabel} · 회원은 <Link href="/support">고객센터의 1:1 문의</Link>도 이용할 수 있어요.
+          받는 이메일: {toLabel} · 회원은 <Link href="/support">고객센터의 1:1 문의</Link>도 이용할 수 있습니다.
         </p>
       </div>
     </form>

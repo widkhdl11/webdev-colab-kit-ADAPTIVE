@@ -63,7 +63,7 @@ function ShareWaybill({ box, fanNickname }: { box: ShareBox; fanNickname: string
         boxName={`${fanNickname}님 상자`}
         initial={box.waybillNo}
         layout="share"
-        hint="선택이에요. 넣으면 배송 조회로 팬꾹까지 오는 길을 보여 드려요."
+        hint="선택 사항입니다. 입력하면 팬꾹으로 보내는 상자의 배송 상황을 조회할 수 있습니다."
       />
     );
   }
@@ -71,8 +71,8 @@ function ShareWaybill({ box, fanNickname }: { box: ShareBox; fanNickname: string
     // 결제 + 30일이 지나도 오지 않아 닫힌 상자(office-workflow INV-W10) — 입고되지 않았다. 문구는 팬 선물 진행 화면과 같은 말
     return (
       <p className={`tags ${s["inv-tags"]}`}>
-        <span className={statusTagClass("warn")}>도착하지 않음</span>
-        <span className="t-meta">결제하고 30일이 지나도 도착하지 않아 이 상자는 닫혔어요</span>
+        <span className={statusTagClass("warn")}>미도착으로 종료</span>
+        <span className="t-meta">결제 후 30일 이내에 도착하지 않아 종료되었습니다.</span>
       </p>
     );
   }
@@ -83,7 +83,7 @@ function ShareWaybill({ box, fanNickname }: { box: ShareBox; fanNickname: string
         <Check />
         도착 완료
       </span>
-      <span className="t-meta">사무실에 도착해 확인했어요</span>
+      <span className="t-meta">팬꾹 입고 확인</span>
     </p>
   );
 }
@@ -94,9 +94,9 @@ function WaybillFold({ views }: { views: readonly ShareView[] }) {
   if (items.length === 0) return null;
   return (
     <details className={`${s.fold} ${s.invFold}`}>
-      <summary>송장번호 적기 (선택)</summary>
+      <summary>송장번호 등록 (선택)</summary>
       <div className={s.in}>
-        <p className={s.hint}>상자가 사무실에 도착하기 전까지만 고칠 수 있고, 도착하면 「도착 완료」로 바뀌고 잠겨요.</p>
+        <p className={s.hint}>입고 전까지 송장번호를 수정할 수 있습니다. 입고 후에는 ‘도착 완료’로 표시되며 수정할 수 없습니다.</p>
         {items.map(({ x, box }) => (
           <div key={x.orderNo} className={s.invRow}>
             <p className={s.invName} title={`${x.fanNickname}님`}>
@@ -115,7 +115,7 @@ function batchSummary(shares: readonly SentRevgift[]): string {
   const parts = [n.accepted ? `수락 ${n.accepted}명` : "", n.waiting ? `수락 대기 ${n.waiting}명` : "", n.not_received ? `받지 않음 ${n.not_received}명` : ""].filter(
     Boolean,
   );
-  return n.not_received ? `${parts.join(" · ")} (받지 않은 상자 요금은 환불돼요)` : parts.join(" · ");
+  return n.not_received ? `${parts.join(" · ")} (받지 않은 팬의 상자는 환불 대상 · 반송 시 택배비 차감)` : parts.join(" · ");
 }
 
 const STATE_ORDER: readonly SentRevgift["state"][] = ["accepted", "waiting", "not_received"];
@@ -160,11 +160,10 @@ function AddressGuide({ headId }: { headId: string }) {
   return (
     <div className={s.guide} role="group" aria-labelledby={headId}>
       <p className={s.guideT} id={headId}>
-        팬마다 팬꾹 주소가 달라요
+        팬별 팬꾹 주소
       </p>
       <p>
-        팬 한 명마다 상자를 따로 포장하고, 아래 팬마다 나온 팬꾹 주소를 끝 6자리까지 그대로 써서 보내 주세요. 팬이 받기를 누를 때까지 기다리지 않고 보내셔도 돼요. 받지 않은 팬의
-        상자는 돌려보내고 그 상자 요금은 환불돼요.
+        팬마다 상자를 따로 포장하고, 해당 팬의 팬꾹 주소를 끝 6자리까지 모두 입력해 보내 주세요. 팬의 수락 전에도 발송할 수 있습니다.<br />받지 않은 팬의 상자는 반송하며, 반송 택배비를 제외한 금액을 환불합니다. 입고 전 환불 시점은 아래 ‘반송·환불 안내’에서 확인해 주세요.
       </p>
     </div>
   );
@@ -179,7 +178,7 @@ function Batch({ b, bi, boxByOrder }: { b: SentBatch; bi: number; boxByOrder: Re
       <summary>
         <div className={s.bHead}>
           <h2 className={s.bTitle} id={`rv-batch-${bi}`}>
-            {when} 보낸 역조공
+            {when} 결제 완료
           </h2>
           <p className={s.facts}>
             {/* 한 번 보낸 것 안에서는 같은 팬이 두 번 없다(DB 유일 send_id·fan_id) — 묶음 줄은 「팬 N명」이 맞다 */}
@@ -197,7 +196,7 @@ function Batch({ b, bi, boxByOrder }: { b: SentBatch; bi: number; boxByOrder: Re
       </summary>
       <div className={s.bbody}>
         {b.officeAddress && views.some((v) => v.addressCode) ? <AddressGuide headId={`rv-addr-${bi}`} /> : null}
-        <ul className={s.rows} aria-label={`${when} 묶음 팬별 지금 상태`}>
+        <ul className={s.rows} aria-label={`${when} 결제 묶음의 팬별 상태`}>
           {views.map(({ x, addressCode }, i) => {
             const tag = sentStateTag(x.state);
             return (
@@ -251,7 +250,7 @@ export function RevgiftSentPage({
       <header className="page-head">
         <div className="ph-row">
           <h1 className="ph-title">
-            보낸 역조공<span className="ph-count">{batches.length}</span>
+            보낸 역조공<span className="ph-count">{batches.length}묶음</span>
           </h1>
         </div>
       </header>
@@ -260,7 +259,7 @@ export function RevgiftSentPage({
         <div className={s.paid} role="status">
           <img className={s.peek} src="/images/home/icon-truck.webp" alt="" aria-hidden="true" width={80} height={80} />
           <p>
-            <strong>결제가 끝났어요.</strong> 팬마다 상자를 따로 포장하고, 아래 팬마다 나온 팬꾹 주소로 보내 주세요.
+            <strong>결제가 완료되었습니다.</strong> 팬마다 상자를 따로 포장해 아래에 안내된 팬별 팬꾹 주소로 보내 주세요.
           </p>
         </div>
       ) : null}
@@ -268,27 +267,28 @@ export function RevgiftSentPage({
       <div className={s.privacy}>
         <img src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={40} height={40} />
         <p>
-          <strong>팬의 주소와 실명은 보이지 않아요.</strong>
-          <span>팬이 직접 입력하고, 팬꾹만 송장을 뽑을 때 열어요.</span>
+          <strong>팬의 주소와 실명은 크리에이터에게 공개되지 않습니다.</strong>
+          <span>팬이 확인한 배송지는 팬꾹에서 송장 출력 시에만 열람합니다.</span>
         </p>
       </div>
       {batches.length === 0 ? (
         <section className={s.sempty}>
           <img src="/images/home/icon-gift.webp" alt="" aria-hidden="true" width={96} height={96} />
-          <h2 className={s.semptyT}>아직 보낸 역조공이 없어요</h2>
-          <p>나를 팔로우한 팬을 골라 선물을 보낼 수 있어요.</p>
+          <h2 className={s.semptyT}>보낸 역조공이 없습니다</h2>
+          <p>나를 팔로우한 팬을 선택해 선물을 보낼 수 있습니다.</p>
         </section>
       ) : (
         batches.map((b, bi) => <Batch key={b.sentAt} b={b} bi={bi} boxByOrder={boxByOrder} />)
       )}
       <details className={`${s.fold} ${s.knows}`}>
-        <summary>알아 두세요</summary>
+        <summary>반송·환불 안내</summary>
         <div className={s.in}>
           <ul>
-            <li>「받지 않음」은 팬이 받지 않기를 누른 경우와 7일이 지난 경우를 구분하지 않아요.</li>
-            <li>받지 않은 상자는 보낸 사무실 쪽에서 돌려보내고, 그 상자 요금만 환불돼요.</li>
-            <li>한 팬이 받지 않아도 같은 묶음의 다른 팬 선물은 그대로 가요.</li>
-            <li>상자를 더 보내려면 새로 보내기를 해 주세요. 상자마다 팬꾹 주소가 달라요.</li>
+            <li>‘받지 않음’에는 팬이 거절하거나 결제 후 7일 이내에 수락하지 않은 경우가 포함됩니다.</li>
+            <li>입고된 상자: 크리에이터에게 반송 후 반송 택배비를 제외한 금액 환불</li>
+            <li>입고 전: 결제 후 30일까지 환불 보류. 기간 내 도착하면 반송 택배비를 제외해 환불하고, 미도착 시 해당 상자 요금 전액 환불</li>
+            <li>다른 팬의 선물은 그대로 진행됩니다.</li>
+            <li>상자를 추가로 보내려면 새로 신청해 주세요. 팬꾹 주소는 상자마다 다릅니다.</li>
           </ul>
         </div>
       </details>

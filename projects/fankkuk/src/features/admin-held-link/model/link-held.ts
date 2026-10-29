@@ -18,7 +18,7 @@ export const MESSAGE_WAYBILL_DISPUTE = "같은 송장번호가 다른 상자에 
 export const MESSAGE_NO_NICKNAME = "그 닉네임의 계정이 없어요.";
 const MESSAGE_LINK_INPUT = "닉네임과 상자를 고르고, 송장번호·내용물 확인을 표시해 주세요.";
 const MESSAGE_NICKNAME = "닉네임을 1~20자로 적어 주세요.";
-const FAILED = "처리하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const FAILED = "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 const READ_FAILED = "상자를 읽지 못했어요. 잠시 뒤 다시 해 주세요.";
 
 // 닉네임 — 앞뒤 공백을 뺀 값이 DB 닉네임 칸과 같은 1~20자. DB 는 대소문자·앞뒤 공백을 무시하고 비교한다

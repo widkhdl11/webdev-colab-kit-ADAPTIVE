@@ -37,7 +37,7 @@ describe("1:1 문의 양식 — 로그인 전 (design-rules 28절 · session-log
 describe("1:1 문의 양식 — 문의 제한 (INV-K12)", () => {
   it("INV-K12: 제한된 계정에는 양식 대신 「지금은 1:1 문의를 남길 수 없어요」만 보인다", () => {
     act(() => root.render(<InquiryForm signedIn restricted />));
-    expect(host.textContent).toContain("지금은 1:1 문의를 남길 수 없어요.");
+    expect(host.textContent).toContain("현재 1:1 문의 이용이 제한되어 있습니다.");
     expect(host.querySelector("form")).toBeNull();
     expect(host.querySelector("textarea")).toBeNull();
   });
@@ -45,7 +45,7 @@ describe("1:1 문의 양식 — 문의 제한 (INV-K12)", () => {
   it("INV-K12: 제한되지 않은 계정에는 양식이 그대로 있고 안내는 없다", () => {
     act(() => root.render(<InquiryForm signedIn restricted={false} />));
     expect(host.querySelector("form")).not.toBeNull();
-    expect([...host.querySelectorAll("button")].map((b) => b.textContent)).toContain("문의 남기기");
-    expect(host.textContent).not.toContain("지금은 1:1 문의를 남길 수 없어요.");
+    expect([...host.querySelectorAll("button")].map((b) => b.textContent)).toContain("문의 등록");
+    expect(host.textContent).not.toContain("현재 1:1 문의 이용이 제한되어 있습니다.");
   });
 });

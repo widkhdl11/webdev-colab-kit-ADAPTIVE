@@ -87,12 +87,6 @@ export function DocSummary({
   );
 }
 
-/** 「조가」·「질문이」 — 받침이 있으면 「이」 */
-function subjectMark(word: string): string {
-  const code = word.charCodeAt(word.length - 1) - 0xac00;
-  return code >= 0 && code < 11172 && code % 28 !== 0 ? "이" : "가";
-}
-
 /** 검색칸 — 낱말로 조를 찾고 다음·이전으로 오간다(원칙 ① · 기준 3). Enter 는 다음 */
 export function DocSearch({
   query,
@@ -123,7 +117,7 @@ export function DocSearch({
       }}
     >
       <label htmlFor={id} className="sr-only">
-        이 글에서 찾기
+        문서 내 검색
       </label>
       <div className={s.searchRow}>
         <span className={s.searchBox}>
@@ -137,7 +131,7 @@ export function DocSearch({
             className={s.searchInput}
             type="search"
             value={query}
-            placeholder="이 글에서 찾기"
+            placeholder="문서 내 검색"
             autoComplete="off"
             onChange={(e) => onQuery(e.target.value)}
           />
@@ -154,7 +148,7 @@ export function DocSearch({
         ) : null}
       </div>
       <p className={s.searchCount} aria-live="polite">
-        {!searching ? "" : count > 0 ? `${count}개 ${unit}에서 발견` : `찾는 낱말이 있는 ${unit}${subjectMark(unit)} 없어요.`}
+        {!searching ? "" : count > 0 ? `${count}개 ${unit === "조" ? "항목" : unit}에서 검색됨` : "검색 결과가 없습니다."}
       </p>
     </form>
   );
@@ -218,12 +212,12 @@ export function CopyAnchor({ id, title }: { id: string; title: string }) {
           const url = `${origin}${pathname}${search}#${id}`;
           // http 주소·오래된 브라우저에는 navigator.clipboard 가 없다
           if (!navigator.clipboard) {
-            show("복사하지 못했어요");
+            show("복사 실패");
             return;
           }
           navigator.clipboard.writeText(url).then(
-            () => show("복사됨"),
-            () => show("복사하지 못했어요"),
+            () => show("복사 완료"),
+            () => show("복사 실패"),
           );
         }}
       >

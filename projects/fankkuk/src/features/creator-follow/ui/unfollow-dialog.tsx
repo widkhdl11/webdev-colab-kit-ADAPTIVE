@@ -67,7 +67,7 @@ export function useUnfollowConfirm(): { ask: (name: string, onConfirm: () => voi
           팔로우를 취소할까요?
         </h2>
         <p id={`${uid}-d`} className={s.desc}>
-          팔로우 목록에서 {name}님이 삭제됩니다. 다시 팔로우할 수 있습니다.
+          {name}님을 팔로우 목록에서 삭제합니다.
         </p>
         <div className={s.actions}>
           <button className="btn btn--line" type="button" onClick={confirm}>

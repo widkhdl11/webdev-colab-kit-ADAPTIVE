@@ -36,7 +36,7 @@ describe("INV-M17: 대표의 입고 뒤 취소", () => {
 
   it("INV-M17 (S17b, 실패경로): 운영자가 아니면 404, 직원 운영자는 403 — 둘 다 DB 함수를 부르지 않는다", async () => {
     const guest = fakeClient(null, { operator: false, owner: false });
-    expect(await cancelReceivedGift(guest.client, { orderNo: "FC-7K3M9", reason: "x" })).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+    expect(await cancelReceivedGift(guest.client, { orderNo: "FC-7K3M9", reason: "x" })).toEqual({ status: 404, body: { message: "요청한 항목을 찾을 수 없습니다." } });
     expect(guest.calls).toEqual([]);
     const staff = fakeClient(null, { operator: true, owner: false });
     expect(await cancelReceivedGift(staff.client, { orderNo: "FC-7K3M9", reason: "x" })).toEqual({ status: 403, body: { message: "입고 뒤 취소는 대표만 할 수 있어요." } });

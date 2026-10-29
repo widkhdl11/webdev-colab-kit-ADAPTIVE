@@ -46,7 +46,7 @@ describe("태그 선택지 관리 (creator-tags INV-T1·T5)", () => {
       { kind: "promote", tag: "팝콘TV" },
     ]) {
       const { calls, client } = fakeClient({ error: null }, false);
-      expect(await saveTagOptions(client, body)).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+      expect(await saveTagOptions(client, body)).toEqual({ status: 404, body: { message: "요청한 항목을 찾을 수 없습니다." } });
       expect(calls).toEqual([]);
     }
   });

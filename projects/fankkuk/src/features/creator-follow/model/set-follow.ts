@@ -19,13 +19,13 @@ export async function setFollow(
   body: unknown,
 ): Promise<SetFollowResult> {
   if (!deps.viewer)
-    return { ok: false, status: 401, message: "로그인이 필요해요." };
+    return { ok: false, status: 401, message: "로그인이 필요합니다." };
   if (deps.viewer.role === "operator")
     return { ok: false, status: 403, message: "팬·크리에이터 계정만 팔로우할 수 있어요." };
 
   const parsed = inputSchema.safeParse(body);
   if (!parsed.success)
-    return { ok: false, status: 400, message: "잘못된 요청이에요." };
+    return { ok: false, status: 400, message: "유효하지 않은 요청입니다." };
 
   const { creatorId, following } = parsed.data;
   const { error } = await deps.client.rpc("set_follow", {

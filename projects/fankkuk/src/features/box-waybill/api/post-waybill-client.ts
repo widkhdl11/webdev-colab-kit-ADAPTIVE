@@ -9,10 +9,10 @@ export type WaybillTarget = { kind: "box"; id: string } | { kind: "share"; id: s
 export function postWaybill(target: WaybillTarget, waybill: string): Promise<PostJsonOutcome> {
   if (target.kind === "box") {
     const write: BoxWaybillWrite = { boxId: target.id, waybill };
-    return postJson("/api/gifts/boxes/waybill", write);
+    return postJson("/api/gifts/boxes/waybill", write, "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
   }
   const write: ShareWaybillWrite = { shareId: target.id, waybill };
-  return postJson("/api/revgifts/shares/waybill", write);
+  return postJson("/api/revgifts/shares/waybill", write, "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
 }
 
 export function postFind(target: WaybillTarget, waybill: string, carrier: Carrier): Promise<PostJsonOutcome> {

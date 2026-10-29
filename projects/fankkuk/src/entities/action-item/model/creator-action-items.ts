@@ -61,7 +61,7 @@ export type UnconfirmedItem = { kind: "unconfirmed"; orderNo: string; shareId: s
 export type SentGiftItem =
   | { kind: "difference"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; measuredTier: string; amountKrw: number; dueAt: string; sentAt: string }
   | { kind: "missing_box"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; dueAt: string; sentAt: string }
-  // 결제를 마치지 않은 선물(payment INV-M22 ⑤) — 크리에이터 계정이 보낸 결제 대기 주문 하나. 금액 = 처음 저장한 금액, 기한 = 처음 결제 대기 + 24시간, sentAt = 주문을 만든 때
+  // 결제 대기(payment INV-M22 ⑤) — 크리에이터 계정이 보낸 결제 대기 주문 하나. 금액 = 처음 저장한 금액, 기한 = 처음 결제 대기 + 24시간, sentAt = 주문을 만든 때
   | { kind: "unpaid"; orderNo: string; creatorName: string; amountKrw: number; dueAt: string; sentAt: string };
 
 /** 보낸 선물의 반송 주소 확인(office-workflow INV-W15, action-center INV-J5·J3) — 보낸 역조공 몫(shareId) 또는 보낸 팬 선물의 상자(boxId) 하나.

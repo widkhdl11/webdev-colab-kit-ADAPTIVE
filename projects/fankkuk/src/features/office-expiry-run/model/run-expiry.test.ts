@@ -56,7 +56,7 @@ describe("자동 처리 지금 돌리기 (office-workflow INV-W6)", () => {
   it("INV-W6 (실패경로): 운영자가 아니면 404 — 자동 처리 함수를 부르지 않는다", async () => {
     const { calls, client } = fakeClient({ data: COUNTS, error: null }, { operator: false, owner: false });
     const r = reconcileSpy();
-    expect(await runExpiry(client, { orderNo: "FC-1" }, r.run)).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+    expect(await runExpiry(client, { orderNo: "FC-1" }, r.run)).toEqual({ status: 404, body: { message: "요청한 항목을 찾을 수 없습니다." } });
     expect(calls).toEqual([]);
     expect(r.calls).toEqual([]);
   });

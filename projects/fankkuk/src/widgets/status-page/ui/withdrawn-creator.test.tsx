@@ -37,7 +37,7 @@ describe("탈퇴한 크리에이터 화면 (INV-S15)", () => {
   });
 
   it("상태 화면 부품: 설명을 주면 그 문장이 제목 아래에 있다 — 없는 페이지 화면은 그대로", () => {
-    act(() => root.render(<StatusPage title="페이지를 찾을 수 없어요" description="주소가 바뀌었거나 없어진 페이지예요." actions={null} />));
-    expect(host.querySelector("h1 + p")?.textContent).toBe("주소가 바뀌었거나 없어진 페이지예요.");
+    act(() => root.render(<StatusPage title="페이지를 찾을 수 없습니다" description="입력한 주소를 확인해 주세요. 페이지가 이동되거나 삭제되었을 수 있습니다." actions={null} />));
+    expect(host.querySelector("h1 + p")?.textContent).toBe("입력한 주소를 확인해 주세요. 페이지가 이동되거나 삭제되었을 수 있습니다.");
   });
 });

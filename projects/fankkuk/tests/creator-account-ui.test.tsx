@@ -161,9 +161,9 @@ describe("계정 설정(크리에이터) — 알림", () => {
     render();
     const notify = host.querySelectorAll("section")[1];
     const must = notify.querySelector("strong")!;
-    expect(must.textContent).toBe("필수 알림은 수신 설정과 관계없이 발송됩니다.");
+    expect(must.textContent).toContain("필수 알림:");
     expect(must.closest("details")).toBeNull();
-    expect((must.nextElementSibling as HTMLElement).textContent).toContain("승인 요청 · 추적 장치 발견 · 확인할 선물 · 반송 주소 확인");
+    expect(must.textContent).toContain("승인 요청 · 추적 장치 발견 · 선물 수령 여부 확인 · 반송 주소 확인");
     const rows = notify.querySelector("h2")!.nextElementSibling as HTMLElement;
     const last = rows.lastElementChild as HTMLElement;
     expect(last.querySelector('[role="status"]')).not.toBeNull();

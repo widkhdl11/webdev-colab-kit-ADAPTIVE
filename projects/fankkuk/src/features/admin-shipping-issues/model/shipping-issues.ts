@@ -38,7 +38,7 @@ export type ShippingIssue = {
 
 export async function readShippingIssues(client: Pick<SupabaseClient, "rpc">, input: unknown): Promise<JsonReply> {
   if ((await readAdminAccess(client)) === "not_found") return { status: 404, body: { message: MESSAGE_NOT_FOUND } };
-  if (!body.safeParse(input).success) return { status: 400, body: { message: "잘못된 요청이에요." } };
+  if (!body.safeParse(input).success) return { status: 400, body: { message: "유효하지 않은 요청입니다." } };
   const { data, error } = await client.rpc("admin_shipping_issues");
   if (error) return pgErrorReply(error.code, { limit: READ_FAILED, failed: READ_FAILED });
   const parsed = rows.safeParse(data ?? []);

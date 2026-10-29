@@ -36,8 +36,8 @@ type Step = "ask" | "sign" | "no" | "ok" | "noed";
 
 /** 서명 단계 머리(INV-S13) — 주소가 없으면 입력, 바꾸는 중이면 새 주소, 준비됐으면 확인 */
 function addressHead(address: ApprovalAddressStep): string {
-  if (!address.registered) return "주소를 입력해 주세요";
-  return address.ready ? "주소를 확인해 주세요" : "새 주소를 입력해 주세요";
+  if (!address.registered) return "배송지 등록";
+  return address.ready ? "등록된 배송지 확인" : "배송지 변경";
 }
 
 /** 사이드바 「승인 내역」과 같은 자리 — 승인·받지 않기를 마친 요청이 간다 */
@@ -91,7 +91,7 @@ export function ApprovalWindow({
   useEffect(() => {
     if (open) focusRef.current?.focus();
   }, [open, step]);
-  // 주소가 없으면(처음부터 없거나 서버가 「주소 없음」으로 돌려보냄) 초점을 주소 단계 머리 「주소를 입력해 주세요」로 — 무엇을 해야 하는지부터 읽히게(INV-S13)
+  // 주소가 없으면(처음부터 없거나 서버가 「주소 없음」으로 돌려보냄) 초점을 주소 단계 머리 「배송지 등록」로 — 무엇을 해야 하는지부터 읽히게(INV-S13)
   useEffect(() => {
     if (open && step === "sign" && !address.registered) addressHeadRef.current?.focus();
   }, [open, step, address.registered]);
@@ -117,7 +117,7 @@ export function ApprovalWindow({
     if (r.kind === "ok") return setStep("ok");
     if (r.kind === "login") return router.push("/login");
     if (r.kind === "refused" && r.noAddress) return address.onMissing(); // 창은 그대로 두고 주소 입력으로 돌아간다
-    setError(r.kind === "refused" ? r.message : "승인하지 못했어요. 잠시 뒤 다시 해 주세요.");
+    setError(r.kind === "refused" ? r.message : "승인하지 못했습니다. 잠시 후 다시 시도해 주세요.");
   }
 
   async function decline() {
@@ -128,7 +128,7 @@ export function ApprovalWindow({
     setBusy(false);
     if (r.kind === "ok") return setStep("noed");
     if (r.kind === "login") return router.push("/login");
-    setError(r.kind === "refused" ? r.message : "저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
+    setError(r.kind === "refused" ? r.message : "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
   }
 
   return (
@@ -202,7 +202,7 @@ export function ApprovalWindow({
             {address.ready ? (
               <>
                 <p ref={signHeadRef} tabIndex={-1} className={d.q}>
-                  카카오톡으로 승인해 주세요
+                  카카오톡으로 선물 승인
                 </p>
                 {/* 승인 버튼 바로 위 — 승인해도 보내는 팬에게 주소가 가지 않는다는 것과 검수를 다시 말한다(2026-10-14 추가분 3, 용어집 11절 고정 문장) */}
                 <p className="t-strong">
@@ -214,7 +214,7 @@ export function ApprovalWindow({
                   </button>
                   <button ref={focusRef} className="btn btn--kakao" type="button" disabled={busy} onClick={() => void approve()}>
                     <KakaoBubble />
-                    {busy ? "보내는 중…" : "카카오톡으로 승인하기"}
+                    {busy ? "요청 중…" : "카카오톡으로 승인하기"}
                   </button>
                 </div>
               </>
@@ -224,7 +224,7 @@ export function ApprovalWindow({
 
         {step === "no" ? (
           <div className={d.stack}>
-            <p className={d.q}>이 선물을 받지 않을까요?</p>
+            <p className={d.q}>이 선물을 거절할까요?</p>
             {/* 차단은 받지 않기 창에서만 고른다(decline-block — 차단하는 다른 길이 없다) */}
             <label className={d.check}>
               <input type="checkbox" checked={block} onChange={(e) => setBlock(e.target.checked)} />
@@ -235,7 +235,7 @@ export function ApprovalWindow({
                 돌아가기
               </button>
               <button ref={focusRef} className="btn" type="button" disabled={busy} onClick={() => void decline()}>
-                {busy ? "저장하는 중…" : "받지 않기"}
+                {busy ? "저장 중…" : "받지 않기"}
               </button>
             </div>
           </div>
@@ -245,7 +245,7 @@ export function ApprovalWindow({
           <div className={d.stack} role="status">
             <p className={d.done}>
               <CheckIcon />
-              {step === "ok" ? "승인 완료" : "받지 않기 완료"}
+              {step === "ok" ? "승인 완료" : "거절 완료"}
             </p>
             <div className={`${d.btns} ${d.two}`}>
               <Link className="btn btn--line" href={DECIDED_HREF}>

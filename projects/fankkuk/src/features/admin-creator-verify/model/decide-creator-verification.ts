@@ -16,8 +16,8 @@ import { charCount } from "@/shared/lib/validation/char-count";
 
 const MESSAGES = {
   limit: `사유를 목록에서 고르고, 메모는 ${VERIFICATION_MEMO_MAX}자까지 적어 주세요.`,
-  conflict: "이미 처리됐어요. 새로 고침해 주세요.",
-  failed: "처리하지 못했어요. 잠시 뒤 다시 해 주세요.",
+  conflict: "이미 처리된 요청입니다. 페이지를 새로고침해 주세요.",
+  failed: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
 };
 
 const memo = z

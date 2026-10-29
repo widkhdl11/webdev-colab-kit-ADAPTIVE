@@ -27,7 +27,7 @@ describe("1:1 문의 답하기 (INV-K11)", () => {
 
   it("INV-K11 (실패경로): 운영자가 아니면(문의를 쓴 사람 포함) 404 — DB 답 함수를 부르지 않는다", async () => {
     const { calls, client } = fakeClient(null, { operator: false, owner: false });
-    expect(await answerInquiry(client, { id: ID, answer: "답" })).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+    expect(await answerInquiry(client, { id: ID, answer: "답" })).toEqual({ status: 404, body: { message: "요청한 항목을 찾을 수 없습니다." } });
     expect(calls).toEqual([]);
   });
 

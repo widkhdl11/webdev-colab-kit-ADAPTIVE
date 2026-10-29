@@ -97,13 +97,13 @@ const step = (li: Element) => ({
 describe("INV-J9: 판 둘 — 받는 선물은 선물마다, 보내는 선물은 보낸 날별 소제목 아래 팬마다, 줄마다 다섯 칸 막대와 단계 이름", () => {
   it("INV-J9 S9: 제목 「진행 중 6건」, 승인 대기 판 1건 + 받는 선물 카드 2, 보내는 선물 소제목 둘(팬 2명·팬 1명)", () => {
     render();
-    expect(host.querySelector("h1")?.textContent).toBe("선물 현황진행 중 6건");
+    expect(host.querySelector("h1")?.textContent).toBe("선물 현황· 진행 중 6건");
     const heads = [...host.querySelectorAll("section h2")].map((h) => h.textContent);
-    expect(heads).toEqual(["승인을 기다리는 선물", "받는 선물2건", "보내는 선물3건"]);
+    expect(heads).toEqual(["승인 대기 선물", "받는 선물2건", "보내는 선물3건"]);
     expect(waitingPanel()?.querySelector(".num-big")?.textContent).toBe("1건");
-    expect(waitingPanel()?.textContent).toContain("가장 가까운 기한 6일 남음 · 하루님의 선물");
-    expect([...host.querySelectorAll("[data-subhead]")].map((p) => p.textContent)).toEqual(["10월 2일 오전 10:00 보낸 역조공팬 2명", "10월 9일 오전 10:00 보낸 역조공팬 1명"]);
-    expect([...host.querySelectorAll("section ul")].slice(1).map((u) => u.getAttribute("aria-label"))).toEqual(["10월 2일 오전 10:00 보낸 역조공", "10월 9일 오전 10:00 보낸 역조공"]);
+    expect(waitingPanel()?.textContent).toContain("가장 빠른 승인 기한: 6일 남음 · 하루님의 선물");
+    expect([...host.querySelectorAll("[data-subhead]")].map((p) => p.textContent)).toEqual(["10월 2일 오전 10:00 결제 완료 · 팬 2명", "10월 9일 오전 10:00 결제 완료 · 팬 1명"]);
+    expect([...host.querySelectorAll("section ul")].slice(1).map((u) => u.getAttribute("aria-label"))).toEqual(["10월 2일 오전 10:00 결제 완료", "10월 9일 오전 10:00 결제 완료"]);
     // 승인 대기 선물은 받는 선물 카드에 다시 나오지 않는다 — 판에만
     expect(rowOf("하루님", "받는 선물")).toBeUndefined();
     expect(rowOf("보리님", "받는 선물").querySelector("[data-sub]")?.textContent).toBe("상자 1개 · 10월 13일 승인");
@@ -112,9 +112,9 @@ describe("INV-J9: 판 둘 — 받는 선물은 선물마다, 보내는 선물은
 
   it("INV-J9: 막대는 다섯 칸, 칠한 칸 수와 단계 이름은 같은 단계에서", () => {
     render();
-    expect(step(rowOf("보리님", "받는 선물"))).toEqual({ sr: "5단계 중 2단계, ", on: 2, all: 5, label: "사무실로 오는 중", late: false });
+    expect(step(rowOf("보리님", "받는 선물"))).toEqual({ sr: "5단계 중 2단계, ", on: 2, all: 5, label: "팬꾹 도착 대기", late: false });
     expect(step(rowOf("소라님", "받는 선물"))).toEqual({ sr: "5단계 중 4단계, ", on: 4, all: 5, label: "배송 중", late: false });
-    expect(step(rowOf("모카님", "보내는 선물"))).toEqual({ sr: "5단계 중 2단계, ", on: 2, all: 5, label: "아직 도착하지 않았어요", late: true });
+    expect(step(rowOf("모카님", "보내는 선물"))).toEqual({ sr: "5단계 중 2단계, ", on: 2, all: 5, label: "미도착", late: true });
     expect(step(rowOf("하루님", "보내는 선물"))).toEqual({ sr: "5단계 중 4단계, ", on: 4, all: 5, label: "출고", late: false });
     expect(step(rowOf("꿀단지님", "보내는 선물"))).toEqual({ sr: "5단계 중 1단계, ", on: 1, all: 5, label: "수락 대기", late: false });
   });
@@ -125,7 +125,7 @@ describe("INV-J9: 판 둘 — 받는 선물은 선물마다, 보내는 선물은
       { ...ROWS[4]!, sent_at: "2026-10-02T06:30:00Z" },
     ]);
     const heads = [...host.querySelectorAll("[data-subhead]")].map((p) => p.textContent);
-    expect(heads).toEqual(["10월 2일 오전 10:00 보낸 역조공팬 1명", "10월 2일 오후 3:30 보낸 역조공팬 1명"]);
+    expect(heads).toEqual(["10월 2일 오전 10:00 결제 완료 · 팬 1명", "10월 2일 오후 3:30 결제 완료 · 팬 1명"]);
   });
 
   it("화면 리뷰 U1: 막대 묶음에는 role·aria-label 이 없다 — 단계는 보이는 이름 앞 숨은 글자로 읽힌다", () => {
@@ -133,7 +133,7 @@ describe("INV-J9: 판 둘 — 받는 선물은 선물마다, 보내는 선물은
     const prog = rowOf("보리님", "받는 선물").querySelector("[data-bar]")!.parentElement!;
     expect([prog.getAttribute("role"), prog.getAttribute("aria-label")]).toEqual([null, null]);
     // 카드 아래 「n/5」는 화면에만(숨은 글자가 이미 몇 단계인지 읽는다)
-    expect(prog.textContent).toBe("5단계 중 2단계, 사무실로 오는 중2/5");
+    expect(prog.textContent).toBe("5단계 중 2단계, 팬꾹 도착 대기2/5");
     expect(prog.querySelector("span[aria-hidden=true]:last-child")?.textContent).toBe("2/5");
   });
 
@@ -223,7 +223,7 @@ describe("INV-J11·J10: 버튼은 필요한 줄에만", () => {
 });
 
 describe("INV-C4 ②-나: 찾은 뒤", () => {
-  it("찾으면 창에 「사무실에 도착했어요」가 남고, 목록은 창을 닫을 때 새로 읽는다 — 먼저 읽어 창이 사라지지 않게", async () => {
+  it("찾으면 창에 「상자 확인 완료」가 남고, 목록은 창을 닫을 때 새로 읽는다 — 먼저 읽어 창이 사라지지 않게", async () => {
     postFind.mockResolvedValue({ kind: "ok", body: { matched: true } });
     render();
     act(() => [...rowOf("모카님", "보내는 선물").querySelectorAll("button")].find((b) => b.textContent === "내 상자 찾기")!.click());
@@ -235,7 +235,7 @@ describe("INV-C4 ②-나: 찾은 뒤", () => {
     });
     d.querySelector<HTMLInputElement>("input[name=waybill]")!.value = "123456789012";
     await act(async () => d.querySelector("form")!.requestSubmit());
-    expect(d.textContent).toContain("사무실에 도착했어요");
+    expect(d.textContent).toContain("상자 확인 완료");
     expect(refresh).not.toHaveBeenCalled();
     act(() => d.querySelector<HTMLButtonElement>('button[aria-label="닫기"]')!.click());
     expect(refresh).toHaveBeenCalledTimes(1);
@@ -248,7 +248,7 @@ describe("INV-J10 S10b: 배송 조회 창은 택배사 조회 페이지 링크�
     const btn = [...rowOf("모카님", "보내는 선물").querySelectorAll("button")].find((b) => b.textContent === "배송 조회")!;
     act(() => btn.click());
     const d = host.querySelector("dialog[open]")!;
-    expect(d.querySelector("h2")?.textContent).toBe("도착하지 않았어요");
+    expect(d.querySelector("h2")?.textContent).toBe("배송 조회");
     expect(d.querySelector("a[target=_blank]")).toBeNull();
     const select = d.querySelector("select")!;
     // 화면 리뷰 U3: 열리면 첫 초점은 택배사 칸

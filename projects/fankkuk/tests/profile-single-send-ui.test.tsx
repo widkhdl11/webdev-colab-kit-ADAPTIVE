@@ -220,7 +220,7 @@ describe("크리에이터 상세 — 버튼 자리 상태표 (UX 명세 2026-10-
     act(() => buttonByText("팔로우 취소")!.click());
     await flush();
     expect(actionsText()).toEqual(["선물 보내기", "팔로우 중"]);
-    expect(status().textContent).toBe("팔로우 설정을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    expect(status().textContent).toBe("팔로우를 취소하지 못했습니다. 잠시 후 다시 시도해 주세요.");
     expect(status().classList.contains("sr-only")).toBe(false);
   });
 
@@ -256,20 +256,20 @@ describe("크리에이터 상세 — 버튼 자리 상태표 (UX 명세 2026-10-
     expect(actionsText()).toEqual(["팔로우"]);
   });
 
-  it("self: 꼬리표 「내 크리에이터 페이지예요」 하나, 버튼 없음", () => {
+  it("self: 꼬리표 「내 페이지」 하나, 버튼 없음", () => {
     renderProfile("self", "hidden");
-    const tags = [...host.querySelectorAll("span")].filter((el) => el.textContent === "내 크리에이터 페이지예요");
+    const tags = [...host.querySelectorAll("span")].filter((el) => el.textContent === "내 페이지");
     expect(tags).toHaveLength(1);
     expect(actionsText()).toEqual([]);
   });
 
-  it("hidden(쉬는 중, INV-B2): 버튼 없이 버튼 자리에 쉬는 기간 한 줄, 받기 어려운 품목 알림 숨김", () => {
+  it("hidden(쉬는 중, INV-B2): 버튼 없이 버튼 자리에 쉬는 기간 한 줄, 받기 어려운 선물 알림 숨김", () => {
     renderProfile("hidden", "save", { receiving: resting, hardItems });
     expect(actionsText()).toEqual([]);
     const line = [...host.querySelectorAll("p")].find((p) => p.textContent === restingMessage("2026-11-03"));
     expect(line?.textContent).toContain("11월 3일");
     expect(line?.closest("section")?.querySelector("#creator-name")).not.toBeNull();
-    expect(host.textContent).not.toContain("받기 어려운 품목");
+    expect(host.textContent).not.toContain("받기 어려운 선물");
   });
 
   it("(실패경로) 쉬는 중인데 다시 받는 날을 모르면 빈칸 대신 「잠시 선물 받기를 쉬고 있어요」 한 줄", () => {
@@ -277,19 +277,19 @@ describe("크리에이터 상세 — 버튼 자리 상태표 (UX 명세 2026-10-
     expect(actionsText()).toEqual([]);
     const line = [...host.querySelectorAll("p")].find((p) => p.textContent === "잠시 선물 받기를 쉬고 있어요");
     expect(line?.closest("section")?.querySelector("#creator-name")).not.toBeNull();
-    expect(host.textContent).not.toContain("받기 어려운 품목");
+    expect(host.textContent).not.toContain("받기 어려운 선물");
   });
 
-  it("받는 중이면 받는 상태 칸이 없고, 받기 어려운 품목은 머리 아래 한 줄 알림", () => {
+  it("받는 중이면 받는 상태 칸이 없고, 받기 어려운 선물은 머리 아래 한 줄 알림", () => {
     renderProfile("open", "save", { hardItems });
     expect(host.textContent).not.toContain("받는 상태");
     expect(host.textContent).not.toContain("지금 선물을 받고 있어요");
     const alert = host.querySelector("aside");
-    expect(alert?.querySelector("h2")?.textContent).toBe("받기 어려운 품목");
+    expect(alert?.querySelector("h2")?.textContent).toBe("받기 어려운 선물");
     expect(alert?.previousElementSibling?.querySelector("#creator-name")).not.toBeNull();
   });
 
-  it("(실패경로) 받기 어려운 품목이 없으면 알림 줄이 없다", () => {
+  it("(실패경로) 받기 어려운 선물이 없으면 알림 줄이 없다", () => {
     renderProfile("open", "save");
     expect(host.querySelector("aside")).toBeNull();
   });
@@ -306,15 +306,15 @@ describe("크리에이터 상세 — 없앤 것·남긴 것 (design-rules 31절)
     }
   });
 
-  it("숫자 띠 이름은 「평균 승인 시간」·「요금」(·기념일은 30일 안일 때만)", () => {
+  it("숫자 띠 이름은 「평균 승인 소요 시간」·「요금」(·기념일은 30일 안일 때만)", () => {
     renderProfile("open", "save");
-    expect([...host.querySelectorAll("dt")].map((d) => d.textContent)).toEqual(["평균 승인 시간", "요금"]);
+    expect([...host.querySelectorAll("dt")].map((d) => d.textContent)).toEqual(["평균 승인 소요 시간", "요금"]);
     expect(host.querySelector("dl")?.textContent).toContain("6,900원부터");
   });
 
   it("INV-E8: 이번 달 팬 수가 있으면 「이번 달 N명의 팬이 마음을 보냈어요」 그대로, 0이면 없다", () => {
     renderProfile("open", "save", { monthFans: 3 });
-    expect([...host.querySelectorAll("p")].map((p) => p.textContent)).toContain("이번 달 3명의 팬이 마음을 보냈어요");
+    expect(host.textContent).toContain("이번 달 선물한 팬 3명");
     renderProfile("open", "save", { monthFans: 0 });
     expect(host.textContent).not.toContain("마음을 보냈어요");
   });
@@ -329,6 +329,6 @@ describe("크리에이터 상세 — 없앤 것·남긴 것 (design-rules 31절)
   it("(실패경로) 운영자가 목록을 다 지웠으면 「보낼 수 없는 것」 줄이 없다", () => {
     renderProfile("open", "save");
     expect(host.querySelector("details[data-prohibited]")).toBeNull();
-    expect(host.textContent).toContain("상자는 이렇게 확인해요");
+    expect(host.textContent).toContain("검수·주소 보호 안내");
   });
 });

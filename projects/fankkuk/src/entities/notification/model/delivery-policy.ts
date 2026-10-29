@@ -50,18 +50,18 @@ export const NOTIFICATION_POLICY: Record<NotificationKind, Policy> = {
   hold: { mustDeliver: true, label: "추적 장치 발견", audience: "creator" },
   hold_fan: { mustDeliver: true, label: "반송할 상자", audience: "fan" },
   // 추적기 아님 블루투스·RF 상자를 받을지 묻는다 — 7일 안에 답이 없으면 반송(2026-10-12 (2) D3 ②)
-  creator_check: { mustDeliver: true, label: "확인할 선물", audience: "creator" },
+  creator_check: { mustDeliver: true, label: "선물 수령 여부 확인", audience: "creator" },
   box_missing: { mustDeliver: true, label: "미도착 상자", audience: "fan" },
   // 같은 이름으로 보인다 — 14일 안내와 거절 뒤 안내는 팬에게 같은 「미도착 상자」다
   gift_pending_box: { mustDeliver: true, label: "미도착 상자", audience: "fan" },
-  gift_undelivered: { mustDeliver: true, label: "전달되지 못한 선물", audience: "fan" },
+  gift_undelivered: { mustDeliver: true, label: "전달되지 않은 선물", audience: "fan" },
   difference_due: { mustDeliver: true, label: "추가 결제 요청", audience: "fan" },
   payment_canceled: { mustDeliver: true, label: "결제 취소", audience: "fan" },
   difference_canceled: { mustDeliver: true, label: "추가 결제 취소", audience: "fan" },
   // 6자리 없이 온 상자가 닉네임과 맞았을 때(INV-N21, 카드 d94) — 도착부터 720시간(30일, 2026-10-21) 안에 찾지 않으면 착불 반송
-  box_no_code: { mustDeliver: true, label: "팬꾹 주소 없이 발송한 상자", audience: "fan" },
+  box_no_code: { mustDeliver: true, label: "팬꾹 주소 없이 보낸 상자", audience: "fan" },
   // 역조공 몫 결제 완료 때·72시간 뒤 받는 팬에게(INV-N20, 2026-10-16) — 7일 안에 정하지 않으면 받지 않음이 된다
-  revgift_offer: { mustDeliver: true, label: "크리에이터가 보낸 선물 받기", audience: "fan" },
+  revgift_offer: { mustDeliver: true, label: "크리에이터가 보낸 선물 수락 요청", audience: "fan" },
   // 반송 주소를 확인하지 않으면 반송되지 않고 30일 뒤 처분된다(INV-N22). 설정 화면 이름은 문구 다듬은본(10-26) — 첫 알림과 재알림이 한 이름으로 보인다
   return_address: { mustDeliver: true, label: "반송 주소 확인", audience: "fan", alsoAudience: "creator" },
   return_address_reminder: { mustDeliver: true, label: "반송 주소 확인", audience: "fan", alsoAudience: "creator" },

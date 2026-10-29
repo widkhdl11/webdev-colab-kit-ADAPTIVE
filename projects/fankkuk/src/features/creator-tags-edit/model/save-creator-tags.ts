@@ -11,7 +11,7 @@ export type SaveCreatorTagsDeps = { client: Pick<SupabaseClient, "rpc">; viewer:
 export type SaveCreatorTagsResult = { ok: true } | { ok: false; status: 400 | 401 | 403; message: string };
 
 export async function saveCreatorTags(deps: SaveCreatorTagsDeps, body: unknown): Promise<SaveCreatorTagsResult> {
-  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
+  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요합니다." };
   if (deps.viewer.role !== "creator") return { ok: false, status: 403, message: "크리에이터 계정만 태그를 바꿀 수 있어요." };
   const parsed = tagSelectionSchema.safeParse(body);
   if (!parsed.success) return { ok: false, status: 400, message: parsed.error.issues[0]?.message ?? "태그를 확인해 주세요." };
@@ -26,6 +26,6 @@ export async function saveCreatorTags(deps: SaveCreatorTagsDeps, body: unknown):
   if (error.code === "42501")
     return error.message.includes("크리에이터 계정만")
       ? { ok: false, status: 403, message: "크리에이터 계정만 태그를 바꿀 수 있어요." }
-      : { ok: false, status: 401, message: "로그인이 필요해요." };
+      : { ok: false, status: 401, message: "로그인이 필요합니다." };
   throw new Error(`태그를 저장하지 못했다: ${error.code}`);
 }

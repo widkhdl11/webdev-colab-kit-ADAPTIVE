@@ -73,7 +73,7 @@ export function FollowButton({
   if (mode === "hidden") return null;
   if (mode === "login" && variant === "card") {
     return (
-      <Link className="btn btn--sm btn--line" href="/login" aria-label={`${creatorName} 팔로우 — 로그인이 필요해요`} data-card-btn="main">
+      <Link className="btn btn--sm btn--line" href="/login" aria-label={`${creatorName} 팔로우 — 로그인 필요`} data-card-btn="main">
         <CardButtonLabel icon="heart-plus">팔로우</CardButtonLabel>
       </Link>
     );
@@ -87,7 +87,7 @@ export function FollowButton({
         href="/login"
         aria-label={
           variant === "row"
-            ? `${creatorName} 팔로우 — 로그인이 필요해요`
+            ? `${creatorName} 팔로우 — 로그인 필요`
             : undefined
         }
       >

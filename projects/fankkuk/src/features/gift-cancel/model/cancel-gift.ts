@@ -19,15 +19,15 @@ export type GiftCancelWrite = z.input<typeof body>;
 type Deps = { client: Pick<SupabaseClient, "rpc">; viewer: Viewer | null };
 
 export async function cancelMyGift(deps: Deps, input: unknown): Promise<JsonReply> {
-  if (!deps.viewer) return { status: 401, body: { message: "로그인이 필요해요." } };
-  if (deps.viewer.role !== "fan" && deps.viewer.role !== "creator") return { status: 403, body: { message: "권한이 없어요." } };
+  if (!deps.viewer) return { status: 401, body: { message: "로그인이 필요합니다." } };
+  if (deps.viewer.role !== "fan" && deps.viewer.role !== "creator") return { status: 403, body: { message: "이 작업을 수행할 권한이 없습니다." } };
   const shaped = body.safeParse(input);
-  if (!shaped.success) return { status: 400, body: { message: "잘못된 요청이에요." } };
+  if (!shaped.success) return { status: 400, body: { message: "유효하지 않은 요청입니다." } };
   const { error } = await deps.client.rpc("cancel_my_gift", { p_order_no: shaped.data.orderNo });
   if (error) {
     // 남의 주문이거나 그 사이 상자가 입고됨 — 화면이 낡았다(409 면 화면이 다시 읽는다)
     if (error.code === "P0002") return { status: 409, body: { message: MESSAGE_CANCEL_UNAVAILABLE } };
-    return pgErrorReply(error.code, { limit: "잘못된 요청이에요.", failed: "취소하지 못했습니다. 잠시 후 다시 시도해 주세요." });
+    return pgErrorReply(error.code, { limit: "유효하지 않은 요청입니다.", failed: "취소하지 못했습니다. 잠시 후 다시 시도해 주세요." });
   }
   return { status: 200, body: { canceled: true } };
 }

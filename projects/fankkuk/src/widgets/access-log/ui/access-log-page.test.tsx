@@ -54,16 +54,16 @@ describe("INV-P7: 크리에이터 열람 기록 화면", () => {
     expect(host.textContent).not.toMatch(/대표 계정|권한이 없는 계정|거부/);
   });
 
-  it("INV-P7 (D12): 이번 달 숫자는 승인·주소 열림·재출력 셋 — 거부 숫자는 없다", () => {
+  it("INV-P7 (D12): 이번 달 숫자는 승인·주소 열람·재출력 셋 — 거부 숫자는 없다", () => {
     render(ENTRIES);
-    // v37: 주소 열림이 큰 숫자로 맨 앞, 승인·재출력은 옆 작은 숫자
-    expect([...host.querySelectorAll("dt")].map((dt) => dt.textContent)).toEqual(["주소 열림", "승인", "재출력"]);
-    expect([...host.querySelectorAll("dd")].map((dd) => dd.textContent)).toEqual(["3번", "4건", "1번"]);
+    // v37: 주소 열람이 큰 숫자로 맨 앞, 승인·재출력은 옆 작은 숫자
+    expect([...host.querySelectorAll("dt")].map((dt) => dt.textContent)).toEqual(["주소 열람", "승인", "재출력"]);
+    expect([...host.querySelectorAll("dd")].map((dd) => dd.textContent)).toEqual(["3회", "4건", "1회"]);
   });
 
   it("INV-P7: 기록이 없으면 아직 열린 적이 없다는 안내, 표는 없다", () => {
     render([]);
-    expect(host.textContent).toContain("아직 주소가 열린 적이 없어요");
+    expect(host.textContent).toContain("주소 열람 기록이 없습니다");
     expect(host.querySelector("table")).toBeNull();
   });
 });

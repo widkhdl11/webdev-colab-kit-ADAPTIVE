@@ -12,8 +12,8 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "팬에게 보내기 — 팬꾹" };
 
 const PAYMENT_NOTICE: Record<string, string> = {
-  failed: "결제를 마치지 못해 역조공이 보내지지 않았어요. 받을 팬을 다시 골라 주세요.",
-  in_progress: "같은 결제를 처리하는 중이에요. 잠시 뒤 보낸 역조공을 확인해 주세요.",
+  failed: "결제가 완료되지 않았습니다. 다시 진행하려면 받을 팬을 선택해 주세요.",
+  in_progress: "결제를 처리 중입니다. 잠시 후 ‘보낸 역조공’에서 결과를 확인해 주세요.",
 };
 
 // 역조공 보내기(크리에이터만). 받는 팬은 나를 팔로우하는 팬 목록에서 고른다(INV-R2) — 목록은 로그인 토큰으로 DB 가 내 팔로워만 돌려준다.

@@ -91,16 +91,16 @@ describe("INV-B2: 쉬는 중 판정과 문구", () => {
     expect(isResting(null, today)).toBe(false);
   });
 
-  it("INV-B2: 문구는 「잠시 선물 받기를 쉬고 있어요. 10월 20일부터 다시 받을게요」", () => {
-    expect(restingMessage("2026-10-20")).toBe("잠시 선물 받기를 쉬고 있어요. 10월 20일부터 다시 받을게요");
+  it("INV-B2: 문구는 「선물 받기 일시 중단 · 10월 20일부터 재개」", () => {
+    expect(restingMessage("2026-10-20")).toBe("선물 받기 일시 중단 · 10월 20일부터 재개");
   });
 });
 
 describe("INV-B2: 쉬는 중 안내 하나 — 크리에이터 페이지·등록 화면 목록·고른 크리에이터 안내가 같이 쓴다", () => {
   const today = d(2026, 10, 10);
   it("INV-B2: 다시 받는 날이 오늘보다 뒤면 문구", () => {
-    expect(restingNotice("2026-10-20", today)).toBe("잠시 선물 받기를 쉬고 있어요. 10월 20일부터 다시 받을게요");
-    expect(restingNotice("2026-10-11", today)).toBe("잠시 선물 받기를 쉬고 있어요. 10월 11일부터 다시 받을게요");
+    expect(restingNotice("2026-10-20", today)).toBe("선물 받기 일시 중단 · 10월 20일부터 재개");
+    expect(restingNotice("2026-10-11", today)).toBe("선물 받기 일시 중단 · 10월 11일부터 재개");
   });
   it("INV-B2 S2c (실패경로): 오늘·지난 날·없음은 null", () => {
     expect(restingNotice("2026-10-10", today)).toBeNull();

@@ -103,7 +103,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       return (
         <Row
           key={keyOf(it)}
-          title={`${it.nickname}님 선물에서 추적 장치가 나왔어요`}
+          title={`${it.nickname}님 선물 · 추적 장치 발견`}
           meta={metaOf("추적 장치 발견", due, [`${it.itemKind} · ${boxPlace(it)}`])}
           action={
             it.choice ? (
@@ -123,8 +123,8 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
     return (
       <Row
         key={keyOf(it)}
-        title={`${it.nickname}님 선물에서 ${signalThing(it)}가 나왔어요`}
-        meta={metaOf("블루투스 발견", due, [`${it.itemKind} · ${boxPlace(it)} · 추적 장치 아님`])}
+        title={`${it.nickname}님 선물 · ${signalThing(it)} 발견`}
+        meta={metaOf("기기 발견", due, [`${it.itemKind} · ${boxPlace(it)} · 추적 장치 아님`])}
         action={
           it.choice ? (
             <>
@@ -148,7 +148,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
         <div className={s.atop}>
           <FaceAvatar index={i + 1} className="face face--sm" />
           <div>
-            <strong data-title="">{`${it.nickname}님이 선물을 보내려고 해요`}</strong>
+            <strong data-title="">{`${it.nickname}님의 선물 승인 요청`}</strong>
             <span>{`${it.itemKind} · 상자 ${it.boxCount}개`}</span>
           </div>
         </div>
@@ -170,7 +170,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
         <Row
           key={keyOf(it)}
           title={title}
-          meta={metaOf("돌려받을 주소 확인", null, [disposeDueText(it.dueAt)])}
+          meta={metaOf("반송 주소 확인", null, [disposeDueText(it.dueAt)])}
           action={<CreatorReturnAddressButton target={{ orderNo: it.orderNo, boxSeq: it.boxSeq }} meta={title} address={address} sealingKeyPem={sealingKeyPem} />}
         />
       );
@@ -179,15 +179,15 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       return (
         <Row
           key={keyOf(it)}
-          title={`${it.nickname}님 상자가 아직 안 왔어요`}
-          // 14일이면 받는 주소 없이 온 보류 상자는 이미 반송된 뒤라 찾기를 권하지 않는다 — 「아직 도착하지 않은 상자」로만(카드 d96 ②)
-          meta={metaOf("아직 도착하지 않은 상자", null, [`${formatMonthDayKo(it.sentAt)} 보낸 역조공`])}
+          title={`${it.nickname}님께 보낸 상자 미도착`}
+          // 14일이면 받는 주소 없이 온 보류 상자는 이미 반송된 뒤라 찾기를 권하지 않는다 — 「미도착 상자 찾기」로만(카드 d96 ②)
+          meta={metaOf("미도착 상자", null, [`${formatMonthDayKo(it.sentAt)} 결제 완료`])}
           action={
             <FindSentBoxButton
               className="btn btn--sm btn--line"
               candidates={candidates}
               shareId={it.shareId}
-              meta={`${formatMonthDayKo(it.sentAt)} 보냄`}
+              meta={`${formatMonthDayKo(it.sentAt)} 결제 완료`}
               label={`내 상자 찾기(${it.nickname}님)`}
             />
           }
@@ -196,12 +196,12 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
     }
     const due = daysLeftOf(it.dueAt, now);
     if (it.kind === "unpaid") {
-      // 결제를 마치지 않은 선물(payment INV-M22 ⑤) — 결제는 선물 상세 맨 위 칸의 「결제하기」에서만 시작된다(INV-J13). 이 줄은 그 칸을 펼친 상세로 간다
+      // 결제 대기(payment INV-M22 ⑤) — 결제는 선물 상세 맨 위 칸의 「결제하기」에서만 시작된다(INV-J13). 이 줄은 그 칸을 펼친 상세로 간다
       return (
         <Row
           key={keyOf(it)}
           title={`${it.creatorName}님께 보낼 선물`}
-          meta={metaOf("결제를 마치지 않은 선물", due, [won(it.amountKrw)])}
+          meta={metaOf("결제 대기", due, [won(it.amountKrw)])}
           action={
             <Link className="btn btn--sm btn--line" href={giftDetailHref(it.orderNo, true)}>
               결제하기
@@ -229,10 +229,10 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       <Row
         key={keyOf(it)}
         title={title}
-        meta={metaOf("아직 도착하지 않은 상자", due, [tierName(it.declaredTier)])}
+        meta={metaOf("미도착 상자", due, [tierName(it.declaredTier)])}
         action={
           <button className="btn btn--sm btn--line" type="button" aria-haspopup="dialog" onClick={() => setOpen({ kind: "missing_box", item: it })}>
-            찾기
+            상자 찾기
           </button>
         }
       />
@@ -252,7 +252,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       {items.length === 0 ? (
         <section className={s.empty} aria-labelledby="ca-empty">
           <img className={s.emptyImg} src="/images/home/icon-approve.webp" alt="" width={96} height={96} />
-          <h2 id="ca-empty">지금 할 일이 없어요</h2>
+          <h2 id="ca-empty">현재 처리할 일이 없습니다</h2>
           <Link className="btn btn--line" href="/creator">
             홈으로
           </Link>
@@ -275,7 +275,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
           <div className={s.heroMain}>
             <p className={s.eyebrow}>승인 요청</p>
             <h2 className={s.heroH} id="ca-top" data-title="">
-              {`${top.nickname}님이 선물을 보내려고 해요`}
+              {`${top.nickname}님의 선물 승인 요청`}
             </h2>
             <div className={s.who}>
               <FaceAvatar index={0} className={`face face--sm ${s.whoFace}`} />
@@ -305,7 +305,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
             </div>
           </div>
           <div className={s.due}>
-            <span className={s.lab}>정할 때까지</span>
+            <span className={s.lab}>승인 기한</span>
             <DueBig dueAt={top.dueAt} now={now} />
             <span className={s.lab}>{formatDateTime(top.dueAt)}까지</span>
           </div>
@@ -356,7 +356,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
         />
       ) : null}
       {open?.kind === "missing_box" ? (
-        <BottomSheet open title="아직 도착하지 않은 상자" meta={`${open.item.creatorName}님께 보낸 선물 · 상자 ${open.item.boxSeq}`} onClose={close}>
+        <BottomSheet open title="미도착 상자 찾기" meta={`${open.item.creatorName}님께 보낸 선물 · 상자 ${open.item.boxSeq}`} onClose={close}>
           <FindMyBox
             box={{
               target: { kind: "box", id: open.item.boxId },

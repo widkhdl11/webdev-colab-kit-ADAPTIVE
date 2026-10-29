@@ -16,7 +16,7 @@ const MESSAGES = {
   limit: `태그 이름은 1~${TAG_CUSTOM_MAX}자로 적어 주세요. 보이지 않는 글자는 쓸 수 없어요.`,
   conflict: "같은 이름의 선택지가 이미 있어요.",
   bannedExists: "이미 있는 금칙어예요.",
-  failed: "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
+  failed: "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
 };
 
 const name = z

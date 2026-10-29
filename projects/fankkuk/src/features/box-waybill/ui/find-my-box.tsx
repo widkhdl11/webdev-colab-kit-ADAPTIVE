@@ -185,7 +185,7 @@ export function FindMyBox(props: Props) {
         ) : null}
         {result?.kind === "no" ? (
           <div ref={resultRef} tabIndex={-1} className={s.result}>
-            <strong>아직 못 찾았어요</strong>
+            <strong>일치하는 상자 없음</strong>
             <p>{result.message}</p>
           </div>
         ) : null}

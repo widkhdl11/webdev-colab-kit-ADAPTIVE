@@ -10,7 +10,7 @@ describe("thanksLine", () => {
   });
 
   it("(실패경로) 없거나 공백뿐이면 기본 문장", () => {
-    for (const v of [null, undefined, "", "   "]) expect(thanksLine(v)).toBe("보내주시는 마음 늘 감사해요");
+    for (const v of [null, undefined, "", "   "]) expect(thanksLine(v)).toBe("보내 주시는 마음 늘 감사해요");
   });
 
   it("최대 글자 수는 10자", () => {

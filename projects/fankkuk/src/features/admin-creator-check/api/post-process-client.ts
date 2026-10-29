@@ -5,5 +5,5 @@ import type { CreatorCheckProcessWrite } from "../model/process-check";
 // 보내는 값은 상자 QR 과 화면에서 본 선택뿐이다.
 export function postProcessCheck(qr: string, seen: CreatorCheckProcessWrite["seen"]): Promise<PostJsonOutcome> {
   const write: CreatorCheckProcessWrite = { qr, seen };
-  return postJson("/api/admin/work/creator-checks", write, "처리하지 못했어요. 잠시 뒤 다시 해 주세요.");
+  return postJson("/api/admin/work/creator-checks", write, "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.");
 }

@@ -64,9 +64,9 @@ describe("약관·개인정보처리방침 글", () => {
   it("약관 4조 단계 칩은 화면의 단계 이름 여섯 개이고, 이름표와 본문의 「6단계」와 수가 맞는다", () => {
     const service = termsDoc(prices).sections.find((s) => s.id === "service");
     const stages = service?.blocks.find((b) => b.kind === "stages");
-    expect(stages && stages.kind === "stages" ? stages.items : []).toEqual(["등록", "입고", "검수", "출고", "배송중", "수령"]);
+    expect(stages && stages.kind === "stages" ? stages.items : []).toEqual(["등록", "입고", "검수", "출고", "배송 중", "수령"]);
     expect(stages && stages.kind === "stages" ? stages.title : "").toBe(`진행 상황 ${stages && stages.kind === "stages" ? stages.items.length : 0}단계`);
-    expect(JSON.stringify(service)).toContain("등록 → 입고 → 검수 → 출고 → 배송중 → 수령의 6단계");
+    expect(JSON.stringify(service)).toContain("등록 → 입고 → 검수 → 출고 → 배송 중 → 수령의 6단계");
   });
 
   it("빈칸 표시가 있는 문장만 모은다", () => {

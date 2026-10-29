@@ -9,14 +9,14 @@ import type { StatusTone } from "@/shared/ui/status-tone";
 export type StageCopy = { tag: string; tone: StatusTone; note: string };
 
 const STAGE_COPY: Record<Exclude<ReceivedStage, "waiting">, StageCopy> = {
-  accepted: { tag: "수락", tone: "success", note: "수락 완료 · 배송 준비 중" },
-  shipped: { tag: "출고됨", tone: "info", note: "배송 시작" },
-  declined: { tag: "받지 않음", tone: "danger", note: "수령 거절" },
-  expired: { tag: "기한 지남", tone: "danger", note: "수락 기한(7일) 만료" },
-  returned: { tag: "돌려보냈어요", tone: "danger", note: "크리에이터에게 반송 완료" },
+  accepted: { tag: "수락 완료", tone: "success", note: "상자 준비 후 발송" },
+  shipped: { tag: "출고 완료", tone: "info", note: "택배사 인계 후 배송 진행" },
+  declined: { tag: "받지 않음", tone: "danger", note: "선물 수령을 거절했습니다" },
+  expired: { tag: "기한 만료", tone: "danger", note: "수락 기한(7일)이 지났습니다" },
+  returned: { tag: "반송 완료", tone: "danger", note: "크리에이터에게 반송했습니다" },
   // 용어집 disposed 라벨 「처분」 · 문장은 dispose_due 행의 「상자를 처분해요」와 같은 말(office-workflow INV-W15)
-  disposed: { tag: "처분", tone: "danger", note: "상자 처분 완료" },
-  cancelled: { tag: "취소됐어요", tone: "plain", note: "선물 취소 완료" },
+  disposed: { tag: "처분 완료", tone: "danger", note: "상자 처분이 완료되었습니다" },
+  cancelled: { tag: "취소", tone: "plain", note: "취소된 선물입니다" },
 };
 
 const shortDate = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "2-digit", day: "2-digit" });
@@ -36,12 +36,12 @@ export function settledStageCopy(stage: Exclude<ReceivedStage, "waiting">): Stag
 export function receivedStageCopy(stage: ReceivedStage, deadline: string, nowMs: number): StageCopy & { urgent: boolean } {
   if (stage !== "waiting") return { ...settledStageCopy(stage), urgent: false };
   const days = daysLeft(deadline, nowMs);
-  return { tag: "받을지 정해 주세요", tone: "warn", note: `${days}일 남음 · ${monthDay(deadline)}까지`, urgent: days <= 1 };
+  return { tag: "수락 대기", tone: "warn", note: `${days}일 남음 · ${monthDay(deadline)}까지`, urgent: days <= 1 };
 }
 
 /** 받기 화면의 기한 한 줄 — 「수락 기한: 10월 8일 오후 3:00」 */
 export function replyDeadlineText(deadline: string): string {
-  return `수락 기한: ${formatDateTime(deadline)}`;
+  return `${formatDateTime(deadline)}까지 수령 여부를 선택해 주세요`;
 }
 
 const SENT_TAG: Record<SentRevgift["state"], { tag: string; tone: StatusTone }> = {

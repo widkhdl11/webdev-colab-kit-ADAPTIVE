@@ -19,7 +19,7 @@ export function RevgiftSendPage({ clientKey, prices, followers, notice }: { clie
       <div className={s.col}>
         <header className={`page-head ${s.head}`}>
           <h1 className="ph-title">팬에게 보내기</h1>
-          {registered ? <p className="ph-desc">{`팬 ${registered.fanCount}명에게 보내요 — 결제하면 보내기가 끝나요.`}</p> : null}
+          {registered ? <p className="ph-desc">{`팬 ${registered.fanCount}명에게 보낼 선물입니다. 결제 후 안내된 팬꾹 주소로 상자를 보내 주세요.`}</p> : null}
         </header>
         {registered ? (
           clientKey ? (
@@ -34,7 +34,7 @@ export function RevgiftSendPage({ clientKey, prices, followers, notice }: { clie
             />
           ) : (
             <p className="err" role="alert">
-              지금은 결제를 받을 수 없어요. 잠시 뒤 다시 시도해 주세요.
+              현재 결제를 이용할 수 없습니다. 잠시 후 다시 시도해 주세요.
             </p>
           )
         ) : (

@@ -26,7 +26,7 @@ export type RegisterRevgiftResult =
   | { ok: true; sendId: string; tossOrderId: string; orderNos: string[]; amountKrw: number }
   | { ok: false; status: 400 | 401 | 403 | 409; message: string };
 
-const NOT_FOLLOWER_MESSAGE = "나를 팔로우한 팬에게만 보낼 수 있어요.";
+const NOT_FOLLOWER_MESSAGE = "나를 팔로우한 팬에게만 선물을 보낼 수 있습니다.";
 
 const inputSchema = z.object({
   shares: z
@@ -57,11 +57,11 @@ export async function registerRevgift(
   deps: { store: RevgiftStore; viewer: Viewer | null; readPrices: () => Promise<PriceTable>; newOrderNo?: () => string },
   body: unknown,
 ): Promise<RegisterRevgiftResult> {
-  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
-  if (deps.viewer.role !== "creator") return { ok: false, status: 403, message: "역조공은 크리에이터만 보낼 수 있어요." };
+  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요합니다." };
+  if (deps.viewer.role !== "creator") return { ok: false, status: 403, message: "역조공은 크리에이터 계정만 이용할 수 있습니다." };
 
   const parsed = inputSchema.safeParse(body);
-  if (!parsed.success) return { ok: false, status: 400, message: `받을 팬과 상자를 다시 확인해 주세요. 한 번에 ${MAX_REVGIFT_SHARES}명까지, 같은 팬은 한 번만 넣을 수 있어요.` };
+  if (!parsed.success) return { ok: false, status: 400, message: `받을 팬과 상자를 확인해 주세요. 한 번에 최대 ${MAX_REVGIFT_SHARES}명까지 선택할 수 있으며, 같은 팬을 중복 선택할 수 없습니다.` };
 
   const prices = await deps.readPrices();
   const tiers = parsed.data.shares.map((s) => s.tier as PricedTier);

@@ -1,0 +1,89 @@
+import { z } from "zod";
+import { computeRevgiftCharge, revgiftTierBreakdown, type ChargeBreakdown } from "@/entities/payment/model/charge";
+import { isPricedTier, PRICE_CHANGED_MESSAGE, quotedTotalSchema, type PriceTable, type PricedTier } from "@/entities/payment/model/price-table";
+import { newRevgiftOrderNo } from "@/entities/revgift/model/revgift-order-no";
+import type { Viewer } from "@/entities/session/model/viewer";
+
+// 역조공 보내기 등록 = 보내기 + 몫들 + 결제 대기를 한 번에 만든다(reverse-gift INV-R1·R3).
+// 받는 팬이 나를 팔로우하는지는 DB 등록 함수가 팔로우 표를 직접 읽어 판정한다(INV-R1). 앱 서버는 역할·꼴·금액을 맡는다.
+
+export const MAX_REVGIFT_SHARES = 10;
+
+export type RevgiftShareDraft = { fanId: string; tier: PricedTier; orderNo: string; amountKrw: number; shippingFeeKrw: number };
+
+export type RevgiftCreateInput = { senderId: string; tossOrderId: string; charge: ChargeBreakdown; shares: RevgiftShareDraft[] };
+
+/** DB 가 등록을 거부했다 — 받는 사람이 나를 팔로우하는 팬 계정이 아님(INV-R1 두 번째 장치)·주문번호 겹침·
+ * 금액이 등록 순간의 요금표와 다름(요금이 방금 바뀜, admin-console INV-K3). */
+export type RevgiftRefusal = "not_follower" | "order_no_taken" | "price_changed";
+
+export interface RevgiftStore {
+  /** 거부되면 refusal 칸이 붙은 오류를 던진다. */
+  create(input: RevgiftCreateInput): Promise<{ sendId: string }>;
+}
+
+export type RegisterRevgiftResult =
+  | { ok: true; sendId: string; tossOrderId: string; orderNos: string[]; amountKrw: number }
+  | { ok: false; status: 400 | 401 | 403 | 409; message: string };
+
+const NOT_FOLLOWER_MESSAGE = "나를 팔로우한 팬에게만 선물을 보낼 수 있습니다.";
+
+const inputSchema = z.object({
+  shares: z
+    .array(z.object({ fanId: z.string().uuid(), tier: z.string().refine(isPricedTier) }))
+    .min(1)
+    .max(MAX_REVGIFT_SHARES)
+    // INV-R3: 한 보내기 안에 같은 팬은 한 번
+    .refine((rows) => new Set(rows.map((r) => r.fanId)).size === rows.length),
+  // 화면이 보여 준 결제 금액 — 요금이 바뀌었는지 비교하는 데만 쓴다(INV-K3)
+  quotedTotalKrw: quotedTotalSchema,
+});
+
+function newPaymentOrderId(): string {
+  return `rgpay_${crypto.randomUUID().replaceAll("-", "")}`;
+}
+
+function refusalOf(e: unknown): RevgiftRefusal | null {
+  const r = (e as { refusal?: unknown } | null)?.refusal;
+  return r === "not_follower" || r === "order_no_taken" || r === "price_changed" ? r : null;
+}
+
+/**
+ * 보내는 사람은 viewer(서버가 확인한 로그인 크리에이터)다. 본문의 보내는 사람·금액 칸은 읽지 않는다 —
+ * 금액은 몫마다 고른 상자 구간의 역조공 요금으로만 계산한다(INV-R3). 요금표는 요청마다 한 번 DB 에서 읽는다(INV-K3).
+ * 본문의 quotedTotalKrw(화면이 보여 준 합계)가 그 표로 계산한 합계와 다르면 DB 를 부르기 전에 409 — 비교에만 쓰고 결제 금액으로 쓰지 않는다.
+ */
+export async function registerRevgift(
+  deps: { store: RevgiftStore; viewer: Viewer | null; readPrices: () => Promise<PriceTable>; newOrderNo?: () => string },
+  body: unknown,
+): Promise<RegisterRevgiftResult> {
+  if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
+  if (deps.viewer.role !== "creator") return { ok: false, status: 403, message: "역조공은 크리에이터 계정만 이용할 수 있습니다." };
+
+  const parsed = inputSchema.safeParse(body);
+  if (!parsed.success) return { ok: false, status: 400, message: `받을 팬과 상자를 확인해 주세요. 한 번에 최대 ${MAX_REVGIFT_SHARES}명까지 선택할 수 있으며, 같은 팬을 중복 선택할 수 없습니다.` };
+
+  const prices = await deps.readPrices();
+  const tiers = parsed.data.shares.map((s) => s.tier as PricedTier);
+  const charge = computeRevgiftCharge(prices, { boxes: tiers });
+  if (charge.totalKrw !== parsed.data.quotedTotalKrw) return { ok: false, status: 409, message: PRICE_CHANGED_MESSAGE };
+  const makeNo = deps.newOrderNo ?? newRevgiftOrderNo;
+
+  // 주문번호가 겹치면(여섯 자리 무작위) 새 번호로 두 번까지 다시 시도한다
+  for (let attempt = 1; ; attempt += 1) {
+    const shares: RevgiftShareDraft[] = parsed.data.shares.map((s) => {
+      const b = revgiftTierBreakdown(prices, s.tier as PricedTier);
+      return { fanId: s.fanId, tier: s.tier as PricedTier, orderNo: makeNo(), amountKrw: b.totalKrw, shippingFeeKrw: b.shippingFeeKrw };
+    });
+    const tossOrderId = newPaymentOrderId();
+    try {
+      const { sendId } = await deps.store.create({ senderId: deps.viewer.userId, tossOrderId, charge, shares });
+      return { ok: true, sendId, tossOrderId, orderNos: shares.map((s) => s.orderNo), amountKrw: charge.totalKrw };
+    } catch (e) {
+      const refusal = refusalOf(e);
+      if (refusal === "not_follower") return { ok: false, status: 403, message: NOT_FOLLOWER_MESSAGE };
+      if (refusal === "price_changed") return { ok: false, status: 409, message: PRICE_CHANGED_MESSAGE };
+      if (refusal !== "order_no_taken" || attempt >= 3) throw e;
+    }
+  }
+}

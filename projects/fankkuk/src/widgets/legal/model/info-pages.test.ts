@@ -35,10 +35,10 @@ const docs: Readonly<Record<string, LegalDoc>> = {
 const text = (doc: LegalDoc) => JSON.stringify(doc);
 
 describe("안내·법정 페이지 공통", () => {
-  it("페이지마다 맨 위 요약이 세 줄이고, 줄마다 완결 문장이다", () => {
+  it("페이지마다 맨 위 요약이 비어 있지 않은 세 줄이다 — 조건·한도는 짧은 항목형도 허용한다", () => {
     for (const [name, doc] of Object.entries(docs)) {
       expect([name, doc.summary.length]).toEqual([name, 3]);
-      for (const line of doc.summary) expect([name, line]).toEqual([name, expect.stringMatching(/[.요다]$/)]);
+      for (const line of doc.summary) expect([name, line.trim().length > 0]).toEqual([name, true]);
     }
     expect(faqDoc(prices).summary).toHaveLength(3);
   });
@@ -168,7 +168,7 @@ describe("안내·법정 페이지 공통", () => {
   });
 
   it("보안 안내 그림은 팬 → 사무실 → 송장 출력 때만 주소 열람 → 크리에이터 네 칸이다", () => {
-    expect(SECURITY_FLOW.map((s) => s.title)).toEqual(["팬", "팬꾹 사무실", "송장을 출력할 때만 주소 열람", "크리에이터"]);
+    expect(SECURITY_FLOW.map((s) => s.title)).toEqual(["팬", "팬꾹", "송장을 출력할 때만 주소 열람", "크리에이터"]);
   });
 });
 

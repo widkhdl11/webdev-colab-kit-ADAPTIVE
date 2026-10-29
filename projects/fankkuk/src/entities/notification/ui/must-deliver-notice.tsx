@@ -18,9 +18,9 @@ export function MustDeliverNotice({ audience, id, className, titleClassName, bod
   const labels = mustDeliverLabels(audience);
   return (
     <p id={id} className={className}>
-      <strong className={titleClassName}>필수 알림은 수신 설정과 관계없이 발송됩니다.</strong>{" "}
+      <strong className={titleClassName}>필수 알림: {labels.join(" · ")}</strong><br />
       <span className={bodyClassName}>
-        {labels.join(" · ")}
+        선물 진행·결제·상자 처리에 필요한 알림은 수신 설정과 관계없이 발송됩니다.
         {extra ? (
           <>
             <br />

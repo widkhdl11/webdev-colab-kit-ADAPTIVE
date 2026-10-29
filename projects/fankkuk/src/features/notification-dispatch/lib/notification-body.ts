@@ -19,7 +19,7 @@ import { formatDeadline, formatMonthDayKo } from "@/shared/lib/format/datetime";
 // gift_pending_box: 받는 주소를 본 적이 있는 주문이 거절·반려될 때 아직 안 온 상자가 있으면 보낸 팬에게 한 번(INV-N17, 2026-10-10).
 //   거절·7일 반려·차단 거절 모두 같은 종류·같은 본문이다(INV-N2). 6자리·주소 칸이 없다.
 // gift_undelivered: 받는 주소를 본 적이 없는(상자가 하나도 오지 않은) 주문이 거절·반려될 때 보낸 팬에게 한 번(INV-N17 ②, 2026-10-12 문제집 D11).
-//   화면(C2)과 같은 뜻을 전한다(2026-10-12 (2) D11) — 직접·차단 거절은 「선물을 원하지 않아요」, 7일 반려는 「기간이 지나 반려됐어요」.
+//   화면(C2)과 같은 뜻을 전한다(2026-10-12 (2) D11) — 직접·차단 거절은 「선물을 원하지 않아요」, 7일 반려는 「승인 기한이 지나 자동 반려되었습니다」.
 //   어느 문구인지는 꺼낸 줄의 undelivered_reason(DB 가 주문 상태로 정한 값)이 정한다. 차단 거절도 declined 라 차단은 드러나지 않는다(decline-block INV-D5).
 //   크리에이터 이름은 넣지 않는다(INV-N1) — 화면의 「OO님이」 대신 「크리에이터가」.
 // creator_check: 추적기 아님 블루투스·RF 상자를 받을지 크리에이터에게 묻는다(2026-10-12 (2) D3 ②). 보낸 팬·검출 내용 칸이 없다(INV-N1) —
@@ -66,24 +66,24 @@ export type NotificationBody = { subject: string; text: string; buttonLabel: str
 
 const ORDER_NO = /^[A-Z0-9][A-Z0-9-]{0,39}$/;
 
-const FOOTER = "이 알림에는 선물 내용과 보낸 사람·받는 사람 정보를 담지 않아요. 자세한 내용은 로그인한 뒤 위 링크에서 확인해 주세요.";
+const FOOTER = "선물 상세 정보는 알림에 표시하지 않습니다. 로그인 후 위 링크에서 확인해 주세요.";
 const FOOTER_OPTIONAL: Record<NotificationAudience, string> = {
-  fan: "알림은 내 팬꾹에서 끌 수 있어요.",
-  creator: "알림은 내 팬꾹의 주소와 설정에서 끌 수 있어요.",
+  fan: "알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다.",
+  creator: "알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다.",
 };
-const FOOTER_MUST = "이 알림은 꺼 두어도 가요.";
+const FOOTER_MUST = "서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.";
 
 const APPROVAL_SUBJECT = {
-  1: "[팬꾹] 새 선물 승인 요청이 왔어요",
-  2: "[팬꾹] 승인을 기다리는 선물이 사무실에 도착했어요",
-  3: "[팬꾹] 아직 승인하지 않은 선물이 있어요",
+  1: "[팬꾹] 새 선물 승인 요청",
+  2: "[팬꾹] 승인 대기 선물 도착",
+  3: "[팬꾹] 선물 승인 기한 안내",
 } as const;
 
 /** 팬이 보낸 선물의 단계 알림 — 제목과 첫 문장 */
 const FAN_STEP = {
-  arrived: ["[팬꾹] 보낸 선물이 팬꾹 사무실에 도착했어요", "보내신 선물이 팬꾹 사무실에 도착했어요."],
-  inspected: ["[팬꾹] 보낸 선물의 검수가 끝났어요", "보내신 선물의 검수가 끝났어요."],
-  shipped: ["[팬꾹] 보낸 선물이 출고됐어요", "보내신 선물이 크리에이터에게 출발했어요."],
+  arrived: ["[팬꾹] 선물 입고 완료", "보내신 선물이 팬꾹에 도착했습니다."],
+  inspected: ["[팬꾹] 선물 검수 완료", "보내신 선물의 검수가 완료되었습니다."],
+  shipped: ["[팬꾹] 선물 출고 완료", "보내신 선물이 팬꾹에서 출고 처리되었습니다. 택배사 인계 후 배송이 진행됩니다."],
 } as const;
 
 /** 역조공 주문번호(RG-…)인가 — 역조공 상자 도착 알림은 보낸 크리에이터의 「보낸 역조공」 화면으로 잇는다 */
@@ -115,9 +115,9 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
         subject: APPROVAL_SUBJECT[round],
         lines: [
           greet,
-          round === 3 ? "승인을 기다리는 선물이 아직 있어요." : "승인을 기다리는 선물이 있어요.",
+          round === 3 ? "아직 승인하지 않은 선물이 있습니다. 승인 기한을 확인해 주세요." : "승인 요청을 확인해 주세요.",
           order,
-          `${formatDeadline(autoRejectAt)}까지 승인하지 않으면 자동으로 반려돼요.`,
+          `${formatDeadline(autoRejectAt)}까지 승인하지 않으면 자동 반려됩니다.`,
         ],
         buttonLabel: "승인 요청 보기",
         // 승인은 크리에이터 처리할 일에서 한다(2026-10-16 — 「승인 대기」 메뉴가 없어짐, INV-N9 · action-center INV-J5)
@@ -132,8 +132,8 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
     case "box_arrived":
       // 상자 하나가 사무실에 도착해 입고됐다.
       return {
-        subject: "[팬꾹] 보낸 상자가 팬꾹 사무실에 도착했어요",
-        lines: [greet, "보내신 상자 하나가 팬꾹 사무실에 도착했어요.", order],
+        subject: "[팬꾹] 상자 입고 완료",
+        lines: [greet, "보내신 상자 하나가 팬꾹에 도착했습니다.", order],
         buttonLabel: "상자 확인하기",
         path: REVGIFT_ORDER_NO.test(orderNo) ? "/creator/revgifts" : `/gifts/${orderNo}`,
       };
@@ -142,8 +142,8 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
       // 보낸 팬의 닉네임은 쓰지 않는다(INV-N1) — 들어간 처리할 일 화면에서 로그인한 크리에이터에게만 보인다.
       // 스펙 문장의 「보낸 분」은 용어집 2절에서 쓰지 않는 말이라 「보낸 사람」으로 쓴다. 기한은 블루투스 발견과 같은 7일(검수 완료 + 168시간)
       return {
-        subject: "[팬꾹] 추적 장치가 나온 상자가 있어요",
-        lines: [greet, "추적 장치가 나온 상자가 있어요.", `신고할지 정해 주세요. ${CREATOR_CHECK_DAYS}일 안에 정하지 않으면 보낸 사람에게 돌려보내요.`, order],
+        subject: "[팬꾹] 추적 장치 발견 안내",
+        lines: [greet, "검수 중 추적 장치가 발견되었습니다.", `신고 여부를 선택해 주세요. 검수 완료 후 ${CREATOR_CHECK_DAYS}일 이내에 선택하지 않으면 반송 처리됩니다.`, order],
         buttonLabel: "확인하기",
         path: CREATOR_ACTION_CENTER_HREF,
       };
@@ -205,9 +205,9 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
     case "gift_undelivered": {
       // 거절했다는 뜻은 전하고(화면 C2 와 같은 말) 차단·크리에이터 이름은 쓰지 않는다(INV-N1·N2). 받는 주소를 본 적이 없는 주문이라 결제 금액 전부가 돌아간다(payment INV-M8)
       if (!undeliveredReason) throw new Error("거절 알림에 문구 갈래가 없다");
-      const first = undeliveredReason === "expired" ? `보내신 선물이 ${EXPIRED_TEXT}` : `크리에이터가 ${DECLINED_PHRASE}`;
+      const first = undeliveredReason === "expired" ? `보내신 선물의 ${EXPIRED_TEXT}` : `크리에이터가 ${DECLINED_PHRASE}`;
       return {
-        subject: undeliveredReason === "expired" ? `[팬꾹] 보낸 선물이 ${EXPIRED_TEXT}` : `[팬꾹] 크리에이터가 ${DECLINED_PHRASE}`,
+        subject: undeliveredReason === "expired" ? `[팬꾹] 보낸 선물의 ${EXPIRED_TEXT}` : `[팬꾹] 크리에이터가 ${DECLINED_PHRASE}`,
         lines: [greet, `${first}.`, "결제 금액은 돌려드려요.", order],
         buttonLabel: "선물 보기",
         path: `/gifts/${orderNo}`,
@@ -216,8 +216,8 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
     case "creator_check":
       // 받을지 정해 달라는 말과 기한뿐 — 보낸 팬·무엇이 나왔는지는 쓰지 않는다(INV-N1). 화면은 크리에이터 처리할 일의 블루투스 발견 줄(INV-N9·N13)
       return {
-        subject: "[팬꾹] 받을지 정해 주실 선물이 있어요",
-        lines: [greet, "받을지 정해 주실 상자가 있어요.", `${CREATOR_CHECK_DAYS}일 안에 정하지 않으면 보낸 사람에게 돌려보내요.`, order],
+        subject: "[팬꾹] 선물 수령 여부 확인 요청",
+        lines: [greet, "수령 여부를 확인할 상자가 있습니다.", `검수 완료 후 ${CREATOR_CHECK_DAYS}일 이내에 선택하지 않으면 반송 처리됩니다.`, order],
         buttonLabel: "확인하기",
         path: CREATOR_ACTION_CENTER_HREF,
       };
@@ -258,15 +258,15 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
       };
     case "gift_reply":
       return {
-        subject: "[팬꾹] 보낸 선물에 답장이 왔어요",
-        lines: [greet, "보내신 선물에 답장이 왔어요.", order],
+        subject: "[팬꾹] 선물 답장 도착",
+        lines: [greet, "보내신 선물에 답장이 도착했습니다.", order],
         buttonLabel: "답장 보기",
         path: `/gifts/${orderNo}`,
       };
     case "gift_received":
       return {
-        subject: "[팬꾹] 보낸 선물이 도착했다고 확인됐어요",
-        lines: [greet, "보내신 선물을 크리에이터가 받았다고 확인했어요.", order],
+        subject: "[팬꾹] 크리에이터 수령 확인",
+        lines: [greet, "크리에이터가 선물 수령을 확인했습니다.", order],
         buttonLabel: "선물 보기",
         path: `/gifts/${orderNo}`,
       };
@@ -280,7 +280,7 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
         return {
           subject: "[팬꾹] 돌려보낼 상자가 있어요",
           lines: [greet, "돌려보낼 상자가 있어요.", "돌려받을 주소를 확인해 주세요. 30일 안에 확인하지 않으면 상자를 처분해요.", order],
-          buttonLabel: "돌려받을 주소 확인하기",
+          buttonLabel: "반송 주소 확인하기",
           path,
         };
       }
@@ -290,14 +290,14 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
         return {
           subject: "[팬꾹] 5일 뒤 상자를 처분해요",
           lines: [greet, "5일 뒤 상자를 처분해요.", `${formatMonthDayKo(disposeDueAt)}까지 확인하지 않으면 상자를 처분해요.`, order],
-          buttonLabel: "돌려받을 주소 확인하기",
+          buttonLabel: "반송 주소 확인하기",
           path,
         };
       }
       return {
         subject: "[팬꾹] 돌려받을 주소를 아직 확인하지 않았어요",
         lines: [greet, "돌려받을 주소를 아직 확인하지 않았어요.", `${formatMonthDayKo(disposeDueAt)}까지 확인하지 않으면 상자를 처분해요.`, order],
-        buttonLabel: "돌려받을 주소 확인하기",
+        buttonLabel: "반송 주소 확인하기",
         path,
       };
     }

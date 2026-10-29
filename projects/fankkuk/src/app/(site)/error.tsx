@@ -8,8 +8,8 @@ import { StatusPage } from "@/widgets/status-page/ui/status-page";
 export default function SiteError({ retry }: { error: Error & { digest?: string }; retry: () => void }) {
   return (
     <StatusPage
-      title="화면을 열지 못했어요"
-      description="잠시 뒤 다시 시도해 주세요. 계속되면 고객센터로 알려 주세요."
+      title="화면을 불러오지 못했습니다"
+      description="잠시 후 다시 시도해 주세요. 문제가 계속되면 고객센터로 문의해 주세요."
       actions={
         <>
           <button className="btn" type="button" onClick={() => retry()}>

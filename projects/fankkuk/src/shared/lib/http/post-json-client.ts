@@ -3,7 +3,7 @@
 /** status: 서버 응답 코드. 연결이 안 됐으면 0. field: 서버가 틀린 칸을 알려 줬으면 그 이름(화면이 그 칸에 포커스를 옮긴다), 아니면 null */
 export type PostJsonOutcome = { kind: "ok"; body: Record<string, unknown> } | { kind: "failed"; status: number; message: string; field: string | null };
 
-const FALLBACK = "저장하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const FALLBACK = "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 /** 화면이 낡았다는 뜻의 실패 — 다른 사람이 먼저 처리했거나(409) 이미 없어졌다(404). 화면을 다시 읽어야 한다. */
 export function isStaleFailure(outcome: PostJsonOutcome): boolean {

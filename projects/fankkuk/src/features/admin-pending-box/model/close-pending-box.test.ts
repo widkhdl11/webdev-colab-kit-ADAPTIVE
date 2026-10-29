@@ -29,7 +29,7 @@ describe("INV-M18: 대표의 안 온 상자 닫기", () => {
 
   it("INV-M18 (S18d, 실패경로): 운영자가 아니면 404, 직원 운영자는 403 — DB 를 부르지 않는다", async () => {
     const guest = fakeClient(null, { operator: false, owner: false });
-    expect(await closePendingBox(guest.client, { boxId: BOX_ID })).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+    expect(await closePendingBox(guest.client, { boxId: BOX_ID })).toEqual({ status: 404, body: { message: "요청한 항목을 찾을 수 없습니다." } });
     expect(guest.calls).toEqual([]);
     const staff = fakeClient(null, { operator: true, owner: false });
     expect(await closePendingBox(staff.client, { boxId: BOX_ID })).toEqual({ status: 403, body: { message: "도착하지 않은 상자는 대표만 닫을 수 있어요." } });

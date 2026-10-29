@@ -27,7 +27,7 @@ export const MESSAGE_PHONE_SEARCH = "전화번호 뒤 4자리를 숫자 4개로 
 export const MESSAGE_PHONE_SEARCH_UNAVAILABLE = "전화번호 뒤 4자리 검색은 아직 쓸 수 없어요.";
 const MESSAGE_ACCEPT_INPUT = "송장번호·내용물 확인을 표시해 주세요.";
 const READ_FAILED = "목록을 읽지 못했어요. 잠시 뒤 다시 해 주세요.";
-const FAILED = "처리하지 못했어요. 잠시 뒤 다시 해 주세요.";
+const FAILED = "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 const claimRows = z.array(
   z
@@ -91,11 +91,11 @@ export async function adminStorageRequest(client: Rpc, body: unknown): Promise<J
   if (kind === "reject") return rejectClaim(client, body);
   if (kind === "look") return setLook(client, body);
   if (kind === "phone_search") return searchPhoneLast4(client, body);
-  return { status: 400, body: { message: "잘못된 요청이에요." } };
+  return { status: 400, body: { message: "유효하지 않은 요청입니다." } };
 }
 
 async function readClaims(client: Rpc, body: unknown): Promise<JsonReply> {
-  if (!claimsBody.safeParse(body).success) return { status: 400, body: { message: "잘못된 요청이에요." } };
+  if (!claimsBody.safeParse(body).success) return { status: 400, body: { message: "유효하지 않은 요청입니다." } };
   const { data, error } = await client.rpc("admin_storage_claims");
   if (error) return pgErrorReply(error.code, { limit: READ_FAILED, failed: READ_FAILED });
   const rows = claimRows.safeParse(data ?? []);
@@ -131,9 +131,9 @@ async function acceptClaim(client: Rpc, body: unknown): Promise<JsonReply> {
 
 async function rejectClaim(client: Rpc, body: unknown): Promise<JsonReply> {
   const shaped = rejectBody.safeParse(body);
-  if (!shaped.success) return { status: 400, body: { message: "잘못된 요청이에요." } };
+  if (!shaped.success) return { status: 400, body: { message: "유효하지 않은 요청입니다." } };
   const { error } = await client.rpc("admin_reject_storage_claim", { p_claim_id: shaped.data.claimId });
-  if (error) return pgErrorReply(error.code, { limit: "잘못된 요청이에요.", conflict: MESSAGE_CLAIM_CLOSED, failed: FAILED });
+  if (error) return pgErrorReply(error.code, { limit: "유효하지 않은 요청입니다.", conflict: MESSAGE_CLAIM_CLOSED, failed: FAILED });
   return { status: 200, body: { ok: true } };
 }
 

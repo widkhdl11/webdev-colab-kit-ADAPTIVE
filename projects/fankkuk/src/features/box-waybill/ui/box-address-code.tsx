@@ -8,7 +8,7 @@ import s from "./box-waybill.module.css";
 // 팬 선물 상세의 상자별 팬꾹 주소 (inbound-address-code INV-C2·C3) — 시안 v41-user-fixes/s/detail-after.html .addr3, design-rules 33절.
 // 6자리를 「팬꾹 주소 6자리」 이름표 + 한 글자씩 흰 칸으로 따로 크게 보인다. 동작은 ReceivingAddress 와 같다:
 // - 6자리는 기본으로 가려 두고 「6자리 보기」를 눌러야 보인다(INV-C2 — 어깨 너머·화면 공유로 새지 않게).
-// - 「주소 한 번에 복사」는 가려져 있어도 6자리를 포함한 전체 주소를 복사한다.
+// - 「전체 주소 복사」는 가려져 있어도 6자리를 포함한 전체 주소를 복사한다.
 // - 부르는 쪽이 DB 가 준 6자리가 있을 때만 그린다(6자리 빠진 기본 사무실 주소는 그리지 않는다).
 // 받은 역조공 쪽(revgift-sent)은 이번 결정 밖이라 ReceivingAddress 를 그대로 쓴다.
 

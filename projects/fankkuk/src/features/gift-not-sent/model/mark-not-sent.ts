@@ -8,7 +8,7 @@ import type { JsonReply } from "@/shared/lib/http/private-json";
 // 도착하지 않은 상자 알림·선물 상세의 버튼. 그 주문에 「고객 확인: 아직 안 보냄」과 누른 시각만 남기고(다시 누르면 시각만 바뀐다) 기한은 바꾸지 않는다.
 // 주문번호만 넘긴다 — 누구 주문인지·진행 중이고 아직 안 온 상자가 있는지는 DB 가 로그인 토큰으로 판정한다(남의 주문은 404).
 
-export const MESSAGE_NOT_SENT_UNAVAILABLE = "지금은 남길 수 없는 선물이에요. 새로고침해 주세요.";
+export const MESSAGE_NOT_SENT_UNAVAILABLE = "현재 미발송 상태를 등록할 수 없습니다. 새로고침해 주세요.";
 
 const body = z.object({ orderNo: z.string().regex(/^FC-[0-9A-Z]{3,10}(-[0-9]{1,2})?$/) }).strict();
 const answer = z.string().min(1);
@@ -16,17 +16,17 @@ const answer = z.string().min(1);
 type Deps = { client: Pick<SupabaseClient, "rpc">; viewer: Viewer | null };
 
 export async function markGiftNotSent(deps: Deps, input: unknown): Promise<JsonReply> {
-  if (!deps.viewer) return { status: 401, body: { message: "로그인이 필요해요." } };
-  if (deps.viewer.role !== "fan" && deps.viewer.role !== "creator") return { status: 403, body: { message: "권한이 없어요." } };
+  if (!deps.viewer) return { status: 401, body: { message: "로그인이 필요합니다." } };
+  if (deps.viewer.role !== "fan" && deps.viewer.role !== "creator") return { status: 403, body: { message: "이 작업을 수행할 권한이 없습니다." } };
   const shaped = body.safeParse(input);
-  if (!shaped.success) return { status: 400, body: { message: "잘못된 요청이에요." } };
+  if (!shaped.success) return { status: 400, body: { message: "유효하지 않은 요청입니다." } };
   const { data, error } = await deps.client.rpc("mark_gift_not_sent", { p_order_no: shaped.data.orderNo });
   if (error) {
     if (error.code === "P0002") return { status: 404, body: { message: MESSAGE_NOT_SENT_UNAVAILABLE } };
-    return pgErrorReply(error.code, { limit: "잘못된 요청이에요.", failed: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." });
+    return pgErrorReply(error.code, { limit: "유효하지 않은 요청입니다.", failed: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." });
   }
   const at = answer.safeParse(data);
   // 모르는 답이면 남았다고 단정하지 않는다
-  if (!at.success) return { status: 500, body: { message: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." } };
+  if (!at.success) return { status: 500, body: { message: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." } };
   return { status: 200, body: { notSentAt: at.data } };
 }

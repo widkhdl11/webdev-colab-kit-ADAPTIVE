@@ -15,9 +15,9 @@ export type ManualRefundDeps = {
 };
 
 export const MANUAL_REFUND_MESSAGE = {
-  notFound: "찾을 수 없어요.",
+  notFound: "요청한 항목을 찾을 수 없습니다.",
   ownerOnly: "환불은 대표만 할 수 있어요.",
-  badRequest: "잘못된 요청이에요.",
+  badRequest: "유효하지 않은 요청입니다.",
   memoLength: "메모를 1~200자로 써 주세요.",
   memoDigits: "메모에 연락처나 계좌번호는 쓰지 마세요. 숫자가 10자리 이상 이어지면 받지 않아요.",
   notClaimed: "아직 환불을 누르지 않은 기록이에요. 「환불」부터 눌러 주세요.",

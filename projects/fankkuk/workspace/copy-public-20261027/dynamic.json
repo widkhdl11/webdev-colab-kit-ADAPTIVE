@@ -1,0 +1,200 @@
+[
+  {
+    "index": 423,
+    "file": "src/widgets/legal/model/dispute-doc.ts",
+    "old": "이메일(${orBlank(info.supportEmail)})로도 문의할 수 있어요.",
+    "new": "이메일(${orBlank(info.supportEmail)})로도 문의할 수 있습니다."
+  },
+  {
+    "index": 435,
+    "file": "src/widgets/legal/model/dispute-doc.ts",
+    "old": "신고한 가액이 없으면 ${won(info.compensationCapKrw)}을 한도로 배상해요.",
+    "new": "신고한 가액이 없으면 ${won(info.compensationCapKrw)}을 한도로 배상합니다."
+  },
+  {
+    "index": 486,
+    "file": "src/widgets/legal/model/faq-doc.ts",
+    "old": "크리에이터의 승인과 검수가 모두 끝난 상자만 출고해요. 사무실에 도착한 뒤 출고까지 걸리는 기간은 ${toCheck(\"입고부터 출고까지 걸리는 기간\")}이에요. 진행 상황은 선물 상세에서 볼 수 있어요.",
+    "new": "크리에이터의 승인과 검수가 모두 끝난 상자만 출고합니다. 사무실에 도착한 뒤 출고까지 걸리는 기간은 ${toCheck(\"입고부터 출고까지 걸리는 기간\")}입니다. 진행 상황은 선물 상세에서 볼 수 있습니다."
+  },
+  {
+    "index": 487,
+    "file": "src/widgets/legal/model/faq-doc.ts",
+    "old": "크리에이터가 거절했거나 결제가 끝난 때부터 ${APPROVAL_DEADLINE_DAYS}일 안에 승인하지 않은 선물은 크리에이터에게 배송하지 않아요. 거절한 이유는 팬에게 알리지 않아요. 상자가 아직 도착하지 않았고 팬꾹 주소도 공개되지 않았다면 결제 금액 전액을 환불해 드려요. 팬꾹 주소가 공개되었다면 반송 택배비를 뺀 금액을 먼저 환불해 드려요. 결제가 끝난 때부터 30일 안에 상자가 도착하면 돌려보내며, 추가 환불은 없어요. 30일이 지나도 도착하지 않으면 보류한 반송 택배비까지 환불해 드려요. 사무실에 도착한 상자는 확인해 주신 주소로 돌려보내고, 해당 상자의 결제 금액에서 반송 택배비를 뺀 금액을 환불해 드려요. 검수 기준에 맞지 않는 상자는 환불 금액이 없어요.",
+    "new": "크리에이터가 거절하거나 결제 후 ${APPROVAL_DEADLINE_DAYS}일 이내에 승인하지 않으면 선물은 배송하지 않습니다. 거절 사유는 공개하지 않습니다.\\n• 입고 전·팬꾹 주소 미표시: 전액 환불\\n• 입고 전·팬꾹 주소 표시: 반송 택배비를 제외한 금액 우선 환불. 결제 후 30일 이내 도착하면 반송하며 추가 환불은 없음. 30일이 지나도 도착하지 않으면 보류한 택배비까지 환불\\n• 입고 후: 확인한 반송 주소로 보내고, 상자별 결제 금액에서 반송 택배비를 제외해 환불\\n• 검수 불합격 상자: 환불 금액 없음"
+  },
+  {
+    "index": 492,
+    "file": "src/widgets/legal/model/faq-doc.ts",
+    "old": "승인 요청이 오면 선물마다 카카오톡 인증서로 서명해 승인해 주세요. 한꺼번에 승인하는 기능은 없어요. 결제가 끝난 때부터 ${APPROVAL_DEADLINE_DAYS}일 안에 승인하지 않으면 기한이 지나 받지 않은 선물로 처리돼요.",
+    "new": "승인 요청이 오면 선물마다 카카오톡 인증서로 서명해 승인해 주세요. 한꺼번에 승인하는 기능은 없습니다. 결제가 끝난 때부터 ${APPROVAL_DEADLINE_DAYS}일 안에 승인하지 않으면 기한이 지나 받지 않은 선물로 처리됩니다."
+  },
+  {
+    "index": 493,
+    "file": "src/widgets/legal/model/faq-doc.ts",
+    "old": "사무실에서 측정한 상자의 요금 구간이 등록한 구간보다 높으면 차액을 결제해야 해요. 차액을 결제하기 전에는 출고하지 않아요. 검수가 끝난 때부터 ${DIFFERENCE_DEADLINE_DAYS}일 안에 결제하지 않으면 상자를 돌려보내며, 이때는 검수 기준에 맞지 않는 상자와 마찬가지로 환불 금액이 없어요.",
+    "new": "실측 요금 구간이 선택한 구간을 초과하면 차액을 결제해야 합니다. 차액을 결제하기 전에는 출고하지 않습니다. 검수가 끝난 때부터 ${DIFFERENCE_DEADLINE_DAYS}일 안에 결제하지 않으면 상자를 돌려보내며, 이때는 검수 기준에 맞지 않는 상자와 마찬가지로 환불 금액이 없습니다."
+  },
+  {
+    "index": 494,
+    "file": "src/widgets/legal/model/faq-doc.ts",
+    "old": "크리에이터가 보낼 때 상자마다 결제해요. ${revgiftFees}이에요. 팬 선물 요금에서 검수비를 뺀 금액이에요. 받는 팬은 결제하지 않아요.",
+    "new": "크리에이터가 보낼 때 상자마다 결제합니다. ${revgiftFees}입니다. 팬 선물 요금에서 검수비를 뺀 금액입니다. 받는 팬은 결제하지 않습니다."
+  },
+  {
+    "index": 495,
+    "file": "src/widgets/legal/model/faq-doc.ts",
+    "old": "환불 금액은 선물의 진행 상태에 따라 정해지며, 선물 상세의 결제 내역에서 확인할 수 있어요. 결제한 수단으로 환불받기까지 걸리는 기간은 ${toCheck(\"결제 수단별 환불이 들어오기까지 걸리는 기간\")}이에요. 출고한 뒤에는 환불 금액이 없어요.",
+    "new": "환불 금액은 진행 상태에 따라 산정하며 ‘선물 상세 > 결제 내역’에서 확인할 수 있습니다.\\n결제 수단별 환불 반영 기간: ${toCheck(\"결제 수단별 환불이 들어오기까지 걸리는 기간\")}\\n출고 후에는 환불 금액이 없습니다."
+  },
+  {
+    "index": 496,
+    "file": "src/widgets/legal/model/faq-doc.ts",
+    "old": "고객센터에 1:1 문의를 남겨 주세요. 이메일(${orBlank(SITE_INFO.supportEmail)})로도 문의할 수 있어요.",
+    "new": "고객센터에 1:1 문의를 남겨 주세요. 이메일(${orBlank(SITE_INFO.supportEmail)})로도 문의할 수 있습니다."
+  },
+  {
+    "index": 206,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "인증 코드를 받은 날부터 ${VERIFICATION_CODE_DAYS}일 안에 확인을 마치거나 「확인 요청」을 눌러야 해요. 팬꾹이 직접 확인하는 데 걸리는 기간은 정해져 있지 않아요.",
+    "new": "인증 코드를 받은 날부터 ${VERIFICATION_CODE_DAYS}일 안에 확인을 마치거나 「확인 요청」을 눌러야 합니다. 팬꾹이 직접 확인하는 데 걸리는 기간은 정해져 있지 않습니다."
+  },
+  {
+    "index": 207,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "한 채널의 인증 코드는 최대 ${VERIFICATION_TRIES}번까지 신청할 수 있어요. 횟수를 모두 사용했다면 1:1 문의로 알려 주세요.",
+    "new": "한 채널의 인증 코드는 최대 ${VERIFICATION_TRIES}번까지 신청할 수 있습니다. 횟수를 모두 사용했다면 1:1 문의를 이용해 주세요."
+  },
+  {
+    "index": 212,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "「링크 주소」에 영문·숫자·밑줄(_)로 ${HANDLE_MIN}~${HANDLE_MAX}자를 적어요. 로그인 아이디와 다른 값으로 정해 주세요.",
+    "new": "「링크 주소」에 영문·숫자·밑줄(\\_)로 ${HANDLE_MIN}~${HANDLE_MAX}자를 입력해 주세요. 로그인 아이디와 다른 값으로 정해 주세요."
+  },
+  {
+    "index": 216,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "링크 주소를 정하거나 바꾸면 ${HANDLE_LOCK_DAYS}일 동안 다시 바꿀 수 없어요.",
+    "new": "링크 주소를 정하거나 바꾸면 ${HANDLE_LOCK_DAYS}일 동안 다시 바꿀 수 없습니다."
+  },
+  {
+    "index": 217,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "링크 주소를 바꾸면 ${HANDLE_RETIRE_DAYS}일 동안은 이전 주소로 접속해도 새 주소로 연결돼요.",
+    "new": "링크 주소를 바꾸면 ${HANDLE_RETIRE_DAYS}일 동안은 이전 주소로 접속해도 새 주소로 연결됩니다."
+  },
+  {
+    "index": 243,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "결제가 끝난 때부터 ${APPROVAL_DEADLINE_DAYS * 24}시간(${APPROVAL_DEADLINE_DAYS}일) 안에 승인하지 않으면 자동으로 받지 않음 처리돼요. 주말과 공휴일도 포함돼요.",
+    "new": "결제가 끝난 때부터 ${APPROVAL_DEADLINE_DAYS * 24}시간(${APPROVAL_DEADLINE_DAYS}일) 안에 승인하지 않으면 자동으로 받지 않음 처리됩니다. 주말과 공휴일도 포함됩니다."
+  },
+  {
+    "index": 264,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "「받지 않기」를 고르거나 수령 여부를 물은 때부터 ${CREATOR_CHECK_DAYS}일 안에 답하지 않으면 해당 상자를 팬에게 돌려보내요.",
+    "new": "「받지 않기」를 고르거나 검수가 완료된 때부터 ${CREATOR_CHECK_DAYS}일 안에 답하지 않으면 해당 상자를 팬에게 반송합니다."
+  },
+  {
+    "index": 273,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "한 달 한도는 1개부터 ${MONTHLY_LIMIT_MAX}개까지 정할 수 있어요. 변경한 한도는 다음 선물부터 적용돼요.",
+    "new": "한 달 한도는 1개부터 ${MONTHLY_LIMIT_MAX}개까지 정할 수 있습니다. 변경한 한도는 다음 선물부터 적용됩니다."
+  },
+  {
+    "index": 277,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "등록하면 크리에이터 페이지에 ${DDAY_WINDOW_DAYS}일 전부터 D-day가 표시돼요. 연도는 입력하지 않아요.",
+    "new": "등록하면 크리에이터 페이지에 ${DDAY_WINDOW_DAYS}일 전부터 D-day가 표시됩니다. 연도는 입력하지 않습니다."
+  },
+  {
+    "index": 278,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "기념일 ${ANNIVERSARY_MARK_DAYS}일 전부터는 팬이 「기념일 선물」 표시를 붙여 보낼 수 있어요.",
+    "new": "기념일 ${ANNIVERSARY_MARK_DAYS}일 전부터는 팬이 「기념일 선물」 표시를 붙여 보낼 수 있습니다."
+  },
+  {
+    "index": 282,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "「기간」을 골라요. ${quoteList(HARD_PERIODS.map((p) => HARD_PERIOD_LABEL[p]))} 가운데 하나예요.",
+    "new": "「기간」을 선택해 주세요. ${quoteList(HARD_PERIODS.map((p) => HARD_PERIOD_LABEL[p]))} 가운데 하나입니다."
+  },
+  {
+    "index": 291,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "「짧은 답장 고르기」에서 정해진 문구 하나를 골라요. ${quoteList(REPLY_PHRASES.map((p) => REPLY_PHRASE_TEXT[p]))} 가운데 하나예요.",
+    "new": "「짧은 답장 고르기」에서 정해진 문구 하나를 선택해 주세요. ${quoteList(REPLY_PHRASES.map((p) => REPLY_PHRASE_TEXT[p]))} 가운데 하나입니다."
+  },
+  {
+    "index": 292,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "더 하고 싶은 말이 있으면 「한 줄 더 쓰기」에 ${REPLY_LINE_MAX}자까지 적어요. 전화번호·이메일·인터넷 주소는 쓸 수 없어요.",
+    "new": "더 하고 싶은 말이 있으면 「한 줄 더 쓰기」에 ${REPLY_LINE_MAX}자까지 입력해 주세요. 전화번호·이메일·인터넷 주소는 입력할 수 없습니다."
+  },
+  {
+    "index": 302,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "주소는 상자마다 첫 출력과 재출력을 합쳐 최대 ${MAX_DECRYPTS_PER_BOX}번까지 열 수 있어요. 택배사와 연동된 뒤에는 택배사가 상자를 가져가면 남은 횟수가 있어도 더 이상 열 수 없어요.",
+    "new": "주소는 상자마다 첫 출력과 재출력을 합쳐 최대 ${MAX_DECRYPTS_PER_BOX}번까지 열 수 있습니다. 택배사와 연동된 뒤에는 택배사가 상자를 가져가면 남은 횟수가 있어도 더 이상 열 수 없습니다."
+  },
+  {
+    "index": 306,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "「받을 팬 고르기」에서 받을 팬을 체크해요. 한 번에 ${MAX_REVGIFT_SHARES}명까지 고를 수 있어요.",
+    "new": "「받을 팬 고르기」에서 받을 팬을 선택해 주세요. 한 번에 ${MAX_REVGIFT_SHARES}명까지 고를 수 있습니다."
+  },
+  {
+    "index": 315,
+    "file": "src/widgets/legal/model/guide-creator-doc.ts",
+    "old": "결제가 끝난 때부터 ${APPROVAL_DEADLINE_DAYS}일 안에 팬이 수락하지 않으면 「받지 않음」으로 처리돼요. 팬이 직접 받지 않기를 선택한 경우와 기한이 지난 경우는 구분하지 않고 모두 「받지 않음」으로 표시돼요.",
+    "new": "결제가 끝난 때부터 ${APPROVAL_DEADLINE_DAYS}일 안에 팬이 수락하지 않으면 「받지 않음」으로 처리됩니다. 팬이 직접 받지 않기를 선택한 경우와 기한이 지난 경우는 구분하지 않고 모두 「받지 않음」으로 표시됩니다."
+  },
+  {
+    "index": 134,
+    "file": "src/widgets/legal/model/guide-fan-doc.ts",
+    "old": "보낼 수 없는 물품이 발견되거나 ${OVERSIZE_RULE}는 검수 기준에 맞지 않는 상자로 처리해 돌려보내요. 이때는 검수비·서비스료·반송 택배비를 모두 빼므로 환불 금액이 없어요. 다만 추적 장치가 확인된 상자는 사무실에 보관한 뒤 신고 여부에 따라 경찰에 넘기거나 돌려보내며, 어느 경우에도 환불 금액은 없어요.",
+    "new": "보낼 수 없는 물품이 발견되거나 ${OVERSIZE_RULE}는 검수 기준에 맞지 않는 상자로 처리해 돌려보냅니다. 이때는 검수비·서비스료·반송 택배비를 모두 빼므로 환불 금액이 없습니다. 다만 추적 장치가 확인된 상자는 사무실에 보관한 뒤 신고 여부에 따라 경찰에 넘기거나 돌려보내며, 어느 경우에도 환불 금액은 없습니다."
+  },
+  {
+    "index": 145,
+    "file": "src/widgets/legal/model/guide-fan-doc.ts",
+    "old": "결제가 끝난 때부터 ${DAYS} 안에 크리에이터가 승인하지 않으면, 기한이 지나 받지 않은 선물로 처리돼요.",
+    "new": "결제가 끝난 때부터 ${DAYS} 안에 크리에이터가 승인하지 않으면, 기한이 지나 받지 않은 선물로 처리됩니다."
+  },
+  {
+    "index": 158,
+    "file": "src/widgets/legal/model/guide-fan-doc.ts",
+    "old": "탐지기 반응이 있었지만 추적 장치가 아닌 상자는 크리에이터에게 받을지 물어요. 크리에이터가 받지 않기를 고르거나 물은 때부터 ${CREATOR_CHECK_DAYS}일 안에 답하지 않으면 돌려보내요. 이때는 검수비·서비스료·반송 택배비를 모두 빼므로 환불 금액이 없어요.",
+    "new": "탐지기 반응이 있었지만 추적 장치가 아닌 상자는 크리에이터에게 수령 여부를 확인합니다. 크리에이터가 받지 않기를 고르거나 검수가 완료된 때부터 ${CREATOR_CHECK_DAYS}일 안에 답하지 않으면 돌려보냅니다. 이때는 검수비·서비스료·반송 택배비를 모두 빼므로 환불 금액이 없습니다."
+  },
+  {
+    "index": 180,
+    "file": "src/widgets/legal/model/guide-fan-doc.ts",
+    "old": "검수가 끝난 때부터 ${DIFFERENCE_DEADLINE_DAYS}일 안에 차액을 결제하지 않으면 상자를 돌려보내요. 이때는 검수 기준에 맞지 않는 상자와 마찬가지로 환불 금액이 없어요.",
+    "new": "검수가 끝난 때부터 ${DIFFERENCE_DEADLINE_DAYS}일 안에 차액을 결제하지 않으면 상자를 반송합니다. 이때는 검수 기준에 맞지 않는 상자와 마찬가지로 환불 금액이 없습니다."
+  },
+  {
+    "index": 344,
+    "file": "src/widgets/legal/model/inspection-doc.ts",
+    "old": "크리에이터가 돌려보내기를 선택하거나 수령 여부를 물은 때부터 ${WAIT} 안에 답하지 않으면 팬에게 돌려보내요.",
+    "new": "크리에이터가 돌려보내기를 선택하거나 검수가 완료된 때부터 ${WAIT} 안에 답하지 않으면 팬에게 반송합니다."
+  },
+  {
+    "index": 348,
+    "file": "src/widgets/legal/model/inspection-doc.ts",
+    "old": "${OVERSIZE_RULE}도 팬에게 돌려보내 드려요.",
+    "new": "${OVERSIZE_RULE}도 팬에게 반송합니다."
+  },
+  {
+    "index": 105,
+    "file": "src/widgets/legal/model/pricing-doc.ts",
+    "old": "검수가 끝난 때부터 ${DIFFERENCE_DEADLINE_DAYS}일 안에 차액을 결제하지 않으면 상자를 돌려보내요. 이때는 검수 기준에 맞지 않는 상자와 마찬가지로 환불 금액이 없어요.",
+    "new": "검수가 끝난 때부터 ${DIFFERENCE_DEADLINE_DAYS}일 안에 차액을 결제하지 않으면 상자를 반송합니다. 이때는 검수 기준에 맞지 않는 상자와 마찬가지로 환불 금액이 없습니다."
+  },
+  {
+    "index": 448,
+    "file": "src/widgets/support/ui/support-page.tsx",
+    "old": "크리에이터가 받지 않은 선물과 결제하고 ${APPROVAL_DEADLINE_DAYS}일 안에 승인되지 않은 선물은 크리에이터에게 배송되지 않고, 받지 않은 이유는 팬에게 알리지 않아요. 사무실에 도착하기 전이고 팬꾹 주소를 본 적이 없으면 결제 금액을 모두 돌려드려요. 팬꾹 주소를 본 적이 있으면 택배비를 뺀 금액을 먼저 돌려드리고, 그 뒤에 도착한 상자는 돌려보내 드려요. 결제하고 30일 안에 상자가 오지 않으면 택배비도 돌려드려요. 사무실에 도착한 상자는 확인해 주신 돌려받을 주소로 돌려보내 드리고, 택배비를 뺀 금액을 돌려드려요(검수 기준에 맞지 않는 상자는 돌려드리는 금액이 없어요).",
+    "new": "크리에이터가 거절하거나 결제 후 ${APPROVAL_DEADLINE_DAYS}일 이내에 승인하지 않은 선물은 배송하지 않습니다. 거절 사유는 공개하지 않습니다.\\n• 입고 전·팬꾹 주소 미확인: 전액 환불\\n• 입고 전·팬꾹 주소 확인: 반송 택배비를 제외한 금액 우선 환불. 이후 도착한 상자는 반송하며, 결제 후 30일 이내에 도착하지 않으면 보류한 택배비도 환불\\n• 입고 후: 확인한 반송 주소로 반송하고, 반송 택배비를 제외한 금액 환불\\n• 검수 불합격 상자: 환불 금액 없음"
+  }
+]

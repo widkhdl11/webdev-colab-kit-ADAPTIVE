@@ -62,7 +62,7 @@ export function ProfileFollowActions({
 
   if (!signedIn) {
     return (
-      <Link className={`btn ${s.follow}`} href="/login" aria-label={`${creatorName}님 팔로우 — 로그인이 필요해요`}>
+      <Link className={`btn ${s.follow}`} href="/login" aria-label={`${creatorName}님 팔로우 — 로그인 필요`}>
         <span className={s.ico}>
           <Icon d={PLUS} />
         </span>

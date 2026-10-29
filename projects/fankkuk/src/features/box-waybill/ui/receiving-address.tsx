@@ -6,7 +6,7 @@ import s from "./box-waybill.module.css";
 
 // 이 선물의 받는 주소 (inbound-address-code INV-C2·C3). 상자마다 사무실 주소 끝에 6자리가 붙은 주소가 하나씩이다.
 // - 끝 6자리는 기본으로 가려 두고 「6자리 보기」를 눌러야 보인다(어깨 너머·화면 공유로 새지 않게).
-// - 「주소 한 번에 복사」는 가려져 있어도 6자리를 포함한 전체 주소를 복사한다 — 팬은 그대로 붙여 넣어 보내기만 하면 된다.
+// - 「전체 주소 복사」는 가려져 있어도 6자리를 포함한 전체 주소를 복사한다 — 팬은 그대로 붙여 넣어 보내기만 하면 된다.
 // - 6자리가 빠진 기본 사무실 주소는 따로 보여 주지 않는다. 6자리는 DB 가 로그인한 주문 주인에게, 유효할 때만 준다 —
 //   거절·반려·취소되거나 상자가 입고되면 이 칸을 그리지 않는다(부르는 쪽이 code 가 있을 때만 그린다).
 
@@ -33,11 +33,11 @@ export function ReceivingAddress({ officeAddress, code, boxName, multiple = fals
   return (
     <div className={s.addr} role="group" aria-labelledby={`${id}-title`}>
       <p className={s["addr-title"]} id={`${id}-title`}>
-        이 선물의 팬꾹 주소{multiple ? <span className="sr-only"> · {boxName}</span> : null}
+        팬꾹 주소{multiple ? <span className="sr-only"> · {boxName}</span> : null}
       </p>
       <dl>
         <div>
-          <dt>받는 곳</dt>
+          <dt>팬꾹 주소</dt>
           <dd>
             {officeAddress}{" "}
             {shown ? (
@@ -65,14 +65,14 @@ export function ReceivingAddress({ officeAddress, code, boxName, multiple = fals
           <CopyButton
             className="btn btn--soft btn--sm"
             text={full}
-            label="주소 한 번에 복사"
-            ariaLabel={multiple ? `${boxName} 주소 한 번에 복사` : undefined}
-            copiedMessage="끝 6자리까지 전체 주소를 복사했어요."
-            failedMessage="복사하지 못했어요. 6자리 보기를 누르고 주소를 끝까지 옮겨 적어 주세요."
+            label="전체 주소 복사"
+            ariaLabel={multiple ? `${boxName} 전체 주소 복사` : undefined}
+            copiedMessage="끝 6자리까지 전체 주소가 복사되었습니다."
+            failedMessage="주소를 복사하지 못했습니다. ‘6자리 보기’를 눌러 전체 주소를 직접 입력해 주세요."
           />
         </div>
       </div>
-      <p className={s["addr-note"]}>끝 6자리까지 꼭 그대로 적어 주세요. 이 6자리로 사무실에서 이 상자를 찾아요. 다른 사람에게 알려 주지 마세요. 송장의 보내는 분에는 팬꾹 닉네임을 써 주세요.</p>
+      <p className={s["addr-note"]}>주소 끝 6자리로 상자를 구분합니다. 6자리를 포함한 전체 주소를 입력하고, 다른 사람과 공유하지 마세요.<br />송장의 보내는 분에는 팬꾹 닉네임을 입력해 주세요.</p>
     </div>
   );
 }

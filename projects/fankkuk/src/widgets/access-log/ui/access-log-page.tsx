@@ -47,11 +47,11 @@ export function AccessLogPage({
       <header className="page-head">
         <div className="ph-row">
           <h1 className="ph-title">
-            주소 열람 기록<span className="ph-count">{entries.length}</span>
+            주소 열람 기록<span className="ph-count">{entries.length}건</span>
           </h1>
         </div>
         <p className="ph-desc">
-          <strong className={`t-strong ${s.strong}`}>{PROMISE.address}</strong> 열린 기록은 전부 여기에 보여요.
+          <strong className={`t-strong ${s.strong}`}>주소는 승인·검수 후 송장 출력에만 사용합니다.</strong> 주소 열람 시각과 출력 내역을 확인할 수 있습니다. {PROMISE.addressFan}
         </p>
       </header>
 
@@ -63,10 +63,10 @@ export function AccessLogPage({
           </h2>
           <dl className={s.nums}>
             <div className={s.main}>
-              <dt>주소 열림</dt>
+              <dt>주소 열람</dt>
               <dd className="num-big">
                 {summary.openedCount}
-                <small>번</small>
+                <small>회</small>
               </dd>
             </div>
             <div className={s.subs}>
@@ -76,15 +76,14 @@ export function AccessLogPage({
               </div>
               <div>
                 <dt>재출력</dt>
-                <dd>{summary.reprintCount}번</dd>
+                <dd>{summary.reprintCount}회</dd>
               </div>
             </div>
           </dl>
         </section>
         <div className={s.rule}>
           <p>
-            주소는 선물 상자마다 첫 출력과 재출력을 합쳐 최대 {MAX_DECRYPTS_PER_BOX}번까지 열려요. 택배 기사가 상자를 가져가면 남은 횟수가 있어도 그 상자로는 더
-            열리지 않아요.
+            주소 열람은 상자별 첫 출력·재출력을 합쳐 최대 {MAX_DECRYPTS_PER_BOX}회 가능합니다. 택배사 연동 후에는 집하가 확인되면 남은 횟수와 관계없이 추가 열람이 제한됩니다.
           </p>
         </div>
       </div>
@@ -94,7 +93,7 @@ export function AccessLogPage({
           열람 기록
         </h2>
         {entries.length === 0 ? (
-          <p className="empty">아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요.</p>
+          <p className="empty">주소 열람 기록이 없습니다. 송장 출력 시 기록됩니다.</p>
         ) : (
           <div className={s.wrap} tabIndex={0} role="region" aria-label="주소 열람 기록 표">
             <table className={s.table}>

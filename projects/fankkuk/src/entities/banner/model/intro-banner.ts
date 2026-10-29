@@ -4,7 +4,7 @@ import type { BannerView } from "./banner";
 export const INTRO_BANNER: BannerView = {
   id: "fankkuk-introduction",
   title: "팬의 마음을, 크리에이터에게.",
-  description: "승인한 선물을 검수해 전달해요.",
+  description: "승인된 선물을 검수 후 전달합니다.",
   link: "/about",
   isAd: false,
   imageUrl: "/images/banners/launch-01-introduction-no-button.png",

@@ -6,7 +6,7 @@ import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-h
 import { SiteHeader, type SiteHeaderProps } from "@/widgets/site-header/ui/site-header";
 import { StatusPage } from "@/widgets/status-page/ui/status-page";
 
-export const metadata: Metadata = { title: "페이지를 찾을 수 없어요 — 팬꾹" };
+export const metadata: Metadata = { title: "페이지를 찾을 수 없습니다 — 팬꾹" };
 
 // 없는 주소 — Next 기본 화면(영어) 대신 팬꾹 틀 안에서 안내한다(용어집 13절, DECISIONS 2026-10-18 재진단)
 // 상단 바 읽기(세션·내 선물·처리할 일)가 실패해도 이 화면은 떠야 한다 — 그때는 로그인 전 상단 바로 그린다
@@ -27,8 +27,8 @@ export default async function NotFound() {
     <>
       <SiteHeader {...header} />
       <StatusPage
-        title="페이지를 찾을 수 없어요"
-        description="주소가 바뀌었거나 없어진 페이지예요."
+        title="페이지를 찾을 수 없습니다"
+        description="입력한 주소를 확인해 주세요. 페이지가 이동되거나 삭제되었을 수 있습니다."
         actions={
           <>
             <Link className="btn" href="/">

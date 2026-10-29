@@ -86,14 +86,14 @@ describe("INV-H8: 「등록 막기」 품목이면 2단계에서 넘어가지 �
     await click(button("다음"));
     expect(visibleStep()).toEqual([2]);
     const note = host.querySelector("#hard-note");
-    expect(note?.textContent).toContain("하루님이 현재 받지 않는 선물입니다: 꽃. 다른 종류를 선택해 주세요.");
+    expect(note?.textContent).toContain("꽃은 현재 하루님이 받기 어려운 선물입니다. 다른 선물을 선택해 주세요.");
     expect(document.activeElement).toBe(note);
   });
 
   it("INV-H8 S8: 안내만 + 꽃이면 안내가 보이고 3단계로 넘어간다", async () => {
     await render("notice");
     await toStep2("flower");
-    expect(host.querySelector("#hard-note")?.textContent).toContain("하루님이 현재 받기 어려운 선물입니다: 꽃.");
+    expect(host.querySelector("#hard-note")?.textContent).toContain("꽃은 현재 하루님이 받기 어려운 선물입니다. 다른 선물을 선택할까요?");
     await click(button("다음"));
     expect(visibleStep()).toEqual([3]);
   });
@@ -123,7 +123,7 @@ describe("결제 직전에 다시 본다 — 4단계까지 간 뒤 크리에이�
     await agreeAndPay();
     expect(fetchMock).not.toHaveBeenCalled();
     expect(visibleStep()).toEqual([2]);
-    expect(host.querySelector("#hard-note")?.textContent).toContain("다른 종류를 선택해 주세요.");
+    expect(host.querySelector("#hard-note")?.textContent).toContain("다른 선물을 선택해 주세요.");
   });
 
   it("INV-B2 (실패경로): 쉬는 중인 크리에이터는 4단계에서 돌아가도 고를 수 없다 — 눌러도 고른 사람이 그대로이고 결제는 원래 고른 사람으로 간다(d113 D-2)", async () => {

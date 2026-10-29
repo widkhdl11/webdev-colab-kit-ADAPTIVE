@@ -70,7 +70,7 @@ describe("역조공 보내기 등록 — 앱 서버 쪽 판정 (INV-R1·R3)", ()
     const call = (shares: unknown) => registerRevgift({ store, viewer: haru, readPrices }, { shares, quotedTotalKrw: 5400 });
     expect((await call([])).ok).toBe(false);
     // 거부 문구의 인원은 한도 상수에서 온다
-    expect(await call([])).toMatchObject({ status: 400, message: expect.stringContaining(`한 번에 ${MAX_REVGIFT_SHARES}명까지`) });
+    expect(await call([])).toMatchObject({ status: 400, message: expect.stringContaining(`한 번에 최대 ${MAX_REVGIFT_SHARES}명까지`) });
     expect((await call(Array.from({ length: 11 }, (_, i) => ({ fanId: `${String(i).padStart(8, "0")}-1111-4111-8111-111111111111`, tier: "small" })))).ok).toBe(false);
     expect((await call([{ fanId: FAN_A, tier: "small" }, { fanId: FAN_A, tier: "medium" }])).ok).toBe(false);
     expect((await call([{ fanId: FAN_A, tier: "oversize" }])).ok).toBe(false);
@@ -89,7 +89,7 @@ describe("역조공 보내기 등록 — 앱 서버 쪽 판정 (INV-R1·R3)", ()
   it("INV-R1 S1b (실패경로): DB 가 「나를 팔로우하는 팬이 아니다」로 거부하면 403 과 한 가지 문구", async () => {
     const { store } = memoryStore({ refuse: "not_follower" });
     const r = await registerRevgift({ store, viewer: haru, readPrices }, { shares: [{ fanId: FAN_A, tier: "small" }], quotedTotalKrw: 5400 });
-    expect(r).toEqual({ ok: false, status: 403, message: "나를 팔로우한 팬에게만 보낼 수 있어요." });
+    expect(r).toEqual({ ok: false, status: 403, message: "나를 팔로우한 팬에게만 선물을 보낼 수 있습니다." });
   });
 
   it("INV-R3: 대형도 고를 수 있다 — 대형 요금 − 대형 검수비", async () => {

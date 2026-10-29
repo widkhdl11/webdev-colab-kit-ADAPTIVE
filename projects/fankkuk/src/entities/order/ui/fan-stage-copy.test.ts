@@ -36,25 +36,25 @@ describe("INV-S9: 「먼저 보내기」 전 표시", () => {
   it("INV-S9: 입고 전·승인 전이고 「먼저 보내기」를 아직 누르지 않았으면 「승인 대기 · 아직 승인하지 않았어요」 — 「보내 주세요」라고 하지 않는다", () => {
     const v = { ...view(1), earlySendPending: true };
     expect(fanBadge(v)).toEqual({ text: "승인 대기", tone: "warn", kind: "approval_wait" });
-    expect(fanHeadline(v)).toBe("하루님이 아직 승인하지 않았어요");
+    expect(fanHeadline(v)).toBe("크리에이터 승인 대기 중입니다");
   });
 
   it("INV-S9: 상세 배지 — 먼저 보내기 전·검수 뒤 승인 대기는 이름 붙은 하나, 먼저 보내기 뒤 승인 전이면 기본 배지 + 이름 붙은 승인 대기", () => {
     expect(fanDetailBadges({ ...view(1), earlySendPending: true }).map((b) => b.text)).toEqual(["하루님 승인 대기"]);
     expect(fanDetailBadges(view(3, "in_progress", { state: "waiting", at: null })).map((b) => b.text)).toEqual(["하루님 승인 대기"]);
-    expect(fanDetailBadges(view(1)).map((b) => b.text)).toEqual(["보내 주세요", "하루님 승인 대기"]);
+    expect(fanDetailBadges(view(1)).map((b) => b.text)).toEqual(["발송 필요", "하루님 승인 대기"]);
   });
 
   it("INV-S9 (실패경로): 승인됐거나 끝난 선물은 기본 배지 하나 — 목록 배지(fanBadge)는 그대로", () => {
-    expect(fanDetailBadges(view(1, "in_progress", { state: "done", at: null })).map((b) => b.text)).toEqual(["보내 주세요"]);
+    expect(fanDetailBadges(view(1, "in_progress", { state: "done", at: null })).map((b) => b.text)).toEqual(["발송 필요"]);
     expect(fanDetailBadges(view(1, "declined")).map((b) => b.text)).toEqual(["거절"]);
     expect(awaitsApproval(view(1, "expired"))).toBe(false);
     expect(fanBadge({ ...view(1), earlySendPending: true }).text).toBe("승인 대기");
   });
 
   it("INV-S9 (실패경로): 누른 뒤에는 그대로 「보내 주세요」", () => {
-    expect(fanBadge(view(1)).text).toBe("보내 주세요");
-    expect(fanHeadline(view(1))).toBe("사무실로 보내 주세요");
+    expect(fanBadge(view(1)).text).toBe("발송 필요");
+    expect(fanHeadline(view(1))).toBe("팬꾹으로 상자를 발송해 주세요");
   });
 });
 
@@ -96,12 +96,12 @@ describe("fanGiftBucket", () => {
 describe("승인 대기 문구", () => {
   it("검수 뒤 승인 대기면 한 줄 문구와 배지가 승인을 기다린다고 말한다", () => {
     const v = view(3, "in_progress", { state: "waiting", at: null });
-    expect(fanHeadline(v)).toContain("승인을 기다려요");
+    expect(fanHeadline(v)).toContain("크리에이터 승인 대기");
     expect(fanBadge(v).text).toBe("승인 대기");
   });
   it("승인이 끝났으면 같은 출고 단계라도 곧 출고한다고 말한다", () => {
     const v = view(3, "in_progress", { state: "done", at: null });
-    expect(fanHeadline(v)).not.toContain("승인을 기다려요");
+    expect(fanHeadline(v)).not.toContain("크리에이터 승인 대기");
     expect(fanBadge(v).text).not.toBe("승인 대기");
   });
 });
@@ -123,12 +123,12 @@ describe("상태 배지 색 갈래", () => {
 
 describe("decline-block INV-D5: 팬에게 보이는 거절과 기한 지남", () => {
   it("거절은 크리에이터 이름으로 부드럽게 말하되 거절했다는 뜻을 전한다", () => {
-    expect(fanHeadline(view(1, "declined"))).toBe("하루님이 선물을 원하지 않아요");
+    expect(fanHeadline(view(1, "declined"))).toBe("하루님이 선물 수령을 거절했습니다");
     expect(fanBadge(view(1, "declined")).text).toBe("거절");
   });
   it("7일 자동 반려는 기간이 지났다고 따로 말한다", () => {
-    expect(fanHeadline(view(1, "expired"))).toBe("기간이 지나 반려됐어요");
-    expect(fanBadge(view(1, "expired")).text).toBe("기한 지남");
+    expect(fanHeadline(view(1, "expired"))).toBe("승인 기한이 지나 자동 반려되었습니다");
+    expect(fanBadge(view(1, "expired")).text).toBe("기한 만료");
   });
 });
 
