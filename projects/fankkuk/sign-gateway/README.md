@@ -128,6 +128,6 @@ cd sign-gateway && node --test test/*.test.mjs
 
 ## 드림시큐리티 명세가 오면
 
-`lib/adapters/dreamsecurity.mjs` 의 세 함수를 채운다. 파일 머리말에 할 일이 적혀 있다 —
+`lib/adapters/dreamsecurity.cjs` 의 세 함수를 채운다(CommonJS — 드림시큐리티 연동 모듈이 CommonJS 만 지원한다). 파일 머리말에 할 일이 적혀 있다 —
 서명 검증(인증서 체인·알고리즘·유효 기간·폐기 여부, 외부 연결 INV-S3)을 이 서버가 직접 하고,
 딜러사 응답의 「성공」 표시만으로 `signed` 를 돌려주지 않는다.
