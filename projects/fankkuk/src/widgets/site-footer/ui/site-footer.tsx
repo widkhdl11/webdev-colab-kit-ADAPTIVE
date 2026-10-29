@@ -45,36 +45,34 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="pub-inner">
-        <div className="footer-grid">
-          <div>
-            <p className="footer-logo">
-              <LogoMark size={28} />
-              팬꾹
-            </p>
-            <dl className="biz">
-              {bizInfoRows(SITE_INFO).map(([k, v]) => (
-                <div key={k}>
-                  <dt>{k}</dt>
-                  <dd>{keepParts(v)}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-          <nav className="footer-links" aria-label="서비스 정책">
+        <div className="footer-top">
+          <p className="footer-logo">
+            <LogoMark size={28} />
+            팬꾹
+          </p>
+          <nav className="footer-links footer-policy" aria-label="서비스 정책">
             {POLICY_LINKS.map(([href, label]) => (
               <Link key={href} href={href} className={href === "/privacy" ? "footer-strong" : undefined}>
                 {label}
               </Link>
             ))}
           </nav>
-          <nav className="footer-links" aria-label="이용 안내">
-            {GUIDE_LINKS.map(([href, label]) => (
-              <Link key={href} href={href}>
-                {label}
-              </Link>
-            ))}
-          </nav>
         </div>
+        <nav className="footer-links footer-guide" aria-label="이용 안내">
+          {GUIDE_LINKS.map(([href, label]) => (
+            <Link key={href} href={href}>
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <dl className="biz">
+          {bizInfoRows(SITE_INFO).map(([k, v]) => (
+            <div key={k} className={k === "사업장 주소" ? "footer-address" : k === "고객센터" ? "footer-contact" : undefined}>
+              <dt>{k}</dt>
+              <dd>{keepParts(v)}</dd>
+            </div>
+          ))}
+        </dl>
         <p className="footer-copy">&copy; 2026 {SITE_INFO.companyName}. All rights reserved.</p>
       </div>
     </footer>
