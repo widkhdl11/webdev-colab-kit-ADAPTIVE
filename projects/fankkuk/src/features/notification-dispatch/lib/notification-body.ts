@@ -38,7 +38,7 @@ import { formatDeadline, formatMonthDayKo } from "@/shared/lib/format/datetime";
 // revgift_offer: 역조공 몫의 결제가 끝나면 받는 팬에게 한 번, 72시간 뒤 아직 받기 대기면 한 번 더(INV-N20, 2026-10-16). INV-N1 의 예외로 보낸 크리에이터
 //   공개 이름 하나가 들어간다(팬이 누가 보냈는지 모르면 받을지 정할 수 없다). 링크는 그 몫 받기 화면.
 // approval_request · creator_check 링크는 크리에이터 처리할 일(2026-10-16, INV-N9). 승인 요청은 그 주문의 승인 창을 여는 `?order=주문번호` 를 붙인다(2026-10-29, UX 명세 creator-actions).
-// approval_request: 보낸 사람·선물 종류·개수는 적지 않는다 — 승인 화면에서만 보인다(INV-N1, 2026-10-29 카드 d2 답 ②. 본문 문구는 다음 작업에서 정한다).
+// approval_request: 보낸 사람·선물 종류·개수는 적지 않는다 — 승인 화면에서만 보인다(INV-N1, 2026-10-29 카드 d2 답 ②). 알림톡 본문은 docs/copy/alimtalk-templates.md 2절.
 // 종류 목록과 꼭 가는 알림 판정은 entities/notification 이 정본이다(INV-N6 표).
 export { NOTIFICATION_KINDS, type NotificationKind } from "@/entities/notification/model/delivery-policy";
 

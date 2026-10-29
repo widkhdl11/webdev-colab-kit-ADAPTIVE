@@ -215,7 +215,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     expect(email.sent[0]!.text).not.toContain("haru@example.com"); // 받는 주소는 본문에 없다
   });
 
-  it("INV-N7 (실패경로): 승인 요청은 템플릿 ID 가 있어도 알림톡으로 보내지 않고 건너뜀 — 본문이 아직 정해지지 않았다", async () => {
+  it("INV-N7·N1: 승인 요청 알림톡은 닉네임·주문번호·반려 시각만 넘긴다 — 꺼낸 줄에 보낸 팬·종류·개수가 있어도 넘기지 않는다(카드 d2 답 ②)", async () => {
     const kakao = channel(true);
     const { admin, calls } = fakeAdmin({
       rows: [{ ...APPROVAL_ROW, channel: "kakao" }],
@@ -223,8 +223,9 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
       templates: [{ kind: "approval_request", template_code: "TPL_APPROVAL" }],
     });
     await dispatchNotifications(deps(admin, { email: channel(), kakao }));
-    expect(kakao.sent).toHaveLength(0);
-    expect(finishes(calls).map((f) => (f as { p_error_code: string }).p_error_code)).toEqual(["alimtalk_unavailable"]);
+    expect(kakao.sent.map((m) => m.templateCode)).toEqual(["TPL_APPROVAL"]);
+    expect(kakao.sent[0]!.variables).toEqual({ "#{닉네임}": "하루", "#{주문번호}": ROW.order_no, "#{반려시각}": "10월 8일 오전 10시" });
+    expect(finishes(calls).map((f) => (f as { p_outcome: string }).p_outcome)).toEqual(["sent"]);
   });
 
   it("INV-N7 (실패경로): 템플릿 ID 가 있어도 템플릿 문서에 본문이 없는 종류는 알림톡으로 보내지 않고 건너뜀", async () => {

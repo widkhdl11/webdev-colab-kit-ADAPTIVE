@@ -52,10 +52,17 @@ function inputFor(kind: NotificationBodyInput["kind"], over: Partial<Notificatio
   };
 }
 
-const FAN_FOOTER = "선물 상세 정보는 알림에 표시하지 않습니다. 로그인 후 아래 버튼에서 확인해 주세요.\n알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다.";
+const DETAIL_LINE = "선물 상세 정보는 알림에 표시하지 않습니다. 로그인 후 아래 버튼에서 확인해 주세요.";
+const FAN_FOOTER = `${DETAIL_LINE}\n알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다.`;
+const MUST_FOOTER = `${DETAIL_LINE}\n서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.`;
 
 /** 우리가 기대하는 본문 — 문서와 따로 적는다(둘 중 하나만 바뀌면 깨지게) */
 const EXPECTED: Record<(typeof ALIMTALK_KINDS)[number], { body: string; button: string }> = {
+  // 2026-10-08T01:00:00Z = 서울 10월 8일 오전 10시
+  approval_request: {
+    body: `하루님,\n승인 요청을 확인해 주세요.\n주문번호 FC-7K3M9\n10월 8일 오전 10시까지 승인하지 않으면 자동 반려됩니다.\n\n${MUST_FOOTER}`,
+    button: "https://fankkuk.com/creator/actions?order=FC-7K3M9",
+  },
   box_arrived: { body: `하루님,\n보내신 상자 하나가 팬꾹에 도착했습니다.\n주문번호 FC-7K3M9\n\n${FAN_FOOTER}`, button: "https://fankkuk.com/gifts/FC-7K3M9" },
   shipped: {
     body: `하루님,\n보내신 선물이 팬꾹에서 출고 처리되었습니다. 택배사 인계 후 배송이 진행됩니다.\n주문번호 FC-7K3M9\n\n${FAN_FOOTER}`,
@@ -97,8 +104,21 @@ describe("INV-N7: 알림톡 변수를 채운 템플릿 문서의 본문 == 기�
     expect(fill(doc.body, { [PHONE_CODE_VARIABLE]: "123456" })).toBe("[팬꾹] 인증번호 123456\n\n3분 안에 입력해 주세요.");
   });
 
-  it("INV-N1: 승인 요청은 아직 알림톡 변수를 만들지 않는다 — 본문은 다음 작업에서 정하고, 그때까지 이메일로만 간다(카드 d2 답 ②)", () => {
-    expect(buildAlimtalkVariables(inputFor("approval_request", { autoRejectAt: "2026-10-08T01:00:00Z" }))).toBeNull();
+  it("INV-N8: 승인 요청은 재알림 세 차례가 같은 템플릿 변수다 — 차례마다 달라지는 것은 이메일 제목뿐", () => {
+    const first = buildAlimtalkVariables(inputFor("approval_request"));
+    expect(first).not.toBeNull();
+    expect(buildAlimtalkVariables(inputFor("approval_request", { round: 2 }))).toEqual(first);
+    expect(buildAlimtalkVariables(inputFor("approval_request", { round: 3 }))).toEqual(first);
+  });
+
+  it("INV-N1: 승인 요청 알림톡에 보낸 팬·선물 종류·개수 칸이 없다(카드 d2 답 ②)", () => {
+    const vars = buildAlimtalkVariables(inputFor("approval_request", { senderName: "모모" }))!;
+    expect(Object.keys(vars).sort()).toEqual(["#{닉네임}", "#{반려시각}", "#{주문번호}"]);
+    expect(Object.values(vars)).not.toContain("모모");
+  });
+
+  it("INV-N8 (실패경로): 자동 반려 예정 시각이 없는 승인 요청은 null — 기한 줄이 빈 본문을 보내지 않는다", () => {
+    expect(buildAlimtalkVariables(inputFor("approval_request", { autoRejectAt: null }))).toBeNull();
   });
 
   it("INV-N7 (실패경로): 템플릿 문서에 없는 종류는 null — 검수받지 않은 본문으로 보내지 않는다", () => {

@@ -102,14 +102,16 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     expect(email.sent.find((m) => m.outboxId === idOf(waiting.orderId, "approval_request", "email", 3))!.subject).toBe("[팬꾹] 선물 승인 기한 안내");
   });
 
-  it("INV-N7: 템플릿 코드가 있어도 승인 요청 카카오 줄은 보내지 않고 건너뜀 — 알림톡 본문이 아직 정해지지 않았다(카드 d2 답 ②). 이메일 줄은 간다", async () => {
+  it("INV-N7·N1: 템플릿 코드가 있으면 승인 요청 카카오 줄도 간다 — 넘기는 변수는 닉네임·주문번호·반려 시각뿐(카드 d2 답 ②). 이메일 줄도 간다", async () => {
     psql(`insert into ${TEMPLATES} (kind, template_code) values ('approval_request', 'TPL_APPROVAL_1')`);
     const g = await paidGift();
     const email = capture(false);
     const kakao = capture(true);
     await dispatchNotifications(depsWith(email, kakao));
-    expect(kakao.sent.some((m) => m.outboxId === idOf(g.orderId, "approval_request", "kakao"))).toBe(false);
-    expect(psql(`select status || '|' || error_code from ${OUTBOX} where id = '${idOf(g.orderId, "approval_request", "kakao")}'`)).toBe("skipped|alimtalk_unavailable");
+    const sent = kakao.sent.find((m) => m.outboxId === idOf(g.orderId, "approval_request", "kakao"))!;
+    expect(sent.templateCode).toBe("TPL_APPROVAL_1");
+    expect(Object.keys(sent.variables!).sort()).toEqual(["#{닉네임}", "#{반려시각}", "#{주문번호}"]);
+    expect(statusOf(g.orderId, "approval_request", "kakao")).toBe("sent");
     expect(statusOf(g.orderId, "approval_request", "email")).toBe("sent");
   });
 
@@ -122,8 +124,8 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
       const g = await paidGift();
       await dispatchNotifications(depsWith(capture(false), capture(true)));
       expect(statusOf(g.orderId, "approval_request", "email")).toBe("sent");
-      // 카카오 줄도 생긴다(설정을 꺼도 꼭 가는 알림). 다만 승인 요청 알림톡 본문이 아직 없어 그 줄은 건너뛴다(카드 d2 답 ②)
-      expect(psql(`select status || '|' || error_code from ${OUTBOX} where id = '${idOf(g.orderId, "approval_request", "kakao")}'`)).toBe("skipped|alimtalk_unavailable");
+      // 카카오 줄도 간다(설정을 꺼도 꼭 가는 알림)
+      expect(statusOf(g.orderId, "approval_request", "kakao")).toBe("sent");
     } finally {
       const [k, m] = saved.split("|");
       psql(`update pii.account_contacts set notify_kakao = ${k === "true"}, notify_email = ${m === "true"} where account_id = ${haru}`);
