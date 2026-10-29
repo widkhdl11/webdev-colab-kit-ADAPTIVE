@@ -1,10 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { saveAccount } from "@/features/account-edit/model/save-account";
-import { checkPhoneVerification, startPhoneVerification } from "@/features/signup/model/phone-verification";
 import { signUp } from "@/features/signup/model/sign-up";
-import { choosePhoneVerifier } from "@/shared/api/phone-verifier/verifier";
-import { adminClient, anonClient, deleteTestSignups, psql, psqlError, SEED, signedInClient, TEST_SIGNUP_PHONE_PREFIX } from "./helpers";
+import { adminClient, anonClient, deleteTestSignups, psql, psqlError, SEED, signedInClient, TEST_SIGNUP_PHONE_PREFIX, verifiedTestPhone } from "./helpers";
 
 // 가입 닉네임(signup INV-U13)·아이디·닉네임 미리 확인(INV-U14)을 실제 DB 로.
 // 시험 계정은 it_nk 로 시작하는 아이디, 0109000 의 7000번대 번호만 쓴다 — 끝나면 지운다.
@@ -12,6 +10,7 @@ import { adminClient, anonClient, deleteTestSignups, psql, psqlError, SEED, sign
 
 const dev = { NODE_ENV: "development" };
 const TERMS = [
+  { key: "age14", version: "2026-10-29" },
   { key: "service", version: "2026-10-01" },
   { key: "privacy", version: "2026-10-01" },
 ];
@@ -22,14 +21,8 @@ function phone(): string {
   return `${TEST_SIGNUP_PHONE_PREFIX}${String(seq).padStart(4, "0")}`;
 }
 
-async function verified(p: string): Promise<string> {
-  const deps = { admin: adminClient(), verifier: choosePhoneVerifier(dev) };
-  const started = await startPhoneVerification(deps, { phone: p });
-  if (!started.ok) throw new Error(JSON.stringify(started));
-  const checked = await checkPhoneVerification(deps, { verificationId: started.verificationId });
-  if (!checked.ok || checked.status !== "verified") throw new Error(JSON.stringify(checked));
-  return started.verificationId;
-}
+/** 인증번호를 맞혀 확인까지 끝낸 번호표(INV-U1·U15). */
+const verified = (p: string): Promise<string> => verifiedTestPhone(p);
 
 async function authUser(loginId: string): Promise<string> {
   const r = await adminClient().auth.admin.createUser({ email: `${loginId}@login.fankkuk.invalid`, password: "long-enough-pw1", email_confirm: true });
@@ -63,7 +56,7 @@ function signupBody(loginId: string, nickname: string, p: string, verificationId
     email: `${loginId.replace("_", ".")}@example.com`,
     password: "long-enough-pw1",
     phone: p,
-    terms: { service: true, privacy: true, news: false },
+    terms: { age14: true, service: true, privacy: true, news: false },
     verificationId,
     ...extra,
   };

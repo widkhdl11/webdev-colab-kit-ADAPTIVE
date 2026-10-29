@@ -264,7 +264,7 @@ export function VerificationPanel({
           <p className={`sub ${s.lead}`}>
             {panel.mode === "move"
               ? "채널 변경에는 새 채널의 소유자 확인이 필요합니다. 확인 중에는 기존 채널로 표시되며 새 선물을 받을 수 없습니다."
-              : "채널 소유자 확인을 마치면 ‘크리에이터 찾기’에 표시되고 선물을 받을 수 있습니다."}
+              : "채널 소유자 확인을 마치면 ‘크리에이터 찾기’에 표시됩니다."}
           </p>
           <div className="field">
             <label htmlFor={`${ids}-url`}>{panel.mode === "move" ? "새 채널 주소" : "채널 주소"}</label>

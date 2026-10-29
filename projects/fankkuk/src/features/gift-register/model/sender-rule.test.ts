@@ -70,3 +70,21 @@ describe("INV-B2: 선물 링크 페이지의 선물 보내기 자리 — 쉬는 
     expect(sendOnLinkPage("self", true)).toBe("self");
   });
 });
+
+describe("INV-E15: 승인 서명 연결 전이면 선물 보내기 대신 「승인 수단 등록 전」", () => {
+  it("INV-E15 S15 (실패경로): 연결 전이면 보낼 수 있던 자리(open·needs_follow)가 unsigned 가 된다", () => {
+    expect(sendOnLinkPage("open", false, false)).toBe("unsigned");
+    expect(sendOnLinkPage("needs_follow", false, false)).toBe("unsigned");
+  });
+
+  it("INV-E15 S15: 연결하면 선물 보내기가 돌아온다 — 쉬는 중이 먼저 이기고, 본인 화면은 그대로", () => {
+    expect(sendOnLinkPage("open", false, true)).toBe("open");
+    expect(sendOnLinkPage("needs_follow", false, true)).toBe("needs_follow");
+    expect(sendOnLinkPage("open", true, false)).toBe("hidden");
+    expect(sendOnLinkPage("self", false, false)).toBe("self");
+  });
+
+  it("INV-S16 S16b: DB 가 연결 전으로 거부한 등록은 409 와 그 문구", () => {
+    expect(refusalStatus("unsigned")).toBe(409);
+  });
+});

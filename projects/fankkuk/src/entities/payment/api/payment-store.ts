@@ -28,7 +28,7 @@ export class InvalidRegistrationError extends Error {
  * 쉬는 중(resting — creator-receiving INV-B2)·이번 달 한도(limit — INV-B4)·받기 어려운 품목 등록 막기(hard_item — hard-items INV-H7) — 이 셋도 DB 가 판정하는 정상 경로다.
  * 앱 서버 판정이 먼저 막으므로 정상 흐름에서는 나오지 않는다. 나오면 서버 판정이 빠진 것이다(INV-L3·L8·L9 두 번째 장치). */
 export class SenderRefusedError extends Error {
-  constructor(readonly reason: "role" | "self" | "no_follow" | "unknown_creator" | "moving" | "resting" | "limit" | "hard_item") {
+  constructor(readonly reason: "role" | "self" | "no_follow" | "unknown_creator" | "moving" | "resting" | "limit" | "hard_item" | "unsigned") {
     super(`DB 가 보내는 사람을 받지 않았다: ${reason}`);
   }
 }

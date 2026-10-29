@@ -1,11 +1,10 @@
+import { FAKE_PHONE_CODE } from "@/shared/api/phone-verifier/verifier";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest } from "next/server";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { SAME_AS_CURRENT_PHONE, VERIFY_AGAIN } from "@/features/phone-change/model/change-phone";
-import { startPhoneVerification } from "@/features/signup/model/phone-verification";
-import { choosePhoneVerifier } from "@/shared/api/phone-verifier/verifier";
 import { accountPasswordDeps, canSignIn, createTestAccount, device, FIXTURE_PASSWORD, removeTestAccounts, testEmail, testPhone, type TestAccount } from "./account-fixtures";
-import { adminClient, anonClient, psql } from "./helpers";
+import { adminClient, anonClient, psql, requestTestPhoneCode } from "./helpers";
 
 // 비밀번호 바꾸기(session-login INV-L12)·번호 바꾸기(signup INV-U12) 라우트를 실제로 부른다.
 // 바꾸는 것은 세 자리뿐이다 — 요청 쿠키로 세션 클라이언트를 만드는 자리(시험 계정으로 로그인한 클라이언트를 넣는다),
@@ -44,6 +43,15 @@ const { POST: passwordPost } = await import("@/app/api/me/password/route");
 const { POST: verifyPost } = await import("@/app/api/me/phone/verify/route");
 const { POST: checkPost } = await import("@/app/api/me/phone/verify/check/route");
 const { POST: phonePost } = await import("@/app/api/me/phone/route");
+
+// 로컬 가짜 문자 창구는 문자를 보내지 않고, 서버 기록(console.info)에는 번호 끝 4자리와 「보냄」만 남긴다.
+// 인증번호는 가짜 창구의 고정값(FAKE_PHONE_CODE) — 기록에 인증번호가 없는지도 여기서 같이 본다.
+const smsLog = vi.spyOn(console, "info").mockImplementation(() => {});
+const lastSmsCode = () => {
+  const line = String(smsLog.mock.calls.at(-1)?.[0] ?? "");
+  if (!line.includes("보냄") || line.includes(FAKE_PHONE_CODE)) throw new Error("가짜 문자 기록 꼴이 다르다");
+  return FAKE_PHONE_CODE;
+};
 
 const SITE = "http://127.0.0.1:3311";
 const COOKIE = "fk_phone_change_verification";
@@ -141,7 +149,7 @@ describe("INV-U12: /api/me/phone/* — 로그인 필수, 번호표는 스크립�
     expect(psql(`select phone from pii.phone_verifications where id = '${w!.value}'`)).toBe(next);
   });
 
-  it("INV-U12 (실패경로, manual 0013 뒤): 지금 번호와 같은 번호면 카카오 요청 전에 400 — 본인 확인 줄도 쿠키도 생기지 않는다", async () => {
+  it("INV-U12 (실패경로, manual 0013 뒤): 지금 번호와 같은 번호면 인증번호를 보내기 전에 400 — 본인 확인 줄도 쿠키도 생기지 않는다", async () => {
     const mine = testPhone();
     const f = await createTestAccount({ tag: "rtsame", email: testEmail("rtsame"), phone: mine });
     ctx.client = await device(f.loginEmail);
@@ -151,29 +159,30 @@ describe("INV-U12: /api/me/phone/* — 로그인 필수, 번호표는 스크립�
     expect(ctx.writes).toEqual([]);
   });
 
-  it("INV-U10·U12 (실패경로, manual 0013 뒤): 한 번호로 한 시간에 다섯 번까지 — 여섯 번째는 429", async () => {
+  it("INV-U10·U12 (실패경로, manual 0013·0026 뒤): 같은 번호로 1분 안에 두 번째 요청은 429 — 문자도 기록도 없다", async () => {
     const f = await createTestAccount({ tag: "rtlimit", email: testEmail("rtlimit"), phone: testPhone() });
     ctx.client = await device(f.loginEmail);
     const next = testPhone();
-    for (let i = 0; i < 5; i += 1) expect((await call(verifyPost, "/api/me/phone/verify", { phone: next })).status).toBe(200);
-    const sixth = await call(verifyPost, "/api/me/phone/verify", { phone: next });
-    expect(sixth.status).toBe(429);
-    expect(verificationsFor(next)).toBe(5);
+    expect((await call(verifyPost, "/api/me/phone/verify", { phone: next })).status).toBe(200);
+    const sent = smsLog.mock.calls.length;
+    const second = await call(verifyPost, "/api/me/phone/verify", { phone: next });
+    expect(second.status).toBe(429);
+    expect(smsLog.mock.calls.length).toBe(sent);
+    expect(verificationsFor(next)).toBe(1);
   });
 
   it("INV-U12 (실패경로): 확인 묻기는 본문의 번호표를 읽지 않는다 — 쿠키가 없으면 다시 하라는 응답, 그 번호표는 확인되지 않은 채", async () => {
     const f = await createTestAccount({ tag: "rtcheck", email: testEmail("rtcheck"), phone: testPhone() });
     ctx.client = await device(f.loginEmail);
-    const started = await startPhoneVerification({ admin: adminClient(), verifier: choosePhoneVerifier({ NODE_ENV: "development" }) }, { phone: testPhone() });
-    if (!started.ok) throw new Error("본인 확인 요청 실패");
+    const started = await requestTestPhoneCode(testPhone());
     const verifiedAt = () => psql(`select coalesce(verified_at::text, '') from pii.phone_verifications where id = '${started.verificationId}'`);
 
-    const viaBody = await call(checkPost, "/api/me/phone/verify/check", { verificationId: started.verificationId });
+    const viaBody = await call(checkPost, "/api/me/phone/verify/check", { verificationId: started.verificationId, code: started.code });
     expect(viaBody.status).toBe(400);
     expect(verifiedAt()).toBe("");
 
     ctx.jar.set(COOKIE, started.verificationId);
-    const viaCookie = await call(checkPost, "/api/me/phone/verify/check", {});
+    const viaCookie = await call(checkPost, "/api/me/phone/verify/check", { code: started.code });
     expect(viaCookie).toEqual({ status: 200, cache: "no-store", body: { status: "verified" } });
     expect(verifiedAt()).not.toBe("");
   });
@@ -183,11 +192,9 @@ describe("INV-U12: /api/me/phone/* — 로그인 필수, 번호표는 스크립�
     const f = await createTestAccount({ tag: "rtbody", email: testEmail("rtbody"), phone: before });
     ctx.client = await device(f.loginEmail);
     const next = testPhone();
-    const deps = { admin: adminClient(), verifier: choosePhoneVerifier({ NODE_ENV: "development" }) };
-    const started = await startPhoneVerification(deps, { phone: next });
-    if (!started.ok) throw new Error("본인 확인 요청 실패");
+    const started = await requestTestPhoneCode(next);
     ctx.jar.set(COOKIE, started.verificationId);
-    expect((await call(checkPost, "/api/me/phone/verify/check", {})).body).toEqual({ status: "verified" });
+    expect((await call(checkPost, "/api/me/phone/verify/check", { code: started.code })).body).toEqual({ status: "verified" });
     ctx.jar.clear();
 
     const r = await call(phonePost, "/api/me/phone", { phone: next, currentPassword: FIXTURE_PASSWORD, verificationId: started.verificationId });
@@ -202,7 +209,7 @@ describe("INV-U12: /api/me/phone/* — 로그인 필수, 번호표는 스크립�
     ctx.client = await device(f.loginEmail);
     const next = testPhone();
     expect((await call(verifyPost, "/api/me/phone/verify", { phone: next })).status).toBe(200);
-    expect((await call(checkPost, "/api/me/phone/verify/check", {})).body).toEqual({ status: "verified" });
+    expect((await call(checkPost, "/api/me/phone/verify/check", { code: lastSmsCode() })).body).toEqual({ status: "verified" });
     const r = await call(phonePost, "/api/me/phone", { phone: next, currentPassword: FIXTURE_PASSWORD, accountId: other.userId, userId: other.userId });
     expect(r).toEqual({ status: 200, cache: "no-store", body: { ok: true } });
     expect(phoneOf(f)).toBe(next);

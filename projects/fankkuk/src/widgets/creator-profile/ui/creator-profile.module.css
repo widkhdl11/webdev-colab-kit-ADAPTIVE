@@ -31,6 +31,8 @@
 .actions :global(.btn svg) { width: 20px; height: 20px; }
 .selfTag:global(.tag) { font-weight: var(--fw-btn); }
 .restLine { margin-top: var(--space-6); color: var(--sub); font-weight: 400; }
+/* 승인 서명 연결 전 배지(운영자 화면 — 팔로우 묶음이 없을 때). 팔로우 묶음 안의 같은 배지는 follow-button.module.css .noSend */
+.noSend { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 12px; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font-weight: var(--fw-btn); white-space: nowrap; }
 /* 버튼 칸 — 넓은 칸에서는 머리 오른쪽, 글 묶음의 세로 가운데(「채널 소유 확인」 줄 ~ 소개 줄 높이 — 2026-10-25 사용자) */
 .side { grid-column: 3; align-self: center; min-width: 0; max-width: 320px; margin-right: var(--space-8); } /* 머리 오른쪽 끝에서 32 안쪽(2026-10-25 사용자 「오른쪽에서 살짝 왼쪽으로」) */
 .side .actions { justify-content: flex-end; margin-top: 0; text-align: right; }

@@ -45,7 +45,7 @@ export type CreatorProfilePageProps = {
   followMode: FollowMode;
   /**
    * open = 「선물 보내기」+「팔로우 중」 / self = 크리에이터 자기 페이지(보내지 않음) / needs_follow = 팔로우하지 않음 → 「팔로우」(INV-L9)
-   * / hidden = 쉬는 중이라 버튼 자리에 쉬는 기간 한 줄(INV-B2). 판단은 서버가 sendOnLinkPage 로 한다.
+   * / hidden = 쉬는 중이라 버튼 자리에 쉬는 기간 한 줄(INV-B2) / unsigned = 승인 서명 연결 전(INV-E15). 판단은 서버가 sendOnLinkPage 로 한다.
    */
   send?: LinkPageSend;
   /** 지금 공개 요금표 — 서버가 DB 공개 읽기 함수로 읽어 넘긴다. */
@@ -99,8 +99,26 @@ function StatValue({ text }: { text: string }) {
   );
 }
 
-/** 버튼 자리(UX 명세 상태표) — needs_follow·open 은 팔로우 묶음(운영자에게는 없음), self 는 꼬리표, hidden(쉬는 중)은 쉬는 기간 한 줄. */
+/**
+ * 버튼 자리(UX 명세 상태표) — needs_follow·open 은 팔로우 묶음(운영자에게는 없음), self 는 꼬리표, hidden(쉬는 중)은 쉬는 기간 한 줄,
+ * unsigned(승인 서명 연결 전 — creator-link INV-E15)는 팔로우 묶음에서 「선물 보내기」 대신 「승인 수단 등록 전」 배지.
+ */
 function Actions({ send, creator, followMode, restingText }: { send: LinkPageSend; creator: CreatorLinkView; followMode: FollowMode; restingText: string | null }) {
+  if (send === "unsigned") {
+    // 운영자는 팔로우하지 않는다 — 배지만 남긴다(누를 것이 없는 안내라 운영자에게도 같은 사실을 보인다)
+    if (followMode === "hidden") {
+      return (
+        <div className={s.actions}>
+          <span className={s.noSend}>승인 수단 등록 전</span>
+        </div>
+      );
+    }
+    return (
+      <div className={s.actions}>
+        <ProfileFollowActions creatorId={creator.id} creatorName={creator.name} initialFollowing={creator.following} signedIn={followMode !== "login"} canSend={false} />
+      </div>
+    );
+  }
   if (send === "open" || send === "needs_follow") {
     // 운영자(followMode hidden)는 팔로우하지 않는다(set_follow 도 막는다) — 버튼 자리를 비운다
     if (followMode === "hidden") return null;

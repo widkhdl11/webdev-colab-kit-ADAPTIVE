@@ -39,3 +39,27 @@ describe("INV-TS2: 시험 사이트에서는 가짜 서명 창구가 열린다",
     expect(chooseApprovalSigner({ NODE_ENV: "production", FANKKUK_TEST_SITE: "1", APP_ORIGIN: "https://fankkuk.com" })).toBeNull();
   });
 });
+
+describe("INV-S16: 승인 서명 연결의 시험 서명 창구", () => {
+  const identity = { v: 1, alg: "RSA-OAEP-256+A256GCM", wrappedKey: "A".repeat(344), iv: "c2VlZC1zaWctbG5r", ciphertext: "B".repeat(24) } as const;
+
+  it("INV-S16 S16d (실패경로): 운영 표시가 있으면 연결 창구도 없다 — 시험 창구로 넘어가지 않는다", () => {
+    for (const env of [{ NODE_ENV: "production" }, { NODE_ENV: "production", FANKKUK_TEST_SITE: "1", APP_ORIGIN: "https://fankkuk.com" }]) {
+      expect(chooseApprovalSigner(env)).toBeNull();
+    }
+  });
+
+  it("INV-S16: 시험 창구는 요청을 받고, 결과로 저장된 원문 그대로의 서명을 돌려준다", async () => {
+    const s = chooseApprovalSigner({ NODE_ENV: "development" })!;
+    expect(await s.requestLinkSignature({ requestId: "r1", payload: "fankkuk-signature-link:v1|req=r1|at=t", identity })).toEqual({ ok: true });
+    const r = await s.linkSignatureResult({ requestId: "r1", payload: "fankkuk-signature-link:v1|req=r1|at=t", creatorUserId: "u1" });
+    expect(r.state).toBe("signed");
+    if (r.state !== "signed") return;
+    expect(new TextDecoder().decode(r.signedContent)).toBe("fankkuk-signature-link:v1|req=r1|at=t");
+    expect(r.signerId).toBe(s.registeredSignerIdOf("u1"));
+  });
+
+  it("INV-S16: 시험 사이트에서는 연결 창구가 열린다", () => {
+    expect(chooseApprovalSigner({ NODE_ENV: "production", FANKKUK_TEST_SITE: "1", APP_ORIGIN: TEST_SITE_ORIGINS[0] })?.kind).toBe("fake");
+  });
+});

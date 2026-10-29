@@ -8,7 +8,7 @@ import { PASSWORD_KINDS, PASSWORD_MAX, PASSWORD_MIN, PASSWORD_SAME_AS_ID, PASSWO
 import { EMAIL_SHAPE } from "@/shared/lib/validation/email-shape";
 import { charCount } from "@/shared/lib/validation/char-count";
 import { HIDDEN_CHAR, LINE_BREAK } from "@/shared/lib/validation/hidden-char";
-import { MOBILE_PHONE_SHAPE } from "@/shared/lib/validation/phone-shape";
+import { mobilePhoneOf, normalizeMobilePhone } from "@/shared/lib/validation/phone-shape";
 import { EMAIL_CUSTOM, joinEmail, type EmailParts } from "./signup-fields";
 
 // 가입 입력 경계(INV-U5·U6·U13). 앱 서버가 먼저 검사하고, DB 함수 create_account 가 같은 규칙으로 다시 검사한다.
@@ -18,16 +18,19 @@ import { EMAIL_CUSTOM, joinEmail, type EmailParts } from "./signup-fields";
 // 화면의 2단계 미리 보기(checkDetails)도 같은 detailsSchema 를 쓴다 — 규칙과 문구가 한 곳에만 있다.
 
 /** 약관 판 번호는 서버가 정한다. 약관을 고치면 여기 날짜를 바꾼다. */
-export const TERMS_VERSIONS = { service: "2026-10-01", privacy: "2026-10-01", news: "2026-10-01" } as const;
+export const TERMS_VERSIONS = { age14: "2026-10-29", service: "2026-10-01", privacy: "2026-10-01", news: "2026-10-01" } as const;
 
 export type TermKey = keyof typeof TERMS_VERSIONS;
 
 export const phoneSchema = z
   .string()
-  .transform((s) => s.replace(/[\s-]/g, ""))
-  .refine((s) => MOBILE_PHONE_SHAPE.test(s), "휴대폰 번호를 확인해 주세요.");
+  .transform(normalizeMobilePhone)
+  .refine((s) => mobilePhoneOf(s) !== null, "휴대폰 번호를 확인해 주세요.");
 
-export const verificationIdSchema = z.string().uuid("본인 확인을 다시 시도해 주세요.");
+export const verificationIdSchema = z.string().uuid("휴대폰 번호를 다시 확인해 주세요.");
+
+/** INV-U16: 「만 14세 이상입니다」 체크가 없을 때 */
+export const AGE14_REQUIRED = "만 14세 이상만 가입할 수 있습니다.";
 
 const detailsObject = z.object({
   loginId: z
@@ -46,6 +49,8 @@ const detailsObject = z.object({
     .refine((v) => passwordKinds(v) >= PASSWORD_KINDS, PASSWORD_WEAK),
   phone: phoneSchema,
   terms: z.object({
+    // INV-U16: 만 14세 이상 확인 — 약관 동의와 같이 동의 시각으로 남긴다
+    age14: z.literal(true, { message: AGE14_REQUIRED }),
     service: z.literal(true, { message: "필수 약관에 동의해 주세요." }),
     privacy: z.literal(true, { message: "필수 약관에 동의해 주세요." }),
     news: z.boolean().optional(),
@@ -135,7 +140,7 @@ export function detailsFieldOf(path: readonly PropertyKey[]): DetailsField | nul
 }
 
 /**
- * 2단계 칸을 화면에서 미리 본다 — 서버 검사와 같은 스키마. 틀린 첫 칸과 문구를 돌려준다.
+ * 2단계 칸을 화면에서 미리 본다(휴대폰 번호는 3단계라 빼고) — 서버 검사와 같은 스키마. 틀린 첫 칸과 문구를 돌려준다.
  * 비밀번호 확인 칸만 화면에만 있다. 화면 편의일 뿐 판정은 서버가 다시 한다.
  */
 export function checkDetails(v: {
@@ -144,12 +149,13 @@ export function checkDetails(v: {
   email: string;
   password: string;
   passwordConfirm: string;
-  phone: string;
-  terms: { service: boolean; privacy: boolean };
+  terms: { age14: boolean; service: boolean; privacy: boolean };
   /** 크리에이터로 가입할 때만 — 공개 이름·채널 이름(INV-V1)·태그(creator-tags INV-T3) */
   creator?: CreatorProfileBody;
 }): { field: DetailsField; message: string } | null {
+  // 휴대폰 번호는 3단계에서 받는다 — 2단계 검사에서 뺀다
   const parsed = detailsObject
+    .omit({ phone: true })
     .extend({ creator: creatorProfileSchema.optional() })
     .refine(passwordNotLoginId, PASSWORD_IS_ID)
     .safeParse(v);
@@ -240,7 +246,7 @@ export function checkField(field: LiveField, v: LiveValues): { ok: boolean; mess
 
 /** create_account 에 넘길 약관 동의 — 동의한 것만, 판 번호는 서버 값으로. */
 export function consentRows(terms: SignupInput["terms"]): { key: TermKey; version: string }[] {
-  const keys: TermKey[] = ["service", "privacy"];
+  const keys: TermKey[] = ["age14", "service", "privacy"];
   if (terms.news) keys.push("news");
   return keys.map((key) => ({ key, version: TERMS_VERSIONS[key] }));
 }

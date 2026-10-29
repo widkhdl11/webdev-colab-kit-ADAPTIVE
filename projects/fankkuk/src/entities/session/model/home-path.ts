@@ -19,5 +19,7 @@ export const FAN_PROFILE_EDIT = "/me/profile";
 /** 크리에이터 프로필 수정·상세 설정 화면(design-rules 12절 「내 팬꾹」 묶음). 사이드바와 크리에이터 홈 프로필 구간이 같은 값을 쓴다. */
 export const CREATOR_PROFILE_EDIT = "/creator/profile";
 export const CREATOR_SETTINGS = "/creator/settings";
+/** 크리에이터 승인 서명 연결하기(approval-signature INV-S16) — 상세 설정의 「승인 서명」 줄이 여는 화면. 가입 5단계와 같은 카드다. */
+export const CREATOR_SIGNATURE_LINK = "/creator/settings/signature";
 /** 크리에이터 계정 설정(본인 확인·알림·계정 보안 — 2026-10-16 상세 설정에서 옮김). */
 export const CREATOR_ACCOUNT = "/creator/account";

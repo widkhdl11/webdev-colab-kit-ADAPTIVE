@@ -82,7 +82,7 @@ const body = (extra: Record<string, unknown> = {}) => ({
   email: "new.fan@example.com",
   password: TEST_PW,
   phone: "010-5555-6666",
-  terms: { service: true, privacy: true, news: false },
+  terms: { age14: true, service: true, privacy: true, news: false },
   verificationId: VID,
   ...extra,
 });
@@ -102,6 +102,7 @@ describe("가입 — 정상 경로", () => {
       p_phone: "01055556666",
       p_verification_id: VID,
       p_terms: [
+        { key: "age14", version: "2026-10-29" },
         { key: "service", version: "2026-10-01" },
         { key: "privacy", version: "2026-10-01" },
       ],
@@ -125,13 +126,25 @@ describe("가입 — 정상 경로", () => {
 
   it("INV-U6: 선택 약관에 동의하면 그 기록도 남긴다 — 판 번호는 서버가 정한다", async () => {
     const h = harness();
-    await signUp(h.deps, body({ terms: { service: true, privacy: true, news: true, version: "1999" } }));
+    await signUp(h.deps, body({ terms: { age14: true, service: true, privacy: true, news: true, version: "1999" } }));
     const create = h.rpcCalls.find((c) => c.fn === "create_account");
     expect(create?.args.p_terms).toEqual([
+      { key: "age14", version: "2026-10-29" },
       { key: "service", version: "2026-10-01" },
       { key: "privacy", version: "2026-10-01" },
       { key: "news", version: "2026-10-01" },
     ]);
+  });
+});
+
+describe("INV-U16: 만 14세 이상 확인", () => {
+  it("INV-U16 (S16, 실패경로): 「만 14세 이상입니다」 체크가 없으면 로그인 정보도 계정도 만들지 않는다", async () => {
+    for (const terms of [{ service: true, privacy: true }, { age14: false, service: true, privacy: true }]) {
+      const h = harness();
+      expect(await signUp(h.deps, body({ terms }))).toMatchObject({ ok: false, status: 400, field: "terms", message: "만 14세 이상만 가입할 수 있습니다." });
+      expect(h.created).toEqual([]);
+      expect(h.rpcCalls.some((c) => c.fn === "create_account")).toBe(false);
+    }
   });
 });
 
@@ -163,7 +176,7 @@ describe("INV-U3·U11: 중복은 칸 단위로만 알려 준다", () => {
   it("INV-U3 (S3, 실패경로): 이미 가입된 번호(FKU02)면 그 문구, 로그인 정보는 지운다", async () => {
     const h = harness({ createAccountError: { code: "FKU02" } });
     const r = await signUp(h.deps, body());
-    expect(r).toEqual({ ok: false, status: 409, field: "phone", message: "이미 가입된 휴대폰 번호입니다. 로그인해 주세요." });
+    expect(r).toEqual({ ok: false, status: 409, field: "phone", message: "이 번호로 가입된 계정이 있습니다." });
     expect(h.deleted).toEqual([USER_ID]);
   });
 
@@ -287,8 +300,8 @@ describe("INV-U5·U6: 입력 경계", () => {
       body({ password: TWO_KINDS }),
       body({ password: "x".repeat(73) }),
       body({ loginId: SAME_AS_ID, password: SAME_AS_ID }),
-      body({ terms: { service: true, privacy: false } }),
-      body({ terms: { service: false, privacy: true } }),
+      body({ terms: { age14: true, service: true, privacy: false } }),
+      body({ terms: { age14: true, service: false, privacy: true } }),
       body({ loginId: "abc" }),
       body({ loginId: "x".repeat(21) }),
       body({ email: "a,b@example.com" }),
@@ -344,6 +357,7 @@ describe("크리에이터 가입 — 공개 정보 행 (creator-verification INV
       p_phone: "01055556666",
       p_verification_id: VID,
       p_terms: [
+        { key: "age14", version: "2026-10-29" },
         { key: "service", version: "2026-10-01" },
         { key: "privacy", version: "2026-10-01" },
       ],

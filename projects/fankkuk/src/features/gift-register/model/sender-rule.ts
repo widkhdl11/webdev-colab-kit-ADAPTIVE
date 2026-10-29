@@ -12,7 +12,8 @@ export type CreatorRelation = { receiverIsSelf: boolean; senderFollows: boolean 
 /** moving = 받는 크리에이터가 채널 이사 중(creator-verification INV-V12) — DB 등록 함수만 판정한다(화면은 안내만). */
 /** resting·limit = 받는 크리에이터가 쉬는 중·이번 달 한도에 닿음(creator-receiving INV-B2·B4) — 역시 DB 등록 함수가 판정한다. */
 /** hard_item = 고른 종류를 크리에이터가 「등록 막기」로 둠(hard-items INV-H7) — DB 등록 함수가 판정한다. */
-export type SenderRefusal = "role" | "self" | "no_follow" | "unknown_creator" | "moving" | "resting" | "limit" | "hard_item";
+/** unsigned = 받는 크리에이터가 승인 서명을 연결하지 않음(approval-signature INV-S16) — DB 주문 생성이 판정한다. */
+export type SenderRefusal = "role" | "self" | "no_follow" | "unknown_creator" | "moving" | "resting" | "limit" | "hard_item" | "unsigned";
 export type SenderVerdict = { ok: true } | { ok: false; reason: SenderRefusal };
 
 /** 역할만으로 정해지는 부분. 허락된 역할이면 관계(decideSender)를 더 본다. */
@@ -40,11 +41,13 @@ export const SENDER_REFUSAL_MESSAGE: Record<SenderRefusal, string> = {
   limit: "이번 달 선물 한도에 도달했습니다. 다음 달 1일부터 다시 보낼 수 있습니다.",
   // hard-items INV-H7: 화면을 건너뛴 등록만 여기 닿는다 — 화면은 이 응답을 받으면 2단계로 돌아가 크리에이터 이름·품목을 넣은 안내를 다시 보인다
   hard_item: "현재 선택한 종류의 선물을 받지 않는 크리에이터입니다. 다른 종류를 선택해 주세요.",
+  // INV-S16: 링크 페이지는 버튼을 숨기지만(creator-link INV-E15) 다른 길로 온 등록은 DB 가 막고 여기 닿는다
+  unsigned: "승인 수단 등록 전인 크리에이터에게는 선물을 보낼 수 없습니다.",
 };
 
-/** 거부 응답 상태 — 없는(또는 본인 확인 전) 크리에이터는 404, 채널 이사 중·쉬는 중·한도·받기 어려운 품목은 409(때가 지나면 풀린다), 나머지는 403. */
+/** 거부 응답 상태 — 없는(또는 본인 확인 전) 크리에이터는 404, 채널 이사 중·쉬는 중·한도·받기 어려운 품목·승인 서명 연결 전은 409(때가 지나면 풀린다), 나머지는 403. */
 export function refusalStatus(reason: SenderRefusal): 403 | 404 | 409 {
-  if (reason === "moving" || reason === "resting" || reason === "limit" || reason === "hard_item") return 409;
+  if (reason === "moving" || reason === "resting" || reason === "limit" || reason === "hard_item" || reason === "unsigned") return 409;
   return reason === "unknown_creator" ? 404 : 403;
 }
 
@@ -72,15 +75,19 @@ export function sendAvailabilityOf(input: {
   return input.following ? "open" : "needs_follow";
 }
 
-/** 선물 링크 페이지의 「선물 보내기」 자리 — 카드와 같은 판단에 「쉬는 중이면 숨김」(hidden)이 더해진다. */
-export type LinkPageSend = SendAvailability | "hidden";
+/** 선물 링크 페이지의 「선물 보내기」 자리 — 카드와 같은 판단에 「쉬는 중이면 숨김」(hidden)·「승인 수단 등록 전」(unsigned)이 더해진다. */
+export type LinkPageSend = SendAvailability | "hidden" | "unsigned";
 
 /**
  * creator-receiving INV-B2: 받는 크리에이터가 쉬는 중이면 선물 보내기 자리를 비운다(안내 문구만 보인다 — 등록은 DB 가 막는다).
- * 크리에이터가 자기 페이지를 볼 때(self)는 쉬는 중이어도 「내 크리에이터 페이지예요」를 그대로 둔다.
+ * creator-link INV-E15: 승인 서명을 연결하지 않았으면 선물 보내기 대신 「승인 수단 등록 전」(팔로우는 그대로) — 쉬는 중이 먼저 이긴다.
+ * 크리에이터가 자기 페이지를 볼 때(self)는 쉬는 중·연결 전이어도 「내 크리에이터 페이지예요」를 그대로 둔다(본인은 설정 화면에서 본다).
+ * linked 를 주지 않는 화면(같이 보내기 등)은 연결 여부를 읽지 않는다 — 막는 것은 어느 쪽이든 DB 주문 생성 함수다.
  */
-export function sendOnLinkPage(availability: SendAvailability, resting: boolean): LinkPageSend {
-  return resting && availability !== "self" ? "hidden" : availability;
+export function sendOnLinkPage(availability: SendAvailability, resting: boolean, linked = true): LinkPageSend {
+  if (availability === "self") return "self";
+  if (resting) return "hidden";
+  return linked ? availability : "unsigned";
 }
 
 /** 선물 보내기 목록: 내가 팔로우한 크리에이터만(INV-L9), 크리에이터면 자기 자신은 뺀다(INV-L8). 등록 판정은 서버·DB 가 다시 한다. */

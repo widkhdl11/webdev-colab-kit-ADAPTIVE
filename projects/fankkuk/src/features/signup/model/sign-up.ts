@@ -9,7 +9,7 @@ import { buildSignupMail } from "../lib/signup-mail";
 import { consentRows, detailsFieldOf, signupInputSchema, type DetailsField } from "./signup-input";
 
 // 가입 처리(signup 스펙). 순서:
-// 1) 입력 검사(INV-U5·U6). 운영이면 카카오 연결 전이라 여기서 거부(INV-U9).
+// 1) 입력 검사(INV-U5·U6). 운영이면 문자 대행사 연결 전이라 여기서 거부(INV-U9). 만 14세 확인이 없으면 거부(INV-U16).
 // 2) 번호표가 쓸 수 있는지, 확인된 번호가 입력 번호와 같은지 본다(INV-U1·U2). 아니면 로그인 정보를 만들지 않는다.
 //    번호 중복은 이 확인을 통과한 뒤에만 알려 준다(INV-U11).
 // 3) Supabase Auth 에 로그인 정보를 만든다 — 주소는 아이디로 만든 예약 도메인 주소(INV-U8). 이미 있으면 「쓰는 아이디」.
@@ -53,9 +53,9 @@ const CLOSED = {
   field: "form",
   message: "현재 회원가입을 이용할 수 없습니다.",
 } as const;
-const REVERIFY = { ok: false, status: 400, field: "verification", message: "본인 확인을 다시 시도해 주세요." } as const;
+const REVERIFY = { ok: false, status: 400, field: "verification", message: "휴대폰 번호를 다시 확인해 주세요." } as const;
 const ID_TAKEN = { ok: false, status: 409, field: "loginId", message: "이미 사용 중인 아이디입니다." } as const;
-const PHONE_TAKEN = { ok: false, status: 409, field: "phone", message: "이미 가입된 휴대폰 번호입니다. 로그인해 주세요." } as const;
+const PHONE_TAKEN = { ok: false, status: 409, field: "phone", message: "이 번호로 가입된 계정이 있습니다." } as const;
 
 const FAN_NAME_FILTER: Record<string, string> = {
   P0084: "팬덤 이름에 사용할 수 없는 표현이 포함되어 있습니다.",
@@ -79,7 +79,7 @@ export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = 
   const input = parsed.data;
 
   const usable = await deps.admin.rpc("usable_phone_verification", { p_id: input.verificationId });
-  if (usable.error) throw new Error(`본인 확인 기록을 읽지 못했다: ${usable.error.code}`);
+  if (usable.error) throw new Error(`휴대폰 확인 기록을 읽지 못했다: ${usable.error.code}`);
   if (typeof usable.data !== "string" || usable.data !== input.phone) return REVERIFY;
 
   const loginEmail = accountLoginEmail(input.loginId);

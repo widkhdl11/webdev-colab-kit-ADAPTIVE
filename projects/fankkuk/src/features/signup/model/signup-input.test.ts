@@ -12,8 +12,7 @@ const ok = {
   email: "new.fan@example.com",
   password: TEST_PW,
   passwordConfirm: TEST_PW,
-  phone: "010-5555-6666",
-  terms: { service: true, privacy: true },
+  terms: { age14: true, service: true, privacy: true },
 };
 
 describe("INV-U6: 화면의 2단계 미리 보기 — 서버와 같은 규칙", () => {
@@ -28,8 +27,18 @@ describe("INV-U6: 화면의 2단계 미리 보기 — 서버와 같은 규칙", 
     expect(checkDetails({ ...ok, password: "x".repeat(73), passwordConfirm: "x".repeat(73) })?.field).toBe("password");
     expect(checkDetails({ ...ok, loginId: SAME_AS_ID, password: SAME_AS_ID, passwordConfirm: SAME_AS_ID })?.field).toBe("password");
     expect(checkDetails({ ...ok, passwordConfirm: "other-pw" })?.field).toBe("passwordConfirm");
-    expect(checkDetails({ ...ok, phone: "02-123-4567" })?.field).toBe("phone");
-    expect(checkDetails({ ...ok, terms: { service: true, privacy: false } })?.field).toBe("terms");
+    expect(checkDetails({ ...ok, terms: { age14: true, service: true, privacy: false } })?.field).toBe("terms");
+  });
+
+  it("INV-U16 (S16, 실패경로): 「만 14세 이상입니다」 체크가 없으면 2단계에서 막는다", () => {
+    expect(checkDetails({ ...ok, terms: { age14: false, service: true, privacy: true } })).toEqual({
+      field: "terms",
+      message: "만 14세 이상만 가입할 수 있습니다.",
+    });
+  });
+
+  it("휴대폰 번호는 3단계에서 받는다 — 2단계 검사는 번호를 보지 않는다", () => {
+    expect(checkDetails({ ...ok, phone: "02-123-4567" } as Parameters<typeof checkDetails>[0])).toBeNull();
   });
 });
 
@@ -91,7 +100,6 @@ describe("INV-U6: 칸별 실시간 안내 — 다음을 누를 때와 같은 규
     same("password", { ...live, password: NINE_CHARS, passwordConfirm: NINE_CHARS }, { ...ok, password: NINE_CHARS, passwordConfirm: NINE_CHARS });
     same("password", { ...live, loginId: SAME_AS_ID, password: SAME_AS_ID }, { ...ok, loginId: SAME_AS_ID, password: SAME_AS_ID, passwordConfirm: SAME_AS_ID });
     same("passwordConfirm", { ...live, passwordConfirm: "other-pw" }, { ...ok, passwordConfirm: "other-pw" });
-    same("phone", { ...live, phone: "02-123-4567" }, { ...ok, phone: "02-123-4567" });
     same("email", { ...live, email: { local: "a,b", choice: "naver.com", custom: "" } }, { ...ok, email: "a,b@naver.com" });
   });
 

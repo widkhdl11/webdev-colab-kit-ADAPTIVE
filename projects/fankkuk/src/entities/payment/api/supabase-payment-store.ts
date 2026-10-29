@@ -89,6 +89,8 @@ export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore 
       if (error?.code === "FKR02") throw new SenderRefusedError("limit");
       // hard-items INV-H7: 받기 어려운 품목을 「등록 막기」로 둔 크리에이터
       if (error?.code === "FKR03") throw new SenderRefusedError("hard_item");
+      // approval-signature INV-S16: 승인 서명을 연결하지 않은 크리에이터(주문을 넣는 순간 트리거가 거부)
+      if (error?.code === "FKS16") throw new SenderRefusedError("unsigned");
       // 22023 은 상자 수 경계와 같이 쓰지만 상자 수는 입력 검사가 먼저 막는다 — 남는 것은 받을 수 없는 크리에이터다
       if (error?.code === "22023" && error.message.includes("받을 수 없는 크리에이터")) throw new SenderRefusedError("unknown_creator");
       // together INV-F7: 나머지 22023 은 입력 값 거부(메모·기타 글 길이, 목록 밖 종류, 상자 수) — 서버 고장이 아니라 입력 오류다

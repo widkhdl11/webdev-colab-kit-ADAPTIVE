@@ -84,7 +84,7 @@ describe("INV-U12: 번호 바꾸기는 로그인한 사람 자신의 번호만",
     }
   });
 
-  it("INV-U12 (실패경로, INV-U9): 본인 확인 창구가 없으면(운영, 카카오 연결 전) 거부", async () => {
+  it("INV-U12 (실패경로, INV-U9): 문자 창구가 없으면(운영, 문자 대행사 연결 전) 거부", async () => {
     const { deps, rpcCalls } = fakes();
     expect(await changePhone({ ...deps, verifierReady: false }, body, TICKET)).toEqual({ ok: false, status: 503, message: PHONE_CHANGE_CLOSED });
     expect(rpcCalls).toEqual([]);
@@ -97,7 +97,7 @@ describe("INV-U12: 번호 바꾸기는 로그인한 사람 자신의 번호만",
   });
 });
 
-describe("INV-U12: 번호 바꾸기 1단계 — 지금 번호와 같으면 카카오 확인 요청 전에 거부", () => {
+describe("INV-U12: 번호 바꾸기 1단계 — 지금 번호와 같으면 인증번호를 보내기 전에 거부", () => {
   function startFakes(isCurrent: boolean) {
     const rpcCalls: { fn: string; args: Record<string, unknown> }[] = [];
     const deps = {

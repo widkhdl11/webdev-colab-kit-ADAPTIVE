@@ -1,10 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import type { BlockedFan } from "@/entities/creator/api/blocked-senders";
 import type { CreatorSettingsView } from "@/entities/creator/model/creator-settings";
 import { formatDate } from "@/shared/lib/format/datetime";
+import { statusTagClass } from "@/shared/ui/status-tone";
+import type { MySignatureLink } from "@/entities/creator/api/signature-link-reads";
+import { CREATOR_SIGNATURE_LINK } from "@/entities/session/model/home-path";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import type { MyAddressStatus } from "@/entities/address/api/my-address-status";
@@ -86,8 +90,11 @@ export function CreatorSettingsPage({
   today,
   link,
   replySettings,
+  signatureLink,
 }: {
   settings: CreatorSettingsView;
+  /** 승인 서명 연결 여부와 연결한 때(approval-signature INV-S16) — 등록한 이름·생년월일·번호는 오지 않는다 */
+  signatureLink: MySignatureLink;
   /** 팬덤 구간 — 팬덤 이름·테마 색·카드 미리보기에 쓰는 사진 주소(로그인한 크리에이터 본인 것) */
   fandom: FandomSectionProps;
   /** 답장 모음 보이기·X 계정·태그 허용 — 로그인한 크리에이터 본인 것(gift-reply INV-G8) */
@@ -156,6 +163,26 @@ export function CreatorSettingsPage({
           <h2 className={s.groupT} id="more-h">
             주소와 설정
           </h2>
+          {/* 승인 서명 줄(UX 명세 signup.md 「크리에이터 설정 — 승인 서명 줄」, 시안 v43-signup/creator-settings-signature) — 묶음 맨 위.
+              연결 전: 누르면 가입 5단계와 같은 카드로. 연결됨: 연결한 날과 「다시 연결」. 등록한 값은 다시 보이지 않는다(INV-S16) */}
+          {signatureLink.linked ? (
+            <div className={s.linkRow} data-signature-link="linked">
+              <span>승인 서명</span>
+              <span className={statusTagClass("success")}>연결됨</span>
+              {signatureLink.linkedAt ? <span className={s.foldMeta}>{formatDate(signatureLink.linkedAt)}</span> : null}
+              <Link className="btn btn--line btn--sm" href={CREATOR_SIGNATURE_LINK}>
+                다시 연결
+              </Link>
+            </div>
+          ) : (
+            <Link className={`${s.linkRow} ${s.linkRowGo}`} href={CREATOR_SIGNATURE_LINK} data-signature-link="unlinked">
+              <span>승인 서명 연결하기</span>
+              <span className={s.foldMeta}>연결 전</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m9 6 6 6-6 6" />
+              </svg>
+            </Link>
+          )}
           <Fold id="address" title="받는 주소" meta={addressRegistered ? "등록됨" : "등록 전"}>
             <div className={`card card--soft ${s.inner}`}>
               <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={72} height={72} />

@@ -4,12 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { PASSWORD_HINT } from "@/entities/session/model/password-rule";
+import { PHONE_CODE_EXPIRED_MESSAGE, PHONE_CODE_TTL_SECONDS } from "@/entities/session/model/phone-code";
 import { resolveTagSelection, type TagOption } from "@/entities/creator/model/creator-tags";
 import { FAN_NAME_MAX } from "@/entities/creator/model/fan-name";
 import { HEARD_FROM, HEARD_FROM_LABEL, isHeardFrom, type HeardFrom } from "@/entities/metrics/model/signup-source";
 import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { completeSignup } from "@/features/signup/api/complete-signup";
-import { requestPhoneVerification } from "@/features/signup/api/signup-client";
+import { checkPhoneCode, requestPhoneCode } from "@/features/signup/api/signup-client";
 import { availabilityBlock, availabilityLine, type AvailabilityTone } from "@/features/signup/model/name-availability";
 import { useNameAvailability } from "@/features/signup/model/use-name-availability";
 import {
@@ -28,43 +29,52 @@ import {
   type LiveField,
   type LiveValues,
 } from "@/features/signup/model/signup-input";
-import { KakaoBubble } from "@/shared/ui/kakao-bubble";
+import { useCountdown } from "@/shared/lib/time/use-countdown";
 import { Sentences } from "@/shared/ui/sentences";
+import { SIGNUP_PHONE_KEY } from "../model/signup-phone-key";
 import s from "./signup.module.css";
 
-// 회원가입 3단계. 시안: docs/design/mockups/site/part6-2026-10-25/signup.html (design-rules 29절 — 머리는 카드 밖, 단계 표시는 알약 줄 하나, 2단계는 구분선 + 소제목 묶음 넷) · 스펙: docs/specs/signup.md
-// 시안은 세 단계를 한 화면에 쌓아 보이지만, 가입은 한 번에 한 단계씩 넘기는 흐름을 그대로 둔다 — 지금 단계의 카드 한 장만 보인다.
-// 3단계: 「카카오톡 인증 요청」으로 카카오톡에 요청 → 카카오톡에서 인증 → 「가입 완료」. 순서 1 은 요청 전·후 문장을 바꿔 보인다(덧붙이지 않는다).
-// 브라우저는 번호표만 들고 있다 — 인증됐는지는 서버가 카카오에게 묻는다(INV-U1).
+// 회원가입 단계 화면. 시안: docs/design/mockups/site/v43-signup/signup-1-role·2-info·3-phone (UX 명세 signup.md 「2026-10-29 단계 화면」) · 스펙: docs/specs/signup.md
+// 팬은 세 단계(유형 선택 → 정보 입력 → 휴대폰 확인), 크리에이터는 다섯 단계(+ 채널 확인 → 승인 서명)다. 한 번에 지금 단계의 카드 한 장만 보인다.
+// 3단계: 「인증번호 받기」 → 문자로 받은 6자리 입력 → 「확인」 → 「가입 완료」(크리에이터는 「다음」). 계정은 여기서 만들어진다.
+// 브라우저는 번호표(쿠키)와 입력한 6자리만 다룬다 — 맞혔는지는 서버가 판정한다(INV-U1·U15). 남은 시간 표시는 화면 편의일 뿐 만료 판정은 DB 가 한다.
 // 입력칸에 name 을 두지 않는다 — 폼 기본 제출이 일어나도 값이 주소창에 실리지 않게.
 // 2단계 칸은 입력하거나 칸을 떠난 뒤부터 바로 아래에 안내를 띄운다(맞으면 짧은 확인, 틀리면 무엇이 틀렸는지 — 판정은 checkField).
 // 아이디·닉네임은 형식이 맞으면 입력을 멈춘 뒤 0.4초에 서버에 미리 묻는다(INV-U14) — 문구는 name-availability.ts.
 // 입력이 바뀌면 이전 답은 버린다. 최종 판정은 가입 때 서버가 한다(INV-U13).
-// 줄바꿈(29절): 칸 안내는 문장마다 줄(<Sentences>), 붙여 쓰는 말은 \u00a0, 가운뎃점 덩어리는 \u2060 으로 붙인다.
+// 줄바꿈(29절): 칸 안내는 문장마다 줄(<Sentences>), 붙여 쓰는 말은  , 가운뎃점 덩어리는 ⁠ 으로 붙인다.
 
-const STEPS = ["유형 선택", "정보 입력", "본인 확인"] as const;
-const LAST = STEPS.length;
+const FORM_STEPS = ["유형 선택", "정보 입력", "휴대폰 확인"] as const;
+// 크리에이터만 더 붙는 단계 — 계정을 만든 뒤라 로그인한 화면(/signup/creator, widgets/signup/ui/signup-creator-steps)이 맡는다
+const CREATOR_STEPS = ["채널 확인", "승인 서명"] as const;
+const LAST = FORM_STEPS.length;
+/** 인증번호를 맞힐 수 있는 시간(INV-U15) — 표시용. 판정은 DB 가 한다 */
+const CODE_SECONDS = PHONE_CODE_TTL_SECONDS;
+const EXPIRED_MESSAGE = PHONE_CODE_EXPIRED_MESSAGE;
 
-type TermKey = "service" | "privacy" | "news";
+type TermKey = "age14" | "service" | "privacy" | "news";
 type Role = "fan" | "creator";
 type ErrorField = DetailsField | "verification" | "form";
 type LiveMessage = { tone: AvailabilityTone; message: string };
+/** 3단계 진행 — idle: 받기 전 · sent: 받은 뒤 입력 중 · verified: 맞힘 */
+type PhonePhase = "idle" | "sent" | "verified";
+/** 휴대폰 칸 오류 — field: 칸 아래 줄(형식) · box: 빨간 상자(발송·한도) · exists: 빨간 상자 + 로그인(INV-U11) */
+type PhoneProblem = { kind: "field" | "box" | "exists"; message: string };
 
-/** 칸별 안내가 붙는 칸 → 입력 요소 id 의 꼬리. 「다음」에서 막히면 이 칸으로 포커스를 보낸다. */
-const LIVE_IDS: Record<LiveField, string> = {
+/** 칸별 안내가 붙는 칸(2단계) → 입력 요소 id 의 꼬리. 「다음」에서 막히면 이 칸으로 포커스를 보낸다. */
+const LIVE_IDS: Partial<Record<LiveField, string>> = {
   loginId: "id",
   nickname: "nick",
   email: "mail",
   password: "pw",
   passwordConfirm: "pw2",
-  phone: "tel",
   creatorName: "cr-name",
   channelTitle: "cr-channel",
 };
 const LIVE_FIELDS = Object.keys(LIVE_IDS) as LiveField[];
 const isLiveField = (x: ErrorField): x is LiveField => Object.hasOwn(LIVE_IDS, x);
 
-// href 가 없는 항목(선택 동의)은 「보기」를 그리지 않는다(갈 곳이 없다 — UX 명세 signup.md 바꿀 것 2). 전문 화면이 생기면 href 만 채운다.
+// href 가 없는 항목(만 14세 확인·선택 동의)은 「보기」를 그리지 않는다(갈 곳이 없다). 전문 화면이 생기면 href 만 채운다.
 const TERMS: ReadonlyArray<{
   key: TermKey;
   label: string;
@@ -73,14 +83,16 @@ const TERMS: ReadonlyArray<{
   /** 체크 칸 아래 한 줄 — 무엇을 어디로 받는지(전문 화면이 없는 선택 동의) */
   detail?: string;
 }> = [
+  // INV-U16: 만 14세 확인 — 약관 동의와 같이 동의 시각으로 남는다
+  { key: "age14", label: "만 14세 이상입니다", required: true },
   { key: "service", label: "이용약관", required: true, href: "/terms" },
   {
     key: "privacy",
-    label: "개인정보 수집\u2060·\u2060이용",
+    label: "개인정보 수집⁠·⁠이용",
     required: true,
     href: "/privacy",
   },
-  { key: "news", label: "이벤트\u2060·\u2060소식 알림 받기", required: false, detail: "팬꾹 이벤트와 새 소식을 이메일로 보내 드려요." },
+  { key: "news", label: "이벤트⁠·⁠소식 알림 받기", required: false, detail: "팬꾹 이벤트와 새 소식을 이메일로 보내 드려요." },
 ];
 
 /** 완료 표시 — design-rules §3: 체크는 단색 SVG, 글자색을 따라간다. 화면 낭독기에는 읽히지 않는다. */
@@ -119,15 +131,22 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   // 팬덤 이름(추가 요청 3) — 선택. 비우면 없음
   const [fanName, setFanName] = useState("");
   const [agreed, setAgreed] = useState<Record<TermKey, boolean>>({
+    age14: false,
     service: false,
     privacy: false,
     news: false,
   });
   // metrics INV-Q4: 「어디서 알게 되셨나요」 — 고르지 않아도 가입된다
   const [heardFrom, setHeardFrom] = useState<HeardFrom | null>(null);
-  // 인증 요청을 보냈는가. 번호표 자체는 서버가 쿠키로 들고 있다(INV-U1). 번호를 고치면 요청부터 다시 —
+  // 3단계. 번호표 자체는 서버가 쿠키로 들고 있다(INV-U1). 받은 뒤 번호를 고치면 받기부터 다시 —
   // 다른 번호의 확인으로 가입하지 않게(서버도 번호 대조로 막는다).
-  const [requested, setRequested] = useState(false);
+  const [phase, setPhase] = useState<PhonePhase>("idle");
+  const [code, setCode] = useState("");
+  const [expiresAt, setExpiresAt] = useState(0);
+  const [codeNote, setCodeNote] = useState<LiveMessage | null>(null);
+  // 다섯 번 틀려 버려진 인증번호 — 다시 받기 전까지 입력·확인을 잠근다(INV-U10)
+  const [locked, setLocked] = useState(false);
+  const [phoneProblem, setPhoneProblem] = useState<PhoneProblem | null>(null);
   const [busy, setBusy] = useState(false);
   // server: 가입 요청에서 서버가 돌려준 오류(칸별 안내 칸이라도 낭독기에 알린다)
   const [error, setError] = useState<{
@@ -140,6 +159,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   // 오류를 띄울 때마다 오르는 번호 — 같은 문구가 연달아 나와도 새로 붙여 다시 읽히게 한다.
   const [errorSeq, setErrorSeq] = useState(0);
   const navRef = useRef<HTMLElement>(null);
+  const codeRef = useRef<HTMLInputElement>(null);
   const headingRefs = useRef<Array<HTMLHeadingElement | null>>([]);
 
   // 단계를 옮기면 새 단계 제목으로 포커스를 보내고 단계 표시가 보이게 올린다(시안과 같다). 처음 열 때는 옮기지 않는다.
@@ -148,6 +168,13 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     headingRefs.current[step - 1]?.focus({ preventScroll: true });
     navRef.current?.scrollIntoView({ block: "start", behavior: "instant" });
   }, [step, moved]);
+
+  // 남은 시간 — 받은 뒤에만 1초마다 다시 그린다(번호 바꾸기 패널과 같은 시계)
+  const countdown = useCountdown(phase === "sent" ? expiresAt : null, CODE_SECONDS);
+  const expired = phase === "sent" && countdown.expired;
+  const timerText = countdown.text;
+
+  const steps: readonly string[] = role === "creator" ? [...FORM_STEPS, ...CREATOR_STEPS] : FORM_STEPS;
 
   const go = (n: number) => {
     const next = Math.max(1, Math.min(LAST, n));
@@ -193,7 +220,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     if (field === "loginId" || field === "nickname") return availabilityOf(field);
     return { tone: "ok", message: own.message };
   };
-  const liveId = (field: LiveField) => f(`${LIVE_IDS[field]}-m`);
+  const liveId = (field: LiveField) => f(`${LIVE_IDS[field] ?? field}-m`);
   const liveAttrs = (field: LiveField, hintId?: string) => {
     const m = liveOf(field);
     const describedBy = [hintId, m ? liveId(field) : null].filter(Boolean).join(" ");
@@ -225,7 +252,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     setTouched(Object.fromEntries(LIVE_FIELDS.map((k) => [k, true])));
     const own = checkField(field, liveValues);
     showError({ field, message: own.ok ? problem.message : own.message });
-    requestAnimationFrame(() => document.getElementById(f(LIVE_IDS[field]))?.focus());
+    requestAnimationFrame(() => document.getElementById(f(LIVE_IDS[field] ?? field))?.focus());
   };
 
   // 태그는 화면에서 먼저 합친다(creator-tags INV-T3) — 직접 입력이 선택지 이름과 같으면 그 선택지로 세어 보낸다.
@@ -251,7 +278,6 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
       email,
       password,
       passwordConfirm,
-      phone,
       terms: agreed,
       creator: creatorProfile(),
     });
@@ -283,18 +309,61 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     go(LAST);
   };
 
-  const sendRequest = async () => {
-    if (busy) return;
+  // 「이 번호로 가입된 계정이 있습니다」 뒤에는 번호 칸을 고치기 전까지 다시 받지 않는다(고치면 onPhoneChange 가 안내를 내린다)
+  const phoneTaken = phoneProblem?.kind === "exists";
+
+  const sendCode = async () => {
+    if (busy || phase === "verified" || phoneTaken) return;
+    const own = checkField("phone", liveValues);
+    if (!own.ok) {
+      setPhoneProblem({ kind: "field", message: own.message });
+      document.getElementById(f("tel"))?.focus();
+      return;
+    }
     setBusy(true);
-    setError(null);
-    const r = await requestPhoneVerification(phone);
+    setPhoneProblem(null);
+    const r = await requestPhoneCode(phone);
     setBusy(false);
-    if (r.ok) setRequested(true);
-    else showError({ field: "verification", message: r.message });
+    if (!r.ok) {
+      setPhoneProblem({ kind: r.reason === "phone" ? "field" : "box", message: r.message });
+      return;
+    }
+    const sentAt = Date.now();
+    setPhase("sent");
+    setCode("");
+    setLocked(false);
+    setExpiresAt(sentAt + CODE_SECONDS * 1000);
+    setCodeNote({ tone: "wait", message: `${phone} 번호로 인증번호를 보냈습니다.` });
+    requestAnimationFrame(() => codeRef.current?.focus());
+  };
+
+  const confirmCode = async () => {
+    if (busy || phase !== "sent" || locked || expired) return;
+    setBusy(true);
+    const r = await checkPhoneCode(code);
+    setBusy(false);
+    if (r.ok) {
+      setPhase("verified");
+      setCodeNote({ tone: "ok", message: "휴대폰 번호를 확인했습니다." });
+      return;
+    }
+    if (r.reason === "locked") setLocked(true);
+    if (r.reason === "expired") setExpiresAt(Date.now());
+    setCodeNote({ tone: "bad", message: r.message });
+    if (r.reason !== "locked") requestAnimationFrame(() => codeRef.current?.focus());
+  };
+
+  // 받기 전으로 돌아간다 — 번호표가 쓸 수 없게 됐거나(10분 지남 등) 번호가 이미 가입돼 있을 때, 받은 뒤 번호를 고쳤을 때
+  const resetPhone = (problem: PhoneProblem | null) => {
+    setPhase("idle");
+    setCode("");
+    setCodeNote(null);
+    setLocked(false);
+    setPhoneProblem(problem);
   };
 
   const finish = async () => {
-    if (busy || !requested) return;
+    if (busy || phase !== "verified") return;
     setBusy(true);
     setError(null);
     const r = await completeSignup({
@@ -309,12 +378,24 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
       heardFrom,
     });
     if (r.ok) {
-      router.push(r.loggedIn ? "/" : "/login"); // 「/」 가 역할별 첫 화면으로 나눈다
+      // 팬: 「/」 가 역할별 첫 화면으로 나눈다. 크리에이터: 4단계(채널 확인)로 — 5단계가 3단계 번호를 미리 채우도록 이 탭에만 남긴다
+      if (role === "creator" && r.loggedIn) {
+        try {
+          window.sessionStorage.setItem(SIGNUP_PHONE_KEY, phone);
+        } catch {
+          // 저장소를 못 쓰면 5단계에서 번호를 다시 적는다
+        }
+        router.push("/signup/creator");
+      } else {
+        router.push(r.loggedIn ? "/" : "/login");
+      }
       router.refresh();
       return;
     }
     setBusy(false);
-    if (r.dropVerification) setRequested(false);
+    // INV-U11: 번호 중복은 인증번호를 맞힌 뒤의 가입에서만 알려 주고, 로그인으로 안내한다
+    if (r.field === "phone") return resetPhone({ kind: "exists", message: r.message });
+    if (r.dropVerification) return resetPhone({ kind: "box", message: r.message });
     showError({ field: r.field, message: r.message, server: true });
     if (r.field !== "verification" && r.field !== "form") go(2);
   };
@@ -327,12 +408,11 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     }
     setError(null);
     if (step < LAST) go(step + 1);
-    else if (requested) void finish();
-    else void sendRequest();
+    else void finish();
   };
 
   const allAgreed = TERMS.every((t) => agreed[t.key]);
-  const setAll = (value: boolean) => setAgreed({ service: value, privacy: value, news: value });
+  const setAll = (value: boolean) => setAgreed({ age14: value, service: value, privacy: value, news: value });
 
   const invalid = (field: ErrorField) => (error?.field === field ? { "aria-invalid": true, "aria-describedby": f("error") } : {});
   // 칸별 안내 칸의 오류는 칸 아래에 보인다 — 서버가 돌려준 것만 낭독기용으로 한 번 더 알린다(눈에는 한 번만)
@@ -362,8 +442,8 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     el.value = next.value;
     el.setSelectionRange(next.caret, next.caret);
     setPhone(next.value);
-    setRequested(false);
-    edited("phone");
+    // 받은 뒤 번호를 고치면 받기 전으로(UX 명세 step 3 sent) — 맞힌 뒤에는 칸이 읽기 전용이다
+    resetPhone(null);
   };
 
   const onEmailLocalChange = (value: string) => {
@@ -394,6 +474,10 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     </h2>
   );
 
+  // 시간이 지났으면 서버에 묻지 않고 바로 알린다(서버도 같은 답을 한다)
+  const codeLine: LiveMessage | null = expired && !locked ? { tone: "bad", message: EXPIRED_MESSAGE } : codeNote;
+  const codeClosed = busy || phase !== "sent" || locked || expired;
+
   return (
     <main id="main">
       <section className={s.page} aria-labelledby={f("title")}>
@@ -406,7 +490,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
 
           <nav className={s["steps-wrap"]} aria-label="가입 단계" ref={navRef}>
             <ol className={s.steps}>
-              {STEPS.map((label, i) => {
+              {steps.map((label, i) => {
                 const k = i + 1;
                 const done = k !== step && k < reached; // 지나온 단계만 완료 — 아직 넘지 않은 마지막 단계는 숫자 그대로(선물 보내기와 같은 기준)
                 return (
@@ -439,8 +523,8 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
 
           <form className="card" onSubmit={onSubmit} aria-label="회원가입 입력" noValidate>
             <fieldset className={s.step} hidden={step !== 1}>
-              <legend className="sr-only">회원 유형</legend>
-              {heading(1, "회원 유형 선택")}
+              <legend className="sr-only">어떤 분이세요?</legend>
+              {heading(1, "어떤 분이세요?")}
               <div className={s.choices}>
                 <label className={s.choice}>
                   <input type="radio" name="kind" value="fan" checked={role === "fan"} onChange={() => setRole("fan")} />
@@ -457,24 +541,10 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                   </span>
                 </label>
               </div>
-              {/* 크리에이터를 골랐을 때만(UX 명세 signup.md 바꿀 것 1) */}
-              {role === "creator" ? (
-                <p className={s.note}>
-                  {"가입 후 활동 채널의 소유자 확인이 필요합니다. 확인을 마치면 "}
-                  <span className="nw">‘크리에이터 찾기’에</span>
-                  {" 표시됩니다."}
-                  <br />
-                  {"유튜브\u2060·\u2060치지직: 해당 계정으로 로그인"}
-                  <br />
-                  {"인스타그램: 프로페셔널 계정으로 로그인"}
-                  <br />
-                  {"SOOP: 인증\u00a0코드를 채널\u00a0소개란에 입력하거나 팬꾹\u00a0계정으로 DM을 보내 운영자 확인"}
-                </p>
-              ) : null}
             </fieldset>
 
             <fieldset className={s.step} hidden={step !== 2}>
-              <legend className="sr-only">가입 정보</legend>
+              <legend className="sr-only">회원 정보 입력</legend>
               {heading(2, "회원 정보 입력")}
               <div className={s.grp}>
                 <h3 className={s["grp-title"]}>계정 정보</h3>
@@ -500,7 +570,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     />
                     {liveLine("loginId")}
                     <p className="hint" id={f("id-h")}>
-                      {"영문 소문자\u2060·\u2060숫자\u2060·\u2060밑줄(_) 4~20자 · 가입 후 변경\u00a0불가"}
+                      {"영문 소문자⁠·⁠숫자⁠·⁠밑줄(_) 4~20자 · 가입 후 변경 불가"}
                     </p>
                   </div>
                   <div>
@@ -523,9 +593,9 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     />
                     {liveLine("nickname")}
                     <p className="hint" id={f("nick-h")}>
-                      {"팬꾹에서 사용할 이름 · 최대 12자 · 중복 사용\u00a0불가"}
+                      {"팬꾹에서 사용할 이름 · 최대 12자 · 중복 사용 불가"}
                       <br />
-                      {"가입 후 ‘프로필 수정’에서 변경할\u00a0수\u00a0있습니다."}
+                      {"가입 후 ‘프로필 수정’에서 변경할 수 있습니다."}
                     </p>
                   </div>
                   <div>
@@ -594,7 +664,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     ) : null}
                     {liveLine("email")}
                     <p className="hint" id={f("mail-h")}>
-                      <Sentences text={"가입 후 확인 메일을 발송합니다. 메일의 링크에서 주소를 확인하면 선물\u00a0소식을 이메일로 받을\u00a0수\u00a0있습니다."} />
+                      <Sentences text={"가입 후 확인 메일을 발송합니다. 메일의 링크에서 주소를 확인하면 선물 소식을 이메일로 받을 수 있습니다."} />
                     </p>
                   </div>
                   <div>
@@ -638,32 +708,6 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                       {...liveAttrs("passwordConfirm")}
                     />
                     {liveLine("passwordConfirm")}
-                  </div>
-                </div>
-              </div>
-              <div className={s.grp}>
-                <h3 className={s["grp-title"]}>연락처</h3>
-                <div className="form">
-                  <div>
-                    <label className="label" htmlFor={f("tel")}>
-                      휴대폰 번호
-                    </label>
-                    <input
-                      className="field"
-                      id={f("tel")}
-                      type="tel"
-                      inputMode="numeric"
-                      autoComplete="tel"
-                      placeholder="010-0000-0000"
-                      value={phone}
-                      onChange={onPhoneChange}
-                      onBlur={() => touch("phone")}
-                      {...liveAttrs("phone", f("tel-h"))}
-                    />
-                    {liveLine("phone")}
-                    <p className="hint" id={f("tel-h")}>
-                      <Sentences text={"선물 관련 알림톡을 받을 번호입니다. 실명\u2060·\u2060주소와 마찬가지로 별도 보관합니다."} />
-                    </p>
                   </div>
                 </div>
               </div>
@@ -715,7 +759,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                       />
                       {liveLine("channelTitle")}
                       <p className="hint" id={f("cr-channel-h")}>
-                        채널 주소는 가입 후 채널 소유자 확인 시 입력합니다.
+                        채널 주소는 4단계에서 입력합니다.
                       </p>
                     </div>
                     <div>
@@ -740,7 +784,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                       <p className="hint" id={f("cr-fan-h")}>
                         {`팬을 부르는 이름 · 최대 ${FAN_NAME_MAX}자 · 선택 입력`}
                         <br />
-                        {"가입 후 ‘상세 설정 > 팬덤’에서 변경할\u00a0수\u00a0있습니다."}
+                        {"가입 후 ‘상세 설정 > 팬덤’에서 변경할 수 있습니다."}
                       </p>
                     </div>
                     <TagPicker
@@ -800,7 +844,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                           전체 동의
                         </label>
                         <p className={`t-meta ${s["term-detail"]}`} id={f("all-h")}>
-                          {"선택 항목 동의가 포함됩니다. 선택 항목에 동의하지 않아도 가입할\u00a0수\u00a0있습니다."}
+                          {"선택 항목 동의가 포함됩니다. 선택 항목에 동의하지 않아도 가입할 수 있습니다."}
                         </p>
                       </div>
                       {TERMS.map((t) => (
@@ -844,54 +888,102 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
             </fieldset>
 
             <fieldset className={s.step} hidden={step !== 3}>
-              <legend className="sr-only">카카오톡 본인 확인</legend>
-              {heading(3, "카카오톡으로 본인 확인")}
-              <p className={`t-desc ${s.lead}`}>
-                <Sentences text={"입력한 휴대폰 번호의 소유자를 카카오톡\u00a0인증으로 확인합니다."} />
-              </p>
-              <ol className={s.kakao}>
-                <li className={requested ? s["is-done"] : undefined}>
-                  {requested ? (
-                    <span className={s.mark}>
-                      <CheckIcon size={16} />
-                    </span>
+              <legend className="sr-only">휴대폰 번호 확인</legend>
+              {heading(3, "휴대폰 번호 확인")}
+              <div className="form">
+                <div>
+                  <label className="label" htmlFor={f("tel")}>
+                    휴대폰 번호
+                  </label>
+                  <div className={s["phone-row"]}>
+                    <input
+                      className="field"
+                      id={f("tel")}
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="tel"
+                      placeholder="010-0000-0000"
+                      value={phone}
+                      readOnly={phase === "verified"}
+                      onChange={onPhoneChange}
+                      onKeyDown={(e) => {
+                        if (e.key !== "Enter") return;
+                        e.preventDefault(); // 폼 제출(가입 완료) 대신 인증번호 받기
+                        void sendCode();
+                      }}
+                      aria-invalid={phoneProblem ? true : undefined}
+                      aria-describedby={phoneProblem ? f("tel-m") : undefined}
+                    />
+                    <button className="btn btn--line" type="button" aria-disabled={busy || phase === "verified" || phoneTaken} onClick={() => void sendCode()}>
+                      {phase === "sent" ? "다시 받기" : "인증번호 받기"}
+                    </button>
+                  </div>
+                  {phoneProblem?.kind === "field" ? (
+                    <p className={`${s.live} ${s["live-bad"]}`} id={f("tel-m")} role="alert">
+                      <span>{phoneProblem.message}</span>
+                    </p>
                   ) : null}
-                  {/* 요청 전·후 문장을 바꿔 보인다 — 보낸 뒤 문장을 앞 문장에 덧붙이지 않는다(다듬은본 반영 사항 2) */}
-                  {requested ? (
-                    <span>
-                      <strong className="nw">{phone || "입력한 번호"}</strong>의 카카오톡으로 인증 요청을 보냈습니다.
-                    </span>
-                  ) : (
-                    <span>
-                      ‘카카오톡 인증 요청’을 누르면 <strong className="nw">{phone || "입력한 번호"}</strong>의 카카오톡으로 인증 요청을
-                      보냅니다.
-                    </span>
-                  )}
-                </li>
-                <li>
-                  <span>{"카카오톡에서 요청을 열고 인증을 완료해\u00a0주세요."}</span>
-                </li>
-                <li>
-                  <span>
-                    인증 후 팬꾹으로 돌아와 <span className="nw">‘가입 완료’를</span> 눌러 주세요.
-                  </span>
-                </li>
-              </ol>
-              {requested ? (
-                <p className={`hint ${s.again}`}>
-                  요청이 오지 않았나요?{" "}
-                  <button className={s["text-btn"]} type="button" aria-disabled={busy} onClick={() => void sendRequest()}>
-                    다시 보내기
-                  </button>
-                </p>
-              ) : null}
+                  {phoneProblem && phoneProblem.kind !== "field" ? (
+                    <div className={`err ${s["phone-err"]}`} id={f("tel-m")} role="alert">
+                      <Sentences text={phoneProblem.message} />
+                      {phoneProblem.kind === "exists" ? (
+                        <div className={s["phone-err-action"]}>
+                          <Link className="btn btn--line btn--sm" href="/login">
+                            로그인
+                          </Link>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+                {phase !== "idle" ? (
+                  <div>
+                    <label className="label" htmlFor={f("code")}>
+                      인증번호
+                    </label>
+                    <div className={s["phone-row"]}>
+                      <div className={s.code}>
+                        <input
+                          ref={codeRef}
+                          className="field"
+                          id={f("code")}
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          maxLength={6}
+                          placeholder="6자리 숫자"
+                          value={code}
+                          disabled={phase === "verified" || locked}
+                          onChange={(e) => setCode(e.currentTarget.value.replace(/\D/g, "").slice(0, 6))}
+                          onKeyDown={(e) => {
+                            if (e.key !== "Enter") return;
+                            e.preventDefault(); // 폼 제출(가입 완료) 대신 인증번호 확인
+                            void confirmCode();
+                          }}
+                          aria-invalid={codeLine?.tone === "bad" ? true : undefined}
+                          aria-describedby={codeLine ? f("code-m") : undefined}
+                        />
+                        <span className={expired ? `${s.timer} ${s["is-zero"]}` : s.timer} role="timer" aria-label="남은 시간">
+                          {phase === "sent" ? timerText : ""}
+                        </span>
+                      </div>
+                      <button className="btn" type="button" aria-disabled={codeClosed} onClick={() => void confirmCode()}>
+                        확인
+                      </button>
+                    </div>
+                    {codeLine ? (
+                      <p className={`${s.live} ${s[`live-${codeLine.tone}`]}`} id={f("code-m")} role={codeLine.tone === "bad" ? "alert" : "status"}>
+                        {codeLine.tone === "ok" ? <CheckIcon size={16} /> : null}
+                        <span>{codeLine.message}</span>
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
               {errorLine(step === 3)}
             </fieldset>
 
-            {/* 휴대폰 폭에서 글자가 긴 카카오 버튼 줄은 위아래로 쌓고 주 버튼이 위(29절 줄바꿈 5) */}
-            <div
-              className={[s["step-actions"], step === 1 ? s["no-prev"] : "", step === LAST ? s["kakao-row"] : ""].filter(Boolean).join(" ")}
-            >
+            <div className={[s["step-actions"], step === 1 ? s["no-prev"] : ""].filter(Boolean).join(" ")}>
               {step > 1 ? (
                 <button
                   className="btn btn--line"
@@ -905,16 +997,14 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                   이전
                 </button>
               ) : null}
-              {step < LAST ? (
-                <button className={`btn ${s.next}`} type="submit" aria-disabled={busy} aria-busy={busy || undefined}>
-                  다음
-                </button>
-              ) : (
-                <button className={`btn btn--kakao ${s.next}`} type="submit" aria-disabled={busy} aria-busy={busy || undefined}>
-                  <KakaoBubble size={24} />
-                  {requested ? "가입 완료" : "카카오톡 인증 요청"}
-                </button>
-              )}
+              <button
+                className={`btn ${s.next}`}
+                type="submit"
+                aria-disabled={busy || (step === LAST && phase !== "verified")}
+                aria-busy={busy || undefined}
+              >
+                {step < LAST || role === "creator" ? "다음" : "가입 완료"}
+              </button>
             </div>
           </form>
           <p className="foot-line">

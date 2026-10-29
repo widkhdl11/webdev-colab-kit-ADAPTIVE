@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // 서버와 주고받는 세 호출만 가짜로 둔다 — 시험 대상은 화면이 언제 무엇을 보내는지다.
 const api = vi.hoisted(() => ({
-  requestPhoneChangeVerification: vi.fn(),
-  checkPhoneChangeVerification: vi.fn(),
+  requestPhoneChangeCode: vi.fn(),
+  checkPhoneChangeCode: vi.fn(),
   sendPhoneChange: vi.fn(),
 }));
 vi.mock("../api/phone-change-client", () => api);
@@ -54,71 +54,106 @@ const click = async (name: string) => {
 
 async function startVerified() {
   act(() => root.render(<PhoneChangePanel id="p" onLoginExpired={() => {}} onChanged={() => {}} />));
-  api.requestPhoneChangeVerification.mockResolvedValue({ kind: "ok" });
+  api.requestPhoneChangeCode.mockResolvedValue({ kind: "ok" });
+  api.checkPhoneChangeCode.mockResolvedValue({ kind: "ok" });
   typeInto("새 휴대폰 번호", "01055502006");
-  await click("카카오톡 인증 요청");
+  await click("인증번호 받기");
+  typeInto("인증번호", "123456");
+  await click("확인");
 }
 
-describe("번호 바꾸기 화면 — 카카오 인증 확인은 한 번만 (signup INV-U12)", () => {
-  it("현재 비밀번호를 틀린 뒤 다시 누르면 인증 확인을 다시 보내지 않고 바꾸기만 다시 보낸다", async () => {
-    await startVerified();
-    api.checkPhoneChangeVerification.mockResolvedValue({ kind: "ok", verified: true });
-    api.sendPhoneChange
-      .mockResolvedValueOnce({ kind: "failed", field: "currentPassword", message: "현재 비밀번호가 일치하지 않습니다." })
-      .mockResolvedValueOnce({ kind: "ok" });
+const alertText = () => host.querySelector('[role="alert"]')?.textContent;
+const labels = () => [...host.querySelectorAll("label")].map((l) => l.textContent);
 
-    typeInto("현재 비밀번호", "WrongPass!2026");
-    await click("번호 변경");
-    expect(host.querySelector('[role="alert"]')?.textContent).toBe("현재 비밀번호가 일치하지 않습니다.");
+describe("번호 바꾸기 화면 — 문자 인증번호 (signup INV-U12)", () => {
+  it("INV-U12: 인증번호 받기 → 확인 → 현재 비밀번호 → 변경 순서로만 칸이 열린다", async () => {
+    act(() => root.render(<PhoneChangePanel id="p" onLoginExpired={() => {}} onChanged={() => {}} />));
+    expect(labels()).toEqual(["새 휴대폰 번호"]);
+    api.requestPhoneChangeCode.mockResolvedValue({ kind: "ok" });
+    typeInto("새 휴대폰 번호", "01055502006");
+    await click("인증번호 받기");
+    expect(api.requestPhoneChangeCode).toHaveBeenCalledWith("01055502006");
+    expect(labels()).toEqual(["새 휴대폰 번호", "인증번호"]);
 
+    api.checkPhoneChangeCode.mockResolvedValue({ kind: "ok" });
+    typeInto("인증번호", "12a3456");
+    await click("확인");
+    expect(api.checkPhoneChangeCode).toHaveBeenCalledWith("123456");
+    expect(labels()).toEqual(["새 휴대폰 번호", "현재 비밀번호"]);
+
+    api.sendPhoneChange.mockResolvedValue({ kind: "ok" });
     typeInto("현재 비밀번호", "RightPass!2026");
     await click("번호 변경");
-
-    expect(api.checkPhoneChangeVerification).toHaveBeenCalledTimes(1);
-    expect(api.sendPhoneChange).toHaveBeenCalledTimes(2);
-    expect(api.sendPhoneChange).toHaveBeenLastCalledWith("01055502006", "RightPass!2026");
+    expect(api.sendPhoneChange).toHaveBeenCalledWith("01055502006", "RightPass!2026");
     expect(host.querySelector('[role="status"]')?.textContent).toBe("휴대폰 번호가 변경되었습니다.");
   });
 
-  it("실패경로: 인증이 아직이면 바꾸기를 보내지 않고, 다음 누름에 확인부터 다시 한다", async () => {
-    await startVerified();
-    api.checkPhoneChangeVerification.mockResolvedValueOnce({ kind: "ok", verified: false }).mockResolvedValueOnce({ kind: "ok", verified: true });
-    api.sendPhoneChange.mockResolvedValue({ kind: "ok" });
-
-    typeInto("현재 비밀번호", "RightPass!2026");
-    await click("번호 변경");
+  it("INV-U10 (실패경로): 인증번호가 틀리면 서버 문구를 보여 주고 비밀번호 칸을 열지 않는다", async () => {
+    act(() => root.render(<PhoneChangePanel id="p" onLoginExpired={() => {}} onChanged={() => {}} />));
+    api.requestPhoneChangeCode.mockResolvedValue({ kind: "ok" });
+    typeInto("새 휴대폰 번호", "01055502006");
+    await click("인증번호 받기");
+    api.checkPhoneChangeCode.mockResolvedValue({ kind: "failed", field: "code", message: "인증번호가 맞지 않습니다. 남은 횟수 4회" });
+    typeInto("인증번호", "000000");
+    await click("확인");
+    expect(alertText()).toBe("인증번호가 맞지 않습니다. 남은 횟수 4회");
+    expect(labels()).not.toContain("현재 비밀번호");
     expect(api.sendPhoneChange).not.toHaveBeenCalled();
-
-    await click("번호 변경");
-    expect(api.checkPhoneChangeVerification).toHaveBeenCalledTimes(2);
-    expect(api.sendPhoneChange).toHaveBeenCalledTimes(1);
   });
 
-  it("실패경로: 바꾸기가 본인 확인을 쓸 수 없다고 하면 다음 누름에 확인부터 다시 한다", async () => {
+  it("현재 비밀번호를 틀린 뒤 다시 누르면 인증번호를 다시 묻지 않고 바꾸기만 다시 보낸다", async () => {
     await startVerified();
-    api.checkPhoneChangeVerification.mockResolvedValue({ kind: "ok", verified: true });
-    api.sendPhoneChange.mockResolvedValue({ kind: "failed", field: "verification", message: "본인 확인을 다시 시도해 주세요." });
-
-    typeInto("현재 비밀번호", "RightPass!2026");
-    await click("번호 변경");
-    await click("번호 변경");
-
-    expect(api.checkPhoneChangeVerification).toHaveBeenCalledTimes(2);
-  });
-
-  it("실패경로: 「번호 다시 입력」 뒤 새로 요청하면 확인부터 다시 한다", async () => {
-    await startVerified();
-    api.checkPhoneChangeVerification.mockResolvedValue({ kind: "ok", verified: true });
-    api.sendPhoneChange.mockResolvedValueOnce({ kind: "failed", field: "currentPassword", message: "현재 비밀번호가 일치하지 않습니다." });
-
+    api.sendPhoneChange
+      .mockResolvedValueOnce({ kind: "failed", field: "currentPassword", message: "현재 비밀번호가 일치하지 않습니다." })
+      .mockResolvedValueOnce({ kind: "ok" });
     typeInto("현재 비밀번호", "WrongPass!2026");
     await click("번호 변경");
-    await click("번호 다시 입력");
-    await click("카카오톡 인증 요청");
-    api.sendPhoneChange.mockResolvedValueOnce({ kind: "ok" });
+    expect(alertText()).toBe("현재 비밀번호가 일치하지 않습니다.");
     typeInto("현재 비밀번호", "RightPass!2026");
     await click("번호 변경");
+    expect(api.checkPhoneChangeCode).toHaveBeenCalledTimes(1);
+    expect(api.sendPhoneChange).toHaveBeenCalledTimes(2);
+  });
 
-    expect(api.checkPhoneChangeVerification).toHaveBeenCalledTimes(2);
+  it("INV-U2 (실패경로): 바꾸기가 확인을 쓸 수 없다고 하면(10분 지남 등) 인증번호 받기부터 다시", async () => {
+    await startVerified();
+    api.sendPhoneChange.mockResolvedValue({ kind: "failed", field: "verification", message: "휴대폰 번호를 다시 확인해 주세요." });
+    typeInto("현재 비밀번호", "RightPass!2026");
+    await click("번호 변경");
+    expect(alertText()).toBe("휴대폰 번호를 다시 확인해 주세요.");
+    expect(labels()).toEqual(["새 휴대폰 번호"]);
+    expect(button("인증번호 받기")).toBeTruthy();
+  });
+
+  it("「번호 다시 입력」을 누르면 번호 칸만 남는다", async () => {
+    await startVerified();
+    await click("번호 다시 입력");
+    expect(labels()).toEqual(["새 휴대폰 번호"]);
+  });
+});
+
+describe("번호 바꾸기 화면 — 남은 시간 (signup INV-U15)", () => {
+  it("INV-U15: 받은 뒤 3:00 부터 줄고, 3분이 지나면 서버에 묻지 않고 만료 문구를 보이고 「확인」을 끈다", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
+    try {
+      act(() => root.render(<PhoneChangePanel id="p" onLoginExpired={() => {}} onChanged={() => {}} />));
+      api.requestPhoneChangeCode.mockResolvedValue({ kind: "ok" });
+      typeInto("새 휴대폰 번호", "01055502006");
+      await click("인증번호 받기");
+      expect(host.querySelector('[role="timer"]')?.textContent).toBe("03:00");
+      act(() => vi.advanceTimersByTime(61_000));
+      expect(host.querySelector('[role="timer"]')?.textContent).toBe("01:59");
+      act(() => vi.advanceTimersByTime(120_000));
+      expect(host.querySelector('[role="timer"]')?.textContent).toBe("00:00");
+      expect(alertText()).toBe("인증 시간이 지났습니다. 인증번호를 다시 받아 주세요.");
+      expect(button("확인").getAttribute("aria-disabled")).toBe("true");
+      await click("확인");
+      expect(api.checkPhoneChangeCode).not.toHaveBeenCalled();
+      // 다시 받으면 시계가 처음부터
+      await click("다시 받기");
+      expect(host.querySelector('[role="timer"]')?.textContent).toBe("03:00");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

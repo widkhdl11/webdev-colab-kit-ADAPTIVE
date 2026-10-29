@@ -15,6 +15,8 @@ import { useFollowSave } from "./use-follow-save";
 // 저장이 끝나기 전에는 바꾸지 않는다 — 저장 전에 「선물 보내기」가 보이면 팔로우가 없는 채로 보내기 화면에 갈 수 있어서다.
 // 저장하는 동안은 버튼 글자를 그대로 두고 흐리게(사이트 공통 aria-disabled 모양) 누를 수 없게 한다.
 // 저장이 실패하면 버튼 묶음 바로 아래에 한 줄(읽기 프로그램에도 알린다). 저장·실패 처리는 useFollowSave(「팔로우하고 선물 보내기」와 같이 쓴다).
+// canSend=false(승인 서명 연결 전 — creator-link INV-E15, UX 명세 handle.md `unsigned`): 「팔로우」/「팔로우 중」은 그대로, 「선물 보내기」 자리에
+// 누를 수 없는 회색 배지 「승인 수단 등록 전」. 보내기 화면으로 가는 링크는 그리지 않는다.
 
 // 버튼 아이콘 — 꾸밈이라 읽지 않는다. 마우스를 올렸을 때의 움직임은 follow-button.module.css(사용자 「버튼 디테일 살려줘」)
 function Icon({ d }: { d: string }) {
@@ -34,6 +36,7 @@ export function ProfileFollowActions({
   creatorName,
   initialFollowing,
   signedIn,
+  canSend = true,
 }: {
   creatorId: string;
   creatorName: string;
@@ -41,6 +44,8 @@ export function ProfileFollowActions({
   initialFollowing: boolean;
   /** false = 로그인 전(「팔로우」가 로그인 링크) */
   signedIn: boolean;
+  /** false = 승인 서명 연결 전 — 「선물 보내기」 대신 「승인 수단 등록 전」 배지 */
+  canSend?: boolean;
 }) {
   const router = useRouter();
   const [following, setFollowing] = useState(initialFollowing);
@@ -60,14 +65,19 @@ export function ProfileFollowActions({
     (next === "gift" ? giftRef.current : followRef.current)?.focus();
   }, [following]);
 
+  const noSend = <span className={s.noSend}>승인 수단 등록 전</span>;
+
   if (!signedIn) {
     return (
-      <Link className={`btn ${s.follow}`} href="/login" aria-label={`${creatorName}님 팔로우 — 로그인 필요`}>
-        <span className={s.ico}>
-          <Icon d={PLUS} />
-        </span>
-        팔로우
-      </Link>
+      <>
+        <Link className={`btn ${s.follow}`} href="/login" aria-label={`${creatorName}님 팔로우 — 로그인 필요`}>
+          <span className={s.ico}>
+            <Icon d={PLUS} />
+          </span>
+          팔로우
+        </Link>
+        {canSend ? null : noSend}
+      </>
     );
   }
 
@@ -95,6 +105,7 @@ export function ProfileFollowActions({
     <>
       {following ? (
         <>
+          {canSend ? (
           <Link
             ref={giftRef}
             className={`btn ${s.gift}`}
@@ -108,6 +119,9 @@ export function ProfileFollowActions({
               <Icon d={ARROW} />
             </span>
           </Link>
+          ) : (
+            noSend
+          )}
           <button className={`btn btn--line ${s.following}`} type="button" aria-label={`${creatorName}님 팔로우 중`} aria-disabled={busy} aria-busy={busy} onClick={onUnfollow}>
             <span className={s.swap}>
               <Icon d={CHECK} />
@@ -124,6 +138,7 @@ export function ProfileFollowActions({
           <span className={lbl}>팔로우</span>
         </button>
       )}
+      {!following && !canSend ? noSend : null}
       {/* 저장 실패 알림 — 늘 같은 칸(읽기 프로그램이 바뀐 글자를 읽는다). 비었을 때는 자리를 차지하지 않고, 실패하면 버튼 묶음 아래 한 줄로 보인다 */}
       <span className={failText ? s.cardNotice : "sr-only"} role="status">
         {failText}

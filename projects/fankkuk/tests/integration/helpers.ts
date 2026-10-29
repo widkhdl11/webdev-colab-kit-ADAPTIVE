@@ -1,4 +1,7 @@
 import { execFileSync, spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
+import { checkPhoneCode, startPhoneVerification } from "@/features/signup/model/phone-verification";
+import { readPhoneCodeSecret } from "@/shared/api/phone-verifier/verifier";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 // 통합 테스트 공용 도구. 주소·키는 setup-env 가 로컬 Supabase 에서 읽어 둔다.
@@ -263,6 +266,28 @@ export async function payTestOrder(o: { orderNo: string; tossOrderId: string }):
   return requestId;
 }
 
+/** 시험 서명 연결의 자리 표시 봉투 iv — 「it-sig-link1」. */
+export const DUMMY_LINK_IV = Buffer.from("it-sig-link1").toString("base64");
+
+/**
+ * 승인 서명을 연결하지 않은 크리에이터 앞 주문은 DB 가 거부한다(approval-signature INV-S16, manual/0027).
+ * 시험이 새로 만든 크리에이터에게 주문을 보내려면 시험 서명(fake)으로 연결해 둔다. 표가 없는 DB(0027 적용 전)에서는 아무것도 안 한다.
+ */
+export function linkTestSignature(creatorId: string): void {
+  const b64 = (n: number) => Buffer.from(crypto.getRandomValues(new Uint8Array(n))).toString("base64");
+  const envelope = JSON.stringify({ v: 1, alg: "RSA-OAEP-256+A256GCM", wrappedKey: b64(256), iv: DUMMY_LINK_IV, ciphertext: b64(40) });
+  psql(
+    `do $$ begin if to_regclass('pii.signature_links') is not null then insert into pii.signature_links (creator_id, envelope, method) values ('${creatorId}', '${envelope}'::jsonb, 'fake') on conflict (creator_id) do nothing; end if; end $$;`,
+  );
+}
+
+/** linkTestSignature 의 줄을 지운다 — 크리에이터 줄을 트리거를 끈 채 지우는 시험은 연쇄 삭제가 돌지 않아 먼저 지운다. */
+export function unlinkTestSignature(creatorId: string): void {
+  psql(
+    `do $$ begin if to_regclass('pii.signature_links') is not null then delete from pii.signature_link_requests where creator_id = '${creatorId}'; delete from pii.signature_links where creator_id = '${creatorId}'; end if; end $$;`,
+  );
+}
+
 /** 시험 준비용 자리 표시 주소의 iv — 「it-dummy-add」. 시험 전체 정리(global-cleanup)가 이 값을 단 줄만 지운다. */
 export const DUMMY_ADDRESS_IV = Buffer.from("it-dummy-add").toString("base64");
 
@@ -307,4 +332,44 @@ export function approveSql(requestId: string): string {
   const a = approveArgs(requestId);
   const q = (v: string) => `'${v.replace(/'/g, "''")}'`;
   return `select public.approve_request(${q(a.p_request_id)}, ${a.p_actor_id ? q(a.p_actor_id) + "::uuid" : "null"}, ${q(a.p_signed_content)}, ${q(a.p_signer_id)}, 'fake')`;
+}
+
+/**
+ * 휴대폰 인증번호 받기(signup INV-U15) — 가입 화면과 같은 함수로 요청하고, 보낸 문자에서 6자리를 꺼낸다(시험 창구는 문자를 보내지 않는다).
+ * 접속 주소 해시는 부를 때마다 새 값 — 같은 접속 주소 하루 스무 번 한도(INV-U10)에 시험끼리 걸리지 않게.
+ */
+export async function requestTestPhoneCode(phone: string, ipHash?: string): Promise<{ verificationId: string; code: string }> {
+  let text = "";
+  const started = await startPhoneVerification(
+    {
+      admin: adminClient(),
+      verifier: { kind: "fake", send: async (_to, body) => void (text = body) },
+      codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }),
+    },
+    { phone },
+    ipHash ?? randomBytes(32).toString("hex"),
+  );
+  if (!started.ok) throw new Error(`인증번호 요청 실패: ${started.reason}`);
+  const code = /인증번호 (\d{6})/.exec(text)?.[1];
+  if (!code) throw new Error("문자에 인증번호가 없다");
+  return { verificationId: started.verificationId, code };
+}
+
+/**
+ * 같은 번호로 인증번호를 다시 받는 시험(이미 가입된 번호·같은 번호 동시 가입)용 — 그 번호의 1분 안 요청을 1분 전으로 옮긴다.
+ * 1분에 한 번 한도(INV-U10)를 느슨하게 하지 않고, 「1분을 기다린 뒤 다시 받음」을 만든다. 하루 다섯 번 한도는 그대로 센다.
+ */
+export function waitPhoneCodeMinute(phone: string): void {
+  psql(`update pii.phone_verifications set requested_at = requested_at - interval '61 seconds' where phone = '${phone}' and requested_at > now() - interval '1 minute';`);
+}
+
+/** 인증번호를 맞혀 확인까지 끝낸 번호표(INV-U1). */
+export async function verifiedTestPhone(phone: string): Promise<string> {
+  const { verificationId, code } = await requestTestPhoneCode(phone);
+  const checked = await checkPhoneCode(
+    { admin: adminClient(), verifier: { kind: "fake", send: async () => {} }, codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }) },
+    { verificationId, code },
+  );
+  if (!checked.ok) throw new Error(`인증번호 확인 실패: ${checked.reason}`);
+  return verificationId;
 }

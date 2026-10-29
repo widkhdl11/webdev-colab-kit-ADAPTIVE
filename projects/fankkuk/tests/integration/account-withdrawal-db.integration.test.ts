@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createTestAccount, removeTestAccounts, type TestAccount } from "./account-fixtures";
-import { adminClient, anonClient, approveRpc, deleteTestOrders, ensureApprovalAddress, payTestOrder, psql, psqlError, registerTestOrder, signedInClient } from "./helpers";
+import { adminClient, anonClient, approveRpc, deleteTestOrders, ensureApprovalAddress, linkTestSignature, payTestOrder, psql, psqlError, registerTestOrder, signedInClient } from "./helpers";
 
 // 회원 탈퇴 — 가명 처리(my-account INV-A15 S15~S15c) · 탈퇴 뒤 서명 기록(approval-signature INV-S14 S14·S14b) ·
 // 탈퇴한 크리에이터(INV-S15 S15~S15c). 개인정보 구역 쪽은 manual/0025 가 적용돼 있어야 한다.
@@ -13,6 +13,10 @@ afterEach(() => {
     [
       "begin; set local session_replication_role = replica;",
       made.creatorIds.length ? `delete from pii.creator_addresses where creator_id in (${made.creatorIds.map((i) => `'${i}'`).join(",")});` : "",
+      // 승인 서명 연결 줄(manual/0027) — 크리에이터 줄을 트리거 없이 지우므로 연쇄 삭제가 돌지 않는다. 표가 있을 때만
+      made.creatorIds.length
+        ? `do $$ begin if to_regclass('pii.signature_links') is not null then delete from pii.signature_link_requests where creator_id in (${made.creatorIds.map((i) => `'${i}'`).join(",")}); delete from pii.signature_links where creator_id in (${made.creatorIds.map((i) => `'${i}'`).join(",")}); end if; end $$;`
+        : "",
       made.creatorIds.length ? `delete from public.creators where id in (${made.creatorIds.map((i) => `'${i}'`).join(",")});` : "",
       made.pseudonyms.length ? `delete from public.account_withdrawals where pseudonym_id in (${made.pseudonyms.map((i) => `'${i}'`).join(",")});` : "",
       made.pseudonyms.length ? `delete from public.profiles where id in (${made.pseudonyms.map((i) => `'${i}'`).join(",")});` : "",
@@ -49,6 +53,8 @@ function makeCreator(a: TestAccount): string {
     .find((l) => /^[0-9a-f-]{36}$/.test(l))!;
   made.creatorIds.push(creatorId);
   psql(`insert into public.creator_handles (handle, creator_id) values ('${handleOf(a)}', '${creatorId}')`);
+  // 승인 서명 연결 전이면 주문이 거부된다(INV-S16) — 탈퇴 시험의 크리에이터는 연결된 채로 시작한다
+  linkTestSignature(creatorId);
   return creatorId;
 }
 

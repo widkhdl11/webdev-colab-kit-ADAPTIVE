@@ -1,25 +1,16 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { changePhone, PHONE_CHANGE_CLOSED, SAME_AS_CURRENT_PHONE, VERIFY_AGAIN } from "@/features/phone-change/model/change-phone";
-import { checkPhoneVerification, startPhoneVerification } from "@/features/signup/model/phone-verification";
 import { choosePhoneVerifier } from "@/shared/api/phone-verifier/verifier";
 import { accountPasswordDeps, createTestAccount, FIXTURE_PASSWORD, removeTestAccounts, testEmail, testPhone, type TestAccount } from "./account-fixtures";
-import { adminClient, anonClient, psql, psqlError, signedInClient } from "./helpers";
+import { adminClient, anonClient, psql, psqlError, signedInClient, verifiedTestPhone, waitPhoneCodeMinute } from "./helpers";
 
-// 휴대폰 번호 바꾸기(signup INV-U12)를 실제 DB 로 돈다. 본인 확인은 가입과 같은 함수·같은 로컬 가짜 카카오 창구를 쓴다.
+// 휴대폰 번호 바꾸기(signup INV-U12)를 실제 DB 로 돈다. 인증번호 확인은 가입과 같은 함수를 쓴다(문자는 보내지 않고 시험 도구가 6자리를 꺼내 맞힌다).
 // 번호 바꾸기 함수(change_my_phone)는 연락처(pii)에 쓰므로 사람이 적용하는 supabase/manual/0013 에 있다 — 적용 전에는 빨간불이 맞다.
 // 시험 전용 계정(it_)·시험 번호(0109000…)만 쓴다.
 
-const verifier = choosePhoneVerifier({ NODE_ENV: "development" });
 
-/** 그 번호로 본인 확인을 받아 번호표를 돌려준다(가입 화면과 같은 두 단계). */
-async function verified(phone: string): Promise<string> {
-  const deps = { admin: adminClient(), verifier };
-  const started = await startPhoneVerification(deps, { phone });
-  if (!started.ok) throw new Error(`본인 확인 요청 실패: ${started.message}`);
-  const checked = await checkPhoneVerification(deps, { verificationId: started.verificationId });
-  if (!checked.ok || checked.status !== "verified") throw new Error("본인 확인이 끝나지 않았다");
-  return started.verificationId;
-}
+/** 인증번호를 맞혀 확인까지 끝낸 번호표(INV-U1·U15). */
+const verified = (p: string): Promise<string> => verifiedTestPhone(p);
 
 function change(who: TestAccount | null, body: Record<string, unknown>, verificationId: string | undefined, verifierReady = true) {
   return changePhone(
@@ -164,7 +155,9 @@ describe("INV-U12: 번호 바꾸기는 로그인한 사람 자신의 번호만, 
     const f = await createTestAccount({ tag: "s12racef", email: testEmail("s12racef"), phone: testPhone() });
     const g = await createTestAccount({ tag: "s12raceg", email: testEmail("s12raceg"), phone: testPhone() });
     const next = testPhone();
-    const [tf, tg] = [await verified(next), await verified(next)];
+    const tf = await verified(next);
+    waitPhoneCodeMinute(next);
+    const tg = await verified(next);
     const results = await Promise.all([
       change(f, { phone: next, currentPassword: FIXTURE_PASSWORD }, tf),
       change(g, { phone: next, currentPassword: FIXTURE_PASSWORD }, tg),
@@ -174,7 +167,7 @@ describe("INV-U12: 번호 바꾸기는 로그인한 사람 자신의 번호만, 
     expect(Number(psql(`select count(*) from pii.account_contacts where phone = '${next}'`))).toBe(1);
   });
 
-  it("INV-U12 (실패경로): 로그인 안 함 → 거부 · 본인 확인 창구가 없으면(운영, 카카오 연결 전) 거부", async () => {
+  it("INV-U12 (실패경로): 로그인 안 함 → 거부 · 문자 창구가 없으면(운영, 문자 대행사 연결 전) 거부", async () => {
     const f = await createTestAccount({ tag: "s12gate", email: testEmail("s12gate"), phone: testPhone() });
     const next = testPhone();
     const ticket = await verified(next);

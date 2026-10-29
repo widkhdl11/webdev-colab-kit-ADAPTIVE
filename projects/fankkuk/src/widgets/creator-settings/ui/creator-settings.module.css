@@ -25,6 +25,12 @@
 .fold > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .fold > summary > span:first-child { flex: 1; min-width: 0; }
 .foldMeta { color: var(--sub); font-size: var(--fs-caption); font-weight: 400; }
+/* 승인 서명 줄(시안 v43-signup/creator-settings-signature .v-link-row) — 접힌 칸과 같은 높이·테두리. 연결 전은 줄 전체가 링크 */
+.linkRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); min-height: 56px; padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); background: var(--white); border: 1px solid var(--line-on-white); color: var(--ink); font-weight: var(--fw-btn); text-decoration: none; }
+.linkRow > span:first-child { flex: 1; min-width: 0; }
+.linkRowGo:hover { background: var(--gray-50); }
+.linkRowGo:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.linkRowGo svg { width: 20px; height: 20px; fill: none; stroke: var(--sub); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .foldChev { flex: none; width: 20px; height: 20px; fill: none; stroke: var(--sub); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform var(--dur-fade, 0.15s) ease; }
 .fold[open] > summary .foldChev { transform: rotate(180deg); }
 .foldBody { display: grid; gap: var(--space-4); min-width: 0; padding: var(--space-4); border-top: 1px solid var(--line-on-white); }

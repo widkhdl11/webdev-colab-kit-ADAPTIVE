@@ -1,4 +1,4 @@
-/* 회원가입 — 시안 docs/design/mockups/site/part6-2026-10-25/signup.html · part6.css 「가입」(design-rules 29절, 2026-10-25 승인). 기둥(.auth)·머리(.auth .head)·카드·폼·확인칸(.check)·오류(.err)·아래 줄(.foot-line)은 전역 클래스.
+/* 회원가입 — 시안 docs/design/mockups/site/v43-signup/(단계 화면, 2026-10-29 승인) · 바탕은 part6-2026-10-25/signup.html · part6.css 「가입」(design-rules 29절, 2026-10-25 승인). 기둥(.auth)·머리(.auth .head)·카드·폼·확인칸(.check)·오류(.err)·아래 줄(.foot-line)은 전역 클래스.
    가운데 기둥 720(양옆 여백 포함 768). 상단 바 아래 96, 바닥글까지 96(휴대폰 64). 색은 하늘 한 색 + 회색.
    시안은 세 단계 카드를 쌓아 보이지만 가입은 한 단계씩 넘기는 흐름이라, 카드 한 장 안에 지금 단계만 보이고 위에 단계 표시 줄이 있다 */
 
@@ -22,6 +22,10 @@
 .st[aria-current="step"] { background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
 .st[aria-current="step"] .dot { background: var(--gray-900); color: var(--white); }
 .st[disabled] { opacity: 1; }
+/* 4·5단계의 1~3단계 — 계정이 이미 있어 돌아가지 않는다(누를 수 없는 표시) */
+.st.st-static { cursor: default; }
+.st.st-static:hover .lbl { text-decoration: none; }
+.st:is(a) { text-decoration: none; }
 @media (max-width: 767px) {
   .st { gap: 6px; font-size: 14px; }
   .dot { width: 24px; height: 24px; font-size: 14px; }
@@ -39,17 +43,18 @@
 .step-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-200); }
 .step-actions :global(.btn) { min-width: 120px; white-space: nowrap; }
 .step-actions .next { flex: 1 0 auto; margin-left: auto; } /* 「다음」은 모든 단계에서 카드 오른쪽 아래 */
-.step-actions.kakao-row .next { flex: 0 0 auto; padding-inline: 32px; } /* 카카오 버튼은 글자 길이만큼 — 남은 폭을 다 채우면 너무 길다(2026-10-26 사용자) */
 @media (max-width: 767px) {
   .step-actions { display: grid; grid-template-columns: 1fr 2fr; }
   .step-actions.no-prev { grid-template-columns: 1fr; }
   .step-actions .next { margin-left: 0; }
   .step-actions :global(.btn) { min-width: 0; }
 }
-/* 휴대폰 폭: 「이전 | 다음」은 1:2 그대로, 글자가 긴 카카오 버튼 줄만 위아래로(주 버튼 위) */
+/* 휴대폰 폭: 단계 줄은 지금 단계만 이름을 보이고 나머지는 번호만(시안 v43 — 크리에이터 다섯 칸이 한 줄에 들어가게) */
 @media (max-width: 480px) {
-  .step-actions.kakao-row { grid-template-columns: 1fr; }
-  .step-actions.kakao-row .next { order: -1; }
+  .st:not([aria-current]) .lbl { display: none; }
+  .st:not([aria-current]) { padding: 0 8px; }
+  .steps li:not(:has([aria-current])) { flex: 0 0 auto; }
+  .steps li:has([aria-current]) { flex: 1 1 0; }
 }
 
 /* 1단계 — 유형 선택 */
@@ -86,13 +91,13 @@
 .at { font-weight: var(--fw-btn); color: var(--gray-600); }
 .email-custom { margin-top: 8px; }
 
-/* 3단계 — 카카오톡 본인 확인 */
-.kakao { display: grid; gap: 16px; counter-reset: k; }
-.kakao li { position: relative; min-height: 28px; padding-left: 40px; counter-increment: k; }
-.kakao li::before { content: counter(k); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
-.kakao li.is-done::before { content: none; }
-.kakao strong { font-weight: var(--fw-btn); }
-.mark { position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: var(--on-brand); }
-.again { margin-top: 16px; }
-.text-btn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--brand-ink); font: inherit; font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+/* 3단계 — 휴대폰 번호 확인(시안 v43-signup/signup-3-phone). 칸과 버튼이 한 줄, 인증번호 칸 안쪽 오른쪽에 남은 시간 */
+.phone-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: start; }
+.phone-row :global(.btn) { white-space: nowrap; padding-inline: 14px; }
+.code { position: relative; }
+.code :global(.field) { padding-right: 80px; }
+.timer { position: absolute; right: 16px; top: 12px; font-variant-numeric: tabular-nums; color: var(--gray-600); font-weight: 600; }
+.timer.is-zero { color: var(--danger); }
+.phone-err { margin-top: 8px; }
+.phone-err-action { margin-top: 12px; }
 .step > .error { margin-top: 24px; }

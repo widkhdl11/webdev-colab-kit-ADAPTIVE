@@ -1,11 +1,22 @@
 ---
 project: fankkuk
 status: passed
-basis: de8dc1256c63
-reviewers: [ux-reviewer, code-reviewer, ui-reviewer, security-reviewer]
+basis: pending
+reviewers: [security-reviewer, ux-reviewer, code-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-10-28 밤, 관리자 첫 화면 /admin)
+# 리뷰 사인오프 — fankkuk (2026-10-29, 가입 SMS 인증번호 · 크리에이터 승인 서명 연결 · 링크 페이지 「승인 수단 등록 전」)
+
+- 범위: 가입 흐름 확정(DECISIONS 2026-10-29) 구현 — 가입 3단계 SMS 인증번호(signup INV-U1·U9·U10·U12·U15·U16), 크리에이터 4·5단계·설정 「승인 서명」(approval-signature INV-S16), 링크 페이지 `unsigned`(creator-link INV-E15), 미연결 크리에이터 주문 거부. DB 는 manual 0026·0027(사용자가 로컬에 적용).
+- security-reviewer: 높음 0 · 중간 1(연결 요청 한도가 1시간 5번뿐 → 하루 5번·IP 하루 20번 더함, 스펙에도) · 낮음 2(가짜 문자 창구가 인증번호 원문을 로그에 → 고정 000000 으로 바꾸고 로그는 끝 4자리·「보냄」만 · 서명자 대조 자리 비어 있음 → 드림시큐리티 연결 때 INV-S4 대조 주석) 반영.
+- ux-reviewer: 높음 0 · 중간 2(인증 뒤 멈춤 상태가 명세에 없음 → 명세에 `step 3 verified` · 「이미 가입된 번호」 뒤 같은 번호로 다시 받기 가능 → 번호 고치기 전까지 꺼짐) · 낮음 4(명세에 상태 줄 더함: 「이전」 노출·4단계 확인 뒤 「나중에 하기」 숨김·`unavailable`/`request_error`·운영자 배지) 반영. UX 기준 문서 principles·task-pages 는 없음.
+- code-reviewer: 높음 1(다시 보내기 뒤 앞 요청의 늦은 답이 화면을 실패로 → 요청 ID 대조, 그 줄을 지우면 새 시험이 실패하는 것 확인) · 중간 3(떠났다 돌아오면 대기 요청 이어 묻기 · 번호 정리 세 곳 → 한 함수 · `?step=5` 직접 진입은 의도로 명세에 적음) · 낮음 5 반영.
+- ui-reviewer: 돌리지 않음 — 사용자가 정한 리뷰가 「보안·화면 흐름」이고, 화면은 승인된 시안 v43 과 기존 가입 화면 부품을 그대로 쓴다.
+- 실행 근거: `npx tsc --noEmit` 오류 0 · `npx vitest run` 332 파일 2784 통과 · `npm run copy:lint` 금지어 0 · 통합 `phone-code-db signup-db phone-change account-routes signature-link-db account-withdrawal-db creator-incoming-db admin-lists-db creator-signup-db signup-nickname-db` 251 통과(처음 8 실패 — 모두 시험 쪽: 같은 번호 1분 한도·닉네임 겹침·만 14세 빠짐·로그에서 인증번호 읽기) · `npm run check:pii` 통과 · 로컬 화면(localhost:3000 next dev): 크리에이터 1→2→3(틀린 번호 「남은 횟수 4회」, 000000 확인)→4→5(시험 서명 연결 완료, DB 연결 줄은 봉투 암호문뿐·생년월일·번호 평문 0건)→설정 「연결됨 10월 29일 (목)」 · 팬 같은 번호로 「이 번호로 가입된 계정이 있습니다」+받기 꺼짐 → 번호 고쳐 가입 완료 `/home` · 화면에서 찾아 고친 것 셋(5단계 번호 미리 채움이 개발 모드 두 번 실행에 지워짐 · 「1029으로」 조사 → 「번호로」 · 4단계 「선물을 받을 수 있습니다」 → 승인 서명도 필요하므로 뺌). 링크 페이지 `unsigned` 는 로컬 크리에이터가 모두 연결돼 있어 화면으로 못 봄(유닛 profile-unsigned-ui 와 0027 전 화면으로 갈음).
+
+## 앞 사인오프 (2026-10-28 밤, 관리자 첫 화면)
+
+### 리뷰 사인오프 — fankkuk (2026-10-28 밤, 관리자 첫 화면 /admin)
 
 - 범위: ad8fab7d(같은 날 사인오프) 뒤 커밋 d45978f8 — 관리자 첫 화면 숫자 칸 8개(카드 d3, docs/ux/pages/admin.md). 새 DB 함수·쓰기 동작 없음, 이미 있는 운영자 전용 읽기 함수 여섯과 같은 운영자 판정(loadAdminSession)만 쓴다.
 - ux-reviewer: 높음 0 · 중간 2(「0+건」 표시와 명세 문장 어긋남 → 명세를 「센 숫자 뒤 +」로 고침 · 실패 칸 「—」 없음 → 넣음) · 낮음 1(실패 칸 설명 줄 제각각 → 전부 숨김) 반영.

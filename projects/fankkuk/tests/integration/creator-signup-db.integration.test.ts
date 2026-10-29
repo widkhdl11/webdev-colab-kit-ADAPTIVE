@@ -1,14 +1,12 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import { checkPhoneVerification, startPhoneVerification } from "@/features/signup/model/phone-verification";
-import { choosePhoneVerifier } from "@/shared/api/phone-verifier/verifier";
-import { adminClient, anonClient, deleteTestSignups, psql, signedInClient, TEST_SIGNUP_PHONE_PREFIX } from "./helpers";
+import { adminClient, anonClient, deleteTestSignups, psql, signedInClient, TEST_SIGNUP_PHONE_PREFIX, verifiedTestPhone } from "./helpers";
 
 // 크리에이터 가입 때 공개 정보 행을 만든다(creator-verification INV-V1 「기본 공개 정보는 가입 때 받아 둔 것을 쓴다」,
 // 「지금 코드와 다른 점」, signup INV-U5 「크리에이터로 가입해도 채널 인증 전에는 찾기에 없음」).
 // 시험 계정은 it_cv 로 시작하는 아이디, 0109000 의 9000번대 번호만 쓴다 — 끝나면 지운다.
 
-const dev = { NODE_ENV: "development" };
 const TERMS = [
+  { key: "age14", version: "2026-10-29" },
   { key: "service", version: "2026-10-01" },
   { key: "privacy", version: "2026-10-01" },
 ];
@@ -19,14 +17,8 @@ function phone(): string {
   return `${TEST_SIGNUP_PHONE_PREFIX}${String(seq).padStart(4, "0")}`;
 }
 
-async function verifiedPhone(p: string): Promise<string> {
-  const deps = { admin: adminClient(), verifier: choosePhoneVerifier(dev) };
-  const started = await startPhoneVerification(deps, { phone: p });
-  if (!started.ok) throw new Error(JSON.stringify(started));
-  const checked = await checkPhoneVerification(deps, { verificationId: started.verificationId });
-  if (!checked.ok || checked.status !== "verified") throw new Error(JSON.stringify(checked));
-  return started.verificationId;
-}
+/** 인증번호를 맞혀 확인까지 끝낸 번호표(INV-U1·U15). */
+const verifiedPhone = (p: string): Promise<string> => verifiedTestPhone(p);
 
 async function authUser(loginId: string): Promise<string> {
   const r = await adminClient().auth.admin.createUser({ email: `${loginId}@login.fankkuk.invalid`, password: "long-enough-pw", email_confirm: true });

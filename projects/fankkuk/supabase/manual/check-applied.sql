@@ -43,6 +43,10 @@ from (values
   ('0024', exists (select 1 from body where name = 'public.office_drop_address_copies'),
            '주소 복사본 72시간 지우기'),
   ('0025', exists (select 1 from body where name = 'pii.withdraw_account'),
-           '탈퇴 처리 함수')
+           '탈퇴 처리 함수'),
+  ('0026', exists (select 1 from body where name = 'public.check_phone_code'),
+           '문자 인증번호 확인 함수'),
+  ('0027', exists (select 1 from body where name = 'public.settle_signature_link'),
+           '승인 서명 연결 함수')
 ) as v(file, applied, marker)
 order by file;

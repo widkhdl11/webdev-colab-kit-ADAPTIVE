@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { anonClient, deleteTestOrders, payTestOrder, psql, registerTestOrder, SEED, signedInClient } from "./helpers";
+import { anonClient, deleteTestOrders, linkTestSignature, payTestOrder, psql, registerTestOrder, SEED, signedInClient, unlinkTestSignature } from "./helpers";
 import { approve, deleteTestUnmatched, FAN_PASS, fanSetsWaybill, finishPrint, inspect, paidGift, receiveAndLabel, waybill } from "./office-helpers";
 
 // 크리에이터가 받은 선물의 진행 단계 읽기 (office-workflow INV-W9, S9·S9b).
@@ -166,6 +166,7 @@ describe("INV-W9: 크리에이터는 자기에게 온 주문의 진행 단계만
     psql(
       `begin; set local session_replication_role = replica; insert into public.creators (id, profile_id, slug, name, channel, identity_verified) values ('${fakeCreatorId}', '${SEED.otherFanId}', 'w9-fan-attached', '시험붙임', 'https://www.youtube.com/@w9fanattached', true); commit;`,
     );
+    linkTestSignature(fakeCreatorId);
     try {
       const o = await registerTestOrder(1, { creatorId: fakeCreatorId });
       await payTestOrder(o);
@@ -175,6 +176,7 @@ describe("INV-W9: 크리에이터는 자기에게 온 주문의 진행 단계만
     } finally {
       psql(`delete from public.notification_outbox where order_id in (select id from public.orders where creator_id = '${fakeCreatorId}')`);
       deleteTestOrders();
+      unlinkTestSignature(fakeCreatorId);
       psql(`begin; set local session_replication_role = replica; delete from public.creators where id = '${fakeCreatorId}'; commit;`);
     }
   });

@@ -64,6 +64,10 @@ export const PII_FUNCTIONS = {
   confirm_my_email: "확인 메일 토큰으로 이메일을 확정한다, 돌려주는 것은 결과 글자(my-account INV-A7)",
   my_account: "내 정보 — 본인 이메일·가린 번호만(my-account INV-A2, 위 허용 칸)",
   my_creator_address_status: "본인 주소의 등록 여부·고른 이름표·바꾼 시각만, 주소 값은 돌려주지 않는다(address-protection INV-P9·P16)",
+  // 승인 서명 연결(approval-signature INV-S16, manual/0027) — 연결 봉투(이름·생년월일·번호 암호문)는 돌려주지 않는다
+  my_signature_link: "본인 승인 서명의 연결 여부·연결한 때만, 봉투·방식은 돌려주지 않는다(approval-signature INV-S16)",
+  creator_signature_linked: "공개 읽기 — 연결 여부 참/거짓 하나(creator-link INV-E15)",
+  my_pending_signature_link: "본인의 기한 안 대기 연결 요청 하나 — 요청 ID·기한만, 원문·봉투·접속 주소는 돌려주지 않는다(approval-signature INV-S16)",
   update_my_account: "닉네임·확인 대기 이메일·알림 저장, 돌려주는 것 없음(my-account INV-A4)",
   update_my_creator_notify: "크리에이터 알림 두 개 저장, 돌려주는 것 없음(my-account INV-A11)",
   // 아래 일곱은 사무실 처리 → office_sync → close_revgift_share(출고·반송이 끝난 역조공 몫의 팬 주소를 지운다, reverse-gift INV-R9)로 닿는다.

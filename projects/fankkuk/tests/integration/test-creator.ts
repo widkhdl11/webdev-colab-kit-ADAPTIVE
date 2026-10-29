@@ -1,4 +1,4 @@
-import { psql } from "./helpers";
+import { linkTestSignature, psql } from "./helpers";
 
 // 주소 칸을 건드리는 시험 전용 크리에이터 — 시드 크리에이터(하루)의 진짜 주소 봉투를 시험이 덮어쓰지 않게 한다.
 // 2026-10-06: 하루의 봉투를 저장했다 되돌리는 방식이었는데, 실행이 끊기거나 둘이 겹치면 시험 키로 만든 봉투가 남아
@@ -35,6 +35,8 @@ export function createTestCreator(): void {
       "commit;",
     ].join(" "),
   );
+  // 선물을 받으려면 승인 서명도 연결돼 있어야 한다(approval-signature INV-S16) — 시험 서명(fake)으로
+  linkTestSignature(creatorId);
 }
 
 // 시험 크리에이터(또는 그 프로필)를 가리키는 줄 중 지우지 않으면 크리에이터·로그인 정보 줄이 지워지지 않거나(참조가 막음)

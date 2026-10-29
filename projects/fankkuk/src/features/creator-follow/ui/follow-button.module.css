@@ -25,3 +25,6 @@
   .ico, .swap > svg, .following { transition: none; }
   .gift:hover .ico, .follow:hover .ico { transform: none; }
 }
+
+/* 승인 서명 연결 전(creator-link INV-E15, 시안 v43-signup/link-page-unconnected .v-nosend) — 「선물 보내기」 자리의 누를 수 없는 회색 배지 */
+.noSend { display: inline-flex; align-items: center; align-self: center; min-height: 32px; padding: 4px 12px; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font-weight: var(--fw-btn); white-space: nowrap; }

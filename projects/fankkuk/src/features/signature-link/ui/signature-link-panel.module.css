@@ -1,0 +1,35 @@
+/* 승인 서명 연결하기 카드 — 시안 docs/design/mockups/site/v43-signup/signup-5-signature.html(.su-kakao · .v-kakao-actions · .v-conn, 2026-10-29 승인).
+   카드·폼·칸·오류(.err)·카카오 버튼(.btn--kakao)은 전역 클래스. 카카오 노랑은 이 카드의 「카카오톡 인증 요청」에만(design-rules 2026-10-29). */
+
+.step { margin: 0; padding: 0; border: 0; min-width: 0; }
+.step > h2 { margin-bottom: 8px; }
+.lead { margin: 0 0 24px; }
+.fieldErr { margin-top: 8px; color: var(--danger); font-weight: var(--fw-btn); }
+.after { margin-top: 24px; }
+
+/* 기다리는 중 — 번호 동그라미 두 줄 */
+.kakao { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; counter-reset: k; }
+.kakao li { position: relative; min-height: 28px; padding-left: 40px; counter-increment: k; overflow-wrap: anywhere; }
+.kakao li::before { content: counter(k); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
+.kakao strong { font-weight: var(--fw-btn); }
+.again { margin-top: 16px; }
+.textBtn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--brand-ink); font: inherit; font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.textBtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* 연결 완료 */
+.connected { display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: var(--r-btn); background: var(--success-soft); color: var(--success); font-weight: var(--fw-btn); }
+.connected svg { flex-shrink: 0; }
+
+/* 아래 버튼 줄 — 넓은 폭: 이전 · 나중에 하기(남은 폭) · 요청. 좁은 폭: 요청이 맨 위, 나머지는 아래로 한 줄씩. 연결 완료는 버튼 하나가 줄을 꽉 채운다 */
+.actions { display: grid; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-200); }
+.actions :global(.btn) { white-space: nowrap; }
+.bubble { width: 24px; height: 24px; color: var(--kakao-ink); }
+@media (min-width: 768px) {
+  .three { grid-template-columns: auto 1fr auto; align-items: center; }
+  .two { grid-template-columns: auto 1fr; align-items: center; }
+  .two .main { justify-self: end; }
+  .actions :global(.btn) { min-width: 120px; }
+}
+@media (max-width: 767px) {
+  .main { order: -1; }
+}

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { orderArgs, SMALL_FIRST } from "./admin-pricing-helpers";
-import { adminClient, anonClient, deleteTestOrders, followForTest, psql, psqlError, SEED, signedInClient } from "./helpers";
+import { adminClient, anonClient, deleteTestOrders, followForTest, linkTestSignature, psql, psqlError, SEED, signedInClient, unlinkTestSignature } from "./helpers";
 
 // 관리자 3단계 — 보낼 수 없는 물품(INV-K9) · 크리에이터 본인 확인(INV-K10) · 공지·1:1 문의(INV-K11) · 문의 제한(INV-K12).
 // 시드: fankkuk_admin = 대표 운영자, fankkuk_staff = 직원 운영자, byeolbit_fan = 별빛, daltokki_fan = 달토끼.
@@ -16,10 +16,13 @@ function insertTestCreator(verified: boolean): void {
   psql(
     `select set_config('fankkuk.verifying', 'on', false); insert into public.creators (id, slug, name, channel, identity_verified) values ('${TEST_CREATOR_ID}', 'test-verify', '${TEST_PREFIX}확인', '유튜브', ${verified}) on conflict (id) do update set identity_verified = excluded.identity_verified`,
   );
+  // 승인 서명 연결 전이면 주문이 거부된다(INV-S16) — 이 시험이 보는 것은 채널 확인 여부라 연결은 해 둔다
+  linkTestSignature(TEST_CREATOR_ID);
 }
 
 function cleanup(): void {
   deleteTestOrders();
+  unlinkTestSignature(TEST_CREATOR_ID);
   psql(
     [
       "begin;",

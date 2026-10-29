@@ -14,7 +14,8 @@ export type SignupBody = {
   email: string;
   password: string;
   phone: string;
-  terms: { service: boolean; privacy: boolean; news: boolean };
+  /** age14 = 「만 14세 이상입니다」(INV-U16) */
+  terms: { age14: boolean; service: boolean; privacy: boolean; news: boolean };
   /** 크리에이터로 가입할 때만 — 공개 이름·채널 이름·태그(선택지 id + 직접 입력) */
   creator?: CreatorProfileBody;
   /** 「어디서 알게 되셨나요」(metrics INV-Q4) — 고르지 않으면 null */
@@ -50,22 +51,34 @@ async function post(url: string, body: unknown): Promise<{ status: number; data:
 
 const messageOf = (data: Record<string, unknown> | null) => (typeof data?.message === "string" ? data.message : FALLBACK);
 
-export async function requestPhoneVerification(phone: string): Promise<{ ok: true } | { ok: false; message: string }> {
+export type PhoneCodeRequestFail = { ok: false; reason: string; message: string };
+
+/** 3단계 「인증번호 받기」·「다시 받기」. 인증번호는 서버가 문자로만 보낸다 — 응답에는 없다(INV-U15). */
+export async function requestPhoneCode(phone: string): Promise<{ ok: true } | PhoneCodeRequestFail> {
   try {
     const { status, data } = await post("/api/signup/phone", { phone });
-    return status === 200 ? { ok: true } : { ok: false, message: messageOf(data) };
+    if (status === 200) return { ok: true };
+    return { ok: false, reason: typeof data?.reason === "string" ? data.reason : "error", message: messageOf(data) };
   } catch {
-    return { ok: false, message: FALLBACK };
+    return { ok: false, reason: "error", message: FALLBACK };
   }
 }
 
-export async function checkPhoneVerification(): Promise<{ ok: true; verified: boolean } | { ok: false; message: string }> {
+/** 화면이 구분해 그리는 확인 실패 — wrong(남은 횟수) · locked(다섯 번 틀림) · expired(3분 지남) · 그 밖은 other */
+export type PhoneCodeCheckFail = { ok: false; reason: "wrong" | "locked" | "expired" | "shape" | "other"; remaining: number | null; message: string };
+
+const CHECK_REASONS = ["wrong", "locked", "expired", "shape"] as const;
+
+/** 3단계 「확인」. 맞혔는지는 서버가 판정한다(INV-U1). */
+export async function checkPhoneCode(code: string): Promise<{ ok: true } | PhoneCodeCheckFail> {
   try {
-    const { status, data } = await post("/api/signup/phone/check", {});
-    if (status === 200) return { ok: true, verified: data?.status === "verified" };
-    return { ok: false, message: messageOf(data) };
+    const { status, data } = await post("/api/signup/phone/check", { code });
+    if (status === 200 && data?.status === "verified") return { ok: true };
+    const reason = CHECK_REASONS.find((r) => r === data?.reason) ?? "other";
+    const remaining = typeof data?.remaining === "number" ? data.remaining : null;
+    return { ok: false, reason, remaining, message: messageOf(data) };
   } catch {
-    return { ok: false, message: FALLBACK };
+    return { ok: false, reason: "other", remaining: null, message: FALLBACK };
   }
 }
 
