@@ -674,7 +674,7 @@ describe("INV-D8: 차단하면 그 팬의 아직 승인하지 않은 진행 중 
     const racingQr = await inspectedBox(racing);
     const trigger = await giftFrom();
     // 다른 연결이 승인 함수를 부르고 끝내기 전에 멈춘다(요청 줄·주문 줄을 쥔 채) — 차단은 이 주문을 후보로 고른 뒤 잠금에서 기다린다
-    const hold = await holdRowLock(approveSql(racing.requestId), 1.5);
+    const hold = await holdRowLock(await approveSql(racing.requestId), 1.5);
     const t0 = Date.now();
     const reply = await declineFull(haru, trigger.requestId, true);
     expect(Date.now() - t0).toBeGreaterThan(900);

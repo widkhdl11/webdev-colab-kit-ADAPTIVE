@@ -43,10 +43,16 @@ function envelope(): Record<string, unknown> {
 
 const ipHash = () => Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString("hex");
 
-async function start(actorId: string, env = envelope(), method = "fake", ip = ipHash()) {
+/** 연결 요청을 만들고, 만들어졌으면 게이트웨이 거래 ID 를 적는다(앱 서버와 같은 순서 — manual/0028). withTx=false 면 적지 않는다 */
+async function start(actorId: string, env = envelope(), method = "fake", ip = ipHash(), withTx = true) {
   const r = await adminClient().rpc("start_signature_link", { p_actor_id: actorId, p_envelope: env, p_method: method, p_ip_hash: ip });
   if (r.error) throw new Error(`start_signature_link: ${r.error.message}`);
-  return (r.data as { result: string; request_id: string | null; payload: string | null }[])[0]!;
+  const row = (r.data as { result: string; request_id: string | null; payload: string | null }[])[0]!;
+  if (withTx && row.result === "started") {
+    const t = await adminClient().rpc("record_signature_link_tx", { p_actor_id: actorId, p_request_id: row.request_id, p_tx_id: `fake-${row.request_id}` });
+    if (t.error || t.data !== "recorded") throw new Error(`record_signature_link_tx: ${t.error?.message ?? String(t.data)}`);
+  }
+  return row;
 }
 
 async function settle(actorId: string, requestId: string, signed: string | null, outcome = "signed") {
@@ -112,7 +118,7 @@ describe("INV-S16: 승인 서명 연결", () => {
     expect((await anonClient().rpc("settle_signature_link", { p_actor_id: c.account.userId, p_request_id: req.request_id, p_outcome: "signed", p_signed_content: req.payload, p_method: "fake" })).error).not.toBeNull();
   });
 
-  it("INV-S16 S16c (실패경로): 원문이 다르면·창구가 실패로 답하면·10분이 지나면 연결되지 않는다", async () => {
+  it("INV-S16 S16c (실패경로): 원문이 다르면·창구가 실패로 답하면·5분이 지나면·게이트웨이 거래 ID 가 없으면 연결되지 않는다", async () => {
     const c = await newCreator();
     const a = await start(c.account.userId);
     expect((await settle(c.account.userId, a.request_id!, `${a.payload}x`)).result).toBe("failed");
@@ -121,9 +127,21 @@ describe("INV-S16: 승인 서명 연결", () => {
     const b = await start(c.account.userId);
     expect((await settle(c.account.userId, b.request_id!, null, "failed")).result).toBe("failed");
     const d = await start(c.account.userId);
-    psql(`update pii.signature_link_requests set requested_at = now() - interval '11 minutes', expires_at = now() - interval '1 minute' where id = '${d.request_id}'`);
+    psql(`update pii.signature_link_requests set requested_at = now() - interval '6 minutes', expires_at = now() - interval '1 minute' where id = '${d.request_id}'`);
     expect((await settle(c.account.userId, d.request_id!, d.payload)).result).toBe("expired");
+    const noTx = await start(c.account.userId, envelope(), "fake", ipHash(), false);
+    expect((await settle(c.account.userId, noTx.request_id!, noTx.payload)).result).toBe("failed");
     expect(await linked(c.creatorId)).toBe(false);
+  });
+
+  it("INV-S16: 연결 요청의 기한은 요청부터 5분이고, 결과 읽기가 적힌 거래 ID 를 같이 돌려준다", async () => {
+    const c = await newCreator();
+    const req = await start(c.account.userId);
+    expect(psql(`select (expires_at - requested_at)::text from pii.signature_link_requests where id = '${req.request_id}'`)).toBe("00:05:00");
+    const read = await adminClient().rpc("signature_link_request", { p_actor_id: c.account.userId, p_request_id: req.request_id });
+    expect((read.data as Record<string, unknown>[])[0]).toEqual({ state: "pending", payload: req.payload, method: "fake", gateway_tx_id: `fake-${req.request_id}` });
+    const again = await adminClient().rpc("record_signature_link_tx", { p_actor_id: c.account.userId, p_request_id: req.request_id, p_tx_id: "tx_other" });
+    expect(again.data).toBe("not_pending");
   });
 
   it("INV-S16 S16c (실패경로): 남의 요청에 서명을 붙이거나 앞 요청을 새 요청 뒤에 끝내도 연결되지 않는다", async () => {
@@ -160,7 +178,7 @@ describe("INV-S16: 승인 서명 연결", () => {
     const c = await newCreator();
     for (let i = 0; i < 5; i++) expect((await start(c.account.userId)).result).toBe("started");
     psql(
-      `update pii.signature_link_requests set requested_at = greatest(date_trunc('day', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul', now() - interval '61 minutes'), expires_at = greatest(date_trunc('day', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul', now() - interval '61 minutes') + interval '10 minutes' where creator_id = '${c.creatorId}'`,
+      `update pii.signature_link_requests set requested_at = greatest(date_trunc('day', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul', now() - interval '61 minutes'), expires_at = greatest(date_trunc('day', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul', now() - interval '61 minutes') + interval '5 minutes' where creator_id = '${c.creatorId}'`,
     );
     expect((await start(c.account.userId)).result).toBe("too_many_day");
   });

@@ -63,7 +63,7 @@ async function shippedOrder(who: { senderId?: string; creatorId?: string }): Pro
   const o = await registerTestOrder(1, who);
   const requestId = await payTestOrder(o);
   const ap = await approveRpc(requestId);
-  if (ap.error) throw new Error(`승인 실패: ${ap.error.message}`);
+  if (ap.error || ap.data !== "approved") throw new Error(`승인 실패: ${ap.error?.message ?? String(ap.data)}`);
   psql(`begin; set local session_replication_role = replica; update public.orders set status = 'shipped', shipped_at = now() where id = '${o.orderId}'; commit;`);
   return { orderId: o.orderId, requestId };
 }
@@ -318,17 +318,20 @@ describe("탈퇴 처리 — 가명 처리 (my-account INV-A15)", () => {
 });
 
 describe("탈퇴한 크리에이터 (approval-signature INV-S14·S15)", () => {
-  it("INV-S14 (S14): 승인한 주문이 있는 크리에이터를 탈퇴 처리하면 서명 기록에 원문 해시·주문·시각이 남고 서명자 식별값·원문은 비며, 계정은 가명이다", async () => {
+  it("INV-S14 (S14): 승인한 주문이 있는 크리에이터를 탈퇴 처리하면 서명 기록에 서명값·원문 해시·주문·시각이 남고 서명자 식별값·원문은 비며, 서명 요청의 원문도 지워지고, 계정은 가명이다", async () => {
     const acc = await createTestAccount({ tag: "wdcre", phone: "01090004444" });
     const creatorId = makeCreator(acc);
     const { requestId } = await shippedOrder({ creatorId });
-    const before = psql(`select encode(extensions.digest(convert_to(signed_content, 'UTF8'), 'sha256'), 'hex') || '|' || signed_at from public.approval_signatures where request_id = '${requestId}'`);
+    const sig = (col: string) => psql(`select ${col} from public.approval_signatures where request_id = '${requestId}'`);
+    const plaintextRows = () => Number(psql(`select count(*) from public.approval_sign_requests where approval_request_id = '${requestId}' and plaintext is not null`));
+    const before = sig("content_hash || '|' || signed_at || '|' || signature");
+    expect(before).toMatch(/^[0-9a-f]{64}\|/);
+    expect(plaintextRows()).toBe(1);
     const r = await withdraw(acc.loginId);
     expect(r.error).toBeNull();
-    const after = psql(
-      `select coalesce(content_hash, '') || '|' || signed_at || '|' || (signed_content is null) || '|' || (signer_id is null) from public.approval_signatures where request_id = '${requestId}'`,
-    );
-    expect(after).toBe(`${before}|true|true`);
+    expect(sig("content_hash || '|' || signed_at || '|' || signature")).toBe(before);
+    expect(sig("(signed_content is null) || '|' || (signer_id is null)")).toBe("true|true");
+    expect(plaintextRows()).toBe(0);
     expect([profileRows(acc.userId), authRows(acc.userId)]).toEqual([0, 0]);
   });
 
@@ -593,7 +596,7 @@ describe("기간 지난 주문 기록 자동 삭제 (my-account INV-A16, 카드 
     // 이미 바꾼 주문은 다음 회차에 다시 세지 않는다(S16c)
     expect(purge().unlinked).toBe(0);
     // 크리에이터(회원)의 서명 기록은 그대로다
-    expect(psql(`select count(*) from public.approval_signatures where request_id = '${o.requestId}' and signed_content is not null`)).toBe("1");
+    expect(psql(`select count(*) from public.approval_signatures where request_id = '${o.requestId}' and signature is not null`)).toBe("1");
   });
 
   it("INV-A16 (d123): 크리에이터만 탈퇴한 5년 1일 된 주문은 남고, 크리에이터 칸이 같이 쓰는 「탈퇴한 크리에이터」가 된다. 하루 덜 된 주문은 그대로다", async () => {

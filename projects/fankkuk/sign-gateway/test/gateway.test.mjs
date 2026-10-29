@@ -20,7 +20,7 @@ describe("설정", () => {
     assert.throws(() => loadConfig({ ...baseEnv, GATEWAY_TOKEN: "__FILL_ME__" }), ConfigError);
     assert.throws(() => loadConfig({ ...baseEnv, GATEWAY_TOKEN: "short" }), ConfigError);
   });
-  it("허용 목록은 드림시큐리티·카카오 안에서만 — 밖의 도메인을 적으면 뜨지 않는다", () => {
+  it("허용 목록은 드림시큐리티·ez-iok·카카오 안에서만 — 밖의 도메인을 적으면 뜨지 않는다", () => {
     assert.deepEqual(
       loadConfig({ ...baseEnv, OUTBOUND_ALLOWED_HOSTS: "api.dreamsecurity.com, cert.kakao.com" }).allowedHosts,
       ["api.dreamsecurity.com", "cert.kakao.com"],
@@ -98,7 +98,7 @@ describe("HTTP 흐름 (시험 어댑터)", () => {
   const plaintext = "req_1|FK-0001|2026-10-28T00:00:00Z|abc123";
 
   async function requestThenResult(outcome, resultPlaintext = plaintext, requestId = "req_1") {
-    const r1 = await call("/v1/sign/requests", { requestId: "req_1", plaintext, signer: { subjectId: "creator-1", outcome } });
+    const r1 = await call("/v1/sign/requests", { requestId: "req_1", plaintext, requestMessage: "팬꾹 선물 수령 승인", signer: { subjectId: "creator-1", outcome } });
     assert.equal(r1.status, 201);
     const { txId } = await r1.json();
     return call(`/v1/sign/requests/${requestId}/result`, { txId, plaintext: resultPlaintext });
@@ -121,8 +121,10 @@ describe("HTTP 흐름 (시험 어댑터)", () => {
     assert.equal(body.state, "signed");
     assert.equal(body.method, "fake");
     assert.equal(body.signedPlaintext, plaintext);
-    assert.equal(body.signerId, "fake:creator-1");
     assert.ok(body.signature);
+    assert.ok(!Number.isNaN(Date.parse(body.signedAt)));
+    // INV-S12: 서명자 식별값·인증서는 응답에 없다
+    assert.deepEqual(Object.keys(body).sort(), ["method", "requestId", "signature", "signedAt", "signedPlaintext", "state"]);
   });
 
   it("대기·거절·만료는 상태만", async () => {
@@ -164,32 +166,6 @@ describe("HTTP 흐름 (시험 어댑터)", () => {
       body: "{}",
     });
     assert.equal(text.status, 415);
-  });
-});
-
-describe("드림시큐리티 어댑터 (명세 전)", () => {
-  it("키를 다 채워도 명세 반영 전에는 503", async () => {
-    const env = {
-      ...baseEnv,
-      SIGN_ADAPTER: "dreamsecurity",
-      DREAM_API_BASE_URL: "https://api.dreamsecurity.com",
-      DREAM_CLIENT_ID: "id",
-      DREAM_CLIENT_SECRET: "secret",
-      OUTBOUND_ALLOWED_HOSTS: "api.dreamsecurity.com",
-    };
-    const server = await startServer(env);
-    try {
-      const base = `http://127.0.0.1:${server.address().port}`;
-      const res = await fetch(`${base}/v1/sign/requests`, {
-        method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${TOKEN}` },
-        body: JSON.stringify({ requestId: "r1", plaintext: "p", signer: { name: "x" } }),
-      });
-      assert.equal(res.status, 503);
-      assert.deepEqual(await res.json(), { error: "adapter_not_ready" });
-    } finally {
-      server.close();
-    }
   });
 });
 

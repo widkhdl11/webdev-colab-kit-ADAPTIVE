@@ -1,5 +1,5 @@
 import { MAX_DECRYPTS_PER_BOX, type AccessDenyReason } from "@/entities/address/model/access-log";
-import { checkApprovalSignature, type VerifiedSignature } from "@/entities/order/model/evaluate-approval";
+import { checkRecordedApproval, type RecordedApproval } from "@/entities/order/model/evaluate-approval";
 import { isPrintable, type OrderStatus } from "@/entities/order/model/order-status";
 
 export type DecryptRequest = {
@@ -8,10 +8,11 @@ export type DecryptRequest = {
   requesterUserId: string;
   /** 복호화 함수 자신의 설정에 적힌 대표 ID (DB 의 역할 컬럼이 아니다) */
   ownerUserId: string;
-  storedPayload: string;
-  /** 복호화 함수가 직접 다시 검증한 승인 서명. 없거나 검증 실패면 null */
-  signature: VerifiedSignature | null;
-  registeredSignerId: string;
+  /**
+   * 그 주문의 승인 서명 기록을 다시 볼 재료(INV-P4 a — 서명자 식별값 없이). 서명 기록이 없거나, 서명값이 없거나,
+   * 방식이 이 함수가 받는 방식이 아니면 null — 부르는 쪽이 정한다.
+   */
+  approval: RecordedApproval | null;
   orderStatus: OrderStatus;
   /** 이 상자의 사무실 단계(office_parcels.state) — 출고 확정 뒤 재출력을 가른다 */
   parcelState: string;
@@ -45,9 +46,9 @@ export function authorizeDecrypt(req: DecryptRequest): DecryptDecision {
   // INV-P8: 대표 계정만. 판단 근거는 복호화 함수 설정의 대표 ID 하나.
   if (req.ownerUserId === "" || req.requesterUserId !== req.ownerUserId) return { ok: false, reason: "not_owner" };
 
-  // INV-P4 (a): 서명을 직접 다시 검증한 결과로만 승인을 인정한다.
-  if (!req.signature) return { ok: false, reason: "no_valid_approval" };
-  const approval = checkApprovalSignature(req.storedPayload, req.signature, req.registeredSignerId);
+  // INV-P4 (a): 서명 기록이 있고, 기록된 원문 해시가 그 주문 승인 원문의 해시와 같을 때만 승인을 인정한다(approval-signature INV-S12).
+  if (!req.approval) return { ok: false, reason: "no_valid_approval" };
+  const approval = checkRecordedApproval(req.approval);
   if (!approval.ok) return { ok: false, reason: "no_valid_approval" };
 
   // INV-P4 (b): 서명 원문의 주문번호가 요청한 주문번호와 같아야 한다.

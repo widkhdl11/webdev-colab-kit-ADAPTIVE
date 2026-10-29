@@ -46,6 +46,8 @@ type Props = {
   candidates: readonly SentBoxCandidate[];
   address: MyAddressStatus | null;
   sealingKeyPem: string | null;
+  /** 알림톡 [승인 화면 열기]의 주문번호(?order=) — 그 주문의 승인 요청 줄이 있으면 처음부터 그 승인 창을 연다. 없으면 목록만 */
+  openOrderNo?: string | null;
 };
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
@@ -87,8 +89,15 @@ type Open =
 
 const keyOf = (it: CreatorActionItem) => `${it.kind}:${it.orderNo}:${"boxSeq" in it ? it.boxSeq : "-"}`;
 
-export function CreatorActionCenterPage({ items, now, candidates, address, sealingKeyPem }: Props) {
-  const [open, setOpen] = useState<Open>(null);
+/** 처음 열 창 — 알림톡 링크의 주문번호가 이 크리에이터의 승인 요청 줄일 때만(notifications INV-N9) */
+function initialOpen(items: readonly CreatorActionItem[], orderNo: string | null | undefined): Open {
+  if (!orderNo) return null;
+  const item = items.find((it): it is ApprovalItem => it.kind === "approval" && it.orderNo === orderNo);
+  return item ? { kind: "approval", item, start: "ask" } : null;
+}
+
+export function CreatorActionCenterPage({ items, now, candidates, address, sealingKeyPem, openOrderNo = null }: Props) {
+  const [open, setOpen] = useState<Open>(() => initialOpen(items, openOrderNo));
   const close = () => setOpen(null);
   const { received, sent } = splitBoards(items);
 

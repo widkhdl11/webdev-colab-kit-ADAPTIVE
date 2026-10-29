@@ -10,7 +10,7 @@ import { createAdminSupabase } from "@/shared/api/supabase/admin";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
 import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
 
-// 번호 바꾸기 — 새 번호로 문자 인증번호 받기(signup INV-U12). 가입과 같은 함수·같은 한도(INV-U10)·같은 보관(INV-U15)을 쓴다.
+// 번호 바꾸기 — 새 번호로 인증번호 받기(signup INV-U12 — 알림톡 먼저, 안 되면 문자, 응답의 channel 이 간 길). 가입과 같은 함수·같은 한도(INV-U10)·같은 보관(INV-U15)을 쓴다.
 // 로그인한 사람만 부르고, 지금 번호와 같은 번호면 문자 전에 거부한다. 번호표는 스크립트가 못 읽는 쿠키(이 경로 아래에만 실려 감)로만 준다.
 export async function POST(req: NextRequest) {
   return handlePrivateJsonPost(req, async (body) => {
@@ -29,6 +29,6 @@ export async function POST(req: NextRequest) {
       return { status: result.status, body: { field: "phone", message } };
     }
     (await cookies()).set(PHONE_CHANGE_COOKIE, result.verificationId, phoneChangeCookieOptions(process.env));
-    return { status: 200, body: { requested: true } };
+    return { status: 200, body: { requested: true, channel: result.channel } };
   });
 }

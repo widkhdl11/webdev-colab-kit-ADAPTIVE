@@ -1,32 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { buildSigningPayload } from "@/entities/order/model/signing-payload";
-import type { VerifiedSignature } from "@/entities/order/model/evaluate-approval";
+import { createHash } from "node:crypto";
+import { buildApprovalPlaintext } from "@/entities/order/model/approval-plaintext";
+import type { RecordedApproval } from "@/entities/order/model/evaluate-approval";
 import { MAX_DECRYPTS_PER_BOX } from "@/entities/address/model/access-log";
 import { authorizeDecrypt, type DecryptRequest } from "./authorize-decrypt";
 
 const OWNER = "user-owner";
-const CREATOR_SIGNER = "kakao-ci-creator-1";
+const hex = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
+const payloadFor = (orderNo: string) => buildApprovalPlaintext({ orderNo, fanNickname: "별빛", giftKind: "꽃", boxCount: 1 });
 
-const payloadFor = (orderNo: string) =>
-  buildSigningPayload({
-    requestId: `apr_${orderNo.slice(3)}`,
-    orderNo,
-    requestedAt: "2026-10-01T09:30:00.000Z",
-    fanNicknameHash: "d".repeat(64),
-  });
-
-const signatureOver = (content: string, signerId = CREATOR_SIGNER): VerifiedSignature => ({
-  signedContent: new TextEncoder().encode(content),
-  signerId,
-});
+/** 서명 기록 — 기록된 원문 해시는 기본으로 그 원문의 해시(approval-signature INV-S12) */
+const recordFor = (plaintext: string, recordedHash = hex(plaintext)): RecordedApproval => ({ plaintext, plaintextHash: hex(plaintext), recordedHash });
 
 const ok: DecryptRequest = {
   requestedOrderNo: "FC-AAAAA",
   requesterUserId: OWNER,
   ownerUserId: OWNER,
-  storedPayload: payloadFor("FC-AAAAA"),
-  signature: signatureOver(payloadFor("FC-AAAAA")),
-  registeredSignerId: CREATOR_SIGNER,
+  approval: recordFor(payloadFor("FC-AAAAA")),
   orderStatus: "inspected",
   parcelState: "inspected",
   fanBlocked: false,
@@ -44,11 +34,11 @@ describe("복호화 허용 판정", () => {
   });
 
   it("INV-P4 (S4, 실패경로 a): 승인 서명이 없는 주문은 거부된다", () => {
-    expect(authorizeDecrypt({ ...ok, signature: null })).toEqual({ ok: false, reason: "no_valid_approval" });
+    expect(authorizeDecrypt({ ...ok, approval: null })).toEqual({ ok: false, reason: "no_valid_approval" });
   });
 
-  it("INV-P4 (실패경로 a): DB 에 승인 표시가 있어도 서명 검증이 실패하면 거부된다 — 서명을 직접 다시 본다", () => {
-    expect(authorizeDecrypt({ ...ok, signature: signatureOver(payloadFor("FC-AAAAA"), "kakao-ci-attacker") })).toEqual({
+  it("INV-P4 (실패경로 a)·INV-S12: DB 에 승인 표시가 있어도 기록된 원문 해시가 그 주문 승인 원문의 해시와 다르면 거부된다", () => {
+    expect(authorizeDecrypt({ ...ok, approval: recordFor(payloadFor("FC-AAAAA"), hex(payloadFor("FC-BBBBB"))) })).toEqual({
       ok: false,
       reason: "no_valid_approval",
     });

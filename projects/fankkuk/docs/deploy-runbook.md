@@ -101,5 +101,6 @@ Vercel 에 올린 사이트는 코드가 운영으로 판정한다. 그래서 �
 - [ ] 드림시큐리티: 운영용 키 파일(`eziok_keyInfo.dat`)과 운영 등록 사이트 주소를 받음, 카카오 운영 전환(운영용 settle_id) 완료 통보를 받음
 - [ ] 게이트웨이 서버 환경 변수 파일을 운영 값으로: `DREAM_ENV=production`, `DREAM_KEY_FILE`·`DREAM_KEY_PASSWORD` 는 운영 키, `OUTBOUND_ALLOWED_HOSTS` 에 `cert-dir.ez-iok.com`
 - [ ] **테스트 키 삭제 확인** (드림시큐리티 계약 제13조) — 게이트웨이 서버·내 PC·메일 첨부·저장소 어디에도 개발용 `eziok_keyInfo.dat` 가 남지 않았는지 확인하고 지운다. 서버에서 `sudo find / -name 'eziok_keyInfo*' 2>/dev/null` 결과가 운영 키 파일 하나뿐이어야 한다
-- [ ] 운영 DB 에 `supabase/manual/0026`·`0027` 적용(앱 배포와 같이)
+- [ ] 운영 DB 에 `supabase/manual/0026`·`0027`·`0028` 적용(앱 배포와 같이 — `0028` 은 마이그레이션 `20261029000010` 뒤)
+- [ ] 앱 서버 환경 변수 `SIGN_GATEWAY_URL`·`SIGN_GATEWAY_TOKEN` 둘 다 넣음 — 하나라도 없으면 운영에서 승인·승인 서명 연결 요청이 거부된다
 - [ ] 첫 운영 서명 1건으로 원문 감싼 틀·폐기 확인(OCSP) 주소가 허용 목록 안에서 통과하는지 게이트웨이 로그로 확인

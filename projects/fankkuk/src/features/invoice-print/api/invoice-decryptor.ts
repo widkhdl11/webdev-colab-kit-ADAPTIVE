@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
-import { chooseApprovalSigner } from "@/shared/api/approval-signer/signer";
+import { acceptedSignatureMethod } from "@/shared/api/approval-signer/accepted-method";
 import { readSupabaseConfig } from "@/shared/api/supabase/config";
 import type { DeployEnv } from "@/shared/lib/env/is-production";
 import { createDevKeyUnwrapper, type KeyUnwrapper } from "@/shared/lib/envelope/dev-key-unwrapper";
 import { readDecryptorSecrets } from "./decryptor-secrets";
-import { printCreatorLabel, type CreatorLabelResult } from "./print-creator-label";
+import { printCreatorLabel, type CreatorLabelResult, type StoredSignatureVerifier } from "./print-creator-label";
 import { printReturnLabel, type ReturnLabelResult } from "./print-return-label";
 import { printShareLabel } from "./print-share-label";
 
@@ -45,6 +45,8 @@ export type DecryptorWiring = {
   newWaybill: () => string;
   /** DB·로그인 확인 요청을 보낼 통로. 게이트웨이는 허용 목록을 거치는 통로를 넣는다 — 없으면 기본 fetch */
   fetch?: typeof fetch;
+  /** 저장된 카카오 서명 재검증(INV-P4 a). 게이트웨이만 넣는다 — 로컬 조립에는 없으므로 로컬에서는 kakao 서명 주소가 열리지 않는다 */
+  verifyStoredSignature?: StoredSignatureVerifier;
 };
 
 export function wireDecryptorDeps(w: DecryptorWiring) {
@@ -54,7 +56,8 @@ export function wireDecryptorDeps(w: DecryptorWiring) {
   // DB 는 복호화 전용 역할 토큰으로 부른다. 게이트웨이가 받는 공개 키는 익명 키 그대로 두고, 역할은 토큰이 정한다.
   const db = createClient(url, anonKey, { auth: noSession, global, accessToken: async () => w.dbKey });
   const auth = createClient(url, anonKey, { auth: noSession, global });
-  const signer = chooseApprovalSigner(w.env);
+  // 저장된 서명을 다시 볼 때 받는 방식(INV-P4 a) — 서명 창구 자체는 필요 없다
+  const acceptedMethod = acceptedSignatureMethod(w.env);
 
   return {
     db,
@@ -64,7 +67,8 @@ export function wireDecryptorDeps(w: DecryptorWiring) {
     },
     ownerUserId: w.ownerUserId,
     unwrapper: w.unwrapper,
-    signer,
+    acceptedMethod,
+    verifyStoredSignature: w.verifyStoredSignature,
     newWaybill: w.newWaybill,
   };
 }
@@ -97,7 +101,7 @@ export function createLocalLabelPrinters(env: DecryptorEnv, readFile: () => stri
 
 /** 반송 송장 출력 함수를 재료로 만든다. */
 export function returnLabelPrinterFrom(deps: DecryptorDeps): ReturnLabelPrinter {
-  const { signer: _signer, ...rest } = deps;
+  const { acceptedMethod: _acceptedMethod, verifyStoredSignature: _verifyStoredSignature, ...rest } = deps;
   return (input) => printReturnLabel(rest, input);
 }
 

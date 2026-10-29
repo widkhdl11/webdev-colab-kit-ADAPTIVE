@@ -1,10 +1,20 @@
 // 환경 변수 → 설정. 서버가 뜰 때 한 번 읽고, 잘못된 값이면 뜨지 않는다.
 //
-// 외부 요청 허용 목록은 코드의 접미사 목록(드림시큐리티·카카오)이 상한이다.
+// 외부 요청 허용 목록은 코드의 접미사 목록(드림시큐리티·간편인증 중계 ez-iok.com·카카오)이 상한이다.
 // 환경 변수 OUTBOUND_ALLOWED_HOSTS 는 그 안에서 좁히기만 할 수 있고 넓힐 수 없다 —
 // 목록 밖 도메인을 적으면 설정 오류로 서버가 뜨지 않는다.
 
-export const ALLOWED_HOST_SUFFIXES = Object.freeze(["dreamsecurity.com", "kakao.com"]);
+export const ALLOWED_HOST_SUFFIXES = Object.freeze(["dreamsecurity.com", "ez-iok.com", "kakao.com"]);
+
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const GATEWAY_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+/** 연동 모듈 기본 위치 — 저장소에는 없다(README 「드림시큐리티 연동 모듈」) */
+export const DEFAULT_DREAM_MODULE_FILE = path.join(GATEWAY_DIR, "lib", "vendor", "eziok_Key_Manager.cjs");
+export const DREAM_ENVS = Object.freeze(["development", "production"]);
+const TX_PREFIX_PATTERN = /^[A-Za-z0-9]{1,8}$/;
+const SITE_URL_PATTERN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
 
 export const ADAPTER_NAMES = Object.freeze(["dreamsecurity", "test"]);
 
@@ -90,6 +100,26 @@ function readInvoice(env, testSiteHosts) {
   });
 }
 
+function readDreamsecurity(env) {
+  const dreamEnv = optional(env, "DREAM_ENV");
+  if (dreamEnv && !DREAM_ENVS.includes(dreamEnv)) throw new ConfigError(`DREAM_ENV 는 ${DREAM_ENVS.join(" | ")} 중 하나여야 한다`);
+  const txPrefix = optional(env, "DREAM_TX_PREFIX") ?? "FANKKUK";
+  if (!TX_PREFIX_PATTERN.test(txPrefix)) throw new ConfigError("DREAM_TX_PREFIX 는 영문·숫자 8자 이내여야 한다");
+  const siteUrl = optional(env, "DREAM_SITE_URL");
+  // 등록 도메인만(예 www.fankkuk.com) — https:// 나 경로를 붙이면 딜러사가 등록되지 않은 사이트로 거부한다
+  if (siteUrl && !SITE_URL_PATTERN.test(siteUrl)) throw new ConfigError("DREAM_SITE_URL 은 https:// 없이 도메인만 적는다");
+  const moduleFile = optional(env, "DREAM_MODULE_FILE");
+  return Object.freeze({
+    keyFile: optional(env, "DREAM_KEY_FILE"),
+    keyPassword: optional(env, "DREAM_KEY_PASSWORD"),
+    siteUrl,
+    env: dreamEnv,
+    caFile: optional(env, "DREAM_CA_FILE"),
+    txPrefix,
+    moduleFile: moduleFile ? path.resolve(GATEWAY_DIR, moduleFile) : DEFAULT_DREAM_MODULE_FILE,
+  });
+}
+
 /** opts.testSiteHosts 는 시험에서만 바꿔 끼운다 */
 export function loadConfig(env = process.env, { testSiteHosts = TEST_SITE_SUPABASE_HOSTS } = {}) {
   const adapter = env.SIGN_ADAPTER;
@@ -111,11 +141,7 @@ export function loadConfig(env = process.env, { testSiteHosts = TEST_SITE_SUPABA
     // 토큰 교체 중에는 둘 다 받는다. Vercel 쪽을 새 값으로 바꾼 뒤 옛 값을 지운다.
     tokens: [readToken(env, "GATEWAY_TOKEN", true), readToken(env, "GATEWAY_TOKEN_NEXT", false)].filter(Boolean),
     allowedHosts: parseAllowedHosts(env.OUTBOUND_ALLOWED_HOSTS),
-    dreamsecurity: Object.freeze({
-      apiBaseUrl: optional(env, "DREAM_API_BASE_URL"),
-      clientId: optional(env, "DREAM_CLIENT_ID"),
-      clientSecret: optional(env, "DREAM_CLIENT_SECRET"),
-    }),
+    dreamsecurity: readDreamsecurity(env),
     kakao: Object.freeze({
       clientId: optional(env, "KAKAO_CLIENT_ID"),
       clientSecret: optional(env, "KAKAO_CLIENT_SECRET"),

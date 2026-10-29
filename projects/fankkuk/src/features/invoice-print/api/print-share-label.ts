@@ -11,7 +11,7 @@ import type { CreatorLabelDeps } from "./print-creator-label";
 //   봉투를 연 뒤 송장이 나오기 전에 실패하거나 봉인 속 주문번호가 달라 쓰지 않으면 그 「연 줄」을 돌려받는다(INV-R13 — 조건은 DB 가 몫을 잠근 자리에서 본다).
 // DB 자격은 복호화 전용 역할(address_decryptor). 평문은 이 호출 안에서만 쓰고 라벨 다섯 칸만 돌려준다 — 로그·오류·기록 줄에 넣지 않는다.
 
-export type ShareLabelDeps = Omit<CreatorLabelDeps, "signer">;
+export type ShareLabelDeps = Omit<CreatorLabelDeps, "acceptedMethod">;
 
 export type ShareLabelResult =
   | { kind: "printed"; waybill: string; reprint: boolean; label: RevgiftAddressLabel }

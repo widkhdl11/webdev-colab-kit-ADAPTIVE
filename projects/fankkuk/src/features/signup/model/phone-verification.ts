@@ -6,16 +6,18 @@ import { phoneSchema } from "./signup-input";
 
 // 가입 3단계(그리고 번호 바꾸기, INV-U12)의 휴대폰 번호 확인 — 문자로 보낸 6자리 인증번호. DB 함수는 모두 앱 서버 키 전용이다.
 // 요청: 번호표(ID)와 인증번호를 서버가 만든다 → 한도 확인·앞 인증번호 버리기·해시 기록을 DB 함수 한 처리에서(INV-U10·U15)
-//       → 문자를 보낸다(실패하면 한 번만 다시, 그래도 실패하면 그 인증번호를 버린다). 화면에는 번호표만 쿠키로 준다.
+//       → 카카오 알림톡으로 보내고 짧게 결과를 본다. 도착이 확인되면 통로는 kakao. 실패·확인 안 됨이면 같은 인증번호를 문자로
+//       (실패하면 한 번만 다시, 그래도 실패하면 그 인증번호를 버린다) — 통로는 sms. 화면에는 번호표만 쿠키로, 통로는 본문으로 준다.
+//       새 인증번호를 만들지 않으므로 한도(INV-U10)는 요청 한 번을 한 번으로 센다.
 // 확인: 입력한 6자리를 번호표와 섞어 해시하고, 만료·틀린 횟수·사용 여부 확인과 횟수 올리기는 DB 함수가 한 처리에서 한다.
 //       맞으면 DB 가 확인 줄에 「확인됨」을 적는다(INV-U1). 본문의 「확인됨」·번호는 읽지 않는다.
-// 인증번호 원문은 문자 본문에만 실린다 — DB·응답·오류에 넣지 않는다(INV-U15).
+// 인증번호 원문은 알림톡 변수·문자 본문에만 실린다 — DB·응답·오류·로그에 넣지 않는다(INV-U15).
 
 type Rpc = (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { code?: string } | null }>;
 
 export type PhoneVerificationDeps = {
   admin: { rpc: Rpc };
-  /** null = 운영에서 아직 문자 대행사 연결이 없다(INV-U9). */
+  /** null = 운영에서 솔라피 설정이 다 갖춰지지 않았다(INV-U9). */
   verifier: PhoneVerifier | null;
   /** 인증번호 해시용 비밀 값. 창구가 있을 때만 읽는다(운영에서 창구가 없으면 비밀 값이 없어도 거부만 한다). */
   codeSecret: () => string;
@@ -38,6 +40,9 @@ const EXPIRED_MESSAGE = PHONE_CODE_EXPIRED_MESSAGE;
 const INVALID_MESSAGE = "인증번호를 다시 받아 주세요.";
 export const wrongCodeMessage = (remaining: number) => `인증번호가 맞지 않습니다. 남은 횟수 ${remaining}회`;
 
+/** 인증번호가 실제로 간 길 — 화면 문구가 이것을 따른다(INV-U15). */
+export type PhoneCodeChannel = "kakao" | "sms";
+
 /** INV-U15: 문자 본문은 이 꼴 하나다. */
 export function phoneCodeText(code: string): string {
   return `[팬꾹] 인증번호 ${code} (3분 안에 입력해 주세요)`;
@@ -48,11 +53,20 @@ const checkSchema = z.object({ verificationId: z.string().uuid(), code: z.string
 const CODE_SHAPE = /^\d{6}$/;
 const checkRowsSchema = z.array(z.object({ result: z.enum(["verified", "wrong", "locked", "expired", "invalid"]), remaining: z.number().int() }));
 
-/** INV-U15: 발송은 한 번 실패하면 한 번만 다시 보내 본다. */
-async function sendWithOneRetry(verifier: PhoneVerifier, phone: string, text: string): Promise<boolean> {
+/** INV-U15: 알림톡 먼저 — 도착이 확인되면 kakao. 예외도 「안 됨」으로 본다. */
+async function kakaoDelivered(verifier: PhoneVerifier, phone: string, code: string): Promise<boolean> {
+  try {
+    return await verifier.sendKakaoCode(phone, code);
+  } catch {
+    return false;
+  }
+}
+
+/** INV-U15: 문자는 한 번 실패하면 한 번만 다시 보내 본다. */
+async function smsWithOneRetry(verifier: PhoneVerifier, phone: string, text: string): Promise<boolean> {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      await verifier.send(phone, text);
+      await verifier.sendSms(phone, text);
       return true;
     } catch {
       // 한 번 더
@@ -66,7 +80,7 @@ export async function startPhoneVerification(
   deps: PhoneVerificationDeps,
   body: unknown,
   ipHash: string,
-): Promise<{ ok: true; verificationId: string } | StartFail> {
+): Promise<{ ok: true; verificationId: string; channel: PhoneCodeChannel } | StartFail> {
   if (!deps.verifier) return { ok: false, status: 503, reason: "closed", message: CLOSED_MESSAGE };
   const parsed = startSchema.safeParse(body);
   if (!parsed.success) return { ok: false, status: 400, reason: "phone", message: PHONE_SHAPE_MESSAGE };
@@ -88,12 +102,14 @@ export async function startPhoneVerification(
     throw new Error(`인증번호 요청을 기록하지 못했다: ${recorded.error.code}`);
   }
 
-  if (!(await sendWithOneRetry(deps.verifier, phone, phoneCodeText(code)))) {
+  if (await kakaoDelivered(deps.verifier, phone, code)) return { ok: true, verificationId, channel: "kakao" };
+  // 알림톡 실패·확인 안 됨 — 같은 인증번호를 문자로(둘 다 갔으면 화면은 문자 쪽 문구)
+  if (!(await smsWithOneRetry(deps.verifier, phone, phoneCodeText(code)))) {
     const discarded = await deps.admin.rpc("discard_phone_code", { p_id: verificationId });
     if (discarded.error) console.error(`보내지 못한 인증번호를 버리지 못했다: ${discarded.error.code ?? "코드 없음"}`);
     return { ok: false, status: 503, reason: "send_failed", message: SEND_FAILED_MESSAGE };
   }
-  return { ok: true, verificationId };
+  return { ok: true, verificationId, channel: "sms" };
 }
 
 /** 본문: { verificationId(쿠키에서 끼운 값), code }. */

@@ -1,22 +1,31 @@
 // 요청 처리. Vercel 앱 서버만 부른다 — Authorization: Bearer <GATEWAY_TOKEN>.
 //
 //   GET  /healthz                              토큰 없이. 살아 있는지만(어댑터 상태는 밖에 알리지 않는다 — 로그에 있다).
-//   POST /v1/sign/requests                     { requestId, plaintext, signer } → { txId, expiresAt }
-//   POST /v1/sign/requests/:requestId/result   { txId, plaintext }  → { state, ... }
+//   POST /v1/sign/requests                     { requestId, plaintext, requestMessage, signer } → { requestId, txId, expiresAt }
+//   POST /v1/sign/requests/:requestId/result   { txId, plaintext }  → { requestId, state, ... }
 //   POST /v1/invoice/label                     { qr, accessToken }  → 송장 출력 결과(앱 송장 출력 함수와 같은 꼴)
 //   POST /v1/invoice/return-label              { qr, accessToken }  → 반송 송장 출력 결과
 //
-// 결과 조회에서 state 가 signed 이면 어댑터가 서명 값을 직접 검증하고(외부 연결 INV-S3),
+// 결과 조회에서 state 가 signed 이면 어댑터가 서명 값을 직접 검증했고(외부 연결 INV-S3),
 // 검증된 서명의 원문이 앱이 보낸 원문과 바이트 단위로 같을 때만 돌려준다(승인 서명 INV-S2 의 이중 확인).
 // 같지 않으면 409. 앱 서버는 돌려받은 원문을 자기가 저장한 원문과 다시 대조한다 — 여기서 맞췄다고 건너뛰지 않는다.
+// 응답에는 서명자 식별값·인증서를 넣지 않는다(승인 서명 INV-S12 — CI·서명자 식별값은 저장하지 않는다).
 //
-// 로그에는 원문·서명·서명자 정보를 남기지 않는다. 경로·상태 코드·걸린 시간만.
+// 로그에는 원문·서명·서명자 정보를 남기지 않는다. 경로·상태 코드·걸린 시간과, 거부했을 때의 짧은 이유 코드만.
 
 import crypto from "node:crypto";
-import { AdapterNotReadyError, SignatureInvalidError, UnknownTransactionError } from "./adapters/errors.mjs";
+import {
+  AdapterNotReadyError,
+  PlaintextMismatchError,
+  SignatureInvalidError,
+  SignerMismatchError,
+  UnknownTransactionError,
+  UpstreamError,
+} from "./adapters/errors.mjs";
 
 const MAX_BODY_BYTES = 16 * 1024;
 const MAX_PLAINTEXT_LENGTH = 1024;
+const MAX_REQUEST_MESSAGE_LENGTH = 40; // 카카오 지갑에 보이는 요청 구분 문구(예 「팬꾹 선물 수령 승인」)
 const ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 const RESULT_PATH = /^\/v1\/sign\/requests\/([A-Za-z0-9_-]{1,128})\/result$/;
 
@@ -114,12 +123,13 @@ export function createHandler({ config, adapter, invoice = null, log = console.l
       const body = await readJson(req);
       const requestId = requireString(body, "requestId", ID_PATTERN, 128);
       const plaintext = requireString(body, "plaintext", null, MAX_PLAINTEXT_LENGTH);
+      const requestMessage = requireString(body, "requestMessage", null, MAX_REQUEST_MESSAGE_LENGTH);
       if (body.signer === null || typeof body.signer !== "object" || Array.isArray(body.signer)) {
         throw new HttpError(400, "invalid_signer");
       }
       let result;
       try {
-        result = await adapter.requestSignature({ requestId, plaintext, signer: body.signer });
+        result = await adapter.requestSignature({ requestId, plaintext, requestMessage, signer: body.signer });
       } catch (err) {
         if (err instanceof TypeError) throw new HttpError(400, "invalid_signer");
         throw err;
@@ -137,7 +147,7 @@ export function createHandler({ config, adapter, invoice = null, log = console.l
       const fetched = await adapter.fetchResult({ requestId, txId });
       if (fetched.state !== "signed") return [200, { requestId, state: fetched.state }];
 
-      const verified = await adapter.verify(fetched.raw);
+      const { verified } = fetched;
       const same = Buffer.from(verified.signedPlaintext, "utf8").equals(Buffer.from(plaintext, "utf8"));
       if (!same) throw new HttpError(409, "plaintext_mismatch");
 
@@ -148,9 +158,8 @@ export function createHandler({ config, adapter, invoice = null, log = console.l
           state: "signed",
           method: adapter.method,
           signedPlaintext: verified.signedPlaintext,
-          signerId: verified.signerId,
           signature: verified.signature,
-          certificate: verified.certificate,
+          signedAt: verified.signedAt,
         },
       ];
     }
@@ -187,6 +196,18 @@ export function createHandler({ config, adapter, invoice = null, log = console.l
       } else if (err instanceof SignatureInvalidError) {
         status = 422;
         code = "signature_invalid";
+        log(`rejected signature ${err.reason}`);
+      } else if (err instanceof SignerMismatchError) {
+        status = 422;
+        code = "signer_mismatch";
+        log(`rejected signer ${err.reason}`);
+      } else if (err instanceof PlaintextMismatchError) {
+        status = 409;
+        code = "plaintext_mismatch";
+      } else if (err instanceof UpstreamError) {
+        status = 502;
+        code = "upstream_error";
+        log(`upstream ${err.code}`);
       } else if (err instanceof UnknownTransactionError) {
         status = 404;
         code = "unknown_transaction";

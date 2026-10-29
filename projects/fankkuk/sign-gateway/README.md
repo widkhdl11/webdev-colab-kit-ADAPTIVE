@@ -8,25 +8,31 @@
    그대로 묶어 온 `dist/decryptor.mjs` 이고, 키 풀기만 KMS 가 한다. KMS 는 이 서버 IP 에서만 풀린다(키 정책).
 
 ```
-Vercel 앱 서버 ──(HTTPS + 게이트웨이 토큰)──▶ 이 서버 ──(HTTPS, 허용 목록)──▶ 드림시큐리티 / 카카오 / 서울 KMS / 이 프로젝트 DB
+Vercel 앱 서버 ──(HTTPS + 게이트웨이 토큰)──▶ 이 서버 ──(HTTPS, 허용 목록)──▶ 드림시큐리티 간편인증(ez-iok.com) / 카카오 OCSP / 서울 KMS / 이 프로젝트 DB
 ```
 
 - 드림시큐리티·카카오·KMS 키, 복호화 전용 DB 토큰, 대표 ID 는 이 서버의 환경 변수 파일(`/etc/sign-gateway/` 아래)에만 있다. Vercel·저장소에는 없다.
   Vercel 에는 `SIGN_GATEWAY_URL`(`https://sign.fankkuk.com`)과 이 서버를 부를 토큰 `SIGN_GATEWAY_TOKEN` 만 넣는다.
-- 서명 쪽은 외부 도움 프로그램(npm 패키지)이 없다. 송장 출력 쪽 묶음에는 앱이 쓰는 supabase-js·zod 가 들어 있다. Node 20 이상.
+- 서명 쪽은 외부 도움 프로그램(npm 패키지)이 없다 — 전자서명문(PKCS#7)·인증서·OCSP 도 직접 연다(`lib/der.cjs`·`lib/signed-data.cjs`). 드림시큐리티 연동 모듈 하나만 딜러사 파일이다(아래). 송장 출력 쪽 묶음에는 앱이 쓰는 supabase-js·zod 가 들어 있다. Node 20 이상.
 
 ## 요청 형식
 
 | 요청 | 본문 | 응답 |
 |---|---|---|
 | `GET /healthz` (토큰 없음) | — | `{ ok: true }` — 어댑터 준비 여부는 로그(`journalctl`) 첫 줄에 |
-| `POST /v1/sign/requests` | `{ requestId, plaintext, signer }` | `201 { requestId, txId, expiresAt }` |
-| `POST /v1/sign/requests/:requestId/result` | `{ txId, plaintext }` | `200 { state }` — `pending`·`rejected`·`expired`, 또는 `signed` 이면 `method`·`signedPlaintext`·`signerId`·`signature`·`certificate` 도 |
+| `POST /v1/sign/requests` | `{ requestId, plaintext(1024자 이하), requestMessage(1~40자), signer }` | `201 { requestId, txId, expiresAt }` — `expiresAt` 은 요청 + 5분 |
+| `POST /v1/sign/requests/:requestId/result` | `{ txId, plaintext }` | `200 { requestId, state }` — `pending`·`rejected`·`expired`, 또는 `signed` 이면 `method`(`kakao`·`fake`)·`signedPlaintext`·`signature`(전자서명문 base64)·`signedAt` 도 |
 
 - 모든 `POST` 는 `Authorization: Bearer <토큰>` 이 있어야 한다. 없거나 틀리면 401.
 - `signed` 는 이 서버가 서명 값을 직접 검증했고, 서명된 원문이 보낸 `plaintext` 와 바이트 단위로 같을 때만 나온다.
-  다르면 409, 서명 값이 틀리면 422. 앱 서버는 돌려받은 원문을 자기가 저장한 원문과 **다시** 대조한다.
-- 드림시큐리티 어댑터가 준비되지 않았으면(키 미입력 또는 명세 반영 전) 503 `adapter_not_ready`.
+  원문이 다르면 409 `plaintext_mismatch`, 서명·인증서 검증 실패는 422 `signature_invalid`, 서명한 사람이 지정한 대상자가 아니면
+  422 `signer_mismatch`. 앱 서버는 돌려받은 원문을 자기가 저장한 원문과 **다시** 대조한다.
+- 응답에 서명자 식별값(CI 등)·인증서는 없다(승인 서명 INV-S12).
+- 드림시큐리티 어댑터가 준비되지 않았으면(설정 칸·키 파일·연동 모듈·인증기관 인증서 중 빠진 것) 503 `adapter_not_ready`. 이유는 로그 첫 줄에.
+  딜러사가 예상 밖의 코드를 주거나 연결이 안 되면 502 `upstream_error`(로그에 결과 코드만).
+- 드림시큐리티 어댑터의 `signer` 는 `{ envelope, creatorId }` — 앱이 브라우저에서 봉인한 승인 서명 연결 정보(이름·생년월일·휴대폰)를 그대로,
+  그리고 DB 가 그 요청의 크리에이터로 돌려준 ID. 게이트웨이가 KMS 로 열어 서명 대상을 지정한다. `creatorId` 는 필수이고 봉투 안의 것과 같아야 한다(없거나 다르면 400).
+- 진행 중 거래는 메모리에만 5분 둔다. 서버를 다시 켜면 진행 중이던 거래의 결과는 `expired`.
 - `SIGN_ADAPTER=test` 는 가짜 서명이고 `method: "fake"` 로 나온다. `signer` 에 `{ subjectId, outcome }` 을 넣어
   결과를 고를 수 있다(`signed`·`pending`·`rejected`·`expired`·`tampered`·`badsig`).
 
@@ -37,6 +43,8 @@ Vercel 앱 서버 ──(HTTPS + 게이트웨이 토큰)──▶ 이 서버 ─
 
 - `accessToken` 은 대표의 로그인 토큰이다. 주소를 열 자격은 이것이 정한다(INV-P8) — 게이트웨이 토큰은 「이 앱 서버가 보냈다」만 증명한다.
 - 판정(대표·서명 재검증·주문번호·검수 단계·상자당 3회·열람 기록)은 묶음 안의 앱 코드가 한다. 로그에는 경로·상태 코드만 남는다.
+- kakao 서명 주문은 저장된 서명값(전자서명문)을 송장 출력 때 다시 검증한다 — 체인(`DREAM_CA_FILE` 의 카카오 인증기관)·서명·폐기(OCSP)를 보고,
+  감싼 틀을 벗긴 원문이 그 주문 서명 요청의 원문과 같을 때만 연다(`lib/stored-signature.mjs`). `DREAM_CA_FILE` 을 못 읽으면 kakao 서명 송장은 전부 거부(로그 셋째 줄).
 - 가짜 서명 재검증은 `FANKKUK_TEST_SITE=1` 과 시험 사이트 주소(`APP_ORIGIN`)가 **둘 다** 이 서버 설정에 있을 때만 받는다.
   서버 설정의 `NODE_ENV` 와 상관없이 묶음에는 운영으로 넘긴다.
 - 설정 칸이 비었거나 `dist/decryptor.mjs` 가 없으면 송장 출력만 503 `invoice_not_ready` 이고 서명 쪽은 그대로 돈다(로그 둘째 줄에 이유).
@@ -99,7 +107,7 @@ Supabase 프로젝트의 JWT 비밀을 붙여 넣으면 복호화 전용 역할(
 
 ## 밖으로 나가는 요청
 
-- 허용 범위는 코드(`lib/config.mjs` 의 `ALLOWED_HOST_SUFFIXES`)에 박힌 `dreamsecurity.com`·`kakao.com` 아래뿐이다.
+- 허용 범위는 코드(`lib/config.mjs` 의 `ALLOWED_HOST_SUFFIXES`)에 박힌 `dreamsecurity.com`·`ez-iok.com`·`kakao.com` 아래뿐이다.
   환경 변수 `OUTBOUND_ALLOWED_HOSTS` 에는 그 안의 정확한 호스트 이름을 적는다. 범위 밖을 적으면 서버가 뜨지 않는다.
 - https·443 포트만, IP 를 직접 적은 주소는 거부, DNS 가 내부망 주소(사설·루프백·169.254.x.x 등)로 풀리면 연결하지 않는다,
   리다이렉트는 따라가지 않는다.
@@ -126,8 +134,20 @@ Supabase 프로젝트의 JWT 비밀을 붙여 넣으면 복호화 전용 역할(
 cd sign-gateway && node --test test/*.test.mjs
 ```
 
-## 드림시큐리티 명세가 오면
+## 드림시큐리티 연동 모듈
 
-`lib/adapters/dreamsecurity.cjs` 의 세 함수를 채운다(CommonJS — 드림시큐리티 연동 모듈이 CommonJS 만 지원한다). 파일 머리말에 할 일이 적혀 있다 —
-서명 검증(인증서 체인·알고리즘·유효 기간·폐기 여부, 외부 연결 INV-S3)을 이 서버가 직접 하고,
-딜러사 응답의 「성공」 표시만으로 `signed` 를 돌려주지 않는다.
+연동 모듈은 저장소에 넣지 않는다(라이선스 미확인 — `.gitignore` 의 `lib/vendor/`). 간편인증-API 가이드 다운로드의
+`eziokManager-Nodejs_1.0.7.zip` 안 `eziok_Key_Manager_v1.0.7.js` 를 **`sign-gateway/lib/vendor/eziok_Key_Manager.cjs`** 로 복사한다
+(확장자를 `.cjs` 로 — CommonJS 모듈이다). 설치 스크립트가 `lib/` 를 통째로 올리므로 내 PC 의 그 자리에 두고 위 두 줄로 올리면 된다.
+없으면 설치 스크립트가 경고하고, 서명 요청은 503 이다.
+
+서버에 따로 둘 것 — 모두 `root:sign-gateway` `0640`:
+
+| 파일 | 환경 변수 |
+|---|---|
+| 딜러사가 준 키 정보 파일(`eziok_keyInfo.dat`) | `DREAM_KEY_FILE` (비밀번호는 `DREAM_KEY_PASSWORD`) |
+| 카카오 인증기관 인증서 PEM(여러 장이면 이어 붙임) | `DREAM_CA_FILE` |
+
+검증 순서(`lib/adapters/dreamsecurity.cjs`): 결과의 거래 ID → 발급 시각 10분 → 이름·휴대폰·생년월일 세 값(INV-S4, CI 는 풀지 않음)
+→ 전자서명문 직접 검증(서명 값·인증서 체인·유효 기간·OCSP 폐기 확인, INV-S3) → 감싼 틀을 벗긴 원문 = 그 거래 원문(INV-S2).
+OCSP 주소가 없거나 허용 목록 밖이거나 `http://` 이거나 응답이 안 오면 서명을 거부한다.

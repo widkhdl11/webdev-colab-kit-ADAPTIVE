@@ -89,8 +89,8 @@ export function assertAllowedUrl(rawUrl, allowedHosts) {
 
 /**
  * @param {string} rawUrl
- * @param {{ allowedHosts: string[], method?: string, headers?: Record<string,string>, body?: string, timeoutMs?: number }} opts
- * @returns {Promise<{ status: number, headers: import("node:http").IncomingHttpHeaders, body: string }>}
+ * @param {{ allowedHosts: string[], method?: string, headers?: Record<string,string>, body?: string|Buffer, timeoutMs?: number }} opts body 는 OCSP 처럼 이진이면 Buffer
+ * @returns {Promise<{ status: number, headers: import("node:http").IncomingHttpHeaders, body: string, rawBody: Buffer }>} rawBody 는 OCSP 응답처럼 이진 본문용
  */
 export function outboundRequest(rawUrl, opts) {
   const url = assertAllowedUrl(rawUrl, opts.allowedHosts);
@@ -120,7 +120,10 @@ export function outboundRequest(rawUrl, opts) {
           }
           chunks.push(chunk);
         });
-        res.on("end", () => resolve({ status, headers: res.headers, body: Buffer.concat(chunks).toString("utf8") }));
+        res.on("end", () => {
+          const rawBody = Buffer.concat(chunks);
+          resolve({ status, headers: res.headers, body: rawBody.toString("utf8"), rawBody });
+        });
         res.on("error", reject);
       },
     );

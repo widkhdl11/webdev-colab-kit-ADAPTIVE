@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
-import { PHONE_CODE_EXPIRED_MESSAGE, PHONE_CODE_TTL_SECONDS } from "@/entities/session/model/phone-code";
+import { PHONE_CODE_EXPIRED_MESSAGE, PHONE_CODE_SENT_MESSAGE, PHONE_CODE_TTL_SECONDS } from "@/entities/session/model/phone-code";
 import { useCountdown } from "@/shared/lib/time/use-countdown";
 import { checkPhoneChangeCode, requestPhoneChangeCode, sendPhoneChange, type PhoneChangeField } from "../api/phone-change-client";
 import s from "./phone-change.module.css";
@@ -63,7 +63,7 @@ export function PhoneChangePanel({ id, onLoginExpired, onChanged }: { id: string
     setStage("code");
     setCode("");
     setExpiresAt(Date.now() + PHONE_CODE_TTL_SECONDS * 1000);
-    setNotice({ kind: "ok", text: "인증번호를 보냈습니다." });
+    setNotice({ kind: "ok", text: PHONE_CODE_SENT_MESSAGE[r.channel] });
     setFocusTo({ input: "code" });
   };
 

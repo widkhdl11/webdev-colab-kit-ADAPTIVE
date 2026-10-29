@@ -14,7 +14,7 @@ function phone(): string {
 }
 const ip = () => randomBytes(32).toString("hex");
 const secret = () => readPhoneCodeSecret({ NODE_ENV: "test" });
-const deps = () => ({ admin: adminClient(), verifier: { kind: "fake" as const, send: async () => {} }, codeSecret: secret });
+const deps = () => ({ admin: adminClient(), verifier: { kind: "fake" as const, sendKakaoCode: async () => true, sendSms: async () => {} }, codeSecret: secret });
 const row = (id: string, cols: string) => psql(`select ${cols} from pii.phone_verifications where id = '${id}'`);
 const check = (verificationId: string, code: string) => checkPhoneCode(deps(), { verificationId, code });
 const wrongOf = (code: string) => (code === "000000" ? "000001" : "000000");
@@ -68,7 +68,7 @@ describe("INV-U15: 인증번호 보관 — 해시·만료·틀린 횟수만", ()
   it("INV-U15 (실패경로): 발송이 두 번 실패하면 그 줄은 버려진 채 남는다", async () => {
     const p = phone();
     const r = await startPhoneVerification(
-      { ...deps(), verifier: { kind: "fake", send: async () => Promise.reject(new Error("down")) } },
+      { ...deps(), verifier: { kind: "fake", sendKakaoCode: async () => false, sendSms: async () => Promise.reject(new Error("down")) } },
       { phone: p },
       ip(),
     );

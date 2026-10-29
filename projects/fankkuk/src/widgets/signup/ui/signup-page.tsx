@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { PASSWORD_HINT } from "@/entities/session/model/password-rule";
-import { PHONE_CODE_EXPIRED_MESSAGE, PHONE_CODE_TTL_SECONDS } from "@/entities/session/model/phone-code";
+import { PHONE_CODE_EXPIRED_MESSAGE, PHONE_CODE_SENT_MESSAGE, PHONE_CODE_TTL_SECONDS } from "@/entities/session/model/phone-code";
 import { resolveTagSelection, type TagOption } from "@/entities/creator/model/creator-tags";
 import { FAN_NAME_MAX } from "@/entities/creator/model/fan-name";
 import { HEARD_FROM, HEARD_FROM_LABEL, isHeardFrom, type HeardFrom } from "@/entities/metrics/model/signup-source";
@@ -333,7 +333,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     setCode("");
     setLocked(false);
     setExpiresAt(sentAt + CODE_SECONDS * 1000);
-    setCodeNote({ tone: "wait", message: `${phone} 번호로 인증번호를 보냈습니다.` });
+    setCodeNote({ tone: "wait", message: PHONE_CODE_SENT_MESSAGE[r.channel] });
     requestAnimationFrame(() => codeRef.current?.focus());
   };
 

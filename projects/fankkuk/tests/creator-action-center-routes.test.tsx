@@ -134,7 +134,7 @@ describe("INV-J6: 실제 라우트 — 사이드바 숫자·홈 「처리할 일
   });
 
   it("INV-J6 S6: 처리할 일 — 한 번 읽고, 사이드바 3 · 제목 「3건」 · 줄 3", async () => {
-    const r = await draw(CreatorActionsRoute());
+    const r = await draw(CreatorActionsRoute({ searchParams: Promise.resolve({}) }));
     expect(reads.calls).toBe(1);
     expect(r.badge).toBe("3");
     expect(host.querySelector("h1 .ph-count")?.textContent).toBe("3건");
@@ -146,7 +146,7 @@ describe("INV-J6: 실제 라우트 — 사이드바 숫자·홈 「처리할 일
     expect((await draw(CreatorHomeRoute())).badge).toBeNull();
     expect([...host.querySelectorAll("main a")].find((a) => a.textContent?.startsWith("지금 할 일"))?.textContent).toBe("지금 할 일0건");
     reads.calls = 0;
-    expect((await draw(CreatorActionsRoute())).badge).toBeNull();
+    expect((await draw(CreatorActionsRoute({ searchParams: Promise.resolve({}) }))).badge).toBeNull();
     expect(host.textContent).toContain("현재 처리할 일이 없습니다");
   });
 });

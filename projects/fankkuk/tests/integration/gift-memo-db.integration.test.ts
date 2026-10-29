@@ -197,7 +197,9 @@ describe("together INV-F8: 메모는 보낸 팬 본인에게만 — 정해진 �
     const texts = psql(
       [
         `select coalesce(string_agg(q.payload, ' '), '') from public.approval_requests q join public.orders o on o.id = q.order_id where o.order_no in (${orders})`,
-        `union all select coalesce(string_agg(s.signed_content, ' '), '') from public.approval_signatures s join public.approval_requests q on q.request_id = s.request_id join public.orders o on o.id = q.order_id where o.order_no in (${orders})`,
+        `union all select coalesce(string_agg(coalesce(s.signed_content, '') || ' ' || coalesce(s.signature, ''), ' '), '') from public.approval_signatures s join public.approval_requests q on q.request_id = s.request_id join public.orders o on o.id = q.order_id where o.order_no in (${orders})`,
+        // 승인 서명 원문(INV-S1 — 네 값) — 「승인」을 누를 때 만든 서명 요청 줄
+        `union all select coalesce(string_agg(sr.plaintext, ' '), '') from public.approval_sign_requests sr join public.approval_requests q on q.request_id = sr.approval_request_id join public.orders o on o.id = q.order_id where o.order_no in (${orders})`,
         `union all select coalesce(string_agg(row_to_json(n)::text, ' '), '') from public.notification_outbox n join public.orders o on o.id = n.order_id where o.order_no in (${orders})`,
       ].join(" "),
     );

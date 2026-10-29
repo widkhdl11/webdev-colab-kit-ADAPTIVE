@@ -8,15 +8,25 @@ const VID = "11111111-2222-4333-8444-555555555555";
 
 type Sent = { phone: string; text: string };
 
-function harness(opts: { requestError?: string; sendFails?: number; verifier?: PhoneVerifier | null; checkRow?: { result: string; remaining: number } } = {}) {
+function harness(
+  opts: { requestError?: string; sendFails?: number; kakao?: "delivered" | "failed" | "throws"; verifier?: PhoneVerifier | null; checkRow?: { result: string; remaining: number } } = {},
+) {
   const rpcCalls: { fn: string; args: Record<string, unknown> }[] = [];
   const sent: Sent[] = [];
+  const kakaoSent: { phone: string; code: string }[] = [];
   let failuresLeft = opts.sendFails ?? 0;
+  // 기본은 알림톡이 안 되는 경우 — 문자 쪽 시험이 그대로 문자를 본다
+  const kakao = opts.kakao ?? "failed";
   const verifier: PhoneVerifier | null =
     opts.verifier === undefined
       ? {
           kind: "fake",
-          async send(phone, text) {
+          async sendKakaoCode(phone, code) {
+            kakaoSent.push({ phone, code });
+            if (kakao === "throws") throw new Error("kakao down");
+            return kakao === "delivered";
+          },
+          async sendSms(phone, text) {
             sent.push({ phone, text });
             if (failuresLeft > 0) {
               failuresLeft -= 1;
@@ -38,7 +48,7 @@ function harness(opts: { requestError?: string; sendFails?: number; verifier?: P
       },
     },
   };
-  return { deps, rpcCalls, sent };
+  return { deps, rpcCalls, sent, kakaoSent };
 }
 
 const codeOf = (text: string) => /인증번호 (\d{6})/.exec(text)?.[1] ?? "";
@@ -49,7 +59,7 @@ describe("INV-U9·U15: 가짜 창구의 고정 인증번호", () => {
   });
 
   it("INV-U9: 가짜 창구(fixedCode)면 000000 의 해시를 진짜와 같은 함수로 기록한다", async () => {
-    const h = harness({ verifier: { kind: "fake", fixedCode: "000000", async send() {} } });
+    const h = harness({ verifier: { kind: "fake", fixedCode: "000000", sendKakaoCode: async () => true, async sendSms() {} } });
     const r = await startPhoneVerification(h.deps, { phone: "01055556666" }, IP);
     if (!r.ok) throw new Error("요청 실패");
     expect(h.rpcCalls[0]!.args.p_code_hash).toBe(hashPhoneCode(SECRET, r.verificationId, "000000"));
@@ -57,7 +67,7 @@ describe("INV-U9·U15: 가짜 창구의 고정 인증번호", () => {
 
   it("INV-U9 (실패경로): 가짜가 아닌 창구(운영 대행사)에서는 000000 이 통하지 않는다 — 기록된 해시가 000000 의 해시가 아니다", async () => {
     for (let i = 0; i < 5; i += 1) {
-      const h = harness({ verifier: { kind: "provider", async send() {} } });
+      const h = harness({ verifier: { kind: "provider", sendKakaoCode: async () => true, async sendSms() {} } });
       const r = await startPhoneVerification(h.deps, { phone: "01055556666" }, IP);
       if (!r.ok) throw new Error("요청 실패");
       expect(h.rpcCalls[0]!.args.p_code_hash).not.toBe(hashPhoneCode(SECRET, r.verificationId, "000000"));
@@ -134,6 +144,43 @@ describe("인증번호 요청", () => {
       expect(await startPhoneVerification(h.deps, { phone }, IP)).toMatchObject({ ok: false, status: 400 });
       expect(h.rpcCalls).toEqual([]);
     }
+  });
+});
+
+describe("INV-U15 (S15c): 알림톡 먼저, 안 되면 같은 인증번호를 문자로", () => {
+  it("INV-U15 (S15c): 알림톡이 도착하면 문자는 안 가고 통로는 kakao", async () => {
+    const h = harness({ kakao: "delivered" });
+    const r = await startPhoneVerification(h.deps, { phone: "01055556666" }, IP);
+    expect(r).toMatchObject({ ok: true, channel: "kakao" });
+    expect(h.sent).toEqual([]);
+    expect(h.kakaoSent).toHaveLength(1);
+    expect(h.kakaoSent[0]!.phone).toBe("01055556666");
+    if (r.ok) expect(h.rpcCalls[0]!.args.p_code_hash).toBe(hashPhoneCode(SECRET, r.verificationId, h.kakaoSent[0]!.code));
+  });
+
+  it("INV-U15 (S15c, 실패경로): 알림톡 실패면 같은 인증번호가 문자로 가고 통로는 sms — 요청 기록은 한 번", async () => {
+    for (const kakao of ["failed", "throws"] as const) {
+      const h = harness({ kakao });
+      const r = await startPhoneVerification(h.deps, { phone: "01055556666" }, IP);
+      expect(r).toMatchObject({ ok: true, channel: "sms" });
+      expect(h.sent).toHaveLength(1);
+      expect(h.sent[0]!.text).toBe(phoneCodeText(h.kakaoSent[0]!.code));
+      expect(h.rpcCalls.map((c) => c.fn)).toEqual(["request_phone_code"]);
+    }
+  });
+
+  it("INV-U15 (실패경로): 알림톡도 문자 두 번도 실패하면 버리고 「잠시 후 다시」 — 통로를 말하지 않는다", async () => {
+    const h = harness({ kakao: "failed", sendFails: 2 });
+    const r = await startPhoneVerification(h.deps, { phone: "01055556666" }, IP);
+    expect(r).toMatchObject({ ok: false, reason: "send_failed" });
+    expect(h.kakaoSent).toHaveLength(1);
+    expect(h.sent).toHaveLength(2);
+  });
+
+  it("INV-U15: 응답에는 인증번호가 없다(알림톡으로 간 때도)", async () => {
+    const h = harness({ kakao: "delivered" });
+    const r = await startPhoneVerification(h.deps, { phone: "01055556666" }, IP);
+    expect(JSON.stringify(r)).not.toContain(h.kakaoSent[0]!.code);
   });
 });
 

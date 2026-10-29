@@ -15,6 +15,9 @@ type Row = {
   auto_reject_at: string | null;
   undelivered_reason?: string | null;
   sender_name?: string | null;
+  approval_sender?: string | null;
+  approval_gift_kind?: string | null;
+  approval_box_count?: number | null;
   must_deliver: boolean;
   attempts: number;
   claimed_at: string;
@@ -131,13 +134,16 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     const kakao = channel(true);
     const seen: { hasKakaoTemplates?: boolean } = {};
     const { admin, calls } = fakeAdmin({
-      rows: [{ ...ROW, id: "k", channel: "kakao" }, { ...ROW, id: "e" }],
+      rows: [{ ...ROW, id: "k", kind: "shipped", channel: "kakao" }, { ...ROW, id: "e" }],
       contacts: { k: "01012345678", e: "byeolbit@example.com" },
-      templates: [{ kind: "arrived", template_code: "TPL_ARRIVED_1" }],
+      templates: [{ kind: "shipped", template_code: "TPL_SHIPPED_1" }],
     });
     await dispatchNotifications(deps(admin, { email, kakao }, seen));
     expect(seen.hasKakaoTemplates).toBe(true);
-    expect(kakao.sent.map((m) => [m.outboxId, m.templateCode])).toEqual([["k", "TPL_ARRIVED_1"]]);
+    expect(kakao.sent.map((m) => [m.outboxId, m.templateCode])).toEqual([["k", "TPL_SHIPPED_1"]]);
+    // 알림톡은 템플릿 문서의 변수 이름으로 값만 넘긴다(INV-N7)
+    expect(kakao.sent[0]!.variables).toEqual({ "#{닉네임}": "별빛", "#{주문번호}": "FC-7K3M9" });
+    expect(email.sent[0]!.variables).toBeNull();
     expect(email.sent.map((m) => [m.outboxId, m.templateCode])).toEqual([["e", null]]);
     // 가짜 통로로 보낸 줄은 가짜로 남는다(INV-N11)
     expect(finishes(calls)).toContainEqual({ p_id: "k", p_claimed_at: CLAIMED, p_outcome: "sent", p_provider_message_id: null, p_error_code: null, p_fake: true });
@@ -147,9 +153,9 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     const email = channel();
     const kakao = channel(true, "provider_error");
     const { admin, calls } = fakeAdmin({
-      rows: [{ ...ROW, id: "k", channel: "kakao" }],
+      rows: [{ ...ROW, id: "k", kind: "shipped", channel: "kakao" }],
       contacts: { k: "01012345678" },
-      templates: [{ kind: "arrived", template_code: "TPL_ARRIVED_1" }],
+      templates: [{ kind: "shipped", template_code: "TPL_SHIPPED_1" }],
     });
     const result = await dispatchNotifications(deps(admin, { email, kakao }));
     expect(email.sent).toHaveLength(0);
@@ -186,16 +192,67 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     expect(calls.filter((c) => c.fn === "notification_contact").map((c) => c.args)).toEqual([{ p_outbox_id: "bad" }]);
   });
 
-  it("INV-N1·N8: 승인 요청 줄은 자동 반려 예정 시각을 본문에 넣고, 꺼낸 값 말고는 본문에 쓰지 않는다", async () => {
+  const APPROVAL_ROW: Row = {
+    ...ROW,
+    kind: "approval_request",
+    round: 3,
+    nickname: "하루",
+    auto_reject_at: "2026-10-08T01:00:00Z",
+    approval_sender: "달토끼",
+    approval_gift_kind: "꽃",
+    approval_box_count: 2,
+    must_deliver: true,
+  };
+
+  it("INV-N1·N8 (S1c): 승인 요청 줄은 꺼낸 값(자동 반려 예정 시각·보낸 팬·종류·개수)으로만 본문을 만든다", async () => {
     const email = channel();
-    const { admin } = fakeAdmin({
-      rows: [{ ...ROW, kind: "approval_request", round: 3, nickname: "하루", auto_reject_at: "2026-10-08T01:00:00Z", must_deliver: true }],
-      contacts: { "row-1": "haru@example.com" },
-    });
+    const { admin } = fakeAdmin({ rows: [APPROVAL_ROW], contacts: { "row-1": "haru@example.com" } });
     await dispatchNotifications(deps(admin, { email, kakao: null }));
     expect(email.sent[0]!.text).toContain("10월 8일 오전 10시까지");
     expect(email.sent[0]!.text).toContain("하루님");
+    expect(email.sent[0]!.text).toContain("보낸 사람: 달토끼\n선물: 꽃 2개");
     expect(email.sent[0]!.text).not.toContain("haru@example.com"); // 받는 주소는 본문에 없다
+  });
+
+  it("INV-N1 (실패경로): 보낸 팬·종류·개수를 내주지 않는 줄(옛 DB)의 승인 요청은 만들지 않고 건너뜀", async () => {
+    const email = channel();
+    const { admin, calls } = fakeAdmin({
+      rows: [{ ...APPROVAL_ROW, approval_sender: null }, { ...APPROVAL_ROW, id: "row-2", approval_box_count: undefined }],
+      contacts: { "row-1": "haru@example.com", "row-2": "haru@example.com" },
+    });
+    await dispatchNotifications(deps(admin, { email, kakao: null }));
+    expect(email.sent).toHaveLength(0);
+    expect(finishes(calls).map((f) => (f as { p_error_code: string }).p_error_code)).toEqual(["body_unavailable", "body_unavailable"]);
+  });
+
+  it("INV-N7: 승인 요청 알림톡은 템플릿 문서의 여섯 변수로 간다", async () => {
+    const kakao = channel(true);
+    const { admin } = fakeAdmin({
+      rows: [{ ...APPROVAL_ROW, channel: "kakao" }],
+      contacts: { "row-1": "01012345678" },
+      templates: [{ kind: "approval_request", template_code: "TPL_APPROVAL" }],
+    });
+    await dispatchNotifications(deps(admin, { email: channel(), kakao }));
+    expect(kakao.sent[0]!.variables).toEqual({
+      "#{닉네임}": "하루",
+      "#{주문번호}": "FC-7K3M9",
+      "#{보낸사람}": "달토끼",
+      "#{선물종류}": "꽃",
+      "#{개수}": "2",
+      "#{기한}": "10월 8일 오전 10시",
+    });
+  });
+
+  it("INV-N7 (실패경로): 템플릿 ID 가 있어도 템플릿 문서에 본문이 없는 종류는 알림톡으로 보내지 않고 건너뜀", async () => {
+    const kakao = channel(true);
+    const { admin, calls } = fakeAdmin({
+      rows: [{ ...ROW, channel: "kakao" }],
+      contacts: { "row-1": "01012345678" },
+      templates: [{ kind: "arrived", template_code: "TPL_ARRIVED_1" }],
+    });
+    await dispatchNotifications(deps(admin, { email: channel(), kakao }));
+    expect(kakao.sent).toHaveLength(0);
+    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_claimed_at: CLAIMED, p_outcome: "skipped", p_provider_message_id: null, p_error_code: "alimtalk_unavailable", p_fake: false }]);
   });
 
   it("INV-N20: 역조공 받기 줄은 꺼낸 sender_name(DB 값)으로 보낸 크리에이터 이름을 넣고 그 몫의 선물 상세(#todo — action-center INV-J12·J13)로 잇는다. 이름이 없는 줄은 보내지 않는다", async () => {
@@ -323,7 +380,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
       admin,
       appOrigin: "https://fankkuk.example.com",
       chooseChannels: () => {
-        throw new Error("카카오 템플릿 코드가 설정돼 있는데 알림톡 대행사 설정(KAKAO_ALIMTALK_*)이 없다");
+        throw new Error("카카오 템플릿 코드가 설정돼 있는데 솔라피 설정(SOLAPI_API_KEY·SOLAPI_API_SECRET·SMS_SENDER_NUMBER·KAKAO_PF_ID)이 없다");
       },
     });
     expect(result).toMatchObject({ ok: false, reason: "config" });

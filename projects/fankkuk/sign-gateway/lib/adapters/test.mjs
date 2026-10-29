@@ -7,15 +7,14 @@
 //   signed(기본) · pending · rejected · expired · tampered(다른 원문에 서명) · badsig(서명 값 훼손)
 
 import crypto from "node:crypto";
-import { SignatureInvalidError, UnknownTransactionError } from "./errors.mjs";
+import { PlaintextMismatchError, SignatureInvalidError, UnknownTransactionError } from "./errors.mjs";
 
-const TTL_MS = 10 * 60 * 1000;
+const TTL_MS = 5 * 60 * 1000; // 드림시큐리티와 같은 5분
 const MAX_ENTRIES = 1000;
 const OUTCOMES = new Set(["signed", "pending", "rejected", "expired", "tampered", "badsig"]);
 
 export function createTestAdapter() {
   const { privateKey, publicKey } = crypto.generateKeyPairSync("ed25519");
-  const publicKeyPem = publicKey.export({ type: "spki", format: "pem" }).toString();
   /** @type {Map<string, { requestId: string, plaintext: string, subjectId: string, outcome: string, createdAt: number }>} */
   const transactions = new Map();
 
@@ -37,7 +36,9 @@ export function createTestAdapter() {
     },
 
     async requestSignature({ requestId, plaintext, signer }) {
-      const subjectId = typeof signer?.subjectId === "string" ? signer.subjectId : "";
+      // 시험 결과를 고르는 호출은 subjectId 를, 앱의 약속({ envelope, creatorId })을 그대로 보내는 호출은 creatorId 를 대상 표시로 쓴다
+      const subject = signer?.subjectId ?? signer?.creatorId;
+      const subjectId = typeof subject === "string" ? subject : "";
       if (!subjectId || subjectId.length > 128) throw new TypeError("signer.subjectId 가 필요하다");
       const outcome = signer.outcome ?? "signed";
       if (!OUTCOMES.has(outcome)) throw new TypeError("signer.outcome 이 올바르지 않다");
@@ -48,6 +49,7 @@ export function createTestAdapter() {
       return { txId, expiresAt: new Date(now + TTL_MS).toISOString() };
     },
 
+    /** 서명 값을 직접 검증한 뒤에만 signed. 원문은 검증한 값에서만 꺼낸다. */
     async fetchResult({ requestId, txId }) {
       const tx = transactions.get(txId);
       if (!tx || tx.requestId !== requestId) throw new UnknownTransactionError("모르는 거래 번호");
@@ -60,31 +62,12 @@ export function createTestAdapter() {
         signature = Buffer.from(signature);
         signature[0] ^= 0xff;
       }
+      const ok = crypto.verify(null, Buffer.from(signedPlaintext, "utf8"), publicKey, signature);
+      if (!ok) throw new SignatureInvalidError("signature_mismatch");
+      if (signedPlaintext !== tx.plaintext) throw new PlaintextMismatchError("plaintext");
       return {
         state: "signed",
-        raw: {
-          signedPlaintext,
-          signature: signature.toString("base64"),
-          certificate: publicKeyPem,
-          subjectId: tx.subjectId,
-        },
-      };
-    },
-
-    /** 서명 값을 직접 검증한다. 원문과 서명자는 검증한 값에서만 꺼낸다. */
-    async verify(raw) {
-      const ok = crypto.verify(
-        null,
-        Buffer.from(raw.signedPlaintext, "utf8"),
-        publicKey,
-        Buffer.from(raw.signature, "base64"),
-      );
-      if (!ok) throw new SignatureInvalidError("서명 값이 원문과 맞지 않는다");
-      return {
-        signedPlaintext: raw.signedPlaintext,
-        signerId: `fake:${raw.subjectId}`,
-        signature: raw.signature,
-        certificate: raw.certificate,
+        verified: { signedPlaintext, signature: signature.toString("base64"), signedAt: new Date().toISOString() },
       };
     },
   };

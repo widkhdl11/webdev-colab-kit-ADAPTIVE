@@ -54,7 +54,7 @@ const click = async (name: string) => {
 
 async function startVerified() {
   act(() => root.render(<PhoneChangePanel id="p" onLoginExpired={() => {}} onChanged={() => {}} />));
-  api.requestPhoneChangeCode.mockResolvedValue({ kind: "ok" });
+  api.requestPhoneChangeCode.mockResolvedValue({ kind: "ok", channel: "kakao" });
   api.checkPhoneChangeCode.mockResolvedValue({ kind: "ok" });
   typeInto("새 휴대폰 번호", "01055502006");
   await click("인증번호 받기");
@@ -69,7 +69,7 @@ describe("번호 바꾸기 화면 — 문자 인증번호 (signup INV-U12)", () 
   it("INV-U12: 인증번호 받기 → 확인 → 현재 비밀번호 → 변경 순서로만 칸이 열린다", async () => {
     act(() => root.render(<PhoneChangePanel id="p" onLoginExpired={() => {}} onChanged={() => {}} />));
     expect(labels()).toEqual(["새 휴대폰 번호"]);
-    api.requestPhoneChangeCode.mockResolvedValue({ kind: "ok" });
+    api.requestPhoneChangeCode.mockResolvedValue({ kind: "ok", channel: "kakao" });
     typeInto("새 휴대폰 번호", "01055502006");
     await click("인증번호 받기");
     expect(api.requestPhoneChangeCode).toHaveBeenCalledWith("01055502006");
@@ -88,9 +88,22 @@ describe("번호 바꾸기 화면 — 문자 인증번호 (signup INV-U12)", () 
     expect(host.querySelector('[role="status"]')?.textContent).toBe("휴대폰 번호가 변경되었습니다.");
   });
 
+  it("INV-U15 (S15c): 받은 뒤 안내는 실제로 간 길대로 — 카카오톡 / 문자", async () => {
+    for (const [channel, text] of [
+      ["kakao", "카카오톡으로 인증번호를 보냈어요"],
+      ["sms", "문자로 인증번호를 보냈어요"],
+    ] as const) {
+      act(() => root.render(<PhoneChangePanel key={channel} id="p" onLoginExpired={() => {}} onChanged={() => {}} />));
+      api.requestPhoneChangeCode.mockResolvedValue({ kind: "ok", channel });
+      typeInto("새 휴대폰 번호", "01055502006");
+      await click("인증번호 받기");
+      expect(host.querySelector('[role="status"]')?.textContent).toBe(text);
+    }
+  });
+
   it("INV-U10 (실패경로): 인증번호가 틀리면 서버 문구를 보여 주고 비밀번호 칸을 열지 않는다", async () => {
     act(() => root.render(<PhoneChangePanel id="p" onLoginExpired={() => {}} onChanged={() => {}} />));
-    api.requestPhoneChangeCode.mockResolvedValue({ kind: "ok" });
+    api.requestPhoneChangeCode.mockResolvedValue({ kind: "ok", channel: "kakao" });
     typeInto("새 휴대폰 번호", "01055502006");
     await click("인증번호 받기");
     api.checkPhoneChangeCode.mockResolvedValue({ kind: "failed", field: "code", message: "인증번호가 맞지 않습니다. 남은 횟수 4회" });
@@ -137,7 +150,7 @@ describe("번호 바꾸기 화면 — 남은 시간 (signup INV-U15)", () => {
     vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
     try {
       act(() => root.render(<PhoneChangePanel id="p" onLoginExpired={() => {}} onChanged={() => {}} />));
-      api.requestPhoneChangeCode.mockResolvedValue({ kind: "ok" });
+      api.requestPhoneChangeCode.mockResolvedValue({ kind: "ok", channel: "kakao" });
       typeInto("새 휴대폰 번호", "01055502006");
       await click("인증번호 받기");
       expect(host.querySelector('[role="timer"]')?.textContent).toBe("03:00");

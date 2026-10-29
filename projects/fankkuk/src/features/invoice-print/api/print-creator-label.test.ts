@@ -1,8 +1,9 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { creatorAddressPlaintext } from "@/entities/address/model/creator-address-plaintext";
+import { createHash } from "node:crypto";
+import { buildApprovalPlaintext } from "@/entities/order/model/approval-plaintext";
 import { buildSigningPayload } from "@/entities/order/model/signing-payload";
-import { chooseApprovalSigner } from "@/shared/api/approval-signer/signer";
 import { createDevKeyUnwrapper, type KeyUnwrapper } from "@/shared/lib/envelope/dev-key-unwrapper";
 import { importSealingPublicKey, sealEnvelope } from "@/shared/lib/envelope/envelope";
 import { printCreatorLabel, type CreatorLabelDeps } from "./print-creator-label";
@@ -24,8 +25,8 @@ const OLD_WAYBILL = "111122223333";
 
 const fields = { recipientName: "김하루", phone: "01012345678", zipCode: "06236", address1: "서울시 강남구 테헤란로 123", address2: "101동" };
 
-const payloadFor = (orderNo: string) =>
-  buildSigningPayload({ requestId: `apr_${orderNo.slice(3)}`, orderNo, requestedAt: "2026-10-01T09:30:00.000Z", fanNicknameHash: "d".repeat(64) });
+const payloadFor = (orderNo: string) => buildApprovalPlaintext({ orderNo, fanNickname: "별빛", giftKind: "꽃", boxCount: 1 });
+const hex = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
 
 async function keyPair(): Promise<{ publicKey: CryptoKey; privatePem: string }> {
   const pair = await crypto.subtle.generateKey(
@@ -54,10 +55,10 @@ function goodContext(patch: Context = {}): Context {
     creator_profile_id: HARU_PROFILE,
     difference_unpaid: false,
     decrypt_count: 0,
-    stored_payload: payloadFor(ORDER_NO),
-    signed_content: payloadFor(ORDER_NO),
-    signer_id: `fake:${HARU_PROFILE}`,
+    signature_present: true,
     signer_method: "fake",
+    recorded_hash: hex(payloadFor(ORDER_NO)),
+    approval_plaintext: payloadFor(ORDER_NO),
     ...patch,
   };
 }
@@ -127,7 +128,7 @@ function deps(db: CreatorLabelDeps["db"], over: Partial<CreatorLabelDeps> = {}):
     verifyRequester: async (token) => (token === "owner-token" ? OWNER : token === "staff-token" ? STAFF : null),
     ownerUserId: OWNER,
     unwrapper: countingUnwrapper().unwrapper,
-    signer: chooseApprovalSigner({ NODE_ENV: "development" }),
+    acceptedMethod: "fake",
     newWaybill: () => NEW_WAYBILL,
     ...over,
   };
@@ -219,11 +220,12 @@ describe("송장 출력 — 거부 (INV-P4·P7·P8)", () => {
   });
 
   const deniedCases: [string, Context, string][] = [
-    ["INV-P4 (S4, 실패경로 a): 승인 서명이 없으면", { signed_content: null, signer_id: null, signer_method: null }, "no_valid_approval"],
-    ["INV-P4 (실패경로 a): 서명된 원문이 저장한 원문과 다르면", { signed_content: payloadFor("FC-BBBBB") }, "no_valid_approval"],
-    ["INV-P4 (실패경로 a): 서명자가 그 크리에이터의 식별값이 아니면", { signer_id: "fake:00000000-0000-4000-a000-000000000099" }, "no_valid_approval"],
-    ["INV-P4 (실패경로 a): 서명 방식이 지금 창구와 다르면(카카오 서명인데 창구는 가짜)", { signer_method: "kakao" }, "no_valid_approval"],
-    ["INV-P4 (S4b, 실패경로 b): 서명 원문의 주문번호가 출력하는 주문과 다르면", { stored_payload: payloadFor("FC-BBBBB"), signed_content: payloadFor("FC-BBBBB") }, "order_mismatch"],
+    ["INV-P4 (S4, 실패경로 a): 승인 서명 기록이 없으면", { signature_present: false, signer_method: null, recorded_hash: null, approval_plaintext: null }, "no_valid_approval"],
+    ["INV-P4 (실패경로 a): 서명 기록은 있는데 서명값이 없으면", { signature_present: false }, "no_valid_approval"],
+    ["INV-P4 (실패경로 a)·INV-S12: 기록된 원문 해시가 그 주문 승인 원문의 해시와 다르면", { recorded_hash: hex(payloadFor("FC-BBBBB")) }, "no_valid_approval"],
+    ["INV-P4 (실패경로 a): 승인 원문이 없으면", { approval_plaintext: null }, "no_valid_approval"],
+    ["INV-P4 (실패경로 a): 서명 방식이 지금 받는 방식과 다르면(카카오 서명인데 받는 방식은 가짜)", { signer_method: "kakao" }, "no_valid_approval"],
+    ["INV-P4 (S4b, 실패경로 b): 서명 원문의 주문번호가 출력하는 주문과 다르면", { approval_plaintext: payloadFor("FC-BBBBB"), recorded_hash: hex(payloadFor("FC-BBBBB")) }, "order_mismatch"],
     ["INV-P4 (S4c, 실패경로 c): 검수 완료 전이면", { order_status: "labeled" }, "order_not_printable"],
     ["INV-P4 (실패경로 c): 주문은 출고됐는데 이 상자는 출고 확정 상자가 아니면", { order_status: "shipped", decrypt_count: 1 }, "order_not_printable"],
     ["INV-P4 (S4c, 실패경로 c): 거절된 주문이면", { order_status: "rejected" }, "order_not_printable"],
@@ -242,10 +244,66 @@ describe("송장 출력 — 거부 (INV-P4·P7·P8)", () => {
     });
   }
 
-  it("INV-S11·P12 (실패경로): 운영 환경이라 서명 창구가 없으면 가짜 서명 승인은 열지 않는다", async () => {
+  it("INV-S11·P12 (실패경로): 운영 환경이라 받는 방식이 kakao 면 가짜 서명 승인은 열지 않는다", async () => {
     const { db, logs } = fakeDb(goodContext(), await openedClaim(1));
-    expect(await printCreatorLabel(deps(db, { signer: chooseApprovalSigner({ NODE_ENV: "production" }) }), ask)).toEqual({ kind: "denied", reason: "no_valid_approval" });
+    expect(await printCreatorLabel(deps(db, { acceptedMethod: "kakao" }), ask)).toEqual({ kind: "denied", reason: "no_valid_approval" });
     expect(logs).toHaveLength(1);
+  });
+
+  describe("INV-P4 (a): kakao 서명 기록은 서명값을 다시 검증한다", () => {
+    const kakaoCtx = (patch: Context = {}) => goodContext({ signer_method: "kakao", signature: "MIIB-stored-cms", ...patch });
+    const kakaoDeps = (db: CreatorLabelDeps["db"], over: Partial<CreatorLabelDeps> = {}) => deps(db, { acceptedMethod: "kakao", ...over });
+
+    it("INV-P4 (a): 검증 함수가 서명값과 그 주문 서명 요청 원문으로 통과시키면 주소를 연다", async () => {
+      const seen: unknown[] = [];
+      const { db } = fakeDb(kakaoCtx(), await openedClaim(1));
+      const verifyStoredSignature = async (i: { signature: string; plaintext: string }) => (seen.push(i), true);
+      expect((await printCreatorLabel(kakaoDeps(db, { verifyStoredSignature }), ask)).kind).toBe("printed");
+      expect(seen).toEqual([{ signature: "MIIB-stored-cms", plaintext: payloadFor(ORDER_NO) }]);
+    });
+
+    it("INV-P4 (실패경로 a): DB 에 심은 kakao 줄(signature='x')은 검증 함수가 없으면(게이트웨이 밖) 열지 않는다", async () => {
+      const { db, calls, logs } = fakeDb(kakaoCtx({ signature: "x" }), await openedClaim(1));
+      expect(await printCreatorLabel(kakaoDeps(db), ask)).toEqual({ kind: "denied", reason: "no_valid_approval" });
+      expect(fnNames(calls)).not.toContain("invoice_claim_print");
+      expect(logs).toHaveLength(1);
+    });
+
+    it("INV-P4 (실패경로 a): 검증 함수가 거부하거나 던지면 열지 않는다", async () => {
+      for (const verifyStoredSignature of [async () => false, async () => Promise.reject(new Error("ocsp"))]) {
+        const { db, calls } = fakeDb(kakaoCtx({ signature: "x" }), await openedClaim(1));
+        expect(await printCreatorLabel(kakaoDeps(db, { verifyStoredSignature }), ask)).toEqual({ kind: "denied", reason: "no_valid_approval" });
+        expect(fnNames(calls)).not.toContain("invoice_claim_print");
+      }
+    });
+
+    it("INV-P4 (실패경로 a): 서명값 칸이 없으면(판정 재료 함수가 아직 주지 않음) 검증 함수를 부르지 않고 열지 않는다", async () => {
+      let called = 0;
+      const verifyStoredSignature = async () => (called++, true);
+      for (const patch of [{ signature: null }, { signature: undefined }, { signature: "" }]) {
+        const { db } = fakeDb(kakaoCtx(patch), await openedClaim(1));
+        expect(await printCreatorLabel(kakaoDeps(db, { verifyStoredSignature }), ask)).toEqual({ kind: "denied", reason: "no_valid_approval" });
+      }
+      expect(called).toBe(0);
+    });
+
+    it("INV-P4 (실패경로 a): 서명값이 검증돼도 원문 해시가 다르면 판정이 거부한다", async () => {
+      const { db } = fakeDb(kakaoCtx({ recorded_hash: hex(payloadFor("FC-BBBBB")) }), await openedClaim(1));
+      expect(await printCreatorLabel(kakaoDeps(db, { verifyStoredSignature: async () => true }), ask)).toEqual({ kind: "denied", reason: "no_valid_approval" });
+    });
+
+    it("INV-S11: fake 기록은 지금 규칙 그대로 — 검증 함수를 부르지 않는다", async () => {
+      let called = 0;
+      const { db } = fakeDb(goodContext({ signature: "fake-signature" }), await openedClaim(1));
+      expect((await printCreatorLabel(deps(db, { verifyStoredSignature: async () => (called++, false) }), ask)).kind).toBe("printed");
+      expect(called).toBe(0);
+    });
+  });
+
+  it("INV-P4 (a): 2026-10-29 전의 서명 기록(원문이 서명 기록에 있던 줄)도 그 원문과 해시로 다시 본다", async () => {
+    const old = buildSigningPayload({ requestId: "apr_AAAAA", orderNo: ORDER_NO, requestedAt: "2026-10-01T09:30:00.000Z", fanNicknameHash: "d".repeat(64) });
+    const { db } = fakeDb(goodContext({ approval_plaintext: old, recorded_hash: hex(old) }), await openedClaim(1));
+    expect((await printCreatorLabel(deps(db), ask)).kind).toBe("printed");
   });
 
   it("INV-P5 (S5b, 실패경로): 판정 뒤 DB 가 잠근 자리에서 거부하면(동시 요청이 먼저 씀) 봉투를 열지 않고 출력도 넘기지 않는다", async () => {

@@ -12,7 +12,7 @@ import type { CreatorLabelDeps } from "./print-creator-label";
 // 어느 주문에도 이어지지 않은 상자는 열 주소가 없다 — not_linked 로 돌려보내고, 부르는 쪽이 봉투 번호 길(office_print_return_label)로 간다(S15f).
 // DB 자격은 복호화 전용 역할(address_decryptor). 평문은 이 호출 안에서만 쓰고 라벨 다섯 칸만 돌려준다 — 로그·오류·기록 줄에 넣지 않는다.
 
-export type ReturnLabelDeps = Omit<CreatorLabelDeps, "signer">;
+export type ReturnLabelDeps = Omit<CreatorLabelDeps, "acceptedMethod">;
 
 export type ReturnLabelResult =
   | { kind: "printed"; waybill: string; reprint: boolean; label: CreatorAddressLabel }

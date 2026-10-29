@@ -37,7 +37,10 @@ import { formatDeadline, formatMonthDayKo } from "@/shared/lib/format/datetime";
 //   본문은 「받는 주소 없이 보낸 상자가 있어요」와 「받는 주소 없이 보냈어요」 화면(선물 상세) 링크뿐 — 송장번호·택배사·도착일·크리에이터 이름·주문번호 줄은 없다.
 // revgift_offer: 역조공 몫의 결제가 끝나면 받는 팬에게 한 번, 72시간 뒤 아직 받기 대기면 한 번 더(INV-N20, 2026-10-16). INV-N1 의 예외로 보낸 크리에이터
 //   공개 이름 하나가 들어간다(팬이 누가 보냈는지 모르면 받을지 정할 수 없다). 링크는 그 몫 받기 화면.
-// approval_request · creator_check 링크는 크리에이터 처리할 일(2026-10-16, INV-N9).
+// approval_request · creator_check 링크는 크리에이터 처리할 일(2026-10-16, INV-N9). 승인 요청은 그 주문의 승인 창을 여는 `?order=주문번호` 를 붙인다(2026-10-29, UX 명세 creator-actions).
+// approval_request: 세 차례 모두 보낸 팬 닉네임 · 선물 종류(정해진 목록 값) · 개수(상자 수)를 적는다(INV-N1 의 예외, 2026-10-29 — 승인 서명 원문 approval-signature INV-S1 과 같은 값).
+//   세 값은 알림을 꺼낼 때 DB 가 주문에서 읽어 넘긴다(public.approval_gift_facts) — 앱이 넘기는 값이 아니다. 하나라도 없으면 만들지 않는다.
+//   「선물 상세 정보는 알림에 표시하지 않습니다」 꼬리는 붙이지 않는다 — 종류·개수를 적었으니 틀린 말이 된다.
 // 종류 목록과 꼭 가는 알림 판정은 entities/notification 이 정본이다(INV-N6 표).
 export { NOTIFICATION_KINDS, type NotificationKind } from "@/entities/notification/model/delivery-policy";
 
@@ -56,11 +59,29 @@ export type NotificationBodyInput = {
   senderName: string | null;
   /** 반송 주소 재알림(return_address_reminder)만 — 처분 예정 시각(반송 대기 + 720시간, INV-N22). DB 가 꺼낸 줄에 넣은 값이고, 다른 종류는 본문에 쓰지 않는다 */
   disposeDueAt: string | null;
+  /** 승인 요청(approval_request)만 — 보낸 팬 닉네임·선물 종류(목록 라벨)·상자 수(INV-N1, 2026-10-29). DB 가 꺼낸 줄에 넣은 값이고, 다른 종류는 본문에 쓰지 않는다 */
+  approvalGift: ApprovalGift | null;
   /** 꺼낸 줄의 꼭 가는 알림 표시(DB 판정, INV-N6) */
   mustDeliver: boolean;
   /** 설정의 사이트 주소(APP_ORIGIN) */
   appOrigin: string;
 };
+
+export type ApprovalGift = { senderNickname: string; giftKind: string; boxCount: number };
+
+/** 승인 요청의 세 값 — 비었거나 상자 수가 1 미만이면 null(만들지 않는다). 알림톡 변수도 같은 값을 쓴다. */
+export function approvalGiftOf(input: Pick<NotificationBodyInput, "approvalGift">): ApprovalGift | null {
+  const g = input.approvalGift;
+  const senderNickname = g?.senderNickname.trim();
+  const giftKind = g?.giftKind.trim();
+  if (!g || !senderNickname || !giftKind || !Number.isInteger(g.boxCount) || g.boxCount < 1) return null;
+  return { senderNickname, giftKind, boxCount: g.boxCount };
+}
+
+/** 승인 요청 알림의 링크 경로 — 처리할 일에서 그 주문의 승인 창을 연다(UX 명세 creator-actions) */
+export function approvalRequestPath(orderNo: string): string {
+  return `${CREATOR_ACTION_CENTER_HREF}?order=${encodeURIComponent(orderNo)}`;
+}
 
 export type NotificationBody = { subject: string; text: string; buttonLabel: string; link: string };
 
@@ -89,7 +110,7 @@ const FAN_STEP = {
 /** 역조공 주문번호(RG-…)인가 — 역조공 상자 도착 알림은 보낸 크리에이터의 「보낸 역조공」 화면으로 잇는다 */
 const REVGIFT_ORDER_NO = /^RG-/;
 
-type Draft = { subject: string; lines: string[]; buttonLabel: string; path: string };
+type Draft = { subject: string; lines: string[]; buttonLabel: string; path: string; detailFooter?: false };
 
 /** 알림 링크에 쓸 사이트 주소 — 경로 없는 http(s) 주소만(INV-N9). 아니면 던진다. */
 export function siteOrigin(appOrigin: string): string {
@@ -105,24 +126,31 @@ export function siteOrigin(appOrigin: string): string {
   return url.origin;
 }
 
-function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReason, senderName, disposeDueAt }: NotificationBodyInput): Draft {
+function draftOf(input: NotificationBodyInput): Draft {
+  const { kind, round, nickname, orderNo, autoRejectAt, undeliveredReason, senderName, disposeDueAt } = input;
   const greet = `${nickname}님,`;
   const order = `주문번호 ${orderNo}`;
   switch (kind) {
-    case "approval_request":
+    case "approval_request": {
       if (!autoRejectAt) throw new Error("승인 요청 알림에 자동 반려 예정 시각이 없다");
+      const gift = approvalGiftOf(input);
+      if (!gift) throw new Error("승인 요청 알림에 보낸 사람·선물 종류·개수가 없다");
       return {
         subject: APPROVAL_SUBJECT[round],
         lines: [
           greet,
           round === 3 ? "아직 승인하지 않은 선물이 있습니다. 승인 기한을 확인해 주세요." : "승인 요청을 확인해 주세요.",
+          `보낸 사람: ${gift.senderNickname}`,
+          `선물: ${gift.giftKind} ${gift.boxCount}개`,
           order,
           `${formatDeadline(autoRejectAt)}까지 승인하지 않으면 자동 반려됩니다.`,
         ],
-        buttonLabel: "승인 요청 보기",
-        // 승인은 크리에이터 처리할 일에서 한다(2026-10-16 — 「승인 대기」 메뉴가 없어짐, INV-N9 · action-center INV-J5)
-        path: CREATOR_ACTION_CENTER_HREF,
+        buttonLabel: "승인 화면 열기",
+        // 승인은 크리에이터 처리할 일에서 한다(2026-10-16 — 「승인 대기」 메뉴가 없어짐, INV-N9 · action-center INV-J5). 그 주문의 승인 창을 연다(2026-10-29)
+        path: approvalRequestPath(orderNo),
+        detailFooter: false,
       };
+    }
     case "arrived":
     case "inspected":
     case "shipped": {
@@ -321,7 +349,7 @@ export function buildNotificationBody(input: NotificationBodyInput): Notificatio
   const link = `${origin}${d.path}`;
   return {
     subject: d.subject,
-    text: [...d.lines, "", link, "", FOOTER, input.mustDeliver ? FOOTER_MUST : FOOTER_OPTIONAL[audienceOf(input)]].join("\n"),
+    text: [...d.lines, "", link, "", ...(d.detailFooter === false ? [] : [FOOTER]), input.mustDeliver ? FOOTER_MUST : FOOTER_OPTIONAL[audienceOf(input)]].join("\n"),
     buttonLabel: d.buttonLabel,
     link,
   };

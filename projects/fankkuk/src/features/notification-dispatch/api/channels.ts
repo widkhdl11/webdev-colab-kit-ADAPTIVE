@@ -1,10 +1,12 @@
 import { isProduction, type DeployEnv } from "@/shared/lib/env/is-production";
 import type { SendMail } from "@/shared/api/mail/smtp";
+import { createSolapiPort, readSolapiConfig, SolapiError, type SolapiPort } from "@/shared/api/solapi/solapi";
 
 // 알림 발송 통로 (notifications INV-N7·N10·N11). 통로를 고르는 곳은 이 함수 하나다.
-// 카카오 알림톡 대행사는 아직 정하지 않았다(스펙 비범위 — 사람이 고른다). 그래서 지금 카카오 통로는 로컬의 가짜뿐이고,
-// 가짜는 알림톡 대신 같은 본문을 로컬 메일 확인 화면으로 보낸다. 운영에서 가짜를 켜는 설정은 일부러 두지 않는다
-// (승인 서명 창구 approval-signer 와 같은 이유). 운영에서 카카오 템플릿 코드가 있는데 대행사가 없으면 시작하지 않는다.
+// 카카오 통로는 솔라피 알림톡이다(2026-10-29) — 운영에서 솔라피 네 값(SOLAPI_API_KEY·SOLAPI_API_SECRET·SMS_SENDER_NUMBER·KAKAO_PF_ID)이 있을 때만.
+// 알림톡이 실패해도 문자로 대신 보내지 않는다(disableSms: true — INV-N7). 템플릿 ID 는 종류별 표의 template_code, 변수는 템플릿 문서 이름 그대로다.
+// 로컬의 가짜는 알림톡 대신 같은 본문을 로컬 메일 확인 화면으로 보낸다. 운영에서 가짜를 켜는 설정은 일부러 두지 않는다
+// (승인 서명 창구 approval-signer 와 같은 이유). 운영에서 카카오 템플릿 코드가 있는데 솔라피 설정이 없으면 시작하지 않는다.
 // 오류는 코드만 넘긴다 — 메일 서버·대행사의 오류 문장은 주소·번호를 되풀이할 수 있다(INV-N10).
 
 export type ChannelMessage = {
@@ -16,6 +18,8 @@ export type ChannelMessage = {
   text: string;
   /** 카카오만 — 그 종류의 승인된 템플릿 코드(INV-N7) */
   templateCode: string | null;
+  /** 카카오만 — 알림톡 변수(템플릿 문서의 `#{이름}` 그대로, lib/alimtalk-body) */
+  variables: Record<string, string> | null;
 };
 
 export type NotificationChannel = {
@@ -72,11 +76,44 @@ function fakeKakaoChannel(sendMail: SendMail): NotificationChannel {
   };
 }
 
-export function chooseNotificationChannels(env: DeployEnv, deps: { sendMail: SendMail; hasKakaoTemplates: boolean }): NotificationChannels {
+/** 발송 조회에서 거슬러 보는 시간 — 줄은 사건 뒤 24시간이면 실패로 끝나므로(INV-N5) 그보다 넉넉히 */
+const LOOKUP_SINCE_MS = 48 * 60 * 60 * 1000;
+/** 알림톡에 붙이는 우리 발송 번호의 이름(customFields) — 멈춘 줄을 이것으로 찾는다(INV-N5) */
+export const OUTBOX_FIELD = "outboxId";
+
+/** 솔라피 알림톡 통로. now 는 시험용 시계. */
+export function solapiKakaoChannel(port: SolapiPort, now: () => number = Date.now): NotificationChannel {
+  return {
+    fake: false,
+    async send({ outboxId, to, templateCode, variables }) {
+      if (!templateCode) throw new ChannelError("template_missing");
+      if (!variables) throw new ChannelError("alimtalk_variables_missing");
+      try {
+        const id = await port.sendAlimtalk({ to, templateId: templateCode, variables, customFields: { [OUTBOX_FIELD]: outboxId } });
+        return { providerMessageId: id };
+      } catch (e) {
+        throw new ChannelError(e instanceof SolapiError ? `solapi_${e.code}`.slice(0, 40) : "solapi_error");
+      }
+    },
+    // 우리 발송 번호로 찾는다(INV-N5): 도착 → 갔음 · 실패 → 안 갔음 · 기록 없음 → 안 갔음(접수 전에 끊겼다).
+    // 아직 결과 전이거나 끝까지 훑지 못했으면 던진다 — 일꾼이 그 줄을 건드리지 않고 다음에 다시 본다(두 번 가지 않게)
+    lookup: async (outboxId) => {
+      const found = await port.findAlimtalkByField(OUTBOX_FIELD, outboxId, new Date(now() - LOOKUP_SINCE_MS));
+      if (found === "pending") throw new ChannelError("lookup_pending");
+      return found === "delivered";
+    },
+  };
+}
+
+export function chooseNotificationChannels(
+  env: DeployEnv & Record<string, string | undefined>,
+  deps: { sendMail: SendMail; hasKakaoTemplates: boolean; solapiPort?: (config: NonNullable<ReturnType<typeof readSolapiConfig>>) => SolapiPort },
+): NotificationChannels {
   const email = emailChannel(deps.sendMail, !isProduction(env));
   if (isProduction(env)) {
-    // 실제 알림톡 대행사가 붙으면 여기서 그 통로를 돌려준다
-    if (deps.hasKakaoTemplates) throw new Error("카카오 템플릿 코드가 설정돼 있는데 알림톡 대행사 설정(KAKAO_ALIMTALK_*)이 없다");
+    const config = readSolapiConfig(env);
+    if (config) return { email, kakao: solapiKakaoChannel((deps.solapiPort ?? createSolapiPort)(config)) };
+    if (deps.hasKakaoTemplates) throw new Error("카카오 템플릿 코드가 설정돼 있는데 솔라피 설정(SOLAPI_API_KEY·SOLAPI_API_SECRET·SMS_SENDER_NUMBER·KAKAO_PF_ID)이 없다");
     return { email, kakao: null };
   }
   return { email, kakao: fakeKakaoChannel(deps.sendMail) };

@@ -11,6 +11,11 @@ vi.mock("@/features/creator-check/api/send-check-choice", () => ({ sendCheckChoi
 const sendReturnConfirm = vi.fn();
 vi.mock("@/features/return-address/api/send-return-confirm", () => ({ sendReturnConfirm: (...a: unknown[]) => sendReturnConfirm(...a) }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh, push: () => {} }) }));
+// 승인 창이 열릴 때 이어 볼 서명 요청을 묻는다 — 없음으로 답한다
+vi.mock("@/features/approval-request/api/approval-sign-client", () => ({
+  checkSign: async () => ({ kind: "view", view: { state: "none" } }),
+  startSign: async () => ({ kind: "failed" }),
+}));
 
 import { CreatorActionCenterPage } from "./creator-action-center-page";
 
@@ -77,7 +82,9 @@ const APPROVAL: CreatorActionItem = {
 const UNCONFIRMED: CreatorActionItem = { kind: "unconfirmed", orderNo: "RG-UN1", shareId: "11111111-1111-4111-8111-111111111111", nickname: "모카", tier: "small", sentAt: "2026-10-02T01:00:00.000Z" };
 const ALL = [BT_OPEN, BT_PICKED, APPROVAL, UNCONFIRMED];
 
-function render(items: readonly CreatorActionItem[]) {
+const exactButton = (scope: ParentNode, text: string) => [...scope.querySelectorAll("button")].find((b) => b.textContent === text);
+
+function render(items: readonly CreatorActionItem[], openOrderNo: string | null = null) {
   act(() =>
     root.render(
       <CreatorActionCenterPage
@@ -86,6 +93,7 @@ function render(items: readonly CreatorActionItem[]) {
         candidates={[{ shareId: UNCONFIRMED.kind === "unconfirmed" ? UNCONFIRMED.shareId : "", nickname: "모카", tier: "small" }]}
         address={null}
         sealingKeyPem={null}
+        openOrderNo={openOrderNo}
       />,
     ),
   );
@@ -180,7 +188,7 @@ describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
     expect(button(d, "상자 찾기")).toBeDefined();
   });
 
-  it("INV-J8: 하늘 판의 「받지 않기」는 같은 승인 창을 받지 않기 확인부터 열고, 「승인하기」는 카카오톡 승인 고르기부터 연다", () => {
+  it("INV-J8: 하늘 판의 「받지 않기」는 같은 승인 창을 받지 않기 확인부터 열고, 「승인하기」는 거절·승인 고르기부터 연다", () => {
     render(ALL);
     const hero = rows()[2]!;
     act(() => button(hero, "받지 않기")!.click());
@@ -188,12 +196,29 @@ describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
     expect(d.textContent).toContain("이 선물을 거절할까요?");
     expect(button(d, "돌아가기")).toBeDefined();
     act(() => button(d, "돌아가기")!.click());
-    expect(button(d, "카카오톡으로 승인")).toBeDefined();
+    expect(exactButton(d, "승인")).toBeDefined();
     act(() => d.querySelector<HTMLButtonElement>('button[aria-label="닫기"]')!.click());
     act(() => button(hero, "승인하기")!.click());
     d = host.querySelector("dialog[open]")!;
     expect(d.textContent).not.toContain("이 선물을 거절할까요?");
-    expect(button(d, "카카오톡으로 승인")).toBeDefined();
+    expect(exactButton(d, "승인")).toBeDefined();
+  });
+
+  it("INV-N9: 알림톡 [승인 화면 열기](?order=주문번호)로 오면 그 주문의 승인 창이 처음부터 열린다", () => {
+    render(ALL, "FC-AP1");
+    const d = host.querySelector("dialog[open]");
+    expect(d?.querySelector("h2")?.textContent).toBe("승인 요청");
+    expect(d?.textContent).toContain("다온님");
+    expect(exactButton(d!, "거절")).toBeDefined();
+    expect(exactButton(d!, "승인")).toBeDefined();
+  });
+
+  it("INV-N9 (실패경로): 그 주문이 이 크리에이터의 승인 요청 줄이 아니면(남의 주문·이미 처리·승인 요청 아닌 줄) 창을 열지 않고 목록만", () => {
+    for (const orderNo of ["FC-NOPE1", "FC-BT1", null]) {
+      render(ALL, orderNo);
+      expect(host.querySelector("dialog[open]"), String(orderNo)).toBeNull();
+      expect(rows().length).toBeGreaterThan(0);
+    }
   });
 
   it("INV-J6: 줄이 없으면 빈 상태 하나 — 판도 숫자도 없다", () => {

@@ -304,34 +304,85 @@ export function ensureApprovalAddress(requestId: string): void {
   );
 }
 
-/**
- * 그 주문의 크리에이터로, 가짜 서명(원문 그대로·서명자 fake:<크리에이터 계정>)을 붙여 승인 함수를 부른다(approval-signature INV-S11·S12).
- * 크리에이터 계정이 없는 요청이면 actor 가 비어 not_found 가 돌아온다.
- */
-export function approveArgs(
-  requestId: string,
-  opts: { ensureAddress?: boolean } = {},
-): { p_request_id: string; p_actor_id: string | null; p_signed_content: string; p_signer_id: string; p_method: string } {
-  if (opts.ensureAddress ?? true) ensureApprovalAddress(requestId);
-  const row = psql(
-    `select coalesce(c.profile_id::text, '') || '|' || q.payload from public.approval_requests q join public.orders o on o.id = q.order_id join public.creators c on c.id = o.creator_id where q.request_id = '${requestId}'`,
+/** 그 승인 요청 주문의 크리에이터 계정 ID — 크리에이터 계정이 없으면 null */
+export function creatorActorOf(requestId: string): string | null {
+  const actor = psql(
+    `select coalesce(c.profile_id::text, '') from public.approval_requests q join public.orders o on o.id = q.order_id join public.creators c on c.id = o.creator_id where q.request_id = '${requestId.replace(/'/g, "''")}'`,
   );
-  const cut = row.indexOf("|");
-  const actor = cut < 0 ? "" : row.slice(0, cut);
-  const payload = cut < 0 ? "" : row.slice(cut + 1);
-  return { p_request_id: requestId, p_actor_id: actor || null, p_signed_content: payload, p_signer_id: `fake:${actor}`, p_method: "fake" };
+  return actor || null;
 }
 
-/** approveArgs 로 승인 함수를 부른다. 결과는 rpc 응답 그대로. */
-export function approveRpc(requestId: string) {
-  return adminClient().rpc("approve_request", approveArgs(requestId));
+export type SignStartRow = {
+  result: string;
+  sign_request_id: string | null;
+  plaintext: string | null;
+  expires_at: string | null;
+  envelope: unknown;
+  /** 새 요청이면 그 주문의 크리에이터 ID(게이트웨이가 봉투 안의 것과 대조한다) — manual/0028 의 크리에이터 ID 판 */
+  creator_id?: string | null;
+};
+
+/** 「승인」을 누를 때의 서명 요청 만들기(approval-signature INV-S17) — 화면이 부르는 함수 그대로, 방식 fake. actor 를 주면 그 사람으로 */
+export async function startSignRpc(requestId: string, actor: string | null = creatorActorOf(requestId), method = "fake"): Promise<SignStartRow> {
+  const r = await adminClient().rpc("start_approval_sign", { p_actor_id: actor, p_request_id: requestId, p_method: method });
+  if (r.error) throw new Error(`start_approval_sign 실패: ${r.error.message}`);
+  return (Array.isArray(r.data) ? r.data[0] : r.data) as SignStartRow;
 }
 
-/** 같은 호출을 SQL 한 문장으로(다른 연결에서 잠금을 쥔 채 부를 때). */
-export function approveSql(requestId: string): string {
-  const a = approveArgs(requestId);
+/** 서명 요청에 게이트웨이 거래 ID 를 적는다(가짜 창구는 fake-<요청 ID>) */
+export async function recordSignTx(signRequestId: string, actor: string | null, txId = `fake-${signRequestId}`): Promise<string> {
+  const r = await adminClient().rpc("record_approval_sign_tx", { p_actor_id: actor, p_sign_request_id: signRequestId, p_tx_id: txId });
+  if (r.error) throw new Error(`record_approval_sign_tx 실패: ${r.error.message}`);
+  return String(r.data);
+}
+
+/** 가짜 서명 결과 — 서명된 원문은 저장 원문 그대로(바꿔 넣으려면 over) */
+export function settleArgs(
+  signRequestId: string,
+  actor: string | null,
+  plaintext: string,
+  over: Partial<{ p_signed_plaintext: string | null; p_signature: string | null; p_signed_at: string | null; p_method: string | null; p_actor_id: string | null }> = {},
+) {
+  return {
+    p_actor_id: actor,
+    p_sign_request_id: signRequestId,
+    p_signed_plaintext: plaintext,
+    p_signature: "fake-signature",
+    p_signed_at: new Date().toISOString(),
+    p_method: "fake",
+    ...over,
+  };
+}
+
+/**
+ * 그 주문의 크리에이터로 승인을 끝까지 돌린다 — 화면과 같은 길: 서명 요청 만들기 → 거래 ID 적기 → 가짜 서명 결과로 승인 함수(INV-S11·S12·S17).
+ * 서명 요청 만들기가 거부하면(already·not_found·expired·not_approvable·no_address …) 그 답을, 아니면 승인 함수의 답을 돌려준다.
+ * ensureAddress(기본 켬): 받는 주소가 없으면 시험용 봉투를 넣는다(INV-S13).
+ */
+export async function approveRpc(requestId: string, opts: { ensureAddress?: boolean } = {}): Promise<{ data: string | null; error: { message: string } | null }> {
+  if (opts.ensureAddress ?? true) ensureApprovalAddress(requestId);
+  const actor = creatorActorOf(requestId);
+  const started = await startSignRpc(requestId, actor);
+  if (started.result !== "started" && started.result !== "pending") return { data: started.result, error: null };
+  const signId = started.sign_request_id!;
+  const tx = psql(`select coalesce(gateway_tx_id, '') from public.approval_sign_requests where id = '${signId}'`);
+  if (!tx) await recordSignTx(signId, actor);
+  const r = await adminClient().rpc("settle_approval_sign", settleArgs(signId, actor, started.plaintext!));
+  return { data: (r.data as string | null) ?? null, error: r.error ? { message: r.error.message } : null };
+}
+
+/**
+ * 같은 승인을 SQL 한 문장으로(다른 연결에서 잠금을 쥔 채 부를 때). 서명 요청 만들기·거래 ID 는 먼저 끝내 두고, 승인 함수 부르기만 돌려준다.
+ */
+export async function approveSql(requestId: string): Promise<string> {
+  ensureApprovalAddress(requestId);
+  const actor = creatorActorOf(requestId);
+  const started = await startSignRpc(requestId, actor);
+  if (started.result !== "started" && started.result !== "pending") throw new Error(`서명 요청을 만들지 못함: ${started.result}`);
+  const signId = started.sign_request_id!;
+  if (!psql(`select coalesce(gateway_tx_id, '') from public.approval_sign_requests where id = '${signId}'`)) await recordSignTx(signId, actor);
   const q = (v: string) => `'${v.replace(/'/g, "''")}'`;
-  return `select public.approve_request(${q(a.p_request_id)}, ${a.p_actor_id ? q(a.p_actor_id) + "::uuid" : "null"}, ${q(a.p_signed_content)}, ${q(a.p_signer_id)}, 'fake')`;
+  return `select public.settle_approval_sign(${actor ? q(actor) + "::uuid" : "null"}, ${q(signId)}::uuid, ${q(started.plaintext!)}, 'fake-signature', now(), 'fake')`;
 }
 
 /**
@@ -343,7 +394,8 @@ export async function requestTestPhoneCode(phone: string, ipHash?: string): Prom
   const started = await startPhoneVerification(
     {
       admin: adminClient(),
-      verifier: { kind: "fake", send: async (_to, body) => void (text = body) },
+      // 알림톡은 안 된 것으로 — 같은 인증번호가 문자 본문으로 와서 꺼낼 수 있다
+      verifier: { kind: "fake", sendKakaoCode: async () => false, sendSms: async (_to, body) => void (text = body) },
       codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }),
     },
     { phone },
@@ -367,7 +419,7 @@ export function waitPhoneCodeMinute(phone: string): void {
 export async function verifiedTestPhone(phone: string): Promise<string> {
   const { verificationId, code } = await requestTestPhoneCode(phone);
   const checked = await checkPhoneCode(
-    { admin: adminClient(), verifier: { kind: "fake", send: async () => {} }, codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }) },
+    { admin: adminClient(), verifier: { kind: "fake", sendKakaoCode: async () => true, sendSms: async () => {} }, codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }) },
     { verificationId, code },
   );
   if (!checked.ok) throw new Error(`인증번호 확인 실패: ${checked.reason}`);

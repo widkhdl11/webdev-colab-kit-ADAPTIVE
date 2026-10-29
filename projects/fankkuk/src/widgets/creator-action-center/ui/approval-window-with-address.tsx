@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { addressOnFileText } from "@/entities/address/ui/address-on-file-text";
 import type { MyAddressStatus } from "@/entities/address/api/my-address-status";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
-import { ApprovalWindow, type ApprovalAddressStep } from "@/features/approval-request/ui/approval-window";
+import { ApprovalWindow, approvalLoginHref, type ApprovalAddressStep } from "@/features/approval-request/ui/approval-window";
 import { AddressChangeForm } from "@/features/creator-address/ui/address-change-form";
 import { ADDRESS_KEY_MISSING_TEXT } from "@/features/creator-address/ui/address-copy";
 import s from "./creator-action-center.module.css";
@@ -106,7 +106,7 @@ export function ApprovalWindowWithAddress({
             setEditing(false);
             setRefocusChange(true);
           }}
-          onLoginExpired={() => router.push("/login?next=/creator/actions")}
+          onLoginExpired={() => router.push(approvalLoginHref(request.orderNo))}
         />
       </>
     );

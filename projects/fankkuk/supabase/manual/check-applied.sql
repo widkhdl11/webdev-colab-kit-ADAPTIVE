@@ -47,6 +47,8 @@ from (values
   ('0026', exists (select 1 from body where name = 'public.check_phone_code'),
            '문자 인증번호 확인 함수'),
   ('0027', exists (select 1 from body where name = 'public.settle_signature_link'),
-           '승인 서명 연결 함수')
+           '승인 서명 연결 함수'),
+  ('0028', exists (select 1 from body where name = 'public.start_approval_sign' and def like '%v_env, v_order.creator_id;%'),
+           '승인 서명 요청 — 「승인」 누를 때 서명 요청·결과로 승인 (서명 요청이 크리에이터 ID 를 같이 돌려주는 판)')
 ) as v(file, applied, marker)
 order by file;

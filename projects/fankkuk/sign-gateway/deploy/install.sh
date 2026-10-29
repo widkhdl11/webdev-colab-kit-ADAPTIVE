@@ -57,6 +57,9 @@ if [ -f "$SRC_DIR/dist/decryptor.mjs" ]; then
 else
   echo "경고: dist/decryptor.mjs 가 없다 — 송장 출력은 준비되지 않는다 (PC 에서 node sign-gateway/scripts/build-decryptor.mjs)"
 fi
+if [ ! -f "$APP_DIR/lib/vendor/eziok_Key_Manager.cjs" ]; then
+  echo "경고: lib/vendor/eziok_Key_Manager.cjs 가 없다 — 드림시큐리티 서명은 준비되지 않는다 (README 「드림시큐리티 연동 모듈」)"
+fi
 find "$APP_DIR/scripts" -name '*.sh' -exec sed -i 's/\r$//' {} +
 chown -R root:root "$APP_DIR"
 find "$APP_DIR" -type d -exec chmod 0755 {} +

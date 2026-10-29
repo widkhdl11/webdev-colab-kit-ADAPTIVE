@@ -54,6 +54,10 @@ server.listen(config.port, config.host, () => {
     `sign-gateway listening ${config.host}:${config.port} adapter=${adapter.name} ready=${ready.ok}${ready.ok ? "" : ` (${ready.reason})`}`,
   );
   console.log(`invoice ready=${invoice.ready.ok}${invoice.ready.ok ? "" : ` (${invoice.ready.reason})`}`);
+  // 카카오 서명 재검증 준비(INV-P4 a) — 준비 안 됐으면 kakao 서명 주문의 송장은 전부 거부된다
+  if (invoice.signatureCheck) {
+    console.log(`invoice kakao-signature-check=${invoice.signatureCheck.ok}${invoice.signatureCheck.ok ? "" : ` (${invoice.signatureCheck.reason})`}`);
+  }
 });
 
 for (const signal of ["SIGTERM", "SIGINT"]) {

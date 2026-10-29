@@ -1,4 +1,5 @@
 import type { HeardFrom } from "@/entities/metrics/model/signup-source";
+import { readPhoneCodeChannel, type PhoneCodeChannel } from "@/entities/session/model/phone-code";
 import type { NameAnswer } from "../model/name-availability";
 import type { SignUpField } from "../model/sign-up";
 import type { CreatorProfileBody } from "../model/signup-input";
@@ -53,11 +54,11 @@ const messageOf = (data: Record<string, unknown> | null) => (typeof data?.messag
 
 export type PhoneCodeRequestFail = { ok: false; reason: string; message: string };
 
-/** 3단계 「인증번호 받기」·「다시 받기」. 인증번호는 서버가 문자로만 보낸다 — 응답에는 없다(INV-U15). */
-export async function requestPhoneCode(phone: string): Promise<{ ok: true } | PhoneCodeRequestFail> {
+/** 3단계 「인증번호 받기」·「다시 받기」. 인증번호는 서버가 알림톡·문자로만 보낸다 — 응답에는 없고, 간 길(channel)만 온다(INV-U15). */
+export async function requestPhoneCode(phone: string): Promise<{ ok: true; channel: PhoneCodeChannel } | PhoneCodeRequestFail> {
   try {
     const { status, data } = await post("/api/signup/phone", { phone });
-    if (status === 200) return { ok: true };
+    if (status === 200) return { ok: true, channel: readPhoneCodeChannel(data?.channel) };
     return { ok: false, reason: typeof data?.reason === "string" ? data.reason : "error", message: messageOf(data) };
   } catch {
     return { ok: false, reason: "error", message: FALLBACK };

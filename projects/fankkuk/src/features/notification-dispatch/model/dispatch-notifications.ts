@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { ChannelError, type NotificationChannels } from "../api/channels";
-import { buildNotificationBody, kindHasPath, NOTIFICATION_KINDS, siteOrigin, type NotificationBody } from "../lib/notification-body";
+import { buildAlimtalkVariables } from "../lib/alimtalk-body";
+import { buildNotificationBody, kindHasPath, NOTIFICATION_KINDS, siteOrigin, type NotificationBody, type NotificationBodyInput } from "../lib/notification-body";
 
 // 보내는 일꾼 (notifications INV-N5·N6·N7·N8·N10). 앱 서버 키로만 돈다.
 // 줄의 상태(대기 → 보내는 중 → 끝)와 「둘이 같은 줄을 꺼내지 않음」, 재시도 간격·실패 한도, 끝난 승인 요청 건너뛰기는 DB 함수가 지킨다.
@@ -56,6 +57,10 @@ const claimedRow = z.object({
   sender_name: z.string().nullable().optional(),
   /** 반송 주소 재알림 줄만 — 처분 예정 시각(반송 대기 + 720시간, INV-N22). 다른 종류는 null. 이 칸을 내주지 않는 옛 DB 면 재알림은 만들지 못해 보내지 않는다 */
   dispose_due_at: z.string().nullable().optional(),
+  /** 승인 요청 줄만 — 보낸 팬 닉네임·선물 종류(목록 라벨)·상자 수(INV-N1, 2026-10-29 — DB 의 public.approval_gift_facts). 다른 종류는 null. 이 칸을 내주지 않는 옛 DB 면 승인 요청은 만들지 못해 보내지 않는다 */
+  approval_sender: z.string().nullable().optional(),
+  approval_gift_kind: z.string().nullable().optional(),
+  approval_box_count: z.number().int().nullable().optional(),
   /** 꼭 가는 알림인가 — DB 가 줄의 종류로 정한 값(public.notification_kind_must_deliver). 본문 끝 안내는 이것을 따른다(INV-N6). */
   must_deliver: z.boolean(),
   /** 꺼낸 시각 — 끝내기에 그대로 돌려준다. 다른 일꾼이 다시 꺼낸 줄이면 DB 가 이 결과를 받지 않는다(INV-N5). 문자열 그대로 둔다(밀리초로 바꾸면 값이 달라진다). */
@@ -91,15 +96,34 @@ async function sendRow(deps: DispatchDeps, origin: string, channels: Notificatio
   const templateCode = row.channel === "kakao" ? (templates.get(row.kind) ?? null) : null;
   if (row.channel === "kakao" && !templateCode) return { outcome: "error", code: "template_missing" };
 
+  const input: NotificationBodyInput = {
+    kind: row.kind,
+    round: row.round,
+    nickname: row.nickname,
+    orderNo: row.order_no,
+    autoRejectAt: row.auto_reject_at,
+    undeliveredReason: row.undelivered_reason ?? null,
+    senderName: row.sender_name ?? null,
+    disposeDueAt: row.dispose_due_at ?? null,
+    approvalGift:
+      row.kind === "approval_request" && row.approval_sender != null && row.approval_gift_kind != null && row.approval_box_count != null
+        ? { senderNickname: row.approval_sender, giftKind: row.approval_gift_kind, boxCount: row.approval_box_count }
+        : null,
+    mustDeliver: row.must_deliver,
+    appOrigin: origin,
+  };
   let body: NotificationBody;
   try {
-    body = buildNotificationBody({ kind: row.kind, round: row.round, nickname: row.nickname, orderNo: row.order_no, autoRejectAt: row.auto_reject_at, undeliveredReason: row.undelivered_reason ?? null, senderName: row.sender_name ?? null, disposeDueAt: row.dispose_due_at ?? null, mustDeliver: row.must_deliver, appOrigin: origin });
+    body = buildNotificationBody(input);
   } catch {
     return { outcome: "skipped", code: "body_unavailable" };
   }
+  // 알림톡은 검수받은 템플릿에 변수만 채운다(INV-N7) — 템플릿 문서에 없는 종류·값이 빈 줄은 몇 번을 다시 해도 같다
+  const variables = row.channel === "kakao" ? buildAlimtalkVariables(input) : null;
+  if (row.channel === "kakao" && !variables) return { outcome: "skipped", code: "alimtalk_unavailable" };
 
   try {
-    const { providerMessageId } = await channel.send({ outboxId: row.id, to: contact.data, subject: body.subject, text: body.text, templateCode });
+    const { providerMessageId } = await channel.send({ outboxId: row.id, to: contact.data, subject: body.subject, text: body.text, templateCode, variables });
     return { outcome: "sent", providerMessageId, fake: channel.fake };
   } catch (e) {
     return { outcome: "error", code: e instanceof ChannelError ? e.code : "send_failed" };

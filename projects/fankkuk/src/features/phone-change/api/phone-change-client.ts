@@ -1,3 +1,4 @@
+import { readPhoneCodeChannel, type PhoneCodeChannel } from "@/entities/session/model/phone-code";
 import { postJson } from "@/shared/lib/http/post-json-client";
 
 // 브라우저에서 번호 바꾸기 단계를 서버에 보낸다. 번호표는 브라우저 스크립트가 만지지 않는다 — 서버가 쿠키로 주고 쿠키에서 읽는다.
@@ -18,8 +19,13 @@ function outcome(r: Awaited<ReturnType<typeof postJson>>): PhoneStepOutcome {
   return { kind: "failed", field, message: r.message };
 }
 
-export async function requestPhoneChangeCode(phone: string): Promise<PhoneStepOutcome> {
-  return outcome(await postJson("/api/me/phone/verify", { phone }, FALLBACK));
+/** 받기 성공이면 간 길(channel)도 — 화면 안내가 따른다(INV-U15). */
+export async function requestPhoneChangeCode(phone: string): Promise<{ kind: "ok"; channel: PhoneCodeChannel } | Exclude<PhoneStepOutcome, { kind: "ok" }>> {
+  const r = await postJson("/api/me/phone/verify", { phone }, FALLBACK);
+  if (r.kind === "ok") return { kind: "ok", channel: readPhoneCodeChannel(r.body.channel) };
+  if (r.status === 401) return { kind: "login" };
+  const field = r.field !== null && FIELDS.includes(r.field) ? (r.field as PhoneChangeField) : null;
+  return { kind: "failed", field, message: r.message };
 }
 
 export async function checkPhoneChangeCode(code: string): Promise<PhoneStepOutcome> {

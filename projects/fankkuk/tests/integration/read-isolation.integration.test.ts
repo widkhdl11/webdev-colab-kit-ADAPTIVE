@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { MOMO_CREATOR_ID } from "./invoice-helpers";
-import { adminClient, anonClient, approveArgs, approveRpc, deleteTestOrders, payTestOrder, registerTestOrder, SEED, signedInClient } from "./helpers";
+import { adminClient, anonClient, approveRpc, settleArgs, deleteTestOrders, payTestOrder, registerTestOrder, SEED, signedInClient } from "./helpers";
 
 // 카드 d9 완료 조건: 화면은 표를 직접 읽지 못하고, 읽기 함수는 로그인한 사람의 것만 돌려준다.
 // 승인 대기 요청은 시드에 기대지 않고 시험 안에서 만든다 — 시드 주문은 등록 시각이 고정이라 7일이 지나면
@@ -108,8 +108,11 @@ describe("읽기 함수는 로그인한 사람의 것만 돌려준다", () => {
         const r = await client.from(t).select("*").limit(1);
         expect(r.error?.code, t).toBe("42501");
       }
-      const w = await client.rpc("approve_request", approveArgs(w8.requestId));
+      // 승인 입구(서명 요청 만들기·승인)는 서비스 키 전용(approval-signature INV-S7·S17)
+      const w = await client.rpc("start_approval_sign", { p_actor_id: SEED.creatorProfileId, p_request_id: w8.requestId, p_method: "fake" });
       expect(w.error?.code).toBe("42501");
+      const st = await client.rpc("settle_approval_sign", settleArgs("00000000-0000-4000-8000-000000000000", SEED.creatorProfileId, "x"));
+      expect(st.error?.code).toBe("42501");
       const c = await client.rpc("claim_payment", { p_toss_order_id: w8.tossOrderId });
       expect(c.error?.code).toBe("42501");
     }

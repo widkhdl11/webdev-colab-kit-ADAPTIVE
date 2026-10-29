@@ -80,6 +80,20 @@ describe("송장 출력 — 조립", () => {
     await assert.rejects(got.fetch(`http://${REF}.supabase.co/`), OutboundBlockedError);
   });
 
+  it("INV-P4 (a): 카카오 서명 재검증 함수는 준비됐을 때만 넘긴다 — 준비 안 됐으면 넘기지 않아 묶음이 kakao 서명 기록을 거부한다", async () => {
+    let got;
+    const verify = async () => true;
+    const ok = await createInvoicePrinters(loadConfig(full), { load: stubModule((o) => (got = o)), signatureCheck: { ok: true, verify } });
+    assert.equal(got.verifyStoredSignature, verify);
+    assert.deepEqual(ok.signatureCheck, { ok: true });
+    const no = await createInvoicePrinters(loadConfig(full), { load: stubModule((o) => (got = o)), signatureCheck: { ok: false, reason: "r" } });
+    assert.equal(got.verifyStoredSignature, undefined);
+    assert.deepEqual(no.signatureCheck, { ok: false, reason: "r" });
+    // 기본: DREAM_CA_FILE 이 없으면 넘기지 않는다
+    await createInvoicePrinters(loadConfig(full), { load: stubModule((o) => (got = o)) });
+    assert.equal(got.verifyStoredSignature, undefined);
+  });
+
   it("키 풀기는 KMS 로 간다", async () => {
     let got;
     await createInvoicePrinters(loadConfig({ ...full, AWS_ACCESS_KEY_ID: "" }), { load: stubModule((o) => (got = o)) });

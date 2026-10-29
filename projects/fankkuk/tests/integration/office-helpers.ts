@@ -90,7 +90,7 @@ export const HOLD_DETAILS = { carrier: "cj", senderName: "별빛", shelf: "T-1" 
 
 export async function approve(unit: Unit): Promise<void> {
   const r = await approveRpc(unit.requestId);
-  if (r.error || r.data !== "approved") throw new Error(`approve_request 실패: ${r.error?.message ?? String(r.data)}`);
+  if (r.error || r.data !== "approved") throw new Error(`승인 실패: ${r.error?.message ?? String(r.data)}`);
 }
 
 export const FAN_PASS = { bluetooth: "clear", rf: "clear", metal: "clear", outcome: "pass" } as const;

@@ -567,14 +567,18 @@ describe("INV-J8: 줄의 버튼은 정해진 처리를 부르고, 처리가 끝�
 
   it("INV-J8 S8b (실패경로): 서명 없이 승인하는 길이 없다 — 크리에이터 세션으로 승인 함수를 부를 수 없다", async () => {
     const g = await paidGift();
-    const r = await (await signedInClient("haru_creator")).rpc("approve_request", {
-      p_request_id: g.requestId,
+    const haru = await signedInClient("haru_creator");
+    const r = await haru.rpc("start_approval_sign", { p_actor_id: PROFILE.haru, p_request_id: g.requestId, p_method: "fake" });
+    expect(r.error?.code).toBe("42501");
+    const st = await haru.rpc("settle_approval_sign", {
       p_actor_id: PROFILE.haru,
-      p_signed_content: "x",
-      p_signer_id: `fake:${PROFILE.haru}`,
+      p_sign_request_id: "00000000-0000-4000-8000-000000000000",
+      p_signed_plaintext: "x",
+      p_signature: "x",
+      p_signed_at: new Date().toISOString(),
       p_method: "fake",
     });
-    expect(r.error?.code).toBe("42501");
+    expect(st.error?.code).toBe("42501");
     expect(await lines("haru_creator", [g.orderNo])).toEqual([`received:approval:${g.orderNo}:-`]);
   });
 });

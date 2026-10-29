@@ -1,4 +1,4 @@
-import { constants, privateDecrypt } from "node:crypto";
+import { constants, createHash, privateDecrypt } from "node:crypto";
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -7,7 +7,7 @@ import { creatorAddressPlaintext } from "@/entities/address/model/creator-addres
 import { createGatewayLabelPrinters } from "@/features/invoice-print/api/gateway-client";
 import { TEST_SITE_ORIGINS } from "@/shared/lib/env/test-site";
 import { sealEnvelope } from "@/shared/lib/envelope/envelope";
-import { adminClient, approveArgs, deleteTestOrders, psql, signedInClient } from "./helpers";
+import { adminClient, creatorActorOf, deleteTestOrders, psql, recordSignTx, settleArgs, signedInClient, startSignRpc } from "./helpers";
 import { ADDRESS_CREATOR_ID, decryptorDbKey, LABEL, logRows, OWNER_ID, testKeyPair, type TestKeys } from "./invoice-helpers";
 import { FAN_PASS, fanSetsWaybill, inspect, paidGift, parcelState, receiveAndLabel, waybill } from "./office-helpers";
 import { createTestCreator, removeTestCreator, TEST_CREATOR } from "./test-creator";
@@ -24,6 +24,12 @@ type GatewayModules = {
   app: { createHandler: (o: unknown) => http.RequestListener };
   config: { loadConfig: (env: Record<string, string>) => unknown };
   adapters: { createAdapter: (config: unknown) => unknown };
+  storedSignature: {
+    createStoredSignatureVerifier: (o: {
+      anchors: unknown[];
+      ocspPost: (url: string, body: Buffer) => Promise<Buffer>;
+    }) => (i: { signature: string; plaintext: string }) => Promise<boolean>;
+  };
   kms: {
     kmsDecrypt: (
       kms: { keyId: string; accessKeyId: string; secretAccessKey: string },
@@ -56,8 +62,20 @@ async function fakeKms(_url: string, o: { body: string; headers: Record<string, 
   return { status: 200, headers: {}, body: JSON.stringify({ Plaintext: plain.toString("base64") }) };
 }
 
-/** 게이트웨이를 띄운다. testSite: 시험 사이트를 붙인 게이트웨이인가(저장된 가짜 서명을 재검증에서 받는가) */
-async function startGateway(testSite: boolean): Promise<{ url: string; close: () => void }> {
+type TestPki = {
+  makePki: () => { ca: { x509: unknown; key: unknown }; leaf: unknown };
+  makeSignedData: (o: { content: Buffer; signer: unknown }) => Buffer;
+  makeOcspResponse: (o: { request: Buffer; responderKey: unknown }) => Buffer;
+};
+
+/**
+ * 게이트웨이를 띄운다. testSite: 시험 사이트를 붙인 게이트웨이인가(저장된 가짜 서명을 재검증에서 받는가)
+ * verifyStoredSignature: 게이트웨이가 묶음에 넣는 카카오 서명 재검증 함수(INV-P4 a) — 없으면 kakao 기록은 거부된다
+ */
+async function startGateway(
+  testSite: boolean,
+  verifyStoredSignature?: (i: { signature: string; plaintext: string }) => Promise<boolean>,
+): Promise<{ url: string; close: () => void }> {
   const config = mods.config.loadConfig({ SIGN_ADAPTER: "test", GATEWAY_TOKEN, LISTEN_HOST: "127.0.0.1", LISTEN_PORT: "8443" });
   const kmsCfg = { keyId: "arn:aws:kms:ap-northeast-2:123456789012:key/11111111-2222-3333-4444-555555555555", accessKeyId: "AKIA-E2E", secretAccessKey: "e2e" };
   const printers = createGatewayDecryptors({
@@ -73,6 +91,7 @@ async function startGateway(testSite: boolean): Promise<{ url: string; close: ()
     unwrap: async (b64) => new Uint8Array(await mods.kms.kmsDecrypt(kmsCfg, Buffer.from(b64, "base64"), { request: fakeKms })),
     fetch,
     newWaybill: waybill,
+    verifyStoredSignature,
   });
   const handler = mods.app.createHandler({ config, adapter: mods.adapters.createAdapter(config), invoice: { printers }, log: () => {} });
   const server = http.createServer(handler);
@@ -104,22 +123,36 @@ async function registerAddress(): Promise<void> {
   if (r.error) throw new Error(`set_creator_address 실패: ${r.error.message}`);
 }
 
-/** ② 승인 — 게이트웨이 시험 어댑터로 저장된 원문에 서명받아 승인 DB 함수에 낸다(INV-S2·S11·S12) */
-async function approveViaGateway(gw: string, requestId: string): Promise<{ method: string; signerId: string }> {
-  const args = approveArgs(requestId, { ensureAddress: false });
-  const req = await gatewayPost(gw, "/v1/sign/requests", { requestId, plaintext: args.p_signed_content, signer: { subjectId: args.p_actor_id } });
+/**
+ * ② 승인 — 「승인」을 누른 것처럼 서명 요청을 만들고(INV-S17), 정해진 HTTP 약속 그대로 게이트웨이 시험 어댑터에 요청·결과 조회를 한 뒤
+ * 돌려받은 서명된 원문·서명값·서명 시각·방식으로 승인 DB 함수에 낸다(INV-S2·S11·S12). 서명 대상은 연결 봉투 그대로 넘긴다(INV-S4).
+ */
+async function approveViaGateway(gw: string, requestId: string): Promise<{ method: string; savedHashMatches: boolean }> {
+  const actor = creatorActorOf(requestId);
+  const started = await startSignRpc(requestId, actor);
+  expect(started.result).toBe("started");
+  const signId = started.sign_request_id!;
+  const plaintext = started.plaintext!;
+  const req = await gatewayPost(gw, "/v1/sign/requests", { requestId: signId, plaintext, requestMessage: "팬꾹 선물 수령 승인", signer: { envelope: started.envelope, creatorId: started.creator_id } });
   expect(req.status).toBe(201);
-  const res = await gatewayPost(gw, `/v1/sign/requests/${requestId}/result`, { txId: req.json.txId, plaintext: args.p_signed_content });
+  await recordSignTx(signId, actor, req.json.txId as string);
+  const res = await gatewayPost(gw, `/v1/sign/requests/${signId}/result`, { txId: req.json.txId, plaintext });
   expect(res.status).toBe(200);
   expect(res.json.state).toBe("signed");
-  const r = await adminClient().rpc("approve_request", {
-    ...args,
-    p_signed_content: res.json.signedPlaintext as string,
-    p_signer_id: res.json.signerId as string,
-    p_method: res.json.method as string,
-  });
-  if (r.error || r.data !== "approved") throw new Error(`approve_request 실패: ${r.error?.message ?? String(r.data)}`);
-  return { method: res.json.method as string, signerId: res.json.signerId as string };
+  // INV-S2: 돌려받은 서명된 원문은 저장 원문과 바이트 단위로 같다
+  expect(res.json.signedPlaintext).toBe(plaintext);
+  const r = await adminClient().rpc(
+    "settle_approval_sign",
+    settleArgs(signId, actor, res.json.signedPlaintext as string, {
+      p_signature: res.json.signature as string,
+      p_signed_at: res.json.signedAt as string,
+      p_method: res.json.method as string,
+    }),
+  );
+  if (r.error || r.data !== "approved") throw new Error(`settle_approval_sign 실패: ${r.error?.message ?? String(r.data)}`);
+  const hash = createHash("sha256").update(plaintext, "utf8").digest("hex");
+  const saved = psql(`select content_hash from public.approval_signatures where sign_request_id = '${signId}'`);
+  return { method: res.json.method as string, savedHashMatches: saved === hash };
 }
 
 /** ③ 입고·검수 — 팬이 송장번호를 적고, 직원이 받아 라벨을 붙이고 검수 통과 */
@@ -138,6 +171,7 @@ beforeAll(async () => {
     app: await load("app.mjs"),
     config: await load("config.mjs"),
     adapters: await load("adapters/index.mjs"),
+    storedSignature: await load("stored-signature.mjs"),
     kms: await load("kms.mjs"),
   };
   deleteTestOrders();
@@ -157,10 +191,9 @@ describe("전 흐름 — 등록 → 승인 → 복호화 → 라벨 출력 (게�
       await registerAddress();
       const order = await paidGift(1, ADDRESS_CREATOR_ID);
       const signed = await approveViaGateway(gw.url, order.requestId);
-      expect(signed).toEqual({ method: "fake", signerId: `fake:${TEST_CREATOR.profileId}` });
-      expect(psql(`select method || '|' || signer_id from public.approval_signatures where request_id = '${order.requestId}'`)).toBe(
-        `fake|fake:${TEST_CREATOR.profileId}`,
-      );
+      expect(signed).toEqual({ method: "fake", savedHashMatches: true });
+      // INV-S12: 서명 기록은 방식·서명값·원문 해시만 — 서명자 식별값 칸은 비어 있다
+      expect(psql(`select method || '|' || (signer_id is null) || '|' || (signature is not null) from public.approval_signatures where request_id = '${order.requestId}'`)).toBe("fake|true|true");
 
       const qr = await receiveAndInspect(order.boxIds[0]!);
       kmsCalls.length = 0;
@@ -214,6 +247,72 @@ describe("전 흐름 — 등록 → 승인 → 복호화 → 라벨 출력 (게�
       signGw.close();
       prodGw.close();
     }
+  });
+
+  describe("INV-P4 (a): 운영 게이트웨이는 저장된 kakao 서명값을 다시 검증한다", () => {
+    let pki: TestPki;
+    let testCa: ReturnType<TestPki["makePki"]>;
+    let verifier: (i: { signature: string; plaintext: string }) => Promise<boolean>;
+    beforeAll(async () => {
+      pki = (await import(/* @vite-ignore */ new URL("../../sign-gateway/test/helpers/pki.mjs", import.meta.url).href)) as TestPki;
+      testCa = pki.makePki();
+      verifier = mods.storedSignature.createStoredSignatureVerifier({
+        anchors: [testCa.ca.x509],
+        ocspPost: async (_url, body) => pki.makeOcspResponse({ request: body, responderKey: testCa.ca.key }),
+      });
+    });
+
+    /** 승인된 주문의 서명 기록을 DB 에서 직접 kakao 줄로 바꿔 심는다(잠긴 표의 막기 트리거를 끄고) */
+    function plantKakao(requestId: string, signature: string): void {
+      psql(
+        `set session_replication_role = replica; update public.approval_signatures set method = 'kakao', signature = '${signature.replace(/'/g, "''")}' where request_id = '${requestId.replace(/'/g, "''")}';`,
+      );
+    }
+    function signRequestPlaintext(requestId: string): string {
+      return psql(
+        `select sr.plaintext from public.approval_signatures s join public.approval_sign_requests sr on sr.id = s.sign_request_id where s.request_id = '${requestId.replace(/'/g, "''")}'`,
+      );
+    }
+
+    it("INV-P4 (실패경로 a): DB 에 심은 kakao 줄(signature='x')은 검증 함수가 있는 운영 게이트웨이에서도 열리지 않는다 — KMS 를 부르지 않는다", async () => {
+      const signGw = await startGateway(true);
+      const prodGw = await startGateway(false, verifier);
+      try {
+        await registerAddress();
+        const order = await paidGift(1, ADDRESS_CREATOR_ID);
+        await approveViaGateway(signGw.url, order.requestId);
+        plantKakao(order.requestId, "x");
+        expect(psql(`select method || '|' || signature from public.approval_signatures where request_id = '${order.requestId}'`)).toBe("kakao|x");
+        const qr = await receiveAndInspect(order.boxIds[0]!);
+        kmsCalls.length = 0;
+        const res = await createGatewayLabelPrinters({ url: prodGw.url, token: GATEWAY_TOKEN }).printLabel({ qr, accessToken: await tokenOf("fankkuk_admin") });
+        expect(res).toEqual({ kind: "denied", reason: "no_valid_approval" });
+        expect(kmsCalls).toEqual([]);
+        expect(logRows(order.orderId)).toEqual([`denied:no_valid_approval:${OWNER_ID}`]);
+      } finally {
+        signGw.close();
+        prodGw.close();
+      }
+    });
+
+    it("INV-P4 (a): 인증기관 체인이 맞는 전자서명문이 그 주문 서명 요청 원문을 덮으면 운영 게이트웨이가 연다 (마이그레이션 20261029000011 필요)", async () => {
+      const signGw = await startGateway(true);
+      const prodGw = await startGateway(false, verifier);
+      try {
+        await registerAddress();
+        const order = await paidGift(1, ADDRESS_CREATOR_ID);
+        await approveViaGateway(signGw.url, order.requestId);
+        const plaintext = signRequestPlaintext(order.requestId);
+        const cms = pki.makeSignedData({ content: Buffer.from(plaintext, "utf8"), signer: testCa.leaf }).toString("base64");
+        plantKakao(order.requestId, cms);
+        const qr = await receiveAndInspect(order.boxIds[0]!);
+        const res = await createGatewayLabelPrinters({ url: prodGw.url, token: GATEWAY_TOKEN }).printLabel({ qr, accessToken: await tokenOf("fankkuk_admin") });
+        expect(res).toMatchObject({ kind: "printed", label: LABEL });
+      } finally {
+        signGw.close();
+        prodGw.close();
+      }
+    });
   });
 
   it("실패경로: 게이트웨이 토큰이 틀리면 송장 출력 함수까지 가지 않는다 — 앱에는 failed", async () => {

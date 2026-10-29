@@ -112,21 +112,32 @@ describe("INV-P4 (a)(b): 승인 서명을 직접 다시 본다", () => {
     expect(logRows(g.orderId)).toEqual([`denied:no_valid_approval:${OWNER_ID}`]);
   });
 
-  it("INV-P4 (실패경로 a)·INV-S11: 서명자가 그 크리에이터의 가짜 식별값이 아니면 열지 않는다", async () => {
+  it("INV-P4 (실패경로 a)·INV-S12: 서명 기록의 원문 해시가 그 주문 승인 원문의 해시와 다르면 열지 않는다", async () => {
     const g = await inspectedGift();
     psql(
-      `begin; set local session_replication_role = replica; update public.approval_signatures set signer_id = 'fake:${STAFF_ID}' where request_id = '${g.requestId}'; commit;`,
+      `begin; set local session_replication_role = replica; update public.approval_signatures set content_hash = '${"0".repeat(64)}' where request_id = '${g.requestId}'; commit;`,
     );
     expect(await print(g.qr)).toEqual({ kind: "denied", reason: "no_valid_approval" });
   });
 
-  it("INV-P4 (S4b, 실패경로 b): 주문 A 의 승인 원문·서명을 주문 B 에 옮겨 붙이면 거부", async () => {
+  it("INV-P4 (실패경로 a)·INV-S12: 서명값이 없는 서명 기록은 승인으로 치지 않는다", async () => {
+    const g = await inspectedGift();
+    psql(
+      `begin; set local session_replication_role = replica; alter table public.approval_signatures drop constraint approval_signatures_new_shape; update public.approval_signatures set signature = null where request_id = '${g.requestId}'; rollback;`,
+    );
+    // 표 제약이 서명값 없는 새 줄을 막으므로(위는 되돌렸다) 판정 재료 함수의 「서명값이 있는가」를 직접 본다
+    expect(psql(`set role address_decryptor; select public.invoice_print_context('${g.qr}') ->> 'signature_present';`).split(/\r?\n/).pop()).toBe("true");
+    expect(psql(`set role address_decryptor; select (public.invoice_print_context('${g.qr}') ? 'signer_id')::text;`).split(/\r?\n/).pop()).toBe("false");
+  });
+
+  it("INV-P4 (S4b, 실패경로 b): 주문 A 의 승인 원문·원문 해시를 주문 B 에 옮겨 붙이면 거부", async () => {
     const a = await inspectedGift();
     const b = await inspectedGift();
-    const payloadA = psql(`select payload from public.approval_requests where request_id = '${a.requestId}'`);
-    const lit = `'${payloadA.replace(/'/g, "''")}'`;
+    const plainA = psql(`select plaintext from public.approval_sign_requests where approval_request_id = '${a.requestId}' and state = 'signed'`);
+    const hashA = psql(`select content_hash from public.approval_signatures where request_id = '${a.requestId}'`);
+    const lit = `'${plainA.replace(/'/g, "''")}'`;
     psql(
-      `begin; set local session_replication_role = replica; update public.approval_requests set payload = ${lit} where request_id = '${b.requestId}'; update public.approval_signatures set signed_content = ${lit} where request_id = '${b.requestId}'; commit;`,
+      `begin; set local session_replication_role = replica; update public.approval_sign_requests set plaintext = ${lit} where approval_request_id = '${b.requestId}' and state = 'signed'; update public.approval_signatures set content_hash = '${hashA}' where request_id = '${b.requestId}'; commit;`,
     );
     expect(await print(b.qr)).toEqual({ kind: "denied", reason: "order_mismatch" });
     expect(logRows(b.orderId)).toEqual([`denied:order_mismatch:${OWNER_ID}`]);
@@ -135,12 +146,12 @@ describe("INV-P4 (a)(b): 승인 서명을 직접 다시 본다", () => {
 });
 
 describe("INV-P4 (a)·S12: 서명 재검증 재료는 저장된 서명에서 온다", () => {
-  it("INV-P4 (실패경로 a)·INV-S12: 저장된 승인 원문만 다른 주문 것으로 바꾸면(서명은 그대로) 서명 불일치로 거부 — 주문번호 판정까지 가지 않는다", async () => {
+  it("INV-P4 (실패경로 a)·INV-S12: 저장된 승인 원문만 다른 주문 것으로 바꾸면(원문 해시는 그대로) 해시 불일치로 거부 — 주문번호 판정까지 가지 않는다", async () => {
     const a = await inspectedGift();
     const b = await inspectedGift();
-    const payloadA = psql(`select payload from public.approval_requests where request_id = '${a.requestId}'`);
+    const plainA = psql(`select plaintext from public.approval_sign_requests where approval_request_id = '${a.requestId}' and state = 'signed'`);
     psql(
-      `begin; set local session_replication_role = replica; update public.approval_requests set payload = '${payloadA.replace(/'/g, "''")}' where request_id = '${b.requestId}'; commit;`,
+      `begin; set local session_replication_role = replica; update public.approval_sign_requests set plaintext = '${plainA.replace(/'/g, "''")}' where approval_request_id = '${b.requestId}' and state = 'signed'; commit;`,
     );
     expect(await print(b.qr)).toEqual({ kind: "denied", reason: "no_valid_approval" });
     expect(logRows(b.orderId)).toEqual([`denied:no_valid_approval:${OWNER_ID}`]);

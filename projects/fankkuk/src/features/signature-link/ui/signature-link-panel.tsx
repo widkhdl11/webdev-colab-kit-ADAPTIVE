@@ -11,7 +11,7 @@ import s from "./signature-link-panel.module.css";
 
 // 승인 서명 연결하기 카드 (approval-signature INV-S16 · UX 명세 signup.md 「2026-10-29 단계 화면」 step 5, 시안 v43-signup/signup-5-signature).
 // 가입 5단계와 크리에이터 상세 설정의 「승인 서명」 줄이 같은 카드를 쓴다 — 아래 버튼 줄만 부르는 곳이 정한다(prev·later·done).
-// input → 「카카오톡 인증 요청」 → waiting(칸 읽기 전용, 몇 초마다 결과를 묻는다) → done(연결됨) / failed(실패·10분 지남 — 칸이 다시 열린다).
+// input → 「카카오톡 인증 요청」 → waiting(칸 읽기 전용, 몇 초마다 결과를 묻는다) → done(연결됨) / failed(실패·5분 지남 — 칸이 다시 열린다).
 // 이름·생년월일·휴대폰 번호는 이 브라우저에서 공개키로 봉인한 뒤에만 보낸다 — 서버로 가는 본문에 평문 칸이 없다.
 // 「연결됨」은 서버가 서명 창구에 직접 물어 DB 가 원문 대조를 통과했을 때만 온다 — 이 화면은 그 답을 보여 줄 뿐이다.
 // 입력칸에 name 을 두지 않는다 — 폼 기본 제출이 일어나도 값이 주소창에 실리지 않게.
@@ -107,7 +107,7 @@ export function SignatureLinkPanel({ creatorId, sealingKeyPem, initialPhone = ""
     if (saved) setSentPhone(saved);
   }, [resumable, pending]);
 
-  // 결과 묻기 — waiting 동안만. 10분이 지나면 묻지 않고 실패로(서버도 같은 답을 한다)
+  // 결과 묻기 — waiting 동안만. 5분이 지나면 묻지 않고 실패로(서버도 같은 답을 한다)
   useEffect(() => {
     if (phase !== "waiting" || !requestId) return;
     const asked = requestId;

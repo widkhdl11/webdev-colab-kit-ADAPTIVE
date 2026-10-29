@@ -2,9 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { ACCESS_DENY_REASONS, type AccessDenyReason } from "@/entities/address/model/access-log";
 import type { CreatorAddressLabel } from "@/entities/address/model/creator-address-plaintext";
-import type { VerifiedSignature } from "@/entities/order/model/evaluate-approval";
+import { sha256Hex, type RecordedApproval } from "@/entities/order/model/evaluate-approval";
 import { ORDER_STATUSES, type OrderStatus } from "@/entities/order/model/order-status";
-import type { ApprovalSigner } from "@/shared/api/approval-signer/signer";
+import type { SignatureMethod } from "@/shared/api/approval-signer/accepted-method";
 import type { KeyUnwrapper } from "@/shared/lib/envelope/dev-key-unwrapper";
 import { openEnvelope, parseEnvelope } from "@/shared/lib/envelope/envelope";
 import { authorizeDecrypt } from "../model/authorize-decrypt";
@@ -25,11 +25,19 @@ export type CreatorLabelDeps = {
   /** 이 함수 자신의 설정에 적힌 대표 ID(INV-P8) */
   ownerUserId: string;
   unwrapper: KeyUnwrapper;
-  /** 승인 서명 창구 — 저장된 서명을 다시 검증할 때 등록된 본인 식별값을 준다. 운영에서 가짜 창구는 없다(null) */
-  signer: ApprovalSigner | null;
+  /** 저장된 서명을 다시 볼 때 받는 서명 방식 — 운영은 kakao, 로컬·시험 사이트는 fake(accepted-method.ts) */
+  acceptedMethod: SignatureMethod;
+  /**
+   * kakao 서명 기록의 서명값 재검증(INV-P4 a) — 서명 게이트웨이만 넣는다. 없으면 kakao 기록은 승인으로 치지 않는다
+   * (게이트웨이 밖에는 카카오 인증기관 인증서·폐기 조회 통로가 없다).
+   */
+  verifyStoredSignature?: StoredSignatureVerifier | undefined;
   /** 첫 출력의 새 송장번호(택배사 연동 전 개발용) */
   newWaybill: () => string;
 };
+
+/** 저장된 전자서명문(base64)을 다시 검증하고, 서명된 원문(감싼 틀을 벗긴 것)이 plaintext 와 바이트 단위로 같으면 true. 오류도 false. */
+export type StoredSignatureVerifier = (input: { signature: string; plaintext: string }) => Promise<boolean>;
 
 export type CreatorLabelResult =
   | { kind: "printed"; waybill: string; reprint: boolean; label: CreatorAddressLabel }
@@ -50,10 +58,13 @@ const giftContext = z.object({
   creator_profile_id: z.string(),
   difference_unpaid: z.boolean(),
   decrypt_count: z.number().int().nonnegative(),
-  stored_payload: z.string().nullable(),
-  signed_content: z.string().nullable(),
-  signer_id: z.string().nullable(),
+  // INV-P4 (a)·approval-signature INV-S12: 서명값이 있는가 · 방식 · 기록된 원문 해시 · 그 주문 승인 원문(서명자 식별값 없음)
+  signature_present: z.boolean(),
+  // 서명값 — kakao 면 전자서명문 base64(다시 검증한다). 판정 재료 함수가 아직 이 칸을 주지 않으면(마이그레이션 20261029000011 전) 없음 → kakao 는 거부
+  signature: z.string().nullable().optional(),
   signer_method: z.string().nullable(),
+  recorded_hash: z.string().nullable(),
+  approval_plaintext: z.string().nullable(),
 });
 const contextShape = z.union([giftContext, z.object({ kind: z.literal("share") })]);
 
@@ -81,12 +92,25 @@ function orderStatusOf(raw: string): OrderStatus {
 }
 
 /**
- * INV-P4 (a): 저장된 서명을 지금 서명 창구 기준으로 다시 본다. 서명 방식이 창구와 다르거나(운영에 가짜 서명 등),
- * 서명이 없으면 승인으로 치지 않는다. 원문 일치·본인 일치는 판정(checkApprovalSignature)이 본다.
+ * INV-P4 (a): 저장된 서명 기록을 지금 받는 방식 기준으로 다시 본다. 서명값이 없거나 방식이 다르면(운영에 가짜 서명 등) 승인으로 치지 않는다.
+ * kakao 는 칸이 차 있는 것만으로 믿지 않는다 — 서명값(전자서명문)을 체인·서명·폐기까지 다시 검증하고, 서명된 원문이 그 주문 서명 요청의
+ * 원문과 바이트 단위로 같을 때만 승인으로 친다(DB 에 method='kakao', signature='x' 줄을 심어도 열리지 않게). 검증 함수가 없으면 거부.
+ * fake 는 지금 규칙 그대로 — 받는 방식이 fake 인 것 자체가 시험 사이트 판정이고, DB 는 가짜 허용 줄이 있을 때만 그 기록을 만든다.
+ * 원문 해시 대조·주문번호 대조는 판정(checkRecordedApproval)이 본다.
  */
-function storedSignature(ctx: GiftContext, signer: ApprovalSigner | null): VerifiedSignature | null {
-  if (!signer || ctx.signed_content === null || ctx.signer_id === null || ctx.signer_method !== signer.kind) return null;
-  return { signedContent: new TextEncoder().encode(ctx.signed_content), signerId: ctx.signer_id };
+async function recordedApproval(ctx: GiftContext, deps: Pick<CreatorLabelDeps, "acceptedMethod" | "verifyStoredSignature">): Promise<RecordedApproval | null> {
+  if (!ctx.signature_present || ctx.signer_method !== deps.acceptedMethod || ctx.recorded_hash === null || ctx.approval_plaintext === null) return null;
+  if (deps.acceptedMethod === "kakao" && !(await storedKakaoSignatureHolds(ctx, deps.verifyStoredSignature))) return null;
+  return { plaintext: ctx.approval_plaintext, plaintextHash: await sha256Hex(ctx.approval_plaintext), recordedHash: ctx.recorded_hash };
+}
+
+async function storedKakaoSignatureHolds(ctx: GiftContext, verify: StoredSignatureVerifier | undefined): Promise<boolean> {
+  if (!verify || !ctx.signature || !ctx.approval_plaintext) return false;
+  try {
+    return (await verify({ signature: ctx.signature, plaintext: ctx.approval_plaintext })) === true;
+  } catch {
+    return false;
+  }
 }
 
 /** 거부 줄에도 어느 상자의 출력이었는지 남긴다(INV-P5 — 횟수는 상자마다, 카드 d30). */
@@ -127,14 +151,12 @@ export async function printCreatorLabel(deps: CreatorLabelDeps, input: { qr: str
   if (parsedCtx.data.kind === "share") return { kind: "not_gift" };
   const ctx = parsedCtx.data;
 
-  const signature = storedSignature(ctx, deps.signer);
+  const approval = await recordedApproval(ctx, deps);
   const decision = authorizeDecrypt({
     requestedOrderNo: ctx.order_no,
     requesterUserId: requesterId,
     ownerUserId: deps.ownerUserId,
-    storedPayload: ctx.stored_payload ?? "",
-    signature,
-    registeredSignerId: deps.signer ? deps.signer.registeredSignerIdOf(ctx.creator_profile_id) : "",
+    approval,
     orderStatus: orderStatusOf(ctx.order_status),
     parcelState: ctx.parcel_state,
     // 차단은 승인 전 주문을 거절로 바꿀 뿐이고 승인된 주문은 그대로 출고한다(decline-block INV-D8, 카드 d27) —

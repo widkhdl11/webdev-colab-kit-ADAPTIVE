@@ -1,10 +1,25 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { adminClient, approveArgs, approveRpc, deleteTestOrders, ensureApprovalAddress, payTestOrder, psql, psqlError, registerTestOrder, SEED, signedInClient } from "./helpers";
+import { createHash } from "node:crypto";
+import {
+  adminClient,
+  approveRpc,
+  creatorActorOf,
+  deleteTestOrders,
+  ensureApprovalAddress,
+  payTestOrder,
+  psql,
+  psqlError,
+  recordSignTx,
+  registerTestOrder,
+  SEED,
+  settleArgs,
+  startSignRpc,
+} from "./helpers";
 import { createTestCreator, removeTestCreator, TEST_CREATOR } from "./test-creator";
 
 // 승인 서명 스펙(docs/specs/approval-signature.md) 중 DB 가 지키는 것.
-// 서명 검증(INV-S2~S4)은 앱 서버가 approve_request 를 부르기 전에 한다. DB 는 승인하는 사람·원문 일치를 한 번 더 보고(INV-S11),
-// 서명을 승인과 한 처리에서 저장한다(INV-S12).
+// 서명자 대조(INV-S4)는 게이트웨이가, 원문 대조(INV-S2)는 앱 서버가 승인 함수를 부르기 전에 한다. DB 는 승인하는 사람·원문 일치·방식·기한을
+// 한 번 더 보고(INV-S11·S17), 서명을 승인과 한 처리에서 저장한다(INV-S12). 승인 함수는 manual/0028 의 settle_approval_sign.
 
 async function paidOrder() {
   const o = await registerTestOrder();
@@ -95,7 +110,7 @@ describe("INV-S6: 승인할 수 없는 주문은 승인하지 않는다", () => 
   });
 });
 
-describe("INV-S7: 승인 상태를 바꾸는 입구는 approve_request 하나다", () => {
+describe("INV-S7: 승인 상태를 바꾸는 입구는 승인 함수(settle_approval_sign) 하나다", () => {
   it("INV-S7 S7: 앱 서버 키로 주문의 승인 시각을 직접 고치면 DB 가 거부한다", async () => {
     const o = await paidOrder();
     const { error } = await adminClient().from("orders").update({ approved_at: new Date().toISOString() }).eq("id", o.orderId);
@@ -155,52 +170,100 @@ describe("INV-S7: 승인 상태를 바꾸는 입구는 approve_request 하나다
 const MOMO_PROFILE_ID = "00000000-0000-4000-a000-000000000012";
 
 function signatureRow(requestId: string): string {
-  return psql(`select signed_content || '|' || signer_id || '|' || method from public.approval_signatures where request_id = '${requestId}'`);
+  return psql(
+    `select coalesce(signed_content, '-') || '|' || coalesce(signer_id, '-') || '|' || content_hash || '|' || signature || '|' || method from public.approval_signatures where request_id = '${requestId}'`,
+  );
+}
+
+/** 하루로 서명 요청을 만들고 거래 ID 까지 적는다 — 승인 함수 앞까지 */
+async function signRequestOf(requestId: string) {
+  ensureApprovalAddress(requestId);
+  const actor = SEED.creatorProfileId;
+  const started = await startSignRpc(requestId, actor);
+  expect(started.result).toBe("started");
+  await recordSignTx(started.sign_request_id!, actor);
+  return { signId: started.sign_request_id!, plaintext: started.plaintext! };
 }
 
 describe("INV-S11: 승인은 그 주문의 크리에이터만, 저장한 원문 그대로의 서명으로", () => {
-  it("INV-S11 S11b: 다른 크리에이터·팬·빈 계정으로 승인하면 없는 요청과 같은 답이고 아무것도 안 바뀐다", async () => {
+  it("INV-S11 S11b: 다른 크리에이터·팬·빈 계정으로 서명 요청을 만들거나 승인하면 없는 요청과 같은 답이고 아무것도 안 바뀐다", async () => {
     const o = await paidOrder();
-    const good = approveArgs(o.requestId);
-    const missing = (await adminClient().rpc("approve_request", { ...approveArgs("apr_NOSUCHREQUEST"), p_actor_id: MOMO_PROFILE_ID })).data;
+    ensureApprovalAddress(o.requestId);
+    const missing = (await startSignRpc("apr_NOSUCHREQUEST", MOMO_PROFILE_ID)).result;
     expect(missing).toBe("not_found");
     for (const actor of [MOMO_PROFILE_ID, SEED.fanId, null]) {
-      const r = await adminClient().rpc("approve_request", { ...good, p_actor_id: actor, p_signer_id: `fake:${actor}` });
-      expect(r.data, String(actor)).toBe(missing);
+      expect((await startSignRpc(o.requestId, actor)).result, String(actor)).toBe(missing);
+    }
+    expect(psql(`select count(*) from public.approval_sign_requests where approval_request_id = '${o.requestId}'`)).toBe("0");
+    const { signId, plaintext } = await signRequestOf(o.requestId);
+    const noSuch = (await adminClient().rpc("settle_approval_sign", settleArgs("00000000-0000-4000-8000-000000000000", MOMO_PROFILE_ID, plaintext))).data;
+    expect(noSuch).toBe("not_found");
+    for (const actor of [MOMO_PROFILE_ID, SEED.fanId, null]) {
+      const r = await adminClient().rpc("settle_approval_sign", settleArgs(signId, actor, plaintext));
+      expect(r.data, String(actor)).toBe(noSuch);
     }
     expect(psql(`select status from public.approval_requests where request_id = '${o.requestId}'`)).toBe("waiting");
+    expect(psql(`select state from public.approval_sign_requests where id = '${signId}'`)).toBe("pending");
     expect(signatureRow(o.requestId)).toBe("");
   });
 
-  it("INV-S11·S2: 원문이 다르거나, fake 서명자가 그 크리에이터가 아니거나, 방식이 목록 밖이면 signature_mismatch", async () => {
-    const o = await paidOrder();
-    const good = approveArgs(o.requestId);
+  it("INV-S11·S2: 서명된 원문이 한 글자라도 다르거나, 방식이 요청과 다르거나 목록 밖이거나, 서명값이 비면 signature_mismatch — 그 요청은 끝난다", async () => {
     for (const bad of [
-      { p_signed_content: `${good.p_signed_content} ` },
-      { p_signer_id: `fake:${MOMO_PROFILE_ID}` },
-      { p_signer_id: "" },
+      { p_signed_plaintext: "__TAIL__" },
+      { p_method: "kakao" },
       { p_method: "password" },
+      { p_signature: "" },
+      { p_signature: null },
+      { p_signed_at: null },
     ]) {
-      const r = await adminClient().rpc("approve_request", { ...good, ...bad });
+      const o = await paidOrder();
+      const { signId, plaintext } = await signRequestOf(o.requestId);
+      const over = bad.p_signed_plaintext === "__TAIL__" ? { p_signed_plaintext: `${plaintext} ` } : bad;
+      const r = await adminClient().rpc("settle_approval_sign", settleArgs(signId, SEED.creatorProfileId, plaintext, over));
       expect(r.data, JSON.stringify(bad)).toBe("signature_mismatch");
+      expect(psql(`select status from public.approval_requests where request_id = '${o.requestId}'`)).toBe("waiting");
+      expect(psql(`select state from public.approval_sign_requests where id = '${signId}'`)).toBe("failed");
+      // 끝난 요청의 결과는 다시 받지 않는다 — 「다시 요청」으로 새 요청을 만들어야 한다
+      expect((await adminClient().rpc("settle_approval_sign", settleArgs(signId, SEED.creatorProfileId, plaintext))).data).toBe("sign_failed");
     }
+  });
+
+  it("INV-S11 (실패경로): 게이트웨이 거래 ID 가 적히지 않은 서명 요청의 결과는 받지 않는다", async () => {
+    const o = await paidOrder();
+    ensureApprovalAddress(o.requestId);
+    const started = await startSignRpc(o.requestId, SEED.creatorProfileId);
+    const r = await adminClient().rpc("settle_approval_sign", settleArgs(started.sign_request_id!, SEED.creatorProfileId, started.plaintext!));
+    expect(r.data).toBe("signature_mismatch");
     expect(psql(`select status from public.approval_requests where request_id = '${o.requestId}'`)).toBe("waiting");
-    expect((await approveRpc(o.requestId)).data).toBe("approved");
   });
 });
 
 describe("INV-S12: 승인과 서명 저장은 한 처리, 서명은 추가만", () => {
-  it("INV-S12 S12: 승인하면 저장한 원문·서명자·방식 fake 가 한 줄 남고, 고치기·지우기는 서비스 키로도 거부된다", async () => {
+  it("INV-S12 S12: 승인하면 서명값·원문 해시(그 요청 원문의 SHA-256)·서명 시각·방식 fake 가 한 줄 남고, 서명자 식별값·원문 칸은 비어 있다. 고치기·지우기는 서비스 키로도 거부된다", async () => {
     const o = await paidOrder();
-    const a = approveArgs(o.requestId);
     expect((await approveRpc(o.requestId)).data).toBe("approved");
-    expect(signatureRow(o.requestId)).toBe(`${a.p_signed_content}|fake:${SEED.creatorProfileId}|fake`);
+    const plaintext = psql(`select plaintext from public.approval_sign_requests where approval_request_id = '${o.requestId}' and state = 'signed'`);
+    const hash = createHash("sha256").update(plaintext, "utf8").digest("hex");
+    expect(signatureRow(o.requestId)).toBe(`-|-|${hash}|fake-signature|fake`);
+    expect(psql(`select (signed_at is not null) || '|' || (sign_request_id is not null) from public.approval_signatures where request_id = '${o.requestId}'`)).toBe("true|true");
     expect((await adminClient().from("approval_signatures").select("id").eq("request_id", o.requestId)).error?.code).toBe("42501");
-    expect(psqlError(`update public.approval_signatures set signer_id = 'x' where request_id = '${o.requestId}'`)).toMatch(/추가만/);
+    expect(psqlError(`update public.approval_signatures set signature = 'x' where request_id = '${o.requestId}'`)).toMatch(/추가만/);
     expect(psqlError(`delete from public.approval_signatures where request_id = '${o.requestId}'`)).toMatch(/추가만/);
     // 다시 승인해도 서명 줄은 하나
     expect((await approveRpc(o.requestId)).data).toBe("already");
     expect(psql(`select count(*) from public.approval_signatures where request_id = '${o.requestId}'`)).toBe("1");
+  });
+
+  it("INV-S12 (실패경로): 새 줄에 서명자 식별값이나 원문을 넣으려 하면 표 제약이 거부한다", async () => {
+    const o = await paidOrder();
+    expect((await approveRpc(o.requestId)).data).toBe("approved");
+    const signId = psql(`select id from public.approval_sign_requests where approval_request_id = '${o.requestId}' and state = 'signed'`);
+    // 같은 요청 줄이 이미 있어 유일 제약에도 걸리므로 다른 승인 요청 ID 를 빌린다 — 제약 이름으로 무엇이 막았는지 본다
+    const other = await paidOrder();
+    const err = psqlError(
+      `insert into public.approval_signatures (request_id, signed_content, signer_id, content_hash, signature, method, sign_request_id) values ('${other.requestId}', 'x', 'fake:x', '${"a".repeat(64)}', 's', 'fake', '${signId}')`,
+    );
+    expect(err).toMatch(/approval_signatures_new_shape/);
   });
 
   it("INV-S12 S12b: 서명 저장이 실패하면 승인도 남지 않는다", async () => {
@@ -213,35 +276,28 @@ describe("INV-S12: 승인과 서명 저장은 한 처리, 서명은 추가만", 
   });
 });
 
-describe("INV-S11: 승인할 원문은 그 주문의 크리에이터에게만", () => {
-  it("INV-S11 S11b: 하루에게는 원문이, 모모·팬·없는 요청에는 빈 결과가 온다. 로그인 토큰으로는 부르지 못한다", async () => {
-    const o = await paidOrder();
-    const payload = psql(`select payload from public.approval_requests where request_id = '${o.requestId}'`);
-    const read = (actor: string, requestId = o.requestId) =>
-      adminClient().rpc("approval_payload_of", { p_request_id: requestId, p_actor_id: actor });
-    expect((await read(SEED.creatorProfileId)).data).toBe(payload);
-    expect((await read(MOMO_PROFILE_ID)).data).toBeNull();
-    expect((await read(SEED.fanId)).data).toBeNull();
-    expect((await read(SEED.creatorProfileId, "apr_NOSUCHREQUEST")).data).toBeNull();
-    const fan = await signedInClient("byeolbit_fan");
-    expect((await fan.rpc("approval_payload_of", { p_request_id: o.requestId, p_actor_id: SEED.creatorProfileId })).error?.code).toBe("42501");
+describe("INV-S7: 옛 승인 입구는 없다", () => {
+  it("INV-S7: 서명자 식별값을 받던 승인 함수·옛 원문 읽기 함수는 지워졌다 — 승인 입구는 settle_approval_sign 하나", () => {
+    expect(psql(`select count(*) from pg_proc where pronamespace = 'public'::regnamespace and proname in ('approve_request', 'approval_payload_of')`)).toBe("0");
+    expect(psql(`select count(*) from pg_proc where pronamespace = 'public'::regnamespace and proname = 'settle_approval_sign'`)).toBe("1");
   });
 });
 
 describe("INV-S11: 가짜 서명은 허용 줄이 있는 DB(로컬)에서만 받는다", () => {
-  it("INV-S11 S11c: 허용 줄이 없는 DB(운영 DB 와 같은 상태)에서는 가짜 서명 승인이 거부되고 아무것도 안 바뀐다", async () => {
+  it("INV-S11 S11c: 허용 줄이 없는 DB(운영 DB 와 같은 상태)에서는 가짜 서명 요청도 승인도 거부되고 아무것도 안 바뀐다", async () => {
     const o = await paidOrder();
-    const a = approveArgs(o.requestId);
+    const { signId, plaintext } = await signRequestOf(o.requestId);
     const q = (v: string) => `'${v.replace(/'/g, "''")}'`;
     const out = psql(
-      `begin; delete from public.local_dev_flags; select public.approve_request(${q(a.p_request_id)}, ${q(a.p_actor_id ?? "")}::uuid, ${q(a.p_signed_content)}, ${q(a.p_signer_id)}, 'fake'); rollback;`,
+      `begin; delete from public.local_dev_flags; select public.settle_approval_sign(${q(SEED.creatorProfileId)}::uuid, ${q(signId)}::uuid, ${q(plaintext)}, 'fake-signature', now(), 'fake'); select (public.start_approval_sign(${q(SEED.creatorProfileId)}::uuid, ${q(o.requestId)}, 'fake')).result; rollback;`,
     );
     expect(out.split("\n")).toContain("signature_mismatch");
+    expect(out.split("\n")).toContain("method_refused");
     expect(psql(`select status from public.approval_requests where request_id = '${o.requestId}'`)).toBe("waiting");
     // 로컬 DB 에는 허용 줄이 있어(위 처리는 되돌렸다) 같은 승인이 된다. 서비스 키로는 표를 읽지도 못한다
     expect(psql(`select count(*) from public.local_dev_flags where flag = 'allow_fake_signatures'`)).toBe("1");
     expect((await adminClient().from("local_dev_flags").select("flag")).error?.code).toBe("42501");
-    expect((await approveRpc(o.requestId)).data).toBe("approved");
+    expect((await adminClient().rpc("settle_approval_sign", settleArgs(signId, SEED.creatorProfileId, plaintext))).data).toBe("approved");
   });
 
   it("INV-S12: 서명 표는 통째로 비우기도 막힌다", () => {
@@ -269,9 +325,19 @@ describe("INV-S13: 받는 주소가 없는 크리에이터의 승인은 거부�
 
   it("INV-S13 S13 (실패경로): 주소 칸이 없으면 유효한 서명이어도 no_address — 승인·서명 기록이 남지 않는다", async () => {
     const o = await orderWithoutAddress();
-    const r = await adminClient().rpc("approve_request", approveArgs(o.requestId, { ensureAddress: false }));
+    // 서명 요청 만들기가 먼저 거부한다 — 카카오톡을 보내지 않는다
+    expect((await startSignRpc(o.requestId)).result).toBe("no_address");
+    expect(psql(`select count(*) from public.approval_sign_requests where approval_request_id = '${o.requestId}'`)).toBe("0");
+    // 서명 요청을 만든 뒤 주소가 지워졌어도 승인 함수가 같은 답을 한다
+    ensureApprovalAddress(o.requestId);
+    const started = await startSignRpc(o.requestId);
+    await recordSignTx(started.sign_request_id!, creatorActorOf(o.requestId));
+    psql(`delete from pii.creator_addresses where creator_id = '${creatorId}'`);
+    const r = await adminClient().rpc("settle_approval_sign", settleArgs(started.sign_request_id!, creatorActorOf(o.requestId), started.plaintext!));
     expect(r.error).toBeNull();
     expect(r.data).toBe("no_address");
+    // 서명 요청은 기한까지 그대로 기다린다 — 주소를 등록하고 다시 누르면 같은 요청을 이어 본다
+    expect(psql(`select state from public.approval_sign_requests where id = '${started.sign_request_id}'`)).toBe("pending");
     expect(psql(`select status from public.approval_requests where request_id = '${o.requestId}'`)).toBe("waiting");
     expect(psql(`select coalesce(approved_at::text, 'null') from public.orders where id = '${o.orderId}'`)).toBe("null");
     expect(psql(`select count(*) from public.approval_signatures where request_id = '${o.requestId}'`)).toBe("0");
@@ -279,8 +345,8 @@ describe("INV-S13: 받는 주소가 없는 크리에이터의 승인은 거부�
 
   it("INV-S13 S13b: 같은 주문도 주소를 등록한 뒤에는 승인된다", async () => {
     const o = await orderWithoutAddress();
-    expect((await adminClient().rpc("approve_request", approveArgs(o.requestId, { ensureAddress: false }))).data).toBe("no_address");
+    expect((await approveRpc(o.requestId, { ensureAddress: false })).data).toBe("no_address");
     ensureApprovalAddress(o.requestId);
-    expect((await adminClient().rpc("approve_request", approveArgs(o.requestId, { ensureAddress: false }))).data).toBe("approved");
+    expect((await approveRpc(o.requestId, { ensureAddress: false })).data).toBe("approved");
   });
 });

@@ -1,3 +1,4 @@
+import type { StoredSignatureVerifier } from "@/features/invoice-print/api/print-creator-label";
 import {
   invoiceDecryptorFrom,
   returnLabelPrinterFrom,
@@ -23,6 +24,11 @@ export type GatewayDecryptorOptions = {
   fetch: typeof fetch;
   /** 첫 출력의 송장번호. 없으면 개발용 난수(택배사 연동 전) */
   newWaybill?: () => string;
+  /**
+   * 저장된 카카오 서명(전자서명문)을 체인·서명·폐기까지 다시 검증하고, 감싼 틀을 벗긴 원문이 그 주문 서명 요청의 원문과 같은지 본다(INV-P4 a).
+   * 게이트웨이가 넣는다(sign-gateway/lib/stored-signature.mjs). 없으면 kakao 서명 기록은 승인으로 치지 않는다.
+   */
+  verifyStoredSignature?: StoredSignatureVerifier;
 };
 
 export function createGatewayDecryptors(o: GatewayDecryptorOptions): {
@@ -36,6 +42,7 @@ export function createGatewayDecryptors(o: GatewayDecryptorOptions): {
     unwrapper: { unwrap: o.unwrap },
     newWaybill: o.newWaybill ?? devWaybillNo,
     fetch: o.fetch,
+    verifyStoredSignature: o.verifyStoredSignature,
   });
   return { printLabel: invoiceDecryptorFrom(deps), printReturnLabel: returnLabelPrinterFrom(deps) };
 }
