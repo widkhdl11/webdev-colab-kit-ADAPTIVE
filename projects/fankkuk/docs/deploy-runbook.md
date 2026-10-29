@@ -91,3 +91,15 @@ Vercel 에 올린 사이트는 코드가 운영으로 판정한다. 그래서 �
 - 크리에이터의 승인 서명 — 같은 이유
 - 송장 출력 — 주소 열쇠 보관처(KMS) 연결 전
 - 메일 — 메일 서비스를 정하기 전
+
+## 운영 전환 체크리스트 — 문자·알림톡·승인 서명 (2026-10-29)
+
+시험 사이트에서 운영으로 넘어갈 때 하나씩 확인한다. 하나라도 못 하면 운영 가입·승인은 열지 않는다.
+
+- [ ] 솔라피: 발신번호 등록 완료, 카카오 채널 연동 완료, 인증번호 템플릿·상태 알림 템플릿 검수 승인. Vercel 운영에 `SOLAPI_API_KEY`·`SOLAPI_API_SECRET`·`SMS_SENDER_NUMBER`·`KAKAO_PF_ID`·`SOLAPI_PHONE_CODE_TEMPLATE_ID`
+- [ ] 상태 알림 템플릿 ID 를 운영 DB 의 `notification_kakao_templates` 에 종류별로 넣음(넣은 종류만 알림톡으로 간다)
+- [ ] 드림시큐리티: 운영용 키 파일(`eziok_keyInfo.dat`)과 운영 등록 사이트 주소를 받음, 카카오 운영 전환(운영용 settle_id) 완료 통보를 받음
+- [ ] 게이트웨이 서버 환경 변수 파일을 운영 값으로: `DREAM_ENV=production`, `DREAM_KEY_FILE`·`DREAM_KEY_PASSWORD` 는 운영 키, `OUTBOUND_ALLOWED_HOSTS` 에 `cert-dir.ez-iok.com`
+- [ ] **테스트 키 삭제 확인** (드림시큐리티 계약 제13조) — 게이트웨이 서버·내 PC·메일 첨부·저장소 어디에도 개발용 `eziok_keyInfo.dat` 가 남지 않았는지 확인하고 지운다. 서버에서 `sudo find / -name 'eziok_keyInfo*' 2>/dev/null` 결과가 운영 키 파일 하나뿐이어야 한다
+- [ ] 운영 DB 에 `supabase/manual/0026`·`0027` 적용(앱 배포와 같이)
+- [ ] 첫 운영 서명 1건으로 원문 감싼 틀·폐기 확인(OCSP) 주소가 허용 목록 안에서 통과하는지 게이트웨이 로그로 확인
