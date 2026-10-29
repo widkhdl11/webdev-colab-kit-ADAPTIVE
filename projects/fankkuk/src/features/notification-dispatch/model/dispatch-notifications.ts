@@ -57,10 +57,6 @@ const claimedRow = z.object({
   sender_name: z.string().nullable().optional(),
   /** 반송 주소 재알림 줄만 — 처분 예정 시각(반송 대기 + 720시간, INV-N22). 다른 종류는 null. 이 칸을 내주지 않는 옛 DB 면 재알림은 만들지 못해 보내지 않는다 */
   dispose_due_at: z.string().nullable().optional(),
-  /** 승인 요청 줄만 — 보낸 팬 닉네임·선물 종류(목록 라벨)·상자 수(INV-N1, 2026-10-29 — DB 의 public.approval_gift_facts). 다른 종류는 null. 이 칸을 내주지 않는 옛 DB 면 승인 요청은 만들지 못해 보내지 않는다 */
-  approval_sender: z.string().nullable().optional(),
-  approval_gift_kind: z.string().nullable().optional(),
-  approval_box_count: z.number().int().nullable().optional(),
   /** 꼭 가는 알림인가 — DB 가 줄의 종류로 정한 값(public.notification_kind_must_deliver). 본문 끝 안내는 이것을 따른다(INV-N6). */
   must_deliver: z.boolean(),
   /** 꺼낸 시각 — 끝내기에 그대로 돌려준다. 다른 일꾼이 다시 꺼낸 줄이면 DB 가 이 결과를 받지 않는다(INV-N5). 문자열 그대로 둔다(밀리초로 바꾸면 값이 달라진다). */
@@ -105,10 +101,6 @@ async function sendRow(deps: DispatchDeps, origin: string, channels: Notificatio
     undeliveredReason: row.undelivered_reason ?? null,
     senderName: row.sender_name ?? null,
     disposeDueAt: row.dispose_due_at ?? null,
-    approvalGift:
-      row.kind === "approval_request" && row.approval_sender != null && row.approval_gift_kind != null && row.approval_box_count != null
-        ? { senderNickname: row.approval_sender, giftKind: row.approval_gift_kind, boxCount: row.approval_box_count }
-        : null,
     mustDeliver: row.must_deliver,
     appOrigin: origin,
   };

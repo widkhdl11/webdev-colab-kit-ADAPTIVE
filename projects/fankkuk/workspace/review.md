@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: passed
-basis: 2b15cb5a3815
+basis: 9a7097451608
 reviewers: [security-reviewer, ux-reviewer]
 ---
 
@@ -13,3 +13,4 @@ reviewers: [security-reviewer, ux-reviewer]
 - 사용자가 고른 리뷰는 보안·화면 흐름이다. code-reviewer·ui-reviewer 는 돌리지 않았다 — 화면은 기존 창의 클래스를 그대로 쓰고 새 시각 요소가 없다.
 - 검사: tsc 0 · 단위 2872 통과 · 게이트웨이 81 통과 · 관련 통합 8파일 234 통과 · copy:lint 0 · check:pii 통과. 화면: /creator/actions?order= 로 창 열림 → 승인 → 배송지 확인 → 승인 요청 보내기 → 「승인됨」, DB 에 서명 요청 1줄(5분)·서명 줄(fake, 서명자 식별값·원문 비어 있음, 해시만).
 - 리뷰 뒤 고친 것: 선물 종류 목록·이름을 `src/shared/config/item-category.ts` 로 옮김(entities 끼리 import 하던 FSD 위반, 동작 그대로 — tsc 0·단위 2872 통과).
+- 카드 d2 답 ② 반영(같은 날): 승인 요청 알림에서 보낸 팬·선물 종류·개수를 빼고 승인 요청 알림톡을 보류(본문 미정 → 이메일만), DB 알림 꺼내기 함수를 앞 판으로(migration 20261029000012). 값을 빼는 변경이라 리뷰는 다시 돌리지 않음 — tsc 0 · 단위 2867 · 통합 notifications-db·dispatch·together-routes 112 통과.

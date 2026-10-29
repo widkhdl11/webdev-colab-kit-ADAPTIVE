@@ -19,8 +19,6 @@ function inputFor(kind: NotificationBodyInput["kind"], round: 1 | 2 | 3 = 1): No
     senderName: kind === "revgift_offer" ? "모모" : null,
     // 반송 주소 재알림(INV-N22)만 처분 예정 시각(반송 대기 + 30일)을 받는다
     disposeDueAt: kind === "return_address_reminder" ? "2026-11-16T03:00:00Z" : null,
-    // 승인 요청(INV-N1, 2026-10-29)만 보낸 팬 닉네임·선물 종류·상자 수를 받는다 — DB 가 꺼낸 줄의 값
-    approvalGift: kind === "approval_request" ? { senderNickname: "달토끼", giftKind: "인형·쿠션", boxCount: 2 } : null,
     mustDeliver: isMustDeliver(kind),
   };
 }
@@ -68,29 +66,14 @@ describe("알림 본문 틀 (INV-N1)", () => {
     expect(buildNotificationBody(inputFor("arrived")).text).not.toContain("꺼 두어도 가요");
   });
 
-  it("INV-N1 (S1c): 승인 요청은 세 차례 모두 보낸 팬 닉네임·선물 종류·개수를 적고 [승인 화면 열기] — 상세 미표시 꼬리는 없다", () => {
+  it("INV-N1 (S1c): 승인 요청은 세 차례 모두 보낸 사람·선물 종류·개수를 적지 않고(승인 화면에서만 보인다 — 카드 d2 답 ②) [승인 화면 열기]", () => {
     for (const r of [1, 2, 3] as const) {
       const b = buildNotificationBody(inputFor("approval_request", r));
-      expect(b.text).toContain("보낸 사람: 달토끼\n선물: 인형·쿠션 2개\n주문번호 FC-7K3M9");
+      expect(b.text).not.toMatch(/보낸 사람|선물:|\d개/);
       expect(b.buttonLabel).toBe("승인 화면 열기");
       expect(b.link).toBe(`${ORIGIN}/creator/actions?order=FC-7K3M9`);
-      expect(b.text).not.toContain("선물 상세 정보는 알림에 표시하지 않습니다");
+      expect(b.text).toContain("선물 상세 정보는 알림에 표시하지 않습니다");
       expect(b.text).toContain("서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.");
-    }
-    // 다른 종류는 꼬리가 그대로다
-    expect(buildNotificationBody(inputFor("shipped")).text).toContain("선물 상세 정보는 알림에 표시하지 않습니다");
-  });
-
-  it("INV-N1 (S1c, 실패경로): 다른 종류에는 보낸 팬·종류·개수를 넘겨도 섞이지 않는다", () => {
-    for (const kind of SENDABLE.filter((k) => k !== "approval_request")) {
-      const b = buildNotificationBody({ ...inputFor(kind), approvalGift: { senderNickname: "달토끼", giftKind: "인형·쿠션", boxCount: 2 } });
-      expect([kind, /달토끼|인형·쿠션|2개/.test([b.subject, b.text, b.buttonLabel].join("\n"))]).toEqual([kind, false]);
-    }
-  });
-
-  it("INV-N1 (실패경로): 승인 요청에 보낸 사람·종류·개수가 없으면 만들지 않는다", () => {
-    for (const approvalGift of [null, { senderNickname: "", giftKind: "꽃", boxCount: 1 }, { senderNickname: "달토끼", giftKind: " ", boxCount: 1 }, { senderNickname: "달토끼", giftKind: "꽃", boxCount: 0 }]) {
-      expect(() => buildNotificationBody({ ...inputFor("approval_request"), approvalGift })).toThrow();
     }
   });
 
@@ -293,8 +276,7 @@ describe("알림 링크 (INV-N9)", () => {
       const b = buildNotificationBody(inputFor(kind));
       const all = [b.subject, b.text, b.buttonLabel].join("\n");
       expect([kind, all.includes("보낸 분"), all.includes("받는 분")]).toEqual([kind, false, false]);
-      // 승인 요청은 종류·개수를 적어서 「상세 정보는 표시하지 않습니다」 꼬리가 없다(INV-N1, 2026-10-29)
-      expect([kind, b.text.includes("선물 상세 정보는 알림에 표시하지 않습니다.")]).toEqual([kind, kind !== "approval_request"]);
+      expect([kind, b.text.includes("선물 상세 정보는 알림에 표시하지 않습니다.")]).toEqual([kind, true]);
     }
   });
 

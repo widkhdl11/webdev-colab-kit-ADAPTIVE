@@ -102,17 +102,15 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     expect(email.sent.find((m) => m.outboxId === idOf(waiting.orderId, "approval_request", "email", 3))!.subject).toBe("[팬꾹] 선물 승인 기한 안내");
   });
 
-  it("INV-N7: 템플릿 코드가 있으면 카카오 줄은 휴대폰 번호로 가짜 카카오에", async () => {
+  it("INV-N7: 템플릿 코드가 있어도 승인 요청 카카오 줄은 보내지 않고 건너뜀 — 알림톡 본문이 아직 정해지지 않았다(카드 d2 답 ②). 이메일 줄은 간다", async () => {
     psql(`insert into ${TEMPLATES} (kind, template_code) values ('approval_request', 'TPL_APPROVAL_1')`);
     const g = await paidGift();
     const email = capture(false);
     const kakao = capture(true);
     await dispatchNotifications(depsWith(email, kakao));
-    const k = kakao.sent.find((m) => m.outboxId === idOf(g.orderId, "approval_request", "kakao"));
-    expect(k?.templateCode).toBe("TPL_APPROVAL_1");
-    expect(k?.to).toMatch(/^01\d{8,9}$/);
-    expect(statusOf(g.orderId, "approval_request", "kakao")).toBe("sent");
-    expect(psql(`select fake from ${OUTBOX} where id = '${idOf(g.orderId, "approval_request", "kakao")}'`)).toBe("t");
+    expect(kakao.sent.some((m) => m.outboxId === idOf(g.orderId, "approval_request", "kakao"))).toBe(false);
+    expect(psql(`select status || '|' || error_code from ${OUTBOX} where id = '${idOf(g.orderId, "approval_request", "kakao")}'`)).toBe("skipped|alimtalk_unavailable");
+    expect(statusOf(g.orderId, "approval_request", "email")).toBe("sent");
   });
 
   it("INV-N6 (S6c): 두 칸을 다 끈 크리에이터에게도 승인 요청은 간다 — 꼭 가는 알림", async () => {
@@ -124,7 +122,8 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
       const g = await paidGift();
       await dispatchNotifications(depsWith(capture(false), capture(true)));
       expect(statusOf(g.orderId, "approval_request", "email")).toBe("sent");
-      expect(statusOf(g.orderId, "approval_request", "kakao")).toBe("sent");
+      // 카카오 줄도 생긴다(설정을 꺼도 꼭 가는 알림). 다만 승인 요청 알림톡 본문이 아직 없어 그 줄은 건너뛴다(카드 d2 답 ②)
+      expect(psql(`select status || '|' || error_code from ${OUTBOX} where id = '${idOf(g.orderId, "approval_request", "kakao")}'`)).toBe("skipped|alimtalk_unavailable");
     } finally {
       const [k, m] = saved.split("|");
       psql(`update pii.account_contacts set notify_kakao = ${k === "true"}, notify_email = ${m === "true"} where account_id = ${haru}`);
@@ -232,11 +231,12 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     psql(`insert into ${TEMPLATES} (kind, template_code) values ('approval_request', 'TPL_APPROVAL_1')`);
     const g = await paidGift();
     const failing: Capture = { ...capture(false), send: async () => Promise.reject(new Error("550 haru@example.com 01012345678")) };
-    await dispatchNotifications(depsWith(capture(false), failing));
+    // 번호·주소를 되풀이하는 오류는 메일 통로가 던진다 — 승인 요청 알림톡은 본문이 없어 보내지 않는다(카드 d2 답 ②)
+    await dispatchNotifications(depsWith(failing, capture(true)));
     const dump = psql(`select row_to_json(o)::text from ${OUTBOX} o where order_id = '${g.orderId}'`);
     expect(dump).not.toMatch(/[\w.+-]+@[\w-]+\.[\w.]+/);
     expect(dump).not.toMatch(PHONE_IN_TEXT);
     expect(dump).not.toContain("승인");
-    expect(psql(`select error_code from ${OUTBOX} where id = '${idOf(g.orderId, "approval_request", "kakao")}'`)).toBe("send_failed");
+    expect(psql(`select error_code from ${OUTBOX} where id = '${idOf(g.orderId, "approval_request", "email")}'`)).toBe("send_failed");
   });
 });

@@ -15,6 +15,7 @@ type Row = {
   auto_reject_at: string | null;
   undelivered_reason?: string | null;
   sender_name?: string | null;
+  /** DB 가 더 내주는 칸이 와도 본문에 섞이지 않는지 보는 데만 쓴다 */
   approval_sender?: string | null;
   approval_gift_kind?: string | null;
   approval_box_count?: number | null;
@@ -204,43 +205,26 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     must_deliver: true,
   };
 
-  it("INV-N1·N8 (S1c): 승인 요청 줄은 꺼낸 값(자동 반려 예정 시각·보낸 팬·종류·개수)으로만 본문을 만든다", async () => {
+  it("INV-N1·N8 (S1c): 승인 요청 줄은 꺼낸 자동 반려 예정 시각으로 본문을 만들고, 줄에 보낸 팬·종류·개수 칸이 와도 본문에 넣지 않는다(카드 d2 답 ②)", async () => {
     const email = channel();
     const { admin } = fakeAdmin({ rows: [APPROVAL_ROW], contacts: { "row-1": "haru@example.com" } });
     await dispatchNotifications(deps(admin, { email, kakao: null }));
     expect(email.sent[0]!.text).toContain("10월 8일 오전 10시까지");
     expect(email.sent[0]!.text).toContain("하루님");
-    expect(email.sent[0]!.text).toContain("보낸 사람: 달토끼\n선물: 꽃 2개");
+    expect(email.sent[0]!.text).not.toMatch(/달토끼|꽃|2개/);
     expect(email.sent[0]!.text).not.toContain("haru@example.com"); // 받는 주소는 본문에 없다
   });
 
-  it("INV-N1 (실패경로): 보낸 팬·종류·개수를 내주지 않는 줄(옛 DB)의 승인 요청은 만들지 않고 건너뜀", async () => {
-    const email = channel();
-    const { admin, calls } = fakeAdmin({
-      rows: [{ ...APPROVAL_ROW, approval_sender: null }, { ...APPROVAL_ROW, id: "row-2", approval_box_count: undefined }],
-      contacts: { "row-1": "haru@example.com", "row-2": "haru@example.com" },
-    });
-    await dispatchNotifications(deps(admin, { email, kakao: null }));
-    expect(email.sent).toHaveLength(0);
-    expect(finishes(calls).map((f) => (f as { p_error_code: string }).p_error_code)).toEqual(["body_unavailable", "body_unavailable"]);
-  });
-
-  it("INV-N7: 승인 요청 알림톡은 템플릿 문서의 여섯 변수로 간다", async () => {
+  it("INV-N7 (실패경로): 승인 요청은 템플릿 ID 가 있어도 알림톡으로 보내지 않고 건너뜀 — 본문이 아직 정해지지 않았다", async () => {
     const kakao = channel(true);
-    const { admin } = fakeAdmin({
+    const { admin, calls } = fakeAdmin({
       rows: [{ ...APPROVAL_ROW, channel: "kakao" }],
       contacts: { "row-1": "01012345678" },
       templates: [{ kind: "approval_request", template_code: "TPL_APPROVAL" }],
     });
     await dispatchNotifications(deps(admin, { email: channel(), kakao }));
-    expect(kakao.sent[0]!.variables).toEqual({
-      "#{닉네임}": "하루",
-      "#{주문번호}": "FC-7K3M9",
-      "#{보낸사람}": "달토끼",
-      "#{선물종류}": "꽃",
-      "#{개수}": "2",
-      "#{기한}": "10월 8일 오전 10시",
-    });
+    expect(kakao.sent).toHaveLength(0);
+    expect(finishes(calls).map((f) => (f as { p_error_code: string }).p_error_code)).toEqual(["alimtalk_unavailable"]);
   });
 
   it("INV-N7 (실패경로): 템플릿 ID 가 있어도 템플릿 문서에 본문이 없는 종류는 알림톡으로 보내지 않고 건너뜀", async () => {

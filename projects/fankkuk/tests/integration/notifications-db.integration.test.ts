@@ -101,9 +101,6 @@ type Claimed = {
   must_deliver: boolean;
   attempts: number;
   claimed_at: string;
-  approval_sender: string | null;
-  approval_gift_kind: string | null;
-  approval_box_count: number | null;
 };
 
 /** 이 줄만 꺼낼 수 있게 다른 대기 줄을 뒤로 미룬 뒤 하나를 꺼낸다. */
@@ -447,32 +444,14 @@ describe("추적 장치 발견 알림 — 크리에이터에게만, 팬에게는
     expect(fanKinds(held.g.orderId)).toEqual(fanKinds(returned.g.orderId));
   });
 
-  it("INV-N1 (S1c): 승인 요청 줄을 꺼내면 DB 가 주문에서 보낸 팬 닉네임·선물 종류(목록 라벨)·상자 수를 함께 준다", async () => {
+  it("INV-N1 (S1c): 승인 요청 줄을 꺼내도 보낸 팬 닉네임·선물 종류·상자 수는 오지 않는다 — 승인 화면에서만 보인다(카드 d2 답 ②)", async () => {
     const g = await paidGift(2);
     psql(`update public.orders set item_category = 'flower', item_kind = '꽃' where id = '${g.orderId}'`);
     const c = await claimOne(rowId(g.orderId, "approval_request", "haru_creator"));
-    expect(c).toMatchObject({ kind: "approval_request", nickname: "하루", approval_sender: "별빛", approval_gift_kind: "꽃", approval_box_count: 2 });
-  });
-
-  it("INV-N1 (S1c, 실패경로): 「기타」 주문은 팬이 쓴 글이 아니라 목록 라벨 「기타」 — 다른 종류의 줄에는 세 칸이 비어 있다", async () => {
-    const { g, staff, qrs } = await arrivedGift();
-    // 시험 주문은 기타(other) + 팬이 쓴 글 「시험 선물」
-    expect(psql(`select item_category || '|' || item_kind from public.orders where id = '${g.orderId}'`)).toBe("other|시험 선물");
-    const c = await claimOne(rowId(g.orderId, "approval_request", "haru_creator"));
-    expect(c).toMatchObject({ approval_sender: "별빛", approval_gift_kind: "기타", approval_box_count: 1 });
-    expect(JSON.stringify(c)).not.toContain("시험 선물");
-    await inspect(staff, qrs[0]!, { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" });
-    const hold = await claimOne(rowId(g.orderId, "hold", "haru_creator"));
-    expect(hold).toMatchObject({ approval_sender: null, approval_gift_kind: null, approval_box_count: null });
-  });
-
-  it("INV-N1: 종류·개수를 읽는 함수는 화면 쪽 키로 부를 수 없다", async () => {
-    const g = await paidGift();
-    for (const client of [anonClient(), await signedInClient("haru_creator")]) {
-      const r = await client.rpc("approval_gift_facts", { p_order_id: g.orderId });
-      expect(r.error).not.toBeNull();
-    }
-    expect(psql(`select fan_nickname || '|' || gift_kind || '|' || box_count from public.approval_gift_facts('${g.orderId}')`)).toBe("별빛|기타|1");
+    expect(c).toMatchObject({ kind: "approval_request", nickname: "하루" });
+    expect(JSON.stringify(c)).not.toMatch(/별빛|꽃/);
+    // 그 값을 고르던 함수도 없다
+    expect(psql(`select count(*) from pg_proc where proname = 'approval_gift_facts'`)).toBe("0");
   });
 
   it("INV-N13 (S13): 하루 몫 hold 줄을 꺼내면 닉네임은 하루 자신이다 — 보낸 팬(별빛)의 닉네임이 본문에 실리지 않는다", async () => {
@@ -594,7 +573,7 @@ describe("꺼내기·끝내기 (INV-N5·N1)", () => {
     const c = await claimOne(rowId(g.orderId, "approval_request", "haru_creator"));
     // dispose_due_at = 반송 주소 재알림의 처분 예정 시각(INV-N22) — 다른 종류는 비어 있다
     // approval_* = 승인 요청의 보낸 팬·선물 종류·상자 수(INV-N1, 2026-10-29) — 다른 종류는 비어 있다
-    expect(Object.keys(c).sort()).toEqual(["approval_box_count", "approval_gift_kind", "approval_sender", "attempts", "auto_reject_at", "channel", "claimed_at", "dispose_due_at", "id", "kind", "must_deliver", "nickname", "order_no", "round", "sender_name", "undelivered_reason"]);
+    expect(Object.keys(c).sort()).toEqual(["attempts", "auto_reject_at", "channel", "claimed_at", "dispose_due_at", "id", "kind", "must_deliver", "nickname", "order_no", "round", "sender_name", "undelivered_reason"]);
     expect(c).toMatchObject({ dispose_due_at: null });
     expect(c).toMatchObject({ kind: "approval_request", channel: "email", round: 1, order_no: g.orderNo, nickname: "하루", must_deliver: true, attempts: 0, undelivered_reason: null });
     const expected = psql(`select extract(epoch from registered_at + interval '168 hours') from public.orders where id = '${g.orderId}'`);

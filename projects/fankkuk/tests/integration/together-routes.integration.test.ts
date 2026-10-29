@@ -4,7 +4,7 @@ import { createTestAccount, removeTestAccounts, type TestAccount, FIXTURE_PASSWO
 import { resetLink, setHandleOk, verifyCreator } from "./creator-link-helpers";
 import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verification-helpers";
 import { giftBoxes, resetReplySettings } from "./gift-reply-helpers";
-import { deleteTestBlocks, deleteTestOrders, psql, signedInClient } from "./helpers";
+import { deleteTestBlocks, deleteTestOrders, linkTestSignature, psql, signedInClient, unlinkTestSignature } from "./helpers";
 import { allStoredObjects, clearGiftPhotos, jpegWithGps, kstDateDaysAgo, paidOrder, photoFiles, sessionCookie } from "./together-helpers";
 import { SPECIAL_MOMENT_TEXT } from "@/entities/together/model/special-moment";
 import { GIFT_PHOTO_PRIVATE } from "@/features/gift-photo/ui/gift-photo-manager";
@@ -123,6 +123,8 @@ beforeAll(async () => {
     throw new Error(`개발 서버(${APP})가 떠 있어야 한다 — npm run dev 로 띄운 뒤 실행한다`);
   }
   createCvAccounts();
+  // 크리에이터 페이지는 승인 서명을 연결한 크리에이터에게만 「선물 보내기」를 보인다(creator-link INV-E15) — 이 파일은 팔로우·받기 상태를 본다
+  linkTestSignature(A.creatorId);
   fanA = await createTestAccount({ tag: "tgfana" });
   fanB = await createTestAccount({ tag: "tgfanb" });
 }, 60_000);
@@ -145,6 +147,7 @@ afterAll(async () => {
   psql(`update public.creators set resume_on = null, birthday_month = null, birthday_day = null where id in (${IDS})`);
   if (fanA && fanB) await clearGiftPhotos([fanA.userId, fanB.userId]);
   removeTestAccounts();
+  unlinkTestSignature(A.creatorId);
   dropCvAccounts();
 });
 
