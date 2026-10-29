@@ -1,0 +1,1495 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>가입 2단계 · 정보 입력</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>/* 디자인 토큰 — 글자·간격·폭·카드·반경 값의 정본은 docs/design/tokens.md(2026-10-17 승인, 카드 d96 · 시안 docs/design/mockups/site/v23-tokens/).
+   그 밖의 값은 design-rules.md 00절(2026-10-14 v18 승인, 카드 d77)과 시안 docs/design/mockups/site/v18/tokens.css.
+   색만 v20 하늘색으로 바꿨다(2026-10-15 승인, 카드 d86 · 시안 docs/design/mockups/site/v20-rebrand/*-c.html). 배치·간격·글꼴 값은 v18 그대로다.
+   화면이 쓰는 옛 이름(--brand·--ink·--sub·--faint·--surface…)은 맨 위 묶음의 값을 가리킨다.
+   하늘색은 면(버튼 바탕·선택 면)에만 쓴다. 흰 바탕 대비 1.7:1 이라 글자·초점·선택 테두리에는 짙은 회색을 쓴다. */
+:root {
+  /* v20 — 하늘색 한 색 + 회색 단계. 진한 파랑·남색은 브랜드 색으로 쓰지 않는다(로고 안 --logo-ink 만 예외) */
+  --primary: #89cff0; /* 주 버튼·켜진 칩·스위치 면. 위 글자는 --on-brand(짙은 회색 8.8:1) */
+  --primary-50: #e0f2fe; /* 선택 면·뱃지·아이콘 원 (C안 primary-soft) */
+  --primary-700: #6bbfe6; /* 하늘색 면의 마우스 올림·누름. 글자에 쓰지 않는다 */
+  --tint: #f0f8ff; /* 사이드바·약속 구간처럼 넓은 옅은 하늘 면 */
+  --tint-line: #bfe3f7; /* 강조 하늘 면(--tint)의 테두리 — 한 화면에 강조 하나(design-rules 21절, 시안 v33b.css·v34.css) */
+  --accent-peach: #ffd6a5; /* 긍정 알림에만, 화면 넓이 5% 이하 */
+  /* 그라데이션 — 이 세 곳에만. 버튼에는 쓰지 않는다 */
+  --grad-hero: linear-gradient(135deg, #d6eefc 0%, #eef0ff 100%); /* 랜딩 첫 화면 판 */
+  --grad-glow: radial-gradient(ellipse at top left, #f0f8ff 0%, transparent 60%); /* 사이드바 위쪽 빛 */
+  --grad-title: linear-gradient(90deg, #7dd3fc, #a5e1fa); /* 구간 제목 강조 낱말 아래 띠. 글자색으로 쓰지 않는다 */
+  --glass: rgb(255 255 255 / 0.7); /* 그라데이션 판 위 카드 */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db; /* 장식 전용 — 흰 카드 위에서 보이는 회색 칸(보낸 내역 「받지 않음」, design-rules 25절) */
+  --gray-400: #9ca3af; /* 글자에 쓰지 않는다(대비 미달). 장식 전용 */
+  --gray-500: #6b7280; /* 흐린 글자 — 흰 바탕 4.83:1. 이보다 옅게 쓰지 않는다 */
+  --gray-600: #4b5563;
+  --gray-900: #1f2937; /* 본문 글자(ink). 흰 바탕 14.7:1 */
+  --badge-ink: #111827; /* 테마 색 팬덤 뱃지 글자(creator-link INV-E14 — 8색 모두 12:1 이상, design-rules 17절) */
+  --shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  --shadow-float: 0 1px 3px rgb(0 0 0 / 0.15); /* 사진 위에 뜬 작은 버튼(크리에이터 카드 배너 모서리 「팔로우」, 시안 v25-card-align C안) */
+  /* 글꼴: 본문·버튼·메뉴 Pretendard, 제목(h1·h2·h3·페이지 머리 제목)만 티머니 둥근바람(400·800 두 굵기뿐) */
+  --font: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Segoe UI", "Malgun Gothic", sans-serif;
+  --font-round: "Tmoney Round Wind", var(--font);
+  --fw-bold: 700; /* 본문 쪽 굵은 글자(라벨·강조·태그) */
+  --fw-h3: 600; /* 작은 제목(판 머리 — 시안 v20 tokens --fw-h3) */
+  --fw-btn: 600; /* 버튼·메뉴 */
+  --fw-title: 800; /* 티머니 둥근바람 제목 — 이 글꼴에는 400·800 만 있다 */
+
+  /* 로고 원색 — 로고 그림 안에서만(2026-10-15 사용자 제공 로고). 남색은 로고 밖에 쓰지 않는다 */
+  --logo-sky: #62b9fc;
+  --logo-cream: #fefdf9;
+  --logo-ink: #192b4f;
+  --r-logo: 22%; /* 로고 그림(연한 하늘색 정사각형) 모서리 — 크기에 비례 */
+
+  /* 색 */
+  --brand: var(--primary); /* 주 버튼 면. 글자로 쓰지 않는다 — 강조 글자는 --brand-ink */
+  --brand-hover: var(--primary-700);
+  --brand-active: var(--primary-700);
+  --brand-soft: var(--primary-50); /* 하늘 태그 면 (= 선택 면) */
+  --brand-ink: var(--gray-900); /* 강조 글자·링크 글자·선 아이콘 — 하늘색 글자는 쓰지 않는다 */
+  --brand-line: var(--gray-900); /* 선택된 칸 테두리·왼쪽 띠 (WCAG 1.4.11 3:1) */
+  --focus: var(--gray-900); /* 키보드 초점 테두리 */
+  --avatar-soft: var(--primary-50); /* 이름 첫 글자 동그라미 면 */
+  --ink: var(--gray-900); /* 본문 */
+  --sub: var(--gray-600); /* 보조 글 */
+  --faint: var(--gray-500); /* 흐린 글 — 이보다 옅게 쓰지 않는다 */
+  --background: #ffffff; /* 페이지 바탕 — 흰색 (2026-10-07 사용자 「배경을 하얗게」, 아이보리 #FFFAF7 에서) */
+  --surface: var(--gray-50); /* 옅은 중립 면 — 아이콘 칸·비선택 탭·빈 목록·푸터 같은 일반 칸 (시안 v8) */
+  --surface-hover: var(--gray-100); /* 일반 칸 마우스 올림 */
+  --surface-muted: #f7f7f8; /* 덜 중요한 카드 바탕(선물 상세 주문 정보·함께한 시간 안내 줄) — 시안 v35 푸터 회색, 위 --sub 글자 7.1:1 (design-rules 22절) */
+  --surface-brand: var(--tint); /* 옅은 하늘 면 — 주소 보호·개인정보 안내, 금액·업무 요약에만 */
+  --surface-selected: var(--primary-50); /* 선택된 탭·메뉴·항목 */
+  --white: #ffffff; /* 카드·입력창·헤더 */
+  --print-ink: #000000; /* 종이에 찍는 글자 — 송장 라벨처럼 스캐너·사람이 읽는 인쇄물은 순검정 */
+  --on-brand: var(--gray-900); /* 하늘색 면 위 글자 — 흰 글자는 1.8:1 이라 쓰지 않는다 */
+  --disabled: var(--gray-100);
+  --disabled-ink: var(--gray-600); /* 비활성 면 위 */
+  --warn-soft: #fff5db;
+  --warn-ink: #805b16; /* 5.6:1 */
+  /* 크리에이터 처리할 일 — 블루투스 발견 줄·늦음 강조(design-rules 13절, 시안 cre-action-center-d.html) */
+  --alert-50: #fffbeb;
+  --alert-100: #fef3c7;
+  --alert-200: #fde68a;
+  --alert-600: #d97706;
+  --alert-800: #92400e; /* #fffbeb 위 6.8:1 */
+  --alert-900: #78350f;
+  --success: #276749;
+  --success-soft: #eaf5ee;
+  --danger: #b42318;
+  --danger-soft: #feece9;
+  --info: #315e86;
+  --info-soft: #edf4fa;
+  --kakao: #fee500;
+  --kakao-ink: #191919;
+  --kakao-hover: #f3d900;
+  --kakao-active: #e6cd00; /* 카카오 버튼 누름 (v11) */
+  /* 이름 첫 글자·얼굴 동그라미 바탕 — 사람마다 돌려 쓴다(시안 v4). 글자는 --ink */
+  --face-1: #fbe3a8;
+  --face-2: #dcd3f6;
+  --face-3: #cfe3fa;
+  --face-4: #fad2ba;
+  --face-5: #c9ecdd;
+  --face-6: #f7c8d4;
+  --face-default: var(--primary-50); /* 얼굴 동그라미에 사람 색(--f)을 안 줬을 때 (v11 .face) */
+  --ctag-face: var(--gray-100); /* 플랫폼 뱃지 — 플랫폼 색(--f)이 없을 때의 옅은 면·로고 바탕 (v11 13절) */
+  --divider: rgb(17 24 39 / 0.08); /* 줄 사이 */
+  --divider-mid: rgb(17 24 39 / 0.16); /* 표 머리 */
+  --divider-strong: rgb(17 24 39 / 0.2);
+  --line-button: var(--gray-200); /* 흰 보조 버튼 테두리 */
+  --field-line: var(--gray-500); /* 입력창 경계 — 흰 바탕 4.8:1. 시안은 gray-200(1.2:1)이지만 입력창 경계 3:1(WCAG 1.4.11) 기준을 지킨다 */
+  --track: var(--gray-200); /* 진행 막대 빈 칸 */
+  --grip: var(--gray-200);
+
+  /* 그림자 */
+  --border: var(--gray-200); /* 카드·구분 경계 */
+  --hair: inset 0 0 0 1px var(--border); /* 테두리 대신. 아이보리 바탕 위 흰 카드 가장자리가 보이게 불투명 */
+  --field: inset 0 0 0 1px var(--field-line);
+  --lift: none; /* v18 버튼은 떠 있는 그림자가 없다 */
+  --float: 0 10px 28px rgb(17 24 39 / 0.12); /* 말풍선·메뉴·바텀시트 */
+  --scrim: rgb(17 24 39 / 0.48);
+
+  /* 반경 — 바깥은 둥글게, 안쪽은 덜 둥글게(tokens.md 5절) */
+  --r-panel: 24px; /* 큰 판(첫 화면 판·약속 구간·프로필 머리) */
+  --r-panel-sm: 24px; /* 좁은 화면의 큰 판 */
+  --r-tile: var(--r-panel); /* 옛 이름 — 28 을 뺐다(반경 단계 밖) */
+  --r-card: 16px; /* 모든 카드·카드 모양 상자 */
+  --r-box: 16px; /* 안내 상자·드롭다운 */
+  --r-btn: 12px; /* 버튼·입력창·카드 안 줄 */
+  --r-btn-sm: var(--r-btn); /* 옛 이름 — 10 을 뺐다 */
+  --r-tag: var(--r-pill); /* 상태 태그·칩·작은 표시 — 알약 모양. 반경 셈(한 화면 큰 판 24·카드 16·버튼 12 세 단계)에서 알약·원은 뺀다(DECISIONS 2026-10-18 재진단) */
+  --r-icon: 8px; /* 작은 아이콘 그림(채널 아이콘 20·팬마크) 모서리 — 그림 모양이라 반경 셈에서 뺀다 */
+  --r-bar: 3px; /* 진행 막대 칸(높이 6)의 둥근 끝 — design-rules 13절 선물 현황 */
+  --r-mark: 3px; /* 작은 팬덤 뱃지(높이 22) 안 팬마크 14 의 모서리 — 시안 v25-card-align */
+  --r-pill: 9999px;
+  /* 체크박스 B 젤리 네모(design-rules 29절 체크박스 줄, 카드 d130, 시안 part6-2026-10-25/checkbox-options.html B) — 작은 표시 모양이라 반경 셈에서 뺀다 */
+  --check-size: 26px;
+  --r-check: 10px;
+  --check-line: var(--gray-500); /* 꺼진 칸 테두리 — 흰 바탕 4.8:1 */
+  --check-shadow: inset 0 -2px 0 color-mix(in srgb, var(--gray-900) 6%, transparent);
+  --check-shadow-on: inset 0 -3px 0 color-mix(in srgb, var(--gray-900) 18%, transparent);
+  --ease-pop: cubic-bezier(0.3, 1.6, 0.5, 1); /* 체크가 튀어 나타나는 곡선 */
+  --dur-check: 180ms;
+
+  /* 간격 — 4px 기준 10단계(tokens.md 1절). 20 은 뺐다: 16·20·24 가 함께 있으면 구분이 안 된다.
+     한 묶음 안의 간격은 그 묶음과 바깥 사이 간격의 절반 이하 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: var(--space-6); /* 옛 이름 — 20 을 뺐다. 새로 쓰지 않는다(크리에이터 찾기 전용 CSS 가 아직 쓴다) */
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+
+  /* 폭(tokens.md 3절) */
+  --maxw: 880px; /* 로그인 전 글 폭 — .pub-inner(--pub-max 928 − 양옆 24×2)와 같은 선. 2026-10-18 1152 → 880(design-rules 16절, 사용자 「3안」) */
+  --prose-max: 680px; /* 약관·안내·자주 묻는 질문 본문, 페이지 머리 설명 한 줄(16px 기준 약 42자) */
+  --col-profile: 1080px; /* 크리에이터 상세 한 기둥 — 최대 폭(design-rules 31절, 2026-10-25 재디자인 880 → 1080) */
+  --col-list: 880px; /* 로그인 후 목록형·홈 */
+  --col-form: 720px; /* 로그인 후 입력·설정형, 가입 */
+  --col-wide: 1200px; /* 표·편집+미리보기 */
+  --col-auth: 480px; /* 로그인·비밀번호 찾기 카드 */
+  --gutter: 24px;
+  --header-h: 64px; /* v18 상단 바 64 */
+
+  /* 글자 — 6단계 48·32·24·20·16·14(tokens.md 2절, 휴대폰 32·24·24·20·16·14). 이 밖의 크기는 쓰지 않는다.
+     바로 위아래 단계는 한 단계 이상 띄우고, 같은 크기로 위계를 줄 때는 굵기와 색으로만 준다 */
+  --fs-hero: 48px; /* 랜딩 첫 화면 제목 하나 · 줄 높이 1.2 */
+  --fs-title: 32px; /* 랜딩·소개 구간 제목, 크리에이터 이름 · 1.25 */
+  --fs-page: 24px; /* 페이지 머리 제목, 프로필 아래 구간 제목 · 1.3 */
+  --fs-card: 20px; /* 카드 제목, 로그인 후 구간 제목, 강조 값(숫자·상태) · 1.4 */
+  --fs-body: 16px; /* 본문·버튼·상단 메뉴·리드 문장 · 1.6 */
+  --fs-small: 14px; /* 보조 글 — 캡션·날짜·개수·라벨·뱃지·사이드바 메뉴·푸터 · 1.5 */
+  --fs-badge: 12px; /* 6단계 밖 예외 — 팬덤 뱃지·카드 안 플랫폼 칩 전용(DECISIONS 2026-10-17 카드 d103) */
+  --fs-lead: var(--fs-body); /* 옛 이름 — 리드 18 → 16(통계 값처럼 강조 값은 --fs-card) */
+  /* v18 앱 사이드바(로그인 후)·상단 바(로그인 전) — 시안 v18/tokens.css 6~8단계 값 */
+  --sidebar-w: 240px;
+  --rail-w: 64px;
+  --topbar-h: 56px; /* 768 이하 로그인 후 위 막대 */
+  --nav-item-h: 36px;
+  --nav-icon: 18px;
+  --nav-gap-in: 12px;
+  --group-h: 32px;
+  --prof-h: 56px;
+  --mark: 28px;
+  --avatar-sb: 28px;
+  --r-nav: 8px;
+  --menu-w: 192px;
+  --fs-nav: var(--fs-body); /* 상단 바 메뉴 15 → 16 */
+  --fs-navitem: var(--fs-small); /* 사이드바 메뉴 */
+  --fs-caption: var(--fs-small); /* 캡션·태그·날짜·개수 13 → 14 */
+  --fs-group: var(--fs-small); /* 사이드바 묶음 이름·숫자 뱃지 11 → 14 */
+  --fw-nav: 500;
+  --nav-px: calc((var(--rail-w) - 2 * 8px - var(--nav-icon)) / 2); /* 접힘 64 에서 아이콘이 가운데 오는 안쪽 여백 */
+  --prof-px: calc((var(--rail-w) - 2 * 8px - var(--avatar-sb)) / 2);
+  --dur-w: 200ms;
+  --dur-fade: 150ms;
+  --dur-fade-out: 100ms;
+  --delay-fade: 100ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* 마우스 올림·누름 반응 */
+  --dur-hover: 150ms;
+  --dur-press: 100ms;
+  --lift-hover: 0 8px 24px rgb(0 0 0 / 0.08); /* 누를 수 있는 카드에 마우스를 올렸을 때만 */
+  --pub-max: calc(var(--col-list) + 2 * var(--gutter)); /* 로그인 전 상단 바·본문·푸터 글의 바깥 폭(양옆 여백 → 글 880 = 로그인 후 목록형 폭) */
+  --nav-gap: 32px;
+  /* 로고 글자 「팬꾹」 전용 — 티머니 둥근바람은 라이선스상 로고(BI/CI)에 쓸 수 없다 */
+  --font-logo: "Pretendard Variable", Pretendard, sans-serif;
+  --ls-title: -0.02em; /* 음수 자간은 제목(첫 화면·구간·페이지 제목)에만, 이 값 하나 */
+  /* v18 구간 사이 96(휴대폰 64) — 시안 tokens.css --section-gap. 옛 이름 --sec-pad 도 이 값을 가리킨다(v11 의 88~144 를 대신한다) */
+  --section-gap: 96px;
+  --sec-pad: var(--section-gap);
+  /* v18 전역 클래스(base.css 16절)가 쓰는 시안 값 */
+  /* 카드(tokens.md 4절) */
+  --card-pad: 24px; /* 목록·통계·설정 카드 안쪽(휴대폰도 24) */
+  --panel-pad: 32px; /* 큰 판 안쪽(휴대폰 24) */
+  --card-gap: 24px; /* 카드 격자 간격(휴대폰 16) */
+
+  /* 정돈 시범(tokens.md 0-4-1, 2026-10-22 승인) — 구간 띠·띠 위 낮은 대비 테두리·12열 격자. 띠 위 흐린 글자는 --sub 만(--gray-500 은 띠 끝에서 4.2:1 로 미달) */
+  --band-white: linear-gradient(180deg, #ffffff 0%, #eff1f3 100%); /* 흰 구간 바탕 — 위→아래 밝기 4.0% */
+  --band-cream: linear-gradient(180deg, #fffaf7 0%, #f6ede4 100%); /* 크림 구간 바탕 — 페이지 바탕이 아니라 구간을 바꿀 때만 */
+  --line-on-white: #dcdee0; /* 흰 구간 위 테두리 — 흰색과 10% */
+  --line-on-cream: #e4d8cb; /* 크림 구간 위 테두리 */
+  --grid-cols: 12; /* 카드 폭은 3·4·6·8·12 열만 */
+  --grid-gap: 24px;
+  --group-gap: 16px; /* 묶음 안 간격 상한 — 묶음 사이의 절반 이하 */
+  --btn-h: 48px;
+  --btn-h-sm: 44px; /* 2026-10-18 재진단 36 → 44(누름 칸 44) */
+  --touch: 48px;
+  --hero-pad-top: 64px; /* 첫 화면 판 안쪽 위 여백 96 → 64 (v23 감사표 1절) */
+  --hero-max: 680px; /* 첫 화면 글·검색창 폭 */
+  --search-h: 56px;
+  --search-btn: 44px;
+  --art: 64px; /* 바로가기 그림 */
+  --art-step: 56px; /* 단계 카드 그림 */
+  --art-empty: 160px; /* 빈 상태 그림 (휴대폰 128) */
+  --icon-xs: 20px;
+  --fw-sub: 500; /* 시안 --fw-subtitle. 리드·설명 글은 2026-10-25 부터 400(design-rules 28·30절) — 남은 쓰임은 BACKLOG 「입력 칸 라벨이 굵기 700」 */
+  --lh-caption: 1.5;
+
+  /* 23절 카드 면 효과·마이크로 디테일(2026-10-21 승인, design-rules 23-1·23-2 · 시안 docs/design/mockups/site/v37-part2/v37.css 맨 아래 세 블록 값 그대로).
+     높낮이: 강조 면(하늘) > 흰 카드 > 회색 보조 카드. 입력창·표·사이드바·창·운영자 화면에는 쓰지 않는다 */
+  --ease-micro: cubic-bezier(0.2, 0.8, 0.2, 1); /* 마이크로 디테일 곡선 — 0.15~0.6초, 움직임 2px 이하 */
+  /* 강조 면(하늘 판): 오른쪽 위 흰 빛 + 왼쪽 아래 하늘빛 번짐 + #f0f8ff→#e0f2fe 비스듬한 그러데이션. 테두리 --tint-line 그대로 */
+  --surface-accent-fx:
+    radial-gradient(120% 140% at 100% 0%, rgb(255 255 255 / 0.9) 0%, rgb(255 255 255 / 0) 45%),
+    radial-gradient(80% 120% at 0% 100%, rgb(137 207 240 / 0.28) 0%, rgb(137 207 240 / 0) 60%),
+    linear-gradient(135deg, #f0f8ff 0%, #e0f2fe 100%);
+  --surface-accent-sheen: inset 0 1px 0 rgb(255 255 255 / 0.8); /* 위 가장자리 흰 1px 반사선 */
+  --surface-accent-lift: 0 8px 24px rgb(137 207 240 / 0.18); /* 하늘빛 바깥 그림자 */
+  --surface-accent-shadow: var(--surface-accent-sheen), var(--surface-accent-lift);
+  /* 흰 카드: 오른쪽 위 아주 옅은 하늘빛(7%) + #fff→#fbfcfe 위→아래, 위 반사선, 옅은 두 겹 그림자. 마우스를 올리면 조금 더 뜬다 */
+  --card-fx:
+    radial-gradient(90% 120% at 100% 0%, rgb(137 207 240 / 0.07) 0%, rgb(137 207 240 / 0) 55%),
+    linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  --card-shadow: inset 0 1px 0 #ffffff, 0 1px 2px rgb(31 41 55 / 0.04), 0 4px 12px rgb(31 41 55 / 0.04);
+  --card-shadow-hover: inset 0 1px 0 #ffffff, 0 2px 4px rgb(31 41 55 / 0.05), 0 8px 24px rgb(31 41 55 / 0.08);
+  /* 회색 보조 카드: 그림자 없이 #f9f9fa→#f4f5f7 위→아래 + 위 반사선만 */
+  --muted-fx: linear-gradient(180deg, #f9f9fa 0%, #f4f5f7 100%);
+  --muted-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9);
+  /* 버튼: 주 버튼은 위→아래로 아주 옅게 짙어지는 면 + 위 반사선, 마우스를 올리면 하늘빛 그림자. 보조(흰) 버튼은 옅은 그림자 */
+  --btn-fill-fx: linear-gradient(180deg, #95d4f2 0%, #89cff0 100%);
+  --btn-fill-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45), 0 1px 2px rgb(31 41 55 / 0.06);
+  --btn-fill-shadow-hover: inset 0 1px 0 rgb(255 255 255 / 0.45), 0 4px 12px rgb(137 207 240 / 0.45);
+  --btn-ghost-shadow: 0 1px 2px rgb(31 41 55 / 0.04);
+  --btn-ghost-line-hover: var(--gray-500); /* 보조 버튼 마우스 올림 테두리 */
+  --btn-ghost-hover: #fafbfc;
+  --bar-fill-fx: linear-gradient(180deg, #9ad6f3 0%, #7cc6ea 100%); /* 진행 막대 채운 칸 */
+  --tag-sheen: inset 0 1px 0 rgb(255 255 255 / 0.6); /* 태그 위 반사선 */
+  --face-ring: inset 0 0 0 1px rgb(31 41 55 / 0.06); /* 얼굴 안쪽 옅은 윤곽 */
+  --selection: var(--tint-line); /* 글자 선택 색 #bfe3f7 */
+}
+@media (max-width: 1023px) {
+  :root { --nav-gap: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-w: 0s; --dur-fade: 0s; --dur-fade-out: 0s; --delay-fade: 0s; --dur-hover: 0s; --dur-press: 0s; --dur-check: 0s; }
+}
+@media (max-width: 767px) {
+  :root {
+    --gutter: 16px;
+    --fs-hero: 32px;
+    --fs-title: 24px;
+    --section-gap: 48px; /* 2026-10-18 재진단 64 → 48 */
+    --card-pad: 24px;
+    --panel-pad: 24px;
+    --card-gap: 16px;
+    --hero-pad-top: 64px;
+    --art-empty: 128px;
+  }
+}
+/* 운영자 화면은 이번 토큰 정리 대상이 아니다(design-rules 8절) — 옛 값을 그대로 물려준다 */
+.admin-area {
+  --space-5: 20px;
+  --r-tag: 6px;
+  --r-panel: 16px;
+  --r-panel-sm: 16px;
+  --fs-lead: 18px;
+  --fs-nav: 15px;
+  --fs-caption: 13px;
+  --fs-group: 11px;
+  --card-pad: 32px;
+  --maxw: 1200px;
+}
+</style><style>/* 공통 기본 스타일(전역 클래스) — v18 (2026-10-14 승인, design-rules 00절)이 v11 위에 덮였다.
+   v18 에서 바뀐 것: 본문 글꼴 Pretendard · 제목(h1·h2·h3·.t-hero·.t-title·.t-card)만 티머니 둥근바람 · 굵기 700(본문)·600(버튼) · 색은 tokens.css 가 v18 값으로 연결한다.
+   클래스 구성은 v11 시안(docs/design/mockups/site/v11/v11.css) 기준이다. 전역 클래스의 v18 모양은 맨 아래 16절이 같은 이름으로 덮는다(운영자 화면 제외) — 2~15절은 운영자 화면이 쓰는 v11 모양이다.
+   운영자 화면(.admin-area 안)에는 14·15절의 자동 간격을 걸지 않는다 — 운영자 화면은 재디자인 대상이 아니다. */
+
+/* ---------- 글꼴: 티머니 둥근바람 400·800 (파일은 public/fonts) — 제목에만. 로고 글자는 Pretendard — 티머니는 로고(BI/CI)에 쓸 수 없다 ---------- */
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../../public/fonts/TmoneyRoundWindRegular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2"); font-weight: 800; font-style: normal; font-display: swap; }
+
+/* ---------- 2. 바탕 ---------- */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--background); color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--fs-body); font-weight: 400; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere;
+}
+body.no-scroll { overflow: hidden; }
+h1, h2, h3, h4, p, ol, ul, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+a { color: inherit; }
+img, svg { display: block; max-width: 100%; }
+svg { flex-shrink: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+b, strong, th, dt { font-weight: var(--fw-bold); }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.skip-link { position: absolute; left: 16px; top: -64px; z-index: 200; background: var(--ink); color: var(--white); padding: 12px 16px; border-radius: var(--r-btn-sm); }
+.skip-link:focus { top: 8px; }
+
+/* ---------- 3. 글자 단계 (클래스 이름으로 쓴다) ----------
+   .t-hero  첫 화면 제목   40 / 30   800  줄간격 1.25  자간 -0.02em
+   .t-title 페이지·구간 제목 28 / 24   800  줄간격 1.3   자간 -0.02em
+   .t-card  카드 제목      20        800  줄간격 1.4
+   .t-lead  리드           18        400  줄간격 1.6
+   .t-body  본문·버튼·네비·보조 16     400  줄간격 1.6   (.t-meta = 같은 크기, 색만 --sub)
+   h1 = .t-hero, h2 = .t-title, h3 = .t-card 가 기본값이다 (페이지 제목이 h1 이면 .t-title 을 같이 단다). */
+.t-hero, h1 { font-size: var(--fs-hero); line-height: 1.2; letter-spacing: var(--ls-title); }
+.t-title, h2 { font-size: var(--fs-title); line-height: 1.3; letter-spacing: var(--ls-title); }
+.t-card, h3 { font-size: var(--fs-card); line-height: 1.4; letter-spacing: 0; }
+/* 제목만 티머니 둥근바람(400·800 두 굵기 — 없는 굵기를 가짜로 만들지 않는다) */
+:is(h1, h2, h3, .t-hero, .t-title, .t-card, .hero-title):where(:not(.admin-area *)) { font-family: var(--font-round); font-weight: var(--fw-title); font-synthesis: none; }
+.t-lead { font-size: var(--fs-lead); line-height: 1.6; font-weight: 400; }
+.t-body { font-size: var(--fs-body); line-height: 1.6; font-weight: 400; }
+.t-meta { font-size: var(--fs-body); line-height: 1.6; font-weight: 400; color: var(--sub); }
+.t-strong { font-weight: var(--fw-bold); }
+/* 글자색: 본문 기본은 --ink. --sub 는 제목 아래 설명(.t-desc)·메타(.t-meta)에만. 코랄(.accent)은 구간마다 한 곳 */
+.t-desc { color: var(--sub); }
+.accent { color: var(--brand-ink); }
+.tint .accent, .panel .accent { color: var(--brand-ink); }
+
+/* ---------- 4. 레이아웃 ---------- */
+.container { width: 100%; max-width: calc(var(--maxw) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
+.section { padding-block: var(--sec-pad); }
+.section--flush-top { padding-top: 0; }
+.center { text-align: center; }
+/* 구간 머리는 가운데, 입력값·목록·카드 본문은 읽기 방향으로 정렬한다. */
+.sec-head { margin-bottom: 48px; text-align: center; }
+.sec-head .t-lead, .sec-head .t-desc { margin: 16px auto 0; max-width: 640px; }
+.center .sec-head .t-lead, .center .sec-head .t-desc, .center.sec-head .t-lead { margin-inline: auto; }
+.sec-head .sec-icon { width: 72px; height: 72px; margin: 0 auto 16px; object-fit: contain; }
+.center .sec-head .sec-icon, .center.sec-head .sec-icon { margin-inline: auto; }
+.sec-foot { margin-top: 40px; text-align: center; }
+.center .sec-foot { display: grid; justify-items: center; gap: 12px; }
+/* 같은 크기 카드 격자 */
+.grid { --grid-gap: 24px; display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: var(--grid-gap); }
+.grid > * { flex: 0 0 calc((100% - (var(--cols, 1) - 1) * var(--grid-gap)) / var(--cols, 1)); min-width: 0; }
+.cols-1 { --cols: 1; } .cols-2 { --cols: 2; } .cols-3 { --cols: 3; } .cols-4 { --cols: 4; }
+@media (max-width: 1023px) { .cols-4 { --cols: 2; } .cols-3 { --cols: 2; } .cols-3.keep { --cols: 3; } }
+@media (max-width: 767px) { .cols-2, .cols-3, .cols-4, .cols-3.keep { --cols: 1; } .grid { --grid-gap: 16px; } }
+/* 옅은 코랄 큰 판 — 의미 있는 곳(약속·요약)에만 */
+.panel { padding: clamp(32px, 5vw, 72px); border-radius: var(--r-panel); background: var(--surface-brand); }
+@media (max-width: 767px) { .panel { border-radius: var(--r-panel-sm); } }
+
+/* ---------- 7. 버튼 · 태그 · 입력창 · 카드 ---------- */
+/* 버튼: 주(코랄 면)·보조(.btn--line 흰 면+경계)·글자만(.btn--text). 높이 52, 작은 것(.btn--sm) 44 */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 24px; border: 0; border-radius: var(--r-btn); background: var(--brand); color: var(--on-brand); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; text-align: center; text-decoration: none; cursor: pointer; box-shadow: var(--lift); }
+.btn:hover { background: var(--brand-hover); }
+.btn:active { background: var(--brand-active); }
+.btn--line { background: var(--white); color: var(--ink); box-shadow: var(--hair); }
+.btn--line:hover, .btn--line:active { background: var(--surface-hover); }
+.btn--text { background: none; color: var(--ink); box-shadow: none; padding-inline: 14px; }
+.btn--text:hover, .btn--text:active { background: var(--surface-hover); }
+.btn--sm { min-height: 44px; padding: 0 18px; border-radius: var(--r-btn-sm); box-shadow: none; }
+.btn--wide { min-width: 360px; }
+.btn--block { width: 100%; }
+@media (max-width: 767px) { .btn--wide { min-width: 0; width: 100%; } }
+/* 태그: 상태 4색 + 코랄(상태가 아닌 강조에만) + 중립 */
+.tag { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 8px; border-radius: var(--r-tag); background: var(--surface); color: var(--sub); font-weight: var(--fw-bold); line-height: 1.5; }
+.tag--brand { background: var(--surface-selected); color: var(--brand-ink); }
+.tag--success { background: var(--success-soft); color: var(--success); } /* 완료·승인 */
+.tag--warn { background: var(--warn-soft); color: var(--warn-ink); } /* 대기·검수 중·남은 기간 */
+.tag--danger { background: var(--danger-soft); color: var(--danger); } /* 거절·배송 문제 */
+.tag--info { background: var(--info-soft); color: var(--info); } /* 배송 중·진행 */
+.chip { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: var(--r-pill); background: var(--surface); color: var(--ink); }
+/* 입력창: 흰 바탕 + 또렷한 경계, 안내 글자는 --faint.
+   시안에서 .field 는 입력 요소 자체에 붙는다. 이전 화면은 같은 이름을 「라벨+입력」 감싸개 div 로 썼으므로 입력 요소에만 건다(감싸개는 맨 아래 이전 클래스) */
+:is(input, select, textarea).field { display: block; width: 100%; min-width: 0; min-height: 48px; padding: 0 16px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font-size: var(--fs-body); color: var(--ink); }
+:is(input, textarea).field::placeholder { color: var(--faint); opacity: 1; }
+:is(input, select, textarea).field:focus { outline: 2px solid var(--focus); outline-offset: 0; }
+.label { display: block; margin-bottom: 8px; font-weight: var(--fw-bold); }
+/* 카드: 경계 1px, 떠 있는 그림자 없음 */
+.card { min-width: 0; padding: 32px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--shadow); }
+.card .t-card + p { margin-top: 8px; }
+.card--soft { background: var(--surface-brand); box-shadow: none; }
+.card-icon { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 16px; border-radius: 50%; background: var(--surface); color: var(--ink); }
+.card-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; }
+/* 표 */
+.table-wrap { overflow-x: auto; border-radius: var(--r-card); box-shadow: var(--hair); background: var(--white); }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: 16px 24px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.table thead th { background: var(--surface); }
+.table tbody tr:last-child td { border-bottom: 0; }
+@media (max-width: 767px) { .table th, .table td { padding: 12px; } }
+
+/* ---------- 8. 첫 화면 부품 (첫 화면·팬 메인·크리에이터 메인·소개가 같이 쓴다. 검색창은 크리에이터 찾기·선물 보내기도) ---------- */
+.hero { padding-block: clamp(48px, 7vw, 96px) clamp(56px, 7vw, 96px); text-align: center; }
+.hero .t-lead { margin-bottom: 16px; }
+.hero-line { margin-top: 24px; font-size: var(--fs-card); line-height: 1.4; font-weight: var(--fw-bold); color: var(--brand-ink); }
+.hero-desc { max-width: 640px; margin: 24px auto 0; }
+.search { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 640px; height: 60px; margin: clamp(32px, 4vw, 48px) auto 0; padding: 0 8px 0 24px; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--field); }
+.search:focus-within { box-shadow: 0 0 0 3px var(--ink); }
+.search input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; font-size: var(--fs-lead); color: var(--ink); }
+.search input::placeholder { color: var(--faint); opacity: 1; }
+.search input:focus { outline: none; }
+.search-go { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--brand); color: var(--on-brand); cursor: pointer; flex-shrink: 0; }
+.search-go:hover { background: var(--brand-hover); }
+.tiles { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px; max-width: 1100px; margin: 32px auto 0; }
+.tile { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px; min-height: 152px; padding: 16px 4px 12px; border-radius: var(--r-tile); background: var(--surface); box-shadow: var(--hair); text-align: center; text-decoration: none; line-height: 1.35; }
+.tile:hover { background: var(--surface-brand); }
+.tile img { width: 88px; height: 88px; object-fit: contain; }
+.hero-actions { display: grid; justify-items: center; gap: 12px; margin-top: 40px; }
+@media (max-width: 1023px) { .tiles { gap: 8px; } }
+@media (max-width: 767px) { .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; } .tile { min-height: 124px; padding: 12px 2px 10px; } .tile img { width: 64px; height: 64px; } }
+@media (max-width: 480px) { .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* 그림이 붙은 단계 열 */
+.step-col img { width: 80px; height: 80px; margin: 0 auto 16px; object-fit: contain; }
+.step-col .label-num { margin-bottom: 4px; font-weight: var(--fw-bold); }
+.step-col h3 + p { margin-top: 8px; }
+.steps-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin-top: 48px; }
+.steps-line .lab { margin-right: 4px; font-weight: var(--fw-bold); }
+.steps-line .arrow { color: var(--faint); }
+/* 요금 카드 */
+.price .price-amount { margin-top: 16px; font-size: var(--fs-hero); font-weight: var(--fw-bold); line-height: 1.15; letter-spacing: 0; }
+.price .price-amount span { margin-left: 4px; font-size: var(--fs-card); line-height: 1.4; }
+.price .inc { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-weight: var(--fw-bold); }
+.price .inc svg { color: var(--brand-ink); }
+.price .spec { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--sub); }
+.notes { display: grid; gap: 8px; margin-top: 28px; color: var(--sub); }
+.notes li { display: flex; gap: 12px; }
+.notes li::before { content: ""; width: 6px; height: 6px; margin-top: 11px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+
+/* ---------- 9. 번호 단계 (PC 가로 / 1023px 이하 세로) ---------- */
+.flow { display: grid; grid-template-columns: repeat(var(--steps, 5), minmax(0, 1fr)); gap: 16px; }
+.flow li { position: relative; }
+.flow .n { position: relative; z-index: 1; display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: 16px; border-radius: 50%; background: var(--white); box-shadow: inset 0 0 0 2px var(--ink); font-weight: var(--fw-bold); line-height: 1; }
+.flow li:not(:last-child)::after { content: ""; position: absolute; left: 48px; top: 19px; width: calc(100% - 48px + 16px); height: 2px; background: var(--border); }
+.flow li.on .n { background: var(--brand); color: var(--on-brand); box-shadow: 0 0 0 4px var(--surface-selected); }
+.flow h3 + p { margin-top: 8px; }
+.flow .tag { margin-top: 12px; }
+.flow li.done .n { background: var(--success); color: var(--white); box-shadow: none; }
+.flow li.done:not(:last-child)::after { background: var(--success); }
+.flow--mini { justify-items: stretch; text-align: center; }
+.flow--mini .n { margin-inline: auto; }
+.flow.flow--mini li:not(:last-child)::after { left: calc(50% + 28px); top: 19px; bottom: auto; width: calc(100% - 56px + 16px); height: 2px; }
+@media (max-width: 1023px) {
+  .flow { grid-template-columns: 1fr; gap: 0; }
+  .flow li { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 16px; padding-bottom: 28px; }
+  .flow li:last-child { padding-bottom: 0; }
+  .flow .n { margin-bottom: 0; }
+  .flow li:not(:last-child)::after { left: 19px; top: 48px; bottom: 8px; width: 2px; height: auto; }
+  .flow li > p { grid-column: 2; }
+  .flow li > .n { grid-row: 1 / span 3; }
+  .flow--mini li > p { grid-column: auto; }
+  .flow--mini li > .n { grid-row: auto; }
+  .flow--mini li:not(:last-child)::after { left: calc(50% + 28px); width: calc(100% - 56px + 16px); }
+}
+
+/* ---------- 10. 화면 공통 부품 ---------- */
+/* 「내 팬꾹」 틀: PC 왼쪽 메뉴 + 본문, 1023px 이하 위 가로 메뉴 */
+.my { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 40px; padding-block: 48px var(--sec-pad); align-items: start; }
+.my-grid { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 40px; align-items: start; padding-bottom: var(--sec-pad); }
+.my-side { position: sticky; top: calc(var(--header-h) + 24px); min-width: 0; padding: 16px; border-radius: var(--r-card); background: var(--surface); }
+.my-me { display: flex; align-items: center; gap: 12px; padding: 8px 0 24px; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
+.my-me b { display: block; line-height: 1.3; }
+.my-me div span { display: block; color: var(--sub); }
+.my-menu ul, ul.my-menu { display: grid; gap: 4px; }
+.my-menu a { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 12px; border-radius: var(--r-btn-sm); text-decoration: none; }
+.my-menu a:hover { background: var(--surface-hover); }
+.my-menu a[aria-current="page"] { background: var(--surface-selected); color: var(--brand-ink); font-weight: var(--fw-bold); }
+.my-menu a:focus-visible { outline-offset: 0; }
+.my-menu svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.my-main, .my-body { min-width: 0; }
+.my-body .tabs, .my-main .tabs { justify-content: center; }
+/* v18 페이지 머리 — 로그인 전·후 같은 모양: 제목 24 왼쪽 + (개수) + 오른쪽 주요 버튼 하나 + 설명 한 줄(design-rules 00절, 시안 v18-app.css .page-head·.ph-*) */
+.page-head { margin-bottom: 32px; text-align: left; }
+.page-head > :is(h1, h2), .ph-title { font-size: var(--fs-page); line-height: 1.3; letter-spacing: 0; }
+.page-head > :is(.t-lead, .t-desc, p), .ph-desc { margin: 8px 0 0; max-width: var(--prose-max); font-size: var(--fs-body); color: var(--gray-600); }
+.ph-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+.ph-count { margin-left: 8px; font-family: var(--font); font-size: var(--fs-body); font-weight: 400; color: var(--gray-500); }
+/* 본문 틀 — 로그인 후 관리 화면의 폭은 세 가지(design-rules 00절 「본문 틀」, 카드 d89 · 시안 v22-width/v22.css). 셋 다 안쪽 여백 40, 사이드바를 뺀 남은 영역의 가운데.
+   기본(.page-pane) = 목록형·홈 880 / .pane-form = 입력·설정형 720 / .pane-broad = 표·카드 격자·두 단 1200.
+   틀 자체는 남은 영역을 다 쓰고(container), 바로 아래 자식이 그 기둥 폭 가운데에 선다. 화면이 좁으면 본문 폭에 맞춘다.
+   카드 격자는 .pane-wide 로 최대 1360(= 1440 - 안쪽 여백 40×2)까지 펼친다 — 몇 겹 안에 있어도 된다. 너비는 틀 기준(cqi),
+   여백은 감싼 칸 기준(%)이라 가운데를 맞춘 채 양옆으로 같은 만큼 나간다. 소개형·단계 입력은 가운데 틀(.page-centered, 최대 1200). */
+.page-pane { --pane-col: 880px; --pane-wide: min(1360px, 100cqi); container: pane / inline-size; width: 100%; min-width: 0; padding: 40px; }
+.page-pane.pane-form { --pane-col: 720px; }
+.page-pane.pane-broad { --pane-col: 1200px; }
+.page-pane > :not(.pane-wide) { max-width: var(--pane-col); margin-inline: auto; } /* 클래스 둘 무게 — 뒤에 오는 .tabs 등의 max-width·좌우 여백보다 먼저 */
+.page-pane .pane-wide { width: var(--pane-wide); max-width: none; margin-inline: calc((100% - var(--pane-wide)) / 2); }
+.page-centered { width: 100%; min-width: 0; max-width: 1200px; margin-inline: auto; padding: 40px var(--gutter); }
+@media (max-width: 768px) { .page-pane { padding: 16px; } }
+.page-top { padding-block: 48px 40px; text-align: center; }
+.page-top .t-lead { margin-top: 12px; }
+.page-end { padding-bottom: var(--sec-pad); }
+.crumb { padding-top: 24px; }
+.crumb a { display: inline-flex; align-items: center; min-height: 44px; color: var(--sub); text-decoration: none; }
+.crumb a:hover { color: var(--ink); text-decoration: underline; }
+.col { max-width: 720px; margin-inline: auto; padding-block: 48px var(--sec-pad); }
+.section--compact { padding-block: clamp(48px, 6vw, 88px); }
+.section--compact + .section--compact { padding-top: 0; }
+/* 사람 */
+.avatar { display: grid; place-items: center; flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%; background: var(--surface-selected); color: var(--brand-ink); font-weight: var(--fw-bold); line-height: 1; }
+.who { display: flex; align-items: center; gap: 12px; }
+.who h3 { line-height: 1.3; }
+.face { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--f, var(--face-default)); color: var(--ink); font-weight: var(--fw-bold); line-height: 1; flex-shrink: 0; }
+.face--sm { width: 40px; height: 40px; }
+.face--lg { width: 72px; height: 72px; font-size: var(--fs-card); }
+.face--xl { width: 120px; height: 120px; }
+.avatar-stack { display: flex; margin-top: 24px; }
+.avatar-stack .face { width: 48px; height: 48px; margin-left: -10px; box-shadow: 0 0 0 3px var(--white); border-radius: 50%; }
+.avatar-stack .face:first-child { margin-left: 0; }
+/* 탭·태그 묶음 */
+.tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 100%; margin: 0 0 32px; padding: 4px; }
+.tabs a, .tabs label, .tab { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 8px 16px; border: 0; border-radius: var(--r-pill); background: var(--surface); text-decoration: none; text-align: center; cursor: pointer; }
+.tabs a:hover, .tab:hover { background: var(--surface-hover); }
+.tabs a[aria-current="page"], .tab[aria-selected="true"] { background: var(--surface-selected); color: var(--brand-ink); font-weight: var(--fw-bold); }
+.tabs .n { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 8px; border-radius: var(--r-pill); background: var(--ink); color: var(--white); font-weight: var(--fw-bold); line-height: 1; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 32px; }
+.chips .chip { min-height: 44px; padding: 0 18px; border: 0; cursor: pointer; }
+.chips .chip:hover { background: var(--surface-hover); }
+.chips .chip[aria-pressed="true"] { background: var(--ink); color: var(--white); }
+/* 버튼 묶음 */
+.card-col { display: flex; flex-direction: column; gap: 12px; }
+.card-col .push { margin-top: auto; }
+.btn-row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.btn-col { display: grid; gap: 12px; }
+.btn-stack { display: flex; flex-wrap: wrap; gap: 12px; }
+.btnrow { display: flex; flex-wrap: wrap; gap: 12px; }
+.btnrow, .btn-stack { align-items: center; }
+.row-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 32px; }
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-top: 32px; }
+.block-gap { display: grid; gap: 24px; }
+.stack { display: grid; gap: 24px; }
+.link-line { display: inline-flex; align-items: center; min-height: 44px; font-weight: var(--fw-bold); color: var(--brand-ink); }
+.mini-links a { display: flex; align-items: center; min-height: 44px; font-weight: var(--fw-bold); text-decoration: none; color: var(--brand-ink); }
+.foot-line { margin-top: 24px; text-align: center; }
+.foot-line a { font-weight: var(--fw-bold); color: var(--brand-ink); }
+@media (max-width: 767px) { .btn-row2 { grid-template-columns: 1fr; } }
+/* 카카오 인증 버튼만 카카오 노란색 (design-rules 1절) — 떠 있는 그림자 없음 */
+.btn--kakao { background: var(--kakao); color: var(--kakao-ink); box-shadow: none; }
+.btn--kakao:hover { background: var(--kakao-hover); }
+.btn--kakao:active { background: var(--kakao-active); }
+.btn--kakao svg { width: 20px; height: 20px; }
+/* 고르기·폼 */
+.opt { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 12px 16px; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); cursor: pointer; line-height: 1.5; }
+.opt input { flex-shrink: 0; width: 24px; height: 24px; margin: 0; accent-color: var(--brand-line); }
+.opt:has(input:checked) { background: var(--surface-selected); box-shadow: inset 0 0 0 2px var(--brand-line); }
+.opt:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 3px; }
+.fs { min-width: 0; margin: 0; padding: 0; border: 0; }
+.hint { margin-top: 8px; color: var(--sub); }
+select.field { appearance: auto; }
+textarea.field { padding-block: 14px; min-height: 160px; resize: vertical; line-height: 1.6; }
+.form { display: grid; gap: 24px; }
+.field-block + .field-block { margin-top: 24px; }
+.check { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.check input { width: 24px; height: 24px; margin: 0; accent-color: var(--brand-line); flex-shrink: 0; }
+.check + .check { margin-top: 12px; }
+.err { padding: 16px; border-radius: var(--r-btn); background: var(--danger-soft); color: var(--danger); font-weight: var(--fw-bold); }
+.okmsg { padding: 16px; border-radius: var(--r-btn); background: var(--success-soft); color: var(--success); font-weight: var(--fw-bold); }
+/* 알림 칸은 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다 — 빈 칸은 흐름에서 빼 간격·격자 gap 을 차지하지 않는다(낭독기 트리에는 남는다) */
+.err:empty, .okmsg:empty { position: absolute; margin: 0; padding: 0; background: none; }
+.auth { max-width: 640px; margin-inline: auto; }
+.auth .card { padding: 40px; }
+.auth .head { text-align: center; margin-bottom: 32px; }
+.auth .head img { width: 72px; height: 72px; margin: 0 auto 16px; object-fit: contain; }
+.auth .head .t-lead { margin-top: 16px; }
+.auth .head p { max-width: 480px; margin-inline: auto; }
+.step-h { margin-bottom: 32px; text-align: center; }
+/* 진행 막대 */
+.dots { display: flex; gap: 8px; }
+.dots span { flex: 1; height: 8px; border-radius: var(--r-tag); background: var(--border); }
+.dots span.on { background: var(--brand); }
+/* 크리에이터 카드·플랫폼 뱃지 */
+.ctags { display: flex; flex-wrap: wrap; gap: 8px; }
+.ccard { display: flex; flex-direction: column; gap: 16px; }
+.ccard-top { display: flex; align-items: center; gap: 16px; }
+.ccard-top h3 a { text-decoration: none; }
+.ccard-top h3 a:hover { text-decoration: underline; }
+.ccard-top .ctags { margin-top: 8px; }
+.ccard-foot { display: grid; gap: 12px; margin-top: auto; }
+.ccard-foot.two { grid-template-columns: 1fr 1fr; }
+.ccard-foot.two > .t-meta { grid-column: 1 / -1; }
+.ccard-foot .btn { width: 100%; }
+.ccard .intro { flex: 1; color: var(--ink); }
+.grid > .ccard { height: auto; }
+/* 접기 목록 */
+.acc details { border-radius: var(--r-card); box-shadow: var(--hair); background: var(--white); }
+.acc details + details, .acc > * + * { margin-top: 12px; }
+.acc summary { display: flex; align-items: center; gap: 16px; min-height: 72px; padding: 16px 24px; cursor: pointer; list-style: none; }
+.acc summary::-webkit-details-marker { display: none; }
+.acc summary .q { flex: 1; min-width: 0; }
+.acc summary .q b { display: block; }
+.acc summary svg { width: 20px; height: 20px; transition: transform .15s; }
+.acc summary:hover { background: var(--surface); border-radius: var(--r-card); }
+.acc details[open] summary { margin-bottom: 16px; border-bottom: 1px solid var(--border); border-radius: var(--r-card) var(--r-card) 0 0; }
+.acc details[open] summary svg { transform: rotate(180deg); }
+.acc .ans { padding: 0 24px 24px; display: grid; gap: 16px; }
+/* 긴 글 */
+.prose { display: grid; gap: 16px; max-width: var(--prose-max); margin-inline: auto; }
+.prose .dots { display: grid; gap: 8px; }
+.prose .dots li { display: flex; gap: 12px; }
+.prose .dots li::before { content: ""; width: 6px; height: 6px; margin-top: 11px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+/* 프로필 머리 */
+.pf { padding-block: clamp(40px, 6vw, 80px) clamp(32px, 4vw, 56px); text-align: center; }
+.pf .face--xl { margin: 0 auto 24px; }
+.pf .handle { margin-top: 8px; }
+.pf .t-lead { margin-top: 16px; }
+.pf .ctags { justify-content: center; margin-top: 24px; }
+.pf .thanks { margin-top: 24px; font-size: var(--fs-card); line-height: 1.4; font-weight: var(--fw-bold); color: var(--brand-ink); }
+.pf .row-btns { margin-top: 24px; }
+.pf .note { margin-top: 12px; color: var(--sub); }
+/* 안내 카드 */
+.info h3 { display: flex; align-items: center; gap: 8px; }
+.info .big { margin-top: 8px; font-size: var(--fs-card); line-height: 1.4; font-weight: var(--fw-bold); }
+.info .ic { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 16px; border-radius: 50%; background: var(--surface); }
+.info .ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.info.ok .ic { background: var(--success-soft); color: var(--success); }
+.info.rest .ic { background: var(--warn-soft); color: var(--warn-ink); }
+.info .dd { margin-top: 12px; }
+.quote { padding: 16px 24px; border-radius: var(--r-btn); background: var(--surface); }
+.quote q { display: block; font-weight: var(--fw-bold); font-size: var(--fs-lead); line-height: 1.5; quotes: "“" "”"; }
+.quote .by { margin-top: 12px; }
+.nos { display: grid; gap: 8px; }
+.nos li { display: flex; gap: 12px; align-items: flex-start; }
+.nos .x { display: grid; place-items: center; width: 24px; height: 24px; margin-top: 1px; border-radius: 50%; background: var(--danger-soft); color: var(--danger); flex-shrink: 0; }
+.steps-ol { display: grid; gap: 12px; counter-reset: s; }
+.steps-ol li { display: flex; gap: 12px; }
+.steps-ol li::before { counter-increment: s; content: counter(s); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--white); font-weight: var(--fw-bold); flex-shrink: 0; }
+.other { text-decoration: none; display: flex; align-items: center; gap: 16px; }
+.other:hover { background: var(--surface); }
+.other small { display: block; color: var(--sub); font-size: var(--fs-body); }
+.panel .center-in { display: grid; justify-items: center; gap: 16px; text-align: center; }
+.section-hint { margin: -8px 0 24px; color: var(--sub); text-align: center; }
+.empty { display: grid; justify-items: center; gap: 16px; padding: 48px 24px; border-radius: var(--r-panel); background: var(--surface); text-align: center; }
+.empty img { width: 96px; height: 96px; object-fit: contain; }
+.part { padding: clamp(24px, 3vw, 40px); border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
+.part > .t-desc, .part > .t-meta { margin-top: 8px; }
+.part--soft { background: var(--surface-brand); box-shadow: none; }
+fieldset.part { border: 0; min-width: 0; }
+fieldset.part > legend { float: left; width: 100%; margin: 0 0 12px; padding: 0; }
+fieldset.part > legend + * { clear: both; }
+.kv { container-type: inline-size; }
+.kv > div { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+.kv > div:last-child { border-bottom: 0; }
+.kv dd { min-width: 0; overflow-wrap: anywhere; }
+/* 좁은 칸(카드 격자 안 등)에서는 이름 칸 200 이 값 칸을 0 으로 만든다 — 목록 폭이 480 이하면 이름 아래 값 */
+@container (max-width: 480px) { .kv > div { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+/* 금액 줄 */
+.lines > div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.lines .total { border-bottom: 0; padding-top: 24px; align-items: baseline; }
+.lines .amt { font-weight: var(--fw-bold); white-space: nowrap; }
+.total .amt { font-size: var(--fs-title); line-height: 1.3; color: var(--brand-ink); }
+.bignum { margin-top: 8px; font-size: var(--fs-hero); line-height: 1.2; font-weight: var(--fw-bold); }
+.bignum span { margin-left: 4px; font-size: var(--fs-card); }
+.bignum, .price-amount, .amt, .hd-count { font-variant-numeric: tabular-nums; }
+/* 선물 카드·내 목록 */
+.gcard { display: grid; gap: 16px; align-content: start; list-style: none; }
+.gcard-top { display: flex; align-items: center; gap: 16px; }
+.mine-list { display: grid; gap: 12px; margin-top: 24px; }
+.mine-list a { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 12px; border-radius: var(--r-btn); background: var(--surface); text-decoration: none; }
+.mine-list a:hover { background: var(--surface-hover); }
+.mine-list .w { flex: 1; min-width: 0; font-weight: var(--fw-bold); }
+.nlist li + li { margin-top: 12px; }
+.nlist a { display: block; padding: 24px 24px; border-radius: var(--r-card); box-shadow: var(--hair); text-decoration: none; background: var(--white); }
+.nlist a:hover { background: var(--surface); }
+.nlist b { display: block; }
+/* 스위치: 설명과 조작 영역 */
+.sw-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 16px 24px; border-radius: var(--r-btn); background: var(--surface); }
+.sw { position: relative; flex-shrink: 0; width: 56px; height: 32px; padding: 0; border: 0; border-radius: var(--r-pill); background: var(--field-line); cursor: pointer; }
+.sw span { position: absolute; left: 4px; top: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--white); transition: transform .15s; }
+.sw[aria-checked="true"] { background: var(--brand); }
+.sw[aria-checked="true"] span { transform: translateX(24px); }
+
+/* ---------- 11. 정렬과 세부 마감 ----------
+   제목·다음 행동은 가운데, 폼과 긴 설명은 왼쪽으로 읽는다.
+   카드 간격 24, 카드 안 32, 제목과 본문 8, 부품 묶음 16·24·32. */
+main { min-height: 60vh; }
+main :is(section, fieldset, [id]) { scroll-margin-top: calc(var(--header-h) + 24px); }
+h1, h2, h3 { text-wrap: balance; }
+.step-col { text-align: center; }
+.center :is(.card-icon, .info .ic) { margin-inline: auto; }
+.center :is(.btnrow, .btn-stack, .tags, .ctags, .info h3) { justify-content: center; }
+.sec-head > .row-btns { margin-top: 24px; }
+.ccard-top > :last-child, .who > :last-child, .gcard-top > :last-child { min-width: 0; }
+.tag, .chip, .ctag { max-width: 100%; }
+.btn, .chip, .opt, .acc summary { transition: background-color .15s, box-shadow .15s; }
+a.card:hover, .ccard:focus-within { box-shadow: inset 0 0 0 2px var(--field-line); }
+.table caption { padding: 16px 24px; text-align: left; font-weight: var(--fw-bold); background: var(--surface); }
+.table tbody tr:hover { background: var(--surface); }
+.table-wrap:focus-visible { outline-offset: 4px; }
+.card > img, .part > img { object-fit: contain; }
+:is(input, select, textarea).field:disabled { background: var(--surface); color: var(--sub); opacity: 1; }
+:is(input, select, textarea).field[readonly] { background: var(--surface); }
+.btn:disabled { background: var(--disabled); color: var(--disabled-ink); box-shadow: none; cursor: not-allowed; }
+.btn--line.btn--sm { box-shadow: var(--hair); }
+@media (max-width: 1023px) {
+  .my, .my-grid { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .my-side { position: static; padding: 0; background: none; }
+  .my-me { display: none; }
+  .my-menu ul, ul.my-menu { display: flex; gap: 8px; overflow-x: auto; padding: 4px 4px 12px; }
+  .my-menu li { flex-shrink: 0; }
+  .my-menu a { white-space: nowrap; background: var(--surface); }
+}
+@media (max-width: 767px) {
+  .sec-head { margin-bottom: 32px; }
+  .section, .section--compact { padding-block: 56px; }
+  .section--flush-top, .section--compact + .section--compact { padding-top: 0; }
+  .panel { padding: 32px 24px; }
+  .card, .auth .card, .part { padding: 24px; }
+  .hero { padding-block: 48px 56px; }
+  .page-top { padding-block: 32px; }
+  .col { padding-block: 32px 56px; }
+  .my { padding-block: 32px 56px; }
+  .my-grid { padding-bottom: 56px; }
+  .my-menu a { min-height: 48px; padding-inline: 16px; }
+  .my-menu svg { width: 20px; height: 20px; }
+  .tabs { gap: 8px; padding: 0; }
+  .tabs a, .tabs label, .tab { padding-inline: 16px; }
+  .ccard-foot.two { grid-template-columns: 1fr; }
+  .btnrow .btn, .btn-stack .btn { flex: 1 1 auto; }
+  .acc summary { padding: 16px; gap: 8px; }
+  .acc .ans { padding: 0 16px 24px; }
+  .acc summary .tag { flex-shrink: 0; }
+  .flow--mini .n { margin-bottom: 8px; }
+  .flow--mini .t-strong { font-size: var(--fs-body); }
+  .flow.flow--mini li:not(:last-child)::after { width: calc(100% - 56px + 8px); }
+  .kv > div { grid-template-columns: 1fr; gap: 4px; }
+  .actions { display: grid; grid-template-columns: 1fr 2fr; }
+  .actions .btn:only-child { grid-column: 1 / -1; }
+}
+/* 여덟 개 그림은 좁은 폭에서도 마지막 줄이 같은 폭으로 가운데 모인다. */
+@media (max-width: 480px) {
+  .tiles { display: flex; flex-wrap: wrap; justify-content: center; }
+  .tile { flex: 0 0 calc((100% - 16px) / 3); }
+}
+
+/* ---------- 12. 세부 정렬 보정 (2차) ----------
+   카드·판 안: 제목 아래 본문 8px, 표 바깥 설명은 표 칸 글 시작선(24px)에 맞춘다. */
+:is(.card, .part, .gcard, .ccard, .info, .flow li, .step-col) :is(h3, .t-card) + :is(p, .t-meta, .t-desc) { margin-top: 8px; }
+.card > .tag + :is(h3, .t-card) { margin-top: 12px; }
+.table-wrap + :is(p, .t-meta) { margin-top: 12px; padding-inline: 24px; }
+.card--soft.center { text-align: center; }
+@media (max-width: 767px) {
+  .table-wrap + :is(p, .t-meta) { padding-inline: 12px; }
+  .table td:last-child { white-space: normal; }
+}
+
+/* ---------- 13. 플랫폼 뱃지 (2026-10-13 사용자 선택: 테두리 알약, 마우스를 올리면 연한 색 배경) ----------
+   --f(옅은 면)·--k(글자색)는 플랫폼마다 화면이 넣는다(design-rules 5절). 어느 폭에서도 한 줄 */
+.ctag { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 4px 12px 4px 4px; border-radius: var(--r-pill); background: var(--white); color: var(--k, var(--ink)); font-weight: 400; line-height: 1.5; white-space: nowrap;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--k, var(--ink)) 30%, var(--white)); transition: background-color .15s ease; }
+.ctag:hover { background: var(--f, var(--ctag-face)); }
+.ctag .bd { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; overflow: hidden; }
+.ctag .bd img { width: 100%; height: 100%; object-fit: cover; }
+.ctag .bd.glyph img { width: 12px; height: 12px; }
+.ctag svg { width: 24px; height: 24px; padding: 3px; border-radius: 50%; background: var(--ctag-face); }
+
+/* ---------- 14. 제목·설명 → 아래 내용 간격 (2026-10-13 사용자 「텍스트와 섹션 사이가 너무 가깝다」) ----------
+   큰 구간 머리 64 · 화면 머리 48 · 작은 제목/안내 한 줄 32 · 상자 위 이름표 16 (휴대폰 48 · 32 · 24 · 16). 빈 목록 안내(.empty)도 판으로 센다.
+   화면마다 손으로 간격을 적지 않는다 — 아래 규칙이 정한다. 운영자 화면은 빼 둔다(:where 로 감싸 선택자 점수는 그대로) */
+.sec-head { margin-bottom: 64px; }
+.page-head, .step-h, .auth .head, .my-body > .sec-head { margin-bottom: 48px; }
+:is(h2, h3, .section-hint, .bar):has(+ :is(.grid, .table-wrap, .part, .card, .ccard, form, .stack, .acc, .cards, .steps, .flow, .list, .empty)):where(:not(.admin-area *)) { margin-bottom: 32px; }
+.t-meta:has(+ :is(.grid, .table-wrap, .part, .card, .ccard, form, .stack, .acc, .cards, .steps, .flow, .list, .empty)):where(:not(.admin-area *)) { margin-bottom: 16px; }
+.bar:has(+ .section-hint) { margin-bottom: 8px; }
+@media (max-width: 767px) {
+  .sec-head { margin-bottom: 48px; }
+  .page-head, .step-h, .auth .head, .my-body > .sec-head { margin-bottom: 32px; }
+  :is(h2, h3, .section-hint, .bar):has(+ :is(.grid, .table-wrap, .part, .card, .ccard, form, .stack, .acc, .cards, .steps, .flow, .list, .empty)):where(:not(.admin-area *)) { margin-bottom: 24px; }
+}
+/* 목록 위 안내 한 줄은 구간 머리의 끝이다 — 화면 머리와 같은 48(휴대폰 32) */
+.section-hint:has(+ :is(.grid, .cards, .list)) { margin-bottom: 48px; }
+@media (max-width: 767px) { .section-hint:has(+ :is(.grid, .cards, .list)) { margin-bottom: 32px; } }
+
+/* ---------- 15. 구간 사이 여백 (2026-10-13 사용자 「섹션 간격도 조금 띄워줘, 내용이 찌부된 것 같다」) ----------
+   바깥 화면 큰 구간 위아래 88~144(--sec-pad, tokens.css) · 화면 안 구간 사이 64(휴대폰 48) · 세로로 쌓인 판·카드 사이 32
+   「구간」은 화면 본문(페이지 본문·「내 팬꾹」 .my-body/.my-main)에 놓인 이웃 section 이다. 다음 section 은 구간이 아니라 판이라 64 를 걸지 않는다:
+   카드 격자·쌓인 판(.grid·.cards·.stack·.block-gap 등)의 바로 아래 칸 — 그 묶음의 gap 이 간격을 정한다 · 판(.card·.part·.panel) 안의 section · 운영자 화면 */
+section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.stack, .block-gap, .grid, .cards, .tiles, .flow, .acc) > *, :is(.card, .part, .panel) *)) { margin-top: 64px; }
+.stack, .block-gap { gap: 32px; }
+@media (max-width: 767px) { section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.stack, .block-gap, .grid, .cards, .tiles, .flow, .acc) > *, :is(.card, .part, .panel) *)) { margin-top: 48px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* ========== 이전 클래스 — v11 에 없지만 지금 화면이 쓴다. 크기·굵기만 v11 다섯 단계·두 굵기로 맞췄다.
+   2026-10-13 화면이 더 쓰지 않는 것(.page-h·.lead·.faint·.kicker·.green-line·.row·.page-title·.panel-head·.panel-h·.panel-title·.block·.block-head·.search--field·.tile .ico)은 지웠다 ========== */
+/* 글자 */
+.hero-title { font-size: var(--fs-hero); line-height: 1.25; font-weight: var(--fw-bold); letter-spacing: var(--ls-title); } /* = .t-hero */
+.sub { color: var(--sub); }
+/* 헤더 선물 바텀시트의 목록 줄 — 창 자체는 shared/ui/bottom-sheet */
+.sheet-list a { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 0; border-bottom: 1px solid var(--border); text-decoration: none; }
+.sheet-list li:last-child a { border-bottom: 0; }
+.sheet-list .gift-icon { flex-shrink: 0; }
+.sheet-list small { display: block; color: var(--sub); font-size: var(--fs-body); }
+/* 버튼 */
+.btn--soft { background: var(--white); color: var(--ink); box-shadow: var(--hair); } /* = .btn--line */
+.btn--soft:hover { background: var(--surface-hover); }
+.btn--sm.btn--soft { box-shadow: var(--hair); }
+/* 처리 중인 버튼 — disabled 대신 aria-disabled 를 써서 키보드 포커스를 잃지 않게(같은 모양) */
+.btn[disabled], .btn[aria-disabled="true"] { background: var(--disabled); color: var(--disabled-ink); box-shadow: none; cursor: not-allowed; }
+.link-arrow { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--brand-ink); font-weight: var(--fw-bold); text-decoration: none; }
+.link-arrow:hover { text-decoration: underline; text-underline-offset: 4px; }
+/* 검색창 변형 */
+span.search-go { cursor: default; } /* 누르는 동작이 없는 장식용 돋보기 */
+span.search-go:hover { background: var(--brand); }
+img.face { object-fit: cover; } /* 프로필 사진(512 정사각)을 원 안에 채운다 */
+/* 입력 — 이전 화면은 입력 요소에 .input, 「라벨+입력」 감싸개에 .field 를 쓴다. 모양은 v11 입력창(.field)과 같게 */
+.field > label, .field > .label { display: block; margin-bottom: 8px; font-weight: var(--fw-bold); }
+.input { display: block; width: 100%; min-width: 0; min-height: 52px; padding: 0 16px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font-size: var(--fs-body); }
+.input::placeholder { color: var(--faint); opacity: 1; }
+.input:focus { outline: 2px solid var(--focus); outline-offset: 0; }
+/* 그림 — 칸 안에서 비율 유지 */
+img.asset { display: block; object-fit: contain; }
+
+/* 인쇄에만 나오는 칸 — 송장 라벨(받는 사람 주소)은 화면에 보이지 않고 인쇄에만 찍힌다(address-protection INV-P4, 출고 화면).
+   인쇄할 때는 이 칸만 남기고 나머지는 가린다. */
+.print-only { display: none; }
+@media print {
+  body:has(.print-only) * { visibility: hidden; }
+  /* 위 줄과 같은 앞머리를 붙여야 이긴다 — `:has()` 안의 클래스도 선택자 점수에 들어가서, `.print-only` 만 쓰면 위 줄에 져 라벨까지 가려진다 */
+  body:has(.print-only) .print-only, body:has(.print-only) .print-only * { visibility: visible; }
+  .print-only { display: grid; gap: 6px; position: absolute; left: 0; top: 0; width: 100%; padding: 16px; background: var(--white); color: var(--print-ink); font-size: var(--fs-body); }
+}
+
+/* 운영자 화면은 재디자인 대상이 아니다(design-rules 0·00절) — 제목도 둥근 글꼴로 바꾸지 않고(위 제목 규칙에서 뺐다) Pretendard 그대로, 굵기 600·700 을 그대로 쓴다 */
+.admin-area { font-family: var(--font); font-synthesis: weight; }
+
+/* ========== 16. v18 전역 모양 (2026-10-14, design-rules 00절 · 시안 v18/*.css 의 같은 이름 범용 규칙) ==========
+   위 2~15절과 「이전 클래스」는 v11 모양이다. 이 절이 같은 이름을 v18 모양으로 덮는다 — 같은 선택자 점수에서 뒤에 오므로 이긴다.
+   운영자 화면(.admin-area 안)은 재디자인 대상이 아니라 v11 모양을 그대로 쓴다: 모든 선택자 끝에 :where(:not(.admin-area *)) 를 단다(점수는 그대로).
+   시안끼리 값이 다른 이름은 이렇게 골랐다 — 탭: 사이드바 화면의 밑줄 탭(.tab-links) · 상태 태그: 공개 화면 묶음(색은 빨강+회색만) ·
+   .part·.acc·.part--soft: 공개 화면 묶음 · .card--soft: 로그인 후 화면 묶음(회색) · .kv·.lines·.nlist·.mine-list: 팬 화면 묶음 · .opt·.sw-row·.quote·.chips 눌림: 크리에이터 화면 묶음.
+   글자 13px 은 캡션(시안 --fs-caption 자리: .t-meta·.hint·.tag·표 머리)에만 — 00절의 예외. 시안의 14px(작은 버튼·칩)은 예외가 아니라 16 으로 둔다. */
+
+/* 글자 */
+:is(.t-lead, .t-desc):where(:not(.admin-area *)) { font-size: var(--fs-lead); font-weight: 400; line-height: 1.5; color: var(--gray-600); }
+:is(.part, .card) :is(.t-lead, .t-desc):where(:not(.admin-area *)) { font-size: var(--fs-body); font-weight: 400; line-height: 1.6; }
+.t-meta:where(:not(.admin-area *)) { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
+.t-strong:where(:not(.admin-area *)) { font-weight: var(--fw-btn); color: var(--gray-900); }
+.accent:where(:not(.admin-area *)) { color: var(--brand-ink); }
+:is(.tint, .panel) .accent:where(:not(.admin-area *)) { color: var(--brand-ink); }
+
+/* 구간 · 구간 머리 — v11 의 「가운데 정렬」을 걷고 왼쪽 정렬(가운데는 .center 안에서만). 구간 사이 96(휴대폰 64) */
+.section:where(:not(.admin-area *)) { padding-block: var(--section-gap); }
+.section:where(:not(.admin-area *)) + .section:where(:not(.admin-area *)) { padding-top: 0; }
+.section--flush-top:where(:not(.admin-area *)) { padding-top: 0; }
+.section--compact:where(:not(.admin-area *)) { padding-block: var(--space-12); }
+.sec-head:where(:not(.admin-area *)) { margin-bottom: var(--space-12); text-align: left; }
+.sec-head :is(.t-lead, .t-desc):where(:not(.admin-area *)) { margin: var(--space-2) 0 0; max-width: none; }
+.center .sec-head:where(:not(.admin-area *)), .center.sec-head:where(:not(.admin-area *)) { text-align: center; }
+:is(.center .sec-head, .center.sec-head) :is(.t-lead, .t-desc):where(:not(.admin-area *)) { max-width: var(--hero-max); margin-inline: auto; }
+.sec-head .sec-icon:where(:not(.admin-area *)) { width: var(--art); height: var(--art); margin: 0 0 var(--space-4); }
+:is(.center .sec-head, .center.sec-head) .sec-icon:where(:not(.admin-area *)) { margin-inline: auto; }
+.sec-foot:where(:not(.admin-area *)) { display: flex; justify-content: center; margin-top: var(--space-12); }
+.section-hint:where(:not(.admin-area *)) { margin: 0 0 var(--space-4); text-align: left; }
+.page-top:where(:not(.admin-area *)) { padding-block: var(--space-12) var(--space-8); }
+.page-top .t-lead:where(:not(.admin-area *)) { margin-top: var(--space-2); }
+
+/* 카드 격자 — v18 시안은 CSS grid 라 마지막 줄을 왼쪽부터 채운다(v11 의 「홀수 마지막 칸 가운데 모음」을 걷는다) */
+.grid:where(:not(.admin-area *)) { justify-content: flex-start; }
+
+/* 카드 · 판 — 1px 회색 경계(gray-200) + 반경 16 + 옅은 그림자. 경계는 v11 처럼 안쪽 그림자 1px 로 그린다(크기 계산이 바뀌지 않게) */
+.card:where(:not(.admin-area *)) { padding: var(--card-pad); border-radius: var(--r-card); background: var(--white) var(--grad-glow); box-shadow: var(--hair), var(--shadow); }
+/* 옅은 판 — 로그인 후 화면 시안(v18-fan·v18-cre)의 회색 면 + 경계. 공개 화면 시안(v18-pub)의 옅은 빨강은 소개·약관 모듈이 덮는다 */
+.card--soft:where(:not(.admin-area *)) { background: var(--gray-50); box-shadow: var(--hair); }
+.card .t-card + p:where(:not(.admin-area *)) { margin-top: var(--space-2); }
+.part:where(:not(.admin-area *)) { padding: var(--card-pad); border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--shadow); }
+.part--soft:where(:not(.admin-area *)) { background: var(--primary-50); box-shadow: none; }
+.panel:where(:not(.admin-area *)) { padding: var(--card-pad); border-radius: var(--r-card); background: var(--primary-50); }
+.center .panel:where(:not(.admin-area *)) { padding: var(--section-gap) var(--card-pad); }
+:is(a.card, .ccard):where(:not(.admin-area *)):is(:hover, :focus-within) { box-shadow: inset 0 0 0 1px var(--gray-400), var(--shadow); }
+.card-icon:where(:not(.admin-area *)) { width: 40px; height: 40px; margin-bottom: var(--space-4); border-radius: var(--r-pill); background: var(--primary-50); color: var(--brand-ink); }
+.card-icon svg:where(:not(.admin-area *)) { width: var(--icon-xs); height: var(--icon-xs); }
+.card-col:where(:not(.admin-area *)) { gap: var(--space-4); }
+.stack:where(:not(.admin-area *)), .block-gap:where(:not(.admin-area *)) { gap: var(--space-6); }
+
+/* 빈 상태 — 시안 「card empty」: 카드 모양 + 가운데 그림(160, 휴대폰 128) + 회색 글 */
+.empty:where(:not(.admin-area *)) { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); padding: var(--card-pad); border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--shadow); color: var(--gray-600); text-align: center; }
+.empty img:where(:not(.admin-area *)) { width: var(--art-empty); height: var(--art-empty); }
+.empty :is(h2, h3):where(:not(.admin-area *)) { color: var(--gray-900); }
+
+/* 버튼 — 높이 48 · 반경 12 · 굵기 600. 보조(.btn--line·.btn--soft)는 흰 면 + 회색 경계, 작은 버튼 36 */
+.btn:where(:not(.admin-area *)) { min-height: var(--btn-h); padding: 0 var(--space-6); border-radius: var(--r-btn); font-weight: var(--fw-btn); line-height: 1.25; box-shadow: none; }
+:is(.btn--line, .btn--soft):where(:not(.admin-area *)) { background: var(--white); color: var(--gray-900); box-shadow: inset 0 0 0 1px var(--gray-200); }
+:is(.btn--line, .btn--soft):where(:not(.admin-area *)):is(:hover, :active) { background: var(--gray-50); }
+.btn--text:where(:not(.admin-area *)) { background: none; color: var(--gray-900); box-shadow: none; padding-inline: var(--space-4); }
+.btn--text:where(:not(.admin-area *)):is(:hover, :active) { background: var(--gray-100); }
+.btn--sm:where(:not(.admin-area *)) { min-height: var(--btn-h-sm); padding: 0 var(--space-4); border-radius: var(--r-btn); }
+:is(.btn--line, .btn--soft).btn--sm:where(:not(.admin-area *)) { box-shadow: inset 0 0 0 1px var(--gray-200); }
+.btn--wide:where(:not(.admin-area *)) { min-width: 240px; }
+:is(.btn:disabled, .btn[disabled], .btn[aria-disabled="true"]):where(:not(.admin-area *)) { background: var(--gray-100); color: var(--gray-600); box-shadow: none; }
+:is(.btnrow, .row-btns, .btn-stack):where(:not(.admin-area *)) { gap: var(--space-4); }
+.row-btns:where(:not(.admin-area *)) { justify-content: flex-start; margin-top: var(--space-8); }
+.actions:where(:not(.admin-area *)) { justify-content: flex-end; gap: var(--space-4); margin-top: var(--space-6); }
+.center :is(.row-btns, .actions):where(:not(.admin-area *)) { justify-content: center; }
+:is(.btn-col, .btn-row2):where(:not(.admin-area *)) { gap: var(--space-2); }
+.foot-line:where(:not(.admin-area *)) { color: var(--gray-600); }
+.foot-line a:where(:not(.admin-area *)) { color: var(--brand-ink); font-weight: var(--fw-btn); text-decoration: underline; }
+:is(.link-line, .mini-links a):where(:not(.admin-area *)) { font-weight: var(--fw-btn); color: var(--brand-ink); }
+
+/* 태그 · 칩 — 알약(gray-100). 상태 색은 빨강+회색만: 강조·완료 = 옅은 빨강, 대기·진행·거절 = 회색 */
+.tag:where(:not(.admin-area *)) { gap: var(--space-2); min-height: 0; padding: var(--space-2) var(--space-4); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-size: var(--fs-caption); font-weight: var(--fw-btn); line-height: 1; }
+.tag svg:where(:not(.admin-area *)) { width: 16px; height: 16px; }
+:is(.tag--brand, .tag--success, .tag--accent):where(:not(.admin-area *)) { background: var(--primary-50); color: var(--brand-ink); }
+:is(.tag--warn, .tag--info, .tag--danger):where(:not(.admin-area *)) { background: var(--gray-100); color: var(--gray-900); }
+.tag--line:where(:not(.admin-area *)) { background: var(--white); color: var(--gray-600); box-shadow: inset 0 0 0 1px var(--gray-200); } /* 새 이름 — 흰 면 회색 경계(시안 크리에이터 묶음) */
+.tag--no:where(:not(.admin-area *)) { background: var(--white); color: var(--brand-ink); box-shadow: inset 0 0 0 1px var(--brand-line); } /* 새 이름 — 거절(시안 크리에이터 묶음) */
+.chip:where(:not(.admin-area *)) { min-height: 0; padding: var(--space-2) var(--space-4); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-weight: var(--fw-btn); line-height: 1; }
+.chips:where(:not(.admin-area *)) { justify-content: flex-start; margin-bottom: var(--space-6); }
+.chips .chip:where(:not(.admin-area *)) { min-height: var(--btn-h-sm); padding: 0 var(--space-4); }
+.chips .chip:where(:not(.admin-area *)):hover { background: var(--gray-200); }
+.chips .chip[aria-pressed="true"]:where(:not(.admin-area *)) { background: var(--primary); color: var(--on-brand); }
+.dots span:where(:not(.admin-area *)) { border-radius: var(--r-pill); background: var(--gray-200); }
+.dots span.on:where(:not(.admin-area *)) { background: var(--primary); }
+
+/* 탭 — 밑줄 탭(시안 사이드바 화면 .tab-links): 회색 글자, 고른 탭만 진한 글자 + 빨강 밑줄 2 */
+.tabs:where(:not(.admin-area *)) { justify-content: flex-start; gap: var(--space-2); margin: 0 0 var(--space-6); padding: 0; box-shadow: inset 0 -1px 0 var(--gray-200); }
+:is(.tabs a, .tabs label, .tab):where(:not(.admin-area *)) { min-height: var(--touch); padding: 0 var(--space-4); border-radius: 0; background: none; color: var(--gray-600); font-weight: var(--fw-nav); white-space: nowrap; box-shadow: inset 0 -2px 0 transparent; }
+:is(.tabs a, .tab):where(:not(.admin-area *)):hover { background: none; color: var(--gray-900); }
+:is(.tabs a[aria-current="page"], .tab[aria-selected="true"]):where(:not(.admin-area *)) { background: none; color: var(--gray-900); font-weight: var(--fw-btn); box-shadow: inset 0 -2px 0 var(--primary); }
+.tabs .n:where(:not(.admin-area *)) { background: var(--gray-100); color: var(--gray-900); }
+:is(.my-body, .my-main) .tabs:where(:not(.admin-area *)) { justify-content: flex-start; }
+
+/* 입력 · 고르기 — 입력창 경계는 gray-500 로 둔다(입력창 경계 3:1, DECISIONS 2026-10-14). 라벨 600, 안내 글은 캡션 */
+.label:where(:not(.admin-area *)), .field > :is(label, .label):where(:not(.admin-area *)) { margin-bottom: var(--space-2); font-weight: var(--fw-btn); }
+:is(:is(input, select, textarea).field, .input):where(:not(.admin-area *)) { min-height: var(--btn-h); }
+:is(:is(input, select, textarea).field, .input):where(:not(.admin-area *))::placeholder { color: var(--gray-500); }
+textarea.field:where(:not(.admin-area *)) { padding-block: var(--space-4); }
+.hint:where(:not(.admin-area *)) { margin-top: var(--space-2); font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
+.form:where(:not(.admin-area *)) { gap: var(--space-6); }
+.check:where(:not(.admin-area *)) { min-height: var(--touch); gap: var(--space-2); }
+.opt:where(:not(.admin-area *)) { min-height: var(--btn-h); padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.opt input:where(:not(.admin-area *)) { width: var(--icon-xs); height: var(--icon-xs); accent-color: var(--brand-line); }
+.opt:has(input:checked):where(:not(.admin-area *)) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
+.opt:has(input:focus-visible):where(:not(.admin-area *)) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.err:where(:not(.admin-area *)) { padding: var(--space-4); border-radius: var(--r-btn); background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
+.okmsg:where(:not(.admin-area *)) { padding: var(--space-4); border-radius: var(--r-btn); background: var(--gray-50); color: var(--gray-900); font-weight: var(--fw-btn); box-shadow: inset 0 0 0 1px var(--gray-200); }
+:is(.err, .okmsg):empty:where(:not(.admin-area *)) { padding: 0; background: none; box-shadow: none; }
+.sw-row:where(:not(.admin-area *)) { display: flex; justify-content: space-between; gap: var(--space-6); padding: var(--space-4) var(--space-6); border-radius: var(--r-btn); background: var(--gray-50); box-shadow: inset 0 0 0 1px var(--gray-200); }
+/* 탭 포커스는 탭 안쪽에 — 휴대폰에서 탭 줄이 가로로 넘겨지면(overflow-x) 바깥 테두리 위아래가 잘린다(시안 v18-app.css .tabs) */
+:is(.tabs a, .tab):focus-visible:where(:not(.admin-area *)) { outline-offset: -2px; }
+.sw:where(:not(.admin-area *)) { width: 48px; height: 28px; background: var(--gray-500); }
+.sw span:where(:not(.admin-area *)) { width: 20px; height: 20px; }
+.sw[aria-checked="true"]:where(:not(.admin-area *)) { background: var(--primary); }
+.sw[aria-checked="true"] span:where(:not(.admin-area *)) { transform: translateX(20px); }
+
+/* 표 — 바깥 1px 경계 + 반경 16, 머리 칸은 gray-50 바탕 · 회색 캡션 글자 */
+.table-wrap:where(:not(.admin-area *)) { border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
+.table thead th:where(:not(.admin-area *)) { background: var(--gray-50); color: var(--gray-600); font-size: var(--fs-caption); font-weight: var(--fw-btn); }
+.table :is(th, td):where(:not(.admin-area *)) { border-bottom-color: var(--gray-200); }
+.table tbody tr:where(:not(.admin-area *)):hover { background: var(--gray-50); }
+
+/* 접는 목록 — 카드 모양(경계·반경 16·그림자), 사이 16, 열면 머리 아래 선 */
+.acc details:where(:not(.admin-area *)) { border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--shadow); }
+:is(.acc details + details, .acc > * + *):where(:not(.admin-area *)) { margin-top: var(--space-4); }
+.acc summary:where(:not(.admin-area *)) { min-height: var(--touch); padding: var(--space-4) var(--space-6); }
+.acc summary:where(:not(.admin-area *)):hover { background: var(--gray-50); }
+.acc summary b:where(:not(.admin-area *)) { font-weight: var(--fw-btn); }
+.acc summary svg:where(:not(.admin-area *)) { width: var(--icon-xs); height: var(--icon-xs); color: var(--gray-600); }
+.acc details[open] summary:where(:not(.admin-area *)) { margin-bottom: 0; border-bottom: 1px solid var(--gray-200); }
+.acc .ans:where(:not(.admin-area *)) { padding: var(--space-6); color: var(--gray-600); }
+
+/* 이름-값 목록(.kv) — 이름 칸 144 + 값, 폭이 모자라면 값이 아래로. 줄 사이 선 없음 */
+.kv > div:where(:not(.admin-area *)) { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); padding: var(--space-2) 0; border-bottom: 0; }
+.kv dt:where(:not(.admin-area *)) { flex: 0 0 144px; color: var(--gray-600); font-weight: 400; }
+.kv dd:where(:not(.admin-area *)) { flex: 1 1 240px; min-width: 0; }
+/* 금액 줄 */
+.lines > div:where(:not(.admin-area *)) { padding: var(--space-2) 0; border-bottom-color: var(--gray-200); }
+.lines .amt:where(:not(.admin-area *)) { font-weight: var(--fw-btn); }
+.lines .total:where(:not(.admin-area *)) { padding-top: var(--space-4); font-size: var(--fs-card); }
+.total .amt:where(:not(.admin-area *)) { font-size: var(--fs-card); color: var(--gray-900); }
+
+/* 사람 · 목록 */
+.avatar:where(:not(.admin-area *)) { background: var(--gray-100); color: var(--gray-900); font-weight: var(--fw-btn); }
+.who:where(:not(.admin-area *)) { gap: var(--space-4); }
+.mine-list:where(:not(.admin-area *)) { gap: var(--space-2); }
+.mine-list a:where(:not(.admin-area *)) { min-height: var(--touch); padding: var(--space-2); border-radius: var(--r-nav); background: none; }
+.mine-list a:where(:not(.admin-area *)):hover { background: var(--gray-50); }
+.mine-list .w:where(:not(.admin-area *)) { font-weight: var(--fw-btn); }
+.nlist:where(:not(.admin-area *)) { border-top: 1px solid var(--gray-200); }
+.nlist li + li:where(:not(.admin-area *)) { margin-top: 0; }
+.nlist a:where(:not(.admin-area *)) { padding: var(--space-4) var(--space-2); border-radius: 0; background: none; box-shadow: inset 0 -1px 0 var(--gray-200); }
+.nlist a:where(:not(.admin-area *)):hover { background: var(--gray-50); }
+.quote:where(:not(.admin-area *)) { padding: var(--space-4); border-radius: var(--r-card); background: var(--gray-50); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.quote q:where(:not(.admin-area *)) { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.6; }
+.info .ic:where(:not(.admin-area *)) { width: 40px; height: 40px; margin-bottom: var(--space-2); background: var(--primary-50); color: var(--brand-ink); }
+.info .ic svg:where(:not(.admin-area *)) { width: var(--icon-xs); height: var(--icon-xs); }
+.info.ok .ic:where(:not(.admin-area *)) { background: var(--primary-50); color: var(--brand-ink); }
+.info.rest .ic:where(:not(.admin-area *)) { background: var(--gray-100); color: var(--gray-600); }
+.nos:where(:not(.admin-area *)) { gap: var(--space-4); }
+.nos li:where(:not(.admin-area *)) { align-items: center; gap: var(--space-4); }
+.nos .x:where(:not(.admin-area *)) { width: 32px; height: 32px; margin-top: 0; background: var(--primary-50); color: var(--brand-ink); }
+.steps-ol:where(:not(.admin-area *)) { gap: var(--space-2); padding-left: var(--space-6); list-style: decimal; counter-reset: none; }
+.steps-ol li:where(:not(.admin-area *)) { display: list-item; }
+.steps-ol li:where(:not(.admin-area *))::before { content: none; }
+.prose p:where(:not(.admin-area *)) { color: var(--gray-600); }
+
+/* 단계 — 자리(가로/세로·연결선)는 그대로, 번호 원만 v18: 회색 원 → 지금 단계 빨강 원 → 끝난 단계 옅은 빨강 */
+.flow .n:where(:not(.admin-area *)) { background: var(--gray-100); color: var(--gray-900); box-shadow: none; font-weight: var(--fw-btn); }
+.flow li.on .n:where(:not(.admin-area *)) { background: var(--primary); color: var(--on-brand); box-shadow: none; }
+.flow li.done .n:where(:not(.admin-area *)) { background: var(--primary-50); color: var(--brand-ink); }
+.flow li:not(:last-child):where(:not(.admin-area *))::after { background: var(--gray-200); }
+.flow li.done:not(:last-child):where(:not(.admin-area *))::after { background: var(--brand-line); }
+
+/* 첫 화면 부품 — 히어로 위 96(휴대폰 64)·글 폭 680, 한 줄 설명은 회색 본문, 검색창 56 알약 */
+.hero:where(:not(.admin-area *)) { padding-block: var(--hero-pad-top) 0; }
+.hero h1:where(:not(.admin-area *)) { margin-block: var(--space-4); }
+.hero-line:where(:not(.admin-area *)) { margin-top: var(--space-4); font-size: var(--fs-body); font-weight: 400; line-height: 1.6; color: var(--gray-600); }
+.hero-desc:where(:not(.admin-area *)) { max-width: var(--hero-max); }
+.search:where(:not(.admin-area *)) { max-width: var(--hero-max); height: var(--search-h); margin: var(--space-8) auto 0; padding: 0 6px 0 var(--space-6); box-shadow: var(--field), var(--shadow); }
+.search:where(:not(.admin-area *)):focus-within { box-shadow: 0 0 0 2px var(--focus); }
+.search input:where(:not(.admin-area *)) { font-size: var(--fs-body); }
+.search input:where(:not(.admin-area *))::placeholder { color: var(--gray-600); }
+.search-go:where(:not(.admin-area *)) { width: var(--search-btn); height: var(--search-btn); background: var(--primary); }
+.hero-actions:where(:not(.admin-area *)) { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-4); margin-top: var(--space-8); }
+.tile:where(:not(.admin-area *)) { gap: var(--space-4); padding: var(--space-6) var(--space-2); border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--shadow); }
+.tile:where(:not(.admin-area *)):hover { background: var(--gray-50); }
+.tile img:where(:not(.admin-area *)) { width: var(--art); height: var(--art); }
+/* 단계 카드 — 왼쪽 정렬, 번호는 빨강 캡션 */
+.step-col:where(:not(.admin-area *)) { text-align: left; }
+.step-col img:where(:not(.admin-area *)) { width: var(--art-step); height: var(--art-step); margin: 0 0 var(--space-4); }
+.step-col .label-num:where(:not(.admin-area *)) { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: var(--fw-btn); color: var(--brand-ink); }
+.steps-line:where(:not(.admin-area *)) { justify-content: flex-start; margin-top: var(--space-8); font-size: var(--fs-caption); color: var(--gray-600); }
+.steps-line .lab:where(:not(.admin-area *)) { color: var(--gray-900); }
+/* 요금 */
+.price .price-amount:where(:not(.admin-area *)) { margin-top: var(--space-2); font-size: var(--fs-title); line-height: 1.3; }
+.price .price-amount span:where(:not(.admin-area *)) { margin-left: var(--space-2); font-size: var(--fs-card); font-weight: var(--fw-btn); }
+.price .inc:where(:not(.admin-area *)) { color: var(--brand-ink); font-weight: var(--fw-btn); }
+.notes:where(:not(.admin-area *)) { margin-top: var(--space-6); color: var(--gray-600); }
+/* 로그인·가입 카드 */
+.auth .card:where(:not(.admin-area *)) { padding: var(--card-pad); }
+.auth .head img:where(:not(.admin-area *)) { width: var(--art); height: var(--art); }
+.auth .head .t-lead:where(:not(.admin-area *)) { margin-top: var(--space-2); }
+
+/* 14·15절 간격의 v18 값 — 구간 머리 48 · 페이지 머리 32 · 작은 제목→내용 16 · 화면 안 구간 사이 48 (휴대폰도 같다) */
+:is(.page-head, .auth .head, .my-body > .sec-head):where(:not(.admin-area *)) { margin-bottom: var(--space-8); }
+.step-h:where(:not(.admin-area *)) { margin-bottom: var(--space-4); }
+:is(h2, h3, .section-hint, .bar):has(+ :is(.grid, .table-wrap, .part, .card, .ccard, form, .stack, .acc, .cards, .steps, .flow, .list, .empty)):where(:not(.admin-area *)) { margin-bottom: var(--space-4); }
+.section-hint:has(+ :is(.grid, .cards, .list)):where(:not(.admin-area *)) { margin-bottom: var(--space-4); }
+section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.stack, .block-gap, .grid, .cards, .tiles, .flow, .acc) > *, :is(.card, .part, .panel) *)) { margin-top: var(--space-12); }
+@media (max-width: 767px) {
+  .sec-head:where(:not(.admin-area *)) { margin-bottom: var(--space-12); }
+  :is(.page-head, .auth .head, .my-body > .sec-head):where(:not(.admin-area *)) { margin-bottom: var(--space-8); }
+  .hero-actions:where(:not(.admin-area *)) { flex-direction: column; align-items: stretch; }
+  .tabs:where(:not(.admin-area *)) { flex-wrap: nowrap; overflow-x: auto; }
+}
+
+/* 제목 줄 오른쪽 「모두 보기」 링크 — 프로필·마이꾹 공통 모양(v23 감사표 2·3절). 목록 아래 버튼·가운데 버튼을 대신한다 */
+.head-row:where(:not(.admin-area *)) { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-4); }
+.head-row > :first-child:where(:not(.admin-area *)) { flex: 1 1 auto; min-width: 0; margin: 0; }
+.more-link:where(:not(.admin-area *)) { flex: none; display: inline-flex; align-items: center; min-height: 44px; /* 누름 칸 44 */ font-size: var(--fs-body); font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+
+/* 2026-10-18 재진단(DECISIONS 「사이트 재진단 반영」, 시안 v29) — 반응·누름 칸·페이지 제목 자간 */
+/* 버튼: 색은 0.15초에 걸쳐, 누르면 98% */
+.btn:where(:not(.admin-area *)) { transition: background-color var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out), transform var(--dur-press) var(--ease-out); }
+.btn:where(:not(.admin-area *)):active:not(:disabled, [aria-disabled="true"]) { transform: scale(0.98); }
+/* 카드·판은 평소 1px 테두리 하나(그림자 없음). 누를 수 있는 카드만 마우스를 올리면 위로 2px + 그림자, 누르면 98% */
+:is(.card, .part, .empty):where(:not(.admin-area *)) { box-shadow: var(--hair); }
+:is(a.card, .ccard):where(:not(.admin-area *)) { transition: transform var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out); }
+:is(a.card, .ccard):where(:not(.admin-area *)):hover { transform: translateY(-2px); box-shadow: var(--hair), var(--lift-hover); }
+:is(a.card, .ccard):where(:not(.admin-area *)):focus-within { box-shadow: var(--hair), var(--lift-hover); }
+/* 페이지 제목도 제목 자간 */
+.page-head > :is(h1, h2):where(:not(.admin-area *)), .ph-title:where(:not(.admin-area *)) { letter-spacing: var(--ls-title); }
+/* 스위치: 모양(48×28)은 그대로, 누름 칸은 위아래로 넓혀 44 */
+.sw:where(:not(.admin-area *))::after { content: ""; position: absolute; inset: -8px 0; }
+@media (hover: none) {
+  /* 손가락 기기에서는 hover 가 눌린 뒤 남으므로 떠오르지 않는다 */
+  :is(a.card, .ccard):where(:not(.admin-area *)):hover { transform: none; }
+}
+/* 누름은 손가락 기기에서도 — 위 hover 규칙보다 뒤에 둔다 */
+:is(a.card, .ccard):where(:not(.admin-area *)):active { transform: scale(0.98); transition-duration: var(--dur-press); }
+
+/* ── 21절 강조 하나 + 나머지 촘촘하게 (2026-10-21 시안 docs/design/mockups/site/v34-part1/ — v33b.css·v34.css 값) ──
+   화면마다 가장 먼저 볼 것 하나만 하늘 면(.feat · .lrow--hi), 나머지는 테두리 없는 촘촘한 줄(.lrows > .lrow). 그림자는 쓰지 않는다. */
+.feat { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-4) var(--space-8); align-items: center; padding: var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--tint); }
+.feat-who { display: flex; gap: var(--space-4); align-items: center; min-width: 0; }
+.feat-who .face { width: 64px; height: 64px; overflow: hidden; border: 2px solid var(--tint-line); background: var(--white); font-size: var(--fs-card); }
+.feat-who .face img { width: 40px; height: 40px; object-fit: contain; }
+.feat-who > div { min-width: 0; }
+.feat-who strong { display: block; font-size: var(--fs-card); line-height: 1.6; overflow-wrap: anywhere; }
+.feat-who .meta { display: block; font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
+.feat-who .tag { margin-top: var(--space-2); }
+.feat-days { text-align: right; line-height: 1.2; }
+.feat-days .lab { display: block; margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
+.feat > .btn { min-width: 96px; text-align: center; }
+.num-big { font-family: var(--font-round); font-size: var(--fs-hero); font-weight: var(--fw-title); letter-spacing: -1.5px; line-height: 1.2; color: var(--ink); }
+.num-big--32 { font-size: var(--fs-title); letter-spacing: -1px; }
+.num-big small { margin-left: var(--space-1); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); letter-spacing: 0; color: var(--sub); }
+.lrows { margin: 0; padding: 0; list-style: none; }
+.lrow { position: relative; display: flex; align-items: center; gap: var(--space-4); min-height: 56px; padding: var(--space-2) var(--space-3); border-radius: var(--r-btn); }
+.lrow + .lrow { border-top: 1px solid var(--gray-200); border-radius: 0; }
+.lrow:hover { border-radius: var(--r-btn); background: var(--tint); }
+.lrow:has(.stretch:focus-visible) { outline: 3px solid var(--focus); outline-offset: -3px; }
+.lrow .face { width: 32px; height: 32px; font-size: var(--fs-small); overflow: hidden; }
+.lrow-txt { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.lrow-txt strong { font-weight: var(--fw-bold); }
+.lrow-txt .meta { margin-left: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+.lrow-side { display: flex; flex: none; align-items: center; gap: var(--space-4); }
+.lrow-side .btn { position: relative; z-index: 1; }
+.lrow-chev { flex: none; width: var(--icon-xs); height: var(--icon-xs); fill: none; stroke: var(--sub); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.lrow--hi { min-height: 72px; margin: var(--space-2) 0; border: 1px solid var(--tint-line); border-radius: var(--r-card); background: var(--tint); }
+.lrow--hi:hover { border-radius: var(--r-card); }
+.lrow--hi + .lrow { border-top: 0; }
+.lrow--hi .lrow-txt strong { font-size: var(--fs-card); }
+.stretch { color: inherit; text-decoration: none; }
+.stretch::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.stretch:focus-visible { outline: none; }
+.mini-steps { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+.mini-steps .segs { display: inline-flex; gap: var(--space-1); }
+.mini-steps i { display: block; width: 12px; height: 4px; border-radius: var(--r-pill); background: var(--gray-200); }
+.mini-steps i.on { background: var(--primary); }
+/* 21절 화면 안의 태그·버튼·탭 — 시안 styles.css·v33b.css 의 .tag·.btn·.tabs 값. 다른 화면의 공통 부품은 그대로 두고,
+   21절 여섯 화면의 뿌리(.v34)와 목록 줄·강조 칸(.lrow·.feat)·분류 탭(.tabs--line) 안에서만 바꾼다.
+   태그: 알약 안쪽 4·12, 글자 14 보통 굵기, 기본은 하늘 면·남색 글자 · 기다림은 노랑 · 끝남은 초록 */
+:is(.v34, .lrow, .feat) .tag { min-height: 0; padding: var(--space-1) var(--space-3); font-size: var(--fs-small); font-weight: 400; line-height: 1.6; background: var(--info-soft); color: var(--info); }
+:is(.v34, .lrow, .feat) .tag--warn { background: var(--warn-soft); color: var(--warn-ink); }
+:is(.v34, .lrow, .feat) .tag--success { background: var(--success-soft); color: var(--success); }
+:is(.v34, .lrow, .feat) .tag--danger { background: var(--danger-soft); color: var(--danger); }
+/* 버튼: 좌우 안쪽 16, 줄 높이 1.4 · 흰 버튼 테두리는 회색 400 (시안 .btn · .btn.ghost) */
+:is(.v34, .lrow, .feat) .btn { padding-inline: var(--space-4); line-height: 1.4; }
+:is(.v34, .lrow, .feat) .btn--line { box-shadow: inset 0 0 0 1px var(--gray-400); }
+/* 분류 탭(진행 중·완료 / 받는 중·완료): 글자 사이 24, 안쪽 여백 없음, 높이 44, 고른 탭만 굵게 (시안 v33b.css .tabs) */
+.tabs--line.tabs--line { gap: var(--space-6); }
+.tabs--line :is(.tab, a) { min-height: var(--btn-h-sm); padding: 0; font-weight: 400; }
+.tabs--line .tab[aria-selected="true"] { font-weight: var(--fw-bold); }
+@media (max-width: 767px) {
+  .feat { grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-4); padding: var(--space-6); }
+  .feat-who { grid-column: 1 / -1; }
+  .feat > .btn { grid-column: 1 / -1; width: 100%; }
+  .feat-days { text-align: left; }
+  .num-big { font-size: var(--fs-title); letter-spacing: -1px; }
+  .lrow { flex-wrap: wrap; gap: var(--space-3) var(--space-4); }
+  /* 휴대폰도 제목 옆에 설명이 이어지고 넘치면 줄이 바뀐다 (시안 v33b.css 767 이하 .lrow.dense .txt) */
+  .lrow-txt { white-space: normal; }
+  .lrow-side { order: 3; width: 100%; padding-left: var(--space-12); justify-content: flex-start; flex-wrap: wrap; }
+  .lrow-chev { order: 2; }
+}
+
+/* ── 23절 카드 면 효과·마이크로 디테일 — 사이트 전체 (2026-10-21 승인, design-rules 23-1·23-2 · 시안 v37-part2/v37.css 맨 아래 세 블록).
+   이 묶음이 2절 「떠 있는 그림자는 주 버튼에만」과 18절 「카드·판은 테두리 1px 하나, 그림자와 같이 쓰지 않는다」를 대신한다.
+   높낮이: 강조 면(하늘) > 흰 카드 > 회색 보조 카드. 값은 tokens.css 23절 토큰. 입력창·표·사이드바·창(모달)·운영자 화면(.admin-area)은 그대로 둔다.
+   떠오름은 마우스 기기(hover: hover)에서만, 「움직임 줄이기」를 켜면 움직임을 모두 끈다. 키보드 포커스 표시는 손대지 않는다 ── */
+/* 1) 강조 면(하늘 판) — 테두리는 각자 그대로(--tint-line) */
+:is(.feat, .lrow--hi, .panel, .part--soft):where(:not(.admin-area *)) { background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
+/* 2) 흰 카드 — 경계는 안쪽 1px(--hair)를 맨 위에 두고 그 아래 은은한 면·그림자 */
+:is(.card, .part, .ccard, .tile, .empty, .acc details):where(:not(.admin-area *, .card--soft, .part--soft)) { background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); }
+/* 3) 회색 보조 카드 — 그림자 없이 면과 위 반사선만 */
+:is(.card--soft, .quote):where(:not(.admin-area *)) { background: var(--muted-fx); box-shadow: var(--hair), var(--muted-shadow); }
+/* 4) 누를 수 있는 카드 — 마우스를 올리면 2px 떠오름(18절)과 그림자가 같이 부드럽게 */
+:is(a.card, .ccard, a.tile):where(:not(.admin-area *)) { transition: transform 0.25s var(--ease-micro), box-shadow 0.25s var(--ease-micro), background-color 0.2s var(--ease-micro); }
+:is(a.card, .ccard, a.tile):where(:not(.admin-area *)):is(:hover, :focus-within) { box-shadow: var(--hair), var(--card-shadow-hover); }
+@media (hover: hover) {
+  :is(a.card, .ccard, a.tile):where(:not(.admin-area *)):hover { transform: translateY(-2px); }
+}
+/* 5) 버튼 — 주 버튼: 위→아래 옅게 짙어지는 면 + 위 반사선, 마우스를 올리면 1px 뜨고 하늘빛 그림자. 보조(흰) 버튼: 옅은 그림자, 마우스를 올리면 테두리 조금 진하게. 누르면 98%(18절 그대로) */
+.btn:where(:not(.admin-area *)) { transition: transform 0.15s var(--ease-micro), box-shadow 0.2s var(--ease-micro), background-color 0.2s var(--ease-micro); }
+.btn:where(:not(.admin-area *, .btn--line, .btn--soft, .btn--text, .btn--kakao, :disabled, [disabled], [aria-disabled="true"])) { background-image: var(--btn-fill-fx); box-shadow: var(--btn-fill-shadow); }
+:is(.btn--line, .btn--soft):where(:not(.admin-area *, :disabled, [disabled], [aria-disabled="true"])) { box-shadow: inset 0 0 0 1px var(--gray-200), var(--btn-ghost-shadow); }
+@media (hover: hover) {
+  .btn:where(:not(.admin-area *, .btn--line, .btn--soft, .btn--text, .btn--kakao, :disabled, [disabled], [aria-disabled="true"])):hover { background-image: var(--btn-fill-fx); box-shadow: var(--btn-fill-shadow-hover); transform: translateY(-1px); }
+  :is(.btn--line, .btn--soft):where(:not(.admin-area *, :disabled, [disabled], [aria-disabled="true"])):hover { background: var(--btn-ghost-hover); box-shadow: inset 0 0 0 1px var(--btn-ghost-line-hover), var(--btn-ghost-shadow); }
+}
+.btn:where(:not(.admin-area *)):active:not(:disabled, [aria-disabled="true"]) { transform: scale(0.98); }
+/* 6) 촘촘한 줄 — 마우스를 올리면 왼쪽에 하늘색 3px 막대가 0→24px 로 자란다 */
+.lrow::before { content: ""; position: absolute; left: 0; top: 50%; width: 3px; height: 0; border-radius: 3px; background: var(--primary); transform: translateY(-50%); transition: height 0.2s var(--ease-micro); pointer-events: none; }
+@media (hover: hover) { .lrow:hover::before { height: 24px; } }
+.lrow { transition: background-color 0.2s var(--ease-micro); }
+/* 7) 진행 막대 — 채운 칸은 위→아래 옅은 면, 처음 열 때 왼쪽부터 차례로 차오른다(칸마다 0.05초 늦게, 0.5초) */
+:is(.dots span.on, .mini-steps i.on):where(:not(.admin-area *)) { background: var(--bar-fill-fx); transform-origin: left center; animation: bar-fill 0.5s var(--ease-micro) both; }
+:is(.dots span.on, .mini-steps i.on):nth-child(2) { animation-delay: 0.05s; }
+:is(.dots span.on, .mini-steps i.on):nth-child(3) { animation-delay: 0.1s; }
+:is(.dots span.on, .mini-steps i.on):nth-child(4) { animation-delay: 0.15s; }
+:is(.dots span.on, .mini-steps i.on):nth-child(5) { animation-delay: 0.2s; }
+:is(.dots span.on, .mini-steps i.on):nth-child(6) { animation-delay: 0.25s; }
+@keyframes bar-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+/* 8) 숫자 — 자릿수 폭 고정, 큰 숫자는 자간 −0.02em */
+:is(.num-big, .bignum, .ph-count, .tabs .n, time) { font-variant-numeric: tabular-nums; }
+:is(.num-big, .num-big--32):where(:not(.admin-area *)) { letter-spacing: var(--ls-title); }
+/* 9) 얼굴 — 안쪽 1px 옅은 윤곽, 겹친 얼굴은 마우스를 올린 하나가 2px 앞으로 */
+.face:where(:not(.admin-area *)) { box-shadow: var(--face-ring); }
+.avatar-stack .face { position: relative; transition: transform 0.2s var(--ease-micro); }
+@media (hover: hover) { .avatar-stack .face:hover { transform: translateY(-2px); z-index: 1; } }
+/* 10) 태그 — 위 반사선(테두리로 그리는 흰·거절 태그는 뺀다) */
+.tag:where(:not(.admin-area *, .tag--line, .tag--no)) { box-shadow: var(--tag-sheen); }
+/* 11) 접기 — 열린 내용은 4px 내려오며 나타난다(화살표는 각자 돈다) */
+.acc details[open] > :not(summary) { animation: fold-in 0.25s var(--ease-micro) both; }
+.acc summary svg { transition: transform 0.25s var(--ease-micro); }
+@keyframes fold-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+/* 12) 링크 밑줄은 3px 띄우고 1px 두께, 글자 선택 색 */
+a { text-underline-offset: 3px; text-decoration-thickness: 1px; }
+::selection { background: var(--selection); color: var(--ink); }
+/* ---------- 17. 줄바꿈 (2026-10-25 design-rules 29절 「줄바꿈」 — 사이트 전체) ----------
+   1 덩어리(전화번호·이메일·「버튼 이름」+조사·「1:1 문의」 같은 화면 이름)는 .nw 로 묶어 쪼개지 않는다.
+   2 붙여 쓰는 말(「~할 수 있어요」·「~해 주세요」·꾸밈말+이름)은 문자열 안에서 "\u00a0"(줄이 안 바뀌는 띄어쓰기), 가운뎃점 덩어리는 "\u2060·\u2060".
+   3 짧은 여러 문장 안내는 문장마다 줄 — .brk(블록 한 줄). 문자열은 shared/ui/sentences 의 <Sentences> 가 문장마다 .brk 로 나눈다.
+   4 문단은 마지막 줄에 낱말 하나만 남지 않게(text-wrap: pretty). 낱말 단위 줄바꿈(word-break: keep-all, 1절)은 그대로 */
+p, .hint, li, dd, label, legend { text-wrap: pretty; }
+.nw { white-space: nowrap; }
+.brk { display: block; }
+/* ---------- 18. 체크박스 — B 젤리 네모 (2026-10-25 design-rules 29절 체크박스 줄, 카드 d130, 시안 part6-2026-10-25/checkbox-options.html B) ----------
+   마크업은 그대로(<input type="checkbox">) 두고 appearance: none 으로 칸을 그린다 — 진짜 input 이라 키보드·스크린리더 동작이 그대로다.
+   스위치(role="switch", 각 화면이 따로 그림)와 운영자 화면(design-rules 8절, 옛 모양 유지)은 뺀다.
+   선택자 무게(0,2,1)가 화면별 `.check input`(0,1,1) 보다 무거워 크기·색은 여기 한 곳에서 정해진다 */
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)) {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: var(--check-size);
+  height: var(--check-size);
+  margin: 0;
+  border: 2px solid var(--check-line);
+  border-radius: var(--r-check);
+  background: var(--white);
+  box-shadow: var(--check-shadow);
+  vertical-align: middle;
+  cursor: pointer;
+  transition: transform var(--dur-check) var(--ease-pop), background-color var(--dur-hover), border-color var(--dur-hover), box-shadow var(--dur-hover);
+}
+/* 짙은 회색 굵은 둥근 체크 — 모양은 마스크, 색은 토큰(하늘 면 위 8.8:1) */
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *))::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  background: var(--on-brand);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.5 8.5 3 3 6-7' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.5 8.5 3 3 6-7' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity var(--dur-hover), transform var(--dur-check) var(--ease-pop);
+}
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):checked {
+  background: var(--primary);
+  border-color: var(--brand-line);
+  box-shadow: var(--check-shadow-on);
+  transform: translateY(-1px);
+}
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):checked::before { opacity: 1; transform: scale(1); }
+/* 누르면 살짝 눌림 — 칸을 눌러도, 글자(label)를 눌러도 */
+:is(input[type="checkbox"]:active, label:active > input[type="checkbox"]):not([role="switch"], :disabled):where(:not(.admin-area *)) { transform: scale(0.9); }
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):disabled { border-color: var(--gray-300); background: var(--gray-100); box-shadow: none; transform: none; cursor: not-allowed; }
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):disabled:checked { border-color: var(--gray-400); background: var(--gray-200); }
+input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):disabled::before { background: var(--gray-600); }
+/* 고대비 모드(forced-colors)는 배경색을 지워 체크가 사라진다 — 글자색(CanvasText)으로 칠해 보이게 */
+@media (forced-colors: active) {
+  input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *))::before { background: CanvasText; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  :is(input[type="checkbox"]:active, label:active > input[type="checkbox"]):not([role="switch"], :disabled):where(:not(.admin-area *)) { transform: none; }
+  input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):checked:active { transform: translateY(-1px); }
+  :is(a.card, .ccard, a.tile, .btn, .avatar-stack .face):hover { transform: none !important; }
+}
+
+/* 인증 화면 틀(design-rules 29절) — 로그인·비밀번호 찾기·새 비밀번호가 같이 쓴다. 맨 끝에 두어 위의 .auth 규칙을 이긴다.
+   상단 바 아래 96(휴대폰 64), 바닥글까지 --section-gap. 가운데 기둥 480(양옆 여백 포함). 머리(카드 밖)와 카드 사이 32, 설명 16/400 */
+.auth-page { padding: var(--space-24) 0 var(--section-gap); }
+.auth-page > .auth { max-width: calc(var(--col-auth) + 2 * var(--gutter)); }
+.auth-page .head { margin-bottom: var(--space-8); }
+.auth-page .head .t-lead { margin-top: var(--space-2); font-size: var(--fs-body); font-weight: 400; line-height: 1.5; }
+@media (max-width: 767px) {
+  .auth-page { padding-top: var(--space-16); }
+}
+</style><style>/* 회원가입 — 시안 docs/design/mockups/site/part6-2026-10-25/signup.html · part6.css 「가입」(design-rules 29절, 2026-10-25 승인). 기둥(.su-auth)·머리(.su-auth .su-head)·카드·폼·확인칸(.su-check)·오류(.su-err)·아래 줄(.su-foot-line)은 전역 클래스.
+   가운데 기둥 720(양옆 여백 포함 768). 상단 바 아래 96, 바닥글까지 96(휴대폰 64). 색은 하늘 한 색 + 회색.
+   시안은 세 단계 카드를 쌓아 보이지만 가입은 한 단계씩 넘기는 흐름이라, 카드 한 장 안에 지금 단계만 보이고 위에 단계 표시 줄이 있다 */
+
+.su-page { padding: var(--space-24) 0 var(--section-gap); } /* 위 96(간격 단계, 2026-10-18 재진단 — 88 이던 것) */
+.auth.box { max-width: calc(var(--col-form) + 2 * var(--gutter)); }
+.su-box .head { margin-bottom: var(--space-8); }
+.su-box .head .t-lead { margin-top: var(--space-2); font-size: var(--fs-lead); font-weight: 400; line-height: 1.5; } /* 설명 16/400(29절 세 화면 같은 머리) */
+.su-box :is(.err, .okmsg) { font-weight: var(--fw-btn); }
+@media (max-width: 767px) { .su-page { padding-top: calc(var(--space-4) + var(--space-12)); } }
+
+/* 단계 표시 — 알약 셋이 한 줄에 같은 폭(글자는 가운데, 줄바꿈 없음). 지금 단계·지난 단계는 옅은 하늘 면 */
+/* 「다음」으로 단계를 옮기면 이 줄로 스크롤한다 — 위에 붙은 상단 바(--header-h) 밑에 깔리지 않게 비켜 선다(base.css 의 구간 규칙과 같은 값) */
+.su-steps-wrap { margin-bottom: 24px; scroll-margin-top: calc(var(--header-h) + 24px); }
+.su-steps { display: flex; gap: 8px; }
+.su-steps li { flex: 1 1 0; min-width: 0; }
+.su-st { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; padding: 0 8px; border: 0; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font: 400 16px/1.2 var(--font); white-space: nowrap; cursor: default; }
+.su-dot { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--white); color: var(--gray-600); font-weight: var(--fw-btn); line-height: 1; }
+.su-st.is-done { background: var(--primary-50); color: var(--brand-ink); cursor: pointer; }
+.su-st.is-done .su-dot { color: var(--brand-ink); }
+.su-st.is-done:hover .su-lbl { text-decoration: underline; text-underline-offset: 4px; }
+.su-st[aria-current="step"] { background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
+.su-st[aria-current="step"] .su-dot { background: var(--gray-900); color: var(--white); }
+.su-st[disabled] { opacity: 1; }
+@media (max-width: 767px) {
+  .su-st { gap: 6px; font-size: 14px; }
+  .su-dot { width: 24px; height: 24px; font-size: 14px; }
+}
+
+/* 단계 카드 — 입력과 「이전」「다음」이 한 카드 안 */
+.su-step { margin: 0; padding: 0; border: 0; min-width: 0; }
+.su-step > h2 { margin-bottom: 24px; }
+.su-step > h2:has(+ .su-lead) { margin-bottom: 8px; } /* 제목 아래 설명이 있으면 제목과 8, 설명 아래 24 */
+.su-lead { margin: 0 0 24px; }
+.su-focusable { scroll-margin-top: 160px; }
+.su-focusable:focus { outline: none; }
+.su-focusable:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+/* 버튼 글자는 한 줄 — 둘이 한 줄에 안 들어가면 주 버튼이 다음 줄을 꽉 채운다 */
+.su-step-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-200); }
+.su-step-actions .btn { min-width: 120px; white-space: nowrap; }
+.su-step-actions .su-next { flex: 1 0 auto; margin-left: auto; } /* 「다음」은 모든 단계에서 카드 오른쪽 아래 */
+.su-step-actions.kakao-row .su-next { flex: 0 0 auto; padding-inline: 32px; } /* 카카오 버튼은 글자 길이만큼 — 남은 폭을 다 채우면 너무 길다(2026-10-26 사용자) */
+@media (max-width: 767px) {
+  .su-step-actions { display: grid; grid-template-columns: 1fr 2fr; }
+  .su-step-actions.no-prev { grid-template-columns: 1fr; }
+  .su-step-actions .su-next { margin-left: 0; }
+  .su-step-actions .btn { min-width: 0; }
+}
+/* 휴대폰 폭: 「이전 | 다음」은 1:2 그대로, 글자가 긴 카카오 버튼 줄만 위아래로(주 버튼 위) */
+@media (max-width: 480px) {
+  .su-step-actions.kakao-row { grid-template-columns: 1fr; }
+  .su-step-actions.kakao-row .su-next { order: -1; }
+}
+
+/* 1단계 — 유형 선택 */
+.su-choices { display: grid; gap: var(--space-4); }
+.su-choice { display: flex; align-items: flex-start; gap: var(--space-4); padding: var(--space-6); border-radius: var(--r-card); box-shadow: inset 0 0 0 1px var(--gray-200); cursor: pointer; background: var(--white); }
+.su-choice:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
+.su-choice:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.su-choice input { width: var(--icon-xs); height: var(--icon-xs); margin: 2px 0 0; flex-shrink: 0; accent-color: var(--brand-line); }
+.su-choice input:focus-visible { outline: none; }
+.su-choice strong { display: block; font-weight: var(--fw-btn); }
+.su-choice .t-meta { display: block; }
+.su-note { margin-top: var(--space-4); color: var(--gray-600); }
+.su-note strong { font-weight: var(--fw-btn); }
+
+/* 2단계 — 정보 입력. 묶음은 하늘 판 대신 구분선 + 소제목 16/600, 묶음 사이 위아래 32 */
+.su-grp + .su-grp { margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--gray-200); }
+.su-grp-title { margin: 0 0 24px; font-family: var(--font); font-size: 16px; line-height: 1.5; font-weight: var(--fw-h3); }
+.su-opt { font-weight: 400; }
+.su-terms { display: grid; gap: 4px; }
+.su-row { display: flex; align-items: center; gap: 12px; }
+.su-row .check { flex: 1; min-width: 0; }
+.su-req { color: var(--brand-ink); font-weight: var(--fw-btn); }
+.su-term-detail { display: block; }
+/* 칸별 안내 — 칸 바로 아래. 업계 표준대로 상태를 색으로도 가른다(2026-10-26 사용자): 틀림 = 빨강 굵은 글자 + 원 안의 ! + 칸 테두리 빨강, 맞음 = 초록 글자 + 체크. 확인 중은 회색 */
+.su-live { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; }
+.su-live-bad { color: var(--danger); font-weight: var(--fw-btn); }
+.su-live-bad::before { content: "!" / ""; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--danger); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1; }
+.su-live-ok { align-items: center; color: var(--success); font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: var(--fw-btn); }
+.su-step .field[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--danger); }
+.su-live-ok svg { flex-shrink: 0; }
+.su-live-wait { color: var(--gray-600); font-size: var(--fs-caption); line-height: var(--lh-caption); } /* 미리 확인 중·잠시 뒤에 — 틀렸다는 표시가 아니다 */
+/* 이메일 — 앞부분 @ 주소 고르기 한 줄, 「직접 입력」이면 아래에 주소 칸 */
+.su-email { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; }
+.su-at { font-weight: var(--fw-btn); color: var(--gray-600); }
+.su-email-custom { margin-top: 8px; }
+
+/* 3단계 — 카카오톡 본인 확인 */
+.su-kakao { display: grid; gap: 16px; counter-reset: k; }
+.su-kakao li { position: relative; min-height: 28px; padding-left: 40px; counter-increment: k; }
+.su-kakao li::before { content: counter(k); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
+.su-kakao li.is-done::before { content: none; }
+.su-kakao strong { font-weight: var(--fw-btn); }
+.su-mark { position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: var(--on-brand); }
+.su-again { margin-top: 16px; }
+.su-text-btn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--brand-ink); font: inherit; font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.su-step > .su-error { margin-top: 24px; }
+</style><style></style><style>
+/* ---- v43 시안 전용(시안 틀) ---- */
+body{background:#fff}
+.v-bar{display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 var(--gutter);border-bottom:1px solid var(--gray-200);background:#fff}
+.v-bar b{font-family:var(--font-round);font-weight:800;font-size:20px}
+.v-state{border-top:2px dashed var(--gray-300);padding-bottom:16px}
+.v-label{display:block;padding:12px var(--gutter);font-size:13px;line-height:1.4;color:var(--gray-600);background:var(--gray-100)}
+.v-label b{font-weight:700;color:var(--gray-900)}
+.su-page{padding:32px 0 32px}
+.v-bubble{width:24px;height:24px}
+@media (max-width:480px){.su-four .su-st:not([aria-current]) .su-lbl{display:none}.su-four .su-st:not([aria-current]){padding:0 8px}.su-four li:not(:has([aria-current])){flex:0 0 auto}.su-four li:has([aria-current]){flex:1 1 0}}
+.v-phone{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}
+.v-phone .btn{white-space:nowrap}
+.v-code{position:relative}
+.v-code input{padding-right:80px}
+.v-timer{position:absolute;right:16px;top:12px;font-variant-numeric:tabular-nums;color:var(--gray-600);font-weight:600}
+.v-timer.is-zero{color:var(--danger)}
+.v-taglist{display:flex;flex-wrap:wrap;gap:8px}
+.v-taglist .chip{border:0;font:inherit}
+.v-taglist .chip[aria-pressed=true]{background:var(--ink);color:#fff}
+@media(max-width:480px){.v-phone .btn{padding-inline:14px}}
+.vp-head{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.vp-box{display:grid;gap:16px;padding:24px;border-radius:var(--r-card);background:var(--surface)}
+.vp-top{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px}
+.vp-top .ch{min-width:0;overflow-wrap:anywhere;font-weight:700}
+.vp-code-row{display:flex;align-items:center;flex-wrap:wrap;gap:12px 16px}
+.vp-code{font-size:var(--fs-title);font-weight:700;letter-spacing:1px;font-variant-numeric:tabular-nums}
+.vp-facts{display:grid;gap:4px;color:var(--sub)}
+.vp-steps{display:grid;gap:12px;margin-top:24px}
+.vp-or{display:grid;gap:12px;padding-top:16px;border-top:1px solid var(--divider)}
+.vp-examples{display:grid;gap:2px;margin-top:8px;color:var(--sub)}
+.vp-examples code{font-family:inherit;overflow-wrap:anywhere}
+.vp-done{display:grid;gap:4px;padding:24px;border-radius:var(--r-btn);background:var(--primary-50)}
+.vp-done a{color:inherit;overflow-wrap:anywhere}
+.vp-preview{margin-top:8px;font-weight:700}
+.sub{color:var(--sub)}
+.v-nosend{display:inline-flex;align-items:center;min-height:32px;padding:4px 12px;border-radius:var(--r-pill);background:var(--gray-100);color:var(--gray-600);font-weight:600}
+.v-kakao-actions{display:grid;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--gray-200)}
+.v-kakao-actions .btn{white-space:nowrap}
+.v-conn{display:flex;align-items:center;gap:12px;padding:16px;border-radius:var(--r-btn);background:var(--success-soft);color:var(--success);font-weight:600}
+@media(min-width:768px){.v-kakao-actions.v-three{grid-template-columns:auto 1fr auto;align-items:center}.v-kakao-actions.v-three .v-main{justify-self:end}}
+@media(max-width:767px){.v-kakao-actions .v-main{order:-1}}
+.v-link-row{display:flex;align-items:center;gap:16px;min-height:56px;padding:8px 16px;border-radius:var(--r-btn);background:#fff;border:1px solid var(--line-on-white);text-decoration:none;color:var(--ink);font-weight:600}
+.v-link-row > span:first-child{flex:1;min-width:0}
+.v-link-row .m{color:var(--sub);font-size:var(--fs-caption);font-weight:400}
+.v-link-row:hover{background:var(--gray-50)}
+.v-link-row svg{width:20px;height:20px;fill:none;stroke:var(--sub);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.v-wrap720{max-width:720px;margin:0 auto;padding:32px var(--gutter)}
+.v-stats{display:flex;gap:32px;flex-wrap:wrap;margin:24px 0;padding:24px 0;border-top:1px solid var(--gray-200);border-bottom:1px solid var(--gray-200)}
+.v-stats dt{color:var(--sub)}
+.v-stats dd{font-size:var(--fs-card);font-weight:700}
+.btn[aria-disabled=true]{background:var(--disabled);color:var(--disabled-ink);box-shadow:none;cursor:not-allowed}
+.btn--kakao[aria-disabled=true]{background:var(--kakao);color:var(--kakao-ink);opacity:.6}
+</style>
+</head><body><div class="v-bar"><b>팬꾹</b><span>로그인</span></div><section class="v-state"><span class="v-label"><b>2단계 · 정보 입력</b> — 팬 · 처음(비어 있음) · 단계 줄 3칸</span><main><section class="su-page"><div class="container auth su-box">
+<div class="head"><h1 class="t-title">회원가입</h1></div>
+<nav class="su-steps-wrap" aria-label="가입 단계"><ol class="su-steps su-four"><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">유형 선택</span></span></li><li><span class="su-st" aria-current="step"><span class="su-dot" aria-hidden="true">2</span><span class="su-lbl">정보 입력</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">3</span><span class="su-lbl">휴대폰 확인</span></span></li></ol></nav>
+<form class="card" onsubmit="return false"><fieldset class="su-step"><legend class="sr-only">회원 정보 입력</legend>
+<h2 class="t-card">회원 정보 입력</h2><div class="su-grp"><h3 class="su-grp-title">계정 정보</h3><div class="form"><div><label class="label" for="f18">아이디</label>
+<input class="field" id="f18" type="text" value="" placeholder=""><p class="hint">영문 소문자·숫자·밑줄(_) 4~20자 · 가입 후 변경 불가</p></div><div><label class="label" for="f19">닉네임</label>
+<input class="field" id="f19" type="text" value="" placeholder=""><p class="hint">팬꾹에서 사용할 이름 · 최대 12자 · 중복 사용 불가<br>가입 후 ‘프로필 수정’에서 변경할 수 있습니다.</p></div><div><label class="label">이메일</label><div class="su-email"><input class="field" type="text" placeholder="이메일 아이디" value=""><span class="su-at" aria-hidden="true">@</span><select class="field" aria-label="이메일 도메인 선택(@ 뒤)"><option>이메일 도메인 선택</option></select></div><p class="hint">가입 후 확인 메일을 발송합니다. 메일의 링크에서 주소를 확인하면 선물 소식을 이메일로 받을 수 있습니다.</p></div><div><label class="label" for="f20">비밀번호</label>
+<input class="field" id="f20" type="password" value="" placeholder=""><p class="hint">8~64자 · 영문·숫자·특수문자 모두 포함 · 아이디와 다르게 설정</p></div><div><label class="label" for="f21">비밀번호 확인</label>
+<input class="field" id="f21" type="password" value="" placeholder="비밀번호를 한 번 더 입력해 주세요"></div></div></div><div class="su-grp"><h3 class="su-grp-title">선택 입력 사항</h3><div class="form"><div><label class="label" for="hd22">어디서 알게 되셨나요 <span class="t-meta su-opt">(선택)</span></label><select class="field"><option>선택 안 함</option></select><p class="hint">서비스 유입 경로를 파악하기 위한 선택 항목입니다.</p></div></div></div><div class="su-grp"><h3 class="su-grp-title">약관 동의</h3><div class="form"><div class="su-terms"><div><label class="check"><input type="checkbox"> 전체 동의</label><p class="t-meta su-term-detail">선택 항목 동의가 포함됩니다. 선택 항목에 동의하지 않아도 가입할 수 있습니다.</p></div>
+<div class="su-row"><label class="check"><input type="checkbox"><span><span class="su-req">[필수]</span> 만 14세 이상입니다</span></label></div><div class="su-row"><label class="check"><input type="checkbox"><span><span class="su-req">[필수]</span> 이용약관</span></label><a class="btn btn--text btn--sm" href="#">보기</a></div><div class="su-row"><label class="check"><input type="checkbox"><span><span class="su-req">[필수]</span> 개인정보 수집·이용</span></label><a class="btn btn--text btn--sm" href="#">보기</a></div><div class="su-row"><label class="check"><input type="checkbox"><span>[선택] 이벤트·소식 알림 받기<span class="t-meta su-term-detail">팬꾹 이벤트와 새 소식을 이메일로 보내 드려요.</span></span></label></div></div></div></div></fieldset>
+<div class="su-step-actions"><button class="btn btn--line" type="button">이전</button><button class="btn su-next" type="submit">다음</button></div></form>
+<p class="foot-line">이미 회원이신가요? <a href="#">로그인</a></p></div></section></main></section><section class="v-state"><span class="v-label"><b>2단계 · 정보 입력</b> — 팬 · 입력 뒤(아이디 사용 가능 / 닉네임 중복 / 비밀번호 확인 틀림) · 필수 동의 체크됨</span><main><section class="su-page"><div class="container auth su-box">
+<div class="head"><h1 class="t-title">회원가입</h1></div>
+<nav class="su-steps-wrap" aria-label="가입 단계"><ol class="su-steps su-four"><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">유형 선택</span></span></li><li><span class="su-st" aria-current="step"><span class="su-dot" aria-hidden="true">2</span><span class="su-lbl">정보 입력</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">3</span><span class="su-lbl">휴대폰 확인</span></span></li></ol></nav>
+<form class="card" onsubmit="return false"><fieldset class="su-step"><legend class="sr-only">회원 정보 입력</legend>
+<h2 class="t-card">회원 정보 입력</h2><div class="su-grp"><h3 class="su-grp-title">계정 정보</h3><div class="form"><div><label class="label" for="f24">아이디</label>
+<input class="field" id="f24" type="text" value="honey_fan" placeholder=""><p class="su-live su-live-ok"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>사용 가능합니다.</span></p><p class="hint">영문 소문자·숫자·밑줄(_) 4~20자 · 가입 후 변경 불가</p></div><div><label class="label" for="f25">닉네임</label>
+<input class="field" id="f25" type="text" value="꿀벌러버" placeholder="" aria-invalid="true"><p class="su-live su-live-bad"><span>이미 사용 중입니다.</span></p><p class="hint">팬꾹에서 사용할 이름 · 최대 12자 · 중복 사용 불가<br>가입 후 ‘프로필 수정’에서 변경할 수 있습니다.</p></div><div><label class="label">이메일</label><div class="su-email"><input class="field" type="text" placeholder="이메일 아이디" value="honey"><span class="su-at" aria-hidden="true">@</span><select class="field" aria-label="이메일 도메인 선택(@ 뒤)"><option>naver.com</option></select></div><p class="hint">가입 후 확인 메일을 발송합니다. 메일의 링크에서 주소를 확인하면 선물 소식을 이메일로 받을 수 있습니다.</p></div><div><label class="label" for="f26">비밀번호</label>
+<input class="field" id="f26" type="password" value="password12!" placeholder=""><p class="hint">8~64자 · 영문·숫자·특수문자 모두 포함 · 아이디와 다르게 설정</p></div><div><label class="label" for="f27">비밀번호 확인</label>
+<input class="field" id="f27" type="password" value="password12" placeholder="비밀번호를 한 번 더 입력해 주세요" aria-invalid="true"><p class="su-live su-live-bad"><span>비밀번호가 일치하지 않습니다.</span></p></div></div></div><div class="su-grp"><h3 class="su-grp-title">선택 입력 사항</h3><div class="form"><div><label class="label" for="hd28">어디서 알게 되셨나요 <span class="t-meta su-opt">(선택)</span></label><select class="field"><option>팬 커뮤니티</option></select><p class="hint">서비스 유입 경로를 파악하기 위한 선택 항목입니다.</p></div></div></div><div class="su-grp"><h3 class="su-grp-title">약관 동의</h3><div class="form"><div class="su-terms"><div><label class="check"><input type="checkbox"> 전체 동의</label><p class="t-meta su-term-detail">선택 항목 동의가 포함됩니다. 선택 항목에 동의하지 않아도 가입할 수 있습니다.</p></div>
+<div class="su-row"><label class="check"><input type="checkbox" checked><span><span class="su-req">[필수]</span> 만 14세 이상입니다</span></label></div><div class="su-row"><label class="check"><input type="checkbox" checked><span><span class="su-req">[필수]</span> 이용약관</span></label><a class="btn btn--text btn--sm" href="#">보기</a></div><div class="su-row"><label class="check"><input type="checkbox" checked><span><span class="su-req">[필수]</span> 개인정보 수집·이용</span></label><a class="btn btn--text btn--sm" href="#">보기</a></div><div class="su-row"><label class="check"><input type="checkbox"><span>[선택] 이벤트·소식 알림 받기<span class="t-meta su-term-detail">팬꾹 이벤트와 새 소식을 이메일로 보내 드려요.</span></span></label></div></div></div></div></fieldset>
+<div class="su-step-actions"><button class="btn btn--line" type="button">이전</button><button class="btn su-next" type="submit">다음</button></div></form>
+<p class="foot-line">이미 회원이신가요? <a href="#">로그인</a></p></div></section></main></section><section class="v-state"><span class="v-label"><b>2단계 · 정보 입력</b> — 크리에이터 · 처음(채널 정보 묶음이 생김) · 단계 줄 5칸</span><main><section class="su-page"><div class="container auth su-box">
+<div class="head"><h1 class="t-title">회원가입</h1></div>
+<nav class="su-steps-wrap" aria-label="가입 단계"><ol class="su-steps su-four"><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">유형 선택</span></span></li><li><span class="su-st" aria-current="step"><span class="su-dot" aria-hidden="true">2</span><span class="su-lbl">정보 입력</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">3</span><span class="su-lbl">휴대폰 확인</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">4</span><span class="su-lbl">채널 확인</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">5</span><span class="su-lbl">승인 서명</span></span></li></ol></nav>
+<form class="card" onsubmit="return false"><fieldset class="su-step"><legend class="sr-only">회원 정보 입력</legend>
+<h2 class="t-card">회원 정보 입력</h2><div class="su-grp"><h3 class="su-grp-title">계정 정보</h3><div class="form"><div><label class="label" for="f30">아이디</label>
+<input class="field" id="f30" type="text" value="" placeholder=""><p class="hint">영문 소문자·숫자·밑줄(_) 4~20자 · 가입 후 변경 불가</p></div><div><label class="label" for="f31">닉네임</label>
+<input class="field" id="f31" type="text" value="" placeholder=""><p class="hint">팬꾹에서 사용할 이름 · 최대 12자 · 중복 사용 불가<br>가입 후 ‘프로필 수정’에서 변경할 수 있습니다.</p></div><div><label class="label">이메일</label><div class="su-email"><input class="field" type="text" placeholder="이메일 아이디" value=""><span class="su-at" aria-hidden="true">@</span><select class="field" aria-label="이메일 도메인 선택(@ 뒤)"><option>이메일 도메인 선택</option></select></div><p class="hint">가입 후 확인 메일을 발송합니다. 메일의 링크에서 주소를 확인하면 선물 소식을 이메일로 받을 수 있습니다.</p></div><div><label class="label" for="f32">비밀번호</label>
+<input class="field" id="f32" type="password" value="" placeholder=""><p class="hint">8~64자 · 영문·숫자·특수문자 모두 포함 · 아이디와 다르게 설정</p></div><div><label class="label" for="f33">비밀번호 확인</label>
+<input class="field" id="f33" type="password" value="" placeholder="비밀번호를 한 번 더 입력해 주세요"></div></div></div><div class="su-grp"><h3 class="su-grp-title">채널 정보</h3><div class="form"><div><label class="label" for="f34">공개 이름</label>
+<input class="field" id="f34" type="text" value="" placeholder=""><p class="hint">팬에게 표시되는 이름 · 최대 20자</p></div><div><label class="label" for="f35">채널 이름</label>
+<input class="field" id="f35" type="text" value="" placeholder="예: 꿀단지TV"><p class="hint">채널 주소는 4단계에서 입력합니다.</p></div><div><label class="label" for="f36">팬덤 이름 <span class="t-meta su-opt">(선택)</span></label>
+<input class="field" id="f36" type="text" value="" placeholder="예: 꿀벌단"><p class="hint">팬을 부르는 이름 · 최대 10자 · 선택 입력<br>가입 후 ‘상세 설정 &gt; 팬덤’에서 변경할 수 있습니다.</p></div><div><p class="label">태그</p><div class="v-taglist"><button type="button" class="chip" aria-pressed="false">SOOP</button><button type="button" class="chip" aria-pressed="false">치지직</button><button type="button" class="chip" aria-pressed="false">유튜브</button><button type="button" class="chip" aria-pressed="false">알플레이</button><button type="button" class="chip" aria-pressed="false">인스타그램</button><button type="button" class="chip" aria-pressed="false">X</button><button type="button" class="chip" aria-pressed="false">스레드</button><button type="button" class="chip" aria-pressed="false">틱톡</button><button type="button" class="chip" aria-pressed="false">버추얼</button></div><div style="margin-top:12px"><div><label class="label" for="f37">직접 입력 (목록에 없을 때 한 개)</label>
+<input class="field" id="f37" type="text" value="" placeholder="예: 팝콘TV"><p class="hint">활동하는 곳과 방송 종류를 골라 주세요. 고른 것과 직접 입력을 합쳐 1~5개(지금 0개), 직접 입력은 20자까지예요.</p></div></div></div></div></div><div class="su-grp"><h3 class="su-grp-title">선택 입력 사항</h3><div class="form"><div><label class="label" for="hd38">어디서 알게 되셨나요 <span class="t-meta su-opt">(선택)</span></label><select class="field"><option>선택 안 함</option></select><p class="hint">서비스 유입 경로를 파악하기 위한 선택 항목입니다.</p></div></div></div><div class="su-grp"><h3 class="su-grp-title">약관 동의</h3><div class="form"><div class="su-terms"><div><label class="check"><input type="checkbox"> 전체 동의</label><p class="t-meta su-term-detail">선택 항목 동의가 포함됩니다. 선택 항목에 동의하지 않아도 가입할 수 있습니다.</p></div>
+<div class="su-row"><label class="check"><input type="checkbox"><span><span class="su-req">[필수]</span> 만 14세 이상입니다</span></label></div><div class="su-row"><label class="check"><input type="checkbox"><span><span class="su-req">[필수]</span> 이용약관</span></label><a class="btn btn--text btn--sm" href="#">보기</a></div><div class="su-row"><label class="check"><input type="checkbox"><span><span class="su-req">[필수]</span> 개인정보 수집·이용</span></label><a class="btn btn--text btn--sm" href="#">보기</a></div><div class="su-row"><label class="check"><input type="checkbox"><span>[선택] 이벤트·소식 알림 받기<span class="t-meta su-term-detail">팬꾹 이벤트와 새 소식을 이메일로 보내 드려요.</span></span></label></div></div></div></div></fieldset>
+<div class="su-step-actions"><button class="btn btn--line" type="button">이전</button><button class="btn su-next" type="submit">다음</button></div></form>
+<p class="foot-line">이미 회원이신가요? <a href="#">로그인</a></p></div></section></main></section><section class="v-state"><span class="v-label"><b>2단계 · 정보 입력</b> — 크리에이터 · 입력 뒤</span><main><section class="su-page"><div class="container auth su-box">
+<div class="head"><h1 class="t-title">회원가입</h1></div>
+<nav class="su-steps-wrap" aria-label="가입 단계"><ol class="su-steps su-four"><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">유형 선택</span></span></li><li><span class="su-st" aria-current="step"><span class="su-dot" aria-hidden="true">2</span><span class="su-lbl">정보 입력</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">3</span><span class="su-lbl">휴대폰 확인</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">4</span><span class="su-lbl">채널 확인</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">5</span><span class="su-lbl">승인 서명</span></span></li></ol></nav>
+<form class="card" onsubmit="return false"><fieldset class="su-step"><legend class="sr-only">회원 정보 입력</legend>
+<h2 class="t-card">회원 정보 입력</h2><div class="su-grp"><h3 class="su-grp-title">계정 정보</h3><div class="form"><div><label class="label" for="f40">아이디</label>
+<input class="field" id="f40" type="text" value="honey_fan" placeholder=""><p class="su-live su-live-ok"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>사용 가능합니다.</span></p><p class="hint">영문 소문자·숫자·밑줄(_) 4~20자 · 가입 후 변경 불가</p></div><div><label class="label" for="f41">닉네임</label>
+<input class="field" id="f41" type="text" value="꿀벌러버" placeholder=""><p class="hint">팬꾹에서 사용할 이름 · 최대 12자 · 중복 사용 불가<br>가입 후 ‘프로필 수정’에서 변경할 수 있습니다.</p></div><div><label class="label">이메일</label><div class="su-email"><input class="field" type="text" placeholder="이메일 아이디" value="honey"><span class="su-at" aria-hidden="true">@</span><select class="field" aria-label="이메일 도메인 선택(@ 뒤)"><option>naver.com</option></select></div><p class="hint">가입 후 확인 메일을 발송합니다. 메일의 링크에서 주소를 확인하면 선물 소식을 이메일로 받을 수 있습니다.</p></div><div><label class="label" for="f42">비밀번호</label>
+<input class="field" id="f42" type="password" value="password12!" placeholder=""><p class="hint">8~64자 · 영문·숫자·특수문자 모두 포함 · 아이디와 다르게 설정</p></div><div><label class="label" for="f43">비밀번호 확인</label>
+<input class="field" id="f43" type="password" value="password12" placeholder="비밀번호를 한 번 더 입력해 주세요"></div></div></div><div class="su-grp"><h3 class="su-grp-title">채널 정보</h3><div class="form"><div><label class="label" for="f44">공개 이름</label>
+<input class="field" id="f44" type="text" value="꿀단지" placeholder=""><p class="hint">팬에게 표시되는 이름 · 최대 20자</p></div><div><label class="label" for="f45">채널 이름</label>
+<input class="field" id="f45" type="text" value="꿀단지TV" placeholder="예: 꿀단지TV"><p class="hint">채널 주소는 4단계에서 입력합니다.</p></div><div><label class="label" for="f46">팬덤 이름 <span class="t-meta su-opt">(선택)</span></label>
+<input class="field" id="f46" type="text" value="꿀벌단" placeholder="예: 꿀벌단"><p class="hint">팬을 부르는 이름 · 최대 10자 · 선택 입력<br>가입 후 ‘상세 설정 &gt; 팬덤’에서 변경할 수 있습니다.</p></div><div><p class="label">태그</p><div class="v-taglist"><button type="button" class="chip" aria-pressed="false">SOOP</button><button type="button" class="chip" aria-pressed="false">치지직</button><button type="button" class="chip" aria-pressed="true">유튜브</button><button type="button" class="chip" aria-pressed="false">알플레이</button><button type="button" class="chip" aria-pressed="false">인스타그램</button><button type="button" class="chip" aria-pressed="false">X</button><button type="button" class="chip" aria-pressed="false">스레드</button><button type="button" class="chip" aria-pressed="false">틱톡</button><button type="button" class="chip" aria-pressed="false">버추얼</button></div><div style="margin-top:12px"><div><label class="label" for="f47">직접 입력 (목록에 없을 때 한 개)</label>
+<input class="field" id="f47" type="text" value="" placeholder="예: 팝콘TV"><p class="hint">활동하는 곳과 방송 종류를 골라 주세요. 고른 것과 직접 입력을 합쳐 1~5개(지금 1개), 직접 입력은 20자까지예요.</p></div></div></div></div></div><div class="su-grp"><h3 class="su-grp-title">선택 입력 사항</h3><div class="form"><div><label class="label" for="hd48">어디서 알게 되셨나요 <span class="t-meta su-opt">(선택)</span></label><select class="field"><option>팬 커뮤니티</option></select><p class="hint">서비스 유입 경로를 파악하기 위한 선택 항목입니다.</p></div></div></div><div class="su-grp"><h3 class="su-grp-title">약관 동의</h3><div class="form"><div class="su-terms"><div><label class="check"><input type="checkbox"> 전체 동의</label><p class="t-meta su-term-detail">선택 항목 동의가 포함됩니다. 선택 항목에 동의하지 않아도 가입할 수 있습니다.</p></div>
+<div class="su-row"><label class="check"><input type="checkbox" checked><span><span class="su-req">[필수]</span> 만 14세 이상입니다</span></label></div><div class="su-row"><label class="check"><input type="checkbox" checked><span><span class="su-req">[필수]</span> 이용약관</span></label><a class="btn btn--text btn--sm" href="#">보기</a></div><div class="su-row"><label class="check"><input type="checkbox" checked><span><span class="su-req">[필수]</span> 개인정보 수집·이용</span></label><a class="btn btn--text btn--sm" href="#">보기</a></div><div class="su-row"><label class="check"><input type="checkbox"><span>[선택] 이벤트·소식 알림 받기<span class="t-meta su-term-detail">팬꾹 이벤트와 새 소식을 이메일로 보내 드려요.</span></span></label></div></div></div></div></fieldset>
+<div class="su-step-actions"><button class="btn btn--line" type="button">이전</button><button class="btn su-next" type="submit">다음</button></div></form>
+<p class="foot-line">이미 회원이신가요? <a href="#">로그인</a></p></div></section></main></section></body></html>

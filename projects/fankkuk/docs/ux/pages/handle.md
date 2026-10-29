@@ -97,3 +97,14 @@ status: approved
 - 기준 문서 `docs/ux/principles.md`·`docs/ux/detail-pages.md` 가 없다(UX 기준 문서 없음).
 - 「팔로우」를 누른 뒤 보내기 화면으로 바로 넘어가지 않는다 — 지금보다 한 번 더 누른다.
 
+
+## 2026-10-29 승인 서명 연결 전 — `unsigned` (승인 — 시안 v43-signup, 사용자 「추천대로」)
+
+스펙: creator-link INV-E15 · approval-signature INV-S16. 시안: `docs/design/mockups/site/v43-signup/link-page-unconnected.html`.
+
+| 상태(코드 / 화면) | 조건 | 보이는 버튼·안내 | 다음 상태 |
+|---|---|---|---|
+| `unsigned`(제안) / 승인 수단 등록 전 | 채널 확인은 끝났고 승인 서명을 연결하지 않은 크리에이터. `needs_follow`·`open` 보다 먼저 본다(쉬는 중 `hidden` 이 먼저면 쉬는 중이 이긴다 — 쉬는 동안엔 어차피 받지 않는다) | 「팔로우」/「팔로우 중」은 그대로, 「선물 보내기」·「팔로우하고 선물 보내기」 대신 누를 수 없는 회색 배지 「승인 수단 등록 전」. 맨 아래 「선물 보내기」 장식 판도 숨김 | 크리에이터가 연결하면 `open`/`needs_follow` |
+
+- 정보 칸(평균 승인·요금 등)은 그대로 보인다. 공개 화면에는 연결 여부만 나간다.
+- 본인(`self`)은 꼬리표 옆에 같은 배지를 보지 않는다 — 본인은 설정 화면의 「승인 서명」 줄에서 본다.
