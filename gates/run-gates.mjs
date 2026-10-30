@@ -6,6 +6,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { readSpec } from "./lib/read-spec.mjs";
+import { fileURLToPath } from "node:url";
 
 const ROOT = process.cwd();
 const PROJECTS = join(ROOT, "projects");
@@ -717,6 +718,27 @@ for (const projDir of projectDirs) {
 }
 // 위험 표면 예외는 통과시키되 매번 보이게 남긴다 — 예외가 쌓여 아무도 모르게 방벽이 사라지는 걸 막는다.
 for (const w of riskWarnings) console.error(w);
+
+// ── INV 인용 경고: 스펙의 INV 를 고치면, 그 번호를 인용하는 다른 스펙·화면 명세의 파일:줄을 알린다. (막지 않음)
+//    판정은 scripts/check-inv-citations.mjs 한 자리에 있다 — 여기서 로직을 베끼지 않고 그것을 돌린다.
+//    --quick 에서도 돈다. 스펙을 고치는 그 편집에서 보여야 쓸모가 있고, git diff 한 번이라 빠르다.
+//    스크립트 위치는 이 게이트 파일 기준으로 찾는다 — 작업 위치(cwd)가 다른 폴더여도 같은 스크립트를 쓴다.
+//    검사기가 없거나 못 돌면 ⚠ 로 건너뛴다. 어느 경우에도 errors 에 넣지 않는다.
+{
+  const citeCheck = join(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "check-inv-citations.mjs");
+  if (!existsSync(citeCheck)) {
+    console.error("⚠ [inv-cite/SKIP] scripts/check-inv-citations.mjs 가 없다 — INV 인용 경고를 건너뛴다.");
+  } else {
+    const cr = spawnSync(process.execPath, [citeCheck, "--root", ROOT], { cwd: ROOT, encoding: "utf-8" });
+    if (cr.status === null || cr.status !== 0) {
+      console.error("⚠ [inv-cite/SKIP] INV 인용 검사가 실행되지 않았다 — 나머지 게이트는 그대로 판정한다.");
+    } else {
+      for (const line of (cr.stdout ?? "").split("\n")) if (line.startsWith("⚠ [inv-cite/")) console.error(line);
+    }
+  }
+}
+
+
 // 감지된 표면 신고(차단 아님). graph-stop 이 review 사인오프 판정에 쓴다.
 // 이름 줄과 위치 줄을 따로 낸다. 이름 줄에 위치를 섞으면 그걸 읽는 옛 graph-stop 이 표면 이름을
 // "authz@경로:줄" 로 통째로 읽어 require_reviewer 대조에 실패한다 — security-reviewer 요구가
