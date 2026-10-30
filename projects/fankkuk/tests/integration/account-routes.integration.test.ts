@@ -140,7 +140,8 @@ describe("INV-U12: /api/me/phone/* — 로그인 필수, 번호표는 스크립�
     ctx.client = await device(f.loginEmail);
     const next = testPhone();
     const r = await call(verifyPost, "/api/me/phone/verify", { phone: next });
-    expect(r).toEqual({ status: 200, cache: "no-store", body: { requested: true } });
+    // 응답에는 인증번호가 간 길(알림톡 kakao·문자 sms)만 더 실린다 — 번호표는 여전히 없다(2026-10-29 알림톡 먼저·문자 대체, INV-U12)
+    expect(r).toEqual({ status: 200, cache: "no-store", body: { requested: true, channel: expect.stringMatching(/^(kakao|sms)$/) } });
     expect(ctx.writes).toHaveLength(1);
     const [w] = ctx.writes;
     expect(w!.name).toBe(COOKIE);

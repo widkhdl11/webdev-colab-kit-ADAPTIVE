@@ -1,12 +1,14 @@
 import { removeTestAccounts } from "./account-fixtures";
-import { countTestOrders, deleteTestBlocks, deleteTestOrders, DUMMY_ADDRESS_IV, psql, SEED } from "./helpers";
+import { countTestOrders, deleteTestBlocks, deleteTestOrders, DUMMY_ADDRESS_IV, MANUAL_CHECK_PROFILES_SQL, psql, SEED } from "./helpers";
 import { removeTestCreator } from "./test-creator";
 
 // 시험마다 새 주문을 만든다. 남겨 두면 쌓여서 「최근 n 건」 목록에서 시드 주문을 밀어낸다.
 // 시작 전에 한 번(지난 실행이 중간에 죽어 남은 것), 끝난 뒤에 한 번 지운다.
 function cleanup(): void {
-  deleteTestOrders();
+  deleteTestOrders(); // 확인용 계정(qa_·widkhdl12)이 보내거나 받은 주문도 같이 지운다
   deleteTestBlocks();
+  // 확인용 계정의 가입 경로 기록(metrics INV-Q4) — 남겨 두면 가입 경로 집계 시험의 분모가 흔들린다. 계정은 남긴다
+  psql(`do $$ begin if to_regclass('public.signup_sources') is not null then delete from public.signup_sources where account_id in (${MANUAL_CHECK_PROFILES_SQL}); end if; end $$;`);
   // 승인 준비용 자리 표시 주소(ensureApprovalAddress) — 진짜 봉투는 iv 가 무작위라 이 줄에 걸리지 않는다
   psql(`delete from pii.creator_addresses where envelope ->> 'iv' = '${DUMMY_ADDRESS_IV}'`);
   removeTestCreator(); // 주소 시험 전용 크리에이터 — 지난 실행이 끊겨 남았으면 주소째 지운다

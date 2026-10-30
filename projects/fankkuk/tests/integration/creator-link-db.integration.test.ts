@@ -344,7 +344,7 @@ describe("INV-E8: 이번 달 N명의 팬", () => {
     const page = await loadCreatorLinkPage({ client: anonClient(), viewer: null, creatorId: A.creatorId, photoBase: "http://photo.test" });
     expect(page?.props.monthFans).toBe(0);
     const html = renderToStaticMarkup(createElement(CreatorProfilePage, page!.props));
-    expect(html).not.toContain("마음을 보냈어요");
+    expect(html).not.toContain("이번 달 선물한 팬"); // 2026-10-29 문구 수정본: 「이번 달 N명의 팬이 마음을 보냈어요」 → 「이번 달 선물한 팬 N명」
   });
 
   it("INV-E8: 숫자만 돌려준다 — 본인 확인 전 크리에이터는 0", async () => {
@@ -353,8 +353,7 @@ describe("INV-E8: 이번 달 N명의 팬", () => {
     insertOrder(FAN_X, A.creatorId, "registered", "now()");
     const page = await loadCreatorLinkPage({ client: anonClient(), viewer: null, creatorId: A.creatorId, photoBase: "http://photo.test" });
     const html = renderToStaticMarkup(createElement(CreatorProfilePage, page!.props));
-    expect(html).toContain("1명");
-    expect(html).toContain("마음을 보냈어요");
+    expect(html).toContain("이번 달 선물한 팬 1명");
   });
 
   // 한국 시간 달 시작 = UTC 로는 전달 마지막 날 15시. 그 +1시간은 UTC 달력으로는 아직 전달이라, UTC 로 달을 자르는 구현이면 빠진다.

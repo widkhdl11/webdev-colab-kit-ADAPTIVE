@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { adminClient, anonClient, followForTest, holdRowLock, psql, SEED, signedInClient, TEST_ITEM_KINDS } from "./helpers";
@@ -177,8 +178,12 @@ describe("INV-H1: 물품 종류는 여덟 가지 중 하나, 기타만 글, 물�
   });
 
   it("INV-H1 S1d: 이 기능 전에 만든 주문(시드)은 종류 칸이 비어 있고 물품 이름이 그대로다", async () => {
+    // 시드 파일에 적힌 주문번호만 센다. 「시험 주문이 아닌 주문 전부」로 세면 화면 확인 때 손으로 만든 주문·
+    // 이름을 바꿔 정리에서 빠진 시험 주문이 섞여 실패한다(2026-10-30, 9 대 22).
+    const seedOrderNos = [...new Set(readFileSync(new URL("../../supabase/seed.sql", import.meta.url), "utf8").match(/'FC-[A-Z0-9]+'/g) ?? [])];
+    expect(seedOrderNos.length).toBeGreaterThan(0);
     const rows = psql(
-      `select count(*) || '|' || count(*) filter (where item_category is null) || '|' || count(*) filter (where char_length(item_kind) > 0) from public.orders where item_kind not in (${TEST_ITEM_KINDS.map((k) => `'${k}'`).join(", ")}) and creator_id not in (${IDS})`,
+      `select count(*) || '|' || count(*) filter (where item_category is null) || '|' || count(*) filter (where char_length(item_kind) > 0) from public.orders where order_no in (${seedOrderNos.join(", ")})`,
     );
     const [total, nullCategory, named] = rows.split("|").map(Number);
     expect(total).toBeGreaterThan(0);

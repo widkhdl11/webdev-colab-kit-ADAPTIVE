@@ -330,41 +330,44 @@ describe("INV-A11: 크리에이터 알림은 카카오·이메일 두 칸 (manua
 
     const o = await registerTestOrder(1, { creatorId: ME.creatorId });
     await payTestOrder(o);
-    const boxId = psql(`select id from public.boxes where order_id = '${o.orderId}'`);
-    const no = waybill();
-    await fanSetsWaybill(boxId, no);
-    const staff = await signedInClient("fankkuk_staff");
-    const qr = await receiveAndLabel(staff, no);
-    await inspect(staff, qr, { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" });
 
     const outbox = (kind: string) =>
       psql(`select id from public.notification_outbox where order_id = '${o.orderId}' and kind = '${kind}' and account_id = '${ME.id}' and channel = 'email' and round = 1`);
-    const approvalRow = outbox("approval_request");
-    const holdRow = outbox("hold");
-    expect(approvalRow).not.toBe("");
-    expect(holdRow).not.toBe("");
-    const deliveredRow = psql(
-      `insert into public.notification_outbox (order_id, account_id, kind, channel, round, status, next_attempt_at, event_at)
-       values ('${o.orderId}', '${ME.id}', 'delivered', 'email', 1, 'pending', now() + interval '1 day', now()) returning id`,
-    ).split("\n")[0]; // psql 이 id 뒤에 「INSERT 0 1」을 붙인다
-    expect(deliveredRow).not.toBe("");
+    /** 그 줄 하나만 꺼내 받는 연락처를 본다 — 다른 대기 줄은 뒤로 미룬다 */
+    const claimOnly = async (id: string, expected: string | null) => {
+      psql(
+        `update public.notification_outbox set next_attempt_at = case when id = '${id}' then now() - interval '1 minute' else now() + interval '1 day' end where status = 'pending'`,
+      );
+      const claimed = await adminClient().rpc("notification_claim", { p_limit: 1 });
+      expect(claimed.error).toBeNull();
+      expect((claimed.data as { id: string }[]).map((x) => x.id)).toEqual([id]);
+      const contact = await adminClient().rpc("notification_contact", { p_outbox_id: id });
+      expect(contact.error).toBeNull();
+      expect(contact.data).toBe(expected);
+    };
     try {
-      for (const [id, expected] of [
-        [approvalRow, "cvt.haru@example.com"],
-        [holdRow, "cvt.haru@example.com"],
-        [deliveredRow, null],
-      ] as const) {
-        // 이 줄만 꺼낼 수 있게 다른 대기 줄을 뒤로 미룬다
-        psql(
-          `update public.notification_outbox set next_attempt_at = case when id = '${id}' then now() - interval '1 minute' else now() + interval '1 day' end where status = 'pending'`,
-        );
-        const claimed = await adminClient().rpc("notification_claim", { p_limit: 1 });
-        expect(claimed.error).toBeNull();
-        expect((claimed.data as { id: string }[]).map((x) => x.id)).toEqual([id]);
-        const contact = await adminClient().rpc("notification_contact", { p_outbox_id: id });
-        expect(contact.error).toBeNull();
-        expect(contact.data).toBe(expected);
-      }
+      // 승인 요청은 아직 승인 대기일 때 꺼낸다 — 보내는 순간 대기가 0건이면 보내지 않는다(notification-batching INV-NB1).
+      // 아래에서 추적 장치 발견으로 보류하면 그 주문은 더 승인 대기가 아니라서, 그 뒤에 꺼내면 건너뛴다(2026-10-30 이 순서로 고침).
+      const approvalRow = outbox("approval_request");
+      expect(approvalRow).not.toBe("");
+      await claimOnly(approvalRow, "cvt.haru@example.com");
+
+      const boxId = psql(`select id from public.boxes where order_id = '${o.orderId}'`);
+      const no = waybill();
+      await fanSetsWaybill(boxId, no);
+      const staff = await signedInClient("fankkuk_staff");
+      const qr = await receiveAndLabel(staff, no);
+      await inspect(staff, qr, { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" });
+
+      const holdRow = outbox("hold");
+      expect(holdRow).not.toBe("");
+      const deliveredRow = psql(
+        `insert into public.notification_outbox (order_id, account_id, kind, channel, round, status, next_attempt_at, event_at)
+         values ('${o.orderId}', '${ME.id}', 'delivered', 'email', 1, 'pending', now() + interval '1 day', now()) returning id`,
+      ).split("\n")[0]; // psql 이 id 뒤에 「INSERT 0 1」을 붙인다
+      expect(deliveredRow).not.toBe("");
+      await claimOnly(holdRow, "cvt.haru@example.com");
+      await claimOnly(deliveredRow, null);
     } finally {
       psql(`delete from public.notification_outbox where order_id = '${o.orderId}'`);
     }

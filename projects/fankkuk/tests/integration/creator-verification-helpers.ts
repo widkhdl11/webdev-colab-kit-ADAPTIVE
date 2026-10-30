@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { adminClient, deleteTestOrders, psql, signedInClient } from "./helpers";
+import { adminClient, deleteTestOrders, linkTestSignature, psql, signedInClient, unlinkTestSignature } from "./helpers";
 
 // 크리에이터 본인 확인(creator-verification INV-V1~V15) 시험 도구.
 // 시험 계정은 cvt_ 로 시작하는 아이디의 크리에이터 넷 — 시드 계정의 상태를 바꾸지 않으려고 따로 만든다.
@@ -49,7 +49,11 @@ export function resetCv(): void {
   );
 }
 
-/** 시험 계정 넷을 만든다(이미 있으면 그대로). 로그인 정보·프로필·공개 정보 행. */
+/**
+ * 시험 계정 넷을 만든다(이미 있으면 그대로). 로그인 정보·프로필·공개 정보 행, 시험 서명(fake) 연결.
+ * 서명을 연결하지 않은 크리에이터 앞 주문은 DB 가 거부한다(approval-signature INV-S16) — 연결을 빼면
+ * 이 계정에 주문을 보내는 시험(받는 양 조절·물품 종류·측정 등)이 전부 「승인 서명 연결 전인 크리에이터」로 실패한다(2026-10-30, 48건).
+ */
 export function createCvAccounts(): void {
   const values = ALL.map((a) => `('${a.id}'::uuid, '${a.login}', '${a.name}', '${a.creatorId}'::uuid)`).join(", ");
   psql(`
@@ -70,11 +74,14 @@ export function createCvAccounts(): void {
     insert into public.creators (id, profile_id, slug, name, channel, channel_title)
     select a.creator_id, a.id, replace(a.login_id, '_', '-'), a.nickname, '', a.nickname || ' 채널' from a on conflict (id) do nothing;
   `);
+  for (const a of ALL) linkTestSignature(a.creatorId);
 }
 
 /** 시험 계정을 모두 지운다. */
 export function dropCvAccounts(): void {
   resetCv();
+  // 크리에이터 줄을 트리거를 끈 채 지우므로 연결 줄이 연쇄로 지워지지 않는다 — 먼저 지운다.
+  for (const a of ALL) unlinkTestSignature(a.creatorId);
   psql(
     [
       "begin;",

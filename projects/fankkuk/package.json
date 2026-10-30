@@ -9,6 +9,8 @@
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:integration": "vitest run --config vitest.integration.config.mts",
+    "test:related": "node scripts/related-tests.mjs",
+    "test:integration:signoff": "node scripts/integration-baseline.mjs --run",
     "check:pii": "node scripts/pii-exposure.mjs",
     "copy:lint": "node scripts/copy-lint.mjs"
   },

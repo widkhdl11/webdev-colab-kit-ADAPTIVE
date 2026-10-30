@@ -78,6 +78,15 @@ export function psqlError(sql: string): string | null {
 export const TEST_ITEM_KINDS = ["시험 선물", "통합 시험 선물"] as const;
 
 /**
+ * 사람이 화면에서 확인하려고 만든 계정 — 아이디가 qa_ 로 시작하는 계정과 widkhdl12.
+ * 이 계정이 보내거나 받은 주문과 가입 경로 기록은 시험 정리가 같이 지운다(2026-10-30 사용자 지시 — 남겨 두면
+ * 「시드 주문 수」「가입 경로 집계」 시험이 흔들린다). 계정 자체는 남긴다 — 다시 로그인해 확인할 수 있게.
+ * 새 확인용 계정은 아이디를 qa_ 로 시작한다.
+ */
+// LIKE 의 _ 는 「아무 글자 하나」라 백슬래시로 글자 그대로의 밑줄로 만든다(SQL 에 \_ 가 들어가야 한다)
+export const MANUAL_CHECK_PROFILES_SQL = "select id from public.profiles where login_id like 'qa\\_%' or login_id = 'widkhdl12'";
+
+/**
  * 시험이 만든 주문을 딸린 상자·결제·승인 요청·열람 기록까지 한 트랜잭션으로 지운다.
  * 열람 기록은 DB 가 수정·삭제를 막아 두었으므로(INV-P7) 그 한 줄만 트리거를 끄고 지운다.
  * 로컬 컨테이너에만 붙는 psql 로 실행하므로 호스팅 DB 에는 닿지 않는다.
@@ -107,7 +116,8 @@ export function deleteTestFollows(): void {
 export function deleteTestOrders(): void {
   deleteTestFollows();
   const kinds = TEST_ITEM_KINDS.map((k) => `'${k}'`).join(", ");
-  const ids = `select id from public.orders where item_kind in (${kinds})`;
+  const manual = MANUAL_CHECK_PROFILES_SQL;
+  const ids = `select id from public.orders where item_kind in (${kinds}) or fan_id in (${manual}) or creator_id in (select id from public.creators where profile_id in (${manual}))`;
   psql(
     [
       "begin;",
@@ -125,7 +135,7 @@ export function deleteTestOrders(): void {
       `delete from public.approval_requests where order_id in (${ids});`,
       `delete from public.refunds where payment_id in (select id from public.payments where order_id in (${ids}));`,
       `delete from public.payments where order_id in (${ids});`,
-      `delete from public.orders where item_kind in (${kinds});`,
+      `delete from public.orders where id in (${ids});`,
       // 승인 요청 10분 창·바로 받기 설정(notification-batching INV-NB1·NB5) — 남겨 두면 다음 시험의 첫 결제가 열린 창에 쌓이거나 설정이 이어진다. 시드에는 둘 다 없다
       "do $$ begin if to_regclass('public.approval_notice_windows') is not null then delete from public.approval_notice_windows; delete from public.notification_preferences; end if; end $$;",
       "commit;",
@@ -207,7 +217,10 @@ export function deleteTestBlocks(): void {
 
 export function countTestOrders(): number {
   const kinds = TEST_ITEM_KINDS.map((k) => `'${k}'`).join(", ");
-  return Number(psql(`select count(*) from public.orders where item_kind in (${kinds});`));
+  const manual = MANUAL_CHECK_PROFILES_SQL;
+  return Number(
+    psql(`select count(*) from public.orders where item_kind in (${kinds}) or fan_id in (${manual}) or creator_id in (select id from public.creators where profile_id in (${manual}));`),
+  );
 }
 
 export const SEED = {

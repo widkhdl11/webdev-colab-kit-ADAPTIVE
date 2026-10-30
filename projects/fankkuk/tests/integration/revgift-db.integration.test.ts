@@ -354,7 +354,7 @@ describe("앱 서버 등록 → DB 등록 함수 (INV-R1·R3 두 장치가 이�
       { store: createSupabaseRevgiftStore(adminClient()), viewer: { userId: PROFILE.haru, role: "creator" }, readPrices: () => readTierPrices(adminClient()) },
       { shares: [{ fanId: PROFILE.daltokki, tier: "small" }], quotedTotalKrw: 5400 },
     );
-    expect(r).toEqual({ ok: false, status: 403, message: "나를 팔로우한 팬에게만 보낼 수 있어요." });
+    expect(r).toEqual({ ok: false, status: 403, message: "나를 팔로우한 팬에게만 선물을 보낼 수 있습니다." }); // 2026-10-29 문구 수정본
   });
 
   it("INV-R3 S3: 앱 서버가 계산한 금액으로 등록되고, 결제 기록의 검수비 칸은 0 이다", async () => {

@@ -422,7 +422,10 @@ describe("INV-Q4 — 가입 경로·utm", () => {
     const after = rowsAt(dbSoon());
     expect(delta(before, after, "signup_source", "all", "creator_stream")).toEqual({ n: 2, d: 3 });
     expect(delta(before, after, "signup_source", "all", "none")).toEqual({ n: 1, d: 3 });
-    expect(delta(before, after, "utm_source", "all", "x_share")).toEqual({ n: 1, d: 3 });
+    // utm 줄은 값이 있을 때만 생긴다 — 시험 전에 x_share 줄이 없으면 「분모의 차이」가 전체 가입 수가 된다(남은 가입 기록에 따라 7 등).
+    // 건수는 차이로, 분모는 늘 있는 가입 경로 줄과 같은지로 본다(2026-10-30)
+    expect(delta(before, after, "utm_source", "all", "x_share").n).toBe(1);
+    expect(cell(after, "utm_source", "all", "x_share").d).toBe(cell(after, "signup_source", "all", "creator_stream").d);
     // utm 은 전체 기간만 센다(화면이 전체만 쓴다)
     expect(after.filter((r) => r.metric.startsWith("utm_") && r.period !== "all")).toEqual([]);
   });

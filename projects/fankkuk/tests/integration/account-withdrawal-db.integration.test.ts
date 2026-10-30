@@ -856,10 +856,13 @@ function referencesTo(profileId: string): string[] {
     `select c.conrelid::regclass || '.' || a.attname from pg_constraint c join pg_attribute a on a.attrelid = c.conrelid and a.attnum = c.conkey[1]
      where c.contype = 'f' and c.confrelid = 'public.profiles'::regclass and array_length(c.conkey, 1) = 1 and c.conrelid <> 'public.account_withdrawals'::regclass`,
   ).split("\n");
-  return cols.filter((col) => {
+  // 칸마다 psql 을 따로 부르면 65칸 × 0.4초 = 26초라 시험 시간 제한(30초)을 넘긴다(2026-10-30). 한 번에 묻는다.
+  const probes = cols.map((col) => {
     const dot = col.lastIndexOf(".");
-    return Number(psql(`select count(*) from ${col.slice(0, dot)} where ${col.slice(dot + 1)} = '${profileId}'`)) > 0;
+    return `select '${col}' as col where exists (select 1 from ${col.slice(0, dot)} where ${col.slice(dot + 1)} = '${profileId}')`;
   });
+  const hit = psql(probes.join(" union all "));
+  return hit === "" ? [] : hit.split("\n");
 }
 
 describe("자동 삭제 — 사무실 상자가 있는 주문 (코드 리뷰 반영, my-account INV-A15·A16 · 카드 d123)", () => {

@@ -448,10 +448,13 @@ describe("추적 장치 발견 알림 — 크리에이터에게만, 팬에게는
 
   it("INV-N1 (S1c): 승인 요청 줄을 꺼내도 보낸 팬 닉네임·선물 종류·상자 수는 오지 않는다 — 승인 화면에서만 보인다(카드 d2 답 ②)", async () => {
     const g = await paidGift(2);
-    psql(`update public.orders set item_category = 'flower', item_kind = '꽃' where id = '${g.orderId}'`);
+    // 물품 이름은 시험 이름 그대로 둔다 — 「꽃」으로 바꾸면 시험 주문 정리(deleteTestOrders)가 이 주문을 못 지운다(2026-10-30, 10건 남음)
+    psql(`update public.orders set item_category = 'flower' where id = '${g.orderId}'`);
+    const kind = psql(`select item_kind from public.orders where id = '${g.orderId}'`);
     const c = await claimOne(rowId(g.orderId, "approval_request", "haru_creator"));
     expect(c).toMatchObject({ kind: "approval_request", nickname: "하루" });
-    expect(JSON.stringify(c)).not.toMatch(/별빛|꽃/);
+    expect(JSON.stringify(c)).not.toMatch(/별빛|flower/);
+    expect(JSON.stringify(c)).not.toContain(kind);
     // 그 값을 고르던 함수도 없다
     expect(psql(`select count(*) from pg_proc where proname = 'approval_gift_facts'`)).toBe("0");
   });

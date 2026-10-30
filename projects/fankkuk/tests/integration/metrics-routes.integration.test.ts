@@ -129,12 +129,14 @@ describe("INV-Q4 — 가입이 끝나면 utm 쿠키를 지운다(개인정보처
     expect(requested.status).toBe(200);
     const ticket = cookiePair(requested, "fk_signup_verification");
     expect(ticket).not.toBeNull();
-    expect((await postJson("/api/signup/phone/check", {}, ticket!)).status).toBe(200);
+    // 2026-10-29 부터 본인 확인은 인증번호를 맞혀야 끝난다(signup INV-U15). 이 시험은 개발 서버를 거쳐 그 서버가 보낸 번호를
+    // 읽을 수 없고, 보려는 것은 가입 성공 뒤 utm 쿠키다 — 인증번호를 맞힌 상태를 DB 에 직접 만든다(번호 확인 자체는 signup 시험이 본다).
+    psql(`update pii.phone_verifications set verified_at = now() where phone = '${phone}' and verified_at is null and discarded_at is null`);
 
     const loginId = `it_mqs${Date.now().toString(36).slice(-6)}`;
     const res = await postJson(
       "/api/signup",
-      { role: "fan", loginId, nickname: loginId, email: testEmail("mqs"), password: "Fk-signup-9876", phone, terms: { service: true, privacy: true }, heardFrom: "friend" },
+      { role: "fan", loginId, nickname: loginId, email: testEmail("mqs"), password: "Fk-signup-9876", phone, terms: { age14: true, service: true, privacy: true }, heardFrom: "friend" },
       `${ticket}; fk_utm=x_share.social.launch-1`,
     );
     expect(res.status).toBe(200);
@@ -155,7 +157,7 @@ describe("INV-Q4 — 가입이 끝나면 utm 쿠키를 지운다(개인정보처
   it("INV-Q4 (실패경로): 가입이 실패하면(본인 확인 없음) utm 쿠키를 지우지 않는다 — 다시 가입할 때 읽는다", async () => {
     const res = await postJson(
       "/api/signup",
-      { role: "fan", loginId: `it_mqf${Date.now().toString(36).slice(-6)}`, nickname: `mqf${Date.now().toString(36).slice(-6)}`, email: testEmail("mqf"), password: "Fk-signup-9876", phone: testPhone(), terms: { service: true, privacy: true } },
+      { role: "fan", loginId: `it_mqf${Date.now().toString(36).slice(-6)}`, nickname: `mqf${Date.now().toString(36).slice(-6)}`, email: testEmail("mqf"), password: "Fk-signup-9876", phone: testPhone(), terms: { age14: true, service: true, privacy: true } },
       "fk_utm=x_share..",
     );
     expect(res.status).toBe(400);
