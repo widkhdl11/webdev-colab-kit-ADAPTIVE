@@ -52,25 +52,25 @@ function inputFor(kind: NotificationBodyInput["kind"], over: Partial<Notificatio
   };
 }
 
-const DETAIL_LINE = "선물 상세 정보는 알림에 표시하지 않습니다. 로그인 후 아래 버튼에서 확인해 주세요.";
-const FAN_FOOTER = `${DETAIL_LINE}\n알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다.`;
-const MUST_FOOTER = `${DETAIL_LINE}\n서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.`;
-
 /** 우리가 기대하는 본문 — 문서와 따로 적는다(둘 중 하나만 바뀌면 깨지게) */
+const FOLLOW = "\n\n알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다.";
+const GIFT = "https://fankkuk.com/gifts/FC-7K3M9";
 const EXPECTED: Record<(typeof ALIMTALK_KINDS)[number], { body: string; button: string }> = {
   // 2026-10-08T01:00:00Z = 서울 10월 8일 오전 10시
   approval_request: {
-    body: `하루님,\n승인 요청을 확인해 주세요.\n주문번호 FC-7K3M9\n10월 8일 오전 10시까지 승인하지 않으면 자동 반려됩니다.\n\n${MUST_FOOTER}`,
+    body:
+      "하루님,\n승인 대기 중인 선물이 있습니다.\n선물을 확인하고 승인 여부를 선택해 주세요.\n\n주문번호: FC-7K3M9\n승인 기한: 10월 8일 오전 10시\n\n" +
+      "기한까지 승인하지 않으면 자동 반려됩니다.\n선물 상세 정보는 로그인 후 확인할 수 있습니다.\n\n이 알림은 서비스 이용에 필요한 필수 알림으로, 알림 수신 설정과 관계없이 발송됩니다.",
     button: "https://fankkuk.com/creator/actions?order=FC-7K3M9",
   },
-  box_arrived: { body: `하루님,\n보내신 상자 하나가 팬꾹에 도착했습니다.\n주문번호 FC-7K3M9\n\n${FAN_FOOTER}`, button: "https://fankkuk.com/gifts/FC-7K3M9" },
+  box_arrived: { body: `하루님,\n보내신 상자 1개가 팬꾹에 도착했습니다.\n\n주문번호: FC-7K3M9\n\n상자 도착 현황은 로그인 후 확인해 주세요.${FOLLOW}`, button: GIFT },
   shipped: {
-    body: `하루님,\n보내신 선물이 팬꾹에서 출고 처리되었습니다. 택배사 인계 후 배송이 진행됩니다.\n주문번호 FC-7K3M9\n\n${FAN_FOOTER}`,
-    button: "https://fankkuk.com/gifts/FC-7K3M9",
+    body: `하루님,\n보내신 선물이 팬꾹에서 출고 처리되었습니다.\n택배사에 인계되면 배송이 시작됩니다.\n\n주문번호: FC-7K3M9\n\n선물 진행 상황은 로그인 후 확인해 주세요.${FOLLOW}`,
+    button: GIFT,
   },
-  in_transit: { body: `하루님,\n보내신 선물이 배송 중입니다.\n주문번호 FC-7K3M9\n\n${FAN_FOOTER}`, button: "https://fankkuk.com/gifts/FC-7K3M9" },
-  delivered: { body: `하루님,\n보내신 선물의 배송이 완료되었습니다.\n주문번호 FC-7K3M9\n\n${FAN_FOOTER}`, button: "https://fankkuk.com/gifts/FC-7K3M9" },
-  gift_reply: { body: `하루님,\n보내신 선물에 답장이 도착했습니다.\n주문번호 FC-7K3M9\n\n${FAN_FOOTER}`, button: "https://fankkuk.com/gifts/FC-7K3M9" },
+  in_transit: { body: `하루님,\n보내신 선물이 배송 중입니다.\n\n주문번호: FC-7K3M9\n\n선물 진행 상황은 로그인 후 확인해 주세요.${FOLLOW}`, button: GIFT },
+  delivered: { body: `하루님,\n보내신 선물의 배송이 완료되었습니다.\n\n주문번호: FC-7K3M9\n\n선물 상세 정보는 로그인 후 확인해 주세요.${FOLLOW}`, button: GIFT },
+  gift_reply: { body: `하루님,\n보내신 선물에 답장이 도착했습니다.\n\n주문번호: FC-7K3M9\n\n로그인 후 답장을 확인해 주세요.${FOLLOW}`, button: GIFT },
 };
 
 describe("INV-N7: 알림톡 변수를 채운 템플릿 문서의 본문 == 기대 본문", () => {
@@ -101,7 +101,7 @@ describe("INV-N7: 알림톡 변수를 채운 템플릿 문서의 본문 == 기�
   it("INV-U15: 인증번호 템플릿의 변수 이름이 코드와 같다", () => {
     const doc = docs.get("SOLAPI_PHONE_CODE_TEMPLATE_ID")!;
     expect(placeholders(doc.body)).toEqual([PHONE_CODE_VARIABLE]);
-    expect(fill(doc.body, { [PHONE_CODE_VARIABLE]: "123456" })).toBe("[팬꾹] 인증번호 123456\n\n3분 안에 입력해 주세요.");
+    expect(fill(doc.body, { [PHONE_CODE_VARIABLE]: "123456" })).toBe("[팬꾹] 인증번호 안내\n\n인증번호: 123456\n\n3분 안에 입력해 주세요.");
   });
 
   it("INV-N8: 승인 요청은 재알림 세 차례가 같은 템플릿 변수다 — 차례마다 달라지는 것은 이메일 제목뿐", () => {
