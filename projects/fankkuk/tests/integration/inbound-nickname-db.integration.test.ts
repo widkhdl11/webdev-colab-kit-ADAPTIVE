@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { afterEach, describe, expect, it } from "vitest";
-import { anonClient, deleteTestOrders, holdRowLock, payTestOrder, psql, psqlError, registerTestOrder, SEED, signedInClient } from "./helpers";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { anonClient, deleteTestOrders, holdRowLock, payTestOrder, psql, psqlError, registerTestOrder, SEED, signedInClient, instantNotices } from "./helpers";
 import { codeOf, deleteTestUnmatched, fanSetsWaybill, paidGift, paidShare, scanInbound, waybill } from "./office-helpers";
 import { ADDRESS_CODE_ALPHABET, addressCodeCheckChar } from "@/entities/parcel/model/address-code";
 import { HELD_WITHOUT_CODE_REASONS, HOLD_REASONS } from "@/entities/parcel/model/office-lists";
@@ -10,6 +10,9 @@ import { deleteTestRevgifts } from "./revgift-helpers";
 // office-workflow INV-W5·W7, notifications INV-N21 — 2026-10-16 카드 d94).
 // 직원은 송장 「보내는 분」 이름을 그대로 넣고, DB 는 그 이름이 닉네임과 맞는 계정만 상자에 남긴다(글자는 남기지 않는다).
 // 시드: 별빛(byeolbit_fan) = 시험 주문의 팬, 달토끼(daltokki_fan) = 다른 팬, fankkuk_staff = 직원, fankkuk_admin = 대표.
+
+// 상태 알림 줄(상자 도착·출고)을 보는 시험이 있다 — 별빛은 「바로 받기」를 켠 팬으로 둔다(꺼진 경우는 notification-batching INV-NB5 시험이 본다)
+beforeEach(() => instantNotices(SEED.fanId));
 
 afterEach(() => {
   deleteTestOrders();

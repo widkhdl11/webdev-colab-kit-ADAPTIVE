@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ADDRESS_CODE_ALPHABET, addressCodeCheckChar, parseAddressCode } from "@/entities/parcel/model/address-code";
-import { adminClient, anonClient, clearWaybillAttempts, deleteTestOrders, holdRowLock, psql, psqlError, registerTestOrder, SEED, signedInClient } from "./helpers";
+import { adminClient, anonClient, clearWaybillAttempts, deleteTestOrders, holdRowLock, psql, psqlError, registerTestOrder, SEED, signedInClient, instantNotices } from "./helpers";
 import {
   approve,
   codeOf,
@@ -275,14 +275,16 @@ describe("INV-C2 6자리는 그 주문의 주인에게만", () => {
     expect(JSON.stringify(fanBoxes.data ?? [])).not.toContain(code);
   });
 
-  it("INV-C2 (S2b) · INV-N14: 상자 도착·승인 요청 알림 줄과 꺼내기 결과에 6자리가 없다", async () => {
+  it("INV-C2 (S2b) · INV-N14 · INV-NB5: 상자 도착 소식(바로 받기를 끈 팬은 하루 묶음 대기)·승인 요청 알림 줄과 꺼내기 결과에 6자리가 없다", async () => {
     const g = await paidGift();
     const code = codeOf({ boxId: g.boxIds[0] })!;
     await receiveWithCode(await staff(), g.boxIds[0]);
     const rows = psql(`select coalesce(json_agg(row_to_json(n))::text, '[]') from public.notification_outbox n where n.order_id = '${g.orderId}'`);
-    expect(rows).toContain("box_arrived");
+    const items = psql(`select coalesce(json_agg(row_to_json(d))::text, '[]') from public.notification_digest_items d where d.order_id = '${g.orderId}'`);
+    expect(items).toContain("box_arrived");
     expect(rows).toContain("approval_request");
     expect(rows).not.toContain(code);
+    expect(items).not.toContain(code);
     // 꺼내기가 돌려주는 칸에 6자리·주소 칸이 없다
     const claimCols = psql(`select pg_get_function_result('public.notification_claim(integer)'::regprocedure)`);
     expect(claimCols).not.toMatch(/code|address/);
@@ -774,6 +776,11 @@ describe("INV-C10 송장번호 등록도 계정마다 하루 10번 (리뷰 반�
 });
 
 describe("INV-C8 상자 도착 알림 · 「제가 보낸 게 아니에요」", () => {
+  // 상자 도착 줄을 본다 — 받는 사람은 「바로 받기」를 켠 계정(꺼져 있으면 하루 묶음 대기로 간다, notification-batching INV-NB5)
+  beforeEach(() => {
+    instantNotices(SEED.fanId);
+    instantNotices(SEED.creatorProfileId);
+  });
   it("INV-C8 (S8) · INV-N14 (S14): 상자 둘 주문의 상자가 하나씩 입고될 때마다 주인(별빛)에게 상자 도착 줄 정확히 하나씩, 크리에이터에게는 0", async () => {
     const g = await paidGift(2);
     const op = await staff();

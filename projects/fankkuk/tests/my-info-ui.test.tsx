@@ -3,6 +3,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
+const postAccount = vi.fn();
+vi.mock("@/features/account-edit/api/save-account-client", () => ({ postAccount: (...args: unknown[]) => postAccount(...args) }));
 
 import type { MyFanAddressStatus } from "@/entities/address/api/my-fan-address-status";
 import type { MyAccount } from "@/entities/fan/model/my-account";
@@ -22,6 +24,7 @@ const account: MyAccount = {
   phoneMasked: "010-****-5678",
   notifyKakao: true,
   notifyEmail: false,
+  notifyInstant: false,
 };
 const registered: MyFanAddressStatus = { registered: true, label: "home", updatedAt: "2026-10-22T03:00:00.000Z" };
 
@@ -62,7 +65,7 @@ describe("계정 설정(팬) — 묶음 순서", () => {
     expect(buttonByText("저장")?.closest("form")).toBe(form);
     const notify = form.previousElementSibling as HTMLElement;
     expect(notify.querySelector("h2")?.textContent?.trim()).toBe("알림");
-    expect(notify.querySelectorAll('[role="switch"]')).toHaveLength(2);
+    expect(notify.querySelectorAll('[role="switch"]')).toHaveLength(3);
     const personal = notify.previousElementSibling as HTMLElement;
     expect(personal.querySelector("h2")?.textContent?.trim()).toBe("개인정보");
     expect(personal.querySelector('input[name="email"]')).not.toBeNull();
@@ -175,6 +178,32 @@ describe("계정 설정(팬) — 알림", () => {
     expect(kakao.getAttribute("aria-checked")).toBe("true");
     expect(mail.getAttribute("aria-checked")).toBe("false");
     expect(email.value).toBe(first);
+  });
+
+  it("notify-settings: 셋째 스위치 「선물 소식 바로 받기」 — 설명 한 줄, 처음 값은 저장된 값, 되돌리기로 처음 값", () => {
+    render({ account: { ...account, notifyInstant: true } });
+    const instant = [...host.querySelectorAll<HTMLButtonElement>('[role="switch"]')][2]!;
+    const label = document.getElementById(instant.getAttribute("aria-labelledby")!)!;
+    expect(label.firstElementChild?.textContent).toBe("선물 소식 바로 받기");
+    expect(label.lastElementChild?.textContent).toBe("끄면 하루 한 번 오후 7시에 모아서 보냅니다");
+    expect(instant.getAttribute("aria-checked")).toBe("true");
+    act(() => instant.click());
+    expect(instant.getAttribute("aria-checked")).toBe("false");
+    act(() => buttonByText("되돌리기")!.click());
+    expect(instant.getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("INV-A11: 저장은 「바로 받기」 값도 같이 보낸다", async () => {
+    postAccount.mockReset();
+    postAccount.mockResolvedValue({ kind: "ok", pendingEmail: null });
+    render();
+    const instant = [...host.querySelectorAll<HTMLButtonElement>('[role="switch"]')][2]!;
+    act(() => instant.click());
+    await act(async () => {
+      saveForm().requestSubmit();
+      await Promise.resolve();
+    });
+    expect(postAccount).toHaveBeenCalledWith(expect.objectContaining({ notifyKakao: true, notifyEmail: false, notifyInstant: true }));
   });
 
   it("필수 알림 안내는 접지 않고 알림 묶음 안에 제목과 목록으로 늘 보인다", () => {

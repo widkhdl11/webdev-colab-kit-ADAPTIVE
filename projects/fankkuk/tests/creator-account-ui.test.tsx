@@ -37,7 +37,7 @@ function render(state: MyVerificationState = unverified) {
     root.render(
       <CreatorAccountPage
         phoneMasked="010-****-9999"
-        notify={{ kakao: true, email: false }}
+        notify={{ kakao: true, email: false, instant: false }}
         verification={{ state, rows: [], apiPlatforms: [] }}
       />,
     );
@@ -124,7 +124,7 @@ describe("계정 설정(크리에이터) — 알림", () => {
     expect(name.textContent).toBe("이메일 알림");
     act(() => name.click());
     expect(mail.getAttribute("aria-checked")).toBe("true");
-    expect(sendNotify).toHaveBeenCalledWith({ kakao: true, email: true });
+    expect(sendNotify).toHaveBeenCalledWith({ kakao: true, email: true, instant: false });
     await flush();
     expect(host.querySelector('[role="status"]')?.textContent).toBe("알림 설정이 저장되었습니다.");
   });
@@ -155,6 +155,27 @@ describe("계정 설정(크리에이터) — 알림", () => {
     expect(mail.getAttribute("aria-checked")).toBe("false");
     await act(async () => { finish({ kind: "ok" }); await Promise.resolve(); });
     expect(mail.getAttribute("aria-disabled")).toBe("false");
+  });
+
+  it("notify-settings: 셋째 스위치 「선물 소식 바로 받기」 — 누르면 즉시 셋 다 보내고, 실패하면 되돌린다", async () => {
+    sendNotify.mockResolvedValue({ kind: "ok" });
+    render();
+    expect(switches()).toHaveLength(3);
+    const instant = switches()[2]!;
+    const label = document.getElementById(instant.getAttribute("aria-labelledby")!)!;
+    expect(label.firstElementChild?.textContent).toBe("선물 소식 바로 받기");
+    expect(label.lastElementChild?.textContent).toBe("끄면 하루 한 번 오후 7시에 모아서 보냅니다");
+    expect(instant.getAttribute("aria-checked")).toBe("false");
+    act(() => instant.click());
+    expect(sendNotify).toHaveBeenCalledWith({ kakao: true, email: false, instant: true });
+    await flush();
+    expect(instant.getAttribute("aria-checked")).toBe("true");
+
+    sendNotify.mockResolvedValue({ kind: "failed", message: "저장하지 못했어요." });
+    act(() => instant.click());
+    expect(instant.getAttribute("aria-checked")).toBe("false");
+    await flush();
+    expect(instant.getAttribute("aria-checked")).toBe("true");
   });
 
   it("필수 알림 안내는 알림 묶음 안에 제목 줄과 목록으로 늘 보이고, 결과 안내 자리는 묶음 끝에 있다", () => {

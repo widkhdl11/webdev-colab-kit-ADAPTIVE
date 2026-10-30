@@ -50,7 +50,7 @@ function idOf(orderId: string, kind: string, channel = "email", round = 1): stri
 }
 
 describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
-  it("INV-N3·N5: 결제 완료로 생긴 승인 요청 줄을 하루의 확인된 이메일로 한 번 보내고 보냄으로 끝낸다", async () => {
+  it("INV-N3·N5 · INV-NB3: 결제 완료로 생긴 승인 요청 줄을 하루의 확인된 이메일로 한 번 보내고 보냄으로 끝낸다 — 주문번호 없이 승인 대기 건수", async () => {
     const g = await paidGift();
     const email = capture(false);
     const result = await dispatchNotifications(depsWith(email));
@@ -58,8 +58,9 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     const mine = email.sent.filter((m) => m.outboxId === idOf(g.orderId, "approval_request"));
     expect(mine).toHaveLength(1);
     expect(mine[0]!.to).toBe(psql(`select c.email from pii.account_contacts c join public.profiles p on p.id = c.account_id where p.login_id = 'haru_creator'`));
-    expect(mine[0]!.text).toContain(g.orderNo);
-    expect(mine[0]!.text).toContain("http://127.0.0.1:3311/creator/actions");
+    expect(mine[0]!.text).not.toContain(g.orderNo);
+    expect(mine[0]!.text).toMatch(/승인 대기 \d+건/);
+    expect(mine[0]!.text).toContain("http://127.0.0.1:3311/creator/actions\n");
     expect(statusOf(g.orderId, "approval_request")).toBe("sent");
   });
 
@@ -82,34 +83,52 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     expect(again.sent.filter((m) => ids.has(m.outboxId))).toHaveLength(0);
   });
 
-  it("INV-N8 (S8·S8b): 72시간이 지난 대기 요청에 일꾼이 3차 줄을 만들고, 꺼내기 전에 승인됐으면 건너뛴다", async () => {
-    const waiting = await paidGift();
-    const approved = await paidGift();
-    // 승인된 주문의 3차 줄이 먼저 생긴 뒤 승인되는 순서를 만든다: 일꾼이 도는 도중에 승인할 수 없으니, 줄을 먼저 만들고 승인한다
+  it("INV-N8 · INV-NB2 (S2): 72시간이 지난 대기 요청에 일꾼이 재알림 줄을 만들고, 꺼내기 전에 승인됐으면 건너뛴다", async () => {
+    const waiting = await paidGift(1, undefined, { keepApprovalWindow: true });
+    const approved = await paidGift(1, undefined, { keepApprovalWindow: true });
+    // 그때 열린 승인 요청 창도 73시간 전 것으로 당긴다 — 창이 재알림 시각을 덮으면 재알림을 만들지 않는다(INV-NB2)
+    psql(`update public.approval_notice_windows set opened_at = opened_at - interval '73 hours', ends_at = ends_at - interval '73 hours'`);
+    // 승인된 주문의 재알림 줄이 먼저 생긴 뒤 승인되는 순서를 만든다: 일꾼이 도는 도중에 승인할 수 없으니, 줄을 먼저 만들고 승인한다
     psql(`update public.orders set registered_at = now() - interval '73 hours' where id = '${approved.orderId}'`);
     psql(`select public.notification_enqueue_due()`);
-    expect(statusOf(approved.orderId, "approval_request", "email", 3)).toBe("pending");
+    expect(statusOf(approved.orderId, "approval_reminder", "email", 1)).toBe("pending");
     await approve(approved);
-    // 대기 주문의 3차 줄은 일꾼이 만들어야 한다(여기까지 없다)
+    // 대기 주문의 재알림 줄은 일꾼이 만들어야 한다(여기까지 없다)
     psql(`update public.orders set registered_at = now() - interval '73 hours' where id = '${waiting.orderId}'`);
-    expect(statusOf(waiting.orderId, "approval_request", "email", 3)).toBe("");
+    expect(statusOf(waiting.orderId, "approval_reminder", "email", 1)).toBe("");
 
     const email = capture(false);
     await dispatchNotifications(depsWith(email));
-    expect(statusOf(waiting.orderId, "approval_request", "email", 3)).toBe("sent");
-    expect(statusOf(approved.orderId, "approval_request", "email", 3)).toBe("skipped");
-    expect(email.sent.some((m) => m.outboxId === idOf(approved.orderId, "approval_request", "email", 3))).toBe(false);
-    expect(email.sent.find((m) => m.outboxId === idOf(waiting.orderId, "approval_request", "email", 3))!.subject).toBe("[팬꾹] 선물 승인 기한 안내");
+    expect(statusOf(waiting.orderId, "approval_reminder", "email", 1)).toBe("sent");
+    expect(statusOf(approved.orderId, "approval_reminder", "email", 1)).toBe("skipped");
+    expect(email.sent.some((m) => m.outboxId === idOf(approved.orderId, "approval_reminder", "email", 1))).toBe(false);
+    const sent = email.sent.find((m) => m.outboxId === idOf(waiting.orderId, "approval_reminder", "email", 1))!;
+    expect(sent.subject).toBe("[팬꾹] 선물 승인 기한 안내");
+    expect(sent.text).toMatch(/승인 대기 \d+건, \d+일 뒤 자동 반려/);
   });
 
-  it("INV-N7: 템플릿 코드가 있어도 승인 요청 카카오 줄은 보내지 않고 건너뜀 — 확정 본문(승인 대기 건수·10분 묶음)이 코드 반영 전이다. 이메일 줄은 간다", async () => {
+  it("INV-NB1 (S1): 일꾼이 끝난 창의 끝 통을 만들어 보낸다 — 건수는 보내는 순간의 대기 전체", async () => {
+    const first = await paidGift(1, undefined, { keepApprovalWindow: true });
+    const second = await paidGift(1, undefined, { keepApprovalWindow: true });
+    const count = Number(psql(`select count(*) from public.approval_requests r join public.orders o on o.id = r.order_id join public.creators c on c.id = o.creator_id where c.name = '하루' and r.status = 'waiting'`));
+    expect(idOf(second.orderId, "approval_request")).toBe("");
+    psql(`update public.approval_notice_windows set opened_at = opened_at - interval '11 minutes', ends_at = ends_at - interval '11 minutes'`);
+    const email = capture(false);
+    await dispatchNotifications(depsWith(email));
+    expect(statusOf(first.orderId, "approval_request")).toBe("sent");
+    const last = email.sent.find((m) => m.outboxId === idOf(second.orderId, "approval_request", "email", 2))!;
+    expect(last.text).toContain(`승인 대기 ${count}건`);
+  });
+
+  it("INV-N7 · INV-NB1: 템플릿 코드가 있으면 승인 요청은 카카오 줄도 보낸다 — 변수는 승인 대기 건수 하나. 이메일 줄도 간다", async () => {
     psql(`insert into ${TEMPLATES} (kind, template_code) values ('approval_request', 'TPL_APPROVAL_1')`);
     const g = await paidGift();
     const email = capture(false);
     const kakao = capture(true);
     await dispatchNotifications(depsWith(email, kakao));
-    expect(kakao.sent.some((m) => m.outboxId === idOf(g.orderId, "approval_request", "kakao"))).toBe(false);
-    expect(psql(`select status || '|' || error_code from ${OUTBOX} where id = '${idOf(g.orderId, "approval_request", "kakao")}'`)).toBe("skipped|alimtalk_unavailable");
+    const k = kakao.sent.find((m) => m.outboxId === idOf(g.orderId, "approval_request", "kakao"))!;
+    expect([k.templateCode, Object.keys(k.variables ?? {})]).toEqual(["TPL_APPROVAL_1", ["#{건수}"]]);
+    expect(statusOf(g.orderId, "approval_request", "kakao")).toBe("sent");
     expect(statusOf(g.orderId, "approval_request", "email")).toBe("sent");
   });
 
@@ -122,8 +141,8 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
       const g = await paidGift();
       await dispatchNotifications(depsWith(capture(false), capture(true)));
       expect(statusOf(g.orderId, "approval_request", "email")).toBe("sent");
-      // 카카오 줄도 생긴다(설정을 꺼도 꼭 가는 알림). 다만 승인 요청 알림톡은 코드 반영 전이라 그 줄은 건너뛴다
-      expect(psql(`select status || '|' || error_code from ${OUTBOX} where id = '${idOf(g.orderId, "approval_request", "kakao")}'`)).toBe("skipped|alimtalk_unavailable");
+      // 카카오 줄도 간다(설정을 꺼도 꼭 가는 알림)
+      expect(statusOf(g.orderId, "approval_request", "kakao")).toBe("sent");
     } finally {
       const [k, m] = saved.split("|");
       psql(`update pii.account_contacts set notify_kakao = ${k === "true"}, notify_email = ${m === "true"} where account_id = ${haru}`);
@@ -231,7 +250,7 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     psql(`insert into ${TEMPLATES} (kind, template_code) values ('approval_request', 'TPL_APPROVAL_1')`);
     const g = await paidGift();
     const failing: Capture = { ...capture(false), send: async () => Promise.reject(new Error("550 haru@example.com 01012345678")) };
-    // 번호·주소를 되풀이하는 오류는 메일 통로가 던진다 — 승인 요청 알림톡은 본문이 없어 보내지 않는다(카드 d2 답 ②)
+    // 번호·주소를 되풀이하는 오류는 메일 통로가 던진다
     await dispatchNotifications(depsWith(failing, capture(true)));
     const dump = psql(`select row_to_json(o)::text from ${OUTBOX} o where order_id = '${g.orderId}'`);
     expect(dump).not.toMatch(/[\w.+-]+@[\w-]+\.[\w.]+/);

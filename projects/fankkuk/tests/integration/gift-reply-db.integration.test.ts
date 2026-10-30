@@ -4,7 +4,7 @@ import { readMyGiftReplies, readMyReceivedBoxes, readMyReplyCard, readMyReplyPen
 import { linkClient, verifyCreator } from "./creator-link-helpers";
 import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verification-helpers";
 import { FAN_X, FAN_Y, giftBoxes, kstTodayAt, receivedDaysAgo, resetReplySettings } from "./gift-reply-helpers";
-import { anonClient, deleteTestOrders, holdRowLock, psql } from "./helpers";
+import { anonClient, deleteTestOrders, holdRowLock, psql, instantNotices } from "./helpers";
 
 // 받았어요 · 감사 답장 · 답장 공유 카드 · 감사 답장 모음 (docs/specs/gift-reply.md INV-G1~G10, S1~S10) 중 DB 가 지키는 것.
 // 알림 본문 틀(INV-G5 본문)과 공유 문구(INV-G9 S9b 의 글)는 src 단위 시험(notification-body.test.ts · entities/gift-reply/model/reply.test.ts)에도 있다.
@@ -59,6 +59,8 @@ beforeEach(() => {
   resetReplySettings(IDS);
   verifyCreator(A.creatorId, "cvt-reply-a");
   verifyCreator(B.creatorId, "cvt-reply-b");
+  // 답장 알림 줄을 본다 — 별빛은 「바로 받기」를 켠 팬(꺼져 있으면 하루 묶음 대기로 간다, notification-batching INV-NB5). 정리 단계가 설정을 지우므로 맨 끝에
+  instantNotices(FAN_X.id);
 });
 afterAll(() => {
   deleteTestOrders();

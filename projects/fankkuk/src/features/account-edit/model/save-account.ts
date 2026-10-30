@@ -6,7 +6,7 @@ import type { SendMail } from "@/shared/api/mail/smtp";
 import { buildVerificationMail } from "../lib/verification-mail";
 import { accountInputSchema } from "./account-input";
 
-// 내 정보 저장. 두 단계다.
+// 내 정보 저장. 두 단계다(「바로 받기」가 있으면 1 뒤에 set_notification_instant 를 한 번 더).
 // 1) 요청한 사람의 세션 클라이언트로 update_my_account — DB 가 로그인 토큰으로 사람을 정하고(INV-A3) 입력을 다시 검사한다(INV-A5).
 //    이메일이 확인된 이메일과 다르면 확인 대기로만 저장하고 true 를 돌려준다(INV-A7).
 // 2) true 면 앱 서버 키로 issue_email_verification — 링크 값은 로그인 사용자에게 돌려주지 않으려고 앱 서버 키 전용이다.
@@ -55,6 +55,14 @@ export async function saveAccount(deps: SaveAccountDeps, body: unknown): Promise
     if (updated.error.code === "FK429") return { ok: false, status: 429, message: TOO_MANY };
     if (updated.error.code === "42501") return { ok: false, status: 401, message: "로그인이 필요합니다." };
     throw new Error(`내 정보를 저장하지 못했다: ${updated.error.code}`);
+  }
+  // 선물 소식 바로 받기(notification-batching INV-NB5) — 계정 저장이 된 뒤에만, 본인 함수로 값 하나만 넘긴다
+  if (input.notifyInstant !== undefined) {
+    const instant = await deps.client.rpc("set_notification_instant", { p_instant: input.notifyInstant });
+    if (instant.error) {
+      if (instant.error.code === "42501") return { ok: false, status: 401, message: "로그인이 필요합니다." };
+      throw new Error(`바로 받기를 저장하지 못했다: ${instant.error.code}`);
+    }
   }
   if (updated.data !== true) return { ok: true, pendingEmail: null };
 

@@ -51,7 +51,7 @@ function Switch({
   desc: string;
   on: boolean;
   busy: boolean;
-  describedBy: string;
+  describedBy?: string;
   onChange: (v: boolean) => void;
 }) {
   return (
@@ -94,7 +94,7 @@ export function CreatorAccountPage({
   verification,
 }: {
   phoneMasked: string | null;
-  notify: { kakao: boolean; email: boolean };
+  notify: { kakao: boolean; email: boolean; instant: boolean };
   verification: {
     state: MyVerificationState;
     rows: readonly MyVerification[];
@@ -113,7 +113,7 @@ export function CreatorAccountPage({
   const [msg, setMsg] = useState<Msg>(null);
 
   // 스위치는 누르는 즉시 저장한다. 실패하면 화면 값을 저장된 값으로 되돌린다.
-  const toggleNotify = async (key: "kakao" | "email", value: boolean) => {
+  const toggleNotify = async (key: "kakao" | "email" | "instant", value: boolean) => {
     if (saving) return;
     const before = alarm;
     const next = { ...alarm, [key]: value };
@@ -239,6 +239,15 @@ export function CreatorAccountPage({
             busy={saving}
             describedBy={f("must")}
             onChange={(v) => void toggleNotify("email", v)}
+          />
+          {/* 상태 알림 다섯은 기본이 하루 한 번 묶음(notification-batching INV-NB5, UX 명세 notify-settings) — 필수 알림과 상관없어 안내를 잇지 않는다 */}
+          <Switch
+            id={f("n3")}
+            title="선물 소식 바로 받기"
+            desc="끄면 하루 한 번 오후 7시에 모아서 보냅니다"
+            on={alarm.instant}
+            busy={saving}
+            onChange={(v) => void toggleNotify("instant", v)}
           />
           {/* 꼭 가는 알림(승인 요청·돌려보내는 선물 등)은 두 칸을 꺼도 간다(notifications INV-N6 표, 2026-10-12 문제집 D7) — 접지 않고 늘 보인다(my-account INV-A11) */}
           <MustDeliverNotice

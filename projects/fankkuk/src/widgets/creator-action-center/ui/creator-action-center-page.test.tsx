@@ -123,9 +123,21 @@ describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
     expect(bt!.textContent).toContain("4일 남음");
     expect(bt!.textContent).toContain("인형·쿠션 · 상자 2개 중 1번 · 추적 장치 아님");
     expect(ap!.textContent).toContain("승인 요청");
-    expect(ap!.textContent).toContain("3일 남음");
+    // 승인 요청의 남은 날은 2일 이하만(카드 fankkuk-20261030-1-d1) — 3일 남은 이 요청은 기한 날짜만
+    expect(ap!.textContent).not.toContain("3일");
+    expect(ap!.textContent).toContain("10월 19일");
     // 하늘 판은 물품·상자·전자기기를 세 칸으로(design-rules 23-3)
     expect([...ap!.querySelectorAll("dt")].map((dt) => `${dt.textContent}=${dt.nextElementSibling?.textContent}`)).toEqual(["선물 종류=문구", "상자=1개", "전자기기·금속=없음"]);
+  });
+
+  it("INV-J5: 반려가 2일 이하 남은 승인 요청은 하늘 판과 카드 모두 남은 날을 보인다", () => {
+    const soon: CreatorActionItem = { ...APPROVAL, orderNo: "FC-AP2", requestId: "apr_FCAP2", dueAt: "2026-10-18T05:20:00.000Z" };
+    render([APPROVAL, soon]);
+    const [top, card] = rows();
+    expect(top!.textContent).not.toContain("3일");
+    expect(card!.textContent).toContain("2일 남음");
+    render([soon, APPROVAL]);
+    expect(rows()[0]!.textContent).toMatch(/2일\s*남음/);
   });
 
   it("INV-J7 (실패경로): 미확인 상자 줄은 상자가 있다고 말하지 않는다 — 「아직 안 왔어요 · 미도착 상자 찾기」, 도착일·찾기 권유가 없다(카드 d96 ②)", () => {

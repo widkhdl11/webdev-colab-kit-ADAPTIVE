@@ -5,6 +5,8 @@
 
 export const NOTIFICATION_KINDS = [
   "approval_request",
+  // 승인 재알림 — 결제 완료 3일째·6일째(notification-batching INV-NB2)
+  "approval_reminder",
   "arrived",
   "inspected",
   "shipped",
@@ -27,6 +29,8 @@ export const NOTIFICATION_KINDS = [
   // 반송 주소 확인과 14일 재알림(INV-N22, office-workflow INV-W15) — 주문을 보낸 사람(팬 선물은 팬, 역조공은 보낸 크리에이터)에게
   "return_address",
   "return_address_reminder",
+  // 상태 알림 다섯(box_arrived·shipped·in_transit·delivered·gift_reply)의 하루 묶음 — 「바로 받기」를 끈 사람에게(notification-batching INV-NB5)
+  "status_digest",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
@@ -45,6 +49,8 @@ type Policy = {
 // 새 종류를 더하면 여기서 타입 오류가 난다 — 끌 수 있는지를 정하지 않은 종류는 만들 수 없다.
 export const NOTIFICATION_POLICY: Record<NotificationKind, Policy> = {
   approval_request: { mustDeliver: true, label: "승인 요청", audience: "creator" },
+  // 설정 화면에는 승인 요청과 한 이름으로 보인다 — 받는 사람에게 같은 일이다(notification-batching INV-NB2)
+  approval_reminder: { mustDeliver: true, label: "승인 요청", audience: "creator" },
   // 검수에서 위치 추적기가 나와 사무실에 보관한 상자 — 크리에이터에게 신고할지 묻는다(INV-N13, office-workflow INV-W14, 2026-10-17 카드 d100).
   // 이름은 용어집 tracker_hold 행의 크리에이터 라벨. 종류 코드는 처음 이름 그대로
   hold: { mustDeliver: true, label: "추적 장치 발견", audience: "creator" },
@@ -73,6 +79,7 @@ export const NOTIFICATION_POLICY: Record<NotificationKind, Policy> = {
   box_arrived: { mustDeliver: false, label: null, audience: "fan" },
   gift_reply: { mustDeliver: false, label: null, audience: "fan" },
   gift_received: { mustDeliver: false, label: null, audience: "fan" },
+  status_digest: { mustDeliver: false, label: null, audience: "fan", alsoAudience: "creator" },
 };
 
 export const MUST_DELIVER_KINDS: readonly NotificationKind[] = NOTIFICATION_KINDS.filter((k) => NOTIFICATION_POLICY[k].mustDeliver);

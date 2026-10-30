@@ -117,6 +117,13 @@ describe("남은 날 (INV-J5 — 서울 시간)", () => {
     // 서울 10월 16일 23시 → 같은 날 기한
     expect(daysLeftOf("2026-10-16T14:59:00Z", "2026-10-16T14:00:00Z")).toEqual({ text: "오늘까지", soon: true });
   });
+
+  it("INV-J5: 승인 요청의 남은 날은 2일 이하일 때만 보인다(카드 fankkuk-20261030-1-d1) — 3일 남음은 숨기고 2일·오늘은 보인다", async () => {
+    const { approvalShowsDaysLeft } = await import("./creator-action-items");
+    expect(approvalShowsDaysLeft("2026-10-19T14:59:00Z", "2026-10-16T03:00:00Z")).toBe(false); // 3일 남음
+    expect(approvalShowsDaysLeft("2026-10-18T14:59:00Z", "2026-10-16T03:00:00Z")).toBe(true); // 2일 남음
+    expect(approvalShowsDaysLeft("2026-10-16T14:59:00Z", "2026-10-16T14:00:00Z")).toBe(true); // 오늘까지
+  });
 });
 
 describe("추적 장치 발견 줄 (action-center INV-J5, office-workflow INV-W14)", () => {

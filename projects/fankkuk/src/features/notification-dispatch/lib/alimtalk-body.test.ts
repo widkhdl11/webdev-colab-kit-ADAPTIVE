@@ -42,7 +42,10 @@ function inputFor(kind: NotificationBodyInput["kind"], over: Partial<Notificatio
     round: 1,
     nickname: "하루",
     orderNo: "FC-7K3M9",
-    autoRejectAt: kind === "approval_request" ? "2026-10-08T01:00:00Z" : null,
+    waitingCount: kind === "approval_request" || kind === "approval_reminder" ? 3 : null,
+    daysLeft: kind === "approval_reminder" ? 2 : null,
+    itemCount: kind === "status_digest" ? 4 : null,
+    recipientIsCreator: false,
     undeliveredReason: null,
     senderName: null,
     disposeDueAt: null,
@@ -55,7 +58,13 @@ function inputFor(kind: NotificationBodyInput["kind"], over: Partial<Notificatio
 /** 우리가 기대하는 본문 — 문서와 따로 적는다(둘 중 하나만 바뀌면 깨지게) */
 const FOLLOW = "\n\n알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다.";
 const GIFT = "https://fankkuk.com/gifts/FC-7K3M9";
+const MUST = "\n\n이 알림은 서비스 이용에 필요한 필수 알림으로, 알림 수신 설정과 관계없이 발송됩니다.";
+const ACTIONS = "https://fankkuk.com/creator/actions";
 const EXPECTED: Record<(typeof ALIMTALK_KINDS)[number], { body: string; button: string }> = {
+  // 묶음 알림(notification-batching INV-NB1·NB2·NB5) — 주문번호 없이 건수, 링크는 목록(INV-NB3·NB4)
+  approval_request: { body: `새 선물 승인 요청이 왔어요.\n승인 대기 3건${MUST}`, button: ACTIONS },
+  approval_reminder: { body: `승인 대기 3건, 2일 뒤 자동 반려${MUST}`, button: ACTIONS },
+  status_digest: { body: `하루님,\n새 선물 소식 4건이 있습니다.\n\n선물 진행 상황은 로그인 후 확인해 주세요.${FOLLOW}`, button: "https://fankkuk.com/gifts" },
   box_arrived: { body: `하루님,\n보내신 상자 1개가 팬꾹에 도착했습니다.\n\n주문번호: FC-7K3M9\n\n상자 도착 현황은 로그인 후 확인해 주세요.${FOLLOW}`, button: GIFT },
   shipped: {
     body: `하루님,\n보내신 선물이 팬꾹에서 출고 처리되었습니다.\n택배사에 인계되면 배송이 시작됩니다.\n\n주문번호: FC-7K3M9\n\n선물 진행 상황은 로그인 후 확인해 주세요.${FOLLOW}`,
@@ -74,11 +83,21 @@ describe("INV-N7: 알림톡 변수를 채운 템플릿 문서의 본문 == 기�
     expect(kinds.sort()).toEqual([...ALIMTALK_KINDS].sort());
   });
 
-  it("INV-N7 (실패경로): 코드 반영 전인 본문(승인 요청·승인 재알림·하루 묶음)은 보내지 않는다 — 템플릿 ID 가 들어 있어도 옛 변수로 새 본문을 채우지 않는다", () => {
-    const pending = [...docs].filter(([, s]) => s.pending).map(([k]) => k);
-    expect(pending.sort()).toEqual(["approval_reminder", "approval_request", "status_digest"]);
-    expect(pending.filter((k) => (ALIMTALK_KINDS as readonly string[]).includes(k))).toEqual([]);
-    expect(buildAlimtalkVariables(inputFor("approval_request"))).toBeNull();
+  it("INV-N7 · INV-NB1 · INV-NB2 · INV-NB5: 문서에 「코드 반영 전」 절이 없다 — 승인 요청·승인 재알림·하루 묶음도 코드가 채운다", () => {
+    expect([...docs].filter(([, s]) => s.pending).map(([k]) => k)).toEqual([]);
+    for (const kind of ["approval_request", "approval_reminder", "status_digest"]) expect(ALIMTALK_KINDS as readonly string[]).toContain(kind);
+  });
+
+  it("INV-NB5 (S5): 크리에이터가 받는 하루 묶음은 처리할 일로", () => {
+    const vars = buildAlimtalkVariables(inputFor("status_digest", { recipientIsCreator: true }))!;
+    expect(fill(docs.get("status_digest")!.button!, vars)).toBe(ACTIONS);
+  });
+
+  it("INV-NB1 · INV-NB2 · INV-NB5 (실패경로): 건수·남은 일수가 비면 변수를 만들지 않는다 — 빈 칸으로 보내지 않는다", () => {
+    expect(buildAlimtalkVariables(inputFor("approval_request", { waitingCount: null }))).toBeNull();
+    expect(buildAlimtalkVariables(inputFor("approval_request", { waitingCount: 0 }))).toBeNull();
+    expect(buildAlimtalkVariables(inputFor("approval_reminder", { daysLeft: null }))).toBeNull();
+    expect(buildAlimtalkVariables(inputFor("status_digest", { itemCount: null }))).toBeNull();
   });
 
   for (const kind of ALIMTALK_KINDS) {

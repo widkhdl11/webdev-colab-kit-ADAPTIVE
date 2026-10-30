@@ -4,7 +4,7 @@ import { accountInputSchema, type AccountInput } from "./account-input";
 // 닉네임은 이 화면에서 고치지 않으므로 지금 값을 그대로 싣는다. 지금 닉네임이 규칙에 맞지 않으면 이 화면에서는 고칠 수 없으므로
 // 프로필 수정으로 안내하는 문구를 돌려준다.
 
-export type SettingsDraft = { nickname: string; email: string; notifyKakao: boolean; notifyEmail: boolean };
+export type SettingsDraft = { nickname: string; email: string; notifyKakao: boolean; notifyEmail: boolean; notifyInstant: boolean };
 
 export type SettingsPlan = { ok: true; input: AccountInput } | { ok: false; message: string };
 

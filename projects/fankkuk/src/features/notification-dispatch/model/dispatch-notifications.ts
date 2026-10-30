@@ -4,7 +4,7 @@ import { ChannelError, type NotificationChannels } from "../api/channels";
 import { buildAlimtalkVariables } from "../lib/alimtalk-body";
 import { buildNotificationBody, kindHasPath, NOTIFICATION_KINDS, siteOrigin, type NotificationBody, type NotificationBodyInput } from "../lib/notification-body";
 
-// 보내는 일꾼 (notifications INV-N5·N6·N7·N8·N10). 앱 서버 키로만 돈다.
+// 보내는 일꾼 (notifications INV-N5·N6·N7·N8·N10, notification-batching INV-NB1~NB5). 앱 서버 키로만 돈다.
 // 줄의 상태(대기 → 보내는 중 → 끝)와 「둘이 같은 줄을 꺼내지 않음」, 재시도 간격·실패 한도, 끝난 승인 요청 건너뛰기는 DB 함수가 지킨다.
 // 일꾼이 하는 일: 꺼낸 줄마다 ① 연락처 읽기(꺼진 칸·확인 안 된 이메일은 빈 값 → 건너뜀, INV-N6) ② 꺼낸 값으로만 본문 만들기(INV-N1)
 // ③ 줄의 통로로 보내기 — 실패해도 다른 통로로 갈아타지 않는다(INV-N7) ④ 결과를 끝내기로 남기기.
@@ -48,9 +48,17 @@ const claimedRow = z.object({
   kind: z.enum(NOTIFICATION_KINDS),
   channel: z.enum(["email", "kakao"]),
   round: z.union([z.literal(1), z.literal(2), z.literal(3)]),
-  order_no: z.string(),
+  /** 하루 묶음은 주문이 없어 null(notification-batching INV-NB3). 다른 종류에서 비면 본문을 만들지 않는다 */
+  order_no: z.string().nullable(),
   nickname: z.string(),
-  auto_reject_at: z.string().nullable(),
+  /** 승인 요청·재알림만 — 보내는 순간 그 크리에이터의 승인 대기 건수(DB 가 센 값, INV-NB1). 다른 종류는 null */
+  waiting_count: z.number().int().nullable().optional(),
+  /** 재알림만 — 가장 빨리 자동 반려될 건까지 남은 일수(DB 가 센 값, INV-NB2). 다른 종류는 null */
+  days_left: z.number().int().nullable().optional(),
+  /** 하루 묶음만 — 소식 건수(INV-NB5). 다른 종류는 null */
+  item_count: z.number().int().nullable().optional(),
+  /** 받는 사람이 크리에이터인가 — 하루 묶음 링크를 고른다 */
+  recipient_is_creator: z.boolean().optional(),
   /** 거절 알림의 문구 갈래 — DB 가 주문 상태로 정한 값(직접·차단 거절 declined · 7일 반려 expired). 다른 종류는 null */
   undelivered_reason: z.enum(["declined", "expired"]).nullable().optional(),
   /** 역조공 받기 줄만 — 보낸 크리에이터 공개 이름(DB 가 넣은 값, INV-N20). 다른 종류는 null */
@@ -97,7 +105,10 @@ async function sendRow(deps: DispatchDeps, origin: string, channels: Notificatio
     round: row.round,
     nickname: row.nickname,
     orderNo: row.order_no,
-    autoRejectAt: row.auto_reject_at,
+    waitingCount: row.waiting_count ?? null,
+    daysLeft: row.days_left ?? null,
+    itemCount: row.item_count ?? null,
+    recipientIsCreator: row.recipient_is_creator ?? false,
     undeliveredReason: row.undelivered_reason ?? null,
     senderName: row.sender_name ?? null,
     disposeDueAt: row.dispose_due_at ?? null,
@@ -136,7 +147,7 @@ export async function dispatchNotifications(deps: DispatchDeps): Promise<Dispatc
   }
 
   try {
-    // 72시간 재알림 줄(INV-N8)과, 결과를 모르는 채 멈춘 메일 줄 되돌리기(INV-N5)
+    // 기한 알림 줄 — 승인 요청 창 끝 통·승인 재알림(notification-batching INV-NB1·NB2)·역조공 받기 재알림 — 과, 결과를 모르는 채 멈춘 메일 줄 되돌리기(INV-N5)
     await rpc(deps.admin, "notification_enqueue_due");
     await rpc(deps.admin, "notification_requeue_stale");
 

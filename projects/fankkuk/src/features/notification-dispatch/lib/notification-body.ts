@@ -3,7 +3,7 @@ import { NOTIFICATION_POLICY, type NotificationAudience, type NotificationKind }
 import { DECLINED_PHRASE, EXPIRED_TEXT } from "@/entities/order/ui/fan-stage-copy";
 import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
 import { CREATOR_CHECK_DAYS } from "@/entities/parcel/model/creator-check";
-import { formatDeadline, formatMonthDayKo } from "@/shared/lib/format/datetime";
+import { formatMonthDayKo } from "@/shared/lib/format/datetime";
 
 // 알림 본문 틀 (notifications INV-N1·N9). 카카오 알림톡과 이메일이 같은 틀을 쓴다(INV-N7) — 카카오 템플릿도 이 문구로 심사받는다.
 // 본문은 잠금 화면·메일함·대행사 서버처럼 우리가 지킬 수 없는 곳에 남는다. 그래서 받는 칸을 아래 여섯으로 묶어
@@ -37,20 +37,30 @@ import { formatDeadline, formatMonthDayKo } from "@/shared/lib/format/datetime";
 //   본문은 「받는 주소 없이 보낸 상자가 있어요」와 「받는 주소 없이 보냈어요」 화면(선물 상세) 링크뿐 — 송장번호·택배사·도착일·크리에이터 이름·주문번호 줄은 없다.
 // revgift_offer: 역조공 몫의 결제가 끝나면 받는 팬에게 한 번, 72시간 뒤 아직 받기 대기면 한 번 더(INV-N20, 2026-10-16). INV-N1 의 예외로 보낸 크리에이터
 //   공개 이름 하나가 들어간다(팬이 누가 보냈는지 모르면 받을지 정할 수 없다). 링크는 그 몫 받기 화면.
-// approval_request · creator_check 링크는 크리에이터 처리할 일(2026-10-16, INV-N9). 승인 요청은 그 주문의 승인 창을 여는 `?order=주문번호` 를 붙인다(2026-10-29, UX 명세 creator-actions).
-// approval_request: 보낸 사람·선물 종류·개수는 적지 않는다 — 승인 화면에서만 보인다(INV-N1, 2026-10-29 카드 d2 답 ②). 알림톡 본문은 docs/copy/alimtalk-templates.md 2절.
+// approval_request · approval_reminder · creator_check 링크는 크리에이터 처리할 일(2026-10-16, INV-N9). 승인 요청·재알림은 특정 주문이 아니라
+//   승인 대기 목록이다 — 여러 건을 묶은 알림이라 주문번호를 붙이지 않는다(notification-batching INV-NB4, 2026-10-30).
+// approval_request: 크리에이터마다 10분 창의 첫 통·끝 통(INV-NB1). approval_reminder: 결제 완료 3일째·6일째(INV-NB2). 둘 다 주문번호·보낸 사람·선물 종류·개수가 없고
+//   보내는 순간의 승인 대기 건수(재알림은 가장 이른 자동 반려까지 남은 일수도)만 들어간다(INV-NB3). 알림톡 본문은 docs/copy/alimtalk-templates.md 2·3절.
+// status_digest: 상태 알림 다섯의 하루 묶음(INV-NB5) — 받는 사람의 닉네임·소식 건수·선물 목록 링크(팬 /gifts · 크리에이터 처리할 일)뿐. 템플릿 9절.
 // 종류 목록과 꼭 가는 알림 판정은 entities/notification 이 정본이다(INV-N6 표).
 export { NOTIFICATION_KINDS, type NotificationKind } from "@/entities/notification/model/delivery-policy";
 
 export type NotificationBodyInput = {
   kind: NotificationKind;
-  /** 승인 요청의 재알림 차례(INV-N8). 다른 종류는 1. */
+  /** 차례(재알림·창 끝 통). 차례가 없는 종류는 1. */
   round: 1 | 2 | 3;
   /** 받는 사람 자신의 닉네임 */
   nickname: string;
-  orderNo: string;
-  /** 승인 요청만 — 자동 반려 예정 시각(결제 완료 + 168시간) */
-  autoRejectAt: string | null;
+  /** 주문번호 — 묶음 알림(승인 요청·재알림·하루 묶음)은 쓰지 않는다(INV-NB3). 그 밖의 종류는 꼭 있어야 한다 */
+  orderNo: string | null;
+  /** 승인 요청·재알림만 — 보내는 순간 그 크리에이터의 승인 대기 건수(DB 가 센 값, INV-NB1) */
+  waitingCount: number | null;
+  /** 재알림만 — 가장 빨리 자동 반려될 건까지 남은 날, 하루 단위 올림·최소 1(DB 가 센 값, INV-NB2) */
+  daysLeft: number | null;
+  /** 하루 묶음만 — 묶인 소식 건수(INV-NB5) */
+  itemCount: number | null;
+  /** 받는 사람이 크리에이터인가 — 하루 묶음의 링크를 고른다(INV-NB5 ②) */
+  recipientIsCreator: boolean;
   /** 거절 알림(gift_undelivered)만 — 직접·차단 거절 declined · 7일 반려 expired. DB 가 정한 값이다 */
   undeliveredReason: "declined" | "expired" | null;
   /** 역조공 받기(revgift_offer)만 — 보낸 크리에이터의 공개 이름(INV-N20 · reverse-gift INV-R12). DB 가 꺼낸 줄에 넣은 값이고, 다른 종류는 본문에 쓰지 않는다 */
@@ -63,9 +73,16 @@ export type NotificationBodyInput = {
   appOrigin: string;
 };
 
-/** 승인 요청 알림의 링크 경로 — 처리할 일에서 그 주문의 승인 창을 연다(UX 명세 creator-actions) */
-export function approvalRequestPath(orderNo: string): string {
-  return `${CREATOR_ACTION_CENTER_HREF}?order=${encodeURIComponent(orderNo)}`;
+/** 주문번호를 쓰지 않는 묶음 알림 — 건수만 들어간다(notification-batching INV-NB3) */
+export const ORDERLESS_KINDS = ["approval_request", "approval_reminder", "status_digest"] as const satisfies readonly NotificationKind[];
+
+function isOrderless(kind: NotificationKind): boolean {
+  return (ORDERLESS_KINDS as readonly NotificationKind[]).includes(kind);
+}
+
+/** 건수 칸 — 1 이상의 정수만. 아니면 만들지 않는다(대기 0건·소식 0건 통을 보내지 않는다) */
+export function positiveCount(n: number | null): number | null {
+  return n !== null && Number.isInteger(n) && n >= 1 ? n : null;
 }
 
 export type NotificationBody = { subject: string; text: string; buttonLabel: string; link: string };
@@ -78,12 +95,6 @@ const FOOTER_OPTIONAL: Record<NotificationAudience, string> = {
   creator: "알림 수신 여부는 ‘계정 설정 > 알림’에서 변경할 수 있습니다.",
 };
 const FOOTER_MUST = "서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.";
-
-const APPROVAL_SUBJECT = {
-  1: "[팬꾹] 새 선물 승인 요청",
-  2: "[팬꾹] 승인 대기 선물 도착",
-  3: "[팬꾹] 선물 승인 기한 안내",
-} as const;
 
 /** 팬이 보낸 선물의 단계 알림 — 제목과 첫 문장 */
 const FAN_STEP = {
@@ -111,23 +122,45 @@ export function siteOrigin(appOrigin: string): string {
   return url.origin;
 }
 
-function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReason, senderName, disposeDueAt }: NotificationBodyInput): Draft {
+function draftOf(
+  { kind, round, nickname, waitingCount, daysLeft, itemCount, recipientIsCreator, undeliveredReason, senderName, disposeDueAt }: NotificationBodyInput,
+  orderNo: string,
+): Draft {
   const greet = `${nickname}님,`;
   const order = `주문번호 ${orderNo}`;
   switch (kind) {
     case "approval_request": {
-      if (!autoRejectAt) throw new Error("승인 요청 알림에 자동 반려 예정 시각이 없다");
+      // 창 첫 통(1)과 끝 통(2)은 같은 본문 — 건수만 그때의 대기 전체(INV-NB1). 승인은 처리할 일의 승인 대기 목록에서 한 건씩(INV-NB4)
+      const waiting = positiveCount(waitingCount);
+      if (waiting === null) throw new Error("승인 요청 알림에 승인 대기 건수가 없다");
       return {
-        subject: APPROVAL_SUBJECT[round],
-        lines: [
-          greet,
-          round === 3 ? "아직 승인하지 않은 선물이 있습니다. 승인 기한을 확인해 주세요." : "승인 요청을 확인해 주세요.",
-          order,
-          `${formatDeadline(autoRejectAt)}까지 승인하지 않으면 자동 반려됩니다.`,
-        ],
+        subject: "[팬꾹] 새 선물 승인 요청",
+        lines: [greet, "새 선물 승인 요청이 왔어요.", `승인 대기 ${waiting}건`],
         buttonLabel: "승인 화면 열기",
-        // 승인은 크리에이터 처리할 일에서 한다(2026-10-16 — 「승인 대기」 메뉴가 없어짐, INV-N9 · action-center INV-J5). 그 주문의 승인 창을 연다(2026-10-29)
-        path: approvalRequestPath(orderNo),
+        path: CREATOR_ACTION_CENTER_HREF,
+      };
+    }
+    case "approval_reminder": {
+      // 3일째·6일째 같은 본문(INV-NB2) — 일수는 가장 빨리 자동 반려될 건 기준
+      const waiting = positiveCount(waitingCount);
+      const days = positiveCount(daysLeft);
+      if (waiting === null || days === null) throw new Error("승인 재알림에 승인 대기 건수·남은 일수가 없다");
+      return {
+        subject: "[팬꾹] 선물 승인 기한 안내",
+        lines: [greet, `승인 대기 ${waiting}건, ${days}일 뒤 자동 반려`],
+        buttonLabel: "승인 화면 열기",
+        path: CREATOR_ACTION_CENTER_HREF,
+      };
+    }
+    case "status_digest": {
+      // 어느 선물의 무슨 소식인지는 넣지 않는다 — 건수만(INV-NB3)
+      const items = positiveCount(itemCount);
+      if (items === null) throw new Error("하루 묶음에 소식 건수가 없다");
+      return {
+        subject: "[팬꾹] 새 선물 소식",
+        lines: [greet, `새 선물 소식 ${items}건이 있습니다.`, "선물 진행 상황은 로그인 후 확인해 주세요."],
+        buttonLabel: "선물 보기",
+        path: recipientIsCreator ? CREATOR_ACTION_CENTER_HREF : "/gifts",
       };
     }
     case "arrived":
@@ -316,19 +349,22 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
 }
 
 /** 받는 사람 — 종류별 표의 받는 쪽. 역조공 상자 도착은 보낸 크리에이터가 받는다 */
-function audienceOf({ kind, orderNo }: NotificationBodyInput): NotificationAudience {
+function audienceOf({ kind, recipientIsCreator }: NotificationBodyInput, orderNo: string): NotificationAudience {
   if ((kind === "box_arrived" || kind === "box_no_code" || kind === "return_address" || kind === "return_address_reminder") && REVGIFT_ORDER_NO.test(orderNo)) return "creator";
+  if (kind === "status_digest") return recipientIsCreator ? "creator" : "fan";
   return NOTIFICATION_POLICY[kind].audience;
 }
 
 export function buildNotificationBody(input: NotificationBodyInput): NotificationBody {
-  if (!ORDER_NO.test(input.orderNo)) throw new Error("알림 링크에 넣을 주문번호 형식이 아니다");
+  // 묶음 알림은 주문번호를 쓰지 않는다 — 넘어와도 본문·링크에 넣지 않는다(INV-NB3)
+  const orderNo = isOrderless(input.kind) ? "" : (input.orderNo ?? "");
+  if (!isOrderless(input.kind) && !ORDER_NO.test(orderNo)) throw new Error("알림 링크에 넣을 주문번호 형식이 아니다");
   const origin = siteOrigin(input.appOrigin);
-  const d = draftOf(input);
+  const d = draftOf(input, orderNo);
   const link = `${origin}${d.path}`;
   return {
     subject: d.subject,
-    text: [...d.lines, "", link, "", FOOTER, input.mustDeliver ? FOOTER_MUST : FOOTER_OPTIONAL[audienceOf(input)]].join("\n"),
+    text: [...d.lines, "", link, "", FOOTER, input.mustDeliver ? FOOTER_MUST : FOOTER_OPTIONAL[audienceOf(input, orderNo)]].join("\n"),
     buttonLabel: d.buttonLabel,
     link,
   };

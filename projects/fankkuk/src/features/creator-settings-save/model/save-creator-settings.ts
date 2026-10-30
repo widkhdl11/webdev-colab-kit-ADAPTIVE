@@ -97,7 +97,10 @@ export async function saveCreatorNotify(deps: SaveCreatorSettingsDeps, body: unk
   if (denied) return denied;
   const parsed = notifyInputSchema.safeParse(body);
   if (!parsed.success) return { ok: false, status: 400, message: "입력한 정보를 확인해 주세요." };
-  return call(deps, "update_my_creator_notify", { p_notify_kakao: parsed.data.kakao, p_notify_email: parsed.data.email });
+  const saved = await call(deps, "update_my_creator_notify", { p_notify_kakao: parsed.data.kakao, p_notify_email: parsed.data.email });
+  // 선물 소식 바로 받기(notification-batching INV-NB5) — 두 칸 경로(INV-A11)는 두 칸만 받으므로 본인 함수로 따로 저장한다
+  if (!saved.ok || parsed.data.instant === undefined) return saved;
+  return call(deps, "set_notification_instant", { p_instant: parsed.data.instant });
 }
 
 // creator-receiving INV-B1·B3·B5: 받는 상태·다시 받는 날·팬당 한도. 크리에이터 ID 는 넘기지 않는다 — DB 가 로그인 토큰으로 정한다.

@@ -68,6 +68,7 @@ export const profileInputSchema = z.object({
 
 export type ProfileInput = z.infer<typeof profileInputSchema>;
 
-export const notifyInputSchema = z.object({ kakao: z.boolean(), email: z.boolean() });
+// instant = 선물 소식 바로 받기(notification-batching INV-NB5) — 두 칸과 따로 set_notification_instant 로 저장한다
+export const notifyInputSchema = z.object({ kakao: z.boolean(), email: z.boolean(), instant: z.boolean().optional() });
 
 export type NotifyInput = z.infer<typeof notifyInputSchema>;

@@ -389,6 +389,31 @@ describe("INV-J5: 크리에이터 처리할 일 — 네 종류, 보이는 조건
     expect(rows.find((r) => r.kind === "approval" && r.order_no === r3.orderNo)).toMatchObject({ request_id: r3.requestId, nickname: "별빛", box_count: 1 });
   });
 
+  it("INV-J5 (2026-10-30, 카드 d1): 승인 요청은 결제 뒤 24시간 안인 새 요청을 최근 순으로 먼저, 그다음 밀린 요청을 오래된 순 — 23시간 59분은 새 요청, 24시간은 밀린 요청", async () => {
+    // 기대 순서와 다르게 만든다
+    const old48 = await paidGift();
+    const new2 = await paidGift();
+    const edge24 = await paidGift();
+    const old96 = await paidGift();
+    const new10 = await paidGift();
+    const edge2359 = await paidGift();
+    backdateOrder(old48.orderId, "48 hours");
+    backdateOrder(new2.orderId, "2 hours");
+    backdateOrder(edge24.orderId, "24 hours");
+    backdateOrder(old96.orderId, "96 hours");
+    backdateOrder(new10.orderId, "10 hours");
+    backdateOrder(edge2359.orderId, "23 hours 59 minutes");
+    const mine = [old48, new2, edge24, old96, new10, edge2359].map((g) => g.orderNo);
+    expect(await lines("haru_creator", mine)).toEqual([
+      `received:approval:${new2.orderNo}:-`,
+      `received:approval:${new10.orderNo}:-`,
+      `received:approval:${edge2359.orderNo}:-`,
+      `received:approval:${old96.orderNo}:-`,
+      `received:approval:${old48.orderNo}:-`,
+      `received:approval:${edge24.orderNo}:-`,
+    ]);
+  });
+
   it("INV-J5 S5b (실패경로): 승인을 마친 요청 · 168시간이 지난 대기 요청 · 운영자가 처리한 확인 상자 · 확인 기한이 지난 상자 · 거절로 끝난 주문의 확인 상자 → 줄 없음", async () => {
     const approved = await paidGift();
     await approve(approved);

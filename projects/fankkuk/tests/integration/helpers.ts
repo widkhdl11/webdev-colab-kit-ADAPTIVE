@@ -126,6 +126,8 @@ export function deleteTestOrders(): void {
       `delete from public.refunds where payment_id in (select id from public.payments where order_id in (${ids}));`,
       `delete from public.payments where order_id in (${ids});`,
       `delete from public.orders where item_kind in (${kinds});`,
+      // 승인 요청 10분 창·바로 받기 설정(notification-batching INV-NB1·NB5) — 남겨 두면 다음 시험의 첫 결제가 열린 창에 쌓이거나 설정이 이어진다. 시드에는 둘 다 없다
+      "do $$ begin if to_regclass('public.approval_notice_windows') is not null then delete from public.approval_notice_windows; delete from public.notification_preferences; end if; end $$;",
       "commit;",
     ].join(" "),
   );
@@ -250,8 +252,17 @@ export function requestIdFor(orderNo: string): string {
   return `apr_${orderNo.replaceAll("-", "")}`;
 }
 
-/** 결제를 끝내고 승인 요청까지 만든다(settle_payment done). */
-export async function payTestOrder(o: { orderNo: string; tossOrderId: string }): Promise<string> {
+/**
+ * 결제를 끝내고 승인 요청까지 만든다(settle_payment done).
+ * 같은 크리에이터에게 연달아 결제하면 10분 창 하나로 묶여 첫 결제만 승인 요청 줄이 생긴다(notification-batching INV-NB1).
+ * 창을 보는 시험이 아니면 결제마다 승인 요청 줄이 생기도록 결제 전에 그 크리에이터의 창을 비운다 — 창을 보는 시험은 keepApprovalWindow.
+ */
+export async function payTestOrder(o: { orderNo: string; tossOrderId: string }, opts: { keepApprovalWindow?: boolean } = {}): Promise<string> {
+  if (!opts.keepApprovalWindow) {
+    psql(
+      `do $$ begin if to_regclass('public.approval_notice_windows') is not null then delete from public.approval_notice_windows w using public.orders o join public.creators c on c.id = o.creator_id where o.order_no = '${o.orderNo}' and w.account_id = c.profile_id; end if; end $$;`,
+    );
+  }
   const requestId = requestIdFor(o.orderNo);
   const at = new Date().toISOString();
   const { error } = await adminClient().rpc("settle_payment", {
@@ -264,6 +275,14 @@ export async function payTestOrder(o: { orderNo: string; tossOrderId: string }):
   });
   if (error) throw new Error(`settle_payment 실패: ${error.message}`);
   return requestId;
+}
+
+/**
+ * 그 계정의 「바로 받기」를 켠다 — 상태 알림 다섯(상자 도착·출고·배송중·수령·답장)이 하루 묶음 대신 사건마다 줄로 생긴다(notification-batching INV-NB5 ①).
+ * 사건 알림 줄을 보는 시험이 쓴다. deleteTestOrders 가 설정을 지운다.
+ */
+export function instantNotices(accountId: string): void {
+  psql(`insert into public.notification_preferences (account_id, instant) values ('${accountId}', true) on conflict (account_id) do update set instant = true`);
 }
 
 /** 시험 서명 연결의 자리 표시 봉투 iv — 「it-sig-link1」. */

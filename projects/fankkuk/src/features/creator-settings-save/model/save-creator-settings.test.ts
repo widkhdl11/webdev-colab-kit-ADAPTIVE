@@ -104,8 +104,36 @@ describe("크리에이터 알림 저장 (my-account INV-A11)", () => {
     expect(f.calls).toEqual([{ fn: "update_my_creator_notify", args: { p_notify_kakao: false, p_notify_email: true } }]);
   });
 
+  it("INV-A11·INV-NB5: 「바로 받기」가 있으면 두 칸 저장 뒤 set_notification_instant 에 그 값 하나만 넘긴다", async () => {
+    const f = fakeClient();
+    const r = await saveCreatorNotify({ client: f.client, viewer: HARU }, { kakao: true, email: false, instant: true, accountId: "x" });
+    expect(r).toEqual({ ok: true });
+    expect(f.calls).toEqual([
+      { fn: "update_my_creator_notify", args: { p_notify_kakao: true, p_notify_email: false } },
+      { fn: "set_notification_instant", args: { p_instant: true } },
+    ]);
+  });
+
+  it("INV-NB5 (실패경로): 두 칸 저장이 실패하면 「바로 받기」는 부르지 않는다, 로그인 없음이면 401", async () => {
+    const f = fakeClient({ code: "42501" });
+    expect(await saveCreatorNotify({ client: f.client, viewer: HARU }, { kakao: true, email: false, instant: false })).toMatchObject({ ok: false, status: 401 });
+    expect(f.calls.map((c) => c.fn)).toEqual(["update_my_creator_notify"]);
+  });
+
+  it("INV-NB5 (실패경로): 「바로 받기」 저장만 실패해도 실패로 돌려준다(화면이 되돌린다)", async () => {
+    const calls: string[] = [];
+    const client = {
+      rpc: async (fn: string) => {
+        calls.push(fn);
+        return { data: null, error: fn === "set_notification_instant" ? { code: "42501" } : null };
+      },
+    } as never;
+    expect(await saveCreatorNotify({ client, viewer: HARU }, { kakao: true, email: false, instant: true })).toMatchObject({ ok: false, status: 401 });
+    expect(calls).toEqual(["update_my_creator_notify", "set_notification_instant"]);
+  });
+
   it("INV-A11 (실패경로): 참·거짓이 아니면 400, 팬이면 403 — DB 를 부르지 않는다", async () => {
-    for (const body of [{ kakao: "off", email: true }, { kakao: true }, null]) {
+    for (const body of [{ kakao: "off", email: true }, { kakao: true }, { kakao: true, email: true, instant: "on" }, null]) {
       const f = fakeClient();
       expect(await saveCreatorNotify({ client: f.client, viewer: HARU }, body)).toMatchObject({ ok: false, status: 400 });
       expect(f.calls).toEqual([]);

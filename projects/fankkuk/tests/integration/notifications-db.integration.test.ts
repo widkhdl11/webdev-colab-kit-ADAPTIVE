@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   adminClient,
   anonClient,
@@ -12,6 +12,7 @@ import {
   registerTestOrder,
   SEED,
   signedInClient,
+  instantNotices,
 } from "./helpers";
 import { deleteTestRevgifts } from "./revgift-helpers";
 import { isMustDeliver, NOTIFICATION_KINDS } from "@/entities/notification/model/delivery-policy";
@@ -41,6 +42,9 @@ const OUTBOX = "public.notification_outbox";
 const TEMPLATES = "public.notification_kakao_templates";
 const HANEUL_FAN_ID = "00000000-0000-4000-a000-000000000005"; // 하늘 — 차단 시험용 보낸 사람
 const SAEBYEOKDAL_CREATOR_ID = "00000000-0000-4000-b000-000000000003"; // 계정이 없는 예시 크리에이터
+
+// 상태 알림 줄(상자 도착·출고)을 보는 시험이 있다 — 별빛은 「바로 받기」를 켠 팬으로 둔다(꺼진 경우는 notification-batching INV-NB5 시험이 본다)
+beforeEach(() => instantNotices(SEED.fanId));
 
 afterEach(() => {
   deleteTestOrders();
@@ -94,9 +98,9 @@ type Claimed = {
   kind: string;
   channel: string;
   round: number;
-  order_no: string;
+  order_no: string | null;
   nickname: string;
-  auto_reject_at: string | null;
+  waiting_count: number | null;
   undelivered_reason: string | null;
   must_deliver: boolean;
   attempts: number;
@@ -170,11 +174,13 @@ describe("받는 계정과 줄 만들기 (INV-N3·N4·N7)", () => {
         "channel",
         "claimed_at",
         "created_at",
+        "digest_date", // 하루 묶음의 서울 날짜(notification-batching INV-NB5 — 계정 + 날짜마다 한 줄) — 연락처·본문 칸이 아니다
         "error_code",
         "event_at",
         "fake",
         "finished_at",
         "id",
+        "item_count", // 하루 묶음의 소식 건수(INV-NB5) — 어느 선물의 소식인지는 없다(INV-NB3)
         "kind",
         "next_attempt_at",
         "order_id",
@@ -215,7 +221,7 @@ describe("받는 계정과 줄 만들기 (INV-N3·N4·N7)", () => {
     expect(outboxRows(o.orderId)).toEqual([]);
   });
 
-  it("INV-N3 (S3e): 상자 둘 — 첫 상자 입고에 하루 몫 승인 요청 2차, 팬 입고 줄은 둘째 상자로 주문이 입고될 때 한 번", async () => {
+  it("INV-N3 · INV-NB2 (S3e, S2b): 상자 둘 — 첫 상자 입고에 승인 요청 줄이 더 생기지 않고(첫 입고 재알림 없어짐), 팬 입고 줄은 둘째 상자로 주문이 입고될 때 한 번", async () => {
     const g = await paidGift(2);
     const staff = await signedInClient("fankkuk_staff");
     const [a, b] = [waybill(), waybill()];
@@ -223,17 +229,13 @@ describe("받는 계정과 줄 만들기 (INV-N3·N4·N7)", () => {
     await fanSetsWaybill(g.boxIds[1]!, b);
     await receiveAndLabel(staff, a);
     expect(orderStatus(g.orderId)).toBe("registered");
-    expect(outboxRows(g.orderId)).toEqual(["approval_request|1|haru_creator|email|pending", "approval_request|2|haru_creator|email|pending"]);
+    expect(outboxRows(g.orderId)).toEqual(["approval_request|1|haru_creator|email|pending"]);
     await receiveAndLabel(staff, b);
     expect(orderStatus(g.orderId)).toBe("labeled");
-    expect(outboxRows(g.orderId)).toEqual([
-      "approval_request|1|haru_creator|email|pending",
-      "approval_request|2|haru_creator|email|pending",
-      "arrived|1|byeolbit_fan|email|pending",
-    ]);
+    expect(outboxRows(g.orderId)).toEqual(["approval_request|1|haru_creator|email|pending", "arrived|1|byeolbit_fan|email|pending"]);
   });
 
-  it("INV-N8 (실패경로): 승인이 끝난 뒤 처음 입고되면 2차 승인 요청 줄은 없다", async () => {
+  it("INV-N8 · INV-NB2 (실패경로): 승인이 끝난 뒤 처음 입고되어도 승인 요청 줄이 더 생기지 않는다", async () => {
     const g = await paidGift();
     await approve(g);
     const no = waybill();
@@ -243,7 +245,8 @@ describe("받는 계정과 줄 만들기 (INV-N3·N4·N7)", () => {
     expect(outboxRows(g.orderId)).toEqual(["approval_request|1|haru_creator|email|pending", "arrived|1|byeolbit_fan|email|pending"]);
   });
 
-  it("INV-N3 (S3f): 끝까지 간 주문 — 입고·검수·출고는 팬에게 한 번씩, 크리에이터 몫은 승인 요청뿐", async () => {
+  it("INV-N3 · INV-NB5 (S3f): 끝까지 간 주문 — 입고·검수는 팬에게 한 번씩, 출고는 바로 받기를 끈 팬의 하루 묶음 대기로, 크리에이터 몫은 승인 요청 첫 통뿐", async () => {
+    psql(`delete from public.notification_preferences where account_id = '${SEED.fanId}'`);
     const { g, staff, qrs } = await arrivedGift();
     await inspect(staff, qrs[0]!, FAN_PASS);
     await approve(g);
@@ -253,11 +256,10 @@ describe("받는 계정과 줄 만들기 (INV-N3·N4·N7)", () => {
     expect(orderStatus(g.orderId)).toBe("shipped");
     expect(outboxRows(g.orderId)).toEqual([
       "approval_request|1|haru_creator|email|pending",
-      "approval_request|2|haru_creator|email|pending",
       "arrived|1|byeolbit_fan|email|pending",
       "inspected|1|byeolbit_fan|email|pending",
-      "shipped|1|byeolbit_fan|email|pending",
     ]);
+    expect(psql(`select string_agg(kind || '|' || account_id, ',') from public.notification_digest_items where order_id = '${g.orderId}' and kind = 'shipped'`)).toBe(`shipped|${SEED.fanId}`);
   });
 
   it("INV-N4 (S4c): 같은 사건 처리를 다시 돌려도 줄은 그대로", async () => {
@@ -515,76 +517,81 @@ describe("추적 장치 발견 알림 — 크리에이터에게만, 팬에게는
 
 // ── 3차 재알림 ─────────────────────────────────────────────
 
-describe("승인 요청 3차 재알림 (INV-N8)", () => {
-  const age = (orderId: string, interval: string) => psql(`update public.orders set registered_at = now() - interval '${interval}' where id = '${orderId}'`);
-  const third = (orderId: string) => outboxRows(orderId).filter((r) => r.startsWith("approval_request|3|"));
+describe("승인 재알림 (INV-N8 · INV-NB2)", () => {
+  // 결제 완료 뒤 그만큼 흐른 것으로 — 결제 완료 시각과 그때 열린 승인 요청 창을 같이 당긴다
+  const age = (orderId: string, interval: string) => {
+    psql(`update public.orders set registered_at = now() - interval '${interval}' where id = '${orderId}'`);
+    psql(`update public.approval_notice_windows set opened_at = opened_at - interval '${interval}', ends_at = ends_at - interval '${interval}'`);
+  };
+  const reminder = (orderId: string) => outboxRows(orderId).filter((r) => r.startsWith("approval_reminder|"));
 
-  it("INV-N8 (S8): 결제 완료 + 72시간이 지난 대기 요청 → 3차 줄 1개, 두 번 돌려도 1개", async () => {
+  it("INV-N8 · INV-NB2 (S2): 결제 완료 + 72시간이 지난 대기 요청 → 재알림 1차 줄 1개, 두 번 돌려도 1개", async () => {
     const g = await paidGift();
     age(g.orderId, "72 hours 1 minute");
     const first = await adminClient().rpc("notification_enqueue_due");
     expect(first.error).toBeNull();
-    expect(third(g.orderId)).toEqual(["approval_request|3|haru_creator|email|pending"]);
+    expect(reminder(g.orderId)).toEqual(["approval_reminder|1|haru_creator|email|pending"]);
     const second = await adminClient().rpc("notification_enqueue_due");
     expect(second.error).toBeNull();
-    expect(third(g.orderId)).toEqual(["approval_request|3|haru_creator|email|pending"]);
+    expect(reminder(g.orderId)).toEqual(["approval_reminder|1|haru_creator|email|pending"]);
   });
 
-  it("INV-N8 (S8c, 실패경로): 71시간 59분이면 3차 줄이 없다", async () => {
+  it("INV-N8 · INV-NB2 (S2b, 실패경로): 71시간 59분이면 재알림 줄이 없다", async () => {
     const g = await paidGift();
     age(g.orderId, "71 hours 59 minutes");
     expect((await adminClient().rpc("notification_enqueue_due")).error).toBeNull();
-    expect(third(g.orderId)).toEqual([]);
+    expect(reminder(g.orderId)).toEqual([]);
   });
 
-  it("INV-N8 (실패경로): 이미 승인된 요청에는 72시간이 지나도 3차 줄이 없다", async () => {
-    const g = await paidGift();
-    await approve(g);
-    age(g.orderId, "73 hours");
-    expect((await adminClient().rpc("notification_enqueue_due")).error).toBeNull();
-    expect(third(g.orderId)).toEqual([]);
-  });
-
-  it("INV-N8 (실패경로): 3차 재알림은 앱 서버 키 전용 — 로그인 사용자·익명은 거부", async () => {
+  it("INV-N8 (실패경로): 기한 알림 함수는 앱 서버 키 전용 — 로그인 사용자·익명은 거부", async () => {
     const fan = await signedInClient("byeolbit_fan");
     expect((await fan.rpc("notification_enqueue_due")).error?.code).toBe("42501");
     expect((await anonClient().rpc("notification_enqueue_due")).error?.code).toBe("42501");
   });
 
-  it("INV-N8 (S8b, 실패경로): 3차 줄이 대기인 사이에 하루가 승인 → 꺼낼 때 건너뜀으로 끝나고 돌려주지 않는다", async () => {
+  it("INV-N8 · INV-NB2 (실패경로): 재알림 줄이 대기인 사이에 하루가 승인 → 꺼낼 때 건너뜀으로 끝나고 돌려주지 않는다", async () => {
     const g = await paidGift();
     age(g.orderId, "73 hours");
     await adminClient().rpc("notification_enqueue_due");
-    const id = rowId(g.orderId, "approval_request", "haru_creator", "email", 3);
+    const id = rowId(g.orderId, "approval_reminder", "haru_creator", "email", 1);
     await approve(g);
     onlyThisDue(id);
     const r = await adminClient().rpc("notification_claim", { p_limit: 5 });
     expect(r.error).toBeNull();
     expect((r.data as Claimed[]).map((c) => c.id)).not.toContain(id);
-    expect(rowField(id, "status")).toBe("skipped");
+    expect(rowField(id, "status || '|' || error_code")).toBe("skipped|request_not_waiting");
+  });
+
+  it("INV-N8 · INV-NB2: 재알림 함수는 실제로 넣은 줄 수를 돌려준다 — 두 번째 부르면 0", async () => {
+    setTemplate("approval_reminder", "TPL_REMINDER_1");
+    const g = await paidGift();
+    age(g.orderId, "73 hours");
+    // 시드의 오래된 대기 요청 몫을 먼저 만들어 두고, 이 주문 몫만 지운 뒤 센다
+    psql(`select public.notification_enqueue_due()`);
+    psql(`delete from ${OUTBOX} where order_id = '${g.orderId}' and kind = 'approval_reminder'`);
+    expect((await adminClient().rpc("notification_enqueue_due")).data).toBe(2); // 이메일 + 카카오
+    expect((await adminClient().rpc("notification_enqueue_due")).data).toBe(0);
   });
 });
 
 // ── 보내는 일꾼 ────────────────────────────────────────────
 
 describe("꺼내기·끝내기 (INV-N5·N1)", () => {
-  it("INV-N1: 꺼낸 줄은 본문에 쓸 값만 돌려준다 — 승인 요청은 자동 반려 예정 시각과 꼭 가는 알림 표시, 연락처는 없다", async () => {
+  it("INV-N1 · INV-NB3: 꺼낸 줄은 본문에 쓸 값만 돌려준다 — 승인 요청은 주문번호 없이 승인 대기 건수와 꼭 가는 알림 표시, 연락처는 없다", async () => {
     const g = await paidGift();
+    const waiting = Number(psql(`select count(*) from public.approval_requests r join public.orders o on o.id = r.order_id where o.creator_id = '${SEED.haruCreatorId}' and r.status = 'waiting'`));
     const c = await claimOne(rowId(g.orderId, "approval_request", "haru_creator"));
-    // dispose_due_at = 반송 주소 재알림의 처분 예정 시각(INV-N22) — 다른 종류는 비어 있다
-    // approval_* = 승인 요청의 보낸 팬·선물 종류·상자 수(INV-N1, 2026-10-29) — 다른 종류는 비어 있다
-    expect(Object.keys(c).sort()).toEqual(["attempts", "auto_reject_at", "channel", "claimed_at", "dispose_due_at", "id", "kind", "must_deliver", "nickname", "order_no", "round", "sender_name", "undelivered_reason"]);
-    expect(c).toMatchObject({ dispose_due_at: null });
-    expect(c).toMatchObject({ kind: "approval_request", channel: "email", round: 1, order_no: g.orderNo, nickname: "하루", must_deliver: true, attempts: 0, undelivered_reason: null });
-    const expected = psql(`select extract(epoch from registered_at + interval '168 hours') from public.orders where id = '${g.orderId}'`);
-    expect(new Date(c.auto_reject_at!).getTime() / 1000).toBeCloseTo(Number(expected), 3);
+    // dispose_due_at = 반송 주소 재알림의 처분 예정 시각(INV-N22) · waiting_count·days_left·item_count = 묶음 알림의 건수(notification-batching INV-NB3) — 다른 종류는 비어 있다
+    expect(Object.keys(c).sort()).toEqual(["attempts", "channel", "claimed_at", "days_left", "dispose_due_at", "id", "item_count", "kind", "must_deliver", "nickname", "order_no", "recipient_is_creator", "round", "sender_name", "undelivered_reason", "waiting_count"]);
+    expect(c).toMatchObject({ dispose_due_at: null, days_left: null, item_count: null });
+    expect(c).toMatchObject({ kind: "approval_request", channel: "email", round: 1, order_no: null, nickname: "하루", must_deliver: true, attempts: 0, undelivered_reason: null, waiting_count: waiting });
     expect(rowField(c.id, "status")).toBe("sending");
   });
 
   it("INV-N1: 팬 몫 입고 줄은 별빛 닉네임, 반려 시각 없음, 꼭 가는 알림 아님", async () => {
     const { g } = await arrivedGift();
     const c = await claimOne(rowId(g.orderId, "arrived", "byeolbit_fan"));
-    expect(c).toMatchObject({ kind: "arrived", nickname: "별빛", order_no: g.orderNo, must_deliver: false, auto_reject_at: null });
+    expect(c).toMatchObject({ kind: "arrived", nickname: "별빛", order_no: g.orderNo, must_deliver: false, waiting_count: null });
   });
 
   it("INV-N5 (실패경로): 다음 시도 시각이 안 된 줄은 꺼내지 않는다", async () => {
@@ -1002,18 +1009,27 @@ describe("연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3�
         // 반송 주소 재알림(INV-N22)은 꺼낼 때 상자가 반송 대기·확인 전이어야 보낸다 — 그 줄 앞에서 상자를 반송 대기로 둔다
         if (kind === "return_address_reminder") psql(`update public.office_parcels set state = 'return_waiting' where id = '${parcelId}'`);
         const share = kind === "revgift_offer" ? `'${shareId}'` : "null";
-        const request = kind === "approval_request" ? `'${requestId}'` : "null";
+        const request = kind === "approval_request" || kind === "approval_reminder" ? `'${requestId}'` : "null";
         const parcel = parcelKinds.includes(`'${kind}'`) ? `'${parcelId}'` : "null";
         const held = kind === "box_no_code" ? `'${heldId}'` : "null";
+        // 하루 묶음(notification-batching INV-NB5)은 주문 없이 계정 + 날짜 + 건수
+        const digest = kind === "status_digest";
         psql(
-          `insert into ${OUTBOX} (kind, order_id, approval_request_id, parcel_id, unmatched_id, share_id, round, account_id, channel, event_at) select '${kind}', '${g.orderId}', ${request}, ${parcel}, ${held}, ${share}, 1, id, 'email', now() from public.profiles where login_id = 'byeolbit_fan' on conflict do nothing`,
+          `insert into ${OUTBOX} (kind, order_id, approval_request_id, parcel_id, unmatched_id, share_id, round, account_id, channel, event_at, digest_date, item_count) select '${kind}', ${digest ? "null" : `'${g.orderId}'`}, ${request}, ${parcel}, ${held}, ${share}, 1, id, 'email', now(), ${digest ? "current_date, 1" : "null, null"} from public.profiles where login_id = 'byeolbit_fan' on conflict do nothing`,
         );
-        const id = rowId(g.orderId, kind, "byeolbit_fan");
-        await claimOne(id);
+        const id = digest
+          ? psql(`select id from ${OUTBOX} where kind = 'status_digest' and account_id = '${SEED.fanId}' and channel = 'email'`)
+          : rowId(g.orderId, kind, "byeolbit_fan");
+        if (kind === "approval_request" || kind === "approval_reminder") {
+          // 승인 요청·재알림은 받는 크리에이터의 대기가 없으면 꺼낼 때 건너뛴다(INV-NB1·NB2) — 별빛 몫 줄은 꺼낼 수 없어 「보내는 중」으로 바로 둔다(연락처 판정만 본다)
+          forceRow(id, "status = 'sending', claimed_at = now()");
+        } else {
+          await claimOne(id);
+        }
         const must = psql(`select public.notification_kind_must_deliver('${kind}')`) === "t";
         seen.push([kind, must, await contactValue(id)]);
       }
-      expect(seen.filter(([, must]) => must)).toHaveLength(14); // 역조공 받기(INV-N20)·반송 주소 확인과 재알림(INV-N22)까지 열넷
+      expect(seen.filter(([, must]) => must)).toHaveLength(15); // 역조공 받기(INV-N20)·반송 주소 확인과 재알림(INV-N22)·승인 재알림(INV-NB2)까지 열다섯
       psql(`delete from public.office_unmatched where id = '${heldId}'`);
       expect(seen).toEqual(seen.map(([kind, must]) => [kind, must, must ? "byeolbit.fan@example.com" : null]));
     });
@@ -1096,24 +1112,13 @@ describe("일꾼 함수 고침 (INV-N5·N8) — 20261006000011", () => {
     expect(rowField(a, "status || '|' || error_code || '|' || (finished_at is not null)")).toBe("failed|expired|true");
   });
 
-  it("INV-N8: 3차 재알림 함수는 실제로 넣은 줄 수를 돌려준다 — 두 번째 부르면 0", async () => {
-    setTemplate("approval_request", "TPL_APPROVAL_1");
-    const g = await paidGift();
-    psql(`update public.orders set registered_at = now() - interval '73 hours' where id = '${g.orderId}'`);
-    // 시드의 오래된 대기 요청 몫을 먼저 만들어 두고, 이 주문 몫만 지운 뒤 센다
-    psql(`select public.notification_enqueue_due()`);
-    psql(`delete from ${OUTBOX} where order_id = '${g.orderId}' and round = 3`);
-    expect((await adminClient().rpc("notification_enqueue_due")).data).toBe(2); // 이메일 + 카카오
-    expect((await adminClient().rpc("notification_enqueue_due")).data).toBe(0);
-  });
-
-  it("INV-N5: 건너뛴 승인 요청 줄에는 이유 코드 request_not_waiting 이 남는다", async () => {
-    const g = await paidGift();
-    const id = rowId(g.orderId, "approval_request", "haru_creator");
+  it("INV-N5 · INV-NB1: 건너뛴 승인 요청 줄에는 이유 코드가 남는다 — 그 크리에이터의 대기가 0건이면 no_waiting_requests", async () => {
+    const g = await paidGift(1, "00000000-0000-4000-b000-000000000002"); // 시드 대기 요청이 없는 모모
+    const id = rowId(g.orderId, "approval_request", "momo_creator");
     await approve(g);
     onlyThisDue(id);
     expect((await adminClient().rpc("notification_claim", { p_limit: 5 })).data).toEqual([]);
-    expect(rowField(id, "status || '|' || error_code")).toBe("skipped|request_not_waiting");
+    expect(rowField(id, "status || '|' || error_code")).toBe("skipped|no_waiting_requests");
   });
 
   it("INV-N5: 다시 보낼 간격은 1분·4분·16분 — 꺼낼 때 시도 횟수를 돌려준다", async () => {

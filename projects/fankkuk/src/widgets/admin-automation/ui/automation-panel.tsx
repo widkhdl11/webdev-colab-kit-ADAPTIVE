@@ -129,7 +129,7 @@ export function AutomationPanel({ rows, failures, now, unsignedOpens }: Props) {
                   failures.map((f) => (
                     <tr key={`${f.orderNo}-${f.kind}-${f.round}-${f.channel}-${f.finishedAt}`}>
                       <td className={`${a.mono} ${a.nowrap}`}>
-                        <strong>{f.orderNo}</strong>
+                        <strong>{f.orderNo ?? "—"}</strong>
                       </td>
                       <td>{kindLabel(f.kind, f.round)}</td>
                       <td>{f.channel === "kakao" ? "카카오" : "이메일"}</td>

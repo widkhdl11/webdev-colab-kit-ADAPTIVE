@@ -9,7 +9,8 @@ import { NOTIFICATION_KINDS, type NotificationKind } from "../model/delivery-pol
 const row = z.object({
   // 모르는 종류(새로 더한 알림)가 와도 화면 전체를 오류로 만들지 않는다 — 종류 코드를 그대로 보여 준다
   kind: z.string().regex(/^[a-z_]{1,40}$/),
-  order_no: z.string(),
+  // 하루 묶음(notification-batching INV-NB5)은 주문을 가리키지 않아 비어 있다
+  order_no: z.string().nullable(),
   round: z.number().int(),
   channel: z.enum(["email", "kakao"]),
   status: z.enum(["failed", "skipped"]),
@@ -20,7 +21,7 @@ const row = z.object({
 
 export type NotificationFailure = {
   kind: string;
-  orderNo: string;
+  orderNo: string | null;
   round: number;
   channel: "email" | "kakao";
   status: "failed" | "skipped";
@@ -48,6 +49,7 @@ export async function readNotificationFailures(client: Pick<SupabaseClient, "rpc
 
 const KIND_LABEL: Record<NotificationKind, string> = {
   approval_request: "승인 요청",
+  approval_reminder: "승인 재알림",
   arrived: "입고",
   inspected: "검수",
   shipped: "출고",
@@ -71,6 +73,7 @@ const KIND_LABEL: Record<NotificationKind, string> = {
   // 반송 주소 확인·재알림(INV-N22) — 운영자 화면 표기(용어집 return_address 행)
   return_address: "반송 주소 확인",
   return_address_reminder: "반송 주소 확인 (14일 재알림)",
+  status_digest: "하루 묶음",
 };
 
 function isKnownKind(kind: string): kind is NotificationKind {
@@ -80,14 +83,18 @@ function isKnownKind(kind: string): kind is NotificationKind {
 export function kindLabel(kind: string, round = 1): string {
   if (!isKnownKind(kind)) return kind;
   const base = KIND_LABEL[kind];
+  // 승인 요청은 10분 창의 첫 통(1)·끝 통(2), 승인 재알림은 3일째(1)·6일째(2)(notification-batching INV-NB1·NB2). 3차는 2026-10-30 전에 생긴 옛 줄
+  if (kind === "approval_reminder") return `${base} (${round === 2 ? "6일째" : "3일째"})`;
   if (kind !== "approval_request" || round === 1) return base;
-  return `${base} (${round === 2 ? "도착 재알림" : "3차 재알림"})`;
+  return `${base} (${round === 2 ? "창 끝" : "옛 3차 재알림"})`;
 }
 
 /** 일꾼과 DB 가 남기는 오류 코드 → 운영자가 읽는 말. 모르는 코드는 코드 그대로 보인다. */
 const ERROR_LABEL: Record<string, string> = {
   no_contact: "알림을 꺼 두었거나 확인된 이메일·휴대폰 번호가 없어요",
   request_not_waiting: "보내기 전에 승인·거절·반려돼서 보내지 않았어요",
+  no_waiting_requests: "보내기 전에 승인 대기가 모두 처리돼서 보내지 않았어요",
+  approval_window_open: "10분 안에 승인 요청 알림이 이미 가서 보내지 않았어요",
   kind_not_ready: "아직 보낼 수 없는 종류예요(택배사 연결 전)",
   body_unavailable: "본문을 만들 수 없었어요(주문번호 꼴 확인)",
   contact_failed: "연락처를 읽지 못했어요",

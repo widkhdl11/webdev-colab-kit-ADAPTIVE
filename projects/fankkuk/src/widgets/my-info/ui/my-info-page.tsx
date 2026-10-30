@@ -75,6 +75,7 @@ export function MyInfoPanel({
   const [addressBusy, setAddressBusy] = useState(false);
   const [kakao, setKakao] = useState(account.notifyKakao);
   const [mail, setMail] = useState(account.notifyEmail);
+  const [instant, setInstant] = useState(account.notifyInstant);
   const toggle = (which: Reveal) => {
     if (which === "address" || which === "address-delete") setAddressMsg(null);
     setOpen((cur) => (cur === which ? null : which));
@@ -86,7 +87,7 @@ export function MyInfoPanel({
     if (saving) return;
     const form = new FormData(e.currentTarget);
     // 닉네임은 이 화면에서 고치지 않는다 — 지금 값을 그대로 싣는다(planAccountSettingsSave)
-    const plan = planAccountSettingsSave({ nickname: account.nickname, email: String(form.get("email") ?? ""), notifyKakao: kakao, notifyEmail: mail });
+    const plan = planAccountSettingsSave({ nickname: account.nickname, email: String(form.get("email") ?? ""), notifyKakao: kakao, notifyEmail: mail, notifyInstant: instant });
     if (!plan.ok) return setNotice({ tone: "error", text: plan.message });
     setSaving(true);
     setNotice(null);
@@ -300,6 +301,8 @@ export function MyInfoPanel({
         <div className={s.rows}>
           <Switch id={f("n1")} title="카카오톡 알림" desc="승인·배송 등 선물 관련 알림톡 수신" on={kakao} onChange={setKakao} />
           <Switch id={f("n2")} title="이메일 알림" desc="영수증·안내 메일 수신" on={mail} onChange={setMail} />
+          {/* 상태 알림 다섯은 기본이 하루 한 번 묶음(notification-batching INV-NB5, UX 명세 notify-settings) */}
+          <Switch id={f("n3")} title="선물 소식 바로 받기" desc="끄면 하루 한 번 오후 7시에 모아서 보냅니다" on={instant} onChange={setInstant} />
           {/* 꼭 가는 알림은 두 칸을 꺼도 간다(notifications INV-N6 표, 2026-10-12 문제집 D7) — 접지 않고 늘 보인다(my-account INV-A11) */}
           <MustDeliverNotice audience="fan" id={f("noti-must")} className={s.must} titleClassName={s.mustT} bodyClassName={s.mustL} />
         </div>
@@ -322,6 +325,7 @@ export function MyInfoPanel({
               setNotice(null);
               setKakao(account.notifyKakao);
               setMail(account.notifyEmail);
+              setInstant(account.notifyInstant);
             }}
           >
             되돌리기

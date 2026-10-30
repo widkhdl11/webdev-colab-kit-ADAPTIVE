@@ -226,6 +226,12 @@ export function daysLeftOf(dueAt: string, now: string): { text: string; soon: bo
   return { text: days > 0 ? `${days}일 남음` : "오늘까지", soon: days <= 3 };
 }
 
+/** 승인 요청 줄에 남은 날을 보이는가 — 반려가 가까운 2일 이하만(INV-J5, 카드 fankkuk-20261030-1-d1). 기한 날짜는 늘 보인다 */
+export const APPROVAL_DAYS_LEFT_SHOWN = 2;
+export function approvalShowsDaysLeft(dueAt: string, now: string): boolean {
+  return seoulDaysUntil(dueAt, now) <= APPROVAL_DAYS_LEFT_SHOWN;
+}
+
 /**
  * 크리에이터 계정이 보낸 선물 상세의 맨 위 「지금 할 일」 칸(action-center INV-J13 · payment INV-M22 ⑤) — 크리에이터 지금 할 일 읽기 결과(사이드바 숫자와 같은 결과, INV-J6)에서
  * 그 주문의 보낸 선물 줄(결제 대기·추가 결제·상자 찾기)을 모두 팬 칸과 같은 꼴로 옮긴다 — 같은 주문의 일이 여럿이면 모두(INV-J13).

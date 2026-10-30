@@ -21,8 +21,11 @@ function fakeRpc(replies: Record<string, Reply>) {
   };
 }
 
-function setup(o: { update?: Reply; issue?: Reply; mailFails?: boolean } = {}) {
-  const session = fakeRpc({ update_my_account: o.update ?? { data: true, error: null } });
+function setup(o: { update?: Reply; issue?: Reply; instant?: Reply; mailFails?: boolean } = {}) {
+  const session = fakeRpc({
+    update_my_account: o.update ?? { data: true, error: null },
+    set_notification_instant: o.instant ?? { data: true, error: null },
+  });
   const admin = fakeRpc({
     issue_email_verification: o.issue ?? { data: [{ token: TOKEN, email: "b@example.com", nickname: "별빛" }], error: null },
   });
@@ -170,6 +173,37 @@ describe("내 정보 저장", () => {
   it("메일 서버가 실패하면 502 로 알린다(다른 칸은 저장됐다고)", async () => {
     const t = setup({ mailFails: true });
     expect(await saveAccount(t.deps, VALID)).toMatchObject({ ok: false, status: 502 });
+  });
+
+  it("INV-A11·INV-NB5: 「바로 받기」가 있으면 계정 저장 뒤 set_notification_instant 에 그 값 하나만 넘긴다", async () => {
+    const t = setup({ update: { data: false, error: null } });
+    expect(await saveAccount(t.deps, { ...VALID, notifyInstant: true, p_account_id: "x" })).toEqual({ ok: true, pendingEmail: null });
+    expect(t.session.calls).toEqual([
+      { fn: "update_my_account", args: { p_nickname: "별빛", p_email: "b@example.com", p_notify_kakao: true, p_notify_email: false } },
+      { fn: "set_notification_instant", args: { p_instant: true } },
+    ]);
+  });
+
+  it("INV-NB5: 「바로 받기」 칸이 없으면 부르지 않는다, 참·거짓이 아니면 400 이고 DB 를 부르지 않는다", async () => {
+    const t = setup({ update: { data: false, error: null } });
+    await saveAccount(t.deps, VALID);
+    expect(t.session.calls.map((c) => c.fn)).toEqual(["update_my_account"]);
+    const bad = setup();
+    expect(await saveAccount(bad.deps, { ...VALID, notifyInstant: "on" })).toMatchObject({ ok: false, status: 400 });
+    expect(bad.session.calls).toEqual([]);
+  });
+
+  it("INV-NB5 (실패경로): 계정 저장이 실패하면 「바로 받기」는 부르지 않는다", async () => {
+    const t = setup({ update: { data: null, error: { code: "22023" } } });
+    await saveAccount(t.deps, { ...VALID, notifyInstant: true });
+    expect(t.session.calls.map((c) => c.fn)).toEqual(["update_my_account"]);
+  });
+
+  it("INV-NB5 (실패경로): 「바로 받기」 저장이 로그인 없음이면 401, 알 수 없는 오류는 던진다", async () => {
+    const t = setup({ update: { data: false, error: null }, instant: { data: null, error: { code: "42501" } } });
+    expect(await saveAccount(t.deps, { ...VALID, notifyInstant: false })).toMatchObject({ ok: false, status: 401 });
+    const u = setup({ update: { data: false, error: null }, instant: { data: null, error: { code: "XX001" } } });
+    await expect(saveAccount(u.deps, { ...VALID, notifyInstant: false })).rejects.toThrow(/XX001/);
   });
 
   it("알 수 없는 DB 오류는 던진다", async () => {

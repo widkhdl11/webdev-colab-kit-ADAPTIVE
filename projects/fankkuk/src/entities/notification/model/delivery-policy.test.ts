@@ -33,10 +33,11 @@ describe("꼭 가는 알림 목록 (INV-N6)", () => {
     for (const kind of NOTIFICATION_KINDS) expect([kind, NOTIFICATION_POLICY[kind].mustDeliver]).toEqual([kind, table.get(kind)]);
   });
 
-  it("INV-N6 · INV-N21 · INV-N20 · INV-N22: 끌 수 없는 알림은 열넷 — 승인 요청·추적 장치 발견·확인할 선물·돌려보낼 상자·안 온 상자 둘·거절 알림·추가 결제·결제 취소 둘·코드 없이 온 상자·역조공 받기·반송 주소 확인과 그 재알림", () => {
+  it("INV-N6 · INV-N21 · INV-N20 · INV-N22 · INV-NB2: 끌 수 없는 알림은 열다섯 — 승인 요청·승인 재알림·추적 장치 발견·확인할 선물·돌려보낼 상자·안 온 상자 둘·거절 알림·추가 결제·결제 취소 둘·코드 없이 온 상자·역조공 받기·반송 주소 확인과 그 재알림", () => {
     expect([...MUST_DELIVER_KINDS].sort()).toEqual(
       [
         "approval_request",
+        "approval_reminder",
         "hold",
         "creator_check",
         "hold_fan",
@@ -54,8 +55,8 @@ describe("꼭 가는 알림 목록 (INV-N6)", () => {
     );
   });
 
-  it("INV-N6 (실패경로): 진행·소식 알림은 끌 수 있다", () => {
-    for (const kind of ["arrived", "inspected", "shipped", "in_transit", "delivered", "box_arrived", "gift_reply", "gift_received"] as const) {
+  it("INV-N6 · INV-NB5 (실패경로): 진행·소식 알림과 하루 묶음은 끌 수 있다", () => {
+    for (const kind of ["arrived", "inspected", "shipped", "in_transit", "delivered", "box_arrived", "gift_reply", "gift_received", "status_digest"] as const) {
       expect([kind, isMustDeliver(kind)]).toEqual([kind, false]);
     }
     expect(isMustDeliver("no_such_kind")).toBe(false);

@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 import { priorHistoryLabel } from "@/entities/order/model/prior-history";
 import type { MyAddressStatus } from "@/entities/address/api/my-address-status";
 import {
+  approvalShowsDaysLeft,
   daysLeftOf,
   splitBoards,
   type ApprovalItem,
@@ -103,7 +104,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
 
   const checks = received.filter((it): it is TrackerItem | BluetoothItem => it.kind !== "approval");
   const approvals = received.filter((it): it is ApprovalItem => it.kind === "approval");
-  // 가장 급한 승인 요청 하나만 하늘 판(design-rules 23-3 A안) — 읽기가 기한이 짧은 순으로 준다(INV-J5), 나머지는 카드
+  // 첫 승인 요청 하나만 하늘 판(design-rules 23-3 A안), 나머지는 카드. 순서는 읽기가 준다(INV-J5 — 결제 뒤 24시간 안인 새 요청을 최근 순으로 먼저, 나머지는 오래된 순, 2026-10-30)
   const [top, ...restApprovals] = approvals;
 
   function checkRow(it: TrackerItem | BluetoothItem) {
@@ -162,7 +163,8 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
           </div>
         </div>
         <div className={s.afoot}>
-          <span>{`${due.text} · ${formatMonthDayKo(it.dueAt)}까지`}</span>
+          {/* 남은 날은 반려가 가까운 2일 이하만, 기한 날짜는 늘(INV-J5, 카드 fankkuk-20261030-1-d1) */}
+          <span>{approvalShowsDaysLeft(it.dueAt, now) ? `${due.text} · ${formatMonthDayKo(it.dueAt)}까지` : `${formatMonthDayKo(it.dueAt)}까지`}</span>
           <button className="btn btn--sm btn--line" type="button" aria-haspopup="dialog" onClick={() => setOpen({ kind: "approval", item: it, start: "ask" })}>
             승인하기
           </button>
@@ -315,7 +317,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
           </div>
           <div className={s.due}>
             <span className={s.lab}>승인 기한</span>
-            <DueBig dueAt={top.dueAt} now={now} />
+            {approvalShowsDaysLeft(top.dueAt, now) ? <DueBig dueAt={top.dueAt} now={now} /> : null}
             <span className={s.lab}>{formatDateTime(top.dueAt)}까지</span>
           </div>
         </section>

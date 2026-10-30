@@ -10,9 +10,15 @@ type Row = {
   kind: string;
   channel: "email" | "kakao";
   round: number;
-  order_no: string;
+  order_no: string | null;
   nickname: string;
-  auto_reject_at: string | null;
+  /** 승인 요청·재알림만 — 보내는 순간의 승인 대기 건수(notification-batching INV-NB1) */
+  waiting_count?: number | null;
+  /** 재알림만 — 가장 이른 자동 반려까지 남은 일수(INV-NB2) */
+  days_left?: number | null;
+  /** 하루 묶음만 — 소식 건수(INV-NB5) */
+  item_count?: number | null;
+  recipient_is_creator?: boolean;
   undelivered_reason?: string | null;
   sender_name?: string | null;
   /** DB 가 더 내주는 칸이 와도 본문에 섞이지 않는지 보는 데만 쓴다 */
@@ -26,7 +32,7 @@ type Row = {
 
 const CLAIMED = "2026-10-06T06:00:00.123456+00:00";
 
-const ROW: Row = { id: "row-1", kind: "arrived", channel: "email", round: 1, order_no: "FC-7K3M9", nickname: "별빛", auto_reject_at: null, must_deliver: false, attempts: 0, claimed_at: "2026-10-06T06:00:00.123456+00:00" };
+const ROW: Row = { id: "row-1", kind: "arrived", channel: "email", round: 1, order_no: "FC-7K3M9", nickname: "별빛", must_deliver: false, attempts: 0, claimed_at: "2026-10-06T06:00:00.123456+00:00" };
 
 type Call = { fn: string; args: unknown };
 
@@ -196,35 +202,62 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
   const APPROVAL_ROW: Row = {
     ...ROW,
     kind: "approval_request",
-    round: 3,
+    round: 2,
     nickname: "하루",
-    auto_reject_at: "2026-10-08T01:00:00Z",
+    waiting_count: 3,
     approval_sender: "달토끼",
     approval_gift_kind: "꽃",
     approval_box_count: 2,
     must_deliver: true,
   };
 
-  it("INV-N1·N8 (S1c): 승인 요청 줄은 꺼낸 자동 반려 예정 시각으로 본문을 만들고, 줄에 보낸 팬·종류·개수 칸이 와도 본문에 넣지 않는다(카드 d2 답 ②)", async () => {
+  it("INV-NB1 · INV-NB3 (S3): 승인 요청 줄은 꺼낸 승인 대기 건수로 본문을 만들고, 줄에 보낸 팬·종류·개수 칸이 와도 본문에 넣지 않는다", async () => {
     const email = channel();
     const { admin } = fakeAdmin({ rows: [APPROVAL_ROW], contacts: { "row-1": "haru@example.com" } });
     await dispatchNotifications(deps(admin, { email, kakao: null }));
-    expect(email.sent[0]!.text).toContain("10월 8일 오전 10시까지");
+    expect(email.sent[0]!.text).toContain("승인 대기 3건");
     expect(email.sent[0]!.text).toContain("하루님");
-    expect(email.sent[0]!.text).not.toMatch(/달토끼|꽃|2개/);
+    expect(email.sent[0]!.text).toContain("/creator/actions");
+    expect(email.sent[0]!.text).not.toMatch(/달토끼|꽃|2개|FC-7K3M9/);
     expect(email.sent[0]!.text).not.toContain("haru@example.com"); // 받는 주소는 본문에 없다
   });
 
-  it("INV-N7 (실패경로): 승인 요청은 템플릿 ID 가 있어도 알림톡으로 보내지 않고 건너뜀 — 확정 본문(승인 대기 건수·10분 묶음)이 코드 반영 전이다", async () => {
+  it("INV-NB1 · INV-N7: 승인 요청은 템플릿 ID 가 있으면 알림톡으로 — 변수는 건수 하나", async () => {
     const kakao = channel(true);
-    const { admin, calls } = fakeAdmin({
+    const { admin } = fakeAdmin({
       rows: [{ ...APPROVAL_ROW, channel: "kakao" }],
       contacts: { "row-1": "01012345678" },
       templates: [{ kind: "approval_request", template_code: "TPL_APPROVAL" }],
     });
     await dispatchNotifications(deps(admin, { email: channel(), kakao }));
-    expect(kakao.sent).toHaveLength(0);
-    expect(finishes(calls).map((f) => (f as { p_error_code: string }).p_error_code)).toEqual(["alimtalk_unavailable"]);
+    expect(kakao.sent.map((m) => [m.templateCode, m.variables])).toEqual([["TPL_APPROVAL", { "#{건수}": "3" }]]);
+  });
+
+  it("INV-NB2 (S2c): 승인 재알림 줄은 건수·남은 일수로 본문을 만든다", async () => {
+    const email = channel();
+    const { admin } = fakeAdmin({ rows: [{ ...APPROVAL_ROW, kind: "approval_reminder", round: 1, waiting_count: 3, days_left: 1 }], contacts: { "row-1": "haru@example.com" } });
+    await dispatchNotifications(deps(admin, { email, kakao: null }));
+    expect(email.sent[0]!.subject).toBe("[팬꾹] 선물 승인 기한 안내");
+    expect(email.sent[0]!.text).toContain("승인 대기 3건, 1일 뒤 자동 반려");
+  });
+
+  it("INV-NB5 (S5): 하루 묶음 줄은 주문번호 없이 소식 건수로 — 크리에이터가 받으면 처리할 일 링크", async () => {
+    const email = channel();
+    const digest: Row = { ...ROW, kind: "status_digest", order_no: null, item_count: 2, recipient_is_creator: true };
+    const { admin, calls } = fakeAdmin({ rows: [digest], contacts: { "row-1": "a@example.com" } });
+    await dispatchNotifications(deps(admin, { email, kakao: null }));
+    expect(email.sent[0]!.subject).toBe("[팬꾹] 새 선물 소식");
+    expect(email.sent[0]!.text).toContain("새 선물 소식 2건이 있습니다.");
+    expect(email.sent[0]!.text).toContain("https://fankkuk.example.com/creator/actions");
+    expect(finishes(calls).map((f) => (f as { p_outcome: string }).p_outcome)).toEqual(["sent"]);
+  });
+
+  it("INV-NB1 (실패경로): 승인 요청 줄에 건수가 없으면 보내지 않고 건너뜀", async () => {
+    const email = channel();
+    const { admin, calls } = fakeAdmin({ rows: [{ ...APPROVAL_ROW, waiting_count: null }], contacts: { "row-1": "haru@example.com" } });
+    await dispatchNotifications(deps(admin, { email, kakao: null }));
+    expect(email.sent).toHaveLength(0);
+    expect(finishes(calls).map((f) => (f as { p_error_code: string }).p_error_code)).toEqual(["body_unavailable"]);
   });
 
   it("INV-N7 (실패경로): 템플릿 ID 가 있어도 템플릿 문서에 본문이 없는 종류는 알림톡으로 보내지 않고 건너뜀", async () => {
@@ -381,7 +414,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
 
   it("INV-N6·N5 (실패경로): 연락처 함수가 실패하면 건너뛰지 않고 오류로 끝낸다 — 빈 값(보낼 곳 없음)과 구분해 다시 보낼 차례로", async () => {
     const email = channel();
-    const { admin, calls } = fakeAdmin({ rows: [{ ...ROW, kind: "approval_request", auto_reject_at: "2026-10-08T01:00:00Z", must_deliver: true }], fail: { notification_contact: { code: "57014" } } });
+    const { admin, calls } = fakeAdmin({ rows: [{ ...ROW, kind: "approval_request", waiting_count: 1, must_deliver: true }], fail: { notification_contact: { code: "57014" } } });
     const result = await dispatchNotifications(deps(admin, { email, kakao: null }));
     expect(email.sent).toHaveLength(0);
     expect(finishes(calls)).toEqual([{ p_id: "row-1", p_claimed_at: CLAIMED, p_outcome: "error", p_provider_message_id: null, p_error_code: "contact_failed", p_fake: false }]);

@@ -13,7 +13,7 @@ const ROW = {
 
 describe("내 정보 한 줄 옮기기", () => {
   it("DB 한 줄을 화면 모양으로 옮긴다", () => {
-    expect(toMyAccount(ROW)).toEqual({
+    expect(toMyAccount(ROW, false)).toEqual({
       loginId: "byeolbit_fan",
       nickname: "별빛",
       email: "byeolbit.fan@example.com",
@@ -21,17 +21,23 @@ describe("내 정보 한 줄 옮기기", () => {
       phoneMasked: "010-****-5678",
       notifyKakao: true,
       notifyEmail: false,
+      notifyInstant: false,
     });
   });
 
+  it("notification-batching INV-NB5: 「바로 받기」 값(my_notification_instant)을 notifyInstant 로 싣는다", () => {
+    expect(toMyAccount(ROW, true)).toMatchObject({ notifyInstant: true });
+    expect(toMyAccount(ROW, "yes")).toBeNull();
+  });
+
   it("INV-A2: 가리지 않은 번호가 오면 화면에 넘기지 않는다", () => {
-    expect(toMyAccount({ ...ROW, phone_masked: "010-1234-5678" })).toBeNull();
-    expect(toMyAccount({ ...ROW, phone_masked: "01012345678" })).toBeNull();
-    expect(toMyAccount({ ...ROW, phone_masked: null })).toMatchObject({ phoneMasked: null });
+    expect(toMyAccount({ ...ROW, phone_masked: "010-1234-5678" }, false)).toBeNull();
+    expect(toMyAccount({ ...ROW, phone_masked: "01012345678" }, false)).toBeNull();
+    expect(toMyAccount({ ...ROW, phone_masked: null }, false)).toMatchObject({ phoneMasked: null });
   });
 
   it("꼴이 틀린 줄은 null", () => {
-    expect(toMyAccount(undefined)).toBeNull();
-    expect(toMyAccount({ ...ROW, notify_kakao: "yes" })).toBeNull();
+    expect(toMyAccount(undefined, false)).toBeNull();
+    expect(toMyAccount({ ...ROW, notify_kakao: "yes" }, false)).toBeNull();
   });
 });
