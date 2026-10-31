@@ -1,0 +1,389 @@
+
+ RUN  v4.1.11 C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/projects/fankkuk
+
+····································x··············x···············x······························x·······x················x·······························x·xx··x·xx···x································x········x································x···································································xx············································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································x·················································································································································································································x···············································································································································································································································stderr | tests/integration/fan-profile-db.integration.test.ts > INV-A14: 사진은 서버가 다시 그려 공개 저장소에 서버 키로만 쓴다 > INV-A14 (실패경로): 다음 판 자리에 붙지 못한 파일이 남아 있으면 — 방금 생긴 것은 409(건드리지 않음), 오래된 것은 지우고 다시 올려 붙인다
+fan-photos: 붙지 못하고 남은 파일을 지우고 다시 올린다 00000000-0000-4000-a000-000000000001/p-1.webp
+
+········································································································stderr | tests/integration/sign-gateway-flow.integration.test.ts > 전 흐름 — 등록 → 승인 → 복호화 → 라벨 출력 (게이트웨이가 주소를 연다) > 실패경로: 게이트웨이 토큰이 틀리면 송장 출력 함수까지 가지 않는다 — 앱에는 failed
+서명 게이트웨이 송장 출력 응답 401
+
+·····································································································································································································································stderr | tests/integration/session.integration.test.ts > INV-L2: 서버는 Supabase Auth 로 확인한 사용자만 쓴다 > INV-L2 (S2): 망가진 쿠키·쿠키 없음은 로그인하지 않은 것
+@supabase/ssr: chunked cookie decoded to invalid JSON, treating as absent. This usually indicates that cookie chunks from different writes were combined (e.g. response committed before all Set-Cookie headers were sent).
+@supabase/ssr: chunked cookie decoded to invalid JSON, treating as absent. This usually indicates that cookie chunks from different writes were combined (e.g. response committed before all Set-Cookie headers were sent).
+@supabase/ssr: chunked cookie decoded to invalid JSON, treating as absent. This usually indicates that cookie chunks from different writes were combined (e.g. response committed before all Set-Cookie headers were sent).
+
+···········
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/action-center-db.integration.test.ts > INV-J1: 카드는 세 종류, 상자(몫) 하나에 하나, 보이는 조건은 처리 함수가 받아 주는 조건 > INV-J1 S1: 차액 요청(미결제, 요청 뒤 2일) → 추가 결제 1 · 결제 뒤 15일 입고 전 상자 → 도착하지 않은 상자 1 · 13일 된 상자는 없음
+AssertionError: expected NaN to be 1793875893058 // Object.is equality
+
+- Expected
++ Received
+
+- 1793875893058
++ NaN
+
+ ❯ tests/integration/action-center-db.integration.test.ts:107:37
+    105|     expect(diff).toMatchObject({ box_id: d.boxId, box_label: d.orderNo…
+    106|     // 기한 = 요청 + 168시간
+    107|     expect(Date.parse(diff.due_at)).toBe(Date.parse(psql(`select to_js…
+       |                                     ^
+    108|     const box = rows.find((r) => r.order_no === late.orderNo)!;
+    109|     expect(box).toMatchObject({ box_id: late.boxIds[0], tier: "small",…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/20]⎯
+
+ FAIL  tests/integration/action-center-db.integration.test.ts > INV-J1: 카드는 세 종류, 상자(몫) 하나에 하나, 보이는 조건은 처리 함수가 받아 주는 조건 > INV-J1 S1 (경계): 추가 결제는 요청 + 168시간 전까지 — 167시간 59분이면 있고 168시간이면 없다(차액 결제 준비도 그때부터 거부)
+AssertionError: expected [ 'difference:FC-T5PLLRE:1' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "difference:FC-T5PLLRE:1",
++ ]
+
+ ❯ tests/integration/action-center-db.integration.test.ts:154:54
+    152|     expect(await cards("byeolbit_fan", [d.orderNo])).toEqual([`differe…
+    153|     backdateDifference(d.orderId, 168);
+    154|     expect(await cards("byeolbit_fan", [d.orderNo])).toEqual([]);
+       |                                                      ^
+    155|     const prepared = await (await signedInClient("byeolbit_fan")).rpc(…
+    156|     expect(prepared.error?.code).toBe("P0022");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/20]⎯
+
+ FAIL  tests/integration/box-missing-db.integration.test.ts > 도착하지 않은 상자 알림 (INV-W10 · INV-N15) > INV-W10·N15 (S10·S15): 결제 + 335시간이면 알림 없음, 336시간이면 팬에게 한 번 — 두 번 돌려도 한 번
+AssertionError: expected 'byeolbit_fan|email' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ byeolbit_fan|email
+
+ ❯ tests/integration/box-missing-db.integration.test.ts:61:31
+     59|     backdate(g.orderId, 335);
+     60|     await runExpiry(g.orderNo);
+     61|     expect(alerts(g.orderId)).toBe("");
+       |                               ^
+     62|     backdate(g.orderId, 336);
+     63|     expect((await runExpiry(g.orderNo)).box_missing_alerts).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/20]⎯
+
+ FAIL  tests/integration/difference-payment-db.integration.test.ts > 출고 화면 안내: 승인은 끝났고 차액만 미납이면 「차액 결제 대기」(BACKLOG 2026-10-06) > (실패경로) 차액 기한(요청 + 168시간)이 지났는데 7일 처리 전이면 wait_expiry — 더 낼 수 없는 차액을 기다리라고 하지 않는다
+AssertionError: expected 'wait_difference' to be 'wait_expiry' // Object.is equality
+
+Expected: "wait_expiry"
+Received: "wait_difference"
+
+ ❯ tests/integration/difference-payment-db.integration.test.ts:360:30
+    358|     expect(await nextStep()).toBe("wait_difference");
+    359|     psql(`update public.payments set created_at = now() - interval '16…
+    360|     expect(await nextStep()).toBe("wait_expiry");
+       |                              ^
+    361|   });
+    362|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/20]⎯
+
+ FAIL  tests/integration/difference-payment-db.integration.test.ts > INV-M13 · INV-M8: 차액 요청 뒤 7일 미납이면 반송 대상, 환불은 상품 대금 칸만 > INV-M13 S13: 168시간 지난 미납 차액은 운영자의 7일 처리에서 반송 대기로 — 167시간이면 아직 아니다
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/integration/difference-payment-db.integration.test.ts:394:125
+    392|     expect(parcelState(qr)).toBe("inspected");
+    393|     backdate(g.orderId, "168 hours");
+    394|     expect(((await staff.rpc("office_run_expiry", { p_order_no: g.orde…
+       |                                                                                                                             ^
+    395|     expect(parcelState(qr)).toBe("return_waiting");
+    396|     // 두 번 돌려도 다시 처리하지 않는다
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/20]⎯
+
+ FAIL  tests/integration/difference-payment-db.integration.test.ts > INV-M13 · INV-M8: 차액 요청 뒤 7일 미납이면 반송 대상, 환불은 상품 대금 칸만 > INV-M13 (실패경로): 기한이 지난 차액은 7일 처리 전이라도 결제를 준비·승인할 수 없다
+AssertionError: expected undefined to be 'P0022' // Object.is equality
+
+- Expected:
+"P0022"
+
++ Received:
+undefined
+
+ ❯ tests/integration/difference-payment-db.integration.test.ts:404:55
+    402|     const row = ((await prepare(g.boxIds[0]!)).data as { toss_order_id…
+    403|     backdate(g.orderId, "168 hours");
+    404|     expect((await prepare(g.boxIds[0]!)).error?.code).toBe("P0022");
+       |                                                       ^
+    405|     expect((await adminClient().rpc("claim_difference_payment", { p_to…
+    406|     expect(differenceRow(g.orderId)).toBe("2000/0/500/500/1000/pending…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/20]⎯
+
+ FAIL  tests/integration/difference-payment-db.integration.test.ts > INV-M13 · INV-M8: 차액 요청 뒤 7일 미납이면 반송 대상, 환불은 상품 대금 칸만 > INV-M8 S8: 차액 미납 반송의 환불은 첫 결제의 상품 대금 칸만 — 배송비 칸은 선불 반송에 쓰인다, 반송 전에는 환불 대상이 아니다
+AssertionError: expected 'none' to be '0' // Object.is equality
+
+Expected: "0"
+Received: "none"
+
+ ❯ tests/integration/difference-payment-db.integration.test.ts:448:34
+    446|     backdate(g.orderId, "168 hours");
+    447|     await (await signedInClient("fankkuk_staff")).rpc("office_run_expi…
+    448|     expect(refundDue(g.orderId)).toBe(psql(`select goods_krw from publ…
+       |                                  ^
+    449|     expect(refundDue(g.orderId)).not.toBe(psql(`select shipping_fee_kr…
+    450|     // 내지 않은 차액 결제 자체는 환불할 것이 없다
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/20]⎯
+
+ FAIL  tests/integration/difference-payment-db.integration.test.ts > INV-M13 · INV-M8: 차액 요청 뒤 7일 미납이면 반송 대상, 환불은 상품 대금 칸만 > INV-M8 (실패경로): 한 주문에 검수 불합격 상자와 미납 차액이 같이 있으면 팬의 위반 갈래(상품 대금 칸만)를 따른다
+AssertionError: expected 'inspected' to be 'return_waiting' // Object.is equality
+
+Expected: "return_waiting"
+Received: "inspected"
+
+ ❯ tests/integration/difference-payment-db.integration.test.ts:475:33
+    473|     backdate(g.orderId, "168 hours");
+    474|     await staff.rpc("office_run_expiry", { p_order_no: g.orderNo });
+    475|     expect(parcelState(second)).toBe("return_waiting");
+       |                                 ^
+    476|     expect(refundDue(g.orderId)).toBe("0");
+    477|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/20]⎯
+
+ FAIL  tests/integration/difference-success-route.integration.test.ts > 기한이 지나 승인 권리를 못 얻으면 「기한 지남」으로 안내한다 (INV-M13) > INV-M13 (실패경로): 결제창에 있는 사이 기한(요청 + 168시간)이 지나면 승인 API 를 부르지 않고 closed 안내로 보낸다
+AssertionError: expected '/gifts/FC-T0TQ011?difference=paid' to be '/gifts/FC-T0TQ011?difference=closed' // Object.is equality
+
+Expected: "/gifts/FC-T0TQ011?difference=closed"
+Received: "/gifts/FC-T0TQ011?difference=paid"
+
+ ❯ tests/integration/difference-success-route.integration.test.ts:94:36
+     92|     psql(`update public.payments set created_at = now() - interval '16…
+     93|     request.client = await signedInClient("byeolbit_fan");
+     94|     expect(await callSuccess(row)).toBe(`/gifts/${g.orderNo}?differenc…
+       |                                    ^
+     95|     expect(tossCalls).toHaveLength(0);
+     96|     expect(differenceRow(g.orderId)).toBe("2000/0/500/500/1000/pending…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/20]⎯
+
+ FAIL  tests/integration/inbound-admin-db.integration.test.ts > INV-C9 주문에 묶인 채 멈춘 상자의 반송 (정책 질문 12) > INV-C9 (S9c): 아무도 넘기지 않으면 보류 + 168시간에 자동 처리가 넘긴다 — 167시간이면 그대로, 두 번 돌려도 한 번
+AssertionError: expected 0 to be greater than or equal to 2
+ ❯ tests/integration/inbound-admin-db.integration.test.ts:197:32
+    195|     backdateHold(dispute.parcelId, 168);
+    196|     const first = (await op.rpc("office_run_expiry", {})).data as { he…
+    197|     expect(first.held_parcels).toBeGreaterThanOrEqual(2);
+       |                                ^
+    198|     expect(closed(mine.parcelId)).toBe("true|true");
+    199|     expect(closed(dispute.parcelId)).toBe("true|true");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/20]⎯
+
+ FAIL  tests/integration/inbound-code-db.integration.test.ts > INV-C6 무효 6자리로 온 보류 상자는 7일 뒤 반송 > INV-C6 (S6): 도착 + 167시간이면 그대로, + 168시간 자동 처리에서 반송 대기(기한 지남)
+AssertionError: expected 'false' to be 'true' // Object.is equality
+
+Expected: "true"
+Received: "false"
+
+ ❯ tests/integration/inbound-code-db.integration.test.ts:660:39
+    658|     psql(`update public.office_unmatched set arrived_at = now() - inte…
+    659|     expect((await op.rpc("office_run_expiry")).error).toBeNull();
+    660|     expect(holdRow(barcode)?.expired).toBe("true");
+       |                                       ^
+    661|     const list = (await op.rpc("admin_unmatched_parcels")).data as { w…
+    662|     expect(list.find((x) => x.waybill_no === barcode)?.state).toBe("ex…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/20]⎯
+
+ FAIL  tests/integration/inbound-code-db.integration.test.ts > INV-C9 운영자 확인 목록 — 보이는 값과 손으로 잇는 길 없음 > INV-C9 (S9): 보류 목록에는 도착 시각·바코드·택배사·보류 사유·닉네임 일치 여부(일치면 그 닉네임)만 — 실명·주소·전화·주문번호·6자리 없음
+AssertionError: expected [ 'arrived_at', …(17) ] to deeply equal [ 'arrived_at', 'carrier', …(11) ]
+
+- Expected
++ Received
+
+  [
+    "arrived_at",
++   "auto_return_at",
+    "carrier",
+    "deadline_at",
+    "id",
++   "in_storage",
++   "look",
+    "nickname",
++   "phone_last4",
+    "qr",
+    "reason",
+    "share_movable",
+    "shelf",
+    "source",
+    "state",
+    "suspected_theft",
++   "tier",
+    "waybill_no",
+  ]
+
+ ❯ tests/integration/inbound-code-db.integration.test.ts:896:37
+    894|     const row = rows.find((x) => x.waybill_no === barcode)!;
+    895|     // share_movable: 운영자 몫 옮기기를 받는 줄인지(참·거짓) — 사람·주문 칸이 아니다(INV-C11)
+    896|     expect(Object.keys(row).sort()).toEqual(
+       |                                     ^
+    897|       ["arrived_at", "carrier", "deadline_at", "id", "nickname", "qr",…
+    898|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/20]⎯
+
+ FAIL  tests/integration/inbound-nickname-db.integration.test.ts > INV-C12 운영자 잇기 — 운영자만, 문의한 계정의 결제 완료·입고 전 주문에만, 확인 표시 필수, 기록은 추가만 > INV-C12 (실패경로): 이미 이어졌거나 반송 대상인 상자·168시간이 지난 상자·6자리가 붙어 온 보류 상자는 잇지 않는다(55000)
+AssertionError: expected undefined to be '55000' // Object.is equality
+
+- Expected:
+"55000"
+
++ Received:
+undefined
+
+ ❯ tests/integration/inbound-nickname-db.integration.test.ts:355:88
+    353|     await holdNoCode(late, realName());
+    354|     psql(`update public.office_unmatched set arrived_at = now() - inte…
+    355|     expect((await link("fankkuk_staff", heldId(late), "별빛", g.boxIds[0…
+       |                                                                                        ^
+    356|     // 남의 6자리가 붙어 온 보류 상자(분쟁) — 6자리 없이 온 상자가 아니다
+    357|     await receiveWithCode(other.boxIds[0]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/20]⎯
+
+ FAIL  tests/integration/inbound-nickname-db.integration.test.ts > 리뷰 반영 — 운영자 잇기의 한계 (INV-C12 ②·③, INV-C7) > INV-C12 (S12b, 실패경로): 닉네임이 맞은 보류 상자는 그 계정이 아닌 팬에게 잇지 못한다(P0047) — 운영자 잇기는 닉네임 없음 상자의 길
+AssertionError: expected null to be 'linked' // Object.is equality
+
+- Expected:
+"linked"
+
++ Received:
+null
+
+ ❯ tests/integration/inbound-nickname-db.integration.test.ts:508:71
+    506|     expect(linkLogs(id)).toBe("");
+    507|     // 닉네임이 맞은 그 계정에게는 이을 수 있다
+    508|     expect((await link("fankkuk_staff", id, "별빛", g.boxIds[0])).data).…
+       |                                                                       ^
+    509|   });
+    510|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/20]⎯
+
+ FAIL  tests/integration/lock-order-db.integration.test.ts > INV-W12 자동 처리 — 주문마다·상자마다 같은 순서로 > INV-W12 (S12): 나갈 수 없게 된 검수 완료 상자의 반송 대기는 주문 줄을 쥐고 있으면 사무소 상자 줄을 잡기 전에 기다린다
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/integration/lock-order-db.integration.test.ts:163:3
+    161|   });
+    162|
+    163|   it("INV-W12 (S12): 나갈 수 없게 된 검수 완료 상자의 반송 대기는 주문 줄을 쥐고 있으면 사무소 상자 줄을…
+       |   ^
+    164|     const op = await staff();
+    165|     const g = await paidGift(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/20]⎯
+
+ FAIL  tests/integration/notifications-db.integration.test.ts > 연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3·N6) — manual/0011 뒤 > INV-N6 (S6d·S6e, manual/0016 뒤): 두 칸 모두 꺼진 별빛 — DB 의 종류마다 줄을 넣고 꺼내면 연락처는 판정 함수가 참일 때만 나온다
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/integration/notifications-db.integration.test.ts:995:3
+    993|   });
+    994|
+    995|   it("INV-N6 (S6d·S6e, manual/0016 뒤): 두 칸 모두 꺼진 별빛 — DB 의 종류마다 줄을 넣고 …
+       |   ^
+    996|     await withContact("byeolbit_fan", { notify_kakao: false, notify_em…
+    997|       const { g } = await arrivedGift();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/20]⎯
+
+ FAIL  tests/integration/notifications-db.integration.test.ts > 연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3·N6) — manual/0011 뒤 > INV-N6 (S6e, manual/0016 뒤): 두 칸 모두 꺼진 별빛 — 거절 알림은 확인된 이메일로 가고, 같은 별빛의 입고 줄은 빈 값
+AssertionError: expected 'byeolbit.fan@example.com' to be null
+
+- Expected:
+null
+
++ Received:
+"byeolbit.fan@example.com"
+
+ ❯ tests/integration/notifications-db.integration.test.ts:1051:46
+    1049|       const optional = rowId(g.orderId, "arrived", "byeolbit_fan");
+    1050|       await claimOne(optional);
+    1051|       expect((await contactValue(optional))).toBeNull();
+       |                                              ^
+    1052|     });
+    1053|   });
+ ❯ withContact tests/integration/notifications-db.integration.test.ts:905:7
+ ❯ tests/integration/notifications-db.integration.test.ts:1042:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/20]⎯
+
+ FAIL  tests/integration/notifications-dispatch.integration.test.ts > 보내는 일꾼 — DB 와 함께 (manual/0011 뒤) > INV-N6 (S6): 카카오 칸을 끈 팬의 입고 카카오 줄은 건너뛰고 이메일 줄은 보낸다
+AssertionError: expected 'skipped' to be 'sent' // Object.is equality
+
+Expected: "sent"
+Received: "skipped"
+
+ ❯ tests/integration/notifications-dispatch.integration.test.ts:243:55
+    241|       expect(psql(`select error_code from ${OUTBOX} where id = '${k}'`…
+    242|       expect(kakao.sent.some((m) => m.outboxId === k)).toBe(false);
+    243|       expect(statusOf(g.orderId, "arrived", "email")).toBe("sent");
+       |                                                       ^
+    244|     } finally {
+    245|       psql(`update pii.account_contacts set notify_kakao = ${saved ===…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/20]⎯
+
+ FAIL  tests/integration/return-address-db.integration.test.ts > 반송 주소 기한 (office-workflow INV-W15 S15c, notifications INV-N22) > INV-W15 · N22 (S15c·S22): 335시간 알림 없음, 336시간 재알림 상자마다 1(두 번 돌려도 1), 719시간 그대로, 720시간 처분 대상(다시 돌려도 그대로·재알림 늘지 않음)
+AssertionError: expected '2' to be '0' // Object.is equality
+
+Expected: "0"
+Received: "2"
+
+ ❯ tests/integration/return-address-db.integration.test.ts:188:74
+    186|     for (const qr of qrs) backdateReturnWaiting(qr, "335 hours");
+    187|     await runExpiry(g.orderNo);
+    188|     expect(orderNotices(g.orderId, "return_address_reminder", BYEOLBIT…
+       |                                                                          ^
+    189|     for (const qr of qrs) backdateReturnWaiting(qr, "336 hours");
+    190|     await runExpiry(g.orderNo);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/20]⎯
+
+ FAIL  tests/integration/signup-nickname-db.integration.test.ts > INV-U13·my-account INV-A5: 내 정보에서 닉네임을 바꿀 때도 같은 규칙 > INV-U13 (실패경로): 다른 사람이 쓰는 닉네임(대소문자·공백만 다름)으로 바꾸면 FKU04, 아무 칸도 바뀌지 않는다
+AssertionError: expected 'f' to be 't' // Object.is equality
+
+Expected: "t"
+Received: "f"
+
+ ❯ tests/integration/signup-nickname-db.integration.test.ts:241:103
+    239|     expect(r.error?.code).toBe("FKU04");
+    240|     expect(nicknameOf(SEED.fanId)).toBe("별빛");
+    241|     expect(psql(`select notify_kakao from pii.account_contacts where a…
+       |                                                                                                       ^
+    242|   });
+    243|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/20]⎯
+
+
+ Test Files  12 failed | 94 passed (106)
+      Tests  20 failed | 2283 passed (2303)
+   Start at  19:37:34
+   Duration  7976.57s (transform 3.25s, setup 344.30s, import 127.59s, tests 7470.35s, environment 7ms)
+
+JSON report written to C:/Users/PC/AppData/Local/Temp/fk-integration-5Hewcl/result.json
+통합 시험 2303개 — 통과 2283 · 실패 20(기준선 16 · 새 실패 4) · 기준선 항목 16 · 오늘 2026-10-31
+기준선 검사 실패 4건
+  - 새 실패: tests/integration/notifications-db.integration.test.ts > 연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3·N6) — manual/0011 뒤 INV-N6 (S6d·S6e, manual/0016 뒤): 두 칸 모두 꺼진 별빛 — DB 의 종류마다 줄을 넣고 꺼내면 연락처는 판정 함수가 참일 때만 나온다
+  - 새 실패: tests/integration/notifications-db.integration.test.ts > 연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3·N6) — manual/0011 뒤 INV-N6 (S6e, manual/0016 뒤): 두 칸 모두 꺼진 별빛 — 거절 알림은 확인된 이메일로 가고, 같은 별빛의 입고 줄은 빈 값
+  - 새 실패: tests/integration/notifications-dispatch.integration.test.ts > 보내는 일꾼 — DB 와 함께 (manual/0011 뒤) INV-N6 (S6): 카카오 칸을 끈 팬의 입고 카카오 줄은 건너뛰고 이메일 줄은 보낸다
+  - 새 실패: tests/integration/signup-nickname-db.integration.test.ts > INV-U13·my-account INV-A5: 내 정보에서 닉네임을 바꿀 때도 같은 규칙 INV-U13 (실패경로): 다른 사람이 쓰는 닉네임(대소문자·공백만 다름)으로 바꾸면 FKU04, 아무 칸도 바뀌지 않는다
