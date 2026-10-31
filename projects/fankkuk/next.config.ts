@@ -40,6 +40,12 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },
+      {
+        // 알림톡 로그인 링크 페이지는 주소에 1회용 토큰이 있다 — 어디로 가는 요청에도 출처조차 싣지 않는다(link-login INV-K5).
+        // 같은 이름의 헤더는 나중 항목이 이긴다(Next 문서 headers). 라우트가 보내는 값은 이 설정에 덮이므로 여기서 정한다.
+        source: "/login/link",
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      },
     ];
   },
   // 개발 서버는 localhost 가 아닌 주소에서 오는 개발용 파일 요청을 막는다. 127.0.0.1 로 열면 화면 스크립트가

@@ -3,6 +3,7 @@ import type { CookieOptions } from "@supabase/ssr";
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakePasswordAttempts } from "@/entities/session/api/password-attempts-fake";
+import { sessionCookieMaxAgeSeconds } from "@/entities/session/model/session-lifetime";
 import { SESSION_ONLY_COOKIE } from "@/shared/api/supabase/session-cookies";
 import { fakeAuthFetch, UNIT_AUTH_COOKIE, UNIT_CONFIG, unitSessionCookieValue } from "@/shared/api/supabase/session-cookies-fake-auth";
 
@@ -22,7 +23,16 @@ vi.mock("next/headers", () => ({
     },
   }),
 }));
-vi.mock("@/shared/api/supabase/admin", () => ({ createAdminSupabase: () => ({}) }));
+// 판정 재료(session-login INV-L16)는 늘 「팬」 — 「유지」 켬 쿠키 유효기간이 팬의 절대 기간인지 본다
+vi.mock("@/shared/api/supabase/admin", () => ({
+  createAdminSupabase: () => ({
+    rpc: async (fn: string) => {
+      if (fn !== "session_lifetime_facts") throw new Error(`모르는 함수 ${fn}`);
+      const now = new Date().toISOString();
+      return { data: [{ role: "fan", is_owner: false, created_at: now, last_seen_at: now, db_now: now }], error: null };
+    },
+  }),
+}));
 vi.mock("@/entities/session/api/password-attempts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/session/api/password-attempts")>()),
   passwordAttemptsOf: () => fakePasswordAttempts().attempts,
@@ -47,7 +57,6 @@ async function postNow(body: unknown): Promise<{ res: Response; written: typeof 
 }
 const authWrites = (written: typeof sets) => written.filter((s) => s.name.startsWith(UNIT_AUTH_COOKIE) && s.value !== "");
 const markerLines = (res: Response) => res.headers.getSetCookie().filter((l) => l.startsWith(`${SESSION_ONLY_COOKIE}=`));
-const FOUR_HUNDRED_DAYS = 400 * 24 * 60 * 60;
 
 /**
  * 실패 쪽 시험은 비밀번호 확인 답을 늦게 준다. 그래야 시작 때 건 토큰 갱신의 쿠키 쓰기가 응답 전에 끝나
@@ -89,13 +98,13 @@ describe("INV-L15: 로그인 실패 응답의 로그인 쿠키는 원래 표시�
     expect(written.filter((s) => s.name === SESSION_ONLY_COOKIE)).toEqual([]);
   });
 
-  it("INV-L15 (S13e, 실패경로): 표시가 없는(켜고 로그인한) 사람이 끄고 틀리면 갱신 쿠키는 원래대로 만료 시각이 붙는다", async () => {
+  it("INV-L15 (S13e, 실패경로): 표시가 없는(켜고 로그인한) 사람이 끄고 틀리면 갱신 쿠키는 원래대로 만료 시각(그 역할의 절대 기간, INV-L16)이 붙는다", async () => {
     requestCookies.set(UNIT_AUTH_COOKIE, unitSessionCookieValue(5));
     useAuth(false);
     const { res, written } = await postNow({ ...creds, keepSignedIn: false });
     expect(res.status).toBe(401);
     expect(authWrites(written).length).toBeGreaterThan(0);
-    for (const c of authWrites(written)) expect(c.options?.maxAge).toBe(FOUR_HUNDRED_DAYS);
+    for (const c of authWrites(written)) expect(c.options?.maxAge).toBe(sessionCookieMaxAgeSeconds("member"));
     expect(markerLines(res)).toEqual([]);
   });
 
@@ -122,13 +131,13 @@ describe("INV-L15: 로그인 성공 응답의 로그인 쿠키는 고른 값대�
     }
   });
 
-  it("INV-L15 (S13c): 켜고 성공하면 남은 표시가 있어도 로그인 쿠키에 만료 시각이 붙는다", async () => {
+  it("INV-L15 (S13c): 켜고 성공하면 남은 표시가 있어도 로그인 쿠키에 만료 시각(그 역할의 절대 기간, INV-L16)이 붙는다", async () => {
     requestCookies.set(SESSION_ONLY_COOKIE, "1");
     requestCookies.set(UNIT_AUTH_COOKIE, unitSessionCookieValue(5));
     useAuth(true);
     const { res, written } = await postNow({ ...creds, keepSignedIn: true });
     expect(res.status).toBe(200);
     expect(authWrites(written).length).toBeGreaterThan(0);
-    for (const c of authWrites(written)) expect(c.options?.maxAge).toBe(FOUR_HUNDRED_DAYS);
+    for (const c of authWrites(written)) expect(c.options?.maxAge).toBe(sessionCookieMaxAgeSeconds("member"));
   });
 });

@@ -20,7 +20,8 @@ describe("readSiteHeader — 팬 사이드바", () => {
     const { client, called } = recordingClient();
     const props = await readSiteHeader(client, FAN, "/home");
     expect(called).toEqual(["my_action_items"]);
-    expect(props).toEqual({ role: "fan", current: "/home", nickname: "별빛", actionCount: 0 });
+    // viewerId: 상단 바가 다른 계정의 폼 임시 저장을 지우는 데만 쓴다(session-login INV-L20) — 본인 ID 뿐이다
+    expect(props).toEqual({ role: "fan", current: "/home", nickname: "별빛", actionCount: 0, viewerId: FAN.userId });
   });
 
   it("화면이 처리할 일을 이미 읽었으면 다시 읽지 않고 그 줄 수를 쓴다", async () => {

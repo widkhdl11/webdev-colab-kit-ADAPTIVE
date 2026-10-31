@@ -35,7 +35,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-async function authWritesAfterSignIn(opts?: { sessionOnly: boolean }) {
+async function authWritesAfterSignIn(opts?: { sessionOnly: boolean; maxAge?: number }) {
   const supabase = await createRequestSupabase(opts);
   await supabase.auth.signInWithPassword({ email: "fan@login.fankkuk.invalid", password: "pw" });
   const w = sets.filter((s) => s.name.startsWith(UNIT_AUTH_COOKIE));
@@ -52,13 +52,16 @@ describe("INV-L15: 라우트의 세션 클라이언트도 같은 표시 판정�
     }
   });
 
-  it("INV-L15 (S13c): 표시 쿠키가 없으면 만료 시각이 붙는다", async () => {
-    for (const c of await authWritesAfterSignIn()) expect(c.options?.maxAge).toBe(400 * 24 * 60 * 60);
+  it("INV-L15 · INV-L16 (S13c): 표시 쿠키가 없어도 역할을 모르는 자리(화면·일반 라우트)는 만료 시각을 뗀다 — 라이브러리 400일이 남지 않는다", async () => {
+    for (const c of await authWritesAfterSignIn()) {
+      expect(c.options?.maxAge).toBeUndefined();
+      expect(c.options?.expires).toBeUndefined();
+    }
   });
 
   it("INV-L15 (S13c): 로그인처럼 고른 값을 넘기면 남은 표시보다 그 값이 이긴다(켬)", async () => {
     requestCookies.set(SESSION_ONLY_COOKIE, "1");
-    for (const c of await authWritesAfterSignIn({ sessionOnly: false })) expect(c.options?.maxAge).toBe(400 * 24 * 60 * 60);
+    for (const c of await authWritesAfterSignIn({ sessionOnly: false, maxAge: 12_345 })) expect(c.options?.maxAge).toBe(12_345);
   });
 
   it("INV-L15 (S13): 고른 값이 끔이면 표시가 아직 없어도 만료 시각 없이 쓴다", async () => {

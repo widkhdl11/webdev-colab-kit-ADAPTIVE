@@ -10,7 +10,7 @@ import { createSessionClient, deferSessionCookieWrites, isSessionOnly } from "./
  * 로그인 쿠키를 만료 시각 없이 쓸지(session-login INV-L15)는 요청의 표시 쿠키로 정한다.
  * 로그인 라우트만 방금 고른 값을 sessionOnly 로 넘긴다 — 남아 있는 표시보다 그 값이 이긴다.
  */
-export async function createRequestSupabase(opts: { sessionOnly?: boolean } = {}): Promise<SupabaseClient> {
+export async function createRequestSupabase(opts: { sessionOnly?: boolean; maxAge?: number } = {}): Promise<SupabaseClient> {
   const store = await cookies();
   return createSessionClient(
     readSupabaseConfig(process.env),
@@ -25,7 +25,8 @@ export async function createRequestSupabase(opts: { sessionOnly?: boolean } = {}
       },
     },
     process.env,
-    { sessionOnly: opts.sessionOnly ?? isSessionOnly(store) },
+    // maxAge(session-login INV-L16): 역할을 아는 쪽만 넘긴다. 안 넘기면 만료 시각을 뗀다 — 요청마다 갱신(proxy)이 역할 기간으로 다시 쓴다
+    { sessionOnly: opts.sessionOnly ?? isSessionOnly(store), maxAge: opts.maxAge },
   );
 }
 
@@ -38,7 +39,7 @@ export async function createRequestSupabase(opts: { sessionOnly?: boolean } = {}
 export async function createDeferredRequestSupabase(): Promise<{
   supabase: SupabaseClient;
   storedSessionOnly: boolean;
-  decide(sessionOnly: boolean): void;
+  decide(sessionOnly: boolean, maxAge?: number): void;
 }> {
   const store = await cookies();
   const deferred = deferSessionCookieWrites((list) => {

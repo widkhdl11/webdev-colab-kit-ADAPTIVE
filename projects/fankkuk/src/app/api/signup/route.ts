@@ -8,6 +8,7 @@ import { createAdminSupabase } from "@/shared/api/supabase/admin";
 import { createDeferredRequestSupabase } from "@/shared/api/supabase/server";
 import { sessionOnlyMarker } from "@/shared/api/supabase/session-cookies";
 import { KEEP_SIGNED_IN_DEFAULT } from "@/entities/session/model/keep-signed-in";
+import { sessionActivityOf, sessionCookieMaxAgeFor } from "@/entities/session/api/session-activity";
 import { decodeUtm, UTM_COOKIE, utmCookieOptions } from "@/shared/lib/attribution/utm";
 import { isProduction } from "@/shared/lib/env/is-production";
 import { handlePrivateJsonPost, REFINED_PRIVATE_JSON_COPY } from "@/shared/lib/http/private-json";
@@ -24,6 +25,7 @@ export async function POST(req: NextRequest) {
     const { supabase, storedSessionOnly, decide } = await createDeferredRequestSupabase();
     const sessionOnly = !KEEP_SIGNED_IN_DEFAULT;
     let loggedIn = false;
+    let maxAge: number | undefined;
     try {
       const result = await signUp(
         {
@@ -43,6 +45,8 @@ export async function POST(req: NextRequest) {
       jar.set(VERIFICATION_COOKIE, "", { ...verificationCookieOptions(process.env), maxAge: 0 });
       jar.set(UTM_COOKIE, "", { ...utmCookieOptions(isProduction(process.env)), maxAge: 0 });
       loggedIn = result.loggedIn;
+      // session-login INV-L16: 「유지」 켬이면 그 역할의 절대 기간(가입은 팬·크리에이터 — 기본값은 꺼짐이라 보통 쓰지 않는다)
+      maxAge = await sessionCookieMaxAgeFor(supabase.auth, sessionActivityOf(createAdminSupabase()));
       // INV-L15: 자동 로그인이 됐을 때만 표시 쿠키를 쓴다 — 다음 요청부터 갱신(proxy)이 이 표시를 본다
       if (loggedIn) {
         const marker = sessionOnlyMarker(sessionOnly, process.env);
@@ -50,7 +54,7 @@ export async function POST(req: NextRequest) {
       }
       return { status: 200, body: { loggedIn: result.loggedIn, mailSent: result.mailSent } };
     } finally {
-      decide(loggedIn ? sessionOnly : storedSessionOnly);
+      decide(loggedIn ? sessionOnly : storedSessionOnly, maxAge);
     }
   }, REFINED_PRIVATE_JSON_COPY);
 }

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { DRAFT_MAX_AGE_MS } from "@/entities/session/model/session-lifetime";
+import { DraftPurge } from "@/shared/lib/form-draft/use-form-draft";
 import { IntentPrefetch } from "@/shared/ui/intent-prefetch";
 import { HeaderMemoryProvider } from "@/widgets/site-header/model/header-memory";
 import "./globals.css";
@@ -47,6 +49,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <HeaderMemoryProvider>{children}</HeaderMemoryProvider>
         {/* 링크에 마우스를 올리면 그 페이지를 통째로 미리 받는다(shared/ui/intent-prefetch) */}
         <IntentPrefetch />
+        {/* session-login INV-L20: 어느 화면을 열든 만료된 폼 임시 저장을 지운다(로그인한 사람이 누구인지는 여기서 모른다 — 다른 계정 것은 상단 바·운영자 틀이 지운다) */}
+        <DraftPurge userId={null} maxAgeMs={DRAFT_MAX_AGE_MS} />
       </body>
     </html>
   );

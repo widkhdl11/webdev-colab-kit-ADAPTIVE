@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
+import { useFormDraft } from "@/shared/lib/form-draft/use-form-draft";
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { revgiftPriceOf, serviceFeeOf } from "@/entities/payment/model/charge";
 import { PRICED_TIERS, checkPriceTable, type PriceTable, type PricedTier, type TierPrice } from "@/entities/payment/model/price-table";
@@ -49,6 +50,10 @@ export function PricingForm({ table, editable }: { table: PriceTable; editable: 
   const [draft, setDraft] = useState<Draft>(base);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  // 고치던 값 임시 저장(session-login INV-L20). 직원 화면은 입력칸이 없어 저장할 것도 없다.
+  // 서버 요금표를 기준값으로 함께 남긴다 — 다시 열 때 그사이 요금표가 바뀌었으면 옛 입력으로 덮지 않는다
+  const formRef = useRef<HTMLFormElement>(null);
+  const { clear } = useFormDraft(formRef, "admin-pricing-form", { baseline: JSON.stringify(table) });
 
   const numbers = numbersOf(draft);
   const checked = checkPriceTable(numbers);
@@ -74,6 +79,7 @@ export function PricingForm({ table, editable }: { table: PriceTable; editable: 
     const outcome = await postPricing(pricingRowsOf(checked.table));
     setBusy(false);
     if (outcome.kind === "ok") {
+      clear();
       const saved = draftOf(checked.table);
       setBase(saved);
       setDraft(saved);
@@ -85,7 +91,7 @@ export function PricingForm({ table, editable }: { table: PriceTable; editable: 
   }
 
   return (
-    <form onSubmit={submit} noValidate>
+    <form ref={formRef} onSubmit={submit} noValidate>
       <div className={a.tblWrap}>
         <table className={a.tbl} style={{ minWidth: 900 }}>
           <caption className="sr-only">구간별 요금표</caption>

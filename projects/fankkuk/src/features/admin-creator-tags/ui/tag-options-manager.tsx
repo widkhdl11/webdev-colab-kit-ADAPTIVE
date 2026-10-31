@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ComponentProps, type FormEvent, type RefObject } from "react";
 import { TAG_CUSTOM_MAX, type AdminTagOption, type BannedWord, type CustomTagCount } from "@/entities/creator/model/creator-tags";
 import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import { charCount } from "@/shared/lib/validation/char-count";
 import a from "@/shared/ui/admin.module.css";
+import { useFormDraft } from "@/shared/lib/form-draft/use-form-draft";
 import { postTagOptions } from "../api/post-tag-options-client";
 import type { TagOptionWrite } from "../model/save-tag-options";
 
@@ -53,6 +54,19 @@ function ErrorLine({ id, message }: { id: string; message: string | null }) {
   );
 }
 
+// 줄마다 여는 「이름 고치기」 칸 — 열렸을 때만 그려져서 양식과 함께 생기는 부품에서 임시 저장을 붙인다(session-login INV-L20).
+// 지금 이름(서버 값)을 기준값으로 남겨, 그사이 이름이 바뀌었으면 옛 입력으로 덮지 않는다. clear 는 칸이 사라진 뒤에도 쓰므로 clearRef 에 남긴다.
+type DraftFormProps = Omit<ComponentProps<"form">, "ref"> & { draftKey: string; baseline: string; clearRef: RefObject<(() => void) | null> };
+
+function DraftForm({ draftKey, baseline, clearRef, ...props }: DraftFormProps) {
+  const ref = useRef<HTMLFormElement>(null);
+  const { clear } = useFormDraft(ref, draftKey, { baseline });
+  useEffect(() => {
+    clearRef.current = clear;
+  }, [clear, clearRef]);
+  return <form ref={ref} {...props} />;
+}
+
 const nameOk = (s: string) => charCount(s.trim()) >= 1 && charCount(s.trim()) <= TAG_CUSTOM_MAX;
 const NAME_LIMIT = `이름은 1~${TAG_CUSTOM_MAX}자로 적어 주세요.`;
 
@@ -67,6 +81,10 @@ export function TagOptionsTable({ options, onDone }: { options: readonly AdminTa
   const [lastForm, setLastForm] = useState<"rename" | "add" | null>(null);
   // 「그만두기」 뒤 포커스를 돌려줄 줄마다의 「이름 고치기」 버튼
   const renameButtons = useRef(new Map<string, HTMLButtonElement>());
+  // 새 선택지 칸 임시 저장(session-login INV-L20). 줄마다 여는 이름 고치기 칸은 DraftForm 이 따로 저장한다
+  const addFormRef = useRef<HTMLFormElement>(null);
+  const { clear: clearAddDraft } = useFormDraft(addFormRef, "admin-tag-option-new");
+  const clearRenameDraft = useRef<(() => void) | null>(null);
   const message = localError ?? error;
 
   async function rename(e: FormEvent, option: AdminTagOption) {
@@ -77,7 +95,10 @@ export function TagOptionsTable({ options, onDone }: { options: readonly AdminTa
       return;
     }
     setLocalError(null);
-    if (await send({ kind: "rename", id: option.id, name: draft }, `「${option.name}」을 「${draft.trim()}」(으)로 고쳤어요.`)) setEditingId(null);
+    if (await send({ kind: "rename", id: option.id, name: draft }, `「${option.name}」을 「${draft.trim()}」(으)로 고쳤어요.`)) {
+      clearRenameDraft.current?.();
+      setEditingId(null);
+    }
   }
 
   async function add(e: FormEvent) {
@@ -88,7 +109,10 @@ export function TagOptionsTable({ options, onDone }: { options: readonly AdminTa
       return;
     }
     setLocalError(null);
-    if (await send({ kind: "add", name: newName }, `「${newName.trim()}」 선택지를 목록 끝에 더했어요.`)) setNewName("");
+    if (await send({ kind: "add", name: newName }, `「${newName.trim()}」 선택지를 목록 끝에 더했어요.`)) {
+      clearAddDraft();
+      setNewName("");
+    }
   }
 
   return (
@@ -120,7 +144,14 @@ export function TagOptionsTable({ options, onDone }: { options: readonly AdminTa
                   <td className={`${a.mono} ${a.nowrap}`}>{i + 1}</td>
                   <td>
                     {editingId === o.id ? (
-                      <form onSubmit={(e) => void rename(e, o)} className={a.btnRow} noValidate>
+                      <DraftForm
+                        draftKey={`admin-tag-option-rename:${o.id}`}
+                        baseline={o.name}
+                        clearRef={clearRenameDraft}
+                        onSubmit={(e) => void rename(e, o)}
+                        className={a.btnRow}
+                        noValidate
+                      >
                         <label className="sr-only" htmlFor={`tag-rename-${o.id}`}>
                           {o.name} 새 이름
                         </label>
@@ -143,13 +174,14 @@ export function TagOptionsTable({ options, onDone }: { options: readonly AdminTa
                           type="button"
                           className={`${a.btn} ${a.btnSm} ${a.btnLine}`}
                           onClick={() => {
+                            clearRenameDraft.current?.(); // [취소]로 버림(INV-L20)
                             setEditingId(null);
                             renameButtons.current.get(o.id)?.focus();
                           }}
                         >
                           그만두기
                         </button>
-                      </form>
+                      </DraftForm>
                     ) : (
                       <strong>{o.name}</strong>
                     )}
@@ -184,6 +216,7 @@ export function TagOptionsTable({ options, onDone }: { options: readonly AdminTa
                         else renameButtons.current.delete(o.id);
                       }}
                       onClick={() => {
+                        clearRenameDraft.current?.(); // 다른 줄을 고치러 가면 앞 줄 입력은 버린 것이다(INV-L20)
                         setEditingId(o.id);
                         setDraft(o.name);
                         setLocalError(null);
@@ -212,7 +245,7 @@ export function TagOptionsTable({ options, onDone }: { options: readonly AdminTa
           </tbody>
         </table>
       </div>
-      <form className={a.btnRow} onSubmit={(e) => void add(e)} noValidate>
+      <form ref={addFormRef} className={a.btnRow} onSubmit={(e) => void add(e)} noValidate>
         <div className={a.field} style={{ flex: 1 }}>
           <label htmlFor="tag-option-new">새 선택지 (1~{TAG_CUSTOM_MAX}자, 목록 끝에 붙어요)</label>
           <input
@@ -363,6 +396,9 @@ export function BannedWordsTable({ words, onDone }: { words: readonly BannedWord
   const [localError, setLocalError] = useState<string | null>(null);
   // 오류 줄이 어느 쪽 것인지 — 입력칸의 aria-invalid 는 더하기에서 난 오류일 때만
   const [lastForm, setLastForm] = useState<"add" | "remove" | null>(null);
+  // 새 금칙어 칸 임시 저장(session-login INV-L20)
+  const addFormRef = useRef<HTMLFormElement>(null);
+  const { clear: clearAddDraft } = useFormDraft(addFormRef, "admin-tag-banned-new");
   const message = localError ?? error;
 
   async function remove(w: BannedWord) {
@@ -379,7 +415,10 @@ export function BannedWordsTable({ words, onDone }: { words: readonly BannedWord
       return;
     }
     setLocalError(null);
-    if (await send({ kind: "ban_add", word: newWord }, `「${newWord.trim()}」을 금칙어에 더했어요.`)) setNewWord("");
+    if (await send({ kind: "ban_add", word: newWord }, `「${newWord.trim()}」을 금칙어에 더했어요.`)) {
+      clearAddDraft();
+      setNewWord("");
+    }
   }
 
   return (
@@ -405,7 +444,7 @@ export function BannedWordsTable({ words, onDone }: { words: readonly BannedWord
           ))}
         </ul>
       )}
-      <form className={a.btnRow} onSubmit={(e) => void add(e)} noValidate>
+      <form ref={addFormRef} className={a.btnRow} onSubmit={(e) => void add(e)} noValidate>
         <div className={a.field} style={{ flex: 1 }}>
           <label htmlFor="tag-banned-new">새 금칙어 (1~{TAG_CUSTOM_MAX}자)</label>
           <input

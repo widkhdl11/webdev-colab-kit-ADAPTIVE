@@ -23,11 +23,11 @@ export async function readSiteHeader(
 ): Promise<SiteHeaderProps> {
   if (viewer?.role === "fan") {
     const actionItems = actions === undefined ? await readActionItemsOrNull(client) : actions;
-    return { role: "fan", current, nickname: viewer.nickname ?? "", actionCount: actionItems?.length ?? 0 };
+    return { role: "fan", current, nickname: viewer.nickname ?? "", actionCount: actionItems?.length ?? 0, viewerId: viewer.userId };
   }
   if (viewer?.role === "creator") {
     const items = actions === undefined ? await readCreatorActionItemsOrNull(client) : actions;
-    return { role: "creator", current, nickname: viewer.nickname ?? "", actionCount: items?.length ?? 0 };
+    return { role: "creator", current, nickname: viewer.nickname ?? "", actionCount: items?.length ?? 0, viewerId: viewer.userId };
   }
   return { role: "guest", current };
 }

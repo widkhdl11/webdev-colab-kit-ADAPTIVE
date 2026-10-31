@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
+import { useFormDraft } from "@/shared/lib/form-draft/use-form-draft";
 import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import { charCount } from "@/shared/lib/validation/char-count";
 import a from "@/shared/ui/admin.module.css";
@@ -25,6 +26,9 @@ export function NoticeForm({ editing, onStopEditing, onSubmitStart, onSaved }: P
   const [pinned, setPinned] = useState(editing?.pinned ?? false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  // 쓰던 내용 임시 저장(session-login INV-L20) — 새 글과 고치는 글마다 따로
+  const formRef = useRef<HTMLFormElement>(null);
+  const { clear } = useFormDraft(formRef, `admin-notice-form:${editing?.slug ?? "new"}`, { baseline: editing ? JSON.stringify(editing) : undefined });
 
   const titleCount = charCount(title.trim());
   // 본문은 DB 처럼 앞뒤를 다듬기 전 글자 수로 센다
@@ -50,6 +54,7 @@ export function NoticeForm({ editing, onStopEditing, onSubmitStart, onSaved }: P
       if (isStaleFailure(outcome)) router.refresh();
       return;
     }
+    clear();
     setTitle("");
     setBody("");
     setPinned(false);
@@ -61,7 +66,7 @@ export function NoticeForm({ editing, onStopEditing, onSubmitStart, onSaved }: P
   const errorRef = message ? " notice-form-error" : "";
 
   return (
-    <form className={a.stack} style={{ gap: 12 }} onSubmit={submit} noValidate>
+    <form ref={formRef} className={a.stack} style={{ gap: 12 }} onSubmit={submit} noValidate>
       {editing && (
         <p className={a.hint}>고쳐서 올리면 본문이 빈 줄로 나눈 문단 글로 저장돼요. 원래 글의 소제목·링크 꾸밈은 사라지고 글자만 남아요.</p>
       )}
@@ -103,7 +108,7 @@ export function NoticeForm({ editing, onStopEditing, onSubmitStart, onSaved }: P
         </span>
       </div>
       <label className={a.check}>
-        <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} /> 맨 위에 고정하기
+        <input id="notice-pinned" type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} /> 맨 위에 고정하기
       </label>
       <div role="status">
         {message && (
@@ -120,7 +125,10 @@ export function NoticeForm({ editing, onStopEditing, onSubmitStart, onSaved }: P
           {busy ? "올리는 중…" : "올리기"}
         </button>
         {editing && (
-          <button type="button" className={`${a.btn} ${a.btnLine}`} onClick={onStopEditing} aria-disabled={busy}>
+          <button type="button" className={`${a.btn} ${a.btnLine}`} onClick={() => {
+              clear(); // [취소]로 버림(INV-L20)
+              onStopEditing();
+            }} aria-disabled={busy}>
             고치기 그만두기
           </button>
         )}

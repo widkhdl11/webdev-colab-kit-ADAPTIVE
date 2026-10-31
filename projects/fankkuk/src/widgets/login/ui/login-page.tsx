@@ -13,14 +13,17 @@ import s from "./login.module.css";
 // 「로그인 상태 유지」는 고른 값을 keepSignedIn 으로 보낸다. 끄면 서버가 로그인 쿠키를 브라우저를 닫으면 지워지는 쿠키로 쓴다(session-login INV-L15).
 // 돌아갈 주소(next)는 주소창 값을 그대로 서버에 보내고, 서버가 검사해 돌려준 경로로만 간다(session-login INV-L13).
 // 비밀번호 재설정 요청은 이 화면에 두지 않는다 — 카드 아래 링크로 /password/forgot 에 간다(UX 명세 login.md 「바꿀 것」 2).
+// notice: 서버가 고른 안내 하나 — 알림톡 로그인 링크를 못 씀(link-login INV-K4)·로그인 유지 기간으로 끝남(session-login INV-L17).
+// 안내는 오류가 아니다 — 같은 자리에 알림(role=status)으로 보이고 칸에 aria-invalid 를 붙이지 않는다. 로그인을 누르면 지운다.
 
 type LoginResponse = { ok?: boolean; message?: string; next?: string };
 
-export function LoginPage({ next }: { next?: string }) {
+export function LoginPage({ next, notice }: { next?: string; notice?: string | null }) {
   const id = useId();
   const f = (name: string) => `${id}-${name}`;
 
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(notice ?? null);
   const [pending, setPending] = useState(false);
   const [keepSignedIn, setKeepSignedIn] = useState(KEEP_SIGNED_IN_DEFAULT);
 
@@ -32,6 +35,7 @@ export function LoginPage({ next }: { next?: string }) {
     const password = (form.elements.namedItem(f("pw")) as HTMLInputElement | null)?.value ?? "";
     setPending(true);
     setError(null);
+    setInfo(null);
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -96,6 +100,12 @@ export function LoginPage({ next }: { next?: string }) {
               <label className="check">
                 <input type="checkbox" checked={keepSignedIn} onChange={(e) => setKeepSignedIn(e.currentTarget.checked)} /> 로그인 상태 유지
               </label>
+              {info && !error && (
+                // 안내 상자 — 오류 상자(.err)와 같은 자리·모양에 중립 색(사이트 토큰). 새 CSS 파일 없이 둔다
+                <p role="status" style={{ padding: 16, borderRadius: "var(--r-btn)", background: "var(--surface)", color: "var(--ink)", fontWeight: "var(--fw-bold)" }}>
+                  <Sentences text={info} />
+                </p>
+              )}
               {error && (
                 // 잠김 안내처럼 두 문장이면 문장마다 줄(design-rules 29절 줄바꿈 3)
                 <p className="err" id={f("error")} role="alert">

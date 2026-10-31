@@ -5,6 +5,9 @@ export const UNIT_CONFIG = { url: "https://fkunit.supabase.co", anonKey: "unit-a
 /** 위 주소로 라이브러리가 짓는 로그인 쿠키 이름(조각이면 뒤에 .0 .1 이 붙는다). */
 export const UNIT_AUTH_COOKIE = "sb-fkunit-auth-token";
 
+/** 가짜 토큰에 든 세션 id(접근 토큰의 session_id) */
+export const UNIT_SESSION_ID = "99999999-8888-4777-8666-555555555555";
+
 export const UNIT_USER = {
   id: "11111111-2222-4333-8444-555555555555",
   aud: "authenticated",
@@ -19,7 +22,7 @@ const b64url = (s: string) => Buffer.from(s).toString("base64url");
 
 function accessToken(expSeconds: number): string {
   const header = b64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const payload = b64url(JSON.stringify({ sub: UNIT_USER.id, aud: "authenticated", role: "authenticated", exp: expSeconds }));
+  const payload = b64url(JSON.stringify({ sub: UNIT_USER.id, aud: "authenticated", role: "authenticated", exp: expSeconds, session_id: UNIT_SESSION_ID }));
   return `${header}.${payload}.unit-signature`;
 }
 

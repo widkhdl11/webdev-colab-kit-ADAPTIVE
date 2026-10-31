@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, type ReactNode } from "react";
 import { VERIFICATION_MEMO_MAX } from "@/entities/creator/model/creator-verification";
+import { useFormDraft } from "@/shared/lib/form-draft/use-form-draft";
 import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import { charCount } from "@/shared/lib/validation/char-count";
 import a from "@/shared/ui/admin.module.css";
@@ -45,6 +46,10 @@ export function DecisionDialog<R extends string>(p: Props<R>) {
   const memoCount = charCount(memo.trim());
   const memoBad = memoCount > VERIFICATION_MEMO_MAX;
   const labels = p.reasonLabels;
+  // 고른 사유·메모 임시 저장(session-login INV-L20) — 창마다 따로. 창이 닫히면(닫기·Esc·처리 성공) 지운다.
+  // 창 안의 칸을 폼 하나로 묶으려고 감싼다 — display: contents 라 배치는 그대로다
+  const formRef = useRef<HTMLFormElement>(null);
+  const { clear } = useFormDraft(formRef, `admin-creator-verify:${p.idBase}`);
 
   function open() {
     setError(null);
@@ -95,7 +100,9 @@ export function DecisionDialog<R extends string>(p: Props<R>) {
         onCancel={(e) => {
           if (busy) e.preventDefault();
         }}
+        onClose={clear}
       >
+        <form ref={formRef} style={{ display: "contents" }} noValidate onSubmit={(e) => e.preventDefault()}>
         <div className={a.dlgBody}>
           <h2 id={titleId}>{p.title}</h2>
           {p.body}
@@ -148,6 +155,7 @@ export function DecisionDialog<R extends string>(p: Props<R>) {
             {busy ? p.busyLabel : p.confirmLabel}
           </button>
         </div>
+        </form>
       </dialog>
     </>
   );

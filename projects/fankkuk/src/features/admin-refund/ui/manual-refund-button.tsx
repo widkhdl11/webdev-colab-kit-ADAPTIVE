@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useId, useRef, useState } from "react";
 import type { RefundUnitKind } from "@/entities/payment/model/payment-rows";
+import { useFormDraft } from "@/shared/lib/form-draft/use-form-draft";
 import { charCount } from "@/shared/lib/validation/char-count";
 import a from "@/shared/ui/admin.module.css";
 import { postManualRefund } from "../api/post-manual-refund-client";
@@ -41,6 +42,10 @@ export function ManualRefundButton({ unitKind, unitId, orderNo, payerNickname, a
   const errorId = `${base}-error`;
   // DB 와 같은 기준 — 앞뒤 빈칸을 뺀 글자 수
   const memoCount = charCount(memo.trim());
+  // 메모 임시 저장(session-login INV-L20) — 환불 건마다 따로. 창이 닫히면(닫기·Esc·처리 성공) 지운다.
+  // 창 안의 칸을 폼 하나로 묶으려고 감싼다 — display: contents 라 배치는 그대로다. 칸 id 는 화면마다 달라질 수 있어 name 으로 저장한다
+  const formRef = useRef<HTMLFormElement>(null);
+  const { clear } = useFormDraft(formRef, `admin-manual-refund:${unitKind}:${unitId}`);
 
   function open() {
     setError(null);
@@ -83,7 +88,9 @@ export function ManualRefundButton({ unitKind, unitId, orderNo, payerNickname, a
         onCancel={(e) => {
           if (busy) e.preventDefault(); // 처리 중에는 Esc 로도 닫히지 않는다
         }}
+        onClose={clear}
       >
+        <form ref={formRef} style={{ display: "contents" }} noValidate onSubmit={(e) => e.preventDefault()}>
         <div className={a.dlgBody}>
           <h2 id={titleId}>직접 돌려준 환불을 완료로 적을까요?</h2>
           <dl className={a.kv}>
@@ -103,6 +110,7 @@ export function ManualRefundButton({ unitKind, unitId, orderNo, payerNickname, a
             <label htmlFor={memoId}>메모 (어떻게 돌려줬는지, 필수)</label>
             <textarea
               id={memoId}
+              name="memo"
               className={a.textarea}
               style={{ minHeight: 80 }}
               aria-required="true"
@@ -142,6 +150,7 @@ export function ManualRefundButton({ unitKind, unitId, orderNo, payerNickname, a
             {busy ? "적는 중…" : "완료로 적기"}
           </button>
         </div>
+        </form>
       </dialog>
     </>
   );

@@ -43,18 +43,21 @@ function memoryJar(initial: Record<string, string> = {}) {
 }
 
 const dev = { NODE_ENV: "development" };
+/** 라이브러리(@supabase/ssr)가 쓸 때마다 붙이는 만료(400일) — 이 값이 브라우저에 가면 안 된다(session-login INV-L16) */
 const LIBRARY_MAX_AGE = 400 * 24 * 60 * 60;
+/** 부르는 쪽이 넘기는 「유지」 켬 유효기간(초). 역할별 값은 entities/session 이 정한다 — 여기서는 받은 값을 그대로 쓰는지만 본다 */
+const KEEP = 12_345;
 const authWrites = (writes: Write[]) => writes.filter((w) => w.name.startsWith(UNIT_AUTH_COOKIE));
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-async function signInWith(sessionOnly: boolean) {
+async function signInWith(sessionOnly: boolean, maxAge: number | null = KEEP) {
   const fake = fakeAuthFetch();
   vi.stubGlobal("fetch", fake.fetch);
   const { jar, writes, methods } = memoryJar();
-  const client = createSessionClient(UNIT_CONFIG, methods, dev, { sessionOnly });
+  const client = createSessionClient(UNIT_CONFIG, methods, dev, { sessionOnly, maxAge: maxAge ?? undefined });
   const { error } = await client.auth.signInWithPassword({ email: "fan@login.fankkuk.invalid", password: "pw-1234" });
   expect(error).toBeNull();
   return { client, jar, writes, fake };
@@ -75,19 +78,32 @@ describe("INV-L15: 「로그인 상태 유지」를 끄면 로그인 쿠키에 �
     }
   });
 
-  it("INV-L15 (S13c): 켜고 로그인하면 라이브러리 기본 만료(400일)가 그대로 붙는다", async () => {
+  it("INV-L15 · INV-L16 (S13c·S14e): 켜고 로그인하면 라이브러리가 400일을 붙여도 로그인 쿠키는 넘겨받은 유효기간이다", async () => {
     const { writes } = await signInWith(false);
     const w = authWrites(writes);
     expect(w.length).toBeGreaterThan(0);
-    for (const c of w) expect(c.options.maxAge).toBe(LIBRARY_MAX_AGE);
+    for (const c of w) {
+      expect(c.options.maxAge).toBe(KEEP);
+      expect(c.options.maxAge).not.toBe(LIBRARY_MAX_AGE);
+      expect(c.options.expires).toBeUndefined();
+    }
   });
 
-  it("INV-L15 (S13c): 넷째 인자를 안 주면 지금처럼 유지(만료 시각이 붙는다)", async () => {
+  it("INV-L16 (실패경로): 켬이어도 유효기간을 모르는 쓰기(역할을 아직 모름)는 만료 없는 쿠키로 — 라이브러리 400일을 남기지 않는다", async () => {
+    const { writes } = await signInWith(false, null);
+    expect(authWrites(writes).length).toBeGreaterThan(0);
+    for (const c of authWrites(writes)) {
+      expect(c.options.maxAge).toBeUndefined();
+      expect(c.options.expires).toBeUndefined();
+    }
+  });
+
+  it("INV-L16 (실패경로): 넷째 인자를 안 주면 만료 없는 쿠키(400일이 아니다)", async () => {
     vi.stubGlobal("fetch", fakeAuthFetch().fetch);
     const { writes, methods } = memoryJar();
     await createSessionClient(UNIT_CONFIG, methods, dev).auth.signInWithPassword({ email: "fan@login.fankkuk.invalid", password: "pw" });
     expect(authWrites(writes).length).toBeGreaterThan(0);
-    for (const c of authWrites(writes)) expect(c.options.maxAge).toBe(LIBRARY_MAX_AGE);
+    for (const c of authWrites(writes)) expect(c.options.maxAge).toBeUndefined();
   });
 
   it("INV-L15·INV-L7 (S13d, 실패경로): 끄고 로그인한 뒤 로그아웃하면 지우는 쓰기(만료 0)는 떼지 않아 쿠키가 지워진다", async () => {
@@ -117,9 +133,14 @@ describe("INV-L15: 쿠키 쓰기 옵션 — 끔이면 만료 시각만 떼고 �
     expect(sessionOnlyWriteOptions({ ...base, maxAge: 0 }, true)).toEqual({ ...base, maxAge: 0 });
   });
 
-  it("INV-L15: 켬이면 아무것도 떼지 않는다", () => {
+  it("INV-L15 · INV-L16: 켬이면 만료를 넘겨받은 유효기간으로 바꾸고(모르면 뗀다) expires 는 뗀다(Max-Age 가 이긴다 — 둘이 어긋나지 않게)", () => {
     const expires = new Date(Date.now() + 86_400_000);
-    expect(sessionOnlyWriteOptions({ ...base, maxAge: LIBRARY_MAX_AGE, expires }, false)).toEqual({ ...base, maxAge: LIBRARY_MAX_AGE, expires });
+    expect(sessionOnlyWriteOptions({ ...base, maxAge: LIBRARY_MAX_AGE, expires }, false, KEEP)).toEqual({ ...base, maxAge: KEEP });
+    expect(sessionOnlyWriteOptions({ ...base, maxAge: LIBRARY_MAX_AGE, expires }, false)).toEqual(base);
+  });
+
+  it("INV-L16 (실패경로): 켬이어도 만료 0(지우기)은 그대로 둔다", () => {
+    expect(sessionOnlyWriteOptions({ ...base, maxAge: 0 }, false, KEEP)).toEqual({ ...base, maxAge: 0 });
   });
 });
 
@@ -173,13 +194,13 @@ describe("INV-L15: 쓰기 규칙을 나중에 정하는 쿠키 쓰기(deferSessi
     for (const c of r.calls[0]) expect(c.options.maxAge).toBeUndefined();
   });
 
-  it("INV-L15 (S13e): 켬으로 decide 하면 모아 둔 쓰기에 만료 시각이 그대로 붙는다", () => {
+  it("INV-L15 · INV-L16 (S13e): 켬으로 decide 하면 모아 둔 쓰기에 넘겨받은 유효기간이 붙는다", () => {
     const r = recorder();
     const d = deferSessionCookieWrites(r.setAll);
     d.setAll([long("a")], {});
-    d.decide(false);
+    d.decide(false, KEEP);
     expect(r.calls).toHaveLength(1);
-    expect(r.calls[0][0].options.maxAge).toBe(LIBRARY_MAX_AGE);
+    expect(r.calls[0][0].options.maxAge).toBe(KEEP);
   });
 
   it("INV-L15: decide 뒤의 쓰기는 모으지 않고 바로 그 규칙으로 쓴다", () => {

@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ComponentProps, type FormEvent, type RefObject } from "react";
+import { useFormDraft } from "@/shared/lib/form-draft/use-form-draft";
 import a from "@/shared/ui/admin.module.css";
 import { postWithdraw } from "../api/post-withdraw-client";
 import { MESSAGE_LOGIN_ID, shapeLoginId } from "../model/login-id";
@@ -14,6 +15,19 @@ const FIELD_ID = "account-withdraw";
 
 type Step = "closed" | "open" | "confirm";
 
+// 열렸을 때만 그려지는 양식이라, 양식과 함께 생기는 부품에서 임시 저장을 붙인다(session-login INV-L20) — 확인 단계에서는 양식이 사라진다.
+// clear 는 양식이 사라진 뒤에도 같은 저장을 지우므로 clearRef 에 남겨 둔다.
+type DraftFormProps = Omit<ComponentProps<"form">, "ref"> & { draftKey: string; clearRef: RefObject<(() => void) | null> };
+
+function DraftForm({ draftKey, clearRef, ...props }: DraftFormProps) {
+  const ref = useRef<HTMLFormElement>(null);
+  const { clear } = useFormDraft(ref, draftKey);
+  useEffect(() => {
+    clearRef.current = clear;
+  }, [clear, clearRef]);
+  return <form ref={ref} {...props} />;
+}
+
 export function WithdrawForm() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("closed");
@@ -23,13 +37,16 @@ export function WithdrawForm() {
   const [done, setDone] = useState<{ loginId: string; note: string | null } | null>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const focusToggleNext = useRef(false);
+  const clearDraft = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (step !== "closed" || !focusToggleNext.current) return;
     focusToggleNext.current = false;
     toggleRef.current?.focus();
   }, [step]);
 
+  // 닫히면(닫기·처리 끝) 임시 저장을 지운다(INV-L20). 확인 단계의 [취소]는 적던 칸으로 돌아가는 것이라 지우지 않는다
   const close = () => {
+    clearDraft.current?.();
     focusToggleNext.current = true;
     setStep("closed");
     setLoginId("");
@@ -58,6 +75,7 @@ export function WithdrawForm() {
       return;
     }
     const note = typeof outcome.body.message === "string" ? outcome.body.message : null;
+    clearDraft.current?.();
     setDone({ loginId: shaped, note });
     close();
     router.refresh(); // 탈퇴한 회원의 문의가 「탈퇴한 회원」으로 보이게 다시 읽는다
@@ -101,7 +119,7 @@ export function WithdrawForm() {
         </button>
       )}
       {step === "open" && (
-        <form className={a.stack} style={{ gap: 8 }} onSubmit={ask} noValidate>
+        <DraftForm draftKey="admin-account-withdraw" clearRef={clearDraft} className={a.stack} style={{ gap: 8 }} onSubmit={ask} noValidate>
           <div className={a.field}>
             <label htmlFor={`${FIELD_ID}-id`}>아이디</label>
             <input
@@ -138,7 +156,7 @@ export function WithdrawForm() {
               닫기
             </button>
           </div>
-        </form>
+        </DraftForm>
       )}
       {step === "confirm" && shaped && (
         <div className={a.stack} style={{ gap: 8 }} role="alertdialog" aria-labelledby={`${FIELD_ID}-confirm`}>

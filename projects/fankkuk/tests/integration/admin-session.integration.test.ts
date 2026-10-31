@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
-import { anonClient, signedInClient } from "./helpers";
+import { adminClient, anonClient, signedInClient } from "./helpers";
 
 // 관리자 주소에 들어온 사람 판정 (admin-console INV-K1 S1c). 레이아웃·화면이 부르는 loadAdminSession 을 그대로 부른다.
 // 바꾸는 것은 요청 쿠키로 세션 클라이언트를 만드는 자리 하나뿐이다 — 쿠키 대신 시험 계정으로 로그인한 클라이언트를 넣는다.
@@ -14,6 +14,8 @@ vi.mock("@/shared/api/supabase/server", () => ({
     return request.client;
   },
 }));
+// 화면이 남은 로그인 시간(session-login INV-L19)을 읽을 때 쓰는 서버 키 연결 — 서버 전용 모듈 대신 시험의 서버 키 연결
+vi.mock("@/shared/api/supabase/admin", () => ({ createAdminSupabase: () => adminClient() }));
 
 const { loadAdminSession } = await import("@/widgets/admin-shell/api/admin-session");
 

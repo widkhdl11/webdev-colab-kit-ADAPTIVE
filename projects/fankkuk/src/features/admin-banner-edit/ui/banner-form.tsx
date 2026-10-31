@@ -7,6 +7,7 @@ import { BannerSlide } from "@/entities/banner/ui/banner-slide";
 import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import { charCount } from "@/shared/lib/validation/char-count";
 import a from "@/shared/ui/admin.module.css";
+import { useFormDraft } from "@/shared/lib/form-draft/use-form-draft";
 import { sendBanner } from "../api/banner-client";
 import { BANNER_IMAGE_ACCEPT, bannerImagePickProblem, BANNER_IMAGE_MESSAGE } from "../model/banner-image";
 import { bannerInputProblem } from "../model/banner-input";
@@ -51,6 +52,9 @@ export function BannerForm({ editing, onStopEditing, onSubmitStart, onSaved, pre
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ text: string; field: string | null } | null>(null);
+  // 쓰던 내용 임시 저장(session-login INV-L20) — 새 배너와 고치는 배너마다 따로. 그림은 저장하지 않는다
+  const formRef = useRef<HTMLFormElement>(null);
+  const { clear } = useFormDraft(formRef, `admin-banner-form:${editing?.id ?? "new"}`, { baseline: editing ? JSON.stringify(editing) : undefined });
 
   // 고른 그림의 미리보기 주소 — 바꾸거나 양식이 사라지면 놓아준다
   useEffect(() => {
@@ -108,6 +112,7 @@ export function BannerForm({ editing, onStopEditing, onSubmitStart, onSaved, pre
       if (isStaleFailure(outcome)) router.refresh();
       return;
     }
+    clear();
     setTitle("");
     setDescription("");
     setLink("");
@@ -125,7 +130,7 @@ export function BannerForm({ editing, onStopEditing, onSubmitStart, onSaved, pre
   const describe = (id: string, field: string) => (bad(field) ? `${id} banner-form-error` : id);
 
   return (
-    <form className={a.stack} style={{ gap: 12 }} onSubmit={submit} noValidate>
+    <form ref={formRef} className={a.stack} style={{ gap: 12 }} onSubmit={submit} noValidate>
       <div className={a.field}>
         <span className={a.fieldLabel} id="banner-image-label">
           그림
@@ -266,7 +271,10 @@ export function BannerForm({ editing, onStopEditing, onSubmitStart, onSaved, pre
         </button>
         {editing && (
           <>
-            <button type="button" className={`${a.btn} ${a.btnLine}`} onClick={onStopEditing} aria-disabled={busy}>
+            <button type="button" className={`${a.btn} ${a.btnLine}`} onClick={() => {
+              clear(); // [취소]로 버림(INV-L20)
+              onStopEditing();
+            }} aria-disabled={busy}>
               고치기 그만두기
             </button>
             <RemoveBannerButton bannerId={editing.id} bannerTitle={editing.title} onDone={(text) => {

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { passwordAttemptsOf } from "@/entities/session/api/password-attempts";
+import { sessionActivityOf, sessionCookieMaxAgeFor } from "@/entities/session/api/session-activity";
 import { keepSignedInOf, signIn } from "@/features/auth/model/sign-in";
 import { createAdminSupabase } from "@/shared/api/supabase/admin";
 import { createDeferredRequestSupabase } from "@/shared/api/supabase/server";
@@ -24,9 +25,13 @@ export async function POST(req: NextRequest) {
   // 라이브러리가 시작 때 토큰을 갱신해 쓰는 쿠키도 이 규칙을 따른다(S13e).
   const { supabase, storedSessionOnly, decide } = await createDeferredRequestSupabase();
   let ok = false;
+  let maxAge: number | undefined;
   try {
+    const admin = createAdminSupabase();
     // INV-L14: 아이디별 확인 횟수는 서버 전용 키로 센다
-    const result = await signIn({ attempts: passwordAttemptsOf(createAdminSupabase()), auth: supabase.auth, env: process.env }, body);
+    const result = await signIn({ attempts: passwordAttemptsOf(admin), auth: supabase.auth, env: process.env }, body);
+    // INV-L16: 「유지」 켬 쿠키 유효기간은 지금 클라이언트에 든 세션(성공이면 새 세션, 실패면 갱신된 옛 세션) 역할의 절대 기간
+    maxAge = await sessionCookieMaxAgeFor(supabase.auth, sessionActivityOf(admin));
     // 실패 응답에는 표시 쿠키를 건드리지 않는다 — 고른 값과 상관없이 같은 응답(INV-L5)
     if (!result.ok) return NextResponse.json({ message: result.message }, { status: result.status, headers: { "Cache-Control": "no-store" } });
     ok = true;
@@ -37,6 +42,6 @@ export async function POST(req: NextRequest) {
     response.cookies.set(marker.name, marker.value, marker.options);
     return response;
   } finally {
-    decide(ok ? sessionOnly : storedSessionOnly);
+    decide(ok ? sessionOnly : storedSessionOnly, maxAge);
   }
 }

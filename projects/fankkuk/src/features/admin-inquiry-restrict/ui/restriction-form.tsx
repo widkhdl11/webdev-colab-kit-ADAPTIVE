@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ComponentProps, type FormEvent, type RefObject } from "react";
+import { useFormDraft } from "@/shared/lib/form-draft/use-form-draft";
 import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import { charCount } from "@/shared/lib/validation/char-count";
 import a from "@/shared/ui/admin.module.css";
@@ -12,6 +13,19 @@ import { RESTRICTION_REASON_MAX } from "../model/restrict-inquiry-author";
 // 버튼을 누르면 사유 칸이 열리고, 사유를 적어 확인해야 바뀐다. 제한은 그 문의를 쓴 계정 전체에 걸린다.
 // 부르는 쪽은 문의가 바뀔 때 key 를 바꿔 칸을 비운다. 양식이 닫히면(취소·저장) 포커스를 다시 보이는 버튼으로 돌려준다.
 
+// 열렸을 때만 그려지는 양식이라, 양식과 함께 생기는 부품에서 임시 저장을 붙인다(session-login INV-L20) — 문의마다 따로 저장한다.
+// clear 는 양식이 사라진 뒤에도 같은 저장을 지우므로 clearRef 에 남겨 둔다.
+type DraftFormProps = Omit<ComponentProps<"form">, "ref"> & { draftKey: string; clearRef: RefObject<(() => void) | null> };
+
+function DraftForm({ draftKey, clearRef, ...props }: DraftFormProps) {
+  const ref = useRef<HTMLFormElement>(null);
+  const { clear } = useFormDraft(ref, draftKey);
+  useEffect(() => {
+    clearRef.current = clear;
+  }, [clear, clearRef]);
+  return <form ref={ref} {...props} />;
+}
+
 export function RestrictionForm({ inquiryId, restricted }: { inquiryId: string; restricted: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -20,12 +34,15 @@ export function RestrictionForm({ inquiryId, restricted }: { inquiryId: string; 
   const [error, setError] = useState<string | null>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const focusToggleNext = useRef(false);
+  const clearDraft = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (open || !focusToggleNext.current) return;
     focusToggleNext.current = false;
     toggleRef.current?.focus();
   }, [open]);
+  // 닫히면(닫기·취소·저장) 그 양식의 임시 저장을 지운다(INV-L20 — 버리거나 끝낸 입력은 다시 열 때 돌아오지 않는다)
   const close = () => {
+    clearDraft.current?.();
     focusToggleNext.current = true;
     setOpen(false);
     setReason("");
@@ -52,6 +69,7 @@ export function RestrictionForm({ inquiryId, restricted }: { inquiryId: string; 
       if (isStaleFailure(outcome)) router.refresh();
       return;
     }
+    clearDraft.current?.();
     close();
     router.refresh(); // 목록의 「문의 제한 중」 표시가 바뀌게 다시 읽는다
   }
@@ -65,7 +83,7 @@ export function RestrictionForm({ inquiryId, restricted }: { inquiryId: string; 
   }
 
   return (
-    <form className={a.stack} style={{ gap: 8 }} onSubmit={submit} noValidate>
+    <DraftForm draftKey={`admin-inquiry-restrict:${inquiryId}:${restricted ? "lift" : "restrict"}`} clearRef={clearDraft} className={a.stack} style={{ gap: 8 }} onSubmit={submit} noValidate>
       <div className={a.field}>
         <label htmlFor={fieldId}>{restricted ? "푸는 사유" : "제한 사유"}</label>
         <input
@@ -111,6 +129,6 @@ export function RestrictionForm({ inquiryId, restricted }: { inquiryId: string; 
           취소
         </button>
       </div>
-    </form>
+    </DraftForm>
   );
 }

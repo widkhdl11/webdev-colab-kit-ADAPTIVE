@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { readVerifiedUserId } from "@/entities/session/model/viewer";
 import { signIn } from "@/features/auth/model/sign-in";
 import { signOut } from "@/features/auth/model/sign-out";
+import { sessionCookieMaxAgeSeconds } from "@/entities/session/model/session-lifetime";
 import { createSessionClient } from "@/shared/api/supabase/session-cookies";
 import { adminClient, SEED } from "./helpers";
 
@@ -101,7 +102,7 @@ describe("INV-L7: 로그아웃은 서버 세션까지 끝낸다", () => {
 });
 
 describe("INV-L15: 「로그인 상태 유지」를 끄면 로그인 쿠키에 만료 시각이 없다(실제 Auth)", () => {
-  it("INV-L15 (S13·S13c): 끄고 로그인하면 Max-Age·Expires 없음, 켜고 로그인하면 400일", async () => {
+  it("INV-L15 (S13·S13c): 끄고 로그인하면 Max-Age·Expires 없음, 켜고 로그인하면 그 역할의 절대 기간(팬 30일, INV-L16 · S14e)", async () => {
     const off: Jar = new Map();
     const offClient = createSessionClient(config(), memoryCookies(off), dev, { sessionOnly: true });
     expect((await signIn({ attempts: passwordAttemptsOf(adminClient()), auth: offClient.auth, env: dev }, { loginId: "byeolbit_fan", password: "fankkuk-local-1234" })).ok).toBe(true);
@@ -115,9 +116,9 @@ describe("INV-L15: 「로그인 상태 유지」를 끄면 로그인 쿠키에 �
     expect(await readVerifiedUserId(createSessionClient(config(), memoryCookies(off), dev, { sessionOnly: true }).auth)).toBe(SEED.fanId);
 
     const on: Jar = new Map();
-    const onClient = createSessionClient(config(), memoryCookies(on), dev, { sessionOnly: false });
+    const onClient = createSessionClient(config(), memoryCookies(on), dev, { sessionOnly: false, maxAge: sessionCookieMaxAgeSeconds("member") });
     expect((await signIn({ attempts: passwordAttemptsOf(adminClient()), auth: onClient.auth, env: dev }, { loginId: "byeolbit_fan", password: "fankkuk-local-1234" })).ok).toBe(true);
     expect(on.size).toBeGreaterThan(0);
-    for (const [, c] of on) expect(c.options.maxAge).toBe(400 * 24 * 60 * 60);
+    for (const [, c] of on) expect(c.options.maxAge).toBe(sessionCookieMaxAgeSeconds("member"));
   });
 });

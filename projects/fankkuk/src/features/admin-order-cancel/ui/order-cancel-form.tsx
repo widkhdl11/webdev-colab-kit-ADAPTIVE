@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ComponentProps, type FormEvent, type RefObject } from "react";
+import { useFormDraft } from "@/shared/lib/form-draft/use-form-draft";
 import { ORDER_NO_PATTERN } from "@/entities/order/model/order-no";
 import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import { charCount } from "@/shared/lib/validation/char-count";
@@ -23,6 +24,19 @@ export type OrderCancelFormProps = {
   send: (write: { orderNo: string; reason: string }) => Promise<PostJsonOutcome>;
 };
 
+// 열렸을 때만 그려지는 양식이라, 양식과 함께 생기는 부품에서 임시 저장을 붙인다(session-login INV-L20) — 같은 꼴의 양식이 한 화면에 여럿이라 fieldId 로 따로 저장한다.
+// clear 는 양식이 사라진 뒤에도 같은 저장을 지우므로 clearRef 에 남겨 둔다.
+type DraftFormProps = Omit<ComponentProps<"form">, "ref"> & { draftKey: string; clearRef: RefObject<(() => void) | null> };
+
+function DraftForm({ draftKey, clearRef, ...props }: DraftFormProps) {
+  const ref = useRef<HTMLFormElement>(null);
+  const { clear } = useFormDraft(ref, draftKey);
+  useEffect(() => {
+    clearRef.current = clear;
+  }, [clear, clearRef]);
+  return <form ref={ref} {...props} />;
+}
+
 export function OrderCancelForm({ fieldId: FIELD_ID, title, hint, openLabel, reasonPlaceholder, submitLabel, doneText, send }: OrderCancelFormProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -33,12 +47,15 @@ export function OrderCancelForm({ fieldId: FIELD_ID, title, hint, openLabel, rea
   const [doneNo, setDoneNo] = useState<string | null>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const focusToggleNext = useRef(false);
+  const clearDraft = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (open || !focusToggleNext.current) return;
     focusToggleNext.current = false;
     toggleRef.current?.focus();
   }, [open]);
+  // 닫히면(닫기·취소·저장) 그 양식의 임시 저장을 지운다(INV-L20 — 버리거나 끝낸 입력은 다시 열 때 돌아오지 않는다)
   const close = () => {
+    clearDraft.current?.();
     focusToggleNext.current = true;
     setOpen(false);
     setOrderNo("");
@@ -69,6 +86,7 @@ export function OrderCancelForm({ fieldId: FIELD_ID, title, hint, openLabel, rea
       if (isStaleFailure(outcome)) router.refresh();
       return;
     }
+    clearDraft.current?.();
     setDoneNo(shapedNo);
     close();
     router.refresh(); // 그 주문 줄이 「환불 대기」로 바뀌게 다시 읽는다
@@ -100,7 +118,7 @@ export function OrderCancelForm({ fieldId: FIELD_ID, title, hint, openLabel, rea
           {openLabel}
         </button>
       ) : (
-        <form className={a.stack} style={{ gap: 8 }} onSubmit={submit} noValidate>
+        <DraftForm draftKey={`admin-order-cancel:${FIELD_ID}`} clearRef={clearDraft} className={a.stack} style={{ gap: 8 }} onSubmit={submit} noValidate>
           <div className={a.field}>
             <label htmlFor={`${FIELD_ID}-no`}>주문번호</label>
             <input
@@ -156,7 +174,7 @@ export function OrderCancelForm({ fieldId: FIELD_ID, title, hint, openLabel, rea
               닫기
             </button>
           </div>
-        </form>
+        </DraftForm>
       )}
     </section>
   );

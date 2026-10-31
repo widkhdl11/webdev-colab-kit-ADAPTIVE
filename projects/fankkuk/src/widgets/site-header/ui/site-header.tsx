@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { CREATOR_HOME, FAN_HOME } from "@/entities/session/model/home-path";
+import { DRAFT_MAX_AGE_MS } from "@/entities/session/model/session-lifetime";
+import { DraftPurge } from "@/shared/lib/form-draft/use-form-draft";
 import { LogoMark } from "@/shared/ui/logo";
 import { CREATOR_APP_MENU, FAN_APP_MENU } from "../model/app-menu";
 import { useLastHeader, useRememberHeader } from "../model/header-memory";
@@ -25,8 +27,8 @@ const SITE_NAV: NavItem[] = [
 
 export type SiteHeaderProps =
   | { role: "guest"; current?: string }
-  | { role: "fan"; current?: string; nickname: string; actionCount: number }
-  | { role: "creator"; current?: string; nickname: string; actionCount: number };
+  | { role: "fan"; current?: string; nickname: string; actionCount: number; viewerId?: string }
+  | { role: "creator"; current?: string; nickname: string; actionCount: number; viewerId?: string };
 
 function GuestTopBar({ current }: { current?: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -119,7 +121,13 @@ function GuestTopBar({ current }: { current?: string }) {
 /** 각 페이지가 그리는 상단 바. 그린 값을 기억해 두어 페이지를 옮기는 동안 로딩 화면(RememberedSiteHeader)이 같은 바를 보여 준다. */
 export function SiteHeader(props: SiteHeaderProps) {
   useRememberHeader(props);
-  return <SiteHeaderView {...props} />;
+  return (
+    <>
+      {/* session-login INV-L20: 로그인한 사람이 있으면 다른 계정의 폼 임시 저장도 지운다(만료된 것은 사이트 공통 틀이 늘 지운다) */}
+      {props.role !== "guest" && props.viewerId ? <DraftPurge userId={props.viewerId} maxAgeMs={DRAFT_MAX_AGE_MS} /> : null}
+      <SiteHeaderView {...props} />
+    </>
+  );
 }
 
 /** 로딩 화면용 — 마지막으로 그린 상단 바를 그대로, 메뉴 표시만 지금 가는 주소로. 기억이 없으면(처음 들어온 직후) 그리지 않는다. */

@@ -3,7 +3,8 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { isMustDeliver } from "@/entities/notification/model/delivery-policy";
 import { PHONE_CODE_VARIABLE } from "@/shared/api/phone-verifier/verifier";
-import { ALIMTALK_KINDS, buildAlimtalkVariables } from "./alimtalk-body";
+import { ALIMTALK_KINDS, buildAlimtalkVariables, buildLoginLinkAlimtalkVariables, LOGIN_LINK_TEMPLATE_KEY } from "./alimtalk-body";
+import { newLoginLinkToken } from "@/entities/session/model/login-link";
 import type { NotificationBodyInput } from "./notification-body";
 
 // 알림톡 템플릿 문서(docs/copy/alimtalk-templates.md)를 읽어 변수를 채운 본문이 우리가 기대하는 본문과 같은지 본다(notifications INV-N7).
@@ -79,7 +80,7 @@ describe("INV-N7: 알림톡 변수를 채운 템플릿 문서의 본문 == 기�
   const docs = sections();
 
   it("INV-N7: 문서에 본문이 있고 코드 반영 전이 아닌 종류와 코드의 종류 목록이 같다", () => {
-    const kinds = [...docs].filter(([k, s]) => k !== "SOLAPI_PHONE_CODE_TEMPLATE_ID" && !s.pending).map(([k]) => k);
+    const kinds = [...docs].filter(([k, s]) => k !== "SOLAPI_PHONE_CODE_TEMPLATE_ID" && k !== LOGIN_LINK_TEMPLATE_KEY && !s.pending).map(([k]) => k);
     expect(kinds.sort()).toEqual([...ALIMTALK_KINDS].sort());
   });
 
@@ -111,6 +112,32 @@ describe("INV-N7: 알림톡 변수를 채운 템플릿 문서의 본문 == 기�
       expect(Object.keys(vars).sort()).toEqual([...used].sort());
     });
   }
+
+  it("INV-K1 · INV-N7: 로그인 링크 템플릿 — 본문은 승인 요청과 글자까지 같고 버튼은 토큰 링크, 변수는 건수·토큰 둘", () => {
+    const doc = docs.get(LOGIN_LINK_TEMPLATE_KEY)!;
+    expect(doc).toBeDefined();
+    const { token } = newLoginLinkToken();
+    const vars = buildLoginLinkAlimtalkVariables(inputFor("approval_request"), token)!;
+    expect(fill(doc.body, vars)).toBe(EXPECTED.approval_request.body);
+    expect(doc.body).toBe(docs.get("approval_request")!.body);
+    expect(fill(doc.button!, vars)).toBe(`https://fankkuk.com/login/link#t=${token}`);
+    expect(fill(doc.button!, vars).length).toBeLessThanOrEqual(300);
+    // INV-K1 · S3: 토큰은 # 뒤 — 서버로 가는 주소(경로·쿼리)에 없다
+    const url = new URL(fill(doc.button!, vars));
+    expect(url.pathname + url.search).toBe("/login/link");
+    expect(url.hash).toBe(`#t=${token}`);
+    const used = new Set([...placeholders(doc.body), ...placeholders(doc.button!)]);
+    expect(Object.keys(vars).sort()).toEqual([...used].sort());
+  });
+
+  it("INV-K1 (실패경로): 로그인 링크 변수는 승인 요청·토큰 꼴일 때만 — 다른 종류·빈 토큰·건수 없음은 null", () => {
+    const { token } = newLoginLinkToken();
+    expect(buildLoginLinkAlimtalkVariables(inputFor("approval_reminder"), token)).toBeNull();
+    expect(buildLoginLinkAlimtalkVariables(inputFor("status_digest"), token)).toBeNull();
+    expect(buildLoginLinkAlimtalkVariables(inputFor("approval_request"), "")).toBeNull();
+    expect(buildLoginLinkAlimtalkVariables(inputFor("approval_request"), "x".repeat(10))).toBeNull();
+    expect(buildLoginLinkAlimtalkVariables(inputFor("approval_request", { waitingCount: null }), token)).toBeNull();
+  });
 
   it("INV-C8: 역조공 상자 도착은 보낸 역조공 화면으로", () => {
     const vars = buildAlimtalkVariables(inputFor("box_arrived", { orderNo: "RG-7K3M9" }))!;

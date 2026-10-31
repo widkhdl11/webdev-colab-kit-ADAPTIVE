@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
+import { useFormDraft } from "@/shared/lib/form-draft/use-form-draft";
 import { PROHIBITED_DESCRIPTION_MAX, PROHIBITED_NAME_MAX } from "@/entities/parcel/model/prohibited-item";
 import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import { charCount } from "@/shared/lib/validation/char-count";
@@ -24,6 +25,9 @@ export function ProhibitedForm({ editing, onStopEditing, onSubmitStart, onSaved 
   const [description, setDescription] = useState(editing?.description ?? "");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  // 쓰던 내용 임시 저장(session-login INV-L20) — 새 항목과 고치는 항목마다 따로
+  const formRef = useRef<HTMLFormElement>(null);
+  const { clear } = useFormDraft(formRef, `admin-prohibited-form:${editing?.id ?? "new"}`, { baseline: editing ? JSON.stringify(editing) : undefined });
 
   const nameCount = charCount(name.trim());
   const descriptionCount = charCount(description.trim());
@@ -49,6 +53,7 @@ export function ProhibitedForm({ editing, onStopEditing, onSubmitStart, onSaved 
       if (isStaleFailure(outcome)) router.refresh(); // 다른 사람이 먼저 지웠으면 목록을 다시 읽는다
       return;
     }
+    clear();
     setName("");
     setDescription("");
     onSaved(editing ? `「${name.trim()}」 항목을 고쳤어요.` : `「${name.trim()}」 항목을 추가했어요.`);
@@ -57,7 +62,7 @@ export function ProhibitedForm({ editing, onStopEditing, onSubmitStart, onSaved 
   }
 
   return (
-    <form className={a.stack} style={{ gap: 12 }} onSubmit={submit} noValidate>
+    <form ref={formRef} className={a.stack} style={{ gap: 12 }} onSubmit={submit} noValidate>
       <div className={a.field}>
         <label htmlFor="prohibited-name">이름 (1~{PROHIBITED_NAME_MAX}자)</label>
         <input
@@ -110,7 +115,10 @@ export function ProhibitedForm({ editing, onStopEditing, onSubmitStart, onSaved 
           {busy ? "저장하는 중…" : editing ? "고친 내용 저장" : "추가하기"}
         </button>
         {editing && (
-          <button type="button" className={`${a.btn} ${a.btnLine}`} onClick={onStopEditing} aria-disabled={busy}>
+          <button type="button" className={`${a.btn} ${a.btnLine}`} onClick={() => {
+              clear(); // [취소]로 버림(INV-L20)
+              onStopEditing();
+            }} aria-disabled={busy}>
             고치기 그만두기
           </button>
         )}

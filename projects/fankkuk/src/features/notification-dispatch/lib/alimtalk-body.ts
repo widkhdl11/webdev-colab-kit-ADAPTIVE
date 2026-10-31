@@ -1,4 +1,5 @@
 import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
+import { readLoginLinkToken } from "@/entities/session/model/login-link";
 import { positiveCount, type NotificationBodyInput, type NotificationKind } from "./notification-body";
 
 // 카카오 알림톡 변수 (notifications INV-N1·N7). 알림톡은 솔라피에 검수받은 템플릿 본문과 글자 하나까지 같아야 나간다 —
@@ -61,4 +62,16 @@ export function buildAlimtalkVariables(input: NotificationBodyInput): AlimtalkVa
     default:
       return null;
   }
+}
+
+/** link-login: 템플릿 문서 10절의 키 — 승인 요청과 본문이 같고 버튼만 토큰 링크인 템플릿. 템플릿 ID 는 승인 요청 줄의 login_link_template_code */
+export const LOGIN_LINK_TEMPLATE_KEY = "approval_request_login_link";
+/** link-login INV-K1: 토큰을 담는 변수 — 버튼 주소 `https://fankkuk.com/login/link#t=#{token}` (# 뒤라 서버 요청 기록에 남지 않는다) */
+export const LOGIN_LINK_TOKEN_VARIABLE = v("token");
+
+/** link-login INV-K1: 로그인 링크 템플릿의 변수 — 승인 요청의 변수 + 토큰. 승인 요청이 아니거나 토큰 꼴이 아니면 null. */
+export function buildLoginLinkAlimtalkVariables(input: NotificationBodyInput, token: string): AlimtalkVariables | null {
+  if (input.kind !== "approval_request" || !readLoginLinkToken(token)) return null;
+  const base = buildAlimtalkVariables(input);
+  return base ? { ...base, [LOGIN_LINK_TOKEN_VARIABLE]: token } : null;
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
+import { useFormDraft } from "@/shared/lib/form-draft/use-form-draft";
 import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import { charCount } from "@/shared/lib/validation/char-count";
 import a from "@/shared/ui/admin.module.css";
@@ -22,6 +23,9 @@ export function AnswerForm({ inquiryId }: { inquiryId: string }) {
   const valid = count >= 1 && count <= ANSWER_MAX;
   const bad = count > ANSWER_MAX || (error !== null && count < 1);
   const fieldId = `answer-${inquiryId}`;
+  // 쓰던 답 임시 저장(session-login INV-L20) — 문의마다 따로
+  const formRef = useRef<HTMLFormElement>(null);
+  const { clear } = useFormDraft(formRef, `admin-inquiry-answer:${inquiryId}`);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -39,11 +43,12 @@ export function AnswerForm({ inquiryId }: { inquiryId: string }) {
       if (isStaleFailure(outcome)) router.refresh();
       return;
     }
+    clear();
     router.refresh(); // 보낸 답변이 상세에 보이게 다시 읽는다
   }
 
   return (
-    <form className={a.stack} style={{ gap: 10, marginTop: 16 }} onSubmit={submit} noValidate>
+    <form ref={formRef} className={a.stack} style={{ gap: 10, marginTop: 16 }} onSubmit={submit} noValidate>
       <div className={a.field}>
         <label htmlFor={fieldId}>답변 쓰기</label>
         <textarea

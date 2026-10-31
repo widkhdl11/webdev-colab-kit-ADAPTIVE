@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ChannelError, type ChannelMessage, type NotificationChannel, type NotificationChannels } from "@/features/notification-dispatch/api/channels";
 import { dispatchNotifications, TIME_BUDGET_MS, type DispatchDeps } from "./dispatch-notifications";
@@ -39,7 +40,9 @@ type Call = { fn: string; args: unknown };
 function fakeAdmin(opts: {
   rows?: Row[];
   contacts?: Record<string, string | null>;
-  templates?: { kind: string; template_code: string }[];
+  templates?: { kind: string; template_code: string; login_link_template_code?: string | null }[];
+  /** 로그인 링크 토큰 발급 함수의 답(link-login INV-K1). 기본은 발급됨(true) */
+  issue?: { data: unknown; error: { code: string } | null };
   stale?: { id: string; channel: string; provider_message_id: string | null }[];
   fail?: Partial<Record<string, { code: string }>>;
 }) {
@@ -67,6 +70,8 @@ function fakeAdmin(opts: {
           return { data: (args as { p_outcome: string }).p_outcome === "error" ? "pending" : (args as { p_outcome: string }).p_outcome, error: null };
         case "notification_resolve_stale":
           return { data: (args as { p_delivered: boolean }).p_delivered ? "sent" : "pending", error: null };
+        case "login_link_issue":
+          return opts.issue ?? { data: true, error: null };
       }
       throw new Error(`모르는 함수 ${fn}`);
     },
@@ -231,6 +236,108 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     });
     await dispatchNotifications(deps(admin, { email: channel(), kakao }));
     expect(kakao.sent.map((m) => [m.templateCode, m.variables])).toEqual([["TPL_APPROVAL", { "#{건수}": "3" }]]);
+  });
+
+  describe("link-login INV-K1: 카카오 승인 요청은 로그인 링크 템플릿이 있을 때만 토큰을 발급해 그 템플릿으로", () => {
+    const LINK_TEMPLATES = [{ kind: "approval_request", template_code: "TPL_APPROVAL", login_link_template_code: "TPL_APPROVAL_LINK" }];
+    const issues = (calls: Call[]) => calls.filter((c) => c.fn === "login_link_issue").map((c) => c.args as { p_outbox_id: string; p_token_hash: string });
+
+    it("INV-K1 (S1): 그 줄 id 와 토큰 해시로 발급하고, 링크 템플릿 + 건수·토큰 변수로 보낸다 — 해시는 보낸 토큰의 SHA-256", async () => {
+      const kakao = channel(true);
+      const { admin, calls } = fakeAdmin({ rows: [{ ...APPROVAL_ROW, channel: "kakao" }], contacts: { "row-1": "01012345678" }, templates: LINK_TEMPLATES });
+      await dispatchNotifications(deps(admin, { email: channel(), kakao }));
+      expect(kakao.sent).toHaveLength(1);
+      const sent = kakao.sent[0]!;
+      expect(sent.templateCode).toBe("TPL_APPROVAL_LINK");
+      const token = sent.variables!["#{token}"]!;
+      expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+      expect(sent.variables).toEqual({ "#{건수}": "3", "#{token}": token });
+      expect(issues(calls)).toEqual([{ p_outbox_id: "row-1", p_token_hash: createHash("sha256").update(token).digest("hex") }]);
+      // 발급이 보내기보다 먼저다 — 토큰이 DB 에 없는 링크를 보내지 않는다
+      expect(calls.findIndex((c) => c.fn === "login_link_issue")).toBeLessThan(calls.findIndex((c) => c.fn === "notification_finish"));
+    });
+
+    it("INV-K1 (S3): 발송 기록(끝내기 인자)에 토큰 원문이 없다", async () => {
+      const kakao = channel(false);
+      const { admin, calls } = fakeAdmin({ rows: [{ ...APPROVAL_ROW, channel: "kakao" }], contacts: { "row-1": "01012345678" }, templates: LINK_TEMPLATES });
+      await dispatchNotifications(deps(admin, { email: channel(), kakao }));
+      const token = kakao.sent[0]!.variables!["#{token}"]!;
+      expect(JSON.stringify(finishes(calls))).not.toContain(token);
+    });
+
+    it("INV-K1 (S3, 실패경로): 보내기가 실패해도 오류 코드에 토큰이 없다", async () => {
+      const sentTokens: string[] = [];
+      const kakao: NotificationChannel = {
+        fake: false,
+        async send(m) {
+          sentTokens.push(m.variables?.["#{token}"] ?? "");
+          throw new ChannelError("solapi_bad");
+        },
+        lookup: null,
+      };
+      const { admin, calls } = fakeAdmin({ rows: [{ ...APPROVAL_ROW, channel: "kakao" }], contacts: { "row-1": "01012345678" }, templates: LINK_TEMPLATES });
+      await dispatchNotifications(deps(admin, { email: channel(), kakao }));
+      expect(sentTokens[0]).toMatch(/^[A-Za-z0-9_-]{43}$/);
+      expect(JSON.stringify(finishes(calls))).not.toContain(sentTokens[0]!);
+      expect((finishes(calls)[0] as { p_error_code: string }).p_error_code).toBe("solapi_bad");
+    });
+
+    it("INV-K1 (실패경로): 링크 템플릿이 없으면 지금 그대로 — 발급하지 않고 토큰 없는 승인 요청 템플릿으로", async () => {
+      const kakao = channel(true);
+      const { admin, calls } = fakeAdmin({
+        rows: [{ ...APPROVAL_ROW, channel: "kakao" }],
+        contacts: { "row-1": "01012345678" },
+        templates: [{ kind: "approval_request", template_code: "TPL_APPROVAL", login_link_template_code: null }],
+      });
+      await dispatchNotifications(deps(admin, { email: channel(), kakao }));
+      expect(issues(calls)).toEqual([]);
+      expect(kakao.sent.map((m) => [m.templateCode, m.variables])).toEqual([["TPL_APPROVAL", { "#{건수}": "3" }]]);
+    });
+
+    it("INV-K1 (비범위): 이메일 통로·승인 재알림은 링크 템플릿이 있어도 토큰을 발급하지 않는다", async () => {
+      const email = channel();
+      const kakao = channel(true);
+      const { admin, calls } = fakeAdmin({
+        rows: [
+          { ...APPROVAL_ROW, id: "e1" },
+          { ...APPROVAL_ROW, id: "k2", channel: "kakao", kind: "approval_reminder", round: 1, days_left: 2 },
+        ],
+        contacts: { e1: "haru@example.com", k2: "01012345678" },
+        templates: [...LINK_TEMPLATES, { kind: "approval_reminder", template_code: "TPL_REMIND" }],
+      });
+      await dispatchNotifications(deps(admin, { email, kakao }));
+      expect(issues(calls)).toEqual([]);
+      expect(email.sent).toHaveLength(1);
+      expect(email.sent[0]!.text).not.toContain("/login/link");
+      expect(kakao.sent.map((m) => m.templateCode)).toEqual(["TPL_REMIND"]);
+      expect(kakao.sent[0]!.variables).not.toHaveProperty("#{token}");
+    });
+
+    it("INV-K1 (실패경로): 발급이 DB 오류면 보내지 않고 다시 보낼 차례로(login_link_failed)", async () => {
+      const kakao = channel(true);
+      const { admin, calls } = fakeAdmin({
+        rows: [{ ...APPROVAL_ROW, channel: "kakao" }],
+        contacts: { "row-1": "01012345678" },
+        templates: LINK_TEMPLATES,
+        issue: { data: null, error: { code: "57014" } },
+      });
+      await dispatchNotifications(deps(admin, { email: channel(), kakao }));
+      expect(kakao.sent).toHaveLength(0);
+      expect(finishes(calls).map((f) => { const a = f as { p_outcome: string; p_error_code: string }; return `${a.p_outcome}:${a.p_error_code}`; })).toEqual(["error:login_link_failed"]);
+    });
+
+    it("INV-K1 (실패경로): DB 가 그 줄에 발급하지 않으면(false) 보내지 않는다 — 토큰 없는 링크를 보내지 않는다", async () => {
+      const kakao = channel(true);
+      const { admin, calls } = fakeAdmin({
+        rows: [{ ...APPROVAL_ROW, channel: "kakao" }],
+        contacts: { "row-1": "01012345678" },
+        templates: LINK_TEMPLATES,
+        issue: { data: false, error: null },
+      });
+      await dispatchNotifications(deps(admin, { email: channel(), kakao }));
+      expect(kakao.sent).toHaveLength(0);
+      expect(finishes(calls).map((f) => (f as { p_error_code: string }).p_error_code)).toEqual(["login_link_failed"]);
+    });
   });
 
   it("INV-NB2 (S2c): 승인 재알림 줄은 건수·남은 일수로 본문을 만든다", async () => {

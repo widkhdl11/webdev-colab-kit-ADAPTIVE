@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { TIER_LABEL } from "@/entities/parcel/model/office-labels";
 import { formatMonthDay } from "@/shared/lib/format/datetime";
+import { useFormDraft } from "@/shared/lib/form-draft/use-form-draft";
 import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import a from "@/shared/ui/admin.module.css";
 import { postHeldLink, postLinkCandidates } from "../api/post-held-link-client";
@@ -41,6 +42,10 @@ export function LinkHeldButton({ id, waybillNo }: Props) {
   const titleId = `${base}-title`;
   const errorId = `${base}-error`;
   const name = waybillNo ? `송장 ${waybillNo}` : "이 상자";
+  // 닉네임 칸 임시 저장(session-login INV-L20) — 상자마다 따로. 상자 고르기·확인 표시는 닉네임으로 다시 찾아야 해서 남기지 않는다.
+  // 창이 닫히면(닫기·Esc·처리 성공) 지우고 칸을 비운다 — 열 때 비우면 다시 로그인해 되돌린 닉네임까지 지워진다
+  const nickFormRef = useRef<HTMLFormElement>(null);
+  const { clear } = useFormDraft(nickFormRef, `admin-held-link:${id}`);
 
   // 틀린 칸으로 초점 — 상자 고르기는 첫 선택지로
   const focusKey = error ? `${error.field ?? ""}|${error.message}` : null;
@@ -127,7 +132,7 @@ export function LinkHeldButton({ id, waybillNo }: Props) {
         className={`${a.btn} ${a.btnSm} ${a.btnLine}`}
         aria-label={`${name} 주인 주문으로 입고`}
         onClick={() => {
-          reset();
+          setError(null);
           dialog.current?.showModal();
         }}
       >
@@ -140,11 +145,16 @@ export function LinkHeldButton({ id, waybillNo }: Props) {
         onCancel={(e) => {
           if (busy) e.preventDefault();
         }}
+        onClose={() => {
+          clear();
+          reset();
+        }}
       >
         <div className={a.dlgBody}>
           <h2 id={titleId}>주인 주문으로 입고</h2>
           <p className={a.mono}>{name}</p>
           <form
+            ref={nickFormRef}
             className={a.field}
             noValidate
             onSubmit={(e) => {
@@ -157,6 +167,7 @@ export function LinkHeldButton({ id, waybillNo }: Props) {
               <input
                 ref={nickInput}
                 id={`${base}-nick`}
+                name="nickname"
                 className={a.input}
                 autoComplete="off"
                 maxLength={40}

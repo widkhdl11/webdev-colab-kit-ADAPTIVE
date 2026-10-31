@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { ChannelError, type NotificationChannels } from "../api/channels";
-import { buildAlimtalkVariables } from "../lib/alimtalk-body";
+import { loginLinksOf } from "@/entities/session/api/login-links";
+import { buildAlimtalkVariables, buildLoginLinkAlimtalkVariables } from "../lib/alimtalk-body";
 import { buildNotificationBody, kindHasPath, NOTIFICATION_KINDS, siteOrigin, type NotificationBody, type NotificationBodyInput } from "../lib/notification-body";
 
 // 보내는 일꾼 (notifications INV-N5·N6·N7·N8·N10, notification-batching INV-NB1~NB5). 앱 서버 키로만 돈다.
@@ -9,6 +10,8 @@ import { buildNotificationBody, kindHasPath, NOTIFICATION_KINDS, siteOrigin, typ
 // 일꾼이 하는 일: 꺼낸 줄마다 ① 연락처 읽기(꺼진 칸·확인 안 된 이메일은 빈 값 → 건너뜀, INV-N6) ② 꺼낸 값으로만 본문 만들기(INV-N1)
 // ③ 줄의 통로로 보내기 — 실패해도 다른 통로로 갈아타지 않는다(INV-N7) ④ 결과를 끝내기로 남기기.
 // 연락처·본문·오류 문장은 어디에도 남기지 않는다(INV-N10) — 끝내기에는 정해진 오류 코드만 넘기고, 로그를 찍지 않는다.
+// link-login INV-K1: 카카오 승인 요청은 로그인 링크 템플릿 코드가 있을 때만, 보내기 직전에 그 줄에 묶은 1회용 토큰을 발급해 그 템플릿으로 보낸다.
+// 토큰은 알림톡 변수로만 넘긴다 — 끝내기·오류 코드·로그에 없다. 코드가 없으면(솔라피 검수 전) 지금 템플릿 그대로(토큰 없음).
 // 한 번 부를 때 30초가 지나면 새 묶음을 꺼내지 않는다. 다시 보낼 가장 짧은 간격(1분)보다 짧아서, 이번에 실패한 줄을
 // 같은 호출에서 또 꺼내 시도 횟수를 두 번 깎지 않고, 요청이 끊겨 줄이 「보내는 중」에 남는 일도 줄인다.
 
@@ -74,7 +77,10 @@ type ClaimedRow = z.infer<typeof claimedRow>;
 
 const rowId = z.object({ id: z.string() });
 const claimToken = z.object({ id: z.string(), claimed_at: z.string() });
-const templateRow = z.object({ kind: z.string(), template_code: z.string() });
+const templateRow = z.object({ kind: z.string(), template_code: z.string(), login_link_template_code: z.string().nullable().optional() });
+
+/** 카카오 템플릿 설정 — 종류별 코드와, 승인 요청의 로그인 링크 템플릿 코드(link-login, 없으면 null) */
+type Templates = { byKind: Map<string, string>; loginLink: string | null };
 
 type Outcome = { outcome: "sent"; providerMessageId: string | null; fake: boolean } | { outcome: "skipped" | "error"; code: string };
 
@@ -86,7 +92,7 @@ async function rpc(admin: DispatchDeps["admin"], fn: string, args?: Record<strin
   return data;
 }
 
-async function sendRow(deps: DispatchDeps, origin: string, channels: NotificationChannels, templates: Map<string, string>, row: ClaimedRow): Promise<Outcome> {
+async function sendRow(deps: DispatchDeps, origin: string, channels: NotificationChannels, templates: Templates, row: ClaimedRow): Promise<Outcome> {
   // 받는 사람별 경로가 없는 종류는 몇 번을 다시 해도 같다 — 다시 보내지 않고 건너뜀(운영자 목록에 남는다)
   if (!kindHasPath(row.kind)) return { outcome: "skipped", code: "kind_not_ready" };
 
@@ -97,7 +103,7 @@ async function sendRow(deps: DispatchDeps, origin: string, channels: Notificatio
 
   const channel = row.channel === "kakao" ? channels.kakao : channels.email;
   if (!channel) return { outcome: "error", code: "channel_unavailable" };
-  const templateCode = row.channel === "kakao" ? (templates.get(row.kind) ?? null) : null;
+  let templateCode = row.channel === "kakao" ? (templates.byKind.get(row.kind) ?? null) : null;
   if (row.channel === "kakao" && !templateCode) return { outcome: "error", code: "template_missing" };
 
   const input: NotificationBodyInput = {
@@ -122,8 +128,22 @@ async function sendRow(deps: DispatchDeps, origin: string, channels: Notificatio
     return { outcome: "skipped", code: "body_unavailable" };
   }
   // 알림톡은 검수받은 템플릿에 변수만 채운다(INV-N7) — 템플릿 문서에 없는 종류·값이 빈 줄은 몇 번을 다시 해도 같다
-  const variables = row.channel === "kakao" ? buildAlimtalkVariables(input) : null;
+  let variables = row.channel === "kakao" ? buildAlimtalkVariables(input) : null;
   if (row.channel === "kakao" && !variables) return { outcome: "skipped", code: "alimtalk_unavailable" };
+
+  // link-login INV-K1: 보내는 순간 그 줄의 받는 계정에 묶어 발급한다. 발급을 못 하면 토큰 없는 링크를 보내지 않고 다시 보낼 차례로
+  if (row.channel === "kakao" && row.kind === "approval_request" && templates.loginLink) {
+    let token: string | null;
+    try {
+      token = await loginLinksOf(deps.admin).issue(row.id);
+    } catch {
+      return { outcome: "error", code: "login_link_failed" };
+    }
+    const linkVariables = token ? buildLoginLinkAlimtalkVariables(input, token) : null;
+    if (!linkVariables) return { outcome: "error", code: "login_link_failed" };
+    templateCode = templates.loginLink;
+    variables = linkVariables;
+  }
 
   try {
     const { providerMessageId } = await channel.send({ outboxId: row.id, to: contact.data, subject: body.subject, text: body.text, templateCode, variables });
@@ -151,13 +171,17 @@ export async function dispatchNotifications(deps: DispatchDeps): Promise<Dispatc
     await rpc(deps.admin, "notification_enqueue_due");
     await rpc(deps.admin, "notification_requeue_stale");
 
-    const tpl = await deps.admin.from("notification_kakao_templates").select("kind, template_code");
+    const tpl = await deps.admin.from("notification_kakao_templates").select("kind, template_code, login_link_template_code");
     if (tpl.error) throw new DbFailure("templates");
-    const templates = new Map(z.array(templateRow).parse(tpl.data ?? []).map((t) => [t.kind, t.template_code]));
+    const rows = z.array(templateRow).parse(tpl.data ?? []);
+    const templates: Templates = {
+      byKind: new Map(rows.map((t) => [t.kind, t.template_code])),
+      loginLink: rows.find((t) => t.kind === "approval_request")?.login_link_template_code ?? null,
+    };
 
     let channels: NotificationChannels;
     try {
-      channels = deps.chooseChannels(templates.size > 0);
+      channels = deps.chooseChannels(templates.byKind.size > 0);
     } catch {
       return { ok: false, reason: "config", counts };
     }

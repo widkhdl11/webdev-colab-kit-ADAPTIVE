@@ -22,6 +22,11 @@ const SESSION_ONLY_VALUE = "1";
 
 type CookieReader = { get(name: string): { value: string } | undefined };
 
+/** 라이브러리(@supabase/ssr)가 쓰는 로그인 쿠키 이름인가 — `sb-<프로젝트>-auth-token`, 길면 뒤에 `.0` `.1` 조각 */
+export function isAuthCookieName(name: string): boolean {
+  return /^sb-[^.]+-auth-token(\.\d+)?$/.test(name);
+}
+
 /** INV-L15: 요청 쿠키에 표시가 있으면 끔(브라우저를 닫으면 지워지는 쿠키로 쓴다). proxy·라우트가 같은 판정을 쓴다. */
 export function isSessionOnly(cookies: CookieReader): boolean {
   return cookies.get(SESSION_ONLY_COOKIE)?.value === SESSION_ONLY_VALUE;
@@ -36,14 +41,16 @@ export function sessionOnlyMarker(sessionOnly: boolean, env: EnvLike): { name: s
 }
 
 /**
- * INV-L15: 끔이면 쓰기 옵션에서 만료 시각(maxAge·expires)을 뗀다. 지우는 쓰기(maxAge 0 이하)는 그대로 둔다.
- * 라이브러리(@supabase/ssr)는 쓸 때마다 maxAge 를 400일로 강제하고 cookieOptions 로는 못 덮는다 — 그래서 쓰는 자리에서 뗀다.
+ * 로그인 쿠키 쓰기 옵션. 지우는 쓰기(maxAge 0 이하)는 어느 쪽이든 그대로 둔다.
+ * INV-L15: 끔이면 만료 시각(maxAge·expires)을 뗀다. 켬이면 부르는 쪽이 넘긴 유효기간(초, session-login INV-L16 — 역할별 절대 기간)으로 쓰고 expires 는 뗀다.
+ * 유효기간을 모르는 쓰기(역할을 아직 모르는 자리)는 만료 시각을 뗀다 — 라이브러리 기본 400일을 남기지 않는다. 요청마다 갱신(proxy)이 역할 기간으로 다시 쓴다.
+ * 라이브러리(@supabase/ssr)는 쓸 때마다 maxAge 를 400일로 강제하고 cookieOptions 로는 못 덮는다 — 그래서 쓰는 자리에서 바꾼다.
+ * 로그인·요청마다 갱신(proxy)·화면 읽기가 모두 createSessionClient 를 거쳐 이 함수로 쓴다.
  */
-export function sessionOnlyWriteOptions(options: CookieOptions, sessionOnly: boolean): CookieOptions {
-  if (!sessionOnly) return options;
+export function sessionOnlyWriteOptions(options: CookieOptions, sessionOnly: boolean, maxAge?: number): CookieOptions {
   if (typeof options.maxAge === "number" && options.maxAge <= 0) return options;
   const { maxAge: _maxAge, expires: _expires, ...rest } = options;
-  return rest;
+  return sessionOnly || maxAge === undefined ? rest : { ...rest, maxAge };
 }
 
 type SetAll = NonNullable<CookieMethodsServer["setAll"]>;
@@ -53,13 +60,13 @@ type SetAll = NonNullable<CookieMethodsServer["setAll"]>;
  * decide 때 그 규칙으로 한꺼번에 쓰고, 정한 뒤의 쓰기는 바로 그 규칙으로 쓴다. 처음 decide 한 값만 이긴다.
  * 로그인처럼 결과(성공이면 고른 값, 실패면 원래 표시)를 알기 전에 라이브러리가 쿠키를 쓸 수 있는 곳에서 쓴다.
  */
-export function deferSessionCookieWrites(setAll: SetAll): { setAll: SetAll; decide(sessionOnly: boolean): void } {
-  let decided: boolean | null = null;
+export function deferSessionCookieWrites(setAll: SetAll): { setAll: SetAll; decide(sessionOnly: boolean, maxAge?: number): void } {
+  let decided: { sessionOnly: boolean; maxAge?: number } | null = null;
   const pending: Parameters<SetAll>[0] = [];
   let lastHeaders: Parameters<SetAll>[1] = {};
-  const write = (list: Parameters<SetAll>[0], headers: Parameters<SetAll>[1], sessionOnly: boolean) =>
+  const write = (list: Parameters<SetAll>[0], headers: Parameters<SetAll>[1], rule: { sessionOnly: boolean; maxAge?: number }) =>
     setAll(
-      list.map((c) => ({ ...c, options: sessionOnlyWriteOptions(c.options, sessionOnly) })),
+      list.map((c) => ({ ...c, options: sessionOnlyWriteOptions(c.options, rule.sessionOnly, rule.maxAge) })),
       headers,
     );
   return {
@@ -71,13 +78,13 @@ export function deferSessionCookieWrites(setAll: SetAll): { setAll: SetAll; deci
       }
       return write(list, headers, decided);
     },
-    decide: (sessionOnly) => {
+    decide: (sessionOnly, maxAge) => {
       if (decided !== null) return;
-      decided = sessionOnly;
+      decided = { sessionOnly, maxAge };
       const list = pending.splice(0);
       if (list.length === 0) return;
       // 여기 쓰기는 기다리는 쪽이 없다 — setAll 이 Promise 를 돌려주면 실패를 삼키지 않고 남긴다.
-      const result = write(list, lastHeaders, sessionOnly);
+      const result = write(list, lastHeaders, decided);
       if (result instanceof Promise) {
         result.catch((error: unknown) => console.error("[session-cookies] 미뤄 둔 로그인 쿠키 쓰기가 실패했다", error));
       }
@@ -88,21 +95,23 @@ export function deferSessionCookieWrites(setAll: SetAll): { setAll: SetAll; deci
 /**
  * 요청마다 새로 만든다 — 클라이언트를 요청 사이에 나눠 쓰면 남의 세션이 섞인다.
  * sessionOnly(INV-L15): 로그인 쿠키를 쓰는 모든 경로(로그인·요청마다 갱신·화면 읽기)가 이 함수로 쓰므로 여기 한 곳에서 뗀다.
+ * maxAge(INV-L16): 「유지」 켬의 유효기간(초). 안 주면 만료 시각을 뗀다 — 역할을 아는 쪽(proxy·로그인 라우트)이 넘긴다.
  */
 export function createSessionClient(
   config: SupabaseConfig,
   cookies: CookieMethodsServer,
   env: EnvLike,
-  opts: { sessionOnly?: boolean } = {},
+  opts: { sessionOnly?: boolean; maxAge?: number } = {},
 ): SupabaseClient {
   const sessionOnly = opts.sessionOnly === true;
+  const maxAge = opts.maxAge;
   const setAll = cookies.setAll;
   const methods: CookieMethodsServer = setAll
     ? {
         ...cookies,
         setAll: (list, headers) =>
           setAll(
-            list.map((c) => ({ ...c, options: sessionOnlyWriteOptions(c.options, sessionOnly) })),
+            list.map((c) => ({ ...c, options: sessionOnlyWriteOptions(c.options, sessionOnly, maxAge) })),
             headers,
           ),
       }

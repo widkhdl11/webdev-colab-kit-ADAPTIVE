@@ -14,9 +14,9 @@ export async function generateMetadata(): Promise<Metadata> {
 // 관리자 틀. 운영자가 아니면(손님 포함) 404 — 판정은 서버에서 DB 함수로 한다(admin-console INV-K1 S1c).
 // 각 화면도 같은 판정을 다시 부른다(레이아웃과 화면은 따로 그려진다). 한 요청 안에서는 한 번만 묻는다.
 export default async function AdminLayout({ children }: { children: ReactNode }) {
-  const { nickname, access } = await loadAdminSession();
+  const { userId, nickname, access, clock } = await loadAdminSession();
   return (
-    <AdminShell nickname={nickname} access={access}>
+    <AdminShell userId={userId} nickname={nickname} access={access} clock={clock}>
       {children}
     </AdminShell>
   );
