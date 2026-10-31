@@ -5,10 +5,12 @@ import { safeNextPath } from "@/entities/session/model/safe-next-path";
 import { readVerifiedUserId } from "@/entities/session/model/viewer";
 import { guardSession, type SessionGuardResult } from "@/features/auth/model/session-guard";
 import { createAdminSupabase } from "@/shared/api/supabase/admin";
+import { createPublicReadSupabase } from "@/shared/api/supabase/detached";
 import { readSupabaseConfig } from "@/shared/api/supabase/config";
 import { createSessionClient, deferSessionCookieWrites, isAuthCookieName, isSessionOnly, sessionCookieOptions, sessionOnlyMarker } from "@/shared/api/supabase/session-cookies";
 import { firstTouchUtmCookie, UTM_COOKIE, utmCookieOptions } from "@/shared/lib/attribution/utm";
 import { isProduction } from "@/shared/lib/env/is-production";
+import { linkGateOf, type LinkGate } from "./proxy-link-route";
 
 // 요청마다 로그인 쿠키를 갱신한다. 서버 컴포넌트는 응답 쿠키를 쓸 수 없으므로 만료된 토큰을 새로 받는 일은 여기서 한다.
 // 접근 판정은 하지 않는다 — 누가 무엇을 보는지는 각 화면·라우트가 readVerifiedUserId 와 DB 함수로 정한다.
@@ -16,9 +18,38 @@ import { isProduction } from "@/shared/lib/env/is-production";
 // 화면 요청은 로그인 화면(돌아갈 곳 = 그 경로, 안내 표시 reason 하나)으로, API·로그인 화면·로그인 링크 페이지는 로그인 안 된 요청으로 넘긴다.
 // 갱신해 다시 쓰는 로그인 쿠키의 유효기간은 그 역할의 절대 기간이다(INV-L15·L16) — 역할을 안 뒤에 쓰려고 쓰기를 판정 뒤로 미룬다.
 // 공유 링크의 utm 도 여기서 쿠키에 남긴다(metrics INV-Q4) — 서버 컴포넌트는 쿠키를 쓸 수 없고, 어느 주소로 들어와도 첫 방문을 잡으려면 이 자리다.
+// 링크 주소·옛 크리에이터 페이지 주소의 308·404 도 여기서 정한다(creator-link INV-E2·E3·E5, proxy-link-route.ts) — 페이지는 응답을 먼저 흘려보내 상태 코드를 못 바꾼다.
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
-  return withFirstTouchUtm(request, await refreshSession(request));
+  const [session, gate] = await Promise.all([refreshSession(request), linkGateFor(request)]);
+  return withFirstTouchUtm(request, withLinkGate(request, session, gate));
+}
+
+/** 없는 링크 페이지를 그릴 때 다시 쓰는 주소 — 어떤 라우트에도 맞지 않아 Next 가 없는 페이지(not-found.tsx)를 404 로 그린다. */
+const MISSING_PATH = "/_missing/link";
+
+/** 읽기 요청만 판정한다 — 폼 제출 등은 페이지가 그대로 받는다. */
+function linkGateFor(request: NextRequest): Promise<LinkGate> {
+  if (request.method !== "GET" && request.method !== "HEAD") return Promise.resolve({ kind: "pass" });
+  return linkGateOf(request.nextUrl.pathname, createPublicReadSupabase);
+}
+
+/**
+ * 판정이 넘기기(308)나 없는 페이지(404)면 그 응답으로 바꾼다. 갱신한 로그인 쿠키·캐시 헤더는 그대로 옮긴다.
+ * 끝난 세션의 로그인 화면 넘기기(INV-L16)가 이미 정해졌으면 그것이 먼저다.
+ */
+function withLinkGate(request: NextRequest, session: NextResponse, gate: LinkGate): NextResponse {
+  if (gate.kind === "pass" || session.headers.has("location")) return session;
+  const { origin, search } = request.nextUrl;
+  const next =
+    gate.kind === "redirect" ? NextResponse.redirect(new URL(`${gate.to}${search}`, origin), 308) : NextResponse.rewrite(new URL(MISSING_PATH, origin), { request });
+  for (const cookie of session.cookies.getAll()) next.cookies.set(cookie);
+  session.headers.forEach((value, key) => {
+    if (key !== "set-cookie" && key !== "location" && !key.startsWith("x-middleware-")) next.headers.set(key, value);
+  });
+  // 옛 아이디 넘기기는 90일 뒤 풀리고, 옛 페이지 주소의 넘길 곳은 아이디를 바꾸면 바뀐다 — 브라우저가 넘기기를 오래 들고 있지 않게
+  if (gate.kind === "redirect") next.headers.set("Cache-Control", "private, no-store");
+  return next;
 }
 
 /** metrics INV-Q4: 처음 들어온 공유 링크의 utm 을 거른 뒤 30일 쿠키로 남긴다. 이미 남은 값이 있으면 덮어쓰지 않는다. */

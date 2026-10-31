@@ -196,6 +196,21 @@ describe("주소 넘기기 — 실제 페이지 응답 (개발 서버)", () => {
     expect((await open(`/creators/${C.creatorId}`)).status).toBe(404);
   });
 
+  it("INV-E5 · approval-signature INV-S15: 탈퇴한 크리에이터의 링크 주소·옛 페이지 주소는 없는 페이지(404)가 아니라 「탈퇴한 크리에이터입니다.」가 200 으로 열린다", async () => {
+    await setHandleOk(A.login, "rt_left");
+    // 탈퇴하면 본인 확인이 꺼지고 탈퇴 시각이 남는다 — 링크 찾기는 빈 결과가 된다
+    psql(`begin; set local session_replication_role = replica; update public.creators set withdrawn_at = now(), identity_verified = false where id = '${A.creatorId}'; commit;`);
+    try {
+      for (const path of ["/rt_left", `/creators/${A.creatorId}`]) {
+        const res = await open(path);
+        expect([path, res.status]).toEqual([path, 200]);
+        expect([path, (await res.text()).includes("탈퇴한 크리에이터입니다.")]).toEqual([path, true]);
+      }
+    } finally {
+      psql(`begin; set local session_replication_role = replica; update public.creators set withdrawn_at = null where id = '${A.creatorId}'; commit;`);
+    }
+  });
+
   it("INV-E7 S7: 로그인 안 한 사람이 받는 링크 페이지 HTML 에 주문번호·운송장·주문 금액·팬 닉네임·로그인 아이디·전화번호 꼴·열람 건수가 없다", async () => {
     await setHandleOk(A.login, "rt_s7");
     await saveIntro(A.login, A.name, INTRO);
@@ -209,10 +224,11 @@ describe("주소 넘기기 — 실제 페이지 응답 (개발 서버)", () => {
     const html = await res.text();
     // 있어야 할 것이 있어야 없는 것의 확인이 뜻을 가진다
     expect(html).toContain(A.name);
-    expect(html).toContain("fankkuk.kr/rt_s7");
+    // 화면의 링크 주소 줄은 재디자인(카드 d134, docs/ux/pages/handle.md 「없음」 표)에서 뺐다 — 그 아이디의 페이지라는 것은 정식 주소로 본다
+    expect(html).toMatch(/<link rel="canonical" href="[^"]*\/rt_s7"/);
     expect(html).toContain(INTRO);
-    // 집계 숫자(팬 둘)는 나온다 — 누가·몇 개·금액은 없다. 강조 태그는 v18 에서 <b> → <span class="accent"> 라 태그 이름은 보지 않는다
-    expect(html).toMatch(/이번 달 <(b|span)[^>]*>2(<!-- -->)?명<\/(b|span)>/);
+    // 집계 숫자(팬 둘)는 나온다 — 누가·몇 개·금액은 없다. 재디자인(카드 d134) 뒤 문구는 「이번 달 선물한 팬 N명」 한 칸이다
+    expect(html).toMatch(/이번 달 선물한 팬 (<!-- -->)?2(<!-- -->)?명/);
     for (const bad of forbidden(orders)) expect([bad, html.includes(bad)]).toEqual([bad, false]);
     expect(html.match(/FC-[0-9A-Z]{3,}/g)).toBeNull();
     expect(PHONE_IN_TEXT.test(html)).toBe(false);

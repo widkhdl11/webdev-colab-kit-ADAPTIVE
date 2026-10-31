@@ -23,48 +23,6 @@
       "backlog": "BACKLOG 「기록 없이 실패하던 통합 시험 5파일 6개」"
     },
     {
-      "test": "tests/integration/creator-link-routes.integration.test.ts > 주소 넘기기 — 실제 페이지 응답 (개발 서버) INV-E2 S2b: 대문자가 섞인 링크 주소로 열면 308 로 소문자 주소로 넘기고, 소문자 주소는 그 크리에이터 페이지가 200 으로 열린다",
-      "reason": "(site)/loading.tsx 가 페이지를 먼저 흘려보내 넘기기가 308 이 아니라 200 + 화면 안 이동으로 온다 — 코드 쪽 문제(넘기기를 응답 전 자리로 옮겨야 한다)",
-      "found": "2026-10-18",
-      "due": "2026-11-01",
-      "backlog": "BACKLOG 「링크 주소 넘기기(308)가 개발 서버에서 200 으로 온다」"
-    },
-    {
-      "test": "tests/integration/creator-link-routes.integration.test.ts > 주소 넘기기 — 실제 페이지 응답 (개발 서버) INV-E3 S3b: 묶여 있는 옛 아이디 주소로 열면 308 로 지금 아이디 주소로 넘긴다",
-      "reason": "(site)/loading.tsx 가 페이지를 먼저 흘려보내 넘기기가 308 이 아니라 200 + 화면 안 이동으로 온다 — 코드 쪽 문제(넘기기를 응답 전 자리로 옮겨야 한다)",
-      "found": "2026-10-18",
-      "due": "2026-11-01",
-      "backlog": "BACKLOG 「링크 주소 넘기기(308)가 개발 서버에서 200 으로 온다」"
-    },
-    {
-      "test": "tests/integration/creator-link-routes.integration.test.ts > 주소 넘기기 — 실제 페이지 응답 (개발 서버) INV-E3 S3c (실패경로): 90일이 지나 풀린 옛 아이디 주소는 없는 페이지다",
-      "reason": "(site)/loading.tsx 가 페이지를 먼저 흘려보내 넘기기가 308 이 아니라 200 + 화면 안 이동으로 온다 — 코드 쪽 문제(넘기기를 응답 전 자리로 옮겨야 한다)",
-      "found": "2026-10-18",
-      "due": "2026-11-01",
-      "backlog": "BACKLOG 「링크 주소 넘기기(308)가 개발 서버에서 200 으로 온다」"
-    },
-    {
-      "test": "tests/integration/creator-link-routes.integration.test.ts > 주소 넘기기 — 실제 페이지 응답 (개발 서버) INV-E5 S5: 아이디가 있는 크리에이터의 옛 페이지 주소(/creators/{id})는 308 로 링크 주소로 넘기고, 아이디가 없으면 그 주소가 그대로 200 이다",
-      "reason": "(site)/loading.tsx 가 페이지를 먼저 흘려보내 넘기기가 308 이 아니라 200 + 화면 안 이동으로 온다 — 코드 쪽 문제(넘기기를 응답 전 자리로 옮겨야 한다)",
-      "found": "2026-10-18",
-      "due": "2026-11-01",
-      "backlog": "BACKLOG 「링크 주소 넘기기(308)가 개발 서버에서 200 으로 온다」"
-    },
-    {
-      "test": "tests/integration/creator-link-routes.integration.test.ts > 주소 넘기기 — 실제 페이지 응답 (개발 서버) INV-E5 S5b (실패경로): 본인 확인 전 크리에이터가 정해 둔 아이디·없는 아이디·그 크리에이터의 옛 페이지 주소는 없는 페이지다",
-      "reason": "(site)/loading.tsx 가 페이지를 먼저 흘려보내 넘기기가 308 이 아니라 200 + 화면 안 이동으로 온다 — 코드 쪽 문제(넘기기를 응답 전 자리로 옮겨야 한다)",
-      "found": "2026-10-18",
-      "due": "2026-11-01",
-      "backlog": "BACKLOG 「링크 주소 넘기기(308)가 개발 서버에서 200 으로 온다」"
-    },
-    {
-      "test": "tests/integration/creator-link-routes.integration.test.ts > 주소 넘기기 — 실제 페이지 응답 (개발 서버) INV-E7 S7: 로그인 안 한 사람이 받는 링크 페이지 HTML 에 주문번호·운송장·주문 금액·팬 닉네임·로그인 아이디·전화번호 꼴·열람 건수가 없다",
-      "reason": "(site)/loading.tsx 가 페이지를 먼저 흘려보내 넘기기가 308 이 아니라 200 + 화면 안 이동으로 온다 — 코드 쪽 문제(넘기기를 응답 전 자리로 옮겨야 한다)",
-      "found": "2026-10-18",
-      "due": "2026-11-01",
-      "backlog": "BACKLOG 「링크 주소 넘기기(308)가 개발 서버에서 200 으로 온다」"
-    },
-    {
       "test": "tests/integration/difference-payment-db.integration.test.ts > 출고 화면 안내: 승인은 끝났고 차액만 미납이면 「차액 결제 대기」(BACKLOG 2026-10-06) (실패경로) 차액 기한(요청 + 168시간)이 지났는데 7일 처리 전이면 wait_expiry — 더 낼 수 없는 차액을 기다리라고 하지 않는다",
       "reason": "기한 정리(2026-10-21) 뒤 추가 결제 기한이 검수 기록 시각 기준으로 바뀌었는데 시험은 「요청 + 168시간」을 기대한다",
       "found": "2026-10-21",
