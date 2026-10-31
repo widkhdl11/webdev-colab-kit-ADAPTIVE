@@ -1036,7 +1036,9 @@ describe("연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3�
       psql(`delete from public.office_unmatched where id = '${heldId}'`);
       expect(seen).toEqual(seen.map(([kind, must]) => [kind, must, must ? "byeolbit.fan@example.com" : null]));
     });
-  });
+    // 종류(30여 개)마다 DB 명령을 여러 번 보내 혼자 돌려도 30초 남짓 걸린다. 기본 제한(30초)에 끊기면 설정을 되돌리는 코드가
+    // 다음 시험이 시작된 뒤에 돌아 뒤 시험들이 꺼진 설정을 보고 실패한다(2026-10-31 전체 실행 — 새 실패 4건이 모두 이것)
+  }, 120_000);
 
   it("INV-N6 (S6e, manual/0016 뒤): 두 칸 모두 꺼진 별빛 — 거절 알림은 확인된 이메일로 가고, 같은 별빛의 입고 줄은 빈 값", async () => {
     await withContact("byeolbit_fan", { notify_kakao: false, notify_email: false }, async () => {
