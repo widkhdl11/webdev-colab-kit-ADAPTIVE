@@ -29,7 +29,8 @@ import { FOLLOW_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-n
 import s from "./creator-search.module.css";
 
 // 크리에이터 찾기. 시안: docs/design/mockups/site/v18/creators.html (design-rules 00절) · 태그 아이콘·색 v9-pages/tags-b.html (카드 d46)
-// 위에서 아래로: 광고 배너(0장이면 없음) → 페이지 머리(제목 24 왼쪽·설명·본인 확인 줄) → 왼쪽부터 꽉 찬 검색창 → 태그 칩 → 「전체 N명」 → 카드 격자(880 기둥 → 화면 1024 이상 3열 · 640 이상 2열 · 그 아래 1열).
+// 2026-11-01 시안 4 기준 정돈(design-rules 35절, 시안 docs/design/mockups/part5-v4-20261101/): 제목 32 · 메인과 같은 검색창 · 칩 휴대폰 한 줄 가로 넘김 · 배너 기둥 폭.
+// 위에서 아래로: 광고 배너(0장이면 없음) → 페이지 머리(제목 32 왼쪽·설명·본인 확인 줄) → 왼쪽부터 꽉 찬 검색창 → 태그 칩 → 「전체 N명」 → 카드 격자(880 기둥 → 화면 1024 이상 3열 · 640 이상 2열 · 그 아래 1열).
 // 본문 틀: 로그인 후는 목록형 기본 폭(.page-pane 880 — 2026-10-16 사용자 「꼭 넓은 너비가 필요한 페이지가 아니다」), 로그인 전은 상단 바와 같은 880 선(.pub-inner — 2026-10-18 1152 → 880) — 로그인 전 상단 바 아래에서 넓은 틀이 상단 바 선을 벗어나지 않게.
 // 카드는 크리에이터가 꾸민 대로 — entities/creator/ui/creator-card-head·creator-card-tags(시안 v28-card-redesign, design-rules 17절: 배너 2:1 ·
 // 사진 왼쪽 + 이름·팬덤 뱃지 한 줄 · 「채널 이름 · 소개」 한 줄 · 칩 한 줄 · 하단 줄에 평균 승인 시간과 팔로우). 팔로우한 크리에이터·홈과 같은 카드다.
@@ -101,12 +102,12 @@ export function CreatorSearchPage({
   const frame = followMode === "login" ? `pub-inner ${s.pub}` : "page-pane";
 
   return (
-    <main id="main" className={frame}>
+    <main id="main" className={`${frame} ${s.page}`}>
       {/* 광고 배너는 맨 위(2026-10-18 사용자 「위치는 제일 상단에」) */}
       {banner}
-      <header className="page-head">
+      <header className={`page-head ${s.head}`}>
         <div className="ph-row">
-          <h1 className="ph-title" id="find-title">
+          <h1 className={`ph-title ${s.title}`} id="find-title">
             선물을 보낼 크리에이터 찾기
           </h1>
         </div>
@@ -118,38 +119,37 @@ export function CreatorSearchPage({
           활동 채널 소유자 확인을 완료한 크리에이터만 표시됩니다.
         </p>
       </header>
-      <div className={`search ${s.search}`}>
+      {/* 검색창 — 메인 검색과 같은 모양(design-rules 34·35절): 높이 64·반경 16·하늘 「검색」 단추. 치는 대로 걸러지므로
+          단추는 목록을 다시 거르지 않고 입력을 마친다(휴대폰 자판을 내려 결과가 보이게) */}
+      <form
+        className={s.search}
+        role="search"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const field = e.currentTarget.elements.namedItem("q");
+          if (field instanceof HTMLInputElement) field.blur();
+        }}
+      >
         <label className="sr-only" htmlFor={inputId}>
           크리에이터 이름 또는 채널 이름
         </label>
         <input
           id={inputId}
           type="search"
+          name="q"
           placeholder="예: 하루, 치지직, 새벽달 라디오"
           autoComplete="off"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        {/* 치는 대로 걸러지므로 누를 버튼이 없다 — 돋보기는 장식 */}
-        <span className="search-go" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-            <circle
-              cx="11"
-              cy="11"
-              r="8"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-            <path
-              d="m21 21-4.34-4.34"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
+        <button className={s.searchGo} type="submit" aria-label="검색">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" strokeWidth="2.4" />
+            <path d="m15.5 15.5 5 5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
           </svg>
-        </span>
-      </div>
+          <span className={s.searchLabel}>검색</span>
+        </button>
+      </form>
       {/* 칩 줄 제목 — 칩이 검색창 바로 아래 한 줄로 와서 눈에는 보이지 않게 두고 문서 개요에만 남긴다 */}
       <h2 className="sr-only">태그</h2>
       <div className={s.chips} role="group" aria-label="태그별 보기">

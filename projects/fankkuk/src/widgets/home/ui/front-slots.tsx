@@ -11,10 +11,11 @@ import { INTAKE_LIMIT_TEXT, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/si
 import { lowestPriceKrw, PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { PROMISE } from "@/shared/config/site-copy";
 import { formatDate } from "@/shared/lib/format/datetime";
-import { statusTagClass } from "@/shared/ui/status-tone";
+import type { StatusTone } from "@/shared/ui/status-tone";
 import { CardRowScroller } from "./card-row-scroller";
 import s from "./front.module.css";
 import h from "./home.module.css";
+import l from "./landing.module.css";
 
 // 홈 칸(design-rules 16절, 시안 docs/design/mockups/site/v27-home-airy/ · 로그인 전 모양은 v29-landing-fix/). 로그인 전 첫 화면과 로그인 후 팬 홈이 같은 칸 순서를 쓰고,
 // 로그인 후에 바뀌는 칸만 「-2」 부품으로 바꾼다 — 두 화면이 같은 부품을 써야 순서와 모양이 어긋나지 않는다.
@@ -49,114 +50,114 @@ export function guestTiles(prices: PublicPriceTable): FrontTile[] {
 
 function SearchGlyph() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="3" />
-      <path d="m15.5 15.5 5 5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" strokeWidth="2.4" />
+      <path d="m15.5 15.5 5 5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
     </svg>
   );
 }
 
+/** 팬 홈 첫 화면 검색 — 로그인 전 메인 검색과 같은 모양(design-rules 34·35절). 채움 버튼은 화면에 이 「검색」 하나 */
 function HeroSearch() {
   return (
-    <form className="search" role="search" action="/creators">
+    <form className={l.search} role="search" action="/creators">
       <label className="sr-only" htmlFor="hero-q">
         크리에이터 검색
       </label>
       <input id="hero-q" type="search" name="q" placeholder="크리에이터 이름 또는 채널 이름 검색" autoComplete="off" />
-      <button className="search-go" type="submit" aria-label="크리에이터 찾기">
+      <button className={l.searchGo} type="submit" aria-label="검색">
         <SearchGlyph />
+        <span className={l.searchLabel}>검색</span>
       </button>
     </form>
   );
 }
 
-function HeroActions() {
+/** ① 로그인 후 첫 화면 — 메인(34절)과 같은 띠·글·그림 자리. 머리말 → 인사 48 → 검색(팬) 또는 내 프로필·버튼(크리에이터).
+ *  팬 홈의 「선물 보내기」「크리에이터 찾기」 채움 버튼은 뺐다(35절) — 바로 아래 바로가기·검색과 같은 일이다 */
+export function HeroBand({ title, eyebrow, control, actions = null }: { title: string; eyebrow: string; control?: ReactNode; actions?: ReactNode }) {
   return (
-    <div className="hero-actions">
-      <Link className="btn" href="/gifts/new">
-        선물 보내기
-      </Link>
-      <Link className="btn btn--line" href="/creators">
-        크리에이터 찾기
-      </Link>
-    </div>
-  );
-}
-
-/** ① 크리에이터 검색 판(팬 홈) — eyebrow 가 있으면 제목 위 머리말(①-2 「OO님」) */
-export function SearchSlot({ eyebrow, tiles, tilesLabel }: { eyebrow?: string; tiles: readonly FrontTile[]; tilesLabel: string }) {
-  return (
-    <section className={`hero ${s.hero}`} aria-labelledby="hero-title">
-      <div className={s.heroText}>
-        {eyebrow ? <p className="t-lead">{eyebrow}</p> : null}
-        <h1 className="t-hero" id="hero-title">
-          선물을 보낼 크리에이터 찾기
-        </h1>
-        <HeroSearch />
-      </div>
-      <HeroActions />
-      <ul className={s.tiles} aria-label={tilesLabel}>
-        {tiles.map((t) => (
-          <li key={t.label}>
-            <Link className={`card ${s.tile}`} href={t.href}>
-              <img src={`/img/${t.icon}.png`} width={64} height={64} alt="" aria-hidden="true" />
-              <span className={s.tileLabel}>{t.label}</span>
-              <span className={s.caption}>{t.note}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-/** ① 로그인 전 첫 화면 — 화면 끝까지 칠한 그라데이션 띠 안에 880 기둥. 왼쪽 머리말·제목·검색·버튼, 오른쪽 마스코트(767 이하는 위) */
-export function HeroBand({ title = "선물을 보낼 크리에이터 찾기", eyebrow = "크리에이터에게 선물을 보낼 때", control, actions }: { title?: string; eyebrow?: string; control?: ReactNode; actions?: ReactNode }) {
-  return (
-    <section className={s.heroBand} aria-labelledby="hero-title">
-      <div className={`${s.col} ${s.heroIn}`}>
-        <div className={s.heroCopy}>
-          <p className="t-lead">{eyebrow}</p>
+    <section className={`${s.heroBand} ${l.hero}`} aria-labelledby="hero-title">
+      <div className={`${s.col} ${l.heroIn}`}>
+        <div className={l.heroCopy}>
+          <p className={l.eyebrow}>{eyebrow}</p>
           <h1 className="t-hero" id="hero-title">
             {title}
           </h1>
           {control ?? <HeroSearch />}
-          {actions ?? <HeroActions />}
+          {actions}
         </div>
-        <img className={s.heroArt} src="/images/home/creator-cat.webp" width={280} height={280} alt="" aria-hidden="true" fetchPriority="high" />
+        <img className={l.heroArt} src="/images/home/creator-cat.webp" width={240} height={240} alt="" aria-hidden="true" fetchPriority="high" />
       </div>
     </section>
   );
 }
 
-/** 승인된 세 역할 홈의 공통 순서. 역할별 본문은 서버에서 그린 부품으로 받는다. */
+/** 승인된 역할 홈의 공통 순서(20절) — 첫 화면 → 바로가기 넷(첫 화면 아래 걸침, 35절) → 배너 → 역할별 본문. 구간 사이는 두 홈 모두 --section-gap */
 export function RoleHome({ hero, tiles, tilesLabel, banner, children }: { hero: ReactNode; tiles: readonly FrontTile[]; tilesLabel: string; banner: ReactNode; children: ReactNode }) {
   return (
     <main id="main" className={`${s.landing} ${s.roleHome}`}>
       {hero}
-      <div className={`${s.col} ${s.colTop}`}>
-        <GuestTiles tiles={tiles} label={tilesLabel} />
-        {banner ? <div className={s.homeBanner}>{banner}</div> : null}
+      <div className={s.col}>
+        <HomeTiles tiles={tiles} label={tilesLabel} />
+        {banner ? <div className={l.banner}>{banner}</div> : null}
         {children}
       </div>
     </main>
   );
 }
 
-/** ① 로그인 전 바로가기 넷 — 흰 바탕 경계 카드, 그림 48 이 글 위(920 이하 두 장씩) */
-export function GuestTiles({ tiles, label }: { tiles: readonly FrontTile[]; label: string }) {
+/** 바로가기 넷 — 메인과 같은 카드(하늘 원 44 안 그림 28 → 이름 → 설명, 왼쪽 정렬) */
+function HomeTiles({ tiles, label }: { tiles: readonly FrontTile[]; label: string }) {
   return (
-    <ul className={s.flatTiles} aria-label={label}>
+    <ul className={l.tiles} aria-label={label}>
       {tiles.map((t) => (
         <li key={t.label}>
-          <Link className={`card ${s.flatTile}`} href={t.href}>
-            <img src={`/images/home/${t.icon}.webp`} width={48} height={48} alt="" aria-hidden="true" loading="lazy" />
-            <span className={s.flatLabel}>{t.label}</span>
-            <span className={s.caption}>{t.note}</span>
+          <Link className={`card ${l.tile}`} href={t.href}>
+            <span className={l.ico} aria-hidden="true">
+              <img src={`/images/home/${t.icon}.webp`} width={28} height={28} alt="" loading="lazy" />
+            </span>
+            <span className={l.tileLabel}>{t.label}</span>
+            {t.note ? <span className={l.tileNote}>{t.note}</span> : null}
           </Link>
         </li>
       ))}
     </ul>
+  );
+}
+
+/** 진행 상태 뱃지 — 색만이 아니라 점 + 글자(35절). 색 갈래는 각 도메인이 정한 tone 그대로 */
+export function StatusBadge({ tone, text }: { tone: StatusTone; text: string }) {
+  return (
+    <span className={h.stt} data-tone={tone}>
+      {text}
+    </span>
+  );
+}
+
+const EMPTY_ICON = {
+  check: "m5 12 5 5L20 7",
+  eye: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z",
+  gift: "M4 11h16v10H4zM2 7h20v4H2zM12 7v14M12 7S10.5 3 8 3a2 2 0 0 0 0 4M12 7s1.5-4 4-4a2 2 0 0 1 0 4",
+  heart: "M12 21 3.5 12.5a5.5 5.5 0 0 1 8.5-7 5.5 5.5 0 0 1 8.5 7Z",
+  bell: "M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0",
+} as const;
+
+/** 빈 상태·못 읽음 — 같은 문구를 흰 카드 안에(35절). 첫 줄이 상태, children 은 그 아래(안내 문장·버튼) */
+export function EmptyCard({ icon, text, children }: { icon: keyof typeof EMPTY_ICON; text: string; children?: ReactNode }) {
+  return (
+    <div className={h.emptyCard}>
+      <span className={h.emptyIco} aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          {icon === "eye" ? <circle cx="12" cy="12" r="3" /> : null}
+          <path d={EMPTY_ICON[icon]} />
+        </svg>
+      </span>
+      <div className={h.emptyText}>
+        <p>{text}</p>
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -246,7 +247,7 @@ export function GiftsSlot({ gifts, faceToneByName }: { gifts: readonly FanGiftVi
   return (
     <SlotSection id="gifts" title="진행 중인 선물" meta={`${gifts.length}건`} more={{ href: "/gifts", label: "보낸 선물 모두 보기" }}>
       {gifts.length === 0 ? (
-        <p className="t-meta">진행 중인 선물이 없습니다.</p>
+        <EmptyCard icon="gift" text="진행 중인 선물이 없습니다." />
       ) : (
         <ul className={h.rows} aria-label="진행 중인 선물">
           {gifts.slice(0, MAX_GIFTS).map((g) => {
@@ -261,7 +262,7 @@ export function GiftsSlot({ gifts, faceToneByName }: { gifts: readonly FanGiftVi
                       상자 {g.boxCount}개 · {formatDate(g.registeredAt)} 등록
                     </span>
                   </span>
-                  <span className={statusTagClass(badge.tone)}>{badge.text}</span>
+                  <StatusBadge tone={badge.tone} text={badge.text} />
                   <Chev />
                 </Link>
               </li>
@@ -501,12 +502,12 @@ export type FrontNotice = { id: string; title: string; date: string };
 /** "2026-09-28" → "09.28" */
 const shortDate = (date: string) => date.slice(5).replace("-", ".");
 
-/** ⑦ 공지 최신 셋 */
-export function NoticesSlot({ notices }: { notices: readonly FrontNotice[] }) {
+/** ⑦ 공지 최신 셋. cardEmpty: 0건일 때 같은 문구를 흰 카드 안에(35절 두 역할 홈) — 로그인 전 메인은 34절대로 기존 빈 판 */
+export function NoticesSlot({ notices, cardEmpty = false }: { notices: readonly FrontNotice[]; cardEmpty?: boolean }) {
   return (
     <SlotSection id="notice" title="공지사항" more={{ href: "/notices", label: "전체 보기" }}>
       {notices.length === 0 ? (
-        <p className="empty">등록된 공지사항이 없습니다.</p>
+        cardEmpty ? <EmptyCard icon="bell" text="등록된 공지사항이 없습니다." /> : <p className="empty">등록된 공지사항이 없습니다.</p>
       ) : (
         <ul className={`nlist ${s.notices}`}>
           {notices.map((n) => (

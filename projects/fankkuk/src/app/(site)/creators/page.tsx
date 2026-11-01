@@ -51,13 +51,14 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   return (
     <>
       <SiteHeader {...header} />
+      {/* 배너는 본문 기둥(880) 폭 그대로 — 넓은 판 가운데 장이면 제목 왼쪽 선과 어긋난다(design-rules 35절, 2026-11-01) */}
       <CreatorSearchPage
         creators={creators}
         looks={cardLooks}
         tagOptions={tagOptions}
         followMode={followModeOf(viewer)}
         ownCreatorId={ownCreatorId}
-        banner={viewer ? memberBannerSlot(banners) : bannerSlot(banners)}
+        banner={viewer ? memberBannerSlot(banners) : bannerSlot(banners, "column")}
         initialQuery={initialQuery}
       />
       <SiteFooter />

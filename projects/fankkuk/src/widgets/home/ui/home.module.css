@@ -69,3 +69,31 @@
 @media (prefers-reduced-motion: reduce) {
   .row:hover .chev { transform: none !important; }
 }
+
+/* 35절 진행 상태 뱃지 — 색만이 아니라 점 + 글자. 공용 .tag 를 쓰지 않는다(홈 밖 태그는 회색 갈래라 색이 사라진다).
+   글자/면 대비: warn 5.6 · info · success · danger 모두 4.5 이상(tokens.css 값) */
+.stt { display: inline-flex; flex: none; align-items: center; gap: var(--space-2); max-width: 50%; min-height: 28px; padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1.4; box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 24%, transparent); overflow-wrap: anywhere; }
+/* 좁은 폭에서는 뱃지를 이름 아래 줄로 — 이름과 뱃지가 한 줄에서 서로 밀면 20자 이름이 네다섯 줄로 접힌다(ui-layers 「늘어나는 것 둘」) */
+@media (max-width: 479px) {
+  .row { flex-wrap: wrap; row-gap: var(--space-2); }
+  .row .w { flex: 1 1 calc(100% - 20px - var(--space-4)); }
+  .row .chev { order: 1; }
+  .row .stt { order: 2; max-width: 100%; }
+  /* 팬 홈 줄은 앞에 얼굴 40 — 뱃지를 이름 글자 줄에 맞춘다 */
+  .row:has(.faceSm) .w { flex-basis: calc(100% - 40px - 20px - 2 * var(--space-4)); }
+  .row:has(.faceSm) .stt { margin-left: calc(40px + var(--space-4)); }
+}
+.stt::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: var(--r-pill); background: currentColor; }
+.stt[data-tone="warn"] { background: var(--warn-soft); color: var(--warn-ink); }
+.stt[data-tone="info"] { background: var(--info-soft); color: var(--info); }
+.stt[data-tone="success"] { background: var(--success-soft); color: var(--success); }
+.stt[data-tone="danger"] { background: var(--danger-soft); color: var(--danger); }
+
+/* 35절 빈 상태 — 같은 문구를 흰 카드 안에. 하늘 원 44 안 선 아이콘 + 첫 줄 16(본문 글자색) + 아래 안내 14 */
+.emptyCard { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-4); border-radius: var(--r-card); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); }
+.emptyIco { display: grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: var(--r-pill); background: var(--tint); color: var(--ink); }
+.emptyIco svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.emptyText { min-width: 0; }
+.emptyText > p { margin: 0; font-size: var(--fs-small); line-height: 1.6; color: var(--gray-600); }
+.emptyText > p:first-child { min-height: 44px; display: flex; align-items: center; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; color: var(--ink); }
+.emptyText > .emptyAct { margin-top: var(--space-2); }

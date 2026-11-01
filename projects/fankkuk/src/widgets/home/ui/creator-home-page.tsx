@@ -9,8 +9,10 @@ import type { FanGiftView } from "@/entities/order/model/fan-view";
 import { CREATOR_PROFILE_EDIT } from "@/entities/session/model/home-path";
 import { NO_ADDRESS_ASK } from "@/shared/config/site-copy";
 import { formatDateTime } from "@/shared/lib/format/datetime";
-import { HeroBand, NoticesSlot, RoleHome, SlotSection, type FrontNotice, type FrontTile } from "./front-slots";
+import type { StatusTone } from "@/shared/ui/status-tone";
+import { EmptyCard, HeroBand, NoticesSlot, RoleHome, SlotSection, StatusBadge, type FrontNotice, type FrontTile } from "./front-slots";
 import s from "./front.module.css";
+import h from "./home.module.css";
 
 export type CreatorHomeProfile = {
   name: string;
@@ -23,8 +25,8 @@ export type CreatorHomeProfile = {
   symbolUrl: string | null;
 };
 
-/** 상태 이름은 기존 표시 함수를 라우트에서 적용한 값이다. */
-export type HomeProgressRow = { id: string; title: string; description: string; status: string };
+/** 상태 이름은 기존 표시 함수를 라우트에서 적용한 값이다. tone = 뱃지 색 갈래(없으면 회색) */
+export type HomeProgressRow = { id: string; title: string; description: string; status: string; tone?: StatusTone };
 
 type Props = {
   profile: CreatorHomeProfile;
@@ -47,15 +49,27 @@ const ACTION_LABEL: Record<CreatorActionItem["kind"], string> = {
 };
 const countNote = (n: number | null) => n === null ? "" : `${n}건`;
 
-function SummaryRows({ rows, href }: { rows: readonly HomeProgressRow[]; href: string }) {
+function Chev() {
   return (
-    <ul className={s.summaryRows}>
+    <svg className={h.chev} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+}
+
+/** 한 줄 목록 — 팬 홈 진행 중인 선물과 같은 흰 카드 묶음. 줄 전체가 누르는 칸, 상태는 색 뱃지(점 + 글자, 35절) */
+function SummaryRows({ rows, href, label }: { rows: readonly HomeProgressRow[]; href: string; label: string }) {
+  return (
+    <ul className={h.rows} aria-label={label}>
       {rows.slice(0, 3).map((row) => (
         <li key={row.id}>
-          <Link href={href} className={s.summaryRow}>
-            <span className={s.summaryText}><strong>{row.title}</strong><span>{row.description}</span></span>
-            <span className={s.summaryStatus}>{row.status}</span>
-            <span aria-hidden="true">›</span>
+          <Link href={href} className={h.row}>
+            <span className={h.w}>
+              <b>{row.title}</b>
+              <span>{row.description}</span>
+            </span>
+            <StatusBadge tone={row.tone ?? "plain"} text={row.status} />
+            <Chev />
           </Link>
         </li>
       ))}
@@ -75,6 +89,7 @@ export function CreatorHomePage({ profile, publicHref = null, actionCount, actio
     title: `${"nickname" in item ? item.nickname : item.creatorName}님`,
     description: "itemKind" in item ? item.itemKind : item.orderNo,
     status: ACTION_LABEL[item.kind],
+    tone: "warn",
   }));
   const control = (
     <div className={s.heroProfile} aria-label="내 프로필">
@@ -83,8 +98,9 @@ export function CreatorHomePage({ profile, publicHref = null, actionCount, actio
       {profile.fanName ? <FandomBadge name={profile.fanName} symbolUrl={profile.symbolUrl} themeColor={profile.colors.personal} size="medium" /> : null}
     </div>
   );
+  // 채움 버튼은 「내 페이지 보기」 하나, 「프로필 수정」은 테두리(공개 페이지가 없으면 프로필 수정만 — 20절)
   const heroActions = (
-    <div className="hero-actions">
+    <div className={s.heroActions}>
       {publicHref ? <Link className="btn" href={publicHref}>내 페이지 보기</Link> : null}
       <Link className={`btn ${publicHref ? "btn--line" : ""}`} href={CREATOR_PROFILE_EDIT}>프로필 수정</Link>
     </div>
@@ -92,16 +108,24 @@ export function CreatorHomePage({ profile, publicHref = null, actionCount, actio
   return (
     <RoleHome hero={<HeroBand title={`${profile.name}님, 반가워요`} eyebrow="팬들이 보낸 선물과 승인 요청을 확인해 주세요" control={control} actions={heroActions} />} tiles={tiles} tilesLabel="내 바로가기" banner={banner}>
       <SlotSection id="creator-actions" title="지금 할 일" meta={countNote(actionCount)} more={{ href: CREATOR_ACTION_CENTER_HREF, label: "지금 할 일 모두 보기" }}>
-        {actionRows.length > 0 ? <SummaryRows rows={actionRows} href={CREATOR_ACTION_CENTER_HREF} /> : <p className="t-meta">{actionCount === null ? "지금 할 일을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." : "현재 처리할 일이 없습니다."}</p>}
+        {actionRows.length > 0 ? <SummaryRows rows={actionRows} href={CREATOR_ACTION_CENTER_HREF} label="지금 할 일" /> : <EmptyCard icon="check" text={actionCount === null ? "지금 할 일을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." : "현재 처리할 일이 없습니다."} />}
       </SlotSection>
       <SlotSection id="creator-progress" title="진행 중인 선물" meta={countNote(ongoingCount)} more={{ href: CREATOR_GIFT_PROGRESS_HREF, label: "선물 현황 모두 보기" }}>
-        {progressRows.length > 0 ? <SummaryRows rows={progressRows} href={CREATOR_GIFT_PROGRESS_HREF} /> : <p className="t-meta">{ongoingCount === null ? "선물 현황을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." : "진행 중인 선물이 없습니다."}</p>}
+        {progressRows.length > 0 ? <SummaryRows rows={progressRows} href={CREATOR_GIFT_PROGRESS_HREF} label="진행 중인 선물" /> : <EmptyCard icon="gift" text={ongoingCount === null ? "선물 현황을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." : "진행 중인 선물이 없습니다."} />}
       </SlotSection>
       <SlotSection id="creator-log" title="최근 열람 기록" more={{ href: "/creator/log", label: "열람 기록 모두 보기" }}>
-        {accessLog.length > 0 ? <SummaryRows href="/creator/log" rows={accessLog.map((entry) => ({ id: `${entry.orderNo}-${entry.at}-${entry.printNo}`, title: "배송지 열람 기록", description: `${entry.orderNo} · ${formatDateTime(entry.at)}`, status: printLabelOf(entry.printNo, entry.released).text }))} /> : <p className="t-meta">주소 열람 기록이 없습니다.</p>}
-        <p className="t-meta">{NO_ADDRESS_ASK}</p>
+        {accessLog.length > 0 ? (
+          <>
+            <SummaryRows href="/creator/log" label="최근 열람 기록" rows={accessLog.map((entry) => { const print = printLabelOf(entry.printNo, entry.released); return { id: `${entry.orderNo}-${entry.at}-${entry.printNo}`, title: "배송지 열람 기록", description: `${entry.orderNo} · ${formatDateTime(entry.at)}`, status: print.text, tone: entry.released ? "danger" : "plain" }; })} />
+            <p className={`t-meta ${h.secFoot}`}>{NO_ADDRESS_ASK}</p>
+          </>
+        ) : (
+          <EmptyCard icon="eye" text="주소 열람 기록이 없습니다.">
+            <p>{NO_ADDRESS_ASK}</p>
+          </EmptyCard>
+        )}
       </SlotSection>
-      <NoticesSlot notices={notices} />
+      <NoticesSlot notices={notices} cardEmpty />
     </RoleHome>
   );
 }

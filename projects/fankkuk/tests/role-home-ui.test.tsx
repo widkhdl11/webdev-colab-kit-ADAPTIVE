@@ -39,6 +39,34 @@ describe("승인된 세 역할 홈", () => {
     expect(host.querySelector('a[href="/creator/log"]')).not.toBeNull();
   });
 
+  it("팬 홈 첫 화면에는 「선물 보내기」「크리에이터 찾기」 버튼이 없고 검색 하나만 둔다(design-rules 35절 — 바로 아래 바로가기·검색과 같은 일이라 2026-11-01 승인으로 뺐다)", () => {
+    draw(<HomePage nickname="별빛" gifts={[]} following={[]} looks={{}} faceToneByName={{}} notices={[]} prices={prices} actionCount={0} receivedCount={0} />);
+    const hero = host.querySelector('[aria-labelledby="hero-title"]')!;
+    expect(hero.querySelector('form[role="search"][action="/creators"]')).not.toBeNull();
+    expect(hero.querySelectorAll("a")).toHaveLength(0);
+    expect(host.querySelector('ul[aria-label="내 바로가기"] a[href="/gifts/new"]')).not.toBeNull();
+  });
+
+  it("진행 상태는 색 갈래가 붙은 뱃지, 빈 상태는 같은 문구 그대로(35절)", () => {
+    draw(creator({ progressRows: [{ id: "FC-1", title: "별빛님이 보낸 선물", description: "목도리", status: "배송 중", tone: "info" }], ongoingCount: 1 }));
+    expect(host.querySelector('[aria-labelledby="creator-progress-title"] [data-tone="info"]')?.textContent).toBe("배송 중");
+    expect(host.querySelector('[aria-labelledby="creator-actions-title"]')!.textContent).toContain("현재 처리할 일이 없습니다.");
+    expect(host.querySelector('[aria-labelledby="creator-log-title"]')!.textContent).toContain("주소 열람 기록이 없습니다.");
+  });
+
+  it("공지 0건: 두 역할 홈은 같은 문구를 흰 카드 안에(35절), 로그인 전 메인은 기존 빈 판 그대로(34절)", () => {
+    const emptyNotice = () => [...host.querySelectorAll('[aria-labelledby="notice-title"] *')].find((el) => el.childElementCount === 0 && el.textContent === "등록된 공지사항이 없습니다.");
+    for (const page of [
+      <HomePage key="fan" nickname="별빛" gifts={[]} following={[]} looks={{}} faceToneByName={{}} notices={[]} prices={prices} actionCount={0} receivedCount={0} />,
+      creator(),
+    ]) {
+      draw(page);
+      expect(emptyNotice()).toBeDefined();
+      expect(emptyNotice()!.closest("p.empty")).toBeNull();
+    }
+    draw(<LandingPage prices={prices} newest={[]} looks={{}} notices={[]} banner={null} />);
+    expect(emptyNotice()?.matches("p.empty")).toBe(true);
+  });
   it("크리에이터 홈에는 처리할 일 앞 세 줄만 보이지만 전체 건수와 모두 보기 링크를 유지한다", () => {
     const actions: CreatorActionItem[] = Array.from({ length: 4 }, (_, index) => ({ kind: "approval", orderNo: `FC-${index}`, requestId: `req-${index}`, boxCount: 1, nickname: `팬${index}`, itemKind: "손편지", hasElectronicsOrMetal: false, sentAt: "2026-10-20T00:00:00Z", receivedAt: null, dueAt: "2026-10-27T00:00:00Z", priorHistory: { gifts: 0, passed: 0, returned: 0 } }));
     draw(creator({ actions, actionCount: 4 }));

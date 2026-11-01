@@ -12,8 +12,9 @@ import { readCreatorActionItemsOrNull } from "@/entities/action-item/api/read-ac
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
 import { FAN_HOME } from "@/entities/session/model/home-path";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
+import type { StatusTone } from "@/shared/ui/status-tone";
 import { readMyGiftProgress } from "@/widgets/creator-gift-progress/api/read-gift-progress";
-import { countProgress, receivedStepOf, sentStepOf } from "@/widgets/creator-gift-progress/model/gift-progress";
+import { countProgress, receivedStepOf, sentStepOf, type ProgressStepKey } from "@/widgets/creator-gift-progress/model/gift-progress";
 import { PROGRESS_STEP_LABEL } from "@/widgets/creator-gift-progress/ui/gift-progress-page";
 import { memberBannerSlot } from "@/widgets/banner-carousel/ui/banner-slot";
 import { CREATOR_HOME_LOG_ROWS, CreatorHomePage, type HomeProgressRow } from "@/widgets/home/ui/creator-home-page";
@@ -23,6 +24,22 @@ import { loadSession } from "@/widgets/site-header/api/session-header";
 import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
 export const dynamic = "force-dynamic";
+
+// 홈 진행 중인 선물 뱃지 색(design-rules 35절 「진행 상태 색 뱃지」) — 팬 화면 뱃지(fanBadge)와 같은 갈래:
+// 기다리는 단계 warn · 움직이는 단계 info · 문제·끝나지 않는 단계 danger. 단계 이름은 PROGRESS_STEP_LABEL 그대로
+const PROGRESS_STEP_TONE: Record<ProgressStepKey, StatusTone> = {
+  approval_waiting: "warn",
+  to_office: "warn",
+  inspecting: "warn",
+  inspected: "info",
+  shipped: "info",
+  in_transit: "info",
+  reply_waiting: "warn",
+  not_received: "danger",
+  late: "danger",
+  returning: "danger",
+  dispose_due: "danger",
+};
 
 // 크리에이터 메인 — 로그인한 크리에이터의 첫 화면(시안 v21-addendum3/cre-home.html). 맨 앞 프로필 구간은 본인 읽기 —
 // 공개 이름·소개·팬덤 이름·테마 색(my_creator_settings, creator-link INV-E13)·프로필 사진(my_creator_link)·배경사진·심볼(my_creator_look). 본인 확인 전에도 나온다.
@@ -56,8 +73,8 @@ export default async function Page() {
   const publicHref = publicCreator ? creatorPagePath({ id: publicCreator.creatorId, handle: publicCreator.handle }) : publicCard ? creatorPagePath(publicCard) : null;
   // 같은 읽기의 순서·기존 단계 표시를 그대로 쓰며 홈에는 앞 세 줄만 보인다.
   const progressRows: HomeProgressRow[] = progress ? [
-    ...progress.received.slice(0, 3).map((row) => ({ id: row.orderNo, title: `${row.nickname}님이 보낸 선물`, description: row.itemKind, status: PROGRESS_STEP_LABEL[receivedStepOf(row).key] })),
-    ...progress.sent.flatMap((group) => group.rows).slice(0, Math.max(0, 3 - progress.received.length)).map((row) => ({ id: row.shareId, title: `${row.nickname}님께 보낸 선물`, description: row.orderNo, status: PROGRESS_STEP_LABEL[sentStepOf(row).key] })),
+    ...progress.received.slice(0, 3).map((row) => ({ id: row.orderNo, title: `${row.nickname}님이 보낸 선물`, description: row.itemKind, status: PROGRESS_STEP_LABEL[receivedStepOf(row).key], tone: PROGRESS_STEP_TONE[receivedStepOf(row).key] })),
+    ...progress.sent.flatMap((group) => group.rows).slice(0, Math.max(0, 3 - progress.received.length)).map((row) => ({ id: row.shareId, title: `${row.nickname}님께 보낸 선물`, description: row.orderNo, status: PROGRESS_STEP_LABEL[sentStepOf(row).key], tone: PROGRESS_STEP_TONE[sentStepOf(row).key] })),
   ] : [];
   const notices = allNotices
     .toSorted((a, b) => b.date.localeCompare(a.date))

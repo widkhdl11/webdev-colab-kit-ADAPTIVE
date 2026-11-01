@@ -6,10 +6,10 @@ import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import type { PublicPriceTable } from "@/entities/payment/model/price-table";
 import { FollowButton } from "@/features/creator-follow/ui/follow-button";
-import { CreatorCardsSlot, GiftsSlot, HeroBand, NoticesSlot, PriceSlot, RoleHome, type FrontNotice, type FrontTile } from "./front-slots";
+import { CreatorCardsSlot, EmptyCard, GiftsSlot, HeroBand, NoticesSlot, PriceSlot, RoleHome, type FrontNotice, type FrontTile } from "./front-slots";
 import h from "./home.module.css";
 
-// 팬 홈(로그인 뒤, design-rules 16절, 시안 v27-home-airy 오른쪽). 로그인 전 첫 화면과 같은 칸 순서에서 바뀌는 칸만 「-2」:
+// 팬 홈(로그인 뒤, design-rules 16·20·35절, 시안 part5-v4-20261101 「팬 홈」). 첫 화면 채움 버튼은 검색 하나(35절). 로그인 전 첫 화면과 같은 칸 순서에서 바뀌는 칸만 「-2」:
 // ①-2 「OO님」 + 내 바로가기 → ② 광고 배너(라우트가 넘긴 칸, 0장이면 없음 — banners INV-Y8) → ③-2 진행 중인 선물 → ④-2 팔로우한 크리에이터 → ⑤-2 약속(가입 버튼 없음) → ⑥ 요금 → ⑦ 공지.
 // 「처리할 일」 칸의 숫자는 사이드바 숫자와 같은 처리할 일 읽기 결과의 줄 수다(action-center INV-J2) — 따로 세지 않는다.
 // 팬 화면이라 선물은 팬용 모양(toFanView)만 받는다 — 크리에이터행 송장번호·주소가 여기 닿지 않는다.
@@ -60,18 +60,17 @@ export function HomePage({ nickname, gifts, following, looks, faceToneByName, no
           scroll
           action={(c) => <FollowButton creatorId={c.id} creatorName={c.name} initialFollowing variant="card" mode="save" />}
           empty={
-            <>
-              <p className="t-meta">팔로우한 크리에이터가 없습니다.</p>
-              <p className={h.secFoot}>
+            <EmptyCard icon="heart" text="팔로우한 크리에이터가 없습니다.">
+              <p className={h.emptyAct}>
                 <Link className="btn btn--line btn--sm" href="/creators">
                   크리에이터 찾기
                 </Link>
               </p>
-            </>
+            </EmptyCard>
           }
         />
         <PriceSlot prices={prices} joined />
-        <NoticesSlot notices={notices} />
+        <NoticesSlot notices={notices} cardEmpty />
     </RoleHome>
   );
 }

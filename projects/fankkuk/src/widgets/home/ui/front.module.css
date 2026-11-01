@@ -32,27 +32,9 @@
 .col { width: 100%; min-width: 0; max-width: calc(var(--col-list) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
 .introBanner { display: block; width: 100%; max-width: 100%; height: auto; border-radius: var(--r-panel); }
 .col > * { min-width: 0; }
-.colTop { padding-top: var(--space-12); }
 
-/* ① 첫 화면 띠 — 왼쪽 글(머리말 → 제목 48 → 검색 → 버튼 둘), 오른쪽 마스코트 280 */
+/* ① 첫 화면 띠 — 비눗방울 그림 + 하늘 그라데이션, 화면 끝까지. 안쪽 배치는 landing.module.css(.hero · .heroIn) */
 .heroBand { background: url("/images/home/hero-bubbles.png") center / cover no-repeat, var(--grad-hero); }
-.heroIn { display: flex; align-items: center; gap: var(--space-8); padding-block: var(--space-16); }
-.heroCopy { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); text-align: left; }
-.heroCopy > :global(.t-lead) { margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; color: var(--gray-600); }
-.heroCopy > :global(.t-hero) { margin: 0; }
-.heroCopy :global(.search) { max-width: var(--hero-search); margin: var(--space-2) 0 0; }
-.heroCopy :global(.hero-actions) { justify-content: flex-start; margin-top: var(--space-2); }
-.heroCopy :global(.hero-actions .btn) { min-height: var(--btn-h); }
-.heroArt { flex: 0 0 var(--hero-art); width: var(--hero-art); height: var(--hero-art); object-fit: contain; }
-
-/* 바로가기 넷 — 흰 바탕 경계 카드, 그림 48 이 글 위 */
-.flatTiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-12) 0 0; padding: 0; list-style: none; }
-.colTop > .flatTiles:first-child { margin-top: 0; }
-.flatTiles > li { min-width: 0; }
-.flatTile:global(.card) { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); height: 100%; padding: var(--space-6); text-align: center; text-decoration: none; color: var(--gray-900); }
-.flatTile img { width: var(--icon); height: var(--icon); flex: none; object-fit: contain; }
-.flatLabel { font-weight: var(--fw-btn); line-height: 1.5; }
-.flatLabel + .caption { margin-top: 0; }
 
 /* ③ 4단계 — 카드 없이 2×2 줄(그림 64 + 번호 · 제목 20 · 설명) */
 .stepRows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-8) var(--space-12); margin: 0; padding: 0; list-style: none; }
@@ -265,9 +247,6 @@
 @media (max-width: 1024px) {
   .root { --cols-4: 2; }
 }
-@media (max-width: 920px) {
-  .flatTiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
 @media (max-width: 768px) {
   .root { --cols-3: 1; --cols-2: 1; --hero-px: var(--space-4); padding-top: var(--space-4); }
   .promise { padding: var(--space-12) var(--space-6); }
@@ -279,12 +258,6 @@
   /* 로그인 전 — 첫 화면은 마스코트 160 이 위, 4단계·약속·요금은 한 줄에 하나 */
   .landing { --hero-art: 160px; --cols-3: 1; --cols-2: 1; }
   .heroBand { background-position: right center; }
-  .heroIn { flex-direction: column-reverse; align-items: stretch; gap: var(--space-4); padding-block: var(--space-8) var(--space-12); }
-  .heroArt { align-self: center; }
-  .heroCopy { align-items: stretch; }
-  .heroCopy :global(.search) { max-width: none; }
-  .flatTiles { gap: var(--space-3); }
-  .flatTile:global(.card) { padding: var(--space-4); }
   .stepRows { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
   .priceJoined { grid-template-columns: minmax(0, 1fr); }
   .priceTier + .priceTier { border-left: 0; border-top: 1px solid var(--gray-200); }
@@ -296,66 +269,59 @@
   .moreBottom:global(.more-link) { display: flex; width: fit-content; margin: var(--space-4) 0 0 auto; }
 }
 
-/* v31 승인: 세 역할 모두 같은 히어로·바로가기·배너를 사용한다. */
-.roleHome { container: home / inline-size; --hero-art: 240px; }
-.roleHome .heroIn { min-height: 408px; gap: var(--space-6); }
-.roleHome .heroCopy { gap: var(--space-2); }
-.roleHome .heroCopy > :global(.t-lead) { color: var(--ink); }
-.roleHome .heroCopy > h1 { overflow-wrap: anywhere; }
-.roleHome .heroCopy :global(.search) { height: 56px; border-radius: var(--r-btn); margin: var(--space-4) 0 0; }
-.roleHome .heroCopy :global(.hero-actions) { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
-.roleHome .heroCopy :global(.hero-actions .btn) { font-size: var(--fs-small); }
-.roleHome .flatTiles { gap: var(--space-4); }
-.roleHome .flatTile:global(.card) { min-height: 180px; gap: var(--space-2); }
-.homeBanner { margin-top: var(--space-12); }
-.homeBanner > * { margin: 0; }
-.heroProfile { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); width: 100%; max-width: 520px; min-height: 56px; padding: var(--space-2) var(--space-3); margin-top: var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-btn); background: var(--white); }
+/* 로그인 후 두 역할 홈(20절 순서, 35절 모양 — 시안 part5-v4-20261101 「팬 홈」「크리에이터 홈」 바꾼 뒤).
+   첫 화면·검색·바로가기·배너는 메인과 같은 부품(landing.module.css)이고, 그 부품이 읽는 크기 변수만 여기서 둔다.
+   마스코트는 시안대로 200(767 이하 128 위). 구간 사이는 두 홈 모두 --section-gap(PC 96 · 767 이하 48, 메인과 같은 값) */
+.roleHome { --hero-art: 200px; --search-max: 560px; --ico: 44px; }
+.roleHome .heroCopy :global(.t-hero) { overflow-wrap: anywhere; }
+/* 구간 머리 — 제목 아래 24, 건수는 14 보조 글 */
+.roleHome .slotHead { margin-bottom: var(--space-6); }
+.roleHome .slotMeta { font-size: var(--fs-small); font-weight: var(--fw-btn); }
+/* 「모두 보기」 — 밑줄 글자 대신 오른쪽 꺾쇠 달린 링크(누르는 칸 44 그대로) */
+.roleHome :global(.more-link) { gap: var(--space-1); text-decoration: none; }
+.roleHome :global(.more-link)::after { content: ""; width: 16px; height: 16px; flex: none; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9 6 6 6-6 6' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9 6 6 6-6 6' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+.roleHome :global(.more-link):hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* 크리에이터 첫 화면 — 내 정보 줄은 글자 폭만큼의 경계 카드, 채움 버튼은 「내 페이지 보기」 하나 */
+.heroProfile { display: inline-flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); max-width: 100%; margin-top: var(--space-6); padding: var(--space-2) var(--space-4) var(--space-2) var(--space-2); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); }
 .heroProfileName { min-width: 0; overflow-wrap: anywhere; font-weight: var(--fw-btn); }
 .heroAvatar { display: grid; place-items: center; flex: none; width: 40px; height: 40px; overflow: hidden; border-radius: var(--r-pill); background: var(--primary-50); font-weight: var(--fw-bold); }
 .heroAvatar img { width: 100%; height: 100%; object-fit: cover; }
-.summaryRows { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--gray-200); }
-.summaryRows li + li { border-top: 1px solid var(--gray-200); }
-.summaryRow { display: flex; align-items: center; gap: var(--space-4); min-height: 88px; padding-block: var(--space-4); color: var(--ink); text-decoration: none; }
-.summaryText { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.summaryText strong { display: block; font-weight: var(--fw-btn); }
-.summaryText > span { display: block; margin-top: var(--space-1); color: var(--gray-600); font-size: var(--fs-small); }
-.summaryStatus { flex: none; max-width: 40%; font-size: var(--fs-small); text-align: right; overflow-wrap: anywhere; }
-@container home (width < 928px) {
-  .roleHome .heroIn { --hero-art: 184px; }
-  .roleHome .heroCopy > h1 { font-size: var(--fs-title); }
-}
+.heroActions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-6); }
+
 @container home (width < 960px) {
   .roleHome .scroller { --edge: var(--space-2); --fade: 40px; }
   .roleHome .rowArrow { display: none; }
   .roleHome .cardRow.cardRowScroll { scrollbar-width: auto; }
   .roleHome .cardRow.cardRowScroll::-webkit-scrollbar { display: block; }
 }
-@media (max-width: 767px) {
-  .roleHome { --hero-art: 136px; }
-  .roleHome .heroIn { position: relative; display: block; min-height: 544px; padding-top: 176px; padding-bottom: var(--space-12); }
-  .roleHome .heroArt { position: absolute; top: var(--space-6); right: var(--gutter); width: 136px; height: 136px; }
-  .roleHome .heroCopy > h1 { min-height: 90px; font-size: var(--fs-hero); }
-  .roleHome .heroCopy :global(.hero-actions) { flex-direction: row; flex-wrap: nowrap; }
-  .roleHome .heroCopy :global(.hero-actions .btn) { flex: 1; min-width: 0; padding-inline: var(--space-2); }
-  .roleHome .flatTiles { gap: var(--space-4); }
-  .roleHome .flatTile:global(.card) { min-height: 164px; }
-  .summaryRow { gap: var(--space-3); }
+.roleHome { container: home / inline-size; }
+@media (max-width: 767.98px) {
+  .roleHome { --hero-art: 128px; }
+  /* 요금 — 세로로 길던 세 칸을 그림 왼쪽 · 글 오른쪽의 낮은 줄로 */
+  .roleHome .priceTier { display: grid; grid-template-columns: 96px minmax(0, 1fr); grid-template-areas: "pic tag" "pic amt" "pic inc" "pic cap"; align-items: center; column-gap: var(--space-4); row-gap: var(--space-1); padding: var(--space-4); }
+  .roleHome .priceTier > :global(.tag) { grid-area: tag; justify-self: start; }
+  .roleHome .priceTier > .priceBoxArt { grid-area: pic; height: 80px; margin: 0; }
+  .roleHome .priceTier > .amount { grid-area: amt; font-size: var(--fs-page); }
+  .roleHome .priceTier > .inc { grid-area: inc; }
+  .roleHome .priceTier > .caption { grid-area: cap; }
+  .roleHome .priceBox { max-height: 80px; }
 }
 
 /* 24절 메인 화면 마이크로 디테일(2026-10-22 승인, 시안 v38-home-micro 1·2번 「바꾼 뒤」). 떠오름·확대는 마우스 기기에서만, 움직임 줄이기면 끈다. 키보드 포커스 표시는 그대로.
    1) 바로가기 — 아이콘 그림만 2px 떠오르며 1.04배, 누르면 98%(칸 면 효과는 넣지 않는다) */
-.flatTile img, .tile img { transition: transform 0.25s var(--ease-micro); }
+.tile img { transition: transform 0.25s var(--ease-micro); }
 @media (hover: hover) {
-  .flatTile:hover img, .tile:hover img { transform: translateY(-2px) scale(1.04); }
+  .tile:hover img { transform: translateY(-2px) scale(1.04); }
 }
-.flatTile:active img, .tile:active img { transform: scale(0.98); transition-duration: 0.15s; }
+.tile:active img { transform: scale(0.98); transition-duration: 0.15s; }
 /* 2) 카드 줄 화살표 — 마우스를 올리면 1.08배(위치를 잡는 transform 과 따로 scale 로) */
 .rowArrow { transition: scale 0.15s var(--ease-micro); }
 @media (hover: hover) {
   .rowArrow:hover { scale: 1.08; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .flatTile img, .tile img { transform: none !important; }
+  .tile img { transform: none !important; }
   .rowArrow { scale: none !important; }
 }
 /* 3) 공지 줄 — 마우스를 올리면 왼쪽 하늘색 3px 막대가 0→24px(시안 v38-home-micro 3번, 꺾쇠는 새로 붙이지 않는다. 처리할 일 줄은 home.module.css) */
