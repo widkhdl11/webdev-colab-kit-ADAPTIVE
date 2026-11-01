@@ -76,7 +76,8 @@
 .stepNo { display: block; font-family: var(--font-round); font-size: var(--fs-small); font-weight: var(--fw-title); line-height: 1; color: var(--gray-500); }
 .steps h3 { margin: var(--space-2) 0 0; font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); line-height: 1.4; }
 .steps p { margin: var(--space-1) 0 0; font-size: var(--fs-small); line-height: 1.6; color: var(--gray-600); }
-.stepTag { margin-top: var(--space-2); }
+/* 단계 목록의 꼬리표는 그림 속 표시가 아니라 낭독기도 읽는 목록 글자라 12 예외 밖 — 14 */
+.stepTag { margin-top: var(--space-2); font-size: var(--fs-small); }
 
 /* 4. 02 팬에게 보내는 선물 — 가로 흐름 세 장면 */
 .flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--flow-gap); margin: var(--space-8) 0 0; padding: 0; list-style: none; }

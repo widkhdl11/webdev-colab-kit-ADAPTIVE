@@ -54,7 +54,7 @@
   .page :global(.acc summary) { padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); }
   .col > :global(a.btn--block) { width: 100%; }
   /* 탭은 두 줄로 접지 않고 한 줄 가로 넘김 — 양옆 여백까지 넘겨 끝 탭이 잘려 보이게 */
-  .page .tabs { flex-wrap: nowrap; overflow-x: auto; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); padding-block: var(--space-1); scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+  .page .tabs { flex-wrap: nowrap; overflow-x: auto; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); padding-block: var(--space-2); margin-block: calc(-1 * var(--space-2)); scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
   .tabs :global(.tab) { scroll-snap-align: start; }
   .band { padding: var(--space-8) 0; }
   .fact { flex-direction: column; width: auto; }
