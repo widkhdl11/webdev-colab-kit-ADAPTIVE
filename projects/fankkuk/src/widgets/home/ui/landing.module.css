@@ -5,7 +5,7 @@
   --art-w: 128px;
   --art-h: 112px;
   --flow-gap: var(--space-8);
-  --arrow-pad: 20px;
+  --arrow-pad: var(--space-6);
   --hero-art: 240px;
   --search-max: 560px;
   --ico: 44px;
@@ -26,17 +26,16 @@
 .search:focus-within { box-shadow: inset 0 0 0 2px var(--ink), var(--card-shadow); }
 .search input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; font: inherit; color: var(--ink); outline: 0; }
 .search input::placeholder { color: var(--gray-600); }
-.searchGo { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 48px; padding: 0 var(--space-5); border: 0; border-radius: var(--r-icon); background: var(--brand); color: var(--on-brand); font: inherit; font-weight: var(--fw-btn); cursor: pointer; transition: background-color var(--dur-hover) var(--ease-micro), transform var(--dur-press) var(--ease-micro); }
+.searchGo { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 48px; padding: 0 var(--space-6); border: 0; border-radius: var(--r-icon); background: var(--brand); color: var(--on-brand); font: inherit; font-weight: var(--fw-btn); cursor: pointer; transition: background-color var(--dur-hover) var(--ease-micro), transform var(--dur-press) var(--ease-micro); }
 .searchGo:hover { background: var(--brand-hover); }
 .searchGo:active { transform: scale(0.98); }
-.searchGo:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 /* 바로가기 넷 — 첫 화면 아래 48 걸침. 그림(원 안 28) → 이름 → 설명, 같은 너비·같은 간격 */
 .tiles { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); margin: calc(-1 * var(--space-12)) 0 0; padding: 0; list-style: none; }
 .tiles > li { min-width: 0; }
 .tile:global(.card) { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); height: 100%; padding: var(--space-4); text-decoration: none; color: var(--ink); }
 .ico { display: grid; place-items: center; width: var(--ico); height: var(--ico); border-radius: var(--r-pill); background: var(--tint); }
-.ico img { width: 28px; height: 28px; object-fit: contain; transition: transform 0.25s var(--ease-micro); }
+.ico img { width: 28px; height: 28px; object-fit: contain; transition: transform var(--dur-w) var(--ease-micro); }
 @media (hover: hover) {
   .tile:hover .ico img { transform: translateY(-2px) scale(1.04); }
 }
@@ -68,7 +67,7 @@
 }
 .art { position: relative; display: grid; place-items: center; width: var(--art-w); height: var(--art-h); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--tint-line), var(--card-shadow); }
 .art img { width: 64px; height: 64px; object-fit: contain; }
-.addrChip { position: absolute; left: 50%; bottom: -11px; transform: translateX(-50%); padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--ink); color: var(--white); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 22px; white-space: nowrap; }
+.addrChip { position: absolute; left: 50%; bottom: -12px; transform: translateX(-50%); padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--ink); color: var(--white); font-size: var(--fs-badge); /* 그림 속 표시만 12 — design-rules 34절 */ font-weight: var(--fw-btn); line-height: 22px; white-space: nowrap; }
 .okBadge { position: absolute; right: var(--space-4); bottom: var(--space-4); display: grid; place-items: center; width: 24px; height: 24px; border-radius: var(--r-pill); background: var(--success-soft); color: var(--success); box-shadow: 0 0 0 2px var(--white); }
 .okBadge svg { width: 12px; height: 12px; }
 .cap { margin-top: var(--space-4); }
