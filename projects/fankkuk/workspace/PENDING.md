@@ -2,7 +2,7 @@
 
 ## 열린 항목
 
-(없음.)
+- **로그인 전 메인 재디자인 A안·B안 중 선택**(카드 `fankkuk-20261031-2-d1`) — A안 `docs/design/mockups/home-landing-20261031/index.html`(여섯 기능을 메인에, 폭 1120, 엇갈린 카드 그리드) · B안 `docs/design/mockups/home-landing-b-20261031/index.html`(배포된 메인 구조·문구·880 그대로 디자인만, 여섯 기능은 팬꾹 소개 페이지로). 메인 소개 여섯 매력 시안(home-benefits-20261029)과 같은 내용이라 답이 오면 그 확인 항목도 함께 정리한다.
 
 ## 닫힌 항목
 
