@@ -1,6 +1,6 @@
 # 7파트 안내·정책 화면 진단 — 시안 4 기준 (2026-11-01)
 
-비교 페이지: `docs/design/mockups/part7-v4-20261101/index.html` (지금 캡처: `workspace/redesign-v4/part7/now/`). 원칙 번호는 `docs/design/design-prompt.md`.
+비교 페이지: `docs/design/mockups/part7-v4-20261101/index.html` (지금 캡처: `docs/design/mockups/part7-v4-20261101/now/`). 원칙 번호는 `docs/design/design-prompt.md`.
 문구·칸 순서·노출 조건·약관 본문은 지금 코드 그대로 두고 배치·위계·간격·색·경계만 다뤘다. 코드(src/)는 건드리지 않았다.
 13개 화면을 틀 단위로 묶어 탭 다섯으로 만들었다. 문서형은 대표 둘(`/guide/fan`, `/terms`)만 그렸다.
 

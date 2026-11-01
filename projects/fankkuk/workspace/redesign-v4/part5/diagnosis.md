@@ -1,6 +1,6 @@
 # 5파트 공개 화면 진단 — 시안 4 기준 (2026-11-01)
 
-비교 페이지: `docs/design/mockups/part5-v4-20261101/index.html` (지금 캡처: `workspace/redesign-v4/part5/now/`). 원칙 번호는 `docs/design/design-prompt.md`.
+비교 페이지: `docs/design/mockups/part5-v4-20261101/index.html` (지금 캡처: `docs/design/mockups/part5-v4-20261101/now/`). 원칙 번호는 `docs/design/design-prompt.md`.
 문구·칸 순서·노출 조건은 지금 코드 그대로 두고, 배치·위계·간격·색·경계만 다뤘다. 코드(src/)는 건드리지 않았다.
 
 ## 1. 크리에이터 찾기 `/creators`
