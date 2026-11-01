@@ -15,8 +15,8 @@
 .picked { display: inline-flex; align-items: center; padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); font-size: var(--fs-small); font-weight: var(--fw-btn); white-space: nowrap; }
 
 /* 가장 급한 승인 요청 — 하늘 판 하나(2:1), 오른쪽 위로 그림이 걸친다 (시안 .ahero) */
-.root.root > .hero { position: relative; margin-top: var(--space-12); display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-8); align-items: stretch; padding: var(--space-10); }
-.peek { position: absolute; right: var(--space-10); top: calc(var(--space-12) * -1); width: 96px; height: 96px; object-fit: contain; pointer-events: none; }
+.root.root > .hero { position: relative; margin-top: var(--space-12); display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-8); align-items: stretch; padding: var(--space-8); } /* 안쪽 32 — 줄 안쪽과 같은 정렬선(40절) */
+.peek { position: absolute; right: var(--space-8); top: calc(var(--space-12) * -1); width: 96px; height: 96px; object-fit: contain; pointer-events: none; }
 .heroMain { min-width: 0; }
 .eyebrow { margin: 0; font-size: var(--fs-small); font-weight: var(--fw-bold); color: var(--sub); }
 .heroH { margin-top: var(--space-1); font-family: var(--font); font-size: var(--fs-page); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; overflow-wrap: anywhere; }
@@ -24,7 +24,7 @@
 .who span { min-width: 0; font-size: var(--fs-small); color: var(--sub); }
 .whoFace.whoFace { flex: none; }
 .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-6) 0 0; padding: var(--space-4) 0 0; border-top: 1px solid var(--tint-line); }
-.facts dt { font-size: var(--fs-small); font-weight: 400; color: var(--sub); }
+.facts dt { font-size: var(--fs-small); font-weight: 500; color: var(--sub); }
 .facts dd { margin: var(--space-1) 0 0; font-weight: var(--fw-btn); overflow-wrap: anywhere; }
 .acts { display: flex; gap: var(--space-3); margin-top: var(--space-8); }
 .acts :global(.btn) { min-width: 160px; }
@@ -42,10 +42,16 @@
 .atop span { display: block; font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
 .afoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: auto; padding-top: var(--space-4); border-top: 1px solid var(--gray-200); font-size: var(--fs-small); color: var(--sub); }
 
-/* 할 일이 없을 때 */
+/* 할 일이 없을 때 — 흰 카드(공통 .card) + 가운데 그림 72 · 제목 · 버튼 (40절, 팬 지금 할 일 빈 상태와 같음) */
 .root.root > .empty { display: grid; justify-items: center; gap: var(--space-4); margin-top: var(--space-12); padding: var(--space-12) var(--space-6); text-align: center; }
-.emptyImg { width: 96px; height: 96px; object-fit: contain; }
-.empty h2 { font-family: var(--font); font-size: var(--fs-card); letter-spacing: 0; line-height: 1.4; }
+.emptyImg { width: 72px; height: 72px; object-fit: contain; }
+.empty h2 { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
+
+/* design-rules 40절 — 촘촘한 줄 안쪽 32(휴대폰 24, 38절과 같음) · 글자는 말줄임 대신 줄바꿈.
+   선 버튼은 짙은 선(--gray-500, 이 화면 안에서만 — 공용 .btn--line 은 그대로). 줄 안에서 여는 창(<dialog>) 속 버튼은 바꾸지 않게 바로 아래 자식만 */
+.rows.rows :global(.lrow) { padding-inline: var(--space-8); }
+.rows.rows :global(.lrow-txt) { white-space: normal; overflow: visible; }
+.root :is(.side, .acts, .afoot, .empty) > :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
 
 /* 승인 창 — 등록한 주소 확인 칸(이름표·등록한 날, INV-P16) */
 .addr-on-file { display: grid; gap: var(--space-2); }
@@ -64,4 +70,5 @@
   .acards { grid-template-columns: minmax(0, 1fr); }
   .acard.acard { padding: var(--space-4); }
   .side.side { padding-left: 0; }
+  .rows.rows :global(.lrow) { padding-inline: var(--space-6); }
 }

@@ -291,7 +291,7 @@ export function ReceivedBoxList({ boxes, pending }: { boxes: readonly ReceivedBo
           {status}
         </p>
         {boxes.length === 0 ? (
-          <p className="empty">출고된 선물이 없습니다. 팬꾹에서 출고하면 상자별로 표시됩니다.</p>
+          <p className={`empty ${s.empty}`}>출고된 선물이 없습니다. 팬꾹에서 출고하면 상자별로 표시됩니다.</p>
         ) : (
           months.map((m, mi) => (
             <section key={m.key} className={s.month} aria-labelledby={`bm-${m.key}`}>

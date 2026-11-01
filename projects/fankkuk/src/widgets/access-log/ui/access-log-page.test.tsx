@@ -54,6 +54,19 @@ describe("INV-P7: 크리에이터 열람 기록 화면", () => {
     expect(host.textContent).not.toMatch(/대표 계정|권한이 없는 계정|거부/);
   });
 
+  it("「출력 실패」는 상태 뱃지(점 + 글자, 빨강) — 「재출력 N번째」는 분류 알약, 「첫 출력」은 글자 그대로(design-rules 40절)", () => {
+    render(ENTRIES);
+    const notes = [...host.querySelectorAll("tbody tr:not([data-day]) td:last-child")];
+    const failed = notes[1]?.querySelector(".tag");
+    expect(failed?.textContent).toBe("출력 실패");
+    expect(failed?.classList.contains("tag--danger")).toBe(true);
+    expect(failed?.classList.contains("tag--dot")).toBe(true);
+    const reprint = notes[0]?.querySelector(".tag");
+    expect(reprint?.textContent).toBe("재출력 2번째");
+    expect(reprint?.classList.contains("tag--dot")).toBe(false);
+    expect(notes[2]?.querySelector(".tag")).toBeNull();
+  });
+
   it("INV-P7 (D12): 이번 달 숫자는 승인·주소 열람·재출력 셋 — 거부 숫자는 없다", () => {
     render(ENTRIES);
     // v37: 주소 열람이 큰 숫자로 맨 앞, 승인·재출력은 옆 작은 숫자

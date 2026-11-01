@@ -25,7 +25,8 @@ export function CreatorReturnAddressButton({
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button className="btn" type="button" aria-haspopup="dialog" onClick={() => setOpen(true)}>
+      {/* 줄 오른쪽 처리 버튼은 다른 줄과 같은 선 버튼 44 — 채움은 화면에 「승인하기」 하나(design-rules 40절) */}
+      <button className="btn btn--sm btn--line" type="button" aria-haspopup="dialog" onClick={() => setOpen(true)}>
         확인하기
       </button>
       {open ? (

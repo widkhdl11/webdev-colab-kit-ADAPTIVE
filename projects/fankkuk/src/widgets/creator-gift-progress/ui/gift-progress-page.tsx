@@ -204,7 +204,7 @@ export function GiftProgressPage({ progress, items, candidates, now }: Props) {
             {moving.map((r) => receivedCard(r, face++))}
           </ul>
         ) : (
-          <p className={s.none}>진행 중인 선물이 없습니다.</p>
+          <p className={`card ${s.none}`}>진행 중인 선물이 없습니다.</p>
         )}
       </section>
 
@@ -227,7 +227,7 @@ export function GiftProgressPage({ progress, items, candidates, now }: Props) {
             </div>
           ))
         ) : (
-          <p className={s.none}>진행 중인 선물이 없습니다.</p>
+          <p className={`card ${s.none}`}>진행 중인 선물이 없습니다.</p>
         )}
       </section>
     </div>

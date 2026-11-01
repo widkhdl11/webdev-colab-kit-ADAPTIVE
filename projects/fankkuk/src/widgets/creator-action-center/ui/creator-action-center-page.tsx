@@ -261,8 +261,8 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       </header>
 
       {items.length === 0 ? (
-        <section className={s.empty} aria-labelledby="ca-empty">
-          <img className={s.emptyImg} src="/images/home/icon-approve.webp" alt="" width={96} height={96} />
+        <section className={`card ${s.empty}`} aria-labelledby="ca-empty">
+          <img className={s.emptyImg} src="/images/home/icon-approve.webp" alt="" width={72} height={72} />
           <h2 id="ca-empty">현재 처리할 일이 없습니다</h2>
           <Link className="btn btn--line" href="/creator">
             홈으로

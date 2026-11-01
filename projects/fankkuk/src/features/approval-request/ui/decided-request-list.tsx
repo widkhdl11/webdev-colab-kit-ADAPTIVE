@@ -84,7 +84,7 @@ export function DecidedRequestList({ decided }: { decided: readonly DecidedReque
                     </span>
                   </p>
                   <div className={`lrow-side ${q.side}`}>
-                    <span className={statusTagClass(tag.tone)}>{tag.text}</span>
+                    <span className={statusTagClass(tag.tone, "tag--dot")}>{tag.text}</span>
                     <time dateTime={d.decidedAt}>{formatMonthDayKo(d.decidedAt)}</time>
                   </div>
                 </li>

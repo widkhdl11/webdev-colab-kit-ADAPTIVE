@@ -6,6 +6,7 @@ import {
 } from "@/entities/address/model/access-log";
 import { PROMISE } from "@/shared/config/site-copy";
 import { formatDate, formatTimeKo } from "@/shared/lib/format/datetime";
+import { statusTagClass } from "@/shared/ui/status-tone";
 import s from "./access-log.module.css";
 
 // 크리에이터 — 주소 열람 기록. 주소가 열린 줄이 전부 한 줄씩 보인다(INV-P7). 주소 값은 이 화면에 오지 않는다.
@@ -16,6 +17,8 @@ import s from "./access-log.module.css";
 
 function Note({ e }: { e: AddressAccessEntry }) {
   const label = printLabelOf(e.printNo, e.released);
+  // 「출력 실패」는 돌려받은 줄이라는 상태라 상태 뱃지(점 + 글자, 빨강). 「재출력 N번째」 알약은 분류라 그대로(design-rules 40절)
+  if (e.released) return <span className={statusTagClass("danger", "tag--dot")}>{label.text}</span>;
   return label.reprint ? <span className="tag">{label.text}</span> : <>{label.text}</>;
 }
 

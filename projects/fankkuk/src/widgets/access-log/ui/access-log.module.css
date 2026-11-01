@@ -6,7 +6,10 @@
 /* 숫자 판(2) + 규칙 칸(1) */
 .top { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-4); align-items: stretch; margin-top: var(--space-12); }
 .num.num { position: relative; padding: var(--space-8); border-radius: var(--r-panel); }
-.peek { position: absolute; right: var(--space-8); top: calc(var(--space-10) * -1); width: 96px; height: 96px; object-fit: contain; pointer-events: none; }
+.peek { position: absolute; right: var(--space-8); top: 50%; width: 96px; height: 96px; object-fit: contain; pointer-events: none; transform: translateY(-50%); }
+/* 글자 쪽에 그림 자리(96 + 양옆 32)를 비워 둔다 — 카드가 좁아지는 폭(왼쪽 메뉴가 있는 1000~1100)에서 큰 숫자와 그림이 겹치지 않게. 휴대폰은 모서리 걸침이라 풀어 준다 */
+.num.num.num { padding-right: calc(96px + var(--space-8) * 2); }
+/* 반 폭 숫자 카드라 오른쪽 옆에 규칙 칸이 붙어 있다 — 위로 걸치면 두 칸 사이 틈에 떠 보여서 PC 는 카드 안 오른쪽 세로 가운데(design-rules 40절). 휴대폰은 모서리 걸침 64 */
 .month.month { margin: 0; font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.5; color: var(--sub); }
 .nums { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-4) var(--space-10); align-items: end; margin: var(--space-4) 0 0; }
 /* 값이 위, 이름이 아래(시안) — 읽는 순서는 이름 → 값 그대로 */
@@ -17,11 +20,12 @@
 .subs > div { display: flex; flex-direction: column-reverse; }
 .subs dt { font-size: var(--fs-small); font-weight: 400; color: var(--sub); }
 .subs dd { margin: 0; font-family: var(--font-round); font-size: var(--fs-page); font-weight: var(--fw-title); line-height: 1.2; font-variant-numeric: tabular-nums; }
-.rule { display: flex; flex-direction: column; justify-content: center; padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); } /* 회색 보조 카드(23-1) */
+.rule { display: flex; flex-direction: column; justify-content: center; padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); } /* 회색 보조 카드(23-1) + 1px 선(40절) */
 .rule p { font-size: var(--fs-small); color: var(--sub); }
 
 /* 표 — 880 폭, 날짜마다 묶은 촘촘한 줄 */
 .root > .rec { margin-top: var(--space-12); }
+.sh.sh { margin-bottom: 0; }
 .sh { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
 .wrap { margin-top: var(--space-3); overflow-x: auto; }
 .wrap:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
@@ -29,18 +33,27 @@
 .table thead th { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--gray-200); text-align: left; font-weight: var(--fw-btn); color: var(--sub); }
 .table td { height: 48px; padding: var(--space-3); border-bottom: 1px solid var(--gray-200); font-size: var(--fs-body); }
 .table tbody tr:not(.day):hover td { background: var(--tint); }
-.day th { padding: var(--space-6) var(--space-3) var(--space-2); text-align: left; font-size: var(--fs-small); font-weight: var(--fw-bold); color: var(--sub); }
+/* 표 안쪽 32(휴대폰 24) — 위쪽 판 안쪽과 같은 정렬선, 날짜 머리 포함(design-rules 40절) */
+.table :is(th, td):first-child { padding-left: var(--space-8); }
+.table :is(th, td):last-child { padding-right: var(--space-8); }
+.table .day th { padding: var(--space-6) var(--space-8) var(--space-2); }
+.day th { text-align: left; font-size: var(--fs-small); font-weight: var(--fw-bold); color: var(--sub); }
 .n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* 빈 상태 — 다섯 화면 공통 빈 카드(흰 카드 + 가운데 글, 40절) */
+.rec :global(.empty) { margin-top: var(--space-3); padding: var(--space-12) var(--space-6); }
 
 @media (max-width: 999px) {
   .top { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 767px) {
-  .num.num { padding: var(--space-8) var(--space-6) var(--space-6); }
-  .peek { right: var(--space-6); top: calc(var(--space-8) * -1); width: 64px; height: 64px; }
+  .num.num.num { padding: var(--space-8) var(--space-6) var(--space-6); }
+  .peek { right: var(--space-6); top: calc(var(--space-8) * -1); width: 64px; height: 64px; transform: none; }
   .nums { grid-template-columns: minmax(0, 1fr); }
   .subs { padding: var(--space-4) 0 0; border-left: 0; border-top: 1px solid var(--gray-200); }
   .table th:nth-child(3), .table td:nth-child(3) { text-align: right; }
   .table td { padding: var(--space-3) var(--space-2); font-size: var(--fs-small); }
   .table thead th { padding: var(--space-2); }
+  .table :is(th, td):first-child { padding-left: var(--space-6); }
+  .table :is(th, td):last-child { padding-right: var(--space-6); }
+  .table .day th { padding: var(--space-6) var(--space-6) var(--space-2); }
 }

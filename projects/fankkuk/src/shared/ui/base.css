@@ -833,7 +833,8 @@ section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.sta
 .stretch:focus-visible { outline: none; }
 .mini-steps { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
 .mini-steps .segs { display: inline-flex; gap: var(--space-1); }
-.mini-steps i { display: block; width: 12px; height: 4px; border-radius: var(--r-pill); background: var(--gray-200); }
+/* 칸 16×8 — 카드 막대와 같은 칸 높이(design-rules 40절, 13절 6 을 바꿈). 크리에이터 선물 현황·팬 보낸 선물 둘이 쓴다 */
+.mini-steps i { display: block; width: 16px; height: 8px; border-radius: var(--r-pill); background: var(--gray-200); }
 .mini-steps i.on { background: var(--primary); }
 /* 21절 화면 안의 태그·버튼·탭 — 시안 styles.css·v33b.css 의 .tag·.btn·.tabs 값. 다른 화면의 공통 부품은 그대로 두고,
    21절 여섯 화면의 뿌리(.v34)와 목록 줄·강조 칸(.lrow·.feat)·분류 탭(.tabs--line) 안에서만 바꾼다.

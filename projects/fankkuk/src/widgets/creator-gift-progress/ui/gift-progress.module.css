@@ -5,9 +5,9 @@
 .root.root.root > section, .root.root.root > header { margin: 0; } /* 전역 「구간 다음 구간 위 48」(base.css) 을 이 화면 간격으로 바꾼다 */
 
 /* 승인 대기 — 하늘 판 하나(건수 48 · 가운데 글 · 오른쪽 버튼), 오른쪽 위로 그림이 걸친다 (시안 .pfeat) */
-.root.root.root > .pfeat { position: relative; margin-top: var(--space-12); grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-4) var(--space-10); padding: var(--space-8) var(--space-10); }
-.peek { position: absolute; right: var(--space-10); top: calc(var(--space-10) * -1); width: 80px; height: 80px; object-fit: contain; pointer-events: none; }
-.lab { display: block; margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
+.root.root.root > .pfeat { position: relative; margin-top: var(--space-12); grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-4) var(--space-10); padding: var(--space-8); } /* 안쪽 32 — 줄 안쪽과 같은 정렬선(40절) */
+.peek { position: absolute; right: var(--space-8); top: calc(var(--space-10) * -1); width: 80px; height: 80px; object-fit: contain; pointer-events: none; }
+.lab { display: block; margin-top: var(--space-1); font-size: var(--fs-small); font-weight: 500; color: var(--sub); }
 .mid { min-width: 0; }
 .mid h2 { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
 .mid p { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
@@ -47,17 +47,22 @@
 .plLate.plLate { color: var(--alert-800); }
 .cardAct { display: flex; justify-content: flex-end; }
 
-/* 보내는 선물 — 보낸 날별 머리 + 촘촘한 줄 (시안 .ghead·.drow) */
-.ghead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-6); padding: 0 var(--space-3); font-size: var(--fs-small); font-weight: var(--fw-bold); color: var(--sub); }
+/* 보내는 선물 — 보낸 날별 머리 + 촘촘한 줄 (design-rules 40절, 시안 part2-v4-20261101 .ghead·.lr.sent·.mini)
+   보낸 날 머리는 한 줄로 이어 쓰고(「… 결제 완료 · 팬 3명」) 구간 머리와 같은 왼쪽 선(안쪽 0) */
+.ghead { margin-top: var(--space-6); font-size: var(--fs-small); font-weight: var(--fw-bold); color: var(--sub); }
 .ghead span { font-weight: 500; }
 .rows { margin-top: var(--space-3); border-top: 1px solid var(--gray-200); }
-.row.row { border-bottom: 1px solid var(--gray-200); }
+.row.row { border-bottom: 1px solid var(--gray-200); padding-inline: var(--space-8); } /* 줄 안쪽 32(휴대폰 24) — 하늘 판·카드 안쪽과 같은 정렬선 */
 .row.row + .row { border-top: 0; border-radius: 0; }
-.side { flex-wrap: wrap; justify-content: flex-end; }
-.mini.mini { min-width: 176px; justify-content: flex-end; }
-.mini b { color: var(--sub); font-weight: 400; }
-.mini b.plLate { font-weight: var(--fw-btn); }
-.none { margin: var(--space-3) 0 0; padding: var(--space-4) var(--space-3); font-size: var(--fs-small); color: var(--sub); }
+/* 세 열 「이름 200 | 막대 + 단계 200 | 버튼」 왼쪽 맞춤 — 버튼 수가 달라도 막대 시작점이 줄마다 같다 */
+.row.row > :global(.lrow-txt) { flex: 0 0 200px; white-space: normal; overflow: visible; }
+.side.side { flex: 1 1 auto; flex-wrap: wrap; justify-content: flex-start; }
+.mini.mini { min-width: 200px; justify-content: flex-start; }
+.mini b { color: var(--ink); font-weight: var(--fw-btn); } /* 단계 이름 짙은 글자 600 — 카드 .pfoot b 와 같음. 늦은 줄은 .plLate 갈색 600 */
+/* 선 버튼 짙은 선(--gray-500, 이 화면 안에서만). 줄에서 여는 창(<dialog>) 속 버튼은 바꾸지 않게 바로 아래 자식만 */
+.root :is(.side, .cardAct) > :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
+/* 빈 상태 — 공통 흰 카드(.card) 안 가운데 글 (40절, 다섯 화면 공통 빈 카드) */
+.none.none { margin: var(--space-4) 0 0; padding: var(--space-12) var(--space-6); text-align: center; color: var(--sub); }
 
 @media (max-width: 767px) {
   .root.root.root > .pfeat { grid-template-columns: minmax(0, 1fr); padding: var(--space-8) var(--space-6) var(--space-6); }
@@ -65,9 +70,17 @@
   .pfeat > :global(.btn) { width: 100%; }
   .gcards { grid-template-columns: minmax(0, 1fr); }
   .gcard.gcard { padding: var(--space-4); }
-  .ghead { padding: 0 var(--space-2); }
-  .side.side { justify-content: flex-start; }
-  .mini.mini { min-width: 0; justify-content: flex-start; }
+  .row.row { padding-inline: var(--space-6); }
+  .row.row > :global(.lrow-txt) { flex: 1 1 calc(100% - 48px); }
+  .side.side { flex: 1 1 100%; }
+  .mini.mini { min-width: 0; }
+}
+/* 세 열(얼굴 + 이름 200 + 막대 200 + 버튼)은 본문 칸이 600 아래면 들어가지 않는다 — 왼쪽 메뉴 240 이 있는 768~839 폭도 같아서
+   화면 폭이 아니라 본문 칸 폭(.page-pane 컨테이너) 기준으로 휴대폰 배치로 푼다(38절 「중간 폭」과 같은 방식) */
+@container pane (max-width: 599px) {
+  .row.row > :global(.lrow-txt) { flex: 1 1 calc(100% - 48px); }
+  .side.side { flex: 1 1 100%; }
+  .mini.mini { min-width: 0; }
 }
 /* 모듈 안에서는 움직임 이름이 따로 잡혀 공통(base.css)의 bar-fill 을 못 쓴다 — 같은 값으로 여기 둔다. 「움직임 줄이기」는 base.css 가 끈다 */
 @keyframes bar-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }

@@ -5,14 +5,17 @@
 /* 맨 위 — 처리 수 판 + 오른쪽 288 결과별 숫자 칸 넷 */
 .top { display: grid; grid-template-columns: minmax(0, 1fr) 288px; gap: var(--space-4); align-items: stretch; margin-top: var(--space-12); }
 .tot.tot { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: 208px; padding: var(--space-8); border-radius: var(--r-panel); }
-.peek { position: absolute; right: var(--space-8); top: calc(var(--space-10) * -1); width: 96px; height: 96px; object-fit: contain; pointer-events: none; }
+.peek { position: absolute; right: var(--space-8); top: 50%; width: 96px; height: 96px; object-fit: contain; pointer-events: none; transform: translateY(-50%); }
+/* 글자 쪽에 그림 자리(96 + 양옆 32)를 비워 둔다 — 카드가 좁아지는 폭(왼쪽 메뉴가 있는 1000~1100)에서 큰 숫자와 그림이 겹치지 않게. 휴대폰은 모서리 걸침이라 풀어 준다 */
+.tot.tot.tot { padding-right: calc(96px + var(--space-8) * 2); }
+/* 반 폭 숫자 카드라 오른쪽 옆에 결과별 칸이 붙어 있다 — 위로 걸치면 두 칸 사이 틈에 떠 보여서 PC 는 카드 안 오른쪽 세로 가운데(design-rules 40절). 휴대폰은 모서리 걸침 64 */
 .lab.lab { font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.5; color: var(--sub); }
 .line { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin: 0; }
-.grid > div { display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-2); padding: var(--space-4); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); } /* 회색 보조 카드(23-1) */
+.grid > div { display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-2); padding: var(--space-4); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); } /* 회색 보조 카드(23-1) + 1px 선(40절) */
 .grid dt { font-size: var(--fs-small); font-weight: 400; color: var(--sub); }
 .grid dd { margin: 0; font-family: var(--font-round); font-size: var(--fs-page); font-weight: var(--fw-title); line-height: 1.2; font-variant-numeric: tabular-nums; }
-.empty.empty { margin-top: var(--space-8); }
+.empty.empty { margin-top: var(--space-8); padding: var(--space-12) var(--space-6); } /* 다섯 화면 공통 빈 카드(흰 카드 + 가운데 글, 40절) */
 
 /* 달마다 촘촘한 줄 — 결과 태그와 날짜는 줄 오른쪽 */
 .month { margin-top: var(--space-12); }
@@ -22,6 +25,7 @@
 .rows { margin-top: var(--space-3); border-top: 1px solid var(--gray-200); }
 .row.row { border-bottom: 1px solid var(--gray-200); }
 .row.row + .row { border-top: 0; border-radius: 0; }
+.row.row { padding-inline: var(--space-8); } /* 줄 안쪽 32(휴대폰 24) — 위쪽 판 안쪽과 같은 정렬선(design-rules 40절) */
 .side time { min-width: 96px; font-size: var(--fs-small); color: var(--sub); text-align: right; font-variant-numeric: tabular-nums; }
 
 /* 결과 설명 — 맨 아래 접기 */
@@ -40,8 +44,9 @@
   .top { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 767px) {
-  .tot.tot { min-height: 0; padding: var(--space-8) var(--space-6) var(--space-6); }
-  .peek { right: var(--space-6); top: calc(var(--space-8) * -1); width: 64px; height: 64px; }
+  .tot.tot.tot { min-height: 0; padding: var(--space-8) var(--space-6) var(--space-6); }
+  .peek { right: var(--space-6); top: calc(var(--space-8) * -1); width: 64px; height: 64px; transform: none; }
+  .row.row { padding-inline: var(--space-6); }
   .side time { min-width: 0; text-align: left; }
 }
 /* 모듈 안에서는 움직임 이름이 따로 잡혀 공통(base.css)의 fold-in 을 못 쓴다 — 같은 값으로 여기 둔다. 「움직임 줄이기」는 base.css 가 끈다 */
