@@ -14,6 +14,8 @@ import { charCount } from "@/shared/lib/validation/char-count";
 import s from "./fan-profile-edit.module.css";
 
 // 팬 프로필 수정 (design-rules 27절 「4파트 나머지 다섯 화면」, 카드 d115 · 시안 docs/design/mockups/site/pilot-2026-10-22/me-profile.html, 값은 pilot.css .me-*·.pf-*).
+// 2차 정돈 4파트(41절, 시안 part4-v4-20261101): 구간 이름을 첫 줄 글자 높이에, 얼굴·배경 칸 1px --tint-line, 선 버튼 짙은 선, 닉네임 칸 240,
+// 사진·저장 결과는 사이트 공통 결과 상자(.err·.okmsg) + 앞 원(색만으로 알리지 않게).
 // 계정 설정(팬)과 같은 880 안 12열 4 + 8 묶음 둘 — 「사진」(즉시 저장) → 「소개」(닉네임·자기소개) → 저장 줄 [취소][저장하기]. 카드 없음.
 // 스펙 my-account INV-A12~A14:
 // - 사진·배경 사진은 고르는 즉시 서버로 보낸다(/api/me/profile/image/…). 서버가 열어 보고 사진 정보를 지운 뒤 다시 그린다 — 화면은 보내기만 한다.
@@ -115,8 +117,9 @@ function PhotoField({
       <label className={`btn btn--line btn--sm ${s.pick}`} id={`${id}-l`} htmlFor={`${id}-f`} aria-disabled={busy}>
         {busy ? "저장 중…" : hasImage ? "사진 변경" : "사진 업로드"}
       </label>
+      {/* 사진 「삭제」는 다른 선 버튼과 같은 짙은 선 — 빨강은 회원 탈퇴 하나에만(41절, 크리에이터 팬마크 「삭제」와 같은 모양) */}
       {hasImage ? (
-        <button className={`btn btn--sm ${s.danger}`} type="button" aria-disabled={busy} onClick={() => void removeNow()}>
+        <button className="btn btn--line btn--sm" type="button" aria-disabled={busy} onClick={() => void removeNow()}>
           삭제
         </button>
       ) : null}
@@ -135,10 +138,10 @@ function PhotoField({
   // 알림 칸은 늘 두고 글자만 바꾼다 — 오류는 alert, 끝남은 status
   const notes = (
     <>
-      <p className={`${s.msg} ${s.bad}`} role="alert" id={`${id}-e`}>
+      <p className={`err ${s.msg}`} role="alert" id={`${id}-e`}>
         {bad ? msg.text : ""}
       </p>
-      <p className={s.msg} role="status" id={`${id}-m`}>
+      <p className={`okmsg ${s.msg}`} role="status" id={`${id}-m`}>
         {msg?.ok ? msg.text : ""}
       </p>
     </>
@@ -233,7 +236,7 @@ export function FanProfileEditPage(p: FanProfileEditProps) {
       </header>
 
       <section className={s.grp} aria-labelledby={`${id}-g1`} data-pf-group="photo">
-        <h2 className={s.nm} id={`${id}-g1`}>
+        <h2 className={`${s.nm} ${s.nmTwo}`} id={`${id}-g1`}>
           사진
         </h2>
         <div className={s.rows}>
@@ -274,34 +277,37 @@ export function FanProfileEditPage(p: FanProfileEditProps) {
 
       {/* 소개 두 칸은 아래 저장 줄의 폼에 form 속성으로 붙는다 — 묶음(section)끼리 형제로 두어 구분선·간격을 계정 설정과 같게 */}
       <section className={s.grp} aria-labelledby={`${id}-g2`} data-pf-group="intro">
-        <h2 className={s.nm} id={`${id}-g2`}>
+        <h2 className={`${s.nm} ${s.nmField}`} id={`${id}-g2`}>
           소개
         </h2>
         <div className={s.rows}>
           <div className={`${s.item} ${s.colRow}`}>
-            <div className={s.lab}>
-              <label className={s.k} htmlFor={`${id}-nick`}>
-                닉네임
-              </label>
-              <span className={s.count} aria-hidden="true">
-                {charCount(nickname.trim())}/{NICKNAME_MAX}
-              </span>
+            {/* 닉네임(12자)은 짧은 이름 칸 240 — 글자 수 세기도 칸 오른쪽 끝에 붙는다(41절). 휴대폰은 폭을 채운다 */}
+            <div className={s.short}>
+              <div className={s.lab}>
+                <label className={s.k} htmlFor={`${id}-nick`}>
+                  닉네임
+                </label>
+                <span className={s.count} aria-hidden="true">
+                  {charCount(nickname.trim())}/{NICKNAME_MAX}
+                </span>
+              </div>
+              <input
+                className="field"
+                id={`${id}-nick`}
+                form={`${id}-form`}
+                type="text"
+                value={nickname}
+                maxLength={NICKNAME_MAX}
+                autoComplete="nickname"
+                aria-invalid={nickErr ? true : undefined}
+                aria-describedby={nickErr ? `${id}-nick-h ${id}-nick-e` : `${id}-nick-h`}
+                onChange={(e) => {
+                  setNickname(e.currentTarget.value);
+                  setNickErr(null);
+                }}
+              />
             </div>
-            <input
-              className="field"
-              id={`${id}-nick`}
-              form={`${id}-form`}
-              type="text"
-              value={nickname}
-              maxLength={NICKNAME_MAX}
-              autoComplete="nickname"
-              aria-invalid={nickErr ? true : undefined}
-              aria-describedby={nickErr ? `${id}-nick-h ${id}-nick-e` : `${id}-nick-h`}
-              onChange={(e) => {
-                setNickname(e.currentTarget.value);
-                setNickErr(null);
-              }}
-            />
             {nickErr ? (
               <p className={`${s.sub} ${s.bad}`} id={`${id}-nick-e`} role="alert">
                 {nickErr}
@@ -349,7 +355,7 @@ export function FanProfileEditPage(p: FanProfileEditProps) {
 
       {/* 저장 줄 — 저장하기가 보내는 소개 묶음 바로 아래(사진은 고르는 즉시 저장). 767 이하에서는 화면 아래에 붙는다 */}
       <form className={s.end} id={`${id}-form`} onSubmit={onSubmit} aria-labelledby={`${id}-h1`} noValidate data-pf-save="">
-        <p className={`${s.msg} ${notice && !notice.ok ? s.bad : ""}`} role="status">
+        <p className={`${notice && !notice.ok ? "err" : "okmsg"} ${s.msg}`} role="status">
           {notice?.text}
         </p>
         <div className={s.btns}>

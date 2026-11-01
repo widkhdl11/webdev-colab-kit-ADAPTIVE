@@ -77,7 +77,7 @@ export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
             @
           </span>
           <input
-            className="field"
+            className={`field ${s.w240}`}
             id="reply-x"
             type="text"
             inputMode="text"

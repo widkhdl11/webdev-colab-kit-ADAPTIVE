@@ -12,7 +12,7 @@ import { FollowButton } from "@/features/creator-follow/ui/follow-button";
 import s from "./my-following.module.css";
 
 // 팔로우한 크리에이터 본문. 시안: docs/design/mockups/site/pilot-2026-10-22/following.html (값은 pilot.css 「팔로우한 크리에이터」, design-rules 27절).
-// 960 안 12열 8 + 4 — 왼쪽은 촘촘한 줄 목록(높이 72: 얼굴 40 · 이름 + 채널 칩 · 「채널 이름 · 소개」 한 줄 · 「선물 보내기」 + 「팔로우 취소」 아이콘),
+// 880 안 12열 8 + 4(41절에서 960 → 880) — 왼쪽은 촘촘한 줄 목록(높이 72: 얼굴 40 · 이름 + 채널 칩 · 「채널 이름 · 소개」 한 줄 · 「선물 보내기」 + 「팔로우 취소」 아이콘),
 // 오른쪽은 숫자 판(크림 띠 — 「팔로우」 N명 · 「크리에이터 더 찾기」 · 고양이, 스크롤하면 따라온다). 767 이하는 숫자 판이 위로 낮게(고양이 없음).
 // 줄의 버튼은 찾기 화면과 같은 FollowButton(card) — 모두 팔로우 중이라 「선물 보내기」 + 「팔로우 취소」(아이콘만). 모양만 이 화면 CSS 가 바꾼다.
 // 「팔로우 취소」는 확인 창을 거쳐 저장하고, 저장되면(onUnfollowed) 줄을 목록에서 빼고 초점을 제목으로 옮긴다.
@@ -107,7 +107,8 @@ export function MyFollowingPanel({
                 <small>명</small>
               </p>
             </div>
-            <Link className="btn" href="/creators">
+            {/* 0명이면 빈 카드의 「크리에이터 찾기」가 채움 버튼이라 여기는 선 버튼 — 한 화면에 채움 하나(41절) */}
+            <Link className={list.length > 0 ? "btn" : "btn btn--line"} href="/creators">
               크리에이터 더 찾기
             </Link>
             <img className={s.cat} src="/images/mascot-basic.png" alt="" aria-hidden="true" width={96} height={96} />

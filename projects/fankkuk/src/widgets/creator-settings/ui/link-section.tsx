@@ -81,7 +81,7 @@ export function LinkSection({
             {LINK_HOST}/
           </span>
           <input
-            className="field"
+            className={`field ${s.w280}`}
             id="link-handle"
             value={draft}
             maxLength={HANDLE_MAX + 4}
@@ -132,7 +132,7 @@ export function LinkSection({
           ) : null}
         </div>
       ) : null}
-      <p className={`${s["set-msg"]} ${msg && !msg.ok ? "err" : "t-meta"}`} role="status" id="link-msg">
+      <p className={`${s["set-msg"]} ${msg && !msg.ok ? "err" : "okmsg"}`} role="status" id="link-msg">
         {msg?.text}
       </p>
 

@@ -7,6 +7,9 @@
 .grp { display: grid; grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr)); column-gap: var(--grid-gap); align-items: start; }
 .grp + .grp { margin-top: var(--space-12); padding-top: var(--space-12); border-top: 1px solid var(--line-on-white); }
 .nm { grid-column: span 4; min-width: 0; margin: 0; font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; }
+/* 구간 이름 글줄 가운데를 첫 줄 글자 가운데에 맞춘다(design-rules 41절) — 한 줄 줄(높이 64, 글 24)은 18, 스위치 줄(이름 + 설명 두 줄)은 첫 줄에 맞춰 6 */
+.nmRow { padding-top: 18px; }
+.nmSw { padding-top: 6px; }
 .rows { grid-column: span 8; min-width: 0; }
 
 /* 줄 — 최소 높이 64, 버튼은 줄 오른쪽. 줄 사이 1px. 펼쳐지는 칸은 그 줄 아래(.panel) (my-info .item·.row) */
@@ -47,9 +50,18 @@
 .danger { background: var(--white); color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
 .danger:hover { background: var(--gray-50); }
 
+/* 선 버튼 짙은 선 --gray-500(이 화면 범위에서만 — 공용 .btn--line 은 그대로, 41절) */
+.wrap.wrap :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
+/* 저장 결과 상자 앞 「!」·「✓」 원 — 색만으로 알리지 않게(37절 오류 상자와 같음, 41절) */
+.msg:not(:empty) { display: flex; gap: var(--space-3); align-items: flex-start; }
+.msg:not(:empty)::before { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; box-shadow: inset 0 0 0 2px currentColor; font-weight: var(--fw-bold); line-height: 1; }
+.msg:global(.err):not(:empty)::before { content: "!" / ""; }
+.msg:global(.okmsg):not(:empty)::before { content: "✓" / ""; }
+
 /* 휴대폰 — 한 기둥 */
 @media (max-width: 767px) {
   .grp { display: block; }
   .grp + .grp { margin-top: var(--space-8); padding-top: var(--space-8); }
   .rows { margin-top: var(--space-4); }
+  .nmRow, .nmSw { padding-top: 0; }
 }

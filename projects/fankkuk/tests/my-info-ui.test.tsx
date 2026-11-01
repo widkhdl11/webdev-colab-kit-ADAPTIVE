@@ -50,6 +50,18 @@ function render(props: Partial<Parameters<typeof MyInfoPanel>[0]> = {}) {
 
 const sectionTitles = () => [...host.querySelectorAll("section")].map((sec) => sec.querySelector("h2")?.textContent?.trim());
 const saveForm = () => host.querySelector("form") as HTMLFormElement;
+const emailLocal = () => host.querySelector('[data-me-group="personal"] input[inputmode="email"]') as HTMLInputElement;
+const emailSelect = () => host.querySelector('[data-me-group="personal"] select') as HTMLSelectElement;
+const emailCustom = () => host.querySelector('[data-me-group="personal"] input[inputmode="url"]') as HTMLInputElement | null;
+const savedEmail = () => new FormData(saveForm()).get("email");
+// React 가 그린 칸에 사람이 친 것처럼 값을 넣는다(값 설정자 + input/change 이벤트)
+function typeInto(el: HTMLInputElement | HTMLSelectElement, value: string) {
+  const proto = el instanceof HTMLSelectElement ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
+  act(() => {
+    Object.getOwnPropertyDescriptor(proto, "value")!.set!.call(el, value);
+    el.dispatchEvent(new Event(el instanceof HTMLSelectElement ? "change" : "input", { bubbles: true }));
+  });
+}
 const buttonByText = (text: string) => [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === text);
 
 describe("계정 설정(팬) — 묶음 순서", () => {
@@ -118,9 +130,73 @@ describe("계정 설정(팬) — 뺀 문장과 남은 칸", () => {
 
   it("이메일 변경 대기 중이면 보조 글이 대기 안내로 바뀐다", () => {
     render({ account: { ...account, pendingEmail: "new@example.com" } });
-    const input = host.querySelector('input[name="email"]') as HTMLInputElement;
+    const input = emailLocal();
     const help = document.getElementById(input.getAttribute("aria-describedby")!)!;
     expect(help.textContent).toBe("새 이메일(new@example.com)로 확인 메일을 보냈습니다. 메일의 링크에서 확인을 마치면 변경됩니다.");
+  });
+});
+
+describe("계정 설정(팬) — 이메일 칸은 가입과 같은 「앞부분 @ 도메인 고르기」(design-rules 41절)", () => {
+  it("목록에 있는 도메인이면 고르기에서 그 도메인이 골라지고 「직접 입력」 칸은 없다", () => {
+    render({ account: { ...account, email: "fan@gmail.com" } });
+    expect(emailLocal().value).toBe("fan");
+    expect(emailSelect().value).toBe("gmail.com");
+    expect(emailCustom()).toBeNull();
+    expect(savedEmail()).toBe("fan@gmail.com");
+  });
+
+  it("목록 밖 도메인이면 「직접 입력」이 골라지고 아래 칸에 도메인이 들어간다", () => {
+    render(); // fan@example.com
+    expect(emailLocal().value).toBe("fan");
+    expect(emailSelect().value).toBe("custom");
+    expect(emailCustom()?.value).toBe("example.com");
+    expect(savedEmail()).toBe("fan@example.com");
+  });
+
+  it("고르기·칸의 낭독 이름은 가입과 같다", () => {
+    render();
+    expect(emailSelect().getAttribute("aria-label")).toBe("이메일 도메인 선택(@ 뒤)");
+    expect(emailCustom()?.getAttribute("aria-label")).toBe("이메일 주소 직접 입력(@ 뒤)");
+    const label = host.querySelector(`label[for="${emailLocal().id}"]`);
+    expect(label?.textContent).toBe("이메일");
+  });
+
+  it("칸을 바꾸면 저장 폼이 보내는 값은 합친 전체 주소 한 줄이다(목록 도메인 고르기)", () => {
+    render();
+    typeInto(emailLocal(), "new.fan");
+    typeInto(emailSelect(), "naver.com");
+    expect(emailCustom()).toBeNull();
+    expect(savedEmail()).toBe("new.fan@naver.com");
+  });
+
+  it("「직접 입력」을 고르면 주소 칸이 생기고 합친 값이 저장 값이 된다", () => {
+    render({ account: { ...account, email: "fan@gmail.com" } });
+    typeInto(emailSelect(), "custom");
+    const custom = emailCustom()!;
+    expect(custom).not.toBeNull();
+    typeInto(custom, "company.co.kr");
+    expect(savedEmail()).toBe("fan@company.co.kr");
+  });
+
+  it("앞부분 칸에 전체 주소를 붙여 넣으면 @ 뒤가 도메인으로 옮겨진다", () => {
+    render();
+    typeInto(emailLocal(), "pasted@daum.net");
+    expect(emailLocal().value).toBe("pasted");
+    expect(emailSelect().value).toBe("daum.net");
+    expect(savedEmail()).toBe("pasted@daum.net");
+  });
+
+  it("저장하기는 합친 전체 주소를 서버로 보낸다", async () => {
+    postAccount.mockReset();
+    postAccount.mockResolvedValue({ kind: "ok", pendingEmail: "new.fan@kakao.com" });
+    render();
+    typeInto(emailLocal(), "new.fan");
+    typeInto(emailSelect(), "kakao.com");
+    await act(async () => {
+      saveForm().requestSubmit();
+      await Promise.resolve();
+    });
+    expect(postAccount).toHaveBeenCalledWith(expect.objectContaining({ email: "new.fan@kakao.com" }));
   });
 });
 
@@ -169,15 +245,18 @@ describe("계정 설정(팬) — 알림", () => {
   it("되돌리기를 누르면 스위치 둘과 이메일 칸(저장 폼 밖, form 속성으로 붙음)이 처음 값으로 돌아간다", () => {
     render();
     const [kakao, mail] = [...host.querySelectorAll<HTMLButtonElement>('[role="switch"]')];
-    const email = host.querySelector<HTMLInputElement>('input[type="email"]')!;
-    const first = email.value;
     act(() => kakao.click());
     act(() => mail.click());
-    email.value = "changed@example.com";
+    typeInto(emailLocal(), "changed");
+    typeInto(emailSelect(), "gmail.com");
+    expect(savedEmail()).toBe("changed@gmail.com");
     act(() => buttonByText("되돌리기")!.click());
     expect(kakao.getAttribute("aria-checked")).toBe("true");
     expect(mail.getAttribute("aria-checked")).toBe("false");
-    expect(email.value).toBe(first);
+    expect(emailLocal().value).toBe("fan");
+    expect(emailSelect().value).toBe("custom");
+    expect(emailCustom()?.value).toBe("example.com");
+    expect(savedEmail()).toBe("fan@example.com");
   });
 
   it("notify-settings: 셋째 스위치 「선물 소식 바로 받기」 — 설명 한 줄, 처음 값은 저장된 값, 되돌리기로 처음 값", () => {

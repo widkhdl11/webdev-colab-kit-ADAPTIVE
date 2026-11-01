@@ -28,7 +28,7 @@ import type { MyCreatorLink } from "@/entities/creator/api/creator-link-reads";
 import type { MyHardItems } from "@/entities/gift-item/model/hard-items";
 import s from "./creator-settings.module.css";
 
-// 크리에이터 상세 설정 (design-rules 12절 · 27절, 시안 docs/design/mockups/site/pilot-2026-10-22/settings.html). 틀 폭 1200 — 「팬덤」은 12열 7 + 5, 「주소와 설정」은 880 한 기둥.
+// 크리에이터 상세 설정 (design-rules 12절 · 27절, 시안 docs/design/mockups/site/pilot-2026-10-22/settings.html). 틀 폭 1200 — 「팬덤」(입력 + 미리보기)과 「주소와 설정」이 같은 폭 · 같은 왼쪽 선(41절).
 // 위에서 아래: 팬덤(팬덤 이름·팬마크·테마 색·미리보기 — fandom-section) → 주소와 설정(접힌 칸: 받는 주소·받기 설정·차단한 팬·선물 링크·감사 답장)
 // 본인 확인·알림·계정 보안은 크리에이터 계정 설정(/creator/account, widgets/creator-account)으로 옮겼다(2026-10-16).
 // 사이드바 「주소 관리」 줄은 없어졌고(12절) 받는 주소는 이 화면의 접힌 칸이다. 옛 주소(/creator/settings#address · #blocked …)로 오면
@@ -44,13 +44,18 @@ import s from "./creator-settings.module.css";
 
 type SheetState = { kind: "address" } | { kind: "unblock"; fan: BlockedFan } | null;
 
-/** 접힌 칸 하나 — 시안 .fold(제목 · 오른쪽 짧은 상태 · 화살표). */
+/** 접힌 칸 · 승인 서명 줄 오른쪽 상태 뱃지(점 + 글자, design-rules 41절) — 초록 완료 · 노랑 쉬는 중 · 회색 아직 */
+function StateBadge({ tone, text }: { tone: "success" | "warn" | "plain"; text: string }) {
+  return <span className={statusTagClass(tone, `tag--dot ${s.badge}`)}>{text}</span>;
+}
+
+/** 접힌 칸 하나 — 시안 .fold(제목 · 오른쪽 짧은 상태 · 화살표). 상태가 글자면 흐린 글자, 뱃지면 그대로 */
 function Fold({ id, title, meta, children }: { id?: string; title: string; meta?: ReactNode; children: ReactNode }) {
   return (
     <details className={s.fold} id={id}>
       <summary>
         <span>{title}</span>
-        {meta ? <span className={s.foldMeta}>{meta}</span> : null}
+        {typeof meta === "string" ? <span className={s.foldMeta}>{meta}</span> : (meta ?? null)}
         <svg className={s.foldChev} viewBox="0 0 24 24" aria-hidden="true">
           <path d="m6 9 6 6 6-6" />
         </svg>
@@ -168,7 +173,7 @@ export function CreatorSettingsPage({
           {signatureLink.linked ? (
             <div className={s.linkRow} data-signature-link="linked">
               <span>승인 서명</span>
-              <span className={statusTagClass("success")}>연결됨</span>
+              <StateBadge tone="success" text="연결됨" />
               {signatureLink.linkedAt ? <span className={s.foldMeta}>{formatDate(signatureLink.linkedAt)}</span> : null}
               <Link className="btn btn--line btn--sm" href={CREATOR_SIGNATURE_LINK}>
                 다시 연결
@@ -177,13 +182,13 @@ export function CreatorSettingsPage({
           ) : (
             <Link className={`${s.linkRow} ${s.linkRowGo}`} href={CREATOR_SIGNATURE_LINK} data-signature-link="unlinked">
               <span>승인 서명 연결하기</span>
-              <span className={s.foldMeta}>연결 전</span>
+              <StateBadge tone="plain" text="연결 전" />
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="m9 6 6 6-6 6" />
               </svg>
             </Link>
           )}
-          <Fold id="address" title="받는 주소" meta={addressRegistered ? "등록됨" : "등록 전"}>
+          <Fold id="address" title="받는 주소" meta={addressRegistered ? <StateBadge tone="success" text="등록됨" /> : <StateBadge tone="plain" text="등록 전" />}>
             <div className={`card card--soft ${s.inner}`}>
               <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={72} height={72} />
               <p className="t-strong">{addressRegistered ? "주소 등록 완료" : "등록된 주소 없음"}</p>
@@ -205,13 +210,13 @@ export function CreatorSettingsPage({
               >
                 {addressRegistered ? "주소 변경" : "주소 등록"}
               </button>
-              <p className={`t-meta ${s.msg}`} role="status">
+              <p className={`okmsg ${s.msg}`} role="status">
                 {addressMsg ?? ""}
               </p>
             </div>
           </Fold>
 
-          <Fold id="receiving" title="받기 설정" meta={isResting(receiving.resumeOn, today) ? "쉬는 중" : "받는 중"}>
+          <Fold id="receiving" title="받기 설정" meta={isResting(receiving.resumeOn, today) ? <StateBadge tone="warn" text="쉬는 중" /> : <StateBadge tone="success" text="받는 중" />}>
             <ReceivingSection initial={receiving} today={today} />
             <HardItemsSection initial={hardItems} today={today} />
           </Fold>

@@ -8,9 +8,26 @@
 .grid { display: grid; grid-template-columns: minmax(0, 1fr) 400px; column-gap: var(--grid-gap); align-items: start; }
 .main { display: grid; gap: var(--space-6); min-width: 0; }
 
-/* 판 — 소제목 칸을 가는 줄로 나눈다(상세 설정과 같은 모양) */
-.form { min-width: 0; margin: 0; border: 1px solid var(--line-on-white); border-radius: var(--r-card); background: var(--white); }
-.sub { display: grid; gap: var(--space-2); min-width: 0; padding: var(--space-6); border-bottom: 1px solid var(--line-on-white); }
+/* 판 — 흰 카드(--hair + --card-shadow) · 안쪽 32(휴대폰 24), 소제목 칸을 가는 줄로 나눈다(상세 설정과 같은 모양, design-rules 41절) */
+.form { min-width: 0; margin: 0; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
+.sub { display: grid; gap: var(--space-2); min-width: 0; padding: var(--space-8); border-bottom: 1px solid var(--line-on-white); }
+/* 칸 폭은 값 길이에 맞춘다 — 공개 이름 · 태그 직접 입력 20자 칸 360(41절). 휴대폰은 칸이 폭을 채운다 */
+.w360 { max-width: 360px; }
+.tags :global(input.input) { max-width: 360px; }
+
+/* 선 버튼 짙은 선 --gray-500(이 화면 범위에서만 — 공용 .btn--line 은 그대로, 41절) */
+.col.col :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
+/* 태그 칩 — 짙은 선 44, 고른 칩은 플랫폼 색 윤곽 대신 공통 고른 칩(하늘 면 + 짙은 선 2px + 체크, 35·37절과 같음, 41절) */
+.tags.tags :global(.chip) { background: var(--white); color: var(--ink); box-shadow: inset 0 0 0 1px var(--gray-500); font-weight: var(--fw-nav); }
+.tags.tags :global(.chip):hover { background: var(--gray-50); }
+.tags.tags :global(.chip)[aria-pressed="true"] { background: var(--primary-50); color: var(--ink); box-shadow: inset 0 0 0 2px var(--gray-900); font-weight: var(--fw-bold); }
+/* 아이콘 없는 선택지(운영자가 새로 넣은 것)는 칩 몸통이 체크를 그리지 않는다 — 고른 표시를 같게 하려고 여기서 체크를 붙인다 */
+.tags.tags :global(.chip)[aria-pressed="true"][data-icon="false"]::after { content: ""; flex: none; width: 6px; height: 12px; margin: -4px 2px 0 2px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+/* 저장 결과 상자 — 완료는 .okmsg + 「✓」, 오류는 .err + 「!」 원(계정 설정과 같은 값, 색만으로 알리지 않게 — 37·41절) */
+.col :global(:is(.err, .okmsg):not(:empty)) { display: flex; gap: var(--space-3); align-items: flex-start; }
+.col :global(.err:not(:empty))::before { content: "!" / ""; }
+.col :global(.okmsg:not(:empty))::before { content: "✓" / ""; }
+.col :global(:is(.err, .okmsg):not(:empty))::before { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; box-shadow: inset 0 0 0 2px currentColor; font-weight: var(--fw-bold); line-height: 1; }
 .last { border-bottom: 0; }
 .secT { margin: 0 0 var(--space-2); font-size: var(--fs-card); line-height: 1.4; }
 .subT { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; }
@@ -29,9 +46,10 @@
 .switch:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
 
-/* 판 끝 — 저장 결과 안내(role=status) 한 줄 자리 + 취소·저장 */
-.end { display: grid; gap: var(--space-2); padding: var(--space-4) var(--space-6) var(--space-6); }
-.msg { min-height: 22px; margin: 0; } /* 비어 있어도 한 줄 자리 — 글이 들어올 때 버튼이 밀리지 않게 */
+/* 판 끝 — 저장 결과 안내(role=status) + 취소·저장. 결과가 없을 때 저장 줄 위 간격은 16(41절 — 빈 한 줄 자리 때문에 저장 줄이 떠 보였다) */
+.end { display: grid; gap: var(--space-2); padding: var(--space-4) var(--space-8) var(--space-8); }
+.msg { margin: 0; }
+/* 빈 결과 줄은 공용 :is(.err, .okmsg):empty 가 흐름에서 빼 높이 0(알림 자리는 남는다) */
 .btns { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
 
 /* 오른쪽 미리보기 — 판·상자 없이 제목 아래 머리 하나, 스크롤하면 따라온다 */
@@ -50,7 +68,8 @@
   .pv { gap: var(--space-2); }
   .pv > section[data-creator-head] { --av: 56px; --pf-pad: 16px; }
   .pv > section[data-creator-head] [data-band] { aspect-ratio: auto; height: 72px; }
-  .sub { padding: var(--space-4); }
-  .end { position: sticky; bottom: 0; z-index: 4; padding: var(--space-3) var(--space-4); border-top: 1px solid var(--line-on-white); border-radius: 0 0 var(--r-card) var(--r-card); background: var(--white); }
+  .sub { padding: var(--space-6); }
+  .w360, .tags :global(input.input) { max-width: none; }
+  .end { position: sticky; bottom: 0; z-index: 4; padding: var(--space-3) var(--space-6); border-top: 1px solid var(--line-on-white); border-radius: 0 0 var(--r-card) var(--r-card); background: var(--white); }
   .btns :global(.btn) { flex: 1; }
 }

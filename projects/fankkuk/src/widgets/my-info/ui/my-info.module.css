@@ -7,6 +7,9 @@
 .grp + .grp { margin-top: var(--space-12); padding-top: var(--space-12); border-top: 1px solid var(--line-on-white); }
 .nm { grid-column: span 4; min-width: 0; margin: 0; font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; }
 .rows { grid-column: span 8; min-width: 0; }
+/* 구간 이름 글줄(28) 가운데를 오른쪽 첫 줄 글자(24) 가운데에 맞춘다(design-rules 41절) — 한 줄짜리 첫 줄(높이 64 가운데 32) 18, 이름 + 설명 두 줄짜리 첫 줄(위 8 + 12) 6 */
+.nmLine { padding-top: 18px; }
+.nmTwo { padding-top: 6px; }
 
 /* 줄 — 최소 높이 64, 버튼은 줄 오른쪽. 줄 사이 1px */
 .item { min-width: 0; }
@@ -23,6 +26,11 @@
 /* 입력 줄(이메일) — 이름 위 · 칸 · 보조 글 아래 */
 .fieldRow { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4) 0; }
 .fieldRow :global(.field) { width: 100%; }
+/* 이메일 — 가입(signup.module.css .email · .at · .email-custom)과 같은 「앞부분 @ 도메인」, 묶음 416(칸 약 196 · 8 · @ · 8 · 칸). 「직접 입력」 칸은 아래 416 한 칸(41절) */
+.emailBox { width: 100%; max-width: 416px; }
+.email { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: var(--space-2); }
+.at { font-weight: var(--fw-btn); color: var(--gray-600); }
+.emailCustom { margin-top: var(--space-2); }
 
 /* 알림 스위치 — 줄 전체가 누르는 칸(64). 막대는 시안 pilot .me-trk 값 */
 .swBtn { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); width: 100%; min-height: 64px; padding: var(--space-2) 0; border: 0; border-radius: var(--r-btn); background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
@@ -38,7 +46,17 @@
 .mustT { display: block; color: var(--ink); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; }
 .mustL { display: block; margin-top: var(--space-1); color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: 1.6; }
 
-/* 저장 줄 — 결과 안내(늘 두고 글자가 있을 때만 판이 보인다, 공통 .err:empty·.okmsg:empty) + 되돌리기·저장하기 */
+/* 선 버튼 짙은 선(--gray-500, 이 화면 안에서만 — 공용 .btn--line 은 그대로, 41절) */
+.wrap.wrap :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
+.wrap.wrap :global(.btn--line):is(:hover, :active) { background: var(--gray-50); }
+
+/* 결과 상자 앞 「!」·「✓」 원 — 색만으로 알리지 않는다(37절 오류 상자와 같은 모양, 장식이라 읽지 않음) */
+.wrap :global(:is(.err, .okmsg)):not(:empty) { display: flex; align-items: flex-start; gap: var(--space-3); }
+.wrap :global(:is(.err, .okmsg)):not(:empty)::before { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; box-shadow: inset 0 0 0 2px currentColor; font-size: var(--fs-small); font-weight: var(--fw-title); line-height: 1; }
+.wrap :global(.err):not(:empty)::before { content: "!" / ""; }
+.wrap :global(.okmsg):not(:empty)::before { content: "✓" / ""; }
+
+/* 저장 줄 — 결과 안내(늘 두고 글자가 있을 때만 판이 보인다, 공통 .err:empty·.okmsg:empty) + 되돌리기(선 버튼 48 — 저장과 같은 높이, 41절)·저장 */
 .end { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); margin-top: var(--space-6); }
 .msg { max-width: 100%; margin: 0; overflow-wrap: anywhere; }
 .msg:not(:empty) { margin-top: var(--space-2); } /* 받을 주소 결과 안내가 생기면 위 줄에 붙지 않게 */
@@ -54,6 +72,8 @@
   .grp { display: block; }
   .grp + .grp { margin-top: var(--space-8); padding-top: var(--space-8); }
   .rows { margin-top: var(--space-4); }
+  .nmLine, .nmTwo { padding-top: 0; }
+  .emailBox { max-width: none; }
   .end { position: sticky; bottom: 0; z-index: 4; align-items: stretch; margin: var(--space-6) calc(-1 * var(--space-4)) 0; padding: var(--space-3) var(--space-4); border-top: 1px solid var(--line-on-white); background: var(--white); }
   .btns :global(.btn) { flex: 1; }
 }

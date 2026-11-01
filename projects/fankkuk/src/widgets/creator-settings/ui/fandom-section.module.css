@@ -1,13 +1,17 @@
 /* 상세 설정 · 팬덤 — 시안 docs/design/mockups/site/pilot-2026-10-22/settings.html, 값의 정본은 같은 폴더 pilot.css 「상세 설정」(.st-* · .fd-b · .cc).
-   폭은 틀(MyShell broad 1200)이 정하고, 안에서 입력 + 미리보기 300(--grid-gap). 테두리는 낮은 대비 1px 실선(--line-on-white). */
+   폭은 틀(MyShell broad 1200)이 정하고, 안에서 입력 + 미리보기 300(--grid-gap). 판은 흰 카드, 판 안 구분선만 낮은 대비 1px(--line-on-white, 41절). */
 .sec { display: grid; gap: var(--space-6); scroll-margin-top: var(--space-6); }
 .secT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
 /* 미리보기 칸은 카드 폭(300 — 찾기 화면 카드와 같은 크기)에 맞추고 남는 폭은 입력 판이 쓴다. 7+5 로 나누면 카드 오른쪽에 146 이 비었다(2026-10-22 사용자 「미리보기 카드랑 내용 크기가 안맞는다」) */
 .grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; column-gap: var(--grid-gap); align-items: start; }
 
-/* 왼쪽 입력 한 판 — 소제목 칸 셋을 가는 줄로 나눈다 */
-.form { min-width: 0; border: 1px solid var(--line-on-white); border-radius: var(--r-card); background: var(--white); }
-.sub { display: grid; gap: var(--space-2); min-width: 0; padding: var(--space-6); border-bottom: 1px solid var(--line-on-white); }
+/* 왼쪽 입력 한 판 — 흰 카드(--hair + --card-shadow) · 안쪽 32(휴대폰 24), 소제목 칸 셋을 가는 줄로 나눈다(design-rules 41절) */
+.form { min-width: 0; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
+.sub { display: grid; gap: var(--space-2); min-width: 0; padding: var(--space-8); border-bottom: 1px solid var(--line-on-white); }
+/* 팬덤 이름 — 칸 폭은 값 길이(10자)에 맞춘 240, 글자 수 세기는 칸 오른쪽 끝(41절). 휴대폰은 칸이 폭을 채운다 */
+.short > .subT, .short > :global(.field) { width: 100%; max-width: 240px; }
+/* 팬마크 「업로드」 — 권리 확인 전(누를 수 없음)에도 「삭제」와 같은 선 버튼 모양, 글자만 흐리게(41절) */
+.form.form :global(.btn--line)[aria-disabled="true"] { background: var(--white); color: var(--sub); }
 .subT { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0 0 var(--space-1); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; }
 .subT label { cursor: pointer; }
 .count { color: var(--sub); font-size: var(--fs-small); font-weight: 400; font-variant-numeric: tabular-nums; }
@@ -30,8 +34,9 @@
 .chk input { flex: none; margin: 0; } /* 칸 모양은 base.css 18) 체크박스 */
 
 /* 판 끝 — 저장 결과 안내(role=status) 한 줄 자리 + 되돌리기·저장 */
-.end { display: grid; gap: var(--space-2); padding: var(--space-4) var(--space-6) var(--space-6); }
-.msg { min-height: 22px; margin: 0; } /* 비어 있어도 한 줄 자리(14 × 1.5 = 21 → 짝수 22) */
+.end { display: grid; gap: var(--space-2); padding: var(--space-4) var(--space-8) var(--space-8); }
+.msg { margin: 0; }
+/* 결과가 없을 때는 공용 :is(.err, .okmsg):empty 가 칸을 흐름에서 빼 높이 0 — 저장 줄 위 간격이 16(시안 41절). 알림 자리(role=status)는 남아 있다 */
 .btns { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
 
 /* 오른쪽 미리보기 — 판·상자 없이 제목 아래 카드 하나(카드 안에 카드를 겹치지 않는다), 스크롤하면 따라온다 */
@@ -57,7 +62,8 @@
   .pv > [data-card-preview] > :nth-child(2) { grid-column: 2; padding-right: var(--space-3); padding-bottom: var(--space-3); }
   .pv > [data-card-preview] [data-card-foot],
   .pv > [data-card-preview] [data-card-actions] { display: none; }
-  .sub { padding: var(--space-4); }
-  .end { position: sticky; bottom: 0; z-index: 4; padding: var(--space-3) var(--space-4); border-top: 1px solid var(--line-on-white); border-radius: 0 0 var(--r-card) var(--r-card); background: var(--white); }
+  .sub { padding: var(--space-6); }
+  .short > .subT, .short > :global(.field) { max-width: none; }
+  .end { position: sticky; bottom: 0; z-index: 4; padding: var(--space-3) var(--space-6); border-top: 1px solid var(--line-on-white); border-radius: 0 0 var(--r-card) var(--r-card); background: var(--white); }
   .btns :global(.btn) { flex: 1; }
 }

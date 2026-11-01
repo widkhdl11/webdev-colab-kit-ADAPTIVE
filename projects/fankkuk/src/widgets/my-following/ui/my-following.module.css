@@ -1,7 +1,7 @@
 /* 팔로우한 크리에이터 — 시안 docs/design/mockups/site/pilot-2026-10-22/following.html (pilot.css .fl-* · .p-*, design-rules 27절).
-   960 안 12열 8 + 4: 왼쪽 촘촘한 줄 목록, 오른쪽 숫자 판(크림 띠, 따라옴). 767 이하는 숫자 판이 위로 낮게, 그 아래 줄. */
-/* 본문 틀(MyShell list 880)의 기둥 폭을 이 화면만 960 으로 — base.css 의 .page-pane > * 가 이 변수로 max-width 를 정한다 */
-.wrap { --pane-col: 960px; }
+   880 안 12열 8 + 4: 왼쪽 촘촘한 줄 목록, 오른쪽 숫자 판(크림 띠, 따라옴). 767 이하는 숫자 판이 위로 낮게, 그 아래 줄.
+   틀은 다른 팬 설정 화면과 같은 880(MyShell list) — 화면을 오갈 때 제목 시작선이 같다(design-rules 41절, 27절의 960 을 바꿈). */
+.wrap { min-width: 0; }
 .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--grid-gap); align-items: start; }
 .list { grid-column: span 8; min-width: 0; }
 .side { grid-column: span 4; position: sticky; top: var(--space-6); min-width: 0; }
@@ -26,7 +26,7 @@
    버튼 칸은 display: contents — 버튼·저장 실패 알림이 줄(flex-wrap)의 직접 항목이 되어, 알림(FollowButton 이 폭 100% 로 그린다)이 뜨면 줄 아래 한 줄을 차지한다 */
 .act { display: contents; }
 .act > [data-card-btn] { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; border-radius: var(--r-btn); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.4; white-space: nowrap; }
-.act > [data-card-btn="main"] { padding: var(--space-2) var(--space-4); background: var(--white); color: var(--ink); box-shadow: inset 0 0 0 1px var(--gray-400); }
+.act > [data-card-btn="main"] { padding: var(--space-2) var(--space-4); background: var(--white); color: var(--ink); box-shadow: inset 0 0 0 1px var(--gray-500); } /* 짙은 선(41절 — 이 화면 안에서만) */
 .act > [data-card-btn="main"] > svg { display: none; }
 .act > [data-card-btn="main"]:is(:hover, :active) { background: var(--surface-hover); }
 .act > [data-card-btn] { flex: none; }
@@ -44,8 +44,10 @@
 .num small { margin-left: var(--space-1); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); }
 .cat { align-self: flex-end; width: 96px; height: 96px; object-fit: contain; }
 
-/* 빈 상태(0명) — 지금 그림·문구 그대로, 왼쪽 칸에 낮은 대비 테두리 상자 */
-.empty { display: flex; flex-direction: column; align-items: center; gap: var(--group-gap); padding: var(--space-12) var(--space-6); border: 1px solid var(--line-on-white); border-radius: var(--r-card); text-align: center; }
+/* 빈 상태(0명) — 지금 그림·문구 그대로, 왼쪽 칸에 흰 카드(--hair + --card-shadow, 40·41절 빈 상태 카드) */
+.empty { display: flex; flex-direction: column; align-items: center; gap: var(--group-gap); padding: var(--space-12) var(--space-6); border: 0; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); text-align: center; }
+/* 0명일 때 판의 「크리에이터 더 찾기」는 선 버튼(채움은 빈 카드 버튼 하나, 41절) — 짙은 선 */
+.panel.panel > :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
 .empty img { width: 96px; height: 96px; }
 .empty p { max-width: 360px; margin: 0; color: var(--sub); }
 

@@ -144,7 +144,7 @@ export function CreatorAccountPage({
       </header>
 
       <section className={s.grp} aria-labelledby={f("sec1")} data-ca-group="security">
-        <h2 className={s.nm} id={f("sec1")}>
+        <h2 className={`${s.nm} ${s.nmRow}`} id={f("sec1")}>
           보안
         </h2>
         <div className={s.rows}>
@@ -217,7 +217,7 @@ export function CreatorAccountPage({
       </section>
 
       <section className={s.grp} aria-labelledby={f("sec2")} data-ca-group="notify">
-        <h2 className={s.nm} id={f("sec2")}>
+        <h2 className={`${s.nm} ${s.nmSw}`} id={f("sec2")}>
           알림
         </h2>
         <div className={s.rows}>

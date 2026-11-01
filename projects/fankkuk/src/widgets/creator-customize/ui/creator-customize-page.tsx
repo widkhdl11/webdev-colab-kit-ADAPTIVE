@@ -114,7 +114,7 @@ export function CreatorCustomizePage(p: CreatorCustomizeProps) {
               </span>
             </label>
           </div>
-          <p className={`${s.msg} ${pickMsg && !pickMsg.ok ? "err" : s.sub}`} role="status" id="cz-pick-msg">
+          <p className={`${s.msg} ${pickMsg && !pickMsg.ok ? "err" : "okmsg"}`} role="status" id="cz-pick-msg">
             {pickMsg?.text}
           </p>
           <ShareCard v={{ name: p.name.trim(), initial, photoUrl, symbolUrl, pick: shownPick }} />

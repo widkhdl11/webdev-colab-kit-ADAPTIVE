@@ -11,22 +11,22 @@
 .k { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; }
 .sub { margin: 0; color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: var(--lh-caption); overflow-wrap: anywhere; }
 
-/* 미리보기 이미지 고르기 — 라디오 둘(시안 .cz-opts·.cz-opt) */
+/* 미리보기 이미지 고르기 — 라디오 둘(시안 .cz-opts·.cz-opt). 짙은 선, 고른 칸은 하늘 면 + 짙은 선 2px(37절 유형 선택과 같음, design-rules 41절) */
 .picks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
-.pickOpt { display: flex; gap: var(--space-3); align-items: center; min-height: 56px; padding: var(--space-2) var(--space-4); border: 1px solid var(--line-on-white); border-radius: var(--r-btn); font-weight: var(--fw-btn); cursor: pointer; }
-.pickOpt:has(input:checked) { border-color: var(--ink); background: var(--tint); }
-.pickOpt:has(input:disabled) { background: var(--gray-50); color: var(--gray-600); cursor: not-allowed; }
+.pickOpt { display: flex; gap: var(--space-3); align-items: center; min-height: 56px; padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-500); font-weight: var(--fw-btn); cursor: pointer; }
+.pickOpt:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 2px var(--gray-900); }
+.pickOpt:has(input:disabled) { background: var(--gray-50); color: var(--gray-600); box-shadow: inset 0 0 0 1px var(--gray-300); cursor: not-allowed; }
 .pickOpt:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
 .pickOpt input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--brand-line); }
 .pickHint { display: block; font-size: var(--fs-small); font-weight: 400; color: var(--gray-600); }
 
-/* 결과 줄 — 늘 자리를 둔다(글자가 생겨도 아래가 밀리지 않게, 시안 .st-msg min-height 22) */
-.msg { min-height: 22px; margin: var(--space-2) 0 0; overflow-wrap: anywhere; }
+/* 결과 줄 — 비면 공용 :is(.err, .okmsg):empty 가 흐름에서 빼 높이 0(다른 설정 화면과 같음, 낭독용 칸 role=status 는 남는다) */
+.msg { margin: var(--space-2) 0 0; overflow-wrap: anywhere; }
 
 /* 링크 공유 카드 — 라디오 바로 아래, 폭 최대 360(시안 .cz-cap·.cz-share) */
 .share { margin-top: var(--space-4); }
 .cap { margin: 0 0 var(--space-2); color: var(--sub); font-size: var(--fs-small); line-height: 1.5; }
-.shCard { max-width: 360px; overflow: hidden; border: 1px solid var(--line-on-white); border-radius: var(--r-btn); background: var(--white); }
+.shCard { max-width: 360px; overflow: hidden; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--hair), var(--card-shadow); } /* 흰 카드(41절) */
 .shImg { display: grid; place-items: center; height: 120px; background: var(--primary-50); }
 .shAvatar { display: grid; place-items: center; overflow: hidden; width: 72px; height: 72px; border-radius: var(--r-pill); background: var(--white); box-shadow: 0 0 0 8px var(--white); color: var(--brand-ink); font-size: var(--fs-card); font-weight: var(--fw-btn); }
 .shAvatar img, .shSym { display: block; width: 72px; height: 72px; object-fit: cover; }
@@ -42,9 +42,17 @@
 .sizes li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); min-height: 72px; padding: var(--space-2) 0; }
 .sizes li + li { border-top: 1px solid var(--line-on-white); }
 .szThumb { display: grid; flex: none; place-items: center; width: 48px; height: 48px; }
-.mini { display: block; border: 1px solid var(--line-on-white); border-radius: var(--r-mark); background: var(--primary-50); }
+.mini { display: block; border: 1px solid var(--tint-line); border-radius: var(--r-mark); background: var(--primary-50); } /* 하늘 면 칸의 경계는 --tint-line(41절) */
 .szText { display: flex; flex: 1 1 160px; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
 .szBtns { display: flex; flex: none; gap: var(--space-2); }
+
+/* 선 버튼 짙은 선 --gray-500(이 화면 범위에서만 — 공용 .btn--line 은 그대로, 41절) */
+.root.root :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
+/* 저장 결과 상자 — 완료는 .okmsg + 「✓」, 오류는 .err + 「!」 원(계정 설정과 같은 값, 색만으로 알리지 않게 — 37·41절) */
+.msg:global(.err):not(:empty), .msg:global(.okmsg):not(:empty) { display: flex; gap: var(--space-3); align-items: flex-start; }
+.msg:global(.err):not(:empty)::before { content: "!" / ""; }
+.msg:global(.okmsg):not(:empty)::before { content: "✓" / ""; }
+.msg:global(.err):not(:empty)::before, .msg:global(.okmsg):not(:empty)::before { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; box-shadow: inset 0 0 0 2px currentColor; font-weight: var(--fw-bold); line-height: 1; }
 
 /* 휴대폰 — 한 기둥, 라디오 한 줄에 하나, 공유 카드 그림 72, 버튼은 줄 아래 꽉 차게 */
 @media (max-width: 767px) {

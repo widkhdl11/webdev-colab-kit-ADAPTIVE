@@ -157,7 +157,7 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
                 공개 이름
               </label>
               <input
-                className="field"
+                className={`field ${s.w360}`}
                 id="pe-name"
                 type="text"
                 value={name}
@@ -189,7 +189,7 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
                 onChange={(e) => setIntro(clipChars(oneLine(e.currentTarget.value), INTRO_MAX))}
               />
             </div>
-            <div className={s.sub}>
+            <div className={`${s.sub} ${s.tags}`}>
               <TagPicker
                 idBase="pe-tags"
                 options={p.tagOptions}
@@ -213,9 +213,9 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
                 <input className={s.switch} type="checkbox" role="switch" id="pe-find" checked={visible} onChange={(e) => setVisible(e.currentTarget.checked)} />
               </label>
             </div>
-            {/* 판 끝 — 결과 안내 자리는 비어 있어도 한 줄을 남긴다. 휴대폰에서는 화면 아래에 붙는다 */}
+            {/* 판 끝 — 결과 상자(완료 ✓ · 오류 !)는 비면 높이 0 이라 저장 줄 위 간격이 16(41절). 휴대폰에서는 화면 아래에 붙는다 */}
             <div className={s.end}>
-              <p className={`${s.msg} ${msg && !msg.ok ? "err" : "t-meta"}`} role="status" id="pe-msg">
+              <p className={`${s.msg} ${msg && !msg.ok ? "err" : "okmsg"}`} role="status" id="pe-msg">
                 {msg?.text}
               </p>
               <div className={s.btns}>

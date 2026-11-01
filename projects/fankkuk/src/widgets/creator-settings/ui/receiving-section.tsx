@@ -30,7 +30,7 @@ const daysOf = (month: number) => Array.from({ length: daysInMonth(month) }, (_,
 export function SaveMessage({ id, msg }: { id: string; msg: Msg }) {
   return (
     <>
-      <p className={`t-meta ${s.msg}`} role="status" id={id}>
+      <p className={`okmsg ${s.msg}`} role="status" id={id}>
         {msg?.ok ? msg.text : null}
       </p>
       {msg && !msg.ok ? (
@@ -197,7 +197,7 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
             <input
               ref={resumeRef}
               id="recv-resume"
-              className="field"
+              className={`field ${s.w200}`}
               type="date"
               min={range.min}
               max={range.max}
@@ -222,7 +222,7 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
           </label>
           <select
             id="recv-limit"
-            className="field"
+            className={`field ${s.w240}`}
             value={limit ?? ""}
             onChange={(e) => setLimit(e.currentTarget.value === "" ? null : Number(e.currentTarget.value))}
             aria-describedby="recv-limit-hint"

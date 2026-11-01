@@ -15,9 +15,12 @@ import { planAccountSettingsSave } from "@/features/account-edit/model/settings-
 import { PasswordChangePanel } from "@/features/password-change/ui/password-change-panel";
 import { PhoneChangePanel } from "@/features/phone-change/ui/phone-change-panel";
 import { ADDRESS_KEY_MISSING_TEXT } from "@/shared/ui/sealed-address-form";
+import { AccountEmailField } from "./account-email-field";
 import s from "./my-info.module.css";
 
 // 팬 계정 설정(design-rules 27절 「계정 설정(팬)」, 2026-10-22 카드 d114 · 시안 docs/design/mockups/site/pilot-2026-10-22/me.html).
+// 2차 정돈 4파트(41절, 시안 part4-v4-20261101): 구간 이름을 첫 줄 글자 높이에, 「되돌리기」 선 버튼 48, 선 버튼 짙은 선, 결과 상자 앞 원,
+// 이메일은 가입과 같은 「앞부분 @ 도메인 고르기」(AccountEmailField — 서버로는 전체 주소 한 줄 그대로).
 // 카드 없이 880 기둥 안 12열 4 + 8 묶음 넷 — 왼쪽 구간 이름, 오른쪽 줄(버튼은 줄 오른쪽). 순서는
 // 보안 → 받을 주소 → 개인정보(아이디·이메일) → 알림 → 저장 줄 → 회원 탈퇴. 저장하기가 보내는 이메일·알림을 저장 줄 바로 위에 둔다.
 // 지금 있는 기능만 옮겨 담았다:
@@ -27,7 +30,7 @@ import s from "./my-info.module.css";
 // - 회원 탈퇴는 다른 줄처럼 「탈퇴 안내」를 눌러야 펼쳐진다(문의만으로 삭제가 끝나는 것처럼 보이지 않게, 문구 다듬은본 10-26). 탈퇴 기능이 아직 없어 펼친 안에는 고객센터로 가는 링크만 둔다.
 // - 알림 스위치 설명은 시안의 스위치별 문구 그대로다. 시안에 없는 안내 문구는 두지 않는다(2026-10-16 사용자 — 문구 남발 금지).
 //   「아이디는 바꿀 수 없어요 …」 문장은 머리 설명·「프로필 수정」 버튼과 겹쳐 뺐다(카드 d114).
-// 「되돌리기」는 폼 기본 동작(reset)으로 처음 값에 돌아가고, 알림 스위치도 처음 값으로 돌린다.
+// 「되돌리기」는 이메일 칸을 새로 그려(resetCount) 처음 값에 돌아가고, 알림 스위치도 처음 값으로 돌린다.
 // - 받을 주소(address-protection INV-P17, 2026-10-17 카드 d100): 크리에이터 설정의 받는 주소와 같은 흐름 — 주소는 다시 보이지 않고 이름표와 등록한 날만.
 //   「등록/변경」을 누르면 그 줄 아래에 입력 칸이 펼쳐지고, 저장은 아래 저장하기와 따로 서버에 보낸다(이 브라우저에서 봉인한 값만).
 //   주소 입력도 폼이라 폼 안에 폼이 들어가지 않게, 계정 저장 폼은 아래 저장 줄만 감싸고 이메일 칸은 form 속성으로 그 폼에 붙인다.
@@ -76,6 +79,7 @@ export function MyInfoPanel({
   const [kakao, setKakao] = useState(account.notifyKakao);
   const [mail, setMail] = useState(account.notifyEmail);
   const [instant, setInstant] = useState(account.notifyInstant);
+  const [resetCount, setResetCount] = useState(0);
   const toggle = (which: Reveal) => {
     if (which === "address" || which === "address-delete") setAddressMsg(null);
     setOpen((cur) => (cur === which ? null : which));
@@ -134,7 +138,7 @@ export function MyInfoPanel({
       </header>
 
       <section className={s.grp} aria-labelledby={f("sec1")} data-me-group="security">
-        <h2 className={s.nm} id={f("sec1")}>
+        <h2 className={`${s.nm} ${s.nmLine}`} id={f("sec1")}>
           보안
         </h2>
         <div className={s.rows}>
@@ -175,7 +179,7 @@ export function MyInfoPanel({
       </section>
 
       <section className={s.grp} aria-labelledby={f("sec-addr")} data-me-group="address">
-        <h2 className={s.nm} id={f("sec-addr")}>
+        <h2 className={`${s.nm} ${s.nmLine}`} id={f("sec-addr")}>
           받을 주소
         </h2>
         <div className={s.rows}>
@@ -257,12 +261,12 @@ export function MyInfoPanel({
       </section>
 
       <section className={s.grp} aria-labelledby={f("sec2")} data-me-group="personal">
-        <h2 className={s.nm} id={f("sec2")}>
+        <h2 className={`${s.nm} ${s.nmTwo}`} id={f("sec2")}>
           개인정보
         </h2>
         {/* 저장 뒤 서버 값이 바뀌면 입력칸을 새로 그려 처음 값을 서버 값에 맞춘다 — 안 그러면 방금 적은 새 주소가 칸에 남아
             다음 저장이 같은 주소를 또 보낸다(2026-10-02 code-reviewer). */}
-        <div className={s.rows} key={`${account.email ?? ""}|${account.pendingEmail ?? ""}`}>
+        <div className={s.rows} key={`${account.email ?? ""}|${account.pendingEmail ?? ""}|${resetCount}`}>
           <div className={s.item}>
             <dl className={`${s.row} ${s.txt}`}>
               <dt className={s.k}>아이디</dt>
@@ -273,18 +277,7 @@ export function MyInfoPanel({
             <label className={s.k} htmlFor={f("mail")}>
               이메일
             </label>
-            <input
-              className="field"
-              id={f("mail")}
-              form={f("form")}
-              name="email"
-              type="email"
-              defaultValue={account.email ?? ""}
-              maxLength={254}
-              required
-              autoComplete="email"
-              aria-describedby={f("mail-h")}
-            />
+            <AccountEmailField id={f("mail")} formId={f("form")} initial={account.email ?? ""} describedBy={f("mail-h")} />
             <p className={s.sub} id={f("mail-h")}>
               {account.pendingEmail
                 ? `새 이메일(${account.pendingEmail})로 확인 메일을 보냈습니다. 메일의 링크에서 확인을 마치면 변경됩니다.`
@@ -295,7 +288,7 @@ export function MyInfoPanel({
       </section>
 
       <section className={s.grp} aria-labelledby={f("sec3")} data-me-group="notify">
-        <h2 className={s.nm} id={f("sec3")}>
+        <h2 className={`${s.nm} ${s.nmTwo}`} id={f("sec3")}>
           알림
         </h2>
         <div className={s.rows}>
@@ -319,10 +312,13 @@ export function MyInfoPanel({
         </p>
         <div className={`btnrow ${s.btns}`}>
           <button
-            className="btn btn--text"
-            type="reset"
+            className="btn btn--line"
+            type="button"
             onClick={() => {
               setNotice(null);
+              // 이메일 칸(나눈 칸 셋)은 상태로 그리므로 새로 그려 처음 값으로. 폼 reset 은 쓰지 않는다 —
+              // form 속성으로 붙은 도메인 고르기를 첫 항목(「이메일 도메인 선택」)으로 되돌려 버린다(2026-11-02 화면 확인)
+              setResetCount((n) => n + 1);
               setKakao(account.notifyKakao);
               setMail(account.notifyEmail);
               setInstant(account.notifyInstant);

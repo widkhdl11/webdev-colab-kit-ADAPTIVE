@@ -117,7 +117,8 @@ export function FandomSection(p: FandomSectionProps) {
       <div className={s.grid}>
         {/* 왼쪽 7열 — 입력 한 판. 소제목 셋(순서가 없는 설정이라 번호는 없다) 끝에 저장 결과 안내와 되돌리기·저장 */}
         <div className={s.form}>
-          <div className={s.sub}>
+          {/* 칸 폭은 값 길이(10자)에 맞춘 240 — 글자 수 세기가 칸 오른쪽 끝에 붙게 제목 줄도 같은 폭(s.short) */}
+          <div className={`${s.sub} ${s.short}`}>
             <h3 className={s.subT}>
               <label htmlFor="fd-name">팬덤 이름</label>
               <span className={s.count} aria-hidden="true">
@@ -178,9 +179,9 @@ export function FandomSection(p: FandomSectionProps) {
 
           <ThemeField value={theme} onChange={setTheme} />
 
-          {/* 판 끝 — 결과 안내 자리는 비어 있어도 한 줄을 남긴다(글이 들어올 때 버튼이 밀리지 않게). 휴대폰에서는 화면 아래에 붙는다 */}
+          {/* 판 끝 — 결과 상자(완료 ✓ · 오류 !)는 비면 높이 0 이라 저장 줄 위 간격이 16(41절), 결과가 뜨면 그 높이만큼 버튼이 내려간다. 휴대폰에서는 화면 아래에 붙는다 */}
           <div className={s.end}>
-            <p className={`${s.msg} ${msg && !msg.ok ? "err" : "t-meta"}`} role="status" id="fd-msg">
+            <p className={`${s.msg} ${msg && !msg.ok ? "err" : "okmsg"}`} role="status" id="fd-msg">
               {msg?.text}
             </p>
             <div className={s.btns}>

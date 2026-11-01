@@ -7,4 +7,7 @@
 .ok { display: flex; align-items: flex-start; gap: var(--space-2); }
 .ok svg { flex: none; color: var(--brand-ink); }
 .msg { margin-top: var(--space-3); }
+/* 실패 상자 앞 「!」 원 — 색만으로 알리지 않는다(design-rules 41절 · 37절 오류 상자와 같은 모양, 장식이라 읽지 않음) */
+.msg:not(:empty) { display: flex; align-items: flex-start; gap: var(--space-3); }
+.msg:not(:empty)::before { content: "!" / ""; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; box-shadow: inset 0 0 0 2px currentColor; font-size: var(--fs-small); font-weight: var(--fw-title); line-height: 1; }
 .actions { margin-top: var(--space-6); }
