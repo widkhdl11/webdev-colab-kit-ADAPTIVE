@@ -1,8 +1,12 @@
 /* 보낸 역조공(크리에이터) — 시안 docs/design/mockups/site/v39-part3/revgifts-sent.html · v39.css(.sband·.strip·.legend·.privacy·.batch·.srow2·.invfold·.sempty·.knows), design-rules 25절.
-   머리(.page-head·.ph-*)·태그·큰 숫자(.num-big)는 base.css 공통 부품. 색·그림자·반경은 tokens.css 토큰만, 간격은 짝수 */
+   머리(.page-head·.ph-*)·태그·큰 숫자(.num-big)는 base.css 공통 부품. 색·그림자·반경은 tokens.css 토큰만, 간격은 짝수.
+   2026-11-01 시안 4 기준(design-rules 39절, 시안 docs/design/mockups/part3-v4-20261101 「보낸 역조공」): 상태 띠·범례·뱃지가 같은 색(초록·노랑·빨강),
+   뱃지 점 + 글자, 회색 안내 칸 1px 선, 빈 상태 그림 가운데. */
 
 /* 880 한 단 */
 .page { max-width: var(--col-list); margin-inline: auto; }
+/* 선 버튼(6자리 보기 등)·연한 버튼(송장번호 저장)은 짙은 선 — 이 화면 안에서만, 공용 .btn--line 은 그대로 (design-rules 37·39절) */
+.page.page :global(:is(.btn--line, .btn--soft)) { box-shadow: inset 0 0 0 1px var(--gray-500); }
 
 /* 결제 끝 안내 — 하늘 테두리 판, 오른쪽 위로 걸친 트럭 그림 (시안 .sfeat) */
 .paid { position: relative; margin-top: var(--space-12); padding: var(--space-8) var(--space-10); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); color: var(--ink); }
@@ -13,19 +17,20 @@
 .band { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-4) var(--space-12); align-items: end; margin-top: var(--space-8); padding: var(--space-8) var(--space-10); border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--card-fx); box-shadow: var(--card-shadow); }
 .lab { display: block; font-size: var(--fs-small); font-weight: var(--fw-bold); color: var(--sub); }
 .sub { font-size: var(--fs-small); color: var(--sub); }
-/* 팬 한 명이 한 칸 — 높이 16 · 사이 4(25절 새 값). 칸이 적으면 늘어나 한 줄을 채우고, 많으면(칸 최소 8) 다음 줄로 넘어간다 */
+/* 팬 한 명이 한 칸 — 높이 16 · 사이 4(25절 새 값). 칸이 적으면 늘어나 한 줄을 채우고, 많으면(칸 최소 8) 다음 줄로 넘어간다.
+   칸 색은 줄 뱃지와 같은 색(39절): 수락 = 초록 채움 · 수락 대기 = 노랑 옅은 면 + 노랑 윤곽 2px · 받지 않음 = 빨강 채움. 채움/윤곽 구분은 색을 못 보는 사람을 위해 남긴다 */
 .strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(var(--space-2), 1fr)); gap: var(--space-1); }
 .strip i { display: block; height: 16px; border-radius: var(--r-pill); }
-.cellOk { background: var(--primary); }
-.cellWait { background: var(--white); box-shadow: inset 0 0 0 2px var(--primary); }
-.cellNo { background: var(--gray-300); }
+.cellOk { background: var(--success); }
+.cellWait { background: var(--warn-soft); box-shadow: inset 0 0 0 2px var(--warn-ink); }
+.cellNo { background: var(--danger); }
 .legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-6); margin-top: var(--space-3); font-size: var(--fs-small); color: var(--sub); }
 .legend span { display: inline-flex; align-items: center; gap: var(--space-2); }
 .legend i { display: inline-block; width: 16px; height: 8px; border-radius: var(--r-pill); }
 .legend b { color: var(--ink); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
 
 /* 주소·실명 안내 — 회색 보조 칸 (시안 .privacy) */
-.privacy { display: flex; align-items: center; gap: var(--space-4); margin-top: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
+.privacy { display: flex; align-items: center; gap: var(--space-4); margin-top: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
 .privacy img { flex: none; width: 40px; height: 40px; object-fit: contain; }
 .privacy strong { display: block; }
 .privacy span { font-size: var(--fs-small); color: var(--sub); }
@@ -47,7 +52,7 @@
 .bbody { padding: 0 var(--space-8) var(--space-8); }
 
 /* 받는 주소 안내 — 묶음마다 한 번, 회색 보조 칸 (시안 .batch .guide) */
-.guide { padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
+.guide { padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
 .guide p { font-size: var(--fs-small); color: var(--sub); }
 .guide .guideT { font-size: var(--fs-body); font-weight: var(--fw-bold); color: var(--ink); }
 .guide p + p { margin-top: var(--space-1); }
@@ -66,6 +71,10 @@
 .name { margin: 0; overflow: hidden; font-weight: var(--fw-btn); white-space: nowrap; text-overflow: ellipsis; }
 .orderNo { margin: 0; font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
 .line :global(.tag) { white-space: nowrap; }
+/* 상태 뱃지 색 — 1파트 받은 선물과 같은 색 토큰(수락 초록 · 수락 대기 노랑 · 받지 않음 빨강). 공용 base.css 는 이 범위 밖에서 노랑·빨강을 회색으로 두므로 여기서 되살린다 */
+:is(.line, .inv-tags) :global(.tag--success) { background: var(--success-soft); color: var(--success); }
+:is(.line, .inv-tags) :global(.tag--warn) { background: var(--warn-soft); color: var(--warn-ink); }
+:is(.line, .inv-tags) :global(.tag--danger) { background: var(--danger-soft); color: var(--danger); }
 /* 줄 아래 받는 주소 — 얼굴 폭만큼 들여 쓴다(12 + 40 + 12) */
 .addr { margin: 0 var(--space-3) var(--space-4) var(--space-16); }
 .addr > * { margin-top: 0; }
@@ -90,7 +99,8 @@
 
 /* 보낸 것 없음 (시안 .sempty) */
 .sempty { margin-top: var(--space-8); padding: var(--space-12) var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--card-fx); box-shadow: var(--card-shadow); text-align: center; }
-.sempty img { width: 96px; height: 96px; object-fit: contain; }
+/* 그림은 블록이라 text-align 이 먹지 않는다 — 좌우 auto 로 글과 같은 가운데 정렬선에 */
+.sempty img { display: block; width: 96px; height: 96px; margin-inline: auto; object-fit: contain; }
 .semptyT.semptyT { margin-top: var(--space-4); font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
 .sempty p { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
 

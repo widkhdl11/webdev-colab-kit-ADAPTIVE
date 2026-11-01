@@ -830,7 +830,13 @@ tierCountText(summary.counts) || "없음";
                 <div key={tier} className={`${f.qtile} ${summary.counts[tier] === 0 ? f.zero : ""}`}>
                   <div className={f["qtile-text"]}>
                     <p className={f.qn}>{guide.name} 상자</p>
-                    <p className={f.qm}>{guide.rule}</p>
+                    <p className={f.qm}>
+                      {guide.rule.split("·").map((part, i, all) => (
+                        <span key={part} className={f["qm-line"]}>
+                          {i < all.length - 1 ? `${part}·` : part}
+                        </span>
+                      ))}
+                    </p>
                     <p className={f.qm}>{won(prices[tier].priceKrw)}</p>
                   </div>
                   <div className={f.qty} role="group" aria-label={`${guide.name} 상자 수`}>

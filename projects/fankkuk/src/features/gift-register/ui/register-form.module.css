@@ -36,8 +36,11 @@
 /* ── 흰 입력 판 (시안 .fpanel) ── */
 .panel { margin-top: var(--space-6); padding: var(--space-8) var(--space-10) var(--space-10); border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--card-fx); box-shadow: var(--card-shadow); }
 fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
-/* 단계 칸은 한 번에 하나만 보인다 — 공용 「구획 뒤 구획 위 여백」이 숨은 3단계 뒤의 4단계에 붙어 판 위가 48 비던 것을 막는다 */
-section.step.step { margin-top: 0; }
+/* 단계 칸은 한 번에 하나만 보인다 — 공용 「구획 뒤 구획 위 여백」(base.css section:not(.section) + section:not(.section), 명시도 0,2,2)이 숨은 3단계 뒤의 4단계에 붙어 판 위가 48 비던 것을 막는다.
+   예전 section.step.step(0,2,1)은 공용 규칙보다 약해 지지 않았다 — 클래스 셋(0,3,0)으로 이긴다 (design-rules 39절) */
+.panel > .step.step { margin-top: 0; }
+/* 선 버튼(이전·N명 더 보기·사진 선택·사진 빼기)은 짙은 선 — 이 화면 안에서만, 공용 .btn--line 은 그대로 (design-rules 37·39절) */
+.root.root :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
 .actions { display: flex; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-10); }
 .actions :global(.btn) { min-width: 160px; }
 
@@ -66,7 +69,7 @@ section.step.step { margin-top: 0; }
 .pick-list > li[hidden] { display: none; }
 .pick { position: relative; display: grid; grid-template-columns: 48px minmax(0, 1fr) 24px; gap: var(--space-3); align-items: center; height: 100%; padding: var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--white); cursor: pointer; transition: background-color 0.2s var(--ease-micro); }
 .pick:hover { background: var(--tint); }
-.pick:has(input:checked) { border-color: var(--brand-line); background: var(--tint); box-shadow: inset 0 0 0 1px var(--brand-line); }
+.pick:has(input:checked) { border-color: var(--brand-line); background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
 .pick:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
 /* 이사 중·쉬는 중·이번 달 한도 — 회색 바탕으로 낮추고 고를 수 없다(25절, d113 D-2, 시안 ux-pilot .pcard.stop) */
 .pick.stop { background: var(--surface-muted); cursor: not-allowed; }
@@ -78,7 +81,7 @@ section.step.step { margin-top: 0; }
 .pick-tags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .pick-tags > * { flex: none; white-space: nowrap; }
 .pick-meta { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
-.pick-ok { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--gray-400); border-radius: var(--r-pill); background: var(--white); color: transparent; }
+.pick-ok { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--gray-500); border-radius: var(--r-pill); background: var(--white); color: transparent; }
 .pick:has(input:checked) .pick-ok { border-color: var(--primary); background: var(--primary); color: var(--on-brand); }
 .more-row { display: flex; justify-content: center; margin-top: var(--space-4); }
 .more-left { color: var(--sub); font-weight: 400; }
@@ -86,14 +89,15 @@ section.step.step { margin-top: 0; }
 
 /* ── 2 선물 — 고르기 칸은 알약(라디오는 칸 전체를 덮고, 포커스는 칸 바깥 3px) (시안 .fopt) ── */
 .opts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.opt { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: var(--space-2) var(--space-4); border: 1px solid var(--gray-400); border-radius: var(--r-pill); background: var(--white); cursor: pointer; }
+.opt { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: var(--space-2) var(--space-4); border: 1px solid var(--gray-500); border-radius: var(--r-pill); background: var(--white); cursor: pointer; }
 .opt input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
-.opt:has(input:checked) { border-color: var(--brand-line); background: var(--tint); font-weight: var(--fw-btn); box-shadow: inset 0 0 0 1px var(--brand-line); }
+/* 고른 칩 = --primary-50 면 + 짙은 선 1px (시안 .opt.on, 35·39절) */
+.opt:has(input:checked) { border-color: var(--brand-line); background: var(--primary-50); font-weight: var(--fw-btn); }
 .opt:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
 .opt:has(input:disabled) { border-color: var(--gray-200); background: var(--surface-muted); color: var(--sub); cursor: not-allowed; }
 .opt:has(input:disabled) input { cursor: not-allowed; }
 /* 받기 어려운 품목 안내(안내만) — 회색 보조 판 (시안 .hardnote) */
-.hardnote { margin-top: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
+.hardnote { margin-top: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
 .hardnote strong { display: block; overflow-wrap: anywhere; }
 .hardnote p { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
 .hardnote:focus { outline: none; }
@@ -107,7 +111,7 @@ section.step.step { margin-top: 0; }
 .photo-row .photo-pick { display: inline-flex; margin-bottom: 0; cursor: pointer; }
 .photo-name { overflow-wrap: anywhere; }
 /* 나만 보는 메모(together INV-F7) — 회색 보조 판, 머리에 자물쇠, 칸은 흰 바탕 (시안 .memo) */
-.memo { display: grid; gap: var(--space-6); margin-top: var(--space-8); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
+.memo { display: grid; gap: var(--space-6); margin-top: var(--space-8); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
 .memo :global(.field) { background: var(--white); }
 .memo-h.memo-h { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; }
 .memo-lock { width: var(--icon-xs); height: var(--icon-xs); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -118,8 +122,10 @@ section.step.step { margin-top: 0; }
 .qtile-text { min-width: 0; }
 .qn { font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; }
 .qm { font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
+/* 상자 설명은 「세 변의 합 …이하·」 / 「무게 …이하」 두 줄 — 숫자 앞에서 우연히 끊기지 않게 줄마다 끊지 않는다 (시안 .qm span, 39절) */
+.qm-line { display: block; white-space: nowrap; }
 .qty { display: inline-flex; flex: none; align-items: center; gap: var(--space-2); }
-.qty-btn { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--gray-400); border-radius: var(--r-btn); background: var(--white); color: var(--ink); font-size: var(--fs-page); line-height: 1; cursor: pointer; }
+.qty-btn { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--gray-500); border-radius: var(--r-btn); background: var(--white); color: var(--ink); font-size: var(--fs-page); line-height: 1; cursor: pointer; }
 .qty-btn:hover { background: var(--btn-ghost-hover); }
 /* 끝에 닿으면 흐리게만 — disabled 를 쓰지 않아 키보드 포커스가 남는다 */
 .qty-btn[aria-disabled="true"] { border-color: var(--gray-200); background: var(--surface-muted); color: var(--sub); cursor: not-allowed; }
@@ -127,7 +133,7 @@ section.step.step { margin-top: 0; }
 .zero .qty output { color: var(--sub); }
 
 /* 회색 안내 판 — 3단계 상자 크기 안내 · 4단계 돌려보내는 경우와 승인 시간 (시안 .gnote) */
-.gnote { margin-top: var(--space-6); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
+.gnote { margin-top: var(--space-6); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
 .gnote-first { margin-top: var(--space-8); }
 .gnote h3 { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; color: var(--ink); overflow-wrap: anywhere; }
 .gnote p, .gnote li { font-size: var(--fs-small); color: var(--sub); }
@@ -163,7 +169,7 @@ section.step.step { margin-top: 0; }
 .consent { margin-top: var(--space-6); }
 .consent :global(.check) { align-items: flex-start; gap: var(--space-3); min-height: 44px; padding: var(--space-2) 0; }
 .consent :global(.hint) { margin-top: 0; padding-left: 38px; font-size: var(--fs-small); }
-.consent :global(.hint) a { text-decoration: underline; }
+.consent :global(.hint) a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; }
 
 /* ── 휴대폰 (시안 v39.css 767 이하) ── */
 @media (max-width: 767px) {
@@ -188,6 +194,9 @@ section.step.step { margin-top: 0; }
   .qtiles { grid-template-columns: minmax(0, 1fr); }
   .qtile { flex-direction: row; justify-content: space-between; padding: var(--space-4); text-align: left; }
   .qtile-text { flex: 1; }
+  /* 설명 두 줄은 줄 안에서 끊지 않으므로, 칸이 그보다 좁으면(360 폭 등) −/+ 묶음이 글자 위에 겹치지 않고 아래 줄로 내려간다 */
+  .qtile { flex-wrap: wrap; row-gap: var(--space-3); }
+  .qtile-text { flex: 1 1 auto; min-width: auto; }
 }
 
 /* 움직임 줄이기 — 막대 차오름·카드 면 바뀜을 끈다 */

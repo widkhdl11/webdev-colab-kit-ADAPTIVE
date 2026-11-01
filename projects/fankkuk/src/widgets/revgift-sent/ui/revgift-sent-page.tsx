@@ -24,14 +24,6 @@ import s from "./revgift-sent.module.css";
 // 묶음 나누기와 상태 세기는 entities/revgift/model/sent-batches.ts — 여기서는 문구와 칸만 조립한다.
 // v39 에서 뺀 것(25절): 페이지 설명 문장, 오른쪽 요약 칸(숫자는 상태 띠가 맡는다), 「역조공 보내기」 버튼(사이드바에 있다), 송장 안내 한 줄.
 
-function Check() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 // 받지 않은 몫(거절·기한 지남)은 보낼 상자가 아니라 송장번호 칸을 열지 않는다
 function waybillShown(box: ShareBox | undefined, shareState: SentRevgift["state"]): box is ShareBox {
   if (!box) return false;
@@ -71,7 +63,7 @@ function ShareWaybill({ box, fanNickname }: { box: ShareBox; fanNickname: string
     // 결제 + 30일이 지나도 오지 않아 닫힌 상자(office-workflow INV-W10) — 입고되지 않았다. 문구는 팬 선물 진행 화면과 같은 말
     return (
       <p className={`tags ${s["inv-tags"]}`}>
-        <span className={statusTagClass("warn")}>미도착으로 종료</span>
+        <span className={statusTagClass("warn", "tag--dot")}>미도착으로 종료</span>
         <span className="t-meta">결제 후 30일 이내에 도착하지 않아 종료되었습니다.</span>
       </p>
     );
@@ -79,10 +71,8 @@ function ShareWaybill({ box, fanNickname }: { box: ShareBox; fanNickname: string
   // 남은 것은 입고 뒤(hasArrived) 상태뿐이다
   return (
     <p className={`tags ${s["inv-tags"]}`}>
-      <span className={statusTagClass("success")}>
-        <Check />
-        도착 완료
-      </span>
+      {/* 줄 뱃지와 같은 점 + 글자(design-rules 39절) */}
+      <span className={statusTagClass("success", "tag--dot")}>도착 완료</span>
       <span className="t-meta">팬꾹 입고 확인</span>
     </p>
   );
@@ -120,7 +110,7 @@ function batchSummary(shares: readonly SentRevgift[]): string {
 
 const STATE_ORDER: readonly SentRevgift["state"][] = ["accepted", "waiting", "not_received"];
 
-/** 상태 띠 칸 모양 — 수락=채움 · 수락 대기=하늘 테두리 · 받지 않음=회색(design-rules 25절). 상태는 몫의 판정 결과(x.state) 그대로 */
+/** 상태 띠 칸·범례 점 모양 — 줄 뱃지와 같은 색: 수락=초록 채움 · 수락 대기=노랑 면 + 윤곽 · 받지 않음=빨강 채움(design-rules 39절). 상태는 몫의 판정 결과(x.state) 그대로 */
 const CELL: Record<SentRevgift["state"], string | undefined> = { accepted: s.cellOk, waiting: s.cellWait, not_received: s.cellNo };
 
 /** 묶음 접힌 줄에 겹쳐 보이는 얼굴 수 — 팬이 많은 묶음에서 줄이 넘치지 않게 앞의 몇 명만(인원은 바로 옆 「팬 N명」이 알린다) */
@@ -209,10 +199,8 @@ function Batch({ b, bi, boxByOrder }: { b: SentBatch; bi: number; boxByOrder: Re
                     </p>
                     <p className={s.orderNo}>주문번호 {x.orderNo}</p>
                   </div>
-                  <span className={statusTagClass(tag.tone)}>
-                    {tag.tone === "success" ? <Check /> : null}
-                    {tag.tag}
-                  </span>
+                  {/* 점 + 글자(design-rules 39절 — 1파트 .tag--dot 와 같은 모양) */}
+                  <span className={statusTagClass(tag.tone, "tag--dot")}>{tag.tag}</span>
                 </div>
                 {b.officeAddress && addressCode ? (
                   <div className={s.addr}>

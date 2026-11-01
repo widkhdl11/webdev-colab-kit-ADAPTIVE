@@ -15,7 +15,7 @@ export function RevgiftSendPage({ clientKey, prices, followers, notice }: { clie
   const [registered, setRegistered] = useState<RevgiftCheckout | null>(null);
 
   return (
-    <main id="main" className={`page-centered v34 ${s.page}`}>
+    <main id="main" className="page-centered v34">
       <div className={s.col}>
         <header className={`page-head ${s.head}`}>
           <h1 className="ph-title">팬에게 보내기</h1>

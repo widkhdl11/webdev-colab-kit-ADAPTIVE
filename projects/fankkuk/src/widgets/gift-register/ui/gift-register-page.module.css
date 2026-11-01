@@ -1,8 +1,9 @@
 /* 선물 보내기 바깥 틀 — 시안 docs/design/mockups/site/v39-part3/gifts-new-b.html · v39.css (design-rules 25절 B안). 본문 폼은 features/gift-register/ui/register-form */
 /* 입력 기둥 720 — 가운데 틀(.page-centered) 안 가운데 (시안 .wrap.narrow 800 에서 좌우 안쪽 40 을 뺀 폭) */
 .col { max-width: 720px; margin-inline: auto; min-width: 0; }
-/* 머리 — 제목 24 아래 바로 하늘 단계 판이 온다(전역 .page-head 아래 여백 대신 판의 위 여백 32) */
+/* 머리 — 제목 32(휴대폰 24, --fs-title) 아래 바로 하늘 단계 판이 온다(전역 .page-head 아래 여백 대신 판의 위 여백 32). 사이드바 화면 제목과 같은 크기 (design-rules 38·39절) */
 .head.head { margin-bottom: 0; }
+.head.head :global(.ph-title) { font-size: var(--fs-title); }
 /* 페이지 설명 문장은 뺐다(25절). 남는 한 줄은 회색 14 (시안 .ph-meta) */
 .top-meta { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
 /* 맨 위 한 줄 — 미리 고른 크리에이터의 채널 주인이 확인된 페이지라는 사실(추가분 4-4). 하늘 동그라미 20 안 체크 (시안 .owner) */

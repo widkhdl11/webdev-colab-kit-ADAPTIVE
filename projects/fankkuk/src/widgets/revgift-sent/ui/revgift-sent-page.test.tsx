@@ -125,4 +125,30 @@ describe("보낸 역조공 화면 — 「내 상자 찾기」는 선물 현황�
     expect(batches[0]!.querySelector("h2")!.textContent).not.toBe(batches[1]!.querySelector("h2")!.textContent);
     expect(host.textContent).not.toContain("역조공 보내기");
   });
+
+  it("design-rules 39절: 띠 칸·범례 점·줄 뱃지가 상태마다 같은 색 — 수락 대기와 받지 않음이 같은 모양이면 안 된다", () => {
+    act(() =>
+      root.render(
+        <RevgiftSentPage
+          rows={[row("RG-A0", "별", "accepted"), row("RG-A1", "모카", "waiting"), row("RG-A2", "라온", "not_received")]}
+          boxes={[]}
+          paid={false}
+          officeAddress="사무실 주소"
+        />,
+      ),
+    );
+    const order = ["accepted", "waiting", "not_received"] as const;
+    // 띠 칸(묶음 안 몫 순서 = 위 rows 순서)과 범례 점(수락 · 수락 대기 · 받지 않음 순서)
+    const cells = [...host.querySelector("[role=img]")!.children].map((c) => c.className);
+    const legend = [...host.querySelectorAll("[role=img] + p > span > i")].map((c) => c.className);
+    expect(cells).toHaveLength(order.length);
+    expect(cells.every(Boolean)).toBe(true);
+    expect(legend).toEqual(cells);
+    expect(cells[1]).not.toBe(cells[2]);
+    // 줄 뱃지: 점 + 글자(.tag--dot), 색 갈래는 상태마다 다르다(수락 초록 · 수락 대기 노랑 · 받지 않음 빨강)
+    const tags = [...host.querySelectorAll("ul[aria-label$=\"팬별 상태\"] > li [class*=tag]")];
+    expect(tags.map((t) => t.textContent)).toEqual(["수락", "수락 대기", "받지 않음"]);
+    expect(tags.every((t) => t.classList.contains("tag--dot"))).toBe(true);
+    expect(tags.map((t) => [...t.classList].find((c) => /^tag--(success|warn|danger)$/.test(c)))).toEqual(["tag--success", "tag--warn", "tag--danger"]);
+  });
 });
