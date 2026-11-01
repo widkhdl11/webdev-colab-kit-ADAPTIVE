@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 4파트 설정 계열 여덟 화면 · 시안 4 기준으로 맞춘 비교</title>
+<!--
+  2026-11-01 요청: 4파트(팬 /me · /me/profile · /me/following · /me/email/confirm, 크리에이터 /creator/account · /creator/settings · /creator/profile · /creator/customize)를
+  시안 4 설계 기준(design-prompt.md)과 design-rules 34~40절로 다시 맞춘 비교. 문구 · 칸 순서 · 노출 조건은 지금 코드 그대로, 모양(배치 · 위계 · 간격 · 색 · 경계 · 정렬)만 다뤘다.
+  탭 여덟 · 서른세 상태 × PC 1440 · 휴대폰 390. 「지금」은 캡처(now/)가 있는 여덟 상태는 캡처 그대로, 나머지는 코드의 CSS 값(my-info · fan-profile-edit · my-following · confirm-email · creator-account ·
+  creator-settings · fandom-section · creator-profile-edit · creator-customize 의 *.module.css 와 base.css)으로 같은 틀에 다시 그린 「지금(재현)」이다. 시드에 없는 상태가 재현이다.
+  오류 · 완료 상자의 문장은 상태 모양을 보이려는 예시다(코드 문장과 같지 않을 수 있음). 저장 줄은 휴대폰에서 화면 아래에 붙지만 시안은 제자리에 그렸다. 캡처의 가운데 떠 있는 저장 줄은 전체 페이지 캡처 때문이다.
+  왼쪽 메뉴는 범위 밖이라 펼친 240 으로 단순화. 값은 src/shared/ui/tokens.css 토큰 그대로. 폰트 · 그림은 assets/ (node scripts/preview.mjs fankkuk 으로 열린다).
+  _src/ 는 이 파일을 만든 원본 조각이다(build.mjs 로 합침).
+-->
+<style>
+@font-face{font-family:Pretendard;src:url('assets/Pretendard-Medium.woff') format('woff');font-weight:400 500;font-display:swap}
+@font-face{font-family:Pretendard;src:url('assets/Pretendard-SemiBold.woff') format('woff');font-weight:600;font-display:swap}
+@font-face{font-family:Pretendard;src:url('assets/Pretendard-Bold.woff') format('woff');font-weight:700 800;font-display:swap}
+@font-face{font-family:Tmoney;src:url('assets/TmoneyRoundWindExtraBold.woff2') format('woff2');font-weight:800;font-display:swap}
+:root{--ink:#1F2937;--sub:#4B5563;--muted:#55606E;--line:#DCE3EA}
+*{box-sizing:border-box}
+body{margin:0;background:#EEF1F4;color:var(--ink);font:500 16px/1.6 Pretendard,system-ui,sans-serif;word-break:keep-all}
+h1,h2,h3,p,ul,ol,dl,dd,dt{margin:0}
+ul,ol{padding:0;list-style:none}
+button{font-family:inherit}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:8px}
+
+/* ===== 비교 페이지 틀 ===== */
+.top{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line);padding:12px 24px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
+.top h1{font:800 18px/1.3 Tmoney,Pretendard,sans-serif;letter-spacing:-.02em;margin-right:auto}
+.seg{display:flex;gap:4px;padding:4px;background:#E6EBF0;border-radius:12px;flex-wrap:wrap}
+.seg button{min-height:40px;padding:0 16px;border:0;border-radius:8px;background:transparent;font-weight:600;font-size:14px;color:var(--ink);cursor:pointer}
+.seg button[aria-pressed=true],.seg button[aria-selected=true]{background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.15);font-weight:700}
+.seg-label{font-size:14px;color:var(--muted);font-weight:600}
+.ctl{display:flex;align-items:center;gap:8px}
+.cmp{padding:24px}
+.changes{max-width:1100px;margin:0 auto 24px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 24px}
+.changes h2{font:800 20px/1.3 Tmoney,Pretendard,sans-serif;margin-bottom:8px}
+.changes h2 span{font:500 14px Pretendard;color:var(--muted);margin-left:8px}
+.changes h4{margin:12px 0 0;font-size:14px}
+.changes ul{padding-left:20px;list-style:disc;font-size:14px;line-height:1.7}
+.changes li{margin-top:4px}
+.sub-bar{max-width:1100px;margin:0 auto 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.panes{display:flex;gap:24px;justify-content:center;align-items:flex-start}
+.pane{flex:none}
+.pane>h3{font-size:14px;font-weight:700;margin:0 0 8px}
+.pane>h3 em{font-style:normal;color:var(--muted);font-weight:500;margin-left:8px}
+.shot{background:#fff;border:1px solid var(--line);overflow:hidden}
+.shot>img{display:block;width:100%;height:auto}
+
+/* ===== 화면(바꾼 뒤 = 기본, 지금 재현 = .now 가 되돌림) ===== */
+.stage{container:st/inline-size;--primary:#89CFF0;--p50:#E0F2FE;--tint:#F0F8FF;--tl:#BFE3F7;--g50:#F9FAFB;--g100:#F3F4F6;--g200:#E5E7EB;--g400:#9CA3AF;--g500:#6B7280;--sub:#4B5563;--ink:#1F2937;
+  --info:#315E86;--info-soft:#EDF4FA;--warn:#805B16;--warn-soft:#FFF5DB;--succ:#276749;--succ-soft:#EAF5EE;--danger:#B42318;--danger-soft:#FEECE9;--alert50:#FFFBEB;--alert200:#FDE68A;
+  --fx-accent:radial-gradient(120% 140% at 100% 0%,rgb(255 255 255/.9) 0%,rgb(255 255 255/0) 45%),radial-gradient(80% 120% at 0% 100%,rgb(137 207 240/.28) 0%,rgb(137 207 240/0) 60%),linear-gradient(135deg,#f0f8ff 0%,#e0f2fe 100%);
+  --sh-accent:inset 0 1px 0 rgb(255 255 255/.8),0 8px 24px rgb(137 207 240/.18);
+  --fx-card:radial-gradient(90% 120% at 100% 0%,rgb(137 207 240/.07) 0%,rgb(137 207 240/0) 55%),linear-gradient(180deg,#fff 0%,#fbfcfe 100%);
+  --sh-card:inset 0 1px 0 #fff,0 1px 2px rgb(31 41 55/.04),0 4px 12px rgb(31 41 55/.04);
+  --hair:inset 0 0 0 1px var(--g200);
+  --fx-btn:linear-gradient(180deg,#95d4f2 0%,#89cff0 100%);
+  background:#fff;position:relative;font-size:16px;line-height:1.6;color:var(--ink)}
+.stage a{color:inherit;text-decoration:none}
+.stage h1,.stage h2,.stage h3{font-family:Tmoney,Pretendard,sans-serif;letter-spacing:-.02em;font-weight:800;line-height:1.3;color:var(--ink)}
+.stage svg{flex:none}
+.app{display:flex;min-height:900px}
+.sb{flex:none;width:240px;background:var(--tint);border-right:1px solid var(--g200);display:flex;flex-direction:column;padding:0 8px 8px}
+.sb-top{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 8px 0 8px}
+.sb-top .logo{display:flex;align-items:center;gap:8px;font:800 20px/1 Tmoney,sans-serif}
+.logo img{width:28px;height:28px;border-radius:22%}
+.sb nav{flex:1}
+.sb nav a{display:flex;align-items:center;gap:12px;height:36px;margin-bottom:2px;padding:0 10px;border-radius:8px;font-size:14px;font-weight:500}
+.sb nav a[aria-current]{background:var(--p50);font-weight:600}
+.sb nav svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sb nav .n{margin-left:auto;display:grid;place-items:center;min-width:24px;height:24px;border-radius:12px;background:var(--primary);font-size:14px;font-weight:700;line-height:1}
+.sb .me{display:flex;align-items:center;gap:8px;height:56px;padding:0 10px;font-size:14px;font-weight:600;border-top:1px solid var(--g200)}
+.me i{width:28px;height:28px;border-radius:50%;background:var(--p50)}
+.mainwrap{flex:1;min-width:0;display:flex;flex-direction:column}
+.tb{display:none;align-items:center;justify-content:space-between;height:56px;padding:0 16px;border-bottom:1px solid var(--g200);background:#fff}
+.tb .logo{display:flex;align-items:center;gap:8px;font:800 20px/1 Tmoney,sans-serif}
+.tb button{width:44px;height:44px;border:0;background:none;color:var(--ink);display:flex;align-items:center;justify-content:center}
+.pane-main{flex:1;width:100%;padding:40px;min-width:0;container:pane/inline-size}
+.col{max-width:880px;margin-inline:auto}
+.col.w1040{max-width:1040px}
+.ft{background:var(--g50);padding:40px 0;font-size:14px;color:var(--sub)}
+.ft .in{max-width:928px;margin:0 auto;padding:0 24px}
+.ft .r1,.ft .r2{display:flex;flex-wrap:wrap;gap:0 24px;justify-content:space-between}
+.ft a{display:inline-flex;align-items:center;min-height:44px}
+.ft .biz{margin-top:8px;line-height:1.7}
+
+/* 페이지 머리 — 지금: 제목 24 / 바꾼 뒤: 제목 32 (휴대폰 24) */
+.ph{margin-bottom:32px}
+.phrow{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.ph h1{font-size:32px;line-height:1.3}
+.cnt{margin-left:8px;font:400 16px Pretendard;color:var(--g500);letter-spacing:0}
+.phd{margin-top:8px;max-width:680px;color:var(--sub);font-weight:400}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 16px;min-width:96px;border:0;border-radius:12px;background:var(--fx-btn);color:var(--ink);font:600 16px/1.4 Pretendard,sans-serif;white-space:nowrap;box-shadow:inset 0 1px 0 rgb(255 255 255/.45),0 1px 2px rgb(31 41 55/.06)}
+.btn.line{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px var(--g500)}
+.now .btn.line{box-shadow:inset 0 0 0 1px var(--g400)}
+.btn.sm{min-height:44px;min-width:0}
+.btn.block{width:100%}
+
+/* 상태 뱃지 — 지금: 글자만(400) / 바꾼 뒤: 점 + 글자(700), 팬 홈 .stt 와 같은 모양 (35절) */
+.tg{display:inline-flex;align-items:center;gap:8px;min-height:28px;padding:4px 12px;border-radius:9999px;font-size:14px;font-weight:700;line-height:1.4;white-space:nowrap;background:var(--info-soft);color:var(--info)}
+.tg::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:currentColor}
+.tg.warn{background:var(--warn-soft);color:var(--warn)}
+.tg.succ{background:var(--succ-soft);color:var(--succ)}
+.tg.danger{background:var(--danger-soft);color:var(--danger)}
+.tg.white{background:#fff}
+.tg.white.warn{background:var(--warn-soft)}
+.tg.nodot::before{display:none}
+.now .tg{min-height:0;gap:0;padding:8px 16px;font-weight:600;line-height:1}
+.now .tg::before{display:none}
+.tg svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.now .tg.keep-icon{gap:8px}
+
+/* 탭 — 지금: 밑줄 하늘 2px(1.8:1) / 바꾼 뒤: 44 높이, 고른 탭 --primary-50 면 + 밑줄 2px --brand-line */
+.tabs{display:flex;gap:8px;margin:0 0 24px;box-shadow:inset 0 -1px 0 var(--g200)}
+.tabs span{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;color:var(--sub);font-weight:500;white-space:nowrap;box-shadow:inset 0 -2px 0 transparent}
+.tabs span[aria-selected=true]{background:var(--p50);color:var(--ink);font-weight:700;box-shadow:inset 0 -2px 0 var(--ink)}
+.now .tabs{gap:24px}
+.now .tabs span{padding:0;min-height:44px;font-weight:400;color:var(--sub)}
+.now .tabs span[aria-selected=true]{background:none;font-weight:700;color:var(--ink);box-shadow:inset 0 -2px 0 var(--primary)}
+
+.btn.line.sm{min-height:44px}
+
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.changes code{font-size:13px;background:#F3F4F6;padding:1px 4px;border-radius:4px}
+
+
+@container st (max-width:767px){
+  .sb{display:none}.tb{display:flex}.app{display:block;min-height:0}
+  .pane-main{padding:24px 16px 48px}
+  .ph h1{font-size:24px}
+  .ft{padding:32px 0}.ft .in{padding:0 16px}
+  .ft .r1,.ft .r2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}.ft .r1 .logo{grid-column:1/-1}
+}
+/* ===== 4파트 공통 부품 (바꾼 뒤 = 기본, .now 가 지금 값으로 되돌림) ===== */
+.stage{--lw:#DCDEE0;--tl:#BFE3F7;--cream:#FBF5EE;--lcream:#E4D8CB;--g300:#D1D5DB}
+.sb .gh{margin:12px 0 2px;padding:0 10px;font-size:14px;font-weight:600;color:var(--sub);line-height:28px}
+.sb nav a.subi{height:32px;padding-left:40px;margin-bottom:0}
+.soon2{margin-left:8px;font-size:12px;color:var(--sub)}
+.ph{margin-bottom:48px}.ph h1{font-size:32px}.ph .phd{margin-top:8px;max-width:680px;color:var(--sub);font-weight:400}
+.col.w1200{max-width:1200px}.col.w960{max-width:960px}
+.btn{box-shadow:none;background:var(--primary);padding:0 24px;min-width:0}
+.btn.sm{min-height:44px;padding:0 16px}
+.btn.line{background:#fff;box-shadow:inset 0 0 0 1px var(--g500)}
+.btn.text{background:none;box-shadow:none;padding:0 14px}
+.btn.danger{background:#fff;color:var(--danger);box-shadow:inset 0 0 0 1px var(--danger)}
+.btn.off{background:var(--g100);color:var(--sub);box-shadow:none;cursor:not-allowed}
+.btn.soft{background:#fff;box-shadow:inset 0 0 0 1px var(--g500)}
+.now .btn.line{box-shadow:inset 0 0 0 1px var(--g200)}
+.now .btn.line.fl{box-shadow:inset 0 0 0 1px var(--g400)}
+.now .btn.soft{background:var(--g100);box-shadow:none}
+.btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* 4 + 8 묶음 */
+.grp{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:24px;align-items:start}
+.grp+.grp{margin-top:48px;padding-top:48px;border-top:1px solid var(--lw)}
+.nm{grid-column:span 4;min-width:0;margin:0;font:800 20px/28px Tmoney,Pretendard,sans-serif;letter-spacing:-.02em;padding-top:var(--nmt,0)}
+.now .nm{padding-top:0}
+.rows{grid-column:span 8;min-width:0}
+.item{min-width:0}.item+.item{border-top:1px solid var(--lw)}
+.row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;min-height:64px;margin:0;padding:8px 0}
+.txt{display:flex;flex:1 1 160px;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;margin:0;overflow-wrap:anywhere}
+.k{font-size:16px;font-weight:600;line-height:1.5}.v{margin:0;font-size:16px;line-height:1.5}
+.s{margin:0;color:var(--sub);font-size:14px;line-height:1.6;overflow-wrap:anywhere}
+.act{display:flex;flex:none;flex-wrap:wrap;gap:8px}
+.panel{padding-bottom:16px}
+.fieldrow{display:flex;flex-direction:column;gap:8px;padding:16px 0}
+.fld{display:flex;align-items:center;min-height:48px;padding:0 16px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--g500);font-size:16px;width:100%;overflow-wrap:anywhere}
+.fld.ph0{color:var(--sub)}
+.fld.bad{box-shadow:inset 0 0 0 2px var(--danger)}
+.fld.ta{align-items:flex-start;padding:12px 16px;min-height:120px}
+.fld.sel::after{content:"";margin-left:auto;width:8px;height:8px;border:solid var(--ink);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.lab{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;min-width:0}
+.cnt{color:var(--sub);font-size:14px;white-space:nowrap}
+.bad-t{color:var(--danger);font-weight:600}
+/* 스위치 */
+.swb{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:64px;padding:8px 0}
+.trk{position:relative;flex:none;width:52px;height:32px;border:1px solid var(--sub);border-radius:999px;background:var(--g200)}
+.trk::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:var(--ink)}
+.trk.on{background:var(--primary)}.trk.on::after{transform:translateX(20px)}
+.now .trk.old{width:48px;height:28px;border:0;background:var(--g500)}
+.now .trk.old::after{top:4px;left:4px;width:20px;height:20px;background:#fff}
+.now .trk.old.on{background:var(--primary)}.now .trk.old.on::after{transform:translateX(20px)}
+.must{margin:0;padding-top:16px;border-top:1px solid var(--lw)}
+.must b{display:block;font-size:14px;font-weight:600;line-height:1.5}
+.must span{display:block;margin-top:4px;color:var(--sub);font-size:14px;line-height:1.6}
+/* 알림 상자 — 바꾼 뒤: 색만으로 알리지 않게 앞에 원 */
+.err,.okm{display:flex;gap:12px;align-items:flex-start;margin:0;padding:16px;border-radius:12px;font-weight:600;overflow-wrap:anywhere;max-width:100%}
+.err{background:var(--danger-soft);color:var(--danger)}.okm{background:var(--succ-soft);color:var(--succ)}
+.err::before,.okm::before{content:"!";flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:currentColor;font-size:14px;font-weight:800;line-height:1;color:#fff}
+.okm::before{content:"✓"}
+.err::before{background:var(--danger);color:#fff}.okm::before{background:var(--succ);color:#fff}
+.now .err::before,.now .okm::before{display:none}
+.end{display:flex;flex-direction:column;align-items:flex-end;gap:8px;margin-top:24px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.quit{margin-top:48px;padding-top:24px;border-top:1px solid var(--lw)}
+.more1{margin:48px 0 0;color:var(--sub);font-size:14px;line-height:1.6}
+.more1 a{display:inline-flex;align-items:center;min-height:44px;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:4px}
+/* 사진 */
+.av{flex:none;display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:var(--p50);box-shadow:inset 0 0 0 1px var(--tl);font:800 24px/1 Tmoney,sans-serif;overflow:hidden}
+.now .av{box-shadow:none}
+.av img{width:100%;height:100%;object-fit:cover}
+.bn{display:grid;place-items:center;width:100%;height:160px;margin-top:4px;border-radius:12px;background:var(--p50);box-shadow:inset 0 0 0 1px var(--tl);color:var(--sub);font-size:14px;overflow:hidden}
+.now .bn{box-shadow:none}
+.bn img{width:100%;height:100%;object-fit:cover}
+/* 상태 뱃지(점 + 글자) */
+.bd{display:inline-flex;align-items:center;gap:8px;min-height:28px;padding:4px 12px;border-radius:999px;font-size:14px;font-weight:700;line-height:1.4;white-space:nowrap;background:var(--info-soft);color:var(--info)}
+.bd::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:currentColor}
+.bd.ok{background:var(--succ-soft);color:var(--succ)}.bd.wr{background:var(--warn-soft);color:var(--warn)}.bd.nn{background:var(--g100);color:var(--sub)}
+.now .bd{background:var(--p50)!important;color:var(--ink)!important;font-weight:600;padding:4px 16px;gap:0}.now .bd::before{display:none}
+/* 판(카드) */
+.panelc{min-width:0;border-radius:16px;background:#fff;box-shadow:var(--hair),var(--sh-card)}
+.now .panelc{box-shadow:none;border:1px solid var(--lw)}
+.pform{min-width:0}
+.pform .sub{display:grid;gap:8px;min-width:0;padding:32px;border-bottom:1px solid var(--lw)}
+.now .pform .sub{padding:24px}
+.pform .sub.last{border-bottom:0}
+.pform .end{padding:16px 32px 32px;margin:0}
+.now .pform .end{padding:16px 24px 24px}
+.pt{margin:0 0 8px;font:800 20px/1.4 Tmoney,Pretendard,sans-serif;letter-spacing:-.02em}
+.stt{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0;font-size:16px;font-weight:600;line-height:1.4}
+.hint{margin:0;color:var(--sub);font-size:14px;line-height:1.6}
+.gi{display:grid;grid-template-columns:minmax(0,1fr) var(--pv,300px);column-gap:24px;align-items:start}
+.pv{position:sticky;top:24px;display:grid;align-content:start;gap:12px;min-width:0}
+.pv>h3{margin:0;font:600 16px/1.4 Pretendard,sans-serif;letter-spacing:0}
+.sec-t{margin:0 0 24px;font:800 20px/1.4 Tmoney,Pretendard,sans-serif;letter-spacing:-.02em}
+.jump{display:flex;flex-wrap:wrap;gap:0 16px;margin:-32px 0 32px;font-size:14px}
+.jump a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:4px}
+.mk{display:grid;place-items:center;flex:none;width:56px;height:56px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--lw);overflow:hidden}
+.mk img{width:100%;height:100%;object-fit:cover}
+.chk{display:flex;gap:12px;align-items:center;min-height:44px;font-size:14px}
+.chk i{flex:none;width:24px;height:24px;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 2px var(--g500)}
+.sws{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.sw{position:relative;width:44px;height:44px}
+.sw i{position:absolute;inset:4px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--g500)}
+.sw.on i{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--ink),inset 0 0 0 1px var(--g500)}
+.sw.on::after{content:"";position:absolute;left:16px;top:11px;width:8px;height:14px;border:solid var(--ink);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.swn{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1px var(--g500);font-size:14px}
+.swn.on{background:var(--p50);box-shadow:inset 0 0 0 1px var(--ink)}
+/* 카드 미리보기(찾기 카드) */
+.cc{width:100%;max-width:300px;border-radius:16px;overflow:hidden;background:#fff;box-shadow:var(--hair),var(--sh-card)}
+.cc .cv{height:120px;background:linear-gradient(135deg,#D8F1EC,#FCF1C8);display:grid;place-items:center}
+.cc .cv img{height:84px}
+.cc .cb{padding:16px;display:grid;gap:8px}
+.cc .nr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700}
+.fb{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:var(--info-soft);color:var(--info);font-size:12px;font-weight:700}
+.ct{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:999px;font-size:14px;font-weight:600;line-height:1.5;white-space:nowrap}
+.ct i{width:14px;height:14px;border-radius:50%;background:currentColor}
+.ct.z{background:#E4F7EC;color:#146C43}.ct.y{background:#FDECEA;color:#B42318}.ct.s{background:#E8F0FA;color:#1F4E79}.ct.v{background:var(--g100);color:var(--sub)}
+.cc .ft2{padding:0 16px 16px}
+.head{border-radius:16px;overflow:hidden;background:#fff;box-shadow:var(--hair),var(--sh-card)}
+.head .cv{height:160px;background:linear-gradient(135deg,#FCE9A8,#E0F2FE);display:grid;place-items:center}
+.head .cv img{height:110px}
+.head .hb{display:flex;gap:12px;align-items:flex-end;padding:0 24px 24px;margin-top:-36px}
+.head .hb .av{width:96px;height:96px;background:#fff;box-shadow:0 0 0 4px #fff}
+.head .hb .av img{width:80%;height:80%;object-fit:contain}
+.head .hb p{margin:0}.head .hb .nn2{font:800 24px/1.3 Tmoney,sans-serif}
+/* 태그 칩 */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.pk{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1px var(--g500);font-size:16px;font-weight:500}
+.pk i{width:20px;height:20px;border-radius:50%;background:var(--ink)}
+.pk.on{background:var(--p50);box-shadow:inset 0 0 0 2px var(--ink);font-weight:700}
+.now .pk{box-shadow:inset 0 0 0 1px var(--g200);background:var(--g50)}
+.now .pk.on{background:#fff;box-shadow:inset 0 0 0 2px var(--g500);font-weight:500}
+.pk svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+/* 접힌 칸 */
+.fold{border-radius:12px;background:#fff;box-shadow:var(--hair),var(--sh-card);margin-top:16px}
+.now .fold{box-shadow:none;border:1px solid var(--lw)}
+.fold>.sm{display:flex;align-items:center;gap:16px;min-height:56px;padding:8px 16px;font-weight:600}
+.fold>.sm>span:first-child{flex:1;min-width:0}
+.fm{color:var(--sub);font-size:14px;font-weight:400}
+.chev{flex:none;width:20px;height:20px;fill:none;stroke:var(--sub);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.fold.open .chev{transform:rotate(180deg)}
+.fb2{display:grid;gap:16px;min-width:0;padding:16px;border-top:1px solid var(--lw)}
+.lkrow{display:flex;flex-wrap:wrap;align-items:center;gap:16px;min-height:56px;padding:8px 16px;border-radius:12px;background:#fff;box-shadow:var(--hair),var(--sh-card);font-weight:600}
+.now .lkrow{box-shadow:none;border:1px solid var(--lw)}
+.lkrow>span:first-child{flex:1;min-width:0}
+/* 안쪽 카드·옵션 */
+.card{min-width:0;padding:32px;border-radius:16px;background:#fff;box-shadow:var(--hair),var(--sh-card)}
+.card.soft{background:var(--g50);box-shadow:var(--hair)}
+.card h3{margin:0 0 16px;font:800 20px/1.4 Tmoney,Pretendard,sans-serif;letter-spacing:-.02em}
+.card>*+*{margin-top:16px}
+.card .t{font-weight:600;margin:0}.card p{margin:0}
+.card .hint{margin-top:8px}
+.card .meta{color:var(--sub);font-size:14px}
+.gr{display:grid;gap:8px}.gr.c2{grid-template-columns:repeat(2,minmax(0,1fr))}.gr.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.opt{display:flex;align-items:center;gap:8px;min-height:48px;padding:8px 16px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--g500);line-height:1.5}
+.opt i{flex:none;width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--g500)}
+.opt.sq i{border-radius:8px}
+.opt.on{background:var(--p50);box-shadow:inset 0 0 0 2px var(--ink);font-weight:600}
+.opt.on i{box-shadow:inset 0 0 0 7px var(--ink)}
+.now .opt{box-shadow:inset 0 0 0 1px var(--g200)}.now .opt.on{box-shadow:inset 0 0 0 1px var(--ink);font-weight:400}
+.swr{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:16px 24px;border-radius:12px;background:var(--g50);box-shadow:inset 0 0 0 1px var(--g200)}
+.swr div{display:grid;gap:4px;min-width:0}.swr small{font-size:14px;color:var(--sub);line-height:1.6}
+.hr{display:flex;align-items:center;gap:8px}.hr b{white-space:nowrap}
+.bst{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.who{display:flex;align-items:center;gap:12px}.who .fc{width:40px;height:40px}
+/* 팔로우 목록 */
+.fgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:24px;align-items:start}
+.flist{grid-column:span 8;min-width:0}.fside{grid-column:span 4;position:sticky;top:24px;min-width:0}
+.fl{margin:0;padding:0;border-top:1px solid var(--lw)}
+.fl li{display:flex;flex-wrap:wrap;align-items:center;column-gap:16px;min-height:72px;padding-block:8px;border-bottom:1px solid var(--lw)}
+.fl .who2{flex:1 1 0;min-width:0;display:flex;flex-direction:column}
+.fl .nr{display:flex;align-items:center;gap:8px;min-width:0;font-weight:600;line-height:1.4}
+.fl .nr a{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fl .in{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--sub);font-size:14px;line-height:1.4}
+.fl .btn{font-size:14px;flex:none}
+.ib{flex:none;width:44px;height:44px;margin-left:-8px;display:grid;place-items:center;color:var(--sub);border-radius:12px}
+.ib svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.fpanel{display:flex;flex-direction:column;align-items:flex-start;gap:24px;padding:24px;border:1px solid var(--lcream);border-radius:16px;background:var(--cream)}
+.fpanel .lb{margin:0;color:var(--sub);font-size:14px;font-weight:600}
+.fpanel .num{margin:0;font:800 48px/1.1 Tmoney,sans-serif}.fpanel .num small{margin-left:4px;font:600 16px Pretendard}
+.fpanel img{align-self:flex-end;width:96px;height:96px;object-fit:contain}
+.fempty{display:flex;flex-direction:column;align-items:center;gap:16px;padding:48px 24px;border-radius:16px;background:#fff;box-shadow:var(--hair),var(--sh-card);text-align:center}
+.now .fempty{box-shadow:none;border:1px solid var(--lw)}
+.fempty img{width:96px;height:96px}.fempty h2{margin:0;font:800 20px/1.4 Tmoney,sans-serif}.fempty p{margin:0;color:var(--sub);max-width:360px}
+/* 이메일 확인 */
+.ec{max-width:560px;margin-top:-24px}.ec p{margin:0}.ec .okr{display:flex;gap:8px;align-items:flex-start;color:var(--ink)}.ec .okr svg{flex:none}
+.ec>*+*{margin-top:12px}.ec .btnrow{margin-top:24px}
+/* 꾸미기 */
+.picks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.po{display:flex;gap:12px;align-items:center;min-height:56px;padding:8px 16px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--g500);font-weight:600}
+.po i{flex:none;width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--g500)}
+.po.on{background:var(--p50);box-shadow:inset 0 0 0 2px var(--ink)}.po.on i{box-shadow:inset 0 0 0 7px var(--ink)}
+.po.dis{background:var(--g50);color:var(--sub);box-shadow:inset 0 0 0 1px var(--g300)}
+.po small{display:block;font-size:14px;font-weight:400;color:var(--sub)}
+.po small a{display:inline-flex;align-items:center;min-height:44px;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:4px}
+.now .po{box-shadow:inset 0 0 0 1px var(--lw)}.now .po.on{box-shadow:inset 0 0 0 1px var(--ink);background:var(--tint)}.now .po.on i{box-shadow:inset 0 0 0 7px var(--ink)}
+.shc{max-width:360px;overflow:hidden;border-radius:12px;background:#fff;box-shadow:var(--hair),var(--sh-card)}
+.now .shc{box-shadow:none;border:1px solid var(--lw)}
+.shc .im{display:grid;place-items:center;height:120px;background:var(--p50)}
+.shc .im b{display:grid;place-items:center;width:72px;height:72px;border-radius:50%;background:#fff;box-shadow:0 0 0 8px #fff;overflow:hidden}.shc .im img{width:56px}
+.shc p{margin:0;padding:12px 16px;font-size:14px;font-weight:600}
+.cap{margin:0 0 8px;color:var(--sub);font-size:14px}
+.szs{margin:12px 0 0;padding:0}
+.szs li{display:flex;flex-wrap:wrap;align-items:center;gap:16px;min-height:72px;padding:8px 0}
+.szs li+li{border-top:1px solid var(--lw)}
+.th{display:grid;place-items:center;flex:none;width:48px;height:48px}.th i{display:block;border-radius:3px;background:var(--p50);box-shadow:inset 0 0 0 1px var(--tl)}
+.now .th i{box-shadow:inset 0 0 0 1px var(--lw)}
+.szt{display:flex;flex:1 1 160px;flex-direction:column;gap:2px;min-width:0}
+.lock{margin:12px 0 0;color:var(--sub);font-size:14px;line-height:1.6}
+.lock a{display:inline-flex;align-items:center;min-height:44px;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:4px}
+/* 휴대폰 */
+@container st (max-width:767px){
+  .ph{margin-bottom:32px}
+  .grp{display:block}.grp+.grp{margin-top:32px;padding-top:32px}
+  .nm{padding-top:0!important}
+  .rows{margin-top:16px}
+  .gi{display:flex;flex-direction:column;gap:16px}.pv{position:static;order:-1}
+  .pform .sub{padding:24px}.now .pform .sub{padding:16px}
+  .pform .end{padding:12px 24px;border-top:1px solid var(--lw);border-radius:0 0 16px 16px}.now .pform .end{padding:12px 16px}
+  .end{align-items:stretch}.btns .btn{flex:1}
+  .card{padding:24px 16px}
+  .gr.c4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fgrid{display:flex;flex-direction:column;gap:16px}.fside{position:static;order:-1;width:100%}
+  .flist{width:100%}
+  .fpanel{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:16px}.fpanel img{display:none}
+  .fl li{column-gap:8px}.fl .btn{padding:0 12px}.ib{margin-left:0}
+  .picks{grid-template-columns:1fr}
+  .shc .im{height:72px}.shc .im b{width:48px;height:48px;box-shadow:0 0 0 4px #fff}.shc .im img{width:36px}
+  .szs .btns{width:100%}
+  .jump{margin-top:-16px}
+  .head .hb{padding:0 16px 16px}
+  .head .cv{height:72px}.head .hb .av{width:56px;height:56px}
+  .av{width:56px;height:56px}
+  .bn{height:96px}
+  .swr{padding:16px}
+  .more1{margin-top:32px}
+}
+.more{margin-top:96px;padding-top:48px;border-top:1px solid var(--lw)}
+.now .more{max-width:880px;margin-inline:auto}
+.now .col.fw{max-width:960px}
+.jump{margin:-16px 0 32px}
+.fc{flex:none;width:32px;height:32px;border-radius:50%;background:var(--p50);box-shadow:inset 0 0 0 1px rgb(31 41 55/.08);display:grid;place-items:center;overflow:hidden}
+.fc img{width:26px;height:26px;object-fit:contain}.fc.md{width:40px;height:40px}.fc.md img{width:32px;height:32px}
+.phrow{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+@container st (max-width:767px){.more{margin-top:48px;padding-top:24px}}
+.fl .who2{position:relative}
+.fl .nr a::after{content:"";position:absolute;inset:-8px 0}
+/* 사용자 지적 11-01: 입력 칸 길이는 들어갈 값 길이에 맞춘다(37절). 휴대폰은 꽉 채움 */
+.fx{width:100%;max-width:var(--w);flex:0 1 var(--w);min-width:0}
+.hr .fld,.bst .fld{width:100%;flex:0 1 auto}
+.bst .fld{width:auto;flex:1 1 0}
+.now .fx{max-width:none}
+.now .fld{max-width:none!important}
+@container st (max-width:767px){.fx{max-width:none;flex-basis:100%}.fld{max-width:none!important}.bst .fld{flex:1 1 100px}}
+
+/* 이메일 칸 — 가입(signup.module.css .email · .email-custom)과 같다. 칸 길이는 가입 카드 480 안 값(192 · 192), 휴대폰은 가입처럼 1fr */
+.em-new{max-width:416px}
+.em{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);justify-content:start;align-items:center;gap:8px}
+.now .btn.rv{background:none;box-shadow:none;padding:0 14px}
+.at{font-weight:600;color:var(--sub)}
+.em-c{margin-top:8px;max-width:416px}
+.em-old{display:none}.now .em-old{display:block}.now .em-new{display:none}
+@container st (max-width:767px){.em-new{max-width:none}.em-c{max-width:none}}
+
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>팬꾹 4파트 설정 계열 여덟 화면 · 시안 4 기준 비교</h1>
+  <div class="seg" role="tablist" aria-label="화면" id="tabs"></div>
+  <div class="ctl"><span class="seg-label">폭</span>
+    <div class="seg" id="widths"><button data-w="1440" aria-pressed="true">PC 1440</button><button data-w="390" aria-pressed="false">휴대폰 390</button></div></div>
+  <div class="ctl"><span class="seg-label">보기</span>
+    <div class="seg" id="views"><button data-v="both" aria-pressed="true">지금 / 바꾼 뒤</button><button data-v="after" aria-pressed="false">바꾼 뒤만(크게)</button></div></div>
+</div>
+<div class="cmp">
+  <div class="changes" id="changes"></div>
+  <div class="sub-bar" id="sub"></div>
+  <div class="panes" id="panes"></div>
+</div>
+<script>
+const I={
+ home:'<path d="M4 11 12 4l8 7v9H4z"/>',list:'<path d="M9 4h6v3H9zM6 6h12v14H6zM9 12h6M9 16h6"/>',search:'<circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/>',gift:'<path d="M4 9h16v4H4zM6 13h12v7H6zM12 9v11M12 9c-3 0-4-4-1-4 2 0 1 4 1 4zM12 9c3 0 4-4 1-4-2 0-1 4-1 4z"/>',
+ box:'<path d="M12 3 20 7v10l-8 4-8-4V7zM4 7l8 4 8-4M12 11v10"/>',mail:'<path d="M4 6h16v12H4zM4 7l8 6 8-6"/>',heart:'<path d="M12 20S4 14.5 4 9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5.500-8 11-8 11z"/>',chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+ menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',chk:'<path d="m5 12.500 4.500 4.500L19 7"/>',chd:'<path d="m6 9 6 6 6-6"/>',col:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M10 4v16"/>',right:'<path d="m9 6 6 6-6 6"/>'};
+const ic=(n,sz=18,w=2)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+const logo=`<a class="logo" href="#"><img src="assets/logo-mark.png" alt="">팬꾹</a>`;
+
+const footer=`<footer class="ft"><div class="in"><div class="r1"><a class="logo" href="#" style="font:800 20px/1 Tmoney,sans-serif;gap:8px"><img src="assets/logo-mark.png" alt="" style="width:28px;height:28px;border-radius:22%">팬꾹</a><a href="#">이용약관</a><a href="#"><b>개인정보처리방침</b></a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></div>
+<div class="r2"><a href="#">팬꾹 소개</a><a href="#">요금 안내</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></div>
+<p class="biz">상호 팬꾹 · 대표자 정재원 · 사업자등록번호 260-12-03086 · 통신판매업 신고번호 제2026-서울강남-05946호<br>사업장 주소 서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)<br>고객센터 support@fankkuk.com · 0502-1931-8289 · 호스팅 제공자 Vercel Inc.<br>© 2026 팬꾹. All rights reserved.</p></div></footer>`;
+
+Object.assign(I,{
+ truck:'<path d="M3 6h11v10H3zM14 9h4l3 3v4h-7zM7 19a2 2 0 1 0 0-.01M17 19a2 2 0 1 0 0-.01"/>',eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+ hist:'<path d="M4 12a8 8 0 1 0 3-6.200M4 4v4h4M12 8v4l3 2"/>',pal:'<path d="M12 3a9 9 0 1 0 0 18c1.500 0 2-1 1.500-2s0-2 1.500-2h2a4 4 0 0 0 4-4c0-5-4-10-9-10z"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
+ ok:'<path d="M5 12l5 5 9-10"/>'});
+const CAT='assets/mascot-cat.webp';
+const CK='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>';
+/* 크리에이터 사이드바 — 캡처 그대로(이름만 「하루님」) */
+const NAVG=[['기본',[['home','홈'],['truck','선물 현황'],['list','지금 할 일'],['search','크리에이터 찾기']]],
+ ['받기',[['chk','승인 내역'],['box','받은 선물'],['eye','열람 기록']]],
+ ['보내기',[['box','팬에게 보내기'],['','몇 명에게',1],['','합포장',2],['gift','다른 크리에이터에게 선물'],['heart','팔로우한 크리에이터'],['hist','보낸 내역']]],
+ ['내 팬꾹',[['pal','꾸미기'],['user','프로필 수정'],['gear','상세 설정']]]];
+const CH={
+me:[['구간 이름(보안 · 받을 주소)이 첫 줄 글자보다 17~18 위에 떠 있다 → 이름 글줄 가운데를 첫 줄 글자 가운데에 맞춤(2-9, 2-10)','이메일 칸 — 가입과 같은 「앞부분 @ 도메인 고르기」(묶음 416, 칸 사이 8)로(4-1, 사용자 지적 11-02)','저장 줄 「되돌리기」가 테두리 없는 글자 버튼 — 다른 설정 화면의 같은 자리(되돌리기 · 취소)는 선 버튼 → 선 버튼 하나로(4-1)','선 버튼 테두리 `--gray-200`(1.2:1) → 짙은 선 `#6B7280`(4.8:1)(8-12, 37·40절)','저장 결과 상자에 「!」·「✓」 원 — 색만으로 알리지 않게(37절 오류 상자와 같은 규칙)','「저장」은 비활성이 아니라 채움 버튼(`--primary`)이다. 저장 중에만 회색 비활성 모양'],['문구 · 칸 순서 · 노출 조건(받을 주소 없음/있음, 이메일 확인 대기 문장)','12열 4 + 8 묶음, 줄 최소 64, 스위치 줄 전체 누름, 끌 수 없는 알림은 늘 보임(27절)','저장 줄은 휴대폰에서 화면 아래에 붙음(시안은 제자리에 그림)']],
+profile:[['구간 이름(소개)이 닉네임 글자보다 13 위 → 첫 줄 글자 가운데에 맞춤(2-9)','프로필 사진 얼굴 · 배경 사진 칸이 면만 있고 경계 없음 → 1px `--tint-line`(4-7)','선 버튼(사진 업로드 · 삭제 · 취소) 짙은 선'],['사진은 고르는 즉시 저장, 소개 아래 저장 줄 · 문구 · 칸 순서','프로필 사진 줄과 배경 사진 줄의 서로 다른 구성(안내 위치) — 내용이 달라서']],
+following:[['왼쪽 시작선이 이 화면만 360(틀 960) — 다른 팬 설정 화면은 400(880) → 880 으로(정할 것 1)','「선물 보내기」 테두리 `--gray-400`(2.5:1) → 짙은 선 `#6B7280`','0명 빈 상태가 그림자 없는 옅은 선 상자 → 흰 카드(`--hair` + `--card-shadow`, 40절 빈 상태 카드)','0명일 때 채움 버튼이 둘(빈 카드의 「크리에이터 찾기」 · 오른쪽 판의 「크리에이터 더 찾기」) → 판 쪽을 선 버튼으로(1-2, 1-3)'],['7명 줄 목록(높이 72 · 얼굴 40 · 이름 + 채널 칩 · 소개 한 줄 · 선물 보내기 · 팔로우 취소) 순서','8 + 4 구성, 크림 판 · 따라옴, 휴대폰은 판이 위로 낮게']],
+email:[['큰 변화 없음 — 제목 · 문장 · 버튼 한 줄 구성이 이미 시안 4 와 같다','실패 상자에 「!」 원, 완료 문장의 체크 원은 그대로(색만으로 알리지 않게)'],['문구 · 폭 560 · 왼쪽 시작선(880 틀) · 확인 후 「내 팬꾹으로 가기」','로그인 안 함: 틀 없이 가운데 한 기둥(공개 머리는 시안에서 단순화)']],
+account:[['보안 묶음 첫 줄 · 구간 이름 어긋남 18 → 맞춤(2-9)','선 버튼 짙은 선, 저장 결과 상자 아이콘, 「다시 확인」 · 「확인하기」 44 유지'],['문구 · 칸 순서 · 알림 즉시 저장(저장 버튼 없음) · 상세 설정 안내 줄 · 탈퇴 줄']],
+settings:[['**한 화면에 폭과 왼쪽 선이 둘**: 팬덤 · 미리보기 280~1400(1120), 「주소와 설정」 400~1280(880) → 안 A: 「주소와 설정」도 같은 폭 · 같은 왼쪽 선(비교안 B 는 화면 전체 880)(2-9)','판 · 접힌 칸 경계가 `--line-on-white`(1.3:1)뿐 → `--hair` + `--card-shadow` 흰 카드(4-7, 40절)','판 안쪽 24 → 32(휴대폰 24) — 같은 화면의 카드(32)와 같게(2-9)','「팬마크 업로드」(회색 채움)와 「삭제」(선) → 둘 다 선 버튼(4-1)','스위치 두 모양(감사 답장 48×28 흰 손잡이 · 계정 52×32 짙은 손잡이) → 52×32 로(4-1)','접힌 칸 오른쪽 상태가 「연결됨」은 알약, 「등록됨」 · 「받는 중」은 글자 → 점 + 글자 뱃지 하나로. 「0명」은 숫자라 글자 그대로(4-1)','받기 설정 안 칩 · 선택 칸 경계 `--gray-200` → 짙은 선, 고른 칸 하늘 면 + 짙은 선 2px(37절)','선 버튼 짙은 선'],['문구 · 칸 순서 · 접힌 칸 여섯 줄 순서와 노출 조건 · 저장 줄(한 판에 저장 하나)','1200 틀 · 팬덤 입력 + 미리보기 300 · 따라옴(27절)','선물 받기 · 생일 · 받기 어려운 선물이 각각 저장 버튼을 가짐(같은 칸 안 채움이 셋 — 판마다 따로 저장하는 폼이라 유지)']],
+cprofile:[['판 · 미리보기 머리 경계 `--line-on-white`(1.3:1) → `--hair` + `--card-shadow`','판 안쪽 24 → 32','태그 칩: 경계 `--gray-200` · 고른 칩 플랫폼별 색 윤곽 → 짙은 선 44, 고른 칩 하늘 면 + 짙은 선 2px + 체크(37절 · 35절과 같음)','「크리에이터 찾기에 보이기」 줄 아래 빈 자리가 커서 저장 줄이 떠 보임 → 저장 줄 위 간격 16 으로','선 버튼 짙은 선'],['문구 · 칸 순서 · 사진은 즉시 저장 · 오른쪽 미리보기 400 따라옴 · 1100 이하 미리보기가 위로']],
+customize:[['링크 미리보기 이미지 고르기 칸 경계 `--line-on-white` → 짙은 선, 고른 칸 하늘 면 + 짙은 선 2px(37절 유형 선택)','링크 공유 카드 경계 → `--hair` + `--card-shadow`','썸네일 칸 경계 1px `--tint-line`','선 버튼(다운로드 · 링크 복사) 짙은 선 44, 저장 오류 상자 아이콘'],['문구 · 칸 순서 · 노출 조건(공지 이미지 받기 전 안내 한 줄 / 세 크기 줄) · 4 + 8 묶음 · 구간 이름과 설명 첫 줄은 이미 맞음']]
+};
+
+const CAT2='assets/mascot-cat.webp',GIFT='assets/icon-gift.webp';
+const B=(t,c='line sm',x='')=>`<button type="button" class="btn ${c}" ${x}>${t}</button>`;
+const FC=(c='')=>`<span class="fc ${c}"><img src="${CAT}" alt=""></span>`;
+const FANAV=[['home','홈'],['list','지금 할 일'],['search','크리에이터 찾기'],['gift','선물 보내기'],['box','보낸 선물'],['mail','받은 선물'],['heart','팔로우한 크리에이터'],['chat','문의']];
+const shell=(inner,role,active,o={})=>{
+  const nav=role==='fan'
+   ?`<nav aria-label="내 메뉴">${FANAV.map(([i,t])=>`<a href="#" ${t===active?'aria-current="page"':''}>${ic(i)}${t}${t==='지금 할 일'?'<span class="n">1</span>':''}</a>`).join('')}</nav><div class="me"><i></i>별빛님</div>`
+   :`<nav aria-label="내 메뉴">${NAVG.map(([h,its])=>`<p class="gh">${h}</p>${its.map(([i,t,sub])=>sub?`<a href="#" class="subi">${t}${sub===2?'<span class="soon2">준비 중</span>':''}</a>`:`<a href="#" ${t===active?'aria-current="page"':''}>${ic(i)}${t}</a>`).join('')}`).join('')}</nav><div class="me"><i></i>하루님</div>`;
+  const side=o.anon?'':`<aside class="sb"><div class="sb-top">${logo}<span style="width:36px;height:36px;display:grid;place-items:center;color:var(--sub)">${ic('col',20)}</span></div>${nav}</aside>`;
+  return `<div class="app">${side}<div class="mainwrap"><div class="tb">${logo}<button aria-label="메뉴">${ic('menu',24)}</button></div><main class="pane-main"><div class="col ${o.w||''}">${inner}</div></main>${footer}</div></div>`;
+};
+const head=(t,d,btn)=>`<header class="ph"><div class="phrow"><h1>${t}</h1>${btn||''}</div>${d?`<p class="phd">${d}</p>`:''}</header>`;
+const grp=(n,rows,nmt)=>`<section class="grp"><h2 class="nm" style="--nmt:${nmt}px">${n}</h2><div class="rows">${rows}</div></section>`;
+const row=(k,v,act)=>`<div class="item"><div class="row"><p class="txt">${k?`<span class="k">${k}</span>`:''}${v?`<span class="v">${v}</span>`:''}</p>${act?`<div class="act">${act}</div>`:''}</div></div>`;
+const sw=(t,d,on)=>`<div class="item"><div class="swb"><span class="txt"><span class="k">${t}</span><span class="s">${d}</span></span><span class="trk old ${on?'on':''}" role="img" aria-label="${on?'켜짐':'꺼짐'}"></span></div></div>`;
+const fld=(v,c='',w)=>`<div class="fld ${c}"${w?` style="max-width:${w}px"`:''}>${v}</div>`;
+const fx=(w,inner)=>`<div class="fx" style="--w:${w}px">${inner}</div>`;
+const CHECK='<svg width="24" height="24" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10" fill="currentColor"/><path d="m5 10 3 3 7-7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const chev='<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+const FANMUST=`<p class="must"><b>필수 알림: 반송할 상자 · 미도착 상자 · 전달되지 않은 선물 · 추가 결제 요청 · 결제 취소 · 추가 결제 취소 · 팬꾹 주소 없이 보낸 상자 · 크리에이터가 보낸 선물 수락 요청 · 반송 주소 확인</b></p><p class="s" style="margin-top:24px">선물 진행·결제·상자 처리에 필요한 알림은 수신 설정과 관계없이 발송됩니다.</p>`;
+const CRMUST=`<p class="must"><b>필수 알림: 승인 요청 · 추적 장치 발견 · 선물 수령 여부 확인 · 반송 주소 확인</b></p><p class="s" style="margin-top:24px">선물 진행·결제·상자 처리에 필요한 알림은 수신 설정과 관계없이 발송됩니다.<br>승인 요청은 7일 동안 응답하지 않으면 자동 반려됩니다.</p>`;
+
+/* 이메일 칸 — 가입(signup-page 605~660)과 같은 「앞부분 @ 도메인 고르기」, 기존 주소는 splitEmail 처럼 목록 도메인이면 고르고 아니면 「직접 입력」 */
+const emailBox=k=>{
+  const gm=k==='gmail', er=k==='err';
+  const sel=gm?'gmail.com':'직접 입력';
+  const custom=gm?'':(er?'example':'example.com');
+  const old=er?'byeolbit.fan@example':'byeolbit.fan@example.com';
+  return `<div class="em-new"><div class="em"><div class="fld">byeolbit.fan</div><span class="at" aria-hidden="true">@</span><div class="fld sel">${sel}</div></div>${gm?'':`<div class="fld em-c ${er?'bad':''}">${custom}</div>`}</div><div class="em-old">${fld(old,er?'bad':'')}</div>`;
+};
+/* ---------- 1 /me ---------- */
+const me=k=>{
+  const addr=k==='addr';
+  const mailHint=k==='pend'?'새 이메일(new.byeolbit@example.com)로 확인 메일을 보냈습니다. 메일의 링크에서 확인을 마치면 변경됩니다.':'새 이메일로 확인 메일을 발송합니다. 메일의 링크에서 확인을 마치면 변경됩니다.';
+  const msg=k==='err'?`<p class="err" role="alert">이메일 형식이 올바르지 않습니다.</p>`:k==='pend'?`<p class="okm" role="status">저장되었습니다. 새 이메일(new.byeolbit@example.com)로 확인 메일을 보냈습니다.</p>`:'';
+  return shell(head('계정 설정','보안·받을 주소·알림을 관리합니다. 닉네임은 ‘프로필 수정’에서 변경해 주세요.',B('프로필 수정','line sm'))
+  +grp('보안',row('비밀번호','',B('변경'))+row('휴대폰 번호','010-****-5678',B('변경')),18)
+  +grp('받을 주소',addr?row('','집 · 10월 28일 등록',`${B('변경')}${B('삭제')}`)+`<div class="item"><div class="panel"><p class="s">이미 ‘받기’를 누른 선물은 당시 등록된 주소로 배송됩니다.</p><div class="btns" style="margin-top:16px">${B('취소')}${B('주소 삭제','sm danger')}</div></div></div>`:row('','등록된 주소 없음',B('등록')),18)
+  +grp('개인정보',row('아이디','byeolbit_fan')+`<div class="item fieldrow"><span class="k">이메일</span>${emailBox(k)}<p class="s">${mailHint}</p></div>`,5)
+  +grp('알림',sw('카카오톡 알림','승인·배송 등 선물 관련 알림톡 수신',1)+sw('이메일 알림','영수증·안내 메일 수신',1)+sw('선물 소식 바로 받기','끄면 하루 한 번 오후 7시에 모아서 보냅니다',0)+FANMUST,5)
+  +`<div class="end">${msg}<div class="btns"><button type="button" class="btn line rv">되돌리기</button>${k==='saving'?B('저장 중','off','aria-disabled="true"'):B('저장','')}</div></div>`
+  +`<div class="quit"><div class="row"><p class="txt"><span class="k">회원 탈퇴</span><span class="s">탈퇴 문의 및 절차 안내</span></p>${B('탈퇴 안내','sm danger')}</div></div>`,'fan','');
+};
+/* ---------- 2 /me/profile ---------- */
+const meProfile=k=>{
+  const ph=k==='photo';
+  const photoRow=`<div class="item"><div class="row"><span class="av" aria-hidden="true">${ph?`<img src="${CAT2}" alt="">`:'별'}</span><p class="txt"><span class="k">프로필 사진</span><span class="s">JPG·PNG·WebP · 최대 10MB<br>사진 미등록 시 닉네임 첫 글자 표시</span></p><div class="act">${B(ph?'사진 변경':'사진 업로드')}${ph?B('삭제'):''}</div></div>${ph?'<p class="okm" style="margin-bottom:8px">프로필 사진 변경 완료</p>':''}</div>`;
+  const bgRow=`<div class="item fieldrow"><div class="lab"><span class="k">배경 사진</span><div class="act">${B(ph?'사진 변경':'사진 업로드')}${ph?B('삭제'):''}</div></div><span class="bn">${ph?`<img src="assets/creator-cat.webp" alt="">`:'등록된 배경 사진 없음'}</span><p class="s">가로형 사진 권장 · 미등록 시 기본 하늘색 배경 표시</p></div>`;
+  const nickErr=k==='err';
+  return shell(head('프로필 수정','프로필 사진·배경 사진·닉네임·자기소개를 수정합니다.')
+  +grp('사진',photoRow+bgRow,16)
+  +grp('소개',`<div class="item fieldrow">${fx(240,`<div class="lab"><span class="k">닉네임</span><span class="cnt">${nickErr?'13':'2'}/12</span></div>${fld(nickErr?'별빛별빛별빛별빛별빛입니다':'별빛',nickErr?'bad':'')}`)}${nickErr?'<p class="s bad-t" role="alert">닉네임은 12자까지 입력할 수 있습니다.</p>':''}<p class="s">1~12자</p></div><div class="item fieldrow"><div class="lab"><span class="k">자기소개</span><span class="cnt">${ph?'23':'0'}/100</span></div>${fld(ph?'별빛이에요. 선물 보내는 걸 좋아해요.':'','ta '+(ph?'':'ph0'))}<p class="s">최대 100자</p></div>`,14)
+  +`<div class="end">${ph?'<p class="okm" role="status">저장되었습니다.</p>':''}<div class="btns"><button type="button" class="btn line">취소</button>${B('저장','')}</div></div>`,'fan','');
+};
+/* ---------- 3 /me/following ---------- */
+const FW=[['하루','치지직','z','하루의 놀이터 · 게임 방송을 해요.',GIFT],['모모','유튜브','y','모모네 거실 · 노래 방송을 해요.'],['새벽달','SOOP','s','새벽달 라디오 · 새벽에 이야기를 나눠요.'],['별이','유튜브','y','별이의 작업실 · 그림 그리는 방송을 해요.'],['솜사탕','치지직','z','솜사탕 식탁 · 맛있는 걸 같이 먹어요.'],['도담','유튜브','y','도담 홈트 · 집에서 같이 운동해요.'],['보리','SOOP','s','보리의 지구본 · 여행 이야기를 들려 드려요.']];
+const unf='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20S4 14.5 4 9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5.500-8 11-8 11z"/><path d="m4 4 16 16"/></svg>';
+const following=k=>{
+  const empty=k==='empty';
+  const list=empty?`<div class="fempty"><img src="assets/illust-empty-follow.png" alt=""><h2>팔로우한 크리에이터가 없습니다</h2><p>선물을 보낼 크리에이터를 찾아 팔로우해 주세요.</p>${B('크리에이터 찾기','')}</div>`
+   :`<ul class="fl">${FW.map(([n,p,c,i,img])=>`<li><span class="fc md"><img src="${img||CAT2}" alt=""></span><div class="who2"><p class="nr"><a href="#">${n}</a><span class="ct ${c}"><i></i>${p}</span></p><p class="in">${i}</p></div>${B('선물 보내기','line sm fl')}<span class="ib" role="img" aria-label="${n} 팔로우 취소">${unf}</span></li>`).join('')}</ul>`;
+  return shell(head('팔로우한 크리에이터','팔로우한 크리에이터에게 내 닉네임이 표시됩니다.')
+  +`<div class="fgrid"><div class="flist">${list}</div><aside class="fside" aria-label="팔로우 요약"><div class="fpanel"><div><p class="lb">팔로우</p><p class="num">${empty?0:7}<small>명</small></p></div>${B('크리에이터 더 찾기',empty?'line':'')}<img src="${CAT2}" alt=""></div></aside></div>`,'fan','팔로우한 크리에이터',{w:'fw'});
+};
+/* ---------- 4 /me/email/confirm ---------- */
+const emailC=k=>{
+  if(k==='anon')return shell(head('이메일 확인','')+`<div class="ec"><p>확인 메일을 받은 계정으로 <a href="#" style="font-weight:600;text-decoration:underline;display:inline-flex;align-items:center;min-height:44px">로그인</a>한 뒤 메일의 링크를 다시 눌러 주세요.</p></div>`,'fan','',{anon:1});
+  const done=k==='done';
+  return shell(head('이메일 확인','')+`<div class="ec">${done?'':'<p>‘이메일 주소 확인’을 누르면 이 주소가 계정 이메일로 등록됩니다.</p>'}${done?`<p class="okr" role="status">${CHECK}이메일 주소(new.byeolbit@example.com)가 확인되었습니다.</p>`:''}${k==='failed'?'<p class="err" role="alert">확인 링크가 만료되었습니다. 계정 설정에서 이메일을 다시 저장해 주세요.</p>':''}<div class="btnrow" style="display:flex">${done?B('내 팬꾹으로 가기',''):k==='sending'?B('확인 중','off','aria-disabled="true"'):B('이메일 주소 확인','')}</div></div>`,'fan','');
+};
+/* ---------- 5 /creator/account ---------- */
+const crAccount=k=>{
+  const ver=k==='ver';
+  const msg=k==='err'?'<p class="err" role="alert">알림 설정을 저장하지 못했습니다.</p>':k==='saved'?'<p class="okm" role="status">알림 설정이 저장되었습니다.</p>':'';
+  return shell(head('계정 설정','보안·채널 소유자 확인·알림을 관리합니다.')
+  +grp('보안',row('비밀번호','',B('변경'))+row('휴대폰 번호',k==='err'?'등록된 번호가 없어요':'010-****-9999',B('변경'))+row('채널 소유자 확인',ver?'치지직 채널 「하루의 놀이터」 확인됨 · 10월 12일':'확인 전',B(ver?'다시 확인':'확인하기')),18)
+  +grp('알림',sw('카카오톡 알림','필수 알림 외 소식을 알림톡으로 수신',1)+sw('이메일 알림','동일한 소식을 확인된 이메일로 수신',1)+sw('선물 소식 바로 받기','끄면 하루 한 번 오후 7시에 모아서 보냅니다',0)+CRMUST+(msg?`<div style="margin-top:8px">${msg}</div>`:''),5)
+  +`<p class="more1">받는 주소·차단한 팬·선물 받기는 ‘<a href="#">상세 설정</a>’에서 관리해 주세요.</p>`
+  +`<div class="quit" style="margin-top:24px"><div class="row"><p class="txt"><span class="k">회원 탈퇴</span><span class="s">탈퇴 문의 및 절차 안내</span></p>${B('탈퇴 안내','sm danger')}</div></div>`,'creator','');
+};
+/* ---------- 6 /creator/settings ---------- */
+const swatches=['#FFE0E6','#FFE3CC','#FFF1B8','#DDF3D3','#D3F0EA','#DCE9FF','#E6E0FF','#F7DDF2'];
+const cardPrev=(sym)=>`<div class="cc" role="group" aria-label="크리에이터 카드 미리보기"><div class="cv"><img src="${GIFT}" alt=""></div><div class="cb"><p class="nr">하루 <span class="fb">${sym?'':''}하루별</span></p><p class="s" style="font-size:14px">하루의 놀이터 · 게임 방송을 해요.</p><div class="chips"><span class="ct z"><i></i>치지직</span><span class="ct v"><i></i>버추얼</span></div></div><div class="ft2">${B('팔로우','line sm block','style="width:100%"')}</div></div>`;
+const fandom=k=>{
+  const nosym=k==='fresh', er=k==='fresh';
+  return `<section id="fandom"><h2 class="sec-t">팬덤</h2><div class="gi"><div class="panelc pform">
+  <div class="sub">${fx(240,`<h3 class="stt"><span>팬덤 이름</span><span class="cnt">${nosym?'0':'3'}/10</span></h3>${fld(nosym?'':'하루별',nosym?'bad':'')}`)}<p class="hint">팬 배지에 표시되는 이름 · 최대 10자<br>사용할 수 없는 표현은 저장되지 않습니다.</p></div>
+  <div class="sub"><h3 class="stt"><span>팬마크</span></h3><div class="bst">${nosym?'':'<span class="mk"><img src="assets/promise-lock.webp" alt=""></span>'}${B('팬마크 업로드','soft sm')}${nosym?'':B('삭제')}</div><p class="hint">JPG·PNG · 정사각형 이미지 권장<br>팬 배지에는 축소해서 표시됩니다.</p><div class="chk"><i></i><span>직접 제작했거나 사용 권한이 있는 이미지입니다</span></div></div>
+  <div class="sub"><h3 class="stt"><span>테마 색</span></h3><p class="hint">배경 사진이 없을 때 카드 배경과 팬덤 배지에 적용됩니다. 사이트 버튼과 글자에는 적용되지 않습니다.</p><div class="sws">${swatches.map((c,i)=>`<span class="sw ${i===4&&!nosym?'on':''}"><i style="background:${c}"></i></span>`).join('')}<span class="swn ${nosym?'on':''}">선택 안 함</span></div></div>
+  <div class="end">${er?'<p class="err" role="alert">팬덤 이름을 입력해 주세요.</p>':''}<div class="btns">${B('되돌리기','line')}${B('저장','')}</div></div></div>
+  <aside class="pv" aria-labelledby="pvt"><h3 id="pvt">미리보기</h3>${cardPrev()}</aside></div></section>`;
+};
+const status=(t,c)=>`<span class="bd ${c}">${t}</span>`;
+const fold=(id,t,meta,open,body)=>`<details class="fold ${open?'open':''}" ${open?'open':''} id="${id}"><summary class="sm"><span>${t}</span>${meta||''}${chev}</summary>${open?`<div class="fb2">${body}</div>`:''}</details>`;
+const sel=v=>fld(v,'sel');
+const addrBody=reg=>`<div class="card soft"><img src="assets/icon-address-lock.png" alt="" width="72" height="72" style="width:72px;height:72px"><p class="t">${reg?'주소 등록 완료':'등록된 주소 없음'}</p>${reg?'<p>집 · 10월 28일 등록</p>':''}<p>${reg?'주소는 암호화해 보관합니다. 선물 승인 후 배송에 필요한 경우에만 확인합니다.':'등록한 주소는 암호화해 보관합니다. 선물 승인 후 배송에 필요한 경우에만 확인합니다.'}</p></div><p class="meta s">${reg?'송장 출력 전인 선물부터 변경된 주소로 배송됩니다.':'송장 출력 전인 선물부터 등록한 주소로 배송됩니다.'}</p><p class="s">팬꾹은 채팅·이메일·전화로 주소를 요청하지 않습니다. 주소 재입력을 요구하는 연락에 응답하지 마세요.</p><div>${B(reg?'주소 변경':'주소 등록','line')}</div>`;
+const recvBody=()=>`<section class="card"><h3>선물 받기</h3><div class="gr c2" role="radiogroup" aria-label="받는 상태"><span class="opt"><i></i>받는 중</span><span class="opt on"><i></i>쉬는 중</span></div><div><p class="k" style="margin-bottom:8px">다시 받는 날</p>${fld('2026-11-15','',200)}<p class="hint">선택 가능: 내일~1년 이내 · 선택한 날짜 0시에 선물 받기 재개<br>쉬는 동안에도 기존 선물의 승인·거절은 가능합니다.</p></div><div><p class="k" style="margin-bottom:8px">팬 1명당 월 선물 한도</p>${fld('정하지 않음','sel',240)}<p class="hint">한도에 도달한 팬은 다음 달 1일부터 다시 보낼 수 있습니다. 설정한 한도는 크리에이터 페이지에 표시되지 않습니다.</p></div><div>${B('선물 받기 설정 저장','')}</div></section>
+<section class="card"><h3>생일과 기념일</h3><p>크리에이터 페이지에 30일 전부터 D-day 표시 · 월·일만 입력</p><div><p class="k" style="margin-bottom:8px">생일</p><div class="bst">${fld('3월','sel',120)}${fld('14일','sel',100)}</div></div><div><p class="k" style="margin-bottom:8px">기념일 (5개까지)</p><div class="bst">${fld('데뷔 기념일','',240)}${fld('5월','sel',120)}${fld('2일','sel',100)}${B('삭제')}</div><div style="margin-top:12px">${B('기념일 추가','line sm')}</div><p class="hint">기념일 이름: 최대 20자<br>기념일 7일 전부터 팬이 ‘기념일 선물’ 표시를 선택할 수 있습니다.</p></div><div>${B('생일·기념일 저장','')}</div></section>
+<section class="card"><h3>받기 어려운 선물</h3><p>선택한 선물 종류와 이유가 크리에이터 페이지에 안내 문구로 표시됩니다. 문구는 직접 입력할 수 없습니다.</p><div class="card soft"><p class="meta">현재 안내 문구</p><p class="t">현재 받기 어려운 선물이 없습니다.</p></div><div><p class="k" style="margin-bottom:8px">선물 종류 (복수 선택)</p><div class="gr c4"><span class="opt sq on"><i></i>인형·쿠션</span><span class="opt sq"><i></i>의류</span><span class="opt sq on"><i></i>음식</span><span class="opt sq"><i></i>전자기기</span></div></div><div><p class="k" style="margin-bottom:8px">이유</p><div class="gr c4"><span class="opt on"><i></i>이미 많이 받음</span><span class="opt"><i></i>보관 공간 부족</span><span class="opt"><i></i>일시 부재</span><span class="opt"><i></i>이유 표시 안 함</span></div></div><div><p class="k" style="margin-bottom:8px">기간</p><div class="gr c4"><span class="opt"><i></i>1주</span><span class="opt on"><i></i>2주</span><span class="opt"><i></i>한 달</span><span class="opt"><i></i>직접 해제할 때까지</span></div></div><div><p class="k" style="margin-bottom:8px">해당 선물 선택 시</p><div class="gr c2"><span class="opt on"><i></i>안내만 표시</span><span class="opt"><i></i>선물 등록 제한</span></div></div><div class="bst">${B('받기 어려운 선물 저장','')}${B('해제','line')}</div></section>`;
+const blockBody=n=>n?`<ul class="gr c2" style="margin:0;padding:0">${['달토끼','솜솜'].map(x=>`<li class="card soft" style="padding:24px"><div class="who">${FC('md')}<div><p class="t">${x}</p><p class="s">10월 30일 차단</p></div></div><div style="margin-top:16px">${B('차단 해제','line sm','style="width:100%"')}</div></li>`).join('')}</ul><p class="s">차단을 해제해도 주소는 공개되지 않습니다. 새 선물은 건별로 카카오톡 서명을 거쳐 승인해야 배송됩니다.</p>`:`<p class="s">차단한 팬이 없습니다.</p><p class="s">차단을 해제해도 주소는 공개되지 않습니다. 새 선물은 건별로 카카오톡 서명을 거쳐 승인해야 배송됩니다.</p>`;
+const linkBody=()=>`<section class="card"><h3>선물 링크</h3><div><p class="k" style="margin-bottom:8px">링크 주소</p><div class="hr"><b>fankkuk.kr/</b>${fld('haru_play','',280)}</div><p class="hint">선물 링크 주소: fankkuk.kr/입력한주소<br>영문·숫자·밑줄(_) 3~20자 · 로그인 아이디와 다르게 설정<br>방송·SNS에 공개되는 주소입니다.</p></div><div><p class="t">fankkuk.kr/haru_play</p><p class="s">이 주소로 내 페이지에 접속할 수 있습니다.</p></div><div class="bst">${B('복사','line sm')}${B('링크 주소 변경','sm')}</div><p class="s">프로필 사진·배경 사진은 ‘<a href="#" style="display:inline-flex;align-items:center;min-height:44px;font-weight:600;text-decoration:underline;text-underline-offset:4px">프로필 수정</a>’에서 바꿀 수 있습니다.</p></section>`;
+const replyBody=()=>`<section class="card"><h3>감사 답장</h3><div class="swr"><div><b>답장 모음 공개</b><small>팬이 공개에 동의한 답장을 내 수령 확인일 3일 후부터 선물 링크 페이지에 표시</small></div><span class="trk old on" role="img" aria-label="켜짐"></span></div><div><p class="k" style="margin-bottom:8px">X 계정</p><div class="hr"><b>@</b>${fld('haru_play','',240)}</div><p class="hint">영문·숫자·밑줄 1~15자 · 선택 입력</p></div><div class="swr"><div><b>X 계정 태그 허용</b><small>팬이 답장 카드를 X에 공유할 때 내 계정 태그 포함<br>공유 문구: @haru_play 고마워요!</small></div><span class="trk old" role="img" aria-label="꺼짐"></span></div><div>${B('감사 답장 설정 저장','')}</div></section>`;
+const crSettings=k=>{
+  const linked=k!=='fresh';
+  const B2=k==='B';
+  const sigRow=linked?`<div class="lkrow"><span>승인 서명</span>${status('연결됨','ok')}<span class="fm">10월 31일 (토)</span>${B('다시 연결')}</div>`
+   :`<a class="lkrow" href="#"><span>승인 서명 연결하기</span>${status('연결 전','nn')}${chev.replace('class="chev"','class="chev" style="transform:rotate(-90deg)"')}</a>`;
+  const reg=k!=='fresh';
+  const o=(id)=>k===id;
+  const mt=(t,c)=>`<span class="mt">${status(t,c)}</span>`;
+  return `<header class="ph"><div class="phrow"><h1>상세 설정</h1></div><p class="phd">팬덤·받는 주소·선물 받기·차단한 팬·선물 링크·감사 답장을 관리합니다.</p></header>
+  <nav class="jump" aria-label="상세 설정 구간"><a href="#fandom">팬덤</a><a href="#more">받는 주소·받기 설정·차단한 팬</a></nav>
+  ${fandom(k)}
+  <section id="more" class="more" aria-labelledby="more-h"><h2 class="sec-t" id="more-h" style="margin-bottom:16px">주소와 설정</h2>
+  ${sigRow}
+  ${fold('address','받는 주소',mt(reg?'등록됨':'등록 전',reg?'ok':'nn'),o('addr'),addrBody(reg))}
+  ${fold('receiving','받기 설정',mt(o('recv')?'쉬는 중':'받는 중',o('recv')?'wr':'ok'),o('recv'),recvBody())}
+  ${fold('blocked','차단한 팬',`<span class="fm">${o('blocked')?2:0}명</span>`,o('blocked')||o('blockedNone'),blockBody(o('blocked')))}
+  ${fold('gift-link','선물 링크','',o('link'),linkBody())}
+  ${fold('thanks','감사 답장','',o('reply'),replyBody())}
+  </section>`;
+};
+const settings=k=>{
+  const inner=crSettings(k);
+  return shell(inner,'creator','상세 설정',{w:k==='B'?'':'w1200'});
+};
+/* ---------- 7 /creator/profile ---------- */
+const TAGS=[['SOOP',0],['치지직',1],['유튜브',0],['알플레이',0],['인스타그램',0],['X',0],['스레드',0],['틱톡',0],['버추얼',1]];
+const crProfile=k=>{
+  const nop=k==='empty', er=k==='err';
+  const photoSub=(label,hint,id)=>`<div class="stt" style="display:block"><p class="stt" style="margin-bottom:8px">${label}</p><div class="bst">${B(label+' 변경','line sm')}${nop?'':B(label==='배경 사진'?'배경 사진 삭제':'사진 삭제','line sm')}</div>${hint}</div>`;
+  return shell(head('프로필 수정','팬에게 공개되는 프로필입니다. 변경할 내용을 미리보기에서 확인해 주세요.')
+  +`<div class="gi" style="--pv:400px"><div style="display:grid;gap:24px;min-width:0">
+  <section class="panelc pform"><div class="sub"><h2 class="pt">사진</h2><p class="k">배경 사진</p><div class="bst">${B('배경 사진 변경','line sm')}${nop?'':B('배경 사진 삭제','line sm')}</div><p class="hint">JPG·PNG·WebP · 가로형 사진 권장<br>업로드 시 위치 정보 등 사진에 포함된 부가 정보는 삭제됩니다. 사진 미등록 시 테마 색이 표시됩니다.</p><p class="hint">권장 크기 1200×600px</p></div><div class="sub last"><p class="k">프로필 사진</p><div class="bst">${B('프로필 사진 변경','line sm')}${nop?'':B('사진 삭제','line sm')}</div></div></section>
+  <form class="panelc pform"><div class="sub"><h2 class="pt">소개</h2><label class="stt"><span>공개 이름</span></label>${fld('하루','',360)}<p class="hint">팬에게 표시되는 이름</p></div>
+  <div class="sub"><div class="stt"><span>한 줄 소개 <span class="cnt" style="font-weight:400">(40자까지)</span></span><span class="cnt">10/40</span></div>${fld('게임 방송을 해요.','ta')}</div>
+  <div class="sub"><p class="stt"><span>태그</span></p><div class="chips">${TAGS.map(([t,on])=>`<span class="pk ${on?'on':''}"><i></i>${t}${on?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>':''}</span>`).join('')}</div><p class="k" style="margin-top:16px">태그 직접 입력 (최대 1개)</p>${fld('예: 팝콘TV','ph0'+(er?' bad':''),360)}<p class="hint">활동 플랫폼과 방송 분야를 선택해 주세요.<br>선택·직접 입력 합계: 1~5개 · 현재 2개<br>직접 입력: 최대 20자<br>직접 입력한 태그는 선택한 태그 뒤에 표시됩니다. 욕설·연락처·주소는 입력할 수 없습니다.</p></div>
+  <div class="sub last"><div class="swb" style="padding:0"><strong>크리에이터 찾기에 보이기</strong><span class="trk on" role="img" aria-label="켜짐"></span></div></div>
+  <div class="end">${er?'<p class="err" role="alert">직접 입력한 태그에는 욕설·연락처·주소를 쓸 수 없습니다.</p>':''}<div class="btns">${B('취소','line')}${er?B('저장 중','off','aria-disabled="true"'):B('저장','')}</div></div></form></div>
+  <aside class="pv" aria-labelledby="pe-pv"><h3 id="pe-pv">프로필 머리 미리보기</h3><section class="head"><div class="cv">${nop?'':`<img src="${GIFT}" alt="">`}</div><div class="hb"><span class="av">${nop?'하':`<img src="${GIFT}" alt="">`}</span><div><p class="nn2">하루 <span class="fb">하루별</span></p><p class="s">게임 방송을 해요.</p></div></div></section></aside></div>`,'creator','프로필 수정',{w:'w1200'});
+};
+/* ---------- 8 /creator/customize ---------- */
+const NS=[['정사각',1080,1080],['세로 (스토리용)',1080,1920],['가로',1920,1080]];
+const customize=k=>{
+  const ready=k==='ready', nosym=k==='nosym';
+  const sizes=ready?`<ul class="szs">${NS.map(([t,w,h])=>{const q=46/Math.max(w,h);return `<li><span class="th"><i style="width:${Math.round(w*q)}px;height:${Math.round(h*q)}px"></i></span><span class="szt"><span class="k">${t}</span><span class="s">${w} × ${h}</span></span><span class="btns">${B('다운로드')}${B('링크 복사')}</span></li>`}).join('')}</ul>`
+    :`<p class="lock">채널 소유자 확인 후 ‘<a href="#">상세 설정 &gt; 선물 링크</a>’에서 링크 주소를 등록하면 다운로드할 수 있습니다.</p>`;
+  return shell(head('내 팬꾹 꾸미기','선물 링크의 공유 이미지와 공지 이미지를 설정합니다.')
+  +`<section class="grp"><h2 class="nm">링크 미리보기 이미지</h2><div class="rows" style="padding-top:4px"><p class="s">메신저·SNS에 선물 링크를 공유할 때 표시되는 이미지입니다.</p><div class="picks" role="radiogroup"><span class="po on"><i></i>프로필 사진</span><span class="po ${nosym?'dis':''}"><i></i><span>팬마크${nosym?'<small><a href="#">팬마크 등록</a> 후 선택 가능</small>':''}</span></span></div><div style="min-height:22px;margin-top:8px">${nosym?'<p class="err" role="status">저장하지 못했습니다. 다시 선택해 주세요.</p>':''}</div><div style="margin-top:16px"><p class="cap">링크 공유 미리보기</p><div class="shc"><div class="im"><b><img src="${GIFT}" alt=""></b></div><p>하루 · 팬꾹</p></div></div></div></section>`
+  +`<section class="grp"><h2 class="nm">공지 이미지 다운로드</h2><div class="rows" style="padding-top:4px"><p class="s">내 채널에 선물 링크를 알릴 때 사용하는 이미지입니다.<br>배경 사진·프로필 사진·이름·소개·‘팬꾹으로 선물 보내기’ 문구·링크 주소가 포함됩니다.<br>스토리에서는 이미지 속 주소를 누를 수 없으니 링크 스티커를 추가해 주세요.</p>${sizes}</div></section>`,'creator','꾸미기');
+};
+
+/* ---------- 탭 ---------- */
+const TABS={
+me:{label:'계정 설정(팬)',route:'/me',states:{base:{label:'받을 주소 없음',now:'me',render:()=>me('base')},addr:{label:'받을 주소 등록됨(삭제 확인)',render:()=>me('addr')},err:{label:'저장 오류',render:()=>me('err')},saving:{label:'저장 중',render:()=>me('saving')},pend:{label:'저장됨 · 새 이메일 확인 대기',render:()=>me('pend')},gmail:{label:'목록 도메인(gmail.com)',render:()=>me('gmail')}},
+ changes:CH.me[0],keep:CH.me[1]},
+profile:{label:'프로필 수정(팬)',route:'/me/profile',states:{base:{label:'사진 없음 · 소개 비어 있음',now:'me-profile',render:()=>meProfile('base')},photo:{label:'사진 있음 · 저장됨',render:()=>meProfile('photo')},err:{label:'닉네임 오류',render:()=>meProfile('err')}},changes:CH.profile[0],keep:CH.profile[1]},
+following:{label:'팔로우한 크리에이터',route:'/me/following',states:{list:{label:'7명',now:'me-following',render:()=>following('list')},empty:{label:'0명',render:()=>following('empty')}},changes:CH.following[0],keep:CH.following[1]},
+email:{label:'이메일 확인',route:'/me/email/confirm',states:{ready:{label:'확인 전',now:'me-email-confirm',render:()=>emailC('ready')},sending:{label:'확인 중',render:()=>emailC('sending')},done:{label:'확인 완료',render:()=>emailC('done')},failed:{label:'실패(만료 등)',render:()=>emailC('failed')},anon:{label:'로그인 안 함',render:()=>emailC('anon')}},changes:CH.email[0],keep:CH.email[1]},
+account:{label:'계정 설정(크리에이터)',route:'/creator/account',states:{ver:{label:'채널 확인됨',now:'creator-account',render:()=>crAccount('ver')},err:{label:'확인 전 · 번호 없음 · 저장 오류',render:()=>crAccount('err')},saved:{label:'확인 전 · 알림 저장됨',render:()=>crAccount('saved')}},changes:CH.account[0],keep:CH.account[1]},
+settings:{label:'상세 설정',route:'/creator/settings',states:{closed:{label:'접힘(전부)',now:'creator-settings',render:()=>settings('closed')},addr:{label:'받는 주소 펼침',render:()=>settings('addr')},recv:{label:'받기 설정 펼침',render:()=>settings('recv')},blocked:{label:'차단한 팬 있음',render:()=>settings('blocked')},blockedNone:{label:'차단한 팬 없음',render:()=>settings('blockedNone')},link:{label:'선물 링크 펼침',render:()=>settings('link')},reply:{label:'감사 답장 펼침',render:()=>settings('reply')},fresh:{label:'승인 서명 연결 전 · 팬마크 없음 · 저장 오류',render:()=>settings('fresh')},B:{label:'비교안 B(전체 880 한 기둥)',render:()=>settings('B')}},changes:CH.settings[0],keep:CH.settings[1]},
+cprofile:{label:'프로필 수정(크리에이터)',route:'/creator/profile',states:{base:{label:'사진 있음',now:'creator-profile',render:()=>crProfile('base')},empty:{label:'사진 없음',render:()=>crProfile('empty')},err:{label:'태그 오류 · 저장 중',render:()=>crProfile('err')}},changes:CH.cprofile[0],keep:CH.cprofile[1]},
+customize:{label:'꾸미기',route:'/creator/customize',states:{base:{label:'공지 이미지 받기 전(안내)',now:'creator-customize',render:()=>customize('base')},ready:{label:'공지 이미지 세 크기',render:()=>customize('ready')},nosym:{label:'팬마크 없음 · 저장 오류',render:()=>customize('nosym')}},changes:CH.customize[0],keep:CH.customize[1]}
+};
+
+const NOWDIR='now/';
+let cur='me',sub={},W=1440,V='both';
+Object.keys(TABS).forEach(k=>sub[k]=Object.keys(TABS[k].states)[0]);
+const $=s=>document.querySelector(s);
+const tabs=$('#tabs');
+Object.entries(TABS).forEach(([k,s])=>{const b=document.createElement('button');b.textContent=s.label;b.dataset.k=k;b.setAttribute('role','tab');tabs.append(b)});
+function draw(){
+  const t=TABS[cur], st=t.states[sub[cur]];
+  tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b.dataset.k===cur));
+  document.querySelectorAll('#widths button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.w===W));
+  document.querySelectorAll('#views button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===V));
+  const md=x=>x.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`(.+?)`/g,'<code>$1</code>');
+  $('#changes').innerHTML=`<h2>${t.label}<span>${t.route}</span></h2><h4>바뀌는 것</h4><ul>${t.changes.map(x=>`<li>${md(x)}</li>`).join('')}</ul><h4>바뀌지 않는 것</h4><ul>${t.keep.map(x=>`<li>${md(x)}</li>`).join('')}</ul>`;
+  $('#sub').innerHTML='<span class="seg-label">상태</span><div class="seg" id="subs">'+Object.entries(t.states).map(([k,v])=>`<button data-s="${k}" aria-pressed="${k===sub[cur]}">${v.label}</button>`).join('')+'</div>';
+  const n=V==='both'?2:1, avail=document.documentElement.clientWidth-48-24*(n-1);
+  const z=Math.min(1,avail/(W*n));
+  const nowBody=st.now?`<img src="${NOWDIR}${st.now}-${W}.jpg" alt="지금 화면 ${W}">`:`<div style="zoom:${z}"><div class="stage now" style="width:${W}px">${st.render()}</div></div>`;
+  const nowHtml=`<div class="pane"><h3>지금<em>${st.now?'캡처':'코드 값으로 다시 그림(캡처 없음 · 재현)'} · ${W}</em></h3><div class="shot" style="width:${W*z}px">${nowBody}</div></div>`;
+  const aft=`<div class="pane"><h3>바꾼 뒤<em>${W}</em></h3><div class="shot" style="width:${W*z}px"><div style="zoom:${z}"><div class="stage" style="width:${W}px" id="stage">${st.render()}</div></div></div></div>`;
+  $('#panes').innerHTML=(V==='both'?nowHtml:'')+aft;
+}
+tabs.onclick=e=>{const b=e.target.closest('button');if(b){cur=b.dataset.k;draw()}};
+$('#widths').onclick=e=>{const b=e.target.closest('button');if(b){W=+b.dataset.w;draw()}};
+$('#views').onclick=e=>{const b=e.target.closest('button');if(b){V=b.dataset.v;draw()}};
+$('#sub').onclick=e=>{const b=e.target.closest('button');if(b){sub[cur]=b.dataset.s;draw()}};
+addEventListener('resize',draw);
+const q=new URLSearchParams(location.search);
+if(q.get('s')&&TABS[q.get('s')])cur=q.get('s');if(q.get('st')&&TABS[cur].states[q.get('st')])sub[cur]=q.get('st');if(q.get('w'))W=+q.get('w');if(q.get('v'))V=q.get('v');
+draw();
+</script></body></html>
