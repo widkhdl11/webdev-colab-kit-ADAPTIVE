@@ -74,8 +74,9 @@ function Row({ item, now }: { item: ActionItem; now: string }) {
         <span className="meta">{c.meta}</span>
       </p>
       <div className="lrow-side">
-        {days !== null ? <span className="tag tag--warn">{leftText(days)}</span> : null}
-        <Link className="btn btn--line btn--sm" href={giftDetailHref(item.orderNo, true)} aria-label={`${c.title} 확인하기 — ${c.meta}`}>
+        {days !== null ? <span className="tag tag--warn tag--dot">{leftText(days)}</span> : null}
+        {/* 줄 전체가 누르는 칸(.stretch — 받은 선물 줄과 같게, design-rules 38절) */}
+        <Link className="btn btn--line btn--sm stretch" href={giftDetailHref(item.orderNo, true)} aria-label={`${c.title} 확인하기 — ${c.meta}`}>
           확인하기
         </Link>
       </div>

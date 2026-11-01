@@ -66,7 +66,8 @@ function Task({ item, clientKey, now, address }: { item: ActionItem; clientKey: 
         wide
         action={
           <>
-            <FindMyBox box={{ target: { kind: "box", id: item.boxId }, label: item.boxLabel, name: `${item.boxLabel} · ${tier} 상자` }} />
+            {/* 하늘 칸 안 — 흰 상자 + 하늘 선, 입력·버튼 최대 480(design-rules 38절) */}
+            <FindMyBox surface="tint" box={{ target: { kind: "box", id: item.boxId }, label: item.boxLabel, name: `${item.boxLabel} · ${tier} 상자` }} />
             <div className={s.alt}>
               <NotSentButton orderNo={item.orderNo} focusAfterIds={FOCUS_AFTER_IDS} />
               <a className={s.textlink} href="/support">

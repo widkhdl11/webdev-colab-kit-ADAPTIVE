@@ -65,10 +65,13 @@
 .uDue { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
 .linkarr { display: inline-flex; align-items: center; min-height: 44px; font-size: var(--fs-small); font-weight: var(--fw-btn); color: var(--ink); }
 
-@media (max-width: 767px) {
-  /* 휴대폰 — 크리에이터 카드 줄은 옆으로 넘긴다(카드 폭 78%, 카드 단위로 멈춤). 그림자가 잘리지 않게 위아래 4 */
+/* 열 바꿈은 화면 폭이 아니라 본문 칸(.page-pane, container: pane) 폭 기준 — 왼쪽 메뉴 240 이 있는 중간 폭에서도 카드 밖으로 나가지 않게(design-rules 38절) */
+@container pane (max-width: 839px) {
+  /* 크리에이터 카드 줄은 옆으로 넘긴다(카드 폭 78%, 카드 단위로 멈춤). 그림자가 잘리지 않게 위아래 4 */
   .ccards { display: flex; gap: var(--space-3); margin-top: var(--space-3); padding: var(--space-1) 0; overflow-x: auto; scroll-snap-type: x mandatory; }
   .ccard { flex: 0 0 78%; padding: var(--space-4); scroll-snap-align: start; }
+}
+@container pane (max-width: 699px) {
   .gcards { grid-template-columns: minmax(0, 1fr); }
   .gcard { padding: var(--space-4); }
 }

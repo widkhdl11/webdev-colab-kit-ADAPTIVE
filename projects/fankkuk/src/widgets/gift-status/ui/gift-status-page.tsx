@@ -141,6 +141,7 @@ export function GiftStatusPage({
   // 거절·기한 지남 안내(B-6) — 도착한 상자가 있을 때 · 아직 도착하지 않은 상자가 있을 때의 문단만. 첫 문단은 끝난 주문에서 받는 주소가 보였는지 알 수 없어 늘 보인다(BACKLOG)
   const anyArrived = boxes.some((b) => hasArrived(b.state));
   const anyNotYet = boxes.some((b) => isWaybillEditable(b.state));
+  const stopNotice = view.outcome === "declined" || view.outcome === "expired";
 
   // 진행 단계 칸 아래 작은 글 — 지금 막 끝낸 단계는 「지금」, 다음 단계는 「다음 단계」, 나머지는 날짜(시안 v35 .dsteps)
   const lastDoneIdx = currentIdx > 0 ? currentIdx - 1 : -1;
@@ -186,7 +187,7 @@ export function GiftStatusPage({
               <div className={s.when}>
                 <p className={s.tagrow} data-badges="">
                   {badges.map((b) => (
-                    <span key={b.text} className={statusTagClass(b.tone)}>
+                    <span key={b.text} className={statusTagClass(b.tone, "tag--dot")}>
                       {b.text}
                     </span>
                   ))}
@@ -240,25 +241,11 @@ export function GiftStatusPage({
             </p>
           </div>
         ) : null}
-        {view.outcome === "declined" || view.outcome === "expired" ? (
-          <div className={s.sec} data-sec="">
-            <h2 className={s.secTitle}>이 선물은 발송하지 마세요</h2>
-            {/* 거절·자동 반려 모두 같은 안내 — 거절인지 기간 지남인지는 위 한 줄이 말한다(decline-block INV-D5). 상자마다 돌려준다(payment INV-M8·M18, 2026-10-10 늦게 오는 상자) */}
-            <p className={s.desc}>팬꾹 주소가 표시되기 전에 취소·거절·기한 만료로 종료된 경우 전액 환불됩니다.</p>
-            {anyArrived ? <p className={s.more}>도착한 상자는 확인한 반송 주소로 배송됩니다. 해당 상자 금액에서 반송 배송비를 차감해 환불합니다.</p> : null}
-            {anyNotYet ? (
-              <p className={s.more}>
-                미도착 상자는 반송 배송비를 제외한 금액을 먼저 환불합니다. 이미 발송한 상자는 도착 후 반송됩니다.
-                <br />
-                결제 완료 후 30일 이내에 도착하지 않으면 남은 배송비도 환불합니다.
-              </p>
-            ) : null}
-          </div>
-        ) : null}
 
         {/* 상자 칸 8 + 오른쪽 한 열(결제 위 · 주문 정보 아래 — 시안 ux-pilot .dgrid.split·.dside). 주문 정보는 덜 중요한 회색 카드.
-            상자 칸이 없는 주문(끝남·상자 없음)은 오른쪽 열만 — 「선물 정보」 카드 하나가 PC 반 폭(오른쪽 반은 비움, design-rules 33절) */}
-        <div className={showsProgress && boxes.length > 0 ? `${s.dgrid} ${s.split}` : s.dgrid}>
+            상자 칸이 없는 주문(끝남·상자 없음)은 오른쪽 열만 — 「선물 정보」 카드 하나가 PC 반 폭(오른쪽 반은 비움, design-rules 33절).
+            거절·기한 지남은 그 빈 반에 「이 선물은 발송하지 마세요」 카드가 먼저 오고 선물 정보가 옆에(38절) */}
+        <div className={showsProgress && boxes.length > 0 ? `${s.dgrid} ${s.split}` : stopNotice ? `${s.dgrid} ${s.warnrow}` : s.dgrid}>
           {showsProgress && boxes.length > 0 ? (
             <section className={s.dcard} aria-labelledby="box-status-title">
               {/* 「먼저 보내기」를 누르면 안내 칸이 사라진다 — 포커스는 그대로 남는 이 제목으로 옮긴다 */}
@@ -288,19 +275,19 @@ export function GiftStatusPage({
                           {size ? <span> · {size}</span> : null}
                         </h3>
                         {stateTag ? (
-                          <span className={statusTagClass(stateTag.tone)}>{stateTag.text}</span>
+                          <span className={statusTagClass(stateTag.tone, "tag--dot")}>{stateTag.text}</span>
                         ) : hasArrived(b.state) ? (
                           <span className={statusTagClass("success")}>
                             <Check size={16} />
                             입고됨
                           </span>
                         ) : isMissing(b.state) ? (
-                          <span className={statusTagClass("warn")}>미도착</span>
+                          <span className={statusTagClass("warn", "tag--dot")}>미도착</span>
                         ) : b.notSentAt ? (
                           // 「아직 보내지 않음」을 누른 상자 — 지금 할 일 줄은 없어지고 누른 날만 여기 남는다(UX 시범 C-1, office-workflow INV-W10)
-                          <span className="tag">아직 보내지 않음 · {formatMonthDayKo(b.notSentAt)}</span>
+                          <span className="tag tag--dot">아직 보내지 않음 · {formatMonthDayKo(b.notSentAt)}</span>
                         ) : (
-                          <span className="tag">아직 도착 전</span>
+                          <span className="tag tag--dot">아직 도착 전</span>
                         )}
                       </div>
                       {isMissing(b.state) ? (
@@ -360,6 +347,29 @@ export function GiftStatusPage({
             </section>
           ) : null}
 
+          {/* 거절·기한 지남 — 「이 선물은 발송하지 마세요」를 흰 카드 + 「!」 원으로 묶어 선물 정보 카드 옆에(999 이하 위아래, design-rules 38절 — 33절의 문단 위치를 바꿈) */}
+          {stopNotice ? (
+            <section className={`${s.dcard} ${s.warnbox}`} data-sec="" aria-labelledby="stop-title">
+              <div className={s.warnHead}>
+                <span className={s.warnMark} aria-hidden="true">
+                  !
+                </span>
+                <h2 className={s.secTitle} id="stop-title">
+                  이 선물은 발송하지 마세요
+                </h2>
+              </div>
+              {/* 거절·자동 반려 모두 같은 안내 — 거절인지 기간 지남인지는 위 한 줄이 말한다(decline-block INV-D5). 상자마다 돌려준다(payment INV-M8·M18, 2026-10-10 늦게 오는 상자) */}
+              <p className={s.desc}>팬꾹 주소가 표시되기 전에 취소·거절·기한 만료로 종료된 경우 전액 환불됩니다.</p>
+              {anyArrived ? <p className={s.more}>도착한 상자는 확인한 반송 주소로 배송됩니다. 해당 상자 금액에서 반송 배송비를 차감해 환불합니다.</p> : null}
+              {anyNotYet ? (
+                <p className={s.more}>
+                  미도착 상자는 반송 배송비를 제외한 금액을 먼저 환불합니다. 이미 발송한 상자는 도착 후 반송됩니다.
+                  <br />
+                  결제 완료 후 30일 이내에 도착하지 않으면 남은 배송비도 환불합니다.
+                </p>
+              ) : null}
+            </section>
+          ) : null}
           <div className={s.dside} data-detail-side="">
             {/* 선물 정보 — 결제·주문 정보를 합친 카드 하나(design-rules 33절, 22절에서 벗어남). 모든 상태에 같은 카드, 승인 칸은 진행 중에만 */}
             <section className={`${s.dcard} ${s.ginfo}`} aria-labelledby="info-title">
@@ -405,7 +415,7 @@ export function GiftStatusPage({
                     <div>
                       <dt>지금</dt>
                       <dd>
-                        <span className={statusTagClass("warn")}>승인 대기</span>
+                        <span className={statusTagClass("warn", "tag--dot")}>승인 대기</span>
                       </dd>
                     </div>
                     <div>

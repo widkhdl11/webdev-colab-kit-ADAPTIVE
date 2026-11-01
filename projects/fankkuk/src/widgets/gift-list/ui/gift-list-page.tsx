@@ -60,7 +60,7 @@ function GiftCard({ gift, faceTone, todo }: { gift: FanGiftView; faceTone: strin
             {who}
           </Link>
         </strong>
-        <span className={statusTagClass(badge.tone)}>{badge.text}</span>
+        <span className={statusTagClass(badge.tone, "tag--dot")}>{badge.text}</span>
       </div>
       <div>
         {/* together INV-F7: 나만 보는 메모의 선물 이름 — 본인 목록(my_gifts)에만 온다. 없으면 고른 물품 종류 */}
@@ -134,7 +134,7 @@ function LatestLine({ gift, name }: { gift: FanGiftView; name: string }) {
   const progress = fanProgress(gift);
   return (
     <div className={s.line}>
-      <span className={statusTagClass(badge.tone)}>{badge.text}</span>
+      <span className={statusTagClass(badge.tone, "tag--dot")}>{badge.text}</span>
       {fanGiftBucket(gift) === "not_accepted" ? null : (
         <span
           className="mini-steps"

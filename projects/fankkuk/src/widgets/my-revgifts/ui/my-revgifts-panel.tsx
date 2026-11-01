@@ -32,7 +32,7 @@ function Featured({ row, nowMs }: { row: Row; nowMs: number }) {
           <span className="meta">
             {tier(item)} · 주문번호 {item.orderNo}
           </span>
-          <span className={statusTagClass("warn")}>{row.copy.tag}</span>
+          <span className={statusTagClass("warn", "tag--dot")}>{row.copy.tag}</span>
         </div>
       </div>
       <div className="feat-days">
@@ -66,7 +66,7 @@ function RowList({ rows }: { rows: readonly Row[] }) {
             </span>
           </p>
           <div className="lrow-side">
-            <span className={statusTagClass(copy.tone)}>{copy.tag}</span>
+            <span className={statusTagClass(copy.tone, "tag--dot")}>{copy.tag}</span>
           </div>
           <svg className="lrow-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="m9 6 6 6-6 6" />

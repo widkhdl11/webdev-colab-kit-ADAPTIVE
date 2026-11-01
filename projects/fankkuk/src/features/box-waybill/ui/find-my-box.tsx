@@ -23,7 +23,10 @@ type Result = { kind: "ok"; label: string } | { kind: "no"; message: string };
  * boxes = 아직 입고되지 않은 내 상자들 — 「어느 상자인가요」에서 고른다(선물 상세).
  * box = 상자가 이미 정해진 자리(처리할 일 카드 — 카드 하나가 상자 하나) — 고르는 칸과 위 안내 문단 없이 그 상자로 보낸다.
  */
-type Props = { boxes: readonly FinderBox[]; box?: never } | { box: FinderBox; boxes?: never };
+type Props = ({ boxes: readonly FinderBox[]; box?: never } | { box: FinderBox; boxes?: never }) & {
+  /** 놓이는 바탕 — 하늘 칸(선물 상세 「지금 할 일」) 안이면 "tint"(흰 상자 + 하늘 선), 흰 바탕 위면 기본(회색 면 + 회색 선). design-rules 38절 */
+  surface?: "plain" | "tint";
+};
 
 export function FindMyBox(props: Props) {
   const fixed = props.box ?? null;
@@ -94,9 +97,9 @@ export function FindMyBox(props: Props) {
   }
 
   return (
-    <div className={s.finder}>
-      {/* 바로 위에 「받는 주소 없이 보냈어요」 제목이 있다 — 같은 뜻의 제목을 한 단계 더 두지 않고 안내 문단으로 둔다. 상자가 정해진 카드에는 없다 */}
-      {fixed ? null : <p className={s["finder-q"]}>주소 끝 6자리 없이 보낸 상자 찾기</p>}
+    <div className={props.surface === "tint" ? `${s.finder} ${s["finder--tint"]}` : s.finder}>
+      {/* 바로 위 접힌 줄 제목과 같은 말이라 낭독기용으로만 둔다(design-rules 38절, 문구 그대로). 상자가 정해진 카드에는 없다 */}
+      {fixed ? null : <p className="sr-only">주소 끝 6자리 없이 보낸 상자 찾기</p>}
       {current ? (
         <form
           aria-label="주소 끝 6자리 없이 보낸 상자 찾기"

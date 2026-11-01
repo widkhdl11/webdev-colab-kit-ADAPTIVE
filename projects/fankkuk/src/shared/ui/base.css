@@ -845,10 +845,17 @@ section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.sta
 /* 버튼: 좌우 안쪽 16, 줄 높이 1.4 · 흰 버튼 테두리는 회색 400 (시안 .btn · .btn.ghost) */
 :is(.v34, .lrow, .feat) .btn { padding-inline: var(--space-4); line-height: 1.4; }
 :is(.v34, .lrow, .feat) .btn--line { box-shadow: inset 0 0 0 1px var(--gray-400); }
-/* 분류 탭(진행 중·완료 / 받는 중·완료): 글자 사이 24, 안쪽 여백 없음, 높이 44, 고른 탭만 굵게 (시안 v33b.css .tabs) */
-.tabs--line.tabs--line { gap: var(--space-6); }
-.tabs--line :is(.tab, a) { min-height: var(--btn-h-sm); padding: 0; font-weight: 400; }
-.tabs--line .tab[aria-selected="true"] { font-weight: var(--fw-bold); }
+/* 분류 탭(진행 중·완료 / 받는 중·완료 / 크리에이터 「보낸 내역」): 높이 44 · 안쪽 16, 고른 탭은 하늘 면 + 밑줄 2px --brand-line + --brand-ink
+   (design-rules 38절 — 35절 고른 칩과 같은 규칙, 시안 part1-v4-20261101 .tabs) */
+.tabs--line.tabs--line { gap: var(--space-2); }
+.tabs--line :is(.tab, a) { min-height: var(--btn-h-sm); padding: 0 var(--space-4); font-weight: var(--fw-nav); }
+.tabs--line :is(.tab[aria-selected="true"], a[aria-current="page"]) { background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-bold); box-shadow: inset 0 -2px 0 var(--brand-line); }
+/* 상태 뱃지 점 + 글자 굵게, 테두리 없음(design-rules 38절 — 팬 홈 .stt 와 같은 모양). 점은 글자 색이고 내용이 없어 낭독기는 읽지 않는다.
+   21절 범위 태그(:is(.v34, .lrow, .feat) .tag)보다 뒤에 둔다 — 같은 무게라 뒤가 이긴다 */
+.tag.tag--dot { gap: var(--space-2); min-height: 28px; padding: var(--space-1) var(--space-3); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1.4; }
+.tag--dot::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: var(--r-pill); background: currentColor; }
+/* 로그인 후 사이드바 화면(MyShell = .my-body)의 페이지 제목 32(휴대폰 24 — --fs-title 이 767 이하에서 24). 사이드바 없는 화면 제목은 --fs-page 그대로 (design-rules 38절) */
+.my-body .page-head > :is(h1, h2), .my-body .ph-title { font-size: var(--fs-title); }
 @media (max-width: 767px) {
   .feat { grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-4); padding: var(--space-6); }
   .feat-who { grid-column: 1 / -1; }

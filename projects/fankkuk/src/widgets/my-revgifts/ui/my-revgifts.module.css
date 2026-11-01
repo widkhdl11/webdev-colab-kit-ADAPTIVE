@@ -4,11 +4,23 @@
 .rows { margin-top: var(--space-6); }
 .tabEmpty { margin-top: var(--space-6); }
 .past-note { margin-top: var(--space-6); }
-/* 빈 상태 — 고양이 그림이 위로 걸친 하늘 면 */
-.epanel { position: relative; display: flex; align-items: center; gap: var(--space-8); margin-top: var(--space-24); padding: var(--space-12) var(--space-8) var(--space-8); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
+/* 빈 상태 — 고양이 그림이 위로 걸친 하늘 면, 다른 하늘 판과 같은 1px --tint-line(design-rules 38절) */
+.epanel { position: relative; display: flex; align-items: center; gap: var(--space-8); margin-top: var(--space-24); padding: var(--space-12) var(--space-8) var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
 .epanel img { position: absolute; top: -64px; right: var(--space-12); width: 160px; height: 160px; object-fit: contain; pointer-events: none; }
 .epanel p { max-width: 480px; }
 @media (max-width: 767px) {
   .epanel { flex-direction: column; align-items: flex-start; padding: var(--space-16) var(--space-6) var(--space-6); }
   .epanel img { top: -48px; right: var(--space-6); width: 128px; height: 128px; }
+}
+/* design-rules 38절 — 촘촘한 줄 안쪽 32(휴대폰 24)로 강조 칸 안쪽과 정렬선을 맞춘다 */
+.rows.rows :global(.lrow) { padding-inline: var(--space-8); }
+@media (max-width: 767px) {
+  .rows.rows :global(.lrow) { padding-inline: var(--space-6); }
+}
+/* 본문 칸 폭 699 이하(왼쪽 메뉴가 있는 중간 폭 포함) — 줄을 휴대폰 모양으로 접는다(base.css 767 이하 .lrow 와 같은 값) */
+@container pane (max-width: 699px) {
+  .rows.rows :global(.lrow) { flex-wrap: wrap; gap: var(--space-3) var(--space-4); }
+  .rows.rows :global(.lrow-txt) { white-space: normal; }
+  .rows.rows :global(.lrow-side) { order: 3; width: 100%; padding-left: var(--space-12); justify-content: flex-start; flex-wrap: wrap; }
+  .rows.rows :global(.lrow-chev) { order: 2; }
 }

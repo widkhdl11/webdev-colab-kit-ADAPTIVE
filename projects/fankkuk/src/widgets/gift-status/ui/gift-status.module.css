@@ -27,6 +27,7 @@
 /* 배지 줄 — 지금 상태 + 승인 전이면 「OO님 승인 대기」(시안 .tagrow). 크리에이터 이름이 길면 배지가 줄을 바꾼다 */
 .tagrow { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .when :global(.tag) { max-width: 100%; background: var(--white); overflow-wrap: anywhere; }
+/* 상태 뱃지는 점 + 글자 굵게(base.css .tag--dot, design-rules 38절) — 하늘 판 위 흰 면은 그대로 */
 .when :global(.tag.tag--warn) { background: var(--warn-soft); color: var(--warn-ink); }
 .big.big { margin-top: var(--space-2); overflow-wrap: anywhere; }
 .msg { min-width: 0; font-weight: var(--fw-btn); overflow-wrap: anywhere; }
@@ -76,14 +77,19 @@
 .grp .kv { margin-top: var(--space-2); }
 .grp.apvGrp { padding: var(--space-4); border: 1px solid var(--alert-200); border-radius: var(--r-btn); background: var(--alert-50); }
 .apvGrp .grpTitle { color: var(--ink); overflow-wrap: anywhere; }
-.apvGrp :global(.tag.tag--warn) { background: var(--warn-soft); color: var(--warn-ink); box-shadow: inset 0 0 0 1px var(--alert-200); }
+/* 테두리 없음 — 누르지 않는 표시에 선을 두르면 버튼처럼 보인다(design-rules 37·38절) */
+.apvGrp :global(.tag.tag--warn) { background: var(--warn-soft); color: var(--warn-ink); box-shadow: var(--tag-sheen); }
 .paytot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--space-2) var(--space-4); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--gray-200); }
 .paytot span { font-size: var(--fs-small); font-weight: var(--fw-bold); }
 .paytot b { font-family: var(--font-round); font-size: var(--fs-page); font-weight: var(--fw-title); line-height: 1.2; font-variant-numeric: tabular-nums; }
 .paytot small { margin-left: 2px; font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); }
 
 /* 접는 칸 — 송장번호 입력·받는 주소 없이 보냈다면 (시안 v33.css .fold + v35 .dcard .fold) */
-.fold { margin-top: var(--space-4); border-top: 1px solid var(--gray-200); }
+/* 접는 줄은 이어 붙인다 — 줄마다 위 여백을 따로 두지 않고 선 + 높이 44 만(design-rules 38절, 시안 part1-v4 .fold).
+   주소 칸 아래 첫 줄만 16 띄우고, 마지막 상자가 접는 줄로 끝나면 상자 아래 여백을 없애 아래 「찾기」 줄과 바로 잇는다 */
+.fold { margin-top: 0; border-top: 1px solid var(--gray-200); }
+.box > .fold { margin-top: var(--space-4); }
+.box:last-child:has(> .fold:last-child) { padding-bottom: 0; }
 .fold summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 44px; font-size: var(--fs-small); font-weight: var(--fw-btn); cursor: pointer; list-style: none; }
 .fold summary::-webkit-details-marker { display: none; }
 /* 「+」가 열리면 45도 돌아 닫기 표시가 된다(글자를 바꾸지 않고 돌린다), 열린 내용은 4px 내려오며 나타남(design-rules 23-2) */
@@ -91,7 +97,7 @@
 .fold[open] summary::after { transform: rotate(45deg); }
 .fold[open] > :not(summary) { animation: fold-in 0.25s var(--ease-micro) both; }
 .fold summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.in { padding: var(--space-2) 0; }
+.in { padding: var(--space-2) 0 var(--space-4); }
 .in > * + * { margin-top: var(--space-3); }
 
 /* 테두리 없는 구간 — 위 1px 선 (시안 .flat-sec) */
@@ -111,7 +117,7 @@
 /* 상자 이름 「상자 N · 크기」 — 주문번호를 상자 이름으로 쓰지 않는다(시안 v41 .bx .boxline h3) */
 .boxName.boxName { min-width: 0; font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; overflow-wrap: anywhere; }
 .boxName span { font-weight: 400; color: var(--sub); }
-.boxline :global(.tag) { flex: none; gap: 6px; white-space: nowrap; }
+.boxline :global(.tag) { flex: none; gap: var(--space-2); white-space: nowrap; }
 .inv-fixed { margin-top: var(--space-3); }
 .no { font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
 
@@ -141,8 +147,21 @@
 .memo-lock { width: var(--icon-xs); height: var(--icon-xs); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .memo-body { white-space: pre-line; overflow-wrap: anywhere; }
 
+/* 거절·기한 지남 — 「발송하지 마세요」 흰 카드(--hair + --card-shadow) + 「!」 원, 선물 정보 카드와 나란히 반씩(design-rules 38절, 시안 part1-v4 .warnrow·.warnbox).
+   「!」 원은 장식이라 낭독기에서 숨긴다(6파트 오류 상자와 같은 표시) */
+.warnrow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.warnrow .dside { display: block; }
+.warnbox.warnbox { border: 0; box-shadow: var(--hair), var(--card-shadow); }
+.warnHead { display: flex; align-items: flex-start; gap: var(--space-3); }
+.warnMark { flex: none; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: var(--r-pill); box-shadow: inset 0 0 0 2px var(--ink); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1; }
+.warnHead .secTitle { min-width: 0; overflow-wrap: anywhere; }
+.warnbox .more { color: var(--sub); }
+
+/* 선 버튼(아직 보내지 않음 · 6자리 보기 등)은 짙은 선 — 흰 바탕 경계 대비 3:1 이상(design-rules 37·38절, 이 화면 안에서만. 공용 .btn--line 정리는 BACKLOG) */
+.page.page :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
+
 @media (max-width: 999px) {
-  .dgrid.split { grid-template-columns: minmax(0, 1fr); }
+  .dgrid.split, .warnrow { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 767px) {
   .dhero { padding: var(--space-6); }

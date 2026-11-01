@@ -12,3 +12,17 @@
 .textlink:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 /* 처리에서 돌아온 직후 칸 위 한 줄(진단 C-2·C-3) */
 .notice { margin-bottom: var(--space-4); }
+/* design-rules 38절 — 촘촘한 줄 안쪽 32(휴대폰 24)로 강조 칸 안쪽과 정렬선을 맞춘다. 선 버튼은 짙은 선(--gray-500, 이 화면 안에서만) */
+.rows.rows :global(.lrow) { padding-inline: var(--space-8); }
+.rows.rows :global(.btn--line), .empty.empty :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
+/* 버튼 링크의 ::after 가 줄 전체를 덮도록 — 공통 .lrow-side .btn 의 position: relative 를 이 줄에서만 푼다 */
+.rows.rows :global(.lrow-side .btn.stretch) { position: static; }
+@media (max-width: 767px) {
+  .rows.rows :global(.lrow) { padding-inline: var(--space-6); }
+}
+/* 본문 칸 폭 699 이하(왼쪽 메뉴가 있는 중간 폭 포함) — 줄을 휴대폰 모양으로 접는다(base.css 767 이하 .lrow 와 같은 값) */
+@container pane (max-width: 699px) {
+  .rows.rows :global(.lrow) { flex-wrap: wrap; gap: var(--space-3) var(--space-4); }
+  .rows.rows :global(.lrow-txt) { white-space: normal; }
+  .rows.rows :global(.lrow-side) { order: 3; width: 100%; padding-left: var(--space-12); justify-content: flex-start; flex-wrap: wrap; }
+}

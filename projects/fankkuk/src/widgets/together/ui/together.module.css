@@ -1,17 +1,18 @@
 /* 함께한 시간 — 시안 docs/design/mockups/site/v35-part1/gifts-with-a.html · v35.css .mhead·.mnote·.month·.album·.tile (design-rules 22절 A안 사진 앨범).
    틀 880 (시안 .wrap 960 에서 좌우 안쪽 40 을 뺀 폭) */
 .page { padding-bottom: var(--section-gap); }
-.col { max-width: 880px; margin-inline: auto; }
+/* 본문 칸 폭 기준 열 바꿈(design-rules 38절 「중간 폭」) — 사진 칸은 화면 폭이 아니라 이 칸 폭으로 3열 → 2열 */
+.col { max-width: 880px; margin-inline: auto; container: together / inline-size; }
 
 .back { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); color: var(--sub); font-size: var(--fs-small); font-weight: 400; text-decoration: none; }
 .back:hover { color: var(--ink); }
 
-/* 머리 — 얼굴 64 · 이름 24 · 처음 선물한 날 14, 오른쪽 숫자 둘 (시안 .mhead) */
+/* 머리 — 얼굴 64 · 제목 32(휴대폰 24 — --fs-title) · 처음 선물한 날 14, 오른쪽 숫자 둘 (시안 .mhead, design-rules 38절 — 제목 32 > 달 머리 24) */
 .mhead { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); margin-top: var(--space-4); }
 .photo.photo { flex: none; width: 64px; height: 64px; border: 2px solid var(--tint-line); background: var(--white); object-fit: cover; }
 .who { flex: 1; min-width: 0; }
 .title-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-.name.name { min-width: 0; font-family: var(--font); font-size: var(--fs-page); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; overflow-wrap: anywhere; }
+.name.name { min-width: 0; font-family: var(--font-round); font-size: var(--fs-title); font-weight: var(--fw-title); line-height: 1.3; overflow-wrap: anywhere; }
 .since { font-size: var(--fs-small); color: var(--sub); }
 .nums { display: flex; gap: var(--space-6); margin: 0 0 0 auto; }
 .nums > div { display: flex; flex-direction: column; text-align: right; }
@@ -19,8 +20,8 @@
 /* 큰 숫자가 위, 이름이 아래(시안) — 읽는 순서는 이름 → 숫자 */
 .nums dd { order: -1; margin: 0; font-family: var(--font-round); font-size: var(--fs-page); font-weight: var(--fw-title); line-height: 1.2; font-variant-numeric: tabular-nums; }
 
-/* 「나만 볼 수 있어요」 — 회색 면 한 줄 (시안 .mnote) */
-.mnote { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin-top: var(--space-6); padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); font-size: var(--fs-small); color: var(--sub); box-shadow: var(--muted-shadow); }
+/* 「나만 볼 수 있어요」 — 회색 면 한 줄 + 1px 선(흰 바탕과 면 차가 1.07:1 이라 선으로 경계, design-rules 38절 · 6파트 안내 상자와 같은 모양) */
+.mnote { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin-top: var(--space-6); padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); font-size: var(--fs-small); color: var(--sub); box-shadow: var(--muted-shadow), var(--hair); }
 .mnote strong { color: var(--ink); }
 
 /* 다음 기념일 — 시안에 없는 칸(30일 안일 때만). 옅은 하늘 면 */
@@ -37,23 +38,32 @@
 .month h2 { font-family: var(--font-round); font-size: var(--fs-page); letter-spacing: 0; line-height: 1.4; }
 .month small { font-size: var(--fs-small); color: var(--sub); }
 
-/* 사진 격자 — PC 3열 사이 16, 휴대폰 2열 사이 12 (시안 .album · .tile) */
-.album { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); align-items: start; margin: var(--space-4) 0 0; padding: 0; list-style: none; }
-.tile { position: relative; min-width: 0; overflow: hidden; border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--card-shadow); }
+/* 사진 격자 — 3열 사이 16, 칸 폭 779 이하 2열 사이 12 (시안 .album · .tile).
+   한 행의 카드 높이는 같게, 「N번째 선물 / 상세 보기 ›」는 카드 아래에 붙인다(design-rules 38절) */
+.album { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); align-items: stretch; margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+.tile { position: relative; display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--card-shadow); }
+.tile > article { display: flex; flex: 1; flex-direction: column; min-width: 0; }
 .tile:hover { box-shadow: var(--card-shadow-hover); }
 .badges { position: absolute; top: var(--space-3); left: var(--space-3); right: var(--space-3); display: flex; flex-wrap: wrap; gap: var(--space-1); pointer-events: none; }
-.badges :global(.tag) { background: var(--white); white-space: nowrap; }
-.cap { padding: var(--space-3) var(--space-4) var(--space-4); }
+/* 분류 꼬리표 — 칸보다 길면 줄을 바꾼다(320 폭 「전달되지 않은 선물」) */
+.badges :global(.tag) { max-width: 100%; background: var(--white); white-space: normal; line-height: 1.3; }
+.cap { display: flex; flex: 1; flex-direction: column; padding: var(--space-3) var(--space-4) var(--space-4); }
 .cap time { display: block; font-size: var(--fs-small); color: var(--sub); }
-.what.what { margin-top: var(--space-1); overflow: hidden; font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; white-space: nowrap; text-overflow: ellipsis; }
-.row2 { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 var(--space-2); margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+/* 선물 이름은 말줄임 없이 줄바꿈 — 값이 칸보다 길 때 잘라서 정보가 사라지지 않게(design-rules 38절) */
+.what.what { margin-top: var(--space-1); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; overflow-wrap: anywhere; }
+.row2 { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 var(--space-2); margin-top: auto; padding-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
 .detail { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); color: var(--ink); font-weight: var(--fw-btn); text-decoration: none; }
 .detail:hover { text-decoration: underline; }
 .replies { display: grid; gap: var(--space-2); margin-top: var(--space-2); min-width: 0; }
 
+/* 사진 칸 안 「사진 업로드」 선 버튼은 짙은 선(design-rules 37·38절, 이 화면 안에서만) */
+.page.page :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
+
 @media (max-width: 767px) {
   .nums { width: 100%; margin-left: 0; }
   .nums > div { text-align: left; }
+}
+@container together (max-width: 779px) {
   .album { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
   .cap { padding: var(--space-2) var(--space-3) var(--space-3); }
   .what.what { font-size: var(--fs-small); }

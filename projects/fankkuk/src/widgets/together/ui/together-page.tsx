@@ -72,8 +72,8 @@ function Tile({ card, props }: { card: TogetherCard; props: TogetherPageProps })
         ) : null}
         <div className={s.cap}>
           <time dateTime={card.registeredOn}>{monthDayText(card.registeredOn)}</time>
-          {/* 좁은 칸에서는 한 줄로 줄인다 — 전체는 title 과 선물 상세에서 */}
-          <h3 className={s.what} title={`${card.itemKind} · 상자 ${card.boxCount}개`}>
+          {/* 말줄임 없이 줄바꿈 — 전체 값이 칸 안에 다 보인다(design-rules 38절) */}
+          <h3 className={s.what}>
             {card.itemKind} · 상자 {card.boxCount}개
           </h3>
           <p className={s.row2}>

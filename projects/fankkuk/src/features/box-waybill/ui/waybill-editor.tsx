@@ -39,7 +39,7 @@ export function WaybillEditor({ target, boxName, initial, layout, hint }: Props)
     else resultRef.current?.focus();
   }, [editing]);
 
-  const root = layout === "share" ? s.share : undefined;
+  const root = layout === "share" ? s.share : s.boxForm;
 
   if (!editing && saved) {
     return (
@@ -100,7 +100,8 @@ export function WaybillEditor({ target, boxName, initial, layout, hint }: Props)
           void submit(e.currentTarget);
         }}
       >
-        <label htmlFor={`${id}-no`} className={layout === "share" ? "sr-only" : undefined}>
+        {/* 선물 상세에서는 접힌 줄 제목이 같은 말이라 낭독기용으로만(design-rules 38절) — 크리에이터 몫 줄은 상자 이름을 붙여 낭독기용 */}
+        <label htmlFor={`${id}-no`} className="sr-only">
           {layout === "share" ? `${boxName} 송장번호` : "팬꾹으로 보낸 송장번호 (선택)"}
         </label>
         <div className={s.inv}>
