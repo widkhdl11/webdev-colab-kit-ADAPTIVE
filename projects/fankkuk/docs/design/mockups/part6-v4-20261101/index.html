@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 6파트 로그인·가입·비밀번호 · 시안 4 기준으로 맞춘 비교</title>
+<!--
+  2026-11-01 요청: 6파트(로그인·가입·비밀번호 화면)를 시안 4 설계 기준(design-prompt.md)으로 다시 맞춘 비교. 5·7파트(part5-v4-20261101, part7-v4-20261101)와 같은 형식.
+  문구·칸 순서·단계 수·노출 조건은 지금 코드 그대로. 모양(배치·위계·간격·색·경계)만 다뤘다. 새 안내 문장 없음. 기능 추가 없음.
+  탭 넷: 로그인(기본·오류) / 비밀번호 찾기·새 비밀번호 / 가입 1~3단계 / 가입 4·5단계(크리에이터).
+  「지금」은 캡처(now/)가 있는 상태는 캡처 그대로, 캡처가 없는 상태(3·4·5단계, 비밀번호 입력·결과 등)는 코드의 CSS 값으로 같은 틀에 다시 그린 「재현」이다.
+  바꾼 값의 출처: 카드 테두리·그림자는 design-prompt 4-6 · design-rules 35절, 보조 버튼·선택 칸 테두리는 35절(짙은 선 3:1), 오류·틀림 표시는 4-1·4-2.
+  폰트·로고는 같은 폴더 assets/ 에 복사해 두었다(node scripts/preview.mjs fankkuk 으로 열린다).
+-->
+<style>
+@font-face{font-family:Pretendard;src:url('assets/Pretendard-Medium.woff') format('woff');font-weight:400 500;font-display:swap}
+@font-face{font-family:Pretendard;src:url('assets/Pretendard-SemiBold.woff') format('woff');font-weight:600;font-display:swap}
+@font-face{font-family:Pretendard;src:url('assets/Pretendard-Bold.woff') format('woff');font-weight:700 800;font-display:swap}
+@font-face{font-family:Tmoney;src:url('assets/TmoneyRoundWindExtraBold.woff2') format('woff2');font-weight:800;font-display:swap}
+:root{--ink:#1F2937;--sub:#4B5563;--muted:#55606E;--line:#DCE3EA;--field:#6B7280;--sel-line:#6FB8DD;--sky:#89CFF0;--sky-50:#E0F2FE;--card-shadow:inset 0 1px 0 #fff,0 1px 2px rgb(31 41 55/.04),0 4px 12px rgb(31 41 55/.04)}
+*{box-sizing:border-box}
+body{margin:0;background:#EEF1F4;color:var(--ink);font:500 16px/1.6 Pretendard,system-ui,sans-serif;word-break:keep-all}
+h1,h2,h3,p,ul,ol,dl,dd{margin:0}
+ul,ol{padding:0;list-style:none}
+button{font-family:inherit}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:8px}
+
+/* ===== 비교 페이지 틀 ===== */
+.top{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line);padding:12px 24px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
+.top h1{font:800 18px/1.3 Tmoney,Pretendard,sans-serif;letter-spacing:-.02em;margin-right:auto}
+.seg{display:flex;gap:4px;padding:4px;background:#E6EBF0;border-radius:12px;flex-wrap:wrap}
+.seg button{min-height:40px;padding:0 16px;border:0;border-radius:8px;background:transparent;font-weight:600;font-size:14px;color:var(--ink);cursor:pointer}
+.seg button[aria-pressed=true],.seg button[aria-selected=true]{background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.15);font-weight:700}
+.seg-label{font-size:14px;color:var(--muted);font-weight:600}
+.ctl{display:flex;align-items:center;gap:8px}
+.cmp{padding:24px}
+.changes{max-width:1100px;margin:0 auto 24px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 24px}
+.changes h2{font:800 20px/1.3 Tmoney,Pretendard,sans-serif;margin-bottom:8px}
+.changes h2 span{font:500 14px Pretendard;color:var(--muted);margin-left:8px}
+.changes h4{margin:12px 0 0;font-size:14px}
+.changes ul{padding-left:20px;list-style:disc;font-size:14px;line-height:1.7}
+.changes li{margin-top:4px}.changes li span{color:var(--muted)}
+.changes .note{margin-top:12px;padding:12px 16px;background:#FFF8E6;border:1px solid #F0D78C;border-radius:12px;font-size:14px;line-height:1.6}
+.changes .note b{display:block;margin-bottom:4px}
+.changes .note ol{list-style:decimal;padding-left:20px}
+.sub-bar{max-width:1100px;margin:0 auto 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.panes{display:flex;gap:24px;justify-content:center;align-items:flex-start}
+.pane{flex:none}
+.pane>h3{font-size:14px;font-weight:700;margin:0 0 8px}
+.pane>h3 em{font-style:normal;color:var(--muted);font-weight:500;margin-left:8px}
+.shot{background:#fff;border:1px solid var(--line);overflow:hidden}
+.shot img{display:block;width:100%;height:auto}
+
+/* ===== 바꾼 뒤 / 지금(재현) 화면 ===== */
+.stage{container:st/inline-size;background:#fff;position:relative;font-size:16px;line-height:1.6;min-height:600px}
+.stage a{color:inherit;text-decoration:none}
+.stage h1,.stage h2,.stage h3{font-family:Tmoney,Pretendard,sans-serif;letter-spacing:-.02em;font-weight:800;line-height:1.3;color:var(--ink)}
+.stage svg{flex:none}
+.hd{border-bottom:1px solid #E5E7EB;background:#fff}
+.hd .in{max-width:1000px;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:24px;height:64px}
+.logo{display:flex;align-items:center;gap:8px;font:800 20px/1 Tmoney,sans-serif;min-height:44px}
+.logo img{width:32px;height:32px;border-radius:22%}
+.gnb{display:flex;margin-right:auto}
+.gnb a{display:flex;align-items:center;min-height:44px;padding:0 12px;font-weight:500}
+.acct{display:flex;align-items:center;gap:8px;font-weight:600}
+.acct a{display:flex;align-items:center;min-height:44px;padding:0 8px}
+.acct i{width:1px;height:16px;background:#E5E7EB}
+.mbtn{display:none;width:44px;height:44px;border:0;background:none;color:var(--ink);align-items:center;justify-content:center;margin-left:auto}
+.ft{background:#F9FAFB;padding:40px 0;font-size:14px;color:var(--sub)}
+.ft .in{max-width:1000px;margin:0 auto;padding:0 24px}
+.ft .r1,.ft .r2{display:flex;flex-wrap:wrap;gap:0 24px;justify-content:space-between}
+.ft a{display:inline-flex;align-items:center;min-height:44px}
+.ft .biz{margin-top:8px;line-height:1.7}
+.auth-page{padding:96px 24px}
+.auth-col{width:100%;max-width:480px;margin-inline:auto}
+.auth-col.wide{max-width:720px}
+.head{text-align:center;margin-bottom:32px}
+.head h1{font-size:32px}
+.head p{margin:8px auto 0;max-width:480px;font-weight:400;color:var(--sub)}
+/* 카드: 지금 = 안쪽 1px #E5E7EB + 0 1px 3px 그림자 / 바꾼 뒤 = 1px #DCE3EA 테두리 + --card-shadow (4-6, 35절) */
+.card{padding:40px;border-radius:16px;background:#fff;border:1px solid var(--line);box-shadow:var(--card-shadow)}
+.now .card{border:0;box-shadow:inset 0 0 0 1px #E5E7EB,0 1px 3px rgb(0 0 0/.06)}
+.form{display:grid;gap:24px}
+.label{display:block;margin-bottom:8px;font-weight:700}
+.label .opt{font-weight:400;color:var(--sub)}
+.field{display:block;width:100%;min-width:0;height:48px;padding:0 16px;border:0;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--field);font:400 16px/48px Pretendard,sans-serif;color:var(--ink);overflow:hidden;white-space:nowrap}
+.field.ph{color:#6B7280}
+.field.sel{display:flex;justify-content:space-between;align-items:center}
+.field.h52{height:52px;line-height:52px}
+.now .field.fix48{height:52px;line-height:52px}
+.hint{margin-top:8px;font-size:14px;line-height:1.5;color:var(--sub)}
+.hint.live-ok{display:flex;align-items:center;gap:8px}
+.bad{display:flex;align-items:flex-start;gap:8px;margin-top:8px;color:#B42318;font-weight:600}
+.bad::before{content:"!";flex:none;display:grid;place-items:center;width:24px;height:24px;margin-top:2px;border-radius:50%;box-shadow:inset 0 0 0 2px #B42318;font-weight:600;line-height:1}
+.now .bad{color:var(--ink)}.now .bad::before{box-shadow:inset 0 0 0 2px var(--ink)}
+.err,.okmsg{display:flex;align-items:flex-start;gap:12px;padding:16px;border-radius:12px;font-weight:600}
+.err{background:var(--sky-50);color:var(--ink)}
+.okmsg{background:#F9FAFB;box-shadow:inset 0 0 0 1px #E5E7EB;color:var(--ink)}
+.err .mark{flex:none;display:grid;place-items:center;width:24px;height:24px;margin-top:1px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--ink);font-weight:700;line-height:1}
+.now .a-only{display:none!important}
+#stage .n-only{display:none!important}
+.okmsg .mark.ok{flex:none;display:grid;place-items:center;width:24px;height:24px;margin-top:1px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--ink)}
+.okgrp{flex-direction:column;gap:8px}
+.okgrp .oksub{font-weight:400;color:var(--sub)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:12px;background:var(--sky);color:var(--ink);font:600 16px/1.25 Pretendard,sans-serif;text-align:center;white-space:nowrap}
+.btn.block{width:100%}
+.btn.sm{min-height:44px;padding:0 16px}
+/* 보조(선) 버튼: 지금 = #E5E7EB 1.2:1 / 바꾼 뒤 = #6B7280 4.8:1 (35절 「짙은 선」) */
+.btn.line{background:#fff;box-shadow:inset 0 0 0 1px var(--field)}
+.now .btn.line{box-shadow:inset 0 0 0 1px #E5E7EB}
+.btn.off{background:#F3F4F6;color:#4B5563}
+.btn.kakao{background:#FEE500;color:#191919}
+.btn.kakao.wait{background:#FFF3A0}
+.btn.textb{background:none;box-shadow:none;padding:0 12px}
+.under{display:flex;flex-direction:column;align-items:center;margin-top:16px}
+.under a,.lnk{display:inline-flex;align-items:center;min-height:44px;padding-inline:8px;font-weight:600;text-decoration:underline!important;text-underline-offset:4px}
+.foot-line{margin-top:0;text-align:center;color:var(--sub)}
+.foot-line a{font-weight:600;color:var(--ink);text-decoration:underline!important;text-underline-offset:4px}
+.check{display:flex;align-items:center;gap:8px;min-height:44px}
+.cb{flex:none;width:26px;height:26px;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 2px #6B7280,inset 0 -2px 0 rgb(107 114 128/.35);margin:0 1px}
+.cb.on{background:var(--sky);box-shadow:inset 0 0 0 2px #4B5563,inset 0 -3px 0 rgb(75 85 99/.45);display:grid;place-items:center}
+/* 가입 단계 알약 (바뀌지 않음) */
+.steps{display:flex;gap:8px;margin-bottom:24px}
+.steps li{flex:1 1 0;min-width:0}
+.st{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;padding:0 8px;border-radius:9999px;background:#F3F4F6;color:#4B5563;white-space:nowrap}
+.dot{flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#fff;color:#4B5563;font-weight:600;line-height:1}
+.st.dn{background:var(--sky-50);color:var(--ink)}.st.dn .dot{color:var(--ink)}
+.st.cur{background:var(--sky-50);color:var(--ink);font-weight:600}.st.cur .dot{background:#1F2937;color:#fff}
+.stepcard h2{font-size:20px;line-height:1.4;margin-bottom:24px}
+.stepcard h2.hasdesc{margin-bottom:8px}
+.stepcard .lead{margin:0 0 24px;color:var(--sub)}
+.choices{display:grid;gap:16px}
+/* 유형 선택 칸: 지금 = 1px #E5E7EB, 고르면 하늘 + 1px 짙은 선 / 바꾼 뒤 = 1px #6B7280, 고르면 하늘 + 2px 짙은 선 */
+.choice{display:flex;align-items:flex-start;gap:16px;padding:24px;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px var(--field)}
+.choice.on{background:var(--sky-50);box-shadow:inset 0 0 0 2px var(--ink)}
+.now .choice{box-shadow:inset 0 0 0 1px #E5E7EB}
+.now .choice.on{box-shadow:inset 0 0 0 1px var(--ink)}
+.radio{flex:none;width:24px;height:24px;margin-top:2px;border-radius:50%;box-shadow:inset 0 0 0 2px #6B7280;background:#fff}
+.choice.on .radio{box-shadow:inset 0 0 0 2px var(--ink);background:radial-gradient(circle,var(--ink) 0 5px,#fff 6px)}
+.choice strong{display:block;font-weight:600}
+.choice span span{display:block;color:var(--sub);font-size:14px}
+.crnote{margin-top:16px;color:var(--sub)}
+.grp+.grp{margin-top:32px;padding-top:32px;border-top:1px solid #E5E7EB}
+.grp>h3{font-family:Pretendard,sans-serif;font-size:16px;line-height:1.5;font-weight:600;margin-bottom:24px;letter-spacing:0}
+.email{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px}
+.email .at{font-weight:600;color:#4B5563}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+/* 태그 칩: 지금 = 옅은 면(경계 없음) / 바꾼 뒤 = 높이 44 + 짙은 선, 고르면 하늘 면 + 선 (35절) */
+.chip{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:9999px;background:#fff;box-shadow:inset 0 0 0 1px var(--field);color:var(--ink);font-size:16px}
+.chip.on{background:var(--sky-50);box-shadow:inset 0 0 0 1px var(--sel-line);font-weight:700}
+.now .chip{background:#F9FAFB;box-shadow:none;min-height:36px}
+.terms{display:grid;gap:4px}
+.trow{display:flex;align-items:center;gap:12px}
+.trow .check{flex:1;min-width:0}
+.trow .view{display:inline-flex;align-items:center;min-height:44px;padding-inline:16px;font-weight:600}
+.req{font-weight:600}
+.actions{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid #E5E7EB}
+.actions .btn{min-width:120px}
+.actions .next{margin-left:auto;flex:1 0 auto}
+.phone-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}
+.phone-row .btn{padding-inline:14px}
+/* 바꾼 뒤: 가입도 로그인·비밀번호와 같은 480 — 칸이 모두 한 줄 하나라 720 이 칸·버튼만 늘였다(사용자 지적 11-01) */
+#stage .auth-col.wide{max-width:480px}
+#stage .phone-row{grid-template-columns:minmax(0,1fr) 120px}
+#stage .phone-row .btn{width:100%}
+/* 5단계 버튼 셋: 480 에 한 줄로 안 들어가 카카오 버튼이 카드 밖으로 나갔다 → 카카오 위 꽉 차게, 아래 「이전 | 나중에 하기」 반씩 */
+#stage .actions.kk{display:grid;grid-template-columns:1fr 1fr}
+#stage .actions.kk .btn{min-width:0}
+#stage .actions.kk .next{grid-column:1/-1;order:-1;margin-left:0}
+#stage .steps.many li.far{flex:0 0 auto}
+#stage .steps.many li.curli{flex:1 1 0}
+#stage .steps.many .st.far{width:48px;padding:0}
+#stage .steps.many .st.far .lbl{display:none}
+.codebox{position:relative}
+.codebox .field{padding-right:80px}
+.timer{position:absolute;right:16px;top:0;line-height:48px;font-variant-numeric:tabular-nums;color:#4B5563;font-weight:600}
+/* 4단계 채널 확인 */
+.vhead{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.vhead h2{font-size:20px;line-height:1.4}
+.tag{display:inline-flex;align-items:center;min-height:32px;padding:4px 8px;border-radius:9999px;background:#F9FAFB;color:var(--sub);font-weight:700;font-size:14px;line-height:1.5}
+.tag.state{background:var(--sky-50);color:#075985;box-shadow:inset 0 0 0 1px #BAE0F5}
+.now .tag.state{background:#F9FAFB;color:var(--sub);box-shadow:none}
+.tag.ok{background:#EAF5EE;color:#276749}
+.vlead{margin-bottom:24px;color:var(--sub)}
+.vbox{display:grid;gap:16px;padding:24px;border-radius:16px;background:#F9FAFB;border:1px solid var(--line)}
+.now .vbox{border:0}
+.boxtop{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px}
+.codeval{font:700 32px/1.25 Pretendard,sans-serif;letter-spacing:1px;font-variant-numeric:tabular-nums}
+.coderow{display:flex;align-items:center;flex-wrap:wrap;gap:12px 16px}
+.facts{display:grid;gap:4px;color:var(--sub)}
+.vsteps{display:grid;gap:12px;margin-top:24px}
+.or{display:grid;gap:12px;padding-top:16px;border-top:1px solid #E5E7EB}
+.or p,.vsteps .sub{color:var(--sub)}
+.side{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:24px}
+.examples{display:grid;gap:2px;margin-top:8px;color:var(--sub)}
+.preview{margin-top:8px;font-weight:700}
+.done{display:grid;gap:4px;padding:24px;border-radius:16px;background:var(--sky-50);color:var(--ink)}
+.done a{text-decoration:underline!important;text-underline-offset:4px}
+.kakao-list{display:grid;gap:16px;counter-reset:k}
+.kakao-list li{position:relative;min-height:28px;padding-left:40px;counter-increment:k}
+.kakao-list li::before{content:counter(k);position:absolute;left:0;top:0;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--sky-50);font-weight:600}
+.again{margin-top:16px;color:var(--sub);font-size:14px;line-height:1.5}
+.again b{font-weight:600;color:var(--ink);text-decoration:underline;text-underline-offset:4px}
+.connected{display:flex;align-items:center;gap:12px;padding:16px;border-radius:12px;background:#EAF5EE;color:#276749;font-weight:600}
+.stage .after-block{margin-top:24px}
+.sep{height:0}
+
+@container st (max-width:767px){
+  .gnb,.acct{display:none}
+  .mbtn{display:flex}
+  .hd .in{height:56px;padding:0 16px}
+  .auth-page{padding:64px 16px 48px}
+  .head h1{font-size:24px}
+  .card{padding:24px}
+  .st{font-size:14px;gap:6px}
+  .dot{width:24px;height:24px;font-size:14px}
+  .actions{display:grid;grid-template-columns:1fr 2fr}
+  .actions.solo{grid-template-columns:1fr}
+  .actions .btn{min-width:0}
+  .actions .next{margin-left:0}
+  .ft .in{padding:0 16px}
+  .ft .r1,.ft .r2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+  .codeval{font-size:24px}
+  .grp>h3{font-size:16px}
+  .main{order:-1}
+  .stack-m{display:grid}
+  .side>.btn{flex:1 1 auto}
+}
+@container st (max-width:480px){
+  .st.far .lbl{display:none}
+  .steps li.far{flex:0 0 auto}
+  .steps li.curli{flex:1 1 0}
+  .actions.kk{grid-template-columns:1fr}
+  .actions.kk .next{order:-1}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>팬꾹 6파트 로그인·가입·비밀번호 · 시안 4 기준 비교</h1>
+  <div class="seg" role="tablist" aria-label="화면" id="tabs"></div>
+  <div class="ctl"><span class="seg-label">폭</span>
+    <div class="seg" id="widths"><button data-w="1440" aria-pressed="true">PC 1440</button><button data-w="390" aria-pressed="false">휴대폰 390</button></div></div>
+  <div class="ctl"><span class="seg-label">보기</span>
+    <div class="seg" id="views"><button data-v="both" aria-pressed="true">지금 / 바꾼 뒤</button><button data-v="after" aria-pressed="false">바꾼 뒤만(크게)</button></div></div>
+</div>
+<div class="cmp">
+  <div class="changes" id="changes"></div>
+  <div class="sub-bar" id="sub"></div>
+  <div class="panes" id="panes"></div>
+</div>
+<script>
+const ICO={chk:'<path d="m5 12.5 4.5 4.5L19 7"/>',menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',chd:'<path d="m6 9 6 6 6-6"/>',bubble:'<path d="M4 5h16v11H9l-5 4z"/>'};
+const ic=(n,sz=16,w=3)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[n]}</svg>`;
+
+const header=`<header class="hd"><div class="in"><a class="logo" href="#"><img src="assets/logo-mark.png" alt="">팬꾹</a>
+ <nav class="gnb" aria-label="주 메뉴">${['크리에이터 찾기','선물 보내기','공지사항','팬꾹 소개','고객센터'].map(t=>`<a href="#">${t}</a>`).join('')}</nav>
+ <div class="acct"><a href="#">로그인</a><i></i><a href="#">회원가입</a></div><button class="mbtn" aria-label="메뉴">${ic('menu',24,2)}</button></div></header>`;
+const footer=`<footer class="ft"><div class="in"><div class="r1"><a href="#">이용약관</a><a href="#"><b>개인정보처리방침</b></a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></div>
+<div class="r2"><a href="#">팬꾹 소개</a><a href="#">요금 안내</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></div>
+<p class="biz">상호 팬꾹 · 대표자 정재원 · 사업자등록번호 260-12-03086 · 통신판매업 신고번호 제2026-서울강남-05946호<br>사업장 주소 서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)<br>고객센터 support@fankkuk.com · 0502-1931-8289 · 호스팅 제공자 Vercel Inc.<br>© 2026 팬꾹. All rights reserved.</p></div></footer>`;
+const page=(inner,wide)=>`${header}<main><section class="auth-page"><div class="auth-col ${wide?'wide':''}">${inner}</div></section></main>${footer}`;
+const head=(t,p)=>`<div class="head"><h1>${t}</h1>${p?`<p>${p}</p>`:''}</div>`;
+const fld=(label,val,o={})=>`<div><label class="label">${label}${o.opt?' <span class="opt">(선택)</span>':''}</label><div class="field ${val?'':'ph'} ${o.cls||''}" ${o.attr||''}>${val||o.ph||''}</div>${o.hint?`<p class="hint">${o.hint}</p>`:''}${o.bad?`<p class="bad" role="alert">${o.bad}</p>`:''}</div>`;
+const pwd=n=>'•'.repeat(n);
+const check=(t,on)=>`<div class="check"><span class="cb ${on?'on':''}">${on?ic('chk',16,3.5):''}</span><span>${t}</span></div>`;
+const errBox=t=>`<p class="err" role="alert"><span class="mark a-only" aria-hidden="true">!</span><span>${t}</span></p>`;
+
+/* ---------- 로그인 ---------- */
+const login=err=>page(`${head('로그인','아이디와 비밀번호로 로그인해 주세요.')}
+ <div class="card"><div class="form">
+  ${fld('아이디',err?'nobody_gc9cn':'',{ph:'아이디를 입력해 주세요'})}${fld('비밀번호',err?pwd(13):'',{ph:'비밀번호를 입력해 주세요'})}
+  ${check('로그인 상태 유지',false)}
+  ${err?errBox('아이디 또는 비밀번호가 일치하지 않습니다.'):''}
+  <a class="btn block" href="#">로그인</a></div></div>
+ <div class="under"><a href="#">비밀번호를 잊으셨나요?</a></div>
+ <p class="foot-line">아직 회원이 아니신가요? <a href="#">회원가입</a></p>`);
+
+/* ---------- 비밀번호 ---------- */
+const forgot=sent=>page(`${head('비밀번호 찾기','아이디와 가입 이메일을 입력해&nbsp;주세요. 정보가 일치하면 확인된 이메일로 재설정 링크를 발송합니다.')}
+ <div class="card"><div class="form">${fld('아이디','',{ph:'아이디를 입력해 주세요'})}${fld('가입 이메일','',{ph:'example@email.com'})}
+  ${sent?`<div class="n-only"><p class="okmsg" role="status">입력한 정보가 가입 정보와 일치하면 재설정 메일이 발송됩니다.</p><p style="color:var(--sub)">링크 유효 시간: 1시간 · 1회 사용 가능<br>메일이 도착하지 않으면 <a class="lnk" style="padding:0;min-height:44px" href="#">1:1 문의</a>를&nbsp;이용해&nbsp;주세요.</p></div><div class="okmsg okgrp a-only" role="status"><p>입력한 정보가 가입 정보와 일치하면 재설정 메일이 발송됩니다.</p><p class="oksub">링크 유효 시간: 1시간 · 1회 사용 가능<br>메일이 도착하지 않으면 <a class="lnk" style="padding:0;min-height:44px" href="#">1:1 문의</a>를&nbsp;이용해&nbsp;주세요.</p></div>`:''}
+  <a class="btn block" href="#">재설정 링크 보내기</a></div></div>
+ <div class="under"><a href="#" style="font-weight:600">로그인으로 돌아가기</a></div>`);
+const resetForm=bad=>page(`${head('비밀번호 재설정','비밀번호를 재설정하면 모든 기기에서 로그아웃됩니다.')}
+ <div class="card"><div class="form">
+  ${fld('새 비밀번호',pwd(8),{hint:'8~72자 · 영문·숫자·특수문자 모두 포함 · 아이디와 다르게&nbsp;설정',bad:bad?'비밀번호는 아이디와 다르게&nbsp;설정해&nbsp;주세요.':''})}
+  ${fld('새 비밀번호 확인',pwd(8))}
+  <a class="btn block" href="#">비밀번호 변경</a></div></div>`);
+const resetDead=()=>page(`${head('비밀번호 재설정','비밀번호를 재설정하면 모든 기기에서 로그아웃됩니다.')}
+ <div class="card"><div class="form">${errBox('올바르지 않은 링크입니다.<br>비밀번호 재설정&nbsp;메일을 다시 요청해&nbsp;주세요.')}<a class="btn block" href="#">재설정&nbsp;메일 다시 받기</a></div></div>`);
+const resetDone=()=>page(`${head('비밀번호 재설정','비밀번호를 재설정하면 모든 기기에서 로그아웃됩니다.')}
+ <div class="card"><div class="form"><p class="okmsg" role="status"><span class="mark ok a-only" aria-hidden="true">${ic('chk',14,3.5)}</span><span>비밀번호가 변경되어 모든 기기에서 로그아웃되었습니다.<br>새&nbsp;비밀번호로 로그인해&nbsp;주세요.</span></p><a class="btn block" href="#">로그인</a></div></div>`);
+
+/* ---------- 가입 ---------- */
+const stepNav=(labels,cur,doneAll)=>`<nav aria-label="가입 단계"><ol class="steps ${labels.length>3?'many':''}">${labels.map((l,i)=>{const k=i+1,d=k<cur;const far=k!==cur;return `<li class="${far?'far':'curli'}"><span class="st ${d?'dn':''} ${k===cur?'cur':''} ${far?'far':''}" ${k===cur?'aria-current="step"':''}><span class="dot" aria-hidden="true">${d?ic('chk',16,3.5):k}</span><span class="lbl">${l}</span></span></li>`}).join('')}</ol></nav>`;
+const S3=['유형 선택','정보 입력','휴대폰 확인'], S5=[...S3,'채널 확인','승인 서명'];
+const signHead=(nav)=>`${head('회원가입')}${nav}`;
+const loginFoot=`<p class="foot-line" style="margin-top:8px">이미 회원이신가요? <a href="#">로그인</a></p>`;
+const actions=(prev,nextLabel,opt={})=>`<div class="actions ${prev?'':'solo'} ${opt.kk?'kk':''}">${prev?'<a class="btn line" href="#">이전</a>':''}<a class="btn next ${opt.off?'off':''}" href="#">${nextLabel}</a></div>`;
+const s1=()=>page(`${signHead(stepNav(S3,1))}<div class="card stepcard"><h2>어떤 분이세요?</h2><div class="choices">
+ <div class="choice on"><span class="radio"></span><span><strong>팬</strong><span>좋아하는 크리에이터에게 선물 보내기</span></span></div>
+ <div class="choice"><span class="radio"></span><span><strong>크리에이터</strong><span>팬이 보내는 선물 받기</span></span></div></div>${actions(false,'다음')}</div>${loginFoot}`,true);
+const acct=()=>`<div class="grp"><h3>계정 정보</h3><div class="form">
+ ${fld('아이디','',{hint:'영문 소문자·숫자·밑줄(_) 4~20자 · 가입 후 변경 불가'})}
+ ${fld('닉네임','',{hint:'팬꾹에서 사용할 이름 · 최대 12자 · 중복 사용 불가<br>가입 후 ‘프로필 수정’에서 변경할 수 있습니다.'})}
+ <div><label class="label">이메일</label><div class="email"><div class="field ph">이메일 아이디</div><span class="at">@</span><div class="field sel"><span>이메일 도메인 선택</span>${ic('chd',16,2)}</div></div><p class="hint">가입 후 확인 메일을 발송합니다.<br>메일의 링크에서 주소를 확인하면 선물 소식을 이메일로 받을 수&nbsp;있습니다.</p></div>
+ ${fld('비밀번호','',{hint:'8~72자 · 영문·숫자·특수문자 모두 포함 · 아이디와 다르게&nbsp;설정'})}
+ ${fld('비밀번호 확인','',{ph:'비밀번호를 한 번 더 입력해 주세요'})}</div></div>`;
+const optGrp=()=>`<div class="grp"><h3>선택 입력 사항</h3>${`<div><label class="label">팬꾹을 알게 된 경로 <span class="opt">(선택)</span></label><div class="field sel" style="color:var(--ink)"><span>선택 안 함</span>${ic('chd',16,2)}</div><p class="hint">서비스 유입 경로를 파악하기 위한 선택 항목입니다.</p></div>`}</div>`;
+const termsGrp=()=>`<div class="grp"><h3>약관 동의</h3><div class="terms">
+ <div>${check('전체 동의',false)}<p class="hint" style="margin:0 0 4px 34px">선택 항목 동의가 포함됩니다. 선택 항목에 동의하지 않아도 가입할 수&nbsp;있습니다.</p></div>
+ <div class="trow">${check('<span class="req">[필수]</span> 만 14세 이상입니다',false)}</div>
+ <div class="trow">${check('<span class="req">[필수]</span> 이용약관',false)}<a class="view" href="#">보기</a></div>
+ <div class="trow">${check('<span class="req">[필수]</span> 개인정보 수집·이용',false)}<a class="view" href="#">보기</a></div>
+ <div>${check('[선택] 이벤트·소식 알림 받기',false)}<p class="hint" style="margin:0 0 0 34px">팬꾹 이벤트와 새 소식을 이메일로 보내 드려요.</p></div></div></div>`;
+const s2fan=()=>page(`${signHead(stepNav(S3,2))}<div class="card stepcard"><h2>회원 정보 입력</h2>${acct()}${optGrp()}${termsGrp()}${actions(true,'다음')}</div>${loginFoot}`,true);
+const chipsHtml=sel=>`<div class="chips">${['SOOP','치지직','유튜브','알플레이','인스타그램','X','스레드','틱톡','버추얼'].map(t=>`<span class="chip ${t===sel?'on':''}">${t}</span>`).join('')}</div>`;
+const s2cr=()=>page(`${signHead(stepNav(S5,2))}<div class="card stepcard"><h2>회원 정보 입력</h2>${acct()}
+ <div class="grp"><h3>채널 정보</h3><div class="form">${fld('공개 이름','',{hint:'팬에게 표시되는 이름 · 최대 20자'})}${fld('채널 이름','',{ph:'예: 꿀단지TV',hint:'채널 주소는 4단계에서 입력합니다.'})}${fld('팬덤 이름','',{opt:1,ph:'예: 꿀벌단',hint:'팬을 부르는 이름 · 최대 10자 · 선택 입력<br>가입 후 ‘상세 설정 &gt; 팬덤’에서 변경할 수 있습니다.'})}
+  <div><p class="label">태그</p>${chipsHtml('치지직')}</div>${fld('태그 직접 입력 (최대 1개)','',{ph:'예: 팝콘TV',hint:'활동 플랫폼과 방송 분야를 선택해 주세요.<br>선택·직접 입력 합계: 1~5개 · 현재 1개<br>직접 입력: 최대 20자<br>직접 입력한 태그는 선택한 태그 뒤에 표시됩니다. 욕설·연락처·주소는 입력할 수&nbsp;없습니다.'})}</div></div>
+ ${optGrp()}${termsGrp()}${actions(true,'다음')}</div>${loginFoot}`,true);
+const s3=sent=>page(`${signHead(stepNav(S3,3))}<div class="card stepcard"><h2>휴대폰 번호 확인</h2><div class="form">
+ <div><label class="label">휴대폰 번호</label><div class="phone-row"><div class="field">${sent?'010-1234-5678':'<span style="color:#6B7280">010-0000-0000</span>'}</div><a class="btn line" href="#">${sent?'다시 받기':'인증번호 받기'}</a></div></div>
+ ${sent?`<div><label class="label">인증번호</label><div class="phone-row"><div class="codebox"><div class="field ph">6자리 숫자</div><span class="timer">04:32</span></div><a class="btn" href="#">확인</a></div></div>`:''}</div>
+ ${actions(true,'가입 완료',{off:1})}</div>${loginFoot}`,true);
+
+/* ---------- 4·5단계 ---------- */
+const v4=(kind)=>{
+  const tag={a:'<span class="tag state">확인 전</span>',done:'<span class="tag ok">확인 완료</span>'}[kind==='done'?'done':'a'];
+  let body='';
+  if(kind==='addr') body=`<p class="vlead">채널 소유자 확인을 마치면 ‘크리에이터 찾기’에 표시됩니다.</p>
+   <div><label class="label">채널 주소</label><div class="field fix48 ph">https://www.youtube.com/@핸들</div>
+   <ul class="examples"><li>유튜브 https://www.youtube.com/@핸들</li><li>치지직 https://chzzk.naver.com/채널ID</li><li>SOOP https://www.sooplive.co.kr/station/아이디</li></ul></div>`;
+  if(kind==='route') body=`<p class="vlead">채널 소유자 확인을 마치면 ‘크리에이터 찾기’에 표시됩니다.</p>
+   <div><label class="label">채널 주소</label><div class="field fix48">https://www.youtube.com/@honeypot</div><p class="preview">유튜브 · https://www.youtube.com/@honeypot</p></div>
+   <div class="vsteps"><a class="btn block" href="#">유튜브로 확인하기</a><div class="or"><p>로그인이 어려우면 ‘코드로 확인하기’를 이용해 주세요. 채널 소개란에 인증 코드를 입력해 확인합니다.</p><a class="btn line" href="#">코드로 확인하기</a></div></div>`;
+  if(kind==='code') body=`<div class="vbox"><div class="boxtop"><span class="tag">유튜브</span><span style="font-weight:700">https://www.youtube.com/@honeypot</span></div>
+   <div><p style="color:var(--sub)">인증 코드</p><div class="coderow"><span class="codeval">FK-7Q3M-92XD</span><a class="btn line sm" href="#">코드 복사</a></div></div>
+   <div class="facts"><span>2026.10.30 14:20까지 확인을 마쳐 주세요</span><span>채널별 신청 횟수: 1/3회</span></div></div>
+   <div class="vsteps"><p>채널 소개란에 인증 코드를 입력한 뒤 ‘확인’을 눌러 주세요. 확인 완료 후 코드를 삭제해도 됩니다.</p><a class="btn block" href="#">확인</a>
+   <div class="or"><p class="sub">자동 확인이 되지 않으면 소개란의 코드를 유지한 채 ‘운영자에게 확인 요청’을 눌러 주세요.<br>요청을 제출한 신청은 운영자 확인 대기 중에 만료되지 않습니다.</p><a class="btn line" href="#">운영자에게 확인 요청</a></div></div>
+   <div class="side"><a class="btn line sm" href="#">코드 다시 받기</a><a class="btn sm textb" href="#" style="text-decoration:underline;text-underline-offset:4px">신청 취소</a></div>`;
+  if(kind==='done') body=`<div class="done"><strong style="font-weight:700">유튜브 채널 소유자로 확인되었습니다 · 2026.10.29</strong><a href="#">https://www.youtube.com/@honeypot</a></div>`;
+  const act=kind==='done'?`<div class="actions solo"><a class="btn next" href="#">다음</a></div>`:`<div class="actions"><a class="btn line" href="#">나중에 하기</a><a class="btn next off" href="#">다음</a></div>`;
+  return page(`${signHead(stepNav(S5,4))}<div class="card"><div class="vhead"><h2>채널 소유자 확인</h2>${tag}</div>${body}${act}</div>${loginFoot}`,true);
+};
+const sigHead=`<h2 style="font-size:20px;line-height:1.4;margin-bottom:8px">승인 서명 연결하기</h2><p class="lead" style="margin:0 0 24px;color:var(--sub)">본인인증이 아니라, 앞으로 선물 승인 요청을 카카오톡으로 받기 위한 연결이에요.</p>`;
+const sigFields=`<div class="form">${fld('이름','정재원')}${fld('생년월일','19900115')}${fld('휴대폰 번호','010-1234-5678')}</div>`;
+const s5=kind=>{
+  let mid=sigFields, act;
+  if(kind==='input') act=`<div class="actions kk"><a class="btn line" href="#">이전</a><a class="btn line" href="#">나중에 하기</a><a class="btn kakao next" href="#">${ic('bubble',20,2)}카카오톡 인증 요청</a></div>`;
+  if(kind==='wait'){mid=sigFields+`<ol class="kakao-list" style="margin-top:24px"><li><span><strong class="nw">010-1234-5678</strong>의 카카오톡으로 서명 요청을 보냈습니다.</span></li><li><span>카카오톡에서 요청을 열고 인증을 완료해 주세요.</span></li></ol><p class="again">요청이 오지 않았나요? <b>다시 보내기</b></p>`;
+    act=`<div class="actions kk"><a class="btn line" href="#">이전</a><a class="btn line" href="#">나중에 하기</a><a class="btn kakao wait next" href="#">${ic('bubble',20,2)}확인 기다리는 중</a></div>`;}
+  if(kind==='done'){mid=`<p class="connected" role="status">${ic('chk',20,3)}<span>승인 서명 연결이 완료되었습니다.</span></p>`;act=`<div class="actions solo"><a class="btn next" href="#">가입 완료</a></div>`;}
+  if(kind==='fail'){mid=sigFields+`<div style="margin-top:24px">${errBox('카카오톡 인증이 완료되지 않았습니다. 다시 요청해 주세요.')}</div>`;act=`<div class="actions kk"><a class="btn line" href="#">이전</a><a class="btn line" href="#">나중에 하기</a><a class="btn kakao next" href="#">${ic('bubble',20,2)}카카오톡 인증 요청</a></div>`;}
+  return page(`${signHead(stepNav(S5,5))}<div class="card">${sigHead}${mid}${act}</div>${loginFoot}`,true);
+};
+
+/* ---------- 탭 정의 ---------- */
+const TABS={
+login:{label:'로그인',route:'/login',states:{basic:{label:'기본',now:'login',render:()=>login(false)},error:{label:'오류',now:'login-error',render:()=>login(true)}},
+ changes:['카드: 안쪽 1px #E5E7EB(흰 바탕 1.2:1) + 작은 그림자 → 바깥 1px #DCE3EA + 카드 그림자(--card-shadow). 다른 파트의 흰 카드와 같은 모양 (4-6, 4-8, 35절)','오류 상자: 하늘 면 + 글자뿐이라 고른 칸과 같은 색이다 → 앞에 「!」 원을 붙여 색만으로 알리지 않게 한다. 상자 색·글자·위치는 그대로 (4-1, 4-2)'],
+ keep:['머리(제목 32 · 휴대폰 24, 설명 16 — 3-2, 29절), 입력칸 높이 48 · 짙은 선 4.8:1, 「로그인 상태 유지」 젤리 네모 체크(29절 B), 하늘 채움 「로그인」 하나(1-2), 카드 아래 링크 줄 높이 44, 바탕 흰색']},
+pw:{label:'비밀번호 찾기·새 비밀번호',route:'/password/forgot · /password/reset',states:{forgot:{label:'찾기',now:'forgot',render:()=>forgot(false)},forgotSent:{label:'찾기 · 보낸 뒤',render:()=>forgot(true)},reset:{label:'새 비밀번호 입력',render:()=>resetForm(false)},resetBad:{label:'새 비밀번호 · 칸 틀림',render:()=>resetForm(true)},dead:{label:'링크 죽음',now:'reset-dead',render:resetDead},done:{label:'변경 완료',render:resetDone}},
+ changes:['카드 테두리·그림자: 로그인과 같다 (4-6, 35절)','링크 죽음 상자(「올바르지 않은 링크입니다」)는 로그인 오류 상자와 같은 모양으로 「!」 원을 붙인다 (4-2)','보낸 뒤 안내: 회색 상자 + 상자 밖 두 줄(유효 시간·1:1 문의)로 같은 이야기가 세 조각이다 → 한 상자로 묶는다(가까이 둔 것이 한 묶음 — 기본 원칙). 문장 그대로, 「일치하면 발송」은 확인된 성공이 아니라 체크 표시를 붙이지 않는다','변경 완료 상자: 오류 상자만 「!」 원이 있고 완료 상자는 표시가 없다 → 체크 원을 붙여 성공·실패를 같은 규칙으로 구분한다','새 비밀번호 칸 아래 틀림 줄: 지금은 본문색 + 「!」 원이라 가입 2단계의 틀림 줄(빨강 #B42318 + 「!」 원, 흰 바탕 6.5:1)과 색이 다르다 → 가입과 같은 빨강으로 맞춘다 (4-1, 2-4)'],
+ keep:['머리·카드 480·칸 순서·버튼 이름·「로그인으로 돌아가기」 줄, 변경 완료·보낸 뒤 상자의 면 색(회색 면 + 1px 선)']},
+signup:{label:'가입 1~3단계',route:'/signup',states:{s1:{label:'1 유형 선택',now:'signup-1',render:s1},s2fan:{label:'2 정보 입력 · 팬',now:'signup-2-fan',render:s2fan},s2cr:{label:'2 정보 입력 · 크리에이터',now:'signup-2-creator',render:s2cr,clip:2400},s3:{label:'3 휴대폰 확인 · 번호 입력 전',render:()=>s3(false)},s3sent:{label:'3 휴대폰 확인 · 번호 보냄',render:()=>s3(true)}},
+ changes:['카드: 로그인과 같다 (4-6, 35절)','1단계 유형 선택 칸: 안쪽 선 #E5E7EB(1.2:1)라 눌러서 고르는 칸의 경계가 흐리다 → 고르기 전 #6B7280 1px(4.8:1, 칩과 같은 35절 기준), 고른 칸은 하늘 면 + 짙은 선을 1px에서 2px로 (4-3, 8-12, 12-2)','2단계 태그 칩(크리에이터): 높이 36 · 경계 없는 옅은 면 → 높이 44 + 짙은 선 1px, 고르면 하늘 면 + 하늘 선 + 굵게. 5파트 찾기 칩과 같다 (8-12, 4-3, 35절). 시안에는 고른 칩 하나(치지직)를 그려 모양을 보인다. 칩 아이콘은 시안에 그리지 않았다','3단계 칸+버튼 줄: 카드 폭(720)을 다 채워 휴대폰 번호 칸 543·인증번호 칸 574, 버튼 폭도 87·56으로 달라 두 줄 끝이 어긋난다 → 줄 최대 440, 버튼 두 줄 모두 120으로 같게(칸 길이는 들어갈 값 길이에 맞춘다 — 업계 표준, 사용자 지적 11-01). 휴대폰 폭은 그대로','3단계 「인증번호 받기」·모든 단계 「이전」·「나중에 하기」 같은 선 버튼: 테두리 #E5E7EB → #6B7280 (35절 짙은 선)'],
+ keep:['단계 알약 줄(높이 48, 지금·지난 단계 하늘, 번호 칸 지금만 검정, 휴대폰은 지금 단계만 이름 — 4-3 이미 맞음), 2단계 구분선 + 소제목 16/600 묶음(29절), 이메일 한 줄, 약관 줄·보기 높이 44, 「이전|다음」 1:2(29절 5), 칸 아래 틀림 줄(빨강 + 「!」), 칸 안내 14']},
+creator:{label:'가입 4·5단계(크리에이터)',route:'/signup/creator?step=4,5',states:{addr:{label:'4 채널 확인 · 주소 입력 전',render:()=>v4('addr')},route:{label:'4 · 방법 고르기',render:()=>v4('route')},code:{label:'4 · 코드 발급',render:()=>v4('code')},done:{label:'4 · 확인 완료',render:()=>v4('done')},i5:{label:'5 승인 서명 · 입력',render:()=>s5('input')},w5:{label:'5 · 기다리는 중',render:()=>s5('wait')},d5:{label:'5 · 연결 완료',render:()=>s5('done')},f5:{label:'5 · 실패',render:()=>s5('fail')}},
+ changes:['카드·선 버튼: 위와 같다. 단계 알약 줄·1~3단계 완료 표시는 그대로','4단계 입력칸 높이: 채널 주소 칸만 52(공용 .input)라 1~3단계·5단계 칸(48)과 어긋난다 → 48로 맞춘다 (2-4, 2-6, 8-12)','4단계 상태 뱃지: 「확인 전」이 회색 면 + 회색 글자라 상태가 눈에 안 띈다 → 하늘 면 + 짙은 글자(6.6:1), 「확인 완료」 초록은 그대로 (4-1)','4단계 회색 상자(채널·인증 코드): 흰 카드 위 #F9FAFB 면이라 경계가 안 보인다(1.04:1) → 1px #DCE3EA 테두리를 더한다 (4-7, 4-8)','5단계 실패 상자: 로그인 오류 상자와 같게 「!」 원을 붙인다 (4-2)'],
+ keep:['5단계 카카오 노랑 버튼 · 「확인 기다리는 중」 · 번호 동그라미 두 줄 · 연결 완료 초록 상자, 휴대폰 폭에서 요청 버튼이 위로 올라가는 쌓기(29절 5), 4단계 「나중에 하기 + 다음」 줄, 인증 코드 글자 크기'] }
+};
+
+const NOWDIR='now/';
+let cur='login',sub={},W=1440,V='both';
+Object.keys(TABS).forEach(k=>sub[k]=Object.keys(TABS[k].states)[0]);
+const $=s=>document.querySelector(s);
+const tabs=$('#tabs');
+Object.entries(TABS).forEach(([k,s])=>{const b=document.createElement('button');b.textContent=s.label;b.dataset.k=k;b.setAttribute('role','tab');tabs.append(b)});
+function draw(){
+  const t=TABS[cur], st=t.states[sub[cur]];
+  tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b.dataset.k===cur));
+  document.querySelectorAll('#widths button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.w===W));
+  document.querySelectorAll('#views button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===V));
+  $('#changes').innerHTML=`<h2>${t.label}<span>${t.route}</span></h2><h4>바뀌는 것</h4><ul>${t.changes.map(x=>`<li>${x}</li>`).join('')}</ul><h4>바뀌지 않는 것</h4><ul>${t.keep.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+  $('#sub').innerHTML='<span class="seg-label">상태</span><div class="seg" id="subs">'+Object.entries(t.states).map(([k,v])=>`<button data-s="${k}" aria-pressed="${k===sub[cur]}">${v.label}</button>`).join('')+'</div>';
+  const n=V==='both'?2:1, avail=document.documentElement.clientWidth-48-24*(n-1);
+  const z=Math.min(1,avail/(W*n)), CLIP=st.clip||2600;
+  const clip=`max-height:${CLIP*z}px`;
+  const nowBody=st.now?`<img src="${NOWDIR}${st.now}-${W}.jpg" alt="지금 화면 ${W}">`:`<div style="zoom:${z}"><div class="stage now" style="width:${W}px">${st.render()}</div></div>`;
+  const nowHtml=`<div class="pane"><h3>지금<em>${st.now?'캡처':'코드 값으로 다시 그림(캡처 없음)'} · ${W}</em></h3><div class="shot" style="width:${W*z}px;${st.now?`${clip};`:''}">${nowBody}</div></div>`;
+  const aft=`<div class="pane"><h3>바꾼 뒤<em>${W}</em></h3><div class="shot" style="width:${W*z}px"><div style="zoom:${z}"><div class="stage" style="width:${W}px" id="stage">${st.render()}</div></div></div></div>`;
+  $('#panes').innerHTML=(V==='both'?nowHtml:'')+aft;
+}
+tabs.onclick=e=>{const b=e.target.closest('button');if(b){cur=b.dataset.k;draw()}};
+$('#widths').onclick=e=>{const b=e.target.closest('button');if(b){W=+b.dataset.w;draw()}};
+$('#views').onclick=e=>{const b=e.target.closest('button');if(b){V=b.dataset.v;draw()}};
+$('#sub').onclick=e=>{const b=e.target.closest('button');if(b){sub[cur]=b.dataset.s;draw()}};
+addEventListener('resize',draw);
+const q=new URLSearchParams(location.search);
+if(q.get('s')&&TABS[q.get('s')])cur=q.get('s');if(q.get('st')&&TABS[cur].states[q.get('st')])sub[cur]=q.get('st');if(q.get('w'))W=+q.get('w');if(q.get('v'))V=q.get('v');
+draw();
+</script>
+</body>
+</html>
