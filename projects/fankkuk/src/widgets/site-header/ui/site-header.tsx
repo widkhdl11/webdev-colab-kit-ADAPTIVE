@@ -109,7 +109,8 @@ function GuestTopBar({ current }: { current?: string }) {
           <Link className="btn btn--line" href="/login">
             로그인
           </Link>
-          <Link className="btn" href="/signup">
+          {/* 테두리 버튼 — 채움 버튼은 화면의 메인 행동 하나에만(docs/design/design-prompt.md 1-3, 2026-11-01 시안 4) */}
+          <Link className="btn btn--line" href="/signup">
             회원가입
           </Link>
         </div>

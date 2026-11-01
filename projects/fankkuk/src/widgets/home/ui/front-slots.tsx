@@ -160,7 +160,8 @@ export function GuestTiles({ tiles, label }: { tiles: readonly FrontTile[]; labe
   );
 }
 
-const STEPS = [
+/** ③ 4단계 — 로그인 전 첫 화면(landing-page 의 가로 흐름)도 같은 문구를 읽는다 */
+export const STEPS = [
   { icon: "icon-gift", num: "1. 등록", title: "선물 등록·결제", body: "결제 후 상자별 팬꾹 주소가 발급됩니다. 승인 전에는 ‘먼저 보내기’로 주소를 확인할 수 있습니다." },
   { icon: "icon-approve", num: "2. 승인", title: "크리에이터 승인", body: PROMISE.approval },
   { icon: "icon-inspect", num: "3. 검수", title: "팬꾹 검수", body: `팬이 보낸 모든 상자를 검사하고, ${PROMISE.inspectionOpen}` },
