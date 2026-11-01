@@ -68,6 +68,7 @@ export function CreatorSearchPage({
   followMode,
   ownCreatorId = null,
   banner = null,
+  initialQuery = "",
 }: {
   creators: readonly CreatorCard[];
   looks?: Readonly<Record<string, CardLook>>;
@@ -76,8 +77,10 @@ export function CreatorSearchPage({
   ownCreatorId?: string | null;
   /** 광고 배너 칸 — 보일 배너가 없으면 null */
   banner?: ReactNode;
+  /** 메인 검색창에서 넘어온 검색어(주소의 q) — 검색칸 처음 값 */
+  initialQuery?: string;
 }) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [tag, setTag] = useState("");
   const inputId = useId();
   const chips = tagChips(tagOptions, creators);

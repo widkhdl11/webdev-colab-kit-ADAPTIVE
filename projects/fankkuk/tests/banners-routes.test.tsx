@@ -96,7 +96,7 @@ const ROW = {
 const ROUTES = [
   { name: "팬 홈 /home", viewer: FAN, route: () => HomeRoute() },
   { name: "크리에이터 홈 /creator", viewer: CREATOR, route: () => CreatorHomeRoute() },
-  { name: "크리에이터 찾기 /creators", viewer: null, route: () => CreatorsRoute() },
+  { name: "크리에이터 찾기 /creators", viewer: null, route: () => CreatorsRoute({ searchParams: Promise.resolve({}) }) },
 ];
 
 beforeEach(() => {
@@ -157,5 +157,28 @@ describe("INV-Y7·Y8: 실제 라우트 넷 — 공개 읽기 한 번, 칸 ②", 
       expect(host.querySelector("[data-banner-title]")).toBeNull();
       expect(host.querySelectorAll("[data-banner-card]")).toHaveLength(viewer ? 1 : 0);
     }
+  });
+});
+
+describe("크리에이터 찾기 — 메인 검색어(q)를 검색칸 처음 값으로", () => {
+  const searchBox = () => host.querySelector<HTMLInputElement>('input[type="search"]')!;
+  it("q 가 있으면 앞뒤 공백을 떼고 검색칸에 넣는다", async () => {
+    db.viewer = null;
+    await draw(CreatorsRoute({ searchParams: Promise.resolve({ q: "  하루 " }) }));
+    expect(searchBox().value).toBe("하루");
+  });
+  it("q 가 없으면 검색칸은 비어 있다", async () => {
+    db.viewer = null;
+    await draw(CreatorsRoute({ searchParams: Promise.resolve({}) }));
+    expect(searchBox().value).toBe("");
+  });
+  it("q 가 여러 개면 첫 값만, 50자를 넘으면 50자까지만 넣는다", async () => {
+    db.viewer = null;
+    await draw(CreatorsRoute({ searchParams: Promise.resolve({ q: ["모모", "하루"] }) }));
+    expect(searchBox().value).toBe("모모");
+    act(() => root.unmount());
+    root = createRoot(host);
+    await draw(CreatorsRoute({ searchParams: Promise.resolve({ q: "가".repeat(80) }) }));
+    expect(searchBox().value).toBe("가".repeat(50));
   });
 });
