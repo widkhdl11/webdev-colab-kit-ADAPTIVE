@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 7파트 안내·정책 화면 · 시안 4 기준으로 맞춘 비교</title>
+<!--
+  2026-11-01 요청: 7파트 안내·정책 화면 13개를 시안 4 설계 기준(design-prompt.md)으로 다시 맞춘 비교. 5파트(part5-v4-20261101)와 같은 형식.
+  문구·칸 순서·노출 조건·약관 본문은 지금 코드 그대로(한 글자도 바꾸지 않음). 시안에 없던 안내 문장은 덧붙이지 않았다. 기능 추가 없음.
+  탭 다섯: 소개 / 문서형 공통 틀(이용 안내(팬)·이용약관 대표 둘) / 공지 / 문의 / 신고.
+  소개 탭의 「바꾼 뒤」는 새로 그리지 않고 mockups/about-20261101/ 을 그대로 끼워 넣었다.
+  문서형은 긴 화면이라 앞부분만 그렸다(지금 캡처도 같은 길이로 잘라 보인다).
+  /public/ 경로는 프로젝트 루트를 서빙할 때 열린다(node scripts/preview.mjs --dir projects/fankkuk).
+-->
+<style>
+@font-face{font-family:Pretendard;src:url('/public/images/previews/role-home-unified-v31/Pretendard-Bold.woff') format('woff');font-weight:600 800;font-display:swap}
+@font-face{font-family:Pretendard;src:url('/public/images/previews/role-home-unified-v31/Pretendard-Medium.woff') format('woff');font-weight:400 500;font-display:swap}
+@font-face{font-family:Tmoney;src:url('/public/fonts/TmoneyRoundWindExtraBold.woff2') format('woff2');font-weight:800;font-display:swap}
+:root{--bg:#F7F9FB;--card:#fff;--line:#DCE3EA;--panel-line:#CFE2EE;--shadow:0 1px 2px rgba(15,23,42,.04),0 4px 12px rgba(15,23,42,.04);--ink:#1F2937;--muted:#55606E;--accent:#0369A1;--num:#7F97AC;--sky:#89CFF0;--sky-50:#EEF7FD;--sky-100:#E0F2FE;--field:#6B7280;--sel-line:#6FB8DD;--ease:cubic-bezier(.2,.8,.2,1)}
+*{box-sizing:border-box}
+body{margin:0;background:#EEF1F4;color:var(--ink);font:500 16px/1.6 Pretendard,system-ui,sans-serif;word-break:keep-all}
+h1,h2,h3,p,ul,ol,dl,dd{margin:0}
+ul,ol{padding:0;list-style:none}
+button{font-family:inherit}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:8px}
+
+/* ===== 비교 페이지 틀 ===== */
+.top{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line);padding:12px 24px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
+.top h1{font:800 18px/1.3 Tmoney,Pretendard,sans-serif;letter-spacing:-.02em;margin-right:auto}
+.seg{display:flex;gap:4px;padding:4px;background:#E6EBF0;border-radius:12px}
+.seg button{min-height:40px;padding:0 16px;border:0;border-radius:8px;background:transparent;font-weight:600;font-size:14px;color:var(--ink);cursor:pointer}
+.seg button[aria-pressed=true],.seg button[aria-selected=true]{background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.15);font-weight:700}
+.seg-label{font-size:14px;color:var(--muted);font-weight:600}
+.ctl{display:flex;align-items:center;gap:8px}
+.cmp{padding:24px}
+.changes{max-width:1100px;margin:0 auto 24px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 24px}
+.changes h2{font:800 20px/1.3 Tmoney,Pretendard,sans-serif;margin-bottom:8px}
+.changes h2 span{font:500 14px Pretendard;color:var(--muted);margin-left:8px}
+.changes ul{padding-left:20px;list-style:disc;font-size:14px;line-height:1.7}
+.changes li{margin-top:4px}.changes li span{color:var(--muted)}
+.changes .note{margin-top:12px;padding:12px 16px;background:#FFF8E6;border:1px solid #F0D78C;border-radius:12px;font-size:14px;line-height:1.6}
+.changes .note b{display:block;margin-bottom:4px}
+.changes .note ol{list-style:decimal;padding-left:20px}
+.sub{max-width:1100px;margin:0 auto 16px;display:flex;align-items:center;gap:8px}
+.panes{display:flex;gap:24px;justify-content:center;align-items:flex-start}
+.pane{flex:none}
+.pane>h3{font-size:14px;font-weight:700;margin:0 0 8px}
+.pane>h3 em{font-style:normal;color:var(--muted);font-weight:500;margin-left:8px}
+.shot{background:#fff;border:1px solid var(--line);overflow:hidden}
+.shot img{display:block;width:100%;height:auto}
+
+/* ===== 바꾼 뒤 화면 (stage) ===== */
+.stage{container:st/inline-size;background:var(--bg);position:relative;font-size:16px}
+.stage.white{background:#fff}
+.stage img{display:block;max-width:100%}
+.stage a{color:inherit;text-decoration:none}
+.stage h1,.stage h2{font-family:Tmoney,Pretendard,sans-serif;letter-spacing:-.02em;font-weight:800;line-height:1.3;color:var(--ink)}
+.wrap{max-width:928px;margin:0 auto;padding:0 24px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border-radius:12px;font:700 16px/1 Pretendard,sans-serif;border:1px solid transparent;white-space:nowrap}
+.btn-primary{background:linear-gradient(180deg,#93D4F2,var(--sky));color:var(--ink);border-color:var(--sel-line);box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+.btn-outline{background:#fff;color:var(--ink);border-color:var(--field);min-height:44px;padding:0 16px}
+.ic{width:20px;height:20px;flex:none}
+svg{flex:none}
+
+.hd{background:rgba(255,255,255,.96);border-bottom:1px solid var(--line)}
+.hd .wrap{display:flex;align-items:center;gap:24px;height:64px}
+.logo{display:flex;align-items:center;gap:8px;font:800 20px/1 Tmoney,sans-serif;min-height:44px}
+.logo img{width:32px;height:auto}
+.gnb{display:flex;margin-right:auto}
+.gnb a{display:flex;align-items:center;min-height:44px;padding:0 12px;border-radius:8px;font-weight:600}
+.gnb a.on{background:var(--sky-50)}
+.acct{display:flex;align-items:center;gap:8px}
+.acct .lg{display:flex;align-items:center;min-height:44px;padding:0 12px;font-weight:600}
+.mbtn{display:none;width:44px;height:44px;border:0;background:none;color:var(--ink);align-items:center;justify-content:center;margin-left:auto}
+.ft{margin-top:96px;background:#F1F4F7;border-top:1px solid var(--line);padding:32px 0 40px;font-size:14px;color:var(--muted)}
+.ft .r1{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 24px}
+.ft .r1 div,.ft .r2{display:flex;gap:8px 24px;flex-wrap:wrap}
+.ft .r2{margin-top:8px}
+.ft .biz{margin-top:16px;line-height:1.7}
+.ft a{display:inline-flex;align-items:center;min-height:32px}
+
+/* ---- 공통 부품 ---- */
+.pill{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:14px;font-weight:500;white-space:nowrap}
+.pill.on{background:var(--sky-100);border-color:var(--sel-line);font-weight:700}
+.pills{display:flex;gap:8px;flex-wrap:nowrap}
+.tag{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:999px;background:var(--sky-100);border:1px solid #BAE0F5;color:#075985;font-family:Pretendard,sans-serif;font-size:12px;font-weight:700;letter-spacing:0;white-space:nowrap}
+.page-title{font-size:32px}
+.lede{margin-top:8px;font-size:16px;color:var(--muted)}
+.cardw{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+
+/* ===== 문서형 틀 ===== */
+.doc{padding:40px 0 0}
+.doc .col{max-width:680px}
+.doc h1{font-size:32px;margin-top:32px}
+.doc .lead{margin-top:8px;color:var(--muted)}
+.doc .meta{display:flex;flex-wrap:wrap;align-items:center;gap:0 16px;margin-top:16px;font-size:14px;color:var(--muted)}
+.doc .meta b{color:var(--ink);font-weight:700}
+.doc .meta .sep{width:1px;height:12px;background:var(--line)}
+.doc .meta a{display:inline-flex;align-items:center;min-height:44px;font-weight:700;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.sum{margin-top:32px;padding:32px;border-radius:24px;border:1px solid var(--panel-line);background:linear-gradient(135deg,var(--sky-50),var(--sky-100));box-shadow:var(--shadow)}
+.sum h2{font-size:20px;line-height:1.4}
+.sum ol{margin-top:8px;max-width:680px}
+.sum li a{display:flex;align-items:center;gap:12px;min-height:44px;padding:4px 8px;margin:0 -8px;border-radius:12px;font-weight:600}
+.sum li a .n{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--sky);color:var(--ink);font-size:14px;font-weight:700}
+.sum li a .go{margin-left:auto;color:var(--accent);width:18px;height:18px}
+.tools{margin-top:48px}
+.sbox{display:flex;align-items:center;gap:8px;height:48px;padding:0 16px;max-width:680px;background:#fff;border:1px solid var(--field);border-radius:12px;color:#5F6B79}
+.sbox svg{width:20px;height:20px}
+.tools .pills{margin-top:12px}
+.tbar{display:flex;align-items:center;gap:8px;margin-top:24px;min-height:48px;max-width:880px;border-bottom:1px solid var(--line);font-size:14px}
+.tbar .now{flex:1;min-width:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbar .bt{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border-radius:12px;font-weight:600}
+.tbar .bt svg{width:18px;height:18px}
+.art{padding:40px 0;border-top:1px solid var(--line)}
+.tbar+.art{border-top:0;padding-top:32px}
+.art .no{display:inline-flex;align-items:center;height:24px;padding:0 12px;border-radius:999px;background:#EEF1F4;color:var(--muted);font-size:12px;font-weight:700}
+.art h2{font-size:24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.art .no+h2{margin-top:12px}
+.prose{max-width:680px;margin-top:16px;color:var(--ink)}
+.prose p+p{margin-top:12px}
+.steps{display:flex;flex-direction:column;gap:12px;counter-reset:st}
+.steps li{position:relative;padding-left:40px;counter-increment:st}
+.steps li::before{content:counter(st);position:absolute;left:0;top:0;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--sky-100);color:var(--ink);font-size:14px;font-weight:700}
+.box{max-width:680px;margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.box .row{padding:16px 24px}
+.box .row+.row{border-top:1px solid var(--line)}
+.box dt{font-weight:700}
+.box dd{margin-top:4px;color:var(--muted);line-height:1.7}
+.box .stg{display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:baseline}
+.box .stg dd{margin:0;color:var(--ink)}
+.stg .k{font-size:12px;font-weight:700;color:var(--muted);margin-right:8px}
+.closing{max-width:880px;margin-top:40px;padding:32px;border-radius:24px;border:1px solid var(--panel-line);background:linear-gradient(135deg,var(--sky-50),var(--sky-100))}
+.closing h2{font-size:24px}
+.closing ol{margin-top:16px}
+a.ul{text-decoration:underline;text-underline-offset:3px;font-weight:700}
+
+/* ===== 공지·문의 줄 ===== */
+.pg{padding:48px 0 0}
+.pg h1{font-size:32px}
+.nlist{display:flex;flex-direction:column;gap:16px;margin-top:32px}
+.nitem{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.nitem.open{border-color:var(--sel-line)}
+.nhead{display:flex;align-items:center;gap:16px;min-height:72px;padding:12px 16px 12px 24px}
+.nitem.open .nhead{background:var(--sky-50);border-bottom:1px solid var(--panel-line)}
+.nhead .tx{flex:1;min-width:0}
+.nhead b{display:block;font-size:16px;line-height:1.5}
+.nhead time{display:block;font-size:14px;color:var(--muted)}
+.nhead .chv{width:44px;height:44px;display:grid;place-items:center;color:var(--muted)}
+.nbody{padding:24px;max-width:728px}
+.nbody h3{font-size:16px;font-weight:700;margin-bottom:12px}
+.nbody p+p{margin-top:12px}
+.nbody .sign{font-size:14px;color:var(--muted)}
+.pager{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:48px}
+.pager a{display:grid;place-items:center;min-width:44px;height:44px;border-radius:12px;font-weight:600;background:#fff;border:1px solid var(--line)}
+.pager a[aria-current]{background:var(--sky-100);border-color:var(--sel-line);font-weight:700}
+.pager a.arrow{background:transparent;border-color:transparent;color:var(--muted)}
+.faqtabs{margin-top:24px}
+.faq{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+.faq .nhead{min-height:56px}
+.faq .nhead b{font-weight:700}
+.faq .ans{padding:16px 24px 24px;max-width:728px}
+.faq .ans p+p{margin-top:4px}
+.sec{margin-top:64px}
+.sec h2{font-size:24px}
+.band{margin-top:64px;padding:48px 0;background:#FCF7F1;border-block:1px solid #F0E4D6}
+.sky-band .band{background:linear-gradient(180deg,var(--sky-50),#E8F5FD);border-block:1px solid var(--panel-line)}
+.band h2{font-size:24px}
+.band .btn{margin-top:24px;min-width:240px}
+.contact{display:grid;grid-template-columns:auto auto auto;justify-content:start;margin-top:16px}
+.contact>div{padding:16px 32px}
+.contact>div:first-child{padding-left:24px}
+.contact>div+div{border-left:1px solid var(--line)}
+.contact dt{font-size:14px;color:var(--muted);font-weight:600}
+.contact dd{margin-top:4px;font-size:16px;font-weight:700}
+.contact a{display:inline-flex;align-items:center;min-height:44px}
+
+/* ===== 신고 ===== */
+.noask{margin-top:8px;font-size:14px;color:var(--muted)}
+.form{max-width:680px;margin-top:32px;padding:32px;display:flex;flex-direction:column;gap:24px}
+.fld label{display:block;font-weight:700;margin-bottom:8px}
+.fld label small{font-size:16px;font-weight:500;color:var(--muted)}
+.inp{display:flex;align-items:center;justify-content:space-between;height:48px;padding:0 16px;background:#fff;border:1px solid var(--field);border-radius:12px;color:#5F6B79}
+.inp.ta{height:176px;align-items:flex-start;padding-top:12px}
+.inp.sel{color:var(--ink)}
+.hint{margin-top:8px;font-size:14px;color:var(--muted)}
+.send{display:flex;flex-direction:column;gap:12px}
+.send .hint{margin:0}
+.send .row{display:flex;justify-content:flex-end}
+.to{font-size:14px;color:var(--muted)}
+.to a{text-decoration:underline;text-underline-offset:3px;font-weight:700;color:var(--ink)}
+
+/* ===== 휴대폰(컨테이너 767 이하) ===== */
+@container st (max-width:767px){
+  .wrap{padding:0 16px}
+  .gnb,.acct{display:none}
+  .hd .wrap{height:56px}
+  .mbtn{display:flex}
+  .page-title,.doc h1,.pg h1{font-size:24px}
+  .doc{padding-top:24px}
+  .doc h1{margin-top:24px}
+  .tabs.pills,.pills.scroll{margin-right:-16px;padding-right:16px;overflow-x:auto;scrollbar-width:none}
+  .sum{padding:24px 16px;border-radius:16px}
+  .sum li a{align-items:flex-start;padding:8px}
+  .tools{margin-top:32px}
+  .art{padding:32px 0}
+  .art h2,.closing h2,.sec h2,.band h2{font-size:20px}
+  .box .row{padding:16px}
+  .box .stg{grid-template-columns:96px 1fr;gap:12px}
+  .closing{padding:24px 16px;border-radius:16px}
+  .pg{padding-top:32px}
+  .nlist{margin-top:24px}
+  .nhead{padding:8px 8px 8px 16px;gap:8px}
+  .nbody,.faq .ans{padding:16px}
+  .pager{margin-top:32px}
+  .sec,.band{margin-top:48px}
+  .band{padding:32px 0}
+  .band .btn,.send .btn{width:100%}
+  .contact{grid-template-columns:1fr}
+  .contact>div{padding:16px;border-left:0!important}
+  .contact>div+div{border-top:1px solid var(--line)}
+  .form{margin-top:24px;padding:24px 16px}
+  .send .row{justify-content:stretch}
+  .ft{margin-top:48px}
+  .ft .r1{display:block}.ft .r1 div,.ft .r2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+  .ft a{min-height:44px}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>팬꾹 7파트 안내·정책 · 시안 4 기준 비교</h1>
+  <div class="seg" role="tablist" aria-label="화면" id="tabs"></div>
+  <div class="ctl"><span class="seg-label">폭</span>
+    <div class="seg" id="widths"><button data-w="1440" aria-pressed="true">PC 1440</button><button data-w="390" aria-pressed="false">휴대폰 390</button></div></div>
+  <div class="ctl"><span class="seg-label">보기</span>
+    <div class="seg" id="views"><button data-v="both" aria-pressed="true">지금 / 바꾼 뒤</button><button data-v="after" aria-pressed="false">바꾼 뒤만(크게)</button></div></div>
+</div>
+<div class="cmp">
+  <div class="changes" id="changes"></div>
+  <div class="sub" id="sub" hidden></div>
+  <div class="panes" id="panes"></div>
+</div>
+<script>
+const P={
+ search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+ chr:'<path d="m9 6 6 6-6 6"/>',chl:'<path d="m15 6-6 6 6 6"/>',
+ chd:'<path d="m6 9 6 6 6-6"/>',chu:'<path d="m18 15-6-6-6 6"/>',
+ menu:'<path d="M4 6h16M4 12h16M4 18h16"/>'
+};
+const ic=(n,c='')=>`<svg class="${c}" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
+
+const header=on=>`<header class="hd"><div class="wrap"><a class="logo" href="#"><img src="/public/images/logo-mark.png" alt="">팬꾹</a>
+ <nav class="gnb" aria-label="주 메뉴">${['크리에이터 찾기','선물 보내기','공지사항','팬꾹 소개','고객센터'].map(t=>`<a ${t===on?'class="on"':''} href="#">${t}</a>`).join('')}</nav>
+ <div class="acct"><a class="lg" href="#">로그인</a><a class="btn btn-outline" href="#">회원가입</a></div><button class="mbtn" aria-label="메뉴">${ic('menu')}</button></div></header>`;
+const footer=`<footer class="ft"><div class="wrap"><div class="r1"><a class="logo" href="#"><img src="/public/images/logo-mark.png" alt="">팬꾹</a><div><a href="#">이용약관</a><a href="#"><b>개인정보처리방침</b></a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></div></div>
+<div class="r2"><a href="#">팬꾹 소개</a><a href="#">요금 안내</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></div>
+<p class="biz">상호 팬꾹 · 대표자 정재원 · 사업자등록번호 260-12-03086 · 통신판매업 신고번호 제2026-서울강남-05946호<br>사업장 주소 서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)<br>고객센터 support@fankkuk.com · 0502-1931-8289 · 호스팅 제공자 Vercel Inc.<br>© 2026 팬꾹. All rights reserved.</p></div></footer>`;
+
+const steps=l=>`<ol class="steps">${l.map(t=>`<li>${t}</li>`).join('')}</ol>`;
+const sumPanel=(h,l)=>`<section class="sum" aria-labelledby="sm"><h2 id="sm">${h}</h2><ol>${l.map((t,i)=>`<li><a href="#"><span class="n">${i+1}</span>${t}${ic('chr','go')}</a></li>`).join('')}</ol></section>`;
+const tools=chips=>`<div class="tools"><div class="sbox">${ic('search')}<span>문서 내 검색</span></div>${chips?`<div class="pills scroll">${chips.map((t,i)=>`<a class="pill ${i?'':'on'}" href="#">${t}</a>`).join('')}</div>`:''}</div>`;
+const tbar=t=>`<div class="tbar"><p class="now">${t}</p><a class="bt" href="#">${ic('search')}찾기</a><a class="bt" href="#">목차 열기 ${ic('chd')}</a></div>`;
+
+/* ---------- 문서형: 팬 이용 안내 ---------- */
+const guideFan=()=>`${header('')}<main class="doc"><div class="wrap">
+ <div class="tabs pills" role="navigation" aria-label="안내 글">${[['팬 이용 안내',1],['크리에이터 이용 안내'],['검수 기준'],['보안 안내'],['분쟁 처리 안내']].map(t=>`<a class="pill ${t[1]?'on':''}" href="#" ${t[1]?'aria-current="page"':''}>${t[0]}</a>`).join('')}</div>
+ <h1>팬 이용 안내</h1><p class="lead col">선물 등록·발송 방법과 요금·반송 기준을 확인해 주세요. 크리에이터가 승인한 선물만 배송합니다.</p>
+ ${sumPanel('핵심 안내',['결제 후 상자별 팬꾹 주소 발급','상자별 주소를 끝 6자리까지 모두 입력해 팬꾹으로 보내 주세요.','팬꾹 검수·크리에이터 승인 완료 후 배송'])}
+ ${tools(null)}${tbar('선물 등록·발송 순서')}
+ <article class="art"><h2>선물 등록·발송 순서 <span class="tag">주요</span></h2><div class="prose">${steps(['선물을 보낼 크리에이터를 고르고, 크리에이터 페이지에서 「선물 보내기」를 눌러 주세요.','선물 종류를 고르고, 전자기기나 금속 제품이 들어 있는지 알려 주세요.','상자 수와 크기를 고른 뒤 결제해 주세요.','결제 후 상자별 팬꾹 주소가 발급됩니다. 크리에이터 승인 후 주소를 확인할 수 있습니다.','승인 전에 먼저 보내려면 선물 상세에서 「먼저 보내기」를 눌러 주세요. 팬꾹 주소를 볼 수 있습니다.','선물 상세의 「전체 주소 복사」를 누르면 마지막 6자리까지 전체 주소가 복사됩니다.','송장의 보내는 분 칸에는 팬꾹 닉네임을 입력해 주세요.','복사한 주소를 받는 사람 주소 칸에 그대로 써서 상자를 보내 주세요.','팬꾹 사무실로 보내는 상자의 배송 상황을 조회하려면 선물 상세에 송장번호를 입력해 주세요. 송장번호 입력은 선택 사항입니다.','진행 상황은 「보낸 선물」의 선물 상세에서 확인할 수 있습니다.'])}</div></article>
+ <article class="art"><h2>상자별 팬꾹 주소 <span class="tag">주요</span></h2><div class="prose">${steps(['팬꾹 주소는 팬꾹 사무실 주소 끝에 상자마다 다른 6자리가 붙은 주소입니다.','사무실에서는 이 6자리로 어느 선물의 어느 상자인지 확인합니다.','상자마다 안내된 주소를 끝 6자리까지 모두 입력해 주세요.','한 상자의 주소를 다른 상자에 쓰지 마세요.','팬꾹 주소 6자리는 선물을 보낸 본인에게만 표시됩니다. 다른 사람과 공유하지 마세요.','선물 상세에서는 6자리가 가려져 있습니다. 「6자리 보기」를 누르면 볼 수 있습니다.','상자를 더 보내려면 선물을 새로 등록해 주세요.'])}</div></article>
+ <article class="art"><h2>진행 단계</h2><div class="prose"><p>선물 상세에는 아래 여섯 단계가 차례로 표시됩니다.</p></div>
+  <dl class="box">${[['등록','선물 등록·결제 완료'],['입고','상자가 팬꾹에 도착'],['검수','상자 검수 진행'],['출고','팬꾹에서 출고 처리'],['배송 중','택배사 배송 진행'],['수령','배송 완료']].map(r=>`<div class="row stg"><dt>${r[0]}</dt><dd><span class="k">뜻</span>${r[1]}</dd></div>`).join('')}</dl>
+  <div class="prose" style="margin-top:16px">${steps(['크리에이터의 승인 여부는 검수와 출고 사이에 따로 표시됩니다.','승인과 검수가 모두 끝난 상자만 출고합니다.','승인은 출고 전에만 완료하면 됩니다. 상자는 승인 전에도 먼저 보낼 수 있습니다.'])}</div></article>
+ <section class="closing" aria-labelledby="mo"><h2 id="mo">추가 문의</h2><ol class="steps"><li>자세한 기준은 <a class="ul" href="#">이용약관</a>에서 확인해 주세요.</li><li>사무실에 도착한 뒤 출고까지 걸리는 기간: [확인 필요: 입고부터 출고까지 걸리는 기간]</li><li>더 궁금한 점은 고객센터의 <a class="ul" href="#">1:1 문의</a>로 남겨 주세요.</li></ol></section>
+</div></main>${footer}`;
+
+/* ---------- 문서형: 이용약관 ---------- */
+const terms=()=>`${header('')}<main class="doc"><div class="wrap">
+ <div class="tabs pills" role="navigation" aria-label="약관">${[['이용약관',1],['개인정보처리방침'],['취소·환불 규정']].map(t=>`<a class="pill ${t[1]?'on':''}" href="#" ${t[1]?'aria-current="page"':''}>${t[0]}</a>`).join('')}</div>
+ <h1>이용약관</h1><p class="lead col">이 약관은 팬꾹 서비스의 이용 조건과 절차, 회사와 회원의 권리·의무, 이용요금 및 취소·환불 기준을 정합니다.</p>
+ <p class="meta"><span>버전 <b>2026-10-01</b></span><i class="sep"></i><span>시행일 <b>2026-10-24</b></span><i class="sep"></i><span>운영 <b>팬꾹</b></span><i class="sep"></i><a href="#">버전 기록 보기</a></p>
+ ${sumPanel('주요 내용',['회사는 팬이 보낸 선물을 사무실에서 검수한 뒤, 크리에이터가 승인한 선물만 배송합니다.','이용요금은 상자별 크기·무게 구간에 따라 부과하며, 거절·반송·취소 시 환불 금액은 선물의 진행 상태에 따라 산정합니다.','보낼 수 없는 물품을 보내거나 타인의 채널로 채널 소유자 확인을 받는 경우 서비스 이용이 제한될 수 있습니다.'])}
+ ${tools(['전체','선물·배송','계정·개인정보','크리에이터','환불·취소','금지 물품'])}${tbar('제1조 목적')}
+ <article class="art"><span class="no">제1조</span><h2>목적</h2><div class="prose"><p>이 약관은 팬꾹(이하 「회사」라 합니다)이 운영하는 팬꾹 서비스(이하 「서비스」라 합니다)의 이용 조건 및 절차, 회사와 회원 간의 권리·의무 및 책임 사항을 규정함을 목적으로 합니다.</p></div></article>
+ <article class="art"><span class="no">제2조</span><h2>정의</h2>
+  <dl class="box">${[['팬꾹','팬이 크리에이터에게 보내는 선물을 회사 사무실에서 수령·검수한 후, 크리에이터의 주소를 팬에게 공개하지 않고 크리에이터에게 발송하는 선물 배송 대행 서비스를 말합니다.'],['회원','팬꾹에 가입한 팬과 크리에이터를 말합니다.'],['선물','팬이 크리에이터 1명에게 보내기 위해 등록한 1건을 말합니다. 선물마다 주문번호(예: FC-7K3M9)가 부여됩니다.']].map(r=>`<div class="row"><dt>${r[0]}</dt><dd>${r[1]}</dd></div>`).join('')}</dl></article>
+</div></main>${footer}`;
+
+/* ---------- 공지 ---------- */
+const NOT=[['고정','팬꾹 서비스 시작 안내','2026.10.01',1],['고정','선물 보내기 전에 꼭 확인해 주세요 (크기·무게 기준)','2026.10.01'],['','요금 안내: 상자마다 배송비가 포함돼 있어요','2026.09.30'],['','개천절·한글날 배송 일정 안내','2026.09.29'],['','크리에이터 방송 채널 인증 방법 안내','2026.09.28'],['','검수는 이렇게 진행돼요: 걸린 상자만 개봉합니다','2026.09.26'],['','카카오톡 인증 점검 안내','2026.09.24'],['','개인정보 보관 방식 안내','2026.09.22']];
+const notices=()=>`${header('공지사항')}<main class="pg"><div class="wrap"><h1>공지사항</h1>
+ <ul class="nlist" aria-label="공지사항 목록">${NOT.map(n=>`<li class="nitem ${n[3]?'open':''}"><a class="nhead" href="#" aria-expanded="${n[3]?'true':'false'}">${n[0]?`<span class="tag">${n[0]}</span>`:''}<span class="tx"><b>${n[1]}</b><time>${n[2]}</time></span><span class="chv">${ic(n[3]?'chu':'chd')}</span></a>
+ ${n[3]?`<div class="nbody"><h3>안녕하세요, 팬꾹이에요</h3><p>팬이 보낸 선물을 크리에이터가 안전하게 받을 수 있도록, 팬꾹이 문을 열어요.</p><p>팬꾹에서는 크리에이터가 승인한 선물만 배송돼요. 승인 없이는 저희 시스템이 주소를 열지 않습니다. 사무실에 도착한 상자는 송장을 제거하고 겉면과 추적 장치를 검사한 뒤 출고하고, 검사에 걸린 상자만 열어서 확인해요.</p><p>서비스 이용 중 궁금한 점은 <a class="ul" href="#">고객센터</a>에서 확인해 주세요. 많이 사랑해 주세요.</p><p class="sign">네오코드 팬꾹 운영팀</p></div>`:''}</li>`).join('')}</ul>
+ <nav class="pager" aria-label="공지사항 페이지"><a class="arrow" href="#" aria-label="이전 페이지">${ic('chl')}</a><a href="#" aria-current="page" aria-label="1페이지">1</a><a href="#" aria-label="2페이지">2</a><a class="arrow" href="#" aria-label="다음 페이지">${ic('chr')}</a></nav>
+</div></main>${footer}`;
+
+/* ---------- 문의 ---------- */
+const FQ=[['선물은 어떻게 보내나요?',1],['크리에이터가 받지 않으면 어떻게 되나요?'],['여러 상자를 한 번에 보낼 수 있나요?']];
+const support=()=>`${header('고객센터')}<main class="pg"><div class="wrap"><h1>고객센터</h1><p class="lede">자주 묻는 질문에서 궁금한 내용을 확인해 보세요. 원하는 답변을 찾지 못했다면 1:1 문의를 남겨 주세요.</p>
+ <section class="sec" style="margin-top:48px" aria-labelledby="fq"><h2 id="fq">자주 묻는 질문</h2>
+  <div class="pills scroll faqtabs" role="tablist" aria-label="질문 분류">${['선물 보내기','요금','배송','크리에이터','계정'].map((t,i)=>`<a class="pill ${i?'':'on'}" href="#" role="tab" aria-selected="${!i}">${t}</a>`).join('')}</div>
+  <ul class="faq">${FQ.map(q=>`<li class="nitem ${q[1]?'open':''}"><a class="nhead" href="#" aria-expanded="${!!q[1]}"><span class="tx"><b>${q[0]}</b></span><span class="chv">${ic(q[1]?'chu':'chd')}</span></a>
+   ${q[1]?`<div class="ans"><p>크리에이터를 선택하고 ‘선물 보내기’에서 상자 크기를 골라 결제해 주세요.</p><p>결제 후 상자별 팬꾹 주소가 발급됩니다. 승인 후 주소를 확인할 수 있으며, 승인 전에는 ‘먼저 보내기’로 주소를 확인해 상자를 보낼 수 있습니다.</p></div>`:''}</li>`).join('')}</ul></section></div>
+ <section class="band" aria-labelledby="iq"><div class="wrap"><h2 id="iq">1:1 문의</h2><p class="lede">문의는 접수 순서대로 답변합니다.</p><a class="btn btn-primary" href="#">로그인하고 문의하기</a></div></section>
+ <div class="wrap"><section class="sec" aria-labelledby="ct"><h2 id="ct">운영 시간 및 연락처</h2>
+  <dl class="cardw contact"><div><dt>운영 시간</dt><dd>평일 10:00~18:00 (주말·공휴일 휴무)</dd></div><div><dt>전화</dt><dd><a href="#">0502-1931-8289</a></dd></div><div><dt>이메일</dt><dd><a href="#">support@fankkuk.com</a></dd></div></dl></section></div></main>${footer}`;
+
+/* ---------- 신고 ---------- */
+const report=()=>`${header('')}<main class="pg"><div class="wrap"><h1>신고·문의</h1><p class="lede">팬꾹 사칭 페이지, 사진 권리 침해를 신고하거나 일반 문의를 남길 수 있습니다.</p>
+ <p class="noask">팬꾹은 채팅·메일·전화로 주소를 요청하지 않습니다. 주소 입력은 팬꾹 사이트에서만 진행해 주세요.</p>
+ <form class="cardw form" onsubmit="return false">
+  <div class="fld"><label>분류</label><div class="inp sel"><span>분류 선택</span>${ic('chd')}</div></div>
+  <div class="fld"><label>답변받을 이메일</label><div class="inp"></div></div>
+  <div class="fld"><label>페이지 주소 <small>(선택)</small></label><div class="inp"><span>https://</span></div><p class="hint">신고할 페이지나 사진이 있는 페이지의 주소를 입력해 주세요.</p></div>
+  <div class="fld"><label>내용</label><div class="inp ta"></div><p class="hint">최대 1,000자</p></div>
+  <div class="send"><p class="hint">버튼을 누르면 작성한 내용을 이메일 앱으로 전달합니다. 이메일 앱에서 내용을 확인하고 직접 전송해 주세요. 파일은 이메일 앱에서 첨부할 수 있습니다.</p><div class="row"><a class="btn btn-primary" href="#">이메일로 보내기</a></div>
+  <p class="to">받는 이메일: support@fankkuk.com · 회원은 <a href="#">고객센터의 1:1 문의</a>도 이용할 수 있습니다.</p></div>
+ </form></div></main>${footer}`;
+
+/* ---------- 탭 정의 ---------- */
+const ABOUT_AFTER='../about-20261101/index.html';
+const SCREENS={
+about:{label:'소개',route:'/about',now:'about',after:'iframe',
+ changes:[
+  '새로 그리지 않고 11-01에 시안 4 프롬프트로 그린 소개 시안(about-20261101)을 그대로 「바꾼 뒤」로 끼웠다. 아래는 지금 캡처와 그 시안의 차이다',
+  '첫 화면: 지금은 크림색 면에 양옆 이모지 그림 둘이 있다. 시안은 제목·가치·행동을 한 흐름으로 두고 그림을 줄인다 (1-1, 1-5, 5-6)',
+  '지금은 이야기 세 문단 + 주소 판 하나 + 검수 네 칸으로 끝난다. 시안은 관심 → 이해 → 신뢰 → 행동 순서로 01 주소 · 02 팬에게 보내는 선물 · 03~06 보조 기능 · 지키는 기준 · 끝 행동을 둔다 (6-2, 11-2)',
+  '주요 장점 둘(01·02)은 큰 설명 그림, 03~06은 한 단계 낮은 엇갈린 카드로 비중을 나눈다 (1-1, 6-1, 2-15)',
+  '구역 번호 01~06은 조용한 청회색(#7F97AC)으로 제목과 겹치지 않게 두고 낭독기는 건너뛴다 (7-1~7-5)'],
+ decide:['02 「팬에게 보내는 선물」을 지금 방식(팬이 받기/받지 않기를 고르고 팬꾹이 확인해 배송)으로 그렸다. 이 기능이 운영에서 열려 있는지 확인이 필요하다 (5-5). 합포장은 「나중에 다시 설계」라 넣지 않았다. 추천: 열려 있다면 그대로, 닫혀 있으면 02를 빼고 시안 재작업','03 검수 1번 설명을 배포본 원문으로 되돌릴지. 추천: 되돌린다(문구는 코드가 정본이라는 이번 요청의 기준)','엇갈린 카드 세로 간격: 시안은 48, 시안 A 는 300. 추천: 48 유지(소개 시안이 이 값으로 그려져 있고 300은 다른 시안의 값이라 근거가 약하다. 2-15 반 칸 규칙 충족은 구현 때 다시 잰다)','28절은 소개를 「카드 격자 없음」이라 했는데 시안은 03~06을 카드로 둔다. 추천: 28절 소개 줄을 시안 4 기준으로 바꾼다 (34절이 메인에 한 것과 같은 방식)']},
+doc:{label:'문서형 공통 틀',route:'',sub:{
+  guide:{label:'이용 안내(팬)',route:'/guide/fan',now:'guide-fan',render:guideFan,bg:'white'},
+  terms:{label:'이용약관',route:'/terms',now:'terms',render:terms,bg:'white'}},
+ changes:[
+  '이 틀을 바꾸면 이용 안내(크리에이터)·검수 기준·보안 안내·분쟁 처리 안내·개인정보처리방침·취소·환불 규정이 같이 바뀐다. 요금 안내(/pricing)와 자주 묻는 질문의 요약 판·칩·목차 줄도 같은 부품을 쓴다. 대표 둘만 그렸다',
+  '쪽 제목을 안내 글도 32(휴대폰 24)로 맞춘다. 지금 안내 글은 24라 약관(32)과 크기가 다르다. 조 제목은 둘 다 24(휴대폰 20) (3-2, 3-3)',
+  '요약 판(핵심 안내·주요 내용): 하늘 색면에 1px 하늘 테두리를 둬 경계가 보이게 하고, 문장 전체에 밑줄이던 링크를 「줄 전체를 누르는 칸(높이 44) + 오른쪽 화살표」로 바꾼다 (4-7, 8-6, 8-12)',
+  '안내 글 탭·분류 칩은 높이 44, 고른 칩은 지금의 검정 알약 대신 하늘 배경 + 테두리 + 굵게. 5파트 찾기 칩과 같은 모양이다 (4-3, 8-12, 1-2)',
+  '정의 상자·진행 단계 상자는 테두리만 있던 것에 옅은 그림자를 더한다. 진행 단계는 「이름 | 뜻」을 한 줄로 줄여 여섯 단계가 세 줄씩 늘어지던 것을 줄인다 (4-6, 2-2, 9-1)',
+  '바뀌지 않는 것: 680 글 기둥·880 판, 위에 붙는 「지금 조 + 목차 열기」 줄, 조 사이 구분선, 번호 목록 모양, 약관 본문 전부 (28절·14절)'],
+ decide:['페이지 바탕: 지금 문서형은 흰색이고 시안 4 바탕은 #F7F9FB 다. 긴 글은 흰 바탕을 그대로 두었다(공지·문의·신고 탭은 #F7F9FB). 추천: 긴 글만 흰색 유지']},
+notices:{label:'공지',route:'/notices',now:'notices',render:notices,bg:'bg',
+ changes:[
+  '바탕을 #F7F9FB 로 깔아 흰 공지 카드가 1px 테두리 + 옅은 그림자로 분명히 떨어지게 한다. 지금은 흰 바탕에 카드만 옅게 떠 있다 (4-4, 4-6, 4-8)',
+  '쪽 제목 32(휴대폰 24). 지금은 약 28이라 구간 제목과 비슷하다 (3-2)',
+  '열린 공지는 머리를 하늘 배경으로 채우고 테두리를 하늘색으로 바꿔 지금 어느 글을 읽는지 보이게 한다. 날짜는 14, 오른쪽 화살표 칸은 44 (4-3, 8-12, 3-2)',
+  '「고정」 표시는 하늘 뱃지 그대로 두고 글자색만 짙게(#075985) 한다 (3-6)',
+  '쪽 넘김은 44 정사각 칸으로, 지금 쪽은 하늘 배경 + 테두리 + 굵게. 지금은 작은 화살표가 떠 있고 지금 쪽만 검정 칸이다 (8-12, 4-3)']},
+support:{label:'문의',route:'/support',now:'support',render:support,bg:'bg',toggleBand:true,
+ changes:[
+  '머리 제목 32(휴대폰 24), 설명 16. 구간 제목(자주 묻는 질문·1:1 문의·운영 시간 및 연락처)은 24(휴대폰 20)로 한 단계만 낮춘다 (3-2, 1-1)',
+  '질문 분류 탭은 높이 44 칩, 고른 칩은 하늘 배경 + 테두리 + 굵게(지금은 검정 알약). 휴대폰은 한 줄로 옆으로 넘긴다 (4-3, 8-4, 8-12)',
+  '질문 줄은 높이 56 이상, 줄 전체가 누르는 칸. 열린 줄은 하늘 테두리 + 머리 하늘 배경으로 구분한다 (8-6, 4-3)',
+  '1:1 문의 띠: 로그인 전에는 버튼 하나뿐이다. 지금은 680 폭으로 길게 늘어난 하늘 버튼인데, 글자 폭 버튼(휴대폰만 폭 전체)으로 바꾼다 (1-3, 8-1)',
+  '운영 시간·전화·이메일은 경계 카드 한 장에 세로 구분선으로 묶고, 항목 이름은 12 → 14, 전화·이메일은 누르는 칸 44 (4-6, 충돌 결정 12, 8-12)']},
+report:{label:'신고',route:'/report',now:'report',render:report,bg:'bg',
+ changes:[
+  '바탕 #F7F9FB 위의 양식 카드를 1px 테두리 + 옅은 그림자 흰 카드로 한다. 지금은 카드 안이 옅은 하늘 그라데이션이다 (4-6, 4-5)',
+  '쪽 제목 32(휴대폰 24), 「주소를 요청하지 않습니다」 줄은 지금 13쯤인 글자를 14로 올린다 (3-2, 충돌 결정 12)',
+  '입력칸 테두리는 흰 바탕 4.8:1 값(#6B7280), 높이 48. 시안 4 검색창과 같은 모양이다 (3-6, 8-12)',
+  '「이메일로 보내기」는 PC에서 카드 안 오른쪽 아래에 글자 폭 버튼으로 두고(시선이 끝나는 곳), 휴대폰은 폭 전체. 지금은 카드 폭 전체다 (1-4, 8-1)',
+  '칸 순서·안내 문구·버튼 위 한 줄은 그대로. 요약 판이 없는 양식 화면이라는 28절 결정도 그대로 둔다 (28절, 13-2)']}
+};
+const NOWDIR='../../../../workspace/redesign-v4/part7/now/';
+let cur='about',sub='guide',W=1440,V='both',band='sky';
+const $=s=>document.querySelector(s);
+const tabs=$('#tabs');
+Object.entries(SCREENS).forEach(([k,s])=>{const b=document.createElement('button');b.textContent=s.label;b.dataset.k=k;b.setAttribute('role','tab');tabs.append(b)});
+const CLIP=2200;
+function draw(){
+  const t=SCREENS[cur], s=t.sub?t.sub[sub]:t;
+  tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b.dataset.k===cur));
+  document.querySelectorAll('#widths button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.w===W));
+  document.querySelectorAll('#views button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===V));
+  const mark=x=>x.replace(/\(([^)]*\d-\d+[^)]*|충돌 결정[^)]*|28절[^)]*)\)\s*$/,'<span>($1)</span>');
+  const route=s.route||t.route;
+  $('#changes').innerHTML=`<h2>${t.label}<span>${route}</span></h2><p style="font-size:14px;font-weight:700;margin:0">바뀌는 것</p><ul>${t.changes.map(x=>`<li>${mark(x)}</li>`).join('')}</ul>`
+   +(t.decide?`<div class="note"><b>사용자가 정할 것${cur==='about'?' (BACKLOG 「소개 페이지 시안 4 반영 여부」에서 옮김)':''}</b><ol>${t.decide.map(x=>`<li>${x}</li>`).join('')}</ol></div>`:'')
+   +(t.toggleBand?`<div class="note"><b>사용자가 정할 것</b>1:1 문의 띠 색 — 28절이 정한 크림(지금) 대신 시안 4의 하늘 띠(34절 ③ 소개 띠와 같은 값)로 맞출지. 추천: 하늘 띠. 스위치로 바꿔 볼 수 있다.<div class="seg" id="bands" style="display:inline-flex;margin-left:8px"><button data-b="sky" aria-pressed="${band==='sky'}">하늘 띠(제안)</button><button data-b="cream" aria-pressed="${band==='cream'}">크림(지금)</button></div></div>`:'');
+  const subEl=$('#sub');
+  if(t.sub){subEl.hidden=false;subEl.innerHTML='<span class="seg-label">대표 화면</span><div class="seg" id="subs">'+Object.entries(t.sub).map(([k,v])=>`<button data-s="${k}" aria-pressed="${k===sub}">${v.label} <span style="color:var(--muted);font-weight:500">${v.route}</span></button>`).join('')+'</div>'}else subEl.hidden=true;
+  const n=V==='both'?2:1, avail=document.documentElement.clientWidth-48-24*(n-1);
+  const z=Math.min(1,avail/(W*n));
+  const nowHtml=`<div class="pane"><h3>지금<em>캡처 · ${W}${cur==='doc'?' · 앞부분만':''}</em></h3><div class="shot" style="width:${W*z}px;max-height:${CLIP*z}px"><img src="${NOWDIR}${s.now}-${W}.jpg" alt="지금 화면 ${W}"></div></div>`;
+  let body;
+  if(t.after==='iframe') body=`<iframe id="ab" title="소개 시안" src="${ABOUT_AFTER}" style="border:0;width:${W}px;height:1200px;display:block;background:#fff"></iframe>`;
+  else body=`<div class="stage ${s.bg==='white'?'white':''} ${band==='sky'?'sky-band':''}" style="width:${W}px" id="stage">${s.render()}</div>`;
+  const aft=`<div class="pane"><h3>바꾼 뒤<em>${W}${cur==='about'?' · about-20261101 시안 그대로':cur==='doc'?' · 앞부분만':''}</em></h3><div class="shot" style="width:${W*z}px;${cur==='doc'?`max-height:${CLIP*z}px`:''}"><div style="zoom:${z}">${body}</div></div></div>`;
+  $('#panes').innerHTML=(V==='both'?nowHtml:'')+aft;
+  const ab=$('#ab');
+  if(ab)ab.onload=()=>{try{ab.style.height=ab.contentDocument.documentElement.scrollHeight+'px'}catch(e){}};
+}
+tabs.onclick=e=>{const b=e.target.closest('button');if(b){cur=b.dataset.k;draw()}};
+$('#widths').onclick=e=>{const b=e.target.closest('button');if(b){W=+b.dataset.w;draw()}};
+$('#views').onclick=e=>{const b=e.target.closest('button');if(b){V=b.dataset.v;draw()}};
+$('#sub').onclick=e=>{const b=e.target.closest('button');if(b){sub=b.dataset.s;draw()}};
+$('#changes').onclick=e=>{const b=e.target.closest('#bands button');if(b){band=b.dataset.b;draw()}};
+addEventListener('resize',draw);
+const q=new URLSearchParams(location.search);
+if(q.get('s')&&SCREENS[q.get('s')])cur=q.get('s');if(q.get('sub'))sub=q.get('sub');if(q.get('w'))W=+q.get('w');if(q.get('v'))V=q.get('v');if(q.get('band'))band=q.get('band');
+draw();
+</script>
+</body>
+</html>
