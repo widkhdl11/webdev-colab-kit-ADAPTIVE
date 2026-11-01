@@ -16,6 +16,18 @@ import s from "./reset-password.module.css";
 // 처음부터 링크가 없으면 옮기지 않는다 — 화면을 열자마자 포커스를 옮기지 않는다(접근성 관례).
 // 저장이 실패하면 틀린 칸 바로 아래에 「!」 줄(가입 2단계와 같은 모양)을 띄우고 그 칸으로 포커스를 옮긴다(aria-describedby 로 그 줄을 가리킨다).
 // 칸을 모르는 실패(연결 실패 등)는 버튼 위 상자 — 포커스는 새 비밀번호 칸.
+// 오류 상자 앞 「!」 원은 CSS 장식, 완료 상자 앞 체크 원은 글자 없는 SVG — 둘 다 낭독하지 않는다(design-rules 37절, 색만으로 알리지 않음).
+
+/** 완료 상자 앞 체크 원 — 단색 SVG, 글자색을 따른다 */
+function DoneMark() {
+  return (
+    <span className={s.mark} aria-hidden="true">
+      <svg width={14} height={14} viewBox="0 0 24 24">
+        <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  );
+}
 
 type State =
   | { kind: "ready" }
@@ -89,8 +101,10 @@ export function ResetPasswordPanel({ token }: { token: string }) {
   // 링크가 없거나 죽었을 때 — 같은 모양(상자 + 채운 버튼 하나), 버튼은 비밀번호 찾기로
   const deadLink = (message: string) => (
     <div className="form">
-      <p className="err" role="alert">
-        <Sentences text={message} keep={KEEP} />
+      <p className={`err ${s.alert}`} role="alert">
+        <span className={s.msg}>
+          <Sentences text={message} keep={KEEP} />
+        </span>
       </p>
       <Link className="btn btn--block" href={FORGOT_PATH} ref={nextRef}>
         {"재설정\u00a0메일 다시 받기"}
@@ -106,8 +120,11 @@ export function ResetPasswordPanel({ token }: { token: string }) {
   } else if (state.kind === "done") {
     body = (
       <div className="form">
-        <p className="okmsg" role="status">
-          <Sentences text={state.message ?? DONE_MESSAGE} />
+        <p className={`okmsg ${s.withMark}`} role="status">
+          <DoneMark />
+          <span className={s.msg}>
+            <Sentences text={state.message ?? DONE_MESSAGE} />
+          </span>
         </p>
         <Link className="btn btn--block" href="/login" ref={nextRef}>
           로그인
@@ -154,8 +171,12 @@ export function ResetPasswordPanel({ token }: { token: string }) {
           />
           {badLine("passwordConfirm", f("pw2-m"))}
         </div>
-        <p className="err" id={f("err")} role="alert">
-          {boxFailed && state.kind === "failed" ? <Sentences text={state.message} /> : null}
+        <p className={`err ${s.alert}`} id={f("err")} role="alert">
+          {boxFailed && state.kind === "failed" ? (
+            <span className={s.msg}>
+              <Sentences text={state.message} />
+            </span>
+          ) : null}
         </p>
         <button
           className="btn btn--block"

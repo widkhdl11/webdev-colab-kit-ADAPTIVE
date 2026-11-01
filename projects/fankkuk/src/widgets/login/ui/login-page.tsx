@@ -108,8 +108,11 @@ export function LoginPage({ next, notice }: { next?: string; notice?: string | n
               )}
               {error && (
                 // 잠김 안내처럼 두 문장이면 문장마다 줄(design-rules 29절 줄바꿈 3)
-                <p className="err" id={f("error")} role="alert">
-                  <Sentences text={error} />
+                // 앞의 「!」 원은 CSS 장식(낭독 안 함) — 색만으로 오류를 알리지 않는다(design-rules 37절)
+                <p className={`err ${s.alert}`} id={f("error")} role="alert">
+                  <span className={s.msg}>
+                    <Sentences text={error} />
+                  </span>
                 </p>
               )}
               <button className="btn btn--block" type="submit" aria-disabled={pending} aria-busy={pending || undefined}>

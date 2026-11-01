@@ -1,9 +1,18 @@
 /* 회원가입 — 시안 docs/design/mockups/site/v43-signup/(단계 화면, 2026-10-29 승인) · 바탕은 part6-2026-10-25/signup.html · part6.css 「가입」(design-rules 29절, 2026-10-25 승인). 기둥(.auth)·머리(.auth .head)·카드·폼·확인칸(.check)·오류(.err)·아래 줄(.foot-line)은 전역 클래스.
-   가운데 기둥 720(양옆 여백 포함 768). 상단 바 아래 96, 바닥글까지 96(휴대폰 64). 색은 하늘 한 색 + 회색.
-   시안은 세 단계 카드를 쌓아 보이지만 가입은 한 단계씩 넘기는 흐름이라, 카드 한 장 안에 지금 단계만 보이고 위에 단계 표시 줄이 있다 */
+   가운데 기둥 480(design-rules 37절 2026-11-01 — 29절 「가입 720」을 바꿈, 시안 part6-v4-20261101). 상단 바 아래 96, 바닥글까지 96(휴대폰 64). 색은 하늘 한 색 + 회색.
+   시안은 세 단계 카드를 쌓아 보이지만 가입은 한 단계씩 넘기는 흐름이라, 카드 한 장 안에 지금 단계만 보이고 위에 단계 표시 줄이 있다
+   37절 값은 가입 화면 안에서만 쓴다(공용 .btn--line·.input·.card·--col-form 은 로그인 후 설정 화면도 써서 그대로 둔다) */
 
+.box {
+  --su-col: 480px; /* 37절 — 1~5단계 카드 폭 하나 */
+  --su-line: var(--gray-500); /* 짙은 선 #6B7280 — 흰 바탕 4.83:1(누르는 칸 경계 3:1) */
+}
 .page { padding: var(--space-24) 0 var(--section-gap); } /* 위 96(간격 단계, 2026-10-18 재진단 — 88 이던 것) */
-:global(.auth).box { max-width: calc(var(--col-form) + 2 * var(--gutter)); }
+:global(.auth).box { max-width: calc(var(--su-col) + 2 * var(--gutter)); }
+/* 카드: 사이트 흰 카드와 같은 경계 선(--hair) + --card-shadow, 바탕 흰색(37절) */
+.box :global(.card) { background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
+/* 선(보조)·회색(soft — 인증번호 받기 등 같은 보조 자리) 버튼 짙은 선 — 이 화면 안에서만(37절). 누를 수 없는 상태는 공용 모양 그대로 */
+.box :global(:is(.btn--line, .btn--soft):not(:disabled, [aria-disabled="true"])) { box-shadow: inset 0 0 0 1px var(--su-line); }
 .box :global(.head) { margin-bottom: var(--space-8); }
 .box :global(.head .t-lead) { margin-top: var(--space-2); font-size: var(--fs-lead); font-weight: 400; line-height: 1.5; } /* 설명 16/400(29절 세 화면 같은 머리) */
 .box :global(:is(.err, .okmsg)) { font-weight: var(--fw-btn); }
@@ -51,16 +60,21 @@
 }
 /* 휴대폰 폭: 단계 줄은 지금 단계만 이름을 보이고 나머지는 번호만(시안 v43 — 크리에이터 다섯 칸이 한 줄에 들어가게) */
 @media (max-width: 480px) {
-  .st:not([aria-current]) .lbl { display: none; }
+  .st:not([aria-current]) .lbl { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } /* 화면에서만 숨김 — 지난 단계로 가는 버튼·링크의 이름이라 낭독기는 읽어야 한다 */
   .st:not([aria-current]) { padding: 0 8px; }
   .steps li:not(:has([aria-current])) { flex: 0 0 auto; }
   .steps li:has([aria-current]) { flex: 1 1 0; }
 }
+/* 크리에이터 다섯 단계 — 480 에 이름 다섯이 안 들어가 PC 도 휴대폰 모양(지금 단계만 이름, 나머지는 48 원 칸, 37절) */
+.steps.many li:not(:has([aria-current])) { flex: 0 0 auto; }
+.steps.many li:has([aria-current]) { flex: 1 1 0; }
+.steps.many .st:not([aria-current]) { width: 48px; padding: 0; }
+.steps.many .st:not([aria-current]) .lbl { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } /* 화면에서만 숨김 — 지난 단계로 가는 버튼·링크의 이름이라 낭독기는 읽어야 한다 */
 
 /* 1단계 — 유형 선택 */
 .choices { display: grid; gap: var(--space-4); }
-.choice { display: flex; align-items: flex-start; gap: var(--space-4); padding: var(--space-6); border-radius: var(--r-card); box-shadow: inset 0 0 0 1px var(--gray-200); cursor: pointer; background: var(--white); }
-.choice:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
+.choice { display: flex; align-items: flex-start; gap: var(--space-4); padding: var(--space-6); border-radius: var(--r-card); box-shadow: inset 0 0 0 1px var(--su-line); cursor: pointer; background: var(--white); }
+.choice:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 2px var(--brand-line); } /* 고른 칸 짙은 선 2px(37절) */
 .choice:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 .choice input { width: var(--icon-xs); height: var(--icon-xs); margin: 2px 0 0; flex-shrink: 0; accent-color: var(--brand-line); }
 .choice input:focus-visible { outline: none; }
@@ -86,14 +100,21 @@
 .step :global(.field[aria-invalid="true"]) { box-shadow: inset 0 0 0 2px var(--danger); }
 .live-ok svg { flex-shrink: 0; }
 .live-wait { color: var(--gray-600); font-size: var(--fs-caption); line-height: var(--lh-caption); } /* 미리 확인 중·잠시 뒤에 — 틀렸다는 표시가 아니다 */
+/* 태그 칩(크리에이터) — 높이 44 · 짙은 선 1px, 고르면 하늘 면 + 하늘 선 + 굵게(37절, 5파트 찾기 칩과 같음). 다 고른 뒤 흐린 칩은 공용 그대로 */
+.step :global(.chip) { min-height: 44px; }
+.step :global(.chip:not([aria-disabled="true"])) { background: var(--white); box-shadow: inset 0 0 0 1px var(--su-line); color: var(--ink); }
+.step :global(.chip):hover { background: var(--gray-50); }
+.step :global(.chip[aria-pressed="true"]),
+.step :global(.chip[aria-pressed="true"]):hover { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); color: var(--brand-ink); font-weight: var(--fw-btn); }
 /* 이메일 — 앞부분 @ 주소 고르기 한 줄, 「직접 입력」이면 아래에 주소 칸 */
 .email { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; }
 .at { font-weight: var(--fw-btn); color: var(--gray-600); }
 .email-custom { margin-top: 8px; }
 
 /* 3단계 — 휴대폰 번호 확인(시안 v43-signup/signup-3-phone). 칸과 버튼이 한 줄, 인증번호 칸 안쪽 오른쪽에 남은 시간 */
-.phone-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: start; }
-.phone-row :global(.btn) { white-space: nowrap; padding-inline: 14px; }
+/* 버튼 셋(인증번호 받기·다시 받기·확인) 폭 120 으로 같게 — 두 줄 칸 끝이 맞고 상태가 바뀌어도 칸 길이 그대로(37절) */
+.phone-row { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 8px; align-items: start; }
+.phone-row :global(.btn) { width: 100%; white-space: nowrap; padding-inline: 8px; }
 .code { position: relative; }
 .code :global(.field) { padding-right: 80px; }
 .timer { position: absolute; right: 16px; top: 12px; font-variant-numeric: tabular-nums; color: var(--gray-600); font-weight: 600; }
@@ -101,3 +122,11 @@
 .phone-err { margin-top: 8px; }
 .phone-err-action { margin-top: 12px; }
 .step > .error { margin-top: 24px; }
+
+/* 4단계 채널 확인(크리에이터) — 채널 확인 부품은 상세 설정과 같이 쓰므로 가입 카드(.chan) 안에서만 덮어쓴다(37절) */
+.chan :global(.input) { min-height: 48px; } /* 채널 주소 칸 48 — 1~3·5단계 칸과 같게(공용 .input 52 는 그대로) */
+
+/* 5단계 버튼 줄(카카오 위 꽉 차게, 아래 「이전 | 나중에 하기」 반씩)은 승인 서명 부품의 .three 가 맡는다(가입에서만 붙는 클래스) */
+/* 실패 상자 앞 「!」 원 — 색만으로 알리지 않는다(장식이라 읽지 않음) */
+.sig :global(.err) { display: flex; align-items: flex-start; gap: 12px; }
+.sig :global(.err)::before { content: "!" / ""; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--brand-ink); font-weight: var(--fw-btn); line-height: 1; }

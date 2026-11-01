@@ -489,7 +489,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
           </div>
 
           <nav className={s["steps-wrap"]} aria-label="가입 단계" ref={navRef}>
-            <ol className={s.steps}>
+            <ol className={steps.length > FORM_STEPS.length ? `${s.steps} ${s.many}` : s.steps}>
               {steps.map((label, i) => {
                 const k = i + 1;
                 const done = k !== step && k < reached; // 지나온 단계만 완료 — 아직 넘지 않은 마지막 단계는 숫자 그대로(선물 보내기와 같은 기준)

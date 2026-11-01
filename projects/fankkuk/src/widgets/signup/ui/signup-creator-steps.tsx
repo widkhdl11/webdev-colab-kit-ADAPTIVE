@@ -31,7 +31,7 @@ function CheckIcon() {
 function StepNav({ step }: { step: 4 | 5 }) {
   return (
     <nav className={s["steps-wrap"]} aria-label="가입 단계">
-      <ol className={s.steps}>
+      <ol className={`${s.steps} ${s.many}`}>
         {STEPS.map((label, i) => {
           const k = i + 1;
           const done = k < step;
@@ -97,7 +97,7 @@ export function SignupCreatorSteps(props: SignupCreatorStepsProps) {
 function ChannelStep({ verification }: { verification: { state: MyVerificationState; rows: readonly MyVerification[]; apiPlatforms: readonly string[] } }) {
   const verified = verification.state.verified;
   return (
-    <div className="card">
+    <div className={`card ${s.chan}`}>
       <VerificationPanel state={verification.state} rows={verification.rows} apiPlatforms={verification.apiPlatforms} />
       <div className={[s["step-actions"], verified ? s["no-prev"] : ""].filter(Boolean).join(" ")}>
         {verified ? null : (
@@ -133,17 +133,20 @@ function SignatureStep({ creatorId, sealingKeyPem, linked, pending }: { creatorI
     // 개발 모드는 효과를 두 번 돌린다 — 두 번째의 빈 값이 첫 번째에 읽은 번호를 덮지 않게
     setPhone((prev) => saved || prev || "");
   }, []);
+  // 감싼 칸(.sig)은 가입 안에서만 버튼 줄·실패 상자 모양을 덮어쓰려고 둔다 — 부품은 상세 설정과 같이 쓴다(37절)
   return (
-    <SignatureLinkPanel
-      key={phone ?? "first"}
-      creatorId={creatorId}
-      sealingKeyPem={sealingKeyPem}
-      initialPhone={phone ?? ""}
-      initiallyLinked={linked}
-      pending={pending}
-      prevHref={`${STEP_PATH}?step=4`}
-      laterHref={CREATOR_HOME}
-      done={{ label: "가입 완료", href: CREATOR_HOME }}
-    />
+    <div className={s.sig}>
+      <SignatureLinkPanel
+        key={phone ?? "first"}
+        creatorId={creatorId}
+        sealingKeyPem={sealingKeyPem}
+        initialPhone={phone ?? ""}
+        initiallyLinked={linked}
+        pending={pending}
+        prevHref={`${STEP_PATH}?step=4`}
+        laterHref={CREATOR_HOME}
+        done={{ label: "가입 완료", href: CREATOR_HOME }}
+      />
+    </div>
   );
 }

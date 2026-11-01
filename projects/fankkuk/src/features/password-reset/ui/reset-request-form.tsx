@@ -46,20 +46,28 @@ export function ResetRequestForm() {
         </label>
         <input className="field" id={f("mail")} type="email" autoComplete="email" placeholder="example@email.com" />
       </div>
-      <p className={result && !result.ok ? "err" : "okmsg"} role="status">
-        {result ? <Sentences text={result.text} /> : null}
-      </p>
-      {result?.ok ? (
-        <p className="t-desc">
-          {"링크 유효 시간: 1시간 · 1회 사용 가능"}
-          <br />
-          {"메일이 도착하지 않으면 "}
-          <Link className={`nw ${s.link}`} href="/support">
-            1:1 문의
-          </Link>
-          {"를 이용해\u00a0주세요."}
+      {/* 보낸 뒤 안내(일치하면 발송 · 유효 시간 · 1:1 문의)는 한 상자(.group)로 묶는다 — 확인된 성공이 아니라 체크는 붙이지 않는다(design-rules 37절).
+          알림 칸(role=status)은 늘 같은 자리에 두고 상자 모양만 바깥 틀이 그린다. 오류면 같은 칸이 .err + 앞 「!」 원(장식) */}
+      <div className={result?.ok ? s.group : undefined}>
+        <p className={result && !result.ok ? `err ${s.alert}` : "okmsg"} role="status">
+          {result ? (
+            <span className={s.msg}>
+              <Sentences text={result.text} />
+            </span>
+          ) : null}
         </p>
-      ) : null}
+        {result?.ok ? (
+          <p className={s.sub}>
+            {"링크 유효 시간: 1시간 · 1회 사용 가능"}
+            <br />
+            {"메일이 도착하지 않으면 "}
+            <Link className={`nw ${s.link}`} href="/support">
+              1:1 문의
+            </Link>
+            {"를 이용해\u00a0주세요."}
+          </p>
+        ) : null}
+      </div>
       <button className="btn btn--block" type="submit" aria-disabled={busy} aria-busy={busy || undefined}>
         {busy ? "발송 중" : "재설정 링크 보내기"}
       </button>

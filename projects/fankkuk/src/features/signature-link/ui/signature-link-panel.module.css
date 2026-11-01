@@ -23,9 +23,12 @@
 /* 아래 버튼 줄 — 넓은 폭: 이전 · 나중에 하기(남은 폭) · 요청. 좁은 폭: 요청이 맨 위, 나머지는 아래로 한 줄씩. 연결 완료는 버튼 하나가 줄을 꽉 채운다 */
 .actions { display: grid; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-200); }
 .actions :global(.btn) { white-space: nowrap; }
+/* 가입(나중에 하기가 있는 버튼 셋)은 폭과 상관없이 요청이 위에 꽉 차게, 아래 「이전 | 나중에 하기」 반씩 — 셋을 한 줄에 두면 480 카드 밖으로 나간다(design-rules 37절) */
+.three { grid-template-columns: 1fr 1fr; }
+.three .main { grid-column: 1 / -1; order: -1; }
+.three :global(.btn) { min-width: 0; }
 .bubble { width: 24px; height: 24px; color: var(--kakao-ink); }
 @media (min-width: 768px) {
-  .three { grid-template-columns: auto 1fr auto; align-items: center; }
   .two { grid-template-columns: auto 1fr; align-items: center; }
   .two .main { justify-self: end; }
   .actions :global(.btn) { min-width: 120px; }
