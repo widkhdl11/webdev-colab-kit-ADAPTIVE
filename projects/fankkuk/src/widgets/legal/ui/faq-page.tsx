@@ -73,7 +73,7 @@ export function FaqPage({
   );
 
   return (
-    <main id="main" className={`${d.page} ${d.guide}`}>
+    <main id="main" className={d.page}>
       <section className={d.head} aria-labelledby="page-title">
         <div className="pub-inner">
           <div className={d.titleBox}>

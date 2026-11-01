@@ -12,3 +12,7 @@
 .to { margin-top: var(--space-4); }
 /* 버튼 바로 위 안내 한 줄 — 버튼과 8 */
 .form .btnHint { margin: 0 0 var(--space-2); }
+/* 보내기 버튼 — PC 는 카드 안 오른쪽 아래에 글자 폭, 휴대폰은 폭 전체(design-rules 36절) */
+@media (min-width: 768px) {
+  .form button[type="submit"] { display: flex; width: auto; margin-left: auto; }
+}

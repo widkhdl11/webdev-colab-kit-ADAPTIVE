@@ -13,8 +13,8 @@ import { PROMISE } from "@/shared/config/site-copy";
 import { SITE_INFO } from "@/shared/config/site-info";
 import s from "./support.module.css";
 
-// 고객센터. 시안: docs/design/mockups/site/part7-2026-10-22/support.html (design-rules 28절, UX 명세 docs/ux/pages/support.md)
-// 머리 → 자주 묻는 질문(탭 줄 880, 펼친 답 680) → 1:1 문의(화면 폭 크림 띠 안 680 한 기둥) → 연락처 사실 한 줄.
+// 고객센터. 시안: docs/design/mockups/part7-v4-20261101/index.html 「문의」 바꾼 뒤(design-rules 36절) · 그 전 배치 part7-2026-10-22/support.html(28절, UX 명세 docs/ux/pages/support.md)
+// 머리 → 자주 묻는 질문(탭 줄 880, 펼친 답 680) → 1:1 문의(화면 폭 하늘 띠 안 680 한 기둥) → 연락처 사실 한 줄.
 // 1:1 문의: 로그인하지 않았으면 칸 없이 로그인 버튼 하나, 로그인했으면 실제로 접수한다(결정 d25).
 // 양식 아래 「내 문의」는 자주 묻는 질문과 같은 펼치는 줄로 보인다(쓴 사람 본인 것만 — DB 가 거른다).
 // 요금 답변의 숫자는 결제와 같은 DB 요금표(서버 page 가 읽어 넘긴다)를, 구간 기준은 size-tier 를 읽는다.
@@ -192,7 +192,7 @@ export function SupportPage({
 
   return (
     <main id="main" className={s.page}>
-      <section aria-labelledby="page-title">
+      <section className={s.head} aria-labelledby="page-title">
         <div className="pub-inner">
           <header className="page-head">
             <div className="ph-row">

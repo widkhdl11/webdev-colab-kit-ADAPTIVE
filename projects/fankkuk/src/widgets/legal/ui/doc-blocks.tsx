@@ -24,6 +24,9 @@ function RefundValue({ value, tone, words }: { value: string; tone?: RefundTone;
 
 type Links = readonly (readonly [string, string])[];
 
+/** 한 줄 상자로 그릴 값의 최대 글자 수 — 390 폭 오른쪽 칸(약 200)에 두 줄 안쪽으로 들어가는 길이 */
+const ONE_LINE_MAX = 24;
+
 /** 문장 속 낱말을 링크로 — 낱말마다 처음 나오는 자리 하나만, 앞에서부터. 링크 안 글자도 찾은 낱말 표시를 받는다 */
 function Linked({ text, words, links }: { text: string; words: readonly string[]; links: Links }) {
   const spots = links
@@ -100,7 +103,7 @@ export function DocBlock({ block, words, tag = null, plain = false, links = [] }
       );
     case "prices":
       return (
-        <div className={s.box}>
+        <div className={`${s.box} ${s.tableBox}`}>
           <table className={s.prices}>
             <caption className="sr-only">상자 구간별 요금</caption>
             <thead>
@@ -148,8 +151,11 @@ export function DocBlock({ block, words, tag = null, plain = false, links = [] }
     case "rows": {
       const rows = block.rows.filter((r) => rowShown(r, tag));
       if (rows.length === 0) return null;
+      // 줄마다 짧은 칸 하나뿐이면(진행 단계 「이름 | 뜻」·반송 택배비) 한 줄로 — 36절.
+      // 긴 문장 값(개인정보 보유 기간 등)은 한 줄로 두면 값 시작선이 줄마다 어긋나 위아래 모양 그대로
+      const oneLine = rows.every((r) => r.fields.length === 1 && r.fields[0]![1].length <= ONE_LINE_MAX);
       return (
-        <div className={s.box}>
+        <div className={oneLine ? `${s.box} ${s.oneLine}` : s.box}>
           {rows.map((row) => (
             <div key={row.title} className={s.caseRow}>
               <h3>{m(row.title)}</h3>

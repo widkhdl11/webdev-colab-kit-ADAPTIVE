@@ -7,7 +7,9 @@
 }
 
 /* 신고·문의 — 머리 아래 주소 안내 한 줄, 양식 카드는 머리와 같은 시작선·680 한 기둥(design-rules 28절, 시안 part7-2026-10-22/report.html) */
-.page :global(.page-head) .noAsk { margin-top: var(--space-2); font-size: var(--fs-caption); }
+/* 쪽 제목 32(휴대폰 24 — --fs-title 이 폭에 따라 바뀐다), 주소 안내 한 줄 14(36절, 시안 part7-v4 신고) */
+.page :global(.page-head .ph-title) { font-size: var(--fs-title); line-height: 1.25; }
+.page :global(.page-head) .noAsk { margin-top: var(--space-2); font-size: var(--fs-small); }
 .formCard { max-width: var(--prose-max); }
 @media (max-width: 767px) {
   .formCard { padding: var(--space-6) var(--space-4); }

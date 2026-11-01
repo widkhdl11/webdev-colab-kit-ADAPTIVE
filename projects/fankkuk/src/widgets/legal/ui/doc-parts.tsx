@@ -65,19 +65,25 @@ export function DocSummary({
           const id = targets[i] ?? null;
           return (
             <li key={line}>
+              {/* 줄 전체가 누르는 칸(44) + 오른쪽 화살표 — 갈 조가 없는 줄은 같은 모양의 글자만(36절) */}
               {id ? (
                 <a
-                  className={s.summaryLink}
+                  className={s.summaryRow}
                   href={`#${id}`}
                   onClick={(e: MouseEvent<HTMLAnchorElement>) => {
                     e.preventDefault();
                     onGo(id);
                   }}
                 >
-                  {line}
+                  <span className={s.summaryText}>{line}</span>
+                  <svg className={s.summaryGo} viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="m7.5 4 6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
                 </a>
               ) : (
-                <span>{line}</span>
+                <span className={s.summaryRow}>
+                  <span className={s.summaryText}>{line}</span>
+                </span>
               )}
             </li>
           );

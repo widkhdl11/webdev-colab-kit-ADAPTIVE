@@ -16,7 +16,7 @@ import s from "./doc-page.module.css";
 
 type Props = {
   doc: LegalDoc;
-  /** policy = 약관 세 글(제목 32 · 조 제목 24), guide = 안내 글(제목 24 · 조 제목 20, 28절) */
+  /** policy = 약관 세 글(요약 제목 「주요 내용」), guide = 안내 글(「핵심 안내」). 제목 크기는 둘 다 32·조 24(36절) */
   variant: "policy" | "guide";
   tabs?: DocTabs;
   /** 머리 아래 줄 — 약관의 사실 한 줄(버전 · 시행일 · 운영) */
@@ -52,7 +52,7 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
   const searchRef = useRef<HTMLInputElement>(null);
 
   return (
-    <main id="main" className={`${s.page}${guide ? ` ${s.guide}` : ""}`}>
+    <main id="main" className={s.page}>
       <section className={s.head} aria-labelledby="page-title">
         <div className="pub-inner">
           {tabs ? <DocTabRow tabs={tabs} /> : null}
