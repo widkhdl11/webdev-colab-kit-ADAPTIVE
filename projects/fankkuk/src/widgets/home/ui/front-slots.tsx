@@ -129,7 +129,7 @@ function HomeTiles({ tiles, label }: { tiles: readonly FrontTile[]; label: strin
 /** 진행 상태 뱃지 — 색만이 아니라 점 + 글자(35절). 색 갈래는 각 도메인이 정한 tone 그대로 */
 export function StatusBadge({ tone, text }: { tone: StatusTone; text: string }) {
   return (
-    <span className={h.stt} data-tone={tone}>
+    <span className={`tag tag--dot ${h.stt}`} data-tone={tone}>
       {text}
     </span>
   );

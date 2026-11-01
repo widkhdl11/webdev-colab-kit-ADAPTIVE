@@ -30,6 +30,8 @@
    (design-rules 38절, 시안 part1-v4 .finder). 칸 길이는 값(송장번호 열두 자리 안팎) 길이에 맞춘다 */
 .finder { max-width: 528px; margin-top: 16px; padding: 24px; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--hair); }
 .finder--tint { background: var(--white); box-shadow: inset 0 0 0 1px var(--tint-line); }
+/* 하단 시트 안 — 시트가 이미 판이라 상자 없이 양식만(find-sent-box 와 같은 모양). 767 이하 안쪽 16 보다 뒤에서 이기도록 두 번 쓴다 */
+.finder.finder--bare { max-width: none; margin-top: 0; padding: 0; border-radius: 0; background: none; box-shadow: none; }
 .finder form, .finder .result { max-width: 480px; }
 .finder :global(.input), .finder form :global(.btn) { height: 48px; min-height: 48px; }
 /* 위 질문 줄은 낭독기용(sr-only)이라 양식이 상자 맨 위에서 시작한다 */

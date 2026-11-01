@@ -37,6 +37,8 @@
 .month { display: flex; align-items: baseline; gap: var(--space-3); margin-top: var(--space-12); }
 .month h2 { font-family: var(--font-round); font-size: var(--fs-page); letter-spacing: 0; line-height: 1.4; }
 .month small { font-size: var(--fs-small); color: var(--sub); }
+/* 휴대폰 — 이름 제목이 24(--fs-title)로 줄어 달 머리 24 와 같아지므로 달 머리는 20 으로 내려 위계를 지킨다 */
+@media (max-width: 767px) { .month h2 { font-size: var(--fs-card); } }
 
 /* 사진 격자 — 3열 사이 16, 칸 폭 779 이하 2열 사이 12 (시안 .album · .tile).
    한 행의 카드 높이는 같게, 「N번째 선물 / 상세 보기 ›」는 카드 아래에 붙인다(design-rules 38절) */

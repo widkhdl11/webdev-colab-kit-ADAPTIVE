@@ -24,8 +24,9 @@ type Result = { kind: "ok"; label: string } | { kind: "no"; message: string };
  * box = 상자가 이미 정해진 자리(처리할 일 카드 — 카드 하나가 상자 하나) — 고르는 칸과 위 안내 문단 없이 그 상자로 보낸다.
  */
 type Props = ({ boxes: readonly FinderBox[]; box?: never } | { box: FinderBox; boxes?: never }) & {
-  /** 놓이는 바탕 — 하늘 칸(선물 상세 「지금 할 일」) 안이면 "tint"(흰 상자 + 하늘 선), 흰 바탕 위면 기본(회색 면 + 회색 선). design-rules 38절 */
-  surface?: "plain" | "tint";
+  /** 놓이는 바탕 — 하늘 칸(선물 상세 「지금 할 일」) 안이면 "tint"(흰 상자 + 하늘 선), 흰 바탕 위면 기본(회색 면 + 회색 선).
+   *  하단 시트처럼 그 자체가 판인 곳은 "bare"(상자 없이 양식만 — 같은 시트 계열의 「내 상자 찾기」와 같은 모양). design-rules 38절 */
+  surface?: "plain" | "tint" | "bare";
 };
 
 export function FindMyBox(props: Props) {
@@ -97,7 +98,7 @@ export function FindMyBox(props: Props) {
   }
 
   return (
-    <div className={props.surface === "tint" ? `${s.finder} ${s["finder--tint"]}` : s.finder}>
+    <div className={props.surface === "tint" || props.surface === "bare" ? `${s.finder} ${s[`finder--${props.surface}`]}` : s.finder}>
       {/* 바로 위 접힌 줄 제목과 같은 말이라 낭독기용으로만 둔다(design-rules 38절, 문구 그대로). 상자가 정해진 카드에는 없다 */}
       {fixed ? null : <p className="sr-only">주소 끝 6자리 없이 보낸 상자 찾기</p>}
       {current ? (

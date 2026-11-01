@@ -369,6 +369,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       {open?.kind === "missing_box" ? (
         <BottomSheet open title="미도착 상자 찾기" meta={`${open.item.creatorName}님께 보낸 선물 · 상자 ${open.item.boxSeq}`} onClose={close}>
           <FindMyBox
+            surface="bare"
             box={{
               target: { kind: "box", id: open.item.boxId },
               label: open.item.boxLabel,

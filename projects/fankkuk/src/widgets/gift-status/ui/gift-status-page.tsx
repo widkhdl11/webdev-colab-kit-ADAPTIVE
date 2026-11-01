@@ -216,7 +216,7 @@ export function GiftStatusPage({
                       {st.state === "stopped" ? <span className="sr-only"> 멈춤</span> : null}
                       {st.key === "shipped" && approvalPending ? (
                         <span className={s.apv} data-approval-needed="">
-                          <span className={statusTagClass("warn")}>승인 필요</span>
+                          <span className={statusTagClass("warn", "tag--dot")}>승인 필요</span>
                         </span>
                       ) : null}
                       {note ? <small>{note}</small> : null}
@@ -277,10 +277,7 @@ export function GiftStatusPage({
                         {stateTag ? (
                           <span className={statusTagClass(stateTag.tone, "tag--dot")}>{stateTag.text}</span>
                         ) : hasArrived(b.state) ? (
-                          <span className={statusTagClass("success")}>
-                            <Check size={16} />
-                            입고됨
-                          </span>
+                          <span className={statusTagClass("success", "tag--dot")}>입고됨</span>
                         ) : isMissing(b.state) ? (
                           <span className={statusTagClass("warn", "tag--dot")}>미도착</span>
                         ) : b.notSentAt ? (

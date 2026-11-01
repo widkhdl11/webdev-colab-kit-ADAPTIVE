@@ -23,10 +23,10 @@ const NOTICE_TEXT: Record<Exclude<DifferenceNotice, null>, string> = {
 };
 
 const STATE_TAG = {
-  due: { text: "결제 필요", className: statusTagClass("warn") },
-  paying: { text: "결제 확인 중", className: statusTagClass("warn") },
-  paid: { text: "결제 완료", className: statusTagClass("success") },
-  closed: { text: "기한 만료", className: statusTagClass("danger") },
+  due: { text: "결제 필요", className: statusTagClass("warn", "tag--dot") },
+  paying: { text: "결제 확인 중", className: statusTagClass("warn", "tag--dot") },
+  paid: { text: "결제 완료", className: statusTagClass("success", "tag--dot") },
+  closed: { text: "기한 만료", className: statusTagClass("danger", "tag--dot") },
 } as const;
 
 type Props = { differences: readonly GiftDifference[]; notice: DifferenceNotice };

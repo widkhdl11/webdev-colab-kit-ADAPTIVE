@@ -48,9 +48,9 @@
 /* 멈춘 단계(돌려보냄) — 빨강 대신 본문색 막대 */
 .steps > li.stopped::before { background: var(--gray-900); }
 .steps small { display: block; font-size: var(--fs-small); font-weight: 400; color: var(--sub); }
-/* 출고 아래 「승인 필요」(시안 .dsteps .apv — 뱃지 12) — 승인 전 진행 중에만 */
+/* 출고 아래 「승인 필요」 — 승인 전 진행 중에만. 모양은 상세의 다른 상태 뱃지와 같은 .tag--dot(design-rules 38절), 색만 노랑 */
 .apv { display: flex; margin-top: var(--space-1); }
-.apv :global(.tag.tag--warn) { display: inline-flex; align-items: center; min-height: 22px; padding: 0 var(--space-2); background: var(--warn-soft); color: var(--warn-ink); font-size: var(--fs-badge); font-weight: var(--fw-bold); white-space: nowrap; }
+.apv :global(.tag.tag--warn) { background: var(--warn-soft); color: var(--warn-ink); white-space: nowrap; }
 
 /* 카드 — 사이 16, 위 24, 높이는 내용대로 (시안 .dgrid · .dcard). 상자 칸이 있으면 2:1(8+4), 오른쪽 열은 「선물 정보」 카드 하나(시안 v41 .dside .ginfo).
    상자 칸이 없는 주문은 오른쪽 열만 — 카드가 반 폭(767 이하 한 줄) */

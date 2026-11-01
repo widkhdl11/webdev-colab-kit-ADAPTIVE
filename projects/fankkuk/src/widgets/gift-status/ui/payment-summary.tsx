@@ -58,7 +58,7 @@ export function PaymentSummary({ payment, differences, dueKrw = 0, inProgress = 
           <small>원</small>
         </b>
       </p>
-      {dueKrw > 0 ? <span className={statusTagClass("warn", s.duetag)}>추가 결제 {won(dueKrw)}</span> : null}
+      {dueKrw > 0 ? <span className={statusTagClass("warn", `tag--dot ${s.duetag}`)}>추가 결제 {won(dueKrw)}</span> : null}
       <p className={s.ok}>
         <span className="tag">
           <svg width={16} height={16} viewBox="0 0 24 24" aria-hidden="true">
