@@ -407,7 +407,7 @@ button{font-family:inherit}
 .stage{--float:0 10px 28px rgb(17 24 39/.12);--scrim:rgb(17 24 39/.48)}
 
 /* 줄 오른쪽 「승인 취소」 칸 — 버튼 없는 줄과 태그·날짜 열이 어긋나지 않게 자리를 둔다 */
-.lr-side .slot{display:flex;justify-content:flex-end;min-width:88px}
+.lr-side .slot{display:flex;justify-content:flex-end;flex:none;width:108px}
 @container st (max-width:767px){.lr-side .slot{min-width:0}.lr-side .slot:empty{display:none}}
 .cardact{gap:12px;flex-wrap:wrap}
 
@@ -439,10 +439,23 @@ button{font-family:inherit}
   .sheet .grip{display:block}
 }
 
+/* 2026-11-02 사용자 「미니멀하지만 찾으면 보이게, 글자 줄이고」·「hover 는 텍스트 색이 바뀌는 걸로」 — 비교 세 안(위 띠에서 바꿈).
+   글자 14(캡션 예외 크기), 눌리는 칸 44 그대로. 마우스 올림 = 글자색만 회색 → --ink(경로 표시 링크 .crumb a:hover 와 같은 규칙), 면은 바꾸지 않는다 */
+.btn.text.cbtn{font-size:14px;gap:4px;color:var(--g500);transition:color .15s}
+.cbtn .ci{display:none}
+.btn.text.cbtn:hover,.btn.text.cbtn:focus-visible{color:var(--ink);background:none}
+body.v-a .cbtn .ci{display:block}
+body.v-b .cbtn span{text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--g400);transition:text-decoration-color .15s}
+body.v-b .cbtn:hover span{text-decoration-color:var(--ink)}
+body.v-c .cbtn{padding:0}
+body.v-c .cbtn span{background:var(--g100);border-radius:999px;padding:5px 12px;font-weight:600;font-size:13px}
+.vsw{display:flex;gap:6px;align-items:center;font:600 14px Pretendard,sans-serif;margin-left:16px}
+.vsw button{border:0;border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer;font:inherit}
+.vsw button[aria-pressed=true]{background:#1F2937;color:#fff}
 </style>
 </head>
-<body>
-<div class="top"><h1>팬꾹 승인 취소 · 크리에이터 승인 내역·선물 현황과 팬 선물 상세</h1><nav class="seg" aria-label="장면"><a href="#s1">1 승인 내역</a><a href="#s2">2 선물 현황</a><a href="#s3">3 확인 창</a><a href="#s4">4 오류</a><a href="#s5">5 팬 상세</a></nav></div>
+<body class="v-a">
+<div class="top"><h1>팬꾹 승인 취소 · 크리에이터 승인 내역·선물 현황과 팬 선물 상세</h1><nav class="seg" aria-label="장면"><a href="#s1">1 승인 내역</a><a href="#s2">2 선물 현황</a><a href="#s3">3 확인 창</a><a href="#s4">4 오류</a><a href="#s5">5 팬 상세</a></nav><div class="vsw" role="group" aria-label="버튼 모양"><span>버튼</span><button type="button" data-v="v-a" aria-pressed="true">A 아이콘+글자</button><button type="button" data-v="v-b">B 밑줄</button><button type="button" data-v="v-c">C 옅은 알약</button></div></div>
 <div class="cmp" id="root"></div>
 <script type="text/plain" id="fan-doc"><!doctype html><html lang="ko"><head><meta charset="utf-8"><base href="./"><style>
 @font-face{font-family:Pretendard;src:url('assets/Pretendard-Medium.woff') format('woff');font-weight:400 500;font-display:swap}
@@ -1047,7 +1060,7 @@ const progress=k=>{
   return shell(inner,'선물 현황',k==='waiting'?2:k==='sending'?1:0);
 };
 /* ---------- 승인 취소 장면 ---------- */
-const CANCEL_BTN=n=>`<button type="button" class="btn text sm" aria-label="${n}님 선물 승인 취소">승인 취소</button>`;
+const CANCEL_BTN=n=>`<button type="button" class="btn text sm cbtn" aria-label="${n}님 선물 승인 취소"><svg class="ci" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span>승인 취소</span></button>`;
 const rr2=(n,k,box,no,t,d,cancel)=>`<li class="lr">${FC()}<p class="lr-txt"><strong>${n}님의 선물</strong><span class="meta">${k} · 상자 ${box}개 · ${no}</span></p><div class="lr-side">${tg(t,TAGS[t])}<time>${d}</time><span class="slot">${cancel?CANCEL_BTN(n):''}</span></div></li>`;
 const requestsCancel=()=>shell(head('승인 내역','7건')+qtop(7,{latest:'11월 1일 (일)',g:[['승인',4],['거절',2],['기한 만료',1],['차단',0]]})
  +`<div class="qm"><h3>11월</h3><small>4건</small></div><ul class="rows">${rr2('다온','인형·쿠션','2','FC-Q8W2E','승인','11월 1일',1)}${rr2('모모','엽서','1','FC-R4T7Y','거절','11월 1일')}${rr2('하늘','꽃','1','FC-U1I9O','승인','11월 1일')}${rr2('달토끼','문구 세트','1','FC-D6K2P','승인','11월 1일',1)}</ul>
@@ -1084,4 +1097,5 @@ document.getElementById('root').innerHTML=
 const FAN=document.getElementById('fan-doc').textContent.replace(/<\\\/script>/g,'<'+'/script>');
 document.querySelectorAll('iframe.fanf').forEach(f=>{f.srcdoc=FAN});
 
-</script></body></html>
+</script><script>document.querySelectorAll(".vsw button").forEach(b=>b.onclick=()=>{document.body.classList.remove("v-a","v-b","v-c");document.body.classList.add(b.dataset.v);document.querySelectorAll(".vsw button").forEach(x=>x.setAttribute("aria-pressed",x===b))});</script>
+</body></html>
