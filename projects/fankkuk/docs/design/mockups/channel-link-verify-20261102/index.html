@@ -1,23 +1,938 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>채널 확인 시안 (2026-11-02)</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
-<link rel="stylesheet" href="styles.css"></head><body>
-<!-- 2026-11-02 새로 짬: 옛 구역 없음. 팬꾹 링크는 4단계에서만 만든다(2단계 칸 없음). 운영자 화면은 admin.html -->
-<header class="v-head"><h1 class="t-title">채널 확인 시안</h1><ol><li><a href="#signup-2">가입 2단계</a></li><li><a href="#s4-make">4단계 · 링크 만들기 전</a></li><li><a href="#s4-ready">4단계 · 요청 전</a></li><li><a href="#s4-sent">4단계 · 요청 완료</a></li><li><a href="#s4-rejected">4단계 · 반려</a></li><li><a href="#s4-locked">4단계 · 더 요청 못 함</a></li><li><a href="#acct-verified">계정 설정 · 확인 완료</a></li><li><a href="#acct-recheck">계정 설정 · 링크 다시 확인</a></li><li><a href="#profile-verifying">크리에이터 페이지 · 채널 확인 중</a></li><li><a href="admin.html">운영자 화면</a></li></ol></header>
-<section class="v-state" id="signup-2"><span class="v-label"><b>가입 2단계 (크리에이터)</b> — 바뀌는 칸만. 칸 설명은 소제목 아래, 규칙은 입력 칸 아래. 팬꾹 링크는 여기서 만들지 않는다(4단계)</span><div class="v-bar"><b>팬꾹</b><span>로그인</span></div><main><section class="su-page"><div class="container auth su-box"><div class="head"><h1 class="t-title">회원가입</h1></div><nav class="su-steps-wrap" aria-label="가입 단계"><ol class="su-steps su-four"><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">유형 선택</span></span></li><li><span class="su-st" aria-current="step"><span class="su-dot" aria-hidden="true">2</span><span class="su-lbl">정보 입력</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">3</span><span class="su-lbl">휴대폰 확인</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">4</span><span class="su-lbl">채널 확인</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">5</span><span class="su-lbl">승인 서명</span></span></li></ol></nav><form class="card" onsubmit="return false"><fieldset class="su-step"><legend class="sr-only">정보 입력</legend><h3 class="t-card" style="margin-bottom:16px">계정</h3><div class="form">
-<div><label class="label" for="s2-id">아이디</label><p class="v-desc">로그인에 사용하는 아이디입니다. 다른 사람에게는 보이지 않습니다.</p><input class="field" id="s2-id" value="haru_game"><p class="hint">영문 소문자⁠·⁠숫자⁠·⁠밑줄(_) 4~20자 · 가입 후 변경할 수 없습니다.</p></div>
-<div><label class="label" for="s2-nick">닉네임</label><p class="v-desc">팬꾹에서 다른 사람에게 표시되는 이름입니다.</p><input class="field" id="s2-nick" value="하루"><p class="hint">최대 12자 · 이미 사용 중인 닉네임은 사용할 수 없습니다.</p></div>
-<p class="hint" style="margin:0">이메일·비밀번호는 지금 문구를 유지합니다.</p></div>
-<h3 class="t-card" style="margin:32px 0 16px">채널 정보</h3><div class="form">
-<div><label class="label" for="s2-ch">채널 이름</label><p class="v-desc">방송 플랫폼에 표시된 채널 이름을 그대로 입력해 주세요. 채널 확인 시 일치하는지 확인합니다.</p><input class="field" id="s2-ch" placeholder="예: 꿀단지TV" value="하루의 놀이터"></div>
-<p class="hint" style="margin:0">팬덤 이름·태그는 지금 문구를 유지합니다.</p></div></fieldset><div class="su-step-actions"><button class="btn btn--line" type="button">이전</button><button class="btn su-next" type="submit">다음</button></div></form></div></section></main></section>
-<section class="v-state" id="s4-make"><span class="v-label"><b>4단계 · 링크 만들기 전</b> — ① 팬꾹 링크를 여기서 만든다(누르면 「만든 뒤 30일 동안 변경할 수 없습니다」 확인 창). 링크를 만들기 전에는 ① 하나만 보인다. 만들면 「요청 전」 화면처럼 ①이 올리기 안내로 바뀌고 ②·요청이 나타난다</span><div class="v-bar"><b>팬꾹</b><span>로그인</span></div><main><section class="su-page"><div class="container auth su-box"><div class="head"><h1 class="t-title">회원가입</h1></div><nav class="su-steps-wrap" aria-label="가입 단계"><ol class="su-steps su-four"><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">유형 선택</span></span></li><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">정보 입력</span></span></li><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">휴대폰 확인</span></span></li><li><span class="su-st" aria-current="step"><span class="su-dot" aria-hidden="true">4</span><span class="su-lbl">채널 확인</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">5</span><span class="su-lbl">승인 서명</span></span></li></ol></nav><form class="card" onsubmit="return false"><fieldset class="su-step"><legend class="sr-only">채널 소유자 확인</legend><div class="vp-head"><h2 class="t-card">채널 소유자 확인</h2><span class="tag ">확인 전</span></div><p class="sub su-lead">다른 사람이 내 채널로 가입하지 못하도록, 채널 소유자를 확인해 주세요.</p><div class="vp-kv v-name"><span class="k">채널 이름</span><strong>하루의 놀이터</strong></div><div class="v-step"><label class="vp-label" for="lk"><span class="v-no">1</span>팬꾹 링크를 만들어 주세요</label><p class="v-desc">외부에서 크리에이터님의 팬꾹으로 안내할 때 사용할 주소입니다.</p><div class="vp-handle"><span class="pre">fankkuk.com/</span><input class="field" id="lk" placeholder="haru"><button class="btn btn--sm" type="button">만들기</button></div><p class="hint">로그인 아이디와 다르게 정해 주세요. 만든 뒤 30일 동안은 변경할 수 없습니다.</p></div></fieldset><div class="v-kakao-actions v-three"><button class="btn btn--line" type="button">이전</button><button class="btn btn--line" type="button">나중에 하기</button><button class="btn su-next v-main" type="submit" aria-disabled="true">다음</button></div></form></div></section></main></section>
-<section class="v-state" id="s4-ready"><span class="v-label"><b>4단계 · 요청 전</b> — 링크를 만들면 ①이 「올려 주세요 + 복사 + 예시」로 바뀐다. 주소를 넣으면 요청이 켜짐</span><div class="v-bar"><b>팬꾹</b><span>로그인</span></div><main><section class="su-page"><div class="container auth su-box"><div class="head"><h1 class="t-title">회원가입</h1></div><nav class="su-steps-wrap" aria-label="가입 단계"><ol class="su-steps su-four"><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">유형 선택</span></span></li><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">정보 입력</span></span></li><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">휴대폰 확인</span></span></li><li><span class="su-st" aria-current="step"><span class="su-dot" aria-hidden="true">4</span><span class="su-lbl">채널 확인</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">5</span><span class="su-lbl">승인 서명</span></span></li></ol></nav><form class="card" onsubmit="return false"><fieldset class="su-step"><legend class="sr-only">채널 소유자 확인</legend><div class="vp-head"><h2 class="t-card">채널 소유자 확인</h2><span class="tag ">확인 전</span></div><p class="sub su-lead">다른 사람이 내 채널로 가입하지 못하도록, 채널 소유자를 확인해 주세요.</p><div class="vp-kv v-name"><span class="k">채널 이름</span><strong>하루의 놀이터</strong></div><div class="v-step"><p class="vp-label"><span class="v-no">1</span>활동 중인 채널에 팬꾹 링크를 올려 주세요</p><div class="vp-box"><div class="vp-code-row"><span class="vp-link">fankkuk.com/haru</span><button class="btn btn--line btn--sm" type="button">복사</button></div><div class="v-example"><span class="k">예시</span><p>게임 방송하는 하루입니다. 선물은 여기로 보내 주세요<br><b>fankkuk.com/haru</b></p></div></div></div><div class="v-step"><label class="vp-label" for="a2"><span class="v-no">2</span>팬꾹 링크를 올린 채널 주소를 입력해 주세요</label><input class="field" id="a2" inputmode="url" placeholder="https://www.youtube.com/@핸들" value="https://www.youtube.com/@honeypot"><ul class="vp-examples"><li>유튜브 <code>https://www.youtube.com/@핸들</code></li><li>치지직 <code>https://chzzk.naver.com/채널ID</code></li><li>SOOP <code>https://www.sooplive.co.kr/station/아이디</code></li></ul></div><div class="vp-steps"><button class="btn" type="button">채널 확인 요청</button></div></fieldset><div class="v-kakao-actions v-three"><button class="btn btn--line" type="button">이전</button><button class="btn btn--line" type="button">나중에 하기</button><button class="btn su-next v-main" type="submit" aria-disabled="true">다음</button></div></form></div></section></main></section>
-<section class="v-state" id="s4-sent"><span class="v-label"><b>4단계 · 요청 완료</b> — 이 단계는 끝. 「이전 | 다음」만, 「다음」 켜짐. 운영자가 확인하면 확인 완료</span><div class="v-bar"><b>팬꾹</b><span>로그인</span></div><main><section class="su-page"><div class="container auth su-box"><div class="head"><h1 class="t-title">회원가입</h1></div><nav class="su-steps-wrap" aria-label="가입 단계"><ol class="su-steps su-four"><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">유형 선택</span></span></li><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">정보 입력</span></span></li><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">휴대폰 확인</span></span></li><li><span class="su-st" aria-current="step"><span class="su-dot" aria-hidden="true">4</span><span class="su-lbl">채널 확인</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">5</span><span class="su-lbl">승인 서명</span></span></li></ol></nav><form class="card" onsubmit="return false"><fieldset class="su-step"><legend class="sr-only">채널 소유자 확인</legend><div class="vp-head"><h2 class="t-card">채널 소유자 확인</h2><span class="tag tag--warn">확인 대기</span></div><div class="vp-box v-done-box"><p class="vp-label" style="display:flex;align-items:center;gap:6px"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="m7.5 12.5 3 3 6-6.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>채널 확인 요청을 보냈습니다</p><p>운영자가 채널을 확인하면 채널 확인이 완료됩니다.</p><div class="vp-kv"><span class="k">채널 이름</span><strong>하루의 놀이터</strong></div><div class="vp-kv"><span class="k">채널 주소</span><strong style="overflow-wrap:anywhere">https://www.youtube.com/@honeypot</strong></div><div class="vp-kv"><span class="k">팬꾹 링크</span><strong>fankkuk.com/haru</strong></div><div><button class="btn btn--text btn--sm" type="button">요청 취소</button></div></div></fieldset><div class="su-step-actions"><button class="btn btn--line" type="button">이전</button><button class="btn su-next" type="submit">다음</button></div></form></div></section></main></section>
-<section class="v-state" id="s4-rejected"><span class="v-label"><b>4단계 · 반려</b> — 사유 한 줄, 아래는 요청 전과 같은 순서</span><div class="v-bar"><b>팬꾹</b><span>로그인</span></div><main><section class="su-page"><div class="container auth su-box"><div class="head"><h1 class="t-title">회원가입</h1></div><nav class="su-steps-wrap" aria-label="가입 단계"><ol class="su-steps su-four"><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">유형 선택</span></span></li><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">정보 입력</span></span></li><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">휴대폰 확인</span></span></li><li><span class="su-st" aria-current="step"><span class="su-dot" aria-hidden="true">4</span><span class="su-lbl">채널 확인</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">5</span><span class="su-lbl">승인 서명</span></span></li></ol></nav><form class="card" onsubmit="return false"><fieldset class="su-step"><legend class="sr-only">채널 소유자 확인</legend><div class="vp-head"><h2 class="t-card">채널 소유자 확인</h2><span class="tag tag--danger">반려</span></div><div class="vp-box" style="margin-bottom:24px"><p class="vp-rej"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v6M12 16.5v.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>팬꾹 링크를 찾지 못함</p></div><div class="vp-kv v-name"><span class="k">채널 이름</span><strong>하루의 놀이터</strong></div><div class="v-step"><p class="vp-label"><span class="v-no">1</span>활동 중인 채널에 팬꾹 링크를 올려 주세요</p><div class="vp-box"><div class="vp-code-row"><span class="vp-link">fankkuk.com/haru</span><button class="btn btn--line btn--sm" type="button">복사</button></div><div class="v-example"><span class="k">예시</span><p>게임 방송하는 하루입니다. 선물은 여기로 보내 주세요<br><b>fankkuk.com/haru</b></p></div></div></div><div class="v-step"><label class="vp-label" for="a4"><span class="v-no">2</span>팬꾹 링크를 올린 채널 주소를 입력해 주세요</label><input class="field" id="a4" inputmode="url" placeholder="https://www.youtube.com/@핸들" value="https://www.youtube.com/@honeypot"><ul class="vp-examples"><li>유튜브 <code>https://www.youtube.com/@핸들</code></li><li>치지직 <code>https://chzzk.naver.com/채널ID</code></li><li>SOOP <code>https://www.sooplive.co.kr/station/아이디</code></li></ul></div><div class="vp-steps"><button class="btn" type="button">채널 확인 재요청</button></div></fieldset><div class="v-kakao-actions v-three"><button class="btn btn--line" type="button">이전</button><button class="btn btn--line" type="button">나중에 하기</button><button class="btn su-next v-main" type="submit" aria-disabled="true">다음</button></div></form></div></section></main></section>
-<section class="v-state" id="s4-locked"><span class="v-label"><b>4단계 · 더 요청 못 함</b> — 같은 채널로 끝난 요청 3번</span><div class="v-bar"><b>팬꾹</b><span>로그인</span></div><main><section class="su-page"><div class="container auth su-box"><div class="head"><h1 class="t-title">회원가입</h1></div><nav class="su-steps-wrap" aria-label="가입 단계"><ol class="su-steps su-four"><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">유형 선택</span></span></li><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">정보 입력</span></span></li><li><span class="su-st is-done"><span class="su-dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="su-lbl">휴대폰 확인</span></span></li><li><span class="su-st" aria-current="step"><span class="su-dot" aria-hidden="true">4</span><span class="su-lbl">채널 확인</span></span></li><li><span class="su-st"><span class="su-dot" aria-hidden="true">5</span><span class="su-lbl">승인 서명</span></span></li></ol></nav><form class="card" onsubmit="return false"><fieldset class="su-step"><legend class="sr-only">채널 소유자 확인</legend><div class="vp-head"><h2 class="t-card">채널 소유자 확인</h2><span class="tag ">신청 마감</span></div><div class="vp-box"><p class="vp-label">이 채널로는 더 신청할 수 없어요. 1:1 문의로 알려 주세요</p><div><button class="btn btn--line" type="button">1:1 문의</button></div></div></fieldset><div class="v-kakao-actions v-three"><button class="btn btn--line" type="button">이전</button><button class="btn btn--line" type="button">나중에 하기</button><button class="btn su-next v-main" type="submit" aria-disabled="true">다음</button></div></form></div></section></main></section>
-<section class="v-state" id="acct-verified"><span class="v-label"><b>계정 설정 · 확인 완료</b> — 다음 재확인 날</span><div class="v-bar"><b>팬꾹</b><span>로그인</span></div><main><div class="v-wrap720"><div class="head" style="margin-bottom:24px"><h1 class="t-title">계정 설정</h1></div><section class="card"><fieldset class="su-step" style="margin:0"><legend class="sr-only">채널 소유자 확인</legend><div class="vp-head"><h2 class="t-card">채널 소유자 확인</h2><span class="tag tag--success">확인 완료</span></div><div class="vp-done"><strong>채널 인증이 완료되었습니다 · 2026.11.02</strong><a href="#">https://www.youtube.com/@honeypot</a><span class="sub">다음 재확인 2027.01.31</span></div><div style="margin-top:16px"><button class="btn btn--line" type="button">채널 변경</button></div></fieldset></section></div></main></section>
-<section class="v-state" id="acct-recheck"><span class="v-label"><b>계정 설정 · 링크 다시 확인</b> — 재확인에서 링크를 못 찾음(14일 유예)</span><div class="v-bar"><b>팬꾹</b><span>로그인</span></div><main><div class="v-wrap720"><div class="head" style="margin-bottom:24px"><h1 class="t-title">계정 설정</h1></div><section class="card"><fieldset class="su-step" style="margin:0"><legend class="sr-only">채널 소유자 확인</legend><div class="vp-head"><h2 class="t-card">채널 소유자 확인</h2><span class="tag tag--warn">링크 확인 필요</span></div><div class="vp-box"><p class="vp-label">활동 중인 채널에서 팬꾹 링크를 찾지 못했어요. 11월 16일까지 다시 올려 주세요</p><div class="vp-code-row"><span class="vp-link">fankkuk.com/haru</span><button class="btn btn--line btn--sm" type="button">복사</button></div><div class="vp-actions"><button class="btn" type="button">채널 확인 재요청</button></div></div></fieldset></section></div></main></section>
-<section class="v-state" id="profile-verifying"><span class="v-label"><b>크리에이터 페이지 · 채널 확인 중 (fankkuk.com/haru)</b> — 채널 확인 중 — 팬이 볼 때. 팔로우·채널 아이콘·평균 승인 시간 없음</span><div class="v-bar"><b>팬꾹</b><span>로그인</span></div><main class="pf"><div class="pf-cover" aria-hidden="true"><i class="b"></i><i class="a"></i></div><div class="pf-body"><div class="pf-face"><img src="../part4-v4-20261101/assets/creator-cat.webp" alt="" width="112" height="112"></div><div class="pf-name"><h1>하루</h1></div><p class="pf-intro">게임 방송을 해요.</p><p class="pf-wait" role="status">채널 확인이 끝나면 선물을 보낼 수 있어요</p></div></main></section>
+<!--
+  2026-11-02 새로 짬: 옛 구역 없음. 팬꾹 링크는 4단계에서만 만든다(2단계 칸 없음). 운영자 화면은 admin.html
+  2026-11-02 틀 다시: 옛 공용 CSS(styles.css 의 v43 시안 전용 틀) 위에 그렸던 것을 승인 시안 4 화면 틀 위로 옮겼다.
+    사용자 「카드가 잘 보이지도 않고, 요청 취소 버튼도 이상하다」 「크리에이터 회원가입 페이지 자체가 좀 디자인이 이상한거 같은데. 디자인 프롬프트 적용한거 맞아?」
+    - 가입 2단계·4단계 다섯 상태: mockups/part6-v4-20261101 의 머리·바닥·카드 480·단계 알약·CSS (.f6)
+    - 계정 설정 두 상태: mockups/part4-v4-20261101 의 설정 화면 틀(사이드바·4+8 묶음) (.f4)
+    - 확인 중 공개 페이지: mockups/part5-v4-20261101 의 크리에이터 상세 틀 (.f5)
+    문구·노출 조건은 그대로(signup.md 상태표). 이 파일은 styles.css 를 더 쓰지 않는다. 틀 CSS 는 세 시안에서 가져와 .f6/.f4/.f5 안으로 가뒀다(서로 .btn·.card 가 달라 섞이지 않게).
+    4단계 간격: 묶음 사이 32, 묶음 안 8~16(프롬프트 2-2). 채널 이름 상자에 1px 선(4-7·4-8). 아래 버튼은 「이전 | 나중에 하기 | 다음」 한 줄(채움 버튼은 화면에 하나 — 1-2).
+-->
+<style>
+@font-face{font-family:Pretendard;src:url('../part6-v4-20261101/assets/Pretendard-Medium.woff') format('woff');font-weight:400 500;font-display:swap}
+@font-face{font-family:Pretendard;src:url('../part6-v4-20261101/assets/Pretendard-SemiBold.woff') format('woff');font-weight:600;font-display:swap}
+@font-face{font-family:Pretendard;src:url('../part6-v4-20261101/assets/Pretendard-Bold.woff') format('woff');font-weight:700 800;font-display:swap}
+@font-face{font-family:Tmoney;src:url('../part6-v4-20261101/assets/TmoneyRoundWindExtraBold.woff2') format('woff2');font-weight:800;font-display:swap}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:#1F2937;font:500 16px/1.6 Pretendard,system-ui,sans-serif;word-break:keep-all}
+h1,h2,h3,p,ul,ol,dl,dd{margin:0}
+ul,ol{padding:0;list-style:none}
+button{font-family:inherit}
+:focus-visible{outline:3px solid #1F2937;outline-offset:3px;border-radius:8px}
+/* 시안 안내 줄(화면 밖) */
+.v-head{padding:16px 24px;border-bottom:1px solid #DCE3EA;background:#fff}
+.v-head h1{font:800 18px/1.3 Tmoney,Pretendard,sans-serif;margin-bottom:8px}
+.v-head ol{display:flex;flex-wrap:wrap;gap:4px 16px}
+.v-head a{display:inline-flex;align-items:center;min-height:32px;font-size:14px;color:#1F2937;text-decoration:underline;text-underline-offset:3px}
+.v-label{display:block;padding:12px 24px;background:#FFF8E6;border-top:1px solid #F0D78C;border-bottom:1px solid #F0D78C;font-size:14px;line-height:1.6;color:#1F2937}
+.v-label b{font-weight:700}
+.f6{--ink:#1F2937;--sub:#4B5563;--muted:#55606E;--line:#DCE3EA;--field:#6B7280;--sel-line:#6FB8DD;--sky:#89CFF0;--sky-50:#E0F2FE;--card-shadow:inset 0 1px 0 #fff,0 1px 2px rgb(31 41 55/.04),0 4px 12px rgb(31 41 55/.04)}
+.f6{container:st/inline-size;background:#fff;position:relative;font-size:16px;line-height:1.6;min-height:600px}
+.f6 a{color:inherit;text-decoration:none}
+.f6 h1,.f6 h2,.f6 h3{font-family:Tmoney,Pretendard,sans-serif;letter-spacing:-.02em;font-weight:800;line-height:1.3;color:var(--ink)}
+.f6 svg{flex:none}
+.f6 .hd{border-bottom:1px solid #E5E7EB;background:#fff}
+.f6 .hd .in{max-width:1000px;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:24px;height:64px}
+.f6 .logo{display:flex;align-items:center;gap:8px;font:800 20px/1 Tmoney,sans-serif;min-height:44px}
+.f6 .logo img{width:32px;height:32px;border-radius:22%}
+.f6 .gnb{display:flex;margin-right:auto}
+.f6 .gnb a{display:flex;align-items:center;min-height:44px;padding:0 12px;font-weight:500}
+.f6 .acct{display:flex;align-items:center;gap:8px;font-weight:600}
+.f6 .acct a{display:flex;align-items:center;min-height:44px;padding:0 8px}
+.f6 .acct i{width:1px;height:16px;background:#E5E7EB}
+.f6 .mbtn{display:none;width:44px;height:44px;border:0;background:none;color:var(--ink);align-items:center;justify-content:center;margin-left:auto}
+.f6 .ft{background:#F9FAFB;padding:40px 0;font-size:14px;color:var(--sub)}
+.f6 .ft .in{max-width:1000px;margin:0 auto;padding:0 24px}
+.f6 .ft .r1,.f6 .ft .r2{display:flex;flex-wrap:wrap;gap:0 24px;justify-content:space-between}
+.f6 .ft a{display:inline-flex;align-items:center;min-height:44px}
+.f6 .ft .biz{margin-top:8px;line-height:1.7}
+.f6 .auth-page{padding:96px 24px}
+.f6 .auth-col{width:100%;max-width:480px;margin-inline:auto}
+.f6 .auth-col.wide{max-width:720px}
+.f6 .head{text-align:center;margin-bottom:32px}
+.f6 .head h1{font-size:32px}
+.f6 .head p{margin:8px auto 0;max-width:480px;font-weight:400;color:var(--sub)}
+.f6 .card{padding:40px;border-radius:16px;background:#fff;border:1px solid var(--line);box-shadow:var(--card-shadow)}
+.f6 .form{display:grid;gap:24px}
+.f6 .label{display:block;margin-bottom:8px;font-weight:700}
+.f6 .label .opt{font-weight:400;color:var(--sub)}
+.f6 .field{display:block;width:100%;min-width:0;height:48px;padding:0 16px;border:0;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--field);font:400 16px/48px Pretendard,sans-serif;color:var(--ink);overflow:hidden;white-space:nowrap}
+.f6 .field.ph{color:#6B7280}
+.f6 .field.sel{display:flex;justify-content:space-between;align-items:center}
+.f6 .field.h52{height:52px;line-height:52px}
+.f6 .hint{margin-top:8px;font-size:14px;line-height:1.5;color:var(--sub)}
+.f6 .hint.live-ok{display:flex;align-items:center;gap:8px}
+.f6 .bad{display:flex;align-items:flex-start;gap:8px;margin-top:8px;color:#B42318;font-weight:600}
+.f6 .bad::before{content:"!";flex:none;display:grid;place-items:center;width:24px;height:24px;margin-top:2px;border-radius:50%;box-shadow:inset 0 0 0 2px #B42318;font-weight:600;line-height:1}
+.f6 .err,.f6 .okmsg{display:flex;align-items:flex-start;gap:12px;padding:16px;border-radius:12px;font-weight:600}
+.f6 .err{background:var(--sky-50);color:var(--ink)}
+.f6 .okmsg{background:#F9FAFB;box-shadow:inset 0 0 0 1px #E5E7EB;color:var(--ink)}
+.f6 .err .mark{flex:none;display:grid;place-items:center;width:24px;height:24px;margin-top:1px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--ink);font-weight:700;line-height:1}
+.f6 .okmsg .mark.ok{flex:none;display:grid;place-items:center;width:24px;height:24px;margin-top:1px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--ink)}
+.f6 .okgrp{flex-direction:column;gap:8px}
+.f6 .okgrp .oksub{font-weight:400;color:var(--sub)}
+.f6 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:12px;background:var(--sky);color:var(--ink);font:600 16px/1.25 Pretendard,sans-serif;text-align:center;white-space:nowrap}
+.f6 .btn.block{width:100%}
+.f6 .btn.sm{min-height:44px;padding:0 16px}
+.f6 .btn.line{background:#fff;box-shadow:inset 0 0 0 1px var(--field)}
+.f6 .btn.off{background:#F3F4F6;color:#4B5563}
+.f6 .btn.kakao{background:#FEE500;color:#191919}
+.f6 .btn.kakao.wait{background:#FFF3A0}
+.f6 .btn.textb{background:none;box-shadow:none;padding:0 12px}
+.f6 .under{display:flex;flex-direction:column;align-items:center;margin-top:16px}
+.f6 .under a,.f6 .lnk{display:inline-flex;align-items:center;min-height:44px;padding-inline:8px;font-weight:600;text-decoration:underline!important;text-underline-offset:4px}
+.f6 .foot-line{margin-top:0;text-align:center;color:var(--sub)}
+.f6 .foot-line a{font-weight:600;color:var(--ink);text-decoration:underline!important;text-underline-offset:4px}
+.f6 .check{display:flex;align-items:center;gap:8px;min-height:44px}
+.f6 .cb{flex:none;width:26px;height:26px;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 2px #6B7280,inset 0 -2px 0 rgb(107 114 128/.35);margin:0 1px}
+.f6 .cb.on{background:var(--sky);box-shadow:inset 0 0 0 2px #4B5563,inset 0 -3px 0 rgb(75 85 99/.45);display:grid;place-items:center}
+.f6 .steps{display:flex;gap:8px;margin-bottom:24px}
+.f6 .steps li{flex:1 1 0;min-width:0}
+.f6 .st{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;padding:0 8px;border-radius:9999px;background:#F3F4F6;color:#4B5563;white-space:nowrap}
+.f6 .dot{flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#fff;color:#4B5563;font-weight:600;line-height:1}
+.f6 .st.dn{background:var(--sky-50);color:var(--ink)}
+.f6 .st.dn .dot{color:var(--ink)}
+.f6 .st.cur{background:var(--sky-50);color:var(--ink);font-weight:600}
+.f6 .st.cur .dot{background:#1F2937;color:#fff}
+.f6 .stepcard h2{font-size:20px;line-height:1.4;margin-bottom:24px}
+.f6 .stepcard h2.hasdesc{margin-bottom:8px}
+.f6 .stepcard .lead{margin:0 0 24px;color:var(--sub)}
+.f6 .choices{display:grid;gap:16px}
+.f6 .choice{display:flex;align-items:flex-start;gap:16px;padding:24px;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px var(--field)}
+.f6 .choice.on{background:var(--sky-50);box-shadow:inset 0 0 0 2px var(--ink)}
+.f6 .radio{flex:none;width:24px;height:24px;margin-top:2px;border-radius:50%;box-shadow:inset 0 0 0 2px #6B7280;background:#fff}
+.f6 .choice.on .radio{box-shadow:inset 0 0 0 2px var(--ink);background:radial-gradient(circle,var(--ink) 0 5px,#fff 6px)}
+.f6 .choice strong{display:block;font-weight:600}
+.f6 .choice span span{display:block;color:var(--sub);font-size:14px}
+.f6 .crnote{margin-top:16px;color:var(--sub)}
+.f6 .grp+.grp{margin-top:32px;padding-top:32px;border-top:1px solid #E5E7EB}
+.f6 .grp>h3{font-family:Pretendard,sans-serif;font-size:16px;line-height:1.5;font-weight:600;margin-bottom:24px;letter-spacing:0}
+.f6 .email{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px}
+.f6 .email .at{font-weight:600;color:#4B5563}
+.f6 .chips{display:flex;flex-wrap:wrap;gap:8px}
+.f6 .chip{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:9999px;background:#fff;box-shadow:inset 0 0 0 1px var(--field);color:var(--ink);font-size:16px}
+.f6 .chip.on{background:var(--sky-50);box-shadow:inset 0 0 0 1px var(--sel-line);font-weight:700}
+.f6 .terms{display:grid;gap:4px}
+.f6 .trow{display:flex;align-items:center;gap:12px}
+.f6 .trow .check{flex:1;min-width:0}
+.f6 .trow .view{display:inline-flex;align-items:center;min-height:44px;padding-inline:16px;font-weight:600}
+.f6 .req{font-weight:600}
+.f6 .actions{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid #E5E7EB}
+.f6 .actions .btn{min-width:120px}
+.f6 .actions .next{margin-left:auto;flex:1 0 auto}
+.f6 .phone-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}
+.f6 .phone-row .btn{padding-inline:14px}
+.f6 .auth-col.wide{max-width:480px}
+.f6 .phone-row{grid-template-columns:minmax(0,1fr) 120px}
+.f6 .phone-row .btn{width:100%}
+.f6 .actions.kk{display:grid;grid-template-columns:1fr 1fr}
+.f6 .actions.kk .btn{min-width:0}
+.f6 .actions.kk .next{grid-column:1/-1;order:-1;margin-left:0}
+.f6 .steps.many li.far{flex:0 0 auto}
+.f6 .steps.many li.curli{flex:1 1 0}
+.f6 .steps.many .st.far{width:48px;padding:0}
+.f6 .steps.many .st.far .lbl{display:none}
+.f6 .codebox{position:relative}
+.f6 .codebox .field{padding-right:80px}
+.f6 .timer{position:absolute;right:16px;top:0;line-height:48px;font-variant-numeric:tabular-nums;color:#4B5563;font-weight:600}
+.f6 .vhead{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.f6 .vhead h2{font-size:20px;line-height:1.4}
+.f6 .tag{display:inline-flex;align-items:center;min-height:32px;padding:4px 8px;border-radius:9999px;background:#F9FAFB;color:var(--sub);font-weight:700;font-size:14px;line-height:1.5}
+.f6 .tag.state{background:var(--sky-50);color:#075985;box-shadow:inset 0 0 0 1px #BAE0F5}
+.f6 .tag.ok{background:#EAF5EE;color:#276749}
+.f6 .vlead{margin-bottom:24px;color:var(--sub)}
+.f6 .vbox{display:grid;gap:16px;padding:24px;border-radius:16px;background:#F9FAFB;border:1px solid var(--line)}
+.f6 .boxtop{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px}
+.f6 .codeval{font:700 32px/1.25 Pretendard,sans-serif;letter-spacing:1px;font-variant-numeric:tabular-nums}
+.f6 .coderow{display:flex;align-items:center;flex-wrap:wrap;gap:12px 16px}
+.f6 .facts{display:grid;gap:4px;color:var(--sub)}
+.f6 .vsteps{display:grid;gap:12px;margin-top:24px}
+.f6 .or{display:grid;gap:12px;padding-top:16px;border-top:1px solid #E5E7EB}
+.f6 .or p,.f6 .vsteps .sub{color:var(--sub)}
+.f6 .side{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:24px}
+.f6 .examples{display:grid;gap:2px;margin-top:8px;color:var(--sub)}
+.f6 .preview{margin-top:8px;font-weight:700}
+.f6 .done{display:grid;gap:4px;padding:24px;border-radius:16px;background:var(--sky-50);color:var(--ink)}
+.f6 .done a{text-decoration:underline!important;text-underline-offset:4px}
+.f6 .kakao-list{display:grid;gap:16px;counter-reset:k}
+.f6 .kakao-list li{position:relative;min-height:28px;padding-left:40px;counter-increment:k}
+.f6 .kakao-list li::before{content:counter(k);position:absolute;left:0;top:0;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--sky-50);font-weight:600}
+.f6 .again{margin-top:16px;color:var(--sub);font-size:14px;line-height:1.5}
+.f6 .again b{font-weight:600;color:var(--ink);text-decoration:underline;text-underline-offset:4px}
+.f6 .connected{display:flex;align-items:center;gap:12px;padding:16px;border-radius:12px;background:#EAF5EE;color:#276749;font-weight:600}
+.f6 .after-block{margin-top:24px}
+.f6 .sep{height:0}
+@container st (max-width:767px){.f6 .gnb,.f6 .acct{display:none}
+.f6 .mbtn{display:flex}
+.f6 .hd .in{height:56px;padding:0 16px}
+.f6 .auth-page{padding:64px 16px 48px}
+.f6 .head h1{font-size:24px}
+.f6 .card{padding:24px}
+.f6 .st{font-size:14px;gap:6px}
+.f6 .dot{width:24px;height:24px;font-size:14px}
+.f6 .actions{display:grid;grid-template-columns:1fr 2fr}
+.f6 .actions.solo{grid-template-columns:1fr}
+.f6 .actions .btn{min-width:0}
+.f6 .actions .next{margin-left:0}
+.f6 .ft .in{padding:0 16px}
+.f6 .ft .r1,.f6 .ft .r2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.f6 .codeval{font-size:24px}
+.f6 .grp>h3{font-size:16px}
+.f6 .main{order:-1}
+.f6 .stack-m{display:grid}
+.f6 .side>.btn{flex:1 1 auto}
+}
+@container st (max-width:480px){.f6 .st.far .lbl{display:none}
+.f6 .steps li.far{flex:0 0 auto}
+.f6 .steps li.curli{flex:1 1 0}
+.f6 .actions.kk{grid-template-columns:1fr}
+.f6 .actions.kk .next{order:-1}
+}
+
+.f4{--muted:#55606E;--line:#DCE3EA}
+.f4{container:st/inline-size;--primary:#89CFF0;--p50:#E0F2FE;--tint:#F0F8FF;--tl:#BFE3F7;--g50:#F9FAFB;--g100:#F3F4F6;--g200:#E5E7EB;--g400:#9CA3AF;--g500:#6B7280;--sub:#4B5563;--ink:#1F2937;
+  --info:#315E86;--info-soft:#EDF4FA;--warn:#805B16;--warn-soft:#FFF5DB;--succ:#276749;--succ-soft:#EAF5EE;--danger:#B42318;--danger-soft:#FEECE9;--alert50:#FFFBEB;--alert200:#FDE68A;
+  --fx-accent:radial-gradient(120% 140% at 100% 0%,rgb(255 255 255/.9) 0%,rgb(255 255 255/0) 45%),radial-gradient(80% 120% at 0% 100%,rgb(137 207 240/.28) 0%,rgb(137 207 240/0) 60%),linear-gradient(135deg,#f0f8ff 0%,#e0f2fe 100%);
+  --sh-accent:inset 0 1px 0 rgb(255 255 255/.8),0 8px 24px rgb(137 207 240/.18);
+  --fx-card:radial-gradient(90% 120% at 100% 0%,rgb(137 207 240/.07) 0%,rgb(137 207 240/0) 55%),linear-gradient(180deg,#fff 0%,#fbfcfe 100%);
+  --sh-card:inset 0 1px 0 #fff,0 1px 2px rgb(31 41 55/.04),0 4px 12px rgb(31 41 55/.04);
+  --hair:inset 0 0 0 1px var(--g200);
+  --fx-btn:linear-gradient(180deg,#95d4f2 0%,#89cff0 100%);
+  background:#fff;position:relative;font-size:16px;line-height:1.6;color:var(--ink)}
+.f4 a{color:inherit;text-decoration:none}
+.f4 h1,.f4 h2,.f4 h3{font-family:Tmoney,Pretendard,sans-serif;letter-spacing:-.02em;font-weight:800;line-height:1.3;color:var(--ink)}
+.f4 svg{flex:none}
+.f4 .app{display:flex;min-height:900px}
+.f4 .sb{flex:none;width:240px;background:var(--tint);border-right:1px solid var(--g200);display:flex;flex-direction:column;padding:0 8px 8px}
+.f4 .sb-top{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 8px 0 8px}
+.f4 .sb-top .logo{display:flex;align-items:center;gap:8px;font:800 20px/1 Tmoney,sans-serif}
+.f4 .logo img{width:28px;height:28px;border-radius:22%}
+.f4 .sb nav{flex:1}
+.f4 .sb nav a{display:flex;align-items:center;gap:12px;height:36px;margin-bottom:2px;padding:0 10px;border-radius:8px;font-size:14px;font-weight:500}
+.f4 .sb nav a[aria-current]{background:var(--p50);font-weight:600}
+.f4 .sb nav svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.f4 .sb nav .n{margin-left:auto;display:grid;place-items:center;min-width:24px;height:24px;border-radius:12px;background:var(--primary);font-size:14px;font-weight:700;line-height:1}
+.f4 .sb .me{display:flex;align-items:center;gap:8px;height:56px;padding:0 10px;font-size:14px;font-weight:600;border-top:1px solid var(--g200)}
+.f4 .me i{width:28px;height:28px;border-radius:50%;background:var(--p50)}
+.f4 .mainwrap{flex:1;min-width:0;display:flex;flex-direction:column}
+.f4 .tb{display:none;align-items:center;justify-content:space-between;height:56px;padding:0 16px;border-bottom:1px solid var(--g200);background:#fff}
+.f4 .tb .logo{display:flex;align-items:center;gap:8px;font:800 20px/1 Tmoney,sans-serif}
+.f4 .tb button{width:44px;height:44px;border:0;background:none;color:var(--ink);display:flex;align-items:center;justify-content:center}
+.f4 .pane-main{flex:1;width:100%;padding:40px;min-width:0;container:pane/inline-size}
+.f4 .col{max-width:880px;margin-inline:auto}
+.f4 .col.w1040{max-width:1040px}
+.f4 .ft{background:var(--g50);padding:40px 0;font-size:14px;color:var(--sub)}
+.f4 .ft .in{max-width:928px;margin:0 auto;padding:0 24px}
+.f4 .ft .r1,.f4 .ft .r2{display:flex;flex-wrap:wrap;gap:0 24px;justify-content:space-between}
+.f4 .ft a{display:inline-flex;align-items:center;min-height:44px}
+.f4 .ft .biz{margin-top:8px;line-height:1.7}
+.f4 .ph{margin-bottom:32px}
+.f4 .phrow{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.f4 .ph h1{font-size:32px;line-height:1.3}
+.f4 .cnt{margin-left:8px;font:400 16px Pretendard;color:var(--g500);letter-spacing:0}
+.f4 .phd{margin-top:8px;max-width:680px;color:var(--sub);font-weight:400}
+.f4 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 16px;min-width:96px;border:0;border-radius:12px;background:var(--fx-btn);color:var(--ink);font:600 16px/1.4 Pretendard,sans-serif;white-space:nowrap;box-shadow:inset 0 1px 0 rgb(255 255 255/.45),0 1px 2px rgb(31 41 55/.06)}
+.f4 .btn.line{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px var(--g500)}
+.f4 .btn.sm{min-height:44px;min-width:0}
+.f4 .btn.block{width:100%}
+.f4 .tg{display:inline-flex;align-items:center;gap:8px;min-height:28px;padding:4px 12px;border-radius:9999px;font-size:14px;font-weight:700;line-height:1.4;white-space:nowrap;background:var(--info-soft);color:var(--info)}
+.f4 .tg::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:currentColor}
+.f4 .tg.warn{background:var(--warn-soft);color:var(--warn)}
+.f4 .tg.succ{background:var(--succ-soft);color:var(--succ)}
+.f4 .tg.danger{background:var(--danger-soft);color:var(--danger)}
+.f4 .tg.white{background:#fff}
+.f4 .tg.white.warn{background:var(--warn-soft)}
+.f4 .tg.nodot::before{display:none}
+.f4 .tg svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.f4 .tabs{display:flex;gap:8px;margin:0 0 24px;box-shadow:inset 0 -1px 0 var(--g200)}
+.f4 .tabs span{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;color:var(--sub);font-weight:500;white-space:nowrap;box-shadow:inset 0 -2px 0 transparent}
+.f4 .tabs span[aria-selected=true]{background:var(--p50);color:var(--ink);font-weight:700;box-shadow:inset 0 -2px 0 var(--ink)}
+.f4 .btn.line.sm{min-height:44px}
+.f4 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.f4 .changes code{font-size:13px;background:#F3F4F6;padding:1px 4px;border-radius:4px}
+@container st (max-width:767px){.f4 .sb{display:none}
+.f4 .tb{display:flex}
+.f4 .app{display:block;min-height:0}
+.f4 .pane-main{padding:24px 16px 48px}
+.f4 .ph h1{font-size:24px}
+.f4 .ft{padding:32px 0}
+.f4 .ft .in{padding:0 16px}
+.f4 .ft .r1,.f4 .ft .r2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.f4 .ft .r1 .logo{grid-column:1/-1}
+}
+.f4{--lw:#DCDEE0;--tl:#BFE3F7;--cream:#FBF5EE;--lcream:#E4D8CB;--g300:#D1D5DB}
+.f4 .sb .gh{margin:12px 0 2px;padding:0 10px;font-size:14px;font-weight:600;color:var(--sub);line-height:28px}
+.f4 .sb nav a.subi{height:32px;padding-left:40px;margin-bottom:0}
+.f4 .soon2{margin-left:8px;font-size:12px;color:var(--sub)}
+.f4 .ph{margin-bottom:48px}
+.f4 .ph h1{font-size:32px}
+.f4 .ph .phd{margin-top:8px;max-width:680px;color:var(--sub);font-weight:400}
+.f4 .col.w1200{max-width:1200px}
+.f4 .col.w960{max-width:960px}
+.f4 .btn{box-shadow:none;background:var(--primary);padding:0 24px;min-width:0}
+.f4 .btn.sm{min-height:44px;padding:0 16px}
+.f4 .btn.line{background:#fff;box-shadow:inset 0 0 0 1px var(--g500)}
+.f4 .btn.text{background:none;box-shadow:none;padding:0 14px}
+.f4 .btn.danger{background:#fff;color:var(--danger);box-shadow:inset 0 0 0 1px var(--danger)}
+.f4 .btn.off{background:var(--g100);color:var(--sub);box-shadow:none;cursor:not-allowed}
+.f4 .btn.soft{background:#fff;box-shadow:inset 0 0 0 1px var(--g500)}
+.f4 .btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.f4 .grp{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:24px;align-items:start}
+.f4 .grp+.grp{margin-top:48px;padding-top:48px;border-top:1px solid var(--lw)}
+.f4 .nm{grid-column:span 4;min-width:0;margin:0;font:800 20px/28px Tmoney,Pretendard,sans-serif;letter-spacing:-.02em;padding-top:var(--nmt,0)}
+.f4 .rows{grid-column:span 8;min-width:0}
+.f4 .item{min-width:0}
+.f4 .item+.item{border-top:1px solid var(--lw)}
+.f4 .row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;min-height:64px;margin:0;padding:8px 0}
+.f4 .txt{display:flex;flex:1 1 160px;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;margin:0;overflow-wrap:anywhere}
+.f4 .k{font-size:16px;font-weight:600;line-height:1.5}
+.f4 .v{margin:0;font-size:16px;line-height:1.5}
+.f4 .s{margin:0;color:var(--sub);font-size:14px;line-height:1.6;overflow-wrap:anywhere}
+.f4 .act{display:flex;flex:none;flex-wrap:wrap;gap:8px}
+.f4 .panel{padding-bottom:16px}
+.f4 .fieldrow{display:flex;flex-direction:column;gap:8px;padding:16px 0}
+.f4 .fld{display:flex;align-items:center;min-height:48px;padding:0 16px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--g500);font-size:16px;width:100%;overflow-wrap:anywhere}
+.f4 .fld.ph0{color:var(--sub)}
+.f4 .fld.bad{box-shadow:inset 0 0 0 2px var(--danger)}
+.f4 .fld.ta{align-items:flex-start;padding:12px 16px;min-height:120px}
+.f4 .fld.sel::after{content:"";margin-left:auto;width:8px;height:8px;border:solid var(--ink);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.f4 .lab{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;min-width:0}
+.f4 .cnt{color:var(--sub);font-size:14px;white-space:nowrap}
+.f4 .bad-t{color:var(--danger);font-weight:600}
+.f4 .swb{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:64px;padding:8px 0}
+.f4 .trk{position:relative;flex:none;width:52px;height:32px;border:1px solid var(--sub);border-radius:999px;background:var(--g200)}
+.f4 .trk::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:var(--ink)}
+.f4 .trk.on{background:var(--primary)}
+.f4 .trk.on::after{transform:translateX(20px)}
+.f4 .must{margin:0;padding-top:16px;border-top:1px solid var(--lw)}
+.f4 .must b{display:block;font-size:14px;font-weight:600;line-height:1.5}
+.f4 .must span{display:block;margin-top:4px;color:var(--sub);font-size:14px;line-height:1.6}
+.f4 .err,.f4 .okm{display:flex;gap:12px;align-items:flex-start;margin:0;padding:16px;border-radius:12px;font-weight:600;overflow-wrap:anywhere;max-width:100%}
+.f4 .err{background:var(--danger-soft);color:var(--danger)}
+.f4 .okm{background:var(--succ-soft);color:var(--succ)}
+.f4 .err::before,.f4 .okm::before{content:"!";flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:currentColor;font-size:14px;font-weight:800;line-height:1;color:#fff}
+.f4 .okm::before{content:"✓"}
+.f4 .err::before{background:var(--danger);color:#fff}
+.f4 .okm::before{background:var(--succ);color:#fff}
+.f4 .end{display:flex;flex-direction:column;align-items:flex-end;gap:8px;margin-top:24px}
+.f4 .btns{display:flex;gap:8px;flex-wrap:wrap}
+.f4 .quit{margin-top:48px;padding-top:24px;border-top:1px solid var(--lw)}
+.f4 .more1{margin:48px 0 0;color:var(--sub);font-size:14px;line-height:1.6}
+.f4 .more1 a{display:inline-flex;align-items:center;min-height:44px;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:4px}
+.f4 .av{flex:none;display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:var(--p50);box-shadow:inset 0 0 0 1px var(--tl);font:800 24px/1 Tmoney,sans-serif;overflow:hidden}
+.f4 .av img{width:100%;height:100%;object-fit:cover}
+.f4 .bn{display:grid;place-items:center;width:100%;height:160px;margin-top:4px;border-radius:12px;background:var(--p50);box-shadow:inset 0 0 0 1px var(--tl);color:var(--sub);font-size:14px;overflow:hidden}
+.f4 .bn img{width:100%;height:100%;object-fit:cover}
+.f4 .bd{display:inline-flex;align-items:center;gap:8px;min-height:28px;padding:4px 12px;border-radius:999px;font-size:14px;font-weight:700;line-height:1.4;white-space:nowrap;background:var(--info-soft);color:var(--info)}
+.f4 .bd::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:currentColor}
+.f4 .bd.ok{background:var(--succ-soft);color:var(--succ)}
+.f4 .bd.wr{background:var(--warn-soft);color:var(--warn)}
+.f4 .bd.nn{background:var(--g100);color:var(--sub)}
+.f4 .panelc{min-width:0;border-radius:16px;background:#fff;box-shadow:var(--hair),var(--sh-card)}
+.f4 .pform{min-width:0}
+.f4 .pform .sub{display:grid;gap:8px;min-width:0;padding:32px;border-bottom:1px solid var(--lw)}
+.f4 .pform .sub.last{border-bottom:0}
+.f4 .pform .end{padding:16px 32px 32px;margin:0}
+.f4 .pt{margin:0 0 8px;font:800 20px/1.4 Tmoney,Pretendard,sans-serif;letter-spacing:-.02em}
+.f4 .stt{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0;font-size:16px;font-weight:600;line-height:1.4}
+.f4 .hint{margin:0;color:var(--sub);font-size:14px;line-height:1.6}
+.f4 .gi{display:grid;grid-template-columns:minmax(0,1fr) var(--pv,300px);column-gap:24px;align-items:start}
+.f4 .pv{position:sticky;top:24px;display:grid;align-content:start;gap:12px;min-width:0}
+.f4 .pv>h3{margin:0;font:600 16px/1.4 Pretendard,sans-serif;letter-spacing:0}
+.f4 .sec-t{margin:0 0 24px;font:800 20px/1.4 Tmoney,Pretendard,sans-serif;letter-spacing:-.02em}
+.f4 .jump{display:flex;flex-wrap:wrap;gap:0 16px;margin:-32px 0 32px;font-size:14px}
+.f4 .jump a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:4px}
+.f4 .mk{display:grid;place-items:center;flex:none;width:56px;height:56px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--lw);overflow:hidden}
+.f4 .mk img{width:100%;height:100%;object-fit:cover}
+.f4 .chk{display:flex;gap:12px;align-items:center;min-height:44px;font-size:14px}
+.f4 .chk i{flex:none;width:24px;height:24px;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 2px var(--g500)}
+.f4 .sws{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.f4 .sw{position:relative;width:44px;height:44px}
+.f4 .sw i{position:absolute;inset:4px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--g500)}
+.f4 .sw.on i{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--ink),inset 0 0 0 1px var(--g500)}
+.f4 .sw.on::after{content:"";position:absolute;left:16px;top:11px;width:8px;height:14px;border:solid var(--ink);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.f4 .swn{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1px var(--g500);font-size:14px}
+.f4 .swn.on{background:var(--p50);box-shadow:inset 0 0 0 1px var(--ink)}
+.f4 .cc{width:100%;max-width:300px;border-radius:16px;overflow:hidden;background:#fff;box-shadow:var(--hair),var(--sh-card)}
+.f4 .cc .cv{height:120px;background:linear-gradient(135deg,#D8F1EC,#FCF1C8);display:grid;place-items:center}
+.f4 .cc .cv img{height:84px}
+.f4 .cc .cb{padding:16px;display:grid;gap:8px}
+.f4 .cc .nr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700}
+.f4 .fb{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:var(--info-soft);color:var(--info);font-size:12px;font-weight:700}
+.f4 .ct{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:999px;font-size:14px;font-weight:600;line-height:1.5;white-space:nowrap}
+.f4 .ct i{width:14px;height:14px;border-radius:50%;background:currentColor}
+.f4 .ct.z{background:#E4F7EC;color:#146C43}
+.f4 .ct.y{background:#FDECEA;color:#B42318}
+.f4 .ct.s{background:#E8F0FA;color:#1F4E79}
+.f4 .ct.v{background:var(--g100);color:var(--sub)}
+.f4 .cc .ft2{padding:0 16px 16px}
+.f4 .head{border-radius:16px;overflow:hidden;background:#fff;box-shadow:var(--hair),var(--sh-card)}
+.f4 .head .cv{height:160px;background:linear-gradient(135deg,#FCE9A8,#E0F2FE);display:grid;place-items:center}
+.f4 .head .cv img{height:110px}
+.f4 .head .hb{display:flex;gap:12px;align-items:flex-end;padding:0 24px 24px;margin-top:-36px}
+.f4 .head .hb .av{width:96px;height:96px;background:#fff;box-shadow:0 0 0 4px #fff}
+.f4 .head .hb .av img{width:80%;height:80%;object-fit:contain}
+.f4 .head .hb p{margin:0}
+.f4 .head .hb .nn2{font:800 24px/1.3 Tmoney,sans-serif}
+.f4 .chips{display:flex;flex-wrap:wrap;gap:8px}
+.f4 .pk{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1px var(--g500);font-size:16px;font-weight:500}
+.f4 .pk i{width:20px;height:20px;border-radius:50%;background:var(--ink)}
+.f4 .pk.on{background:var(--p50);box-shadow:inset 0 0 0 2px var(--ink);font-weight:700}
+.f4 .pk svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.f4 .fold{border-radius:12px;background:#fff;box-shadow:var(--hair),var(--sh-card);margin-top:16px}
+.f4 .fold>.sm{display:flex;align-items:center;gap:16px;min-height:56px;padding:8px 16px;font-weight:600}
+.f4 .fold>.sm>span:first-child{flex:1;min-width:0}
+.f4 .fm{color:var(--sub);font-size:14px;font-weight:400}
+.f4 .chev{flex:none;width:20px;height:20px;fill:none;stroke:var(--sub);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.f4 .fold.open .chev{transform:rotate(180deg)}
+.f4 .fb2{display:grid;gap:16px;min-width:0;padding:16px;border-top:1px solid var(--lw)}
+.f4 .lkrow{display:flex;flex-wrap:wrap;align-items:center;gap:16px;min-height:56px;padding:8px 16px;border-radius:12px;background:#fff;box-shadow:var(--hair),var(--sh-card);font-weight:600}
+.f4 .lkrow>span:first-child{flex:1;min-width:0}
+.f4 .card{min-width:0;padding:32px;border-radius:16px;background:#fff;box-shadow:var(--hair),var(--sh-card)}
+.f4 .card.soft{background:var(--g50);box-shadow:var(--hair)}
+.f4 .card h3{margin:0 0 16px;font:800 20px/1.4 Tmoney,Pretendard,sans-serif;letter-spacing:-.02em}
+.f4 .card>*+*{margin-top:16px}
+.f4 .card .t{font-weight:600;margin:0}
+.f4 .card p{margin:0}
+.f4 .card .hint{margin-top:8px}
+.f4 .card .meta{color:var(--sub);font-size:14px}
+.f4 .gr{display:grid;gap:8px}
+.f4 .gr.c2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.f4 .gr.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.f4 .opt{display:flex;align-items:center;gap:8px;min-height:48px;padding:8px 16px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--g500);line-height:1.5}
+.f4 .opt i{flex:none;width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--g500)}
+.f4 .opt.sq i{border-radius:8px}
+.f4 .opt.on{background:var(--p50);box-shadow:inset 0 0 0 2px var(--ink);font-weight:600}
+.f4 .opt.on i{box-shadow:inset 0 0 0 7px var(--ink)}
+.f4 .swr{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:16px 24px;border-radius:12px;background:var(--g50);box-shadow:inset 0 0 0 1px var(--g200)}
+.f4 .swr div{display:grid;gap:4px;min-width:0}
+.f4 .swr small{font-size:14px;color:var(--sub);line-height:1.6}
+.f4 .hr{display:flex;align-items:center;gap:8px}
+.f4 .hr b{white-space:nowrap}
+.f4 .bst{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.f4 .who{display:flex;align-items:center;gap:12px}
+.f4 .who .fc{width:40px;height:40px}
+.f4 .fgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:24px;align-items:start}
+.f4 .flist{grid-column:span 8;min-width:0}
+.f4 .fside{grid-column:span 4;position:sticky;top:24px;min-width:0}
+.f4 .fl{margin:0;padding:0;border-top:1px solid var(--lw)}
+.f4 .fl li{display:flex;flex-wrap:wrap;align-items:center;column-gap:16px;min-height:72px;padding-block:8px;border-bottom:1px solid var(--lw)}
+.f4 .fl .who2{flex:1 1 0;min-width:0;display:flex;flex-direction:column}
+.f4 .fl .nr{display:flex;align-items:center;gap:8px;min-width:0;font-weight:600;line-height:1.4}
+.f4 .fl .nr a{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f4 .fl .in{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--sub);font-size:14px;line-height:1.4}
+.f4 .fl .btn{font-size:14px;flex:none}
+.f4 .ib{flex:none;width:44px;height:44px;margin-left:-8px;display:grid;place-items:center;color:var(--sub);border-radius:12px}
+.f4 .ib svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.f4 .fpanel{display:flex;flex-direction:column;align-items:flex-start;gap:24px;padding:24px;border:1px solid var(--lcream);border-radius:16px;background:var(--cream)}
+.f4 .fpanel .lb{margin:0;color:var(--sub);font-size:14px;font-weight:600}
+.f4 .fpanel .num{margin:0;font:800 48px/1.1 Tmoney,sans-serif}
+.f4 .fpanel .num small{margin-left:4px;font:600 16px Pretendard}
+.f4 .fpanel img{align-self:flex-end;width:96px;height:96px;object-fit:contain}
+.f4 .fempty{display:flex;flex-direction:column;align-items:center;gap:16px;padding:48px 24px;border-radius:16px;background:#fff;box-shadow:var(--hair),var(--sh-card);text-align:center}
+.f4 .fempty img{width:96px;height:96px}
+.f4 .fempty h2{margin:0;font:800 20px/1.4 Tmoney,sans-serif}
+.f4 .fempty p{margin:0;color:var(--sub);max-width:360px}
+.f4 .ec{max-width:560px;margin-top:-24px}
+.f4 .ec p{margin:0}
+.f4 .ec .okr{display:flex;gap:8px;align-items:flex-start;color:var(--ink)}
+.f4 .ec .okr svg{flex:none}
+.f4 .ec>*+*{margin-top:12px}
+.f4 .ec .btnrow{margin-top:24px}
+.f4 .picks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.f4 .po{display:flex;gap:12px;align-items:center;min-height:56px;padding:8px 16px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--g500);font-weight:600}
+.f4 .po i{flex:none;width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--g500)}
+.f4 .po.on{background:var(--p50);box-shadow:inset 0 0 0 2px var(--ink)}
+.f4 .po.on i{box-shadow:inset 0 0 0 7px var(--ink)}
+.f4 .po.dis{background:var(--g50);color:var(--sub);box-shadow:inset 0 0 0 1px var(--g300)}
+.f4 .po small{display:block;font-size:14px;font-weight:400;color:var(--sub)}
+.f4 .po small a{display:inline-flex;align-items:center;min-height:44px;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:4px}
+.f4 .shc{max-width:360px;overflow:hidden;border-radius:12px;background:#fff;box-shadow:var(--hair),var(--sh-card)}
+.f4 .shc .im{display:grid;place-items:center;height:120px;background:var(--p50)}
+.f4 .shc .im b{display:grid;place-items:center;width:72px;height:72px;border-radius:50%;background:#fff;box-shadow:0 0 0 8px #fff;overflow:hidden}
+.f4 .shc .im img{width:56px}
+.f4 .shc p{margin:0;padding:12px 16px;font-size:14px;font-weight:600}
+.f4 .cap{margin:0 0 8px;color:var(--sub);font-size:14px}
+.f4 .szs{margin:12px 0 0;padding:0}
+.f4 .szs li{display:flex;flex-wrap:wrap;align-items:center;gap:16px;min-height:72px;padding:8px 0}
+.f4 .szs li+li{border-top:1px solid var(--lw)}
+.f4 .th{display:grid;place-items:center;flex:none;width:48px;height:48px}
+.f4 .th i{display:block;border-radius:3px;background:var(--p50);box-shadow:inset 0 0 0 1px var(--tl)}
+.f4 .szt{display:flex;flex:1 1 160px;flex-direction:column;gap:2px;min-width:0}
+.f4 .lock{margin:12px 0 0;color:var(--sub);font-size:14px;line-height:1.6}
+.f4 .lock a{display:inline-flex;align-items:center;min-height:44px;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:4px}
+@container st (max-width:767px){.f4 .ph{margin-bottom:32px}
+.f4 .grp{display:block}
+.f4 .grp+.grp{margin-top:32px;padding-top:32px}
+.f4 .nm{padding-top:0!important}
+.f4 .rows{margin-top:16px}
+.f4 .gi{display:flex;flex-direction:column;gap:16px}
+.f4 .pv{position:static;order:-1}
+.f4 .pform .sub{padding:24px}
+.f4 .pform .end{padding:12px 24px;border-top:1px solid var(--lw);border-radius:0 0 16px 16px}
+.f4 .end{align-items:stretch}
+.f4 .btns .btn{flex:1}
+.f4 .card{padding:24px 16px}
+.f4 .gr.c4{grid-template-columns:repeat(2,minmax(0,1fr))}
+.f4 .fgrid{display:flex;flex-direction:column;gap:16px}
+.f4 .fside{position:static;order:-1;width:100%}
+.f4 .flist{width:100%}
+.f4 .fpanel{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:16px}
+.f4 .fpanel img{display:none}
+.f4 .fl li{column-gap:8px}
+.f4 .fl .btn{padding:0 12px}
+.f4 .ib{margin-left:0}
+.f4 .picks{grid-template-columns:1fr}
+.f4 .shc .im{height:72px}
+.f4 .shc .im b{width:48px;height:48px;box-shadow:0 0 0 4px #fff}
+.f4 .shc .im img{width:36px}
+.f4 .szs .btns{width:100%}
+.f4 .jump{margin-top:-16px}
+.f4 .head .hb{padding:0 16px 16px}
+.f4 .head .cv{height:72px}
+.f4 .head .hb .av{width:56px;height:56px}
+.f4 .av{width:56px;height:56px}
+.f4 .bn{height:96px}
+.f4 .swr{padding:16px}
+.f4 .more1{margin-top:32px}
+}
+.f4 .more{margin-top:96px;padding-top:48px;border-top:1px solid var(--lw)}
+.f4 .jump{margin:-16px 0 32px}
+.f4 .fc{flex:none;width:32px;height:32px;border-radius:50%;background:var(--p50);box-shadow:inset 0 0 0 1px rgb(31 41 55/.08);display:grid;place-items:center;overflow:hidden}
+.f4 .fc img{width:26px;height:26px;object-fit:contain}
+.f4 .fc.md{width:40px;height:40px}
+.f4 .fc.md img{width:32px;height:32px}
+.f4 .phrow{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+@container st (max-width:767px){.f4 .more{margin-top:48px;padding-top:24px}
+}
+.f4 .fl .who2{position:relative}
+.f4 .fl .nr a::after{content:"";position:absolute;inset:-8px 0}
+.f4 .fx{width:100%;max-width:var(--w);flex:0 1 var(--w);min-width:0}
+.f4 .hr .fld,.f4 .bst .fld{width:100%;flex:0 1 auto}
+.f4 .bst .fld{width:auto;flex:1 1 0}
+@container st (max-width:767px){.f4 .fx{max-width:none;flex-basis:100%}
+.f4 .fld{max-width:none!important}
+.f4 .bst .fld{flex:1 1 100px}
+}
+.f4 .em-new{max-width:416px}
+.f4 .em{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);justify-content:start;align-items:center;gap:8px}
+.f4 .at{font-weight:600;color:var(--sub)}
+.f4 .em-c{margin-top:8px;max-width:416px}
+.f4 .em-old{display:none}
+@container st (max-width:767px){.f4 .em-new{max-width:none}
+.f4 .em-c{max-width:none}
+}
+
+.f5{--bg:#F7F9FB;--card:#fff;--line:#DCE3EA;--line-hover:#A9B8C6;--panel-line:#CFE2EE;--shadow:0 1px 2px rgba(15,23,42,.04),0 4px 12px rgba(15,23,42,.04);--ink:#1F2937;--muted:#55606E;--accent:#0369A1;--num:#7F97AC;--sky:#89CFF0;--sky-50:#EEF7FD;--sky-100:#E0F2FE;--input-line:#AFC0CE;--ease:cubic-bezier(.2,.8,.2,1)}
+.f5{container:st/inline-size;background:var(--bg);position:relative;font-size:16px}
+.f5 img{display:block;max-width:100%}
+.f5 a{color:inherit;text-decoration:none}
+.f5 h1,.f5 h2{font-family:Tmoney,Pretendard,sans-serif;letter-spacing:-.02em;font-weight:800;line-height:1.3;color:var(--ink)}
+.f5 strong{color:var(--accent);font-weight:700}
+.f5 .wrap{max-width:928px;margin:0 auto;padding:0 24px}
+.f5 .wrap.w1080{max-width:1128px}
+.f5 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border-radius:12px;font:700 16px/1 Pretendard,sans-serif;border:1px solid transparent;cursor:pointer;white-space:nowrap}
+.f5 .btn svg{width:18px;height:18px}
+.f5 .btn-primary{background:linear-gradient(180deg,#93D4F2,var(--sky));color:var(--ink);border-color:#6FB8DD;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+.f5 .btn-outline{background:#fff;color:var(--ink);border-color:var(--input-line)}
+.f5 .tl{display:inline-flex;align-items:center;gap:4px;min-height:44px;font-weight:700;font-size:16px;white-space:nowrap}
+.f5 .tl svg{width:16px;height:16px}
+.f5 .ic{width:20px;height:20px;flex:none}
+.f5 .hd{background:rgba(255,255,255,.96);border-bottom:1px solid var(--line)}
+.f5 .hd .wrap{display:flex;align-items:center;gap:24px;height:64px}
+.f5 .logo{display:flex;align-items:center;gap:8px;font:800 20px/1 Tmoney,sans-serif;min-height:44px}
+.f5 .logo img{width:32px;height:auto}
+.f5 .gnb{display:flex;margin-right:auto}
+.f5 .gnb a{display:flex;align-items:center;min-height:44px;padding:0 12px;border-radius:8px;font-weight:600;font-size:16px}
+.f5 .gnb a.on{background:var(--sky-50)}
+.f5 .acct{display:flex;align-items:center;gap:8px}
+.f5 .acct .lg{display:flex;align-items:center;min-height:44px;padding:0 12px;font-weight:600}
+.f5 .mbtn{display:none;width:44px;height:44px;border:0;background:none;color:var(--ink);align-items:center;justify-content:center;margin-left:auto}
+.f5 .ft{margin-top:96px;background:#F1F4F7;border-top:1px solid var(--line);padding:32px 0 40px;font-size:14px;color:var(--muted)}
+.f5 .ft .r1{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 24px}
+.f5 .ft .r1 div,.f5 .ft .r2{display:flex;gap:8px 24px;flex-wrap:wrap}
+.f5 .ft .r2{margin-top:8px}
+.f5 .ft .biz{margin-top:16px;line-height:1.7}
+.f5 .app{display:grid;grid-template-columns:240px minmax(0,1fr)}
+.f5 .sb{background:#fff;border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:4px;min-height:100%}
+.f5 .sb .logo{padding:0 8px;margin-bottom:8px}
+.f5 .sb a{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 12px;border-radius:12px;font-size:14px;font-weight:600;color:var(--ink)}
+.f5 .sb a.on{background:var(--sky-100)}
+.f5 .sb a svg{width:20px;height:20px;color:var(--muted)}
+.f5 .sb .nb{margin-left:auto;min-width:22px;height:22px;border-radius:11px;background:var(--accent);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center}
+.f5 .app-main{min-width:0}
+.f5 .mhd{display:none;background:#fff;border-bottom:1px solid var(--line);height:56px;padding:0 16px;align-items:center;justify-content:space-between}
+.f5 .hero{background:#E8F5FD url('/public/images/home/hero-bubbles.png') center/cover no-repeat;padding:48px 0 96px}
+.f5 .hero-grid{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:32px;align-items:center}
+.f5 .eyebrow{font-size:16px;font-weight:600;color:var(--muted)}
+.f5 .hero h1{margin-top:8px;font-size:48px;line-height:1.25}
+.f5 .hero .art img{width:200px;height:auto}
+.f5 .search{display:flex;align-items:center;gap:8px;margin-top:32px;max-width:560px;height:64px;padding:0 8px 0 24px;background:#fff;border:1px solid var(--input-line);border-radius:16px;box-shadow:var(--shadow)}
+.f5 .search.plain{margin-top:24px;max-width:none}
+.f5 .search span{flex:1;min-width:0;color:#5F6B79;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f5 .search .btn{min-height:48px;padding:0 20px;border-radius:8px}
+.f5 .pbar{display:inline-flex;align-items:center;gap:12px;margin-top:24px;padding:8px 16px 8px 8px;background:#fff;border:1px solid var(--panel-line);border-radius:16px;box-shadow:var(--shadow);font-weight:600}
+.f5 .pbar img{width:40px;height:40px;border-radius:50%;background:var(--sky-50);border:1px solid var(--line);padding:2px}
+.f5 .vbadge{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:999px;background:#E3F2EA;border:1px solid #BFDCCB;color:#14532D;font-size:12px;font-weight:700}
+.f5 .vbadge svg{width:12px;height:12px}
+.f5 .hero .actions{margin-top:24px}
+.f5 .quick{position:relative;margin-top:-48px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.f5 .quick a{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px;border-radius:16px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow)}
+.f5 .quick .q-ico{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--sky-50)}
+.f5 .quick .q-ico img{width:28px;height:28px}
+.f5 .quick b{display:block;font-size:16px;line-height:1.4}
+.f5 .quick span.d{display:block;font-size:14px;line-height:1.45;color:var(--muted)}
+.f5 .banner{margin-top:48px;position:relative}
+.f5 .banner img{width:100%;height:auto;border-radius:24px;border:1px solid var(--line)}
+.f5 .banner .cnt{position:absolute;right:16px;bottom:16px;background:rgba(17,24,39,.78);color:#fff;font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px}
+.f5 .bctl{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:8px}
+.f5 .bctl i{width:44px;height:44px;border-radius:50%;border:1px solid var(--input-line);background:#fff;display:grid;place-items:center}
+.f5 .bctl i svg{width:16px;height:16px}
+.f5 .bctl .dots{display:flex;gap:8px;align-items:center;padding:0 8px}
+.f5 .bctl .dots b{width:8px;height:8px;border-radius:50%;background:#B5C2CF}
+.f5 .bctl .dots b.on{width:24px;border-radius:4px;background:var(--ink)}
+.f5 .sec{margin-top:96px}
+.f5 .sh{display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+.f5 .sh h2{font-size:32px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.f5 .sh h2 small{font:600 14px/1 Pretendard,sans-serif;letter-spacing:0;color:var(--muted)}
+.f5 .lede{margin-top:8px;font-size:16px;color:var(--muted)}
+.f5 .sb-body{margin-top:24px}
+.f5 .lcard{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.f5 .lrow{display:flex;align-items:center;gap:16px;min-height:64px;padding:12px 16px;border-top:1px solid var(--line)}
+.f5 .lrow:first-child{border-top:0}
+.f5 .lrow .av{width:40px;height:40px;border-radius:50%;background:var(--sky-50);border:1px solid var(--line);padding:2px;flex:none}
+.f5 .lrow .tx{flex:1;min-width:0}
+.f5 .lrow .tx b{display:block;font-size:16px;line-height:1.4}
+.f5 .lrow .tx span{display:block;font-size:14px;color:var(--muted);line-height:1.5}
+.f5 .lrow .tx.one b{font-weight:600}
+.f5 .lrow>svg{width:20px;height:20px;color:var(--muted);flex:none}
+.f5 .stt{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:999px;font-size:14px;font-weight:700;white-space:nowrap}
+.f5 .stt i{width:8px;height:8px;border-radius:50%;background:currentColor}
+.f5 .stt.warn{background:#FEF3C7;color:#92400E;border:1px solid #F3D98B}
+.f5 .stt.info{background:#E0F2FE;color:#075985;border:1px solid #B5DDF3}
+.f5 .notice .lrow .tx b{font-weight:600}
+.f5 .notice .dt{font-size:12px;color:var(--muted);font-weight:600}
+.f5 .empty{display:flex;align-items:flex-start;gap:12px;padding:16px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.f5 .empty .ei{width:44px;height:44px;border-radius:50%;background:var(--sky-50);display:grid;place-items:center;flex:none;color:var(--accent)}
+.f5 .empty .ei svg{width:20px;height:20px}
+.f5 .empty p{font-size:14px;line-height:1.6;color:var(--muted)}
+.f5 .empty p:first-child{font-size:16px;color:var(--ink);font-weight:600;line-height:44px}
+.f5 .empty p+p{margin-top:-4px}
+.f5 .empty .col{min-width:0}
+.f5 .fee{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.f5 .fee>div{padding:24px;border-left:1px solid var(--line);display:flex;flex-direction:column}
+.f5 .fee>div:first-child{border-left:0}
+.f5 .fee .tag{align-self:flex-start;height:24px;padding:0 12px;border-radius:999px;background:#F1F4F7;font-size:12px;font-weight:700;display:flex;align-items:center}
+.f5 .fee .pic{height:96px;display:grid;place-items:center;margin:8px 0}
+.f5 .fee .pic img{width:auto}
+.f5 .fee .pr{font:800 28px/1.2 Tmoney,sans-serif;letter-spacing:-.02em}
+.f5 .fee .pr small{font-size:14px;margin-left:4px}
+.f5 .fee .ins{display:flex;align-items:center;gap:6px;margin-top:8px;font-weight:700;font-size:14px}
+.f5 .fee .ins svg{width:16px;height:16px}
+.f5 .fee .rg{margin-top:8px;font-size:14px;color:var(--muted);line-height:1.5}
+.f5 .notes{margin-top:16px;font-size:14px;color:var(--muted);line-height:1.7}
+.f5 .cc{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.f5 .cardB .cc{box-shadow:var(--shadow)}
+.f5 .cc .bn{position:relative;aspect-ratio:2/1;background:var(--th)}
+.f5 .cc .bn img{position:absolute;right:8%;top:14%;height:72%;width:auto;opacity:.22}
+.f5 .cc .bd{padding:0 24px;margin-top:-32px;position:relative;flex:1}
+.f5 .cc .face{width:64px;height:64px;border-radius:50%;background:#EAF6FD;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);overflow:hidden;display:grid;place-items:center}
+.f5 .cc .face img{width:56px;height:56px;object-fit:cover}
+.f5 .cc .nm{position:absolute;left:100px;right:24px;top:32px}
+.f5 .cc .nm b{display:block;font-size:16px;font-weight:600;line-height:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f5 .cc .nm .vb{display:block;height:22px;margin-top:4px}
+.f5 .cc .intro{margin-top:20px;font-size:14px;line-height:1.5;color:var(--muted);min-height:42px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.f5 .cc .chips{display:flex;gap:4px;margin-top:12px;flex-wrap:nowrap;overflow:hidden}
+.f5 .chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;border:1px solid transparent}
+.f5 .chip i{width:10px;height:10px;border-radius:50%;background:currentColor}
+.f5 .c-chz{background:#E3F8EF;color:#0B6B4A;border-color:#BCE6D5}
+.f5 .c-soop{background:#E1F0FA;color:#0B3C5D;border-color:#BBD9EE}
+.f5 .c-yt{background:#FDE8E6;color:#B42318;border-color:#F7C6C1}
+.f5 .c-ig{background:#FCE7F3;color:#A21C6B;border-color:#F4C2DD}
+.f5 .c-x{background:#EEF0F2;color:#111827;border-color:#D5D9DE}
+.f5 .c-th{background:#EEF0F2;color:#111827;border-color:#D5D9DE}
+.f5 .c-vt{background:#F1F4F7;color:#374151;border-color:#D5DCE3}
+.f5 .c-al{background:#E3F4FB;color:#0B5E80;border-color:#BCE0EF}
+.f5 .cc .strip{display:flex;gap:8px;padding:12px 24px;margin-top:16px}
+.f5 .cc .strip .sb1{flex:1;min-height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600;background:var(--th);border:1px solid color-mix(in srgb,var(--th),#1F2937 22%);color:#111827}
+.f5 .cc .strip .sb2{width:44px;min-height:44px;border-radius:12px;background:#fff;border:1px solid var(--input-line);display:grid;place-items:center}
+.f5 .cc .strip svg{width:16px;height:16px}
+.f5 .cc .stretch{position:absolute;inset:0}
+.f5 .cgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.f5 .crow{display:flex;gap:24px;overflow:hidden;position:relative}
+.f5 .crow .cc{flex:0 0 280px}
+.f5 .crow .arr{position:absolute;right:0;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid var(--input-line);display:grid;place-items:center;box-shadow:var(--shadow)}
+.f5 .crow .arr svg{width:18px;height:18px}
+.f5 .cr-banner{margin-top:32px;height:160px;border-radius:24px;border:1px solid #F3CFD6;background:linear-gradient(90deg,#FDE6EA,#FCEEF0);display:flex;align-items:center;justify-content:space-between;padding:0 48px}
+.f5 .cr-banner h2{font-size:24px}
+.f5 .cr-banner p{margin-top:4px;font-size:14px;color:var(--muted)}
+.f5 .cr-banner .btn{margin-top:12px;min-height:44px;padding:0 16px;font-size:14px}
+.f5 .cr-banner img{height:112px;width:auto}
+.f5 .ph1{margin-top:48px}
+.f5 .ph1 h1{font-size:32px}
+.f5 .ph1 .lede{font-size:16px}
+.f5 .verify{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;color:var(--muted)}
+.f5 .verify svg{width:16px;height:16px;flex:none}
+.f5 .fchips{display:flex;gap:8px;margin-top:16px;overflow:hidden;flex-wrap:nowrap}
+.f5 .fchip{flex:none;display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:14px;font-weight:500;white-space:nowrap}
+.f5 .fchip i{width:16px;height:16px;border-radius:50%;background:currentColor}
+.f5 .fchip.on{background:var(--sky-100);border-color:#6FB8DD;font-weight:700}
+.f5 .count{margin-top:24px;margin-bottom:16px;font-size:14px;color:var(--muted);font-weight:600}
+.f5 .pf-head{margin-top:32px}
+.f5 .pf-cover{height:280px;border-radius:24px;background:#D3F0EC;position:relative;overflow:hidden}
+.f5 .pf-cover .h1c{position:absolute;left:34%;top:-4%;width:36%;height:84%;border-radius:50%;background:#F7A8C0}
+.f5 .pf-cover .h2c{position:absolute;left:12%;top:38%;width:66%;height:80%;border-radius:50%;background:#FCE7A0}
+.f5 .pf-body{position:relative;padding:0 0 0 264px;min-height:200px}
+.f5 .pf-face{position:absolute;left:12px;top:-92px;width:184px;height:184px;border-radius:50%;background:#EAF6FD;border:4px solid #fff;box-shadow:0 0 0 1px var(--line);display:grid;place-items:center}
+.f5 .pf-face img{width:140px;height:140px;object-fit:contain}
+.f5 .pf-name{padding-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.f5 .pf-name h1{font-size:32px}
+.f5 .pf-meta{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;font-size:14px;color:var(--muted);font-weight:600}
+.f5 .pf-meta svg.ck{width:16px;height:16px}
+.f5 .pf-intro{margin-top:16px;font-size:20px;font-weight:600;line-height:1.5}
+.f5 .pf-thx{margin-top:4px;font-size:14px;color:var(--muted)}
+.f5 .pf-follow{position:absolute;right:32px;top:40px}
+.f5 .pf-follow .btn{min-height:48px;padding:0 24px}
+.f5 .stats{margin-top:48px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.f5 .stats>div{padding:24px 32px}
+.f5 .stats>div+div{border-left:1px solid var(--line)}
+.f5 .stats .lb{font-size:14px;color:var(--muted);font-weight:600}
+.f5 .stats .v{margin-top:4px;font:800 32px/1.2 Tmoney,sans-serif;letter-spacing:-.02em;display:flex;align-items:baseline;gap:4px}
+.f5 .stats .v small{font:600 16px/1 Pretendard,sans-serif;letter-spacing:0;color:var(--muted)}
+.f5 .sec64{margin-top:64px}
+.f5 .acc{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.f5 .acc .ah{display:flex;align-items:center;justify-content:space-between;min-height:56px;padding:0 24px;font-weight:700;font-size:16px}
+.f5 .acc .ah svg{width:20px;height:20px;color:var(--muted)}
+.f5 .acc .ab{padding:0 24px 16px}
+.f5 .acc .ab li{list-style:none;display:flex;gap:12px;font-size:14px;line-height:1.6;color:var(--muted);padding:8px 0;border-top:1px solid #EDF1F4}
+.f5 .acc .ab li:first-child{border-top:0}
+.f5 .acc .ab li svg{width:16px;height:16px;flex:none;margin-top:4px;color:#B42318}
+.f5 .acc .ah+.ab{padding-top:0}
+.f5 .acc>div+div{border-top:1px solid var(--line)}
+.f5 .mgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.f5 .mini{display:flex;align-items:center;gap:16px;padding:16px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);min-height:88px}
+.f5 .mini .fc{width:56px;height:56px;border-radius:50%;background:#EAF6FD;border:1px solid var(--line);display:grid;place-items:center;flex:none}
+.f5 .mini .fc img{width:44px;height:44px;object-fit:cover}
+.f5 .mini b{display:block;font-size:16px;line-height:1.4}
+.f5 .mini .chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+@container st (max-width:767px){.f5 .wrap,.f5 .wrap.w1080{padding:0 16px}
+.f5 .gnb,.f5 .acct{display:none}
+.f5 .hd .wrap{height:56px}
+.f5 .mbtn{display:flex}
+.f5 .app{grid-template-columns:1fr}
+.f5 .sb{display:none}
+.f5 .mhd{display:flex}
+.f5 .hero{padding:32px 0 64px}
+.f5 .hero-grid{grid-template-columns:1fr;gap:16px}
+.f5 .hero .art{order:-1}
+.f5 .hero .art img{width:128px}
+.f5 .hero h1{font-size:32px}
+.f5 .search{height:56px;padding-left:16px;margin-top:24px}
+.f5 .search .btn{min-height:44px;padding:0 16px}
+.f5 .quick{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:-32px}
+.f5 .quick a{padding:16px}
+.f5 .banner{margin-top:32px}
+.f5 .sec{margin-top:48px}
+.f5 .sh h2{font-size:24px}
+.f5 .sh{align-items:flex-start;flex-direction:column;gap:0}
+.f5 .sh .tl{align-self:flex-end}
+.f5 .sec .sh.keep{flex-direction:row;align-items:flex-end}
+.f5 .lrow{padding:12px}
+.f5 .fee{grid-template-columns:1fr}
+.f5 .fee>div{border-left:0;border-top:1px solid var(--line);display:grid;grid-template-columns:96px 1fr;grid-template-areas:"pic tag" "pic pr" "pic ins" "pic rg";column-gap:16px;align-items:center;padding:16px}
+.f5 .fee>div:first-child{border-top:0}
+.f5 .fee .tag{grid-area:tag}
+.f5 .fee .pic{grid-area:pic;margin:0;height:80px}
+.f5 .fee .pr{grid-area:pr}
+.f5 .fee .ins{grid-area:ins;margin-top:4px}
+.f5 .fee .rg{grid-area:rg;margin-top:4px}
+.f5 .fee .pr{font-size:24px}
+.f5 .cgrid{grid-template-columns:1fr;gap:16px}
+.f5 .crow .cc{flex-basis:260px}
+.f5 .crow{gap:16px}
+.f5 .crow .arr{display:none}
+.f5 .ft{margin-top:48px}
+.f5 .ft .r1{display:block}
+.f5 .ft .r1 div,.f5 .ft .r2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.f5 .ft a{display:flex;align-items:center;min-height:44px}
+.f5 .cr-banner{margin-top:16px;height:auto;padding:16px;gap:12px}
+.f5 .cr-banner h2{font-size:20px}
+.f5 .cr-banner img{height:72px}
+.f5 .ph1{margin-top:32px}
+.f5 .ph1 h1{font-size:24px}
+.f5 .search.plain{margin-top:16px}
+.f5 .fchips{margin-right:-16px;padding-right:16px;overflow-x:auto;scrollbar-width:none}
+.f5 .count{margin-top:16px}
+.f5 .pf-head{margin-top:16px}
+.f5 .pf-cover{height:160px;border-radius:16px}
+.f5 .pf-body{padding:0;min-height:0}
+.f5 .pf-face{position:relative;left:16px;top:-48px;width:96px;height:96px;margin-bottom:-32px}
+.f5 .pf-face img{width:72px;height:72px}
+.f5 .pf-name{padding-top:0}
+.f5 .pf-name h1{font-size:24px}
+.f5 .pf-intro{font-size:16px}
+.f5 .pf-follow{position:static;margin-top:16px}
+.f5 .pf-follow .btn{width:100%}
+.f5 .stats{margin-top:32px;grid-template-columns:1fr 1fr}
+.f5 .stats>div{padding:16px}
+.f5 .stats .v{font-size:24px}
+.f5 .sec64{margin-top:48px}
+.f5 .mgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.f5 .mini{flex-direction:column;align-items:flex-start;gap:8px;padding:16px}
+.f5 .acc .ah,.f5 .acc .ab{padding-left:16px;padding-right:16px}
+}
+@media (prefers-reduced-motion:reduce){.f5 *{transition:none!important}
+}
+
+
+/* ---- 4단계 (틀 6 위에 얹은 값) ---- */
+.f6 .vfs{margin:0;padding:0;border:0;min-width:0}
+.f6 .vhead{margin-bottom:8px}
+.f6 .vhead:not(:has(+ .vlead)){margin-bottom:24px}
+.f6 .vlead{margin:0 0 32px;color:var(--sub);text-wrap:balance}
+.f6 .vbody{display:grid;grid-template-columns:minmax(0,1fr);gap:32px}
+.f6 .vstep{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0}
+.f6 .vstep.tight{gap:8px}
+.f6 .vlabel{display:flex;align-items:center;gap:12px;margin:0;font-weight:700;line-height:1.5}
+.f6 .vno{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--sky-50);font-weight:700;font-size:14px;line-height:1}
+.f6 .vdesc{margin:-4px 0 0;color:var(--sub);font-size:14px;line-height:1.6}
+.f6 .vdesc16{margin:0;color:var(--sub)}
+.f6 .vstep>.hint{margin:-4px 0 0}
+.f6 .vbox.vname{display:flex;align-items:center;gap:16px;min-height:56px;padding:8px 24px}
+.f6 .vname .k{flex:none;color:var(--sub);font-size:14px;font-weight:600}
+.f6 .vname strong{font-weight:700}
+.f6 .vbox.vlink{gap:16px}
+.f6 .vlrow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.f6 .vurl{min-width:0;overflow-wrap:anywhere;font-weight:700;font-size:20px;line-height:1.4}
+.f6 .vex{display:grid;gap:4px;padding-top:16px;border-top:1px solid #E5E7EB}
+.f6 .vex .k{color:var(--sub);font-size:14px;font-weight:600}
+.f6 .vex p{margin:0;overflow-wrap:anywhere}
+.f6 .vex b{font-weight:700}
+.f6 .vrow{display:flex;gap:8px;align-items:stretch}
+.f6 .vhandle{flex:1 1 0;min-width:0;display:flex;align-items:center;height:48px;padding:0 16px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--field)}
+.f6 .vhandle:focus-within{outline:3px solid var(--ink);outline-offset:3px}
+.f6 .vhandle .pre{flex:none;color:var(--sub)}
+.f6 .vhandle input{flex:1 1 0;min-width:0;height:100%;padding:0;border:0;outline:0;background:none;font:400 16px/1 Pretendard,sans-serif;color:var(--ink)}
+.f6 .vmk{flex:none;min-width:96px}
+.f6 .field{font-family:Pretendard,sans-serif}
+.f6 input.field{line-height:normal}
+.f6 .field.sel{display:flex;align-items:center;justify-content:space-between}
+.f6 input::placeholder{color:#6B7280;opacity:1}
+.f6 .label.hd2{margin-bottom:4px}
+.f6 .vdesc.fd{margin:0 0 8px}
+.f6 .email .field{min-width:0}
+.f6 .examples{margin:-4px 0 0;gap:4px;font-size:14px;line-height:1.5}
+.f6 .examples .pl{font-weight:600;color:var(--ink)}
+.f6 .examples .u{display:inline-block;overflow-wrap:anywhere}
+.f6 .tag{box-shadow:none}
+.f6 .tag.state{background:var(--sky-50);color:#075985}
+.f6 .tag.wait{background:#FFF5DB;color:#805B16}
+.f6 .tag.rej{background:#FEECE9;color:#B42318}
+.f6 .tag.off{background:#F3F4F6;color:#4B5563}
+.f6 .err{margin:0}
+.f6 .vsent{display:flex;align-items:center;gap:8px;margin:0;font-weight:700;font-size:18px;line-height:1.4}
+.f6 .vkv{margin:0;border-top:1px solid #E5E7EB}
+.f6 .vkv>div{display:grid;grid-template-columns:96px minmax(0,1fr);gap:16px;padding:12px 0;border-bottom:1px solid #E5E7EB}
+.f6 .vkv dt{color:var(--sub);font-size:14px;font-weight:600;line-height:1.6}
+.f6 .vkv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.f6 .vend{display:flex;justify-content:flex-end;margin-top:-16px}
+.f6 .actions.three{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:12px}
+.f6 .actions.three .btn{min-width:0;padding:0 20px}
+.f6 .actions.three .next{margin-left:0}
+.f6 .btn.block{width:100%}
+.f6 .btn.off{cursor:default}
+.f6 .grp>h3{margin-top:0}
+.f6 .sr-only,.f4 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.f6 .email{align-items:center}
+@container st (max-width:767px){
+  .f6 .vbox.vlink{gap:16px;padding:16px}
+  .f6 .vbox.vname{padding:8px 16px}
+  .f6 .vkv>div{grid-template-columns:1fr;gap:0}
+  .f6 .vurl{font-size:18px}
+  .f6 .actions.three{grid-template-columns:auto auto minmax(0,1fr)}
+  .f6 .actions.three .btn{padding:0 12px}
+}
+/* ---- 설정 (틀 4 위에 얹은 값) ---- */
+.f4 .kl{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px}
+.f4 .chrow{padding:16px 0}
+.f4 .chtop{padding:0;min-height:0}
+.f4 .vstrong{font-weight:600}
+.f4 .vlink4{color:var(--ink);text-decoration:underline;text-underline-offset:4px;overflow-wrap:anywhere}
+.f4 .lkrow{justify-content:space-between;flex-wrap:nowrap}
+.f4 .lkurl{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.f4 .bd.ok{background:var(--succ-soft);color:var(--succ)}
+.f4 .item+.item{border-top:1px solid var(--lw)}
+.f4 .btn{font-family:Pretendard,sans-serif}
+.f4 .fieldrow{gap:16px}
+.f4 .chrow>.txt{flex:none}
+@container st (max-width:767px){.f4 .chtop{flex-direction:column;align-items:flex-start}.f4 .chtop .txt{flex:none;width:100%}}
+/* ---- 크리에이터 상세 (틀 5 위에 얹은 값) ---- */
+.f5{background:#fff}
+.f5 .pf-wait{display:inline-flex;align-items:center;gap:8px;min-height:48px;margin:24px 0 0;padding:8px 20px;border-radius:12px;background:#EEF7FD;border:1px solid var(--panel-line);color:var(--ink);font-weight:600}
+.f5 .pf-wait svg{flex:none}
+
+</style></head><body>
+<header class="v-head"><h1>채널 확인 시안</h1><ol><li><a href="#signup-2">가입 2단계</a></li><li><a href="#s4-make">4단계 · 링크 만들기 전</a></li><li><a href="#s4-ready">4단계 · 요청 전</a></li><li><a href="#s4-sent">4단계 · 요청 완료</a></li><li><a href="#s4-rejected">4단계 · 반려</a></li><li><a href="#s4-locked">4단계 · 더 요청 못 함</a></li><li><a href="#acct-verified">계정 설정 · 확인 완료</a></li><li><a href="#acct-recheck">계정 설정 · 링크 다시 확인</a></li><li><a href="#profile-verifying">크리에이터 페이지 · 채널 확인 중</a></li><li><a href="admin.html">운영자 화면</a></li></ol></header>
+<section class="v-state" id="signup-2"><span class="v-label"><b>가입 2단계 (크리에이터)</b> — 바뀌는 칸만 — 아이디·닉네임·채널 이름 아래에 칸 설명. 칸 설명은 소제목 아래, 규칙은 입력 칸 아래. 팬꾹 링크는 여기서 만들지 않는다(4단계)</span><div class="stage f6"><header class="hd"><div class="in"><a class="logo" href="#"><img src="../part6-v4-20261101/assets/logo-mark.png" alt="">팬꾹</a>
+ <nav class="gnb" aria-label="주 메뉴"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a></nav>
+ <div class="acct"><a href="#">로그인</a><i></i><a href="#">회원가입</a></div><button class="mbtn" type="button" aria-label="메뉴"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div></header><main><section class="auth-page"><div class="auth-col"><div class="head"><h1>회원가입</h1></div><nav aria-label="가입 단계"><ol class="steps many"><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">유형 선택</span></span></li><li class="curli"><span class="st  cur " aria-current="step"><span class="dot" aria-hidden="true">2</span><span class="lbl">정보 입력</span></span></li><li class="far"><span class="st   far" ><span class="dot" aria-hidden="true">3</span><span class="lbl">휴대폰 확인</span></span></li><li class="far"><span class="st   far" ><span class="dot" aria-hidden="true">4</span><span class="lbl">채널 확인</span></span></li><li class="far"><span class="st   far" ><span class="dot" aria-hidden="true">5</span><span class="lbl">승인 서명</span></span></li></ol></nav><div class="card stepcard"><h2>회원 정보 입력</h2>
+<div class="grp"><h3>계정 정보</h3><div class="form">
+<div><label class="label hd2" for="s2-id">아이디</label><p class="vdesc fd">로그인에 사용하는 아이디입니다. 다른 사람에게는 보이지 않습니다.</p><input class="field" id="s2-id" value="haru_game"  autocomplete="off"><p class="hint">영문 소문자·숫자·밑줄(_) 4~20자 · 가입 후 변경할 수 없습니다.</p></div>
+<div><label class="label hd2" for="s2-nick">닉네임</label><p class="vdesc fd">팬꾹에서 다른 사람에게 표시되는 이름입니다.</p><input class="field" id="s2-nick" value="하루"  autocomplete="off"><p class="hint">최대 12자 · 이미 사용 중인 닉네임은 사용할 수 없습니다.</p></div>
+<div><label class="label" for="s2-mail">이메일</label><div class="email"><input class="field" id="s2-mail" placeholder="이메일 아이디"><span class="at">@</span><div class="field sel" style="color:var(--ink)"><span>이메일 도메인 선택</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div></div><p class="hint">가입 후 확인 메일을 발송합니다.<br>메일의 링크에서 주소를 확인하면 선물 소식을 이메일로 받을 수&nbsp;있습니다.</p></div>
+<div><label class="label " for="s2-pw">비밀번호</label><input class="field" id="s2-pw"   autocomplete="off"><p class="hint">8~72자 · 영문·숫자·특수문자 모두 포함 · 아이디와 다르게&nbsp;설정</p></div>
+<div><label class="label " for="s2-pw2">비밀번호 확인</label><input class="field" id="s2-pw2"  placeholder="비밀번호를 한 번 더 입력해 주세요" autocomplete="off"></div></div></div>
+<div class="grp"><h3>채널 정보</h3><div class="form">
+<div><label class="label " for="s2-pub">공개 이름</label><input class="field" id="s2-pub"   autocomplete="off"><p class="hint">팬에게 표시되는 이름 · 최대 20자</p></div>
+<div><label class="label hd2" for="s2-ch">채널 이름</label><p class="vdesc fd">방송 플랫폼에 표시된 채널 이름을 그대로 입력해 주세요. 채널 확인 시 일치하는지 확인합니다.</p><input class="field" id="s2-ch" value="하루의 놀이터" placeholder="예: 꿀단지TV" autocomplete="off"><p class="hint">채널 주소는 4단계에서 입력합니다.</p></div>
+<div><label class="label " for="s2-fan">팬덤 이름 <span class="opt">(선택)</span></label><input class="field" id="s2-fan"  placeholder="예: 꿀벌단" autocomplete="off"><p class="hint">팬을 부르는 이름 · 최대 10자 · 선택 입력<br>가입 후 ‘상세 설정 &gt; 팬덤’에서 변경할 수 있습니다.</p></div>
+<div><p class="label">태그</p><div class="chips"><span class="chip ">SOOP</span><span class="chip on">치지직</span><span class="chip ">유튜브</span><span class="chip ">알플레이</span><span class="chip ">인스타그램</span><span class="chip ">X</span><span class="chip ">스레드</span><span class="chip ">틱톡</span><span class="chip ">버추얼</span></div></div>
+<div><label class="label " for="s2-tag">태그 직접 입력 (최대 1개)</label><input class="field" id="s2-tag"  placeholder="예: 팝콘TV" autocomplete="off"><p class="hint">활동 플랫폼과 방송 분야를 선택해 주세요.<br>선택·직접 입력 합계: 1~5개 · 현재 1개<br>직접 입력: 최대 20자<br>직접 입력한 태그는 선택한 태그 뒤에 표시됩니다. 욕설·연락처·주소는 입력할 수&nbsp;없습니다.</p></div></div></div>
+<div class="grp"><h3>선택 입력 사항</h3><div><label class="label" for="s2-src">팬꾹을 알게 된 경로 <span class="opt">(선택)</span></label><div class="field sel" id="s2-src" style="color:var(--ink)"><span>선택 안 함</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div><p class="hint">서비스 유입 경로를 파악하기 위한 선택 항목입니다.</p></div></div>
+<div class="grp"><h3>약관 동의</h3><div class="terms">
+<div><div class="check"><span class="cb "></span><span>전체 동의</span></div><p class="hint" style="margin:0 0 4px 34px">선택 항목 동의가 포함됩니다. 선택 항목에 동의하지 않아도 가입할 수&nbsp;있습니다.</p></div>
+<div class="trow"><div class="check"><span class="cb "></span><span><span class="req">[필수]</span> 만 14세 이상입니다</span></div></div>
+<div class="trow"><div class="check"><span class="cb "></span><span><span class="req">[필수]</span> 이용약관</span></div><a class="view" href="#">보기</a></div>
+<div class="trow"><div class="check"><span class="cb "></span><span><span class="req">[필수]</span> 개인정보 수집·이용</span></div><a class="view" href="#">보기</a></div>
+<div><div class="check"><span class="cb "></span><span>[선택] 이벤트·소식 알림 받기</span></div><p class="hint" style="margin:0 0 0 34px">팬꾹 이벤트와 새 소식을 이메일로 보내 드려요.</p></div></div></div>
+<div class="actions"><button type="button" class="btn line" >이전</button><button type="button" class="btn next" >다음</button></div></div><p class="foot-line" style="margin-top:8px">이미 회원이신가요? <a href="#">로그인</a></p></div></section></main><footer class="ft"><div class="in"><div class="r1"><a href="#">이용약관</a><a href="#"><b>개인정보처리방침</b></a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></div>
+<div class="r2"><a href="#">팬꾹 소개</a><a href="#">요금 안내</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></div>
+<p class="biz">상호 팬꾹 · 대표자 정재원 · 사업자등록번호 260-12-03086 · 통신판매업 신고번호 제2026-서울강남-05946호<br>사업장 주소 서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)<br>고객센터 support@fankkuk.com · 0502-1931-8289 · 호스팅 제공자 Vercel Inc.<br>© 2026 팬꾹. All rights reserved.</p></div></footer></div></section>
+<section class="v-state" id="s4-make"><span class="v-label"><b>4단계 · 링크 만들기 전</b> — ① 팬꾹 링크를 여기서 만든다(누르면 「만든 뒤 30일 동안 변경할 수 없습니다」 확인 창). 링크를 만들기 전에는 ① 하나만 보인다. 만들면 「요청 전」 화면처럼 ①이 올리기 안내로 바뀌고 ②·요청이 나타난다</span><div class="stage f6"><header class="hd"><div class="in"><a class="logo" href="#"><img src="../part6-v4-20261101/assets/logo-mark.png" alt="">팬꾹</a>
+ <nav class="gnb" aria-label="주 메뉴"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a></nav>
+ <div class="acct"><a href="#">로그인</a><i></i><a href="#">회원가입</a></div><button class="mbtn" type="button" aria-label="메뉴"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div></header><main><section class="auth-page"><div class="auth-col"><div class="head"><h1>회원가입</h1></div><nav aria-label="가입 단계"><ol class="steps many"><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">유형 선택</span></span></li><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">정보 입력</span></span></li><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">휴대폰 확인</span></span></li><li class="curli"><span class="st  cur " aria-current="step"><span class="dot" aria-hidden="true">4</span><span class="lbl">채널 확인</span></span></li><li class="far"><span class="st   far" ><span class="dot" aria-hidden="true">5</span><span class="lbl">승인 서명</span></span></li></ol></nav><form class="card" onsubmit="return false"><fieldset class="vfs"><legend class="sr-only">채널 소유자 확인</legend><div class="vhead"><h2>채널 소유자 확인</h2><span class="tag state">확인 전</span></div><p class="vlead">다른 사람이 내 채널로 가입하지 못하도록, 채널 소유자를 확인해 주세요.</p><div class="vbody"><div class="vbox vname"><span class="k">채널 이름</span><strong>하루의 놀이터</strong></div><div class="vstep"><label for="mk-link" class="vlabel"><span class="vno" aria-hidden="true">1</span><span>팬꾹 링크를 만들어 주세요</span></label><p class="vdesc">외부에서 크리에이터님의 팬꾹으로 안내할 때 사용할 주소입니다.</p><div class="vrow"><div class="vhandle"><span class="pre">fankkuk.com/</span><input id="mk-link" placeholder="haru" autocomplete="off"></div><button type="button" class="btn vmk" >만들기</button></div><p class="hint">로그인 아이디와 다르게 정해 주세요. 만든 뒤 30일 동안은 변경할 수 없습니다.</p></div></div></fieldset><div class="actions three"><button type="button" class="btn line" >이전</button><button type="button" class="btn line" >나중에 하기</button><button type="button" class="btn next off" aria-disabled="true">다음</button></div></form><p class="foot-line" style="margin-top:8px">이미 회원이신가요? <a href="#">로그인</a></p></div></section></main><footer class="ft"><div class="in"><div class="r1"><a href="#">이용약관</a><a href="#"><b>개인정보처리방침</b></a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></div>
+<div class="r2"><a href="#">팬꾹 소개</a><a href="#">요금 안내</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></div>
+<p class="biz">상호 팬꾹 · 대표자 정재원 · 사업자등록번호 260-12-03086 · 통신판매업 신고번호 제2026-서울강남-05946호<br>사업장 주소 서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)<br>고객센터 support@fankkuk.com · 0502-1931-8289 · 호스팅 제공자 Vercel Inc.<br>© 2026 팬꾹. All rights reserved.</p></div></footer></div></section>
+<section class="v-state" id="s4-ready"><span class="v-label"><b>4단계 · 요청 전</b> — 링크를 만들면 ①이 「올려 주세요 + 복사 + 예시」로 바뀐다. 주소를 넣으면 요청이 켜짐</span><div class="stage f6"><header class="hd"><div class="in"><a class="logo" href="#"><img src="../part6-v4-20261101/assets/logo-mark.png" alt="">팬꾹</a>
+ <nav class="gnb" aria-label="주 메뉴"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a></nav>
+ <div class="acct"><a href="#">로그인</a><i></i><a href="#">회원가입</a></div><button class="mbtn" type="button" aria-label="메뉴"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div></header><main><section class="auth-page"><div class="auth-col"><div class="head"><h1>회원가입</h1></div><nav aria-label="가입 단계"><ol class="steps many"><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">유형 선택</span></span></li><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">정보 입력</span></span></li><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">휴대폰 확인</span></span></li><li class="curli"><span class="st  cur " aria-current="step"><span class="dot" aria-hidden="true">4</span><span class="lbl">채널 확인</span></span></li><li class="far"><span class="st   far" ><span class="dot" aria-hidden="true">5</span><span class="lbl">승인 서명</span></span></li></ol></nav><form class="card" onsubmit="return false"><fieldset class="vfs"><legend class="sr-only">채널 소유자 확인</legend><div class="vhead"><h2>채널 소유자 확인</h2><span class="tag state">확인 전</span></div><p class="vlead">다른 사람이 내 채널로 가입하지 못하도록, 채널 소유자를 확인해 주세요.</p><div class="vbody"><div class="vbox vname"><span class="k">채널 이름</span><strong>하루의 놀이터</strong></div><div class="vstep"><p class="vlabel"><span class="vno" aria-hidden="true">1</span><span>활동 중인 채널에 팬꾹 링크를 올려 주세요</span></p><div class="vbox vlink"><div class="vlrow"><span class="vurl">fankkuk.com/haru</span><button type="button" class="btn line sm" >복사</button></div><div class="vex"><span class="k">예시</span><p>게임 방송하는 하루입니다. 선물은 여기로 보내 주세요<br><b>fankkuk.com/haru</b></p></div></div></div><div class="vstep"><label for="rd-url" class="vlabel"><span class="vno" aria-hidden="true">2</span><span>팬꾹 링크를 올린 채널 주소를 입력해 주세요</span></label><input class="field" id="rd-url" inputmode="url" placeholder="https://www.youtube.com/@핸들" value="https://www.youtube.com/@honeypot"><ul class="examples"><li><span class="pl">유튜브</span> <span class="u">https://www.youtube.com/@핸들</span></li><li><span class="pl">치지직</span> <span class="u">https://chzzk.naver.com/채널ID</span></li><li><span class="pl">SOOP</span> <span class="u">https://www.sooplive.co.kr/station/아이디</span></li></ul></div><div><button type="button" class="btn block" >채널 확인 요청</button></div></div></fieldset><div class="actions three"><button type="button" class="btn line" >이전</button><button type="button" class="btn line" >나중에 하기</button><button type="button" class="btn next off" aria-disabled="true">다음</button></div></form><p class="foot-line" style="margin-top:8px">이미 회원이신가요? <a href="#">로그인</a></p></div></section></main><footer class="ft"><div class="in"><div class="r1"><a href="#">이용약관</a><a href="#"><b>개인정보처리방침</b></a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></div>
+<div class="r2"><a href="#">팬꾹 소개</a><a href="#">요금 안내</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></div>
+<p class="biz">상호 팬꾹 · 대표자 정재원 · 사업자등록번호 260-12-03086 · 통신판매업 신고번호 제2026-서울강남-05946호<br>사업장 주소 서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)<br>고객센터 support@fankkuk.com · 0502-1931-8289 · 호스팅 제공자 Vercel Inc.<br>© 2026 팬꾹. All rights reserved.</p></div></footer></div></section>
+<section class="v-state" id="s4-sent"><span class="v-label"><b>4단계 · 요청 완료</b> — 이 단계는 끝. 「이전 | 다음」만, 「다음」 켜짐. 운영자가 확인하면 확인 완료</span><div class="stage f6"><header class="hd"><div class="in"><a class="logo" href="#"><img src="../part6-v4-20261101/assets/logo-mark.png" alt="">팬꾹</a>
+ <nav class="gnb" aria-label="주 메뉴"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a></nav>
+ <div class="acct"><a href="#">로그인</a><i></i><a href="#">회원가입</a></div><button class="mbtn" type="button" aria-label="메뉴"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div></header><main><section class="auth-page"><div class="auth-col"><div class="head"><h1>회원가입</h1></div><nav aria-label="가입 단계"><ol class="steps many"><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">유형 선택</span></span></li><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">정보 입력</span></span></li><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">휴대폰 확인</span></span></li><li class="curli"><span class="st  cur " aria-current="step"><span class="dot" aria-hidden="true">4</span><span class="lbl">채널 확인</span></span></li><li class="far"><span class="st   far" ><span class="dot" aria-hidden="true">5</span><span class="lbl">승인 서명</span></span></li></ol></nav><form class="card" onsubmit="return false"><fieldset class="vfs"><legend class="sr-only">채널 소유자 확인</legend><div class="vhead"><h2>채널 소유자 확인</h2><span class="tag wait">확인 대기</span></div><div class="vbody"><div class="vstep tight"><p class="vsent"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>채널 확인 요청을 보냈습니다</p><p class="vdesc16">운영자가 채널을 확인하면 채널 확인이 완료됩니다.</p></div><dl class="vkv"><div><dt>채널 이름</dt><dd>하루의 놀이터</dd></div><div><dt>채널 주소</dt><dd>https://www.youtube.com/@honeypot</dd></div><div><dt>팬꾹 링크</dt><dd>fankkuk.com/haru</dd></div></dl><div class="vend"><button type="button" class="btn line sm" >요청 취소</button></div></div></fieldset><div class="actions"><button type="button" class="btn line" >이전</button><button type="button" class="btn next" >다음</button></div></form><p class="foot-line" style="margin-top:8px">이미 회원이신가요? <a href="#">로그인</a></p></div></section></main><footer class="ft"><div class="in"><div class="r1"><a href="#">이용약관</a><a href="#"><b>개인정보처리방침</b></a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></div>
+<div class="r2"><a href="#">팬꾹 소개</a><a href="#">요금 안내</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></div>
+<p class="biz">상호 팬꾹 · 대표자 정재원 · 사업자등록번호 260-12-03086 · 통신판매업 신고번호 제2026-서울강남-05946호<br>사업장 주소 서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)<br>고객센터 support@fankkuk.com · 0502-1931-8289 · 호스팅 제공자 Vercel Inc.<br>© 2026 팬꾹. All rights reserved.</p></div></footer></div></section>
+<section class="v-state" id="s4-rejected"><span class="v-label"><b>4단계 · 반려</b> — 사유 한 줄, 아래는 요청 전과 같은 순서</span><div class="stage f6"><header class="hd"><div class="in"><a class="logo" href="#"><img src="../part6-v4-20261101/assets/logo-mark.png" alt="">팬꾹</a>
+ <nav class="gnb" aria-label="주 메뉴"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a></nav>
+ <div class="acct"><a href="#">로그인</a><i></i><a href="#">회원가입</a></div><button class="mbtn" type="button" aria-label="메뉴"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div></header><main><section class="auth-page"><div class="auth-col"><div class="head"><h1>회원가입</h1></div><nav aria-label="가입 단계"><ol class="steps many"><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">유형 선택</span></span></li><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">정보 입력</span></span></li><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">휴대폰 확인</span></span></li><li class="curli"><span class="st  cur " aria-current="step"><span class="dot" aria-hidden="true">4</span><span class="lbl">채널 확인</span></span></li><li class="far"><span class="st   far" ><span class="dot" aria-hidden="true">5</span><span class="lbl">승인 서명</span></span></li></ol></nav><form class="card" onsubmit="return false"><fieldset class="vfs"><legend class="sr-only">채널 소유자 확인</legend><div class="vhead"><h2>채널 소유자 확인</h2><span class="tag rej">반려</span></div><div class="vbody"><p class="err" role="alert"><span class="mark" aria-hidden="true">!</span><span>팬꾹 링크를 찾지 못함</span></p><div class="vbox vname"><span class="k">채널 이름</span><strong>하루의 놀이터</strong></div><div class="vstep"><p class="vlabel"><span class="vno" aria-hidden="true">1</span><span>활동 중인 채널에 팬꾹 링크를 올려 주세요</span></p><div class="vbox vlink"><div class="vlrow"><span class="vurl">fankkuk.com/haru</span><button type="button" class="btn line sm" >복사</button></div><div class="vex"><span class="k">예시</span><p>게임 방송하는 하루입니다. 선물은 여기로 보내 주세요<br><b>fankkuk.com/haru</b></p></div></div></div><div class="vstep"><label for="rj-url" class="vlabel"><span class="vno" aria-hidden="true">2</span><span>팬꾹 링크를 올린 채널 주소를 입력해 주세요</span></label><input class="field" id="rj-url" inputmode="url" placeholder="https://www.youtube.com/@핸들" value="https://www.youtube.com/@honeypot"><ul class="examples"><li><span class="pl">유튜브</span> <span class="u">https://www.youtube.com/@핸들</span></li><li><span class="pl">치지직</span> <span class="u">https://chzzk.naver.com/채널ID</span></li><li><span class="pl">SOOP</span> <span class="u">https://www.sooplive.co.kr/station/아이디</span></li></ul></div><div><button type="button" class="btn block" >채널 확인 재요청</button></div></div></fieldset><div class="actions three"><button type="button" class="btn line" >이전</button><button type="button" class="btn line" >나중에 하기</button><button type="button" class="btn next off" aria-disabled="true">다음</button></div></form><p class="foot-line" style="margin-top:8px">이미 회원이신가요? <a href="#">로그인</a></p></div></section></main><footer class="ft"><div class="in"><div class="r1"><a href="#">이용약관</a><a href="#"><b>개인정보처리방침</b></a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></div>
+<div class="r2"><a href="#">팬꾹 소개</a><a href="#">요금 안내</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></div>
+<p class="biz">상호 팬꾹 · 대표자 정재원 · 사업자등록번호 260-12-03086 · 통신판매업 신고번호 제2026-서울강남-05946호<br>사업장 주소 서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)<br>고객센터 support@fankkuk.com · 0502-1931-8289 · 호스팅 제공자 Vercel Inc.<br>© 2026 팬꾹. All rights reserved.</p></div></footer></div></section>
+<section class="v-state" id="s4-locked"><span class="v-label"><b>4단계 · 더 요청 못 함</b> — 같은 채널로 끝난 요청 10번</span><div class="stage f6"><header class="hd"><div class="in"><a class="logo" href="#"><img src="../part6-v4-20261101/assets/logo-mark.png" alt="">팬꾹</a>
+ <nav class="gnb" aria-label="주 메뉴"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a></nav>
+ <div class="acct"><a href="#">로그인</a><i></i><a href="#">회원가입</a></div><button class="mbtn" type="button" aria-label="메뉴"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div></header><main><section class="auth-page"><div class="auth-col"><div class="head"><h1>회원가입</h1></div><nav aria-label="가입 단계"><ol class="steps many"><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">유형 선택</span></span></li><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">정보 입력</span></span></li><li class="far"><span class="st dn  far" ><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span><span class="lbl">휴대폰 확인</span></span></li><li class="curli"><span class="st  cur " aria-current="step"><span class="dot" aria-hidden="true">4</span><span class="lbl">채널 확인</span></span></li><li class="far"><span class="st   far" ><span class="dot" aria-hidden="true">5</span><span class="lbl">승인 서명</span></span></li></ol></nav><form class="card" onsubmit="return false"><fieldset class="vfs"><legend class="sr-only">채널 소유자 확인</legend><div class="vhead"><h2>채널 소유자 확인</h2><span class="tag off">신청 마감</span></div><div class="vbody"><div class="vstep"><p class="err" role="alert"><span class="mark" aria-hidden="true">!</span><span>이 채널로는 더 신청할 수 없어요. 1:1 문의로 알려 주세요</span></p><div><button type="button" class="btn line" >1:1 문의</button></div></div></div></fieldset><div class="actions three"><button type="button" class="btn line" >이전</button><button type="button" class="btn line" >나중에 하기</button><button type="button" class="btn next off" aria-disabled="true">다음</button></div></form><p class="foot-line" style="margin-top:8px">이미 회원이신가요? <a href="#">로그인</a></p></div></section></main><footer class="ft"><div class="in"><div class="r1"><a href="#">이용약관</a><a href="#"><b>개인정보처리방침</b></a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></div>
+<div class="r2"><a href="#">팬꾹 소개</a><a href="#">요금 안내</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></div>
+<p class="biz">상호 팬꾹 · 대표자 정재원 · 사업자등록번호 260-12-03086 · 통신판매업 신고번호 제2026-서울강남-05946호<br>사업장 주소 서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)<br>고객센터 support@fankkuk.com · 0502-1931-8289 · 호스팅 제공자 Vercel Inc.<br>© 2026 팬꾹. All rights reserved.</p></div></footer></div></section>
+<section class="v-state" id="acct-verified"><span class="v-label"><b>계정 설정 · 확인 완료</b> — 다음 재확인 날</span><div class="stage f4"><div class="app"><aside class="sb"><div class="sb-top"><a class="logo" href="#"><img src="../part4-v4-20261101/assets/logo-mark.png" alt="">팬꾹</a><span style="width:36px;height:36px;display:grid;place-items:center;color:var(--sub)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M10 4v16"/></svg></span></div><nav aria-label="내 메뉴"><p class="gh">기본</p><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11 12 4l8 7v9H4z"/></svg>홈</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7zM7 19a2 2 0 1 0 0-.01M17 19a2 2 0 1 0 0-.01"/></svg>선물 현황</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6v3H9zM6 6h12v14H6zM9 12h6M9 16h6"/></svg>지금 할 일</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></svg>크리에이터 찾기</a><p class="gh">받기</p><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.500 4.500 4.500L19 7"/></svg>승인 내역</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 20 7v10l-8 4-8-4V7zM4 7l8 4 8-4M12 11v10"/></svg>받은 선물</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>열람 기록</a><p class="gh">보내기</p><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 20 7v10l-8 4-8-4V7zM4 7l8 4 8-4M12 11v10"/></svg>팬에게 보내기</a><a href="#" class="subi">몇 명에게</a><a href="#" class="subi">합포장<span class="soon2">준비 중</span></a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16v4H4zM6 13h12v7H6zM12 9v11M12 9c-3 0-4-4-1-4 2 0 1 4 1 4zM12 9c3 0 4-4 1-4-2 0-1 4-1 4z"/></svg>다른 크리에이터에게 선물</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20S4 14.5 4 9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5.500-8 11-8 11z"/></svg>팔로우한 크리에이터</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.200M4 4v4h4M12 8v4l3 2"/></svg>보낸 내역</a><p class="gh">내 팬꾹</p><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.500 0 2-1 1.500-2s0-2 1.500-2h2a4 4 0 0 0 4-4c0-5-4-10-9-10z"/></svg>꾸미기</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>프로필 수정</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>상세 설정</a></nav><div class="me"><i></i>하루님</div></aside><div class="mainwrap"><div class="tb"><a class="logo" href="#"><img src="../part4-v4-20261101/assets/logo-mark.png" alt="">팬꾹</a><button type="button" aria-label="메뉴"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div><main class="pane-main"><div class="col"><header class="ph"><div class="phrow"><h1>계정 설정</h1></div><p class="phd">보안·채널 소유자 확인·알림을 관리합니다.</p></header><section class="grp"><h2 class="nm" style="--nmt:18px">보안</h2><div class="rows"><div class="item"><div class="row"><p class="txt"><span class="k">비밀번호</span></p><div class="act"><button type="button" class="btn line sm">변경</button></div></div></div><div class="item"><div class="row"><p class="txt"><span class="k">휴대폰 번호</span><span class="v">010-****-9999</span></p><div class="act"><button type="button" class="btn line sm">변경</button></div></div></div><div class="item"><div class="fieldrow chrow"><div class="row chtop"><p class="txt"><span class="kl"><span class="k">채널 소유자 확인</span><span class="bd ok">확인 완료</span></span><span class="v vstrong">채널 인증이 완료되었습니다 · 2026.11.02</span><a class="vlink4" href="#">https://www.youtube.com/@honeypot</a><span class="s">다음 재확인 2027.01.31</span></p><div class="act"><button type="button" class="btn line sm">채널 변경</button></div></div></div></div></div></section><section class="grp"><h2 class="nm" style="--nmt:5px">알림</h2><div class="rows"><div class="item"><div class="swb"><span class="txt"><span class="k">카카오톡 알림</span><span class="s">필수 알림 외 소식을 알림톡으로 수신</span></span><span class="trk on" role="img" aria-label="켜짐"></span></div></div><div class="item"><div class="swb"><span class="txt"><span class="k">이메일 알림</span><span class="s">동일한 소식을 확인된 이메일로 수신</span></span><span class="trk on" role="img" aria-label="켜짐"></span></div></div><div class="item"><div class="swb"><span class="txt"><span class="k">선물 소식 바로 받기</span><span class="s">끄면 하루 한 번 오후 7시에 모아서 보냅니다</span></span><span class="trk " role="img" aria-label="꺼짐"></span></div></div><p class="must"><b>필수 알림: 승인 요청 · 추적 장치 발견 · 선물 수령 여부 확인 · 반송 주소 확인</b></p><p class="s" style="margin-top:24px">선물 진행·결제·상자 처리에 필요한 알림은 수신 설정과 관계없이 발송됩니다.<br>승인 요청은 7일 동안 응답하지 않으면 자동 반려됩니다.</p></div></section><p class="more1">받는 주소·차단한 팬·선물 받기는 ‘<a href="#">상세 설정</a>’에서 관리해 주세요.</p><div class="quit" style="margin-top:24px"><div class="row"><p class="txt"><span class="k">회원 탈퇴</span><span class="s">탈퇴 문의 및 절차 안내</span></p><button type="button" class="btn sm danger">탈퇴 안내</button></div></div></div></main><footer class="ft"><div class="in"><div class="r1"><a class="logo" href="#" style="font:800 20px/1 Tmoney,sans-serif;gap:8px"><img src="../part4-v4-20261101/assets/logo-mark.png" alt="" style="width:28px;height:28px;border-radius:22%">팬꾹</a><a href="#">이용약관</a><a href="#"><b>개인정보처리방침</b></a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></div>
+<div class="r2"><a href="#">팬꾹 소개</a><a href="#">요금 안내</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></div>
+<p class="biz">상호 팬꾹 · 대표자 정재원 · 사업자등록번호 260-12-03086 · 통신판매업 신고번호 제2026-서울강남-05946호<br>사업장 주소 서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)<br>고객센터 support@fankkuk.com · 0502-1931-8289 · 호스팅 제공자 Vercel Inc.<br>© 2026 팬꾹. All rights reserved.</p></div></footer></div></div></div></section>
+<section class="v-state" id="acct-recheck"><span class="v-label"><b>계정 설정 · 링크 다시 확인</b> — 재확인에서 링크를 못 찾음(14일 유예)</span><div class="stage f4"><div class="app"><aside class="sb"><div class="sb-top"><a class="logo" href="#"><img src="../part4-v4-20261101/assets/logo-mark.png" alt="">팬꾹</a><span style="width:36px;height:36px;display:grid;place-items:center;color:var(--sub)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M10 4v16"/></svg></span></div><nav aria-label="내 메뉴"><p class="gh">기본</p><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11 12 4l8 7v9H4z"/></svg>홈</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7zM7 19a2 2 0 1 0 0-.01M17 19a2 2 0 1 0 0-.01"/></svg>선물 현황</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6v3H9zM6 6h12v14H6zM9 12h6M9 16h6"/></svg>지금 할 일</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></svg>크리에이터 찾기</a><p class="gh">받기</p><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.500 4.500 4.500L19 7"/></svg>승인 내역</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 20 7v10l-8 4-8-4V7zM4 7l8 4 8-4M12 11v10"/></svg>받은 선물</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>열람 기록</a><p class="gh">보내기</p><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 20 7v10l-8 4-8-4V7zM4 7l8 4 8-4M12 11v10"/></svg>팬에게 보내기</a><a href="#" class="subi">몇 명에게</a><a href="#" class="subi">합포장<span class="soon2">준비 중</span></a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16v4H4zM6 13h12v7H6zM12 9v11M12 9c-3 0-4-4-1-4 2 0 1 4 1 4zM12 9c3 0 4-4 1-4-2 0-1 4-1 4z"/></svg>다른 크리에이터에게 선물</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20S4 14.5 4 9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5.500-8 11-8 11z"/></svg>팔로우한 크리에이터</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.200M4 4v4h4M12 8v4l3 2"/></svg>보낸 내역</a><p class="gh">내 팬꾹</p><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.500 0 2-1 1.500-2s0-2 1.500-2h2a4 4 0 0 0 4-4c0-5-4-10-9-10z"/></svg>꾸미기</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>프로필 수정</a><a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>상세 설정</a></nav><div class="me"><i></i>하루님</div></aside><div class="mainwrap"><div class="tb"><a class="logo" href="#"><img src="../part4-v4-20261101/assets/logo-mark.png" alt="">팬꾹</a><button type="button" aria-label="메뉴"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div><main class="pane-main"><div class="col"><header class="ph"><div class="phrow"><h1>계정 설정</h1></div><p class="phd">보안·채널 소유자 확인·알림을 관리합니다.</p></header><section class="grp"><h2 class="nm" style="--nmt:18px">보안</h2><div class="rows"><div class="item"><div class="row"><p class="txt"><span class="k">비밀번호</span></p><div class="act"><button type="button" class="btn line sm">변경</button></div></div></div><div class="item"><div class="row"><p class="txt"><span class="k">휴대폰 번호</span><span class="v">010-****-9999</span></p><div class="act"><button type="button" class="btn line sm">변경</button></div></div></div><div class="item"><div class="fieldrow chrow"><p class="txt"><span class="kl"><span class="k">채널 소유자 확인</span><span class="bd wr">링크 확인 필요</span></span><span class="v">활동 중인 채널에서 팬꾹 링크를 찾지 못했어요. 11월 16일까지 다시 올려 주세요</span></p><div class="lkrow"><span class="lkurl">fankkuk.com/haru</span><button type="button" class="btn line sm">복사</button></div><div><button type="button" class="btn ">채널 확인 재요청</button></div></div></div></div></section><section class="grp"><h2 class="nm" style="--nmt:5px">알림</h2><div class="rows"><div class="item"><div class="swb"><span class="txt"><span class="k">카카오톡 알림</span><span class="s">필수 알림 외 소식을 알림톡으로 수신</span></span><span class="trk on" role="img" aria-label="켜짐"></span></div></div><div class="item"><div class="swb"><span class="txt"><span class="k">이메일 알림</span><span class="s">동일한 소식을 확인된 이메일로 수신</span></span><span class="trk on" role="img" aria-label="켜짐"></span></div></div><div class="item"><div class="swb"><span class="txt"><span class="k">선물 소식 바로 받기</span><span class="s">끄면 하루 한 번 오후 7시에 모아서 보냅니다</span></span><span class="trk " role="img" aria-label="꺼짐"></span></div></div><p class="must"><b>필수 알림: 승인 요청 · 추적 장치 발견 · 선물 수령 여부 확인 · 반송 주소 확인</b></p><p class="s" style="margin-top:24px">선물 진행·결제·상자 처리에 필요한 알림은 수신 설정과 관계없이 발송됩니다.<br>승인 요청은 7일 동안 응답하지 않으면 자동 반려됩니다.</p></div></section><p class="more1">받는 주소·차단한 팬·선물 받기는 ‘<a href="#">상세 설정</a>’에서 관리해 주세요.</p><div class="quit" style="margin-top:24px"><div class="row"><p class="txt"><span class="k">회원 탈퇴</span><span class="s">탈퇴 문의 및 절차 안내</span></p><button type="button" class="btn sm danger">탈퇴 안내</button></div></div></div></main><footer class="ft"><div class="in"><div class="r1"><a class="logo" href="#" style="font:800 20px/1 Tmoney,sans-serif;gap:8px"><img src="../part4-v4-20261101/assets/logo-mark.png" alt="" style="width:28px;height:28px;border-radius:22%">팬꾹</a><a href="#">이용약관</a><a href="#"><b>개인정보처리방침</b></a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></div>
+<div class="r2"><a href="#">팬꾹 소개</a><a href="#">요금 안내</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></div>
+<p class="biz">상호 팬꾹 · 대표자 정재원 · 사업자등록번호 260-12-03086 · 통신판매업 신고번호 제2026-서울강남-05946호<br>사업장 주소 서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)<br>고객센터 support@fankkuk.com · 0502-1931-8289 · 호스팅 제공자 Vercel Inc.<br>© 2026 팬꾹. All rights reserved.</p></div></footer></div></div></div></section>
+<section class="v-state" id="profile-verifying"><span class="v-label"><b>크리에이터 페이지 · 채널 확인 중 (fankkuk.com/haru)</b> — 채널 확인 중 — 팬이 볼 때. 팔로우·채널 아이콘·평균 승인 시간 없음</span><div class="stage f5"><header class="hd"><div class="wrap"><a class="logo" href="#"><img src="../part4-v4-20261101/assets/logo-mark.png" alt="">팬꾹</a><nav class="gnb" aria-label="주 메뉴"><a class="on" href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a></nav><div class="acct"><a class="lg" href="#">로그인</a><a class="btn btn-outline" href="#">회원가입</a></div><button class="mbtn" type="button" aria-label="메뉴"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div></header><main class="wrap w1080"><div class="pf-head"><div class="pf-cover" aria-hidden="true"><span class="h2c"></span><span class="h1c"></span></div><div class="pf-body"><div class="pf-face"><img src="../part4-v4-20261101/assets/mascot-gift.png" alt="" width="140" height="140"></div><div class="pf-name"><h1>하루</h1></div><p class="pf-intro">게임 방송을 해요.</p><p class="pf-wait" role="status"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 2"/></svg>채널 확인이 끝나면 선물을 보낼 수 있어요</p></div></div></main><footer class="ft"><div class="wrap"><div class="r1"><a class="logo" href="#"><img src="../part4-v4-20261101/assets/logo-mark.png" alt="">팬꾹</a><div><a href="#">이용약관</a><a href="#"><b>개인정보처리방침</b></a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></div></div>
+<div class="r2"><a href="#">팬꾹 소개</a><a href="#">요금 안내</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></div>
+<p class="biz">상호 팬꾹 · 대표자 정재원 · 사업자등록번호 260-12-03086<br>고객센터 support@fankkuk.com · 0502-1931-8289<br>© 2026 팬꾹. All rights reserved.</p></div></footer></div></section>
 </body></html>
