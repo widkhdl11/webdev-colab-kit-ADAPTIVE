@@ -6,7 +6,7 @@ import type { AdminTagOption, BannedWord, CustomTagCount } from "@/entities/crea
 import {
   adminVerificationTables,
   eventReasonLabel,
-  isCodeApplication,
+  isOperatorCheckedApplication,
   isLive,
   platformLabel,
   VERIFICATION_METHOD_LABEL,
@@ -14,6 +14,7 @@ import {
   VERIFICATION_TRIES,
   type AdminVerification,
 } from "@/entities/creator/model/creator-verification";
+import { giftLinkText } from "@/entities/creator/model/gift-link-match";
 import { ApproveButton } from "@/features/admin-creator-verify/ui/approve-button";
 import { RejectButton } from "@/features/admin-creator-verify/ui/reject-button";
 import { RevokeButton } from "@/features/admin-creator-verify/ui/revoke-button";
@@ -23,9 +24,8 @@ import { formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
 
 // 관리자 「크리에이터 확인」 본문 (creator-verification INV-V5·V6·V9·V11·V13·V15, admin-console INV-K10·K8, 시안 admin/creators.html).
-// 확인 대기(올림) 표 = 시안의 승인 대기 표 — 인증 코드·채널 열기·승인·반려. 시안에 없던 표는 같은 표 모양으로 더했다:
-// 코드 받음(아직 확인 요청 전 — 반려만), 끝난 신청(횟수 풀기). 사람은 닉네임·아이디로만(INV-K8).
-// 2026-10-06 확인 방법을 API 여부로 가른 뒤로 크리에이터는 코드를 공개 게시물이 아니라 채널 소개란에 붙이거나 팬꾹 계정 DM 으로 보낸다.
+// 확인 대기 표 — 채널 이름·찾을 링크(요청 때의 팬꾹 링크)·채널 열기·승인·반려(INV-V18·V19), 끝난 요청(횟수 풀기). 사람은 닉네임·아이디로만(INV-K8).
+// 2026-11-02 팬꾹 링크 게시 확인으로 바꾸며 코드 받음 표와 인증 코드 칸을 뺐다 — 타입에 맞춘 최소 수정이다. 재확인·유예 묶음(INV-V20)은 시안 승인 뒤 더한다.
 // 「채널 열기」는 서버가 채널 키로 다시 만든 주소만 연다(INV-V2) — 크리에이터가 적은 문자열이 아니다.
 
 type Props = {
@@ -76,11 +76,13 @@ function actionTag(action: VerificationEvent["action"]) {
   if (action === "approve") return <span className={`${a.tag} ${a.tagBrand}`}>승인</span>;
   if (action === "revoke") return <span className={`${a.tag} ${a.tagInk}`}>승인 취소</span>;
   if (action === "reject") return <span className={a.tag}>반려</span>;
+  if (action === "recheck_found") return <span className={a.tag}>재확인 · 링크 있음</span>;
+  if (action === "recheck_missing") return <span className={`${a.tag} ${a.tagWarn}`}>재확인 · 링크 없음</span>;
   return <span className={a.tag}>닫힘</span>;
 }
 
 export function CreatorsPanel({ creators, verifications, events, nameChanges, tagOptions, customTags, bannedWords }: Props) {
-  const { posted, issued, ended } = adminVerificationTables(verifications);
+  const { posted, ended } = adminVerificationTables(verifications);
   const approved = creators.filter((c) => c.verified);
   const approvals = latestApprovals(events);
   const moving = new Set(verifications.filter(isLive).map((v) => v.loginId));
@@ -106,7 +108,7 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges, ta
             <h2 id="h-cv-posted" tabIndex={-1}>
               확인 대기 <span>{posted.length}건</span>
             </h2>
-            <span>채널 소개란이나 팬꾹 계정 DM 에 인증 코드가 있는지 확인해 주세요</span>
+            <span>채널 이름이 가입 때 적은 이름과 같고 팬꾹 링크가 채널 소개·링크 칸에 있는지 확인해 주세요</span>
           </div>
           <div className={a.tblWrap}>
             <table className={a.tbl} style={{ minWidth: 980 }}>
@@ -115,7 +117,7 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges, ta
                 <tr>
                   <th scope="col">닉네임</th>
                   <th scope="col">채널</th>
-                  <th scope="col">인증 코드</th>
+                  <th scope="col">찾을 링크</th>
                   <th scope="col">채널 확인</th>
                   <th scope="col">요청 시각</th>
                   <th scope="col">쓴 횟수</th>
@@ -141,7 +143,7 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges, ta
                         <Channel v={v} />
                       </td>
                       <td className={a.mono}>
-                        <b>{v.code}</b>
+                        <b>{v.linkHandle ? giftLinkText(v.linkHandle) : "—"}</b>
                       </td>
                       <td>
                         <OpenChannel v={v} />
@@ -151,60 +153,6 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges, ta
                       <td className={a.act}>
                         <ApproveButton applicationId={v.id} creatorName={v.creatorName ?? v.nickname} returnFocusId="h-cv-posted" onDone={setDone} />
                         <RejectButton applicationId={v.id} creatorName={v.creatorName ?? v.nickname} returnFocusId="h-cv-posted" onDone={setDone} />
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section aria-labelledby="h-cv-issued">
-          <div className={a.sectionH}>
-            <h2 id="h-cv-issued" tabIndex={-1}>
-              코드 받음 <span>{issued.length}건</span>
-            </h2>
-            <span>아직 「확인 요청」을 누르지 않은 신청이에요. 운영자 승인은 확인 요청 뒤에만 할 수 있어요. 크리에이터가 자동 확인에 성공하면 확인 요청 없이 승인돼 이 표에서 빠져요</span>
-          </div>
-          <div className={a.tblWrap}>
-            <table className={a.tbl} style={{ minWidth: 820 }}>
-              <caption className="sr-only">코드 받음 신청 — 발급 뒤 7일 안에 확인을 마쳐야 하는 신청</caption>
-              <thead>
-                <tr>
-                  <th scope="col">닉네임</th>
-                  <th scope="col">채널</th>
-                  <th scope="col">인증 코드</th>
-                  <th scope="col">받은 시각</th>
-                  <th scope="col">쓴 횟수</th>
-                  <th scope="col">
-                    <span className="sr-only">처리</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {issued.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className={a.empty}>
-                      코드만 받고 기다리는 신청이 없어요.
-                    </td>
-                  </tr>
-                ) : (
-                  issued.map((v) => (
-                    <tr key={v.id}>
-                      <td>
-                        <Who v={v} />
-                      </td>
-                      <td>
-                        <Channel v={v} />
-                      </td>
-                      <td className={a.mono}>
-                        <b>{v.code}</b>
-                      </td>
-                      <td className={`${a.mono} ${a.nowrap}`}>{formatStamp(v.issuedAt)}</td>
-                      <td className={`${a.mono} ${a.nowrap}`}>{tries(v)}</td>
-                      <td className={a.act}>
-                        <RejectButton applicationId={v.id} creatorName={v.creatorName ?? v.nickname} returnFocusId="h-cv-issued" onDone={setDone} />
                       </td>
                     </tr>
                   ))
@@ -314,17 +262,17 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges, ta
                       </td>
                       <td>
                         {VERIFICATION_METHOD_LABEL[v.method]}
-                        {v.code ? (
+                        {v.linkHandle ? (
                           <>
                             <br />
-                            <span className={`${a.mono} ${a.sub}`}>{v.code}</span>
+                            <span className={`${a.mono} ${a.sub}`}>{giftLinkText(v.linkHandle)}</span>
                           </>
                         ) : null}
                       </td>
                       <td>
                         <span className={v.status === "approved" ? `${a.tag} ${a.tagBrand}` : a.tag}>{VERIFICATION_STATUS_LABEL[v.status]}</span>
                       </td>
-                      <td className={`${a.mono} ${a.nowrap}`}>{isCodeApplication(v.method) ? tries(v) : "—"}</td>
+                      <td className={`${a.mono} ${a.nowrap}`}>{isOperatorCheckedApplication(v.method) ? tries(v) : "—"}</td>
                       <td className={a.act}>
                         {v.unlockable ? (
                           <UnlockButton
@@ -359,7 +307,7 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges, ta
                   <th scope="col">누가</th>
                   <th scope="col">크리에이터</th>
                   <th scope="col">처리</th>
-                  <th scope="col">그때의 채널 · 코드</th>
+                  <th scope="col">그때의 채널 · 링크</th>
                 </tr>
               </thead>
               <tbody>
@@ -385,6 +333,7 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges, ta
                         <td>
                           {e.method ? <span>{VERIFICATION_METHOD_LABEL[e.method]}</span> : <span className={a.faint}>—</span>}
                           {e.code ? <span className={`${a.mono} ${a.sub}`}> {e.code}</span> : null}
+                          {e.linkHandle ? <span className={`${a.mono} ${a.sub}`}> {giftLinkText(e.linkHandle)}</span> : null}
                           {e.channelUrl ? (
                             <>
                               <br />

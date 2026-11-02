@@ -7,13 +7,15 @@
 export const AVAILABILITY_DELAY_MS = 400;
 
 /** 서버의 답 넷 + 요청 자체가 실패함(error). */
-export type NameAnswer = "available" | "taken" | "invalid" | "rate_limited" | "error";
+export type NameAnswer = "available" | "taken" | "invalid" | "reserved" | "rate_limited" | "error";
 
 export type AvailabilityState = { value: string; status: "checking" | NameAnswer };
 
 export type AvailabilityCheck = (value: string, signal: AbortSignal) => Promise<NameAnswer>;
 
 export type NameField = "loginId" | "nickname";
+/** 미리 확인 API 가 받는 종류 — 팬꾹 링크(linkHandle)는 채널 확인 단계의 링크 만들기 칸이 쓴다(signup INV-U14). */
+export type CheckKind = NameField | "linkHandle";
 
 /** 칸 아래 안내의 색: ok(맞음) · bad(틀림) · wait(흐린 안내 — 틀렸다는 뜻이 아니다) */
 export type AvailabilityTone = "ok" | "bad" | "wait";
@@ -24,9 +26,32 @@ export const AVAILABILITY_LINE: Record<AvailabilityState["status"], { tone: Avai
   available: { tone: "ok", message: "사용 가능합니다." },
   taken: { tone: "bad", message: "이미 사용 중입니다." },
   invalid: { tone: "bad", message: "입력 형식을 확인해 주세요." },
+  // 아이디·닉네임에는 오지 않는 답(팬꾹 링크 전용) — 같은 꼴로 둔다
+  reserved: { tone: "bad", message: "쓸 수 없는 주소예요." },
   rate_limited: { tone: "wait", message: "잠시 후 다시 확인해 주세요." },
   error: { tone: "wait", message: "잠시 후 다시 확인해 주세요." },
 };
+
+/**
+ * 채널 확인 단계 팬꾹 링크 만들기 칸의 안내(signup INV-U14, 2026-11-02 사용자 지시 문구). 아이디·닉네임과 같은 답을 받고 문구만 다르다.
+ * 로그인 아이디와 같으면 서버에 묻지 않고 sameAsLogin 을 보인다(linkNeedsCheck).
+ */
+export const LINK_AVAILABILITY_LINE: Record<AvailabilityState["status"] | "sameAsLogin", { tone: AvailabilityTone; message: string }> = {
+  checking: { tone: "wait", message: "확인 중…" },
+  available: { tone: "ok", message: "쓸 수 있어요." },
+  taken: { tone: "bad", message: "이미 쓰고 있어요." },
+  invalid: { tone: "bad", message: "형식이 맞지 않아요." },
+  reserved: { tone: "bad", message: "쓸 수 없는 주소예요." },
+  rate_limited: { tone: "wait", message: "잠시 후 다시 확인해 주세요." },
+  error: { tone: "wait", message: "잠시 후 다시 확인해 주세요." },
+  sameAsLogin: { tone: "bad", message: "로그인 아이디와 다르게 정해 주세요." },
+};
+
+/** 팬꾹 링크를 서버에 물어야 하는가 — 위 아이디 칸과 같으면(소문자로 비교) 묻지 않는다. */
+export function linkNeedsCheck(link: string, loginId: string): boolean {
+  const h = link.trim().toLowerCase();
+  return h !== "" && h !== loginId.trim().toLowerCase();
+}
 
 /** 「다음」을 눌렀는데 지금 값의 답을 끝내 받지 못했을 때(기다리는 사이 값이 바뀜) */
 export const NAME_STILL_CHECKING = "아이디와 닉네임을 확인 중입니다. 완료 후 다시 눌러 주세요.";

@@ -5,8 +5,7 @@ import {
   createAvailabilityWatcher,
   NAME_STILL_CHECKING,
   type AvailabilityState,
-  type NameAnswer,
-} from "./name-availability";
+  type NameAnswer, LINK_AVAILABILITY_LINE, linkNeedsCheck } from "./name-availability";
 
 // 가입 화면의 아이디·닉네임 미리 확인(signup INV-U14) — 입력을 멈춘 뒤 0.4초에 묻고, 입력이 바뀌면 이전 답은 버린다.
 
@@ -191,5 +190,21 @@ describe("INV-U14: 「다음」 판정 — availabilityBlock", () => {
       field: "loginId",
       message: NAME_STILL_CHECKING,
     });
+  });
+});
+
+describe("INV-U14: 팬꾹 링크 칸 안내", () => {
+  it("INV-U14: 답마다 사용자 지정 문구 — 쓸 수 있어요·이미 쓰고 있어요·형식이 맞지 않아요·쓸 수 없는 주소예요", () => {
+    expect(LINK_AVAILABILITY_LINE.available.message).toBe("쓸 수 있어요.");
+    expect(LINK_AVAILABILITY_LINE.taken.message).toBe("이미 쓰고 있어요.");
+    expect(LINK_AVAILABILITY_LINE.invalid.message).toBe("형식이 맞지 않아요.");
+    expect(LINK_AVAILABILITY_LINE.reserved.message).toBe("쓸 수 없는 주소예요.");
+    expect(LINK_AVAILABILITY_LINE.sameAsLogin.message).toBe("로그인 아이디와 다르게 정해 주세요.");
+  });
+
+  it("INV-U14 (실패경로): 위 아이디 칸과 같으면(대소문자·앞뒤 공백 무시) 서버에 묻지 않는다, 다르면 묻는다", () => {
+    expect(linkNeedsCheck(" Haru01 ", "haru01")).toBe(false);
+    expect(linkNeedsCheck("", "haru01")).toBe(false);
+    expect(linkNeedsCheck("haru", "haru01")).toBe(true);
   });
 });

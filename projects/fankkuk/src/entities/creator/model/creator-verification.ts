@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { CHANNEL_PLATFORM_LABEL, isChannelPlatform } from "./channel-url";
 
-// 크리에이터 본인 확인 신청의 모양과 화면 판단 (creator-verification INV-V4·V5·V9·V11·V13·V15·V16).
-// DB 읽기 함수(my_creator_verifications · admin_creator_verifications)가 돌려준 줄을 이 모양으로 바꾼다.
-// 꼴이 다른 줄이 하나라도 있으면 null — 신청이 몰래 빠지지 않게.
+// 크리에이터 채널 확인 요청의 모양과 화면 판단 (creator-verification INV-V4·V9·V11·V13·V15·V17·V19·V20).
+// 2026-11-02 확인 방법을 「팬꾹 링크 게시 확인」으로 바꿨다 — 요청은 바로 확인 대기, 인증 코드·코드 자동 확인은 없다.
+// DB 읽기 함수(my_creator_verifications · admin_creator_verifications · admin_creator_rechecks)가 돌려준 줄을 이 모양으로 바꾼다.
+// 꼴이 다른 줄이 하나라도 있으면 null — 요청이 몰래 빠지지 않게.
 // 화면이 정하는 것은 「무엇을 보여 주고 어느 버튼을 열어 둘지」뿐이다. 거부·허용은 DB 함수가 다시 판정한다.
 
+/** issued(코드 받음)는 옛 코드 신청에만 있다 — 새 요청은 만들어질 때 바로 posted(확인 대기)다(INV-V17). */
 export const VERIFICATION_STATUSES = ["issued", "posted", "approved", "rejected", "withdrawn", "closed", "expired"] as const;
 export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
 
@@ -14,73 +16,68 @@ export const VERIFICATION_STATUS_LABEL: Record<VerificationStatus, string> = {
   posted: "확인 대기",
   approved: "승인 완료",
   rejected: "승인 반려",
-  withdrawn: "신청 취소",
-  closed: "신청 종료",
+  withdrawn: "요청 취소",
+  closed: "요청 종료",
   expired: "기한 만료",
 };
 
-/** INV-V13: 「인증 코드」(운영자 확인) · 「코드 자동 확인」 · 「플랫폼 로그인」. 읽기 함수는 승인된 신청이면 승인 기록의 방법을 준다. */
-export const VERIFICATION_METHODS = ["code", "auto_code", "login"] as const;
+/** INV-V13: 새 요청은 「팬꾹 링크」·「플랫폼 로그인」. 옛 값(인증 코드·코드 자동 확인)은 기록에 남은 것만 읽는다. */
+export const VERIFICATION_METHODS = ["link", "login", "code", "auto_code"] as const;
 export type VerificationMethod = (typeof VERIFICATION_METHODS)[number];
-export const VERIFICATION_METHOD_LABEL: Record<VerificationMethod, string> = { code: "인증 코드", auto_code: "코드 자동 확인", login: "플랫폼 로그인" };
+export const VERIFICATION_METHOD_LABEL: Record<VerificationMethod, string> = {
+  link: "팬꾹 링크",
+  login: "플랫폼 로그인",
+  code: "인증 코드",
+  auto_code: "코드 자동 확인",
+};
 
-/** 인증 코드 신청인가 — 운영자 확인이든 자동 확인이든 코드를 받은 신청이다(INV-V15 횟수도 이것으로 센다). */
-export function isCodeApplication(method: VerificationMethod): boolean {
+/** 운영자 확인을 거치는 요청인가 — 팬꾹 링크와 옛 인증 코드. INV-V15 횟수도 이것으로 센다. */
+export function isOperatorCheckedApplication(method: VerificationMethod): boolean {
   return method !== "login";
 }
 
-/** INV-V9: 반려 사유 목록 — DB 의 admin_reject_creator_verification 이 받는 값과 같다. */
-export const REJECT_REASONS = ["code_not_found", "channel_unreachable", "profile_mismatch", "other"] as const;
+/** INV-V19: 반려 사유 목록 — DB 의 admin_reject_creator_verification 이 받는 값과 같다. */
+export const REJECT_REASONS = ["link_not_found", "link_mismatch", "name_mismatch", "channel_unreachable", "other"] as const;
 export type RejectReason = (typeof REJECT_REASONS)[number];
-/**
- * INV-V9: 승인 취소 사유 목록 — DB 의 admin_revoke_creator 가 받는 값과 같다.
- * 2026-10-06 「채널에서 코드가 사라짐」(code_removed)을 뺐다 — 확인된 뒤 소개란 코드는 지워도 된다(INV-V16).
- */
-export const REVOKE_REASONS = ["channel_gone", "not_owner_confirmed", "policy_violation", "other"] as const;
+/** INV-V9·V20: 승인 취소 사유 목록 — DB 의 admin_revoke_creator 가 받는 값과 같다. link_removed 는 유예 끝 취소도 쓴다. */
+export const REVOKE_REASONS = ["channel_gone", "not_owner_confirmed", "policy_violation", "link_removed", "other"] as const;
 export type RevokeReason = (typeof REVOKE_REASONS)[number];
-/** INV-V14: 닫힘 사유 — 서버가 정한다. */
+/** INV-V14: 닫힘 사유 — 서버가 정한다. method_changed 는 2026-11-02 확인 방식을 바꾸며 닫은 옛 코드 신청. */
 export const CLOSE_REASON = "owner_confirmed_elsewhere";
 
 export const REJECT_REASON_LABEL: Record<RejectReason, string> = {
-  code_not_found: "코드를 찾지 못함",
+  link_not_found: "팬꾹 링크를 찾지 못함",
+  link_mismatch: "링크 주소가 다름",
+  name_mismatch: "채널 이름이 다름",
   channel_unreachable: "채널 주소가 열리지 않음",
-  profile_mismatch: "채널과 가입 정보가 맞지 않음",
   other: "그 밖",
 };
 export const REVOKE_REASON_LABEL: Record<RevokeReason, string> = {
   channel_gone: "채널이 없어졌거나 다른 사람에게 넘어감",
   not_owner_confirmed: "채널 주인이 아니라는 문의가 확인됨",
   policy_violation: "이용 규칙 위반",
+  link_removed: "팬꾹 링크가 채널에서 내려감",
   other: "그 밖",
 };
-export const CLOSE_REASON_LABEL = "다른 계정에서 채널 소유자 확인을 완료했습니다.";
-/** 지금은 고를 수 없지만 예전 기록에 남아 있을 수 있는 취소 사유 — 읽을 때만 쓴다. */
+const CLOSE_REASON_LABELS: Record<string, string> = {
+  owner_confirmed_elsewhere: "다른 계정에서 채널 소유자 확인을 완료했습니다.",
+  method_changed: "확인 방식이 바뀌었습니다. 새로 확인을 요청해 주세요.",
+};
+/** 지금은 고를 수 없지만 예전 기록에 남아 있을 수 있는 사유 — 읽을 때만 쓴다. */
+const LEGACY_REJECT_REASON_LABEL: Record<string, string> = { code_not_found: "코드를 찾지 못함", profile_mismatch: "채널과 가입 정보가 맞지 않음" };
 const LEGACY_REVOKE_REASON_LABEL: Record<string, string> = { code_removed: "채널에서 코드가 사라짐" };
 
 /** 운영자 메모 한도(INV-V9) — DB 와 같은 기준(글자 수). */
 export const VERIFICATION_MEMO_MAX = 200;
-/** INV-V15: 한 계정·한 채널의 코드 신청 횟수. */
+/** INV-V15: 한 계정·한 채널의 확인 요청 횟수. */
 export const VERIFICATION_TRIES = 3;
+/** INV-V20: 재확인 주기·유예 기간(DB 의 cv_recheck_window·cv_link_grace 와 같은 기준). */
+export const RECHECK_DAYS = 90;
+export const LINK_GRACE_DAYS = 14;
 
-/**
- * INV-V15: 진행 중인 코드 신청이 이 채널로 몇 번째인지. 남은 횟수는 끝난 신청만 빼서 오므로(진행 중인 신청은 아직 안 빠짐)
- * 화면에 「남은 3번」을 그대로 쓰면 이번 신청이 안 됐을 때 한 번 더 있는 것처럼 읽힌다.
- */
+/** INV-V15: 진행 중인 요청이 이 채널로 몇 번째인지. 남은 횟수는 끝난 요청만 빼서 온다. */
 export function attemptNumber(remainingCount: number): number {
   return Math.min(VERIFICATION_TRIES, VERIFICATION_TRIES - remainingCount + 1);
-}
-
-/** INV-V15: 코드를 다시 받으면 지금 신청이 한 번으로 세어지므로, 새 신청은 그다음 번째다. */
-export function attemptNumberAfterRegenerate(remainingCount: number): number {
-  return attemptNumber(remainingCount - 1);
-}
-
-/** INV-V4: 코드 신청의 확인 기한(DB 의 cv_post_window 와 같은 기준). */
-export const VERIFICATION_CODE_DAYS = 7;
-
-/** 인스타그램은 프로페셔널 계정만 플랫폼 API 로 확인된다 — 그 플랫폼이면 화면이 덧붙일 안내 대상인지. */
-export function needsProfessionalAccountNote(platform: string): boolean {
-  return platform === "instagram";
 }
 
 export function platformLabel(platform: string): string {
@@ -93,25 +90,25 @@ export function platformLabel(platform: string): string {
  */
 export function reasonLabel(status: VerificationStatus, reasonCode: string | null): string | null {
   if (reasonCode === null) return null;
-  if (status === "rejected") return (REJECT_REASON_LABEL as Record<string, string>)[reasonCode] ?? null;
-  if (status === "closed") return reasonCode === CLOSE_REASON ? CLOSE_REASON_LABEL : null;
+  if (status === "rejected") return (REJECT_REASON_LABEL as Record<string, string>)[reasonCode] ?? LEGACY_REJECT_REASON_LABEL[reasonCode] ?? null;
+  if (status === "closed") return CLOSE_REASON_LABELS[reasonCode] ?? null;
   if (status === "approved") return (REVOKE_REASON_LABEL as Record<string, string>)[reasonCode] ?? LEGACY_REVOKE_REASON_LABEL[reasonCode] ?? null;
   return null;
 }
 
-// ── 크리에이터 자신의 신청 (my_creator_verifications) ─────────
+// ── 크리에이터 자신의 요청 (my_creator_verifications) ─────────
 
 export type MyVerification = {
   id: string;
   platform: string;
   channelUrl: string;
-  code: string | null;
+  /** 요청 때의 링크용 아이디(INV-V17). 옛 코드 신청·로그인 확인 줄이면 null */
+  linkHandle: string | null;
   method: VerificationMethod;
   status: VerificationStatus;
   issuedAt: string;
-  postDeadline: string | null;
   reasonCode: string | null;
-  /** 그 채널로 남은 코드 신청 횟수(INV-V15) */
+  /** 그 채널로 남은 요청 횟수(INV-V15) */
   remainingCount: number;
 };
 
@@ -120,11 +117,10 @@ const myRow = z
     id: z.string(),
     platform: z.string(),
     channel_url: z.string(),
-    code: z.string().nullable(),
+    link_handle: z.string().nullable(),
     method: z.enum(VERIFICATION_METHODS),
     status: z.enum(VERIFICATION_STATUSES),
     issued_at: z.string(),
-    post_deadline: z.string().nullable(),
     reason_code: z.string().nullable(),
     remaining_count: z.number().int().min(0),
   })
@@ -137,11 +133,10 @@ export function myVerificationsFromRows(rows: unknown): MyVerification[] | null 
     id: r.id,
     platform: r.platform,
     channelUrl: r.channel_url,
-    code: r.code,
+    linkHandle: r.link_handle,
     method: r.method,
     status: r.status,
     issuedAt: r.issued_at,
-    postDeadline: r.post_deadline,
     reasonCode: r.reason_code,
     remainingCount: r.remaining_count,
   }));
@@ -158,6 +153,14 @@ export type MyVerificationState = {
   verifiedAt: string | null;
   /** INV-V10(d32): 마지막 결정이 「이용 규칙 위반」 취소 — 운영자 승인으로만 다시 확인된다. */
   operatorOnly: boolean;
+  /** 지금 링크용 아이디 — 없으면 확인 요청을 낼 수 없다(INV-V17) */
+  handle: string | null;
+  /** 확인됐을 때 다음 재확인 날(마지막 확인 + 90일, INV-V20) */
+  nextRecheckAt: string | null;
+  /** 재확인에서 링크가 없어 유예 중이면 유예 끝(INV-V20) */
+  graceUntil: string | null;
+  /** 유예 중 「다시 확인 요청」을 누른 때 */
+  recheckRequestedAt: string | null;
 };
 
 const stateRow = z
@@ -170,6 +173,10 @@ const stateRow = z
     channel_url: z.string().nullable(),
     verified_at: z.string().nullable(),
     operator_only: z.boolean(),
+    handle: z.string().nullable(),
+    next_recheck_at: z.string().nullable(),
+    grace_until: z.string().nullable(),
+    recheck_requested_at: z.string().nullable(),
   })
   .strict();
 
@@ -187,110 +194,106 @@ export function myVerificationStateFromRows(rows: unknown): MyVerificationState 
     channelUrl: r.channel_url,
     verifiedAt: r.verified_at,
     operatorOnly: r.operator_only,
+    handle: r.handle,
+    nextRecheckAt: r.next_recheck_at,
+    graceUntil: r.grace_until,
+    recheckRequestedAt: r.recheck_requested_at,
   };
 }
 
-/** 살아 있는 신청 = 코드 받음(기간 안 — 기간 지남은 서버가 expired 로 돌려준다) 또는 확인 대기(INV-V5). */
+/** 살아 있는 요청 = 확인 대기(INV-V4). 옛 코드 받음 줄은 기간이 지나면 서버가 expired 로 돌려준다. */
 export function isLive(v: Pick<MyVerification, "status">): boolean {
   return v.status === "issued" || v.status === "posted";
 }
 
 /**
- * 크리에이터 화면의 확인 칸이 보여 줄 것 (INV-V4·V5·V12·V15).
- * - live: 지금 살아 있는 신청(많아야 하나 — INV-V4). 있으면 그 신청의 코드·기한·버튼을 보인다.
- * - last: 살아 있는 신청이 없을 때 가장 최근에 끝난 신청 — 반려·닫힘·기간 지남·거둠·승인 취소 사유를 알린다.
- * - mode: 확인 전이면 「확인 신청」, 확인됐으면 새 채널로 옮기는 「채널 이사 신청」.
- * - 버튼: 확인 요청(운영자 확인)·다시 받기는 코드 받음일 때만, 거두기는 살아 있는 동안. 다시 받기는 남은 횟수가 2 이상일 때만
- *   (지금 신청을 버리면 하나를 더 쓰고, 새 신청에 하나가 더 있어야 한다 — INV-V15).
- *   「확인」(코드 자동 확인)은 코드 받음이고 그 플랫폼이 「API 확인」 있음일 때만(INV-V16).
+ * 크리에이터 화면의 확인 칸이 보여 줄 단계 (UX 명세 signup.md 「2026-11-02 채널 확인」 상태표, INV-V15·V17·V20).
+ * - link_needed: 링크용 아이디가 없다 — 요청을 낼 수 없다.
+ * - waiting: 확인 대기 요청이 있다(확인 전이든 채널 이사든).
+ * - recheck_missing: 확인됐고 재확인에서 링크가 없어 유예 중.
+ * - verified: 확인됨(이사 요청 없음).
+ * - locked: 마지막 요청이 반려 등으로 끝났고 그 채널로 남은 횟수가 0.
+ * - rejected: 마지막 요청이 반려됨 — 사유 한 줄 + 다시 요청 칸.
+ * - idle: 확인 전, 살아 있는 요청 없음.
  */
+export type PanelStage = "link_needed" | "idle" | "waiting" | "rejected" | "locked" | "verified" | "recheck_missing";
+
 export type MyVerificationPanel = {
+  stage: PanelStage;
   mode: "verify" | "move";
   live: MyVerification | null;
   last: MyVerification | null;
-  canRequest: boolean;
-  canMarkPosted: boolean;
-  canRegenerate: boolean;
-  canWithdraw: boolean;
-  canAutoCheck: boolean;
 };
 
 export function myVerificationPanel(
-  state: Pick<MyVerificationState, "verified">,
+  state: Pick<MyVerificationState, "verified" | "handle" | "graceUntil">,
   rows: readonly MyVerification[],
-  apiPlatforms: ReadonlySet<string> = new Set(),
 ): MyVerificationPanel {
   const live = rows.find(isLive) ?? null;
-  // 줄은 마지막으로 일어난 일(취소·끝남·기간 지남·발급)이 늦은 순서로 온다(DB 읽기 함수가 정렬). 그래서 첫 줄이 가장 최근 결정이다.
-  // 플랫폼 로그인으로 승인된 줄도 보여 줄 「지난 신청」이 될 수 있다.
+  // 줄은 마지막으로 일어난 일이 늦은 순서로 온다(DB 읽기 함수가 정렬). 그래서 첫 줄이 가장 최근 결정이다.
   const last = live ? null : (rows[0] ?? null);
-  return {
-    mode: state.verified ? "move" : "verify",
-    live,
-    last,
-    canRequest: live === null,
-    canMarkPosted: live?.status === "issued",
-    canRegenerate: live?.status === "issued" && live.remainingCount >= 2,
-    canWithdraw: live !== null,
-    canAutoCheck: live?.status === "issued" && apiPlatforms.has(live.platform),
-  };
+  const mode = state.verified ? "move" : "verify";
+  const stage: PanelStage = live
+    ? "waiting"
+    : state.verified
+      ? state.graceUntil
+        ? "recheck_missing"
+        : "verified"
+      : state.handle === null
+        ? "link_needed"
+        : last && isOperatorCheckedApplication(last.method) && last.status !== "approved" && last.remainingCount === 0
+          ? "locked"
+          : last?.status === "rejected"
+            ? "rejected"
+            : "idle";
+  return { stage, mode, live, last };
 }
 
 /**
- * 그 플랫폼에서 쓸 수 있는 확인 길, 보여 줄 순서대로 (INV-V2 「API 확인」·V14·V16).
- * API 가 있으면 플랫폼 로그인(기본) → 코드 자동 확인(보조) → 운영자 확인(그래도 안 될 때). 없으면 운영자 확인뿐.
- * 화면 안내일 뿐이다 — 로그인 확인·자동 확인 함수가 같은 표로 다시 판정한다.
+ * 그 플랫폼에서 쓸 수 있는 확인 길 (INV-V14·V17). 로그인 확인이 되는 플랫폼(지금은 치지직)이면 「○○로 바로 확인」이 함께 보인다.
+ * 화면 안내일 뿐이다 — 로그인 확인 함수가 같은 표로 다시 판정한다.
  */
-export type VerifyRoute = "login" | "auto_code" | "operator";
-
-/**
- * INV-V10(d32): 이 크리에이터가 스스로(플랫폼 로그인·코드 자동 확인) 확인할 수 있는 플랫폼.
- * 운영자 확인만이면 빈 집합 — 확인 길과 패널 판단이 모두 운영자 길만 남긴다. 거부는 DB 가 다시 한다.
- */
-export function selfCheckPlatforms(state: Pick<MyVerificationState, "operatorOnly">, apiPlatforms: ReadonlySet<string>): ReadonlySet<string> {
-  return state.operatorOnly ? new Set() : apiPlatforms;
-}
-
-export function verifyRoutes(platform: string, apiPlatforms: ReadonlySet<string>): VerifyRoute[] {
-  return isChannelPlatform(platform) && apiPlatforms.has(platform) ? ["login", "auto_code", "operator"] : ["operator"];
+export function canLoginCheck(platform: string, loginPlatforms: ReadonlySet<string>, state: Pick<MyVerificationState, "operatorOnly">): boolean {
+  return !state.operatorOnly && isChannelPlatform(platform) && loginPlatforms.has(platform);
 }
 
 /**
- * 확인 칸 맨 위 한 줄. 운영자 확인만이고 아직 확인 전이면(INV-V10, d32) 지난 신청보다 위반 취소를 먼저 알린다 —
- * 지난 신청 줄로는 「취소됐다」까지만 알릴 수 있고, 다시 확인을 운영자만 한다는 안내는 이 상태에서만 붙는다.
+ * 확인 칸 맨 위 한 줄. 운영자 확인만이고 아직 확인 전이면(INV-V10, d32) 지난 요청보다 위반 취소를 먼저 알린다.
  */
 export function panelOutcomeText(state: Pick<MyVerificationState, "verified" | "operatorOnly">, last: MyVerification | null): string | null {
   if (!state.verified && state.operatorOnly) return "이용 규칙 위반으로 승인이 취소되었습니다. 재확인은 운영자가 진행합니다.";
   return last ? lastOutcomeText(last) : null;
 }
 
-/** 지난 신청이 화면에 알릴 한 줄 — 승인 취소·반려·닫힘·기간 지남·거둠. 승인됐고 취소되지 않았으면 null. */
+/** 지난 요청이 화면에 알릴 한 줄 — 승인 취소·반려·닫힘·기간 지남·거둠. 승인됐고 취소되지 않았으면 null. */
 export function lastOutcomeText(v: MyVerification): string | null {
   const reason = reasonLabel(v.status, v.reasonCode);
   if (v.status === "approved") return reason ? `승인이 취소되었습니다 — ${reason}` : null;
   if (v.status === "rejected") return reason ? `승인이 반려되었습니다 — ${reason}` : "승인이 반려되었습니다";
-  if (v.status === "closed") return `신청이 종료되었습니다. ${reason ?? CLOSE_REASON_LABEL}`;
-  if (v.status === "expired") return `확인 기한(${VERIFICATION_CODE_DAYS}일)이 만료되었습니다`;
-  if (v.status === "withdrawn") return "신청이 취소되었습니다";
+  if (v.status === "closed") return `요청이 종료되었습니다. ${reason ?? ""}`.trim();
+  if (v.status === "expired") return "확인 기한이 지났습니다";
+  if (v.status === "withdrawn") return "요청을 취소했습니다";
   return null;
 }
 
-// ── 운영자 신청 목록 (admin_creator_verifications) ──────────
+// ── 운영자 요청 목록 (admin_creator_verifications) ──────────
 
 export type AdminVerification = {
   id: string;
   nickname: string;
   loginId: string;
   creatorName: string | null;
+  /** 가입 때 적은 채널 이름 — 승인 조건 (1)의 비교 대상(INV-V18) */
   channelTitle: string | null;
   platform: string;
   channelUrl: string;
-  code: string | null;
+  /** 찾을 링크의 아이디 — 요청 때 값(INV-V17). 옛 코드 신청이면 null */
+  linkHandle: string | null;
   method: VerificationMethod;
   status: VerificationStatus;
   issuedAt: string;
   postedAt: string | null;
-  /** 그 계정이 그 채널로 쓴 코드 신청 횟수(INV-V15 — 승인되지 않고 끝난 것, 마지막 풀기 뒤) */
+  /** 그 계정이 그 채널로 쓴 요청 횟수(INV-V15 — 승인되지 않고 끝난 것, 마지막 풀기 뒤) */
   usedCount: number;
 };
 
@@ -303,7 +306,7 @@ const adminRow = z
     channel_title: z.string().nullable(),
     platform: z.string(),
     channel_url: z.string(),
-    code: z.string().nullable(),
+    link_handle: z.string().nullable(),
     method: z.enum(VERIFICATION_METHODS),
     status: z.enum(VERIFICATION_STATUSES),
     issued_at: z.string(),
@@ -323,7 +326,7 @@ export function adminVerificationsFromRows(rows: unknown): AdminVerification[] |
     channelTitle: r.channel_title,
     platform: r.platform,
     channelUrl: r.channel_url,
-    code: r.code,
+    linkHandle: r.link_handle,
     method: r.method,
     status: r.status,
     issuedAt: r.issued_at,
@@ -333,35 +336,98 @@ export function adminVerificationsFromRows(rows: unknown): AdminVerification[] |
 }
 
 /**
- * 운영자 화면의 세 표 (INV-V5·V6·V15).
- * - posted: 확인 대기 — 승인·반려. 올린 순서가 오래된 것부터(먼저 기다린 사람 먼저).
- * - issued: 코드 받음(아직 안 올림) — 반려만(승인은 올림 상태만, INV-V6).
- * - ended: 끝난 신청 — 읽기 전용. 그 계정·그 채널의 가장 최근 코드 신청 줄에만 「횟수 풀기」를 둔다(같은 쌍에 버튼이 여러 개 생기지 않게).
+ * 운영자 화면의 두 표 (INV-V6·V15·V19).
+ * - posted: 확인 대기 — 승인·반려. 오래된 것부터(먼저 기다린 사람 먼저).
+ * - ended: 끝난 요청 — 읽기 전용. 그 계정·그 채널의 가장 최근 요청 줄에만 「횟수 풀기」를 둔다.
  */
 export type AdminVerificationTables = {
   posted: AdminVerification[];
-  issued: AdminVerification[];
   ended: Array<AdminVerification & { unlockable: boolean }>;
 };
 
 export function adminVerificationTables(rows: readonly AdminVerification[]): AdminVerificationTables {
   const posted = rows.filter((r) => r.status === "posted").toSorted((a, b) => (a.postedAt ?? "").localeCompare(b.postedAt ?? ""));
-  const issued = rows.filter((r) => r.status === "issued");
-  // 살아 있는 신청이 있는 쌍은 그 줄(확인 대기·코드 받음 표)이 가장 최근이라 끝난 표에서 풀기 버튼을 두지 않는다
   const seen = new Set(rows.filter(isLive).map((r) => `${r.loginId}\n${r.channelUrl}`));
   const ended = rows
     .filter((r) => !isLive(r))
     .map((r) => {
       const pair = `${r.loginId}\n${r.channelUrl}`;
-      const first = isCodeApplication(r.method) && !seen.has(pair);
-      if (isCodeApplication(r.method)) seen.add(pair);
+      const counted = isOperatorCheckedApplication(r.method);
+      const first = counted && !seen.has(pair);
+      if (counted) seen.add(pair);
       return { ...r, unlockable: first && r.usedCount > 0 };
     });
-  return { posted, issued, ended };
+  return { posted, ended };
 }
 
+// ── 운영자 재확인 목록 (admin_creator_rechecks, INV-V20) ──────
+
+export type AdminRecheck = {
+  creatorId: string;
+  nickname: string | null;
+  loginId: string | null;
+  creatorName: string;
+  channelTitle: string;
+  platform: string | null;
+  channelUrl: string | null;
+  /** 지금 링크용 아이디 — 재확인은 지금 아이디로 찾는다. 없으면 null */
+  handle: string | null;
+  /** 오른 이유: handle(아이디를 바꿈) · days(90일 지남). 유예 중이면 null 일 수 있다 */
+  reason: "handle" | "days" | null;
+  linkCheckedAt: string | null;
+  /** 「링크 없음」으로 유예가 시작된 때 — 없으면 재확인 대기 */
+  linkMissingAt: string | null;
+  graceUntil: string | null;
+  recheckRequestedAt: string | null;
+};
+
+const recheckRow = z
+  .object({
+    creator_id: z.string(),
+    nickname: z.string().nullable(),
+    login_id: z.string().nullable(),
+    creator_name: z.string(),
+    channel_title: z.string(),
+    platform: z.string().nullable(),
+    channel_url: z.string().nullable(),
+    handle: z.string().nullable(),
+    recheck_reason: z.enum(["handle", "days"]).nullable(),
+    link_checked_at: z.string().nullable(),
+    link_missing_at: z.string().nullable(),
+    grace_until: z.string().nullable(),
+    recheck_requested_at: z.string().nullable(),
+  })
+  .strict();
+
+export function adminRechecksFromRows(rows: unknown): AdminRecheck[] | null {
+  const parsed = z.array(recheckRow).safeParse(rows);
+  if (!parsed.success) return null;
+  return parsed.data.map((r) => ({
+    creatorId: r.creator_id,
+    nickname: r.nickname,
+    loginId: r.login_id,
+    creatorName: r.creator_name,
+    channelTitle: r.channel_title,
+    platform: r.platform,
+    channelUrl: r.channel_url,
+    handle: r.handle,
+    reason: r.recheck_reason,
+    linkCheckedAt: r.link_checked_at,
+    linkMissingAt: r.link_missing_at,
+    graceUntil: r.grace_until,
+    recheckRequestedAt: r.recheck_requested_at,
+  }));
+}
+
+/** 재확인 표(유예 전)와 유예 표로 나눈다. 순서는 DB 가 오래된 순으로 준다. */
+export function adminRecheckTables(rows: readonly AdminRecheck[]): { recheck: AdminRecheck[]; grace: AdminRecheck[] } {
+  return { recheck: rows.filter((r) => r.linkMissingAt === null), grace: rows.filter((r) => r.linkMissingAt !== null) };
+}
+
+export const RECHECK_REASON_LABEL: Record<"handle" | "days", string> = { handle: "링크 주소 바꿈", days: `${RECHECK_DAYS}일 지남` };
+
 /** 처리 기록 한 줄의 사유 문구 — 반려는 반려 사유, 닫힘은 닫힘 사유, 승인 취소는 취소 사유. 없거나 모르는 값이면 null. */
-export function eventReasonLabel(action: "approve" | "reject" | "close" | "revoke", reasonCode: string | null): string | null {
+export function eventReasonLabel(action: string, reasonCode: string | null): string | null {
   if (action === "reject") return reasonLabel("rejected", reasonCode);
   if (action === "close") return reasonLabel("closed", reasonCode);
   if (action === "revoke") return reasonLabel("approved", reasonCode);

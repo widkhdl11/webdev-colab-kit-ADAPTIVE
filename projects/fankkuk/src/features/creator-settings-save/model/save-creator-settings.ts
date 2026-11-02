@@ -1,3 +1,4 @@
+import { HANDLE_REJECT_MESSAGE } from "@/entities/creator/model/creator-handle";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Viewer } from "@/entities/session/model/viewer";
 import { notifyInputSchema, profileInputSchema } from "./creator-settings-input";
@@ -81,13 +82,8 @@ export async function saveCreatorHandle(deps: SaveCreatorSettingsDeps, body: unk
     const days = Number(error?.details);
     return { ok: false, status: 400, message: Number.isInteger(days) && days > 0 ? `링크 주소 변경까지 ${days}일 남았습니다.` : "아직 링크 주소를 변경할 수 없습니다." };
   }
-  const messages: Record<string, string> = {
-    "22023": "영문·숫자·밑줄(_)로 3~20자를 입력해 주세요.",
-    P0090: "서비스에서 사용하는 주소입니다. 다른 링크 주소를 입력해 주세요.",
-    P0092: "이미 사용 중인 링크 주소입니다. 다른 주소를 입력해 주세요.",
-    P0093: "로그인 아이디와 다른 링크 주소를 입력해 주세요.",
-  };
-  if (messages[code]) return { ok: false, status: 400, message: messages[code] };
+  const message = HANDLE_REJECT_MESSAGE[code];
+  if (message) return { ok: false, status: 400, message };
   if (code === "42501") return { ok: false, status: 401, message: "로그인이 필요합니다." };
   throw new Error(`링크 아이디를 저장하지 못했다: ${code || "응답 꼴"}`);
 }

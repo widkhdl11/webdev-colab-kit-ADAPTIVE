@@ -1,9 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import {
+  adminRechecksFromRows,
   adminVerificationsFromRows,
   myVerificationsFromRows,
   myVerificationStateFromRows,
+  type AdminRecheck,
   type AdminVerification,
   type MyVerification,
   type MyVerificationState,
@@ -39,6 +41,15 @@ export async function readAdminVerifications(client: Pick<SupabaseClient, "rpc">
   return rows;
 }
 
+/** INV-V20: 운영자 재확인 목록 — 재확인에 오른 크리에이터와 유예 중인 크리에이터(운영자가 아니면 0줄). */
+export async function readAdminRechecks(client: Pick<SupabaseClient, "rpc">): Promise<AdminRecheck[]> {
+  const { data, error } = await client.rpc("admin_creator_rechecks");
+  if (error) throw new Error(`채널 재확인 목록을 읽지 못했다: ${error.code}`);
+  const rows = adminRechecksFromRows(data);
+  if (!rows) throw new Error("채널 재확인 목록의 형식이 다르다");
+  return rows;
+}
+
 const movingRow = z.object({ creator_id: z.guid() }).strict();
 
 /** INV-V12: 지금 채널 이사 중인 크리에이터 id — 선물 보내기 화면의 안내용(등록은 DB 가 막는다). */
@@ -50,7 +61,7 @@ export async function readMovingCreatorIds(client: Pick<SupabaseClient, "rpc">):
 
 const platformRow = z.object({ platform: z.string(), api_check: z.boolean() }).strict();
 
-/** INV-V2 표의 「API 확인」이 있는 플랫폼 — 화면이 「○○로 확인하기」·「코드로 확인하기」를 보일지 정한다. 판정은 DB 함수가 다시 한다. */
+/** INV-V14: 플랫폼 로그인 확인을 받는 플랫폼(지금은 치지직) — 화면이 「○○로 바로 확인」을 보일지 정한다. 판정은 DB 함수가 다시 한다. */
 export async function readApiCheckPlatforms(client: Pick<SupabaseClient, "rpc">): Promise<Set<string>> {
   const { data, error } = await client.rpc("creator_verification_platforms");
   if (error) throw new Error(`본인 확인 플랫폼을 읽지 못했다: ${error.code}`);

@@ -109,7 +109,7 @@ describe("확인된 채널의 공개 읽기 — creator_link_extras (추가분 4
     expect(raw.error).toBeNull();
     const rows = raw.data as Record<string, unknown>[];
     expect(rows).toHaveLength(1);
-    // 운영자 메모·인증 코드·신청·계정 칸은 없다
+    // 운영자 메모·확인 요청·계정 칸은 없다
     expect(Object.keys(rows[0]!).sort()).toEqual(["bg_path", "channel_key", "channel_url", "fan_name", "platform", "preview_pick", "symbol_path", "verified_on"]);
     const today = psql(`select (now() at time zone 'Asia/Seoul')::date::text`);
     expect(await readCreatorLinkExtras(anonClient(), A.creatorId)).toEqual({
@@ -129,7 +129,7 @@ describe("확인된 채널의 공개 읽기 — creator_link_extras (추가분 4
     expect(await readCreatorLinkExtras(anonClient(), A.creatorId)).toEqual({ fanName: null, channel: null, look: NO_LOOK });
   });
 
-  it("링크 페이지: 감사 문장에 팬덤 이름, 닉네임 아래 채널 아이콘(새 탭·풀이) — 인증 코드는 응답·화면 어디에도 없다", async () => {
+  it("링크 페이지: 감사 문장에 팬덤 이름, 닉네임 아래 채널 아이콘(새 탭·풀이) — 확인 요청 식별값은 응답·화면 어디에도 없다", async () => {
     const issued = await verifyVia("haru", `https://www.youtube.com/@${YT_KEY}`);
     await saveProfile(A.login, "꿀벌단");
     const page = await loadCreatorLinkPage({ client: anonClient(), viewer: null, creatorId: A.creatorId, photoBase: "http://photo.test" });
@@ -138,6 +138,6 @@ describe("확인된 채널의 공개 읽기 — creator_link_extras (추가분 4
     expect(html).toContain("꿀벌단 여러분의 마음 늘 감사해요");
     expect(html).toContain(`href="https://www.youtube.com/@${YT_KEY}" target="_blank" rel="noopener noreferrer"`);
     expect(html).toMatch(new RegExp(`title="@${YT_KEY} · \\d{4}\\.\\d{2}\\.\\d{2} 확인"`));
-    for (const text of [html, JSON.stringify(page)]) expect(text.includes(issued.code)).toBe(false);
+    for (const text of [html, JSON.stringify(page)]) expect(text.includes(issued.application_id)).toBe(false);
   });
 });

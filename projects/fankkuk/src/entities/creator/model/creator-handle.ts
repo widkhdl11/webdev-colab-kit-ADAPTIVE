@@ -13,6 +13,20 @@ export const LINK_HOST = "fankkuk.kr";
 
 const SHAPE = /^[a-z0-9_]{3,20}$/;
 
+/** 링크 아이디 꼴 안내(INV-E2). */
+export const HANDLE_SHAPE_MESSAGE = `영문·숫자·밑줄(_)로 ${HANDLE_MIN}~${HANDLE_MAX}자를 입력해 주세요.`;
+
+/**
+ * 링크 아이디 저장 함수(update_my_creator_handle — 설정 화면과 채널 확인 단계의 링크 만들기가 같이 쓴다)의 거부 코드 → 화면 문구.
+ * 22023 꼴 · P0090 예약어 · P0092 이미 쓰는 아이디 · P0093 로그인 아이디와 같음 (creator-link INV-E2·E3).
+ */
+export const HANDLE_REJECT_MESSAGE: Readonly<Record<string, string>> = {
+  "22023": HANDLE_SHAPE_MESSAGE,
+  P0090: "서비스에서 사용하는 주소입니다. 다른 링크 주소를 입력해 주세요.",
+  P0092: "이미 사용 중인 링크 주소입니다. 다른 주소를 입력해 주세요.",
+  P0093: "로그인 아이디와 다른 링크 주소를 입력해 주세요.",
+};
+
 /** 앞뒤 공백을 빼고 소문자로 — DB 함수도 같은 순서로 바꾼 뒤 검사한다(INV-E2). */
 export function normalizeHandle(raw: string): string {
   return raw.trim().toLowerCase();

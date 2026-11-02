@@ -414,3 +414,52 @@ describe("INV-U14: 아이디·닉네임 미리 확인", () => {
     expect(psql(`select prosrc from pg_proc where proname = 'signup_name_check';`)).not.toMatch(/pii\./);
   });
 });
+
+describe("INV-U14: 팬꾹 링크 미리 확인 — DB 함수 signup_name_check(link_handle)", () => {
+  const H = SEED.haruCreatorId;
+  function seedHandles(): string {
+    psql(`delete from public.creator_handles where handle like 'itnklink%'`);
+    psql(`insert into public.creator_handles (handle, creator_id, retired_until) values ('itnklinkold', '${H}', now() + interval '30 days'), ('itnklinkgone', '${H}', now() - interval '1 day')`);
+    const current = psql(`select coalesce((select handle from public.creator_handles where creator_id = '${H}' and retired_until is null), '')`);
+    if (current) return current;
+    psql(`insert into public.creator_handles (handle, creator_id) values ('itnklinkcur', '${H}')`);
+    return "itnklinkcur";
+  }
+  afterAll(() => psql(`delete from public.creator_handles where handle like 'itnklink%'`));
+
+  it("INV-U14 (S14d): 다른 크리에이터의 지금 아이디·90일 묶인 옛 아이디는 taken, 풀린 옛 아이디·새 아이디는 available — 대소문자는 같은 것으로", async () => {
+    const current = seedHandles();
+    const h = ipHash();
+    for (const [value, want] of [
+      [current.toUpperCase(), "taken"],
+      ["itnklinkold", "taken"],
+      ["itnklinkgone", "available"],
+      ["itnklinknew", "available"],
+    ] as const) {
+      const r = await check(h, "link_handle", value);
+      expect([value, r.error, r.data]).toEqual([value, null, want]);
+    }
+  });
+
+  it("INV-U14 (S14e, 실패경로): 예약어·사이트 첫 단계 주소는 reserved, 꼴이 틀리면 invalid — 둘 다 횟수에 넣지 않는다", async () => {
+    const h = ipHash();
+    expect((await check(h, "link_handle", "login")).data).toBe("reserved");
+    expect((await check(h, "link_handle", "creators")).data).toBe("reserved");
+    expect((await check(h, "link_handle", "ha-ru")).data).toBe("invalid");
+    expect(psql(`select count(*) from public.signup_check_hits where ip_hash = '${h}'`)).toBe("0");
+  });
+
+  it("INV-U14 (실패경로): 팬꾹 링크도 같은 한도(1분 30번)를 쓴다 — 넘으면 rate_limited 이고 찾지 않는다", async () => {
+    seedHandles();
+    const h = ipHash();
+    for (let i = 0; i < 30; i++) expect((await check(h, i % 2 ? "login_id" : "link_handle", `itnklinkx${i}`)).data).not.toBe("rate_limited");
+    expect((await check(h, "link_handle", "itnklinkold")).data).toBe("rate_limited");
+  });
+
+  it("INV-U14 (실패경로): 답은 글자 하나뿐 — 누구의 링크인지 알려 주지 않는다", async () => {
+    const current = seedHandles();
+    const r = await check(ipHash(), "link_handle", current);
+    expect(r.data).toBe("taken");
+    expect(JSON.stringify(r.data)).not.toContain(H);
+  });
+});

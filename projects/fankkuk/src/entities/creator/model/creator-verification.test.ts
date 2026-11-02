@@ -1,274 +1,264 @@
 import { describe, expect, it } from "vitest";
 import {
+  adminRechecksFromRows,
+  adminRecheckTables,
   adminVerificationsFromRows,
   adminVerificationTables,
   attemptNumber,
-  attemptNumberAfterRegenerate,
-  eventReasonLabel,
+  canLoginCheck,
   lastOutcomeText,
   myVerificationPanel,
   myVerificationsFromRows,
   myVerificationStateFromRows,
   panelOutcomeText,
   reasonLabel,
-  selfCheckPlatforms,
+  REJECT_REASON_LABEL,
+  REJECT_REASONS,
   REVOKE_REASONS,
-  VERIFICATION_METHOD_LABEL,
-  verifyRoutes,
+  VERIFICATION_METHODS,
   type AdminVerification,
   type MyVerification,
 } from "./creator-verification";
 
+// 크리에이터 채널 확인 — 모양과 화면 판단 (creator-verification INV-V9·V10·V11·V13·V15·V17·V19·V20).
+
 const mine = (over: Partial<MyVerification>): MyVerification => ({
   id: "a1",
-  platform: "youtube",
-  channelUrl: "https://www.youtube.com/@ggul",
-  code: "FK-7H3Q-92",
-  method: "code",
-  status: "issued",
-  issuedAt: "2026-10-06T00:00:00Z",
-  postDeadline: "2026-10-13T00:00:00Z",
+  platform: "soop",
+  channelUrl: "https://www.sooplive.com/station/haru",
+  linkHandle: "haru",
+  method: "link",
+  status: "posted",
+  issuedAt: "2026-11-02T00:00:00Z",
   reasonCode: null,
   remainingCount: 3,
   ...over,
 });
 
 const adm = (over: Partial<AdminVerification>): AdminVerification => ({
-  id: "x",
-  nickname: "꿀단지",
-  loginId: "ggul",
-  creatorName: "꿀단지",
-  channelTitle: "꿀단지TV",
-  platform: "youtube",
-  channelUrl: "https://www.youtube.com/@ggul",
-  code: "FK-AAAA-11",
-  method: "code",
-  status: "rejected",
-  issuedAt: "2026-10-01T00:00:00Z",
-  postedAt: null,
-  usedCount: 1,
+  id: "a1",
+  nickname: "하루",
+  loginId: "haru01",
+  creatorName: "하루",
+  channelTitle: "하루TV",
+  platform: "soop",
+  channelUrl: "https://www.sooplive.com/station/haru",
+  linkHandle: "haru",
+  method: "link",
+  status: "posted",
+  issuedAt: "2026-11-02T00:00:00Z",
+  postedAt: "2026-11-02T00:00:00Z",
+  usedCount: 0,
   ...over,
 });
 
-describe("사유 문구 (creator-verification INV-V9·V14)", () => {
-  it("INV-V9: 상태가 사유의 종류를 정한다 — 반려됨은 반려 사유, 승인됨+사유는 취소 사유, 닫힘은 닫힘 사유", () => {
+const stateRow = {
+  creator_id: "c1",
+  name: "하루",
+  channel_title: "하루TV",
+  verified: false,
+  platform: null,
+  channel_url: null,
+  verified_at: null,
+  operator_only: false,
+  handle: "haru",
+  next_recheck_at: null,
+  grace_until: null,
+  recheck_requested_at: null,
+};
+
+describe("사유 목록 (INV-V9·V19·V20)", () => {
+  it("INV-V19: 반려 사유는 다섯 — 팬꾹 링크를 찾지 못함·링크 주소가 다름·채널 이름이 다름·채널 주소가 열리지 않음·그 밖", () => {
+    expect([...REJECT_REASONS]).toEqual(["link_not_found", "link_mismatch", "name_mismatch", "channel_unreachable", "other"]);
+    expect(REJECT_REASONS.map((r) => REJECT_REASON_LABEL[r])).toEqual(["팬꾹 링크를 찾지 못함", "링크 주소가 다름", "채널 이름이 다름", "채널 주소가 열리지 않음", "그 밖"]);
+  });
+
+  it("INV-V20: 승인 취소 사유에 「팬꾹 링크가 채널에서 내려감」이 있다", () => {
+    expect(REVOKE_REASONS).toContain("link_removed");
+    expect(reasonLabel("approved", "link_removed")).toBe("팬꾹 링크가 채널에서 내려감");
+  });
+
+  it("INV-V9: 상태가 사유의 종류를 정한다 — 옛 사유 값은 기록에 남은 줄을 읽을 때만", () => {
+    expect(reasonLabel("rejected", "name_mismatch")).toBe("채널 이름이 다름");
     expect(reasonLabel("rejected", "code_not_found")).toBe("코드를 찾지 못함");
+    expect(reasonLabel("closed", "method_changed")).toContain("확인 방식이 바뀌었습니다");
     expect(reasonLabel("approved", "code_removed")).toBe("채널에서 코드가 사라짐");
-    expect(reasonLabel("closed", "owner_confirmed_elsewhere")).toBe("다른 계정에서 채널 소유자 확인을 완료했습니다.");
-    expect(eventReasonLabel("revoke", "not_owner_confirmed")).toBe("채널 주인이 아니라는 문의가 확인됨");
-    expect(eventReasonLabel("reject", "profile_mismatch")).toBe("채널과 가입 정보가 맞지 않음");
   });
 
   it("INV-V9 (실패경로): 종류가 다른 사유·모르는 값·사유 없음은 null — 지어낸 문구를 쓰지 않는다", () => {
-    expect(reasonLabel("rejected", "code_removed")).toBeNull();
-    expect(reasonLabel("approved", "code_not_found")).toBeNull();
-    expect(reasonLabel("closed", "other")).toBeNull();
+    expect(reasonLabel("rejected", "link_removed")).toBeNull();
+    expect(reasonLabel("approved", "name_mismatch")).toBeNull();
+    expect(reasonLabel("closed", "x")).toBeNull();
+    expect(reasonLabel("posted", "other")).toBeNull();
     expect(reasonLabel("rejected", null)).toBeNull();
-    expect(eventReasonLabel("approve", "other")).toBeNull();
-  });
-});
-
-describe("취소 사유 목록 (INV-V9, 2026-10-06)", () => {
-  it("INV-V9: 취소 사유는 넷 — 「채널이 없어졌거나 다른 사람에게 넘어감」이 들어가고 「채널에서 코드가 사라짐」은 빠졌다", () => {
-    expect([...REVOKE_REASONS]).toEqual(["channel_gone", "not_owner_confirmed", "policy_violation", "other"]);
-    expect(reasonLabel("approved", "channel_gone")).toBe("채널이 없어졌거나 다른 사람에게 넘어감");
-    expect(eventReasonLabel("revoke", "channel_gone")).toBe("채널이 없어졌거나 다른 사람에게 넘어감");
   });
 });
 
 describe("확인 방법 (INV-V13)", () => {
-  it("INV-V13: 확인 방법은 셋 — 인증 코드·코드 자동 확인·플랫폼 로그인", () => {
-    expect(VERIFICATION_METHOD_LABEL).toEqual({ code: "인증 코드", auto_code: "코드 자동 확인", login: "플랫폼 로그인" });
-    const row = { id: "a1", platform: "youtube", channel_url: "u", code: "FK-7H3Q-92", method: "auto_code", status: "approved", issued_at: "t", post_deadline: "t2", reason_code: null, remaining_count: 3 };
-    expect(myVerificationsFromRows([row])?.[0]?.method).toBe("auto_code");
-    expect(myVerificationsFromRows([{ ...row, method: "oauth" }])).toBeNull();
+  it("INV-V13: 새 값은 팬꾹 링크·플랫폼 로그인, 옛 값(인증 코드·코드 자동 확인)은 읽기만", () => {
+    expect([...VERIFICATION_METHODS]).toEqual(["link", "login", "code", "auto_code"]);
   });
 });
 
-describe("확인 길 고르기 (INV-V2 「API 확인」·V14·V16)", () => {
-  const API = new Set(["youtube", "chzzk", "instagram"]);
-
-  it("INV-V14·V16: API 가 있는 플랫폼은 플랫폼 로그인이 먼저, 그다음 코드 자동 확인, 그래도 안 되면 운영자 확인", () => {
-    expect(verifyRoutes("youtube", API)).toEqual(["login", "auto_code", "operator"]);
-    expect(verifyRoutes("instagram", API)).toEqual(["login", "auto_code", "operator"]);
-  });
-
-  it("INV-V16 (실패경로): API 가 없는 플랫폼(SOOP)·모르는 플랫폼은 운영자 확인뿐", () => {
-    expect(verifyRoutes("soop", API)).toEqual(["operator"]);
-    expect(verifyRoutes("tiktok", API)).toEqual(["operator"]);
-    expect(verifyRoutes("youtube", new Set())).toEqual(["operator"]);
-  });
-
-  it("INV-V16: 코드 받음 신청이면 API 있는 플랫폼에서만 「확인」(자동 확인)을 연다, 확인 대기면 닫는다", () => {
-    expect(myVerificationPanel({ verified: false }, [mine({ status: "issued" })], API).canAutoCheck).toBe(true);
-    expect(myVerificationPanel({ verified: false }, [mine({ status: "issued", platform: "soop" })], API).canAutoCheck).toBe(false);
-    expect(myVerificationPanel({ verified: false }, [mine({ status: "posted" })], API).canAutoCheck).toBe(false);
-    expect(myVerificationPanel({ verified: false }, [], API).canAutoCheck).toBe(false);
-  });
-});
-
-describe("크리에이터 신청 읽기 (INV-V11)", () => {
-  it("INV-V11: 정해진 칸만 받는다 — 메모·상대 계정 같은 칸이 끼어 있으면 null", () => {
-    const row = {
-      id: "a1",
-      platform: "youtube",
-      channel_url: "u",
-      code: "FK-7H3Q-92",
-      method: "code",
-      status: "posted",
-      issued_at: "t",
-      post_deadline: "t2",
-      reason_code: null,
-      remaining_count: 2,
-    };
-    expect(myVerificationsFromRows([row])?.[0]).toMatchObject({ status: "posted", remainingCount: 2 });
-    expect(myVerificationsFromRows([{ ...row, memo: "운영자 메모" }])).toBeNull();
-    expect(myVerificationsFromRows([{ ...row, status: "unknown" }])).toBeNull();
-  });
-});
-
-describe("크리에이터 확인 칸의 판단 (INV-V4·V5·V15)", () => {
-  it("INV-V4: 살아 있는 신청이 있으면 새 신청은 닫고, 코드 받음이면 올렸어요·다시 받기·거두기를 연다", () => {
-    const p = myVerificationPanel({ verified: false }, [mine({ status: "issued", remainingCount: 3 })]);
-    expect(p).toMatchObject({ mode: "verify", canRequest: false, canMarkPosted: true, canRegenerate: true, canWithdraw: true, last: null });
-  });
-
-  it("INV-V5: 확인 대기면 올렸어요·다시 받기는 닫고 거두기만", () => {
-    const p = myVerificationPanel({ verified: false }, [mine({ status: "posted" })]);
-    expect(p).toMatchObject({ canMarkPosted: false, canRegenerate: false, canWithdraw: true });
-  });
-
-  it("INV-V15 (실패경로): 남은 횟수가 1이면 다시 받기를 닫는다(버리면 새 신청을 만들 수 없다), 2면 연다", () => {
-    expect(myVerificationPanel({ verified: false }, [mine({ remainingCount: 1 })]).canRegenerate).toBe(false);
-    expect(myVerificationPanel({ verified: false }, [mine({ remainingCount: 2 })]).canRegenerate).toBe(true);
-  });
-
-  it("INV-V12: 확인된 크리에이터면 채널 이사 신청, 살아 있는 신청이 없으면 마지막 신청의 결과를 알린다", () => {
-    const rows = [mine({ id: "new", status: "rejected", reasonCode: "code_not_found" }), mine({ id: "old", status: "approved" })];
-    const p = myVerificationPanel({ verified: true }, rows);
-    expect(p).toMatchObject({ mode: "move", live: null, canRequest: true, canWithdraw: false });
-    expect(p.last?.id).toBe("new");
-    expect(lastOutcomeText(p.last!)).toBe("승인이 반려되었습니다 — 코드를 찾지 못함");
-  });
-
-  it("INV-V9·V10: 승인 취소·닫힘·기간 지남의 알림 문구, 취소 안 된 승인은 알릴 것이 없다", () => {
-    expect(lastOutcomeText(mine({ status: "approved", reasonCode: "policy_violation" }))).toBe("승인이 취소되었습니다 — 이용 규칙 위반");
-    expect(lastOutcomeText(mine({ status: "approved" }))).toBeNull();
-    expect(lastOutcomeText(mine({ status: "closed", reasonCode: "owner_confirmed_elsewhere" }))).toContain("다른 계정에서 채널 소유자 확인을 완료했습니다.");
-    expect(lastOutcomeText(mine({ status: "expired" }))).toBe("확인 기한(7일)이 만료되었습니다");
-  });
-});
-
-describe("운영자 신청 표 (INV-V6·V11·V15)", () => {
-  it("INV-V11: 정해진 칸만 받는다 — 휴대폰·이메일 칸이 끼어 있으면 null", () => {
-    const row = {
-      id: "x",
-      nickname: "n",
-      login_id: "l",
-      creator_name: null,
-      channel_title: null,
-      platform: "soop",
-      channel_url: "u",
-      code: null,
-      method: "login",
-      status: "approved",
-      issued_at: "t",
-      posted_at: null,
-      used_count: 0,
-    };
-    expect(adminVerificationsFromRows([row])?.[0]).toMatchObject({ method: "login", usedCount: 0 });
-    expect(adminVerificationsFromRows([{ ...row, phone: "01000000000" }])).toBeNull();
-  });
-
-  it("INV-V6: 확인 대기는 올린 순서대로, 코드 받음은 따로(승인 버튼이 없는 표), 나머지는 끝난 신청", () => {
-    const t = adminVerificationTables([
-      adm({ id: "p2", status: "posted", postedAt: "2026-10-05T10:00:00Z" }),
-      adm({ id: "p1", status: "posted", postedAt: "2026-10-04T10:00:00Z", loginId: "b" }),
-      adm({ id: "i1", status: "issued", loginId: "c" }),
-      adm({ id: "e1", status: "expired", loginId: "d" }),
-    ]);
-    expect(t.posted.map((r) => r.id)).toEqual(["p1", "p2"]);
-    expect(t.issued.map((r) => r.id)).toEqual(["i1"]);
-    expect(t.ended.map((r) => r.id)).toEqual(["e1"]);
-  });
-
-  it("INV-V15: 횟수 풀기는 계정·채널마다 가장 최근의 끝난 코드 신청 한 줄에만, 쓴 횟수가 있을 때만", () => {
-    const t = adminVerificationTables([
-      adm({ id: "new", usedCount: 3 }),
-      adm({ id: "old", usedCount: 3 }),
-      adm({ id: "other-channel", channelUrl: "https://www.youtube.com/@other", usedCount: 0 }),
-      adm({ id: "login", method: "login", status: "approved", loginId: "z", code: null, usedCount: 2 }),
-    ]);
-    expect(t.ended.filter((r) => r.unlockable).map((r) => r.id)).toEqual(["new"]);
-  });
-
-  it("INV-V15·V16: 자동 확인으로 승인된 줄도 코드 신청이다 — 그 쌍의 가장 최근 줄로 친다", () => {
-    const t = adminVerificationTables([adm({ id: "auto", method: "auto_code", status: "approved", usedCount: 2 }), adm({ id: "older", usedCount: 2 })]);
-    expect(t.ended.filter((r) => r.unlockable).map((r) => r.id)).toEqual(["auto"]);
-  });
-
-  it("INV-V15 (실패경로): 같은 계정·채널에 살아 있는 신청이 있으면 끝난 줄에 풀기 버튼을 두지 않는다", () => {
-    const t = adminVerificationTables([adm({ id: "live", status: "issued", usedCount: 2 }), adm({ id: "ended", usedCount: 2 })]);
-    expect(t.ended.find((r) => r.id === "ended")?.unlockable).toBe(false);
-  });
-});
-
-describe("attemptNumber — 진행 중인 코드 신청이 이 채널로 몇 번째인지 (INV-V15)", () => {
-  it("INV-V15: 끝난 신청이 없으면 첫 번째, 둘이면 세 번째(마지막)", () => {
-    expect(attemptNumber(3)).toBe(1);
-    expect(attemptNumber(2)).toBe(2);
-    expect(attemptNumber(1)).toBe(3);
-  });
-  it("INV-V15 (실패경로): 남은 횟수가 0 이하로 와도 상한을 넘는 번호를 만들지 않는다", () => {
-    expect(attemptNumber(0)).toBe(3);
-    expect(attemptNumber(-1)).toBe(3);
-  });
-});
-
-describe("attemptNumberAfterRegenerate — 코드를 다시 받으면 새 신청이 몇 번째인지 (INV-V15)", () => {
-  it("INV-V15: 다시 받기는 지금 신청을 한 번으로 치므로 새 신청은 다음 번째", () => {
-    expect(attemptNumberAfterRegenerate(3)).toBe(2);
-    expect(attemptNumberAfterRegenerate(2)).toBe(3);
-  });
-});
-
-describe("위반 취소 뒤 운영자 확인만 (INV-V10, 결정 d32)", () => {
+describe("크리에이터 요청 읽기 (INV-V11·V17)", () => {
   const row = {
-    creator_id: "c1", name: "꿀단지", channel_title: "꿀단지TV", verified: false, platform: null, channel_url: null, verified_at: null,
+    id: "a1",
+    platform: "soop",
+    channel_url: "https://www.sooplive.com/station/haru",
+    link_handle: "haru",
+    method: "link",
+    status: "posted",
+    issued_at: "2026-11-02T00:00:00Z",
+    reason_code: null,
+    remaining_count: 3,
   };
 
-  it("INV-V10: 확인 상태가 operator_only 를 그대로 옮긴다", () => {
-    expect(myVerificationStateFromRows([{ ...row, operator_only: true }])?.operatorOnly).toBe(true);
-    expect(myVerificationStateFromRows([{ ...row, operator_only: false }])?.operatorOnly).toBe(false);
+  it("INV-V17: 요청 줄의 링크용 아이디를 그대로 옮긴다", () => {
+    expect(myVerificationsFromRows([row])?.[0]?.linkHandle).toBe("haru");
   });
 
-  it("INV-V10 (실패경로): operator_only 칸이 없거나 값이 아니면 모양이 다르다(undefined) — 몰래 「제한 없음」이 되지 않게", () => {
-    expect(myVerificationStateFromRows([row])).toBeUndefined();
-    expect(myVerificationStateFromRows([{ ...row, operator_only: null }])).toBeUndefined();
+  it("INV-V11 (실패경로): 정해진 칸만 받는다 — 메모·코드 같은 칸이 끼어 있으면 null", () => {
+    expect(myVerificationsFromRows([{ ...row, memo: "x" }])).toBeNull();
+    expect(myVerificationsFromRows([{ ...row, code: "FK-AAAA-11" }])).toBeNull();
   });
 
-  it("INV-V10 (S10d): 운영자 확인만이면 스스로 확인할 플랫폼이 없다 — 로그인·코드 자동 확인 버튼이 사라지고 운영자 길만 남는다", () => {
-    const api = new Set(["youtube", "chzzk"]);
-    const only = selfCheckPlatforms({ operatorOnly: true }, api);
-    expect([...only]).toEqual([]);
-    expect(verifyRoutes("youtube", only)).toEqual(["operator"]);
-    expect(myVerificationPanel({ verified: false }, [mine({ status: "issued" })], only).canAutoCheck).toBe(false);
-  });
-
-  it("INV-V10 (S10f): 운영자 확인만이 아니면 「API 확인」 플랫폼 그대로", () => {
-    const api = new Set(["youtube"]);
-    expect([...selfCheckPlatforms({ operatorOnly: false }, api)]).toEqual(["youtube"]);
+  it("INV-V20: 확인 상태는 지금 아이디·다음 재확인·유예 끝을 옮긴다, 칸이 빠지면 모양이 다르다(undefined)", () => {
+    const s = myVerificationStateFromRows([{ ...stateRow, verified: true, next_recheck_at: "2027-01-31T00:00:00Z", grace_until: "2026-11-16T00:00:00Z" }]);
+    expect(s).toMatchObject({ handle: "haru", nextRecheckAt: "2027-01-31T00:00:00Z", graceUntil: "2026-11-16T00:00:00Z" });
+    const { grace_until: _omit, ...missing } = stateRow;
+    expect(myVerificationStateFromRows([missing])).toBeUndefined();
   });
 });
 
-describe("panelOutcomeText — 확인 칸 맨 위 한 줄 (INV-V10, 결정 d32)", () => {
-  it("INV-V10 (S10d): 운영자 확인만이고 확인 전이면, 지난 신청이 거둠이어도 위반 취소를 알린다", () => {
-    expect(panelOutcomeText({ verified: false, operatorOnly: true }, mine({ status: "withdrawn" }))).toBe(
-      "이용 규칙 위반으로 승인이 취소되었습니다. 재확인은 운영자가 진행합니다.",
-    );
+describe("확인 칸의 단계 (UX signup.md 2026-11-02, INV-V15·V17·V20)", () => {
+  const st = (over: Partial<{ verified: boolean; handle: string | null; graceUntil: string | null }> = {}) => ({
+    verified: false,
+    handle: "haru" as string | null,
+    graceUntil: null as string | null,
+    ...over,
   });
-  it("INV-V10 (S10f): 운영자 확인만이 아니면 지난 신청의 한 줄 그대로", () => {
-    expect(panelOutcomeText({ verified: false, operatorOnly: false }, mine({ status: "withdrawn" }))).toBe("신청이 취소되었습니다");
-    expect(panelOutcomeText({ verified: false, operatorOnly: false }, null)).toBeNull();
+
+  it("INV-V17 (실패경로): 링크용 아이디가 없으면 link_needed — 요청 칸을 열지 않는다", () => {
+    expect(myVerificationPanel(st({ handle: null }), []).stage).toBe("link_needed");
+  });
+
+  it("INV-V17: 아이디가 있고 요청이 없으면 idle, 확인 대기 요청이 있으면 waiting(코드 받음 단계 없음)", () => {
+    expect(myVerificationPanel(st(), []).stage).toBe("idle");
+    const p = myVerificationPanel(st(), [mine({ status: "posted" })]);
+    expect(p.stage).toBe("waiting");
+    expect(p.live?.id).toBe("a1");
+  });
+
+  it("INV-V19: 마지막 요청이 반려면 rejected, 남은 횟수가 0이면 locked(INV-V15)", () => {
+    expect(myVerificationPanel(st(), [mine({ status: "rejected", reasonCode: "name_mismatch", remainingCount: 2 })]).stage).toBe("rejected");
+    expect(myVerificationPanel(st(), [mine({ status: "rejected", reasonCode: "name_mismatch", remainingCount: 0 })]).stage).toBe("locked");
+  });
+
+  it("INV-V20: 확인됐으면 verified, 유예 중이면 recheck_missing, 이사 요청이 있으면 waiting(이사)", () => {
+    expect(myVerificationPanel(st({ verified: true }), [mine({ status: "approved" })]).stage).toBe("verified");
+    expect(myVerificationPanel(st({ verified: true, graceUntil: "2026-11-16T00:00:00Z" }), [mine({ status: "approved" })]).stage).toBe("recheck_missing");
+    const move = myVerificationPanel(st({ verified: true }), [mine({ status: "posted" })]);
+    expect([move.stage, move.mode]).toEqual(["waiting", "move"]);
+  });
+
+  it("INV-V9·V10: 승인 취소·닫힘·거둠의 알림 문구, 취소 안 된 승인은 알릴 것이 없다", () => {
+    expect(lastOutcomeText(mine({ status: "approved", reasonCode: "link_removed" }))).toBe("승인이 취소되었습니다 — 팬꾹 링크가 채널에서 내려감");
+    expect(lastOutcomeText(mine({ status: "rejected", reasonCode: "link_mismatch" }))).toBe("승인이 반려되었습니다 — 링크 주소가 다름");
+    expect(lastOutcomeText(mine({ status: "closed", reasonCode: "method_changed", method: "code" }))).toContain("확인 방식이 바뀌었습니다");
+    expect(lastOutcomeText(mine({ status: "approved" }))).toBeNull();
+  });
+
+  it("INV-V10 (S10d): 운영자 확인만이고 확인 전이면 위반 취소를 먼저 알린다", () => {
+    expect(panelOutcomeText({ verified: false, operatorOnly: true }, mine({ status: "withdrawn" }))).toContain("이용 규칙 위반");
+    expect(panelOutcomeText({ verified: false, operatorOnly: false }, mine({ status: "withdrawn" }))).toBe("요청을 취소했습니다");
+  });
+
+  it("INV-V14: 로그인 확인 버튼은 로그인 확인 플랫폼이고 운영자 확인만이 아닐 때만", () => {
+    const login = new Set(["chzzk"]);
+    expect(canLoginCheck("chzzk", login, { operatorOnly: false })).toBe(true);
+    expect(canLoginCheck("youtube", login, { operatorOnly: false })).toBe(false);
+    expect(canLoginCheck("chzzk", login, { operatorOnly: true })).toBe(false);
+  });
+});
+
+describe("운영자 요청 표 (INV-V6·V11·V15·V18)", () => {
+  const row = {
+    id: "a1",
+    nickname: "하루",
+    login_id: "haru01",
+    creator_name: "하루",
+    channel_title: "하루TV",
+    platform: "soop",
+    channel_url: "https://www.sooplive.com/station/haru",
+    link_handle: "haru",
+    method: "link",
+    status: "posted",
+    issued_at: "2026-11-02T00:00:00Z",
+    posted_at: "2026-11-02T00:00:00Z",
+    used_count: 0,
+  };
+
+  it("INV-V18: 운영자 줄은 찾을 링크의 아이디와 가입 때 적은 채널 이름을 옮긴다", () => {
+    expect(adminVerificationsFromRows([row])?.[0]).toMatchObject({ linkHandle: "haru", channelTitle: "하루TV" });
+  });
+
+  it("INV-V11 (실패경로): 정해진 칸만 받는다 — 휴대폰·이메일 칸이 끼어 있으면 null", () => {
+    expect(adminVerificationsFromRows([{ ...row, phone: "010" }])).toBeNull();
+    expect(adminVerificationsFromRows([{ ...row, email: "a@b.c" }])).toBeNull();
+  });
+
+  it("INV-V6: 확인 대기는 요청 순서대로, 나머지는 끝난 요청", () => {
+    const t = adminVerificationTables([
+      adm({ id: "late", postedAt: "2026-11-02T02:00:00Z" }),
+      adm({ id: "early", loginId: "b", channelUrl: "u2", postedAt: "2026-11-02T01:00:00Z" }),
+      adm({ id: "done", loginId: "c", status: "rejected", usedCount: 1 }),
+    ]);
+    expect(t.posted.map((r) => r.id)).toEqual(["early", "late"]);
+    expect(t.ended.map((r) => [r.id, r.unlockable])).toEqual([["done", true]]);
+  });
+
+  it("INV-V15 (실패경로): 같은 계정·채널에 살아 있는 요청이 있으면 끝난 줄에 풀기 버튼을 두지 않는다, 로그인 줄은 풀기 대상이 아니다", () => {
+    const t = adminVerificationTables([adm({ id: "live" }), adm({ id: "old", status: "rejected", usedCount: 1 }), adm({ id: "login", loginId: "z", method: "login", status: "approved", usedCount: 1 })]);
+    expect(t.ended.map((r) => [r.id, r.unlockable])).toEqual([
+      ["old", false],
+      ["login", false],
+    ]);
+  });
+
+  it("INV-V15: 진행 중인 요청이 몇 번째인지 — 상한을 넘지 않는다", () => {
+    expect(attemptNumber(3)).toBe(1);
+    expect(attemptNumber(1)).toBe(3);
+    expect(attemptNumber(0)).toBe(3);
+  });
+});
+
+describe("운영자 재확인 목록 (INV-V20)", () => {
+  const row = {
+    creator_id: "c1",
+    nickname: "하루",
+    login_id: "haru01",
+    creator_name: "하루",
+    channel_title: "하루TV",
+    platform: "soop",
+    channel_url: "https://www.sooplive.com/station/haru",
+    handle: "haru2",
+    recheck_reason: "handle",
+    link_checked_at: "2026-10-01T00:00:00Z",
+    link_missing_at: null,
+    grace_until: null,
+    recheck_requested_at: null,
+  };
+
+  it("INV-V20: 재확인 대기와 유예 중을 나눈다 — 찾을 링크는 지금 아이디", () => {
+    const rows = adminRechecksFromRows([row, { ...row, creator_id: "c2", recheck_reason: "days", link_missing_at: "2026-11-01T00:00:00Z", grace_until: "2026-11-15T00:00:00Z" }]);
+    expect(rows).not.toBeNull();
+    const t = adminRecheckTables(rows ?? []);
+    expect(t.recheck.map((r) => [r.creatorId, r.handle, r.reason])).toEqual([["c1", "haru2", "handle"]]);
+    expect(t.grace.map((r) => [r.creatorId, r.graceUntil])).toEqual([["c2", "2026-11-15T00:00:00Z"]]);
+  });
+
+  it("INV-V20 (실패경로): 모르는 이유 값·연락처 칸이 끼면 null", () => {
+    expect(adminRechecksFromRows([{ ...row, recheck_reason: "other" }])).toBeNull();
+    expect(adminRechecksFromRows([{ ...row, phone: "010" }])).toBeNull();
   });
 });

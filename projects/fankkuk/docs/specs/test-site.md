@@ -27,7 +27,7 @@ surfaces: [auth]
 
 - INV-TS2: 시험 사이트에서 가짜로 열리는 창구는 넷뿐이다 — 휴대폰 본인 확인(signup INV-U9, 가입과 번호 바꾸기),
   승인 서명(approval-signature INV-S11 — 크리에이터 주소 등록 address-protection INV-P13 도 같은 창구),
-  플랫폼 로그인 확인(creator-verification INV-V14), 채널 소개란 읽기(INV-V16).
+  플랫폼 로그인 확인(creator-verification INV-V14). 채널 소개란 읽기(옛 INV-V16)는 2026-11-02 확인 방식을 바꾸며 뺐다.
   주소 복호화(address-protection INV-P12)·알림 발송 창구(notifications INV-N11)·시험 계정 로그인 주소(session-login INV-L6)는
   시험 사이트에서도 운영과 똑같이 닫혀 있다. (강제 위치: 서버 — 각 창구를 고르는 곳 하나씩, 판정은 INV-TS1 의 함수)
   위반 시: 개발용 주소 열쇠가 배포 서버에서 쓰이면 앱 서버 하나로 전원의 주소가 열린다(INV-P2·P3).

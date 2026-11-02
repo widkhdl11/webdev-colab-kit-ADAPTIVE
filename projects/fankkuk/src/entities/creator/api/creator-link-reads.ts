@@ -24,6 +24,29 @@ export async function resolveCreatorHandle(client: Pick<SupabaseClient, "rpc">, 
   return row ? { creatorId: row.creator_id, handle: row.handle } : null;
 }
 
+/** INV-V22: 확인 대기 요청이 있는 확인 전 크리에이터 — 「채널 확인 중」 페이지에 쓰는 공개 칸만. */
+export type VerifyingCreator = { creatorId: string; handle: string; name: string; intro: string; photoPath: string | null; faceTone: string };
+
+const verifyingRow = z.object({
+  creator_id: z.guid(),
+  handle: z.string(),
+  name: z.string(),
+  intro: z.string(),
+  photo_path: z.string().nullable(),
+  face_tone: z.string(),
+});
+
+/** 링크 주소(지금·옛 아이디)로 확인 대기 중인 크리에이터를 찾는다. 꼴이 틀리면 DB 를 부르지 않는다. 없으면 null. */
+export async function readVerifyingCreator(client: Pick<SupabaseClient, "rpc">, handle: string): Promise<VerifyingCreator | null> {
+  if (!isHandleShape(handle)) return null;
+  const { data, error } = await client.rpc("verifying_creator_by_handle", { p_handle: handle });
+  if (error) throw new Error(`확인 중인 크리에이터를 읽지 못했다: ${error.code}`);
+  const row = z.array(verifyingRow).parse(data)[0];
+  return row
+    ? { creatorId: row.creator_id, handle: row.handle, name: row.name, intro: row.intro, photoPath: row.photo_path, faceTone: row.face_tone }
+    : null;
+}
+
 /**
  * 링크 주소(지금·옛 아이디) 또는 크리에이터 ID 가 탈퇴한 크리에이터인지(approval-signature INV-S15 — 크리에이터 페이지는 「탈퇴한 크리에이터입니다.」).
  * 탈퇴하면 본인 확인이 꺼져 링크 찾기가 빈 결과를 주므로, 없는 페이지로 가기 직전에만 묻는다. 꼴이 틀리면 묻지 않는다.

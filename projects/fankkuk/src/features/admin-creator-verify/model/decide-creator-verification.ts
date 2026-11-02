@@ -6,9 +6,10 @@ import { MESSAGE_NOT_FOUND, pgErrorReply } from "@/shared/lib/http/pg-error-repl
 import type { JsonReply } from "@/shared/lib/http/private-json";
 import { charCount } from "@/shared/lib/validation/char-count";
 
-// 운영자의 본인 확인 처리 (creator-verification INV-V6·V9·V10·V15, admin-console INV-K10). 운영자(대표·직원)면 누구나 한다.
-// - approve: 확인 대기(올림) 신청을 승인 — 신청 식별값만 받는다. 크리에이터를 직접 확인됨으로 바꾸는 길은 없다(INV-V6).
-// - reject: 코드 받음·확인 대기 신청을 반려 — 사유는 목록 값 하나 + 운영자 메모(200자까지, 크리에이터에게 안 보임, INV-V9).
+// 운영자의 채널 확인 처리 (creator-verification INV-V6·V9·V10·V15·V19·V20, admin-console INV-K10). 운영자(대표·직원)면 누구나 한다.
+// - approve: 확인 대기 요청을 승인 — 요청 식별값만 받는다. 크리에이터를 직접 확인됨으로 바꾸는 길은 없다(INV-V6).
+// - reject: 확인 대기 요청을 반려 — 사유는 목록 값 하나(INV-V19) + 운영자 메모(200자까지, 크리에이터에게 안 보임, INV-V9).
+// - recheck: 재확인 판정 — 링크 있음(found=true, 마지막 확인 시각 갱신)·링크 없음(found=false, 14일 유예 시작)(INV-V20).
 // - revoke: 확인된 크리에이터의 승인 취소 — 취소 사유 목록 값 + 메모(INV-V9·V10).
 // - unlock: 그 신청의 계정·채널의 신청 횟수 풀기 — 메모(INV-V15).
 // 누가 언제 했는지는 DB 함수가 로그인 토큰의 사람으로 기록한다. 같은 신청에 두 처리가 함께 와도 DB 가 하나만 반영하고
@@ -30,6 +31,7 @@ const bodyShape = z.discriminatedUnion("action", [
   z.object({ action: z.literal("reject"), applicationId: z.guid(), reasonCode: z.enum(REJECT_REASONS), memo }).strict(),
   z.object({ action: z.literal("revoke"), creatorId: z.guid(), reasonCode: z.enum(REVOKE_REASONS), memo }).strict(),
   z.object({ action: z.literal("unlock"), applicationId: z.guid(), memo }).strict(),
+  z.object({ action: z.literal("recheck"), creatorId: z.guid(), found: z.boolean(), memo }).strict(),
 ]);
 
 export type CreatorVerificationDecision = z.input<typeof bodyShape>;
@@ -44,6 +46,8 @@ function rpcOf(d: z.output<typeof bodyShape>): { fn: string; args: Record<string
       return { fn: "admin_revoke_creator", args: { p_creator_id: d.creatorId, p_reason_code: d.reasonCode, p_memo: d.memo } };
     case "unlock":
       return { fn: "admin_unlock_creator_verification_count", args: { p_application_id: d.applicationId, p_memo: d.memo } };
+    case "recheck":
+      return { fn: "admin_recheck_creator_link", args: { p_creator_id: d.creatorId, p_found: d.found, p_memo: d.memo } };
   }
 }
 

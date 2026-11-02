@@ -1,5 +1,5 @@
 import { HANDLE_LOCK_DAYS, HANDLE_MAX, HANDLE_MIN, HANDLE_RETIRE_DAYS } from "@/entities/creator/model/creator-handle";
-import { VERIFICATION_CODE_DAYS, VERIFICATION_TRIES } from "@/entities/creator/model/creator-verification";
+import { LINK_GRACE_DAYS, RECHECK_DAYS, VERIFICATION_TRIES } from "@/entities/creator/model/creator-verification";
 import { ANNIVERSARY_MARK_DAYS, DDAY_WINDOW_DAYS, MONTHLY_LIMIT_MAX } from "@/entities/creator/model/receiving";
 import { REPLY_LINE_MAX, REPLY_PHRASE_TEXT, REPLY_PHRASES } from "@/entities/gift-reply/model/reply";
 import { HARD_ACTION_LABEL, HARD_PERIOD_LABEL, HARD_PERIODS, HARD_REASON_OPTION_LABEL, HARD_REASONS } from "@/entities/gift-item/model/hard-items";
@@ -55,27 +55,21 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
             kind: "steps",
             items: [
               "아래쪽 이름 메뉴에서 「계정 설정」을 열고, 「보안」의 「채널 소유자 확인」 항목에서 「확인하기」를 눌러 주세요.",
-              "「채널 주소」에 내 채널의 주소를 붙여 넣어 주세요.",
-              "채널에 따라 로그인으로 확인하는 버튼이 표시됩니다. 해당 버튼을 눌러 채널 계정으로 로그인하면 바로 확인할 수 있습니다.",
-              "로그인 확인이 어렵다면 ‘코드로 확인하기’를 눌러 주세요. 인증 코드를 복사해 채널 소개란에 입력한 뒤 ‘확인’을 눌러 주세요.",
-              "확인이 끝났다는 문구가 보이면 소개란의 인증 코드는 삭제할 수 있습니다.",
-            ],
-          },
-          { kind: "text", text: "로그인 확인을 지원하지 않거나 자동으로 확인되지 않는 채널은 팬꾹에서 직접 확인합니다." },
-          {
-            kind: "steps",
-            items: [
-              "‘코드 받기’를 눌러 인증 코드를 발급받아 주세요.",
-              "인증 코드를 채널 소개란에 입력하거나 팬꾹 계정에 DM으로 보내 주세요.",
-              "「확인 요청」(또는 「운영자에게 확인 요청」)을 눌러 주세요. 팬꾹에서 채널의 인증 코드를 확인하며, 결과는 같은 항목에서 볼 수 있습니다.",
-              "팬꾹이 확인하면 소개란의 인증 코드는 삭제할 수 있습니다.",
+              "팬꾹 링크가 아직 없다면 같은 항목에서 팬꾹 링크를 먼저 만들어 주세요. 만든 뒤 30일 동안은 바꿀 수 없습니다.",
+              "내 팬꾹 링크를 복사해 채널 소개(프로필 링크 칸)에 올려 주세요.",
+              "「채널 주소」에 내 채널의 주소를 붙여 넣고 「확인 요청」을 눌러 주세요.",
+              "팬꾹이 채널을 열어 채널 이름과 팬꾹 링크를 확인합니다. 결과는 같은 항목에서 볼 수 있습니다.",
             ],
           },
           {
             kind: "list",
             items: [
-              `인증 코드를 받은 날부터 ${VERIFICATION_CODE_DAYS}일 안에 확인을 마치거나 「확인 요청」을 눌러야 합니다. 팬꾹이 직접 확인하는 데 걸리는 기간은 정해져 있지 않습니다.`,
-              `한 채널의 인증 코드는 최대 ${VERIFICATION_TRIES}번까지 신청할 수 있습니다. 횟수를 모두 사용했다면 1:1 문의를 이용해 주세요.`,
+              "채널 이름이 가입할 때 적은 채널 이름과 같아야 합니다. 다르면 「상세 설정」에서 채널 이름을 고친 뒤 다시 요청해 주세요.",
+              "채널 소개나 프로필 링크 칸에 걸린 주소가 내 팬꾹 링크와 같아야 합니다. 사이트 주소만 올리거나, 단축 주소·링크 모음 페이지를 거친 주소, 게시물·댓글에만 있는 링크는 확인되지 않습니다.",
+              `팬꾹 링크는 확인이 끝난 뒤에도 내리지 말아 주세요. 팬꾹은 ${RECHECK_DAYS}일마다, 그리고 팬꾹 링크 주소를 바꾸면 바로 링크가 그대로 있는지 다시 확인합니다.`,
+              `다시 확인할 때 링크가 없으면 ${LINK_GRACE_DAYS}일 안에 다시 올리고 「다시 확인 요청」을 눌러 주세요. 그동안 선물은 그대로 받을 수 있고, 기간이 지나면 승인이 취소됩니다. 이미 등록된 선물은 그대로 진행됩니다.`,
+              "치지직 채널은 「치지직으로 바로 확인」 버튼이 보이면 치지직 계정으로 로그인해 바로 확인할 수 있습니다.",
+              `한 채널로는 확인 요청을 최대 ${VERIFICATION_TRIES}번까지 할 수 있습니다. 횟수를 모두 사용했다면 1:1 문의를 이용해 주세요.`,
               "하나의 채널은 하나의 계정에서만 확인받을 수 있습니다. 이미 다른 계정에서 확인받은 채널이라면 1:1 문의를 이용해 주세요.",
             ],
           },
@@ -90,7 +84,7 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
             kind: "steps",
             items: [
               "사이드바 「내 팬꾹」의 「프로필 수정」에서 프로필 사진·배경 사진·공개 이름·한 줄 소개를 설정해 주세요.",
-              "사이드바 「내 팬꾹」의 「상세 설정」을 열고, 「선물 링크」 칸을 펼쳐 주세요.",
+              "사이드바 「내 팬꾹」의 「상세 설정」을 열고, 「팬꾹 링크」 칸을 펼쳐 주세요.",
               `「링크 주소」에 영문·숫자·밑줄(_)로 ${HANDLE_MIN}~${HANDLE_MAX}자를 입력해 주세요. 로그인 아이디와 다른 값으로 정해 주세요.`,
               "「링크 주소 등록」을 누르고, 철자를 다시 확인한 뒤 「등록」을 눌러 주세요.",
               "「복사」를 눌러 링크 주소를 복사하고 방송이나 SNS에 붙여 주세요.",
@@ -99,7 +93,7 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
           {
             kind: "list",
             items: [
-              "선물 링크는 채널 소유자 확인을 마친 뒤에 이용할 수 있습니다.",
+              "팬꾹 링크는 채널 소유자 확인을 마친 뒤에 이용할 수 있습니다.",
               `링크 주소를 정하거나 바꾸면 ${HANDLE_LOCK_DAYS}일 동안 다시 바꿀 수 없습니다.`,
               `링크 주소를 바꾸면 ${HANDLE_RETIRE_DAYS}일 동안은 이전 주소로 접속해도 새 주소로 연결됩니다.`,
             ],
@@ -117,7 +111,7 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
               "「링크 미리보기 이미지」에서 메신저나 SNS에 링크를 붙였을 때 보일 그림을 선택해 주세요. 프로필 사진과 팬마크 가운데 하나를 쓸 수 있습니다.",
               "「공지 이미지 다운로드」에서 크기를 선택해 주세요. 정사각형·세로형(스토리용)·가로형이 있습니다.",
               "‘다운로드’로 이미지를 저장하거나 ‘링크 복사’로 이미지 링크를 복사해 주세요.",
-              "내 채널에 공지 이미지를 올려 선물 링크를 안내해 주세요. 이미지에는 프로필 배경 사진·프로필 사진·이름·소개·‘팬꾹으로 선물 보내기’ 문구·링크 주소가 포함됩니다.",
+              "내 채널에 공지 이미지를 올려 팬꾹 링크를 안내해 주세요. 이미지에는 프로필 배경 사진·프로필 사진·이름·소개·‘팬꾹으로 선물 보내기’ 문구·링크 주소가 포함됩니다.",
               "스토리에서는 이미지 속 주소를 누를 수 없으니 링크 스티커를 따로 붙여 주세요.",
             ],
           },

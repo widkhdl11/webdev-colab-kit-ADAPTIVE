@@ -69,3 +69,25 @@ describe("INV-U14: 아이디·닉네임 미리 확인 — 앱 서버", () => {
     await expect(checkSignupName(harness({ data: null, error: { code: "42501" } }).deps, { kind: "loginId", value: "haru_creator" }, HASH)).rejects.toThrow();
   });
 });
+
+describe("INV-U14: 팬꾹 링크 미리 확인 — 앱 서버", () => {
+  it("INV-U14 (S14d): 팬꾹 링크는 소문자로 바꿔 link_handle 로 넘기고 답 하나만 돌려준다 — 예약어 답(reserved)도 그대로", async () => {
+    const h = harness({ data: "reserved", error: null });
+    expect(await checkSignupName(h.deps, { kind: "linkHandle", value: " Login " }, HASH)).toEqual({ status: 200, body: { result: "reserved" } });
+    expect(h.calls).toEqual([{ fn: "signup_name_check", args: { p_ip_hash: HASH, p_kind: "link_handle", p_value: "login" } }]);
+  });
+
+  it("INV-U14 (S14e, 실패경로): 꼴이 틀린 팬꾹 링크(밑줄 말고 기호·3자 미만·21자)는 DB 를 부르지 않고 invalid", async () => {
+    const h = harness();
+    for (const value of ["ha-ru", "ab", "a".repeat(21), "하루"]) {
+      expect([value, await checkSignupName(h.deps, { kind: "linkHandle", value }, HASH)]).toEqual([value, { status: 200, body: { result: "invalid" } }]);
+    }
+    expect(h.calls).toEqual([]);
+  });
+
+  it("INV-U14 (실패경로): 다른 칸 값(로그인 아이디 등)이 붙어도 쓰지 않는다 — DB 에는 링크 값만 넘긴다", async () => {
+    const h = harness();
+    expect((await checkSignupName(h.deps, { kind: "linkHandle", value: "haru", loginId: "haru" }, HASH)).status).toBe(200);
+    expect(h.calls[0]?.args).toEqual({ p_ip_hash: HASH, p_kind: "link_handle", p_value: "haru" });
+  });
+});

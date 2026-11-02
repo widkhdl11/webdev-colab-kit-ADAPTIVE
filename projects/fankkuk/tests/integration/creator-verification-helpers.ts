@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { adminClient, deleteTestOrders, linkTestSignature, psql, signedInClient, unlinkTestSignature } from "./helpers";
 
-// 크리에이터 본인 확인(creator-verification INV-V1~V15) 시험 도구.
+// 크리에이터 채널 확인(creator-verification INV-V1~V22) 시험 도구.
+// 2026-11-02 확인 방식이 「팬꾹 링크 게시 확인」으로 바뀌었다 — 요청하려면 링크용 아이디가 있어야 하고(INV-V17), 요청은 바로 확인 대기다.
 // 시험 계정은 cvt_ 로 시작하는 아이디의 크리에이터 넷 — 시드 계정의 상태를 바꾸지 않으려고 따로 만든다.
 // 비밀번호는 시드와 같다(signedInClient 가 그대로 로그인한다).
 
@@ -37,6 +38,10 @@ export function resetCv(): void {
       `delete from public.creator_verification_events where creator_id in (${creatorIds});`,
       ifTable("creator_verification_applications", `delete from public.creator_verification_applications where account_id in (${accountIds})`),
       `delete from public.follows where creator_id in (${creatorIds}) or fan_id in (${accountIds});`,
+      ifTable("creator_handles", `delete from public.creator_handles where creator_id in (${creatorIds}) and handle like 'cvh%'`),
+      `if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'creators' and column_name = 'link_checked_at') then
+         execute $q$update public.creators set link_checked_at = null, link_checked_handle = null, link_missing_at = null, recheck_requested_at = null where id in (${creatorIds})$q$;
+       end if;`,
       `delete from public.creators where id = '${GHOST_CREATOR_ID}';`,
       `if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'creators' and column_name = 'channel_url') then
          execute $q$update public.creators set identity_verified = false, platform = null, channel_url = null, channel_key = null, channel = '' where id in (${creatorIds})$q$;
@@ -106,29 +111,44 @@ export async function as(who: CvWho | string): Promise<SupabaseClient> {
   return c;
 }
 
-export type Issued = { application_id: string; code: string; platform: string; channel_url: string; issued_at: string; post_deadline: string };
+/** 요청 함수가 돌려주는 값(INV-V17) — 코드 대신 요청 때의 링크용 아이디. */
+export type Issued = { application_id: string; platform: string; channel_url: string; link_handle: string; issued_at: string };
 
-/** 신청한다. 오류면 던진다. */
+/** 시험 계정의 링크 아이디(지금 아이디가 없을 때만 넣는다). 정리(resetCv)가 cvh_ 로 시작하는 것만 지운다. */
+export function handleOf(who: CvWho): string {
+  return `cvh_${who}`;
+}
+
+/** 지금 링크용 아이디가 없으면 넣는다 — 요청은 아이디가 있어야 한다(INV-V17). 지금 아이디를 돌려준다. */
+export function ensureHandle(who: CvWho): string {
+  const id = CV[who].creatorId;
+  psql(
+    `insert into public.creator_handles (handle, creator_id) select '${handleOf(who)}', '${id}' where not exists (select 1 from public.creator_handles where creator_id = '${id}' and retired_until is null) on conflict do nothing`,
+  );
+  return psql(`select handle from public.creator_handles where creator_id = '${id}' and retired_until is null`);
+}
+
+/** 요청한다(아이디가 없으면 먼저 넣는다). 오류면 던진다. */
 export async function requestOk(who: CvWho, url: string): Promise<Issued> {
+  ensureHandle(who);
   const r = await (await as(who)).rpc("request_creator_verification", { p_channel_url: url });
   if (r.error) throw new Error(`request_creator_verification 실패(${who}, ${url}): ${r.error.code} ${r.error.message}`);
   return r.data as Issued;
 }
 
+/** 요청한다(아이디가 없으면 먼저 넣는다). 결과를 그대로 돌려준다 — 거부 시험용. */
 export async function request(who: CvWho, url: string) {
+  ensureHandle(who);
   return (await as(who)).rpc("request_creator_verification", { p_channel_url: url });
 }
 
-export async function post(who: CvWho, applicationId: string) {
-  return (await as(who)).rpc("mark_creator_verification_posted", { p_application_id: applicationId });
+/** 아이디를 넣지 않고 요청한다 — 링크용 아이디 없는 거부(INV-V17) 시험용. */
+export async function requestWithoutHandle(who: CvWho, url: string) {
+  return (await as(who)).rpc("request_creator_verification", { p_channel_url: url });
 }
 
 export async function withdraw(who: CvWho, applicationId: string) {
   return (await as(who)).rpc("withdraw_creator_verification", { p_application_id: applicationId });
-}
-
-export async function regenerate(who: CvWho) {
-  return (await as(who)).rpc("regenerate_creator_verification_code");
 }
 
 export const OWNER = "fankkuk_admin"; // 모아 역
@@ -138,7 +158,7 @@ export async function approve(applicationId: string, by: string = OWNER) {
   return (await as(by)).rpc("admin_approve_creator_verification", { p_application_id: applicationId });
 }
 
-export async function reject(applicationId: string, reasonCode = "code_not_found", memo = "", by: string = STAFF) {
+export async function reject(applicationId: string, reasonCode = "link_not_found", memo = "", by: string = STAFF) {
   return (await as(by)).rpc("admin_reject_creator_verification", { p_application_id: applicationId, p_reason_code: reasonCode, p_memo: memo });
 }
 
@@ -155,21 +175,14 @@ export function loginConfirm(who: CvWho, platform: string, channelKey: string) {
   return adminClient().rpc("confirm_creator_channel_by_login", { p_account_id: CV[who].id, p_platform: platform, p_channel_key: channelKey });
 }
 
-/** 자동 확인 ① — 1분 제한을 잡고 읽을 채널·찾을 코드를 받는다. 서버 관리자 키로만(INV-V16). */
-export function autoClaim(who: CvWho, applicationId: string) {
-  return adminClient().rpc("claim_creator_verification_auto_check", { p_account_id: CV[who].id, p_application_id: applicationId });
+/** 재확인 판정(INV-V20) — 운영자. */
+export async function recheck(creatorId: string, found: boolean, memo = "", by: string = STAFF) {
+  return (await as(by)).rpc("admin_recheck_creator_link", { p_creator_id: creatorId, p_found: found, p_memo: memo });
 }
 
-/** 자동 확인 ② — 소개란에서 코드를 찾았는지만 넘긴다. 서버 관리자 키로만(INV-V16). */
-export function autoConfirm(applicationId: string, found: boolean) {
-  return adminClient().rpc("confirm_creator_verification_auto_check", { p_application_id: applicationId, p_found: found });
-}
-
-/** 신청 → 코드 올렸어요 → 운영자 승인. 확인된 크리에이터를 만든다. */
+/** 요청 → 운영자 승인. 확인된 크리에이터를 만든다. */
 export async function verifyVia(who: CvWho, url: string): Promise<Issued> {
   const a = await requestOk(who, url);
-  const p = await post(who, a.application_id);
-  if (p.error) throw new Error(`post 실패: ${p.error.message}`);
   const ap = await approve(a.application_id);
   if (ap.error) throw new Error(`approve 실패: ${ap.error.message}`);
   return a;
@@ -191,7 +204,7 @@ export function verified(who: CvWho): string {
 export function liveCount(who: CvWho): number {
   return Number(
     psql(
-      `select count(*) from public.creator_verification_applications where account_id = '${CV[who].id}' and (status = 'posted' or (status = 'issued' and issued_at > now() - interval '7 days'))`,
+      `select count(*) from public.creator_verification_applications where account_id = '${CV[who].id}' and status in ('issued', 'posted')`,
     ),
   );
 }

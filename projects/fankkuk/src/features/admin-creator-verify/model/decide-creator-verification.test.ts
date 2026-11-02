@@ -30,13 +30,41 @@ describe("운영자의 본인 확인 처리 (creator-verification INV-V6·V9·V1
     expect(direct.calls).toEqual([]);
   });
 
-  it("INV-V9: 반려는 사유 목록 값 + 메모(앞뒤 공백 뗌)로 간다", async () => {
+  it("INV-V19: 반려는 사유 목록 값 + 메모(앞뒤 공백 뗌)로 간다 — 목록은 팬꾹 링크 확인의 다섯 값", async () => {
+    for (const reasonCode of ["link_not_found", "link_mismatch", "name_mismatch", "channel_unreachable", "other"]) {
+      const { calls, client } = fakeClient(null);
+      const r = await decideCreatorVerification(client, { action: "reject", applicationId: APP, reasonCode, memo: "  다른 계정과 대조 " });
+      expect(r.status).toBe(200);
+      expect(calls).toEqual([
+        { fn: "admin_reject_creator_verification", args: { p_application_id: APP, p_reason_code: reasonCode, p_memo: "다른 계정과 대조" } },
+      ]);
+    }
+  });
+
+  it("INV-V19 (실패경로): 옛 반려 사유(코드를 찾지 못함·가입 정보 다름)는 받지 않는다", async () => {
+    for (const reasonCode of ["code_not_found", "profile_mismatch"]) {
+      const { calls, client } = fakeClient(null);
+      expect((await decideCreatorVerification(client, { action: "reject", applicationId: APP, reasonCode, memo: "" })).status).toBe(400);
+      expect(calls).toEqual([]);
+    }
+  });
+
+  it("INV-V20: 재확인은 크리에이터 식별값·링크 있음/없음·메모로 admin_recheck_creator_link 를 부른다", async () => {
+    for (const found of [true, false]) {
+      const { calls, client } = fakeClient(null);
+      expect((await decideCreatorVerification(client, { action: "recheck", creatorId: CREATOR, found, memo: " 소개란 확인 " })).status).toBe(200);
+      expect(calls).toEqual([{ fn: "admin_recheck_creator_link", args: { p_creator_id: CREATOR, p_found: found, p_memo: "소개란 확인" } }]);
+    }
+    const bad = fakeClient(null);
+    expect((await decideCreatorVerification(bad.client, { action: "recheck", creatorId: CREATOR, memo: "" })).status).toBe(400);
+    expect((await decideCreatorVerification(bad.client, { action: "recheck", creatorId: CREATOR, found: "yes", memo: "" })).status).toBe(400);
+    expect(bad.calls).toEqual([]);
+  });
+
+  it("INV-V20: 승인 취소 사유에 「팬꾹 링크가 채널에서 내려감」이 있다", async () => {
     const { calls, client } = fakeClient(null);
-    const r = await decideCreatorVerification(client, { action: "reject", applicationId: APP, reasonCode: "code_not_found", memo: "  다른 계정과 대조 " });
-    expect(r.status).toBe(200);
-    expect(calls).toEqual([
-      { fn: "admin_reject_creator_verification", args: { p_application_id: APP, p_reason_code: "code_not_found", p_memo: "다른 계정과 대조" } },
-    ]);
+    expect((await decideCreatorVerification(client, { action: "revoke", creatorId: CREATOR, reasonCode: "link_removed", memo: "" })).status).toBe(200);
+    expect(calls[0]?.args).toEqual({ p_creator_id: CREATOR, p_reason_code: "link_removed", p_memo: "" });
   });
 
   it("INV-V9·V10: 승인 취소는 취소 사유 목록 값 + 메모로 admin_revoke_creator 를 부른다", async () => {
@@ -56,7 +84,7 @@ describe("운영자의 본인 확인 처리 (creator-verification INV-V6·V9·V1
       null,
       { action: "reject", applicationId: APP, memo: "" },
       { action: "reject", applicationId: APP, reasonCode: "not_owner", memo: "" },
-      { action: "revoke", creatorId: CREATOR, reasonCode: "code_not_found", memo: "" },
+      { action: "revoke", creatorId: CREATOR, reasonCode: "link_not_found", memo: "" },
       { action: "reject", applicationId: APP, reasonCode: "channel_gone", memo: "" },
       // 2026-10-06 취소 사유에서 뺀 값 — 화면도 보내지 않는다
       { action: "revoke", creatorId: CREATOR, reasonCode: "code_removed", memo: "" },

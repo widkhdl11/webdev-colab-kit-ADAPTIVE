@@ -58,3 +58,32 @@ describe("INV-E2: 링크 주소 판정 — DB 없이 정해지는 주소", () =>
     expect(await linkGateOf("/%E0%A4%A", noDb)).toEqual({ kind: "pass" });
   });
 });
+
+describe("INV-V22: 확인 대기 중인 크리에이터의 링크는 없는 페이지가 아니다", () => {
+  const CREATOR = "00000000-0000-4000-b000-0000000000aa";
+  function fakeDb(verifying: { handle: string } | null) {
+    const rpc = vi.fn(async (fn: string) => {
+      if (fn === "resolve_creator_handle") return { data: [], error: null };
+      if (fn === "verifying_creator_by_handle")
+        return {
+          data: verifying ? [{ creator_id: CREATOR, handle: verifying.handle, name: "하루", intro: "", photo_path: null, face_tone: "peach" }] : [],
+          error: null,
+        };
+      if (fn === "withdrawn_creator") return { data: false, error: null };
+      return { data: null, error: { code: "42883" } };
+    });
+    return { make: () => ({ rpc }) as never, rpc };
+  }
+
+  it("INV-V22 (S22): 확인 대기 요청이 있으면 페이지로 넘긴다(채널 확인 중 페이지)", async () => {
+    expect(await linkGateOf("/haru", fakeDb({ handle: "haru" }).make)).toEqual({ kind: "pass" });
+  });
+
+  it("INV-V22: 묶인 옛 아이디로 오면 지금 아이디로 넘긴다", async () => {
+    expect(await linkGateOf("/haru_old", fakeDb({ handle: "haru" }).make)).toEqual({ kind: "redirect", to: "/haru" });
+  });
+
+  it("INV-V22 (실패경로): 확인 전이고 확인 대기 요청도 없으면 없는 페이지다(creator-link INV-E5)", async () => {
+    expect(await linkGateOf("/haru", fakeDb(null).make)).toEqual({ kind: "not_found" });
+  });
+});

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { readCreatorCards } from "@/entities/creator/api/creator-reads";
-import { readWithdrawnCreator, resolveCreatorHandle } from "@/entities/creator/api/creator-link-reads";
+import { readVerifyingCreator, readWithdrawnCreator, resolveCreatorHandle } from "@/entities/creator/api/creator-link-reads";
 import { isHandleShape, linkRouteOf, oldPageRouteOf } from "@/entities/creator/model/creator-handle";
 
 // 선물 링크 주소(/{아이디})와 옛 크리에이터 페이지 주소(/creators/{id})의 넘기기·없는 페이지를 응답 전에 정한다 (creator-link INV-E2·E3·E5).
@@ -9,6 +9,8 @@ import { isHandleShape, linkRouteOf, oldPageRouteOf } from "@/entities/creator/m
 // 판정은 페이지와 같은 함수(resolveCreatorHandle·linkRouteOf·readCreatorCards·oldPageRouteOf·readWithdrawnCreator)로 한다 — 결과도 같다.
 // - 대문자 주소는 DB 없이 소문자로 넘긴다. 정적 첫 단계 주소(/login 등)·점이 든 주소(파일·이미지)는 판정하지 않는다(DB 왕복 없음).
 // - 탈퇴한 크리에이터는 페이지가 「탈퇴한 크리에이터입니다.」를 보여 주므로 그대로 넘긴다(approval-signature INV-S15).
+// - 확인 대기 요청이 있는 확인 전 크리에이터는 페이지가 「채널 확인 중」을 보여 주므로 그대로 넘긴다(creator-verification INV-V22).
+//   묶인 옛 아이디로 왔으면 지금 아이디로 넘긴다(INV-E3 과 같다).
 // - 읽기가 실패하면 그대로 넘긴다 — 페이지가 같은 읽기를 다시 해 판정한다(전과 같은 동작).
 
 /**
@@ -80,6 +82,8 @@ async function handleGate(raw: string, client: () => Pick<SupabaseClient, "rpc">
   const route = linkRouteOf(handle, await resolveCreatorHandle(db, handle));
   if (route.kind === "show") return PASS;
   if (route.kind === "redirect") return route;
+  const verifying = await readVerifyingCreator(db, handle);
+  if (verifying) return verifying.handle === handle ? PASS : { kind: "redirect", to: `/${verifying.handle}` };
   return (await readWithdrawnCreator(db, { handle })) ? PASS : { kind: "not_found" };
 }
 

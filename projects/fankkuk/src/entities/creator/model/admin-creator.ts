@@ -18,8 +18,8 @@ export type AdminCreator = {
   lastActorNickname: string | null;
 };
 
-// creator-verification INV-V6·V9·V13·V14: 승인·반려·닫힘(다른 계정의 로그인 확인)·승인 취소
-export const VERIFICATION_ACTIONS = ["approve", "reject", "close", "revoke"] as const;
+// creator-verification INV-V6·V9·V13·V14·V20: 승인·반려·닫힘(다른 계정의 로그인 확인)·승인 취소·재확인(링크 있음·링크 없음)
+export const VERIFICATION_ACTIONS = ["approve", "reject", "close", "revoke", "recheck_found", "recheck_missing"] as const;
 export type VerificationAction = (typeof VERIFICATION_ACTIONS)[number];
 
 export type VerificationEvent = {
@@ -36,7 +36,10 @@ export type VerificationEvent = {
   method: VerificationMethod | null;
   /** 그때의 채널 주소·코드(INV-V6). 옛 기록·로그인 확인이면 null */
   channelUrl: string | null;
+  /** 옛 인증 코드 기록에만 있다 */
   code: string | null;
+  /** 그때 찾은 팬꾹 링크의 아이디(INV-V17·V20). 옛 기록이면 null */
+  linkHandle: string | null;
 };
 
 const creatorRow = z.object({
@@ -62,6 +65,7 @@ const eventRow = z.object({
   method: z.enum(VERIFICATION_METHODS).nullable(),
   channel_url: z.string().nullable(),
   code: z.string().nullable(),
+  link_handle: z.string().nullable(),
 });
 
 export function adminCreatorsFromRows(rows: unknown): AdminCreator[] | null {
@@ -94,6 +98,7 @@ export function verificationEventsFromRows(rows: unknown): VerificationEvent[] |
     method: r.method,
     channelUrl: r.channel_url,
     code: r.code,
+    linkHandle: r.link_handle,
   }));
 }
 

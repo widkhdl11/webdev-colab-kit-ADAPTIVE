@@ -57,6 +57,10 @@ describe("크리에이터 자신의 확인 상태 읽기 (INV-V7·V11)", () => {
     const after = await readMyVerificationState(await as("ggul"));
     expect(after).toMatchObject({ verified: true, platform: "youtube", channelUrl: YT("scrstate") });
     expect(after?.verifiedAt).not.toBeNull();
+    // INV-V20: 확인되면 다음 재확인 날이 있고 유예는 없다
+    expect(after?.nextRecheckAt).not.toBeNull();
+    expect(after?.graceUntil).toBeNull();
+    expect(after?.handle).toBe("cvh_ggul");
   });
 
   it("INV-V11 (실패경로): 팬은 크리에이터 줄이 없어 null, 로그인하지 않았으면 실행 권한이 없다", async () => {
@@ -70,13 +74,13 @@ describe("운영자 화면 읽기 (INV-V9·V11)", () => {
     const a = await requestOk("ggul", YT("scradmin"));
     const rows = await readAdminVerifications(await as("fankkuk_staff"));
     const row = rows.find((r) => r.id === a.application_id);
-    expect(row).toMatchObject({ loginId: CV.ggul.login, status: "issued", method: "code", code: a.code, channelUrl: YT("scradmin"), usedCount: 0 });
+    expect(row).toMatchObject({ loginId: CV.ggul.login, status: "posted", method: "link", linkHandle: a.link_handle, channelUrl: YT("scradmin"), usedCount: 0 });
     expect(Object.keys(row ?? {})).not.toEqual(expect.arrayContaining(["phone", "email"]));
     expect(await readAdminVerifications(await as("ggul"))).toEqual([]);
     expect(await readAdminVerifications(await signedInClient("byeolbit_fan"))).toEqual([]);
   });
 
-  it("INV-V9: 처리 기록 읽기는 반려·승인 취소를 사유 목록 값·메모·그때의 코드와 함께 돌려준다", async () => {
+  it("INV-V9: 처리 기록 읽기는 반려·승인 취소를 사유 목록 값·메모·그때의 찾을 링크 아이디와 함께 돌려준다", async () => {
     const a = await requestOk("ggul", YT("scrlog"));
     expect((await reject(a.application_id, "channel_unreachable", "운영자 메모")).error).toBeNull();
     await verifyVia("summer", YT("scrlog2"));
@@ -85,8 +89,8 @@ describe("운영자 화면 읽기 (INV-V9·V11)", () => {
     expect(events.find((e) => e.creatorId === CV.ggul.creatorId && e.action === "reject")).toMatchObject({
       reasonCode: "channel_unreachable",
       reason: "운영자 메모",
-      code: a.code,
-      method: "code",
+      linkHandle: a.link_handle,
+      method: "link",
       channelUrl: YT("scrlog"),
     });
     expect(events.find((e) => e.creatorId === CV.summer.creatorId && e.action === "revoke")).toMatchObject({ reasonCode: "policy_violation" });

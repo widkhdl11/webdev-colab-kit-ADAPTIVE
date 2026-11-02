@@ -88,13 +88,16 @@ describe("크리에이터 가입 때 공개 정보 (INV-V1 · signup INV-U5)", (
     expect(found.map((c) => c.slug)).not.toContain(slug);
   });
 
-  it("INV-V1: 가입한 크리에이터는 바로 채널 확인을 신청할 수 있다", async () => {
+  it("INV-V1·INV-V17: 가입한 크리에이터는 채널 확인 단계에서 팬꾹 링크를 만든 뒤 바로 채널 확인을 요청할 수 있다 — 링크 전에는 거부", async () => {
     const { body } = await args("it_cv_apply");
     expect((await adminClient().rpc("create_creator_account", body)).error).toBeNull();
     const pw = await adminClient().auth.admin.updateUserById(body.p_user_id, { password: "long-enough-pw" });
     expect(pw.error).toBeNull();
     const c = anonClient();
     expect((await c.auth.signInWithPassword({ email: "it_cv_apply@login.fankkuk.invalid", password: "long-enough-pw" })).error).toBeNull();
+    expect((await c.rpc("request_creator_verification", { p_channel_url: "https://www.youtube.com/@itcvapply" })).error?.code).toBe("FKV17");
+    // 링크 만들기는 설정 화면이 쓰는 저장 함수 그대로(새 저장 길 없음)
+    expect((await c.rpc("update_my_creator_handle", { p_handle: "itcvapplylink" })).error).toBeNull();
     const r = await c.rpc("request_creator_verification", { p_channel_url: "https://www.youtube.com/@itcvapply" });
     expect(r.error).toBeNull();
     psql(
