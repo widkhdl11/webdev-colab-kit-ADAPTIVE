@@ -1,11 +1,12 @@
 ---
 feature: 크리에이터의 승인 취소 — 입고 전에는 대기로 되돌리고, 입고 뒤에는 거절로 끝낸다 (approval cancel)
-status: parked
+status: approved
 # ↑ 값은 반드시 이 줄에 붙여 쓴다.
 # 이력:
 #   2026-11-02 합의 — 사용자 「참고로 팬꾹에 입고 전까지는 승인취소 가능」 → 결정 카드 fankkuk-20261102-1-d3 답
 #              「입고전에는 취소, 다시 승인이 자유롭다. 입고 후에는 취소하면 거절로 끝내고 기존 규칙대로 이행한다.」 + 「다른건 다 추천대로」.
 #              parked: 구현 시작 때 approved 로 바꾸고 approval-signature.md(INV-S7)·address-protection.md(INV-P4)에 합친다.
+#   2026-11-02 approved — 구현 시작(PROGRESS 다음 할 일). INV-S7·INV-P4 (a) 에 이 스펙을 가리키는 문장을 넣었다.
 surfaces: [auth, authz, concurrency]
 ---
 

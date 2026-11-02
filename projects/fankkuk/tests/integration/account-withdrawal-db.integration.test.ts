@@ -965,6 +965,8 @@ describe("자동 삭제 — 사무실 상자가 있는 주문 (코드 리뷰 반
 // 탈퇴 때 가명으로 옮기는 칸(지우면 함께 지워지는 칸 말고). 자동 삭제가 주문 줄을 남길 때 주문·상자에 달린 칸의 가명을 같이 쓰는 「탈퇴한 회원」으로 바꾼다.
 // 운영자가 누른 기록(…_by·operator_id 등)은 탈퇴하는 회원을 가리키지 않는다. 칸이 늘면 이 목록과 retention_purge 의 바꾸는 칸을 같이 고친다.
 const MOVED_PROFILE_COLUMNS = [
+  // 승인 취소 기록의 계정(approval-cancel INV-AC5) — 자동 삭제가 주문의 크리에이터 칸을 바꿀 때 트리거가 같이 바꾼다(orders_approval_cancellations_unlink)
+  "approval_cancellations.canceled_by",
   "banner_changes.acted_by",
   "banners.created_by",
   "banners.updated_by",

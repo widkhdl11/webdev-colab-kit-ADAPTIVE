@@ -19,6 +19,7 @@ const row = {
   delivery: null,
   fan_tracking_no: "584012379911",
   fan_send_ack_at: null,
+  send_guide_shown: false,
 };
 
 describe("my_gifts 응답 → 팬 화면", () => {
@@ -28,6 +29,19 @@ describe("my_gifts 응답 → 팬 화면", () => {
     expect(view!.approval).toEqual({ state: "waiting", at: null });
     expect(view!.officeAddress).toBe("사무실 주소");
     expect(view!.steps.find((s) => s.key === "inspected")?.state).toBe("done");
+  });
+
+  it("INV-AC6: 입고 전 승인 취소로 대기로 돌아간 선물(승인 시각·「먼저 보내기」 기록 없음, 승인 이력 있음)은 「먼저 보내기」 안내를 다시 띄우지 않는다", () => {
+    const [before] = parseFanGiftRows([{ ...row, send_guide_shown: false }], "사무실 주소");
+    expect(before!.earlySendPending).toBe(true);
+    const [after] = parseFanGiftRows([{ ...row, send_guide_shown: true }], "사무실 주소");
+    expect(after!.earlySendPending).toBe(false);
+    expect(after!.approval.state).toBe("waiting");
+  });
+
+  it("INV-AC6: send_guide_shown 칸이 빠진 응답은 받지 않는다", () => {
+    const { send_guide_shown: _a, ...noShown } = row;
+    expect(() => parseFanGiftRows([noShown], "x")).toThrow();
   });
 
   it("거절된 선물에는 사무실 주소를 넣지 않는다(INV-S9, S9b)", () => {

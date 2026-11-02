@@ -62,6 +62,7 @@ function viewOf(over: Record<string, unknown> = {}) {
         delivery: null,
         fan_tracking_no: null,
         fan_send_ack_at: null,
+        send_guide_shown: false,
         ...over,
       },
     ],

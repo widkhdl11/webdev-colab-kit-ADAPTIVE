@@ -40,7 +40,14 @@ export type FanGiftView = {
 };
 
 /** 팬 화면이 읽는 칸만. 크리에이터행 송장번호·팬 닉네임·크리에이터 id 는 이 모양에 없다 — DB 읽기 함수도 이 칸만 돌려준다. */
-export type FanOrderRecord = Omit<OrderRecord, "creatorId" | "fanNickname" | "outboundWaybillNo">;
+export type FanOrderRecord = Omit<OrderRecord, "creatorId" | "fanNickname" | "outboundWaybillNo"> & {
+  /**
+   * 받는 주소를 본 적이 있는가 — 승인 중 · 「먼저 보내기」 기록 · 승인 이력(서명 기록)을 DB 가 판정한 값(approval-signature INV-S9 · approval-cancel INV-AC6).
+   * 입고 전 승인 취소로 대기로 돌아간 주문은 승인 시각도 「먼저 보내기」 기록도 비어 있지만 이 값은 참이다. DB 읽기(my_gifts)는 늘 채운다.
+   * 비어 있으면 승인 시각·「먼저 보내기」 기록으로만 본다(화면 시험의 손으로 만든 값).
+   */
+  addressShown?: boolean;
+};
 
 function outcomeOf(r: FanOrderRecord): FanGiftView["outcome"] {
   if (r.status === "rejected") return "declined";
@@ -86,7 +93,8 @@ export function toFanView(r: FanOrderRecord, officeAddress: string): FanGiftView
     canEnterTrackingNo: outcome === "in_progress" && r.receivedAt === null,
     fanTrackingNo: r.fanTrackingNo,
     expectedArrivalDate: r.expectedArrivalDate,
-    earlySendPending: outcome === "in_progress" && r.approvedAt === null && r.fanSendAckAt === null,
+    // INV-S9 · approval-cancel INV-AC6: 승인 중 · 「먼저 보내기」 기록 · 승인 이력(DB 판정 addressShown) 중 하나라도 있으면 안내를 띄우지 않는다
+    earlySendPending: outcome === "in_progress" && r.approvedAt === null && r.fanSendAckAt === null && r.addressShown !== true,
     inspectionChecking: outcome === "in_progress" && r.inspection?.result === "checking",
   };
 }

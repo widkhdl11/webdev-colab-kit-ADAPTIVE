@@ -44,6 +44,7 @@ const [view] = parseFanGiftRows(
       delivery: null,
       fan_tracking_no: null,
       fan_send_ack_at: null,
+      send_guide_shown: false,
     },
   ],
   "사무실 주소",

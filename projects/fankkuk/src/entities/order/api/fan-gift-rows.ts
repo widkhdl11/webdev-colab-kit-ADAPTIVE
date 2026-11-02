@@ -29,6 +29,8 @@ const rowSchema = z.object({
   fan_send_ack_at: ts.nullable(),
   // together INV-F7: 보낸 사람 본인 목록의 선물 이름(나만 보는 메모) — 안 적었으면 null
   memo_title: z.string().nullish(),
+  // approval-cancel INV-AC6: 받는 주소를 본 적이 있는가(승인 중 · 「먼저 보내기」 · 승인 이력) — 「먼저 보내기」 안내를 다시 띄울지 이 값으로
+  send_guide_shown: z.boolean(),
 });
 
 /** DB 시각(+00:00)을 화면 코드가 쓰는 ISO(Z) 꼴로. */
@@ -52,6 +54,7 @@ function toRecord(r: z.infer<typeof rowSchema>): FanOrderRecord {
     delivery: r.delivery,
     fanTrackingNo: r.fan_tracking_no,
     fanSendAckAt: isoOrNull(r.fan_send_ack_at),
+    addressShown: r.send_guide_shown,
   };
 }
 

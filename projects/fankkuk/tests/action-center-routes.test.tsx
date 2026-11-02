@@ -74,6 +74,7 @@ const giftRow = {
   delivery: null,
   fan_tracking_no: null,
   fan_send_ack_at: null,
+  send_guide_shown: false,
 };
 vi.mock("@/entities/order/api/fan-gift-rows", async (orig) => {
   const real = await orig<typeof import("@/entities/order/api/fan-gift-rows")>();

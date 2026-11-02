@@ -301,7 +301,9 @@ describe("INV-S11: 가짜 서명은 허용 줄이 있는 DB(로컬)에서만 받
   });
 
   it("INV-S12: 서명 표는 통째로 비우기도 막힌다", () => {
-    expect(psqlError(`truncate public.approval_signatures`)).toMatch(/추가만/);
+    // 승인 취소 기록(approval_cancellations)이 서명 줄을 외래 키로 가리켜, cascade 없이는 그 검사가 먼저 막는다 — cascade 로 불러 추가만 트리거가 막는지 본다
+    expect(psqlError(`truncate public.approval_signatures`)).not.toBeNull();
+    expect(psqlError(`truncate public.approval_signatures cascade`)).toMatch(/추가만/);
   });
 });
 

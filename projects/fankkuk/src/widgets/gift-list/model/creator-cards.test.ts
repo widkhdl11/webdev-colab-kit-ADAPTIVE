@@ -22,6 +22,7 @@ const row = (orderNo: string, creatorName: string, registeredAt: string, status 
   delivery: null,
   fan_tracking_no: null,
   fan_send_ack_at: null,
+  send_guide_shown: false,
 });
 
 const t = (creatorId: string, creatorName: string, giftCount: number, orderNos: string[]): TogetherOfCreator => ({

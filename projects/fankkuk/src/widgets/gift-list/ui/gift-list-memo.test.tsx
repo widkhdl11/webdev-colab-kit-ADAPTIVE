@@ -39,6 +39,7 @@ const row = {
   delivery: null,
   fan_tracking_no: null,
   fan_send_ack_at: null,
+  send_guide_shown: false,
 };
 
 describe("together INV-F7: 보낸 선물 목록의 선물 이름", () => {
