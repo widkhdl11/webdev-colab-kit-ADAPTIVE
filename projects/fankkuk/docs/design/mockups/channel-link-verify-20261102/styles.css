@@ -1462,3 +1462,20 @@ body{background:#fff}
 .pf-intro{margin-top:12px;font-size:var(--fs-card);font-weight:600;line-height:1.5}
 .pf-wait{display:inline-flex;align-items:center;min-height:48px;margin-top:24px;padding:0 20px;border-radius:var(--r-btn);background:var(--gray-100);color:var(--gray-600);font-weight:600}
 @media(max-width:767px){.pf{padding:16px var(--gutter)}.pf-cover{height:160px;border-radius:16px}.pf-body{padding:0;min-height:0}.pf-face{position:relative;left:8px;top:-44px;width:96px;height:96px;margin-bottom:-28px}.pf-face img{width:72px;height:72px}.pf-name{padding-top:0}.pf-name h1{font-size:24px}.pf-intro{font-size:16px}.pf-wait{display:flex;width:100%;padding:12px 16px}}
+
+.v-desc{margin:-4px 0 8px;font-size:14px;line-height:1.5;color:var(--gray-600)}
+
+/* 2026-11-02 — 37절(가입 카드 480)에 맞춤. 처음 시안이 37절 이전 v43 값(640)을 복사해 칸·버튼이 길었다(사용자 「input 박스가 쓸대 없이 길다」) */
+.auth.su-box { max-width: calc(480px + 2 * 24px); }
+.auth .card { padding: 32px; }
+@media (max-width: 767px) { .auth .card { padding: 24px; } }
+.su-box .field { height: 48px; }
+/* 크리에이터 다섯 단계 — PC 도 지금 단계만 이름(37절) */
+.su-steps.su-four .su-st:not([aria-current]) .su-lbl { display: none; }
+.su-steps.su-four .su-st:not([aria-current]) { width: 48px; padding: 0; justify-content: center; }
+/* 4단계 버튼 — 5단계와 같이 「다음」 위 꽉 차게, 아래 「이전 | 나중에 하기」 반씩(PC·휴대폰 같음, 37절) */
+.v-kakao-actions.v-three { grid-template-columns: 1fr 1fr !important; }
+.v-kakao-actions.v-three .v-main { order: -1; grid-column: 1 / -1; justify-self: stretch !important; }
+.su-steps.su-four { display: flex !important; justify-content: center; gap: 8px; }
+.su-steps.su-four > li { flex: 0 0 auto; width: auto !important; }
+.su-steps.su-four .su-st[aria-current] { width: auto; padding: 0 16px 0 8px; }
