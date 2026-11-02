@@ -1422,7 +1422,8 @@ body{background:#fff}
 .v-kakao-actions .btn{white-space:nowrap}
 .v-conn{display:flex;align-items:center;gap:12px;padding:16px;border-radius:var(--r-btn);background:var(--success-soft);color:var(--success);font-weight:600}
 @media(min-width:768px){.v-kakao-actions.v-three{grid-template-columns:auto 1fr auto;align-items:center}.v-kakao-actions.v-three .v-main{justify-self:end}}
-@media(max-width:767px){.v-kakao-actions .v-main{order:-1}}
+@media(max-width:767px){.v-kakao-actions.v-three{grid-template-columns:1fr 1fr}.v-kakao-actions .v-main{order:-1;grid-column:1/-1}}
+.vp-handle{display:flex;align-items:center;gap:8px}.vp-handle .pre{font-weight:700;white-space:nowrap}.vp-handle .field{flex:1;min-width:0}
 .v-link-row{display:flex;align-items:center;gap:16px;min-height:56px;padding:8px 16px;border-radius:var(--r-btn);background:#fff;border:1px solid var(--line-on-white);text-decoration:none;color:var(--ink);font-weight:600}
 .v-link-row > span:first-child{flex:1;min-width:0}
 .v-link-row .m{color:var(--sub);font-size:var(--fs-caption);font-weight:400}
