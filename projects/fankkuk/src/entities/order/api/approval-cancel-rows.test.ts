@@ -7,14 +7,13 @@ const raw = {
   order_no: "FC-TABC123",
   cancelable: true,
   arrived_box_count: 0,
-  box_count: 2,
   approval_deadline_at: "2026-11-09T03:00:00+00:00",
 };
 
 describe("승인 취소 화면 값 (approval-cancel)", () => {
   it("INV-AC1·AC4: 취소 가능·도착한 상자 수·상자 수·승인 기한을 그대로 옮긴다", () => {
     expect(parseApprovalCancelTargets([raw])).toEqual([
-      { requestId: "apr_FCTABC123", orderNo: "FC-TABC123", cancelable: true, arrivedBoxCount: 0, boxCount: 2, approvalDeadlineAt: "2026-11-09T03:00:00.000Z" },
+      { requestId: "apr_FCTABC123", orderNo: "FC-TABC123", cancelable: true, arrivedBoxCount: 0, approvalDeadlineAt: "2026-11-09T03:00:00.000Z" },
     ]);
   });
 

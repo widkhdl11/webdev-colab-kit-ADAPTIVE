@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { readCreatorActionItems } from "@/entities/action-item/api/read-action-items";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { createInvoiceDecryptor, type InvoiceDecryptor } from "@/features/invoice-print/api/invoice-decryptor";
 import {
@@ -58,7 +59,7 @@ async function cancel(requestId: string, actor: string | null = creatorActorOf(r
   return (Array.isArray(r.data) ? r.data[0] : r.data) as CancelRow;
 }
 
-type TargetRow = { request_id: string; order_no: string; cancelable: boolean; arrived_box_count: number; box_count: number; approval_deadline_at: string };
+type TargetRow = { request_id: string; order_no: string; cancelable: boolean; arrived_box_count: number; approval_deadline_at: string };
 
 async function targets(actor: string): Promise<TargetRow[]> {
   const r = await adminClient().rpc("my_approval_cancel_targets", { p_actor_id: actor });
@@ -124,6 +125,17 @@ describe("INV-AC1·AC2: 입고 전 취소는 승인을 무효로 표시하고 �
     expect(cancellations(g)).toHaveLength(2);
   });
 
+  it("INV-AC1 (화면 done-before): 입고 전 취소 뒤 크리에이터 처리할 일 읽기에 그 주문의 승인 요청이 다시 나온다", async () => {
+    const g = await paidGift(1);
+    await approve(g);
+    const haru = await signedInClient("haru_creator");
+    const approvalOf = async () => (await readCreatorActionItems(haru)).find((it) => it.kind === "approval" && it.orderNo === g.orderNo);
+    // 승인된 동안에는 처리할 일에 승인 요청이 없다 — 비교 기준
+    expect(await approvalOf()).toBeUndefined();
+    expect(await cancel(g.requestId)).toEqual({ result: "canceled", phase: "before_inbound" });
+    expect(await approvalOf()).toMatchObject({ kind: "approval", requestId: g.requestId });
+  });
+
   it("INV-AC1 (실패경로): 승인되지 않은 주문·이미 취소한 주문은 취소하지 않는다 — 기록이 생기지 않는다", async () => {
     const g = await paidGift(1);
     expect(await cancel(g.requestId)).toEqual({ result: "not_approved", phase: null });
@@ -137,7 +149,7 @@ describe("INV-AC1·AC2: 입고 전 취소는 승인을 무효로 표시하고 �
     const g = await paidGift(2);
     await approve(g);
     const qr = await arrive(g.boxIds[0]!);
-    expect((await targets(creatorActorOf(g.requestId)!)).find((t) => t.order_no === g.orderNo)).toMatchObject({ cancelable: true, arrived_box_count: 1, box_count: 2 });
+    expect((await targets(creatorActorOf(g.requestId)!)).find((t) => t.order_no === g.orderNo)).toMatchObject({ cancelable: true, arrived_box_count: 1 });
 
     // 지금의 거절: 승인 전 「먼저 보내기」(주소를 봄) → 같은 상자 도착 → 크리에이터 거절
     const twin = await paidGift(2);
@@ -283,6 +295,34 @@ describe("INV-AC4: 취소할 수 있는 때는 첫 송장 출력 전까지", () 
     expect(await cancel(g.requestId)).toEqual({ result: "printed", phase: null });
     expect(approvalState(g)).toBe(before);
     expect(cancellations(g)).toEqual([]);
+    expect((await targets(creatorActorOf(g.requestId)!)).find((t) => t.order_no === g.orderNo)).toMatchObject({ cancelable: false, arrived_box_count: 1 });
+  });
+});
+
+describe("INV-AC4: 송장 출력 조건만으로 막히는 경우 — 송장 출력이 진행 중(주소를 열고 아직 송장이 나오지 않음)이고 주문은 검수 단계", () => {
+  /** 승인·도착·검수까지 끝난 상자 하나에, 송장 출력 함수가 주소를 연 순간의 기록(연 줄)을 남긴 주문 — 송장이 나오기 전이라 주문·상자 단계는 그대로 검수 */
+  async function openedNotPrinted(): Promise<Unit> {
+    const g = await paidGift(1);
+    await approve(g);
+    const qr = await arrive(g.boxIds[0]!);
+    expect(await inspect(await signedInClient("fankkuk_staff"), qr, FAN_PASS)).toBe("inspected");
+    // 준비 한 줄(DB 소유자로)
+    psql(`insert into public.decrypt_log (order_id, box_id, requester_id, result, print_no) values ('${g.orderId}', '${g.boxIds[0]}', '${OWNER_ID}', 'opened', 1)`);
+    expect(psql(`select status || '|' || (shipped_at is null)::text from public.orders where id = '${g.orderId}'`)).toBe("inspected|true");
+    expect(parcelState(qr)).toBe("inspected");
+    return g;
+  }
+
+  it("INV-AC4 AC4 (취소 함수): 취소 거부(printed), 상태·기록 그대로", async () => {
+    const g = await openedNotPrinted();
+    const before = approvalState(g);
+    expect(await cancel(g.requestId)).toEqual({ result: "printed", phase: null });
+    expect(approvalState(g)).toBe(before);
+    expect(cancellations(g)).toEqual([]);
+  });
+
+  it("INV-AC4 AC4 (화면 값): 취소 불가로 준다 — 취소 함수와 같은 판정", async () => {
+    const g = await openedNotPrinted();
     expect((await targets(creatorActorOf(g.requestId)!)).find((t) => t.order_no === g.orderNo)).toMatchObject({ cancelable: false, arrived_box_count: 1 });
   });
 });

@@ -62,8 +62,9 @@ function viewOf(over: Record<string, unknown> = {}) {
         delivery: null,
         fan_tracking_no: null,
         fan_send_ack_at: null,
-        send_guide_shown: false,
         ...over,
+        // DB 판정(order_send_guide_shown)과 같게 — 승인 중이거나 「먼저 보내기」를 눌렀으면 참(승인 이력만 있는 경우는 over 로 직접 준다)
+        send_guide_shown: over.send_guide_shown ?? ((over.approved_at === undefined ? true : over.approved_at !== null) || (over.fan_send_ack_at ?? null) !== null),
       },
     ],
     "서울 금천구 가산디지털1로 123 팬꾹 사무실",

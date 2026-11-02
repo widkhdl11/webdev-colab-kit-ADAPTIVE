@@ -179,8 +179,9 @@ function giftRow(orderNo: string, creatorName: string, over: Record<string, unkn
     delivery: null,
     fan_tracking_no: null,
     fan_send_ack_at: null,
-    send_guide_shown: false,
     ...over,
+    // DB 판정(order_send_guide_shown)과 같게 — 승인 중이거나 「먼저 보내기」를 눌렀으면 참
+    send_guide_shown: over.send_guide_shown ?? ((over.approved_at ?? null) !== null || (over.fan_send_ack_at ?? null) !== null),
   };
 }
 

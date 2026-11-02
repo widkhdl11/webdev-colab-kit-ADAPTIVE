@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
+import type { ApprovalCancelTarget } from "@/entities/order/model/approval-cancel";
 import type { DecidedOutcome, DecidedRequestView } from "@/entities/order/model/decided-request";
 import { formatDate, formatMonthDayKo, monthHeadKo, seoulYearMonth } from "@/shared/lib/format/datetime";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { statusTagClass, type StatusTone } from "@/shared/ui/status-tone";
+import { ApprovalCancelButton } from "./approval-cancel-button";
 import a from "./approval-request.module.css";
 import q from "./decided-request-list.module.css";
 
 // 승인 내역 — 승인·받지 않기를 마친 요청(design-rules 23-3절, 시안 v37-part2/requests.html). 대기 중인 요청은 크리에이터 처리할 일에서
 // 승인 창으로 처리한다(action-center INV-J5·J6 — 승인 대기만 따로 세는 숫자·목록은 없다). 사이드바 「승인 내역」이 #done 으로 온다.
 // 맨 위 처리 수 + 결과별 숫자 칸 넷(이 목록을 센 수), 아래 달마다 촘촘한 줄(결과 태그는 줄 오른쪽). 결과 설명은 맨 아래 접기로.
+// 「승인」 줄 중 서버가 취소 가능하다고 준 주문(approval-cancel INV-AC4 — 송장 출력 전)에만 날짜 오른쪽 「승인 취소」(UX 명세 creator-requests).
 
 const DECIDED_TAG: Record<DecidedOutcome, { text: string; tone: StatusTone }> = {
   approved: { text: "승인", tone: "success" },
@@ -33,7 +36,18 @@ function byMonth(decided: readonly DecidedRequestView[]): Month[] {
   return out;
 }
 
-export function DecidedRequestList({ decided }: { decided: readonly DecidedRequestView[] }) {
+export function DecidedRequestList({
+  decided,
+  cancelTargets = [],
+  now,
+}: {
+  decided: readonly DecidedRequestView[];
+  /** 라우트가 화면을 그린 서버 시각(ISO) — 승인 취소 창의 기한 지남 판정에 쓴다 */
+  now: string;
+  /** 승인 취소 대상(서버 읽기 my_approval_cancel_targets) — cancelable 인 주문의 「승인」 줄에만 버튼 */
+  cancelTargets?: readonly ApprovalCancelTarget[];
+}) {
+  const cancelable = new Map(cancelTargets.filter((t) => t.cancelable).map((t) => [t.orderNo, t]));
   const counts = Object.fromEntries(OUTCOME_ORDER.map((o) => [o, decided.filter((d) => d.outcome === o).length])) as Record<DecidedOutcome, number>;
   const latest = decided.reduce<string | null>((m, d) => (m === null || d.decidedAt > m ? d.decidedAt : m), null);
   const months = byMonth(decided);
@@ -74,6 +88,7 @@ export function DecidedRequestList({ decided }: { decided: readonly DecidedReque
           <ul className={`lrows ${q.rows}`}>
             {m.rows.map((d) => {
               const tag = DECIDED_TAG[d.outcome];
+              const target = d.outcome === "approved" ? cancelable.get(d.orderNo) : undefined;
               return (
                 <li key={d.orderNo} className={`lrow ${q.row}`} data-row="">
                   <FaceAvatar index={n++} className="face face--sm" />
@@ -86,6 +101,9 @@ export function DecidedRequestList({ decided }: { decided: readonly DecidedReque
                   <div className={`lrow-side ${q.side}`}>
                     <span className={statusTagClass(tag.tone, "tag--dot")}>{tag.text}</span>
                     <time dateTime={d.decidedAt}>{formatMonthDayKo(d.decidedAt)}</time>
+                    <span className={q.slot}>
+                      {target ? <ApprovalCancelButton target={target} fanNickname={d.fanNickname} itemKind={d.itemKind} boxCount={d.boxCount} now={now} /> : null}
+                    </span>
                   </div>
                 </li>
               );

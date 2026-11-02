@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
+import { readApprovalCancelTargets } from "@/entities/order/api/approval-cancel-rows";
 import { readMyDecidedRequests } from "@/entities/order/api/creator-request-rows";
 import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
 import { FAN_HOME } from "@/entities/session/model/home-path";
+import { createAdminSupabase } from "@/shared/api/supabase/admin";
 import { ApprovalRequestsPage } from "@/widgets/approval-requests/ui/approval-requests-page";
 import { MyShell } from "@/widgets/my-nav/ui/my-shell";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
@@ -19,12 +21,20 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   const { tab } = await searchParams;
   if (tab === "received") redirect("/creator/boxes");
   if (tab === "checks") redirect(CREATOR_ACTION_CENTER_HREF);
-  const [decided, header] = await Promise.all([readMyDecidedRequests(supabase), readSiteHeader(supabase, viewer, "/creator/requests")]);
+  // 승인 취소 대상(approval-cancel INV-AC4) — 앱 서버 키 전용 읽기에 세션에서 확인한 사람 ID 만 넘긴다. 못 읽으면 버튼만 빠지고 서버 기록에 한 줄 남긴다
+  const [decided, header, cancelTargets] = await Promise.all([
+    readMyDecidedRequests(supabase),
+    readSiteHeader(supabase, viewer, "/creator/requests"),
+    readApprovalCancelTargets(createAdminSupabase(), viewer.userId).catch((e: unknown) => {
+      console.error(`승인 취소 대상을 읽지 못했다(승인 내역): ${e instanceof Error ? e.message : String(e)}`);
+      return [];
+    }),
+  ]);
   return (
     <>
       <SiteHeader {...header} />
       <MyShell width="list">
-        <ApprovalRequestsPage decided={decided} />
+        <ApprovalRequestsPage decided={decided} cancelTargets={cancelTargets} now={new Date().toISOString()} />
       </MyShell>
       <SiteFooter />
     </>

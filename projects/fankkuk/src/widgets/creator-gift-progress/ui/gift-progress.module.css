@@ -45,7 +45,7 @@
 .pfoot b { color: var(--ink); font-weight: var(--fw-btn); }
 .pfoot span[aria-hidden] { font-variant-numeric: tabular-nums; }
 .plLate.plLate { color: var(--alert-800); }
-.cardAct { display: flex; justify-content: flex-end; }
+.cardAct { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: var(--space-3); } /* 「승인 취소」 글자 버튼은 「지금 할 일」 왼쪽(시안 approval-cancel-20261102 .cardact) */
 
 /* 보내는 선물 — 보낸 날별 머리 + 촘촘한 줄 (design-rules 40절, 시안 part2-v4-20261101 .ghead·.lr.sent·.mini)
    보낸 날 머리는 한 줄로 이어 쓰고(「… 결제 완료 · 팬 3명」) 구간 머리와 같은 왼쪽 선(안쪽 0) */

@@ -10,7 +10,6 @@ const rowSchema = z.object({
   order_no: z.string().min(1),
   cancelable: z.boolean(),
   arrived_box_count: z.number().int().nonnegative(),
-  box_count: z.number().int().positive(),
   approval_deadline_at: z.string().min(1),
 });
 
@@ -23,7 +22,6 @@ export function parseApprovalCancelTargets(rows: unknown): ApprovalCancelTarget[
       orderNo: r.order_no,
       cancelable: r.cancelable,
       arrivedBoxCount: r.arrived_box_count,
-      boxCount: r.box_count,
       approvalDeadlineAt: new Date(r.approval_deadline_at).toISOString(),
     }));
 }

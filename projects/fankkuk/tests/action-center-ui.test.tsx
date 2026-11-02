@@ -124,7 +124,7 @@ const [view] = parseFanGiftRows(
       delivery: null,
       fan_tracking_no: null,
       fan_send_ack_at: null,
-      send_guide_shown: false,
+      send_guide_shown: true, // 승인된 주문 — DB 판정(order_send_guide_shown)과 같게
     },
   ],
   "사무실 주소",

@@ -1,3 +1,4 @@
+import type { ApprovalCancelTarget } from "@/entities/order/model/approval-cancel";
 import type { DecidedRequestView } from "@/entities/order/model/decided-request";
 import { DecidedRequestList } from "@/features/approval-request/ui/decided-request-list";
 
@@ -5,7 +6,16 @@ import { DecidedRequestList } from "@/features/approval-request/ui/decided-reque
 // 2026-10-16 크리에이터 처리할 일(action-center INV-J5·J6, design-rules 13절)로 「승인 대기」 메뉴와 이 화면의 대기 구간·「확인할 선물」 탭은 없어졌다 —
 // 대기 중인 승인 요청과 확인 대기 상자는 처리할 일에서 창으로 처리한다(따로 세는 숫자가 없다). 사이드바 「승인 내역」은 #done 으로 온다.
 // 받은 선물(상자·받았어요·답장)은 /creator/boxes. 헤더·푸터는 라우트(app)가 붙인다 — 위젯끼리는 서로 import 하지 않는다(FSD).
-export function ApprovalRequestsPage({ decided }: { decided: readonly DecidedRequestView[] }) {
+export function ApprovalRequestsPage({
+  decided,
+  cancelTargets = [],
+  now,
+}: {
+  decided: readonly DecidedRequestView[];
+  cancelTargets?: readonly ApprovalCancelTarget[];
+  /** 라우트가 그린 서버 시각(ISO) */
+  now: string;
+}) {
   return (
     <div>
       <header className="page-head">
@@ -15,7 +25,7 @@ export function ApprovalRequestsPage({ decided }: { decided: readonly DecidedReq
           </h1>
         </div>
       </header>
-      <DecidedRequestList decided={decided} />
+      <DecidedRequestList decided={decided} cancelTargets={cancelTargets} now={now} />
     </div>
   );
 }

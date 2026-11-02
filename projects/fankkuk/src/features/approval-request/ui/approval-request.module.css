@@ -33,3 +33,15 @@
 .wait-bar::-webkit-progress-value { background: var(--primary); }
 .wait-bar::-moz-progress-bar { background: var(--primary); }
 .wait-time { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: var(--fw-bold); }
+
+/* 「승인 취소」 버튼 모양 — 이 블록 하나가 모양의 전부다(승인 내역 줄·선물 현황 카드가 같은 부품 approval-cancel-button.tsx 를 쓴다).
+   모양을 바꿀 때는 여기만 고친다. 지금은 시안 approval-cancel-20261102 의 A안(.cbtn + 아이콘): 공통 글자 버튼(btn--text btn--sm) 위에
+   글자 14(사용자 지시 — 캡션 크기 예외)·평소 흐린 글자색, 마우스 올림·키보드 포커스 때 글자색만 진하게(면은 바꾸지 않는다), 앞에 되돌리기 화살표 14.
+   촘촘한 줄 안에서는 눌리는 칸 44 를 지키되 줄 높이 56 을 늘리지 않게 위아래로 8 씩 걸친다 */
+.cancel-btn.cancel-btn { gap: var(--space-1); padding-inline: var(--space-2); font-size: var(--fs-small); font-weight: var(--fw-sub); color: var(--gray-500); transition: color var(--dur-hover) var(--ease-out); }
+.cancel-btn.cancel-btn:is(:hover, :active, :focus-visible) { color: var(--ink); background: none; }
+.cancel-icon { display: block; flex: none; width: 14px; height: 14px; }
+:global(.lrow) .cancel-btn.cancel-btn { margin-block: calc(var(--space-2) * -1); }
+/* 강조 카드(하늘 면, 선물 현황 data-accent) 위에서는 --gray-500 대비가 4.5 아래(약 4.2)라 한 단계 진하게 — ui 리뷰 2026-11-02 */
+:global([data-accent]) .cancel-btn.cancel-btn { color: var(--sub); }
+:global([data-accent]) .cancel-btn.cancel-btn:is(:hover, :active, :focus-visible) { color: var(--ink); }

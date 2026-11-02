@@ -293,3 +293,49 @@ describe("INV-J10 S10b: 배송 조회 창은 택배사 조회 페이지 링크�
     expect(d.querySelector("a[target=_blank]")).toBeNull();
   });
 });
+
+describe("approval-cancel INV-AC4: 받는 선물 카드의 「승인 취소」 — 서버가 취소 가능하다고 준 주문에만, 「지금 할 일」 왼쪽", () => {
+  const T = (orderNo: string, cancelable: boolean) => ({
+    requestId: `apr_${orderNo.replace("-", "")}`,
+    orderNo,
+    cancelable,
+    arrivedBoxCount: 0,
+    approvalDeadlineAt: "2026-10-20T05:00:00.000Z",
+  });
+  const renderWith = (targets: ReturnType<typeof T>[], items = ITEMS) =>
+    act(() =>
+      root.render(<GiftProgressPage progress={parseGiftProgressRows(ROWS)} items={items} candidates={CANDIDATES} cancelTargets={targets} now="2026-10-16T03:00:00.000Z" />),
+    );
+
+  it("INV-AC4: cancelable 카드에만 글자 버튼 — 송장 출력 뒤(cancelable 거짓) 카드에는 없다", () => {
+    renderWith([T("FC-B1", true), T("FC-C1", false)]);
+    const btn = rowOf("보리님", "받는 선물").querySelector<HTMLButtonElement>("button[data-cancel-approval]");
+    expect(btn?.textContent).toBe("승인 취소");
+    expect(btn?.className).toContain("btn--text");
+    expect(rowOf("소라님", "받는 선물").querySelector("button[data-cancel-approval]")).toBeNull();
+    // 대상이 없으면(읽기 실패 포함) 버튼도 없다
+    renderWith([]);
+    expect(host.querySelector("button[data-cancel-approval]")).toBeNull();
+  });
+
+  it("INV-AC4: 「지금 할 일」이 있는 카드에서는 그 왼쪽", () => {
+    const approvalItem = ITEMS.find((it) => it.kind === "approval")!;
+    renderWith([T("FC-B1", true)], [...ITEMS, { ...approvalItem, orderNo: "FC-B1" }]);
+    expect(buttonsIn(rowOf("보리님", "받는 선물"))).toEqual(["승인 취소", "지금 할 일"]);
+  });
+
+  it("INV-AC1 confirm-before: 카드의 버튼도 같은 확인 창 — 성공하면 창을 닫고 목록만 새로 읽는다", async () => {
+    renderWith([T("FC-B1", true)]);
+    act(() => rowOf("보리님", "받는 선물").querySelector<HTMLButtonElement>("button[data-cancel-approval]")!.click());
+    const d = host.querySelector("dialog[open]")!;
+    expect(d.textContent).toContain("승인을 취소할까요?");
+    expect(d.querySelector("[data-sentence]")?.textContent).toMatch(/^승인 대기로 돌아갑니다|^승인 기한이 지나/);
+    fetchSpy.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ phase: "before_inbound" }) });
+    act(() => [...d.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent === "승인 취소")!.click());
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(host.querySelector("dialog[open]")).toBeNull();
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+});

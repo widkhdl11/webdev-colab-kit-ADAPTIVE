@@ -9,13 +9,13 @@
 --   2) approval_signatures 의 「승인 요청 하나에 서명 하나」 유일 제약을 「살아 있는(취소되지 않은) 서명 하나」로 바꾼다 —
 --      취소 뒤 다시 승인하면 같은 승인 요청에 새 서명 줄이 생긴다. 지난 서명 줄은 지우지 않고 취소 기록이 무효로 표시한다(INV-AC2, INV-S12·S14).
 --      같은 트리거가 「취소보다 먼저 만들어진 서명 요청」의 서명 줄을 막는다(INV-AC2 — 취소 전 서명으로는 다시 승인되지 않는다).
---   3) order_arrived_box_count · order_invoice_printed — 입고 판정(INV-AC1)과 송장 출력 판정(INV-AC4)을 한 곳에서.
+--   3) order_arrived_box_count · order_invoice_printed · order_approval_cancelable — 입고 판정(INV-AC1)·송장 출력 판정·취소 가능 판정(INV-AC4)을 한 곳씩.
 --   4) cancel_approval(사람, 승인 요청) — 취소하는 유일한 입구. 승인 요청 줄 → 주문 줄 순서로 잠근다(승인·거절·자동 반려와 같은 순서, INV-AC5).
 --      입고 전: 승인 대기로(승인 기한은 그대로 — 결제 완료부터 168시간, INV-S6). 입고 뒤: 지금의 거절 함수로 거절(INV-AC4).
 --      「먼저 보내기」 칸(fan_send_ack_at)은 건드리지 않는다 — 팬이 안내를 보고 누른 기록이다(INV-S9). 승인 이력은 7) 의 판정이 서명 기록으로 본다.
 --   5) invoice_print_context — 서명 재료를 「그 주문의 무효가 아닌 가장 최근 서명」에서 읽는다(INV-AC3, INV-P4 (a)).
 --      취소된 승인이면 서명 칸이 비어 송장 출력 함수가 거부하고 거부 줄을 남긴다.
---   6) my_approval_cancel_targets(사람) — 화면이 버튼·확인 창을 정하는 값: 취소 가능 여부·도착한 상자 수·상자 수·승인 기한.
+--   6) my_approval_cancel_targets(사람) — 화면이 버튼·확인 창을 정하는 값: 취소 가능 여부·도착한 상자 수·승인 기한.
 --   7) order_send_guide_shown(주문) — 「받는 주소를 본 적이 있다」 = 승인 중 · 「먼저 보내기」 기록 · 승인 이력(서명 기록이 하나라도 있음)(INV-AC6·S9).
 --      팬 상자 읽기(my_gift_boxes)·팬 선물 읽기(my_gifts, send_guide_shown 칸 추가)·주문이 끝날 때 6자리 정리(inbound_void_for_order —
 --      환불의 「본 적 있음」과 늦게 오는 상자 규칙, payment INV-M8·M18)가 모두 이 함수 하나로 판정한다.
@@ -97,6 +97,7 @@ for each row execute function public.approval_signature_live_guard();
 -- ── 3) 입고·송장 출력 판정 ───────────────────────────────
 
 -- INV-AC1: 입고 = 그 주문의 상자가 하나라도 사무실에 도착(입고 스캔)한 것. 지금 기록으로 센다.
+-- 사무실 상자는 입고 스캔 때 「대기(awaiting)」를 벗어난다 — 환불·6자리 정리(payment INV-M8·M18)가 쓰는 「도착한 상자」와 같은 기준이다.
 create function public.order_arrived_box_count(p_order_id uuid)
 returns integer
 language sql stable security definer set search_path = ''
@@ -104,7 +105,7 @@ as $$
   select count(distinct b.id)::integer
   from public.boxes b
   join public.office_parcels x on x.box_id = b.id
-  where b.order_id = p_order_id and (x.state <> 'awaiting' or x.received_at is not null);
+  where b.order_id = p_order_id and x.state <> 'awaiting';
 $$;
 
 -- INV-AC4: 송장이 한 번이라도 출력된 상자가 있는가 — 출력 단계·출력 시각·송장번호, 그리고 주소를 열고 돌려주지 않은 기록(주소가 나간 순간)
@@ -121,6 +122,21 @@ as $$
     where l.order_id = p_order_id and l.result = 'opened'
       and not exists (select 1 from public.decrypt_releases r where r.opened_log_id = l.id)
   );
+$$;
+
+-- INV-AC4: 승인을 취소할 수 있는 주문인가 — 출고 전 · 진행 중(결제 완료~검수) · 검수 불합격 반송이 아님 · 첫 송장 출력 전.
+-- 취소 함수와 화면 값(my_approval_cancel_targets)이 이 함수 하나로 판정한다. 승인 여부·본인 여부는 부르는 쪽이 본다.
+create function public.order_approval_cancelable(p_order_id uuid)
+returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from public.orders o
+    where o.id = p_order_id
+      and o.shipped_at is null
+      and o.status in ('registered', 'received', 'labeled', 'inspected')
+      and o.inspection_result is distinct from 'returned'
+  ) and not public.order_invoice_printed(p_order_id);
 $$;
 
 -- ── 4) 승인 취소 ─────────────────────────────────────────
@@ -155,15 +171,9 @@ begin
     return query select 'not_approved'::text, null::text;
     return;
   end if;
-  -- INV-AC4: 첫 송장 출력 전까지만
-  if public.order_invoice_printed(v_order.id) then
-    return query select 'printed'::text, null::text;
-    return;
-  end if;
-  if v_order.shipped_at is not null
-     or v_order.status not in ('registered', 'received', 'labeled', 'inspected')
-     or v_order.inspection_result is not distinct from 'returned' then
-    return query select 'not_cancelable'::text, null::text;
+  -- INV-AC4: 취소할 수 있는 주문인가(화면 값과 같은 함수). 아니면 송장 출력 때문인지만 따로 알린다(그 뒤는 1:1 문의)
+  if not public.order_approval_cancelable(v_order.id) then
+    return query select case when public.order_invoice_printed(v_order.id) then 'printed' else 'not_cancelable' end, null::text;
     return;
   end if;
 
@@ -263,19 +273,15 @@ end $$;
 
 -- ── 6) 화면 값 — 승인 취소 버튼·확인 창 ───────────────────
 
--- 그 크리에이터의 승인된 진행 중 주문. cancelable: 첫 송장 출력 전이고 진행 중(INV-AC4). arrived_box_count: 지금 도착한 상자 수(INV-AC1).
+-- 그 크리에이터의 승인된 진행 중 주문. cancelable: order_approval_cancelable(INV-AC4 — 취소 함수와 같은 판정). arrived_box_count: 지금 도착한 상자 수(INV-AC1).
 -- approval_deadline_at: 결제 완료부터 168시간(INV-S6) — 취소해도 늘지 않는다(INV-AC2). 화면은 이 값으로만 버튼·문구를 정하고, 저장 때는 취소 함수가 다시 판정한다.
 create function public.my_approval_cancel_targets(p_actor_id uuid)
-returns table (request_id text, order_no text, cancelable boolean, arrived_box_count integer, box_count integer, approval_deadline_at timestamptz)
+returns table (request_id text, order_no text, cancelable boolean, arrived_box_count integer, approval_deadline_at timestamptz)
 language sql stable security definer set search_path = ''
 as $$
   select q.request_id, o.order_no,
-         o.shipped_at is null
-           and o.status in ('registered', 'received', 'labeled', 'inspected')
-           and o.inspection_result is distinct from 'returned'
-           and not public.order_invoice_printed(o.id),
+         public.order_approval_cancelable(o.id),
          public.order_arrived_box_count(o.id),
-         (select count(*)::integer from public.boxes b where b.order_id = o.id),
          o.registered_at + interval '168 hours'
   from public.approval_requests q
   join public.orders o on o.id = q.order_id
@@ -333,7 +339,7 @@ AS $function$
   order by b.seq;
 $function$;
 
--- 주문이 끝날 때 6자리 정리 — 20261021000001_deadline_clocks.sql 의 정의 그대로에 「본 적 있음」 조건만 위 함수로
+-- 주문이 끝날 때 6자리 정리 — 20261021000001_deadline_clocks.sql 의 정의 그대로에 「본 적 있음」은 위 함수로, 「도착한 상자 있음」은 입고 판정 함수(3)로
 create or replace function public.inbound_void_for_order()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -345,10 +351,7 @@ begin
   -- 아직 안 온 상자의 6자리는 무효로 하지 않고 살려 둔 시각을 적는다. 도착한 상자의 6자리는 이미 사용됨, 닫힌 상자의 6자리는 이미 무효라
   -- 남은 유효한 6자리가 곧 안 온 상자다.
   -- approval-cancel INV-AC6: 승인 이력(서명 기록)도 「본 적 있음」 — 입고 전 취소로 대기로 돌아간 주문
-  if public.order_send_guide_shown(new.id) or exists (
-    select 1 from public.boxes b join public.office_parcels x on x.box_id = b.id
-    where b.order_id = new.id and x.state <> 'awaiting'
-  ) then
+  if public.order_send_guide_shown(new.id) or public.order_arrived_box_count(new.id) > 0 then
     update public.inbound_codes c
     set kept_at = now()
     from public.boxes b
@@ -430,6 +433,7 @@ revoke all on function public.approval_signature_live_guard() from public, anon,
 revoke all on function public.approval_cancellations_unlink() from public, anon, authenticated, service_role;
 revoke all on function public.order_arrived_box_count(uuid) from public, anon, authenticated, service_role;
 revoke all on function public.order_invoice_printed(uuid) from public, anon, authenticated, service_role;
+revoke all on function public.order_approval_cancelable(uuid) from public, anon, authenticated, service_role;
 revoke all on function public.cancel_approval(uuid, text) from public, anon, authenticated;
 revoke all on function public.my_approval_cancel_targets(uuid) from public, anon, authenticated;
 grant execute on function public.cancel_approval(uuid, text) to service_role;

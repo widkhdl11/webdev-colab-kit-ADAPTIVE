@@ -11,7 +11,6 @@ export type ApprovalCancelTarget = {
   cancelable: boolean;
   /** 지금 팬꾹에 도착한 상자 수 — 0 이면 입고 전(대기로 되돌림), 1 이상이면 입고 뒤(거절로 끝남) */
   arrivedBoxCount: number;
-  boxCount: number;
   /** 승인 기한(결제 완료부터, INV-S6) — 취소해도 늘지 않는다(INV-AC2) */
   approvalDeadlineAt: string;
 };

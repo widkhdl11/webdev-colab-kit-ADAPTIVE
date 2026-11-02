@@ -13,7 +13,9 @@ import {
   type ReceivedProgress,
   type SentProgress,
 } from "../model/gift-progress";
+import type { ApprovalCancelTarget } from "@/entities/order/model/approval-cancel";
 import { tierName } from "@/entities/parcel/model/size-tier";
+import { ApprovalCancelButton } from "@/features/approval-request/ui/approval-cancel-button";
 import type { SentBoxCandidate } from "@/features/box-waybill/ui/find-sent-box";
 import { FindSentBoxButton } from "@/features/box-waybill/ui/find-sent-box-button";
 import { TrackBoxButton } from "@/features/box-waybill/ui/track-box-button";
@@ -27,7 +29,8 @@ import s from "./gift-progress.module.css";
 // 카드·줄마다 다섯 칸 막대 + 단계 이름(단계는 기존 읽기에서 — J9). 늦거나 손이 필요한 줄은 단계 이름을 강조색.
 // 버튼은 필요한 줄에만: 배송 조회(보내는 선물의 늦은 입고 전 몫 — J11, 받는 선물에는 없다 카드 d93 ④) ·
 // 「내 상자 찾기」(보내는 선물의 입고 전 몫마다, 늦지 않아도 — J10 카드 d96 ①) · 「처리할 일」(처리할 일 읽기 결과에 있는 줄만 — J11).
-// 상태를 바꾸는 처리는 여기 없다 — 「내 상자 찾기」 창이 정해진 찾기 처리를 부를 뿐이다(inbound-address-code INV-C4 ②-나).
+// 받는 선물 카드에는 서버가 취소 가능하다고 준 주문(approval-cancel INV-AC4 — 송장 출력 전)에만 「승인 취소」 글자 버튼(「지금 할 일」 왼쪽, UX 명세 creator-requests).
+// 그 밖에 상태를 바꾸는 처리는 여기 없다 — 「내 상자 찾기」 창이 정해진 찾기 처리를 부를 뿐이다(inbound-address-code INV-C4 ②-나).
 
 type Props = {
   progress: GiftProgress;
@@ -35,6 +38,8 @@ type Props = {
   items: readonly CreatorActionItem[];
   /** 「내 상자 찾기」 창의 팬 고르기 후보(결제 끝·입고 전·닫히지 않은 내 몫) */
   candidates: readonly SentBoxCandidate[];
+  /** 승인 취소 대상(서버 읽기 my_approval_cancel_targets) — cancelable 인 주문의 받는 선물 카드에만 버튼 */
+  cancelTargets?: readonly ApprovalCancelTarget[];
   /** 승인 대기 판의 「가장 가까운 기한」 남은 날을 셀 기준 시각(라우트가 그린 때) */
   now: string;
 };
@@ -83,7 +88,8 @@ const goActions = (
   </Link>
 );
 
-export function GiftProgressPage({ progress, items, candidates, now }: Props) {
+export function GiftProgressPage({ progress, items, candidates, cancelTargets = [], now }: Props) {
+  const cancelable = new Map(cancelTargets.filter((t) => t.cancelable).map((t) => [t.orderNo, t]));
   const targets = actionTargetsOf(items);
   const findable = new Set(candidates.map((c) => c.shareId));
   const total = countProgress(progress);
@@ -101,9 +107,10 @@ export function GiftProgressPage({ progress, items, candidates, now }: Props) {
   function receivedCard(r: ReceivedProgress, i: number) {
     const step = receivedStepOf(r);
     const action = hasActionButton(r, targets);
+    const cancelTarget = cancelable.get(r.orderNo);
     const when = r.approvedAt ? `${formatMonthDayKo(r.approvedAt)} 승인` : `${formatMonthDayKo(r.requestedAt)} 요청`;
     return (
-      <li key={r.orderNo} className={action ? `${s.gcard} ${s.hi}` : `card ${s.gcard}`} data-row="">
+      <li key={r.orderNo} className={action ? `${s.gcard} ${s.hi}` : `card ${s.gcard}`} data-row="" data-accent={action ? "" : undefined}>
         <div className={s.top}>
           <FaceAvatar index={i} className="face face--sm" />
           <strong data-title="">{`${r.nickname}님`}</strong>
@@ -119,7 +126,12 @@ export function GiftProgressPage({ progress, items, candidates, now }: Props) {
             <span aria-hidden="true">{`${step.cells}/5`}</span>
           </p>
         </div>
-        {action ? <div className={s.cardAct}>{goActions}</div> : null}
+        {action || cancelTarget ? (
+          <div className={s.cardAct}>
+            {cancelTarget ? <ApprovalCancelButton target={cancelTarget} fanNickname={r.nickname} itemKind={r.itemKind} boxCount={r.boxCount} now={now} /> : null}
+            {action ? goActions : null}
+          </div>
+        ) : null}
       </li>
     );
   }
