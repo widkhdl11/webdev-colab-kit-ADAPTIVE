@@ -69,16 +69,11 @@ const LEGACY_REVOKE_REASON_LABEL: Record<string, string> = { code_removed: "채�
 
 /** 운영자 메모 한도(INV-V9) — DB 와 같은 기준(글자 수). */
 export const VERIFICATION_MEMO_MAX = 200;
-/** INV-V15: 한 계정·한 채널의 확인 요청 횟수. */
-export const VERIFICATION_TRIES = 3;
+/** INV-V15: 한 계정·한 채널의 확인 요청 횟수(DB 의 cv_verification_tries 와 같은 기준). 크리에이터 화면에는 남은 횟수를 보이지 않는다. */
+export const VERIFICATION_TRIES = 10;
 /** INV-V20: 재확인 주기·유예 기간(DB 의 cv_recheck_window·cv_link_grace 와 같은 기준). */
 export const RECHECK_DAYS = 90;
 export const LINK_GRACE_DAYS = 14;
-
-/** INV-V15: 진행 중인 요청이 이 채널로 몇 번째인지. 남은 횟수는 끝난 요청만 빼서 온다. */
-export function attemptNumber(remainingCount: number): number {
-  return Math.min(VERIFICATION_TRIES, VERIFICATION_TRIES - remainingCount + 1);
-}
 
 export function platformLabel(platform: string): string {
   return isChannelPlatform(platform) ? CHANNEL_PLATFORM_LABEL[platform] : platform;

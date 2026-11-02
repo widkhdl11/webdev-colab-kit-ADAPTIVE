@@ -128,14 +128,15 @@ describe("확인 요청 (INV-V17)", () => {
 
   it("INV-V15·V17: 확인 방식이 바뀌어 닫힌 옛 코드 신청(method_changed)은 3번 횟수에 세지 않는다", async () => {
     ensureHandle("haru");
-    for (let i = 0; i < 3; i++) {
+    const tries = Number(psql("select public.cv_verification_tries()"));
+    for (let i = 0; i < tries; i++) {
       psql(
         `begin; set local session_replication_role = replica; insert into public.creator_verification_applications (account_id, platform, channel_key, channel_url, code, method, status, ended_at, reason_code) values ('${CV.haru.id}', 'soop', 'haruold', 'https://www.sooplive.com/station/haruold', public.cv_new_code(), 'code', 'closed', now(), 'method_changed'); commit;`,
       );
     }
     const a = await requestOk("haru", SOOP("haruold"));
     const rows = (await (await as("haru")).rpc("my_creator_verifications")).data as { id: string; remaining_count: number }[];
-    expect(rows.find((r) => r.id === a.application_id)?.remaining_count).toBe(3);
+    expect(rows.find((r) => r.id === a.application_id)?.remaining_count).toBe(tries);
   });
 });
 

@@ -4,7 +4,6 @@ import {
   adminRecheckTables,
   adminVerificationsFromRows,
   adminVerificationTables,
-  attemptNumber,
   canLoginCheck,
   lastOutcomeText,
   myVerificationPanel,
@@ -223,12 +222,6 @@ describe("운영자 요청 표 (INV-V6·V11·V15·V18)", () => {
       ["old", false],
       ["login", false],
     ]);
-  });
-
-  it("INV-V15: 진행 중인 요청이 몇 번째인지 — 상한을 넘지 않는다", () => {
-    expect(attemptNumber(3)).toBe(1);
-    expect(attemptNumber(1)).toBe(3);
-    expect(attemptNumber(0)).toBe(3);
   });
 });
 

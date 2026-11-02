@@ -17,7 +17,7 @@ export function RevokeButton({ creatorId, creatorName, returnFocusId, onDone }: 
       title="승인을 취소할까요?"
       body={
         <p>
-          <b>{creatorName}</b>님이 팬의 크리에이터 찾기에서 사라지고, 새 선물 등록과 팔로우가 막혀요. 이미 등록된 주문은 그대로 가요. 진행 중인 채널 이사
+          <b>{creatorName}</b>님이 팬의 크리에이터 찾기에서 사라지고, 새 선물 등록과 팔로우가 막혀요. 이미 등록된 주문은 그대로 가요. 진행 중인 채널 변경
           신청도 함께 끝나요. 누가 언제 취소했는지 남아요.
         </p>
       }

@@ -26,6 +26,7 @@ import {
   verifyVia,
   withdraw,
 } from "./creator-verification-helpers";
+import { VERIFICATION_TRIES } from "@/entities/creator/model/creator-verification";
 import { adminClient, anonClient, holdRowLock, psql, psqlError, registerTestOrder, SEED, signedInClient } from "./helpers";
 
 // 크리에이터 채널 확인 — DB 층(creator-verification INV-V1~V15, 시나리오 S1~S15h). 선물 링크 게시 확인의 새 규칙(INV-V17~V22)은 creator-verification-link-db.
@@ -520,7 +521,7 @@ describe("읽기 (INV-V11)", () => {
     expect(Object.keys(row ?? {}).sort()).toEqual(
       ["channel_url", "id", "issued_at", "link_handle", "method", "platform", "reason_code", "remaining_count", "status"].sort(),
     );
-    expect(row).toMatchObject({ status: "posted", method: "link", platform: "youtube", remaining_count: 3, link_handle: "cvh_ggul" });
+    expect(row).toMatchObject({ status: "posted", method: "link", platform: "youtube", remaining_count: VERIFICATION_TRIES, link_handle: "cvh_ggul" });
   });
 
   it("INV-V11 (S11b): 운영자 신청 목록의 칸은 정해진 목록뿐, 휴대폰·이메일 없음", async () => {
@@ -756,18 +757,27 @@ describe("확인 요청 횟수 (INV-V15)", () => {
     if (kind === "withdrawn") expect((await withdraw("ggul", a.application_id)).error).toBeNull();
     return a.application_id;
   }
+  /** 한도(DB 의 cv_verification_tries)만큼 — 반려와 거둠을 번갈아. 마지막 요청 id. */
+  async function endedUpTo(count: number, key = "cntx"): Promise<string> {
+    let last = "";
+    for (let i = 0; i < count; i += 1) last = await ended(i % 2 === 0 ? "rejected" : "withdrawn", key);
+    return last;
+  }
+  const tries = () => Number(psql("select public.cv_verification_tries()"));
 
-  it("INV-V15 (S15): 반려 1·거둠 1이면 세 번째 요청이 생긴다", async () => {
-    await ended("rejected");
-    await ended("withdrawn");
+  it("INV-V15: 한도는 10번이고 앱 상수와 같다", () => {
+    expect(tries()).toBe(10);
+    expect(tries()).toBe(VERIFICATION_TRIES);
+  });
+
+  it("INV-V15 (S15): 끝난 요청이 한도보다 1건 적으면 요청이 생긴다", async () => {
+    await endedUpTo(tries() - 1);
     const a = await requestOk("ggul", YT("cntx"));
     expect((await mine("ggul")).find((m) => m.id === a.application_id)?.remaining_count).toBe(1);
   });
 
-  it("INV-V15 (S15b, 실패경로): 반려 1·거둠 2이면 거부, 「이 채널로는 더 신청할 수 없어요」", async () => {
-    await ended("rejected");
-    await ended("withdrawn");
-    await ended("withdrawn");
+  it("INV-V15 (S15b, 실패경로): 끝난 요청이 한도만큼이면 거부, 「이 채널로는 더 신청할 수 없어요」", async () => {
+    await endedUpTo(tries());
     const r = await request("ggul", YT("cntx"));
     expect(r.error?.code).toBe("FKV04");
     expect(r.error?.message).toContain("이 채널로는 더 신청할 수 없어요");
@@ -775,50 +785,41 @@ describe("확인 요청 횟수 (INV-V15)", () => {
   });
 
   it("INV-V15 (실패경로): 닫힘도 센다", async () => {
-    await ended("rejected", CZU(6));
-    await ended("rejected", CZU(6));
+    await endedUpTo(tries() - 1, CZU(6));
     const a = await requestOk("ggul", CZU(6));
     expect((await loginConfirm("summer", "chzzk", CZ(6))).error).toBeNull();
     expect(appStatus(a.application_id)).toBe("closed");
-    // summer 의 확인을 취소해 채널을 풀어도 꿀단지는 3번을 다 썼다
+    // summer 의 확인을 취소해 채널을 풀어도 꿀단지는 한도를 다 썼다
     expect((await revoke(CV.summer.creatorId)).error).toBeNull();
     expect((await request("ggul", CZU(6))).error?.code).toBe("FKV04");
   });
 
-  it("INV-V15 (S15d): X 로 3번을 다 써도 다른 채널 Y 는 따로 센다", async () => {
-    await ended("rejected");
-    await ended("rejected");
-    await ended("rejected");
+  it("INV-V15 (S15d): X 로 한도를 다 써도 다른 채널 Y 는 따로 센다", async () => {
+    await endedUpTo(tries());
+    expect((await request("ggul", YT("cntx"))).error?.code).toBe("FKV04");
     await requestOk("ggul", YT("cnty"));
   });
 
   it("INV-V15 (S15e): 라임이 횟수를 풀면 다시 신청할 수 있고 풀기 기록이 남는다", async () => {
-    await ended("rejected");
-    await ended("rejected");
-    const last = await ended("rejected");
+    const last = await endedUpTo(tries());
     expect((await request("ggul", YT("cntx"))).error?.code).toBe("FKV04");
     expect((await unlock(last, "본인 문의 확인")).error).toBeNull();
     const a = await requestOk("ggul", YT("cntx"));
-    expect((await mine("ggul")).find((m) => m.id === a.application_id)?.remaining_count).toBe(3);
+    expect((await mine("ggul")).find((m) => m.id === a.application_id)?.remaining_count).toBe(tries());
     expect(
       psql(`select acted_by || '|' || account_id || '|' || platform || '|' || channel_key || '|' || memo || '|' || (at > now() - interval '1 minute') from public.creator_verification_unlocks where account_id = '${CV.ggul.id}'`),
     ).toBe(`00000000-0000-4000-a000-000000000022|${CV.ggul.id}|youtube|cntx|본인 문의 확인|true`);
     expect(psqlError(`update public.creator_verification_unlocks set memo = 'x' where account_id = '${CV.ggul.id}'`)).toMatch(/고치거나 지울 수 없다/);
     expect(psqlError(`delete from public.creator_verification_unlocks where account_id = '${CV.ggul.id}'`)).toMatch(/고치거나 지울 수 없다/);
-    // 풀기는 0 으로 영원히 돌리는 것이 아니다 — 풀린 뒤에도 끝난 신청 3건이면 다시 막힌다
+    // 풀기는 0 으로 영원히 돌리는 것이 아니다 — 풀린 뒤에도 끝난 신청이 한도만큼이면 다시 막힌다
     expect((await reject(a.application_id)).error).toBeNull();
-    await ended("rejected");
-    await ended("rejected");
+    await endedUpTo(tries() - 1);
     expect((await request("ggul", YT("cntx"))).error?.code).toBe("FKV04");
   });
 
   it("INV-V15 (S15e, 실패경로): 한 채널을 풀어도 같은 계정의 다른 채널은 그대로 막혀 있다", async () => {
-    await ended("rejected", "cnty");
-    await ended("rejected", "cnty");
-    await ended("rejected", "cnty");
-    await ended("rejected");
-    await ended("rejected");
-    const last = await ended("rejected");
+    await endedUpTo(tries(), "cnty");
+    const last = await endedUpTo(tries());
     expect((await unlock(last, "본인 문의 확인")).error).toBeNull();
     expect((await request("ggul", YT("cnty"))).error?.code).toBe("FKV04");
     await requestOk("ggul", YT("cntx"));
@@ -848,10 +849,9 @@ describe("확인 요청 횟수 (INV-V15)", () => {
     await requestOk("ggul", YT("cntx"));
   });
 
-  it("INV-V15 (S15h): 3번을 다 써도 로그인 확인은 된다", async () => {
-    await ended("rejected", CZU(7));
-    await ended("rejected", CZU(7));
-    await ended("rejected", CZU(7));
+  it("INV-V15 (S15h): 한도를 다 써도 로그인 확인은 된다", async () => {
+    await endedUpTo(tries(), CZU(7));
+    expect((await request("ggul", CZU(7))).error?.code).toBe("FKV04");
     expect((await loginConfirm("ggul", "chzzk", CZ(7))).error).toBeNull();
     expect(verified("ggul")).toBe("t");
   });

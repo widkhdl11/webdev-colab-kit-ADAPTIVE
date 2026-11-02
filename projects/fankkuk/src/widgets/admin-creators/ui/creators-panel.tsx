@@ -199,7 +199,7 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges, ta
                           {c.loginId && moving.has(c.loginId) ? (
                             <>
                               {" "}
-                              <span className={`${a.tag} ${a.tagWarn}`}>채널 이사 중</span>
+                              <span className={`${a.tag} ${a.tagWarn}`}>채널 변경 중</span>
                             </>
                           ) : null}
                         </td>

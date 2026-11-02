@@ -5,13 +5,11 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { CHANNEL_PLATFORM_LABEL, CHANNEL_URL_EXAMPLES, CHANNEL_URL_MESSAGE, parseChannelUrl } from "@/entities/creator/model/channel-url";
 import {
-  attemptNumber,
   canLoginCheck,
   myVerificationPanel,
   panelOutcomeText,
   platformLabel,
   VERIFICATION_STATUS_LABEL,
-  VERIFICATION_TRIES,
   type MyVerification,
   type MyVerificationState,
 } from "@/entities/creator/model/creator-verification";
@@ -136,9 +134,6 @@ export function VerificationPanel({
             <p>운영자가 채널을 열어 팬꾹 링크를 확인하고 있습니다. 완료되면 이 화면에 결과가 표시됩니다.</p>
             <div className={s.facts}>
               {live.linkHandle ? <span className="sub">찾을 링크: {giftLinkText(live.linkHandle)}</span> : null}
-              <span className="sub">
-                채널별 요청 횟수: {attemptNumber(live.remainingCount)}/{VERIFICATION_TRIES}회
-              </span>
             </div>
           </div>
 
