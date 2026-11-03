@@ -18,7 +18,7 @@ export async function readVerifiedUserId(auth: Pick<SupabaseClient["auth"], "get
 export type ViewerRole = "fan" | "creator" | "operator";
 
 /** 확인된 로그인 사용자와 그 역할. 역할은 DB 의 계정 칸(my_profile)에서 온다 — 주소 복호화 판단에는 쓰지 않는다(INV-P8). */
-export type Viewer = { userId: string; role: ViewerRole; nickname?: string };
+export type Viewer = { userId: string; role: ViewerRole; nickname?: string; /** 로그인 아이디 — 화면 안내용(팬꾹 링크가 로그인 아이디와 같은지 미리 보기, signup INV-U14). 판정은 DB 가 다시 한다 */ loginId?: string };
 
 const ROLES: readonly ViewerRole[] = ["fan", "creator", "operator"];
 
@@ -27,7 +27,12 @@ export async function readViewer(client: Pick<SupabaseClient, "auth" | "rpc">): 
   const userId = await readVerifiedUserId(client.auth);
   if (!userId) return null;
   const { data, error } = await client.rpc("my_profile");
-  const row = Array.isArray(data) ? (data[0] as { role?: unknown; nickname?: unknown } | undefined) : undefined;
+  const row = Array.isArray(data) ? (data[0] as { role?: unknown; nickname?: unknown; login_id?: unknown } | undefined) : undefined;
   if (error || !row || !ROLES.includes(row.role as ViewerRole)) return null;
-  return { userId, role: row.role as ViewerRole, nickname: typeof row.nickname === "string" ? row.nickname : undefined };
+  return {
+    userId,
+    role: row.role as ViewerRole,
+    nickname: typeof row.nickname === "string" ? row.nickname : undefined,
+    loginId: typeof row.login_id === "string" ? row.login_id : undefined,
+  };
 }

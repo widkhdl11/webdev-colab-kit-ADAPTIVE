@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { MyCreatorLink } from "@/entities/creator/api/creator-link-reads";
 import { HANDLE_LOCK_DAYS, HANDLE_MAX, HANDLE_RETIRE_DAYS, isSameHandle, LINK_HOST, linkText, normalizeHandle } from "@/entities/creator/model/creator-handle";
 import { CREATOR_PROFILE_EDIT } from "@/entities/session/model/home-path";
-import { sendCreatorHandle } from "@/features/creator-settings-save/api/send-creator-settings";
+import { saveLinkHandle } from "@/entities/creator/api/link-handle-client";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { CopyButton } from "@/shared/ui/copy-button";
 import s from "./creator-settings.module.css";
@@ -43,7 +43,7 @@ export function LinkSection({
   const saveHandle = async () => {
     if (saving) return;
     setSaving(true);
-    const r = await sendCreatorHandle({ handle: draft });
+    const r = await saveLinkHandle(draft);
     setSaving(false);
     setConfirming(false);
     if (r.kind === "login") {

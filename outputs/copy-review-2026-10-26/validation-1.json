@@ -1,0 +1,76 @@
+{
+  "original_rows": 1119,
+  "review_rows": 1119,
+  "changed_rows": 531,
+  "missing_rows": 0,
+  "variable_differences": [],
+  "numeric_changes": [
+    {
+      "line": 376,
+      "before": {},
+      "after": {
+        "6": 1
+      }
+    },
+    {
+      "line": 378,
+      "before": {},
+      "after": {
+        "6": 1
+      }
+    },
+    {
+      "line": 853,
+      "before": {
+        "1": 2
+      },
+      "after": {}
+    },
+    {
+      "line": 854,
+      "before": {
+        "1": 2
+      },
+      "after": {}
+    },
+    {
+      "line": 913,
+      "before": {},
+      "after": {
+        "6": 1
+      }
+    },
+    {
+      "line": 914,
+      "before": {
+        "1": 2,
+        "4": 1,
+        "30": 1
+      },
+      "after": {
+        "6": 1,
+        "1": 2,
+        "4": 1,
+        "30": 1
+      }
+    },
+    {
+      "line": 1118,
+      "before": {
+        "6": 1,
+        "5": 1
+      },
+      "after": {
+        "6": 2,
+        "5": 1
+      }
+    }
+  ],
+  "source_unchanged": true,
+  "source_sha256": "d6424c2a23b7e6927073ea22ebc7e98ad2d974b9509230b124df5bd36ebdf984",
+  "html_structure": "전체 항목 수·원문 펼침 수·내부 링크·외부 리소스 없음 확인",
+  "numeric_change_review": "주소 누락 안내·실제 메뉴 이름에 6자리 명시, 1:1 문의 제목 아래 설명의 중복 1:1 생략. 그 외 수치 보존.",
+  "unconfirmed_placeholders_preserved": true,
+  "emails_and_phone_numbers_preserved": true,
+  "browser_verification": "미실행: 기존 브라우저 접근 제한. 파일 구조·스크립트 문법 검사만 수행."
+}

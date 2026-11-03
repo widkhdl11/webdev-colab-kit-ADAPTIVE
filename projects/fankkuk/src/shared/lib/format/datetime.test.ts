@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDuration, formatMonthDay, formatStamp, seoulDaysUntil } from "./datetime";
+import { formatDotDate, formatDuration, formatMonthDay, formatStamp, seoulDaysUntil } from "./datetime";
 
 describe("formatStamp · formatMonthDay", () => {
   it("서울 시각으로 「MM-DD HH:mm」「MM-DD」 — UTC 밤 시각은 다음 날로 넘어간다", () => {
@@ -36,5 +36,13 @@ describe("formatMonthDayKo · formatMonthDayTimeKo", () => {
     expect(formatMonthDayKo("2026-10-12T16:00:00Z")).toBe("10월 13일");
     expect(formatMonthDayTimeKo("2026-10-15T05:20:00Z")).toBe("10월 15일 14:20");
     expect(formatMonthDayTimeKo("2026-10-15T15:05:00Z")).toBe("10월 16일 00:05");
+  });
+});
+
+describe("formatDotDate", () => {
+  it("서울 날짜를 2026.11.02 꼴로 — 서울 자정 넘은 UTC 시각은 다음 날", () => {
+    expect(formatDotDate("2026-11-02T03:00:00Z")).toBe("2026.11.02");
+    expect(formatDotDate("2026-11-01T15:30:00Z")).toBe("2026.11.02");
+    expect(formatDotDate("2027-01-31T00:00:00+09:00")).toBe("2027.01.31");
   });
 });

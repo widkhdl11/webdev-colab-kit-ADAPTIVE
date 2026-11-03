@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { checkNameAvailability } from "../api/signup-client";
+import { checkNameAvailability } from "@/entities/session/api/name-check-client";
 import { createAvailabilityWatcher, type AvailabilityState, type NameField } from "./name-availability";
 
 // 가입 화면 칸 하나의 미리 확인 상태(signup INV-U14). value 가 null 이면 묻지 않는다(빈칸·형식 틀림).

@@ -26,7 +26,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
     return (
       <>
         <SiteHeader {...header} />
-        <SignupCreatorSteps step={4} verification={{ state, rows, apiPlatforms: [...apiPlatforms] }} />
+        <SignupCreatorSteps step={4} verification={{ state, rows, apiPlatforms: [...apiPlatforms], loginId: viewer.loginId ?? null }} />
         <SiteFooter />
       </>
     );

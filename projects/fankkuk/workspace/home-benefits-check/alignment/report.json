@@ -1,0 +1,1823 @@
+{
+ "url": "docs/design/mockups/home-benefits-20261029/index.html",
+ "at": "2026-10-31T12:41:14.514Z",
+ "allow": [
+  "gradient",
+  "shadow",
+  "outlined-box",
+  "numbering",
+  "eyebrow"
+ ],
+ "viewports": [
+  {
+   "width": 1440,
+   "height": 900,
+   "load": "load",
+   "screens": 5,
+   "filled": [
+    0.37,
+    0.5,
+    0.41,
+    0.44,
+    0.41
+   ],
+   "motion": {
+    "elements": 10,
+    "css": 10,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "page": {
+     "height": 3695,
+     "screens": 4.1,
+     "words": 328,
+     "img": 22,
+     "video": 0,
+     "canvas": 0,
+     "svg": 17,
+     "sections": 6,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 5,
+     "uiAbuse": false,
+     "realPictures": 3,
+     "videoCount": 0,
+     "uiPictures": 3,
+     "pictureSamples": [
+      "promise-inspect.webp",
+      "fankkuk-cat-transparent.png",
+      "icon-gift.webp"
+     ],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": []
+    },
+    "hero": {
+     "text": "01",
+     "words": 1,
+     "chars": 2,
+     "lines": 1,
+     "size": 80,
+     "vw": 5.6,
+     "font": "Pretendard",
+     "weight": 800,
+     "tracking": -0.06,
+     "leading": 1,
+     "upper": false,
+     "italic": false,
+     "mono": false,
+     "align": "left",
+     "position": "left",
+     "widthRatio": 0.06,
+     "top": 478,
+     "tag": "span",
+     "kind": "heading"
+    },
+    "h1": {
+     "text": "팬과 크리에이터가 선물로 마음을 나누는 곳",
+     "words": 6,
+     "lines": 2,
+     "size": 48,
+     "font": "Tmoney"
+    },
+    "headings": [
+     {
+      "text": "팬과 크리에이터가 선물로 마음을 나누는 곳",
+      "words": 6,
+      "chars": 23,
+      "lines": 2,
+      "size": 48,
+      "vw": 3.3,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.02,
+      "leading": 1.32,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.46,
+      "top": 180,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "01",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 80,
+      "vw": 5.6,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.06,
+      "top": 478,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "승인으로 지키는 크리에이터 주소",
+      "words": 4,
+      "chars": 17,
+      "lines": 2,
+      "size": 40,
+      "vw": 2.8,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.02,
+      "leading": 1.25,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.24,
+      "top": 564,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "02",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 64,
+      "vw": 4.4,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.05,
+      "top": 1240,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "팬들에게 선물을 편하게 보내세요",
+      "words": 4,
+      "chars": 17,
+      "lines": 2,
+      "size": 40,
+      "vw": 2.8,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.02,
+      "leading": 1.25,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.22,
+      "top": 1308,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "03",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 64,
+      "vw": 4.4,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.05,
+      "top": 1650,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "선물 검수",
+      "words": 2,
+      "chars": 5,
+      "lines": 1,
+      "size": 32,
+      "vw": 2.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.025,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.3,
+      "top": 1714,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "04",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 104,
+      "vw": 7.2,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.09,
+      "top": 1794,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "배송 현황과 지금 할 일",
+      "words": 5,
+      "chars": 13,
+      "lines": 2,
+      "size": 32,
+      "vw": 2.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.025,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.38,
+      "top": 1810,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "05",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 64,
+      "vw": 4.4,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.05,
+      "top": 2371,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "선물과 답장 보관",
+      "words": 3,
+      "chars": 9,
+      "lines": 1,
+      "size": 32,
+      "vw": 2.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.025,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.39,
+      "top": 2435,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "06",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 48,
+      "vw": 3.3,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.04,
+      "top": 3084,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "팬덤 프로필 꾸미기",
+      "words": 3,
+      "chars": 10,
+      "lines": 1,
+      "size": 32,
+      "vw": 2.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.025,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.25,
+      "top": 3140,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 13,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": 3,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Pretendard",
+       "share": 0.92,
+       "mono": false
+      },
+      {
+       "family": "Tmoney",
+       "share": 0.08,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      14,
+      16,
+      18,
+      24,
+      32,
+      40,
+      48,
+      64,
+      80,
+      104
+     ],
+     "sizeCount": 10,
+     "notLoaded": [],
+     "body": null,
+     "measureChars": null,
+     "max": {
+      "size": 104,
+      "vw": 7.2,
+      "font": "Pretendard",
+      "text": "04"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.01,
+     "centerShare": 0.15,
+     "smallText": 0
+    },
+    "eyebrows": [],
+    "numbered": [
+     {
+      "text": "01",
+      "size": 80,
+      "top": 478
+     },
+     {
+      "text": "02",
+      "size": 64,
+      "top": 1240
+     },
+     {
+      "text": "03",
+      "size": 64,
+      "top": 1650
+     },
+     {
+      "text": "04",
+      "size": 104,
+      "top": 1794
+     },
+     {
+      "text": "05",
+      "size": 64,
+      "top": 2371
+     },
+     {
+      "text": "06",
+      "size": 48,
+      "top": 3084
+     }
+    ],
+    "color": {
+     "bodyBg": "#f8fafc",
+     "bodyBgHsl": {
+      "h": 210,
+      "s": 0.4,
+      "l": 0.98
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#e0f2fe",
+       "top": 508,
+       "hsl": {
+        "h": 204,
+        "s": 0.94,
+        "l": 0.94
+       }
+      },
+      {
+       "color": "#f0f8ff",
+       "top": 3016,
+       "hsl": {
+        "h": 208,
+        "s": 1,
+        "l": 0.97
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#1e293b",
+       "share": 0.36
+      },
+      {
+       "color": "#64748b",
+       "share": 0.35
+      },
+      {
+       "color": "#475569",
+       "share": 0.17
+      },
+      {
+       "color": "#0369a1",
+       "share": 0.11
+      },
+      {
+       "color": "#ffffff",
+       "share": 0
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#0369a1"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 1,
+     "inHero": 1,
+     "radius": "pill",
+     "height": 44,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "1 암호화 보관"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 5,
+     "shadowSamples": [],
+     "gradients": 4,
+     "scrims": 0,
+     "gradientSamples": [
+      "div.security-visual → radial-gradient(at 12% 15%, rgba(56, 189, 248, 0.1), rgba(0, 0, 0, 0) 65%), radial-gradient(at 88% 85%, rgba(1",
+      "section#creator-reverse.spotlight.reverse-spotlight → radial-gradient(at 12% 15%, rgba(56, 189, 248, 0.1), rgba(0, 0, 0, 0) 65%), radial-gradient(at 88% 85%, rgba(1",
+      "section.service-chapter.chapter-management → radial-gradient(at 12% 15%, rgba(56, 189, 248, 0.1), rgba(0, 0, 0, 0) 65%), radial-gradient(at 88% 85%, rgba(1",
+      "section.service-chapter.chapter-profile → radial-gradient(at 12% 15%, rgba(56, 189, 248, 0.1), rgba(0, 0, 0, 0) 65%), radial-gradient(at 88% 85%, rgba(1"
+     ],
+     "gradientText": 0,
+     "hairlines": 0,
+     "hairlineSamples": [],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 9,
+     "boxRadius": 28,
+     "squareMedia": 2,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": false,
+     "height": 80,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "pretendard",
+     "tmoney"
+    ]
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 5,
+   "filled": [
+    0.34,
+    0.86,
+    0.65,
+    0.61,
+    0.46
+   ],
+   "motion": {
+    "elements": 10,
+    "css": 10,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 4360,
+     "screens": 4.3,
+     "words": 328,
+     "img": 22,
+     "video": 0,
+     "canvas": 0,
+     "svg": 17,
+     "sections": 6,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 5,
+     "uiAbuse": false,
+     "realPictures": 3,
+     "videoCount": 0,
+     "uiPictures": 3,
+     "pictureSamples": [
+      "promise-inspect.webp",
+      "fankkuk-cat-transparent.png",
+      "icon-gift.webp"
+     ],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": []
+    },
+    "hero": {
+     "text": "01",
+     "words": 1,
+     "chars": 2,
+     "lines": 1,
+     "size": 80,
+     "vw": 10.4,
+     "font": "Pretendard",
+     "weight": 800,
+     "tracking": -0.06,
+     "leading": 1,
+     "upper": false,
+     "italic": false,
+     "mono": false,
+     "align": "left",
+     "position": "right",
+     "widthRatio": 0.11,
+     "top": 475,
+     "tag": "span",
+     "kind": "heading"
+    },
+    "h1": {
+     "text": "팬과 크리에이터가 선물로 마음을 나누는 곳",
+     "words": 6,
+     "lines": 2,
+     "size": 48,
+     "font": "Tmoney"
+    },
+    "headings": [
+     {
+      "text": "팬과 크리에이터가 선물로 마음을 나누는 곳",
+      "words": 6,
+      "chars": 23,
+      "lines": 2,
+      "size": 48,
+      "vw": 6.3,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.02,
+      "leading": 1.32,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 120,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "01",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 80,
+      "vw": 10.4,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.11,
+      "top": 475,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "승인으로 지키는 크리에이터 주소",
+      "words": 4,
+      "chars": 17,
+      "lines": 2,
+      "size": 40,
+      "vw": 5.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.02,
+      "leading": 1.25,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.83,
+      "top": 555,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "02",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 64,
+      "vw": 8.3,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.1,
+      "top": 1669,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "팬들에게 선물을 편하게 보내세요",
+      "words": 4,
+      "chars": 17,
+      "lines": 2,
+      "size": 40,
+      "vw": 5.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.02,
+      "leading": 1.25,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.81,
+      "top": 1737,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "03",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 64,
+      "vw": 8.3,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.1,
+      "top": 2318,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "선물 검수",
+      "words": 2,
+      "chars": 5,
+      "lines": 1,
+      "size": 32,
+      "vw": 4.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.025,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.43,
+      "top": 2382,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "04",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 104,
+      "vw": 13.5,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.16,
+      "top": 2683,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "배송 현황과 지금 할 일",
+      "words": 5,
+      "chars": 13,
+      "lines": 1,
+      "size": 32,
+      "vw": 4.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.025,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.83,
+      "top": 2699,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "05",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 64,
+      "vw": 8.3,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.1,
+      "top": 3099,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "선물과 답장 보관",
+      "words": 3,
+      "chars": 9,
+      "lines": 1,
+      "size": 32,
+      "vw": 4.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.025,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.73,
+      "top": 3163,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "06",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 48,
+      "vw": 6.3,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.07,
+      "top": 3747,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "팬덤 프로필 꾸미기",
+      "words": 3,
+      "chars": 10,
+      "lines": 2,
+      "size": 32,
+      "vw": 4.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.025,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.33,
+      "top": 3803,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 13,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": 3,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Pretendard",
+       "share": 0.92,
+       "mono": false
+      },
+      {
+       "family": "Tmoney",
+       "share": 0.08,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      14,
+      16,
+      18,
+      24,
+      32,
+      40,
+      48,
+      64,
+      80,
+      104
+     ],
+     "sizeCount": 10,
+     "notLoaded": [],
+     "body": null,
+     "measureChars": null,
+     "max": {
+      "size": 104,
+      "vw": 13.5,
+      "font": "Pretendard",
+      "text": "04"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.01,
+     "centerShare": 0.15,
+     "smallText": 0
+    },
+    "eyebrows": [
+     {
+      "text": "RF",
+      "above": "04",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 14,
+      "top": 2574
+     }
+    ],
+    "numbered": [
+     {
+      "text": "01",
+      "size": 80,
+      "top": 475
+     },
+     {
+      "text": "02",
+      "size": 64,
+      "top": 1669
+     },
+     {
+      "text": "03",
+      "size": 64,
+      "top": 2318
+     },
+     {
+      "text": "04",
+      "size": 104,
+      "top": 2683
+     },
+     {
+      "text": "05",
+      "size": 64,
+      "top": 3099
+     },
+     {
+      "text": "06",
+      "size": 48,
+      "top": 3747
+     }
+    ],
+    "color": {
+     "bodyBg": "#f8fafc",
+     "bodyBgHsl": {
+      "h": 210,
+      "s": 0.4,
+      "l": 0.98
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#e0f2fe",
+       "top": 961,
+       "hsl": {
+        "h": 204,
+        "s": 0.94,
+        "l": 0.94
+       }
+      },
+      {
+       "color": "#f0f8ff",
+       "top": 1697,
+       "hsl": {
+        "h": 208,
+        "s": 1,
+        "l": 0.97
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#1e293b",
+       "share": 0.36
+      },
+      {
+       "color": "#64748b",
+       "share": 0.35
+      },
+      {
+       "color": "#475569",
+       "share": 0.17
+      },
+      {
+       "color": "#0369a1",
+       "share": 0.11
+      },
+      {
+       "color": "#ffffff",
+       "share": 0
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#0369a1"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 1,
+     "inHero": 0,
+     "radius": "pill",
+     "height": 44,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": []
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 5,
+     "shadowSamples": [],
+     "gradients": 4,
+     "scrims": 0,
+     "gradientSamples": [
+      "div.security-visual → radial-gradient(at 12% 15%, rgba(56, 189, 248, 0.1), rgba(0, 0, 0, 0) 65%), radial-gradient(at 88% 85%, rgba(1",
+      "section#creator-reverse.spotlight.reverse-spotlight → radial-gradient(at 12% 15%, rgba(56, 189, 248, 0.1), rgba(0, 0, 0, 0) 65%), radial-gradient(at 88% 85%, rgba(1",
+      "section.service-chapter.chapter-management → radial-gradient(at 12% 15%, rgba(56, 189, 248, 0.1), rgba(0, 0, 0, 0) 65%), radial-gradient(at 88% 85%, rgba(1",
+      "section.service-chapter.chapter-profile → radial-gradient(at 12% 15%, rgba(56, 189, 248, 0.1), rgba(0, 0, 0, 0) 65%), radial-gradient(at 88% 85%, rgba(1"
+     ],
+     "gradientText": 0,
+     "hairlines": 0,
+     "hairlineSamples": [],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 10,
+     "boxRadius": 28,
+     "squareMedia": 1,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": false,
+     "height": 80,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "pretendard",
+     "tmoney"
+    ]
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 8,
+   "filled": [
+    0.36,
+    0.82,
+    0.81,
+    0.86,
+    0.59,
+    0.64,
+    0.78,
+    0.69
+   ],
+   "motion": {
+    "elements": 10,
+    "css": 10,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 6177,
+     "screens": 7.3,
+     "words": 328,
+     "img": 22,
+     "video": 0,
+     "canvas": 0,
+     "svg": 17,
+     "sections": 6,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 5,
+     "uiAbuse": false,
+     "realPictures": 2,
+     "videoCount": 0,
+     "uiPictures": 3,
+     "pictureSamples": [
+      "promise-inspect.webp",
+      "fankkuk-cat-transparent.png"
+     ],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": []
+    },
+    "hero": {
+     "text": "01",
+     "words": 1,
+     "chars": 2,
+     "lines": 1,
+     "size": 64,
+     "vw": 16.4,
+     "font": "Pretendard",
+     "weight": 800,
+     "tracking": -0.06,
+     "leading": 1,
+     "upper": false,
+     "italic": false,
+     "mono": false,
+     "align": "left",
+     "position": "right",
+     "widthRatio": 0.17,
+     "top": 538,
+     "tag": "span",
+     "kind": "heading"
+    },
+    "h1": {
+     "text": "팬과 크리에이터가 선물로 마음을 나누는 곳",
+     "words": 6,
+     "lines": 2,
+     "size": 32,
+     "font": "Tmoney"
+    },
+    "headings": [
+     {
+      "text": "팬꾹",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": 0,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.24,
+      "top": 12,
+      "tag": "a",
+      "kind": "heading"
+     },
+     {
+      "text": "팬과 크리에이터가 선물로 마음을 나누는 곳",
+      "words": 6,
+      "chars": 23,
+      "lines": 2,
+      "size": 32,
+      "vw": 8.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.02,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 92,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "01",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 64,
+      "vw": 16.4,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.17,
+      "top": 538,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "승인으로 지키는 크리에이터 주소",
+      "words": 4,
+      "chars": 17,
+      "lines": 2,
+      "size": 32,
+      "vw": 8.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.02,
+      "leading": 1.25,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 602,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "02",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 48,
+      "vw": 12.3,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.14,
+      "top": 2276,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "팬들에게 선물을 편하게 보내세요",
+      "words": 4,
+      "chars": 17,
+      "lines": 2,
+      "size": 32,
+      "vw": 8.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.02,
+      "leading": 1.25,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.77,
+      "top": 2328,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "03",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 52,
+      "vw": 13.3,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.16,
+      "top": 3330,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "선물 검수",
+      "words": 2,
+      "chars": 5,
+      "lines": 1,
+      "size": 28,
+      "vw": 7.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.025,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 3382,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "04",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 88,
+      "vw": 22.6,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.27,
+      "top": 3929,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "배송 현황과 지금 할 일",
+      "words": 5,
+      "chars": 13,
+      "lines": 2,
+      "size": 28,
+      "vw": 7.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.025,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.78,
+      "top": 3937,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "05",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 52,
+      "vw": 13.3,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.16,
+      "top": 4479,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "선물과 답장 보관",
+      "words": 3,
+      "chars": 9,
+      "lines": 1,
+      "size": 28,
+      "vw": 7.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.025,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 4531,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "06",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 48,
+      "vw": 12.3,
+      "font": "Pretendard",
+      "weight": 800,
+      "tracking": -0.06,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.15,
+      "top": 5294,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "팬덤 프로필 꾸미기",
+      "words": 3,
+      "chars": 10,
+      "lines": 1,
+      "size": 28,
+      "vw": 7.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.025,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.77,
+      "top": 5350,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "꾹냥",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Pretendard",
+      "weight": 700,
+      "tracking": 0,
+      "leading": 1.6,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.77,
+      "top": 5745,
+      "tag": "strong",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 15,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 1,
+     "medianWords": 2,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Pretendard",
+       "share": 0.92,
+       "mono": false
+      },
+      {
+       "family": "Tmoney",
+       "share": 0.08,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      14,
+      16,
+      18,
+      24,
+      28,
+      32,
+      48,
+      52,
+      64,
+      88
+     ],
+     "sizeCount": 10,
+     "notLoaded": [],
+     "body": null,
+     "measureChars": null,
+     "max": {
+      "size": 88,
+      "vw": 22.6,
+      "font": "Pretendard",
+      "text": "04"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.01,
+     "centerShare": 0.15,
+     "smallText": 0
+    },
+    "eyebrows": [
+     {
+      "text": "선물 도착",
+      "above": "03",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 16,
+      "top": 3246
+     },
+     {
+      "text": "RF",
+      "above": "04",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 14,
+      "top": 3805
+     }
+    ],
+    "numbered": [
+     {
+      "text": "01",
+      "size": 64,
+      "top": 538
+     },
+     {
+      "text": "02",
+      "size": 48,
+      "top": 2276
+     },
+     {
+      "text": "03",
+      "size": 52,
+      "top": 3330
+     },
+     {
+      "text": "04",
+      "size": 88,
+      "top": 3929
+     },
+     {
+      "text": "05",
+      "size": 52,
+      "top": 4479
+     },
+     {
+      "text": "06",
+      "size": 48,
+      "top": 5294
+     }
+    ],
+    "color": {
+     "bodyBg": "#f8fafc",
+     "bodyBgHsl": {
+      "h": 210,
+      "s": 0.4,
+      "l": 0.98
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#e0f2fe",
+       "top": 932,
+       "hsl": {
+        "h": 204,
+        "s": 0.94,
+        "l": 0.94
+       }
+      },
+      {
+       "color": "#f0f8ff",
+       "top": 2296,
+       "hsl": {
+        "h": 208,
+        "s": 1,
+        "l": 0.97
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#1e293b",
+       "share": 0.36
+      },
+      {
+       "color": "#64748b",
+       "share": 0.32
+      },
+      {
+       "color": "#475569",
+       "share": 0.2
+      },
+      {
+       "color": "#0369a1",
+       "share": 0.11
+      },
+      {
+       "color": "#ffffff",
+       "share": 0
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#0369a1"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 1,
+     "inHero": 0,
+     "radius": "pill",
+     "height": 44,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": []
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 5,
+     "shadowSamples": [],
+     "gradients": 4,
+     "scrims": 0,
+     "gradientSamples": [
+      "div.security-visual → radial-gradient(at 12% 15%, rgba(56, 189, 248, 0.1), rgba(0, 0, 0, 0) 65%), radial-gradient(at 88% 85%, rgba(1",
+      "section#creator-reverse.spotlight.reverse-spotlight → radial-gradient(at 12% 15%, rgba(56, 189, 248, 0.1), rgba(0, 0, 0, 0) 65%), radial-gradient(at 88% 85%, rgba(1",
+      "section.service-chapter.chapter-management → radial-gradient(at 12% 15%, rgba(56, 189, 248, 0.1), rgba(0, 0, 0, 0) 65%), radial-gradient(at 88% 85%, rgba(1",
+      "section.service-chapter.chapter-profile → radial-gradient(at 12% 15%, rgba(56, 189, 248, 0.1), rgba(0, 0, 0, 0) 65%), radial-gradient(at 88% 85%, rgba(1"
+     ],
+     "gradientText": 0,
+     "hairlines": 0,
+     "hairlineSamples": [],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 9,
+     "boxRadius": 24,
+     "squareMedia": 1,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": false,
+     "height": 64,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "pretendard",
+     "tmoney"
+    ]
+   },
+   "consoleErrors": []
+  }
+ ],
+ "findings": [
+  {
+   "level": "WARN",
+   "id": "size-count",
+   "width": 1440,
+   "message": "10 different font sizes (14, 16, 18, 24, 32, 40, 48, 64, 80, 104).",
+   "fix": "A page needs about five: display, heading, lead, body, small.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "no-footage",
+   "width": 1440,
+   "message": "No video anywhere on the page.",
+   "fix": "Look for one honest clip with scripts/assets.mjs --video (the place, the material, the process) and use it as a muted loop with a poster frame. Defend its absence only if no clip fits the subject."
+  },
+  {
+   "level": "WARN",
+   "id": "still-page",
+   "width": 1440,
+   "message": "Little motion: 10 element(s) moved while the page loaded and scrolled.",
+   "fix": "Give every section an entrance for its parts (not one fade of the whole block) and add one moving picture: a looping clip or a slow move on a photograph."
+  },
+  {
+   "level": "WARN",
+   "id": "first-action",
+   "width": 768,
+   "message": "No visible button in the first screen.",
+   "fix": "Give the one primary action a real button in the first screen (a filled or solid-bordered control, 44px or taller), not only a link in the navigation.",
+   "alsoAt": [
+    390
+   ]
+  }
+ ],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1440,
+   "fold": "C:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\projects\\fankkuk\\workspace\\home-benefits-check\\alignment\\desktop-fold.jpg",
+   "pages": [
+    "C:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\projects\\fankkuk\\workspace\\home-benefits-check\\alignment\\desktop-page-01.jpg",
+    "C:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\projects\\fankkuk\\workspace\\home-benefits-check\\alignment\\desktop-page-02.jpg"
+   ]
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "C:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\projects\\fankkuk\\workspace\\home-benefits-check\\alignment\\tablet-fold.jpg",
+   "pages": [
+    "C:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\projects\\fankkuk\\workspace\\home-benefits-check\\alignment\\tablet-page-01.jpg"
+   ]
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "C:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\projects\\fankkuk\\workspace\\home-benefits-check\\alignment\\mobile-fold.jpg",
+   "pages": [
+    "C:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\projects\\fankkuk\\workspace\\home-benefits-check\\alignment\\mobile-page-01.jpg"
+   ]
+  }
+ ]
+}

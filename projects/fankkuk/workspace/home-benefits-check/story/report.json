@@ -1,0 +1,1127 @@
+{
+ "url": "docs/design/mockups/home-benefits-20261029/index.html",
+ "at": "2026-10-29T15:53:22.266Z",
+ "allow": [
+  "numbering"
+ ],
+ "viewports": [
+  {
+   "width": 1440,
+   "height": 900,
+   "load": "load",
+   "screens": 4,
+   "filled": [
+    0.31,
+    0.36,
+    0.19,
+    0.28
+   ],
+   "motion": {
+    "elements": 9,
+    "css": 9,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "page": {
+     "height": 3332,
+     "screens": 3.7,
+     "words": 335,
+     "img": 16,
+     "video": 0,
+     "canvas": 0,
+     "svg": 5,
+     "sections": 3,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 3,
+     "uiAbuse": false,
+     "realPictures": 2,
+     "videoCount": 0,
+     "uiPictures": 3,
+     "pictureSamples": [
+      "creator-cat.webp",
+      "mascot-gift.png"
+     ],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": []
+    },
+    "hero": {
+     "text": "선물을 보내고, 함께 추억을 쌓아요",
+     "words": 5,
+     "chars": 19,
+     "lines": 2,
+     "size": 48,
+     "vw": 3.3,
+     "font": "Tmoney",
+     "weight": 800,
+     "tracking": -0.035,
+     "leading": 1.35,
+     "upper": false,
+     "italic": false,
+     "mono": false,
+     "align": "left",
+     "position": "left",
+     "widthRatio": 0.27,
+     "top": 128,
+     "tag": "h1",
+     "kind": "heading"
+    },
+    "h1": {
+     "text": "선물을 보내고, 함께 추억을 쌓아요",
+     "words": 5,
+     "lines": 2,
+     "size": 48,
+     "font": "Tmoney"
+    },
+    "headings": [
+     {
+      "text": "선물을 보내고, 함께 추억을 쌓아요",
+      "words": 5,
+      "chars": 19,
+      "lines": 2,
+      "size": 48,
+      "vw": 3.3,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.035,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.27,
+      "top": 128,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "승인으로 지키는 크리에이터 주소",
+      "words": 4,
+      "chars": 17,
+      "lines": 2,
+      "size": 32,
+      "vw": 2.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.035,
+      "leading": 1.4,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.56,
+      "top": 549,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "여러 팬에게, 더 쉽고 저렴하게",
+      "words": 5,
+      "chars": 17,
+      "lines": 2,
+      "size": 32,
+      "vw": 2.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.035,
+      "leading": 1.4,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.27,
+      "top": 1273,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "검수부터 기록까지 함께",
+      "words": 3,
+      "chars": 12,
+      "lines": 1,
+      "size": 32,
+      "vw": 2.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.035,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.61,
+      "top": 1761,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 4,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": 4,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Pretendard",
+       "share": 0.95,
+       "mono": false
+      },
+      {
+       "family": "Tmoney",
+       "share": 0.05,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      14,
+      16,
+      20,
+      24,
+      32,
+      48
+     ],
+     "sizeCount": 6,
+     "notLoaded": [],
+     "body": null,
+     "measureChars": null,
+     "max": {
+      "size": 48,
+      "vw": 3.3,
+      "font": "Tmoney",
+      "text": "선물을 보내고,함께 추억을 쌓아요"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.01,
+     "centerShare": 0.1,
+     "smallText": 0
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#ffffff",
+     "bodyBgHsl": {
+      "h": 0,
+      "s": 0,
+      "l": 1
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#e0f2fe",
+       "top": 509,
+       "hsl": {
+        "h": 204,
+        "s": 0.94,
+        "l": 0.94
+       }
+      },
+      {
+       "color": "#f0f8ff",
+       "top": 1179,
+       "hsl": {
+        "h": 208,
+        "s": 1,
+        "l": 0.97
+       }
+      },
+      {
+       "color": "#ffffff",
+       "top": 2567,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#1f2937",
+       "share": 0.68
+      },
+      {
+       "color": "#4b5563",
+       "share": 0.32
+      }
+     ],
+     "button": null,
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 0,
+     "inHero": 0,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": []
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 0,
+     "hairlineSamples": [],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 13,
+     "boxRadius": 24,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": [
+      {
+       "count": 3,
+       "iconTopped": false,
+       "rounded": true,
+       "top": 509
+      }
+     ]
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": false,
+     "height": 80,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "pretendard",
+     "tmoney"
+    ]
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 4,
+   "filled": [
+    0.61,
+    0.64,
+    0.3,
+    0.39
+   ],
+   "motion": {
+    "elements": 9,
+    "css": 9,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 3320,
+     "screens": 3.2,
+     "words": 335,
+     "img": 16,
+     "video": 0,
+     "canvas": 0,
+     "svg": 5,
+     "sections": 3,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 3,
+     "uiAbuse": false,
+     "realPictures": 2,
+     "videoCount": 0,
+     "uiPictures": 3,
+     "pictureSamples": [
+      "creator-cat.webp",
+      "mascot-gift.png"
+     ],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": []
+    },
+    "hero": {
+     "text": "선물을 보내고, 함께 추억을 쌓아요",
+     "words": 5,
+     "chars": 19,
+     "lines": 2,
+     "size": 48,
+     "vw": 6.3,
+     "font": "Tmoney",
+     "weight": 800,
+     "tracking": -0.035,
+     "leading": 1.35,
+     "upper": false,
+     "italic": false,
+     "mono": false,
+     "align": "left",
+     "position": "left",
+     "widthRatio": 0.5,
+     "top": 128,
+     "tag": "h1",
+     "kind": "heading"
+    },
+    "h1": {
+     "text": "선물을 보내고, 함께 추억을 쌓아요",
+     "words": 5,
+     "lines": 2,
+     "size": 48,
+     "font": "Tmoney"
+    },
+    "headings": [
+     {
+      "text": "선물을 보내고, 함께 추억을 쌓아요",
+      "words": 5,
+      "chars": 19,
+      "lines": 2,
+      "size": 48,
+      "vw": 6.3,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.035,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.5,
+      "top": 128,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "승인으로 지키는 크리에이터 주소",
+      "words": 4,
+      "chars": 17,
+      "lines": 2,
+      "size": 32,
+      "vw": 4.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.035,
+      "leading": 1.4,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.83,
+      "top": 549,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "여러 팬에게, 더 쉽고 저렴하게",
+      "words": 5,
+      "chars": 17,
+      "lines": 2,
+      "size": 32,
+      "vw": 4.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.035,
+      "leading": 1.4,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.4,
+      "top": 1261,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "검수부터 기록까지 함께",
+      "words": 3,
+      "chars": 12,
+      "lines": 1,
+      "size": 32,
+      "vw": 4.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.035,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.94,
+      "top": 1749,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 4,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": 4,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Pretendard",
+       "share": 0.95,
+       "mono": false
+      },
+      {
+       "family": "Tmoney",
+       "share": 0.05,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      14,
+      16,
+      20,
+      24,
+      32,
+      48
+     ],
+     "sizeCount": 6,
+     "notLoaded": [],
+     "body": null,
+     "measureChars": null,
+     "max": {
+      "size": 48,
+      "vw": 6.3,
+      "font": "Tmoney",
+      "text": "선물을 보내고,함께 추억을 쌓아요"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.01,
+     "centerShare": 0.1,
+     "smallText": 0
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#ffffff",
+     "bodyBgHsl": {
+      "h": 0,
+      "s": 0,
+      "l": 1
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#e0f2fe",
+       "top": 509,
+       "hsl": {
+        "h": 204,
+        "s": 0.94,
+        "l": 0.94
+       }
+      },
+      {
+       "color": "#f0f8ff",
+       "top": 1167,
+       "hsl": {
+        "h": 208,
+        "s": 1,
+        "l": 0.97
+       }
+      },
+      {
+       "color": "#ffffff",
+       "top": 2555,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#1f2937",
+       "share": 0.68
+      },
+      {
+       "color": "#4b5563",
+       "share": 0.32
+      }
+     ],
+     "button": null,
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 0,
+     "inHero": 0,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": []
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 0,
+     "hairlineSamples": [],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 11,
+     "boxRadius": 24,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": false,
+     "height": 80,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "pretendard",
+     "tmoney"
+    ]
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 7,
+   "filled": [
+    0.5,
+    0.79,
+    0.73,
+    0.52,
+    0.45,
+    0.41,
+    0.64
+   ],
+   "motion": {
+    "elements": 8,
+    "css": 8,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 5151,
+     "screens": 6.1,
+     "words": 335,
+     "img": 16,
+     "video": 0,
+     "canvas": 0,
+     "svg": 5,
+     "sections": 3,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 3,
+     "uiAbuse": false,
+     "realPictures": 1,
+     "videoCount": 0,
+     "uiPictures": 3,
+     "pictureSamples": [
+      "mascot-gift.png"
+     ],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": []
+    },
+    "hero": {
+     "text": "선물을 보내고, 함께 추억을 쌓아요",
+     "words": 5,
+     "chars": 19,
+     "lines": 2,
+     "size": 32,
+     "vw": 8.2,
+     "font": "Tmoney",
+     "weight": 800,
+     "tracking": -0.035,
+     "leading": 1.35,
+     "upper": false,
+     "italic": false,
+     "mono": false,
+     "align": "left",
+     "position": "center",
+     "widthRatio": 0.74,
+     "top": 96,
+     "tag": "h1",
+     "kind": "heading"
+    },
+    "h1": {
+     "text": "선물을 보내고, 함께 추억을 쌓아요",
+     "words": 5,
+     "lines": 2,
+     "size": 32,
+     "font": "Tmoney"
+    },
+    "headings": [
+     {
+      "text": "팬꾹",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": 0,
+      "leading": 1.65,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.24,
+      "top": 12,
+      "tag": "a",
+      "kind": "heading"
+     },
+     {
+      "text": "선물을 보내고, 함께 추억을 쌓아요",
+      "words": 5,
+      "chars": 19,
+      "lines": 2,
+      "size": 32,
+      "vw": 8.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.035,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.74,
+      "top": 96,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "승인으로 지키는 크리에이터 주소",
+      "words": 4,
+      "chars": 17,
+      "lines": 2,
+      "size": 32,
+      "vw": 8.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.035,
+      "leading": 1.4,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.77,
+      "top": 572,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "여러 팬에게, 더 쉽고 저렴하게",
+      "words": 5,
+      "chars": 17,
+      "lines": 2,
+      "size": 32,
+      "vw": 8.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.035,
+      "leading": 1.4,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.77,
+      "top": 1959,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "검수부터 기록까지 함께",
+      "words": 3,
+      "chars": 12,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Tmoney",
+      "weight": 800,
+      "tracking": -0.035,
+      "leading": 1.35,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 2782,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "선물 검수",
+      "words": 2,
+      "chars": 5,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Pretendard",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.5,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 2902,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "배송 현황과 지금 할 일",
+      "words": 5,
+      "chars": 13,
+      "lines": 2,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Pretendard",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.5,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 3311,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "선물과 답장 보관",
+      "words": 3,
+      "chars": 9,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Pretendard",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.5,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 3882,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "팬덤 프로필 꾸미기",
+      "words": 3,
+      "chars": 10,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Pretendard",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.5,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 4379,
+      "tag": "h3",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 9,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": 3,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Pretendard",
+       "share": 0.95,
+       "mono": false
+      },
+      {
+       "family": "Tmoney",
+       "share": 0.05,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      14,
+      16,
+      20,
+      24,
+      32
+     ],
+     "sizeCount": 5,
+     "notLoaded": [],
+     "body": null,
+     "measureChars": null,
+     "max": {
+      "size": 32,
+      "vw": 8.2,
+      "font": "Tmoney",
+      "text": "선물을 보내고,함께 추억을 쌓아요"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.01,
+     "centerShare": 0.02,
+     "smallText": 0
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#ffffff",
+     "bodyBgHsl": {
+      "h": 0,
+      "s": 0,
+      "l": 1
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#e0f2fe",
+       "top": 548,
+       "hsl": {
+        "h": 204,
+        "s": 0.94,
+        "l": 0.94
+       }
+      },
+      {
+       "color": "#f0f8ff",
+       "top": 1888,
+       "hsl": {
+        "h": 208,
+        "s": 1,
+        "l": 0.97
+       }
+      },
+      {
+       "color": "#ffffff",
+       "top": 2286,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      },
+      {
+       "color": "#f5f6f8",
+       "top": 3475,
+       "hsl": {
+        "h": 220,
+        "s": 0.18,
+        "l": 0.97
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#1f2937",
+       "share": 0.68
+      },
+      {
+       "color": "#4b5563",
+       "share": 0.32
+      }
+     ],
+     "button": null,
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 0,
+     "inHero": 0,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": []
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 0,
+     "hairlineSamples": [],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 11,
+     "boxRadius": 24,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": [
+      {
+       "count": 3,
+       "iconTopped": false,
+       "rounded": true,
+       "top": 548
+      }
+     ]
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": false,
+     "height": 64,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "pretendard",
+     "tmoney"
+    ]
+   },
+   "consoleErrors": []
+  }
+ ],
+ "findings": [
+  {
+   "level": "WARN",
+   "id": "first-action",
+   "width": 1440,
+   "message": "No visible button in the first screen.",
+   "fix": "Give the one primary action a real button in the first screen (a filled or solid-bordered control, 44px or taller), not only a link in the navigation.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "no-footage",
+   "width": 1440,
+   "message": "No video anywhere on the page.",
+   "fix": "Look for one honest clip with scripts/assets.mjs --video (the place, the material, the process) and use it as a muted loop with a poster frame. Defend its absence only if no clip fits the subject."
+  },
+  {
+   "level": "WARN",
+   "id": "still-page",
+   "width": 1440,
+   "message": "Little motion: 9 element(s) moved while the page loaded and scrolled.",
+   "fix": "Give every section an entrance for its parts (not one fade of the whole block) and add one moving picture: a looping clip or a slow move on a photograph."
+  }
+ ],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1440,
+   "fold": "C:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\projects\\fankkuk\\workspace\\home-benefits-check\\story\\desktop-fold.jpg",
+   "pages": [
+    "C:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\projects\\fankkuk\\workspace\\home-benefits-check\\story\\desktop-page-01.jpg"
+   ]
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "C:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\projects\\fankkuk\\workspace\\home-benefits-check\\story\\tablet-fold.jpg",
+   "pages": [
+    "C:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\projects\\fankkuk\\workspace\\home-benefits-check\\story\\tablet-page-01.jpg"
+   ]
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "C:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\projects\\fankkuk\\workspace\\home-benefits-check\\story\\mobile-fold.jpg",
+   "pages": [
+    "C:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\projects\\fankkuk\\workspace\\home-benefits-check\\story\\mobile-page-01.jpg"
+   ]
+  }
+ ]
+}

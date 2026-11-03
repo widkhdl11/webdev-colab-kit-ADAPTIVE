@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { MyVerification, MyVerificationState } from "@/entities/creator/model/creator-verification";
+import { channelStepDone, myVerificationPanel, type MyVerification, type MyVerificationState } from "@/entities/creator/model/creator-verification";
 import type { PendingSignatureLink } from "@/entities/creator/api/signature-link-reads";
 import { CREATOR_HOME } from "@/entities/session/model/home-path";
 import { VerificationPanel } from "@/features/creator-verify/ui/verification-panel";
@@ -11,7 +11,8 @@ import s from "./signup.module.css";
 
 // 크리에이터 가입 4·5단계 (UX 명세 signup.md 「2026-10-29 단계 화면」 step 4·5, 시안 v43-signup/signup-4-channel·5-signature).
 // 계정은 3단계에서 만들어졌다 — 여기는 로그인한 크리에이터로 진행한다. 1~3단계는 지난 단계로 표시만 하고 돌아가지 않는다(계정이 이미 있다).
-// 4단계: 지금 채널 확인 화면(VerificationPanel) 그대로 + 「나중에 하기」·「다음」(확인을 마쳐야 켜짐). 확인을 마치면 「다음」만 남는다.
+// 4단계: 채널 확인(VerificationPanel, 시안 channel-link-verify-20261102 · design-rules 42절) + 아래 버튼 줄. 요청을 보냈거나 확인을 마치면
+// 4단계가 끝난다 — 「다음」만 남는다(signup.md 2026-11-02). 그 전에는 「나중에 하기 | 다음(꺼짐)」 한 줄. 「이전」은 두지 않는다 — 계정이 이미 있어 3단계로 돌아갈 곳이 없다.
 // 5단계: 승인 서명 연결하기 카드(SignatureLinkPanel — 크리에이터 상세 설정과 같은 부품). 「나중에 하기」는 크리에이터 첫 화면으로.
 // 휴대폰 번호 미리 채움: 3단계가 이 탭의 세션 저장소에 남긴 번호를 한 번 읽고 지운다(서버는 번호를 다시 내려보내지 않는다).
 
@@ -65,7 +66,7 @@ function StepNav({ step }: { step: 4 | 5 }) {
 export type SignupCreatorStepsProps =
   | {
       step: 4;
-      verification: { state: MyVerificationState; rows: readonly MyVerification[]; apiPlatforms: readonly string[] };
+      verification: { state: MyVerificationState; rows: readonly MyVerification[]; apiPlatforms: readonly string[]; loginId?: string | null };
     }
   | {
       step: 5;
@@ -94,18 +95,18 @@ export function SignupCreatorSteps(props: SignupCreatorStepsProps) {
   );
 }
 
-function ChannelStep({ verification }: { verification: { state: MyVerificationState; rows: readonly MyVerification[]; apiPlatforms: readonly string[] } }) {
-  const verified = verification.state.verified;
+function ChannelStep({ verification }: { verification: { state: MyVerificationState; rows: readonly MyVerification[]; apiPlatforms: readonly string[]; loginId?: string | null } }) {
+  const done = channelStepDone(myVerificationPanel(verification.state, verification.rows).stage);
   return (
     <div className={`card ${s.chan}`}>
-      <VerificationPanel state={verification.state} rows={verification.rows} apiPlatforms={verification.apiPlatforms} />
-      <div className={[s["step-actions"], verified ? s["no-prev"] : ""].filter(Boolean).join(" ")}>
-        {verified ? null : (
+      <VerificationPanel variant="signup" state={verification.state} rows={verification.rows} loginId={verification.loginId ?? null} />
+      <div className={[s["step-actions"], done ? s["no-prev"] : ""].filter(Boolean).join(" ")}>
+        {done ? null : (
           <Link className="btn btn--line" href={CREATOR_HOME}>
             나중에 하기
           </Link>
         )}
-        {verified ? (
+        {done ? (
           <Link className={`btn ${s.next}`} href={`${STEP_PATH}?step=5`}>
             다음
           </Link>

@@ -155,3 +155,7 @@
   .chevron, .other { transition: none; }
   .other:hover { transform: none; }
 }
+
+/* 「채널 확인 중」 페이지 안내 상자(INV-V22, design-rules 42절 · 시안 .f5 .pf-wait) — 하늘 면 + 1px 선 + 시계 아이콘 한 줄. 선물 버튼 자리는 비운다 */
+.verifying { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 48px; margin: var(--space-6) 0 0; padding: var(--space-2) 20px; border-radius: var(--r-btn); background: var(--notice-sky); border: 1px solid var(--notice-sky-line); color: var(--ink); font-weight: var(--fw-btn); }
+.verifying svg { flex: none; }

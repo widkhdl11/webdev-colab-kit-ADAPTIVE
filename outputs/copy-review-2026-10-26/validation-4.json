@@ -1,0 +1,32 @@
+{
+  "original_rows": 339,
+  "review_rows": 339,
+  "changed_rows": 178,
+  "missing_rows": 0,
+  "variable_differences": [],
+  "numeric_changes": [
+    {
+      "line": 324,
+      "before": {},
+      "after": {
+        "6": 1
+      }
+    },
+    {
+      "line": 447,
+      "before": {
+        "7": 1
+      },
+      "after": {
+        "7": 1,
+        "30": 1
+      }
+    }
+  ],
+  "source_unchanged": true,
+  "source_sha256": "9aea292e76f8f28a58adb7e9b61698b714c1e9c8b1379fde614b3d7b868434bc",
+  "html_structure": "전체 항목 수·원문 펼침 수·내부 링크·외부 리소스 없음 확인",
+  "numeric_change_review": "주소 누락 대상에 6자리 명시. 역조공 환불 시점에 reverse-gift INV-R11의 30일 기준 추가. 원문의 수치 삭제·변경 없음.",
+  "personal_reply_and_greeting_preserved": true,
+  "browser_verification": "미실행: 기존 브라우저 접근 제한. 파일 구조·스크립트 문법 검사만 수행."
+}

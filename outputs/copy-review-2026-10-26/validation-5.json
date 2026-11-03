@@ -1,0 +1,39 @@
+{
+  "original_rows": 236,
+  "review_rows": 236,
+  "changed_rows": 134,
+  "missing_rows": 0,
+  "variable_differences": [],
+  "numeric_changes": [
+    {
+      "line": 283,
+      "before": {
+        "010": 1,
+        "0000": 2
+      },
+      "after": {
+        "5": 1,
+        "010": 1,
+        "0000": 2
+      }
+    },
+    {
+      "line": 349,
+      "before": {
+        "120": 1,
+        "010": 1
+      },
+      "after": {
+        "5": 1,
+        "120": 1,
+        "010": 1
+      }
+    }
+  ],
+  "numeric_review": "283·349행: 우편번호의 다섯 자리를 5자리로 표기. 제한값 변경 없음.",
+  "business_details_unchanged": true,
+  "source_sha256": "235962d36cc07248006c04c277ac9a8bfaea54da2c4942edabfd1c358e5d2122",
+  "source_unchanged": true,
+  "html_structure": "전체 항목 수·원문 펼침 수·내부 링크·외부 리소스 없음 확인",
+  "browser_verification": "미실행: 기존 브라우저 접근 제한. 파일 구조·스크립트 문법 검사만 수행."
+}

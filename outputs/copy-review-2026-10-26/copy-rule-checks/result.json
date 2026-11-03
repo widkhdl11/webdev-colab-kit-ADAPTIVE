@@ -1,0 +1,14 @@
+[
+  {
+    "case": "허용 표현",
+    "expected_exit": 0,
+    "exit": 0,
+    "output": "금지어 0건 · 파일 0개 (금지어 5개, 고정 문장 상수 6개 건너뜀)"
+  },
+  {
+    "case": "명백한 잘못된 표현",
+    "expected_exit": 1,
+    "exit": 1,
+    "output": "../../outputs/copy-review-2026-10-26/copy-rule-checks/blocked/copy.tsx:1 · 팬꾹도 주소를 열지 않아요 · export const copy = [\"팬꾹도 주소를 열지 않아요\", \"절대 유출되지 않습니다\", \"저희도 열 수 없습니다\", \"100% 안전\", \"받을지 정하고 있어요\"];\n../../outputs/copy-review-2026-10-26/copy-rule-checks/blocked/copy.tsx:1 · 절대 유출되지 않습니다 · export const copy = [\"팬꾹도 주소를 열지 않아요\", \"절대 유출되지 않습니다\", \"저희도 열 수 없습니다\", \"100% 안전\", \"받을지 정하고 있어요\"];\n../../outputs/copy-review-2026-10-26/copy-rule-checks/blocked/copy.tsx:1 · 저희도 열 수 없습니다 · export const copy = [\"팬꾹도 주소를 열지 않아요\", \"절대 유출되지 않습니다\", \"저희도 열 수 없습니다\", \"100% 안전\", \"받을지 정하고 있어요\"];\n../../outputs/copy-review-2026-10-26/copy-rule-checks/blocked/copy.tsx:1 · 100% 안전 · export const copy = [\"팬꾹도 주소를 열지 않아요\", \"절대 유출되지 않습니다\", \"저희도 열 수 없습니다\", \"100% 안전\", \"받을지 정하고 있어요\"];\n../../outputs/copy-review-2026-10-26/copy-rule-checks/blocked/copy.tsx:1 · 받을지 정하고 있어요 · export const copy = [\"팬꾹도 주소를 열지 않아요\", \"절대 유출되지 않습니다\", \"저희도 열 수 없습니다\", \"100% 안전\", \"받을지 정하고 있어요\"];\n\n금지어 5건 · 파일 1개 (금지어 5개, 고정 문장 상수 6개 건너뜀)"
+  }
+]

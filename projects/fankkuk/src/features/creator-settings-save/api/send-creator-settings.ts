@@ -1,7 +1,6 @@
 import type { NotifyInput, ProfileInput } from "../model/creator-settings-input";
 import type { DaysInput, ReceivingInput } from "../model/receiving-input";
 import type { HardItemsInput } from "../model/hard-items-input";
-import type { HandleInput } from "../model/handle-input";
 import type { ReplySettingsInput } from "../model/reply-settings-input";
 import type { PreviewPickInput } from "../model/preview-pick-input";
 
@@ -48,22 +47,6 @@ export function sendCreatorHardItems(input: HardItemsInput): Promise<SendSetting
 // gift-reply: 답장 모음 보이기 · X 계정 · 태그 허용
 export function sendCreatorReplySettings(input: ReplySettingsInput): Promise<SendSettingsOutcome> {
   return post("/api/creator/reply-settings", input);
-}
-
-// creator-link: 링크용 아이디 저장 — 저장된 값(소문자로 바뀐 아이디)을 돌려받는다
-export type SendHandleOutcome = { kind: "ok"; handle: string } | { kind: "login" } | { kind: "failed"; message: string };
-
-export async function sendCreatorHandle(input: HandleInput): Promise<SendHandleOutcome> {
-  try {
-    const res = await fetch("/api/creator/handle", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) });
-    const data: unknown = await res.json().catch(() => null);
-    if (res.status === 401) return { kind: "login" };
-    const body = (data ?? {}) as { handle?: unknown; message?: unknown };
-    if (res.ok && typeof body.handle === "string") return { kind: "ok", handle: body.handle };
-    return { kind: "failed", message: res.status < 500 && typeof body.message === "string" ? body.message : FALLBACK };
-  } catch {
-    return { kind: "failed", message: FALLBACK };
-  }
 }
 
 // creator-link: 링크 미리보기 이미지 고르기(프로필 사진·팬덤 심볼)

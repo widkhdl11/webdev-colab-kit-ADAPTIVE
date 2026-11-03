@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { formatMonthDayKo } from "@/shared/lib/format/datetime";
 import { CHANNEL_PLATFORM_LABEL, isChannelPlatform } from "./channel-url";
 
 // 크리에이터 채널 확인 요청의 모양과 화면 판단 (creator-verification INV-V4·V9·V11·V13·V15·V17·V19·V20).
@@ -244,6 +245,56 @@ export function myVerificationPanel(
   return { stage, mode, live, last };
 }
 
+/** 상태 뱃지의 색 갈래(design-rules 42절) — state 확인 전 · wait 확인 대기 · rej 반려 · off 신청 마감 · ok 확인 완료 · warn 링크 확인 필요 */
+export type PanelTagTone = "state" | "wait" | "rej" | "off" | "ok" | "warn";
+
+/** 확인 칸 머리의 상태 뱃지 (UX signup.md 「2026-11-02 채널 확인」 · 시안 channel-link-verify-20261102). 남은 요청 횟수는 어디에도 없다(INV-V15). */
+export const PANEL_STAGE_TAG: Record<PanelStage, { label: string; tone: PanelTagTone }> = {
+  link_needed: { label: "확인 전", tone: "state" },
+  idle: { label: "확인 전", tone: "state" },
+  waiting: { label: "확인 대기", tone: "wait" },
+  rejected: { label: "반려", tone: "rej" },
+  locked: { label: "신청 마감", tone: "off" },
+  verified: { label: "확인 완료", tone: "ok" },
+  recheck_missing: { label: "링크 확인 필요", tone: "warn" },
+};
+
+/** INV-V15: 그 채널로 끝난 요청이 한도에 닿았을 때 크리에이터 화면 문구(스펙 문장 그대로 — 남은 횟수는 보이지 않는다). */
+export const LOCKED_MESSAGE = "이 채널로는 더 요청할 수 없습니다. 1:1 문의를 이용해 주세요.";
+
+/**
+ * 확인 칸 맨 위 알림 상자 한 줄(INV-V9·V10·V15·V19). 없으면 null.
+ * - 운영자 확인만이고 확인 전이면 위반 취소를 먼저(INV-V10, d32).
+ * - 신청 마감: LOCKED_MESSAGE. 반려: 사유 값 한 줄만(INV-V19 — 운영자 메모·남은 횟수 없음).
+ * - 확인 전에 지난 요청이 승인 취소·닫힘이면 그 한 줄. 거둠(본인이 한 일)·기간 지남은 알리지 않는다.
+ */
+export function panelNotice(state: Pick<MyVerificationState, "verified" | "operatorOnly">, panel: Pick<MyVerificationPanel, "stage" | "last">): string | null {
+  if (!state.verified && state.operatorOnly) return panelOutcomeText(state, panel.last);
+  const last = panel.last;
+  if (panel.stage === "locked") return LOCKED_MESSAGE;
+  if (panel.stage === "rejected") return (last && reasonLabel("rejected", last.reasonCode)) ?? "반려되었습니다";
+  if ((panel.stage === "idle" || panel.stage === "link_needed") && last && (last.status === "approved" || last.status === "closed")) return lastOutcomeText(last);
+  return null;
+}
+
+/**
+ * 재확인 유예 중 크리에이터 화면의 안내(INV-V20). 유예 끝 전이면 그 날까지 다시 올리라고, 이미 지났으면(처리 작업이 아직 돌지 않음) 날짜 없이 기다린다고.
+ * 다시 확인을 요청했으면 requested 한 줄을 버튼 대신 보인다(요청은 운영자 목록에 표시만 붙이고 유예 기간을 바꾸지 않는다).
+ */
+export function recheckNotice(state: Pick<MyVerificationState, "graceUntil" | "recheckRequestedAt">, nowIso: string): { text: string; requested: string | null } {
+  const head = "활동 중인 채널에서 팬꾹 링크를 찾지 못했어요.";
+  const open = state.graceUntil !== null && Date.parse(state.graceUntil) > Date.parse(nowIso);
+  return {
+    text: open && state.graceUntil ? `${head} ${formatMonthDayKo(state.graceUntil)}까지 다시 올려 주세요` : `${head} 운영자 확인을 기다리고 있습니다`,
+    requested: state.recheckRequestedAt ? `채널 확인을 다시 요청했습니다 · ${formatMonthDayKo(state.recheckRequestedAt)}` : null,
+  };
+}
+
+/** INV-V17: 가입 4단계가 끝났는가 — 요청을 보냈거나(확인 대기) 확인됐다. 선물 받기는 여전히 승인 뒤다(signup INV-U5). */
+export function channelStepDone(stage: PanelStage): boolean {
+  return stage === "waiting" || stage === "verified" || stage === "recheck_missing";
+}
+
 /**
  * 그 플랫폼에서 쓸 수 있는 확인 길 (INV-V14·V17). 로그인 확인이 되는 플랫폼(지금은 치지직)이면 「○○로 바로 확인」이 함께 보인다.
  * 화면 안내일 뿐이다 — 로그인 확인 함수가 같은 표로 다시 판정한다.
@@ -419,7 +470,15 @@ export function adminRecheckTables(rows: readonly AdminRecheck[]): { recheck: Ad
   return { recheck: rows.filter((r) => r.linkMissingAt === null), grace: rows.filter((r) => r.linkMissingAt !== null) };
 }
 
-export const RECHECK_REASON_LABEL: Record<"handle" | "days", string> = { handle: "링크 주소 바꿈", days: `${RECHECK_DAYS}일 지남` };
+/**
+ * 재확인 줄에서 쓸 수 있는 판정 (INV-V18·V20). 「링크 있음」은 지금 아이디로 찾을 링크가 있어야 한다 — 없으면 DB 판정 함수가 거부하므로
+ * 누르면 반드시 실패하는 버튼을 두지 않고 꺼 둔 채 이유 한 줄을 보인다. 「링크 없음」(유예 시작)은 링크가 없어도 된다.
+ */
+export function recheckActions(r: Pick<AdminRecheck, "handle">): { found: { enabled: boolean; reason: string | null }; missing: { enabled: boolean } } {
+  return { found: r.handle === null ? { enabled: false, reason: "팬꾹 링크가 없습니다" } : { enabled: true, reason: null }, missing: { enabled: true } };
+}
+
+export const RECHECK_REASON_LABEL: Record<"handle" | "days", string> = { handle: "아이디 바꿈", days: `${RECHECK_DAYS}일 지남` };
 
 /** 처리 기록 한 줄의 사유 문구 — 반려는 반려 사유, 닫힘은 닫힘 사유, 승인 취소는 취소 사유. 없거나 모르는 값이면 null. */
 export function eventReasonLabel(action: string, reasonCode: string | null): string | null {

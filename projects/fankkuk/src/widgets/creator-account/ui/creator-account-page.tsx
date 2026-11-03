@@ -7,10 +7,6 @@ import type {
   MyVerification,
   MyVerificationState,
 } from "@/entities/creator/model/creator-verification";
-import {
-  CHANNEL_PLATFORM_LABEL,
-  isChannelPlatform,
-} from "@/entities/creator/model/channel-url";
 import { MustDeliverNotice } from "@/entities/notification/ui/must-deliver-notice";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import {
@@ -21,7 +17,6 @@ import { sendCreatorNotify } from "@/features/creator-settings-save/api/send-cre
 import { VerificationPanel } from "@/features/creator-verify/ui/verification-panel";
 import { PasswordChangePanel } from "@/features/password-change/ui/password-change-panel";
 import { PhoneChangePanel } from "@/features/phone-change/ui/phone-change-panel";
-import { formatDate } from "@/shared/lib/format/datetime";
 import s from "./creator-account.module.css";
 
 // 크리에이터 계정 설정(design-rules 27절 「4파트 나머지 다섯 화면」, 2026-10-22 카드 d115 · 시안 docs/design/mockups/site/pilot-2026-10-22/creator-account.html).
@@ -33,7 +28,7 @@ import s from "./creator-account.module.css";
 //   승인 요청처럼 꼭 가는 알림은 끄는 스위치 없이 「끌 수 없는 알림」으로 알린다(notifications INV-N6). 스위치는 누르는 즉시 저장하고, 실패하면 되돌린다.
 // - 회원 탈퇴는 팬 화면과 같이 펼치면 고객센터 문의 링크만(탈퇴 기능이 아직 없다).
 
-type Open = "password" | "phone" | "verify" | "leave" | null;
+type Open = "password" | "phone" | "leave" | null;
 type Msg = { ok: boolean; text: string } | null;
 
 // 줄 전체가 누르는 칸(높이 64) — 이름·설명·막대가 한 스위치 버튼 안에 있다(계정 설정(팬) my-info-page 의 Switch 와 같은 모양)
@@ -77,17 +72,6 @@ function Switch({
   );
 }
 
-/** 본인 확인 줄의 짧은 상태 — 확인됐으면 「치지직 채널 「채널 이름」 확인됨 · 날짜」(시안 그대로). */
-function verifyMeta(state: MyVerificationState): string {
-  if (!state.verified) return "확인 전";
-  const platform =
-    state.platform && isChannelPlatform(state.platform)
-      ? `${CHANNEL_PLATFORM_LABEL[state.platform]} 채널 `
-      : "";
-  const title = state.channelTitle ? `「${state.channelTitle}」 ` : "";
-  return `${platform}${title}확인됨${state.verifiedAt ? ` · ${formatDate(state.verifiedAt)}` : ""}`;
-}
-
 export function CreatorAccountPage({
   phoneMasked,
   notify,
@@ -99,6 +83,8 @@ export function CreatorAccountPage({
     state: MyVerificationState;
     rows: readonly MyVerification[];
     apiPlatforms: readonly string[];
+    /** 로그인 아이디 — 팬꾹 링크 미리 확인용(signup INV-U14) */
+    loginId?: string | null;
   };
 }) {
   const id = useId();
@@ -191,27 +177,9 @@ export function CreatorAccountPage({
               </div>
             )}
           </div>
+          {/* 채널 소유자 확인 — 줄과 펼친 본문을 부품이 함께 그린다(시안 channel-link-verify-20261102 #acct-verified·#acct-recheck, design-rules 42절) */}
           <div className={s.item} id="verify">
-            <div className={s.row}>
-              <p className={s.txt}>
-                <span className={s.k}>채널 소유자 확인</span>
-                <span className={s.v}>{verifyMeta(verification.state)}</span>
-              </p>
-              <button
-                className="btn btn--line btn--sm"
-                type="button"
-                aria-expanded={open === "verify"}
-                aria-controls={f("verify-panel")}
-                onClick={() => toggle("verify")}
-              >
-                {verification.state.verified ? "다시 확인" : "확인하기"}
-              </button>
-            </div>
-            {open === "verify" && (
-              <div className={s.panel} id={f("verify-panel")}>
-                <VerificationPanel state={verification.state} rows={verification.rows} apiPlatforms={verification.apiPlatforms} />
-              </div>
-            )}
+            <VerificationPanel variant="account" state={verification.state} rows={verification.rows} loginId={verification.loginId ?? null} />
           </div>
         </div>
       </section>

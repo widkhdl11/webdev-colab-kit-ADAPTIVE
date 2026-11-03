@@ -1,0 +1,4 @@
+
+const search=document.getElementById('search'),changes=document.getElementById('changes'),all=[...document.querySelectorAll('article')],count=document.getElementById('count');
+function filter(){const q=search.value.trim().toLocaleLowerCase();let n=0;for(const a of all){a.hidden=(changes.checked&&a.dataset.changed!=='true')||(q&&!a.textContent.toLocaleLowerCase().includes(q));if(!a.hidden)n++}for(const s of document.querySelectorAll('main section'))s.hidden=![...s.querySelectorAll('article')].some(a=>!a.hidden);count.textContent=`전체 ${all.length}개 중 ${n}개 표시 · 수정·추가 178개`}
+search.addEventListener('input',filter);changes.addEventListener('change',filter);document.getElementById('expand').addEventListener('click',()=>{const d=[...document.querySelectorAll('article:not([hidden]) details')];const open=d.some(x=>!x.open);d.forEach(x=>x.open=open);document.getElementById('expand').textContent=open?'원문 모두 접기':'원문 모두 펼치기'});filter();

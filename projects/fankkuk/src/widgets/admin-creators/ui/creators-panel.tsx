@@ -4,33 +4,42 @@ import { useState } from "react";
 import { latestApprovals, type AdminCreator, type NameChange, type VerificationEvent } from "@/entities/creator/model/admin-creator";
 import type { AdminTagOption, BannedWord, CustomTagCount } from "@/entities/creator/model/creator-tags";
 import {
+  adminRecheckTables,
   adminVerificationTables,
   eventReasonLabel,
   isOperatorCheckedApplication,
   isLive,
   platformLabel,
+  RECHECK_REASON_LABEL,
+  recheckActions,
   VERIFICATION_METHOD_LABEL,
   VERIFICATION_STATUS_LABEL,
   VERIFICATION_TRIES,
+  type AdminRecheck,
   type AdminVerification,
 } from "@/entities/creator/model/creator-verification";
 import { giftLinkText } from "@/entities/creator/model/gift-link-match";
 import { ApproveButton } from "@/features/admin-creator-verify/ui/approve-button";
+import { RecheckButton } from "@/features/admin-creator-verify/ui/recheck-button";
 import { RejectButton } from "@/features/admin-creator-verify/ui/reject-button";
 import { RevokeButton } from "@/features/admin-creator-verify/ui/revoke-button";
 import { UnlockButton } from "@/features/admin-creator-verify/ui/unlock-button";
 import { BANNED_TITLE_ID, BannedWordsTable, CustomTagsTable, TagOptionsTable } from "@/features/admin-creator-tags/ui/tag-options-manager";
-import { formatStamp } from "@/shared/lib/format/datetime";
+import { formatDotDate, formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
+import c from "./creators-panel.module.css";
 
 // 관리자 「크리에이터 확인」 본문 (creator-verification INV-V5·V6·V9·V11·V13·V15, admin-console INV-K10·K8, 시안 admin/creators.html).
 // 확인 대기 표 — 채널 이름·찾을 링크(요청 때의 팬꾹 링크)·채널 열기·승인·반려(INV-V18·V19), 끝난 요청(횟수 풀기). 사람은 닉네임·아이디로만(INV-K8).
-// 2026-11-02 팬꾹 링크 게시 확인으로 바꾸며 코드 받음 표와 인증 코드 칸을 뺐다 — 타입에 맞춘 최소 수정이다. 재확인·유예 묶음(INV-V20)은 시안 승인 뒤 더한다.
+// 2026-11-02 팬꾹 링크 게시 확인(UX 명세 admin-creators.md, 시안 channel-link-verify-20261102/admin.html): 확인 대기(채널 이름·찾을 링크) →
+// 재확인(지금 아이디로 찾을 링크·오른 이유, 링크 있음·없음) → 유예 중(유예 끝 날·「다시 확인 요청됨」, 링크 있음)(INV-V20). 코드 받음 표·인증 코드 칸은 없다.
 // 「채널 열기」는 서버가 채널 키로 다시 만든 주소만 연다(INV-V2) — 크리에이터가 적은 문자열이 아니다.
 
 type Props = {
   creators: readonly AdminCreator[];
   verifications: readonly AdminVerification[];
+  /** 재확인·유예 목록(INV-V20) — DB 가 오래된 순으로 준다 */
+  rechecks: readonly AdminRecheck[];
   events: readonly VerificationEvent[];
   /** 공개 이름 바꾼 기록(my-account INV-A9) — 크리에이터가 운영자 확인 없이 바꾼다. 사칭 신고가 오면 이 기록으로 판단한다. */
   nameChanges: readonly NameChange[];
@@ -40,37 +49,30 @@ type Props = {
   bannedWords: readonly BannedWord[];
 };
 
-function Who({ v }: { v: AdminVerification }) {
+function Who({ name, loginId }: { name: string; loginId: string | null }) {
   return (
-    <>
-      <strong>{v.creatorName ?? v.nickname}</strong>
-      <br />
-      <span className={`${a.mono} ${a.sub}`}>{v.loginId}</span>
-    </>
+    <div className={c.chan}>
+      <b>{name}</b>
+      {loginId ? <span className={`${a.mono} ${a.sub}`}>{loginId}</span> : null}
+    </div>
   );
 }
-
-function Channel({ v }: { v: AdminVerification }) {
+// 채널 — 플랫폼 꼬리표 + 주소(누르면 새 탭). 주소는 서버가 채널 키로 다시 만든 것이다(INV-V2)
+function Channel({ platform, url, name }: { platform: string | null; url: string | null; name: string }) {
   return (
-    <>
-      <span className={a.tag}>{platformLabel(v.platform)}</span> {v.channelTitle ?? ""}
-      <br />
-      <span className={`${a.mono} ${a.sub}`} style={{ wordBreak: "break-all" }}>
-        {v.channelUrl}
-      </span>
-    </>
+    <div className={c.chan}>
+      {platform ? <span className={a.tag}>{platformLabel(platform)}</span> : null}
+      {url ? (
+        <a href={url} target="_blank" rel="noopener noreferrer" aria-label={`${name} 채널 새 창으로 열기 — ${url}`}>
+          {url}
+        </a>
+      ) : (
+        <span className={a.faint}>—</span>
+      )}
+    </div>
   );
 }
-
-function OpenChannel({ v }: { v: AdminVerification }) {
-  return (
-    <a className={a.link} href={v.channelUrl} target="_blank" rel="noopener noreferrer" aria-label={`${v.creatorName ?? v.nickname} 채널 새 창으로 열기`}>
-      채널 열기 ↗
-    </a>
-  );
-}
-
-const tries = (v: AdminVerification) => `${v.usedCount} / ${VERIFICATION_TRIES}`;
+const tries = (v: AdminVerification) => `${v.usedCount}/${VERIFICATION_TRIES}회`;
 
 function actionTag(action: VerificationEvent["action"]) {
   if (action === "approve") return <span className={`${a.tag} ${a.tagBrand}`}>승인</span>;
@@ -81,8 +83,9 @@ function actionTag(action: VerificationEvent["action"]) {
   return <span className={a.tag}>닫힘</span>;
 }
 
-export function CreatorsPanel({ creators, verifications, events, nameChanges, tagOptions, customTags, bannedWords }: Props) {
+export function CreatorsPanel({ creators, verifications, rechecks, events, nameChanges, tagOptions, customTags, bannedWords }: Props) {
   const { posted, ended } = adminVerificationTables(verifications);
+  const { recheck, grace } = adminRecheckTables(rechecks);
   const approved = creators.filter((c) => c.verified);
   const approvals = latestApprovals(events);
   const moving = new Set(verifications.filter(isLive).map((v) => v.loginId));
@@ -108,17 +111,17 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges, ta
             <h2 id="h-cv-posted" tabIndex={-1}>
               확인 대기 <span>{posted.length}건</span>
             </h2>
-            <span>채널 이름이 가입 때 적은 이름과 같고 팬꾹 링크가 채널 소개·링크 칸에 있는지 확인해 주세요</span>
+            <span>채널 이름이 같은지, 소개·프로필 링크에 찾을 링크가 걸려 있는지 확인해 주세요</span>
           </div>
           <div className={a.tblWrap}>
-            <table className={a.tbl} style={{ minWidth: 980 }}>
-              <caption className="sr-only">확인 대기 신청 — 크리에이터가 운영자 확인을 요청한 신청</caption>
+            <table className={a.tbl} style={{ minWidth: 1040 }}>
+              <caption className="sr-only">확인 대기 신청 — 오래된 순</caption>
               <thead>
                 <tr>
                   <th scope="col">닉네임</th>
                   <th scope="col">채널</th>
+                  <th scope="col">채널 이름</th>
                   <th scope="col">찾을 링크</th>
-                  <th scope="col">채널 확인</th>
                   <th scope="col">요청 시각</th>
                   <th scope="col">쓴 횟수</th>
                   <th scope="col">
@@ -137,17 +140,15 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges, ta
                   posted.map((v) => (
                     <tr key={v.id}>
                       <td>
-                        <Who v={v} />
+                        <Who name={v.creatorName ?? v.nickname} loginId={v.loginId} />
                       </td>
                       <td>
-                        <Channel v={v} />
-                      </td>
-                      <td className={a.mono}>
-                        <b>{v.linkHandle ? giftLinkText(v.linkHandle) : "—"}</b>
+                        <Channel platform={v.platform} url={v.channelUrl} name={v.creatorName ?? v.nickname} />
                       </td>
                       <td>
-                        <OpenChannel v={v} />
+                        <b>{v.channelTitle ?? "—"}</b>
                       </td>
+                      <td className={`${a.mono} ${c.findlink}`}>{v.linkHandle ? giftLinkText(v.linkHandle) : "—"}</td>
                       <td className={`${a.mono} ${a.nowrap}`}>{v.postedAt ? formatStamp(v.postedAt) : "—"}</td>
                       <td className={`${a.mono} ${a.nowrap}`}>{tries(v)}</td>
                       <td className={a.act}>
@@ -162,6 +163,105 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges, ta
           </div>
         </section>
 
+        <section aria-labelledby="h-cv-recheck">
+          <div className={a.sectionH}>
+            <h2 id="h-cv-recheck" tabIndex={-1}>
+              재확인 <span>{recheck.length}건</span>
+            </h2>
+          </div>
+          <div className={a.tblWrap}>
+            <table className={a.tbl} style={{ minWidth: 900 }}>
+              <caption className="sr-only">재확인 — 오래된 순</caption>
+              <thead>
+                <tr>
+                  <th scope="col">닉네임</th>
+                  <th scope="col">채널</th>
+                  <th scope="col">찾을 링크 (지금)</th>
+                  <th scope="col">오른 이유</th>
+                  <th scope="col">
+                    <span className="sr-only">처리</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {recheck.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className={a.empty}>
+                      다시 확인할 크리에이터가 없어요.
+                    </td>
+                  </tr>
+                ) : (
+                  recheck.map((r) => (
+                    <tr key={r.creatorId}>
+                      <td>
+                        <Who name={r.creatorName} loginId={r.loginId} />
+                      </td>
+                      <td>
+                        <Channel platform={r.platform} url={r.channelUrl} name={r.creatorName} />
+                      </td>
+                      <td className={`${a.mono} ${c.findlink}`}>{r.handle ? giftLinkText(r.handle) : "—"}</td>
+                      <td>{r.reason ? <span className={r.reason === "handle" ? `${a.tag} ${a.tagWarn}` : a.tag}>{RECHECK_REASON_LABEL[r.reason]}</span> : null}</td>
+                      <td className={a.act}>
+                        <RecheckButton creatorId={r.creatorId} creatorName={r.creatorName} found disabledReason={recheckActions(r).found.reason} returnFocusId="h-cv-recheck" onDone={setDone} />
+                        <RecheckButton creatorId={r.creatorId} creatorName={r.creatorName} found={false} returnFocusId="h-cv-recheck" onDone={setDone} />
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <section aria-labelledby="h-cv-grace">
+          <div className={a.sectionH}>
+            <h2 id="h-cv-grace" tabIndex={-1}>
+              유예 중 <span>{grace.length}건</span>
+            </h2>
+          </div>
+          <div className={a.tblWrap}>
+            <table className={a.tbl} style={{ minWidth: 900 }}>
+              <caption className="sr-only">유예 중 — 재확인에서 링크를 찾지 못한 크리에이터</caption>
+              <thead>
+                <tr>
+                  <th scope="col">닉네임</th>
+                  <th scope="col">채널</th>
+                  <th scope="col">유예 끝</th>
+                  <th scope="col">
+                    <span className="sr-only">다시 확인 요청</span>
+                  </th>
+                  <th scope="col">
+                    <span className="sr-only">처리</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {grace.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className={a.empty}>
+                      유예 중인 크리에이터가 없어요.
+                    </td>
+                  </tr>
+                ) : (
+                  grace.map((r) => (
+                    <tr key={r.creatorId}>
+                      <td>
+                        <Who name={r.creatorName} loginId={r.loginId} />
+                      </td>
+                      <td>
+                        <Channel platform={r.platform} url={r.channelUrl} name={r.creatorName} />
+                      </td>
+                      <td className={`${a.mono} ${a.nowrap}`}>{r.graceUntil ? formatDotDate(r.graceUntil) : "—"}</td>
+                      <td>{r.recheckRequestedAt ? <span className={`${a.tag} ${a.tagBrand}`}>다시 확인 요청됨</span> : null}</td>
+                      <td className={a.act}>
+                        <RecheckButton creatorId={r.creatorId} creatorName={r.creatorName} found disabledReason={recheckActions(r).found.reason} returnFocusId="h-cv-grace" onDone={setDone} />
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
         <section aria-labelledby="h-creators-ok">
           <div className={a.sectionH}>
             <h2 id="h-creators-ok" tabIndex={-1}>
@@ -255,10 +355,10 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges, ta
                     <tr key={v.id}>
                       <td className={`${a.mono} ${a.nowrap}`}>{formatStamp(v.issuedAt)}</td>
                       <td>
-                        <Who v={v} />
+                        <Who name={v.creatorName ?? v.nickname} loginId={v.loginId} />
                       </td>
                       <td>
-                        <Channel v={v} />
+                        <Channel platform={v.platform} url={v.channelUrl} name={v.creatorName ?? v.nickname} />
                       </td>
                       <td>
                         {VERIFICATION_METHOD_LABEL[v.method]}

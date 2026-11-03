@@ -1,0 +1,4 @@
+/* 운영자 크리에이터 본인 확인 — 시안 docs/design/mockups/channel-link-verify-20261102/admin.css(.chan · .findlink) */
+.chan { display: grid; gap: 2px; justify-items: start; }
+.chan a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+.findlink { font-weight: 700; overflow-wrap: anywhere; }

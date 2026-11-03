@@ -30,7 +30,7 @@ export default async function Page() {
     <>
       <SiteHeader {...header} />
       <MyShell width="list">
-        <CreatorAccountPage phoneMasked={settings.phoneMasked} notify={settings.notify} verification={{ state, rows, apiPlatforms: [...apiPlatforms] }} />
+        <CreatorAccountPage phoneMasked={settings.phoneMasked} notify={settings.notify} verification={{ state, rows, apiPlatforms: [...apiPlatforms], loginId: viewer.loginId ?? null }} />
       </MyShell>
       <SiteFooter />
     </>

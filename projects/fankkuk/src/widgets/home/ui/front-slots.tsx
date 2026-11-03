@@ -450,11 +450,11 @@ export function PromiseSlot({ withSignup, band = false }: { withSignup: boolean;
   );
 }
 
-// 제공받은 상자 그림에서 각 크기의 영역만 표시한다. 원본 이미지 파일은 그대로 유지한다.
-const PARCEL_BOX_VIEW = {
-  small: "20 440 510 365",
-  medium: "560 300 535 515",
-  large: "1120 135 645 690",
+// 크기별로 제공받은 원본 이미지를 비율을 유지해 표시한다.
+const PARCEL_BOX_ART = {
+  small: { width: 428, height: 339 },
+  medium: { width: 487, height: 499 },
+  large: { width: 607, height: 689 },
 } as const;
 
 /** ⑥ 요금 — 결제와 같은 DB 요금표, 구간 기준은 size-tier.
@@ -473,8 +473,8 @@ export function PriceSlot({ prices, joined = false }: { prices: PublicPriceTable
           <article key={tier} className={joined ? s.priceTier : `card ${s.priceCard}`}>
             <span className="tag">{PARCEL_TIER_GUIDE[tier].name}</span>
             <div className={s.priceBoxArt}>
-              <svg className={s.priceBox} data-size={tier} viewBox={PARCEL_BOX_VIEW[tier]} width={144} height={136} aria-hidden="true" focusable="false">
-                <image href="/images/home/parcel-boxes.png" width={1774} height={887} />
+              <svg className={s.priceBox} data-size={tier} viewBox={`0 0 ${PARCEL_BOX_ART[tier].width} ${PARCEL_BOX_ART[tier].height}`} width={144} height={136} aria-hidden="true" focusable="false">
+                <image href={`/images/home/gift-box-${tier}.png`} width={PARCEL_BOX_ART[tier].width} height={PARCEL_BOX_ART[tier].height} />
               </svg>
             </div>
             <p className={s.amount}>

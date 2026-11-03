@@ -2,9 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   adminRechecksFromRows,
   adminRecheckTables,
+  recheckActions,
+  recheckNotice,
   adminVerificationsFromRows,
   adminVerificationTables,
   canLoginCheck,
+  channelStepDone,
+  LOCKED_MESSAGE,
+  PANEL_STAGE_TAG,
+  panelNotice,
   lastOutcomeText,
   myVerificationPanel,
   myVerificationsFromRows,
@@ -172,6 +178,78 @@ describe("확인 칸의 단계 (UX signup.md 2026-11-02, INV-V15·V17·V20)", ()
     expect(panelOutcomeText({ verified: false, operatorOnly: false }, mine({ status: "withdrawn" }))).toBe("요청을 취소했습니다");
   });
 
+  it("INV-V15·V19: 상태 뱃지 — 확인 전·확인 대기·반려·신청 마감·확인 완료·링크 확인 필요(시안 42절), 남은 횟수 글자는 없다", () => {
+    expect(PANEL_STAGE_TAG.link_needed).toEqual({ label: "확인 전", tone: "state" });
+    expect(PANEL_STAGE_TAG.idle).toEqual({ label: "확인 전", tone: "state" });
+    expect(PANEL_STAGE_TAG.waiting).toEqual({ label: "확인 대기", tone: "wait" });
+    expect(PANEL_STAGE_TAG.rejected).toEqual({ label: "반려", tone: "rej" });
+    expect(PANEL_STAGE_TAG.locked).toEqual({ label: "신청 마감", tone: "off" });
+    expect(PANEL_STAGE_TAG.verified).toEqual({ label: "확인 완료", tone: "ok" });
+    expect(PANEL_STAGE_TAG.recheck_missing).toEqual({ label: "링크 확인 필요", tone: "warn" });
+  });
+
+  it("INV-V19: 반려 상자에는 사유 값 한 줄만(남은 횟수 없음) — 모르는 사유면 「반려되었습니다」", () => {
+    const st0 = { verified: false, operatorOnly: false };
+    const rej = myVerificationPanel(st(), [mine({ status: "rejected", reasonCode: "link_not_found", remainingCount: 4 })]);
+    expect(panelNotice(st0, rej)).toBe("팬꾹 링크를 찾지 못함");
+    const odd = myVerificationPanel(st(), [mine({ status: "rejected", reasonCode: "zzz", remainingCount: 4 })]);
+    expect(panelNotice(st0, odd)).toBe("반려되었습니다");
+  });
+
+  it("INV-V15 (실패경로): 신청 마감이면 「이 채널로는 더 요청할 수 없습니다. 1:1 문의를 이용해 주세요.」, 남은 횟수 숫자는 문구에 없다", () => {
+    const p = myVerificationPanel(st(), [mine({ status: "rejected", reasonCode: "link_not_found", remainingCount: 0 })]);
+    expect(panelNotice({ verified: false, operatorOnly: false }, p)).toBe(LOCKED_MESSAGE);
+    expect(LOCKED_MESSAGE).toBe("이 채널로는 더 요청할 수 없습니다. 1:1 문의를 이용해 주세요.");
+    expect(LOCKED_MESSAGE).not.toMatch(/[0-9]+ *(번|회)/);
+  });
+
+  it("INV-V9·V10: 확인 전 상자 — 승인 취소·닫힘은 알리고, 거둠·요청 없음·대기·확인됨은 상자가 없다, 위반 취소는 먼저", () => {
+    const st0 = { verified: false, operatorOnly: false };
+    expect(panelNotice(st0, myVerificationPanel(st(), [mine({ status: "approved", reasonCode: "link_removed" })]))).toBe("승인이 취소되었습니다 — 팬꾹 링크가 채널에서 내려감");
+    expect(panelNotice(st0, myVerificationPanel(st(), [mine({ status: "closed", reasonCode: "method_changed", method: "code" })]))).toContain("확인 방식이 바뀌었습니다");
+    expect(panelNotice(st0, myVerificationPanel(st(), [mine({ status: "withdrawn" })]))).toBeNull();
+    expect(panelNotice(st0, myVerificationPanel(st(), []))).toBeNull();
+    expect(panelNotice(st0, myVerificationPanel(st(), [mine({ status: "posted" })]))).toBeNull();
+    expect(panelNotice({ verified: true, operatorOnly: false }, myVerificationPanel(st({ verified: true }), [mine({ status: "approved" })]))).toBeNull();
+    expect(panelNotice({ verified: false, operatorOnly: true }, myVerificationPanel(st(), [mine({ status: "withdrawn" })]))).toContain("이용 규칙 위반");
+  });
+
+  it("INV-V17: 가입 4단계는 요청을 보냈거나(확인 대기) 확인됐으면 끝 — 확인 전·반려·신청 마감은 끝나지 않는다", () => {
+    expect(channelStepDone("waiting")).toBe(true);
+    expect(channelStepDone("verified")).toBe(true);
+    expect(channelStepDone("recheck_missing")).toBe(true);
+    for (const stage of ["link_needed", "idle", "rejected", "locked"] as const) expect([stage, channelStepDone(stage)]).toEqual([stage, false]);
+  });
+
+  it("INV-V15: 로그인 확인 줄·승인됐던 줄은 남은 횟수가 0이어도 신청 마감이 아니다(횟수는 운영자 확인 요청의 실패만 센다)", () => {
+    expect(myVerificationPanel(st(), [mine({ method: "login", status: "rejected", reasonCode: "link_not_found", remainingCount: 0 })]).stage).not.toBe("locked");
+    expect(myVerificationPanel(st(), [mine({ status: "approved", reasonCode: "link_removed", remainingCount: 0 })]).stage).toBe("idle");
+    // 같은 조건에서 운영자 확인 요청이면 마감 — 위 단언이 「마감을 아예 안 냄」으로 통과하지 않게
+    expect(myVerificationPanel(st(), [mine({ status: "withdrawn", remainingCount: 0 })]).stage).toBe("locked");
+  });
+
+  it("INV-V17 (실패경로): 링크용 아이디가 없으면 반려·신청 마감보다 link_needed 가 먼저다", () => {
+    expect(myVerificationPanel(st({ handle: null }), [mine({ status: "rejected", reasonCode: "link_not_found", remainingCount: 2 })]).stage).toBe("link_needed");
+    expect(myVerificationPanel(st({ handle: null }), [mine({ status: "rejected", reasonCode: "link_not_found", remainingCount: 0 })]).stage).toBe("link_needed");
+  });
+
+  it("INV-V20: 유예 안내 — 유예 끝 전이면 「○월 ○일까지 다시 올려 주세요」, 지났으면 날짜 없이 「운영자 확인을 기다리고 있습니다」", () => {
+    const grace = "2026-11-16T03:00:00Z";
+    expect(recheckNotice({ graceUntil: grace, recheckRequestedAt: null }, "2026-11-10T00:00:00Z")).toEqual({
+      text: "활동 중인 채널에서 팬꾹 링크를 찾지 못했어요. 11월 16일까지 다시 올려 주세요",
+      requested: null,
+    });
+    const after = recheckNotice({ graceUntil: grace, recheckRequestedAt: null }, "2026-11-16T03:00:01Z");
+    expect(after.text).toBe("활동 중인 채널에서 팬꾹 링크를 찾지 못했어요. 운영자 확인을 기다리고 있습니다");
+    expect(after.text).not.toMatch(/[0-9]+월/);
+  });
+
+  it("INV-V20: 다시 확인을 요청했으면 버튼 대신 「채널 확인을 다시 요청했습니다 · ○월 ○일」(서울 날짜)", () => {
+    expect(recheckNotice({ graceUntil: "2026-11-16T03:00:00Z", recheckRequestedAt: "2026-11-03T15:30:00Z" }, "2026-11-04T00:00:00Z").requested).toBe(
+      "채널 확인을 다시 요청했습니다 · 11월 4일",
+    );
+  });
+
   it("INV-V14: 로그인 확인 버튼은 로그인 확인 플랫폼이고 운영자 확인만이 아닐 때만", () => {
     const login = new Set(["chzzk"]);
     expect(canLoginCheck("chzzk", login, { operatorOnly: false })).toBe(true);
@@ -248,6 +326,12 @@ describe("운영자 재확인 목록 (INV-V20)", () => {
     const t = adminRecheckTables(rows ?? []);
     expect(t.recheck.map((r) => [r.creatorId, r.handle, r.reason])).toEqual([["c1", "haru2", "handle"]]);
     expect(t.grace.map((r) => [r.creatorId, r.graceUntil])).toEqual([["c2", "2026-11-15T00:00:00Z"]]);
+  });
+
+  it("INV-V18·V20 (실패경로): 팬꾹 링크가 없는 줄은 「링크 있음」을 끈다 — 이유 「팬꾹 링크가 없습니다」, 「링크 없음」은 그대로 켠다", () => {
+    const [has, none] = adminRechecksFromRows([row, { ...row, creator_id: "c2", handle: null }]) ?? [];
+    expect(recheckActions(has!)).toEqual({ found: { enabled: true, reason: null }, missing: { enabled: true } });
+    expect(recheckActions(none!)).toEqual({ found: { enabled: false, reason: "팬꾹 링크가 없습니다" }, missing: { enabled: true } });
   });
 
   it("INV-V20 (실패경로): 모르는 이유 값·연락처 칸이 끼면 null", () => {

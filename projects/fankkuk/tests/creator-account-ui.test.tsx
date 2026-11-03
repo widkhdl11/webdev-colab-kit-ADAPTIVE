@@ -15,7 +15,21 @@ import { CreatorAccountPage } from "@/widgets/creator-account/ui/creator-account
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-const unverified = { verified: false } as unknown as MyVerificationState;
+const baseState: MyVerificationState = {
+  creatorId: "c1",
+  name: "하루",
+  channelTitle: "하루의 놀이터",
+  verified: false,
+  platform: null,
+  channelUrl: null,
+  verifiedAt: null,
+  operatorOnly: false,
+  handle: null,
+  nextRecheckAt: null,
+  graceUntil: null,
+  recheckRequestedAt: null,
+};
+const unverified = baseState;
 
 let host: HTMLDivElement;
 let root: Root;
@@ -38,7 +52,7 @@ function render(state: MyVerificationState = unverified) {
       <CreatorAccountPage
         phoneMasked="010-****-9999"
         notify={{ kakao: true, email: false, instant: false }}
-        verification={{ state, rows: [], apiPlatforms: [] }}
+        verification={{ state, rows: [], apiPlatforms: [], loginId: "qa_c1029a" }}
       />,
     );
   });
@@ -92,15 +106,86 @@ describe("계정 설정(크리에이터) — 묶음 순서", () => {
     expect(page().lastElementChild!.contains(panel)).toBe(true);
   });
 
-  it("채널 소유자 확인 — 확인 전이면 「확인 전」 + 확인하기, 누르면 그 줄 아래에 칸이 펼쳐진다", () => {
+  it("INV-V17: 채널 소유자 확인 — 확인 전이면 「확인 전」 뱃지, 그 줄 아래에 ① 팬꾹 링크 만들기가 늘 펼쳐져 있고 ②·요청은 링크를 만든 뒤에", () => {
     render();
-    const security = host.querySelectorAll("section")[0];
-    expect(security.textContent).toContain("확인 전");
-    const btn = buttonByText("확인하기")!;
+    const verify = host.querySelector("#verify")!;
+    expect(verify.textContent).toContain("확인 전");
+    expect(verify.textContent).toContain("팬꾹 링크를 만들어 주세요");
+    expect(verify.textContent).not.toContain("채널 주소를 입력해 주세요");
+    expect(buttonByText("채널 확인 요청")).toBeUndefined();
+    render({ ...baseState, handle: "haru" });
+    expect(host.querySelector("#verify")!.textContent).toContain("활동 중인 채널에 팬꾹 링크를 올려 주세요");
+    expect(buttonByText("채널 확인 요청")?.getAttribute("aria-disabled")).toBe("true");
+  });
+
+  it("INV-V20: 확인됐으면 「채널 인증이 완료되었습니다」·다음 재확인 날, 「채널 변경」을 누르면 같은 ①② 칸이 펼쳐진다", () => {
+    render({
+      ...baseState,
+      handle: "haru",
+      verified: true,
+      channelUrl: "https://www.youtube.com/@honeypot",
+      verifiedAt: "2026-11-02T03:00:00Z",
+      nextRecheckAt: "2027-01-31T03:00:00Z",
+    });
+    const verify = host.querySelector("#verify")!;
+    expect(verify.textContent).toContain("확인 완료");
+    expect(verify.textContent).toContain("채널 인증이 완료되었습니다 · 2026.11.02");
+    expect(verify.textContent).toContain("다음 재확인 2027.01.31");
+    expect(verify.textContent).not.toContain("팬꾹 링크를 올려 주세요");
+    const btn = buttonByText("채널 변경")!;
     act(() => btn.click());
     const panel = document.getElementById(btn.getAttribute("aria-controls")!)!;
-    expect(security.contains(panel)).toBe(true);
-    expect(btn.closest("#verify")!.contains(panel)).toBe(true);
+    expect(verify.contains(panel)).toBe(true);
+    expect(panel.textContent).toContain("팬꾹 링크를 올린 채널 주소를 입력해 주세요");
+  });
+
+  it("INV-U14 (S14e, 실패경로): 팬꾹 링크 칸에 로그인 아이디와 같은 값(대소문자만 다름)을 넣으면 서버에 묻지 않고 「로그인 아이디와 다르게 정해 주세요.」", async () => {
+    vi.useFakeTimers();
+    const fetchSpy = vi.fn(async () => new Response(JSON.stringify({ result: "available" })));
+    vi.stubGlobal("fetch", fetchSpy);
+    try {
+      render();
+      const input = host.querySelector<HTMLInputElement>("#verify input[placeholder='haru']")!;
+      const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+      act(() => {
+        setValue.call(input, "QA_C1029A");
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      await act(async () => {
+        vi.advanceTimersByTime(1000);
+        await Promise.resolve();
+      });
+      // 칸 아래 안내 칸 하나만 본다 — 칸 아래 고정 안내(「로그인 아이디와 다르게 정해 주세요. 만든 뒤…」)가 같은 문장으로 시작해서 카드 전체로 보면 늘 통과한다
+      const lineBox = host.querySelector(`[id="${input.getAttribute("aria-describedby")!.split(" ")[0]}"]`)!;
+      expect(lineBox.id.endsWith("-link-line")).toBe(true);
+      expect(lineBox.textContent).toContain("로그인 아이디와 다르게 정해 주세요.");
+      expect(lineBox.textContent).not.toContain("쓸 수 있어요.");
+      expect(host.querySelector<HTMLButtonElement>("#verify button.btn")?.textContent).toBe("만들기");
+      expect([...host.querySelectorAll("#verify button")].find((b) => b.textContent === "만들기")?.getAttribute("aria-disabled")).toBe("true");
+      expect(fetchSpy).not.toHaveBeenCalled();
+      // 다른 값이면 서버에 묻는다 — 위 단언이 「아무 값도 묻지 않음」으로 통과하지 않게
+      act(() => {
+        setValue.call(input, "qalink1029");
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      await act(async () => {
+        vi.advanceTimersByTime(1000);
+        await Promise.resolve();
+      });
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+      vi.useRealTimers();
+    }
+  });
+
+  it("INV-V20: 유예 중이면 「링크 확인 필요」·유예 끝 날·「채널 확인 재요청」 — 남은 요청 횟수는 없다(INV-V15)", () => {
+    render({ ...baseState, handle: "haru", verified: true, graceUntil: "2026-11-16T03:00:00Z" });
+    const verify = host.querySelector("#verify")!;
+    expect(verify.textContent).toContain("링크 확인 필요");
+    expect(verify.textContent).toContain("활동 중인 채널에서 팬꾹 링크를 찾지 못했어요. 11월 16일까지 다시 올려 주세요");
+    expect(buttonByText("채널 확인 재요청")).toBeDefined();
+    expect(verify.textContent).not.toMatch(/남은|[0-9]+ *(번|회)/);
   });
 });
 
@@ -126,7 +211,7 @@ describe("계정 설정(크리에이터) — 알림", () => {
     expect(mail.getAttribute("aria-checked")).toBe("true");
     expect(sendNotify).toHaveBeenCalledWith({ kakao: true, email: true, instant: false });
     await flush();
-    expect(host.querySelector('[role="status"]')?.textContent).toBe("알림 설정이 저장되었습니다.");
+    expect(host.querySelector('[data-ca-group="notify"] [role="status"]')?.textContent).toBe("알림 설정이 저장되었습니다.");
   });
 
   it("저장에 실패하면 스위치가 저장된 값으로 되돌아가고 실패 문구가 알림 묶음 끝에 나온다", async () => {

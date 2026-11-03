@@ -103,3 +103,12 @@ export function monthHeadKo(yearMonthKey: string, baseYearMonth: string): string
 export function formatTimeKo(iso: string): string {
   return timeOnly.format(new Date(iso));
 }
+
+const dotted = new Intl.DateTimeFormat("ko-KR", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+
+/** "2026.11.02" (서울 날짜) — 설정 줄처럼 날짜만 짧게 적는 곳 */
+export function formatDotDate(iso: string): string {
+  const parts = dotted.formatToParts(new Date(iso));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("year")}.${get("month")}.${get("day")}`;
+}
