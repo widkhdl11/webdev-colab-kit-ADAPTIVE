@@ -262,7 +262,7 @@ describe("미리보기·공지 이미지 라우트가 그리는 것 (INV-E7·E10
       const shot = lastShot();
       sizes.push([size, shot.init?.width, shot.init?.height]);
       const text = drawnText(shot.element);
-      expect([size, text]).toEqual([size, `${[...A.name][0]} ${A.name} ${NOTICE_INTRO} 팬꾹으로 선물 보내기 fankkuk.kr/rt_notice`]);
+      expect([size, text]).toEqual([size, `${[...A.name][0]} ${A.name} ${NOTICE_INTRO} 팬꾹으로 선물 보내기 fankkuk.com/rt_notice`]);
       for (const bad of [...forbidden(orders), "선물은 팬꾹으로 받아요", "승인한 선물만 받습니다"]) expect([size, bad, text.includes(bad)]).toEqual([size, bad, false]);
     }
     expect(sizes).toEqual([

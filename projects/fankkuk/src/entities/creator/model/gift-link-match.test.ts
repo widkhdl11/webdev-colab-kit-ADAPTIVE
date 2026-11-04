@@ -37,6 +37,9 @@ describe("INV-V18 (2): 링크 칸의 주소가 요청 줄의 팬꾹 링크와 �
       "https://evilfankkuk.com/haru",
       "https://fankkuk.com.evil.example/haru",
       "ftp://fankkuk.com/haru",
+      // 2026-11-04: 팬꾹 주소는 fankkuk.com 하나 — 예전 화면 표기 fankkuk.kr 은 없는 주소라 그 링크는 열리지 않는다
+      "https://fankkuk.kr/haru",
+      "fankkuk.kr/haru",
     ]) {
       expect([found, isSameGiftLink(found, "haru")]).toEqual([found, false]);
     }

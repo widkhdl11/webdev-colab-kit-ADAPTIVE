@@ -57,8 +57,8 @@ describe("INV-E4: 아이디 잠금 남은 날", () => {
     expect(button("링크 주소 변경")).toBeDefined();
     const hint = host.querySelector("#link-handle-hint")?.textContent ?? "";
     expect(hint).not.toMatch(/일 뒤에/);
-    // 화면에 보이는 「fankkuk.kr/」 앞부분을 읽어 주는 안내에도 넣는다
-    expect(hint).toContain("fankkuk.kr/");
+    // 화면에 보이는 「fankkuk.com/」 앞부분을 읽어 주는 안내에도 넣는다
+    expect(hint).toContain("fankkuk.com/");
   });
 
   it("INV-E4: 지금 주소와 같은 값(대소문자·앞뒤 공백만 다름)은 확인 창 없이 「같아요」", async () => {

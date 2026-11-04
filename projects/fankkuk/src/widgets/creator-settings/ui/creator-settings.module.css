@@ -96,7 +96,7 @@ label.txt { cursor: pointer; }
 .ann-list { display: grid; gap: 12px; margin-bottom: 12px; }
 .ann-row { display: grid; grid-template-columns: minmax(0, 240px) auto auto; justify-content: start; gap: 8px; align-items: center; } /* 이름 240 · 월 · 일 · 삭제 한 줄 */
 
-/* 선물 링크 — 주소 앞부분(fankkuk.kr/, @)은 칸 왼쪽에 붙인 글자 */
+/* 선물 링크 — 주소 앞부분(fankkuk.com/, @)은 칸 왼쪽에 붙인 글자 */
 .handle-row { display: flex; align-items: center; gap: 8px; }
 .handle-host { flex-shrink: 0; font-weight: var(--fw-btn); white-space: nowrap; }
 .handle-row :global(.field) { flex: 1; }

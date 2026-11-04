@@ -500,7 +500,7 @@ describe("INV-E10: 이미지 생성에 넘기는 값", () => {
     await setHandleOk(A.login, "haru_s10");
     const after = await loadCreatorLinkPage({ client: anonClient(), viewer: null, creatorId: A.creatorId, photoBase: "http://photo.test" });
     const notice = noticeImageInput(after!.props.creator, after!.props.look, "http://photo.test");
-    expect(notice).toEqual({ name: A.name, intro: "느긋하게 게임하는 방송이에요", photoUrl: null, backgroundUrl: null, linkText: "fankkuk.kr/haru_s10", initial: [...A.name][0] });
+    expect(notice).toEqual({ name: A.name, intro: "느긋하게 게임하는 방송이에요", photoUrl: null, backgroundUrl: null, linkText: "fankkuk.com/haru_s10", initial: [...A.name][0] });
     expect(JSON.stringify(previewImageInput(after!.props.creator, after!.props.look, "http://photo.test"))).not.toContain("느긋하게");
   });
 });

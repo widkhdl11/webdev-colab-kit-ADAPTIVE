@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ handle: string }> };
 
-// 선물 링크 주소 fankkuk.kr/{링크용 아이디} (creator-link INV-E2·E3·E5). 사이트의 다른 첫 단계 주소(/login 등)는 정적 경로가 먼저 잡는다 —
+// 선물 링크 주소 fankkuk.com/{링크용 아이디} (creator-link INV-E2·E3·E5). 사이트의 다른 첫 단계 주소(/login 등)는 정적 경로가 먼저 잡는다 —
 // 그 이름들은 DB 예약어라 아이디로 저장되지 않는다(S2c 시험이 목록을 맞춰 본다).
 // 대문자 주소는 소문자로, 묶인 옛 아이디는 지금 아이디로 영구 넘기기(308). 본인 확인 전·없는 아이디는 없는 페이지.
 // 확인 대기 요청이 있는 확인 전 크리에이터의 지금 아이디는 「채널 확인 중」 페이지(creator-verification INV-V22 — 공개 이름·사진·소개만, 묶인 옛 아이디는 지금 아이디로 넘긴다).

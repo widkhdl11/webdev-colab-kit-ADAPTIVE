@@ -7,8 +7,8 @@ import { LINK_HOST } from "./creator-handle";
 //     반려: 도메인만 · 다른 경로 · 다른 아이디(묶인 옛 아이디 포함 — 비교 대상은 요청 줄의 아이디 하나) · ?·# 가 붙은 주소 · 단축 주소·링크 모음.
 // (1) 채널 이름이 같다고 보는 것: 앞뒤 공백과 영문 대소문자 차이만. 팬꾹 닉네임은 비교하지 않는다.
 
-/** 링크로 받는 사이트 주소. 화면에 보이는 LINK_HOST 와 사이트의 실제 주소(fankkuk.com)를 함께 받는다 — 둘 다 팬꾹 주소다. */
-const SITE_HOSTS: ReadonlySet<string> = new Set([LINK_HOST, "fankkuk.com"]);
+/** 링크로 받는 사이트 주소 — 팬꾹 주소는 fankkuk.com 하나다(2026-11-04 사용자 「애초에 .com 밖에 없어」). 예전 화면 표기 fankkuk.kr 은 열리지 않는 주소라 받지 않는다. */
+const SITE_HOSTS: ReadonlySet<string> = new Set([LINK_HOST]);
 
 const LINK_SHAPE = /^(?:https?:\/\/)?(?:www\.)?([^/?#\s]+)\/([^/?#\s]+)\/?$/i;
 
@@ -30,7 +30,7 @@ function asciiLower(s: string): string {
   return s.replace(/[A-Z]/g, (c) => c.toLowerCase());
 }
 
-/** 운영자 화면에 보이는 찾을 링크(fankkuk.kr/haru 꼴). */
+/** 운영자 화면에 보이는 찾을 링크(fankkuk.com/haru 꼴). */
 export function giftLinkText(handle: string): string {
   return `${LINK_HOST}/${handle}`;
 }

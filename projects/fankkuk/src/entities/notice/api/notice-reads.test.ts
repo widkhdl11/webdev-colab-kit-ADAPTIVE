@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { isAllowedNoticeHref, readNotices } from "./notice-reads";
 
 describe("공지 본문 링크", () => {
-  it.each(["/support", "/notices?page=2", "https://help.fankkuk.kr/a"])(
+  it.each(["/support", "/notices?page=2", "https://help.fankkuk.com/a"])(
     "받는다: %s",
     (h) => {
       expect(isAllowedNoticeHref(h)).toBe(true);

@@ -9,7 +9,7 @@ export const HANDLE_LOCK_DAYS = 30;
 /** 바꾼 옛 아이디가 그 크리에이터에게 묶여 있는 날 수(INV-E3) — DB 함수와 같다. */
 export const HANDLE_RETIRE_DAYS = 90;
 /** 링크 주소에 보이는 사이트 이름. */
-export const LINK_HOST = "fankkuk.kr";
+export const LINK_HOST = "fankkuk.com";
 
 const SHAPE = /^[a-z0-9_]{3,20}$/;
 
@@ -42,7 +42,7 @@ export function isSameHandle(draft: string, current: string | null): boolean {
   return current !== null && normalizeHandle(draft) === current;
 }
 
-/** 화면에 보이는 링크 주소(fankkuk.kr/haru). */
+/** 화면에 보이는 링크 주소(fankkuk.com/haru). */
 export function linkText(handle: string): string {
   return `${LINK_HOST}/${handle}`;
 }

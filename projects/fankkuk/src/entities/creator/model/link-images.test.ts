@@ -51,7 +51,7 @@ describe("INV-E10: 공지 이미지에 들어가는 칸", () => {
       intro: "느긋한 방송",
       photoUrl: `${PUB}/${ID}/3.webp`,
       backgroundUrl: `${PUB}/${ID}/bg-2.webp`,
-      linkText: "fankkuk.kr/haru",
+      linkText: "fankkuk.com/haru",
       initial: "하",
     });
   });

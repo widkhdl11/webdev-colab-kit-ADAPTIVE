@@ -299,7 +299,7 @@ describe("크리에이터 상세 — 없앤 것·남긴 것 (design-rules 31절)
   it("링크 주소 줄·맨 아래 선물 판·감사 답장 설명 문장이 없다", () => {
     for (const mode of ["login", "save"] as const) {
       renderProfile("open", mode, { replies: [{ phrase: "thanks", line: null, repliedOn: "2026-10-01", fanNickname: null }] });
-      expect(host.textContent, mode).not.toContain("fankkuk.kr/haru");
+      expect(host.textContent, mode).not.toContain("fankkuk.com/haru");
       expect(host.querySelector("#send-h"), mode).toBeNull();
       expect(host.textContent, mode).not.toContain("팬이 공개를 허락한 것만");
       expect(host.querySelector("#replies-h")?.textContent, mode).toBe("감사 답장 모음");

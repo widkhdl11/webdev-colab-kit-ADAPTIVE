@@ -19,7 +19,7 @@ describe("아이디 → 로그인 주소", () => {
   it("INV-L6: 시험 계정 주소를 가려낸다", () => {
     expect(isTestAccountEmail("byeolbit_fan@fankkuk.test")).toBe(true);
     expect(isTestAccountEmail("BYEOLBIT_FAN@FANKKUK.TEST")).toBe(true);
-    expect(isTestAccountEmail("someone@fankkuk.kr")).toBe(false);
+    expect(isTestAccountEmail("someone@fankkuk.com")).toBe(false);
     expect(isTestAccountEmail("x@fankkuk.test.evil.com")).toBe(false);
     expect(isTestAccountEmail("newfan@login.fankkuk.invalid")).toBe(false);
   });
