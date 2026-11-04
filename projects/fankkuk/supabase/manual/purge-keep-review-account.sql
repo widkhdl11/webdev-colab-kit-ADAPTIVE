@@ -153,6 +153,5 @@ begin
 end
 $purge$;
 
-select tbl as "테이블", sum(rows_deleted) as "지운 줄" from _purge_report group by tbl order by 2 desc;
 
 commit;
