@@ -1,4 +1,5 @@
 import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
+import { approvalSenderLabel } from "@/entities/notification/model/sender-label";
 import { readLoginLinkToken } from "@/entities/session/model/login-link";
 import { positiveCount, type NotificationBodyInput, type NotificationKind } from "./notification-body";
 
@@ -6,7 +7,9 @@ import { positiveCount, type NotificationBodyInput, type NotificationKind } from
 // 본문은 대행사가 템플릿에 변수를 채워 만들고, 우리는 변수만 넘긴다. 템플릿 본문의 정본은 docs/copy/alimtalk-templates.md 다.
 // 변수 이름도 그 문서 그대로(`#{닉네임}` 꼴). 문서를 고치면 이 파일을 같이 고친다 — alimtalk-body.test.ts 가 문서를 읽어 대조한다.
 // 넘기는 값은 이메일 본문 틀(notification-body)과 같은 칸뿐이다(INV-N1).
-// 묶음 알림 셋(승인 요청·승인 재알림·하루 묶음, notification-batching INV-NB1·NB2·NB5)은 주문번호 없이 건수만 넘긴다(INV-NB3).
+// 묶음 알림 셋(승인 요청·승인 재알림·하루 묶음, notification-batching INV-NB1·NB2·NB5)은 주문번호 없이 건수를 넘긴다(INV-NB3).
+// 승인 요청·재알림에는 받는 크리에이터 닉네임과 보낸 팬 표기(「별빛님 외 2명」), 답장 도착에는 답장한 크리에이터 이름이 들어간다 —
+// 2026-11-04 카카오 검수 반려(제3자가 한 행동으로 가는 알림은 보낸 사람과 받는 사람 이름을 적어야 한다). 이름이 비면 그 알림톡은 보내지 않는다.
 // 템플릿이 문서에 없는 종류는 null — 그 종류에 템플릿 ID 가 들어 있어도 보내지 않는다(검수받은 본문과 다르다).
 
 /** 템플릿 문서에 본문이 있고 코드가 그 변수를 채우는 종류 */
@@ -27,17 +30,26 @@ export type AlimtalkVariables = Record<string, string>;
 
 const v = (name: string) => `#{${name}}`;
 
+/** 승인 요청·재알림의 이름 두 칸 — 받는 크리에이터 닉네임과 보낸 팬 표기(2026-11-04 카카오 검수 반려). 하나라도 비면 null */
+function approvalNames(input: NotificationBodyInput): AlimtalkVariables | null {
+  const recipient = input.nickname.trim();
+  const sender = approvalSenderLabel(input.senderName, input.senderCount);
+  return recipient === "" || sender === null ? null : { [v("수신자명")]: recipient, [v("보내는사람")]: sender };
+}
+
 /** 그 종류의 알림톡 변수. 템플릿이 없거나 필요한 값이 비었으면 null. */
 export function buildAlimtalkVariables(input: NotificationBodyInput): AlimtalkVariables | null {
   switch (input.kind) {
     case "approval_request": {
       const waiting = positiveCount(input.waitingCount);
-      return waiting === null ? null : { [v("건수")]: String(waiting) };
+      const names = approvalNames(input);
+      return waiting === null || names === null ? null : { ...names, [v("건수")]: String(waiting) };
     }
     case "approval_reminder": {
       const waiting = positiveCount(input.waitingCount);
       const days = positiveCount(input.daysLeft);
-      return waiting === null || days === null ? null : { [v("건수")]: String(waiting), [v("일수")]: String(days) };
+      const names = approvalNames(input);
+      return waiting === null || days === null || names === null ? null : { ...names, [v("건수")]: String(waiting), [v("일수")]: String(days) };
     }
     case "status_digest": {
       // 링크는 이메일 본문과 같다 — 팬 선물 목록, 크리에이터 처리할 일(INV-NB5 ②)
@@ -57,8 +69,12 @@ export function buildAlimtalkVariables(input: NotificationBodyInput): AlimtalkVa
     case "shipped":
     case "in_transit":
     case "delivered":
-    case "gift_reply":
       return base;
+    case "gift_reply": {
+      // 답장한 크리에이터의 공개 이름(DB 가 꺼낸 줄에 넣은 값, 2026-11-04). 비면 보내지 않는다
+      const creator = input.senderName?.trim();
+      return creator ? { ...base, [v("크리에이터")]: creator } : null;
+    }
     default:
       return null;
   }

@@ -66,7 +66,21 @@ type Claimed = {
   item_count: number | null;
   recipient_is_creator: boolean;
   must_deliver: boolean;
+  /** 승인 요청·재알림은 맨 앞 팬 닉네임, 답장 도착은 답장한 크리에이터 공개 이름(2026-11-04) */
+  sender_name: string | null;
+  /** 승인 요청·재알림만 — 보낸 서로 다른 팬 수 */
+  sender_count: number | null;
 };
+
+const DALTOKKI = SEED.otherFanId;
+const nicknameOf = (profileId: string) => psql(`select nickname from public.profiles where id = '${profileId}'`);
+
+/** 그 팬이 모모에게 결제까지 끝낸 선물 하나 — 창은 그대로 둔다 */
+async function paidToMomoFrom(fanId: string): Promise<Unit> {
+  const o = await registerTestOrder(1, { senderId: fanId, creatorId: MOMO.creatorId });
+  const requestId = await payTestOrder(o, { keepApprovalWindow: true });
+  return { kind: "box", orderId: o.orderId, orderNo: o.orderNo, requestId, boxIds: [] };
+}
 
 /** 이 줄만 꺼낼 차례로 두고 꺼낸다. 건너뜀으로 끝나면 빈 배열 */
 async function claimOnly(id: string): Promise<Claimed[]> {
@@ -188,6 +202,54 @@ describe("승인 요청 10분 창 (INV-NB1)", () => {
     const [c] = await claimOnly(rowIdOf(a, "approval_request", 1));
     expect(c).toMatchObject({ kind: "approval_request", order_no: null, waiting_count: 1, days_left: null, item_count: null, must_deliver: true, recipient_is_creator: true, nickname: "모모" });
     expect(Object.keys(c!)).not.toContain("auto_reject_at");
+  });
+
+  it("INV-NB3 · INV-N1 (S3): 창 첫 통의 보낸 팬은 창을 연 요청의 팬 한 명 — 닉네임과 사람 수 1", async () => {
+    const a = await paidToMomoFrom(BYEOLBIT);
+    const [c] = await claimOnly(rowIdOf(a, "approval_request", 1));
+    expect([c!.sender_name, c!.sender_count, c!.order_no]).toEqual([nicknameOf(BYEOLBIT), 1, null]);
+  });
+
+  it("INV-NB3 · INV-N1 (S3, 실패경로): 창 끝 통의 보낸 팬은 창 안에 쌓인 요청만 — 창을 연 요청의 팬·다른 크리에이터에게 간 요청은 넣지 않는다", async () => {
+    // 0분 별빛(창을 엶) · 2분 달토끼 · 4분 별빛 → 하루(다른 크리에이터) · 6분 달토끼 — 끝 통의 팬은 달토끼 한 명
+    await paidToMomoFrom(BYEOLBIT);
+    windowAgo("2 minutes");
+    await paidToMomoFrom(DALTOKKI);
+    windowAgo("2 minutes");
+    const other = await registerTestOrder(1, { senderId: BYEOLBIT });
+    await payTestOrder(other, { keepApprovalWindow: true });
+    windowAgo("2 minutes");
+    const last = await paidToMomoFrom(DALTOKKI);
+    windowAgo("10 minutes");
+    expect(await closeWindows()).toBe(1);
+    const [c] = await claimOnly(rowIdOf(last, "approval_request", 2));
+    expect([c!.sender_name, c!.sender_count, c!.waiting_count]).toEqual([nicknameOf(DALTOKKI), 1, 3]);
+  });
+
+  it("INV-NB3: 창 끝 통에 여러 팬이 쌓이면 가장 먼저 온 요청의 팬이 앞, 사람 수는 서로 다른 팬 수", async () => {
+    await paidToMomoFrom(DALTOKKI);
+    windowAgo("1 minute");
+    await paidToMomoFrom(BYEOLBIT);
+    windowAgo("1 minute");
+    await paidToMomoFrom(DALTOKKI);
+    windowAgo("1 minute");
+    const last = await paidToMomoFrom(BYEOLBIT);
+    windowAgo("10 minutes");
+    await closeWindows();
+    const [c] = await claimOnly(rowIdOf(last, "approval_request", 2));
+    // 쌓인 것: 별빛 · 달토끼 · 별빛 — 맨 앞 별빛, 서로 다른 팬 둘
+    expect([c!.sender_name, c!.sender_count]).toEqual([nicknameOf(BYEOLBIT), 2]);
+  });
+
+  it("INV-NB1 · INV-NB3: 끝 통 없이 새 창이 열리면 쌓였던 요청의 팬도 새 첫 통에 들어간다", async () => {
+    await paidToMomoFrom(BYEOLBIT);
+    windowAgo("2 minutes");
+    await paidToMomoFrom(DALTOKKI);
+    // 창이 끝났지만 끝 통이 만들어지기 전에 새 결제가 새 창을 연다(INV-NB1 ③ 끝)
+    windowAgo("10 minutes");
+    const next = await paidToMomoFrom(BYEOLBIT);
+    const [c] = await claimOnly(rowIdOf(next, "approval_request", 1));
+    expect([c!.sender_name, c!.sender_count]).toEqual([nicknameOf(DALTOKKI), 2]);
   });
 
   it("INV-NB1: 창 끝 통은 자동 처리(office_run_scheduled)에서도 만들어진다", async () => {
@@ -315,6 +377,28 @@ describe("승인 재알림 3일째·6일째 (INV-NB2)", () => {
     expect(reminders(a)).toEqual([]);
   });
 
+  it("INV-NB3 · INV-NB2: 재알림의 보낸 팬은 지금 대기 중인 요청의 팬 — 가장 빨리 자동 반려될 요청의 팬이 앞", async () => {
+    const b = await paidToMomoFrom(BYEOLBIT);
+    const urgent = await paidToMomoFrom(DALTOKKI);
+    psql(`update public.orders set registered_at = now() - interval '100 hours' where id = '${urgent.orderId}'`);
+    age(b, "72 hours 1 minute");
+    await enqueueDue();
+    const [c] = await claimOnly(rowIdOf(b, "approval_reminder", 1));
+    // 달토끼 건은 결제가 더 일러(100시간) 먼저 반려된다 — 달토끼가 앞, 서로 다른 팬 둘
+    expect([c!.sender_name, c!.sender_count]).toEqual([nicknameOf(DALTOKKI), 2]);
+  });
+
+  it("INV-NB3 · INV-NB2 (실패경로): 재알림의 보낸 팬에 이미 처리된 요청의 팬은 넣지 않는다", async () => {
+    const done = await paidToMomoFrom(DALTOKKI);
+    const b = await paidToMomoFrom(BYEOLBIT);
+    psql(`update public.orders set registered_at = now() - interval '100 hours' where id = '${done.orderId}'`);
+    await approve(done);
+    age(b, "72 hours 1 minute");
+    await enqueueDue();
+    const [c] = await claimOnly(rowIdOf(b, "approval_reminder", 1));
+    expect([c!.sender_name, c!.sender_count, c!.waiting_count]).toEqual([nicknameOf(BYEOLBIT), 1, 1]);
+  });
+
   it("INV-NB2 (실패경로): 6일째가 이미 지난 요청에 3일째 재알림을 뒤늦게 만들지 않는다", async () => {
     const a = await paidToMomo();
     age(a, "150 hours");
@@ -394,6 +478,29 @@ describe("하루 묶음과 바로 받기 (INV-NB5)", () => {
     shippedEvent(box!.orderId);
     expect(psql(`select string_agg(kind || '|' || channel, ',') from ${OUTBOX} where order_id = '${box!.orderId}'`)).toBe("shipped|email");
     expect(openItems()).toBe(0);
+  });
+
+  it("INV-N1 (2026-11-04): 답장 도착 줄은 답장한 크리에이터의 공개 이름을 내주고, 출고·하루 묶음 줄은 보낸 사람 칸이 비어 있다", async () => {
+    await setInstant("byeolbit_fan", true);
+    const [box] = giftBoxes(BYEOLBIT, SEED.haruCreatorId, 1);
+    replyEvent(box!.orderId, box!.parcelId);
+    shippedEvent(box!.orderId);
+    const replyId = psql(`select id from ${OUTBOX} where account_id = '${BYEOLBIT}' and kind = 'gift_reply' and channel = 'email'`);
+    const shippedId = psql(`select id from ${OUTBOX} where account_id = '${BYEOLBIT}' and kind = 'shipped' and channel = 'email'`);
+    const publicName = psql(`select coalesce(c.name, p.nickname) from public.creators c join public.profiles p on p.id = c.profile_id where c.id = '${SEED.haruCreatorId}'`);
+    expect(publicName).not.toBe("");
+    const [reply] = await claimOnly(replyId);
+    expect([reply!.kind, reply!.sender_name, reply!.sender_count]).toEqual(["gift_reply", publicName, null]);
+    const [shipped] = await claimOnly(shippedId);
+    expect([shipped!.kind, shipped!.sender_name, shipped!.sender_count]).toEqual(["shipped", null, null]);
+
+    await setInstant("byeolbit_fan", false);
+    const [later] = giftBoxes(BYEOLBIT, SEED.haruCreatorId, 1);
+    replyEvent(later!.orderId, later!.parcelId);
+    await digest();
+    const digestId = psql(`select id from ${OUTBOX} where account_id = '${BYEOLBIT}' and kind = 'status_digest' and channel = 'email'`);
+    const [d] = await claimOnly(digestId);
+    expect([d!.kind, d!.sender_name, d!.sender_count]).toEqual(["status_digest", null, null]);
   });
 
   it("INV-NB5 (S5c, 실패경로): 소식 0건이면 묶음 줄 없음 — 두 번 돌려도, 같은 날 새 소식이 와도 계정마다 묶음 줄은 하나", async () => {

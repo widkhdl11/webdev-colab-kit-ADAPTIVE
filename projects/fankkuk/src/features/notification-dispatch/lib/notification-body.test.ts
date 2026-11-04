@@ -19,8 +19,10 @@ function inputFor(kind: NotificationBodyInput["kind"], round: 1 | 2 | 3 = 1): No
     itemCount: kind === "status_digest" ? 4 : null,
     recipientIsCreator: false,
     undeliveredReason: kind === "gift_undelivered" ? "declined" : null,
-    // 역조공 받기(INV-N20)만 보낸 크리에이터 이름 하나를 받는다 — 다른 종류는 비어 있다
-    senderName: kind === "revgift_offer" ? "모모" : null,
+    // 보낸 사람 이름 — 역조공 받기(INV-N20)는 보낸 크리에이터, 승인 요청·재알림은 맨 앞 팬(2026-11-04)만 기본으로 넣는다.
+    // 답장 도착의 크리에이터 이름은 그 시험에서 넣는다. 다른 종류는 비어 있다
+    senderName: kind === "revgift_offer" ? "모모" : kind === "approval_request" || kind === "approval_reminder" ? "별빛" : null,
+    senderCount: kind === "approval_request" || kind === "approval_reminder" ? 1 : null,
     // 반송 주소 재알림(INV-N22)만 처분 예정 시각(반송 대기 + 30일)을 받는다
     disposeDueAt: kind === "return_address_reminder" ? "2026-11-16T03:00:00Z" : null,
     mustDeliver: isMustDeliver(kind),
@@ -40,8 +42,10 @@ describe("알림 본문 틀 (INV-N1)", () => {
       if (ORDERLESS.includes(kind)) expect([kind, all.includes("FC-7K3M9")]).toEqual([kind, false]);
       else expect(all).toContain("FC-7K3M9");
       expect(all).toContain("하루");
-      // 추적 장치 발견(hold)은 그 크리에이터에게 신고할지 묻는 알림이라 「추적 장치」를 쓴다(INV-N13, 2026-10-17 카드 d100) — 그 밖의 종류에는 없다
-      const banned = kind === "hold" ? ["향수", "별빛", "블루투스"] : ["향수", "별빛", "추적 장치", "블루투스"];
+      // 추적 장치 발견(hold)은 그 크리에이터에게 신고할지 묻는 알림이라 「추적 장치」를 쓴다(INV-N13, 2026-10-17 카드 d100) — 그 밖의 종류에는 없다.
+      // 승인 요청·재알림은 보낸 팬 이름이 들어간다(2026-11-04) — 그 두 종류는 아래 S3 시험이 본다
+      const withFan = kind === "approval_request" || kind === "approval_reminder";
+      const banned = ["향수", ...(withFan ? [] : ["별빛"]), ...(kind === "hold" ? [] : ["추적 장치"]), "블루투스"];
       for (const word of banned) expect(all).not.toContain(word);
       expect(all).not.toMatch(/01[016789]-?\d{3,4}-?\d{4}/); // 휴대폰 번호 꼴
       expect(all).not.toMatch(/[\w.+-]+@[\w-]+\.[\w.]+/); // 메일 주소 꼴
@@ -60,32 +64,47 @@ describe("알림 본문 틀 (INV-N1)", () => {
     expect([b.subject, b.text, b.buttonLabel, b.link].join("\n")).not.toMatch(/향수|별빛|서울시/);
   });
 
-  it("INV-NB3 · INV-NB1 (S3): 승인 요청 — 건수와 [승인 화면 열기]만, 주문번호·보낸 팬·선물 종류·개수가 없다", () => {
+  it("INV-NB3 · INV-NB1 (S3): 승인 요청 — 보낸 팬 표기·건수와 [승인 화면 열기]만, 주문번호·선물 종류·개수가 없다", () => {
     const b = buildNotificationBody({
       ...inputFor("approval_request"),
-      // @ts-expect-error 본문 틀에는 보낸 팬·선물 칸이 없다
-      senderNickname: "별빛",
+      senderCount: 3,
+      // @ts-expect-error 본문 틀에는 선물 칸이 없다
       itemKind: "향수",
+      boxCount: 2,
     });
     expect(b.subject).toBe("[팬꾹] 새 선물 승인 요청");
-    expect(b.text.split("\n").slice(0, 3)).toEqual(["하루님,", "새 선물 승인 요청이 왔어요.", "승인 대기 3건"]);
+    expect(b.text.split("\n").slice(0, 3)).toEqual(["하루님,", "별빛님 외 2명이 선물을 보내려고 승인을 요청했습니다.", "승인 대기: 총 3건"]);
     expect(b.buttonLabel).toBe("승인 화면 열기");
     expect(b.text).toContain("선물 상세 정보는 알림에 표시하지 않습니다");
     expect(b.text).toContain("서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.");
-    for (const word of ["FC-7K3M9", "주문번호", "별빛", "향수", "개", "자동 반려"]) expect([word, b.text.includes(word) || b.subject.includes(word)]).toEqual([word, false]);
+    for (const word of ["FC-7K3M9", "주문번호", "향수", "2개", "상자"]) expect([word, b.text.includes(word) || b.subject.includes(word)]).toEqual([word, false]);
   });
 
-  it("INV-NB1: 창 첫 통(1)과 끝 통(2)은 같은 본문 — 건수만 그때의 대기 전체", () => {
+  it("INV-NB3 (실패경로): 보낸 팬 이름이 비면 이메일은 이름 없는 문장으로 간다 — 꼭 가는 알림이라 막지 않고, 빈 이름(「님이」)을 쓰지 않는다", () => {
+    for (const kind of ["approval_request", "approval_reminder"] as const) {
+      for (const over of [{ senderName: null }, { senderName: " " }, { senderCount: null }, { senderCount: 0 }]) {
+        const b = buildNotificationBody({ ...inputFor(kind), ...over });
+        expect([kind, b.text.split("\n")[1]!.startsWith("팬이 "), /(^|\s)님/.test(b.text)]).toEqual([kind, true, false]);
+      }
+    }
+  });
+
+  it("INV-NB1: 창 첫 통(1)과 끝 통(2)은 같은 본문 — 보낸 팬과 건수만 그 통의 값", () => {
     const first = buildNotificationBody(inputFor("approval_request", 1));
-    const last = buildNotificationBody({ ...inputFor("approval_request", 2), waitingCount: 5 });
+    const last = buildNotificationBody({ ...inputFor("approval_request", 2), waitingCount: 5, senderCount: 2 });
     expect(last.subject).toBe(first.subject);
-    expect(last.text).toBe(first.text.replace("승인 대기 3건", "승인 대기 5건"));
+    expect(last.text).toBe(first.text.replace("승인 대기: 총 3건", "승인 대기: 총 5건").replace("별빛님이", "별빛님 외 1명이"));
   });
 
-  it("INV-NB2 · INV-NB3 (S2c): 승인 재알림 — 「승인 대기 N건, X일 뒤 자동 반려」, 주문번호 없음, 꼭 가는 알림", () => {
+  it("INV-NB2 · INV-NB3 (S2c): 승인 재알림 — 보낸 팬·「승인 대기: 총 N건」·「X일 뒤에는 … 자동으로 반려」, 주문번호 없음, 꼭 가는 알림", () => {
     const b = buildNotificationBody({ ...inputFor("approval_reminder"), waitingCount: 3, daysLeft: 1 });
     expect(b.subject).toBe("[팬꾹] 선물 승인 기한 안내");
-    expect(b.text.split("\n").slice(0, 2)).toEqual(["하루님,", "승인 대기 3건, 1일 뒤 자동 반려"]);
+    expect(b.text.split("\n").slice(0, 4)).toEqual([
+      "하루님,",
+      "별빛님이 요청한 선물 승인이 아직 대기 중입니다.",
+      "승인 대기: 총 3건",
+      "1일 뒤에는 승인하지 않은 요청이 자동으로 반려됩니다.",
+    ]);
     expect(b.buttonLabel).toBe("승인 화면 열기");
     expect(b.text).toContain("서비스 이용에 필요한 필수 알림으로, 수신 설정과 관계없이 발송됩니다.");
     expect(b.text).not.toContain("FC-7K3M9");
@@ -390,7 +409,21 @@ describe("받았어요·답장 알림 (gift-reply INV-G5)", () => {
     expect(received.link).toBe(`${ORIGIN}/gifts/FC-7K3M9`);
   });
 
-  it("INV-G5 (실패경로): 크리에이터 이름·답장 내용을 넘겨도 본문에 섞이지 않는다 — 틀에 그 칸이 없다", () => {
+  it("INV-N1 · INV-G5: 답장 도착은 답장한 크리에이터 이름을 적는다(2026-11-04) — 받았다고 확인됐어요에는 넣지 않는다", () => {
+    const reply = buildNotificationBody({ ...inputFor("gift_reply"), senderName: "모모" });
+    expect(reply.text.split("\n").slice(0, 2)).toEqual(["하루님,", "모모님이 하루님이 보낸 선물에 답장을 보냈습니다."]);
+    const received = buildNotificationBody({ ...inputFor("gift_received"), senderName: "모모" });
+    expect(received.text).not.toContain("모모");
+  });
+
+  it("INV-N1 (실패경로): 답장한 크리에이터 이름이 비면 이름 없는 문장 — 빈 이름(「님이」)을 쓰지 않는다", () => {
+    for (const senderName of [null, "", "  "]) {
+      const b = buildNotificationBody({ ...inputFor("gift_reply"), senderName });
+      expect(b.text.split("\n")[1]).toBe("보내신 선물에 답장이 도착했습니다.");
+    }
+  });
+
+  it("INV-G5 (실패경로): 답장 내용을 넘겨도 본문에 섞이지 않는다 — 틀에 그 칸이 없다", () => {
     for (const kind of ["gift_reply", "gift_received"] as const) {
       const b = buildNotificationBody({
         ...inputFor(kind),
@@ -432,8 +465,9 @@ describe("역조공 받기 알림 (INV-N20 · reverse-gift INV-R12)", () => {
     expect(() => buildNotificationBody(offer(1, "  "))).toThrow();
   });
 
-  it("INV-N1 (실패경로): 다른 종류에는 보낸 크리에이터 이름을 넘겨도 본문에 섞이지 않는다", () => {
-    for (const kind of SENDABLE.filter((k) => k !== "revgift_offer")) {
+  it("INV-N1 (실패경로): 이름을 쓰는 네 종류 말고는 보낸 사람 이름을 넘겨도 본문에 섞이지 않는다", () => {
+    const named: readonly string[] = ["revgift_offer", "approval_request", "approval_reminder", "gift_reply"];
+    for (const kind of SENDABLE.filter((k) => !named.includes(k))) {
       const b = buildNotificationBody({ ...inputFor(kind), senderName: "모모" });
       expect([kind, [b.subject, b.text].join("\n").includes("모모")]).toEqual([kind, false]);
     }

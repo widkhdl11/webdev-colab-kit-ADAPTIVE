@@ -3,11 +3,14 @@ import { NOTIFICATION_POLICY, type NotificationAudience, type NotificationKind }
 import { DECLINED_PHRASE, EXPIRED_TEXT } from "@/entities/order/ui/fan-stage-copy";
 import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
 import { CREATOR_CHECK_DAYS } from "@/entities/parcel/model/creator-check";
+import { approvalSenderLabel } from "@/entities/notification/model/sender-label";
+import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { formatMonthDayKo } from "@/shared/lib/format/datetime";
 
 // 알림 본문 틀 (notifications INV-N1·N9). 카카오 알림톡과 이메일이 같은 틀을 쓴다(INV-N7) — 카카오 템플릿도 이 문구로 심사받는다.
-// 본문은 잠금 화면·메일함·대행사 서버처럼 우리가 지킬 수 없는 곳에 남는다. 그래서 받는 칸을 아래 여섯으로 묶어
-// 품목·상대방·주소·연락처·운송장 번호가 섞일 자리를 만들지 않는다. 누가 무엇을 보냈는지는 링크를 열고 로그인한 뒤에만 보인다.
+// 본문은 잠금 화면·메일함·대행사 서버처럼 우리가 지킬 수 없는 곳에 남는다. 그래서 받는 칸을 정해 두어
+// 품목·주소·연락처·운송장 번호가 섞일 자리를 만들지 않는다. 무엇을 보냈는지는 링크를 열고 로그인한 뒤에만 보인다.
+// 상대방 이름은 역조공 받기·승인 요청·승인 재알림·답장 도착에만 들어간다(INV-N1 — 2026-11-04 카카오 검수 반려로 셋을 더함).
 // 링크는 설정의 사이트 주소 + 고정 경로(+주문번호, 할 일이면 고정 조각 #todo — action-center INV-J13)뿐이다. 요청 헤더로 만들지 않고, 링크 자체로는 아무것도 처리하지 않는다(INV-N9).
 
 // box_arrived: 상자 하나가 입고됐다고 그 주문의 주인(보낸 팬 · 역조공이면 보낸 크리에이터)에게 한 번(inbound-address-code INV-C8).
@@ -32,15 +35,17 @@ import { formatMonthDayKo } from "@/shared/lib/format/datetime";
 // payment_canceled · difference_canceled: 「확인 필요」 결제를 대표가 전액 취소했을 때 보낸 팬에게 한 번(INV-N19, payment INV-M20, 2026-10-10).
 //   첫 결제면 결제 전 주문이라 팬 화면에 없다 — 링크는 선물 등록. 차액이면 선물 상세. 금액 칸이 없다.
 // gift_reply · gift_received: 크리에이터가 상자에 「받았어요」를 남길 때 보낸 팬에게 상자마다 한 번(gift-reply INV-G5, 2026-10-11).
-//   답장이 있으면 「답장이 왔어요」, 확인만이면 「도착했다고 확인됐어요」. 크리에이터 이름·답장 내용 칸이 없다 — 선물 상세를 열면 보인다.
+//   답장이 있으면 「답장이 왔어요」, 확인만이면 「도착했다고 확인됐어요」. 답장 내용 칸이 없다 — 선물 상세를 열면 보인다.
+//   답장(gift_reply)에 한해 답장한 크리에이터의 공개 이름이 들어간다(2026-11-04 카카오 검수 반려 — DB 가 꺼낸 줄의 sender_name). 받았다고 확인됐어요에는 없다.
 // box_no_code: 6자리 없이 온 상자가 송장 「보내는 분」으로 그 팬의 닉네임과 맞았고 결제 완료·입고 전 주문이 있으면 상자마다 한 번(INV-N21, 카드 d94).
 //   본문은 「받는 주소 없이 보낸 상자가 있어요」와 「받는 주소 없이 보냈어요」 화면(선물 상세) 링크뿐 — 송장번호·택배사·도착일·크리에이터 이름·주문번호 줄은 없다.
 // revgift_offer: 역조공 몫의 결제가 끝나면 받는 팬에게 한 번, 72시간 뒤 아직 받기 대기면 한 번 더(INV-N20, 2026-10-16). INV-N1 의 예외로 보낸 크리에이터
 //   공개 이름 하나가 들어간다(팬이 누가 보냈는지 모르면 받을지 정할 수 없다). 링크는 그 몫 받기 화면.
 // approval_request · approval_reminder · creator_check 링크는 크리에이터 처리할 일(2026-10-16, INV-N9). 승인 요청·재알림은 특정 주문이 아니라
 //   승인 대기 목록이다 — 여러 건을 묶은 알림이라 주문번호를 붙이지 않는다(notification-batching INV-NB4, 2026-10-30).
-// approval_request: 크리에이터마다 10분 창의 첫 통·끝 통(INV-NB1). approval_reminder: 결제 완료 3일째·6일째(INV-NB2). 둘 다 주문번호·보낸 사람·선물 종류·개수가 없고
-//   보내는 순간의 승인 대기 건수(재알림은 가장 이른 자동 반려까지 남은 일수도)만 들어간다(INV-NB3). 알림톡 본문은 docs/copy/alimtalk-templates.md 2·3절.
+// approval_request: 크리에이터마다 10분 창의 첫 통·끝 통(INV-NB1). approval_reminder: 결제 완료 3일째·6일째(INV-NB2). 둘 다 주문번호·선물 종류·개수가 없고
+//   보낸 팬 표기(「별빛님 외 2명」 — 2026-11-04 카카오 검수 반려)와 보내는 순간의 승인 대기 건수(재알림은 가장 이른 자동 반려까지 남은 일수도)가 들어간다(INV-NB3).
+//   알림톡 본문은 docs/copy/alimtalk-templates.md 2·3절.
 // status_digest: 상태 알림 다섯의 하루 묶음(INV-NB5) — 받는 사람의 닉네임·소식 건수·선물 목록 링크(팬 /gifts · 크리에이터 처리할 일)뿐. 템플릿 9절.
 // 종류 목록과 꼭 가는 알림 판정은 entities/notification 이 정본이다(INV-N6 표).
 export { NOTIFICATION_KINDS, type NotificationKind } from "@/entities/notification/model/delivery-policy";
@@ -63,8 +68,14 @@ export type NotificationBodyInput = {
   recipientIsCreator: boolean;
   /** 거절 알림(gift_undelivered)만 — 직접·차단 거절 declined · 7일 반려 expired. DB 가 정한 값이다 */
   undeliveredReason: "declined" | "expired" | null;
-  /** 역조공 받기(revgift_offer)만 — 보낸 크리에이터의 공개 이름(INV-N20 · reverse-gift INV-R12). DB 가 꺼낸 줄에 넣은 값이고, 다른 종류는 본문에 쓰지 않는다 */
+  /**
+   * 보낸 사람 이름 — DB 가 꺼낸 줄에 넣은 값이고, 아래 종류 말고는 본문에 쓰지 않는다(INV-N1).
+   * 역조공 받기(revgift_offer): 보낸 크리에이터의 공개 이름(INV-N20 · reverse-gift INV-R12) ·
+   * 승인 요청·재알림: 맨 앞 팬의 닉네임(notification-batching INV-NB3, 2026-11-04) · 답장 도착(gift_reply): 답장한 크리에이터의 공개 이름(2026-11-04)
+   */
   senderName: string | null;
+  /** 승인 요청·재알림만 — 그 통의 요청을 보낸 서로 다른 팬의 수(DB 가 센 값). 「별빛님 외 2명」을 만든다 */
+  senderCount: number | null;
   /** 반송 주소 재알림(return_address_reminder)만 — 처분 예정 시각(반송 대기 + 720시간, INV-N22). DB 가 꺼낸 줄에 넣은 값이고, 다른 종류는 본문에 쓰지 않는다 */
   disposeDueAt: string | null;
   /** 꺼낸 줄의 꼭 가는 알림 표시(DB 판정, INV-N6) */
@@ -123,31 +134,45 @@ export function siteOrigin(appOrigin: string): string {
 }
 
 function draftOf(
-  { kind, round, nickname, waitingCount, daysLeft, itemCount, recipientIsCreator, undeliveredReason, senderName, disposeDueAt }: NotificationBodyInput,
+  { kind, round, nickname, waitingCount, daysLeft, itemCount, recipientIsCreator, undeliveredReason, senderName, senderCount, disposeDueAt }: NotificationBodyInput,
   orderNo: string,
 ): Draft {
   const greet = `${nickname}님,`;
   const order = `주문번호 ${orderNo}`;
   switch (kind) {
     case "approval_request": {
-      // 창 첫 통(1)과 끝 통(2)은 같은 본문 — 건수만 그때의 대기 전체(INV-NB1). 승인은 처리할 일의 승인 대기 목록에서 한 건씩(INV-NB4)
+      // 창 첫 통(1)과 끝 통(2)은 같은 본문 — 보낸 팬은 그 통에 새로 묶인 요청, 건수는 그때의 대기 전체(INV-NB1·NB3). 승인은 처리할 일의 승인 대기 목록에서 한 건씩(INV-NB4).
+      // 문장은 알림톡 템플릿 2절과 같다(INV-N7). 보낸 팬 이름이 비면(꺼내는 함수가 옛 정의일 때) 이메일은 이름 없는 문장으로 간다 —
+      // 꼭 가는 알림이라 이메일까지 막으면 크리에이터가 요청을 모른 채 자동 반려된다. 알림톡은 이름이 비면 가지 않는다(alimtalk-body)
       const waiting = positiveCount(waitingCount);
       if (waiting === null) throw new Error("승인 요청 알림에 승인 대기 건수가 없다");
+      const sender = approvalSenderLabel(senderName, senderCount);
       return {
         subject: "[팬꾹] 새 선물 승인 요청",
-        lines: [greet, "새 선물 승인 요청이 왔어요.", `승인 대기 ${waiting}건`],
+        lines: [
+          greet,
+          sender ? `${sender}이 선물을 보내려고 승인을 요청했습니다.` : "팬이 선물을 보내려고 승인을 요청했습니다.",
+          `승인 대기: 총 ${waiting}건`,
+          `승인 화면에서 선물 내용을 확인하고 승인 또는 거절해 주세요. ${APPROVAL_DEADLINE_DAYS}일 안에 승인하지 않은 요청은 자동으로 반려됩니다.`,
+        ],
         buttonLabel: "승인 화면 열기",
         path: CREATOR_ACTION_CENTER_HREF,
       };
     }
     case "approval_reminder": {
-      // 3일째·6일째 같은 본문(INV-NB2) — 일수는 가장 빨리 자동 반려될 건 기준
+      // 3일째·6일째 같은 본문(INV-NB2) — 일수는 가장 빨리 자동 반려될 건 기준, 보낸 팬은 지금 대기 중인 요청(그 건의 팬이 앞). 문장은 템플릿 3절과 같다
       const waiting = positiveCount(waitingCount);
       const days = positiveCount(daysLeft);
       if (waiting === null || days === null) throw new Error("승인 재알림에 승인 대기 건수·남은 일수가 없다");
+      const sender = approvalSenderLabel(senderName, senderCount);
       return {
         subject: "[팬꾹] 선물 승인 기한 안내",
-        lines: [greet, `승인 대기 ${waiting}건, ${days}일 뒤 자동 반려`],
+        lines: [
+          greet,
+          sender ? `${sender}이 요청한 선물 승인이 아직 대기 중입니다.` : "팬이 요청한 선물 승인이 아직 대기 중입니다.",
+          `승인 대기: 총 ${waiting}건`,
+          `${days}일 뒤에는 승인하지 않은 요청이 자동으로 반려됩니다.`,
+        ],
         buttonLabel: "승인 화면 열기",
         path: CREATOR_ACTION_CENTER_HREF,
       };
@@ -296,13 +321,16 @@ function draftOf(
         buttonLabel: "추가 결제하기",
         path: `/gifts/${orderNo}`,
       };
-    case "gift_reply":
+    case "gift_reply": {
+      // 답장한 크리에이터의 공개 이름(2026-11-04, 템플릿 8절과 같은 문장). 이름이 비면 이름 없는 문장 — 답장 내용은 쓰지 않는다
+      const creator = senderName?.trim();
       return {
         subject: "[팬꾹] 선물 답장 도착",
-        lines: [greet, "보내신 선물에 답장이 도착했습니다.", order],
+        lines: [greet, creator ? `${creator}님이 ${nickname}님이 보낸 선물에 답장을 보냈습니다.` : "보내신 선물에 답장이 도착했습니다.", order],
         buttonLabel: "답장 보기",
         path: `/gifts/${orderNo}`,
       };
+    }
     case "gift_received":
       return {
         subject: "[팬꾹] 크리에이터 수령 확인",

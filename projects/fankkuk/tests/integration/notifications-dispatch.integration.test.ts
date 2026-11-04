@@ -50,7 +50,7 @@ function idOf(orderId: string, kind: string, channel = "email", round = 1): stri
 }
 
 describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
-  it("INV-N3·N5 · INV-NB3: 결제 완료로 생긴 승인 요청 줄을 하루의 확인된 이메일로 한 번 보내고 보냄으로 끝낸다 — 주문번호 없이 승인 대기 건수", async () => {
+  it("INV-N3·N5 · INV-NB3: 결제 완료로 생긴 승인 요청 줄을 하루의 확인된 이메일로 한 번 보내고 보냄으로 끝낸다 — 주문번호 없이 보낸 팬과 승인 대기 건수", async () => {
     const g = await paidGift();
     const email = capture(false);
     const result = await dispatchNotifications(depsWith(email));
@@ -59,7 +59,9 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     expect(mine).toHaveLength(1);
     expect(mine[0]!.to).toBe(psql(`select c.email from pii.account_contacts c join public.profiles p on p.id = c.account_id where p.login_id = 'haru_creator'`));
     expect(mine[0]!.text).not.toContain(g.orderNo);
-    expect(mine[0]!.text).toMatch(/승인 대기 \d+건/);
+    expect(mine[0]!.text).toMatch(/승인 대기: 총 \d+건/);
+    // 보낸 팬(별빛) 이름이 DB 에서 와서 본문에 들어간다(2026-11-04 카카오 검수 반려)
+    expect(mine[0]!.text).toContain("별빛님이 선물을 보내려고 승인을 요청했습니다.");
     expect(mine[0]!.text).toContain("http://127.0.0.1:3311/creator/actions\n");
     expect(statusOf(g.orderId, "approval_request")).toBe("sent");
   });
@@ -104,7 +106,7 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     expect(email.sent.some((m) => m.outboxId === idOf(approved.orderId, "approval_reminder", "email", 1))).toBe(false);
     const sent = email.sent.find((m) => m.outboxId === idOf(waiting.orderId, "approval_reminder", "email", 1))!;
     expect(sent.subject).toBe("[팬꾹] 선물 승인 기한 안내");
-    expect(sent.text).toMatch(/승인 대기 \d+건, \d+일 뒤 자동 반려/);
+    expect(sent.text).toMatch(/별빛님이 요청한 선물 승인이 아직 대기 중입니다\.\n승인 대기: 총 \d+건\n\d+일 뒤에는 승인하지 않은 요청이 자동으로 반려됩니다\./);
   });
 
   it("INV-NB1 (S1): 일꾼이 끝난 창의 끝 통을 만들어 보낸다 — 건수는 보내는 순간의 대기 전체", async () => {
@@ -117,17 +119,21 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     await dispatchNotifications(depsWith(email));
     expect(statusOf(first.orderId, "approval_request")).toBe("sent");
     const last = email.sent.find((m) => m.outboxId === idOf(second.orderId, "approval_request", "email", 2))!;
-    expect(last.text).toContain(`승인 대기 ${count}건`);
+    expect(last.text).toContain(`승인 대기: 총 ${count}건`);
+    // 끝 통의 보낸 팬은 창 안에 쌓인 요청(second, 별빛)뿐 — 한 명
+    expect(last.text).toContain("별빛님이 선물을 보내려고 승인을 요청했습니다.");
   });
 
-  it("INV-N7 · INV-NB1: 템플릿 코드가 있으면 승인 요청은 카카오 줄도 보낸다 — 변수는 승인 대기 건수 하나. 이메일 줄도 간다", async () => {
+  it("INV-N7 · INV-NB1: 템플릿 코드가 있으면 승인 요청은 카카오 줄도 보낸다 — 변수는 받는 사람·보낸 팬·승인 대기 건수. 이메일 줄도 간다", async () => {
     psql(`insert into ${TEMPLATES} (kind, template_code) values ('approval_request', 'TPL_APPROVAL_1')`);
     const g = await paidGift();
     const email = capture(false);
     const kakao = capture(true);
     await dispatchNotifications(depsWith(email, kakao));
     const k = kakao.sent.find((m) => m.outboxId === idOf(g.orderId, "approval_request", "kakao"))!;
-    expect([k.templateCode, Object.keys(k.variables ?? {})]).toEqual(["TPL_APPROVAL_1", ["#{건수}"]]);
+    expect([k.templateCode, Object.keys(k.variables ?? {}).sort()]).toEqual(["TPL_APPROVAL_1", ["#{건수}", "#{보내는사람}", "#{수신자명}"]]);
+    expect([k.variables?.["#{수신자명}"], k.variables?.["#{보내는사람}"]]).toEqual(["하루", "별빛님"]);
+    expect(k.variables?.["#{건수}"]).toMatch(/^\d+$/);
     expect(statusOf(g.orderId, "approval_request", "kakao")).toBe("sent");
     expect(statusOf(g.orderId, "approval_request", "email")).toBe("sent");
   });

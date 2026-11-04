@@ -446,14 +446,14 @@ describe("추적 장치 발견 알림 — 크리에이터에게만, 팬에게는
     expect(fanKinds(held.g.orderId)).toEqual(fanKinds(returned.g.orderId));
   });
 
-  it("INV-N1 (S1c): 승인 요청 줄을 꺼내도 보낸 팬 닉네임·선물 종류·상자 수는 오지 않는다 — 승인 화면에서만 보인다(카드 d2 답 ②)", async () => {
+  it("INV-N1 (S1c, 2026-11-04 고침): 승인 요청 줄은 보낸 팬 닉네임(별빛)과 팬 수를 돌려주고, 선물 종류·물품 이름은 오지 않는다 — 승인 화면에서만 보인다", async () => {
     const g = await paidGift(2);
     // 물품 이름은 시험 이름 그대로 둔다 — 「꽃」으로 바꾸면 시험 주문 정리(deleteTestOrders)가 이 주문을 못 지운다(2026-10-30, 10건 남음)
     psql(`update public.orders set item_category = 'flower' where id = '${g.orderId}'`);
     const kind = psql(`select item_kind from public.orders where id = '${g.orderId}'`);
     const c = await claimOne(rowId(g.orderId, "approval_request", "haru_creator"));
-    expect(c).toMatchObject({ kind: "approval_request", nickname: "하루" });
-    expect(JSON.stringify(c)).not.toMatch(/별빛|flower/);
+    expect(c).toMatchObject({ kind: "approval_request", nickname: "하루", sender_name: "별빛", sender_count: 1 });
+    expect(JSON.stringify(c)).not.toMatch(/flower|꽃/);
     expect(JSON.stringify(c)).not.toContain(kind);
     // 그 값을 고르던 함수도 없다
     expect(psql(`select count(*) from pg_proc where proname = 'approval_gift_facts'`)).toBe("0");
@@ -584,8 +584,8 @@ describe("꺼내기·끝내기 (INV-N5·N1)", () => {
     const g = await paidGift();
     const waiting = Number(psql(`select count(*) from public.approval_requests r join public.orders o on o.id = r.order_id where o.creator_id = '${SEED.haruCreatorId}' and r.status = 'waiting'`));
     const c = await claimOne(rowId(g.orderId, "approval_request", "haru_creator"));
-    // dispose_due_at = 반송 주소 재알림의 처분 예정 시각(INV-N22) · waiting_count·days_left·item_count = 묶음 알림의 건수(notification-batching INV-NB3) — 다른 종류는 비어 있다
-    expect(Object.keys(c).sort()).toEqual(["attempts", "channel", "claimed_at", "days_left", "dispose_due_at", "id", "item_count", "kind", "must_deliver", "nickname", "order_no", "recipient_is_creator", "round", "sender_name", "undelivered_reason", "waiting_count"]);
+    // sender_name·sender_count = 보낸 사람 이름과 팬 수(2026-11-04) · dispose_due_at = 반송 주소 재알림의 처분 예정 시각(INV-N22) · waiting_count·days_left·item_count = 묶음 알림의 건수(notification-batching INV-NB3) — 다른 종류는 비어 있다
+    expect(Object.keys(c).sort()).toEqual(["attempts", "channel", "claimed_at", "days_left", "dispose_due_at", "id", "item_count", "kind", "must_deliver", "nickname", "order_no", "recipient_is_creator", "round", "sender_count", "sender_name", "undelivered_reason", "waiting_count"]);
     expect(c).toMatchObject({ dispose_due_at: null, days_left: null, item_count: null });
     expect(c).toMatchObject({ kind: "approval_request", channel: "email", round: 1, order_no: null, nickname: "하루", must_deliver: true, attempts: 0, undelivered_reason: null, waiting_count: waiting });
     expect(rowField(c.id, "status")).toBe("sending");

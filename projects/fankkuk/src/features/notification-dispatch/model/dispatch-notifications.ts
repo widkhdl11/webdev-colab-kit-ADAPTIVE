@@ -64,8 +64,10 @@ const claimedRow = z.object({
   recipient_is_creator: z.boolean().optional(),
   /** 거절 알림의 문구 갈래 — DB 가 주문 상태로 정한 값(직접·차단 거절 declined · 7일 반려 expired). 다른 종류는 null */
   undelivered_reason: z.enum(["declined", "expired"]).nullable().optional(),
-  /** 역조공 받기 줄만 — 보낸 크리에이터 공개 이름(DB 가 넣은 값, INV-N20). 다른 종류는 null */
+  /** 보낸 사람 이름(DB 가 넣은 값, INV-N1) — 역조공 받기·답장 도착은 보낸 크리에이터 공개 이름, 승인 요청·재알림은 맨 앞 팬 닉네임(2026-11-04). 다른 종류는 null */
   sender_name: z.string().nullable().optional(),
+  /** 승인 요청·재알림만 — 보낸 서로 다른 팬의 수(「외 N명」). 이 칸을 내주지 않는 옛 DB 면 알림톡은 만들지 못해 보내지 않는다 */
+  sender_count: z.number().int().nullable().optional(),
   /** 반송 주소 재알림 줄만 — 처분 예정 시각(반송 대기 + 720시간, INV-N22). 다른 종류는 null. 이 칸을 내주지 않는 옛 DB 면 재알림은 만들지 못해 보내지 않는다 */
   dispose_due_at: z.string().nullable().optional(),
   /** 꼭 가는 알림인가 — DB 가 줄의 종류로 정한 값(public.notification_kind_must_deliver). 본문 끝 안내는 이것을 따른다(INV-N6). */
@@ -117,6 +119,7 @@ async function sendRow(deps: DispatchDeps, origin: string, channels: Notificatio
     recipientIsCreator: row.recipient_is_creator ?? false,
     undeliveredReason: row.undelivered_reason ?? null,
     senderName: row.sender_name ?? null,
+    senderCount: row.sender_count ?? null,
     disposeDueAt: row.dispose_due_at ?? null,
     mustDeliver: row.must_deliver,
     appOrigin: origin,

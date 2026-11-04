@@ -22,6 +22,8 @@ type Row = {
   recipient_is_creator?: boolean;
   undelivered_reason?: string | null;
   sender_name?: string | null;
+  /** 승인 요청·재알림만 — 보낸 서로 다른 팬 수(2026-11-04) */
+  sender_count?: number | null;
   /** DB 가 더 내주는 칸이 와도 본문에 섞이지 않는지 보는 데만 쓴다 */
   approval_sender?: string | null;
   approval_gift_kind?: string | null;
@@ -210,24 +212,28 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     round: 2,
     nickname: "하루",
     waiting_count: 3,
+    // 보낸 팬 표기는 sender_name·sender_count 두 칸으로만 만든다(2026-11-04) — 옛 칸(approval_sender 등)이 와도 쓰지 않는다
+    sender_name: "별빛",
+    sender_count: 2,
     approval_sender: "달토끼",
     approval_gift_kind: "꽃",
     approval_box_count: 2,
     must_deliver: true,
   };
 
-  it("INV-NB1 · INV-NB3 (S3): 승인 요청 줄은 꺼낸 승인 대기 건수로 본문을 만들고, 줄에 보낸 팬·종류·개수 칸이 와도 본문에 넣지 않는다", async () => {
+  it("INV-NB1 · INV-NB3 (S3): 승인 요청 줄은 꺼낸 보낸 팬 표기·승인 대기 건수로 본문을 만들고, 줄에 옛 보낸 팬·종류·개수 칸이 와도 본문에 넣지 않는다", async () => {
     const email = channel();
     const { admin } = fakeAdmin({ rows: [APPROVAL_ROW], contacts: { "row-1": "haru@example.com" } });
     await dispatchNotifications(deps(admin, { email, kakao: null }));
-    expect(email.sent[0]!.text).toContain("승인 대기 3건");
+    expect(email.sent[0]!.text).toContain("승인 대기: 총 3건");
+    expect(email.sent[0]!.text).toContain("별빛님 외 1명이 선물을 보내려고 승인을 요청했습니다.");
     expect(email.sent[0]!.text).toContain("하루님");
     expect(email.sent[0]!.text).toContain("/creator/actions");
     expect(email.sent[0]!.text).not.toMatch(/달토끼|꽃|2개|FC-7K3M9/);
     expect(email.sent[0]!.text).not.toContain("haru@example.com"); // 받는 주소는 본문에 없다
   });
 
-  it("INV-NB1 · INV-N7: 승인 요청은 템플릿 ID 가 있으면 알림톡으로 — 변수는 건수 하나", async () => {
+  it("INV-NB1 · INV-N7: 승인 요청은 템플릿 ID 가 있으면 알림톡으로 — 변수는 받는 사람·보낸 팬·건수", async () => {
     const kakao = channel(true);
     const { admin } = fakeAdmin({
       rows: [{ ...APPROVAL_ROW, channel: "kakao" }],
@@ -235,14 +241,14 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
       templates: [{ kind: "approval_request", template_code: "TPL_APPROVAL" }],
     });
     await dispatchNotifications(deps(admin, { email: channel(), kakao }));
-    expect(kakao.sent.map((m) => [m.templateCode, m.variables])).toEqual([["TPL_APPROVAL", { "#{건수}": "3" }]]);
+    expect(kakao.sent.map((m) => [m.templateCode, m.variables])).toEqual([["TPL_APPROVAL", { "#{수신자명}": "하루", "#{보내는사람}": "별빛님 외 1명", "#{건수}": "3" }]]);
   });
 
   describe("link-login INV-K1: 카카오 승인 요청은 로그인 링크 템플릿이 있을 때만 토큰을 발급해 그 템플릿으로", () => {
     const LINK_TEMPLATES = [{ kind: "approval_request", template_code: "TPL_APPROVAL", login_link_template_code: "TPL_APPROVAL_LINK" }];
     const issues = (calls: Call[]) => calls.filter((c) => c.fn === "login_link_issue").map((c) => c.args as { p_outbox_id: string; p_token_hash: string });
 
-    it("INV-K1 (S1): 그 줄 id 와 토큰 해시로 발급하고, 링크 템플릿 + 건수·토큰 변수로 보낸다 — 해시는 보낸 토큰의 SHA-256", async () => {
+    it("INV-K1 (S1): 그 줄 id 와 토큰 해시로 발급하고, 링크 템플릿 + 승인 요청 변수 + 토큰으로 보낸다 — 해시는 보낸 토큰의 SHA-256", async () => {
       const kakao = channel(true);
       const { admin, calls } = fakeAdmin({ rows: [{ ...APPROVAL_ROW, channel: "kakao" }], contacts: { "row-1": "01012345678" }, templates: LINK_TEMPLATES });
       await dispatchNotifications(deps(admin, { email: channel(), kakao }));
@@ -251,7 +257,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
       expect(sent.templateCode).toBe("TPL_APPROVAL_LINK");
       const token = sent.variables!["#{token}"]!;
       expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
-      expect(sent.variables).toEqual({ "#{건수}": "3", "#{token}": token });
+      expect(sent.variables).toEqual({ "#{수신자명}": "하루", "#{보내는사람}": "별빛님 외 1명", "#{건수}": "3", "#{token}": token });
       expect(issues(calls)).toEqual([{ p_outbox_id: "row-1", p_token_hash: createHash("sha256").update(token).digest("hex") }]);
       // 발급이 보내기보다 먼저다 — 토큰이 DB 에 없는 링크를 보내지 않는다
       expect(calls.findIndex((c) => c.fn === "login_link_issue")).toBeLessThan(calls.findIndex((c) => c.fn === "notification_finish"));
@@ -291,7 +297,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
       });
       await dispatchNotifications(deps(admin, { email: channel(), kakao }));
       expect(issues(calls)).toEqual([]);
-      expect(kakao.sent.map((m) => [m.templateCode, m.variables])).toEqual([["TPL_APPROVAL", { "#{건수}": "3" }]]);
+      expect(kakao.sent.map((m) => [m.templateCode, m.variables])).toEqual([["TPL_APPROVAL", { "#{수신자명}": "하루", "#{보내는사람}": "별빛님 외 1명", "#{건수}": "3" }]]);
     });
 
     it("INV-K1 (비범위): 이메일 통로·승인 재알림은 링크 템플릿이 있어도 토큰을 발급하지 않는다", async () => {
@@ -340,12 +346,12 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     });
   });
 
-  it("INV-NB2 (S2c): 승인 재알림 줄은 건수·남은 일수로 본문을 만든다", async () => {
+  it("INV-NB2 (S2c): 승인 재알림 줄은 보낸 팬 표기·건수·남은 일수로 본문을 만든다", async () => {
     const email = channel();
     const { admin } = fakeAdmin({ rows: [{ ...APPROVAL_ROW, kind: "approval_reminder", round: 1, waiting_count: 3, days_left: 1 }], contacts: { "row-1": "haru@example.com" } });
     await dispatchNotifications(deps(admin, { email, kakao: null }));
     expect(email.sent[0]!.subject).toBe("[팬꾹] 선물 승인 기한 안내");
-    expect(email.sent[0]!.text).toContain("승인 대기 3건, 1일 뒤 자동 반려");
+    expect(email.sent[0]!.text).toContain("별빛님 외 1명이 요청한 선물 승인이 아직 대기 중입니다.\n승인 대기: 총 3건\n1일 뒤에는 승인하지 않은 요청이 자동으로 반려됩니다.");
   });
 
   it("INV-NB5 (S5): 하루 묶음 줄은 주문번호 없이 소식 건수로 — 크리에이터가 받으면 처리할 일 링크", async () => {
