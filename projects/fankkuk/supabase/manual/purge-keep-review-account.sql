@@ -8,12 +8,13 @@
 --   3. 숫자가 맞으면 apply 를 true 로 바꿔 다시 Run. 이때만 실제로 지워진다.
 --
 -- 무엇이 지워지나
---   · 남길 계정이 아닌 회원 전부(auth.users·profiles). 운영자 계정도 지워진다 — 남기려면 keep_login_ids 에 넣는다.
+--   · 남길 계정과 운영자 계정(role = 'operator', 2026-11-04 사용자 「운영자 계정은 남겨줘」)이 아닌 회원 전부(auth.users·profiles).
 --   · 지운 회원을 가리키던 행 전부, 그리고 그 행을 가리키던 행 전부(크리에이터 페이지·선물·상자·결제·환불·역조공·
---     사무실 처리 기록·알림·문의·주소·연락처·서명 기록 …). 지운 운영자가 만든 배너·공지·가격 변경 기록도 같이 지워진다.
+--     사무실 처리 기록·알림·문의·주소·연락처·서명 기록 …).
 --   · 회원과 이어지지 않은 접속 기록: 휴대폰 확인 코드, 로그인 실패·비밀번호 시도, 가입 확인 횟수.
 -- 무엇이 남나
---   · 남길 계정과 그 계정의 연락처·약관 동의·알림 설정·주소(다른 회원과 이어지지 않은 것).
+--   · 남길 계정·운영자 계정과 그 계정들의 연락처·약관 동의·알림 설정·주소(지운 회원과 이어지지 않은 것).
+--   · 운영자가 만든 배너·공지·가격 변경 기록, 최고 관리자 지정(owner_setting).
 --   · 사이트 설정: 상자 가격표, 금지 품목, 태그 목록·금지어, 예약된 이름, 카카오 알림 양식, 인증 플랫폼 목록.
 --   · 저장소(Storage)의 사진 파일 — SQL 로는 파일이 안 지워진다. 화면에서는 더 이상 보이지 않는다.
 --
@@ -47,13 +48,18 @@ begin
     raise exception '남길 로그인 아이디를 keep_login_ids 에 적어 주세요';
   end if;
 
+  select count(*) into n from public.profiles p where p.login_id = any (keep_login_ids);
+  if n <> array_length(keep_login_ids, 1) then
+    raise exception '로그인 아이디 % 중 찾은 계정이 %개뿐입니다 — 아이디를 확인해 주세요', keep_login_ids, n;
+  end if;
+
+  -- 적은 계정 + 운영자 계정 전부(role = 'operator')
   select array_agg(p.id) into keep_ids
   from public.profiles p
-  where p.login_id = any (keep_login_ids);
+  where p.login_id = any (keep_login_ids) or p.role = 'operator';
 
-  if coalesce(array_length(keep_ids, 1), 0) <> array_length(keep_login_ids, 1) then
-    raise exception '로그인 아이디 % 중 찾은 계정이 %개뿐입니다 — 아이디를 확인해 주세요',
-      keep_login_ids, coalesce(array_length(keep_ids, 1), 0);
+  if not exists (select 1 from public.profiles p where p.id = any (keep_ids) and p.role = 'operator') then
+    raise exception '운영자 계정이 하나도 없습니다 — 멈춥니다';
   end if;
 
   -- 1) 회원
@@ -62,16 +68,16 @@ begin
   delete from public.profiles where id <> all (keep_ids);
   get diagnostics n = row_count; insert into _purge_report values ('public.profiles', n);
 
-  -- 2) 회원과 FK 로 이어지지 않은 접속 기록
-  delete from pii.phone_verifications;
+  -- 2) 회원과 FK 로 이어지지 않은 접속 기록 — 전부 지우는 것이 목적이다. 이 파일은 migrations/ 밖(manual/)이라 apply-migrations --all 이 읽지 않는다
+  delete from pii.phone_verifications; -- gate:allow-unconditional 사람이 한 번 실행하는 전체 정리
   get diagnostics n = row_count; insert into _purge_report values ('pii.phone_verifications', n);
   delete from public.phone_change_events where account_id <> all (keep_ids);
   get diagnostics n = row_count; insert into _purge_report values ('public.phone_change_events', n);
-  delete from public.login_link_failures;
+  delete from public.login_link_failures; -- gate:allow-unconditional 사람이 한 번 실행하는 전체 정리
   get diagnostics n = row_count; insert into _purge_report values ('public.login_link_failures', n);
-  delete from public.password_attempts;
+  delete from public.password_attempts; -- gate:allow-unconditional 사람이 한 번 실행하는 전체 정리
   get diagnostics n = row_count; insert into _purge_report values ('public.password_attempts', n);
-  delete from public.signup_check_hits;
+  delete from public.signup_check_hits; -- gate:allow-unconditional 사람이 한 번 실행하는 전체 정리
   get diagnostics n = row_count; insert into _purge_report values ('public.signup_check_hits', n);
 
   -- 3) 부모가 없어진 행을 더 없을 때까지 지운다
