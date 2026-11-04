@@ -262,7 +262,6 @@
   --selection: var(--tint-line); /* 글자 선택 색 #bfe3f7 */
   /* 채널 확인(design-rules 42절, 시안 channel-link-verify-20261102) */
   --tag-state-ink: #075985; /* 「확인 전」 뱃지 글자 — --primary-50 면 위 7.2:1 */
-  --line-cool: #dce3ea; /* 채널 이름·링크 상자 1px 선(회색 면 위, 시안 part6 --line) */
   --notice-sky: #eef7fd; /* 확인 중 공개 페이지 안내 상자 면(시안 part5 --sky-50) */
   --notice-sky-line: #cfe2ee; /* 같은 상자 1px 선(시안 part5 --panel-line) */
 }

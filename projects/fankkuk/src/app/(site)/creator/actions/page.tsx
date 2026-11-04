@@ -18,13 +18,13 @@ export const dynamic = "force-dynamic";
 // 누구 것인지는 DB 가 로그인 토큰으로 정한다(J7). 승인 요청·확인할 선물 알림 링크가 이곳으로 온다(notifications INV-N9).
 // 주소 상태는 승인 창의 주소 단계(approval-signature INV-S13)에, 후보는 미확인 상자 창(INV-J7)에 쓴다 — 그 읽기가 실패해도 목록은 그린다.
 // 알림톡 [승인 화면 열기]는 ?order=<주문번호> 로 온다 — 그 주문이 이 크리에이터의 승인 요청 줄이면 그 승인 창을 연다(아니면 목록만, notifications INV-N9).
-// 로그인 전이면 로그인 뒤 같은 주소로 돌아온다. 주문번호 꼴이 아니면 버린다.
+// 로그인 전이면 로그인 뒤 같은 주소로 돌아온다 — 주문번호가 없어도(알림톡 [승인 화면 열기]가 이 주소로 온다). 주문번호 꼴이 아니면 버린다.
 export default async function Page({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const { order } = await searchParams;
   const orderNo = typeof order === "string" && isOrderNo(order) ? order : null;
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
-  if (viewer?.role !== "creator") redirect(orderNo ? `/login?next=${encodeURIComponent(`/creator/actions?order=${orderNo}`)}` : "/login");
+  if (viewer?.role !== "creator") redirect(`/login?next=${encodeURIComponent(orderNo ? `${CREATOR_ACTION_CENTER_HREF}?order=${orderNo}` : CREATOR_ACTION_CENTER_HREF)}`);
   const [items, candidates, address] = await Promise.all([
     readCreatorActionItems(supabase),
     readSentBoxCandidates(supabase).catch(() => []),

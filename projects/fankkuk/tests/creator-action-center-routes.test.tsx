@@ -7,6 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // 처리할 일 읽기만 가짜로 둔다 — 첫 읽기는 N 줄, 두 번째부터는 다른 수(N+5)를 준다. 라우트가 다시 읽거나 숫자를 다른 데서 세면
 // (예: 홈이 승인 요청만 따로 세면) 숫자가 어긋나 잡힌다. 나머지 읽기는 화면을 그릴 만큼만 채운다.
 
+// 선물 현황 라우트가 관리자 클라이언트를 부른다(승인 취소 2b79da12) — 그 파일의 server-only 는 시험 환경에 없어 통째로 바꾼다
+vi.mock("@/shared/api/supabase/admin", () => ({ createAdminSupabase: vi.fn(() => ({ rpc: vi.fn() })) }));
+
 const nav = vi.hoisted(() => ({
   redirect: vi.fn((to: string) => {
     throw new Error(`redirect ${to}`);
@@ -215,6 +218,17 @@ describe("INV-J6·J11: 선물 현황 라우트 — 「처리할 일」 버튼은
     vi.mocked(readCreatorCards).mockResolvedValueOnce([]);
     await draw(CreatorHomeRoute());
     expect([...host.querySelectorAll("main a")].find((a) => a.textContent === "내 페이지 보기")).toBeUndefined();
+  });
+});
+
+describe("처리할 일 라우트 — 로그인 전 (notifications INV-N9)", () => {
+  it("INV-N9: 크리에이터가 아니면 로그인으로 보내되, 로그인 뒤 처리할 일로 돌아오게 next 를 붙인다 — 알림톡 [승인 화면 열기]가 주문번호 없이 온다", async () => {
+    who.viewer = { userId: "x", role: "staff" as "fan", nickname: "직원" };
+    await expect(CreatorActionsRoute({ searchParams: Promise.resolve({}) })).rejects.toThrow("redirect /login?next=%2Fcreator%2Factions");
+    await expect(CreatorActionsRoute({ searchParams: Promise.resolve({ order: "FC-7K3M9" }) })).rejects.toThrow(
+      "redirect /login?next=%2Fcreator%2Factions%3Forder%3DFC-7K3M9",
+    );
+    expect(reads.calls).toBe(0);
   });
 });
 
