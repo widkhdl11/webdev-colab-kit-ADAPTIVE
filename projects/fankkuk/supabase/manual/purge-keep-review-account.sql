@@ -27,7 +27,7 @@ begin;
 
 set local session_replication_role = replica;
 
-create temp table _purge_report (tbl text, n bigint) on commit drop;
+create temp table _purge_report (tbl text, rows_deleted bigint) on commit drop;
 
 do $purge$
 declare
@@ -142,7 +142,7 @@ begin
 
   select string_agg(tbl || ' ' || total, E'\n' order by total desc)
   into report
-  from (select tbl, sum(n) as total from _purge_report group by tbl) s;
+  from (select tbl, sum(rows_deleted) as total from _purge_report group by tbl) s;
 
   if not apply then
     raise exception E'[미리보기 — 아무것도 바뀌지 않았습니다] 남는 회원 %명, 지워질 줄:\n%',
@@ -153,6 +153,6 @@ begin
 end
 $purge$;
 
-select tbl as "테이블", sum(n) as "지운 줄" from _purge_report group by tbl order by 2 desc;
+select tbl as "테이블", sum(rows_deleted) as "지운 줄" from _purge_report group by tbl order by 2 desc;
 
 commit;
