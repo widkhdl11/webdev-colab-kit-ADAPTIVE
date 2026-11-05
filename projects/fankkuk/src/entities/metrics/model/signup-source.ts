@@ -1,7 +1,8 @@
 // 가입 화면 「어디서 팬꾹을 알게 되셨나요」의 답 (metrics INV-Q4). 고르는 것 하나, 답하지 않아도 가입된다.
 // 저장 값은 영문 코드, 화면 이름은 한국어. DB(signup_sources.heard_from·record_signup_source)가 같은 목록으로 다시 검사한다.
 
-export const HEARD_FROM = ["x", "creator_stream", "fan_community", "friend", "other"] as const;
+// 화면 선택지 순서 — X 는 유입 일부라 맨 위에 두지 않는다(2026-11-05 사용자 「X 내려라」). DB 값과 집계는 순서와 상관없다
+export const HEARD_FROM = ["creator_stream", "fan_community", "friend", "x", "other"] as const;
 
 export type HeardFrom = (typeof HEARD_FROM)[number];
 

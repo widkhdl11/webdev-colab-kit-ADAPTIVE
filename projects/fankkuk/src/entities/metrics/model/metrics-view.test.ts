@@ -80,8 +80,8 @@ describe("표로 바꾸기", () => {
   });
 
   it("INV-Q4: 가입 경로는 다섯 답 + 고르지 않음, 정해진 순서 — 기간은 최근 3개월 표와 같다", () => {
-    expect(view.sources.map((s) => s.label)).toEqual(["X", "크리에이터 방송", "팬 커뮤니티", "지인", "기타", "고르지 않음"]);
-    expect(view.sources[1]!.cells[0]).toEqual({ period: "all", rate: "66.7%", count: "2 / 3" });
+    expect(view.sources.map((s) => s.label)).toEqual(["크리에이터 방송", "팬 커뮤니티", "지인", "X", "기타", "고르지 않음"]);
+    expect(view.sources.find((s) => s.label === "크리에이터 방송")!.cells[0]).toEqual({ period: "all", rate: "66.7%", count: "2 / 3" });
     expect(view.sources[5]!.cells.map((c) => c.period)).toEqual(["all", "2026-10", "2026-09", "2026-08"]);
   });
 

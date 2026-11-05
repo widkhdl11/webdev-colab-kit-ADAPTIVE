@@ -18,7 +18,7 @@ import s from "./signup.module.css";
 
 import { SIGNUP_PHONE_KEY } from "../model/signup-phone-key";
 
-const STEPS = ["유형 선택", "정보 입력", "휴대폰 확인", "채널 확인", "승인 서명"] as const;
+const STEPS = ["유형 선택", "정보 입력", "휴대폰 확인", "채널 확인", "카카오톡 연결"] as const;
 const STEP_PATH = "/signup/creator";
 
 function CheckIcon() {

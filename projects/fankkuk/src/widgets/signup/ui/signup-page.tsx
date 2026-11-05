@@ -46,7 +46,7 @@ import s from "./signup.module.css";
 
 const FORM_STEPS = ["유형 선택", "정보 입력", "휴대폰 확인"] as const;
 // 크리에이터만 더 붙는 단계 — 계정을 만든 뒤라 로그인한 화면(/signup/creator, widgets/signup/ui/signup-creator-steps)이 맡는다
-const CREATOR_STEPS = ["채널 확인", "승인 서명"] as const;
+const CREATOR_STEPS = ["채널 확인", "카카오톡 연결"] as const;
 const LAST = FORM_STEPS.length;
 /** 인증번호를 맞힐 수 있는 시간(INV-U15) — 표시용. 판정은 DB 가 한다 */
 const CODE_SECONDS = PHONE_CODE_TTL_SECONDS;

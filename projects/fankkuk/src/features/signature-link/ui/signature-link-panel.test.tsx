@@ -91,7 +91,7 @@ describe("INV-S16: 승인 서명 연결하기 카드", () => {
     expect(Object.keys(sent.identity).sort()).toEqual(["alg", "ciphertext", "iv", "v", "wrappedKey"]);
     for (const plain of ["정재원", "19900115", "01012345678", "010-1234-5678"]) expect(bodies[0]!.body).not.toContain(plain);
     expect(bodies[1]).toEqual({ url: "/api/creator/signature-link/result", body: JSON.stringify({ requestId: REQ }) });
-    expect(host.textContent).toContain("승인 서명 연결이 완료되었습니다.");
+    expect(host.textContent).toContain("카카오톡 인증 알림 연결이 완료되었습니다.");
     expect(host.querySelector<HTMLAnchorElement>("a.btn")?.textContent).toBe("가입 완료");
   });
 
@@ -103,7 +103,7 @@ describe("INV-S16: 승인 서명 연결하기 카드", () => {
     replies.push({ status: 200, body: { state: "failed", linkedAt: null } });
     act(() => submit().click());
     await settle();
-    expect(host.textContent).not.toContain("승인 서명 연결이 완료되었습니다.");
+    expect(host.textContent).not.toContain("카카오톡 인증 알림 연결이 완료되었습니다.");
     expect(host.querySelector("[role=alert]")?.textContent).toBe("카카오톡 인증이 완료되지 않았습니다. 다시 요청해 주세요.");
     expect(host.querySelector<HTMLInputElement>("input[type=text]")?.readOnly).toBe(false);
     expect(submit().textContent).toBe("카카오톡 인증 요청");
@@ -188,7 +188,7 @@ describe("INV-S16: 다시 보내기·늦게 온 답·이어 묻기", () => {
     render({ pending: { requestId: REQ2, expiresAt: later() }, initialPhone: "" });
     await settle();
     expect(bodies).toEqual([{ url: "/api/creator/signature-link/result", body: JSON.stringify({ requestId: REQ2 }) }]);
-    expect(host.textContent).toContain("승인 서명 연결이 완료되었습니다.");
+    expect(host.textContent).toContain("카카오톡 인증 알림 연결이 완료되었습니다.");
   });
 
   it("INV-S16: 이어 볼 때 보낸 번호를 모르면 번호 없이 안내하고, 「다시 보내기」를 누르면 칸을 다시 연다", async () => {

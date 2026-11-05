@@ -172,7 +172,7 @@ export function CreatorSettingsPage({
               연결 전: 누르면 가입 5단계와 같은 카드로. 연결됨: 연결한 날과 「다시 연결」. 등록한 값은 다시 보이지 않는다(INV-S16) */}
           {signatureLink.linked ? (
             <div className={s.linkRow} data-signature-link="linked">
-              <span>승인 서명</span>
+              <span>카카오톡 인증 알림</span>
               <StateBadge tone="success" text="연결됨" />
               {signatureLink.linkedAt ? <span className={s.foldMeta}>{formatDate(signatureLink.linkedAt)}</span> : null}
               <Link className="btn btn--line btn--sm" href={CREATOR_SIGNATURE_LINK}>
@@ -181,7 +181,7 @@ export function CreatorSettingsPage({
             </div>
           ) : (
             <Link className={`${s.linkRow} ${s.linkRowGo}`} href={CREATOR_SIGNATURE_LINK} data-signature-link="unlinked">
-              <span>승인 서명 연결하기</span>
+              <span>카카오톡 인증 알림 연결</span>
               <StateBadge tone="plain" text="연결 전" />
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="m9 6 6 6-6 6" />

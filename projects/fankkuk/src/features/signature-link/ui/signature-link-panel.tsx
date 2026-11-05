@@ -203,12 +203,12 @@ export function SignatureLinkPanel({ creatorId, sealingKeyPem, initialPhone = ""
       <div className="card">
         <section className={s.step} aria-labelledby={f("h")}>
           <h2 className="t-card" id={f("h")}>
-            승인 서명 연결하기
+            카카오톡 인증 알림 연결
           </h2>
-          <p className={`t-desc ${s.lead}`}>본인인증이 아니라, 앞으로 선물 승인 요청을 카카오톡으로 받기 위한 연결이에요.</p>
+          <p className={`t-desc ${s.lead}`}>앞으로 선물 승인 요청을 카카오톡으로 받기 위한 연결이에요.</p>
           <div className={s.connected} role="status">
             <CheckIcon />
-            <span>승인 서명 연결이 완료되었습니다.</span>
+            <span>카카오톡 인증 알림 연결이 완료되었습니다.</span>
           </div>
         </section>
         <div className={s.actions}>
@@ -223,11 +223,11 @@ export function SignatureLinkPanel({ creatorId, sealingKeyPem, initialPhone = ""
   return (
     <form className="card" onSubmit={onSubmit} aria-labelledby={f("h")} noValidate>
       <fieldset className={s.step}>
-        <legend className="sr-only">승인 서명 연결하기</legend>
+        <legend className="sr-only">카카오톡 인증 알림 연결</legend>
         <h2 className="t-card" id={f("h")}>
-          승인 서명 연결하기
+          카카오톡 인증 알림 연결
         </h2>
-        <p className={`t-desc ${s.lead}`}>본인인증이 아니라, 앞으로 선물 승인 요청을 카카오톡으로 받기 위한 연결이에요.</p>
+        <p className={`t-desc ${s.lead}`}>앞으로 선물 승인 요청을 카카오톡으로 받기 위한 연결이에요.</p>
         <div className="form">
           <div>
             <label className="label" htmlFor={f("name")}>
