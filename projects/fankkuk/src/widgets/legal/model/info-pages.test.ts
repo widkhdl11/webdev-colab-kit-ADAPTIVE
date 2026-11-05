@@ -121,6 +121,7 @@ describe("안내·법정 페이지 공통", () => {
       ["abroad", ["맡기는 곳"]],
       ["safety", ["주소 보호"]],
       ["access-log", ["주소 보호"]],
+      ["e-signature", ["받는 정보", "맡기는 곳"]],
       ["rights", ["내 권리"]],
       ["cookie", ["내 권리"]],
       ["officer", ["내 권리"]],
@@ -128,7 +129,7 @@ describe("안내·법정 페이지 공통", () => {
     ]);
     expect(pv.sections.filter((s) => s.frequent).map((s) => s.id)).toEqual(["collect", "retention", "safety", "rights"]);
     const boxSizes = (id: string) => pv.sections.find((s) => s.id === id)!.blocks.flatMap((b) => (b.kind === "rows" ? [b.rows.length] : []));
-    expect(boxSizes("collect")).toEqual([3, 3, 3, 2, 2]);
+    expect(boxSizes("collect")).toEqual([3, 3, 3, 2, 2, 2]);
     expect(boxSizes("retention")).toEqual([6, 6, 6]);
     expect(boxSizes("outsource")).toEqual([4, 4]);
     // 줄 꼬리표는 쓰지 않는다 — 칩은 절만 거른다
@@ -197,5 +198,34 @@ describe("환불 규정 — 상자 크기별 반송 택배비 (카드 d98 ①)",
     const all = text(docs.refund!);
     // 검수비 = 1,000 · 1,000 · 3,000 / 서비스료 = 1,000 · 2,000 · 3,000 (위 prices)
     for (const n of ["1,000원", "2,000원", "3,000원"]) expect(all).not.toContain(n);
+  });
+});
+
+describe("개인정보처리방침 — 전자서명 인증 조항(카카오 이용기관 심사 요건)", () => {
+  const pv = privacyDoc();
+  const section = (id: string) => JSON.stringify(pv.sections.find((s) => s.id === id));
+
+  it("수집 항목에 연계정보(CI)는 수집·저장하지 않는다고 적는다", () => {
+    const collect = section("collect");
+    expect(collect).toContain("연계정보(CI)");
+    expect(collect).toContain("수집·저장하지 않습니다.");
+    expect(collect).toContain("본인 일치 확인 외 목적으로 사용하지 않고 즉시 파기합니다.");
+  });
+
+  it("전자서명 조항이 중계 업체·보관 항목·CI 를 다른 수단으로 확보한다는 것을 적는다", () => {
+    const sign = section("e-signature");
+    expect(sign).toContain("㈜드림시큐리티가 중계합니다");
+    expect(sign).toContain("서명값, 서명 원문의 해시, 서명 시각, 서명 방식만 보관합니다");
+    expect(sign).toContain("카카오가 아닌 다른 인증수단으로 확보합니다");
+  });
+
+  it("위탁 표에 ㈜드림시큐리티를 전자서명 인증 중계로 적는다", () => {
+    const row = pv.sections.find((s) => s.id === "outsource")!.blocks.flatMap((b) => (b.kind === "rows" ? b.rows : [])).find((r) => r.title === "㈜드림시큐리티");
+    expect(row?.fields[0]?.[1]).toMatch(/^전자서명 인증 중계/);
+  });
+
+  it("업체 이름이 비면 위탁 표 제목이 빈칸 표시로 남는다(이름을 지어내지 않는다)", () => {
+    const blank = privacyDoc({ ...SITE_INFO, vendors: { ...SITE_INFO.vendors, kakaoAuth: "" } });
+    expect(JSON.stringify(blank)).not.toContain("드림시큐리티");
   });
 });

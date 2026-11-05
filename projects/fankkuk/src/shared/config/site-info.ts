@@ -39,7 +39,7 @@ export const SITE_INFO: SiteInfo = {
   // 개인정보보호법 제31조 — 처리방침에 성명·연락처. 1인 사업자는 대표가 책임자
   privacyOfficer: { name: "정재원", title: "대표", contact: "support@fankkuk.com · 0502-1931-8289" },
   vendors: {
-    kakaoAuth: "", // 카카오 인증 딜러사 계약 후
+    kakaoAuth: "㈜드림시큐리티", // 전자서명 인증 중계(간편인증-API, DECISIONS 2026-10-29 (2))
     alimtalk: "",  // 알림톡 발송 대행사 계약 후
     mail: "",      // 메일 발송 서비스(예: Resend, AWS SES) 정한 뒤
     carrier: "",   // 택배사 계약 후(예: "우체국", "CJ대한통운")
