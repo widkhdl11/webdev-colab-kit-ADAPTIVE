@@ -98,7 +98,9 @@ b, strong, th, dt { font-weight: var(--fw-bold); }
    시안에서 .field 는 입력 요소 자체에 붙는다. 이전 화면은 같은 이름을 「라벨+입력」 감싸개 div 로 썼으므로 입력 요소에만 건다(감싸개는 맨 아래 이전 클래스) */
 :is(input, select, textarea).field { display: block; width: 100%; min-width: 0; min-height: 48px; padding: 0 16px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font-size: var(--fs-body); color: var(--ink); }
 :is(input, textarea).field::placeholder { color: var(--faint); opacity: 1; }
-:is(input, select, textarea).field:focus { outline: 2px solid var(--focus); outline-offset: 0; }
+:is(input, select, textarea).field:focus { outline: 2px solid transparent; box-shadow: inset 0 0 0 var(--field-ring) var(--field-focus); } /* 테두리 색만 바꾼다 — 바깥 선을 더하지 않아 오류 테두리와 겹치지 않는다. 투명 외곽선은 고대비 모드용 */
+/* 오류 입력칸 — 초점이 있어도 빨간 테두리 하나만 */
+:is(input, select, textarea):is(.field, .input)[aria-invalid="true"] { box-shadow: inset 0 0 0 var(--field-ring) var(--danger-line); }
 .label { display: block; margin-bottom: 8px; font-weight: var(--fw-bold); }
 /* 카드: 경계 1px, 떠 있는 그림자 없음 */
 .card { min-width: 0; padding: 32px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--shadow); }
@@ -534,7 +536,8 @@ img.face { object-fit: cover; } /* 프로필 사진(512 정사각)을 원 안에
 .field > label, .field > .label { display: block; margin-bottom: 8px; font-weight: var(--fw-bold); }
 .input { display: block; width: 100%; min-width: 0; min-height: 52px; padding: 0 16px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font-size: var(--fs-body); }
 .input::placeholder { color: var(--faint); opacity: 1; }
-.input:focus { outline: 2px solid var(--focus); outline-offset: 0; }
+.input:focus { outline: 2px solid transparent; box-shadow: inset 0 0 0 var(--field-ring) var(--field-focus); }
+.input[aria-invalid="true"] { box-shadow: inset 0 0 0 var(--field-ring) var(--danger-line); }
 /* 그림 — 칸 안에서 비율 유지 */
 img.asset { display: block; object-fit: contain; }
 
@@ -734,7 +737,7 @@ textarea.field:where(:not(.admin-area *)) { padding-block: var(--space-4); }
 .hero-line:where(:not(.admin-area *)) { margin-top: var(--space-4); font-size: var(--fs-body); font-weight: 400; line-height: 1.6; color: var(--gray-600); }
 .hero-desc:where(:not(.admin-area *)) { max-width: var(--hero-max); }
 .search:where(:not(.admin-area *)) { max-width: var(--hero-max); height: var(--search-h); margin: var(--space-8) auto 0; padding: 0 6px 0 var(--space-6); box-shadow: var(--field), var(--shadow); }
-.search:where(:not(.admin-area *)):focus-within { box-shadow: 0 0 0 2px var(--focus); }
+.search:where(:not(.admin-area *)):focus-within { box-shadow: inset 0 0 0 var(--field-ring) var(--field-focus); }
 .search input:where(:not(.admin-area *)) { font-size: var(--fs-body); }
 .search input:where(:not(.admin-area *))::placeholder { color: var(--gray-600); }
 .search-go:where(:not(.admin-area *)) { width: var(--search-btn); height: var(--search-btn); background: var(--primary); }

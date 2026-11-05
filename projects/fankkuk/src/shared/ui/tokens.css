@@ -48,7 +48,9 @@
   --brand-soft: var(--primary-50); /* 하늘 태그 면 (= 선택 면) */
   --brand-ink: var(--gray-900); /* 강조 글자·링크 글자·선 아이콘 — 하늘색 글자는 쓰지 않는다 */
   --brand-line: var(--gray-900); /* 선택된 칸 테두리·왼쪽 띠 (WCAG 1.4.11 3:1) */
-  --focus: var(--gray-900); /* 키보드 초점 테두리 */
+  --focus: var(--gray-900); /* 키보드 초점 테두리 — 버튼·고르기 칸 */
+  --field-focus: #2e9bd6; /* 글자 입력칸·검색창 초점 테두리 — 대표 하늘색 계열에서 흰 바탕 3:1 을 넘는 가장 옅은 값(3.10:1, 2026-11-05 사용자 「대표색과 유사한 색」) */
+  --field-ring: 1.5px; /* 입력칸 초점·오류 테두리 두께(2026-11-05 사용자 「너무 두껍다」, 이전 2px) */
   --avatar-soft: var(--primary-50); /* 이름 첫 글자 동그라미 면 */
   --ink: var(--gray-900); /* 본문 */
   --sub: var(--gray-600); /* 보조 글 */
@@ -77,6 +79,7 @@
   --success-soft: #eaf5ee;
   --danger: #b42318;
   --danger-soft: #feece9;
+  --danger-line: #f04452; /* 오류 입력칸 테두리 — 흰 바탕 3.71:1. 글자는 --danger 그대로(4.5:1 필요) (2026-11-05 사용자 「빨간색 색감이 안좋다」) */
   --info: #315e86;
   --info-soft: #edf4fa;
   --kakao: #fee500;
