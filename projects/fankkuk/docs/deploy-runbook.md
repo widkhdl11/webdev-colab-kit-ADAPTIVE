@@ -22,8 +22,11 @@
 
 ```
 npx supabase link --project-ref <프로젝트 ref>
-npx supabase db push
+npx supabase db push --remote --dry-run   # 적용할 파일 목록만 본다
+npx supabase db push --remote
 ```
+
+지금 CLI 는 `--remote` 가 없으면 원격이 아니라 로컬 DB(127.0.0.1:55322)를 겨눈다(2026-11-05 확인). 에이전트가 실행할 때는 확인 질문을 못 받아 멈추므로, 사람이 적용을 지시했을 때만 `--yes` 를 붙인다.
 
 끝에 `Finished supabase db push.` 가 나오고 `Applying migration` 줄이 마이그레이션 파일 수(2026-10-12 기준 103)만큼 나와야 한다.
 
