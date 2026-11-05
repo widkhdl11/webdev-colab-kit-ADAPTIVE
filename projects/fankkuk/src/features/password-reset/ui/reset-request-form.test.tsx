@@ -45,7 +45,9 @@ describe("INV-L10: 재설정 요청 응답", () => {
     expect(status[0].classList.contains("okmsg")).toBe(true);
     expect(status[0].textContent).toBe(REPLY);
     expect(host.textContent?.split(REPLY)).toHaveLength(2);
-    const support = host.querySelector('a[href="/support"]');
+    // 1:1 문의(/support)는 로그인이 필요해 이 화면 사용자에게 맞지 않는다 — 고객센터 이메일
+    expect(host.querySelector('a[href="/support"]')).toBeNull();
+    const support = host.querySelector('a[href="mailto:support@fankkuk.com"]');
     expect(support).not.toBeNull();
     expect(status[0].nextElementSibling?.contains(support)).toBe(true);
   });

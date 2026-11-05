@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useId, useState, type FormEvent } from "react";
+import { SITE_INFO } from "@/shared/config/site-info";
 import { Sentences } from "@/shared/ui/sentences";
 import { sendResetRequest } from "../api/reset-client";
 import s from "./reset-request.module.css";
 
 // 비밀번호 재설정 요청 칸 — 아이디와 가입 이메일을 함께 보낸다(session-login INV-L10). 응답은 계정이 있든 없든 언제나 같은 문장이고(서버가 정한다),
-// 메일이 안 오면 1:1 문의로 안내한다. 「비밀번호 찾기」(/password/forgot) 화면의 카드 안 내용이다 — 로그인 화면의 접는 칸에서 옮겨 왔다(design-rules 29절).
+// 메일이 안 오면 고객센터 이메일로 안내한다(1:1 문의는 로그인이 필요해 쓰지 않는다). 「비밀번호 찾기」(/password/forgot) 화면의 카드 안 내용이다 — 로그인 화면의 접는 칸에서 옮겨 왔다(design-rules 29절).
 // 상태: 처음 · 보내는 중 · 오류(빈 칸·연결 실패 — 서버 문구) · 응답(늘 같은 초록 상자 + 1시간·1:1 문의 안내). 응답 뒤에도 다시 보낼 수 있다.
 // 입력칸에 name 을 두지 않아 스크립트가 꺼진 채 기본 제출이 일어나도 값이 주소창에 실리지 않는다.
 
@@ -60,11 +60,12 @@ export function ResetRequestForm() {
           <p className={s.sub}>
             {"링크 유효 시간: 1시간 · 1회 사용 가능"}
             <br />
+            {/* 1:1 문의는 로그인해야 쓸 수 있어 비밀번호를 잊은 사람이 못 쓴다 — 로그인 없이 닿는 고객센터 이메일로(2026-11-05 사용자 지적) */}
             {"메일이 도착하지 않으면 "}
-            <Link className={`nw ${s.link}`} href="/support">
-              1:1 문의
-            </Link>
-            {"를 이용해\u00a0주세요."}
+            <a className={`nw ${s.link}`} href={`mailto:${SITE_INFO.supportEmail}`}>
+              {SITE_INFO.supportEmail}
+            </a>
+            {"로 문의해\u00a0주세요."}
           </p>
         ) : null}
       </div>
