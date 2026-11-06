@@ -4,7 +4,7 @@
 
 - **오늘의 목표**: 전화번호 보호(phone-encryption) — 노출 전수 검사 · 가입 번호 암호화(카드 d3) · 비밀번호 찾기를 휴대폰 인증번호로(d2·d4) · 대표 번호 보기와 접속 기록 · 송장 안심번호 자리
 - **완료**: 노출 검사 통과(상대 번호 보는 길 없음) · 안심번호 설정값 INV-P19 72a657bc · 스펙 L10·L11·U18·K14 e05df068 · 암호화 모듈·SQL 0028·0029·변환 스크립트·가입/번호 바꾸기/인증번호/알림톡 79f4a7c2 · 운영자 가린 번호·대표 「보기」·[적용 순서](../docs/ops/phone-encryption-rollout.md) dffaffc4 · 휴대폰 비밀번호 찾기 화면·서버(명세 승인) f0e06c34
-- **멈춘 지점**: 로컬 DB 에 0028·변환(14건)·0029 적용 끝(사용자, 2026-11-06) · 노출 검사 허용 목록 갱신·통과(32개, 한 함수를 빼면 잡힘) · 접속 기록 1년 지우기 예약 작업을 0028 끝에 덧붙였다 — 로컬에는 그 한 줄(`select cron.schedule('fankkuk-phone-access-log', ...)`)을 사람이 따로 실행해야 한다 · 번호 관련 통합 시험은 시험 정리 도구가 지워진 옛 칸(phone)을 써서 시작 전에 실패한다(`tests/integration/account-fixtures.ts:63`·helpers 의 `phone like` 류) · 비밀번호 찾기·대표 「보기」 화면은 아직 눌러 보지 않음 · `.next/dev/types` 낡은 타입 2건(개발 서버 재시작으로 해결) · channel-link-verify 사인오프 전(이전 세션)
+- **멈춘 지점**: 로컬 DB 에 0028·변환(14건)·0029 적용 끝(사용자, 2026-11-06) · 노출 검사 허용 목록 갱신·통과(32개, 한 함수를 빼면 잡힘) · 접속 기록 1년 지우기 예약 작업(fankkuk-phone-access-log)은 0028 끝에 있고 로컬에도 등록됨(사용자) · 번호 관련 통합 시험은 시험 정리 도구가 지워진 옛 칸(phone)을 써서 시작 전에 실패한다(`tests/integration/account-fixtures.ts:63`·helpers 의 `phone like` 류) · 비밀번호 찾기·대표 「보기」 화면은 아직 눌러 보지 않음 · `.next/dev/types` 낡은 타입 2건(개발 서버 재시작으로 해결) · channel-link-verify 사인오프 전(이전 세션)
 - **다음 할 일**: 통합 시험 도구·번호 관련 시험(account-fixtures·helpers·signup-db·phone-code-db·phone-change·password-reset·my-account-db·account-withdrawal-db·signup-nickname-db·account-routes)을 해시·암호문 칸에 맞게 고쳐 돌린다 → 개발 서버 재시작 뒤 가입·번호 바꾸기·비밀번호 찾기·대표 보기를 화면에서 확인 → security-reviewer → 시험 사이트 적용 순서 안내
 - **대기 중인 결정**: 승인 재알림에도 로그인 토큰 링크를 붙일지(추천 붙임 — 사용자가 직접 눌러 보고 정함) · 사람 작업: 번호 키 두 개 생성·저장 후 0028 로컬 적용
 
