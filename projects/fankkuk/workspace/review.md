@@ -1,9 +1,25 @@
 ---
 project: fankkuk
 status: passed
-basis: 000000000000
-reviewers: [security-reviewer, ux-reviewer, ui-reviewer, code-reviewer]
+basis: ad25a970251e
+reviewers: [security-reviewer, code-reviewer, ux-reviewer, ui-reviewer]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-11-07, 전화번호 보호 phone-encryption)
+
+- 범위: 72a657bc(안심번호 설정값 INV-P19) · e05df068·79f4a7c2(가입 번호 암호화 INV-U18 — 모듈·manual 0028·0029·변환 스크립트·가입/번호 바꾸기/인증번호/알림톡) · dffaffc4(운영자 가린 번호·대표 「보기」와 접속 기록 INV-K14) · f0e06c34(휴대폰 비밀번호 찾기 INV-L10·L11) · 745ed8e4·c264e47d(보안 리뷰 반영) · 1e81eb65·f817bb7a(code·ux·ui 리뷰 반영) · b6205662(기준선 정리 중 찾은 차액 「기한 지남」 안내, 결제 표면)
+- security-reviewer(전화번호, 11-06): 높음 0 · 중간 1 반영(비밀번호 찾기 응답 시간으로 가입 여부가 드러남 → 발송을 응답 뒤로, 745ed8e4) · 낮음 1 반영(시험 사이트 고정 인증번호로 남의 비밀번호 바꾸기 → 시험 사이트에서 닫음, 카드 d5, c264e47d). 바꿔치기·쿠키 속성·대표 판정·키 노출·해시 맞혀보기는 문제 없음
+- security-reviewer(차액 안내 b6205662, 11-06): 높음·중간 0 · 낮음 1 BACKLOG(주문 거절·만료·취소도 「기한 지남」 문구 — 고치기 전엔 「실패」, 돈이 빠지는 경로 없음)
+- code-reviewer: 높음 0 · 중간 3 중 1 반영(대표 번호 보기에서 못 풀면 「다시 시도」 대신 「저장된 번호를 읽지 못했습니다」 + 서버 기록 한 줄, 키 없음도 같게) · 2 그대로(알림 발송에서 번호 키 없음을 발송 전체 중단으로 바꾸면 이메일까지 멈춘다 — 기존 시험이 이메일은 나가는 것을 일부러 본다 · 못 푼 번호를 「건너뜀」으로 바꾸면 키 값 설정 실수를 고친 뒤에도 그 알림이 영영 안 나간다) · 낮음 4 BACKLOG 「전화번호 보호 리뷰 낮음 묶음」
+- ux-reviewer: 높음 1 반영(운영자 크리에이터 명세에 휴대폰 칸이 없고 「휴대폰은 이 목록에 없음」 — 상태 넷 추가, INV-K14) · 중간 1 반영(비밀번호 찾기 「이용할 수 없음」이 명세에 없고 버튼이 남음 → closed 상태, 칸·버튼 거두고 고객센터 메일만) · 낮음 2(저장 실패 조건을 명세 ticket_expired 에 · 「확인」 aria-disabled 는 BACKLOG)
+- ui-reviewer: 높음 1 반영(휴대폰 칸 오류가 nowrap 안 .err 상자라 표를 넓힘 → 번호 아래 빨간 글자 한 줄, 칸 폭 안 줄 바꿈) · 중간 2 반영(design-rules 8절 「전화 칸 없음」에 휴대폰 열 예외 · closed 로 바뀔 때 초점을 메일 링크로) · 낮음 1 반영(혼자 놓인 메일 링크 누를 칸 44)
+- 실행 근거: `npm run test:integration:signoff` (23:15~00:30) → 통합 2,329 중 통과 2,328 · 실패 1(signature-link-db INV-S16 「하루 다섯 번」 — 0시~1시 사이엔 1시간 한도에 먼저 걸린다고 시험 이름에 적힌 시각 의존, 실행이 0시 넘어 끝남) → 01:02 이후 그 파일만 다시 `npx vitest run --config vitest.integration.config.mts tests/integration/signature-link-db.integration.test.ts` → 17 통과 · 기준선(known-failures) 0건 — 기한 지난 16건은 efac8d61 에서 고침 · 리뷰 반영·재디자인 치운 뒤 `npm test` 3,226 통과 · tsc 0 · copy:lint 금지어 0 · 새 시험은 고치기 전 실패를 보고 고침(대표 번호 보기 2·closed 2·초점 1)
+- 화면 확인: 가입·번호 바꾸기·비밀번호 찾기·대표 「보기」(접속 기록 한 줄)는 11-06 로컬에서 눌러 확인, DB 에 번호 원문 없음. 리뷰 반영분(closed 상태·번호 보기 실패 줄)은 브라우저로 보지 않았다 — closed 는 시험 사이트에서만, 번호 보기 실패는 만들기 어려워 DOM 시험으로만
+- 뺀 것: 사인오프 동안 크리에이터 첫 화면 재디자인(다른 창 작업, 커밋 안 됨)을 stash 「creator-welcome 재디자인」으로 치우고 그 시험 커밋 9ce071fb 를 66ebbd4f 로 잠시 되돌림 — 이 basis 에 재디자인은 들어 있지 않다. 사용자 지시: 재디자인은 그 창에서 끝나면 따로 리뷰·사인오프
+- 남은 일: 시험 사이트 적용(docs/ops/phone-encryption-rollout.md — 키 두 개·0028·변환·0029 순서, 사람이 실행)
+
+<details><summary>이전 사인오프</summary>
+
 
 # 리뷰 사인오프 — fankkuk (2026-11-02, 승인 취소)
 
@@ -15,9 +31,6 @@ reviewers: [security-reviewer, ux-reviewer, ui-reviewer, code-reviewer]
 - 검사: tsc 0 · copy:lint 금지어 0 · 단위·화면 268 통과 · approval-cancel-db 통합 23 통과 · 관련 통합 5파일 153 통과(코드 리뷰 반영 뒤) · 넓은 관련 통합 1063 중 실패 11 은 BACKLOG 48·62 기한 경계(이번 diff 전부터) · 변이: 서버 6 + 화면 6 + 처리할 일 복귀 1 + 판정 함수 1 모두 잡힘.
 - 화면 확인(로컬 haru_creator, 시험 도우미로 결제 끝난 선물 둘): 처리할 일 승인 → 승인 내역에 버튼(출고된 승인 줄엔 없음, 날짜 끝 모든 줄 1116·줄 56) → 확인 창 「승인 대기로 돌아갑니다. 11월 9일까지…」 → 취소 → 줄 빠짐·지금 할 일 1→2·화면 그대로 → 처리할 일에 다시, 기한 「11월 9일 오후 3시 6분」 그대로 → 다시 승인(서명 기록 1→2, 옛 서명 보존·취소 기록 1) · 선물 현황 카드 버튼 · 390 넘침 0. 입고 뒤 취소는 화면으로 못 봄(사무실 입고 스캔 필요) — 통합 시험 AC1b·AC4 로만.
 - 남은 일: 시험 사이트 DB 에 마이그레이션 20261102000001 적용 뒤 push(코드보다 DB 먼저).
-
-<details><summary>이전 사인오프</summary>
-
 
 # 리뷰 사인오프 — fankkuk (2026-11-02, 2차 정돈 4파트)
 
