@@ -3,12 +3,14 @@ import { join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { acceptedSignatureMethod } from "@/shared/api/approval-signer/accepted-method";
 import { readSupabaseConfig } from "@/shared/api/supabase/config";
+import { RECIPIENT_PHONE_ON_LABEL, type RecipientPhoneMode } from "@/shared/config/courier";
 import type { DeployEnv } from "@/shared/lib/env/is-production";
 import { createDevKeyUnwrapper, type KeyUnwrapper } from "@/shared/lib/envelope/dev-key-unwrapper";
 import { readDecryptorSecrets } from "./decryptor-secrets";
 import { printCreatorLabel, type CreatorLabelResult, type StoredSignatureVerifier } from "./print-creator-label";
 import { printReturnLabel, type ReturnLabelResult } from "./print-return-label";
 import { printShareLabel } from "./print-share-label";
+import { recipientPhoneOnLabel, withRecipientPhone, type SafeNumberIssuer } from "../model/recipient-phone";
 
 // 송장 출력 함수를 조립한다. 조립은 두 곳에서 한다:
 // - 로컬: 복호화 키·DB 자격·대표 ID 를 이 함수만 읽는 설정 파일에서 읽고 개발용 키로 푼다(scripts/dev-sealing-keys.mjs 가 만든다).
@@ -47,9 +49,15 @@ export type DecryptorWiring = {
   fetch?: typeof fetch;
   /** 저장된 카카오 서명 재검증(INV-P4 a). 게이트웨이만 넣는다 — 로컬 조립에는 없으므로 로컬에서는 kakao 서명 주소가 열리지 않는다 */
   verifyStoredSignature?: StoredSignatureVerifier;
+  /** 라벨의 받는 사람 번호 설정(INV-P19). 없으면 shared/config/courier 의 값 */
+  recipientPhoneMode?: RecipientPhoneMode;
+  /** 택배사 안심번호 받기(INV-P19). 택배사 연결 때 넣는다 — 지금은 없다 */
+  issueSafeNumber?: SafeNumberIssuer;
 };
 
 export function wireDecryptorDeps(w: DecryptorWiring) {
+  // 안심번호 설정인데 연결이 없으면 여기서 실패한다 — 어떤 출력도 횟수를 쓰기 전에(INV-P19)
+  const phoneOnLabel = recipientPhoneOnLabel(w.recipientPhoneMode ?? RECIPIENT_PHONE_ON_LABEL, w.issueSafeNumber);
   const { url, anonKey } = readSupabaseConfig(w.env);
   const noSession = { persistSession: false, autoRefreshToken: false } as const;
   const global = w.fetch ? { fetch: w.fetch } : undefined;
@@ -70,6 +78,7 @@ export function wireDecryptorDeps(w: DecryptorWiring) {
     acceptedMethod,
     verifyStoredSignature: w.verifyStoredSignature,
     newWaybill: w.newWaybill,
+    phoneOnLabel,
   };
 }
 
@@ -101,18 +110,19 @@ export function createLocalLabelPrinters(env: DecryptorEnv, readFile: () => stri
 
 /** 반송 송장 출력 함수를 재료로 만든다. */
 export function returnLabelPrinterFrom(deps: DecryptorDeps): ReturnLabelPrinter {
-  const { acceptedMethod: _acceptedMethod, verifyStoredSignature: _verifyStoredSignature, ...rest } = deps;
-  return (input) => printReturnLabel(rest, input);
+  const { acceptedMethod: _acceptedMethod, verifyStoredSignature: _verifyStoredSignature, phoneOnLabel, ...rest } = deps;
+  return async (input) => withRecipientPhone(await printReturnLabel(rest, input), phoneOnLabel);
 }
 
 /** 송장 출력 함수를 재료로 만든다. */
 export function invoiceDecryptorFrom(deps: DecryptorDeps): InvoiceDecryptor {
   // 상자 종류는 각 출력 함수가 DB 판정 재료로 가린다 — 팬 선물 함수가 「팬 선물 상자가 아님」이라고 하면 역조공 함수로 간다.
+  // 받는 사람 번호는 열린 라벨에 설정값대로 적용한다(INV-P19) — 실제 번호 설정이면 그대로다
   return async (input) => {
     const gift = await printCreatorLabel(deps, input);
-    if (gift.kind !== "not_gift") return gift;
+    if (gift.kind !== "not_gift") return withRecipientPhone(gift, deps.phoneOnLabel);
     const share = await printShareLabel(deps, input);
     // 두 함수가 서로 「내 상자가 아님」이라고 하면 판정 재료가 엇갈린 것이다 — 아무것도 열지 않고 실패로 끝낸다
-    return share.kind === "not_share" ? { kind: "failed" } : share;
+    return share.kind === "not_share" ? { kind: "failed" } : withRecipientPhone(share, deps.phoneOnLabel);
   };
 }
