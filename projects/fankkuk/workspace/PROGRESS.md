@@ -3,9 +3,9 @@
 ## 현재 상태
 
 - **오늘의 목표**: 전화번호 보호(phone-encryption) — 노출 전수 검사 · 가입 번호 암호화(카드 d3) · 비밀번호 찾기를 휴대폰 인증번호로(d2·d4) · 대표 번호 보기와 접속 기록 · 송장 안심번호 자리
-- **완료**: 노출 검사 통과(상대 번호 보는 길 없음) · 안심번호 설정값 INV-P19 72a657bc · 스펙 L10·L11·U18·K14·화면 명세 password-forgot(draft) e05df068 · 암호화 모듈·SQL 0028·0029·변환 스크립트·가입/번호 바꾸기/인증번호/알림톡 79f4a7c2 · 운영자 크리에이터 화면 가린 번호·대표 「보기」·적용 순서 문서 dffaffc4
-- **멈춘 지점**: 휴대폰 비밀번호 찾기(서버·화면)는 서브에이전트가 작업하다 세션이 끝남 — `src/features/password-reset/**`·`src/app/(site)/password/**`·`src/app/api/password*` 변경이 커밋 안 된 채 남을 수 있다. 검토 전 커밋 금지 · 개인정보 SQL 0028 은 사람이 로컬부터 적용 대기([적용 순서](../docs/ops/phone-encryption-rollout.md)) · `scripts/pii-exposure.mjs` 허용 목록에 새 함수(admin_phone_masks·admin_reveal_phone·0028 표식) 미반영 · 접속 기록 1년 지우기(purge_phone_access_log)를 자동 처리에 아직 안 붙임 · channel-link-verify 사인오프 전(이전 세션)
-- **다음 할 일**: `git status` 로 비밀번호 찾기 변경을 보고 시험·`npx tsc --noEmit -p .` 를 돌려 검토·커밋 → 노출 검사 허용 목록과 접속 기록 지우기 연결 → 사용자가 0028 을 로컬에 적용하면 통합 시험(번호 관련 파일 갱신 포함)·화면 확인 → security-reviewer
+- **완료**: 노출 검사 통과(상대 번호 보는 길 없음) · 안심번호 설정값 INV-P19 72a657bc · 스펙 L10·L11·U18·K14 e05df068 · 암호화 모듈·SQL 0028·0029·변환 스크립트·가입/번호 바꾸기/인증번호/알림톡 79f4a7c2 · 운영자 가린 번호·대표 「보기」·[적용 순서](../docs/ops/phone-encryption-rollout.md) dffaffc4 · 휴대폰 비밀번호 찾기 화면·서버(명세 승인) f0e06c34
+- **멈춘 지점**: 개인정보 SQL 0028 을 사람이 로컬부터 적용 대기 — 그 전에는 번호 관련 통합 시험·화면 확인을 못 돌린다(비밀번호 찾기는 브라우저로 눌러 보지 않음) · `scripts/pii-exposure.mjs` 허용 목록에 새 함수(admin_phone_masks·admin_reveal_phone·0028 표식) 미반영 · 접속 기록 1년 지우기(purge_phone_access_log)를 자동 처리에 아직 안 붙임 · `.next/dev/types/validator.ts` 가 지운 두 경로를 가리켜 tsc 게이트 2건 — 개발 서버를 다시 켜면 새로 만들어진다 · channel-link-verify 사인오프 전(이전 세션)
+- **다음 할 일**: 노출 검사 허용 목록과 접속 기록 지우기 연결 → 사용자가 0028 을 로컬에 적용하면 번호 관련 통합 시험 갱신·실행과 화면 확인(가입·번호 바꾸기·비밀번호 찾기·대표 보기) → security-reviewer
 - **대기 중인 결정**: 승인 재알림에도 로그인 토큰 링크를 붙일지(추천 붙임 — 사용자가 직접 눌러 보고 정함) · 사람 작업: 번호 키 두 개 생성·저장 후 0028 로컬 적용
 
 ## 로그
