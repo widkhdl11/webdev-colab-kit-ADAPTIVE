@@ -24,6 +24,7 @@ import { RecheckButton } from "@/features/admin-creator-verify/ui/recheck-button
 import { RejectButton } from "@/features/admin-creator-verify/ui/reject-button";
 import { RevokeButton } from "@/features/admin-creator-verify/ui/revoke-button";
 import { UnlockButton } from "@/features/admin-creator-verify/ui/unlock-button";
+import { PhoneCell } from "@/features/admin-phone-reveal/ui/phone-cell";
 import { BANNED_TITLE_ID, BannedWordsTable, CustomTagsTable, TagOptionsTable } from "@/features/admin-creator-tags/ui/tag-options-manager";
 import { formatDotDate, formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
@@ -47,6 +48,10 @@ type Props = {
   tagOptions: readonly AdminTagOption[];
   customTags: readonly CustomTagCount[];
   bannedWords: readonly BannedWord[];
+  /** 아이디 → 가린 휴대폰 번호(admin-console INV-K14). 번호가 없는 크리에이터는 빠진다 */
+  phoneMasks: Readonly<Record<string, string>>;
+  /** 대표만 「보기」(INV-K14) — 직원은 가린 번호만 */
+  canRevealPhone: boolean;
 };
 
 function Who({ name, loginId }: { name: string; loginId: string | null }) {
@@ -83,7 +88,13 @@ function actionTag(action: VerificationEvent["action"]) {
   return <span className={a.tag}>닫힘</span>;
 }
 
-export function CreatorsPanel({ creators, verifications, rechecks, events, nameChanges, tagOptions, customTags, bannedWords }: Props) {
+export function CreatorsPanel({ creators, verifications, rechecks, events, nameChanges, tagOptions, customTags, bannedWords, phoneMasks, canRevealPhone }: Props) {
+  // 휴대폰 칸(INV-K14) — 가린 번호, 대표에게만 「보기」
+  const phoneOf = (loginId: string | null, name: string) => (
+    <td>
+      <PhoneCell loginId={loginId ?? ""} name={name} masked={loginId ? (phoneMasks[loginId] ?? null) : null} canReveal={canRevealPhone} />
+    </td>
+  );
   const { posted, ended } = adminVerificationTables(verifications);
   const { recheck, grace } = adminRecheckTables(rechecks);
   const approved = creators.filter((c) => c.verified);
@@ -119,6 +130,7 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
               <thead>
                 <tr>
                   <th scope="col">닉네임</th>
+                  <th scope="col">휴대폰</th>
                   <th scope="col">채널</th>
                   <th scope="col">채널 이름</th>
                   <th scope="col">찾을 링크</th>
@@ -132,7 +144,7 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
               <tbody>
                 {posted.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className={a.empty}>
+                    <td colSpan={8} className={a.empty}>
                       확인을 기다리는 신청이 없어요.
                     </td>
                   </tr>
@@ -142,6 +154,7 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
                       <td>
                         <Who name={v.creatorName ?? v.nickname} loginId={v.loginId} />
                       </td>
+                      {phoneOf(v.loginId, v.creatorName ?? v.nickname)}
                       <td>
                         <Channel platform={v.platform} url={v.channelUrl} name={v.creatorName ?? v.nickname} />
                       </td>
@@ -175,6 +188,7 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
               <thead>
                 <tr>
                   <th scope="col">닉네임</th>
+                  <th scope="col">휴대폰</th>
                   <th scope="col">채널</th>
                   <th scope="col">찾을 링크 (지금)</th>
                   <th scope="col">오른 이유</th>
@@ -186,7 +200,7 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
               <tbody>
                 {recheck.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className={a.empty}>
+                    <td colSpan={6} className={a.empty}>
                       다시 확인할 크리에이터가 없어요.
                     </td>
                   </tr>
@@ -196,6 +210,7 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
                       <td>
                         <Who name={r.creatorName} loginId={r.loginId} />
                       </td>
+                      {phoneOf(r.loginId, r.creatorName)}
                       <td>
                         <Channel platform={r.platform} url={r.channelUrl} name={r.creatorName} />
                       </td>
@@ -224,6 +239,7 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
               <thead>
                 <tr>
                   <th scope="col">닉네임</th>
+                  <th scope="col">휴대폰</th>
                   <th scope="col">채널</th>
                   <th scope="col">유예 끝</th>
                   <th scope="col">
@@ -237,7 +253,7 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
               <tbody>
                 {grace.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className={a.empty}>
+                    <td colSpan={6} className={a.empty}>
                       유예 중인 크리에이터가 없어요.
                     </td>
                   </tr>
@@ -247,6 +263,7 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
                       <td>
                         <Who name={r.creatorName} loginId={r.loginId} />
                       </td>
+                      {phoneOf(r.loginId, r.creatorName)}
                       <td>
                         <Channel platform={r.platform} url={r.channelUrl} name={r.creatorName} />
                       </td>

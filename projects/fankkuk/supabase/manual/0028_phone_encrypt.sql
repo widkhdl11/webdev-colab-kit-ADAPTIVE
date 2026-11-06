@@ -23,7 +23,7 @@
 --   3) 휴대폰 비밀번호 찾기(INV-L10·L11): password_reset_target(번호 해시) · issue_phone_password_reset(확인 id, 번호 해시, 표).
 --      재설정 표는 옛 재설정 링크 표(public.password_resets)에 담는다 — 링크 확인·사용(password_reset_login_id · claim_password_reset)은 그대로.
 --      옛 이메일 재설정 요청 함수 request_password_reset 은 지운다.
---   4) 운영자(INV-K14): admin_phone_masks(계정 ID 목록) — 직원·대표, 가린 번호만 · admin_reveal_phone(계정) — 대표만, 접속 기록 한 줄을
+--   4) 운영자(INV-K14): admin_phone_masks(크리에이터 아이디 목록) — 직원·대표, 가린 번호만 · admin_reveal_phone(크리에이터 아이디) — 대표만, 접속 기록 한 줄을
 --      같은 처리에서 남기고 암호문을 돌려준다(앱 서버가 풀어 화면에 보인다) · 접속 기록 표 public.phone_access_log(고치기 불가, 1년 지난 줄만 지울 수 있음)
 --      · purge_phone_access_log() — 1년 지난 줄 지우기(자동 처리가 부른다).
 --   5) 변환용 임시 함수 둘(phone_backfill_pending · phone_backfill_set) — ④ 에서 지운다. 관리자 키만.
@@ -484,43 +484,48 @@ drop trigger if exists phone_access_log_no_truncate on public.phone_access_log;
 create trigger phone_access_log_no_truncate before truncate on public.phone_access_log
 for each statement execute function public.phone_access_log_guard();
 
--- 직원·대표 — 계정마다 가린 번호(앞 3자리-****-뒤 4자리)만. 한 번에 200개까지.
-create or replace function public.admin_phone_masks(p_account_ids uuid[])
-returns table (account_id uuid, phone_masked text)
+-- 직원·대표 — 크리에이터 계정(아이디로 찾는다)마다 가린 번호(앞 3자리-****-뒤 4자리)만. 크리에이터가 아닌 계정은 찾지 않는다. 한 번에 200개까지.
+create or replace function public.admin_phone_masks(p_login_ids text[])
+returns table (login_id text, phone_masked text)
 language plpgsql stable security definer set search_path = ''
 as $fn$
 begin
   if not public.is_operator() then
     raise exception '운영자만' using errcode = '42501';
   end if;
-  if p_account_ids is null or cardinality(p_account_ids) > 200 then
-    raise exception '계정은 200개까지' using errcode = '22023';
+  if p_login_ids is null or cardinality(p_login_ids) > 200 then
+    raise exception '아이디는 200개까지' using errcode = '22023';
   end if;
   return query
-    select c.account_id, c.phone_prefix || '-****-' || c.phone_last4
-    from pii.account_contacts c
-    where c.account_id = any(p_account_ids) and c.phone_last4 is not null;
+    select p.login_id, c.phone_prefix || '-****-' || c.phone_last4
+    from public.profiles p
+    join pii.account_contacts c on c.account_id = p.id
+    where p.login_id = any(p_login_ids) and p.role = 'creator' and c.phone_last4 is not null;
 end;
 $fn$;
 
--- 대표만 — 접속 기록 한 줄을 남기고 그 계정의 번호 암호문을 돌려준다(앱 서버가 풀어 그 응답에만 싣는다).
--- 기록과 읽기가 한 처리다 — 기록을 못 남기면 암호문도 나가지 않는다. 번호가 없는 계정이면 null, 기록도 없다.
-create or replace function public.admin_reveal_phone(p_account_id uuid)
-returns text
+-- 대표만 — 접속 기록 한 줄(누가·언제·어느 계정)을 남기고 그 크리에이터 계정의 ID 와 번호 암호문을 돌려준다
+-- (암호문이 계정에 묶여 있어 앱 서버가 그 계정 ID 로 풀어 그 응답에만 싣는다). 크리에이터가 아닌 계정은 찾지 않는다.
+-- 기록과 읽기가 한 처리다 — 기록을 못 남기면 암호문도 나가지 않는다. 번호가 없으면 줄 없음, 기록도 없다.
+create or replace function public.admin_reveal_phone(p_login_id text)
+returns table (account_id uuid, phone_sealed text)
 language plpgsql volatile security definer set search_path = ''
 as $fn$
 declare
+  v_account uuid;
   v_sealed text;
 begin
   if not public.is_owner() then
     raise exception '대표만' using errcode = '42501';
   end if;
-  select c.phone_sealed into v_sealed from pii.account_contacts c where c.account_id = p_account_id;
+  select c.account_id, c.phone_sealed into v_account, v_sealed
+    from public.profiles p join pii.account_contacts c on c.account_id = p.id
+   where p.login_id = p_login_id and p.role = 'creator';
   if v_sealed is null then
-    return null;
+    return;
   end if;
-  insert into public.phone_access_log (viewer_id, account_id) values (auth.uid(), p_account_id);
-  return v_sealed;
+  insert into public.phone_access_log (viewer_id, account_id) values (auth.uid(), v_account);
+  return query select v_account, v_sealed;
 end;
 $fn$;
 
@@ -588,8 +593,8 @@ revoke all on function pii.withdraw_account(uuid, uuid, uuid) from public, anon,
 revoke all on function public.password_reset_target(text) from public, anon, authenticated;
 revoke all on function public.issue_phone_password_reset(uuid, text, text) from public, anon, authenticated;
 revoke all on function public.phone_access_log_guard() from public, anon, authenticated;
-revoke all on function public.admin_phone_masks(uuid[]) from public, anon;
-revoke all on function public.admin_reveal_phone(uuid) from public, anon;
+revoke all on function public.admin_phone_masks(text[]) from public, anon;
+revoke all on function public.admin_reveal_phone(text) from public, anon;
 revoke all on function public.purge_phone_access_log() from public, anon, authenticated;
 revoke all on function public.phone_backfill_pending(integer) from public, anon, authenticated;
 revoke all on function public.phone_backfill_set(uuid, text, text) from public, anon, authenticated;
@@ -602,8 +607,8 @@ grant execute on function public.is_my_current_phone(uuid, text) to service_role
 grant execute on function public.notification_contact(uuid) to service_role;
 grant execute on function public.password_reset_target(text) to service_role;
 grant execute on function public.issue_phone_password_reset(uuid, text, text) to service_role;
-grant execute on function public.admin_phone_masks(uuid[]) to authenticated;
-grant execute on function public.admin_reveal_phone(uuid) to authenticated;
+grant execute on function public.admin_phone_masks(text[]) to authenticated;
+grant execute on function public.admin_reveal_phone(text) to authenticated;
 grant execute on function public.purge_phone_access_log() to service_role;
 grant execute on function public.phone_backfill_pending(integer) to service_role;
 grant execute on function public.phone_backfill_set(uuid, text, text) to service_role;
