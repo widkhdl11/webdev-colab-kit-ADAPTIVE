@@ -400,6 +400,10 @@ fieldset.part > legend + * { clear: both; }
    제목·다음 행동은 가운데, 폼과 긴 설명은 왼쪽으로 읽는다.
    카드 간격 24, 카드 안 32, 제목과 본문 8, 부품 묶음 16·24·32. */
 main { min-height: 60vh; }
+/* 푸터는 본문이 짧아도 화면 맨 아래(2026-11-07 사용자 확정) — 푸터가 body 바로 아래 있는 페이지만. body 를 화면 높이 세로 줄로 두고 main 이 남는 칸을 채운다.
+   main 의 width:100% 는 가운데 정렬 폭(max-width + margin auto)이 flex 안에서 내용 폭으로 줄지 않게. 운영자 화면(푸터 없음)은 그대로 */
+body:has(> .site-footer) { display: flex; flex-direction: column; min-height: 100dvh; }
+body:has(> .site-footer) > main { flex: 1 0 auto; width: 100%; }
 main :is(section, fieldset, [id]) { scroll-margin-top: calc(var(--header-h) + 24px); }
 h1, h2, h3 { text-wrap: balance; }
 .step-col { text-align: center; }
