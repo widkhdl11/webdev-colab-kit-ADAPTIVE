@@ -9,7 +9,7 @@ import { dispatchNotifications } from "@/features/notification-dispatch/model/di
 import { sessionActivityOf, sessionCookieMaxAgeFor } from "@/entities/session/api/session-activity";
 import { sessionCookieMaxAgeSeconds } from "@/entities/session/model/session-lifetime";
 import { createSessionClient } from "@/shared/api/supabase/session-cookies";
-import { adminClient, deleteTestOrders, psql, SEED } from "./helpers";
+import { adminClient, deleteTestOrders, psql, SEED, testPhoneKeys } from "./helpers";
 import { paidGift } from "./office-helpers";
 
 // 알림톡 링크로 바로 로그인 — 실제 로컬 Supabase(DB 함수 + Auth)와 맞물려 (docs/specs/link-login.md INV-K1·K2·K4·K6, S1·S1b·S3·S4).
@@ -73,7 +73,7 @@ async function sentLoginLink(): Promise<{ token: string; outboxId: string; messa
   const g = await paidGift();
   const outboxId = psql(`select id from ${OUTBOX} where order_id = '${g.orderId}' and kind = 'approval_request' and channel = 'kakao'`);
   const kakao = kakaoCapture();
-  const result = await dispatchNotifications({ admin: adminClient(), appOrigin: "http://127.0.0.1:3311", chooseChannels: () => ({ email: emailSink(), kakao }) });
+  const result = await dispatchNotifications({ admin: adminClient(), phoneKeys: testPhoneKeys, appOrigin: "http://127.0.0.1:3311", chooseChannels: () => ({ email: emailSink(), kakao }) });
   expect(result.ok).toBe(true);
   const message = kakao.sent.find((m) => m.outboxId === outboxId);
   expect(message?.templateCode).toBe("TPL_APPROVAL_LINK");

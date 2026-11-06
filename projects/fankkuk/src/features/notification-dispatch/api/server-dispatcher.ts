@@ -1,5 +1,6 @@
 import { readMailConfig } from "@/shared/api/mail/config";
 import { createSmtpSender } from "@/shared/api/mail/smtp";
+import { readPhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
 import { createAdminSupabase } from "@/shared/api/supabase/admin";
 import { dispatchNotifications, emptyCounts, type DispatchResult } from "../model/dispatch-notifications";
 import { chooseNotificationChannels } from "./channels";
@@ -18,6 +19,8 @@ export async function runServerDispatcher(): Promise<DispatchResult> {
   return dispatchNotifications({
     admin: createAdminSupabase(),
     appOrigin: mail.appOrigin,
+    // 카카오 줄을 만났을 때만 읽는다 — 키가 없으면 그 줄이 오류로 끝나고(다시 보낼 차례) 이메일 줄은 그대로 나간다
+    phoneKeys: () => readPhoneKeys(process.env),
     chooseChannels: (hasKakaoTemplates) => chooseNotificationChannels(process.env, { sendMail, hasKakaoTemplates }),
   });
 }

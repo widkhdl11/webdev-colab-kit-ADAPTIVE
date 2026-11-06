@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { dispatchNotifications, type DispatchDeps } from "@/features/notification-dispatch/model/dispatch-notifications";
 import type { ChannelMessage, NotificationChannel } from "@/features/notification-dispatch/api/channels";
-import { adminClient, deleteTestOrders, psql, signedInClient } from "./helpers";
+import { adminClient, deleteTestOrders, psql, signedInClient, testPhoneKeys } from "./helpers";
 import { approve, deleteTestUnmatched, fanSetsWaybill, paidGift, receiveAndLabel, waybill } from "./office-helpers";
 import { PHONE_IN_TEXT } from "./pii-shape";
 import { labeled, measure, paidOrder } from "./difference-helpers";
@@ -38,7 +38,7 @@ function capture(fake: boolean, delayMs = 0): Capture {
 }
 
 function depsWith(email: Capture, kakao: Capture | null = null): DispatchDeps {
-  return { admin: adminClient(), appOrigin: "http://127.0.0.1:3311", chooseChannels: () => ({ email, kakao }) };
+  return { admin: adminClient(), phoneKeys: testPhoneKeys, appOrigin: "http://127.0.0.1:3311", chooseChannels: () => ({ email, kakao }) };
 }
 
 function statusOf(orderId: string, kind: string, channel = "email", round = 1): string {

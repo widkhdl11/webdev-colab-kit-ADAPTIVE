@@ -1,3 +1,4 @@
+import { readPhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 import { VERIFICATION_COOKIE, withVerificationFromCookie } from "@/features/signup/lib/verification-cookie";
@@ -11,7 +12,7 @@ export async function POST(req: NextRequest) {
   return handlePrivateJsonPost(req, async (body) => {
     const ticket = (await cookies()).get(VERIFICATION_COOKIE)?.value;
     const result = await checkPhoneCode(
-      { admin: createAdminSupabase(), verifier: choosePhoneVerifier(process.env), codeSecret: () => readPhoneCodeSecret(process.env) },
+      { admin: createAdminSupabase(), verifier: choosePhoneVerifier(process.env), codeSecret: () => readPhoneCodeSecret(process.env), phoneKeys: () => readPhoneKeys(process.env) },
       withVerificationFromCookie(body, ticket),
     );
     if (result.ok) return { status: 200, body: { status: "verified" } };

@@ -1,7 +1,14 @@
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
+import { encryptPhone, readPhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ChannelError, type ChannelMessage, type NotificationChannel, type NotificationChannels } from "@/features/notification-dispatch/api/channels";
 import { dispatchNotifications, TIME_BUDGET_MS, type DispatchDeps } from "./dispatch-notifications";
+
+// signup INV-U18: 카카오 연락처는 DB 가 {계정 ID, 번호 암호문} JSON 글자로 준다 — 일꾼이 그 계정 ID 로 풀어 보낸다
+const KEYS = readPhoneKeys({ FANKKUK_PHONE_ENC_KEY: randomBytes(32).toString("base64"), FANKKUK_PHONE_HASH_KEY: randomBytes(32).toString("base64") });
+const KAKAO_ACCOUNT = "00000000-0000-4000-8000-0000000000c1";
+const KAKAO_PHONE = "01012345678";
+const KAKAO_CONTACT = JSON.stringify({ account: KAKAO_ACCOUNT, sealed: encryptPhone(KEYS, KAKAO_ACCOUNT, KAKAO_PHONE) });
 
 // 보내는 일꾼 (notifications INV-N5·N6·N7·N10). DB 함수(꺼내기·끝내기·멈춘 줄 정리)가 줄의 상태를 지키고,
 // 일꾼은 꺼낸 줄마다 연락처를 읽고 → 본문을 만들고 → 통로로 보내고 → 결과를 끝내기로 남긴다.
@@ -103,6 +110,7 @@ function deps(admin: DispatchDeps["admin"], channels: NotificationChannels, seen
   return {
     admin,
     appOrigin: "https://fankkuk.example.com",
+    phoneKeys: () => KEYS,
     chooseChannels: (hasKakaoTemplates) => {
       seen.hasKakaoTemplates = hasKakaoTemplates;
       return channels;
@@ -149,7 +157,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     const seen: { hasKakaoTemplates?: boolean } = {};
     const { admin, calls } = fakeAdmin({
       rows: [{ ...ROW, id: "k", kind: "shipped", channel: "kakao" }, { ...ROW, id: "e" }],
-      contacts: { k: "01012345678", e: "byeolbit@example.com" },
+      contacts: { k: KAKAO_CONTACT, e: "byeolbit@example.com" },
       templates: [{ kind: "shipped", template_code: "TPL_SHIPPED_1" }],
     });
     await dispatchNotifications(deps(admin, { email, kakao }, seen));
@@ -168,7 +176,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     const kakao = channel(true, "provider_error");
     const { admin, calls } = fakeAdmin({
       rows: [{ ...ROW, id: "k", kind: "shipped", channel: "kakao" }],
-      contacts: { k: "01012345678" },
+      contacts: { k: KAKAO_CONTACT },
       templates: [{ kind: "shipped", template_code: "TPL_SHIPPED_1" }],
     });
     const result = await dispatchNotifications(deps(admin, { email, kakao }));
@@ -179,7 +187,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
 
   it("INV-N7 (실패경로): 카카오 줄인데 카카오 통로가 없으면(운영·대행사 전) 보내지 않고 오류 코드", async () => {
     const email = channel();
-    const { admin, calls } = fakeAdmin({ rows: [{ ...ROW, channel: "kakao" }], contacts: { "row-1": "01012345678" } });
+    const { admin, calls } = fakeAdmin({ rows: [{ ...ROW, channel: "kakao" }], contacts: { "row-1": KAKAO_CONTACT } });
     await dispatchNotifications(deps(admin, { email, kakao: null }));
     expect(email.sent).toHaveLength(0);
     expect(finishes(calls)).toEqual([{ p_id: "row-1", p_claimed_at: CLAIMED, p_outcome: "error", p_provider_message_id: null, p_error_code: "channel_unavailable", p_fake: false }]);
@@ -187,7 +195,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
 
   it("INV-N7 (실패경로): 꺼낸 뒤 그 종류의 템플릿 코드가 지워졌으면 카카오로 보내지 않는다", async () => {
     const kakao = channel(true);
-    const { admin, calls } = fakeAdmin({ rows: [{ ...ROW, channel: "kakao" }], contacts: { "row-1": "01012345678" }, templates: [] });
+    const { admin, calls } = fakeAdmin({ rows: [{ ...ROW, channel: "kakao" }], contacts: { "row-1": KAKAO_CONTACT }, templates: [] });
     await dispatchNotifications(deps(admin, { email: channel(), kakao }));
     expect(kakao.sent).toHaveLength(0);
     expect(finishes(calls)).toEqual([{ p_id: "row-1", p_claimed_at: CLAIMED, p_outcome: "error", p_provider_message_id: null, p_error_code: "template_missing", p_fake: false }]);
@@ -237,7 +245,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     const kakao = channel(true);
     const { admin } = fakeAdmin({
       rows: [{ ...APPROVAL_ROW, channel: "kakao" }],
-      contacts: { "row-1": "01012345678" },
+      contacts: { "row-1": KAKAO_CONTACT },
       templates: [{ kind: "approval_request", template_code: "TPL_APPROVAL" }],
     });
     await dispatchNotifications(deps(admin, { email: channel(), kakao }));
@@ -250,7 +258,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
 
     it("INV-K1 (S1): 그 줄 id 와 토큰 해시로 발급하고, 링크 템플릿 + 승인 요청 변수 + 토큰으로 보낸다 — 해시는 보낸 토큰의 SHA-256", async () => {
       const kakao = channel(true);
-      const { admin, calls } = fakeAdmin({ rows: [{ ...APPROVAL_ROW, channel: "kakao" }], contacts: { "row-1": "01012345678" }, templates: LINK_TEMPLATES });
+      const { admin, calls } = fakeAdmin({ rows: [{ ...APPROVAL_ROW, channel: "kakao" }], contacts: { "row-1": KAKAO_CONTACT }, templates: LINK_TEMPLATES });
       await dispatchNotifications(deps(admin, { email: channel(), kakao }));
       expect(kakao.sent).toHaveLength(1);
       const sent = kakao.sent[0]!;
@@ -265,7 +273,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
 
     it("INV-K1 (S3): 발송 기록(끝내기 인자)에 토큰 원문이 없다", async () => {
       const kakao = channel(false);
-      const { admin, calls } = fakeAdmin({ rows: [{ ...APPROVAL_ROW, channel: "kakao" }], contacts: { "row-1": "01012345678" }, templates: LINK_TEMPLATES });
+      const { admin, calls } = fakeAdmin({ rows: [{ ...APPROVAL_ROW, channel: "kakao" }], contacts: { "row-1": KAKAO_CONTACT }, templates: LINK_TEMPLATES });
       await dispatchNotifications(deps(admin, { email: channel(), kakao }));
       const token = kakao.sent[0]!.variables!["#{token}"]!;
       expect(JSON.stringify(finishes(calls))).not.toContain(token);
@@ -281,7 +289,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
         },
         lookup: null,
       };
-      const { admin, calls } = fakeAdmin({ rows: [{ ...APPROVAL_ROW, channel: "kakao" }], contacts: { "row-1": "01012345678" }, templates: LINK_TEMPLATES });
+      const { admin, calls } = fakeAdmin({ rows: [{ ...APPROVAL_ROW, channel: "kakao" }], contacts: { "row-1": KAKAO_CONTACT }, templates: LINK_TEMPLATES });
       await dispatchNotifications(deps(admin, { email: channel(), kakao }));
       expect(sentTokens[0]).toMatch(/^[A-Za-z0-9_-]{43}$/);
       expect(JSON.stringify(finishes(calls))).not.toContain(sentTokens[0]!);
@@ -292,7 +300,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
       const kakao = channel(true);
       const { admin, calls } = fakeAdmin({
         rows: [{ ...APPROVAL_ROW, channel: "kakao" }],
-        contacts: { "row-1": "01012345678" },
+        contacts: { "row-1": KAKAO_CONTACT },
         templates: [{ kind: "approval_request", template_code: "TPL_APPROVAL", login_link_template_code: null }],
       });
       await dispatchNotifications(deps(admin, { email: channel(), kakao }));
@@ -308,7 +316,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
           { ...APPROVAL_ROW, id: "e1" },
           { ...APPROVAL_ROW, id: "k2", channel: "kakao", kind: "approval_reminder", round: 1, days_left: 2 },
         ],
-        contacts: { e1: "haru@example.com", k2: "01012345678" },
+        contacts: { e1: "haru@example.com", k2: KAKAO_CONTACT },
         templates: [...LINK_TEMPLATES, { kind: "approval_reminder", template_code: "TPL_REMIND" }],
       });
       await dispatchNotifications(deps(admin, { email, kakao }));
@@ -323,7 +331,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
       const kakao = channel(true);
       const { admin, calls } = fakeAdmin({
         rows: [{ ...APPROVAL_ROW, channel: "kakao" }],
-        contacts: { "row-1": "01012345678" },
+        contacts: { "row-1": KAKAO_CONTACT },
         templates: LINK_TEMPLATES,
         issue: { data: null, error: { code: "57014" } },
       });
@@ -336,7 +344,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
       const kakao = channel(true);
       const { admin, calls } = fakeAdmin({
         rows: [{ ...APPROVAL_ROW, channel: "kakao" }],
-        contacts: { "row-1": "01012345678" },
+        contacts: { "row-1": KAKAO_CONTACT },
         templates: LINK_TEMPLATES,
         issue: { data: false, error: null },
       });
@@ -377,7 +385,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     const kakao = channel(true);
     const { admin, calls } = fakeAdmin({
       rows: [{ ...ROW, channel: "kakao" }],
-      contacts: { "row-1": "01012345678" },
+      contacts: { "row-1": KAKAO_CONTACT },
       templates: [{ kind: "arrived", template_code: "TPL_ARRIVED_1" }],
     });
     await dispatchNotifications(deps(admin, { email: channel(), kakao }));
@@ -509,6 +517,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     const result = await dispatchNotifications({
       admin,
       appOrigin: "https://fankkuk.example.com",
+      phoneKeys: () => KEYS,
       chooseChannels: () => {
         throw new Error("카카오 템플릿 코드가 설정돼 있는데 솔라피 설정(SOLAPI_API_KEY·SOLAPI_API_SECRET·SMS_SENDER_NUMBER·KAKAO_PF_ID)이 없다");
       },
@@ -619,3 +628,46 @@ describe("INV-N10: 일꾼은 아무것도 찍지 않는다", () => {
   });
 });
 
+describe("카카오 연락처 풀기 (signup INV-U18)", () => {
+  const kakaoRow = { ...ROW, id: "k", kind: "shipped", channel: "kakao" as const };
+  const templates = [{ kind: "shipped", template_code: "TPL_SHIPPED_1" }];
+
+  it("INV-U18: 일꾼이 그 계정 ID 로 암호문을 풀어 원래 번호로 보낸다", async () => {
+    const kakao = channel(true);
+    const { admin } = fakeAdmin({ rows: [kakaoRow], contacts: { k: KAKAO_CONTACT }, templates });
+    await dispatchNotifications(deps(admin, { email: channel(), kakao }));
+    expect(kakao.sent.map((m) => m.to)).toEqual([KAKAO_PHONE]);
+  });
+
+  it("INV-U18 실패경로: 다른 계정 ID 로 묶인 암호문·꼴이 틀린 연락처·숫자 번호는 보내지 않고 오류로 끝낸다", async () => {
+    const other = JSON.stringify({ account: "00000000-0000-4000-8000-0000000000c2", sealed: encryptPhone(KEYS, KAKAO_ACCOUNT, KAKAO_PHONE) });
+    for (const contact of [other, "not json", KAKAO_PHONE, JSON.stringify({ account: KAKAO_ACCOUNT })]) {
+      const kakao = channel(true);
+      const { admin, calls } = fakeAdmin({ rows: [kakaoRow], contacts: { k: contact }, templates });
+      await dispatchNotifications(deps(admin, { email: channel(), kakao }));
+      expect(kakao.sent).toHaveLength(0);
+      expect(finishes(calls)).toEqual([{ p_id: "k", p_claimed_at: CLAIMED, p_outcome: "error", p_provider_message_id: null, p_error_code: "phone_unreadable", p_fake: false }]);
+    }
+  });
+
+  it("이메일 연락처는 지금처럼 주소 그대로 보낸다", async () => {
+    const email = channel();
+    const { admin } = fakeAdmin({ rows: [ROW], contacts: { "row-1": "byeolbit@example.com" } });
+    await dispatchNotifications(deps(admin, { email, kakao: null }));
+    expect(email.sent.map((m) => m.to)).toEqual(["byeolbit@example.com"]);
+  });
+
+  it("INV-U18 실패경로: 번호 키가 없으면 카카오 줄만 오류로 끝나고 이메일 줄은 나간다", async () => {
+    const kakao = channel(true);
+    const email = channel();
+    const { admin, calls } = fakeAdmin({ rows: [kakaoRow, { ...ROW, id: "e" }], contacts: { k: KAKAO_CONTACT, e: "byeolbit@example.com" }, templates });
+    const d = deps(admin, { email, kakao });
+    d.phoneKeys = () => {
+      throw new Error("키 없음");
+    };
+    await dispatchNotifications(d);
+    expect(kakao.sent).toHaveLength(0);
+    expect(email.sent.map((m) => m.outboxId)).toEqual(["e"]);
+    expect(finishes(calls).find((f) => (f as { p_id: string }).p_id === "k")).toMatchObject({ p_outcome: "error", p_error_code: "phone_key_missing" });
+  });
+});

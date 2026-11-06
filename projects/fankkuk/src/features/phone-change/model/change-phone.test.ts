@@ -1,9 +1,13 @@
+import { randomBytes } from "node:crypto";
+import { decryptPhone, phoneHash, readPhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
 import { fakePasswordAttempts } from "@/entities/session/api/password-attempts-fake";
 import { PASSWORD_LOCKED_MESSAGE } from "@/entities/session/api/password-attempts";
 import { describe, expect, it } from "vitest";
 import type { DetachedAuth } from "@/entities/session/api/account-password";
 import { CURRENT_PASSWORD_WRONG } from "@/entities/session/model/password-rule";
 import { changePhone, checkPhoneChangeStart, PHONE_CHANGE_CLOSED, SAME_AS_CURRENT_PHONE, VERIFY_AGAIN } from "./change-phone";
+
+const KEYS = readPhoneKeys({ FANKKUK_PHONE_ENC_KEY: randomBytes(32).toString("base64"), FANKKUK_PHONE_HASH_KEY: randomBytes(32).toString("base64") });
 
 // signup INV-U12 의 앱 서버 쪽 — 누구의 번호를 바꾸는지, 비밀번호를 먼저 보는지, 운영에서 닫혀 있는지.
 // 확인 줄 잠금·번호 유일·기록은 DB 함수(manual 0013)가 한다 — 실제 DB 로 도는 시험은 tests/integration/phone-change.integration.test.ts.
@@ -27,6 +31,7 @@ function fakes(opts: { rpcCode?: string; passwordOk?: boolean; locked?: boolean 
   const deps = {
     viewer: { userId: ME, role: "fan" as const },
     verifierReady: true,
+    phoneKeys: () => KEYS,
     admin: {
       async rpc(fn: string, args: Record<string, unknown>) {
         rpcCalls.push({ fn, args });
@@ -54,7 +59,14 @@ describe("INV-U12: 번호 바꾸기는 로그인한 사람 자신의 번호만",
     const { deps, rpcCalls } = fakes();
     const r = await changePhone(deps, { ...body, accountId: OTHER, userId: OTHER, verificationId: "77777777-7777-4777-8777-777777777777" }, TICKET);
     expect(r).toEqual({ ok: true });
-    expect(rpcCalls).toEqual([{ fn: "change_my_phone", args: { p_account_id: ME, p_phone: "01090001234", p_verification_id: TICKET } }]);
+    // signup INV-U18: 번호는 묶음(해시·이 계정에 묶인 암호문·앞 3자리·뒤 4자리)으로만 — 숫자 번호는 없다
+    expect(rpcCalls).toEqual([{ fn: "change_my_phone", args: { p_account_id: ME, p_phone: expect.any(String), p_verification_id: TICKET } }]);
+    const bundle = String(rpcCalls[0]?.args.p_phone);
+    expect(bundle).not.toContain("01090001234");
+    const b = JSON.parse(bundle) as { hash: string; sealed: string; prefix: string; last4: string };
+    expect(b.hash).toBe(phoneHash(KEYS, "01090001234"));
+    expect(decryptPhone(KEYS, ME, b.sealed)).toBe("01090001234");
+    expect([b.prefix, b.last4]).toEqual(["010", "1234"]);
   });
 
   it("INV-U12 S12b (실패경로): 지금 비밀번호가 틀리면 DB 함수를 부르지 않는다(본인 확인이 쓰이지 않는다)", async () => {
@@ -103,6 +115,7 @@ describe("INV-U12: 번호 바꾸기 1단계 — 지금 번호와 같으면 인�
     const deps = {
       viewer: { userId: ME, role: "fan" as const },
       verifierReady: true,
+      phoneKeys: () => KEYS,
       admin: {
         async rpc(fn: string, args: Record<string, unknown>) {
           rpcCalls.push({ fn, args });
@@ -121,7 +134,8 @@ describe("INV-U12: 번호 바꾸기 1단계 — 지금 번호와 같으면 인�
       field: "phone",
       message: SAME_AS_CURRENT_PHONE,
     });
-    expect(rpcCalls).toEqual([{ fn: "is_my_current_phone", args: { p_account_id: ME, p_phone: "01090001234" } }]);
+    // signup INV-U18: 지금 번호 비교도 해시로
+    expect(rpcCalls).toEqual([{ fn: "is_my_current_phone", args: { p_account_id: ME, p_phone: phoneHash(KEYS, "01090001234") } }]);
   });
 
   it("INV-U12: 다른 번호면 통과 — 하이픈 뗀 번호를 돌려준다", async () => {

@@ -4,6 +4,7 @@ import { accountLoginEmail, isReservedLoginId } from "@/entities/session/model/l
 import { nicknameRejection } from "@/entities/session/model/nickname-rule";
 import type { SendMail } from "@/shared/api/mail/smtp";
 import type { Utm } from "@/shared/lib/attribution/utm";
+import { phoneBundle, phoneHash, readPhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
 import { choosePhoneVerifier } from "@/shared/api/phone-verifier/verifier";
 import { buildSignupMail } from "../lib/signup-mail";
 import { consentRows, detailsFieldOf, signupInputSchema, type DetailsField } from "./signup-input";
@@ -77,10 +78,12 @@ export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = 
     return { ok: false, status: 400, field, message: issue?.message ?? "입력한 정보를 확인해 주세요." };
   }
   const input = parsed.data;
+  // INV-U18: 번호는 해시·암호문으로만 DB 에 — 키가 없으면 로그인 정보를 만들기 전에 실패한다
+  const phoneKeys = readPhoneKeys(deps.env);
 
   const usable = await deps.admin.rpc("usable_phone_verification", { p_id: input.verificationId });
   if (usable.error) throw new Error(`휴대폰 확인 기록을 읽지 못했다: ${usable.error.code}`);
-  if (typeof usable.data !== "string" || usable.data !== input.phone) return REVERIFY;
+  if (typeof usable.data !== "string" || usable.data !== phoneHash(phoneKeys, input.phone)) return REVERIFY;
 
   const loginEmail = accountLoginEmail(input.loginId);
   if (!loginEmail) return { ok: false, status: 400, field: "loginId", message: "아이디를 확인해 주세요." };
@@ -106,7 +109,8 @@ export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = 
       p_user_id: userId,
       p_login_id: input.loginId,
       p_email: input.email,
-      p_phone: input.phone,
+      // 번호 묶음(해시·이 계정에 묶인 암호문·앞 3자리·뒤 4자리) — DB 가 꼴을 다시 본다(manual/0028)
+      p_phone: phoneBundle(phoneKeys, userId, input.phone),
       p_verification_id: input.verificationId,
       p_terms: consentRows(input.terms),
       p_nickname: input.nickname,

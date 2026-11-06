@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { PHONE_CODE_EXPIRED_MESSAGE } from "@/entities/session/model/phone-code";
+import { phoneHash, type PhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
 import { hashPhoneCode, makePhoneCode, type PhoneVerifier } from "@/shared/api/phone-verifier/verifier";
 import { phoneSchema } from "./signup-input";
 
@@ -12,6 +13,9 @@ import { phoneSchema } from "./signup-input";
 // 확인: 입력한 6자리를 번호표와 섞어 해시하고, 만료·틀린 횟수·사용 여부 확인과 횟수 올리기는 DB 함수가 한 처리에서 한다.
 //       맞으면 DB 가 확인 줄에 「확인됨」을 적는다(INV-U1). 본문의 「확인됨」·번호는 읽지 않는다.
 // 인증번호 원문은 알림톡 변수·문자 본문에만 실린다 — DB·응답·오류·로그에 넣지 않는다(INV-U15).
+// 번호는 DB 에 해시로만 넘긴다(INV-U18) — 숫자 번호는 알림톡·문자를 보낼 때만 쓴다.
+// 비밀번호 찾기(session-login INV-L10)도 이 함수를 쓴다 — sendIf(그 번호로 가입한 팬·크리에이터가 있나)가 false 면 기록만 하고 보내지 않고,
+// keepOnSendFail 이면 보내기에 실패해도 인증번호를 버리지 않고 성공과 같은 결과를 돌려준다(어느 쪽이든 응답이 같아야 가입 여부가 드러나지 않는다).
 
 type Rpc = (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { code?: string } | null }>;
 
@@ -21,6 +25,15 @@ export type PhoneVerificationDeps = {
   verifier: PhoneVerifier | null;
   /** 인증번호 해시용 비밀 값. 창구가 있을 때만 읽는다(운영에서 창구가 없으면 비밀 값이 없어도 거부만 한다). */
   codeSecret: () => string;
+  /** 번호 해시 키(INV-U18) */
+  phoneKeys: () => PhoneKeys;
+};
+
+export type StartOptions = {
+  /** 보낼지 묻는다(번호 해시를 받는다). false 면 기록만 하고 보내지 않는다. */
+  sendIf?: (phoneHash: string) => Promise<boolean>;
+  /** 보내기에 실패해도 인증번호를 버리지 않고 성공과 같은 결과를 돌려준다. */
+  keepOnSendFail?: boolean;
 };
 
 export type StartFailReason = "closed" | "phone" | "rate_minute" | "rate_day" | "send_failed";
@@ -80,18 +93,20 @@ export async function startPhoneVerification(
   deps: PhoneVerificationDeps,
   body: unknown,
   ipHash: string,
+  options: StartOptions = {},
 ): Promise<{ ok: true; verificationId: string; channel: PhoneCodeChannel } | StartFail> {
   if (!deps.verifier) return { ok: false, status: 503, reason: "closed", message: CLOSED_MESSAGE };
   const parsed = startSchema.safeParse(body);
   if (!parsed.success) return { ok: false, status: 400, reason: "phone", message: PHONE_SHAPE_MESSAGE };
   const phone = parsed.data.phone;
+  const hash = phoneHash(deps.phoneKeys(), phone);
 
   const verificationId = randomUUID();
   // 가짜 창구(로컬·시험 사이트)만 고정 인증번호 — 그 밖의 창구는 늘 새 난수
   const code = deps.verifier.fixedCode ?? makePhoneCode();
   const recorded = await deps.admin.rpc("request_phone_code", {
     p_id: verificationId,
-    p_phone: phone,
+    p_phone: hash,
     p_ip_hash: ipHash,
     p_code_hash: hashPhoneCode(deps.codeSecret(), verificationId, code),
   });
@@ -102,9 +117,15 @@ export async function startPhoneVerification(
     throw new Error(`인증번호 요청을 기록하지 못했다: ${recorded.error.code}`);
   }
 
+  // 비밀번호 찾기: 보낼 계정이 없으면 기록만(한도는 센다) — 응답은 보낸 때와 같다
+  if (options.sendIf && !(await options.sendIf(hash))) return { ok: true, verificationId, channel: "sms" };
   if (await kakaoDelivered(deps.verifier, phone, code)) return { ok: true, verificationId, channel: "kakao" };
   // 알림톡 실패·확인 안 됨 — 같은 인증번호를 문자로(둘 다 갔으면 화면은 문자 쪽 문구)
   if (!(await smsWithOneRetry(deps.verifier, phone, phoneCodeText(code)))) {
+    if (options.keepOnSendFail) {
+      console.error("인증번호를 보내지 못했다(비밀번호 찾기 — 응답은 같게 둔다)");
+      return { ok: true, verificationId, channel: "sms" };
+    }
     const discarded = await deps.admin.rpc("discard_phone_code", { p_id: verificationId });
     if (discarded.error) console.error(`보내지 못한 인증번호를 버리지 못했다: ${discarded.error.code ?? "코드 없음"}`);
     return { ok: false, status: 503, reason: "send_failed", message: SEND_FAILED_MESSAGE };

@@ -3,7 +3,9 @@ import { z } from "zod";
 import { passwordMatches, type AccountPasswordDeps } from "@/entities/session/api/account-password";
 import { CURRENT_PASSWORD_EMPTY, CURRENT_PASSWORD_WRONG } from "@/entities/session/model/password-rule";
 import type { Viewer } from "@/entities/session/model/viewer";
+import { phoneBundle, phoneHash, type PhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
 import { mobilePhoneOf, normalizeMobilePhone } from "@/shared/lib/validation/phone-shape";
+// 번호는 DB 에 해시·암호문 묶음으로만 넘긴다(signup INV-U18).
 
 // 휴대폰 번호 바꾸기(signup INV-U12). 가입과 같은 문자 인증번호 확인을 새 번호로 다시 받고, 지금 비밀번호도 맞아야 한다.
 // 인증번호 확인은 「새 번호가 바꾸는 사람 것」만 증명한다 — 세션만 빼앗은 사람이 자기 번호로 확인받아 바꾸는 것은 비밀번호가 막는다.
@@ -18,6 +20,7 @@ export type ChangePhoneDeps = AccountPasswordDeps & {
   admin: { rpc: Rpc };
   viewer: Viewer | null;
   verifierReady: boolean;
+  phoneKeys: () => PhoneKeys;
 };
 
 export type ChangePhoneField = "phone" | "verification" | "currentPassword";
@@ -58,7 +61,7 @@ export async function changePhone(deps: ChangePhoneDeps, body: unknown, verifica
 
   const changed = await deps.admin.rpc("change_my_phone", {
     p_account_id: deps.viewer.userId,
-    p_phone: parsed.data.phone,
+    p_phone: phoneBundle(deps.phoneKeys(), deps.viewer.userId, parsed.data.phone),
     p_verification_id: verificationId,
   });
   if (changed.error) {
@@ -73,7 +76,7 @@ export async function changePhone(deps: ChangePhoneDeps, body: unknown, verifica
   return { ok: true };
 }
 
-export type PhoneChangeStartDeps = { admin: { rpc: Rpc }; viewer: Viewer | null; verifierReady: boolean };
+export type PhoneChangeStartDeps = { admin: { rpc: Rpc }; viewer: Viewer | null; verifierReady: boolean; phoneKeys: () => PhoneKeys };
 
 export type PhoneChangeStartCheck = { ok: true; phone: string } | { ok: false; status: 400 | 401 | 503; field?: "phone"; message: string };
 
@@ -90,7 +93,7 @@ export async function checkPhoneChangeStart(deps: PhoneChangeStartDeps, body: un
   if (!parsed.success || mobilePhoneOf(parsed.data.phone) === null) {
     return { ok: false, status: 400, field: "phone", message: CHECK_PHONE };
   }
-  const same = await deps.admin.rpc("is_my_current_phone", { p_account_id: deps.viewer.userId, p_phone: parsed.data.phone });
+  const same = await deps.admin.rpc("is_my_current_phone", { p_account_id: deps.viewer.userId, p_phone: phoneHash(deps.phoneKeys(), parsed.data.phone) });
   if (same.error) throw new Error(`지금 번호와 비교하지 못했다: ${same.error.code}`);
   if (same.data === true) return { ok: false, status: 400, field: "phone", message: SAME_AS_CURRENT_PHONE };
   return { ok: true, phone: parsed.data.phone };

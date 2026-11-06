@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { checkPhoneCode, startPhoneVerification } from "@/features/signup/model/phone-verification";
 import { hashPhoneCode, readPhoneCodeSecret } from "@/shared/api/phone-verifier/verifier";
-import { adminClient, anonClient, deleteTestSignups, psql, requestTestPhoneCode, TEST_SIGNUP_PHONE_PREFIX, verifiedTestPhone } from "./helpers";
+import { adminClient, anonClient, deleteTestSignups, psql, requestTestPhoneCode, TEST_SIGNUP_PHONE_PREFIX, verifiedTestPhone, testPhoneKeys } from "./helpers";
 
 // 문자 인증번호(signup INV-U10·U15·U16)를 실제 DB 로 — 사람이 적용하는 supabase/manual/0026 뒤. 적용 전에는 빨간불이 맞다.
 // 시험 번호는 0109000 의 6000번대만 쓰고 끝나면 지운다.
@@ -14,7 +14,7 @@ function phone(): string {
 }
 const ip = () => randomBytes(32).toString("hex");
 const secret = () => readPhoneCodeSecret({ NODE_ENV: "test" });
-const deps = () => ({ admin: adminClient(), verifier: { kind: "fake" as const, sendKakaoCode: async () => true, sendSms: async () => {} }, codeSecret: secret });
+const deps = () => ({ admin: adminClient(), verifier: { kind: "fake" as const, sendKakaoCode: async () => true, sendSms: async () => {} }, codeSecret: secret, phoneKeys: testPhoneKeys });
 const row = (id: string, cols: string) => psql(`select ${cols} from pii.phone_verifications where id = '${id}'`);
 const check = (verificationId: string, code: string) => checkPhoneCode(deps(), { verificationId, code });
 const wrongOf = (code: string) => (code === "000000" ? "000001" : "000000");

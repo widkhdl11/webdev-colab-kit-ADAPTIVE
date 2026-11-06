@@ -1,3 +1,4 @@
+import { readPhoneKeys, type PhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
 import { execFileSync, spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { checkPhoneCode, startPhoneVerification } from "@/features/signup/model/phone-verification";
@@ -421,6 +422,11 @@ export async function approveSql(requestId: string): Promise<string> {
  * 휴대폰 인증번호 받기(signup INV-U15) — 가입 화면과 같은 함수로 요청하고, 보낸 문자에서 6자리를 꺼낸다(시험 창구는 문자를 보내지 않는다).
  * 접속 주소 해시는 부를 때마다 새 값 — 같은 접속 주소 하루 스무 번 한도(INV-U10)에 시험끼리 걸리지 않게.
  */
+/** 가입 번호 키(signup INV-U18) — setup-env 가 .env.local 에서 읽어 둔 값. 개발 서버와 같아야 해시·암호문이 맞는다. */
+export function testPhoneKeys(): PhoneKeys {
+  return readPhoneKeys(process.env);
+}
+
 export async function requestTestPhoneCode(phone: string, ipHash?: string): Promise<{ verificationId: string; code: string }> {
   let text = "";
   const started = await startPhoneVerification(
@@ -428,7 +434,7 @@ export async function requestTestPhoneCode(phone: string, ipHash?: string): Prom
       admin: adminClient(),
       // 알림톡은 안 된 것으로 — 같은 인증번호가 문자 본문으로 와서 꺼낼 수 있다
       verifier: { kind: "fake", sendKakaoCode: async () => false, sendSms: async (_to, body) => void (text = body) },
-      codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }),
+      codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }), phoneKeys: testPhoneKeys,
     },
     { phone },
     ipHash ?? randomBytes(32).toString("hex"),
@@ -451,7 +457,7 @@ export function waitPhoneCodeMinute(phone: string): void {
 export async function verifiedTestPhone(phone: string): Promise<string> {
   const { verificationId, code } = await requestTestPhoneCode(phone);
   const checked = await checkPhoneCode(
-    { admin: adminClient(), verifier: { kind: "fake", sendKakaoCode: async () => true, sendSms: async () => {} }, codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }) },
+    { admin: adminClient(), verifier: { kind: "fake", sendKakaoCode: async () => true, sendSms: async () => {} }, codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }), phoneKeys: testPhoneKeys },
     { verificationId, code },
   );
   if (!checked.ok) throw new Error(`인증번호 확인 실패: ${checked.reason}`);

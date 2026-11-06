@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+import { decryptPhone, phoneHash, readPhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
 import { describe, expect, it } from "vitest";
 import type { OutgoingMail } from "@/shared/api/mail/smtp";
 import { signUp, type SignUpDeps } from "./sign-up";
@@ -16,6 +18,9 @@ const USER_ID = "99999999-0000-4000-8000-000000000001";
 
 type RpcCall = { fn: string; args: Record<string, unknown> };
 
+const KEY_ENV = { FANKKUK_PHONE_ENC_KEY: randomBytes(32).toString("base64"), FANKKUK_PHONE_HASH_KEY: randomBytes(32).toString("base64") };
+const KEYS = readPhoneKeys(KEY_ENV);
+
 function harness(opts: {
   verifiedPhone?: string | null;
   createUserError?: { code: string } | null;
@@ -31,13 +36,15 @@ function harness(opts: {
   const signIns: { email: string; password: string }[] = [];
   const mails: OutgoingMail[] = [];
   const verifiedPhone = opts.verifiedPhone === undefined ? "01055556666" : opts.verifiedPhone;
+  // signup INV-U18: DB 는 확인 줄의 번호 해시를 돌려준다
+  const verifiedHash = typeof verifiedPhone === "string" ? phoneHash(KEYS, verifiedPhone) : verifiedPhone;
 
   const deps: SignUpDeps = {
-    env: opts.production ? { NODE_ENV: "production" } : { NODE_ENV: "development" },
+    env: { ...(opts.production ? { NODE_ENV: "production" } : { NODE_ENV: "development" }), ...KEY_ENV },
     admin: {
       async rpc(fn: string, args: Record<string, unknown>) {
         rpcCalls.push({ fn, args });
-        if (fn === "usable_phone_verification") return { data: verifiedPhone, error: null };
+        if (fn === "usable_phone_verification") return { data: verifiedHash, error: null };
         if (fn === "create_account" || fn === "create_creator_account") return { data: null, error: opts.createAccountError ?? null };
         if (fn === "record_signup_source") return { data: null, error: opts.recordFails ? { code: "XX000" } : null };
         if (fn === "issue_email_verification") {
@@ -99,7 +106,7 @@ describe("가입 — 정상 경로", () => {
       p_login_id: "newfan",
       p_role: "fan",
       p_email: "new.fan@example.com",
-      p_phone: "01055556666",
+      p_phone: expect.any(String),
       p_verification_id: VID,
       p_terms: [
         { key: "age14", version: "2026-10-29" },
@@ -354,7 +361,7 @@ describe("크리에이터 가입 — 공개 정보 행 (creator-verification INV
       p_user_id: USER_ID,
       p_login_id: "newfan",
       p_email: "new.fan@example.com",
-      p_phone: "01055556666",
+      p_phone: expect.any(String),
       p_verification_id: VID,
       p_terms: [
         { key: "age14", version: "2026-10-29" },
@@ -526,5 +533,27 @@ describe("metrics INV-Q4: 가입 경로·utm 은 가입할 때 계정에 붙는�
     const h = harness({ createAccountError: { code: "FKU02" } });
     await signUp(h.deps, body({ heardFrom: "x" }), UTM);
     expect(h.rpcCalls.some((c) => c.fn === "record_signup_source")).toBe(false);
+  });
+});
+
+describe("INV-U18: 가입 번호는 묶음(해시·암호문·앞 3자리·뒤 4자리)으로만 DB 에", () => {
+  it("INV-U18: 계정 만들기에 넘기는 번호는 그 계정에 묶인 암호문 묶음이고 숫자 번호가 없다", async () => {
+    const h = harness();
+    expect(await signUp(h.deps, body())).toMatchObject({ ok: true });
+    const arg = h.rpcCalls.find((c) => c.fn === "create_account")?.args.p_phone;
+    expect(typeof arg).toBe("string");
+    expect(String(arg)).not.toContain("01055556666");
+    const b = JSON.parse(String(arg)) as { hash: string; sealed: string; prefix: string; last4: string };
+    expect(b.hash).toBe(phoneHash(KEYS, "01055556666"));
+    expect(decryptPhone(KEYS, USER_ID, b.sealed)).toBe("01055556666");
+    expect([b.prefix, b.last4]).toEqual(["010", "6666"]);
+  });
+
+  it("INV-U18 실패경로: 번호 키가 없으면 로그인 정보도 계정도 만들지 않는다", async () => {
+    const h = harness();
+    h.deps.env = { NODE_ENV: "development" };
+    await expect(signUp(h.deps, body())).rejects.toThrow();
+    expect(h.created).toEqual([]);
+    expect(h.rpcCalls.filter((c) => c.fn === "create_account")).toEqual([]);
   });
 });

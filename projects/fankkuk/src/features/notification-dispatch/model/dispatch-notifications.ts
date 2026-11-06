@@ -4,6 +4,7 @@ import { ChannelError, type NotificationChannels } from "../api/channels";
 import { loginLinksOf } from "@/entities/session/api/login-links";
 import { buildAlimtalkVariables, buildLoginLinkAlimtalkVariables } from "../lib/alimtalk-body";
 import { buildNotificationBody, kindHasPath, NOTIFICATION_KINDS, siteOrigin, type NotificationBody, type NotificationBodyInput } from "../lib/notification-body";
+import { decryptPhone, type PhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
 
 // 보내는 일꾼 (notifications INV-N5·N6·N7·N8·N10, notification-batching INV-NB1~NB5). 앱 서버 키로만 돈다.
 // 줄의 상태(대기 → 보내는 중 → 끝)와 「둘이 같은 줄을 꺼내지 않음」, 재시도 간격·실패 한도, 끝난 승인 요청 건너뛰기는 DB 함수가 지킨다.
@@ -23,7 +24,23 @@ export type DispatchDeps = {
   chooseChannels: (hasKakaoTemplates: boolean) => NotificationChannels;
   /** 시험용 시계(밀리초). 기본은 Date.now. */
   now?: () => number;
+  /** 가입 번호 키(signup INV-U18) — 카카오 연락처(그 계정에 묶인 번호 암호문)를 보내기 직전에 푼다. 이메일만 보낼 때는 부르지 않는다. */
+  phoneKeys: () => PhoneKeys;
 };
+
+const kakaoContact = z.object({ account: z.string().uuid(), sealed: z.string() }).strict();
+
+/** DB 가 준 카카오 연락처({계정 ID, 암호문} JSON 글자)를 풀어 번호로. 꼴이 틀리거나 풀리지 않으면 null — 숫자 번호를 그대로 쓰지 않는다. */
+function openKakaoContact(keys: PhoneKeys, raw: string): string | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const c = kakaoContact.safeParse(parsed);
+  return c.success ? decryptPhone(keys, c.data.account, c.data.sealed) : null;
+}
 
 export type DispatchCounts = {
   sent: number;
@@ -134,6 +151,20 @@ async function sendRow(deps: DispatchDeps, origin: string, channels: Notificatio
   let variables = row.channel === "kakao" ? buildAlimtalkVariables(input) : null;
   if (row.channel === "kakao" && !variables) return { outcome: "skipped", code: "alimtalk_unavailable" };
 
+  // signup INV-U18: 카카오는 보내기 직전에 번호를 푼다 — 못 풀면 보내지 않고(로그인 링크도 발급하지 않고) 오류로 끝낸다. 푼 번호는 이 요청 안에서만 쓴다
+  let to = contact.data;
+  if (row.channel === "kakao") {
+    let keys: PhoneKeys;
+    try {
+      keys = deps.phoneKeys();
+    } catch {
+      return { outcome: "error", code: "phone_key_missing" };
+    }
+    const phone = openKakaoContact(keys, contact.data);
+    if (!phone) return { outcome: "error", code: "phone_unreadable" };
+    to = phone;
+  }
+
   // link-login INV-K1: 보내는 순간 그 줄의 받는 계정에 묶어 발급한다. 발급을 못 하면 토큰 없는 링크를 보내지 않고 다시 보낼 차례로
   if (row.channel === "kakao" && row.kind === "approval_request" && templates.loginLink) {
     let token: string | null;
@@ -149,7 +180,7 @@ async function sendRow(deps: DispatchDeps, origin: string, channels: Notificatio
   }
 
   try {
-    const { providerMessageId } = await channel.send({ outboxId: row.id, to: contact.data, subject: body.subject, text: body.text, templateCode, variables });
+    const { providerMessageId } = await channel.send({ outboxId: row.id, to, subject: body.subject, text: body.text, templateCode, variables });
     return { outcome: "sent", providerMessageId, fake: channel.fake };
   } catch (e) {
     return { outcome: "error", code: e instanceof ChannelError ? e.code : "send_failed" };

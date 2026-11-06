@@ -80,3 +80,9 @@ export function phoneParts(phone: string): { prefix: string; last4: string } {
   assertPhone(phone);
   return { prefix: phone.slice(0, 3), last4: phone.slice(-4) };
 }
+
+/** DB 에 넘기는 번호 묶음(JSON 글자) — 해시·암호문·앞 3자리·뒤 4자리. 계정 만들기·번호 바꾸기 함수의 p_phone 자리에 넣는다(0028 pii.phone_bundle 이 꼴을 본다). */
+export function phoneBundle(keys: PhoneKeys, accountId: string, phone: string): string {
+  const { prefix, last4 } = phoneParts(phone);
+  return JSON.stringify({ hash: phoneHash(keys, phone), sealed: encryptPhone(keys, accountId, phone), prefix, last4 });
+}

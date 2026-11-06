@@ -1,10 +1,13 @@
+import { randomBytes } from "node:crypto";
 import { describe, expect, it } from "vitest";
+import { phoneHash, readPhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
 import { hashPhoneCode, type PhoneVerifier } from "@/shared/api/phone-verifier/verifier";
 import { checkPhoneCode, phoneCodeText, startPhoneVerification, type PhoneVerificationDeps } from "./phone-verification";
 
 const SECRET = "k".repeat(40);
 const IP = "a".repeat(64);
 const VID = "11111111-2222-4333-8444-555555555555";
+const KEYS = readPhoneKeys({ FANKKUK_PHONE_ENC_KEY: randomBytes(32).toString("base64"), FANKKUK_PHONE_HASH_KEY: randomBytes(32).toString("base64") });
 
 type Sent = { phone: string; text: string };
 
@@ -38,6 +41,7 @@ function harness(
   const deps: PhoneVerificationDeps = {
     verifier,
     codeSecret: () => SECRET,
+    phoneKeys: () => KEYS,
     admin: {
       async rpc(fn: string, args: Record<string, unknown>) {
         rpcCalls.push({ fn, args });
@@ -83,7 +87,9 @@ describe("인증번호 요청", () => {
     if (!r.ok) return;
     expect(h.rpcCalls.map((c) => c.fn)).toEqual(["request_phone_code"]);
     const args = h.rpcCalls[0]!.args;
-    expect(args).toMatchObject({ p_id: r.verificationId, p_phone: "01055556666", p_ip_hash: IP });
+    // signup INV-U18: DB 에는 번호 해시만 — 숫자 번호는 어느 인자에도 없다
+    expect(args).toMatchObject({ p_id: r.verificationId, p_phone: phoneHash(KEYS, "01055556666"), p_ip_hash: IP });
+    expect(JSON.stringify(args)).not.toContain("01055556666");
     expect(h.sent).toHaveLength(1);
     const code = codeOf(h.sent[0]!.text);
     expect(code).toMatch(/^\d{6}$/);
@@ -229,5 +235,45 @@ describe("인증번호 확인", () => {
   it("INV-U9 (실패경로): 문자 창구가 없으면 503", async () => {
     const h = harness({ verifier: null });
     expect(await checkPhoneCode(h.deps, { verificationId: VID, code: "123456" })).toMatchObject({ ok: false, status: 503 });
+  });
+});
+
+describe("비밀번호 찾기용 선택지 (session-login INV-L10)", () => {
+  it("INV-L10: 보낼지 묻는 함수가 false 면 기록은 하고(한도를 센다) 보내지 않으며, 성공과 같은 결과를 돌려준다", async () => {
+    const h = harness();
+    const asked: string[] = [];
+    const r = await startPhoneVerification(h.deps, { phone: "010-5555-6666" }, IP, {
+      sendIf: async (hash) => {
+        asked.push(hash);
+        return false;
+      },
+      keepOnSendFail: true,
+    });
+    expect(r.ok).toBe(true);
+    expect(asked).toEqual([phoneHash(KEYS, "01055556666")]);
+    expect(h.rpcCalls.map((c) => c.fn)).toEqual(["request_phone_code"]);
+    expect(h.sent).toHaveLength(0);
+    expect(h.kakaoSent).toHaveLength(0);
+  });
+
+  it("INV-L10: 보낼지 묻는 함수가 true 면 보낸다", async () => {
+    const h = harness();
+    const r = await startPhoneVerification(h.deps, { phone: "010-5555-6666" }, IP, { sendIf: async () => true, keepOnSendFail: true });
+    expect(r.ok).toBe(true);
+    expect(h.sent).toHaveLength(1);
+  });
+
+  it("INV-L10 실패경로: 보내기에 실패해도 인증번호를 버리지 않고 성공과 같은 결과 — 계정 있는 번호만 버려지면 응답 차이로 가입 여부가 드러난다", async () => {
+    const h = harness({ sendFails: 5 });
+    const r = await startPhoneVerification(h.deps, { phone: "010-5555-6666" }, IP, { sendIf: async () => true, keepOnSendFail: true });
+    expect(r.ok).toBe(true);
+    expect(h.rpcCalls.map((c) => c.fn)).toEqual(["request_phone_code"]);
+  });
+
+  it("가입(선택지 없음)은 지금처럼 보내기 실패면 버리고 실패를 알린다", async () => {
+    const h = harness({ sendFails: 5 });
+    const r = await startPhoneVerification(h.deps, { phone: "010-5555-6666" }, IP);
+    expect(r.ok).toBe(false);
+    expect(h.rpcCalls.map((c) => c.fn)).toEqual(["request_phone_code", "discard_phone_code"]);
   });
 });

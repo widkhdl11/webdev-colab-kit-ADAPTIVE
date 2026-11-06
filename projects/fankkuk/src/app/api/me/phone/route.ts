@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 import { readViewer } from "@/entities/session/model/viewer";
 import { PHONE_CHANGE_COOKIE, phoneChangeCookieOptions } from "@/features/phone-change/lib/verification-cookie";
 import { changePhone } from "@/features/phone-change/model/change-phone";
+import { readPhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
 import { choosePhoneVerifier } from "@/shared/api/phone-verifier/verifier";
 import { createAdminSupabase } from "@/shared/api/supabase/admin";
 import { createDetachedAuth } from "@/shared/api/supabase/detached";
@@ -25,6 +26,7 @@ export async function POST(req: NextRequest) {
         attempts: passwordAttemptsOf(admin),
         viewer: await readViewer(supabase),
         verifierReady: choosePhoneVerifier(process.env) !== null,
+        phoneKeys: () => readPhoneKeys(process.env),
       },
       body,
       store.get(PHONE_CHANGE_COOKIE)?.value,

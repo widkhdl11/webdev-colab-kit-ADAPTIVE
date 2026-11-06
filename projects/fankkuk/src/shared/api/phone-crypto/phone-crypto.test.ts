@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { decryptPhone, encryptPhone, phoneHash, phoneParts, readPhoneKeys } from "./phone-crypto";
+import { decryptPhone, encryptPhone, phoneBundle, phoneHash, phoneParts, readPhoneKeys } from "./phone-crypto";
 
 const k = () => randomBytes(32).toString("base64");
 const ENC = "FANKKUK_PHONE_ENC_KEY";
@@ -74,5 +74,18 @@ describe("가입 번호 암호화 (signup INV-U18)", () => {
     expect(() => encryptPhone(keys, A, "010-1234-5678")).toThrow();
     expect(() => phoneHash(keys, "12345")).toThrow();
     expect(() => phoneParts("12345")).toThrow();
+  });
+
+  it("INV-U18: DB 에 넘기는 번호 묶음은 해시·암호문·앞 3자리·뒤 4자리 넷뿐이고 원래 숫자가 없다", () => {
+    const b = JSON.parse(phoneBundle(keys, A, PHONE)) as Record<string, string>;
+    expect(Object.keys(b).sort()).toEqual(["hash", "last4", "prefix", "sealed"]);
+    expect(b.hash).toBe(phoneHash(keys, PHONE));
+    expect(decryptPhone(keys, A, b.sealed ?? "")).toBe(PHONE);
+    expect(b.prefix).toBe("010");
+    expect(b.last4).toBe("5678");
+    expect(JSON.stringify(b)).not.toContain(PHONE);
+    // DB 의 칸 꼴 검사(0028 phone_bundle)와 같은 꼴
+    expect(b.sealed).toMatch(/^v1\.[A-Za-z0-9_-]{16}\.[A-Za-z0-9_-]{30,64}$/);
+    expect(phoneBundle(keys, A, "01612345678").length).toBeGreaterThan(0);
   });
 });

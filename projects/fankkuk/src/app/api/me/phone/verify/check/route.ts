@@ -1,3 +1,4 @@
+import { readPhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 import { readViewer } from "@/entities/session/model/viewer";
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
     const ticket = (await cookies()).get(PHONE_CHANGE_COOKIE)?.value;
     const code = body !== null && typeof body === "object" && "code" in body ? (body as { code: unknown }).code : undefined;
     const result = await checkPhoneCode(
-      { admin: createAdminSupabase(), verifier, codeSecret: () => readPhoneCodeSecret(process.env) },
+      { admin: createAdminSupabase(), verifier, codeSecret: () => readPhoneCodeSecret(process.env), phoneKeys: () => readPhoneKeys(process.env) },
       { verificationId: ticket, code },
     );
     if (result.ok) return { status: 200, body: { status: "verified" } };
