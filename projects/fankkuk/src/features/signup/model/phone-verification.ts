@@ -34,6 +34,12 @@ export type StartOptions = {
   sendIf?: (phoneHash: string) => Promise<boolean>;
   /** 보내기에 실패해도 인증번호를 버리지 않고 성공과 같은 결과를 돌려준다. */
   keepOnSendFail?: boolean;
+  /**
+   * 계정 확인(sendIf)·발송을 응답 뒤로 미룬다(라우트는 next/server 의 after 를 넘긴다). 주면 응답 전에는 기록 한 줄만 하고
+   * 늘 성공과 같은 결과를 돌려준다 — 가입된 번호만 발송을 기다리면 응답 시간으로 가입 여부가 드러난다(session-login INV-L10).
+   * 미룬 일은 오류를 던지지 않는다(실패는 로그만).
+   */
+  defer?: (task: () => Promise<void>) => void;
 };
 
 export type StartFailReason = "closed" | "phone" | "rate_minute" | "rate_day" | "send_failed";
@@ -115,6 +121,22 @@ export async function startPhoneVerification(
     if (recorded.error.code === "FK429") return { ok: false, status: 429, reason: "rate_day", message: RATE_DAY_MESSAGE };
     if (recorded.error.code === "22023") return { ok: false, status: 400, reason: "phone", message: PHONE_SHAPE_MESSAGE };
     throw new Error(`인증번호 요청을 기록하지 못했다: ${recorded.error.code}`);
+  }
+
+  // 비밀번호 찾기: 계정 확인·발송을 응답 뒤로 — 응답 전에 하는 일이 계정이 있든 없든 같다(INV-L10)
+  if (options.defer) {
+    const verifier = deps.verifier;
+    const sendIf = options.sendIf;
+    options.defer(async () => {
+      try {
+        if (sendIf && !(await sendIf(hash))) return;
+        if (await kakaoDelivered(verifier, phone, code)) return;
+        if (!(await smsWithOneRetry(verifier, phone, phoneCodeText(code)))) console.error("인증번호를 보내지 못했다(응답 뒤 발송)");
+      } catch (e) {
+        console.error(`응답 뒤 인증번호 발송이 멈췄다: ${e instanceof Error ? e.message : "알 수 없는 오류"}`);
+      }
+    });
+    return { ok: true, verificationId, channel: "sms" };
   }
 
   // 비밀번호 찾기: 보낼 계정이 없으면 기록만(한도는 센다) — 응답은 보낸 때와 같다

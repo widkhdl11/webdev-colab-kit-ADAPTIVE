@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 import {
   RESET_TICKET_COOKIE,
   RESET_TICKET_MAX_AGE,
@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
       phoneKeys: () => readPhoneKeys(process.env),
     };
     const ipHash = hashIp(readIpHashSecret(process.env), clientIp(req.headers));
-    const result = await requestResetCode({ admin, start: (b, options) => startPhoneVerification(deps, b, ipHash, options) }, body);
+    // 계정 확인·발송은 응답 뒤(after) — 가입된 번호만 발송을 기다리면 응답 시간으로 가입 여부가 드러난다
+    const result = await requestResetCode({ admin, start: (b, options) => startPhoneVerification(deps, b, ipHash, { ...options, defer: after }) }, body);
     if (result.status !== 200) return { status: result.status, body: { reason: result.reason, message: result.message } };
     if (result.verificationId) {
       const store = await cookies();

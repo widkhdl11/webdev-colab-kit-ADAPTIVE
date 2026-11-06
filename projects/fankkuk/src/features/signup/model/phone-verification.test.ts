@@ -270,6 +270,60 @@ describe("비밀번호 찾기용 선택지 (session-login INV-L10)", () => {
     expect(h.rpcCalls.map((c) => c.fn)).toEqual(["request_phone_code"]);
   });
 
+  // 보안 리뷰(2026-11-06): 가입된 번호만 발송을 기다렸다 응답하면 응답 시간으로 가입 여부가 드러난다 —
+  // 미루기 함수를 주면 응답 전에는 기록 한 줄만 하고, 계정 확인·발송은 미룬 일에서 한다.
+  it("INV-L10 (실패경로): 미루기 함수를 주면 응답 전에 계정 확인도 발송도 하지 않고, 미룬 일이 돌 때 확인·발송한다", async () => {
+    const h = harness();
+    const asked: string[] = [];
+    const deferred: (() => Promise<void>)[] = [];
+    const r = await startPhoneVerification(h.deps, { phone: "010-5555-6666" }, IP, {
+      sendIf: async (hash) => {
+        asked.push(hash);
+        return true;
+      },
+      keepOnSendFail: true,
+      defer: (task) => void deferred.push(task),
+    });
+    expect(r.ok).toBe(true);
+    expect(asked).toEqual([]);
+    expect(h.sent).toHaveLength(0);
+    expect(h.kakaoSent).toHaveLength(0);
+    expect(deferred).toHaveLength(1);
+    await deferred[0]!();
+    expect(asked).toEqual([phoneHash(KEYS, "01055556666")]);
+    expect(h.kakaoSent).toHaveLength(1);
+    expect(h.sent).toHaveLength(1); // 알림톡 실패(기본) → 같은 번호를 문자로
+  });
+
+  it("INV-L10 (실패경로): 미룬 일에서 계정이 없으면 보내지 않는다 — 응답은 계정이 있을 때와 같다", async () => {
+    const run = async (exists: boolean) => {
+      const h = harness();
+      const deferred: (() => Promise<void>)[] = [];
+      const r = await startPhoneVerification(h.deps, { phone: "010-5555-6666" }, IP, {
+        sendIf: async () => exists,
+        keepOnSendFail: true,
+        defer: (task) => void deferred.push(task),
+      });
+      const before = h.rpcCalls.map((c) => c.fn);
+      await deferred[0]!();
+      return { r, before, sent: h.sent.length + h.kakaoSent.length };
+    };
+    const none = await run(false);
+    const one = await run(true);
+    expect({ ...none.r, verificationId: "x" }).toEqual({ ...one.r, verificationId: "x" });
+    expect(none.before).toEqual(one.before);
+    expect(none.sent).toBe(0);
+    expect(one.sent).toBeGreaterThan(0);
+  });
+
+  it("INV-L10 (실패경로): 미룬 발송이 실패해도 인증번호를 버리지 않고 미룬 일은 오류를 밖으로 던지지 않는다", async () => {
+    const h = harness({ sendFails: 5 });
+    const deferred: (() => Promise<void>)[] = [];
+    await startPhoneVerification(h.deps, { phone: "010-5555-6666" }, IP, { sendIf: async () => true, keepOnSendFail: true, defer: (t) => void deferred.push(t) });
+    await expect(deferred[0]!()).resolves.toBeUndefined();
+    expect(h.rpcCalls.map((c) => c.fn)).toEqual(["request_phone_code"]);
+  });
+
   it("가입(선택지 없음)은 지금처럼 보내기 실패면 버리고 실패를 알린다", async () => {
     const h = harness({ sendFails: 5 });
     const r = await startPhoneVerification(h.deps, { phone: "010-5555-6666" }, IP);

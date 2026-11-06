@@ -22,6 +22,15 @@ const ACCOUNT = "22222222-2222-4222-8222-222222222222";
 const db = { target: true, requestError: null as string | null, checkResult: "verified", issued: "issued", claimCode: null as string | null };
 
 vi.mock("server-only", () => ({}));
+// 응답 뒤 할 일(next/server 의 after) — 모아 두었다가 시험이 직접 돌린다. 응답 전에 무엇을 했는지와 뒤에 한 일을 가른다
+const afterTasks: (() => unknown)[] = [];
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  after: (task: () => unknown) => void afterTasks.push(task),
+}));
+async function runAfterTasks(): Promise<void> {
+  for (const task of afterTasks.splice(0)) await task();
+}
 vi.mock("next/headers", () => ({
   cookies: async () => ({
     get: (name: string) => (requestCookies.has(name) ? { name, value: requestCookies.get(name) ?? "" } : undefined),
@@ -102,6 +111,7 @@ beforeEach(() => {
   sets.length = 0;
   rpcCalls.length = 0;
   kakaoTo.length = 0;
+  afterTasks.length = 0;
   updated.length = 0;
   Object.assign(db, { target: true, requestError: null, checkResult: "verified", issued: "issued", claimCode: null });
   vi.stubEnv("FANKKUK_PHONE_ENC_KEY", randomBytes(32).toString("base64"));
@@ -114,14 +124,22 @@ describe("INV-L10: 인증번호 받기 라우트 — 가입 여부와 상관없�
     const none = await requestCode(PHONE);
     const noneBody = await none.json();
     const noneCookies = written(RESET_VERIFICATION_COOKIE);
+    // 응답 전에 한 일 — 기록 한 줄뿐(계정 확인·발송은 응답 뒤). 응답 시간으로 가입 여부가 드러나지 않게(보안 리뷰 2026-11-06)
+    const noneBefore = rpcCalls.map((c) => c.fn);
+    expect(noneBefore).toEqual(["request_phone_code"]);
+    await runAfterTasks();
     expect(kakaoTo).toEqual([]);
 
     sets.length = 0;
+    rpcCalls.length = 0;
     db.target = true;
     const one = await requestCode(PHONE);
+    expect(rpcCalls.map((c) => c.fn)).toEqual(noneBefore);
+    expect(kakaoTo).toEqual([]); // 가입된 번호도 응답 전에는 보내지 않았다
     expect(one.status).toBe(none.status);
     expect(await one.json()).toEqual(noneBody);
     expect(noneBody).toEqual({ message: RESET_CODE_SENT_MESSAGE });
+    await runAfterTasks();
     expect(kakaoTo).toEqual(["01055556666"]);
     expect(none.status).toBe(200);
     expect(none.headers.get("cache-control")).toBe("no-store");
@@ -141,11 +159,13 @@ describe("INV-L10: 인증번호 받기 라우트 — 가입 여부와 상관없�
       expect(r.status).toBe(200);
       expect(await r.json()).toEqual({ message: RESET_CODE_SENT_MESSAGE });
     }
+    await runAfterTasks();
     expect(kakaoTo).toEqual([]);
   });
 
   it("INV-L10 (실패경로): 숫자 번호는 DB 인자 어디에도 없다 — 번호 해시만", async () => {
     await requestCode(PHONE);
+    await runAfterTasks(); // 계정 확인은 응답 뒤에 한다
     expect(rpcCalls.map((c) => c.fn)).toEqual(["request_phone_code", "password_reset_target"]);
     expect(JSON.stringify(rpcCalls)).not.toMatch(/01055556666|5555-6666|55556666/);
     expect(rpcCalls[1]!.args.p_phone_hash).toMatch(/^[0-9a-f]{64}$/);
