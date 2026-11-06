@@ -7,7 +7,7 @@ import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verific
 import sharp from "sharp";
 import { saveCreatorImage } from "@/features/creator-photo/model/save-creator-image";
 import { savePreviewPick } from "@/features/creator-settings-save/model/save-creator-settings";
-import { adminClient, anonClient, deleteTestOrders, psql, SEED } from "./helpers";
+import { adminClient, anonClient, deleteTestOrders, phoneColumnsSql, psql, SEED, storedTestPhone } from "./helpers";
 import { PHONE_IN_TEXT } from "./pii-shape";
 
 // 선물 링크 페이지의 주소와 이미지 라우트 (docs/specs/creator-link.md INV-E2·E3·E5·E7·E10).
@@ -97,13 +97,16 @@ function lastShot() {
 
 /** 크리에이터 A 와 두 팬의 pii 칸 값(이메일·휴대폰) — 시험 계정에 값이 없으면 넣어 두고 읽는다. */
 function piiStrings(): string[] {
+  // 번호는 암호문·해시·앞뒤 자리 네 칸으로 저장된다(INV-U18) — 없을 때만 넣고, 읽을 때는 풀어서 원래 번호를 얻는다
+  const phone = phoneColumnsSql(A.id, "01077770303");
   psql(
-    `insert into pii.account_contacts (account_id, email, phone) values ('${A.id}', 'cvt-haru-pii@fankkuk.test', '01077770303')
-     on conflict (account_id) do update set email = coalesce(pii.account_contacts.email, excluded.email), phone = coalesce(pii.account_contacts.phone, excluded.phone)`,
+    `insert into pii.account_contacts (account_id, email, ${phone.columns}) values ('${A.id}', 'cvt-haru-pii@fankkuk.test', ${phone.values})
+     on conflict (account_id) do update set email = coalesce(pii.account_contacts.email, excluded.email);
+     update pii.account_contacts set ${phone.set} where account_id = '${A.id}' and phone_hash is null`,
   );
-  const ids = [A.id, FAN_X, FAN_Y].map((id) => `'${id}'`).join(", ");
-  return psql(`select coalesce(email, '') || chr(10) || coalesce(phone, '') from pii.account_contacts where account_id in (${ids})`)
-    .split(/\r?\n/)
+  const ids = [A.id, FAN_X, FAN_Y];
+  const emails = psql(`select coalesce(email, '') from pii.account_contacts where account_id in (${ids.map((id) => `'${id}'`).join(", ")})`).split(/\r?\n/);
+  return [...emails, ...ids.map(storedTestPhone)]
     .map((v) => v.trim())
     .filter((v) => v.length >= 6);
 }

@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { checkPhoneCode, startPhoneVerification } from "@/features/signup/model/phone-verification";
 import { hashPhoneCode, readPhoneCodeSecret } from "@/shared/api/phone-verifier/verifier";
-import { adminClient, anonClient, deleteTestSignups, psql, requestTestPhoneCode, TEST_SIGNUP_PHONE_PREFIX, verifiedTestPhone, testPhoneKeys } from "./helpers";
+import { adminClient, anonClient, deleteTestSignups, psql, requestTestPhoneCode, TEST_SIGNUP_PHONE_PREFIX, verifiedTestPhone, testPhoneKeys, testPhoneHash, testPhoneBundle } from "./helpers";
 
 // 문자 인증번호(signup INV-U10·U15·U16)를 실제 DB 로 — 사람이 적용하는 supabase/manual/0026 뒤. 적용 전에는 빨간불이 맞다.
 // 시험 번호는 0109000 의 6000번대만 쓰고 끝나면 지운다.
@@ -20,7 +20,7 @@ const check = (verificationId: string, code: string) => checkPhoneCode(deps(), {
 const wrongOf = (code: string) => (code === "000000" ? "000001" : "000000");
 
 function request(p: string, ipHash = ip(), id: string = randomUUID()) {
-  return adminClient().rpc("request_phone_code", { p_id: id, p_phone: p, p_ip_hash: ipHash, p_code_hash: hashPhoneCode(secret(), id, "123456") });
+  return adminClient().rpc("request_phone_code", { p_id: id, p_phone: testPhoneHash(p), p_ip_hash: ipHash, p_code_hash: hashPhoneCode(secret(), id, "123456") });
 }
 
 beforeEach(deleteTestSignups);
@@ -73,7 +73,7 @@ describe("INV-U15: 인증번호 보관 — 해시·만료·틀린 횟수만", ()
       ip(),
     );
     expect(r).toMatchObject({ ok: false, reason: "send_failed" });
-    expect(psql(`select count(*) filter (where discarded_at is not null and code_hash is null) || '/' || count(*) from pii.phone_verifications where phone = '${p}'`)).toBe("1/1");
+    expect(psql(`select count(*) filter (where discarded_at is not null and code_hash is null) || '/' || count(*) from pii.phone_verifications where phone_hash = '${testPhoneHash(p)}'`)).toBe("1/1");
   });
 });
 
@@ -99,18 +99,18 @@ describe("INV-U10: 요청 한도 — 같은 번호 1분 한 번·하루 다섯 �
     const p = phone();
     expect((await request(p)).error).toBeNull();
     expect((await request(p)).error?.code).toBe("FK428");
-    expect(psql(`select count(*) from pii.phone_verifications where phone = '${p}'`)).toBe("1");
+    expect(psql(`select count(*) from pii.phone_verifications where phone_hash = '${testPhoneHash(p)}'`)).toBe("1");
   });
 
   it("INV-U10 (S10, 실패경로): 같은 번호 하루 다섯 번 뒤 여섯 번째는 FK429 — 1분이 지나도", async () => {
     const p = phone();
     for (let i = 0; i < 5; i += 1) {
       expect((await request(p)).error).toBeNull();
-      psql(`update pii.phone_verifications set requested_at = requested_at - interval '61 seconds' where phone = '${p}'`);
+      psql(`update pii.phone_verifications set requested_at = requested_at - interval '61 seconds' where phone_hash = '${testPhoneHash(p)}'`);
     }
     expect((await request(p)).error?.code).toBe("FK429");
     // 한국 시간 어제로 옮기면 오늘 횟수에서 빠진다
-    psql(`update pii.phone_verifications set requested_at = now() - interval '1 day 1 minute' where phone = '${p}'`);
+    psql(`update pii.phone_verifications set requested_at = now() - interval '1 day 1 minute' where phone_hash = '${testPhoneHash(p)}'`);
     expect((await request(p)).error).toBeNull();
   });
 
@@ -126,12 +126,12 @@ describe("INV-U10: 요청 한도 — 같은 번호 1분 한 번·하루 다섯 �
     const results = await Promise.all(Array.from({ length: 6 }, () => request(p)));
     expect(results.filter((r) => r.error === null)).toHaveLength(1);
     expect(results.filter((r) => r.error?.code === "FK428")).toHaveLength(5);
-    expect(psql(`select count(*) from pii.phone_verifications where phone = '${p}'`)).toBe("1");
+    expect(psql(`select count(*) from pii.phone_verifications where phone_hash = '${testPhoneHash(p)}'`)).toBe("1");
   });
 
   it("INV-U10 (실패경로): 꼴이 틀린 요청은 22023 — 해시가 64자리 16진수가 아니면 받지 않는다", async () => {
     const id = randomUUID();
-    const r = await adminClient().rpc("request_phone_code", { p_id: id, p_phone: phone(), p_ip_hash: ip(), p_code_hash: "123456" });
+    const r = await adminClient().rpc("request_phone_code", { p_id: id, p_phone: testPhoneHash(phone()), p_ip_hash: ip(), p_code_hash: "123456" });
     expect(r.error?.code).toBe("22023");
   });
 });
@@ -161,7 +161,7 @@ describe("INV-U16: 만 14세 확인", () => {
       p_login_id: "it_age14",
       p_role: "fan",
       p_email: "it.age14@example.com",
-      p_phone: p,
+      p_phone: testPhoneBundle(uid, p),
       p_verification_id: vid,
       p_nickname: "it_age14",
     };

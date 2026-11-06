@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createTestAccount, removeTestAccounts, testEmail, testPhone, type TestAccount } from "./account-fixtures";
-import { deleteTestOrders, psql, SEED } from "./helpers";
+import { deleteTestOrders, psql, SEED, testPhoneHash } from "./helpers";
 import { sessionCookie } from "./together-helpers";
 
 // 측정 화면과 utm 쿠키를 실제 서버에서 부른다 (docs/specs/metrics.md INV-Q1·Q2·Q4).
@@ -134,7 +134,7 @@ describe("INV-Q4 — 가입이 끝나면 utm 쿠키를 지운다(개인정보처
     expect(ticket).not.toBeNull();
     // 2026-10-29 부터 본인 확인은 인증번호를 맞혀야 끝난다(signup INV-U15). 이 시험은 개발 서버를 거쳐 그 서버가 보낸 번호를
     // 읽을 수 없고, 보려는 것은 가입 성공 뒤 utm 쿠키다 — 인증번호를 맞힌 상태를 DB 에 직접 만든다(번호 확인 자체는 signup 시험이 본다).
-    psql(`update pii.phone_verifications set verified_at = now() where phone = '${phone}' and verified_at is null and discarded_at is null`);
+    psql(`update pii.phone_verifications set verified_at = now() where phone_hash = '${testPhoneHash(phone)}' and verified_at is null and discarded_at is null`);
 
     const loginId = `it_mqs${Date.now().toString(36).slice(-6)}`;
     const res = await postJson(

@@ -2,12 +2,12 @@ import { passwordAttemptsOf } from "@/entities/session/api/password-attempts";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { signIn } from "@/features/auth/model/sign-in";
 import { signUp } from "@/features/signup/model/sign-up";
-import { adminClient, anonClient, deleteTestSignups, psql, psqlError, signedInClient, TEST_SIGNUP_PHONE_PREFIX, requestTestPhoneCode, verifiedTestPhone, waitPhoneCodeMinute } from "./helpers";
+import { adminClient, anonClient, deleteTestSignups, psql, psqlError, signedInClient, TEST_SIGNUP_PHONE_PREFIX, requestTestPhoneCode, verifiedTestPhone, waitPhoneCodeMinute, storedTestPhone, testPhoneHash, testPhoneBundle, phoneKeyEnv } from "./helpers";
 
 // 가입을 실제 DB·실제 Supabase Auth 로. 문자만 보내지 않는다(인증번호는 시험 도구가 꺼내 맞힌다).
 // 시험 계정은 it_ 로 시작하는 아이디, 0109000 으로 시작하는 번호만 쓴다 — 끝나면 지운다.
 
-const dev = { NODE_ENV: "development" };
+const dev = { NODE_ENV: "development", ...phoneKeyEnv() };
 const TERMS = [
   { key: "age14", version: "2026-10-29" },
   { key: "service", version: "2026-10-01" },
@@ -40,7 +40,7 @@ function createAccount(userId: string, loginId: string, p: string, verificationI
     p_login_id: loginId,
     p_role: "fan",
     p_email: `${loginId.replace("_", ".")}@example.com`,
-    p_phone: p,
+    p_phone: testPhoneBundle(userId, p),
     p_verification_id: verificationId,
     p_terms: TERMS,
     p_nickname: loginId, // 가입 닉네임(INV-U13) — 시험마다 다른 아이디를 그대로 쓴다
@@ -90,7 +90,7 @@ describe("INV-U1: 서버가 확인한 번호로만 계정이 생긴다", () => {
     const r = await signUp(signUpDeps(), signupBody("it_alpha", p, vid, { terms: { age14: true, service: true, privacy: true, news: true } }));
     expect(r).toEqual({ ok: true, loggedIn: true, mailSent: true });
     expect(psql(`select role || '|' || nickname from public.profiles where login_id = 'it_alpha';`)).toBe("fan|it_alpha");
-    expect(psql(`select c.phone from pii.account_contacts c join public.profiles p on p.id = c.account_id where p.login_id = 'it_alpha';`)).toBe(p);
+    expect(storedTestPhone(psql(`select id from public.profiles where login_id = 'it_alpha';`))).toBe(p);
     expect(
       psql(`select string_agg(term_key || ':' || version, ',' order by term_key) from public.terms_consents t join public.profiles p on p.id = t.account_id where p.login_id = 'it_alpha';`),
     ).toBe("age14:2026-10-29,news:2026-10-01,privacy:2026-10-01,service:2026-10-01");
@@ -161,7 +161,7 @@ describe("INV-U2: 본인 확인 한 건은 한 번, 10분 안에만", () => {
     const results = await Promise.all([createAccount(u1, "it_fox1", p, vid), createAccount(u2, "it_fox2", p, vid)]);
     expect(results.filter((r) => r.error === null)).toHaveLength(1);
     expect(results.find((r) => r.error)?.error?.code).toBe("FKU01");
-    expect(psql(`select count(*) from pii.account_contacts where phone = '${p}';`)).toBe("1");
+    expect(psql(`select count(*) from pii.account_contacts where phone_hash = '${testPhoneHash(p)}';`)).toBe("1");
   });
 
 });
@@ -174,7 +174,7 @@ describe("INV-U3: 번호 하나에 계정 하나, 아이디도 하나", () => {
     const r = await signUp(signUpDeps(), signupBody("it_golf2", p, await verified(p)));
     expect(r).toMatchObject({ ok: false, status: 409, field: "phone" });
     expect(authCount("it_golf2")).toBe("0");
-    expect(psql(`select count(*) from pii.account_contacts where phone = '${p}';`)).toBe("1");
+    expect(psql(`select count(*) from pii.account_contacts where phone_hash = '${testPhoneHash(p)}';`)).toBe("1");
   });
 
   it("INV-U3 (동시): 같은 번호를 서로 다른 번호표로 동시에 — 하나만 성공", async () => {

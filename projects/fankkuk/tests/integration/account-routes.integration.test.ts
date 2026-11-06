@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { SAME_AS_CURRENT_PHONE, VERIFY_AGAIN } from "@/features/phone-change/model/change-phone";
 import { accountPasswordDeps, canSignIn, createTestAccount, device, FIXTURE_PASSWORD, removeTestAccounts, testEmail, testPhone, type TestAccount } from "./account-fixtures";
-import { adminClient, anonClient, psql, requestTestPhoneCode } from "./helpers";
+import { adminClient, anonClient, psql, requestTestPhoneCode, storedTestPhone, testPhoneHash } from "./helpers";
 
 // 비밀번호 바꾸기(session-login INV-L12)·번호 바꾸기(signup INV-U12) 라우트를 실제로 부른다.
 // 바꾸는 것은 세 자리뿐이다 — 요청 쿠키로 세션 클라이언트를 만드는 자리(시험 계정으로 로그인한 클라이언트를 넣는다),
@@ -69,8 +69,8 @@ async function call(handler: (req: NextRequest) => Promise<Response>, path: stri
   return { status: res.status, cache: res.headers.get("cache-control"), body: (await res.json()) as Record<string, unknown> };
 }
 
-const phoneOf = (a: TestAccount) => psql(`select coalesce(phone, '') from pii.account_contacts where account_id = '${a.userId}'`);
-const verificationsFor = (phone: string) => Number(psql(`select count(*) from pii.phone_verifications where phone = '${phone}'`));
+const phoneOf = (a: TestAccount) => storedTestPhone(a.userId);
+const verificationsFor = (phone: string) => Number(psql(`select count(*) from pii.phone_verifications where phone_hash = '${testPhoneHash(phone)}'`));
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 beforeAll(removeTestAccounts);
@@ -147,7 +147,7 @@ describe("INV-U12: /api/me/phone/* — 로그인 필수, 번호표는 스크립�
     expect(w!.name).toBe(COOKIE);
     expect(w!.value).toMatch(UUID);
     expect(w!.options).toMatchObject({ httpOnly: true, path: "/api/me/phone", sameSite: "lax", maxAge: 1200 });
-    expect(psql(`select phone from pii.phone_verifications where id = '${w!.value}'`)).toBe(next);
+    expect(psql(`select phone_hash from pii.phone_verifications where id = '${w!.value}'`)).toBe(testPhoneHash(next));
   });
 
   it("INV-U12 (실패경로, manual 0013 뒤): 지금 번호와 같은 번호면 인증번호를 보내기 전에 400 — 본인 확인 줄도 쿠키도 생기지 않는다", async () => {

@@ -2,13 +2,13 @@ import { randomBytes } from "node:crypto";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { saveAccount } from "@/features/account-edit/model/save-account";
 import { signUp } from "@/features/signup/model/sign-up";
-import { adminClient, anonClient, deleteTestSignups, psql, psqlError, SEED, signedInClient, TEST_SIGNUP_PHONE_PREFIX, verifiedTestPhone } from "./helpers";
+import { adminClient, anonClient, deleteTestSignups, psql, psqlError, SEED, signedInClient, TEST_SIGNUP_PHONE_PREFIX, verifiedTestPhone, testPhoneBundle, phoneKeyEnv } from "./helpers";
 
 // 가입 닉네임(signup INV-U13)·아이디·닉네임 미리 확인(INV-U14)을 실제 DB 로.
 // 시험 계정은 it_nk 로 시작하는 아이디, 0109000 의 7000번대 번호만 쓴다 — 끝나면 지운다.
 // 미리 확인의 횟수 기록은 시험마다 새로 만든 해시 값으로 센다 — 다른 시험·개발 서버의 기록과 섞이지 않게.
 
-const dev = { NODE_ENV: "development" };
+const dev = { NODE_ENV: "development", ...phoneKeyEnv() };
 const TERMS = [
   { key: "age14", version: "2026-10-29" },
   { key: "service", version: "2026-10-01" },
@@ -40,7 +40,7 @@ async function createAccount(loginId: string, nickname: string) {
     p_login_id: loginId,
     p_role: "fan",
     p_email: `${loginId.replace("_", ".")}@example.com`,
-    p_phone: p,
+    p_phone: testPhoneBundle(uid, p),
     p_verification_id: vid,
     p_terms: TERMS,
     p_nickname: nickname,
@@ -138,7 +138,7 @@ describe("INV-U13: 가입 때 받은 닉네임으로 계정이 생긴다", () =>
         p_login_id: loginId,
         p_role: "fan",
         p_email: `${loginId.replace("_", ".")}@example.com`,
-        p_phone: p,
+        p_phone: testPhoneBundle(uid, p),
         p_verification_id: vid,
         p_terms: TERMS,
         p_nickname: nickname,

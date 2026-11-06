@@ -3,7 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { AccountPasswordDeps, DetachedAuth } from "@/entities/session/api/account-password";
 import type { SendMail } from "@/shared/api/mail/smtp";
 import { createSmtpSender } from "@/shared/api/mail/smtp";
-import { adminClient, deleteTestSignups, psql, TEST_SIGNUP_ID_PREFIX, TEST_SIGNUP_PHONE_PREFIX } from "./helpers";
+import { adminClient, deleteTestSignups, phoneColumnsSql, psql, TEST_SIGNUP_ID_PREFIX, TEST_SIGNUP_PHONE_PREFIX } from "./helpers";
 
 // 비밀번호·휴대폰 번호를 바꾸는 시험 전용 계정. 시드 계정의 비밀번호·번호는 건드리지 않는다.
 // 아이디는 가입 시험과 같은 접두어(it_)라 deleteTestSignups 가 로그인 정보째 지운다(프로필·연락처·재설정 링크가 따라 지워진다).
@@ -37,10 +37,11 @@ export async function createTestAccount(o: { tag: string; email?: string | null;
   const { data, error } = await adminClient().auth.admin.createUser({ email: loginEmail, password: FIXTURE_PASSWORD, email_confirm: true });
   if (error || !data.user) throw new Error(`시험 계정을 만들지 못했다: ${error?.message}`);
   const userId = data.user.id;
+  const phone = phoneColumnsSql(userId, o.phone); // 번호는 암호문·해시·앞뒤 자리 네 칸으로(INV-U18)
   psql(
     [
       `insert into public.profiles (id, login_id, nickname, role) values ('${userId}', '${loginId}', '${o.tag.slice(0, 12)}', 'fan');`,
-      `insert into pii.account_contacts (account_id, email, pending_email, phone) values ('${userId}', ${lit(o.email)}, ${lit(o.pendingEmail)}, ${lit(o.phone)});`,
+      `insert into pii.account_contacts (account_id, email, pending_email, ${phone.columns}) values ('${userId}', ${lit(o.email)}, ${lit(o.pendingEmail)}, ${phone.values});`,
     ].join(" "),
   );
   return { userId, loginId, loginEmail };

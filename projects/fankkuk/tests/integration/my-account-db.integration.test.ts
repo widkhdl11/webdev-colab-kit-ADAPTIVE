@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import { adminClient, anonClient, psql, psqlError, SEED, signedInClient } from "./helpers";
+import { adminClient, anonClient, phoneColumnsSql, psql, psqlError, SEED, signedInClient, storedTestPhone } from "./helpers";
 
 // 내 정보 스펙(docs/specs/my-account.md) — 연락처 보관·읽기·고치기·이메일 확인을 DB 로 지킨다.
 // 개인정보 구역 파일(supabase/manual/0002_account_contacts*.sql)을 사람이 적용한 뒤에 돈다.
@@ -12,17 +12,17 @@ function resetContacts(): void {
   psql(`
     update public.profiles set nickname = '별빛' where id = '${SEED.fanId}';
     update public.profiles set nickname = '달토끼' where id = '${SEED.otherFanId}';
-    update pii.account_contacts set email = '${BYEOL_EMAIL}', pending_email = null, phone = '01012345678', notify_kakao = true, notify_email = true where account_id = '${SEED.fanId}';
-    update pii.account_contacts set email = '${DAL_EMAIL}', pending_email = null, phone = null, notify_kakao = true, notify_email = true where account_id = '${SEED.otherFanId}';
+    update pii.account_contacts set email = '${BYEOL_EMAIL}', pending_email = null, ${phoneColumnsSql(SEED.fanId, "01012345678").set}, notify_kakao = true, notify_email = true where account_id = '${SEED.fanId}';
+    update pii.account_contacts set email = '${DAL_EMAIL}', pending_email = null, ${phoneColumnsSql(SEED.otherFanId, null).set}, notify_kakao = true, notify_email = true where account_id = '${SEED.otherFanId}';
     delete from pii.email_verifications where account_id in ('${SEED.fanId}', '${SEED.otherFanId}');
   `);
 }
 
 function contactOf(accountId: string): { email: string; pending: string; phone: string; kakao: string } {
-  const [email = "", pending = "", phone = "", kakao = ""] = psql(
-    `select coalesce(email, ''), coalesce(pending_email, ''), coalesce(phone, ''), notify_kakao from pii.account_contacts where account_id = '${accountId}';`,
+  const [email = "", pending = "", kakao = ""] = psql(
+    `select coalesce(email, ''), coalesce(pending_email, ''), notify_kakao from pii.account_contacts where account_id = '${accountId}';`,
   ).split("|");
-  return { email, pending, phone, kakao };
+  return { email, pending, phone: storedTestPhone(accountId), kakao };
 }
 
 const nicknameOf = (id: string) => psql(`select nickname from public.profiles where id = '${id}';`);
@@ -132,7 +132,8 @@ describe("INV-A3: 로그인 토큰이 확인한 사람 것만 읽고 고친다",
 });
 
 // 함수 본문 중 휴대폰 칸을 쓰는 꼴. 함수 원문 전체를 훑는다.
-const WRITES_PHONE = /(update\s+pii\.account_contacts\s+(?:as\s+)?(?:\w+\s+)?set\b[^;]*\bphone\s*=)|(insert\s+into\s+pii\.account_contacts\s*\([^)]*\bphone\b)/i;
+// 번호는 암호문·해시·앞뒤 자리 네 칸(INV-U18)이라 넷 중 하나라도 쓰면 잡는다. 옛 칸 이름(phone)도 그대로 잡는다.
+const WRITES_PHONE = /(update\s+pii\.account_contacts\s+(?:as\s+)?(?:\w+\s+)?set\b[^;]*\bphone(?:_sealed|_hash|_prefix|_last4)?\s*=)|(insert\s+into\s+pii\.account_contacts\s*\([^)]*\bphone(?:_sealed|_hash|_prefix|_last4)?\b)/i;
 
 describe("INV-A4: 이 경로로 고칠 수 있는 칸은 닉네임·확인 대기 이메일·알림뿐이다", () => {
   // 이 경로의 함수는 아이디·역할·번호 인자를 받지 않는다 — 그런 인자를 붙이면 PostgREST 가 맞는 함수를 못 찾아 PGRST202 로 거부한다.
@@ -163,7 +164,7 @@ describe("INV-A4: 이 경로로 고칠 수 있는 칸은 닉네임·확인 대�
     expect(contactOf(SEED.fanId).phone).toBe("01012345678");
     // 크리에이터 알림 고치기(하루) — 시드 값(알림 두 칸·수정 시각)을 적어 두었다가 그대로 되돌린다
     const creator = await signedInClient("haru_creator");
-    const row = () => psql(`select coalesce(phone, '') || '|' || notify_kakao || '|' || notify_email || '|' || updated_at from pii.account_contacts where account_id = '${SEED.creatorProfileId}'`);
+    const row = () => psql(`select coalesce(phone_hash, '') || '|' || notify_kakao || '|' || notify_email || '|' || updated_at from pii.account_contacts where account_id = '${SEED.creatorProfileId}'`);
     const seed = row();
     const [phone, kakao, email, updatedAt] = seed.split("|");
     try {
@@ -189,6 +190,8 @@ describe("INV-A4: 이 경로로 고칠 수 있는 칸은 닉네임·확인 대�
   it("INV-A4: 로그인한 사람이 부를 수 있는 DB 함수 중 휴대폰 칸을 쓰는 것이 없다 (검사기는 심어 둔 위반을 잡는다)", () => {
     expect(WRITES_PHONE.test("update pii.account_contacts set email = v, phone = p_phone where account_id = v_uid")).toBe(true);
     expect(WRITES_PHONE.test("insert into pii.account_contacts (account_id, phone) values (v_uid, p_phone)")).toBe(true);
+    expect(WRITES_PHONE.test("update pii.account_contacts set email = v, phone_sealed = v_sealed where account_id = v_uid")).toBe(true);
+    expect(WRITES_PHONE.test("insert into pii.account_contacts (account_id, phone_hash) values (v_uid, v_hash)")).toBe(true);
     expect(WRITES_PHONE.test("update pii.account_contacts set notify_kakao = p_notify_kakao where account_id = v_uid")).toBe(false);
     // 스키마 전체 — 시스템 스키마(pg_catalog·information_schema)만 뺀다. Auth·저장소 등 Supabase 스키마의 함수도 훑는다.
     const sources = psql(

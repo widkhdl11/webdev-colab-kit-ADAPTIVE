@@ -1,4 +1,4 @@
-import { readPhoneKeys, type PhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
+import { decryptPhone, encryptPhone, phoneBundle, phoneHash, phoneParts, readPhoneKeys, type PhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
 import { execFileSync, spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { checkPhoneCode, startPhoneVerification } from "@/features/signup/model/phone-verification";
@@ -203,7 +203,8 @@ export function deleteTestSignups(): void {
   psql(
     [
       `delete from auth.users where email like '${TEST_SIGNUP_ID_PREFIX.replace("_", "\\_")}%@login.fankkuk.invalid';`,
-      `delete from pii.phone_verifications where phone like '${TEST_SIGNUP_PHONE_PREFIX}%';`,
+      // 확인 기록에는 번호 대신 번호 해시만 있다(INV-U18) — 시험 번호 앞자리의 번호 만 개를 서버와 같은 키·방식(HMAC-SHA256)으로 DB 안에서 해시해 지운다
+      `delete from pii.phone_verifications where phone_hash in (select encode(extensions.hmac(convert_to('fankkuk.phone.v1:${TEST_SIGNUP_PHONE_PREFIX}' || lpad(i::text, 4, '0'), 'UTF8'), decode('${testPhoneKeys().hashKey.toString("base64")}', 'base64'), 'sha256'), 'hex') from generate_series(0, 9999) i);`,
     ].join(" "),
   );
 }
@@ -427,6 +428,48 @@ export function testPhoneKeys(): PhoneKeys {
   return readPhoneKeys(process.env);
 }
 
+/** 계정 만들기·번호 바꾸기 DB 함수의 p_phone 자리에 넣는 번호 묶음 — 앱 서버와 같은 키로 만든다(INV-U18). */
+export function testPhoneBundle(accountId: string, phone: string): string {
+  return phoneBundle(testPhoneKeys(), accountId, phone);
+}
+
+const PHONE_KEY_NAMES = ["FANKKUK_PHONE_ENC_KEY", "FANKKUK_PHONE_HASH_KEY"] as const;
+
+/** 가입 처리(signUp)에 넘기는 환경의 번호 키 두 개 — setup-env 가 읽어 둔 값. */
+export function phoneKeyEnv(): Record<string, string | undefined> {
+  return Object.fromEntries(PHONE_KEY_NAMES.map((n) => [n, process.env[n]]));
+}
+
+/** 시험 번호의 같은 번호 찾기 해시 — 서버와 같은 키·방식. 번호로 줄을 찾을 때 `phone_hash = '${testPhoneHash(p)}'` 로 쓴다. */
+export function testPhoneHash(phone: string): string {
+  return phoneHash(testPhoneKeys(), phone);
+}
+
+/** pii.account_contacts 의 번호 네 칸(암호문·해시·앞 3자리·뒤 4자리)을 그 번호로 채우는 SQL 값. null 이면 넷 다 비운다. */
+export function phoneColumnsSql(accountId: string, phone: string | null | undefined): { columns: string; values: string; set: string } {
+  const columns = "phone_sealed, phone_hash, phone_prefix, phone_last4";
+  if (phone == null) {
+    return { columns, values: "null, null, null, null", set: "phone_sealed = null, phone_hash = null, phone_prefix = null, phone_last4 = null" };
+  }
+  const keys = testPhoneKeys();
+  const { prefix, last4 } = phoneParts(phone);
+  const v = [encryptPhone(keys, accountId, phone), phoneHash(keys, phone), prefix, last4];
+  return {
+    columns,
+    values: v.map((x) => `'${x}'`).join(", "),
+    set: `phone_sealed = '${v[0]}', phone_hash = '${v[1]}', phone_prefix = '${v[2]}', phone_last4 = '${v[3]}'`,
+  };
+}
+
+/** 그 계정에 저장된 번호를 풀어 돌려준다. 없으면 '', 암호문이 그 계정 것이 아니면 실패한다. */
+export function storedTestPhone(accountId: string): string {
+  const sealed = psql(`select coalesce((select phone_sealed from pii.account_contacts where account_id = '${accountId}'), '')`);
+  if (!sealed) return "";
+  const phone = decryptPhone(testPhoneKeys(), accountId, sealed);
+  if (phone === null) throw new Error(`저장된 번호를 풀지 못했다: ${accountId}`);
+  return phone;
+}
+
 export async function requestTestPhoneCode(phone: string, ipHash?: string): Promise<{ verificationId: string; code: string }> {
   let text = "";
   const started = await startPhoneVerification(
@@ -450,7 +493,7 @@ export async function requestTestPhoneCode(phone: string, ipHash?: string): Prom
  * 1분에 한 번 한도(INV-U10)를 느슨하게 하지 않고, 「1분을 기다린 뒤 다시 받음」을 만든다. 하루 다섯 번 한도는 그대로 센다.
  */
 export function waitPhoneCodeMinute(phone: string): void {
-  psql(`update pii.phone_verifications set requested_at = requested_at - interval '61 seconds' where phone = '${phone}' and requested_at > now() - interval '1 minute';`);
+  psql(`update pii.phone_verifications set requested_at = requested_at - interval '61 seconds' where phone_hash = '${testPhoneHash(phone)}' and requested_at > now() - interval '1 minute';`);
 }
 
 /** 인증번호를 맞혀 확인까지 끝낸 번호표(INV-U1). */

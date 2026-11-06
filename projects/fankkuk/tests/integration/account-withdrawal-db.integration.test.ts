@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createTestAccount, removeTestAccounts, type TestAccount } from "./account-fixtures";
-import { adminClient, anonClient, approveRpc, deleteTestOrders, ensureApprovalAddress, linkTestSignature, payTestOrder, psql, psqlError, registerTestOrder, signedInClient } from "./helpers";
+import { adminClient, anonClient, approveRpc, deleteTestOrders, ensureApprovalAddress, linkTestSignature, payTestOrder, psql, psqlError, registerTestOrder, signedInClient, testPhoneHash } from "./helpers";
 
 // 회원 탈퇴 — 가명 처리(my-account INV-A15 S15~S15c) · 탈퇴 뒤 서명 기록(approval-signature INV-S14 S14·S14b) ·
 // 탈퇴한 크리에이터(INV-S15 S15~S15c). 개인정보 구역 쪽은 manual/0025 가 적용돼 있어야 한다.
@@ -79,13 +79,13 @@ describe("탈퇴 처리 — 가명 처리 (my-account INV-A15)", () => {
     const a = await shippedOrder({ senderId: fan.userId });
     const b = await shippedOrder({ senderId: fan.userId });
     // 그 번호의 본인 확인 기록 · 주소 등록 기록(고칠 수 없는 표)도 개인정보 구역에서 지운다
-    psql(`insert into pii.phone_verifications (phone, verified_at) values ('01090001111', now()); insert into pii.fan_address_events (account_id, event) values ('${fan.userId}', 'registered')`);
+    psql(`insert into pii.phone_verifications (phone_hash, verified_at) values ('${testPhoneHash("01090001111")}', now()); insert into pii.fan_address_events (account_id, event) values ('${fan.userId}', 'registered')`);
     const r = await withdraw(fan.loginId);
     expect(r.error).toBeNull();
     const pseudonym = (r.data as { pseudonym: string }).pseudonym;
     expect(pseudonym).not.toBe(fan.userId);
     expect([profileRows(fan.userId), authRows(fan.userId), contactRows(fan.userId)]).toEqual([0, 0, 0]);
-    expect(Number(psql(`select count(*) from pii.phone_verifications where phone = '01090001111'`))).toBe(0);
+    expect(Number(psql(`select count(*) from pii.phone_verifications where phone_hash = '${testPhoneHash("01090001111")}'`))).toBe(0);
     expect(Number(psql(`select count(*) from pii.fan_address_events where account_id in ('${fan.userId}', '${pseudonym}')`))).toBe(0);
     expect([fanOf(a.orderId), fanOf(b.orderId)]).toEqual([pseudonym, pseudonym]);
     expect(psql(`select nickname || '|' || (withdrawn_at is not null) || '|' || role from public.profiles where id = '${pseudonym}'`)).toBe("탈퇴한 회원|true|fan");
@@ -300,6 +300,9 @@ describe("탈퇴 처리 — 가명 처리 (my-account INV-A15)", () => {
   it("INV-A15 (S15c, 실패경로): 탈퇴 처리 도중 기록 하나의 가명 바꾸기가 실패하면 계정·연락처·주문이 그대로 남는다(일부만 지운 상태가 없다)", async () => {
     const fan = await createTestAccount({ tag: "wdatom", phone: "01090003333" });
     const a = await shippedOrder({ senderId: fan.userId });
+    // 가명 계정 수는 앞뒤 차이로 본다 — 로컬 DB 에는 화면에서 탈퇴해 본 가명 계정이 남아 있을 수 있다
+    const pseudonyms = () => Number(psql(`select count(*) from public.profiles where nickname = '탈퇴한 회원' and id <> 'ffffffff-0000-4000-8000-000000000001'`));
+    const pseudonymsBefore = pseudonyms();
     psql(
       `create or replace function public.it_fail_fan_move() returns trigger language plpgsql as $$ begin raise exception 'it: 가명 바꾸기 실패'; end $$;
        create trigger it_fail_fan_move before update of fan_id on public.orders for each row execute function public.it_fail_fan_move();`,
@@ -313,7 +316,7 @@ describe("탈퇴 처리 — 가명 처리 (my-account INV-A15)", () => {
     expect([profileRows(fan.userId), authRows(fan.userId), contactRows(fan.userId)]).toEqual([1, 1, 1]);
     expect(fanOf(a.orderId)).toBe(fan.userId);
     // 같이 쓰는 「탈퇴한 회원」 계정(자동 삭제가 쓰는 고정 ID) 말고는 가명 계정이 생기지 않았다
-    expect(Number(psql(`select count(*) from public.profiles where nickname = '탈퇴한 회원' and id <> 'ffffffff-0000-4000-8000-000000000001'`))).toBe(0);
+    expect(pseudonyms()).toBe(pseudonymsBefore);
   });
 });
 

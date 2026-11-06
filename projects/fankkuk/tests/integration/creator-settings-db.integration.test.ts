@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { adminClient, anonClient, deleteTestOrders, payTestOrder, psql, psqlError, registerTestOrder, signedInClient } from "./helpers";
+import { adminClient, anonClient, deleteTestOrders, payTestOrder, psql, psqlError, registerTestOrder, phoneColumnsSql, signedInClient } from "./helpers";
 import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verification-helpers";
 import { deleteTestUnmatched, fanSetsWaybill, inspect, receiveAndLabel, waybill } from "./office-helpers";
 import { saveCreatorProfile } from "@/features/creator-settings-save/model/save-creator-settings";
@@ -324,7 +324,8 @@ describe("INV-A11: 크리에이터 알림은 카카오·이메일 두 칸 (manua
   // 크리에이터가 끌 수 있는 알림(배송중·수령)은 택배사 연결 전이라 흐름에서 생기지 않아, 수령 줄을 직접 넣어 건너뛰는 쪽을 본다.
   it("INV-A11 S11 (manual/0012·0016 뒤): 두 칸을 다 끈 크리에이터 — 수령 알림은 건너뛰고 승인 요청·추적기 반송은 간다", async () => {
     verify(ME.creatorId, "cvt-haru");
-    psql(`insert into pii.account_contacts (account_id, email, phone) values ('${ME.id}', 'cvt.haru@example.com', '01077770003')`);
+    const phone = phoneColumnsSql(ME.id, "01077770003");
+    psql(`insert into pii.account_contacts (account_id, email, ${phone.columns}) values ('${ME.id}', 'cvt.haru@example.com', ${phone.values})`);
     const me = await signedInClient(ME.login);
     expect((await me.rpc("update_my_creator_notify", { p_notify_kakao: false, p_notify_email: false })).error).toBeNull();
 

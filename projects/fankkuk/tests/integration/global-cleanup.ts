@@ -1,3 +1,5 @@
+// 시험 정리도 가입 번호 키가 있어야 한다(시험 번호의 확인 기록을 번호 해시로 지운다) — globalSetup 은 setupFiles 보다 먼저, 따로 돌아서 직접 불러온다
+import "./setup-env";
 import { removeTestAccounts } from "./account-fixtures";
 import { countTestOrders, deleteTestBlocks, deleteTestOrders, DUMMY_ADDRESS_IV, MANUAL_CHECK_PROFILES_SQL, psql, SEED } from "./helpers";
 import { removeTestCreator } from "./test-creator";
