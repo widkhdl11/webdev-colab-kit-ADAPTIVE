@@ -20,3 +20,5 @@
 .done { display: grid; gap: var(--space-2); }
 .done p { margin: 0; }
 .strong { font-weight: var(--fw-bold); }
+/* 「이용할 수 없음」의 문장 밖 혼자 놓인 메일 링크 — 누를 칸 44(문장 속 링크만 예외) */
+.alone { display: inline-flex; align-items: center; min-height: 44px; }

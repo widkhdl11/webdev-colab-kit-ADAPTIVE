@@ -119,7 +119,8 @@ describe("INV-L10: 인증번호 받기 단계", () => {
     expect(host.textContent).toContain(RESET_CLOSED);
     expect(phoneInput()).toBeNull();
     expect(host.querySelectorAll("button")).toHaveLength(0);
-    expect(host.querySelector('a[href^="mailto:"]')).not.toBeNull();
+    // 누른 버튼이 사라지므로 초점은 남은 메일 링크로
+    expect(document.activeElement).toBe(host.querySelector('a[href^="mailto:"]'));
   });
 
   it("INV-TS2 (실패경로, UX closed): 인증번호 확인 중에 닫힘이 와도 같은 이용 불가 화면 — 인증번호 칸·다시 받기가 사라진다", async () => {

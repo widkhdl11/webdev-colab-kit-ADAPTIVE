@@ -36,17 +36,18 @@ export function PhoneResetForm({ onDone }: { onDone?: () => void }) {
   const [locked, setLocked] = useState(false);
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [doneMessage, setDoneMessage] = useState<string | null>(null);
-  const [focusTo, setFocusTo] = useState<{ key: FieldKey | "restart" | "login" } | null>(null);
+  const [focusTo, setFocusTo] = useState<{ key: FieldKey | "restart" | "login" | "mail" } | null>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   const codeRef = useRef<HTMLInputElement>(null);
   const pwRef = useRef<HTMLInputElement>(null);
   const pw2Ref = useRef<HTMLInputElement>(null);
   const restartRef = useRef<HTMLButtonElement>(null);
   const loginRef = useRef<HTMLAnchorElement>(null);
+  const mailRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     if (!focusTo) return;
-    const target = { phone: phoneRef, code: codeRef, pw: pwRef, pw2: pw2Ref, restart: restartRef, login: loginRef }[focusTo.key];
+    const target = { phone: phoneRef, code: codeRef, pw: pwRef, pw2: pw2Ref, restart: restartRef, login: loginRef, mail: mailRef }[focusTo.key];
     target.current?.focus();
   }, [focusTo]);
 
@@ -60,6 +61,8 @@ export function PhoneResetForm({ onDone }: { onDone?: () => void }) {
     setExpiresAt(null);
     setProblem({ at: "box", message });
     setStage("closed");
+    // 누른 버튼이 사라지므로 초점을 남은 고객센터 메일 링크로
+    setFocusTo({ key: "mail" });
   };
 
   const fail = (at: FieldKey | "box", message: string) => {
@@ -199,7 +202,7 @@ export function PhoneResetForm({ onDone }: { onDone?: () => void }) {
       <div className="form">
         {box}
         <p className={s.sub}>
-          <a className={`nw ${s.link}`} href={`mailto:${SITE_INFO.supportEmail}`}>
+          <a ref={mailRef} className={`nw ${s.link} ${s.alone}`} href={`mailto:${SITE_INFO.supportEmail}`}>
             {SITE_INFO.supportEmail}
           </a>
         </p>

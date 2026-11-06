@@ -28,18 +28,21 @@ export function PhoneCell({ loginId, name, masked, canReveal }: Props) {
   };
 
   return (
-    <span className={a.nowrap}>
-      <span className={a.mono}>{phone ?? masked}</span>
-      {canReveal && !phone ? (
-        <>
-          {" "}
-          <button type="button" className={`${a.btn} ${a.btnSm} ${a.btnLine}`} onClick={reveal} aria-disabled={busy} aria-label={`${name} 휴대폰 번호 보기`}>
-            {busy ? "여는 중" : "보기"}
-          </button>
-        </>
-      ) : null}
+    <span>
+      {/* 번호와 「보기」만 한 줄로 묶는다 — 오류 문장은 아래 줄에서 칸 폭 안으로 줄 바꿈 */}
+      <span className={a.nowrap}>
+        <span className={a.mono}>{phone ?? masked}</span>
+        {canReveal && !phone ? (
+          <>
+            {" "}
+            <button type="button" className={`${a.btn} ${a.btnSm} ${a.btnLine}`} onClick={reveal} aria-disabled={busy} aria-label={`${name} 휴대폰 번호 보기`}>
+              {busy ? "여는 중" : "보기"}
+            </button>
+          </>
+        ) : null}
+      </span>
       {error ? (
-        <span role="alert" className="err">
+        <span role="alert" className={a.cellError}>
           {error}
         </span>
       ) : null}
