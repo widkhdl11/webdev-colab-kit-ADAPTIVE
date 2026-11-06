@@ -19,6 +19,12 @@ vi.mock("@/shared/api/supabase/admin", () => ({ createAdminSupabase: () => admin
 
 const { loadAdminSession } = await import("@/widgets/admin-shell/api/admin-session");
 
+/** Next 의 redirect() 가 던지는 이동 신호이고 그 목적지가 운영자 로그인 화면인가. */
+function isAdminLoginRedirect(e: unknown): boolean {
+  const digest = (e as { digest?: unknown })?.digest;
+  return typeof digest === "string" && digest.startsWith("NEXT_REDIRECT;") && digest.includes(";/admin/login;");
+}
+
 /** Next 의 notFound() 가 던지는 404 신호인가. */
 function isNotFound(e: unknown): boolean {
   return typeof (e as { digest?: unknown })?.digest === "string" && /;404$/.test((e as { digest: string }).digest);
@@ -30,9 +36,9 @@ describe("관리자 주소는 운영자가 아니면 404 (INV-K1 S1c)", () => {
     await expect(loadAdminSession()).rejects.toSatisfy(isNotFound);
   });
 
-  it("INV-K1 S1c (실패경로): 로그인하지 않은 손님도 404", async () => {
+  it("INV-K13 (S13, 실패경로): 로그인하지 않은 손님은 404 가 아니라 운영자 로그인 화면으로", async () => {
     request.client = anonClient();
-    await expect(loadAdminSession()).rejects.toSatisfy(isNotFound);
+    await expect(loadAdminSession()).rejects.toSatisfy(isAdminLoginRedirect);
   });
 
   it("INV-K1·K2: 직원 운영자는 들어오고 읽기만(staff), 대표는 owner", async () => {

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { sessionActivityOf } from "@/entities/session/api/session-activity";
 import { LOGIN_HINT_COOKIE, LOGIN_HINT_HEADER, LOGIN_HINT_LINK, LOGIN_HINT_MAX_AGE_SECONDS, SESSION_END_REASON } from "@/entities/session/model/session-end-notice";
 import { safeNextPath } from "@/entities/session/model/safe-next-path";
+import { ADMIN_LOGIN_PATH, isAdminPagePath } from "@/entities/session/model/admin-next-path";
 import { readVerifiedUserId } from "@/entities/session/model/viewer";
 import { guardSession, type SessionGuardResult } from "@/features/auth/model/session-guard";
 import { createAdminSupabase } from "@/shared/api/supabase/admin";
@@ -134,6 +135,9 @@ async function refreshSession(request: NextRequest): Promise<NextResponse> {
 
   if (guard?.kind === "ended") return clearLoginHint(endedResponse(request, writes, writeHeaders, guard.byLifetime, guard.linkHint), hintTaken);
 
+  // admin-console INV-K13: 로그인하지 않은 사람이 관리자 화면 주소로 오면 운영자 로그인 화면으로(돌아갈 곳 = 그 경로). 로그인한 팬·크리에이터는 화면 판정이 404 로 막는다
+  if (!userId && isAdminPagePath(request.nextUrl.pathname)) return clearLoginHint(adminLoginRedirect(request, writes, writeHeaders), hintTaken);
+
   // 다음 단계(화면)가 갱신된 값을 보도록 요청 쿠키도 바꾼 뒤 응답을 만든다.
   for (const { name, value } of writes) request.cookies.set(name, value);
   if (guard?.kind === "unknown") {
@@ -148,6 +152,17 @@ async function refreshSession(request: NextRequest): Promise<NextResponse> {
   for (const { name, value, options } of writes) response.cookies.set(name, value, options);
   // 인증 쿠키가 실린 응답을 공유 캐시가 저장하지 않게 하는 헤더 — 버리면 남의 세션이 나갈 수 있다.
   for (const [key, value] of Object.entries(writeHeaders)) response.headers.set(key, value);
+  return response;
+}
+
+/** INV-K13: 운영자 로그인 화면으로 보내는 응답. 갱신하다 생긴 쿠키 쓰기(지우기 포함)는 그대로 싣는다 */
+function adminLoginRedirect(request: NextRequest, writes: Write[], headers: Record<string, string>): NextResponse {
+  const to = new URL(ADMIN_LOGIN_PATH, request.nextUrl.origin);
+  to.searchParams.set("next", safeNextPath(`${request.nextUrl.pathname}${request.nextUrl.search}`));
+  const response = NextResponse.redirect(to, 307);
+  for (const { name, value, options } of writes) response.cookies.set(name, value, options);
+  for (const [key, value] of Object.entries(headers)) response.headers.set(key, value);
+  response.headers.set("Cache-Control", "no-store");
   return response;
 }
 

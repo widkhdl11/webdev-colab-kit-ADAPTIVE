@@ -16,9 +16,10 @@ async function open(cookie?: string): Promise<Response> {
 }
 
 describe("INV-P7 (D12): 운영자 내부 열람 기록 화면은 운영자만", () => {
-  it("INV-P7 (D12, 실패경로): 로그인 안 함 → 404", async () => {
+  it("INV-P7 (D12, 실패경로) · INV-K13: 로그인 안 함 → 운영자 로그인 화면으로(기록은 싣지 않는다)", async () => {
     const res = await open();
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get("location") ?? "", APP).pathname).toBe("/admin/login");
     expect(await res.text()).not.toContain("운영자만 보는 내부 기록");
   });
 

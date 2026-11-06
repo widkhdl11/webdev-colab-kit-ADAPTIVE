@@ -80,3 +80,34 @@ describe("INV-L15: 요청마다 갱신이 토큰을 다시 쓸 때도 표시를 
     expect(res.headers.get("location")).toBeNull();
   });
 });
+
+describe("INV-K13: 로그인하지 않은 사람이 관리자 화면 주소로 오면 운영자 로그인 화면으로", () => {
+  const open = (path: string, cookie?: string) =>
+    proxy(new NextRequest(`http://127.0.0.1:3000${path}`, cookie ? { headers: { cookie } } : {}));
+
+  it("INV-K13 (S13): 손님이 /admin/metrics?tab=1 → /admin/login 으로, 돌아갈 곳은 그 경로", async () => {
+    const res = await open("/admin/metrics?tab=1");
+    expect(res.status).toBe(307);
+    const to = new URL(res.headers.get("location") ?? "");
+    expect(to.pathname).toBe("/admin/login");
+    expect(to.searchParams.get("next")).toBe("/admin/metrics?tab=1");
+    expect(res.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("INV-K13: 손님이 /admin 첫 화면 → /admin/login", async () => {
+    const res = await open("/admin");
+    expect(new URL(res.headers.get("location") ?? "").pathname).toBe("/admin/login");
+  });
+
+  it("INV-K13 (실패경로): 운영자 로그인 화면 자신·관리자 API·비슷한 이름의 주소는 보내지 않는다", async () => {
+    for (const path of ["/admin/login", "/api/admin/pricing", "/administrator", "/gifts"]) {
+      const res = await open(path);
+      expect(res.headers.get("location"), path).toBeNull();
+    }
+  });
+
+  it("INV-K13 · INV-K1 (S1c): 로그인한 사람(팬)은 보내지 않는다 — 404 는 화면 판정이 정한다", async () => {
+    const res = await open("/admin/metrics", `${UNIT_AUTH_COOKIE}=${unitSessionCookieValue(3600)}`);
+    expect(res.headers.get("location")).toBeNull();
+  });
+});

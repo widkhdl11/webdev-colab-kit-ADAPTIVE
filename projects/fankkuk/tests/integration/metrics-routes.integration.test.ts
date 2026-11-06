@@ -39,9 +39,12 @@ describe("INV-Q1 — 측정 화면은 운영자 틀 안", () => {
     removeTestAccounts();
   });
 
-  it("INV-Q1 (S1, 실패경로): 로그인 안 함 → 404", async () => {
+  it("INV-Q1 (S1, 실패경로) · INV-K13 (S13): 로그인 안 함 → 운영자 로그인 화면으로(지표는 싣지 않는다)", async () => {
     const res = await open("/admin/metrics");
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(307);
+    const to = new URL(res.headers.get("location") ?? "", "http://x");
+    expect(to.pathname).toBe("/admin/login");
+    expect(to.searchParams.get("next")).toBe("/admin/metrics");
     expect(await res.text()).not.toContain("재발송률");
   });
 

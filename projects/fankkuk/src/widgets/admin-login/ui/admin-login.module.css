@@ -1,0 +1,8 @@
+/* 운영자 로그인 — 로그인 화면(widgets/login/ui/login.module.css, design-rules 29·37절)과 같은 카드·오류 상자.
+   틀(위아래 여백·기둥 폭·머리 간격)은 base.css 의 .auth-page */
+/* 37절: 카드는 사이트 흰 카드와 같은 경계 선(--hair) + 카드 그림자, 바탕 흰색 */
+.box :global(.card) { background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
+/* 37절: 오류 상자 앞 「!」 원 — 상자 색·글자·자리는 공용 .err 그대로. 표시는 장식(대체 글자 없음) */
+.alert { display: flex; align-items: flex-start; gap: var(--space-3); }
+.alert::before { content: "!" / ""; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px currentColor; font-weight: var(--fw-bold); line-height: 1; }
+.msg { display: block; min-width: 0; }
