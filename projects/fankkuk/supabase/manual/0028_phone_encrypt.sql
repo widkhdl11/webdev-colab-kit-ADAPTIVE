@@ -25,7 +25,7 @@
 --      옛 이메일 재설정 요청 함수 request_password_reset 은 지운다.
 --   4) 운영자(INV-K14): admin_phone_masks(크리에이터 아이디 목록) — 직원·대표, 가린 번호만 · admin_reveal_phone(크리에이터 아이디) — 대표만, 접속 기록 한 줄을
 --      같은 처리에서 남기고 암호문을 돌려준다(앱 서버가 풀어 화면에 보인다) · 접속 기록 표 public.phone_access_log(고치기 불가, 1년 지난 줄만 지울 수 있음)
---      · purge_phone_access_log() — 1년 지난 줄 지우기(자동 처리가 부른다).
+--      · purge_phone_access_log() — 1년 지난 줄 지우기(하루 한 번 DB 예약 작업 fankkuk-phone-access-log).
 --   5) 변환용 임시 함수 둘(phone_backfill_pending · phone_backfill_set) — ④ 에서 지운다. 관리자 키만.
 --
 -- 섞인 상태: 이 파일만 적용하고 앱이 옛것이면 가입·번호 바꾸기·인증번호 받기·옛 비밀번호 찾기가 거부된다(숫자 번호가 꼴 검사에 걸린다).
@@ -616,6 +616,10 @@ grant execute on function public.phone_backfill_set(uuid, text, text) to service
 -- 개인정보 노출 검사(scripts/pii-exposure.mjs)가 이 파일이 적용됐는지 보는 표식
 create table if not exists pii.phone_encrypt_marker (id boolean primary key default true check (id));
 revoke all on pii.phone_encrypt_marker from public, anon, authenticated;
+
+-- 1년 지난 접속 기록 지우기 — 하루 한 번(한국 시간 03:40, 보관 기한 정리 03:30 다음). 같은 이름으로 다시 등록하면 덮어쓴다.
+-- (2026-11-06 로컬에 이 파일을 먼저 적용한 뒤 덧붙인 줄이다 — 로컬에는 이 한 줄만 따로 실행한다)
+select cron.schedule('fankkuk-phone-access-log', '40 18 * * *', 'select public.purge_phone_access_log()');
 
 notify pgrst, 'reload schema';
 

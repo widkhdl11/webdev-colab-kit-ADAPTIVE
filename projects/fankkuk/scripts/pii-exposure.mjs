@@ -52,6 +52,10 @@ export const ALLOWED = [
   // inbound-address-code INV-C5·C12 ③ · admin-console INV-K8 (2026-10-21): 운영자 보류 목록·뒤 4자리 검색은 6자리 없이 온 상자의 원 송장 전화번호 뒤 4자리만(숫자 넷)
   { fn: "admin_unmatched_parcels", key: /^phone_last4$/, value: /^[0-9]{4}$/ },
   { fn: "admin_unmatched_by_phone_last4", key: /^phone_last4$/, value: /^[0-9]{4}$/ },
+  // admin-console INV-K14 (manual/0028): 운영자 크리에이터 목록은 가입 번호를 가운데 넷을 가린 모양으로만
+  { fn: "admin_phone_masks", key: /^phone_masked$/, value: /^01[016789]-\*{4}-\d{4}$/ },
+  // 대표 「전화번호 보기」는 번호 암호문만 돌려준다(앱 서버가 풀어 그 응답에만 싣는다, signup INV-U18) — 숫자 번호 꼴이면 실패
+  { fn: "admin_reveal_phone", key: /^phone_sealed$/, value: /^v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/ },
 ];
 
 // 로그인 키로 부를 수 있으면서 개인정보 구역에 닿는 함수 — 무엇을 돌려주는지 사람이 보고 올린 것만
@@ -109,6 +113,14 @@ export const PII_FUNCTIONS_AFTER_MANUAL = [
       admin_unmatched_parcels: "운영자 보류 목록 — 전화번호 뒤 4자리(숫자 넷)만 읽는다(위 허용 칸, inbound-address-code INV-C5)",
       admin_unmatched_by_phone_last4: "운영자 뒤 4자리 검색 — 칸은 운영자 보류 목록과 같다(INV-C12 ③)",
       // 입고·잇기·확인 처리는 이미 위 목록에 있다(몫 정리 경로) — 0023 뒤에는 뒤 4자리 저장·지우기로도 닿는다
+    },
+  },
+  {
+    manual: "manual/0028_phone_encrypt",
+    marker: "pii.phone_encrypt_marker",
+    functions: {
+      admin_phone_masks: "운영자(직원·대표) 크리에이터 목록 — 아이디마다 가린 번호만(위 허용 칸, admin-console INV-K14)",
+      admin_reveal_phone: "대표만 — 접속 기록 한 줄을 남기고 그 계정 ID 와 번호 암호문을 돌려준다, 숫자 번호는 없다(INV-K14 · signup INV-U18)",
     },
   },
 ];
