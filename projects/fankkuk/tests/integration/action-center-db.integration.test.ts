@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { labeled, measure, paidOrder } from "./difference-helpers";
+import { labeled, measure, paidOrder, shiftDifferenceDue } from "./difference-helpers";
 import { adminClient, anonClient, deleteTestOrders, payTestOrder, psql, registerTestOrder, SEED, signedInClient } from "./helpers";
-import { approve, deleteTestUnmatched, fanSetsWaybill, paidGift, receiveAndLabel, scanInbound, waybill, type Unit } from "./office-helpers";
+import { approve, deleteTestUnmatched, FAN_PASS, fanSetsWaybill, inspect, paidGift, receiveAndLabel, scanInbound, waybill, type Unit } from "./office-helpers";
 import { acceptWithAddress, backdateSettlement, deleteTestRevgifts, followHaru, paidShareFor, PROFILE, unfollowHaru } from "./revgift-helpers";
 
 // 처리할 일 (action-center INV-J1·J3·J4). 카드는 저장하지 않고 읽을 때마다 원천(차액 요청·상자·역조공 몫)에서 계산한다.
@@ -40,8 +40,6 @@ async function cards(login: string, orderNos: readonly string[]): Promise<string
 
 const backdateOrder = (orderId: string, hours: number, minutes = 0) =>
   psql(`update public.orders set registered_at = now() - interval '${hours} hours ${minutes} minutes' where id = '${orderId}'`);
-const backdateDifference = (orderId: string, hours: number, minutes = 0) =>
-  psql(`update public.payments set created_at = now() - interval '${hours} hours ${minutes} minutes' where order_id = '${orderId}' and kind = 'difference'`);
 const differenceToss = (orderId: string) => psql(`select toss_order_id from public.payments where order_id = '${orderId}' and kind = 'difference'`);
 
 async function staff(): Promise<SupabaseClient> {
@@ -49,13 +47,20 @@ async function staff(): Promise<SupabaseClient> {
 }
 
 /** 실측 중형 → 차액 2,000원 요청이 있는 소형 상자 하나짜리 주문(별빛 → 하루) */
-async function differenceOrder(): Promise<{ orderId: string; orderNo: string; boxId: string }> {
+async function differenceOrder(): Promise<{ orderId: string; orderNo: string; boxId: string; qr: string }> {
   const g = await paidOrder(["small"]);
   const qr = await labeled(g.boxIds[0]!);
   const m = await measure(qr, "medium");
   if (m.error) throw new Error(`실측 실패: ${m.error.code}`);
-  return { orderId: g.orderId, orderNo: g.orderNo, boxId: g.boxIds[0]! };
+  return { orderId: g.orderId, orderNo: g.orderNo, boxId: g.boxIds[0]!, qr };
 }
+
+/** 차액 기한(payment INV-M13)의 시계는 검수 완료 스캔 — 스캔해야 기한이 생긴다 */
+async function inspected(qr: string): Promise<void> {
+  expect(await inspect(await staff(), qr, FAN_PASS)).toBe("inspected");
+}
+
+const differenceDue = (boxId: string) => psql(`select to_json(public.difference_due_at('${boxId}'))#>>'{}'`);
 
 /** 승인된 상자 n 개 주문(입고 전), 결제 완료를 hours 시간 전으로 */
 async function waitingGift(boxes: number, hours: number): Promise<Unit> {
@@ -91,9 +96,9 @@ afterAll(() => {
 });
 
 describe("INV-J1: 카드는 세 종류, 상자(몫) 하나에 하나, 보이는 조건은 처리 함수가 받아 주는 조건", () => {
-  it("INV-J1 S1: 차액 요청(미결제, 요청 뒤 2일) → 추가 결제 1 · 결제 뒤 15일 입고 전 상자 → 도착하지 않은 상자 1 · 13일 된 상자는 없음", async () => {
+  it("INV-J1 S1: 차액 요청(미결제, 검수 뒤 기한 전) → 추가 결제 1 · 결제 뒤 15일 입고 전 상자 → 도착하지 않은 상자 1 · 13일 된 상자는 없음", async () => {
     const d = await differenceOrder();
-    backdateDifference(d.orderId, 48);
+    await inspected(d.qr);
     const late = await waitingGift(1, 15 * 24);
     const early = await waitingGift(1, 13 * 24);
     expect(await cards("byeolbit_fan", [d.orderNo, late.orderNo, early.orderNo])).toEqual([
@@ -103,8 +108,9 @@ describe("INV-J1: 카드는 세 종류, 상자(몫) 하나에 하나, 보이는 
     const rows = await read("byeolbit_fan");
     const diff = rows.find((r) => r.order_no === d.orderNo)!;
     expect(diff).toMatchObject({ box_id: d.boxId, box_label: d.orderNo, tier: "small", measured_tier: "medium", amount_krw: 2000, creator_name: "하루" });
-    // 기한 = 요청 + 168시간
-    expect(Date.parse(diff.due_at)).toBe(Date.parse(psql(`select to_json(created_at + interval '168 hours')#>>'{}' from public.payments where order_id = '${d.orderId}' and kind = 'difference'`)));
+    // 기한 = 그 상자의 차액 기한(검수 완료 스캔 기준, difference_due_at) — 스캔했으니 비어 있지 않다
+    expect(diff.due_at).not.toBeNull();
+    expect(Date.parse(diff.due_at)).toBe(Date.parse(differenceDue(d.boxId)));
     const box = rows.find((r) => r.order_no === late.orderNo)!;
     expect(box).toMatchObject({ box_id: late.boxIds[0], tier: "small", measured_tier: null, amount_krw: null });
     // 기한 = 결제 완료 + 720시간(그때 상자가 닫힌다)
@@ -146,11 +152,15 @@ describe("INV-J1: 카드는 세 종류, 상자(몫) 하나에 하나, 보이는 
     expect(await cards("byeolbit_fan", [g.orderNo])).toEqual([`missing_box:${g.orderNo}:1`]);
   });
 
-  it("INV-J1 S1 (경계): 추가 결제는 요청 + 168시간 전까지 — 167시간 59분이면 있고 168시간이면 없다(차액 결제 준비도 그때부터 거부)", async () => {
+  it("INV-J1 S1 (경계): 추가 결제는 검수 완료 스캔 뒤 기한(difference_due_at) 전까지 — 검수 전에는 기한 없이 있고, 기한 1분 전이면 있고 기한이면 없다(차액 결제 준비도 그때부터 거부)", async () => {
     const d = await differenceOrder();
-    backdateDifference(d.orderId, 167, 59);
+    // 검수 전: 기한이 없다(실측은 스캔 앞이라 그 사이 미리 낼 수 있다 — DECISIONS 2026-10-21)
     expect(await cards("byeolbit_fan", [d.orderNo])).toEqual([`difference:${d.orderNo}:1`]);
-    backdateDifference(d.orderId, 168);
+    expect((await read("byeolbit_fan")).find((r) => r.order_no === d.orderNo)?.due_at).toBeNull();
+    await inspected(d.qr);
+    shiftDifferenceDue(d.boxId, "1 minute");
+    expect(await cards("byeolbit_fan", [d.orderNo])).toEqual([`difference:${d.orderNo}:1`]);
+    shiftDifferenceDue(d.boxId, "0 seconds");
     expect(await cards("byeolbit_fan", [d.orderNo])).toEqual([]);
     const prepared = await (await signedInClient("byeolbit_fan")).rpc("prepare_difference_payment", { p_box_id: d.boxId });
     expect(prepared.error?.code).toBe("P0022");

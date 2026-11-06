@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createSupabaseDifferenceStore } from "@/features/difference-pay/api/supabase-difference-store";
 import { confirmDifferencePayment } from "@/features/difference-pay/model/confirm-difference";
 import { createTossPaymentsClient } from "@/shared/api/toss-payments/client";
-import { code, differenceRow, differenceToss, labeled, measure, paidOrder, prepare } from "./difference-helpers";
+import { code, differenceRow, differenceToss, labeled, measure, paidOrder, prepare, shiftDifferenceDue } from "./difference-helpers";
 import { adminClient, approveRpc, deleteTestOrders, psql, psqlError, SEED, signedInClient } from "./helpers";
 import { FAN_PASS, finishPrint, inspect, parcelState, waybill } from "./office-helpers";
 
@@ -346,7 +346,7 @@ describe("출고 화면 안내: 승인은 끝났고 차액만 미납이면 「�
     expect(await nextStep()).toBe("print_label");
   });
 
-  it("(실패경로) 차액 기한(요청 + 168시간)이 지났는데 7일 처리 전이면 wait_expiry — 더 낼 수 없는 차액을 기다리라고 하지 않는다", async () => {
+  it("(실패경로) 차액 기한(검수 완료 스캔 + 7일, INV-M13)이 지났는데 7일 처리 전이면 wait_expiry — 더 낼 수 없는 차액을 기다리라고 하지 않는다", async () => {
     const g = await paidOrder(["small"]);
     const qr = await labeled(g.boxIds[0]!);
     await measure(qr, "medium");
@@ -354,9 +354,9 @@ describe("출고 화면 안내: 승인은 끝났고 차액만 미납이면 「�
     expect(await inspect(staff, qr, FAN_PASS)).toBe("inspected");
     expect((await approveRpc(g.requestId)).data).toBe("approved");
     const nextStep = async () => ((await staff.rpc("office_parcel_by_qr", { p_qr: qr })).data as { next_step: string }[])[0]?.next_step;
-    psql(`update public.payments set created_at = now() - interval '167 hours' where order_id = '${g.orderId}' and kind = 'difference'`);
+    shiftDifferenceDue(g.boxIds[0]!, "1 minute");
     expect(await nextStep()).toBe("wait_difference");
-    psql(`update public.payments set created_at = now() - interval '168 hours 1 minute' where order_id = '${g.orderId}' and kind = 'difference'`);
+    shiftDifferenceDue(g.boxIds[0]!, "-1 minute");
     expect(await nextStep()).toBe("wait_expiry");
   });
 
@@ -379,18 +379,16 @@ describe("INV-M13 · INV-M8: 차액 요청 뒤 7일 미납이면 반송 대상, 
     await inspect(await signedInClient("fankkuk_staff"), qr, FAN_PASS);
     return { g, qr };
   }
-  const backdate = (orderId: string, interval: string) =>
-    psql(`update public.payments set created_at = now() - interval '${interval}' where order_id = '${orderId}' and kind = 'difference'`);
   const refundDue = (orderId: string) =>
     psql(`select coalesce(public.refund_due_of_payment(p.id)::text, 'none') from public.payments p where p.order_id = '${orderId}' and p.kind = 'initial'`);
 
-  it("INV-M13 S13: 168시간 지난 미납 차액은 운영자의 7일 처리에서 반송 대기로 — 167시간이면 아직 아니다", async () => {
+  it("INV-M13 S13: 검수 완료 스캔부터 기한(difference_due_at)이 지난 미납 차액은 운영자의 7일 처리에서 반송 대기로 — 기한 1분 전이면 아직 아니다", async () => {
     const { g, qr } = await inspectedWithDifference();
     const staff = await signedInClient("fankkuk_staff");
-    backdate(g.orderId, "167 hours");
+    shiftDifferenceDue(g.boxIds[0]!, "1 minute");
     expect(((await staff.rpc("office_run_expiry", { p_order_no: g.orderNo })).data as { differences: number }).differences).toBe(0);
     expect(parcelState(qr)).toBe("inspected");
-    backdate(g.orderId, "168 hours");
+    shiftDifferenceDue(g.boxIds[0]!, "0 seconds");
     expect(((await staff.rpc("office_run_expiry", { p_order_no: g.orderNo })).data as { differences: number }).differences).toBe(1);
     expect(parcelState(qr)).toBe("return_waiting");
     // 두 번 돌려도 다시 처리하지 않는다
@@ -400,7 +398,7 @@ describe("INV-M13 · INV-M8: 차액 요청 뒤 7일 미납이면 반송 대상, 
   it("INV-M13 (실패경로): 기한이 지난 차액은 7일 처리 전이라도 결제를 준비·승인할 수 없다", async () => {
     const { g } = await inspectedWithDifference();
     const row = ((await prepare(g.boxIds[0]!)).data as { toss_order_id: string }[])[0]!;
-    backdate(g.orderId, "168 hours");
+    shiftDifferenceDue(g.boxIds[0]!, "-1 minute");
     expect((await prepare(g.boxIds[0]!)).error?.code).toBe("P0022");
     expect((await adminClient().rpc("claim_difference_payment", { p_toss_order_id: row.toss_order_id })).data).toBe(false);
     expect(differenceRow(g.orderId)).toBe("2000/0/500/500/1000/pending");
@@ -410,7 +408,7 @@ describe("INV-M13 · INV-M8: 차액 요청 뒤 7일 미납이면 반송 대상, 
     for (let i = 0; i < 4; i += 1) {
       const { g, qr } = await inspectedWithDifference();
       const toss = differenceToss(g.orderId);
-      psql(`update public.payments set created_at = now() - interval '168 hours' + interval '300 milliseconds' where toss_order_id = '${toss}'`);
+      shiftDifferenceDue(g.boxIds[0]!, "300 milliseconds");
       const staff = await signedInClient("fankkuk_staff");
       await new Promise((r) => setTimeout(r, 250));
       const [claimed] = await Promise.all([
@@ -434,7 +432,7 @@ describe("INV-M13 · INV-M8: 차액 요청 뒤 7일 미납이면 반송 대상, 
     const { g, qr } = await inspectedWithDifference();
     const toss = ((await prepare(g.boxIds[0]!)).data as { toss_order_id: string }[])[0]!.toss_order_id;
     expect((await adminClient().rpc("claim_difference_payment", { p_toss_order_id: toss })).data).toBe(true);
-    backdate(g.orderId, "169 hours");
+    shiftDifferenceDue(g.boxIds[0]!, "-1 hour");
     await (await signedInClient("fankkuk_staff")).rpc("office_run_expiry", { p_order_no: g.orderNo });
     expect(psql(`select status || '/' || (expired_at is not null) from public.payments where toss_order_id = '${toss}'`)).toBe("confirming/false");
     expect(parcelState(qr)).toBe("inspected");
@@ -443,7 +441,7 @@ describe("INV-M13 · INV-M8: 차액 요청 뒤 7일 미납이면 반송 대상, 
   it("INV-M8 S8: 차액 미납 반송의 환불은 첫 결제의 상품 대금 칸만 — 배송비 칸은 선불 반송에 쓰인다, 반송 전에는 환불 대상이 아니다", async () => {
     const { g } = await inspectedWithDifference();
     expect(refundDue(g.orderId)).toBe("none");
-    backdate(g.orderId, "168 hours");
+    shiftDifferenceDue(g.boxIds[0]!, "-1 minute");
     await (await signedInClient("fankkuk_staff")).rpc("office_run_expiry", { p_order_no: g.orderNo });
     expect(refundDue(g.orderId)).toBe(psql(`select goods_krw from public.payments where order_id = '${g.orderId}' and kind = 'initial'`));
     expect(refundDue(g.orderId)).not.toBe(psql(`select shipping_fee_krw from public.payments where order_id = '${g.orderId}' and kind = 'initial'`));
@@ -470,7 +468,7 @@ describe("INV-M13 · INV-M8: 차액 요청 뒤 7일 미납이면 반송 대상, 
     const second = await labeled(g.boxIds[1]!);
     await measure(second, "medium");
     await inspect(staff, second, FAN_PASS);
-    backdate(g.orderId, "168 hours");
+    shiftDifferenceDue(g.boxIds[1]!, "-1 minute");
     await staff.rpc("office_run_expiry", { p_order_no: g.orderNo });
     expect(parcelState(second)).toBe("return_waiting");
     expect(refundDue(g.orderId)).toBe("0");

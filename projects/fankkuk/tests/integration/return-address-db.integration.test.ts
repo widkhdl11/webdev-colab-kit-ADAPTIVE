@@ -16,6 +16,7 @@ import {
   receiveAndLabel,
   returnConfirmedAtSql,
   scanInbound,
+  THIRTY_DAY_NOTICE_HOURS,
   waybill,
   type Unit,
 } from "./office-helpers";
@@ -106,6 +107,21 @@ const parcelNotices = (parcelId: string, kind: string, account?: string) =>
 const parcelIdOf = (qr: string) => psql(`select id from public.office_parcels where qr_code = '${qr}'`);
 const backdateReturnWaiting = (qr: string, interval: string) =>
   psql(`update public.office_parcels set return_waiting_at = now() - interval '${interval}' where qr_code = '${qr}'`);
+const HOUR = 3_600_000;
+const MINUTE = 60_000;
+/** 반송 대기 시각을 지금 − ms 로 */
+const backdateReturnWaitingMs = (qr: string, ms: number) => backdateReturnWaiting(qr, `${Math.round(ms)} milliseconds`);
+/**
+ * 반송 주소 확인 기한의 길이(ms) — 별빛의 「반송 주소 확인」 카드 기한(due_at) − 그 상자의 반송 대기 시각.
+ * 카드의 보이는 조건은 확인 함수와 같은 판정이다(action-center INV-J1 · office-workflow INV-W15) — 기한 길이를 시험에 숫자로 쓰지 않는다.
+ */
+async function returnDeadlineSpanMs(orderNo: string, qr: string): Promise<number> {
+  const cards = (await (await signedInClient("byeolbit_fan")).rpc("my_action_items")).data as { kind: string; order_no: string; box_id: string | null; due_at: string }[];
+  const boxId = psql(`select box_id from public.office_parcels where qr_code = '${qr}'`);
+  const card = cards.find((c) => c.kind === "return_address" && c.order_no === orderNo && c.box_id === boxId);
+  if (!card) throw new Error(`${orderNo} 의 반송 주소 확인 카드가 없다`);
+  return Date.parse(card.due_at) - Date.parse(psql(`select to_json(return_waiting_at)#>>'{}' from public.office_parcels where qr_code = '${qr}'`));
+}
 async function runExpiry(orderNo: string): Promise<Record<string, number>> {
   const r = await (await staff()).rpc("office_run_expiry", { p_order_no: orderNo });
   if (r.error) throw new Error(`office_run_expiry 실패: ${r.error.code} ${r.error.message}`);
@@ -181,25 +197,30 @@ describe("반송 주소 알림 (notifications INV-N22)", () => {
 });
 
 describe("반송 주소 기한 (office-workflow INV-W15 S15c, notifications INV-N22)", () => {
-  it("INV-W15 · N22 (S15c·S22): 335시간 알림 없음, 336시간 재알림 상자마다 1(두 번 돌려도 1), 719시간 그대로, 720시간 처분 대상(다시 돌려도 그대로·재알림 늘지 않음)", async () => {
+  it("INV-W15 · N22 (S15c·S22): 재알림은 반송 대기 + 7·14·25일 차례마다 상자마다 1(차례 1분 전이면 없음·두 번 돌려도 1), 기한 1분 전 그대로, 기한에 처분 대상(다시 돌려도 그대로·재알림 늘지 않음)", async () => {
     const { g, qrs } = await returnWaitingGift(2);
-    for (const qr of qrs) backdateReturnWaiting(qr, "335 hours");
+    const span = await returnDeadlineSpanMs(g.orderNo, qrs[0]!);
+    const [first] = THIRTY_DAY_NOTICE_HOURS;
+    for (const qr of qrs) backdateReturnWaitingMs(qr, first * HOUR - MINUTE);
     await runExpiry(g.orderNo);
     expect(orderNotices(g.orderId, "return_address_reminder", BYEOLBIT)).toBe("0");
-    for (const qr of qrs) backdateReturnWaiting(qr, "336 hours");
-    await runExpiry(g.orderNo);
-    await runExpiry(g.orderNo);
-    expect(qrs.map((qr) => parcelNotices(parcelIdOf(qr), "return_address_reminder", BYEOLBIT))).toEqual(["1", "1"]);
-    for (const qr of qrs) backdateReturnWaiting(qr, "719 hours");
+    // 차례마다 상자마다 한 줄씩 늘어난다 — 두 번 돌려도 한 줄
+    for (const [i, hours] of THIRTY_DAY_NOTICE_HOURS.entries()) {
+      for (const qr of qrs) backdateReturnWaitingMs(qr, hours * HOUR);
+      await runExpiry(g.orderNo);
+      await runExpiry(g.orderNo);
+      expect(qrs.map((qr) => parcelNotices(parcelIdOf(qr), "return_address_reminder", BYEOLBIT))).toEqual([String(i + 1), String(i + 1)]);
+    }
+    for (const qr of qrs) backdateReturnWaitingMs(qr, span - MINUTE);
     await runExpiry(g.orderNo);
     expect(qrs.map(parcelState)).toEqual(["return_waiting", "return_waiting"]);
-    for (const qr of qrs) backdateReturnWaiting(qr, "720 hours");
+    for (const qr of qrs) backdateReturnWaitingMs(qr, span);
     const counts = await runExpiry(g.orderNo);
     expect(counts.dispose_due).toBe(2);
     expect(qrs.map(parcelState)).toEqual(["dispose_due", "dispose_due"]);
     expect((await runExpiry(g.orderNo)).dispose_due).toBe(0);
     expect(qrs.map(parcelState)).toEqual(["dispose_due", "dispose_due"]);
-    expect(orderNotices(g.orderId, "return_address_reminder", BYEOLBIT)).toBe("2");
+    expect(orderNotices(g.orderId, "return_address_reminder", BYEOLBIT)).toBe(String(qrs.length * THIRTY_DAY_NOTICE_HOURS.length));
   });
 
   it("INV-W15 · N22 (실패경로): 반송 주소를 확인한 상자에는 재알림도 처분 대상도 없다", async () => {

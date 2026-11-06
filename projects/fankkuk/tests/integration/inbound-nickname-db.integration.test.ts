@@ -339,7 +339,7 @@ describe("INV-C12 운영자 잇기 — 운영자만, 문의한 계정의 결제 
     expect(heldState(barcode)).toBe("waiting");
   });
 
-  it("INV-C12 (실패경로): 이미 이어졌거나 반송 대상인 상자·168시간이 지난 상자·6자리가 붙어 온 보류 상자는 잇지 않는다(55000)", async () => {
+  it("INV-C12 (실패경로): 이미 이어졌거나 반송 대상인 상자·도착 기한(자동 반송 시각)이 지난 상자·6자리가 붙어 온 보류 상자는 잇지 않는다(55000)", async () => {
     const g = await paidGift();
     const other = await paidGift();
     const op = await staff();
@@ -348,10 +348,12 @@ describe("INV-C12 운영자 잇기 — 운영자만, 문의한 계정의 결제 
     await holdNoCode(returned, realName());
     expect((await op.rpc("admin_return_unmatched", { p_id: heldId(returned) })).error).toBeNull();
     expect((await link("fankkuk_staff", heldId(returned), "별빛", g.boxIds[0])).error?.code).toBe("55000");
-    // 도착 + 168시간이 지난 상자(자동 처리 전이어도)
+    // 도착 기한이 지난 상자(자동 처리 전이어도) — 기한 길이는 숫자로 쓰지 않고 운영자 목록의 자동 반송 시각(auto_return_at)에서 1분 지나게 맞춘다
     const late = waybill();
     await holdNoCode(late, realName());
-    psql(`update public.office_unmatched set arrived_at = now() - interval '168 hours 1 minute' where waybill_no = '${late}'`);
+    const lateAt = ((await op.rpc("admin_unmatched_parcels")).data as { id: string; auto_return_at: string }[]).find((x) => x.id === heldId(late))!.auto_return_at;
+    const lateShift = Math.round(Date.parse(lateAt) - Date.now() + 60_000);
+    psql(`update public.office_unmatched set arrived_at = arrived_at - interval '${lateShift} milliseconds' where waybill_no = '${late}'`);
     expect((await link("fankkuk_staff", heldId(late), "별빛", g.boxIds[0])).error?.code).toBe("55000");
     // 남의 6자리가 붙어 온 보류 상자(분쟁) — 6자리 없이 온 상자가 아니다
     await receiveWithCode(other.boxIds[0]);
@@ -494,7 +496,7 @@ function unissuedCode(): string {
 }
 
 describe("리뷰 반영 — 운영자 잇기의 한계 (INV-C12 ②·③, INV-C7)", () => {
-  it("INV-C12 (S12b, 실패경로): 닉네임이 맞은 보류 상자는 그 계정이 아닌 팬에게 잇지 못한다(P0047) — 운영자 잇기는 닉네임 없음 상자의 길", async () => {
+  it("INV-C12 · INV-C4 ②-가 (S12b·S4h, 실패경로): 닉네임이 맞은 보류 상자는 운영자가 잇지 못한다(P0047) — 다른 팬에게도, 닉네임이 맞은 그 계정에게도. 운영자 잇기는 닉네임 없음 상자의 길", async () => {
     const dalBox = await dalPaidBox();
     const g = await paidGift();
     const barcode = waybill();
@@ -504,8 +506,11 @@ describe("리뷰 반영 — 운영자 잇기의 한계 (INV-C12 ②·③, INV-C7
     expect(parcelOfBox(dalBox)).toBe("none");
     expect(heldState(barcode)).toBe("waiting");
     expect(linkLogs(id)).toBe("");
-    // 닉네임이 맞은 그 계정에게는 이을 수 있다
-    expect((await link("fankkuk_staff", id, "별빛", g.boxIds[0])).data).toBe("linked");
+    // 닉네임이 맞은 그 계정에게도 운영자는 잇지 않는다(S4h, 2026-10-21) — 그 회원이 송장번호·택배사를 넣어야 이어진다
+    expect((await link("fankkuk_staff", id, "별빛", g.boxIds[0])).error?.code).toBe("P0047");
+    expect(parcelOfBox(g.boxIds[0])).toBe("none");
+    expect(heldState(barcode)).toBe("waiting");
+    expect(linkLogs(id)).toBe("");
   });
 
   it("INV-C12 · INV-C7 (실패경로): 같은 송장번호를 다른 상자에 등록해 둔 팬이 있으면 운영자 잇기를 거부한다(P0048) — 분쟁 사안", async () => {

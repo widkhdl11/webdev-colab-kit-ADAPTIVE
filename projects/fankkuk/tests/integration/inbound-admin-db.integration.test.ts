@@ -134,6 +134,20 @@ async function notMineParcel(op: SupabaseClient): Promise<{ parcelId: string; or
 }
 
 const backdateHold = (parcelId: string, hours: number) => psql(`update public.office_parcels set hold_at = now() - interval '${hours} hours' where id = '${parcelId}'`);
+/**
+ * 자동 넘기기 시각(운영자 보류 목록 admin_unmatched_parcels 의 auto_return_at — INV-C9: 도착 + 기한, 분쟁은 보류 + 주인 확인 기간보다 앞서지 않음)이
+ * 「지금 + offsetMs」가 되게 도착·보류 시각을 같은 만큼 앞으로 옮긴다. 기한 길이는 시험에 숫자로 쓰지 않고 그 목록이 준 시각에서 거꾸로 맞춘다.
+ */
+async function shiftAutoReturn(op: SupabaseClient, parcelId: string, offsetMs: number): Promise<void> {
+  const rows = (await op.rpc("admin_unmatched_parcels")).data as { id: string; auto_return_at: string }[];
+  const at = rows.find((x) => x.id === parcelId)?.auto_return_at;
+  if (!at) throw new Error(`보류 목록에 ${parcelId} 의 자동 넘기기 시각이 없다`);
+  const shift = Math.round(Date.parse(at) - Date.now() - offsetMs);
+  psql(
+    `update public.office_parcels set received_at = received_at - interval '${shift} milliseconds', hold_at = hold_at - interval '${shift} milliseconds' where id = '${parcelId}'`,
+  );
+}
+const MINUTE = 60_000;
 const closed = (parcelId: string) =>
   psql(`select (box_id is null) || '|' || (hold_closed_at is not null) from public.office_parcels where id = '${parcelId}'`);
 
@@ -183,16 +197,17 @@ describe("INV-C9 주문에 묶인 채 멈춘 상자의 반송 (정책 질문 12)
     expect(closed(parcelId)).toBe("true|true");
   });
 
-  it("INV-C9 (S9c): 아무도 넘기지 않으면 보류 + 168시간에 자동 처리가 넘긴다 — 167시간이면 그대로, 두 번 돌려도 한 번", async () => {
+  it("INV-C9 (S9c·S9e): 아무도 넘기지 않으면 자동 넘기기 시각(도착 기준, 분쟁은 주인 확인 기간 뒤)에 자동 처리가 넘긴다 — 1분 전이면 그대로, 두 번 돌려도 한 번", async () => {
     const op = await staff();
     const mine = await notMineParcel(op);
     const dispute = await disputedParcel(op);
-    backdateHold(mine.parcelId, 167);
-    backdateHold(dispute.parcelId, 167);
+    await shiftAutoReturn(op, mine.parcelId, MINUTE);
+    await shiftAutoReturn(op, dispute.parcelId, MINUTE);
     await op.rpc("office_run_expiry", {});
     expect(closed(mine.parcelId)).toBe("false|false");
-    backdateHold(mine.parcelId, 168);
-    backdateHold(dispute.parcelId, 168);
+    expect(closed(dispute.parcelId)).toBe("false|false");
+    await shiftAutoReturn(op, mine.parcelId, -MINUTE);
+    await shiftAutoReturn(op, dispute.parcelId, -MINUTE);
     const first = (await op.rpc("office_run_expiry", {})).data as { held_parcels: number };
     expect(first.held_parcels).toBeGreaterThanOrEqual(2);
     expect(closed(mine.parcelId)).toBe("true|true");

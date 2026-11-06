@@ -1,10 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, describe, expect, it } from "vitest";
 import { deleteTestOrders, holdRowLock, psql, signedInClient } from "./helpers";
-import { approve, codeOf, deleteTestUnmatched, FAN_PASS, HOLD_DETAILS, inspect, paidGift, scanInbound, waybill, type Unit } from "./office-helpers";
+import { approve, codeOf, deleteTestUnmatched, FAN_PASS, HOLD_DETAILS, inspect, paidGift, scanInbound, THIRTY_DAY_NOTICE_HOURS, waybill, type Unit } from "./office-helpers";
 
 // 승인 뒤 도착하지 않은 상자 (office-workflow INV-W10 S10~S10c · payment INV-M8·M9 S8d·S8e · notifications INV-N15 S15, 카드 d50).
-// 결제 완료 + 14일(336시간)에 팬 알림 한 번, + 30일(720시간)에 안 온 상자를 닫는다(6자리 무효, 그 상자 금액이 환불 대상).
+// 결제 완료 + 7·14일에 팬 알림, 25일에 마감 안내(2026-10-21 기한 정리), + 30일(720시간)에 안 온 상자를 닫는다(6자리 무효, 그 상자 금액이 환불 대상).
 // 상자가 하나도 오지 않았으면 주문 취소(전액). 시간은 주문의 결제 완료 시각(registered_at)을 앞으로 옮겨 흉내 낸다.
 
 afterEach(() => {
@@ -52,18 +52,21 @@ const orderRefundDue = (orderId: string) =>
   psql(`select coalesce(public.refund_due_of_payment(p.id)::text, 'none') from public.payments p where p.order_id = '${orderId}' and p.kind = 'initial'`);
 
 describe("도착하지 않은 상자 알림 (INV-W10 · INV-N15)", () => {
-  it("INV-W10·N15 (S10·S15): 결제 + 335시간이면 알림 없음, 336시간이면 팬에게 한 번 — 두 번 돌려도 한 번", async () => {
+  it("INV-W10·N15 (S10·S15): 결제 + 7·14·25일 차례마다 팬에게 한 번(차례 1분 전이면 없음) — 두 번 돌려도 한 번", async () => {
     const op = await staff();
     const g = await approvedGift(2);
     await receive(op, g.boxIds[0]!);
-    backdate(g.orderId, 335);
+    const [first] = THIRTY_DAY_NOTICE_HOURS;
+    psql(`update public.orders set registered_at = now() - interval '${first * 60 - 1} minutes' where id = '${g.orderId}'`);
     await runExpiry(g.orderNo);
     expect(alerts(g.orderId)).toBe("");
-    backdate(g.orderId, 336);
-    expect((await runExpiry(g.orderNo)).box_missing_alerts).toBe(1);
-    expect(alerts(g.orderId)).toBe("byeolbit_fan|email");
-    expect((await runExpiry(g.orderNo)).box_missing_alerts).toBe(0);
-    expect(alerts(g.orderId)).toBe("byeolbit_fan|email");
+    for (const [i, hours] of THIRTY_DAY_NOTICE_HOURS.entries()) {
+      backdate(g.orderId, hours);
+      expect((await runExpiry(g.orderNo)).box_missing_alerts).toBe(1);
+      expect((await runExpiry(g.orderNo)).box_missing_alerts).toBe(0);
+      // 받는 사람은 보낸 팬뿐, 차례마다 한 줄씩 늘어난다
+      expect(alerts(g.orderId)).toBe(Array.from({ length: i + 1 }, () => "byeolbit_fan|email").join(","));
+    }
   });
 
   it("INV-N15 (S15, 실패경로): 모든 상자가 입고된 주문에는 알림이 없다", async () => {

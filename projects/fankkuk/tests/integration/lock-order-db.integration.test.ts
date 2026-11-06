@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, describe, expect, it } from "vitest";
 import { deleteTestBlocks, deleteTestOrders, holdRowLock, payTestOrder, psql, psqlError, registerTestOrder, signedInClient } from "./helpers";
 import { approve, codeOf, deleteTestUnmatched, FAN_PASS, inspect, paidGift, paidShare, parcelState, scanInbound, waybill } from "./office-helpers";
+import { shiftDifferenceDue } from "./difference-helpers";
 import { deleteTestRevgifts } from "./revgift-helpers";
 
 // 잠금 순서 하나 (docs/specs/office-workflow.md INV-W12 · S12·S12b).
@@ -166,10 +167,11 @@ describe("INV-W12 자동 처리 — 주문마다·상자마다 같은 순서로"
     const qr = await receive(op, g.boxIds[0]!);
     expect(await inspect(op, qr, FAN_PASS)).toBe("inspected");
     await approve(g);
-    // 차액 요청 뒤 168시간 미납 — 자동 처리가 차액에 기한 지남을 적으면 이 상자는 나갈 수 없게 된다(payment INV-M13)
+    // 차액 기한(검수 완료 스캔 기준, difference_due_at) 지나 미납 — 자동 처리가 차액에 기한 지남을 적으면 이 상자는 나갈 수 없게 된다(payment INV-M13)
     psql(
-      `insert into public.payments (order_id, kind, box_id, toss_order_id, amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw, status, created_at) values ('${g.orderId}', 'difference', '${g.boxIds[0]}', 'pay_test_lock_${g.orderNo.slice(4).toLowerCase()}', 2000, 0, 500, 0, 1500, 'pending', now() - interval '169 hours')`,
+      `insert into public.payments (order_id, kind, box_id, toss_order_id, amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw, status) values ('${g.orderId}', 'difference', '${g.boxIds[0]}', 'pay_test_lock_${g.orderNo.slice(4).toLowerCase()}', 2000, 0, 500, 0, 1500, 'pending')`,
     );
+    shiftDifferenceDue(g.boxIds[0]!, "-1 hour");
     const r = await whileBlocked(holdOrder(g.orderId), "office_run_expiry", runExpiry(op, g.orderNo), () => expect(probeParcel(qr)).toBeNull());
     expect(r.error).toBeNull();
     expect(parcelState(qr)).toBe("return_waiting");

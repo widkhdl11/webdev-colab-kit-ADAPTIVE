@@ -93,6 +93,14 @@ export async function approve(unit: Unit): Promise<void> {
   if (r.error || r.data !== "approved") throw new Error(`승인 실패: ${r.error?.message ?? String(r.data)}`);
 }
 
+/**
+ * 30일 단계의 알림 차례 — 시계 시작부터 7·14·25일(시간). 도착하지 않은 상자(notifications INV-N15, office-workflow INV-W10)와
+ * 반송 주소 재알림(INV-W15·N22)이 같은 차례를 쓴다(DECISIONS 2026-10-21 「기한 정리」 — 「30일 단계는 7·14·25일에 알리고 30일에 끝난다」).
+ * 이 시각을 돌려주는 DB 함수가 없어(자동 처리 안에만 있다) 시험들이 이 한 곳을 본다 — 규칙을 바꾸면 여기만 고친다.
+ * 30일 끝(닫기·처분)은 여기 두지 않는다 — 처리할 일 카드의 기한(due_at)처럼 DB 가 돌려주는 값에서 읽는다.
+ */
+export const THIRTY_DAY_NOTICE_HOURS = [168, 336, 600] as const;
+
 export const FAN_PASS = { bluetooth: "clear", rf: "clear", metal: "clear", outcome: "pass" } as const;
 export const SHARE_PASS = { surface: "clear", prohibited: "clear", outcome: "pass" } as const;
 

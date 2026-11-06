@@ -65,3 +65,13 @@ export function differenceToss(orderId: string): string {
 export async function prepare(boxId: string, who = "byeolbit_fan") {
   return (await signedInClient(who)).rpc("prepare_difference_payment", { p_box_id: boxId });
 }
+
+/**
+ * 그 상자의 차액 기한(DB 함수 difference_due_at — payment INV-M13 의 시계)이 「지금 + offset」이 되게 검수 완료 스캔 시각을 옮긴다.
+ * 기한의 길이는 시험에 숫자로 쓰지 않는다 — 그 함수가 준 기한에서 거꾸로 맞춘다. offset 은 SQL interval('1 minute' = 기한 1분 전, '-1 minute' = 1분 지남).
+ */
+export function shiftDifferenceDue(boxId: string, offset: string) {
+  psql(
+    `update public.office_parcels set inspected_at = inspected_at - (public.difference_due_at(box_id) - now()) + interval '${offset}' where box_id = '${boxId}'`,
+  );
+}

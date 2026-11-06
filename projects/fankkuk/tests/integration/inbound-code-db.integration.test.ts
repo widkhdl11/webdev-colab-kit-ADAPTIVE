@@ -644,18 +644,30 @@ describe("INV-C4 매칭은 유효한 6자리 또는 주인의 송장번호·택�
   });
 });
 
-describe("INV-C6 무효 6자리로 온 보류 상자는 7일 뒤 반송", () => {
-  it("INV-C6 (S6): 도착 + 167시간이면 그대로, + 168시간 자동 처리에서 반송 대기(기한 지남)", async () => {
+/**
+ * 미확인 입고 줄의 자동 반송 시각(운영자 보류 목록 admin_unmatched_parcels 의 auto_return_at — INV-C6: 도착 + 기한)이 「지금 + offsetMs」가 되게 도착 시각을 옮긴다.
+ * 기한 길이는 시험에 숫자로 쓰지 않고 그 목록이 준 시각에서 거꾸로 맞춘다.
+ */
+async function shiftUnmatchedAutoReturn(op: SupabaseClient, barcode: string, offsetMs: number): Promise<void> {
+  const rows = (await op.rpc("admin_unmatched_parcels")).data as { waybill_no: string; source: string; auto_return_at: string }[];
+  const at = rows.find((x) => x.waybill_no === barcode && x.source === "unmatched")?.auto_return_at;
+  if (!at) throw new Error(`보류 목록에 ${barcode} 의 자동 반송 시각이 없다`);
+  const shift = Math.round(Date.parse(at) - Date.now() - offsetMs);
+  psql(`update public.office_unmatched set arrived_at = arrived_at - interval '${shift} milliseconds' where waybill_no = '${barcode}'`);
+}
+
+describe("INV-C6 무효 6자리로 온 보류 상자는 기한(도착 기준) 뒤 반송", () => {
+  it("INV-C6 (S6): 자동 반송 시각 1분 전이면 그대로, 1분 지나면 자동 처리에서 반송 대기(기한 지남)", async () => {
     const g = await paidGift();
     const code = codeOf({ boxId: g.boxIds[0] })!;
     await (await signedInClient("haru_creator")).rpc("decline_gift", { p_request_id: g.requestId, p_block: false });
     const barcode = waybill();
     await scanInbound(await staff(), barcode, { code, ...HOLD_DETAILS });
     const op = await staff();
-    psql(`update public.office_unmatched set arrived_at = now() - interval '167 hours' where waybill_no = '${barcode}'`);
+    await shiftUnmatchedAutoReturn(op, barcode, 60_000);
     await op.rpc("office_run_expiry");
     expect(holdRow(barcode)?.expired).toBe("false");
-    psql(`update public.office_unmatched set arrived_at = now() - interval '168 hours 1 minute' where waybill_no = '${barcode}'`);
+    await shiftUnmatchedAutoReturn(op, barcode, -60_000);
     expect((await op.rpc("office_run_expiry")).error).toBeNull();
     expect(holdRow(barcode)?.expired).toBe("true");
     const list = (await op.rpc("admin_unmatched_parcels")).data as { waybill_no: string; state: string }[];
@@ -893,8 +905,13 @@ describe("INV-C9 운영자 확인 목록 — 보이는 값과 손으로 잇는 �
     const rows = r.data as Record<string, unknown>[];
     const row = rows.find((x) => x.waybill_no === barcode)!;
     // share_movable: 운영자 몫 옮기기를 받는 줄인지(참·거짓) — 사람·주문 칸이 아니다(INV-C11)
+    // 2026-10-21 물품 보관소·기한 정리로 더해진 칸: look·tier(포장 모양·크기, INV-C13 — 운영자가 고친다) · phone_last4(전화번호 뒤 4자리, INV-C12 ③ 운영자 검색 —
+    // 결과 칸이 이 목록과 같다) · auto_return_at(자동 반송·넘기기 시각, INV-C6·C9) · in_storage(물품 보관소에 보이는 줄인지, INV-C13). 실명·주소·전체 번호는 여전히 없다
     expect(Object.keys(row).sort()).toEqual(
-      ["arrived_at", "carrier", "deadline_at", "id", "nickname", "qr", "reason", "share_movable", "shelf", "source", "state", "suspected_theft", "waybill_no"].sort(),
+      [
+        "arrived_at", "auto_return_at", "carrier", "deadline_at", "id", "in_storage", "look", "nickname", "phone_last4", "qr", "reason",
+        "share_movable", "shelf", "source", "state", "suspected_theft", "tier", "waybill_no",
+      ].sort(),
     );
     expect(row).toMatchObject({ carrier: "cj", nickname: "별빛", reason: "code_dispute" });
     // 바코드·id·QR 은 무작위 숫자라 그 안에 「010…」 같은 전화번호 꼴이 우연히 생길 수 있다 — 그 칸을 뺀 나머지에서 찾는다
