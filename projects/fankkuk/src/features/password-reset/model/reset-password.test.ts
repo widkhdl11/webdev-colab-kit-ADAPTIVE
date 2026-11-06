@@ -2,10 +2,11 @@ import { fakePasswordAttempts } from "@/entities/session/api/password-attempts-f
 import { PASSWORD_LOCKED_MESSAGE } from "@/entities/session/api/password-attempts";
 import { describe, expect, it, vi } from "vitest";
 import { PASSWORD_CHANGED_RELOGIN, type DetachedAuth } from "@/entities/session/api/account-password";
-import { RESET_LINK_INVALID } from "./reset-messages";
+import { RESET_TICKET_EXPIRED } from "./reset-messages";
 import { resetPassword } from "./reset-password";
 
 // session-login INV-L11 — 실제 DB·Auth 로 도는 시험은 tests/integration/password-reset.integration.test.ts.
+// 재설정 표는 본문이 아니라 쿠키에서 꺼낸 값(세 번째 인자)으로만 받는다.
 // 여기서는 실제 Auth 가 대신 해 주는 일 때문에 통합 시험으로는 드러나지 않는 「우리 코드가 직접 하는 일」을 붙든다:
 // 비밀번호를 바꾼 뒤 그 계정의 모든 세션을 직접 끝내는가(Auth 서버도 관리자 키로 바꾸면 끝내 주지만 그 동작에 기대지 않는다).
 
@@ -55,12 +56,12 @@ function fakes(opts: { globalSignOutErrors?: number; claimCode?: string } = {}) 
 }
 
 const NEW_PW = "new-pass-1234";
-const body = { token: TOKEN, password: NEW_PW, passwordConfirm: NEW_PW };
+const body = { password: NEW_PW, passwordConfirm: NEW_PW };
 
 describe("INV-L11: 재설정이 끝나면 그 계정의 모든 세션을 끝낸다", () => {
   it("INV-L11 S9: 링크 미리 보기 → 링크 쓰기 → 링크가 정한 계정의 비밀번호 바꾸기 → 새 비밀번호로 잠깐 로그인해 모든 기기 로그아웃", async () => {
     const { deps, calls } = fakes();
-    expect(await resetPassword(deps, { ...body, accountId: "33333333-3333-4333-8333-333333333333" })).toEqual({ ok: true });
+    expect(await resetPassword(deps, { ...body, accountId: "33333333-3333-4333-8333-333333333333" }, TOKEN)).toEqual({ ok: true });
     expect(calls).toEqual([
       "rpc:password_reset_login_id",
       "rpc:claim_password_reset",
@@ -72,17 +73,17 @@ describe("INV-L11: 재설정이 끝나면 그 계정의 모든 세션을 끝낸�
 
   it("INV-L14 (S12c): 재설정이 끝나면 그 아이디의 비밀번호 확인 막힘을 푼다 — 링크가 거부되면 풀지 않는다", async () => {
     const done = fakes();
-    expect(await resetPassword(done.deps, body)).toEqual({ ok: true });
+    expect(await resetPassword(done.deps, body, TOKEN)).toEqual({ ok: true });
     expect(done.limiter.calls).toEqual(["clear:it_owner"]);
     const refused = fakes({ claimCode: "P0002" });
-    await resetPassword(refused.deps, body);
+    await resetPassword(refused.deps, body, TOKEN);
     expect(refused.limiter.calls).toEqual([]);
   });
 
   it("INV-L11 (실패경로): 모든 기기 로그아웃이 한 번 실패하면 한 번 더 해서 끝낸다", async () => {
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
     const { deps, calls } = fakes({ globalSignOutErrors: 1 });
-    expect(await resetPassword(deps, body)).toEqual({ ok: true });
+    expect(await resetPassword(deps, body, TOKEN)).toEqual({ ok: true });
     expect(calls.filter((c) => c === "detached.signOut:global")).toHaveLength(2);
     errors.mockRestore();
   });
@@ -90,21 +91,23 @@ describe("INV-L11: 재설정이 끝나면 그 계정의 모든 세션을 끝낸�
   it("INV-L11 (실패경로): 두 번 다 실패하면 「모든 기기에서 로그아웃됐다」고 하지 않고 다시 로그인하라는 문구를 싣는다 — 비밀번호는 이미 바뀌었다", async () => {
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
     const { deps, calls } = fakes({ globalSignOutErrors: 2 });
-    expect(await resetPassword(deps, body)).toEqual({ ok: true, message: PASSWORD_CHANGED_RELOGIN });
+    expect(await resetPassword(deps, body, TOKEN)).toEqual({ ok: true, message: PASSWORD_CHANGED_RELOGIN });
     expect(calls.filter((c) => c === "detached.signOut:global")).toHaveLength(2);
     expect(errors).toHaveBeenCalledTimes(2); // 시도마다 로그
     errors.mockRestore();
   });
 
-  it("INV-L11 S9b (실패경로): 링크 쓰기가 거부되면(P0002) 비밀번호를 바꾸지 않는다", async () => {
+  it("INV-L11 S9b (실패경로): 표 쓰기가 거부되면(P0002 — 쓴·10분 지난·무효 표) 비밀번호를 바꾸지 않는다", async () => {
     const { deps, calls } = fakes({ claimCode: "P0002" });
-    expect(await resetPassword(deps, body)).toMatchObject({ ok: false, field: "link", message: RESET_LINK_INVALID });
+    expect(await resetPassword(deps, body, TOKEN)).toMatchObject({ ok: false, field: "ticket", message: RESET_TICKET_EXPIRED });
     expect(calls.some((c) => c.startsWith("admin.updateUserById"))).toBe(false);
   });
 
-  it("INV-L11 (실패경로): 링크 꼴이 아니면 DB 에 묻지도 않는다", async () => {
-    const { deps, calls } = fakes();
-    expect(await resetPassword(deps, { ...body, token: "../../etc" })).toMatchObject({ ok: false, field: "link" });
-    expect(calls).toEqual([]);
+  it("INV-L11 S9b (실패경로): 표 쿠키가 없거나 꼴이 아니면 DB 에 묻지도 않는다 — 본문에 실린 표는 읽지 않는다", async () => {
+    for (const ticket of [undefined, "", "../../etc"]) {
+      const { deps, calls } = fakes();
+      expect(await resetPassword(deps, { ...body, token: TOKEN }, ticket)).toMatchObject({ ok: false, field: "ticket", message: RESET_TICKET_EXPIRED });
+      expect(calls).toEqual([]);
+    }
   });
 });

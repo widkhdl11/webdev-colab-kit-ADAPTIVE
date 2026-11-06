@@ -6,7 +6,7 @@ status: approved
 
 # 로그인 UX 명세 — `/login`
 
-코드: `src/app/(site)/login/page.tsx`(라우트) · `src/widgets/login/ui/login-page.tsx`(화면) · `login.module.css`. 서버: `src/app/api/auth/login/route.ts` → `src/features/auth/model/sign-in.ts`, 재설정 요청 `src/app/api/auth/password/reset-request/route.ts` → `src/features/password-reset/model/request-reset.ts`.
+코드: `src/app/(site)/login/page.tsx`(라우트) · `src/widgets/login/ui/login-page.tsx`(화면) · `login.module.css`. 서버: `src/app/api/auth/login/route.ts` → `src/features/auth/model/sign-in.ts`, 비밀번호 찾기는 별도 화면 `/password/forgot`(명세 `password-forgot.md` — 2026-11-06 휴대폰 인증번호 방식, 옛 아이디+이메일 재설정 요청은 없어졌다).
 
 ## 페이지 브리프
 
@@ -15,9 +15,9 @@ status: approved
 3. 사용자가 와서 하려는 일: 로그인해서 하던 일(로그인 링크를 누르기 전 화면)로 돌아간다
 4. 방문 빈도: 가끔 — 로그인이 늘 유지되므로 새 기기·로그아웃 뒤
 5. 페이지 유형: 작업형 — 칸 둘을 채우고 버튼 하나를 누르는 화면
-6. 같은 유형의 다른 페이지: `/signup`(같은 가운데 카드 틀) · `/password/reset`(같은 480 카드)
+6. 같은 유형의 다른 페이지: `/signup`(같은 가운데 카드 틀) · `/password/forgot`(같은 480 카드)
 7. 이 페이지만의 특이점: 로그인 실패는 아이디가 없는지 비밀번호가 틀렸는지 가르지 않는다(INV-L5) — 오류가 칸 하나를 가리키면 안 된다. 이미 로그인한 사람은 화면을 보지 않고 돌아갈 주소나 자기 첫 화면으로 간다(`page.tsx:15-20`)
-8. 바꾸면 안 되는 것: 실패·잠김 문구 하나씩(INV-L5·L14), 재설정 응답이 늘 같은 문장인 것(INV-L10), `?next=` 로 돌아가기(INV-L13), 칸에 `name` 을 두지 않는 것(`login-page.tsx:11`)
+8. 바꾸면 안 되는 것: 실패·잠김 문구 하나씩(INV-L5·L14), 비밀번호 찾기의 인증번호 받기 응답이 번호의 가입 여부와 상관없이 늘 같은 문장인 것(INV-L10, `/password/forgot`), `?next=` 로 돌아가기(INV-L13), 칸에 `name` 을 두지 않는 것(`login-page.tsx:11`)
 
 ## 상태표 (지금 코드)
 
@@ -72,7 +72,7 @@ status: approved
 
 - session-login INV-L16·L17(기간으로 끝났을 때 안내 두 가지)·S15·S15b, link-login INV-K4(링크 만료 안내).
 
-- `docs/specs/session-login.md` — INV-L1(토큰은 HttpOnly 쿠키만) · INV-L5(실패 응답 하나) · INV-L10(재설정 요청 — 아이디+이메일, 늘 같은 응답) · INV-L13(돌아갈 주소) · INV-L14(아이디별 10분 5회 → 15분 막힘).
+- `docs/specs/session-login.md` — INV-L1(토큰은 HttpOnly 쿠키만) · INV-L5(실패 응답 하나) · INV-L10(비밀번호 찾기 — 휴대폰 인증번호로만, 받기 응답은 늘 같음. 화면은 `/password/forgot`) · INV-L13(돌아갈 주소) · INV-L14(아이디별 10분 5회 → 15분 막힘).
 - 「로그인 상태 유지」 — session-login INV-L15(2026-10-25 추가).
 
 ## 바꿀 것 (진단 문서 5절 추천안 기준 — 승인 전)
@@ -80,6 +80,6 @@ status: approved
 상태·노출·입력 구조가 바뀌는 것만 적었다. 굵기(16/500 → 400)·그림 빼기·머리를 카드 밖으로(5번) 같은 시각 변경은 진단 문서 1절에 있다.
 
 1. **「로그인 상태 유지」 확인칸은 남기고 실제로 동작하게 한다**(2026-10-25 사용자 지시 — 5절 2번 ②). 기본값 꺼짐(카드 d129 덧붙임). 끄고 로그인하면 브라우저를 닫을 때 로그인이 풀린다 — session-login INV-L15.
-2. **재설정 요청을 이 화면에서 뺀다**(5절 1번 ①). 상태 `reset_open`·`reset_sending`·`reset_error`·`reset_answered` 가 이 화면에서 없어지고 새 화면(가칭 `/password/forgot`, 명세 `password-reset.md` 「바꿀 것」)으로 옮긴다. 이 화면에는 「로그인」 버튼 아래 가운데 링크 한 줄 「비밀번호를 잊으셨나요?」(누를 칸 44)만 남는다 — 모든 상태에서 보이므로 `locked` 안내가 시키는 재설정의 입구가 안내 바로 아래에 온다.
+2. **재설정 요청을 이 화면에서 뺀다**(5절 1번 ①). 상태 `reset_open`·`reset_sending`·`reset_error`·`reset_answered` 가 이 화면에서 없어지고 새 화면(가칭 `/password/forgot`, 명세 `password-forgot.md`)으로 옮긴다. 이 화면에는 「로그인」 버튼 아래 가운데 링크 한 줄 「비밀번호를 잊으셨나요?」(누를 칸 44)만 남는다 — 모든 상태에서 보이므로 `locked` 안내가 시키는 재설정의 입구가 안내 바로 아래에 온다.
    - 5절 1번에서 ②를 고르면: 접는 칸이 로그인 카드 밖, 카드 아래 별도 판으로 옮기고 상태는 그대로다.
 3. 바꾼 뒤 요소 목록: 머리(카드 밖) · 아이디 · 비밀번호 · 오류 상자(`error`·`locked`) · 「로그인」 · 「비밀번호를 잊으셨나요?」 링크 · 아래 줄. 상태는 `signed_in_redirect`·`idle`·`submitting`·`error`·`locked` 다섯.
