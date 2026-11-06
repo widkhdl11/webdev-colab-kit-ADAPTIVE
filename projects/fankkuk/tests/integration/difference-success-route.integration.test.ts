@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest } from "next/server";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { differenceRow, differenceToss, labeled, measure, paidOrder, prepare } from "./difference-helpers";
-import { adminClient, anonClient, deleteTestOrders, psql, signedInClient } from "./helpers";
+import { differenceRow, differenceToss, labeled, measure, paidOrder, prepare, shiftDifferenceDue } from "./difference-helpers";
+import { adminClient, anonClient, deleteTestOrders, signedInClient } from "./helpers";
 import { FAN_PASS, inspect } from "./office-helpers";
 
 // 차액 결제 성공 주소 라우트 (payment INV-M2·M3·M5·M13, session-login INV-L3).
@@ -86,10 +86,10 @@ describe("차액 결제 성공 주소 — 그 주문을 보낸 팬만 (INV-L3)",
 });
 
 describe("기한이 지나 승인 권리를 못 얻으면 「기한 지남」으로 안내한다 (INV-M13)", () => {
-  it("INV-M13 (실패경로): 결제창에 있는 사이 기한(요청 + 168시간)이 지나면 승인 API 를 부르지 않고 closed 안내로 보낸다", async () => {
+  it("INV-M13 (실패경로): 결제창에 있는 사이 기한(검수 완료 스캔 + 7일, difference_due_at)이 지나면 승인 API 를 부르지 않고 closed 안내로 보낸다", async () => {
     const { g, qr, row } = await withDifference();
     await inspect(await signedInClient("fankkuk_staff"), qr, FAN_PASS);
-    psql(`update public.payments set created_at = now() - interval '168 hours' where toss_order_id = '${row.toss_order_id}'`);
+    shiftDifferenceDue(g.boxIds[0]!, "-1 minute");
     request.client = await signedInClient("byeolbit_fan");
     expect(await callSuccess(row)).toBe(`/gifts/${g.orderNo}?difference=closed`);
     expect(tossCalls).toHaveLength(0);

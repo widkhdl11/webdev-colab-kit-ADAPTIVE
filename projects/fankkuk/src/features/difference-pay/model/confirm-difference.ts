@@ -43,8 +43,10 @@ export async function confirmDifferencePayment(
     ret,
   );
   if (r.ok) return { ok: true, orderNo: r.record.orderNo };
-  // 「처리 중」은 다른 요청이 승인 중이거나(기록이 승인 중·완료) 승인 권리를 거부당한 경우(기록이 그대로 결제 대기)다.
-  // 결제 대기로 남아 있으면 기한·상자 상태 때문에 거부된 것이므로 「확인 중」이 아니라 「낼 수 없음」으로 알린다.
-  if (r.reason === "in_progress" && (await deps.store.find(ret.orderId))?.status === "pending") return { ok: false, reason: "closed" };
+  // 승인 권리를 거부당했는데 기록이 그대로 결제 대기면 공통 흐름은 not_approved 를 돌려준다(payment INV-M22 이후).
+  // 차액에서 그것은 기한·상자 상태 때문에 거부된 것이므로 「실패」·「확인 중」이 아니라 「낼 수 없음」으로 알린다(INV-M13).
+  // 승인 API 가 거절한 not_approved 는 기록이 실패로 닫혀 있어 여기 걸리지 않는다.
+  if ((r.reason === "in_progress" || r.reason === "not_approved") && (await deps.store.find(ret.orderId))?.status === "pending")
+    return { ok: false, reason: "closed" };
   return r;
 }
