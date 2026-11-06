@@ -13,7 +13,9 @@ import {
   SEED,
   signedInClient,
   instantNotices,
+  testPhoneKeys,
 } from "./helpers";
+import { decryptPhone } from "@/shared/api/phone-crypto/phone-crypto";
 import { deleteTestRevgifts } from "./revgift-helpers";
 import { isMustDeliver, NOTIFICATION_KINDS } from "@/entities/notification/model/delivery-policy";
 import {
@@ -914,6 +916,12 @@ describe("연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3�
     if (r.error) throw new Error(`notification_contact 실패: ${r.error.code} ${r.error.message}`);
     return r.data;
   };
+  // 카카오 줄의 연락처는 번호 대신 그 계정에 묶인 암호문(signup INV-U18) — 앱 서버처럼 같은 키로 풀어 번호를 얻는다
+  const kakaoPhone = async (id: string): Promise<string | null> => {
+    const v = await contactValue(id);
+    const o = (typeof v === "string" ? JSON.parse(v) : v) as { account: string; sealed: string };
+    return decryptPhone(testPhoneKeys(), o.account, o.sealed);
+  };
 
   it("INV-N3 (S3c, manual/0011 뒤): 확인된 이메일로만 — 확인 대기 이메일은 쓰지 않고, 확인된 이메일이 없으면 빈 값", async () => {
     const { g } = await arrivedGift();
@@ -947,7 +955,7 @@ describe("연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3�
     const { g } = await arrivedGift();
     const k = rowId(g.orderId, "arrived", "byeolbit_fan", "kakao");
     await claimOne(k);
-    expect((await contactValue(k))).toBe("01012345678");
+    expect(await kakaoPhone(k)).toBe("01012345678");
   });
 
   it("INV-N6 (S6b, manual/0011 뒤): 두 칸 모두 꺼진 팬의 검수 줄 → 어느 통로도 빈 값", async () => {
@@ -972,7 +980,7 @@ describe("연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3�
       await claimOne(e);
       await claimOne(k);
       expect((await contactValue(e))).toBe("haru.creator@example.com");
-      expect((await contactValue(k))).toBe("01088889999");
+      expect(await kakaoPhone(k)).toBe("01088889999");
     });
   });
 

@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import { adminClient, anonClient, deleteTestSignups, psql, signedInClient, TEST_SIGNUP_PHONE_PREFIX, verifiedTestPhone } from "./helpers";
+import { adminClient, anonClient, deleteTestSignups, psql, signedInClient, TEST_SIGNUP_PHONE_PREFIX, testPhoneBundle, verifiedTestPhone } from "./helpers";
 
 // 크리에이터 가입 때 공개 정보 행을 만든다(creator-verification INV-V1 「기본 공개 정보는 가입 때 받아 둔 것을 쓴다」,
 // 「지금 코드와 다른 점」, signup INV-U5 「크리에이터로 가입해도 채널 인증 전에는 찾기에 없음」).
@@ -43,7 +43,7 @@ async function args(loginId: string, extra: Record<string, unknown> = {}) {
       p_user_id: userId,
       p_login_id: loginId,
       p_email: `${loginId.replace("_", ".")}@example.com`,
-      p_phone: p,
+      p_phone: testPhoneBundle(userId, p),
       p_verification_id: verificationId,
       p_terms: TERMS,
       p_name: "꿀단지",

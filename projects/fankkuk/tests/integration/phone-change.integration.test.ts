@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { changePhone, PHONE_CHANGE_CLOSED, SAME_AS_CURRENT_PHONE, VERIFY_AGAIN } from "@/features/phone-change/model/change-phone";
 import { choosePhoneVerifier } from "@/shared/api/phone-verifier/verifier";
 import { accountPasswordDeps, createTestAccount, FIXTURE_PASSWORD, removeTestAccounts, testEmail, testPhone, type TestAccount } from "./account-fixtures";
-import { adminClient, anonClient, psql, psqlError, signedInClient, verifiedTestPhone, waitPhoneCodeMinute, testPhoneKeys, storedTestPhone, testPhoneHash } from "./helpers";
+import { adminClient, anonClient, psql, psqlError, signedInClient, verifiedTestPhone, waitPhoneCodeMinute, testPhoneKeys, storedTestPhone, testPhoneHash, testPhoneBundle } from "./helpers";
 
 // 휴대폰 번호 바꾸기(signup INV-U12)를 실제 DB 로 돈다. 인증번호 확인은 가입과 같은 함수를 쓴다(문자는 보내지 않고 시험 도구가 6자리를 꺼내 맞힌다).
 // 번호 바꾸기 함수(change_my_phone)는 연락처(pii)에 쓰므로 사람이 적용하는 supabase/manual/0013 에 있다 — 적용 전에는 빨간불이 맞다.
@@ -185,7 +185,7 @@ describe("INV-U12: 번호 바꾸기는 로그인한 사람 자신의 번호만, 
     const ticket = await verified(next);
     const fan = await signedInClient("byeolbit_fan");
     for (const client of [fan, anonClient()]) {
-      expect((await client.rpc("change_my_phone", { p_account_id: f.userId, p_phone: next, p_verification_id: ticket })).error).not.toBeNull();
+      expect((await client.rpc("change_my_phone", { p_account_id: f.userId, p_phone: testPhoneBundle(f.userId, next), p_verification_id: ticket })).error).not.toBeNull();
     }
     expect(phoneOf(f)).toBe(before);
   });
