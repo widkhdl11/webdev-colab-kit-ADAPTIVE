@@ -19,7 +19,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ## 1. 로컬
 
 > PowerShell 은 `<`(파일을 명령에 넣기)를 쓸 수 없다. 아래 `docker exec … < 파일` 명령은 `cmd /c "…"` 로 감싸서 친다
-> (예: `cmd /c "docker exec -i supabase_db_fankkuk psql -U postgres -d postgres -v ON_ERROR_STOP=1 < supabase\manual8_phone_encrypt.sql"`).
+> (예: `cmd /c "docker exec -i supabase_db_fankkuk psql -U postgres -d postgres -v ON_ERROR_STOP=1 < supabase\manual\0028_phone_encrypt.sql"`).
 > 나머지 명령(node·확인 쿼리)은 그대로 된다.
 
 1. 키 두 개를 `.env.local` 에 넣는다(이름=값 한 줄씩). 개발 서버를 다시 켠다.
