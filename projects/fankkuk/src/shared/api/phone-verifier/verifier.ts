@@ -1,6 +1,6 @@
 import { createHmac, randomBytes, randomInt } from "node:crypto";
 import { createSolapiPort, readSolapiConfig, waitForDelivery, type SolapiPort } from "@/shared/api/solapi/solapi";
-import { allowsFakeChannels, type TestSiteEnv } from "@/shared/lib/env/test-site";
+import { allowsFakeChannels, isTestSite, type TestSiteEnv } from "@/shared/lib/env/test-site";
 import { isProduction } from "@/shared/lib/env/is-production";
 
 // 휴대폰 번호 확인 — 서버가 만든 6자리 인증번호를 카카오 알림톡으로, 안 되면 문자로 보낸다(signup INV-U1·U15).
@@ -116,4 +116,13 @@ export function choosePhoneVerifier(env: TestSiteEnv & EnvLike): PhoneVerifier |
   const templateId = env[PHONE_CODE_TEMPLATE_ENV]?.trim();
   if (!config || !templateId) return null;
   return solapiVerifier(createSolapiPort(config), templateId);
+}
+
+/**
+ * 비밀번호 찾기의 인증번호 창구 — 시험 사이트에서는 없다(test-site INV-TS2). 가짜 창구의 인증번호는 늘 같아서,
+ * 번호만 알면 이미 있는 남의 계정 비밀번호를 바꿀 수 있다. 로컬·운영은 가입과 같은 창구다.
+ */
+export function choosePasswordResetVerifier(env: TestSiteEnv & EnvLike): PhoneVerifier | null {
+  if (isTestSite(env)) return null;
+  return choosePhoneVerifier(env);
 }

@@ -10,7 +10,7 @@ import {
 import { checkResetCode } from "@/features/password-reset/model/phone-reset";
 import { checkPhoneCode } from "@/features/signup/model/phone-verification";
 import { phoneHash, readPhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
-import { choosePhoneVerifier, readPhoneCodeSecret } from "@/shared/api/phone-verifier/verifier";
+import { choosePasswordResetVerifier, readPhoneCodeSecret } from "@/shared/api/phone-verifier/verifier";
 import { createAdminSupabase } from "@/shared/api/supabase/admin";
 import { handlePrivateJsonPost, REFINED_PRIVATE_JSON_COPY } from "@/shared/lib/http/private-json";
 
@@ -23,7 +23,8 @@ export async function POST(req: NextRequest) {
     const admin = createAdminSupabase();
     const deps = {
       admin,
-      verifier: choosePhoneVerifier(process.env),
+      // 시험 사이트에서는 창구가 없다 — 고정 인증번호로 남의 비밀번호를 바꿀 수 없게(test-site INV-TS2)
+      verifier: choosePasswordResetVerifier(process.env),
       codeSecret: () => readPhoneCodeSecret(process.env),
       phoneKeys: () => readPhoneKeys(process.env),
     };

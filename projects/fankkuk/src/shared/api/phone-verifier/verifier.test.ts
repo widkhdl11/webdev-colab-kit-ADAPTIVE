@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  choosePasswordResetVerifier,
   choosePhoneVerifier,
   hashPhoneCode,
   FAKE_PHONE_CODE,
@@ -83,6 +84,19 @@ describe("INV-TS2: 시험 사이트에서는 가짜 문자 창구가 열린다",
 
   it("INV-TS2 (S2b, 실패경로): 시험 주소가 아니면 설정값이 있어도 창구가 없다", () => {
     expect(choosePhoneVerifier({ NODE_ENV: "production", FANKKUK_TEST_SITE: "1", APP_ORIGIN: "https://fankkuk.com" })).toBeNull();
+  });
+});
+
+describe("INV-TS2: 비밀번호 찾기 창구는 시험 사이트에서 없다", () => {
+  it("INV-TS2 S2d (실패경로): 시험 사이트면 가입 창구는 가짜로 열려도 비밀번호 찾기 창구는 없다", () => {
+    const env = { NODE_ENV: "production", FANKKUK_TEST_SITE: "1", APP_ORIGIN: TEST_SITE_ORIGINS[0] };
+    expect(choosePhoneVerifier(env)?.kind).toBe("fake");
+    expect(choosePasswordResetVerifier(env)).toBeNull();
+  });
+
+  it("INV-TS2 S2d: 로컬은 가입과 같은 가짜 창구, 운영은 가입과 같은 판정(설정 없으면 없음)", () => {
+    expect(choosePasswordResetVerifier({ NODE_ENV: "development" })?.fixedCode).toBe("000000");
+    expect(choosePasswordResetVerifier({ NODE_ENV: "production" })).toBeNull();
   });
 });
 

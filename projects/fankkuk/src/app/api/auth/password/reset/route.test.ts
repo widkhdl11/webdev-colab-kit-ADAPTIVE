@@ -4,10 +4,11 @@ import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { CookieOptions } from "@supabase/ssr";
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakePasswordAttempts } from "@/entities/session/api/password-attempts-fake";
 import { RESET_TICKET_COOKIE, RESET_VERIFICATION_COOKIE, resetCookieOptions } from "@/features/password-reset/lib/reset-cookies";
-import { RESET_CODE_AGAIN, RESET_CODE_SENT_MESSAGE, RESET_TICKET_EXPIRED } from "@/features/password-reset/model/reset-messages";
+import { RESET_CLOSED, RESET_CODE_AGAIN, RESET_CODE_SENT_MESSAGE, RESET_TICKET_EXPIRED } from "@/features/password-reset/model/reset-messages";
+import { TEST_SITE_ORIGINS } from "@/shared/lib/env/test-site";
 import type { PhoneVerifier } from "@/shared/api/phone-verifier/verifier";
 
 // 휴대폰 비밀번호 찾기 세 라우트(session-login INV-L10·L11) — 받기·확인·새 비밀번호 저장.
@@ -84,10 +85,16 @@ const fakeVerifier: PhoneVerifier = {
   },
   async sendSms() {},
 };
-vi.mock("@/shared/api/phone-verifier/verifier", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/shared/api/phone-verifier/verifier")>()),
-  choosePhoneVerifier: () => fakeVerifier,
-}));
+// 창구 판정은 진짜 함수를 거친다(시험 사이트면 없음) — 창구가 나올 때만 보낸 곳을 기록하는 가짜로 바꾼다
+vi.mock("@/shared/api/phone-verifier/verifier", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/shared/api/phone-verifier/verifier")>();
+  return {
+    ...actual,
+    choosePhoneVerifier: () => fakeVerifier,
+    choosePasswordResetVerifier: (env: Parameters<typeof actual.choosePasswordResetVerifier>[0]) =>
+      actual.choosePasswordResetVerifier(env) ? fakeVerifier : null,
+  };
+});
 
 const codeRoute = await import("./code/route");
 const checkRoute = await import("./code/check/route");
@@ -272,6 +279,44 @@ describe("INV-L11: 새 비밀번호 저장 라우트 — 표는 쿠키에서만"
     const r = await save({ password: "short", passwordConfirm: "short" });
     expect(r.status).toBe(400);
     expect(written(RESET_TICKET_COOKIE)).toEqual([]);
+  });
+});
+
+describe("INV-TS2: 시험 사이트에서는 비밀번호 찾기가 닫혀 있다", () => {
+  afterEach(() => vi.unstubAllEnvs());
+  const asTestSite = () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("FANKKUK_TEST_SITE", "1");
+    vi.stubEnv("APP_ORIGIN", TEST_SITE_ORIGINS[0]!);
+    // 운영 판정에서는 접속 주소 해시 비밀 값이 꼭 있어야 한다 — 시험 사이트에는 실제로 있다
+    vi.stubEnv("FANKKUK_IP_HASH_" + "SECRET", randomBytes(32).toString("hex"));
+  };
+
+  it("INV-TS2 S2d (실패경로): 시험 사이트에서 인증번호 받기 — 503 「이용할 수 없습니다」, 인증번호 기록·쿠키·발송 없음", async () => {
+    asTestSite();
+    const r = await requestCode(PHONE);
+    expect(r.status).toBe(503);
+    expect(await r.json()).toMatchObject({ reason: "closed", message: RESET_CLOSED });
+    await runAfterTasks();
+    expect(rpcCalls).toEqual([]);
+    expect(kakaoTo).toEqual([]);
+    expect(written(RESET_VERIFICATION_COOKIE)).toEqual([]);
+  });
+
+  it("INV-TS2 S2d (실패경로): 시험 사이트에서 000000 확인 — 503, 재설정 표 없음", async () => {
+    asTestSite();
+    requestCookies.set(RESET_VERIFICATION_COOKIE, VID);
+    const r = await checkCode({ phone: PHONE, code: "000000" });
+    expect(r.status).toBe(503);
+    expect(await r.json()).toMatchObject({ reason: "closed", message: RESET_CLOSED });
+    expect(rpcCalls).toEqual([]);
+    expect(written(RESET_TICKET_COOKIE)).toEqual([]);
+  });
+
+  it("INV-TS2 S2d: 로컬(시험 사이트 아님)에서는 같은 요청이 열린다", async () => {
+    const r = await requestCode(PHONE);
+    expect(r.status).toBe(200);
+    expect(written(RESET_VERIFICATION_COOKIE)).toHaveLength(1);
   });
 });
 
