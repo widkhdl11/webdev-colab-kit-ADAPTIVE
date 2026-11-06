@@ -18,9 +18,12 @@ const MESSAGES = {
   invalid: "요청을 확인해 주세요.",
   noPhone: "등록된 휴대폰 번호가 없습니다.",
   failed: "번호를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+  // 키 문제·손상된 암호문은 다시 눌러도 같다 — 재시도를 안내하지 않는다(문구 규칙 11). 원인은 서버 기록에만
+  unreadable: "저장된 번호를 읽지 못했습니다.",
 };
 
-export type RevealDeps = { client: Pick<SupabaseClient, "rpc">; phoneKeys: () => PhoneKeys };
+/** log: 서버 기록 한 줄(기본 console.error). 번호·암호문은 넣지 않는다 */
+export type RevealDeps = { client: Pick<SupabaseClient, "rpc">; phoneKeys: () => PhoneKeys; log?: (line: string) => void };
 
 /** 01012345678 → 010-1234-5678, 0161234567 → 016-123-4567 */
 function displayPhone(phone: string): string {
@@ -43,7 +46,18 @@ export async function revealCreatorPhone(deps: RevealDeps, body: unknown): Promi
   if (!rows.success) return { status: 500, body: { message: MESSAGES.failed } };
   const row = rows.data[0];
   if (!row) return { status: 404, body: { message: MESSAGES.noPhone } };
-  const phone = decryptPhone(deps.phoneKeys(), row.account_id, row.phone_sealed);
-  if (!phone) return { status: 500, body: { message: MESSAGES.failed } };
+  const log = deps.log ?? ((line: string) => console.error(line));
+  let keys: PhoneKeys;
+  try {
+    keys = deps.phoneKeys();
+  } catch {
+    log("admin-phone-reveal: 번호 키를 읽지 못했다");
+    return { status: 500, body: { message: MESSAGES.unreadable } };
+  }
+  const phone = decryptPhone(keys, row.account_id, row.phone_sealed);
+  if (!phone) {
+    log(`admin-phone-reveal: 번호를 풀지 못했다 (${shaped.data.loginId})`);
+    return { status: 500, body: { message: MESSAGES.unreadable } };
+  }
   return { status: 200, body: { phone: displayPhone(phone) } };
 }

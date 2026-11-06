@@ -65,9 +65,26 @@ describe("대표 「전화번호 보기」 (admin-console INV-K14)", () => {
   it("INV-K14 실패경로: 암호문이 풀리지 않으면(다른 계정에 묶임·키 틀림) 번호를 돌려주지 않고 500", async () => {
     const wrong = encryptPhone(KEYS, "00000000-0000-4000-8000-0000000000ff", PHONE);
     const c = client({ access: "owner", reveal: { data: [{ account_id: ACCOUNT, phone_sealed: wrong }], error: null } });
-    const r = await revealCreatorPhone(deps(c), { loginId: CREATOR });
+    const logs: string[] = [];
+    const r = await revealCreatorPhone({ ...deps(c), log: (line) => logs.push(line) }, { loginId: CREATOR });
     expect(r.status).toBe(500);
     expect(JSON.stringify(r)).not.toContain("5678");
+    // 다시 눌러도 같은 실패다 — 「잠시 후 다시 시도」로 안내하지 않고(문구 규칙 11), 서버에 원인 한 줄을 남긴다(번호·암호문 없이)
+    expect(JSON.stringify(r.body)).not.toContain("다시 시도");
+    expect(logs).toEqual([`admin-phone-reveal: 번호를 풀지 못했다 (${CREATOR})`]);
+    expect(logs.join()).not.toContain(wrong);
+  });
+
+  it("INV-K14 실패경로: 번호 키가 없으면 500 — 「다시 시도」 없이, 서버에 키 문제로 한 줄", async () => {
+    const c = client({ access: "owner", reveal: { data: [{ account_id: ACCOUNT, phone_sealed: encryptPhone(KEYS, ACCOUNT, PHONE) }], error: null } });
+    const logs: string[] = [];
+    const noKey = () => {
+      throw new Error("키 없음");
+    };
+    const r = await revealCreatorPhone({ ...deps(c), phoneKeys: noKey, log: (line) => logs.push(line) }, { loginId: CREATOR });
+    expect(r.status).toBe(500);
+    expect(JSON.stringify(r.body)).not.toContain("다시 시도");
+    expect(logs).toEqual(["admin-phone-reveal: 번호 키를 읽지 못했다"]);
   });
 
   it("INV-K14 실패경로: 아이디 꼴이 아니면 DB 를 부르지 않고 400", async () => {

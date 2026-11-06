@@ -7,6 +7,7 @@
 
 ## 미결
 
+- [ ] **전화번호 보호 리뷰 낮음 묶음** (2026-11-07 code-reviewer·ux-reviewer 낮음) — ① `src/shared/api/phone-crypto/phone-crypto.ts` 의 번호 꼴 정규식이 `shared/lib/validation/phone-shape.ts` 의 MOBILE_PHONE_SHAPE 를 다시 적은 중복 ② 같은 파일 주석은 「v1 으로 어느 키로 잠갔는지 가린다」인데 키 교체 길이 아직 없고, FANKKUK_ 환경 변수 이름·DB 묶음 꼴이 shared 에 들어와 있다 ③ `app/api/auth/password/reset/code/check/route.ts` 의 deps.phoneKeys 는 안 쓰는 의존성, `dispatch-notifications.ts` 는 카카오 줄마다 키를 다시 읽는다 ④ `features/phone-change/model/change-phone.ts` 가 phoneSchema 대신 정리를 따로 두 번 한다 ⑤ 비밀번호 찾기에서 시간 지남·다섯 번 틀림 뒤 「확인」 버튼이 `aria-disabled` 로 남는다(명세상 할 수 있는 것은 다시 입력·다시 받기뿐, 화면에서 확인 필요) · 번호 키 교체 작업이나 이 파일들을 다시 만질 때
 - [ ] **차액 결제에서 돌아왔을 때 주문이 거절·만료·취소여도 「기한 지남」으로 안내된다** (2026-11-06 security-reviewer 낮음) — `src/features/difference-pay/model/confirm-difference.ts` 는 승인 권리가 거부되고 기록이 결제 대기면 모두 「기한 지남」(closed)으로 보낸다. 주문 상태 때문에 거부된 경우도 같은 문구다(고치기 전에는 「실패」였으니 나빠진 것은 아니다). 돈이 빠지는 경로는 없다 · 고치는 길: 거부 이유를 나눠 돌려주거나 문구를 「낼 수 없음」으로 넓힌다. 차액 결제 화면을 다시 만질 때
 - [ ] **송장 출력 조립 연결 줄의 시험** (2026-11-06) — 안심번호 규칙(INV-P19)을 출력 함수에 끼우는 연결 줄을 지워도 유닛 시험이 못 잡는다 · DB 에 붙는 송장 출력 통합 시험에서 안심번호 설정으로 한 번 돌릴 때
 - [ ] **개인정보처리방침의 휴대폰 번호 보관 문장** (2026-11-06) — 가입 번호를 암호화해 저장하고 대표 열람을 기록한다는 내용이 방침에 없다 · 0028 을 시험 사이트에 적용한 뒤 변호사 검토 목록과 함께

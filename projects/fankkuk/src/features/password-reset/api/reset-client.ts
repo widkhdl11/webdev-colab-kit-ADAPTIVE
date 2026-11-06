@@ -10,12 +10,14 @@ async function post(url: string, body: unknown): Promise<{ status: number; data:
 
 const messageOf = (data: Record<string, unknown> | null) => (typeof data?.message === "string" ? data.message : FALLBACK);
 
-/** 「인증번호 받기」·「인증번호 다시 받기」. field = 번호 꼴 오류(번호 칸 아래), box = 그 밖의 실패(상자) */
-export async function requestResetCode(phone: string): Promise<{ ok: true; message: string } | { ok: false; where: "field" | "box"; message: string }> {
+/** 「인증번호 받기」·「인증번호 다시 받기」. field = 번호 꼴 오류(번호 칸 아래), closed = 이용 불가(다시 해도 같다), box = 그 밖의 실패(상자) */
+export async function requestResetCode(
+  phone: string,
+): Promise<{ ok: true; message: string } | { ok: false; where: "field" | "closed" | "box"; message: string }> {
   try {
     const { status, data } = await post("/api/auth/password/reset/code", { phone });
     if (status === 200) return { ok: true, message: messageOf(data) };
-    return { ok: false, where: data?.reason === "phone" ? "field" : "box", message: messageOf(data) };
+    return { ok: false, where: data?.reason === "phone" ? "field" : data?.reason === "closed" ? "closed" : "box", message: messageOf(data) };
   } catch {
     return { ok: false, where: "box", message: FALLBACK };
   }

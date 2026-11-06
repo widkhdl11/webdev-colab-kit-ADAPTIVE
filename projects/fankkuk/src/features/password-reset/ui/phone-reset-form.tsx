@@ -17,7 +17,8 @@ import s from "./phone-reset.module.css";
 // 지난 단계의 칸은 다음 단계에서 지운다 — 번호·인증번호가 새 비밀번호 단계에 남지 않는다. 표는 서버가 쿠키로만 다룬다.
 // 단계마다 채운 버튼 하나. 포커스: 인증번호를 보내면 인증번호 칸, 맞으면 새 비밀번호 칸, 표가 죽으면 「처음부터」, 끝나면 「로그인」.
 
-type Stage = "phone" | "code" | "password" | "expired" | "done";
+// closed: 받기·확인 응답이 「닫힘」(문자 창구 없음·시험 사이트) — 다시 눌러도 같으므로 칸·버튼을 거두고 고객센터 메일만 남긴다
+type Stage = "phone" | "code" | "password" | "expired" | "done" | "closed";
 type FieldKey = "phone" | "code" | "pw" | "pw2";
 type Problem = { at: FieldKey | "box"; message: string } | null;
 
@@ -52,6 +53,15 @@ export function PhoneResetForm({ onDone }: { onDone?: () => void }) {
   const countdown = useCountdown(stage === "code" ? expiresAt : null, PHONE_CODE_TTL_SECONDS);
   const expired = stage === "code" && countdown.expired;
 
+  const close = (message: string) => {
+    setPhone("");
+    setCode("");
+    setSentMessage("");
+    setExpiresAt(null);
+    setProblem({ at: "box", message });
+    setStage("closed");
+  };
+
   const fail = (at: FieldKey | "box", message: string) => {
     setProblem({ at, message });
     setFocusTo({ key: at === "box" ? (stage === "password" ? "pw" : "phone") : at });
@@ -63,6 +73,7 @@ export function PhoneResetForm({ onDone }: { onDone?: () => void }) {
     setProblem(null);
     const r = await requestResetCode(phone);
     setBusy(false);
+    if (!r.ok && r.where === "closed") return close(r.message);
     if (!r.ok) return fail(r.where === "field" ? "phone" : "box", r.message);
     setStage("code");
     setCode("");
@@ -79,6 +90,7 @@ export function PhoneResetForm({ onDone }: { onDone?: () => void }) {
     const r = await checkResetCode(phone, code);
     setBusy(false);
     if (!r.ok) {
+      if (r.reason === "closed") return close(r.message);
       if (r.reason === "locked" || r.reason === "invalid") setLocked(true);
       if (r.reason === "expired") setExpiresAt(Date.now());
       return fail("code", r.message);
@@ -178,6 +190,19 @@ export function PhoneResetForm({ onDone }: { onDone?: () => void }) {
         <Link className="btn btn--block" href="/login" ref={loginRef}>
           로그인
         </Link>
+      </div>
+    );
+  }
+
+  if (stage === "closed") {
+    return (
+      <div className="form">
+        {box}
+        <p className={s.sub}>
+          <a className={`nw ${s.link}`} href={`mailto:${SITE_INFO.supportEmail}`}>
+            {SITE_INFO.supportEmail}
+          </a>
+        </p>
       </div>
     );
   }

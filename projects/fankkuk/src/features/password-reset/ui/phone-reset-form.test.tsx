@@ -1,7 +1,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { RESET_CODE_SENT_MESSAGE, RESET_TICKET_EXPIRED } from "../model/reset-messages";
+import { RESET_CLOSED, RESET_CODE_SENT_MESSAGE, RESET_TICKET_EXPIRED } from "../model/reset-messages";
 import { PhoneResetForm } from "./phone-reset-form";
 
 const TEST_PW = "new-pass-1234!";
@@ -110,6 +110,27 @@ describe("INV-L10: 인증번호 받기 단계", () => {
     expect(host.textContent).toContain("인증번호가 맞지 않습니다. 남은 횟수 4회");
     expect(codeInput()?.getAttribute("aria-invalid")).toBe("true");
     expect(pwInputs()).toHaveLength(0);
+  });
+
+  it("INV-TS2 (실패경로, UX closed): 받기 응답이 닫힘(503 closed)이면 그 문장과 고객센터 메일 링크만 — 번호 칸·받기 버튼이 사라진다", async () => {
+    fetchMock.mockImplementationOnce(() => reply(503, { reason: "closed", message: RESET_CLOSED }));
+    type(phoneInput(), "010-5555-6666");
+    await press("인증번호 받기");
+    expect(host.textContent).toContain(RESET_CLOSED);
+    expect(phoneInput()).toBeNull();
+    expect(host.querySelectorAll("button")).toHaveLength(0);
+    expect(host.querySelector('a[href^="mailto:"]')).not.toBeNull();
+  });
+
+  it("INV-TS2 (실패경로, UX closed): 인증번호 확인 중에 닫힘이 와도 같은 이용 불가 화면 — 인증번호 칸·다시 받기가 사라진다", async () => {
+    await reachCode();
+    fetchMock.mockImplementationOnce(() => reply(503, { reason: "closed", message: RESET_CLOSED }));
+    type(codeInput(), "123456");
+    await press("확인");
+    expect(host.textContent).toContain(RESET_CLOSED);
+    expect(codeInput()).toBeNull();
+    expect(host.querySelectorAll("button")).toHaveLength(0);
+    expect(host.querySelector('a[href^="mailto:"]')).not.toBeNull();
   });
 
   it("INV-L10: 인증번호 단계에서 번호를 고치면 처음 단계로 — 인증번호 칸이 사라진다", async () => {
