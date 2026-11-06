@@ -35,7 +35,7 @@
 // C 항목만 이 레포를 읽는다(읽기만 한다).
 
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
@@ -114,10 +114,22 @@ export function pairsIn(root) {
   const orphans = [];
   const canonSkills = join(root, ".claude", "skills");
   const mirrorSkills = join(root, ".agents", "skills");
-  const listed = (p) => (existsSync(p) ? readdirSync(p, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name) : []);
+  // 바로가기(심볼릭 링크·정션)도 가리키는 곳이 폴더면 폴더로 센다. isDirectory() 는 바로가기를 폴더로 보지 않아서,
+  // 한쪽을 다른 쪽의 바로가기로 둔 스킬이 「짝이 없다」로 잘못 신고됐다(2026-11-06).
+  const isDirLike = (base, d) => {
+    if (d.isDirectory()) return true;
+    if (!d.isSymbolicLink()) return false;
+    try { return statSync(join(base, d.name)).isDirectory(); } catch { return false; }
+  };
+  const listed = (p) => (existsSync(p) ? readdirSync(p, { withFileTypes: true }).filter((d) => isDirLike(p, d)).map((d) => d.name) : []);
   const a = listed(canonSkills);
   const b = listed(mirrorSkills);
+  // 두 쪽이 같은 실물 폴더면 한 벌이다 — 어긋날 수 없고, 자기 자신과 대조할 것도 없다
+  const sameFolder = (name) => {
+    try { return realpathSync(join(canonSkills, name)) === realpathSync(join(mirrorSkills, name)); } catch { return false; }
+  };
   for (const name of a) {
+    if (b.includes(name) && sameFolder(name)) continue;
     if (b.includes(name)) pairs.push({ name: `skills/${name}`, canon: join(canonSkills, name, "SKILL.md"), mirror: join(mirrorSkills, name, "SKILL.md") });
     else orphans.push(`.claude/skills/${name} 은 있는데 .agents/skills/${name} 이 없다`);
   }
@@ -223,6 +235,23 @@ const ok = (id, what, pass, note = "") => results.push({ id, what, pass, note })
   writeFileSync(join(dir, ".claude", "skills", "only-here", "SKILL.md"), "x\n");
   const orphan = checkRepo(dir).filter((e) => e.includes("[mirror/ORPHAN]"));
   ok("B", "짝 검사    한쪽에만 있는 스킬 폴더를 잡는다", orphan.length === 1, `${orphan.length}건`);
+  rmSync(join(dir, ".claude", "skills", "only-here"), { recursive: true, force: true });
+
+  // B2 — 한쪽이 다른 쪽을 가리키는 바로가기면 짝이 있는 것이다(신고 0건).
+  //      바로가기가 다른 내용의 폴더를 가리키면 여전히 대조한다(신고가 나와야 한다) — 바로가기라고 통째로 눈감지 않는다
+  mkdirSync(join(dir, ".agents", "skills", "linked"), { recursive: true });
+  writeFileSync(join(dir, ".agents", "skills", "linked", "SKILL.md"), "- 보호 파일(.claude/hooks)\n");
+  symlinkSync(join(dir, ".agents", "skills", "linked"), join(dir, ".claude", "skills", "linked"), "junction");
+  const linkedErrs = checkRepo(dir);
+  mkdirSync(join(dir, "elsewhere"), { recursive: true });
+  writeFileSync(join(dir, "elsewhere", "SKILL.md"), "다른 내용\n");
+  mkdirSync(join(dir, ".agents", "skills", "differs"), { recursive: true });
+  writeFileSync(join(dir, ".agents", "skills", "differs", "SKILL.md"), "원래 내용\n");
+  symlinkSync(join(dir, "elsewhere"), join(dir, ".claude", "skills", "differs"), "junction");
+  const differsErrs = checkRepo(dir).filter((e) => e.includes("skills/differs"));
+  ok("B2", "바로가기   같은 폴더를 가리키면 짝이고, 다른 폴더를 가리키면 대조한다",
+     linkedErrs.length === 0 && differsErrs.length > 0,
+     `같은 폴더 신고 ${linkedErrs.length}건(0이어야) ${linkedErrs[0] ?? ""} · 다른 폴더 신고 ${differsErrs.length}건(1 이상이어야)`);
 
   rmSync(dir, { recursive: true, force: true });
 }
