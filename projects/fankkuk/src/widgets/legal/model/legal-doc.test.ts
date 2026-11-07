@@ -30,7 +30,7 @@ describe("약관·개인정보처리방침 글", () => {
     expect(table && table.kind === "prices" ? table.rows.map((r) => [r.rule, ...r.amounts]) : []).toEqual([
       [expect.stringContaining("5kg"), "6,900원", "5,400원"],
       [expect.stringContaining("10kg"), "8,900원", "6,900원"],
-      [expect.stringContaining("20kg"), "12,345원", "9,876원"],
+      [expect.stringContaining("15kg"), "12,345원", "9,876원"],
     ]);
   });
 

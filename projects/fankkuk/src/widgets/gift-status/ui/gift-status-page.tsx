@@ -13,6 +13,7 @@ import {
   hasShipped,
   showsSteps,
 } from "@/entities/order/ui/fan-stage-copy";
+import { INTAKE_LIMIT_TEXT } from "@/entities/parcel/model/size-tier";
 import { boxSizeName, fanBoxStateTag, giftBoxName, tierCountText, hasArrived, isMissing, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
 import { finderBoxesBelowTodo, giftAddressCode, giftFinderBoxes, needsEarlySendAck } from "@/features/box-waybill/model/box-targets";
 import { EarlySendGate } from "@/features/box-waybill/ui/early-send-gate";
@@ -235,7 +236,7 @@ export function GiftStatusPage({
             <p className={s.desc}>
               추적 장치 등 금지 물품이 발견되거나 상자가 접수 한도를 초과하면 반송됩니다.
               <br />
-              접수 한도: 세 변의 합 160cm 이하 · 무게 20kg 이하
+              접수 한도: {INTAKE_LIMIT_TEXT}
               <br />
               이 경우 검수비와 반송 배송비가 차감되어 환불 금액이 없습니다.
             </p>
