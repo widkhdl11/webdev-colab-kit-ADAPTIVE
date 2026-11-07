@@ -264,6 +264,7 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
             { title: vendor("알림톡 발송 대행사", info.vendors.alimtalk), fields: [["위탁 업무", "카카오 알림톡 발송"]] },
             { title: vendor("메일 발송 대행사", info.vendors.mail), fields: [["위탁 업무", "확인 메일과 알림 메일 발송"]] },
             { title: vendor("택배사", info.vendors.carrier), fields: [["위탁 업무", "송장 출력과 배송"]] },
+            { title: vendor("택배 중개 플랫폼", info.vendors.courierBroker), fields: [["위탁 업무", "택배 접수와 송장 발급 중계"]] },
             { title: vendor("주소 암호화 키 보관 업체", info.vendors.keyVault), fields: [["위탁 업무", "암호화한 주소를 여는 키 보관(앱 서버·데이터베이스와 분리)"]] },
           ],
         },

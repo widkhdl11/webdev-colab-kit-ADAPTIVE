@@ -21,7 +21,7 @@ export type SiteInfo = {
   hostingProvider: string;
   privacyOfficer: { name: string; title: string; contact: string };
   /** 개인정보 처리를 맡기는 곳 중 계약 전이라 이름이 없는 곳 */
-  vendors: { kakaoAuth: string; alimtalk: string; mail: string; carrier: string; keyVault: string };
+  vendors: { kakaoAuth: string; alimtalk: string; mail: string; carrier: string; courierBroker: string; keyVault: string };
   /** 분실·파손 배상 한도(신고한 가액이 없을 때) — 약관 제17조. 법률 검토 전 초안 값(DECISIONS 2026-10-08 ①) */
   compensationCapKrw: number;
 };
@@ -43,6 +43,7 @@ export const SITE_INFO: SiteInfo = {
     alimtalk: "",  // 알림톡 발송 대행사 계약 후
     mail: "",      // 메일 발송 서비스(예: Resend, AWS SES) 정한 뒤
     carrier: "",   // 택배사 계약 후(예: "우체국", "CJ대한통운")
+    courierBroker: "", // 택배 중개 플랫폼 계약 후(예: "로지아이" — DECISIONS 2026-11-07 송장 출력 어댑터)
     keyVault: "",  // 주소 키 보관처(예: "Supabase Vault", "AWS KMS") 정한 뒤
   },
   compensationCapKrw: 500_000, // 변호사 검토 후 확정

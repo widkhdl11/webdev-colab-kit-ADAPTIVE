@@ -131,7 +131,7 @@ describe("안내·법정 페이지 공통", () => {
     const boxSizes = (id: string) => pv.sections.find((s) => s.id === id)!.blocks.flatMap((b) => (b.kind === "rows" ? [b.rows.length] : []));
     expect(boxSizes("collect")).toEqual([3, 3, 3, 2, 2, 2]);
     expect(boxSizes("retention")).toEqual([6, 6, 6]);
-    expect(boxSizes("outsource")).toEqual([4, 4]);
+    expect(boxSizes("outsource")).toEqual([4, 5]);
     // 줄 꼬리표는 쓰지 않는다 — 칩은 절만 거른다
     for (const s of pv.sections) for (const b of s.blocks) if (b.kind === "rows") for (const r of b.rows) expect(r.tags).toBeUndefined();
   });
@@ -157,11 +157,13 @@ describe("안내·법정 페이지 공통", () => {
   });
 
   it("처리를 맡기는 곳·보호책임자·문의 이메일은 설정값에서 읽고, 비면 자리표시가 남는다", () => {
-    const filled = privacyDoc({ ...SITE_INFO, supportEmail: "help@example.com", privacyOfficer: { name: "김보호", title: "대표", contact: "02-1" }, vendors: { ...SITE_INFO.vendors, carrier: "예시택배" } });
+    const filled = privacyDoc({ ...SITE_INFO, supportEmail: "help@example.com", privacyOfficer: { name: "김보호", title: "대표", contact: "02-1" }, vendors: { ...SITE_INFO.vendors, carrier: "예시택배", courierBroker: "예시중개" } });
     expect(text(filled)).toContain("help@example.com");
     expect(text(filled)).toContain("김보호");
     expect(text(filled)).toContain("택배사 — 예시택배");
     expect(openItems(privacyDoc()).some((t) => t.includes("택배사 (출시 전 기재)"))).toBe(true);
+    expect(text(filled)).toContain("택배 중개 플랫폼 — 예시중개");
+    expect(openItems(privacyDoc()).some((t) => t.includes("택배 중개 플랫폼 (출시 전 기재)"))).toBe(true);
   });
 
   it("출시 기념 요금·할인 줄이 없다(2026-10-14 적용하지 않기로 함)", () => {
