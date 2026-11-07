@@ -21,6 +21,11 @@
 --   0) 「보내기 하나에 팬 한 명당 몫 하나」 고유값은 같이 쓰는 「탈퇴한 회원」 줄을 뺀다 — 한 보내기에서 팬 둘 이상이 탈퇴하면
 --      두 몫이 모두 같이 쓰는 표시가 되어야 하는데, 그대로면 자동 삭제 회차 전체가 고유값 충돌로 멈춘다(코드 리뷰 high). 회원끼리는 그대로 하나다.
 
+-- 2026-11-07 덧붙임: revgift_send_ended_at(language sql)이 사람이 넣는 manual 0006 의 표를 읽어서, 빈 DB 를 처음부터 만들 때(db reset·새 DB)
+-- 이 파일에서 멈췄다. 함수 본문 검사를 이 파일 안에서만 끈다(pg_dump 와 같은 방식) — 표는 manual 0006 이 나중에 만들고, 함수는 부를 때 확인한다.
+-- 이미 이 파일이 적용된 DB 는 다시 돌지 않으므로 바뀌는 것이 없다.
+set local check_function_bodies = off;
+
 -- ── 0) 몫 고유값 ───────────────────────────────────────
 
 alter table public.revgift_shares drop constraint if exists revgift_shares_send_id_fan_id_key;
