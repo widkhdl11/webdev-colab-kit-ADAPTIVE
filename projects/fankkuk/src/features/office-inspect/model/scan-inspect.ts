@@ -7,12 +7,13 @@ import { qrCode } from "@/entities/parcel/model/scan-code";
 import { readAdminAccess } from "@/entities/session/api/read-admin-access";
 import { MESSAGE_NOT_FOUND } from "@/shared/lib/http/pg-error-reply";
 import type { JsonReply } from "@/shared/lib/http/private-json";
-import { MEASURED_TIERS, measurementFromDb } from "./measurement";
+import { MEASURED_TIERS, measurementFromDb, PERSONAL_INTAKE_COST_MAX_KRW } from "./measurement";
 
 // 검수 화면의 서버 쪽 (office-workflow INV-W1·W4).
 // - lookup: 라벨 QR 로 상자를 불러온다
 // - record: 검수 기록 저장(고치거나 지울 수 없다 — DB 표는 추가만). 결론이 검사 결과와 맞아야 한다
-// - measure: 상자 실측 구간 기록(payment INV-M11) — 신고보다 크면 DB 가 차액 결제 요청을 만든다. 상자마다 한 번, 팬 선물만
+// - measure: 상자 실측 구간 기록(payment INV-M11) — 신고보다 크면 DB 가 차액 결제 요청을 만든다. 상자마다 한 번, 팬 선물만.
+//   대형 초과는 우체국 실비(costKrw)를 같이 받아 개인접수 차액으로(INV-M23)
 // - complete: 같은 QR 을 다시 스캔 → 검수 완료·반송 대기·크리에이터 확인 대기 중 DB 가 정한 곳으로(추적기 반송도 반송 대기, 2026-10-12 D2·(2) D3 ②). 기록이 없으면 P0044
 // 운영자가 아니면 404. 상태를 고르는 칸은 없다(INV-W1).
 
@@ -24,10 +25,16 @@ const RECORD_MESSAGES = { ...MESSAGES, conflict: "이미 검수 기록이 있어
 // INV-M11: 실측은 상자마다 한 번, 입고 뒤·검수 스캔 전에만 — 그 밖은 DB 가 55000 으로 막는다
 const MEASURE_MESSAGES = { ...MESSAGES, conflict: "이미 실측을 기록했거나 지금은 실측 단계가 아니에요." };
 
+// INV-M23: 개인접수 실비가 잘못됐을 때 — 화면 검사와 DB 거부(P0110: 실비 없음·대형 택배 원가 미만·상한 초과)가 같은 안내를 쓴다
+export const MEASURE_COST_MESSAGE = `우체국 실비를 확인해 주세요. 대형 초과는 실비가 꼭 있어야 하고, 대형 택배 원가 이상 ${PERSONAL_INTAKE_COST_MAX_KRW.toLocaleString("ko-KR")}원 이하의 원 단위 숫자만 받습니다.`;
+
+const measureShape = z.object({ kind: z.literal("measure"), qr: qrCode, tier: z.enum(MEASURED_TIERS), costKrw: z.number().optional() }).strict();
+const costShape = z.number().int().min(1).max(PERSONAL_INTAKE_COST_MAX_KRW);
+
 const bodyShape = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("lookup"), qr: qrCode }).strict(),
   z.object({ kind: z.literal("record"), qr: qrCode, result: inspectionResultShape }).strict(),
-  z.object({ kind: z.literal("measure"), qr: qrCode, tier: z.enum(MEASURED_TIERS) }).strict(),
+  measureShape,
   z.object({ kind: z.literal("complete"), qr: qrCode }).strict(),
 ]);
 
@@ -51,7 +58,13 @@ export async function scanInspect(client: Pick<SupabaseClient, "rpc">, body: unk
   }
 
   if (input.kind === "measure") {
-    const { data, error } = await client.rpc("office_record_measurement", { p_qr: input.qr, p_tier: input.tier });
+    // INV-M23: 실비는 대형 초과에만, 원 단위 정수·상한 이하. 하한(대형 택배 원가)·「열린 주문엔 꼭 있어야」는 DB 가 본다
+    const costBad: JsonReply = { status: 400, body: { message: MEASURE_COST_MESSAGE } };
+    if (input.costKrw !== undefined && (input.tier !== "oversize" || !costShape.safeParse(input.costKrw).success)) return costBad;
+    const args: Record<string, unknown> = { p_qr: input.qr, p_tier: input.tier };
+    if (input.costKrw !== undefined) args.p_cost_krw = input.costKrw;
+    const { data, error } = await client.rpc("office_record_measurement", args);
+    if (error?.code === "P0110") return costBad;
     if (error) return officeErrorReply(error.code, MEASURE_MESSAGES);
     const measurement = measurementFromDb(data);
     if (!measurement) return { status: 500, body: { message: FAILED } };

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { scanInspect } from "./scan-inspect";
+import { PERSONAL_INTAKE_COST_MAX_KRW } from "./measurement";
+import { MEASURE_COST_MESSAGE, scanInspect } from "./scan-inspect";
 
 const DETAIL = {
   qr: "Q-000123",
@@ -136,6 +137,33 @@ describe("실측 기록 (payment INV-M11, admin-console INV-K1)", () => {
     expect(twice.status).toBe(409);
     const odd = await scanInspect(fakeClient({ office_record_measurement: { data: { result: "difference" }, error: null } }).client, { kind: "measure", qr: "Q-000123", tier: "large" });
     expect(odd.status).toBe(500);
+  });
+
+  it("INV-M23: 대형 초과에 넣은 우체국 실비는 그대로 DB 에 넘기고, DB 가 정한 차액을 돌려준다", async () => {
+    const { calls, client } = fakeClient({ office_record_measurement: { data: { result: "difference", amount_krw: 11500 }, error: null } });
+    const reply = await scanInspect(client, { kind: "measure", qr: "Q-000123", tier: "oversize", costKrw: 13000 });
+    expect(reply).toEqual({ status: 200, body: { measurement: { result: "difference", amountKrw: 11500 } } });
+    expect(calls).toEqual([{ fn: "office_record_measurement", args: { p_qr: "Q-000123", p_tier: "oversize", p_cost_krw: 13000 } }]);
+  });
+
+  it("INV-M23 (실패경로): 실비가 정수가 아니거나 상한을 넘거나, 대형 초과가 아닌데 실비가 있으면 DB 를 부르지 않고 400·실비 안내", async () => {
+    for (const body of [
+      { kind: "measure", qr: "Q-000123", tier: "oversize", costKrw: 13000.5 },
+      { kind: "measure", qr: "Q-000123", tier: "oversize", costKrw: PERSONAL_INTAKE_COST_MAX_KRW + 1 },
+      { kind: "measure", qr: "Q-000123", tier: "oversize", costKrw: 0 },
+      { kind: "measure", qr: "Q-000123", tier: "large", costKrw: 13000 },
+    ]) {
+      const { calls, client } = fakeClient({});
+      const reply = await scanInspect(client, body);
+      expect(reply.status).toBe(400);
+      expect(reply.body).toEqual({ message: MEASURE_COST_MESSAGE });
+      expect(calls).toEqual([]);
+    }
+  });
+
+  it("INV-M23 (실패경로): DB 가 실비를 거부하면(P0110 — 원가 미만·실비 없음) 400 과 실비 안내", async () => {
+    const reply = await scanInspect(fakeClient({ office_record_measurement: { error: { code: "P0110" } } }).client, { kind: "measure", qr: "Q-000123", tier: "oversize", costKrw: 100 });
+    expect(reply).toEqual({ status: 400, body: { message: MEASURE_COST_MESSAGE } });
   });
 
   it("INV-K1 (실패경로): 운영자가 아니면 404, DB 를 부르지 않는다", async () => {

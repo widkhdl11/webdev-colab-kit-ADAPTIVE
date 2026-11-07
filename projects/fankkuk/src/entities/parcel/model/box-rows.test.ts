@@ -110,6 +110,13 @@ describe("상자 이름·크기별 개수 — 선물 상세·선물 보내기가
     expect(boxSizeName(null)).toBeNull();
   });
 
+  it("payment INV-M23 ④: 개인접수 상자는 구간 이름 대신 「개인접수」 — 읽기 결과의 크기 칸 personal_intake 를 받는다", () => {
+    expect(boxSizeName("personal_intake")).toBe("개인접수");
+    expect(boxTierName("personal_intake")).toBe("개인접수 상자");
+    const row = { box_id: "3f1c2a4e-8b7d-4c6a-9e5f-1a2b3c4d5e6f", label: "FC-7K3M9", tier: "personal_intake", waybill_no: null, state: "inspected", address_code: null, reported_not_mine: false, send_ack_needed: false, not_sent_at: null };
+    expect(parseGiftBoxRows([row])[0]!.tier).toBe("personal_intake");
+  });
+
   it("크기별 개수는 소형·중형·대형 순, 0개는 빼고, 단위를 뺄 수 있다", () => {
     expect(tierCountText({ small: 1, medium: 0, large: 2 })).toBe("소형 1개 · 대형 2개");
     expect(tierCountText({ small: 0, medium: 3, large: 0 }, "")).toBe("중형 3");

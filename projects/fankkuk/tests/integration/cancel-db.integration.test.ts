@@ -175,9 +175,10 @@ describe("대표의 입고 뒤 취소 (INV-M17)", () => {
   it("INV-M17 (S17c): 중형 초과로 실측된 상자가 있어도 취소된다 — 그 상자는 0, 검수 전인 상자는 기본 서비스료 칸만 돌려준다", async () => {
     const op = await staff();
     const g = await paidGift(2);
-    const over = await receive(op, g.boxIds[0]!);
+    await receive(op, g.boxIds[0]!);
     const other = await receive(op, g.boxIds[1]!);
-    expect((await op.rpc("office_record_measurement", { p_qr: over, p_tier: "oversize" })).data).toEqual({ result: "inspection_failed" });
+    // 열린 주문의 대형 초과는 이제 개인접수(payment INV-M23) — 검수 불합격 줄(개인접수 이전 기록)은 기록을 직접 넣어 본다
+    psql(`begin; set local session_replication_role = replica; update public.boxes set measured_tier = 'oversize' where id = '${g.boxIds[0]}'; commit;`);
     const owner = await signedInClient("fankkuk_admin");
     expect((await owner.rpc("admin_cancel_received_gift", { p_order_no: g.orderNo, p_reason: "1:1 문의" })).error).toBeNull();
     expect(status(g.orderId)).toBe("canceled");

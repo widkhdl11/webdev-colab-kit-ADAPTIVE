@@ -1,5 +1,6 @@
 import { statusTagClass } from "@/shared/ui/status-tone";
 import type { GiftDifference } from "@/entities/payment/model/difference-rows";
+import { PERSONAL_INTAKE_NAME } from "@/entities/parcel/model/box-rows";
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import s from "./gift-status.module.css";
 
@@ -58,7 +59,8 @@ export function DifferenceSection({ differences, notice }: Props) {
                 <span className={tag.className}>{tag.text}</span>
               </div>
               <p className={s.note}>
-                선택한 크기 {tierName(d.declaredTier)} → 실측 크기 {tierName(d.measuredTier)}
+                {/* 개인접수(payment INV-M23 ④) — 구간 이름 대신 「개인접수」 */}
+                선택한 크기 {tierName(d.declaredTier)} → {d.measuredTier === "personal_intake" ? PERSONAL_INTAKE_NAME : `실측 크기 ${tierName(d.measuredTier)}`}
               </p>
               {d.state === "closed" ? <p className="hint">차액 결제 기한이 지나 반송 예정입니다.</p> : null}
             </div>

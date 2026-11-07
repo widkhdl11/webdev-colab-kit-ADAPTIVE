@@ -69,10 +69,11 @@ describe("INV-M11: 차액은 서버가 상자마다 실측 − 신고로 계산�
     expect(differenceRow(same.orderId)).toBe("");
   });
 
-  it("INV-M11 S11c (실패경로): 실측이 대형을 넘으면 차액이 아니라 검수 불합격 — 통과로 기록해도 반송 대기로 간다", async () => {
+  it("INV-M11 S11c (실패경로): 실측 대형 초과로 기록된 상자(닫힌 주문 갈래·개인접수 이전 기록 — INV-M23)는 차액이 아니라 검수 불합격 — 통과로 기록해도 반송 대기로 간다", async () => {
     const g = await paidOrder(["small"]);
     const qr = await labeled(g.boxIds[0]!);
-    expect((await measure(qr, "oversize")).data).toEqual({ result: "inspection_failed" });
+    // 열린 주문의 대형 초과는 이제 개인접수(INV-M23, personal-intake 시험) — 검수 불합격 줄은 기록을 직접 넣어 본다
+    psql(`begin; set local session_replication_role = replica; update public.boxes set measured_tier = 'oversize' where id = '${g.boxIds[0]}'; commit;`);
     expect(differenceRow(g.orderId)).toBe("");
     expect(await inspect(await signedInClient("fankkuk_staff"), qr, FAN_PASS)).toBe("return_waiting");
   });
@@ -135,8 +136,11 @@ describe("notifications INV-N18: 차액 결제 요청이 생기면 보낸 팬에
     expect((await measure(await labeled(same.boxIds[0]!), "small")).data).toEqual({ result: "none" });
     const smaller = await paidOrder(["medium"]);
     expect((await measure(await labeled(smaller.boxIds[0]!), "small")).data).toEqual({ result: "none" });
+    // 대형 초과로 검수 불합격이 되는 것은 닫힌 주문뿐이다(INV-M23) — 거절한 뒤 잰다
     const over = await paidOrder(["small"]);
-    expect((await measure(await labeled(over.boxIds[0]!), "oversize")).data).toEqual({ result: "inspection_failed" });
+    const overQr = await labeled(over.boxIds[0]!);
+    expect((await (await signedInClient("haru_creator")).rpc("decline_gift", { p_request_id: over.requestId, p_block: false })).error).toBeNull();
+    expect((await measure(overQr, "oversize")).data).toEqual({ result: "inspection_failed" });
     for (const g of [same, smaller, over]) expect(differenceAlerts(g.orderId)).toEqual([]);
   });
 
@@ -454,7 +458,7 @@ describe("INV-M13 · INV-M8: 차액 요청 뒤 7일 미납이면 반송 대상, 
   it("INV-M8 (실패경로): 실측 대형 초과(검수 불합격)는 차액 미납이 아니라 상품 대금 칸만이다", async () => {
     const g = await paidOrder(["small"]);
     const qr = await labeled(g.boxIds[0]!);
-    await measure(qr, "oversize");
+    psql(`begin; set local session_replication_role = replica; update public.boxes set measured_tier = 'oversize' where id = '${g.boxIds[0]}'; commit;`);
     await inspect(await signedInClient("fankkuk_staff"), qr, FAN_PASS);
     expect(refundDue(g.orderId)).toBe("0");
   });
@@ -463,7 +467,7 @@ describe("INV-M13 · INV-M8: 차액 요청 뒤 7일 미납이면 반송 대상, 
     const g = await paidOrder(["small", "small"]);
     const staff = await signedInClient("fankkuk_staff");
     const first = await labeled(g.boxIds[0]!);
-    await measure(first, "oversize");
+    psql(`begin; set local session_replication_role = replica; update public.boxes set measured_tier = 'oversize' where id = '${g.boxIds[0]}'; commit;`);
     await inspect(staff, first, FAN_PASS);
     const second = await labeled(g.boxIds[1]!);
     await measure(second, "medium");

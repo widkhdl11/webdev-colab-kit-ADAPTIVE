@@ -1,5 +1,5 @@
 // 상자 구간 (admin-console INV-K6, 요금 11-07 최종). 소형 = 세 변 합 100cm·5kg 이하 · 중형 = 120cm·10kg 이하 · 대형 = 140cm·15kg 이하.
-// 크기와 무게 중 큰 쪽 구간을 쓴다. 대형을 넘는 상자는 받지 않는다(검수 불합격 반송). 구간별 요금은 DB 요금표가 정한다.
+// 크기와 무게 중 큰 쪽 구간을 쓴다. 대형을 넘는 상자는 개인접수 — 우체국 실비 기준 차액을 결제 요청한다(payment INV-M23). 구간별 요금은 DB 요금표가 정한다.
 
 export type ParcelTier = "small" | "medium" | "large" | "oversize";
 
@@ -38,6 +38,14 @@ export const OVERSIZE_RULE = `세 변의 합이 ${LARGE_MAX_SUM_CM}cm를 넘거�
 export const INTAKE_LIMIT_TEXT = `세 변의 합 ${LARGE_MAX_SUM_CM}cm 이하 · 무게 ${LARGE_MAX_WEIGHT_KG}kg 이하`;
 export const OVERSIZE_RULE_FORMAL = `세 변의 합이 ${LARGE_MAX_SUM_CM}cm를 초과하거나 무게가 ${LARGE_MAX_WEIGHT_KG}kg을 초과하는 상자`;
 
-/** 보내기 전에 알리는 검수 반송 안내. 추적 장치 등이 나오거나 대형을 넘으면 팬의 위반이라 검수비·반송비를 모두 뺀다(결제 INV-M8).
- *  받지 않는 크기는 OVERSIZE_RULE 에서 만든다 — 구간 기준이 바뀌면 이 안내도 같이 바뀐다. */
-export const RETURN_ON_INSPECTION_NOTICE = `추적 장치 등 금지 물품이 발견되거나 ${OVERSIZE_RULE}에 해당하면 반송됩니다.\n이 경우 검수비와 반송 배송비가 차감되어 환불 금액이 없습니다.`;
+/** 보내기 전에 알리는 검수 반송 안내. 추적 장치 등이 나오면 팬의 위반이라 검수비·반송비를 모두 뺀다(결제 INV-M8).
+ *  대형 초과는 반송이 아니라 개인접수다(personalIntakeNotice, payment INV-M23). */
+export const RETURN_ON_INSPECTION_NOTICE = `추적 장치 등 금지 물품이 발견되면 반송됩니다.\n이 경우 검수비와 반송 배송비가 차감되어 환불 금액이 없습니다.`;
+
+/** 접수 한도를 넘은 상자 안내(payment INV-M23) — 기준 숫자는 OVERSIZE_RULE 과 같은 상수. days 는 차액 기한(INV-M13, DIFFERENCE_DEADLINE_DAYS) */
+export function personalIntakeNotice(days: number): string {
+  return `세 변의 합이 ${LARGE_MAX_SUM_CM}cm를 넘거나 무게가 ${LARGE_MAX_WEIGHT_KG}kg을 넘으면 개인접수로 바뀌어 우체국 실비 기준 차액을 결제 요청합니다. ${days}일 안에 결제하지 않으면 반송됩니다.`;
+}
+
+/** 선물 보내기 화면 접수 한도 줄 아래 한 줄(payment INV-M23) */
+export const OVER_LIMIT_INTAKE_TEXT = "초과 선물은 1:1 문의로 접수 (우체국 실비 + 검수비·서비스료)";

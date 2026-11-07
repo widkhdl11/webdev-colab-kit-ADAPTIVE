@@ -4,11 +4,18 @@ import { fanSetsWaybill, receiveAndLabel, waybill } from "./office-helpers";
 // 차액 결제 통합 시험 공용 (payment INV-M11~M13). 시드 주문은 건드리지 않는다 — 새 주문(물건 이름 「시험 선물」)만 만든다.
 
 type Tier = "small" | "medium" | "large";
-const PRICE: Record<Tier, { total: number; carrier: number; inspection: number }> = {
-  small: { total: 6900, carrier: 4000, inspection: 1500 },
-  medium: { total: 8900, carrier: 5000, inspection: 2000 },
-  large: { total: 10900, carrier: 6500, inspection: 2500 },
-};
+type Price = { total: number; carrier: number; inspection: number };
+
+/** 지금 요금표(tier_prices) — 시험이 요금을 바꿔 둔 동안에도 그 값으로 주문을 만든다 */
+function pricesNow(): Record<Tier, Price> {
+  const out = {} as Record<Tier, Price>;
+  for (const line of psql(`select string_agg(tier || ':' || price_krw || '/' || carrier_cost_krw || '/' || inspection_fee_krw, ',') from public.tier_prices`).split(",")) {
+    const [tier, rest] = line.split(":");
+    const [total, carrier, inspection] = rest!.split("/").map(Number);
+    out[tier as Tier] = { total: total!, carrier: carrier!, inspection: inspection! };
+  }
+  return out;
+}
 
 export function code(n: number): string {
   const alphabet = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -19,6 +26,7 @@ export function code(n: number): string {
 export async function paidOrder(tiers: Tier[]): Promise<{ orderId: string; orderNo: string; requestId: string; boxIds: string[] }> {
   const orderNo = `FC-T${code(6)}`;
   const tossOrderId = `pay_test_${code(12).toLowerCase()}`;
+  const PRICE = pricesNow();
   const sum = (f: (t: Tier) => number) => tiers.reduce((a, t) => a + f(t), 0);
   const { data, error } = await adminClient().rpc("register_order", {
     p_fan_id: SEED.fanId,
@@ -47,8 +55,11 @@ export async function labeled(boxId: string): Promise<string> {
   return receiveAndLabel(await signedInClient("fankkuk_staff"), no);
 }
 
-export async function measure(qr: string, tier: string, who = "fankkuk_staff") {
-  return (await signedInClient(who)).rpc("office_record_measurement", { p_qr: qr, p_tier: tier });
+/** 실측 기록. cost 는 개인접수 우체국 실비(payment INV-M23) — 대형 초과일 때만 넣는다. 생략하면 칸을 보내지 않는다(기본 null). */
+export async function measure(qr: string, tier: string, who = "fankkuk_staff", cost?: number | null) {
+  const args: Record<string, unknown> = { p_qr: qr, p_tier: tier };
+  if (cost !== undefined) args.p_cost_krw = cost;
+  return (await signedInClient(who)).rpc("office_record_measurement", args);
 }
 
 export function differenceRow(orderId: string): string {

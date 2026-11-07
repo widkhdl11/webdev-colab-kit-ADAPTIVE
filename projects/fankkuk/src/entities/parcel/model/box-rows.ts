@@ -35,9 +35,14 @@ export type BoxState = (typeof BOX_STATES)[number];
 
 const state = z.enum(BOX_STATES);
 const tier = z.enum(["small", "medium", "large"]).nullable();
+// 팬 선물 상자만: 실측이 대형을 넘어 개인접수가 된 상자는 DB 가 크기 칸을 personal_intake 로 준다(payment INV-M23 ④)
+const giftTier = z.enum(["small", "medium", "large", "personal_intake"]).nullable();
 const waybill = z.string().nullable();
 
-export type BoxTier = z.infer<typeof tier>;
+export type BoxTier = z.infer<typeof giftTier>;
+
+/** 개인접수 상자의 크기 이름 — 구간 이름(「대형」) 대신 쓴다(payment INV-M23 ④, 용어집 「개인접수」) */
+export const PERSONAL_INTAKE_NAME = "개인접수";
 
 /** 입고 전(송장 없음·도착 기다림)에만 송장번호를 고친다. 입고되면 잠긴다(design-rules 8-1). DB 도 같은 때만 받는다(55000). */
 export function isWaybillEditable(s: BoxState): boolean {
@@ -63,11 +68,13 @@ export function fanBoxStateTag(s: BoxState): { text: string; tone: "warn" | "pla
 }
 
 export function boxTierName(t: BoxTier): string | null {
-  return t ? `${PARCEL_TIER_GUIDE[t].name} 상자` : null;
+  const size = boxSizeName(t);
+  return size ? `${size} 상자` : null;
 }
 
 /** 상자 크기 짧은 이름 「소형」 — 상자 이름 「상자 N · 소형」의 뒤쪽(용어집 6절 「상자 크기」). 크기를 모르면 null */
 export function boxSizeName(t: BoxTier): string | null {
+  if (t === "personal_intake") return PERSONAL_INTAKE_NAME;
   return t ? PARCEL_TIER_GUIDE[t].name : null;
 }
 
@@ -93,7 +100,7 @@ const giftBoxRow = z
   .object({
     box_id: z.string().uuid(),
     label: z.string(),
-    tier,
+    tier: giftTier,
     waybill_no: waybill,
     state,
     address_code: addressCode,

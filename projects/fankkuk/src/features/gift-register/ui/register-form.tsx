@@ -1,5 +1,6 @@
 "use client";
 
+import { DIFFERENCE_DEADLINE_DAYS } from "@/entities/payment/config/difference-deadline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,7 +10,7 @@ import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorTag } from "@/entities/creator/ui/creator-tag";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
-import { INTAKE_LIMIT_TEXT, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
+import { INTAKE_LIMIT_TEXT, OVER_LIMIT_INTAKE_TEXT, PARCEL_TIER_GUIDE, personalIntakeNotice } from "@/entities/parcel/model/size-tier";
 import { tierCountText } from "@/entities/parcel/model/box-rows";
 import { PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { formatDuration } from "@/shared/lib/format/datetime";
@@ -872,6 +873,8 @@ tierCountText(summary.counts) || "없음";
                 크기·무게 중 더 큰 요금 구간 적용
                 <br />
                 접수 한도: {INTAKE_LIMIT_TEXT}
+                <br />
+                {OVER_LIMIT_INTAKE_TEXT}
               </li>
               <li>실측 결과가 선택한 요금 구간을 초과하면 차액이 청구됩니다. 차액 결제 전에는 출고할 수 없습니다.</li>
               <li>실측 결과가 선택한 요금 구간보다 작아도 차액은 환불되지 않습니다.</li>
@@ -933,12 +936,12 @@ tierCountText(summary.counts) || "없음";
             </p>
             {/* payment INV-M8: 검수 불합격 반송은 상품 대금 칸만(지금은 0) — 검수비·반송 택배비를 뺀다 */}
             <p>
-              추적 장치 등 금지 물품이 발견되거나 상자가 접수 한도를 초과하면 반송됩니다.
-              <br />
-              접수 한도: {INTAKE_LIMIT_TEXT}
+              추적 장치 등 금지 물품이 발견되면 반송됩니다.
               <br />
               이 경우 검수비와 반송 배송비가 차감되어 환불 금액이 없습니다.
             </p>
+            {/* payment INV-M23: 접수 한도 초과는 반송이 아니라 개인접수(우체국 실비 기준 차액, 7일 미납이면 반송) */}
+            <p>{personalIntakeNotice(DIFFERENCE_DEADLINE_DAYS)}</p>
             {picked ? (
               <>
                 <hr />

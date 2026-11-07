@@ -1,7 +1,7 @@
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { DIFFERENCE_DEADLINE_DAYS } from "@/entities/payment/config/difference-deadline";
 import { CREATOR_CHECK_DAYS } from "@/entities/parcel/model/creator-check";
-import { INTAKE_LIMIT_TEXT, OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
+import { INTAKE_LIMIT_TEXT, PARCEL_TIER_GUIDE, personalIntakeNotice } from "@/entities/parcel/model/size-tier";
 import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { OPERATOR_NAME, PROMISE } from "@/shared/config/site-copy";
 import { toCheck, type LegalDoc } from "./legal-doc";
@@ -102,7 +102,7 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
               "선물 보내기 화면과 크리에이터 페이지의 「보낼 수 없는 물품」 목록에 있는 물품도 보낼 수 없습니다. 이 목록은 바뀔 수 있습니다.",
               `접수 한도: ${INTAKE_LIMIT_TEXT}`,
               "크리에이터가 받기 어려운 선물로 정해 둔 종류는 선물 보내기 화면에서 미리 안내합니다.",
-              `보낼 수 없는 물품이 발견되거나 ${OVERSIZE_RULE}는 검수 기준에 맞지 않는 상자로 처리해 돌려보냅니다. 이때는 검수비·서비스료·반송 택배비를 모두 빼므로 환불 금액이 없습니다. 다만 추적 장치가 확인된 상자는 사무실에 보관한 뒤 신고 여부에 따라 경찰에 넘기거나 돌려보내며, 어느 경우에도 환불 금액은 없습니다.`,
+              `보낼 수 없는 물품이 발견된 상자는 검수 기준에 맞지 않는 상자로 처리해 돌려보냅니다. 이때는 검수비·서비스료·반송 택배비를 모두 빼므로 환불 금액이 없습니다. 다만 추적 장치가 확인된 상자는 사무실에 보관한 뒤 신고 여부에 따라 경찰에 넘기거나 돌려보내며, 어느 경우에도 환불 금액은 없습니다.`,
             ],
           },
         ],
@@ -209,7 +209,7 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
               "차액을 결제하기 전에는 그 선물을 출고하지 않습니다.",
               `검수가 끝난 때부터 ${DIFFERENCE_DEADLINE_DAYS}일 안에 차액을 결제하지 않으면 상자를 반송합니다. 이때는 검수 기준에 맞지 않는 상자와 마찬가지로 환불 금액이 없습니다.`,
               "실제 측정한 요금 구간이 등록한 구간보다 낮더라도 차액은 환불하지 않습니다.",
-              `${OVERSIZE_RULE}는 차액 결제로 접수할 수 없습니다. 검수 불합격으로 반송됩니다.`,
+              personalIntakeNotice(DIFFERENCE_DEADLINE_DAYS),
               "추가 결제 알림은 알림을 꺼 두어도 보냅니다.",
             ],
           },

@@ -5,7 +5,8 @@ import { useRef, useState, type KeyboardEvent } from "react";
 import { INQUIRY_KIND_LABELS } from "@/entities/inquiry/model/inquiry-kind";
 import type { MyInquiry } from "@/entities/inquiry/model/my-inquiry";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
-import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
+import { DIFFERENCE_DEADLINE_DAYS } from "@/entities/payment/config/difference-deadline";
+import { PARCEL_TIER_GUIDE, personalIntakeNotice } from "@/entities/parcel/model/size-tier";
 import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { InquiryForm } from "@/features/inquiry-submit/ui/inquiry-form";
 import { formatDateTime } from "@/shared/lib/format/datetime";
@@ -59,7 +60,7 @@ const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
       },
       {
         q: "실제 상자 크기가 등록한 크기보다 크면 어떻게 되나요?",
-        a: `크기·무게 실측 요금 구간이 선택한 구간보다 높으면 차액을 결제해야 합니다. ${OVERSIZE_RULE}는 반송하며, 검수비·서비스료·반송 택배비 차감 후 환불 금액은 없습니다.`,
+        a: `크기·무게 실측 요금 구간이 선택한 구간보다 높으면 차액을 결제해야 합니다. ${personalIntakeNotice(DIFFERENCE_DEADLINE_DAYS)}`,
       },
     ],
   },
@@ -77,7 +78,7 @@ const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
       },
       {
         q: "검수는 어떻게 진행되나요?",
-        a: `팬이 보낸 상자는 원래 송장을 제거하고 겉면·추적 장치를 검사합니다. ${PROMISE.inspectionOpen}\n보낼 수 없는 물품이 있거나 ${OVERSIZE_RULE}는 반송합니다. 단, 추적 장치가 확인된 상자는 보관 후 크리에이터의 신고 선택에 따라 수사기관에 인계하거나 반송합니다.\n이 경우 검수비·서비스료·반송 택배비가 차감되어 환불 금액이 없습니다.`,
+        a: `팬이 보낸 상자는 원래 송장을 제거하고 겉면·추적 장치를 검사합니다. ${PROMISE.inspectionOpen}\n보낼 수 없는 물품이 있는 상자는 반송합니다. 단, 추적 장치가 확인된 상자는 보관 후 크리에이터의 신고 선택에 따라 수사기관에 인계하거나 반송합니다.\n이 경우 검수비·서비스료·반송 택배비가 차감되어 환불 금액이 없습니다.`,
       },
     ],
   },

@@ -23,7 +23,15 @@ import a from "@/shared/ui/admin.module.css";
 import { ScanInput, type ScanInputHandle } from "@/shared/ui/scan-input";
 import w from "@/shared/ui/work.module.css";
 import { postInspect } from "../api/post-inspect-client";
-import { initialMeasuredTier, MEASURED_TIERS, measurementFromBody, type MeasuredTier, type Measurement } from "../model/measurement";
+import {
+  initialMeasuredTier,
+  MEASURED_TIERS,
+  measurementFromBody,
+  parseCostText,
+  PERSONAL_INTAKE_COST_MAX_KRW,
+  type MeasuredTier,
+  type Measurement,
+} from "../model/measurement";
 
 // 검수 작업 화면 (office-workflow INV-W1·W4, design-rules 8-1, 시안 admin/work-inspect.html).
 // 라벨 QR 로 상자를 불러와 검수 기록을 저장하고, 같은 QR 을 한 번 더 스캔하면 DB 가 다음 상태(검수 완료·반송 대기)를 정한다.
@@ -91,8 +99,11 @@ function MarkChoice({ name, legend, foundLabel, clearLabel, value, disabled, onC
 function measurementText(m: Measurement): string {
   if (m.result === "difference") return `차액 ${m.amountKrw.toLocaleString("ko-KR")}원 결제를 팬에게 요청했어요. 팬이 내기 전에는 송장이 나가지 않아요.`;
   if (m.result === "none") return "신고한 구간 이하라 차액이 없어요.";
-  return "대형을 넘어 검수 불합격이에요. 검수 결과와 상관없이 QR 을 다시 스캔하면 반송 대기로 가요.";
+  return "닫힌 주문이라 대형 초과는 검수 불합격이에요. 검수 결과와 상관없이 QR 을 다시 스캔하면 반송 대기로 가요.";
 }
+
+/** 개인접수 실비 칸(payment INV-M23) — 비운 채 기록하면 여기로 커서를 옮긴다 */
+const COST_ID = "measure-cost";
 
 /** 판정 칸의 첫 선택지 — 판정 없이 저장하면 여기로 커서를 옮긴다 */
 const VERDICT_FIRST_ID = "tracker-verdict-tracker";
@@ -120,6 +131,9 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
   const [openedFlagged, setOpenedFlagged] = useState(false);
   const [measuredTier, setMeasuredTier] = useState<MeasuredTier | null>(null);
   const [measurement, setMeasurement] = useState<Measurement | null>(null);
+  // 개인접수 우체국 실비(payment INV-M23) — 대형 초과를 골랐을 때만 칸이 보이고 꼭 넣어야 한다
+  const [costText, setCostText] = useState("");
+  const [costFlagged, setCostFlagged] = useState(false);
 
   const allowed = allowedOutcomes(checks);
   const chosen = inspectionResultOf(checks, outcome)?.outcome ?? null;
@@ -206,14 +220,29 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
     // 신고 구간을 미리 골라 둔다(S4h) — 역조공은 실측이 없다
     setMeasuredTier(next.kind === "gift" ? initialMeasuredTier(next.tier) : null);
     setMeasurement(null);
+    setCostText("");
+    setCostFlagged(false);
   }
 
   /** 실측 구간 기록(payment INV-M11). 상자마다 한 번 — 두 번째는 서버가 거부한다. */
   async function saveMeasurement() {
     if (!parcel || busy || !measuredTier) return;
+    let costKrw: number | undefined;
+    if (measuredTier === "oversize") {
+      const cost = parseCostText(costText);
+      if (cost === null) {
+        setError({ title: "우체국 실비를 넣어 주세요", message: "대형 초과는 우체국 실비(원)가 있어야 기록할 수 있어요. 숫자만 넣어 주세요.", local: true });
+        setCostFlagged(true);
+        document.getElementById(COST_ID)?.focus();
+        return;
+      }
+      costKrw = cost;
+    }
     setBusy(true);
     setError(null);
-    const saved = await postInspect({ kind: "measure", qr: parcel.qr, tier: measuredTier });
+    const saved = await postInspect(
+      costKrw === undefined ? { kind: "measure", qr: parcel.qr, tier: measuredTier } : { kind: "measure", qr: parcel.qr, tier: measuredTier, costKrw },
+    );
     setBusy(false);
     // 성공·실패 모두 스캔 칸으로 — 다음 동작(검수 기록·QR 다시 스캔)이 스캐너에서 시작한다
     scan.current?.focus();
@@ -355,7 +384,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
           </section>
         )}
 
-        {/* 실측 구간(payment INV-M11) — 팬 선물만. 신고보다 크면 차액 결제 요청, 대형 초과면 검수 불합격 */}
+        {/* 실측 구간(payment INV-M11) — 팬 선물만. 신고보다 크면 차액 결제 요청, 대형 초과면 우체국 실비로 개인접수 차액(INV-M23 — 닫힌 주문이면 검수 불합격) */}
         {parcel && canInspect && phase !== "finished" && parcel.kind === "gift" && (
           <form
             className={w.result}
@@ -385,6 +414,28 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
                 <p className={a.hint}>신고한 구간을 미리 골라 뒀어요. 다를 때만 바꿔요. 검수 완료 전에 꼭 「실측 기록」을 눌러요. 신고보다 크면 차액만 팬에게 따로 결제 요청돼요. 신고 이하면 차액도 환불도 없어요. 실측은 상자마다 한 번만 기록해요.</p>
               </div>
             </fieldset>
+            {measuredTier === "oversize" && measurement === null ? (
+              <div className={a.field}>
+                <label htmlFor={COST_ID}>우체국 실비(원)</label>
+                <input
+                  id={COST_ID}
+                  className={a.input}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  aria-describedby={`${COST_ID}-hint`}
+                  aria-invalid={costFlagged}
+                  value={costText}
+                  onChange={(e) => {
+                    setCostText(e.target.value);
+                    setCostFlagged(false);
+                  }}
+                />
+                <p id={`${COST_ID}-hint`} className={a.hint}>
+                  대형 택배 원가 이상 {PERSONAL_INTAKE_COST_MAX_KRW.toLocaleString("ko-KR")}원 이하. 이 실비에 대형 검수비·서비스료를 더한 금액에서 팬이 낸 요금을 뺀 차액을 팬에게 결제 요청해요.
+                </p>
+              </div>
+            ) : null}
             {measurement ? (
               <div className={`${a.note} ${measurement.result === "none" ? a.noteOk : w.noteWarn}`}>
                 <InfoIcon />

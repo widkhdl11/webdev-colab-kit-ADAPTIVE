@@ -1,3 +1,4 @@
+import { DIFFERENCE_DEADLINE_DAYS } from "@/entities/payment/config/difference-deadline";
 import { CREATOR_CHECK_DAYS } from "@/entities/parcel/model/creator-check";
 import { OVERSIZE_RULE } from "@/entities/parcel/model/size-tier";
 import { OPERATOR_NAME, PROMISE } from "@/shared/config/site-copy";
@@ -91,7 +92,7 @@ export const INSPECTION_DOC: LegalDoc = {
           kind: "steps",
           items: [
             "보낼 수 없는 물품이 발견된 상자는 팬에게 반송합니다. 다만 추적 장치가 확인된 상자는 위 「추적 장치 발견 시 처리」의 절차에 따라 처리합니다.",
-            `${OVERSIZE_RULE}도 팬에게 반송합니다.`,
+            `${OVERSIZE_RULE}는 반송하지 않고 개인접수로 바꿔 우체국 실비 기준 차액을 결제 요청합니다. ${DIFFERENCE_DEADLINE_DAYS}일 안에 결제하지 않으면 팬에게 반송합니다.`,
             "보낼 수 없는 물품 목록은 선물 보내기 화면과 크리에이터 페이지에 있습니다.",
             "돌려보낼 때는 보낸 사람이 확인한 주소로 보냅니다.",
             "돌려보낼 상자가 생기면 「반송 주소 확인」에서 받을 주소를 확인하거나 바꾼 뒤 「확인」을 눌러 주세요. 「확인」을 누른 때의 주소로 보냅니다.",

@@ -7,6 +7,8 @@
 
 ## 미결
 
+- [ ] **약관·환불 규정의 「대형 초과는 접수하지 않음·검수 불합격 반송」 문장** (2026-11-07, 개인접수 INV-M23 구현 중 발견) — 화면·안내서·고객센터·검수 안내는 개인접수(우체국 실비 기준 차액, 7일 미납이면 반송)로 고쳤다. 법정 문서는 그대로다: `src/widgets/legal/model/terms-doc.ts` 187·206·263·316줄, `src/widgets/legal/model/refund-doc.ts` 54·133줄(`OVERSIZE_RULE_FORMAL` 을 쓰는 줄). 206줄 「차액 결제 대상이 아닌 검수 불합격」은 지금 동작과 정반대 · 약관 개정(시행일·고지)과 함께 사용자가 문장을 정할 때
+
 - [ ] **택배사 회수(방문수거) API 로 큰 상자 수거 신청** (2026-11-07, 사용자 확정문 15) — 지금은 크리에이터가 택배 앱 「방문접수」로 직접 신청하고 팬꾹은 대신 신청하지 않는다(주소 여는 범위를 넓히지 않으려고) · 택배사 계약 뒤 회수 API 를 쓸 수 있게 되면
 - [ ] **전화번호 보호 리뷰 낮음 묶음** (2026-11-07 code-reviewer·ux-reviewer 낮음) — ① `src/shared/api/phone-crypto/phone-crypto.ts` 의 번호 꼴 정규식이 `shared/lib/validation/phone-shape.ts` 의 MOBILE_PHONE_SHAPE 를 다시 적은 중복 ② 같은 파일 주석은 「v1 으로 어느 키로 잠갔는지 가린다」인데 키 교체 길이 아직 없고, FANKKUK_ 환경 변수 이름·DB 묶음 꼴이 shared 에 들어와 있다 ③ `app/api/auth/password/reset/code/check/route.ts` 의 deps.phoneKeys 는 안 쓰는 의존성, `dispatch-notifications.ts` 는 카카오 줄마다 키를 다시 읽는다 ④ `features/phone-change/model/change-phone.ts` 가 phoneSchema 대신 정리를 따로 두 번 한다 ⑤ 비밀번호 찾기에서 시간 지남·다섯 번 틀림 뒤 「확인」 버튼이 `aria-disabled` 로 남는다(명세상 할 수 있는 것은 다시 입력·다시 받기뿐, 화면에서 확인 필요) · 번호 키 교체 작업이나 이 파일들을 다시 만질 때
 - [ ] **차액 결제에서 돌아왔을 때 주문이 거절·만료·취소여도 「기한 지남」으로 안내된다** (2026-11-06 security-reviewer 낮음) — `src/features/difference-pay/model/confirm-difference.ts` 는 승인 권리가 거부되고 기록이 결제 대기면 모두 「기한 지남」(closed)으로 보낸다. 주문 상태 때문에 거부된 경우도 같은 문구다(고치기 전에는 「실패」였으니 나빠진 것은 아니다). 돈이 빠지는 경로는 없다 · 고치는 길: 거부 이유를 나눠 돌려주거나 문구를 「낼 수 없음」으로 넓힌다. 차액 결제 화면을 다시 만질 때

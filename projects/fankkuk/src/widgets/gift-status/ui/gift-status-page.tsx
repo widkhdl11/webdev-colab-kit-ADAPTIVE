@@ -1,4 +1,5 @@
 import { statusTagClass } from "@/shared/ui/status-tone";
+import { DIFFERENCE_DEADLINE_DAYS } from "@/entities/payment/config/difference-deadline";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { withApprovalDeadline, type FanGiftView, type FanStep } from "@/entities/order/model/fan-view";
@@ -13,7 +14,7 @@ import {
   hasShipped,
   showsSteps,
 } from "@/entities/order/ui/fan-stage-copy";
-import { INTAKE_LIMIT_TEXT } from "@/entities/parcel/model/size-tier";
+import { personalIntakeNotice } from "@/entities/parcel/model/size-tier";
 import { boxSizeName, fanBoxStateTag, giftBoxName, tierCountText, hasArrived, isMissing, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
 import { finderBoxesBelowTodo, giftAddressCode, giftFinderBoxes, needsEarlySendAck } from "@/features/box-waybill/model/box-targets";
 import { EarlySendGate } from "@/features/box-waybill/ui/early-send-gate";
@@ -232,13 +233,13 @@ export function GiftStatusPage({
         {view.outcome === "returned" ? (
           <div className={s.sec} data-sec="">
             <h2 className={s.secTitle}>반송 완료</h2>
-            {/* 문구 3 다듬은본 — 크기·무게는 그 문서 기준(INV-M11 과의 불일치는 확인 필요 항목) */}
+            {/* 문구 3 다듬은본. 접수 한도 초과는 반송이 아니라 개인접수(payment INV-M23) — 차액을 7일 안에 내지 않았을 때 반송된다 */}
             <p className={s.desc}>
-              추적 장치 등 금지 물품이 발견되거나 상자가 접수 한도를 초과하면 반송됩니다.
-              <br />
-              접수 한도: {INTAKE_LIMIT_TEXT}
+              추적 장치 등 금지 물품이 발견되면 반송됩니다.
               <br />
               이 경우 검수비와 반송 배송비가 차감되어 환불 금액이 없습니다.
+              <br />
+              {personalIntakeNotice(DIFFERENCE_DEADLINE_DAYS)}
             </p>
           </div>
         ) : null}

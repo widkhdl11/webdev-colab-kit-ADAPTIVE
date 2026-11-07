@@ -124,6 +124,48 @@ describe("실측 구간 — 신고 구간을 미리 골라 둔다 (INV-W4 S4h, �
   });
 });
 
+describe("개인접수 — 대형 초과는 우체국 실비를 같이 넣는다 (payment INV-M23)", () => {
+  const costInput = () => host.querySelector<HTMLInputElement>("#measure-cost");
+  const typeCost = (v: string) => {
+    const el = costInput()!;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+    act(() => {
+      setter?.call(el, v);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  };
+
+  it("INV-M23: 실비 칸은 대형 초과를 골랐을 때만 보이고, 넣은 실비를 원 단위 숫자로 함께 보낸다", async () => {
+    await loadBox("small");
+    expect(costInput()).toBeNull();
+    pick("measured", "oversize");
+    expect(host.querySelector(`label[for="measure-cost"]`)?.textContent).toBe("우체국 실비(원)");
+    typeCost("13,000");
+    api.postInspect.mockResolvedValueOnce({ kind: "ok", body: { measurement: { result: "difference", amountKrw: 11500 } } });
+    await click("실측 기록");
+    expect(writesOf("measure")).toEqual([{ kind: "measure", qr: QR, tier: "oversize", costKrw: 13000 }]);
+  });
+
+  it("INV-M23 (실패경로): 대형 초과인데 실비가 비었으면 보내지 않고 실비 칸 안내를 보인다", async () => {
+    await loadBox("small");
+    pick("measured", "oversize");
+    await click("실측 기록");
+    expect(writesOf("measure")).toEqual([]);
+    expect(host.textContent).toContain("우체국 실비를 넣어 주세요");
+    expect(costInput()!.getAttribute("aria-invalid")).toBe("true");
+  });
+
+  it("INV-M23 (실패경로): 서버가 실비를 거부하면 그 안내를 그대로 보인다", async () => {
+    await loadBox("small");
+    pick("measured", "oversize");
+    typeCost("100");
+    api.postInspect.mockResolvedValueOnce({ kind: "failed", status: 400, message: "우체국 실비를 확인해 주세요.", reason: null });
+    await click("실측 기록");
+    expect(writesOf("measure")).toEqual([{ kind: "measure", qr: QR, tier: "oversize", costKrw: 100 }]);
+    expect(host.textContent).toContain("우체국 실비를 확인해 주세요.");
+  });
+});
+
 describe("추적기 판정 (INV-W4 S4c, 문제집 D2)", () => {
   it("INV-W4 (실패경로): 반응이 나왔는데 판정 없이 저장하면 기록을 보내지 않고, 판정 칸이 오류로 표시되고 첫 선택지로 커서가 간다", async () => {
     await loadBox();
