@@ -1005,6 +1005,8 @@ const MOVED_PROFILE_COLUMNS = [
   "order_cancellations.canceled_by",
   "orders.fan_id",
   "owner_setting.owner_user_id",
+  // 경로표·기본 경로·팬에게 보내기 택배비 변경 기록의 대표(admin-console INV-K15) — 운영자가 누른 기록이라 탈퇴 회원을 가리키지 않는다
+  "pricing_setting_changes.changed_by",
   "prohibited_item_changes.changed_by",
   "refunds.manual_by",
   "refunds.requested_by",

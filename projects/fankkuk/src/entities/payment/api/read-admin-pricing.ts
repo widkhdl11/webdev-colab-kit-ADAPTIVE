@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { carrierPricingFromRow, type CarrierPricing } from "../model/carrier-pricing";
 import { priceChangesFromRows, type PriceChange } from "../model/price-change";
 import { priceTableFromRows, type PriceTable } from "../model/price-table";
 
@@ -19,4 +20,13 @@ export async function readAdminPriceChanges(client: Pick<SupabaseClient, "rpc">)
   const changes = priceChangesFromRows(data);
   if (!changes) throw new Error("요금 변경 기록의 형식이 다르다");
   return changes;
+}
+
+/** 경로표·기본 경로·팬에게 보내기 택배비 (admin-console INV-K15). 운영자가 아니면 DB 가 null 을 준다 — 운영자 화면에서는 실패로 본다. */
+export async function readAdminCarrierPricing(client: Pick<SupabaseClient, "rpc">): Promise<CarrierPricing> {
+  const { data, error } = await client.rpc("admin_carrier_pricing");
+  if (error) throw new Error(`경로표를 읽지 못했다: ${error.code}`);
+  const pricing = carrierPricingFromRow(data);
+  if (!pricing) throw new Error("경로표가 비었거나 형식이 다르다");
+  return pricing;
 }

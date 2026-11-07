@@ -33,6 +33,10 @@ describe("요금표 저장 응답", () => {
     expect(pricingErrorReply("22023")).toEqual({ status: 400, body: { message: "요금표 조건에 맞지 않아요." } });
   });
 
+  it("INV-K16 (a, 실패경로): DB 가 기본 경로 원가 + 검수비 > 받는 값(P0041)으로 거부하면 400 — 500 으로 뭉개지 않는다", () => {
+    expect(pricingErrorReply("P0041").status).toBe(400);
+  });
+
   it("실패경로: 그 밖의 오류·코드 없음은 500 — DB 문구를 그대로 내보내지 않는다", () => {
     expect(pricingErrorReply("P0001").status).toBe(500);
     expect(pricingErrorReply(undefined).status).toBe(500);

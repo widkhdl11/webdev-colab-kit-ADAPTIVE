@@ -13,6 +13,7 @@ const MESSAGE_NOT_FOUND = "요청한 항목을 찾을 수 없습니다.";
 const MESSAGE_OWNER_ONLY = "요금은 대표만 바꿀 수 있어요.";
 const MESSAGE_RULES = "요금표 조건에 맞지 않아요.";
 const MESSAGE_FAILED = "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+const MESSAGE_BELOW_ROUTE = "받는 값이 기본 경로의 택배 원가 + 검수비보다 작아요. 아래 경로표의 기본 경로를 확인해 주세요.";
 
 const won = z.number().int().min(0).max(10_000_000);
 const rowShape = z.object({ tier: z.enum(PRICED_TIERS), price_krw: won, carrier_cost_krw: won, inspection_fee_krw: won }).strict();
@@ -20,10 +21,11 @@ const bodyShape = z.object({ rows: z.array(rowShape).length(3) }).strict();
 
 export type PricingRow = z.infer<typeof rowShape>;
 
-/** DB 오류 코드 → 응답. 42501 = 대표가 아님(INV-K2), 22023 = 요금표 조건 위반(INV-K4). 나머지는 내부 오류. */
+/** DB 오류 코드 → 응답. 42501 = 대표가 아님(INV-K2), 22023 = 요금표 조건 위반(INV-K4), P0041 = 기본 경로 원가 + 검수비 > 받는 값(INV-K16 (a)). 나머지는 내부 오류. */
 export function pricingErrorReply(code: string | undefined): PricingReply {
   if (code === "42501") return { status: 403, body: { message: MESSAGE_OWNER_ONLY } };
   if (code === "22023") return { status: 400, body: { message: MESSAGE_RULES } };
+  if (code === "P0041") return { status: 400, body: { message: MESSAGE_BELOW_ROUTE } };
   return { status: 500, body: { message: MESSAGE_FAILED } };
 }
 

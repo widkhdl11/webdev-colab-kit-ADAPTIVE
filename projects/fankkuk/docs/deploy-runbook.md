@@ -64,6 +64,17 @@ insert into public.owner_setting (owner_user_id) select id from public.profiles 
 
 가입한 계정의 로그인 이메일은 `<아이디>@login.fankkuk.invalid` 꼴이다(메일이 가지 않는 예약 도메인).
 
+## 배포 전 요금 검사 (admin-console INV-K16 (c), 2026-11-07)
+
+배포 전에 대상 DB 에서 요금 검사를 돌려 실패 목록이 비었는지 본다. 한 줄이라도 나오면 /admin/pricing 에서 대표가 받는 값·택배비를 고친 뒤 다시 본다:
+
+```
+npx supabase db query --linked -o csv "select * from public.admin_pricing_check()"
+```
+
+기대값: 머리줄만(실패 0줄). `fan_gift` = 팬 선물 받는 값 < 기본 경로 원가 + 검수비, `fan_send` = 팬에게 보내기 택배비 < 기본 경로 원가(100원 반올림), `route_incomplete` = 기본 경로에 빈칸.
+요금표의 택배 원가 칸은 이 마이그레이션(20261107000002)이 덮지 않는다 — 기본 경로 값과 다르면 대표가 경로표를 한 번 저장할 때 맞춰진다.
+
 ## 알려진 차이 (지금 로컬 DB 와)
 
 - 상자 검수 기록의 검사 조건 이름: 로컬은 `office_inspections_kind_check`, 새 DB 는 `office_inspections_check`. 조건 내용은 같고 이름으로 찾는 코드가 없다.

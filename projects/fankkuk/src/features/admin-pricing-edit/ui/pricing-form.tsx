@@ -102,6 +102,7 @@ export function PricingForm({ table, editable }: { table: PriceTable; editable: 
               {FIELDS.map((f) => (
                 <th key={f.key} scope="col" className={a.num}>
                   {f.name}
+                  {f.key === "carrierCostKrw" && <span className={a.faint}> 기본 경로</span>}
                 </th>
               ))}
               <th scope="col" className={a.num}>
@@ -121,7 +122,8 @@ export function PricingForm({ table, editable }: { table: PriceTable; editable: 
                   <td className={a.sub}>{guide.rule}</td>
                   {FIELDS.map((f) => (
                     <td key={f.key} className={a.num}>
-                      {editable ? (
+                      {/* 택배 원가 칸은 기본 경로 값이다(INV-K15) — 아래 경로표에서 바꾼다 */}
+                      {editable && f.key !== "carrierCostKrw" ? (
                         <>
                           <label className="sr-only" htmlFor={`price-${tier}-${f.key}`}>
                             {guide.name} {f.name}

@@ -1,11 +1,13 @@
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
+import type { CarrierPricing } from "@/entities/payment/model/carrier-pricing";
 import { PRICE_FIELD_NAME, type PriceChange } from "@/entities/payment/model/price-change";
 import type { PriceTable } from "@/entities/payment/model/price-table";
 import { formatWon } from "@/features/admin-pricing-edit/model/price-input";
+import { CarrierPricingForm } from "@/features/admin-pricing-edit/ui/carrier-pricing-form";
 import { PricingForm } from "@/features/admin-pricing-edit/ui/pricing-form";
 import a from "@/shared/ui/admin.module.css";
 
-// 관리자 「요금표」 본문 (admin-console INV-K2·K4·K5, 시안 admin/pricing.html).
+// 관리자 「요금표」 본문 (admin-console INV-K2·K4·K5·K15·K16, 시안 admin/pricing.html, ux pages/admin-pricing.md).
 // 대표만 고칠 수 있다 — 직원에게는 입력칸·버튼 없이 값만 보인다. 바꾼 기록은 고치거나 지울 수 없다(DB 가 막는다).
 
 const stamp = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
@@ -26,9 +28,9 @@ function InfoIcon() {
   );
 }
 
-type Props = { table: PriceTable; changes: readonly PriceChange[]; access: "staff" | "owner" };
+type Props = { table: PriceTable; changes: readonly PriceChange[]; carrier: CarrierPricing; access: "staff" | "owner" };
 
-export function PricingPanel({ table, changes, access }: Props) {
+export function PricingPanel({ table, changes, carrier, access }: Props) {
   const owner = access === "owner";
   return (
     <>
@@ -55,11 +57,14 @@ export function PricingPanel({ table, changes, access }: Props) {
           </p>
         </div>
 
-        <PricingForm table={table} editable={owner} />
+        {/* 경로표 저장이 받는 값·택배 원가 칸을 바꿀 수 있어, 서버 요금표가 바뀌면 입력칸을 새 값으로 다시 그린다 */}
+        <PricingForm key={JSON.stringify(table)} table={table} editable={owner} />
 
         <p className={a.hint}>
-          구간 기준(크기·무게)은 이 화면에서 바꾸지 않아요. 크기와 무게 중 큰 쪽으로 구간을 정하고, 대형을 넘으면 받지 않아요. 역조공 요금은 받는 값 − 검수비로 늘 자동 계산해요.
+          구간 기준(크기·무게)은 이 화면에서 바꾸지 않아요. 크기와 무게 중 큰 쪽으로 구간을 정하고, 대형을 넘으면 개인접수예요. 역조공 요금은 받는 값 − 검수비로 늘 자동 계산해요.
         </p>
+
+        <CarrierPricingForm pricing={carrier} table={table} editable={owner} />
 
         <section aria-labelledby="h-price-log">
           <div className={a.sectionH}>
