@@ -15,6 +15,14 @@ const prices = {
 const docs: readonly LegalDoc[] = [termsDoc(prices), privacyDoc()];
 
 describe("약관·개인정보처리방침 글", () => {
+  it("INV-M23: 약관·환불 규정은 대형 초과 상자를 개인접수로 안내하고, 접수 거부·검수 불합격 반송으로 적지 않는다", () => {
+    for (const doc of [termsDoc(prices), refundDoc(prices)]) {
+      const all = JSON.stringify(doc);
+      expect(all).toContain("개인접수");
+      expect(all).not.toContain("초과하는 상자는 접수하지 않습니다");
+      expect(all).not.toMatch(/발견된 상자, 세 변의 합이/);
+    }
+  });
   it("목차 앵커가 문서마다 겹치지 않고 주소에 그대로 쓸 수 있는 꼴이다", () => {
     for (const doc of docs) {
       const ids = doc.sections.map((s) => s.id);

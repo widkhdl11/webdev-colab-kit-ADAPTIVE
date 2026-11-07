@@ -51,7 +51,7 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
               amounts: [won(prices[t].priceKrw)],
             })),
           },
-          { kind: "text", text: `${OVERSIZE_RULE_FORMAL}는 접수하지 않습니다.` },
+          { kind: "text", text: `${OVERSIZE_RULE_FORMAL}는 선물 등록에서 선택할 수 없으며, 1:1 문의로 개인접수합니다. 개인접수 요금은 우체국 창구 실비에 검수비와 서비스료를 더한 금액입니다.` },
         ],
       },
       {
@@ -130,7 +130,7 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
               {
                 title: "검수 불합격에 따른 반송",
                 fields: [
-                  ["적용 대상", `보낼 수 없는 물품이 발견된 상자, ${OVERSIZE_RULE_FORMAL}, 또는 이용약관 제10조에 따라 수령 의사를 확인한 상자 중 크리에이터가 돌려보내기를 선택했거나 ${CREATOR_CHECK_DAYS}일 이내에 답하지 않은 상자`],
+                  ["적용 대상", `보낼 수 없는 물품이 발견된 상자, 또는 이용약관 제10조에 따라 수령 의사를 확인한 상자 중 크리에이터가 돌려보내기를 선택했거나 ${CREATOR_CHECK_DAYS}일 이내에 답하지 않은 상자`],
                   ["환불 금액", "검수비·서비스료·반송 택배비를 공제하므로 환불 금액이 없습니다.", "none"],
                   ["위치 추적 장치가 확인된 상자", "보관·수사기관 인계·반송 중 어느 경우에도 환불 금액은 없습니다.", "none"],
                 ],
