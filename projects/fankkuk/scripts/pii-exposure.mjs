@@ -60,11 +60,9 @@ export const ALLOWED = [
 
 // 로그인 키로 부를 수 있으면서 개인정보 구역에 닿는 함수 — 무엇을 돌려주는지 사람이 보고 올린 것만
 export const PII_FUNCTIONS = {
-  accept_revgift: "역조공 받기 — 팬의 등록 주소 암호문을 그 몫에 복사만 한다, 돌려주는 것 없음(reverse-gift INV-R4)",
-  // 팬 받을 주소(address-protection INV-P17, manual/0019) — 로그인한 팬 본인 칸만
-  set_my_fan_address: "팬 받을 주소 저장 — 봉인된 값과 이름표를 저장만 한다, 돌려주는 것은 결과 글자(saved·not_fan)",
-  delete_my_fan_address: "팬 받을 주소 지우기 — 돌려주는 것은 결과 글자(deleted·none·not_fan)",
-  my_fan_address_status: "본인 받을 주소의 등록 여부·고른 이름표·바꾼 시각만, 주소 값은 돌려주지 않는다(address-protection INV-P16·P17)",
+  accept_revgift: "역조공 받기 — 받기 창에서 봉인한 주소를 그 몫에 저장만 한다, 돌려주는 것 없음(reverse-gift INV-R4, manual/0032)",
+  // 팬 선물 반송 주소(payment INV-M25, manual/0032) — 로그인한 보낸 사람 본인의 결제 대기 주문에만. 팬 등록 주소 함수 셋은 0032 가 지웠다
+  save_my_order_return_address: "결제 때 반송 주소 저장 — 봉인된 값을 본인 주문 사본에 저장만 한다, 돌려주는 것은 결과 글자(saved·not_found·closed)",
   confirm_my_email: "확인 메일 토큰으로 이메일을 확정한다, 돌려주는 것은 결과 글자(my-account INV-A7)",
   my_account: "내 정보 — 본인 이메일·가린 번호만(my-account INV-A2, 위 허용 칸)",
   my_creator_address_status: "본인 주소의 등록 여부·고른 이름표·바꾼 시각만, 주소 값은 돌려주지 않는다(address-protection INV-P9·P16)",
@@ -89,8 +87,8 @@ export const PII_FUNCTIONS = {
   office_record_police_handover: "경찰 인계 기록 → 몫 정리 경로, 돌려주는 것은 결과 글자(handed)",
   // 처분 대상 상자의 처분 기록(office-workflow INV-W15). 같은 office_sync 경로로 닿는다(처분된 몫 상자의 몫 닫기 — 받는 팬 주소 복사본을 지운다)
   office_record_disposal: "처분 기록 → 몫 정리 경로(주소를 지우는 길), 돌려주는 것은 결과 글자(disposed)",
-  // 반송 주소 확인(office-workflow INV-W15 · address-protection INV-P18, manual/0020) — 로그인한 보낸 사람 본인의 상자에만, 등록 주소 암호문을 상자에 복사만 한다
-  confirm_return_address: "반송 주소 확인 — 보낸 사람 본인의 등록 주소 암호문을 그 상자에 복사만 한다, 돌려주는 것은 결과 글자(confirmed·not_found·no_address·expired·closed)",
+  // 반송 주소 확인(office-workflow INV-W15 · address-protection INV-P18, manual/0020·0032) — 로그인한 보낸 사람 본인의 상자에만, 주문 사본·새 봉인·크리에이터 등록 주소를 상자에 복사만 한다
+  confirm_return_address: "반송 주소 확인 — 보낸 사람 본인 상자에 반송 주소 암호문을 복사만 한다, 돌려주는 것은 결과 글자(confirmed·not_found·no_address·expired·closed)",
   // 운영자 몫 옮기기(inbound-address-code INV-C11) — 옮긴 상자로 office_sync 를 부른다. 주소를 읽어 돌려주지 않는다
   // 운영자 잇기(inbound-address-code INV-C12) — 입고 마무리(office_finish_held_receive → office_sync)로 닿는다. 돌려주는 것은 결과 글자(linked)
   admin_link_held_parcel: "6자리 없이 온 상자를 문의한 팬의 입고 전 상자에 잇기 → 몫 정리 경로, 돌려주는 것은 결과 글자(linked)",

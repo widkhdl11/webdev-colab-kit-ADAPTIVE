@@ -1,6 +1,8 @@
 -- 선물함 신청의 받을 주소 사본 — 사본 표 · 사본 저장 · 사본 삭제.
 -- 스펙: docs/specs/revgift-box.md INV-GB6·GB7·GB20 (S6·S6b·S7·S7c), 순서: workspace/revgift-box-plan.md 2부.
--- 사람이 직접 적용한다(개인정보 구역 pii 의 표·함수를 만든다). 마이그레이션 20261108000004_revgift_box_apply.sql 과 manual 0019·0030 다음에 적용한다(파일 첫 검사가 본다).
+-- 2026-11-08 다시 씀(적용 전) — 팬 주소 등록을 없애(DECISIONS 2026-11-08) 「봉인이 없으면 등록 주소를 복사」하던 갈래를 뺐다. 이제 봉인이 없으면 거부한다.
+-- 사람이 직접 적용한다(개인정보 구역 pii 의 표·함수를 만든다). 마이그레이션 20261108000004_revgift_box_apply.sql 과 manual 0005 다음에 적용한다(파일 첫 검사가 본다).
+-- 이 파일 다음에 0032(팬 등록 주소 지우기)를 적용한다.
 --
 -- 적용(로컬, bash): bash /c/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/projects/fankkuk/supabase/manual/apply-0031.sh
 -- 확인: npx vitest run --config vitest.integration.config.mts revgift-box-apply-db
@@ -8,12 +10,11 @@
 --
 -- 무엇을 만드나
 --   1) pii.revgift_box_addresses — 신청 하나에 사본 하나(봉인 암호문 + 할증 구분 + 넣은 시각). 화면 쪽 키·서버 키 모두 읽지 못한다.
---      암호문은 팬 브라우저가 봉인한 값(INV-P1)이거나 신청 때 복사한 설정의 등록 주소(INV-GB6, reverse-gift INV-R4)다.
+--      암호문은 팬 브라우저가 신청 때 봉인한 값(INV-P1·GB6)뿐이다.
 --   2) pii.revgift_box_save_copy(신청, 팬, 봉인, 구분) — 신청 함수(public.revgift_box_apply)가 같은 처리 안에서 부른다.
---      봉인이 null 이면 그 팬의 등록 주소 암호문과 구분을 복사하고(등록 주소 줄을 잠근 채), 등록 주소가 없으면 P0026.
---      봉인이 있으면 꼴(22023)과 구분 목록(22023)을 다시 본다. 기록 한 줄(copied·entered, 주소 값 없음).
+--      봉인이 없거나 꼴이 아니면, 구분이 목록에 없으면 22023(INV-GB6 — 등록 주소를 복사하는 길은 없다). 기록 한 줄(entered, 주소 값 없음).
 --   3) pii.revgift_box_drop_copies(신청 목록, 까닭) — 마감(제외된 신청)·선물함 취소(모든 신청)·신청 취소가 같은 처리 안에서 부른다.
---      사본이 있던 신청마다 지우고 기록 한 줄(deleted + 까닭). 팬의 설정 등록 주소는 건드리지 않는다(INV-GB20).
+--      사본이 있던 신청마다 지우고 기록 한 줄(deleted + 까닭)(INV-GB20).
 --   두 함수는 아무에게도 실행 권한이 없다 — 공개 구역의 그 함수들(소유자 권한)만 안에서 부른다. 앱 키·서버 키로 남의 신청에 주소를 넣는 길이 없다.
 --
 -- 앱과 DB 가 한쪽만 바뀐 상태
@@ -30,9 +31,8 @@ begin
   if to_regclass('public.revgift_box_applications') is null or to_regclass('public.revgift_box_address_events') is null then
     raise exception '마이그레이션 20261108000003·20261108000004 를 먼저 적용해야 한다';
   end if;
-  if to_regprocedure('pii.is_sealed_envelope(jsonb)') is null or to_regclass('pii.fan_addresses') is null
-     or not exists (select 1 from information_schema.columns where table_schema = 'pii' and table_name = 'fan_addresses' and column_name = 'surcharge_region') then
-    raise exception 'manual 0005·0019·0030 을 먼저 적용해야 한다';
+  if to_regprocedure('pii.is_sealed_envelope(jsonb)') is null then
+    raise exception 'manual 0005 를 먼저 적용해야 한다';
   end if;
 end $$;
 
@@ -53,25 +53,17 @@ create function pii.revgift_box_save_copy(p_application_id uuid, p_fan_id uuid, 
 returns void
 language plpgsql security definer set search_path = ''
 as $$
-declare
-  v_envelope jsonb := p_envelope;
-  v_region text := p_region;
 begin
   if not exists (select 1 from public.revgift_box_applications a where a.id = p_application_id and a.fan_id = p_fan_id and a.status = 'applied') then
     raise exception '신청을 찾을 수 없다' using errcode = 'P0002';
   end if;
-  if v_envelope is null then
-    -- 등록 주소 줄을 잠근다 — 같은 때 들어온 지우기·바꾸기와 겹쳐도 사본은 그 순간의 한 값이다
-    select a.envelope, a.surcharge_region into v_envelope, v_region from pii.fan_addresses a where a.account_id = p_fan_id for share;
-    if v_envelope is null then
-      raise exception '등록한 받을 주소가 없다' using errcode = 'P0026';
-    end if;
-  elsif not pii.is_sealed_envelope(v_envelope) or v_region is null or v_region not in ('none', 'jeju', 'island') then
+  -- INV-GB6: 신청 때 입력한 봉인만 받는다 — 팬 등록 주소는 없고(2026-11-08), 봉인 없이 신청하는 길도 없다
+  if p_envelope is null or not pii.is_sealed_envelope(p_envelope) or p_region is null or p_region not in ('none', 'jeju', 'island') then
     raise exception '봉인된 주소가 아니다' using errcode = '22023';
   end if;
-  insert into pii.revgift_box_addresses (application_id, envelope, surcharge_region) values (p_application_id, v_envelope, v_region)
+  insert into pii.revgift_box_addresses (application_id, envelope, surcharge_region) values (p_application_id, p_envelope, p_region)
   on conflict (application_id) do update set envelope = excluded.envelope, surcharge_region = excluded.surcharge_region, created_at = now();
-  insert into public.revgift_box_address_events (application_id, event) values (p_application_id, case when p_envelope is null then 'copied' else 'entered' end);
+  insert into public.revgift_box_address_events (application_id, event) values (p_application_id, 'entered');
 end $$;
 
 -- ── 3) 사본 삭제 ─────────────────────────────────

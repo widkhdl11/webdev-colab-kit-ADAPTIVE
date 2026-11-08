@@ -49,6 +49,14 @@ from (values
   ('0027', exists (select 1 from body where name = 'public.settle_signature_link'),
            '승인 서명 연결 함수'),
   ('0028', exists (select 1 from body where name = 'public.start_approval_sign' and def like '%v_env, v_order.creator_id;%'),
-           '승인 서명 요청 — 「승인」 누를 때 서명 요청·결과로 승인 (서명 요청이 크리에이터 ID 를 같이 돌려주는 판)')
+           '승인 서명 요청 — 「승인」 누를 때 서명 요청·결과로 승인 (서명 요청이 크리에이터 ID 를 같이 돌려주는 판)'),
+  ('0029', not exists (select 1 from information_schema.columns where table_schema = 'pii' and table_name = 'account_contacts' and column_name = 'phone'),
+           '번호 평문 칸을 지웠다'),
+  ('0030', exists (select 1 from information_schema.columns where table_schema = 'pii' and table_name = 'creator_addresses' and column_name = 'surcharge_region'),
+           '주소 할증 구분 칸'),
+  ('0031', to_regclass('pii.revgift_box_addresses') is not null,
+           '선물함 신청 주소 사본 표'),
+  ('0032', to_regclass('pii.order_return_addresses') is not null and to_regclass('pii.fan_addresses') is null,
+           '팬 등록 주소를 지우고 주문 반송 주소 사본 표가 있다')
 ) as v(file, applied, marker)
 order by file;
