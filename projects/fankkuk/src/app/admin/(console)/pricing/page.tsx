@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { readAdminCarrierPricing, readAdminPriceChanges, readAdminPriceTable } from "@/entities/payment/api/read-admin-pricing";
+import { readAdminBoxServiceFees, readAdminCarrierPricing, readAdminPriceChanges, readAdminPriceTable } from "@/entities/payment/api/read-admin-pricing";
 import { PricingPanel } from "@/widgets/admin-pricing/ui/pricing-panel";
 import { loadAdminSession } from "@/widgets/admin-shell/api/admin-session";
 
@@ -10,9 +10,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: "요금표 · 팬꾹 운영자" };
 }
 
-// 요금표 (admin-console INV-K2·K4·K5) · 택배 원가 경로표 (INV-K15·K16). 읽기는 로그인한 운영자의 세션으로 — 운영자가 아니면 DB 가 빈 결과를 주고, 그 전에 404 다.
+// 요금표 (admin-console INV-K2·K4·K5) · 택배 원가 경로표 (INV-K15·K16) · 선물함 서비스료 (revgift-box INV-GB14·GB15). 읽기는 로그인한 운영자의 세션으로 — 운영자가 아니면 DB 가 빈 결과를 주고, 그 전에 404 다.
 export default async function Page() {
   const { supabase, access } = await loadAdminSession();
-  const [table, changes, carrier] = await Promise.all([readAdminPriceTable(supabase), readAdminPriceChanges(supabase), readAdminCarrierPricing(supabase)]);
-  return <PricingPanel table={table} changes={changes} carrier={carrier} access={access} />;
+  const [table, changes, carrier, boxFees] = await Promise.all([
+    readAdminPriceTable(supabase),
+    readAdminPriceChanges(supabase),
+    readAdminCarrierPricing(supabase),
+    readAdminBoxServiceFees(supabase),
+  ]);
+  return <PricingPanel table={table} changes={changes} carrier={carrier} boxFees={boxFees} access={access} />;
 }

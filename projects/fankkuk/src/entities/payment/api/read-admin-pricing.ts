@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { boxServiceFeesFromRow, type BoxServiceFees } from "../model/box-service-fees";
 import { carrierPricingFromRow, type CarrierPricing } from "../model/carrier-pricing";
 import { priceChangesFromRows, type PriceChange } from "../model/price-change";
 import { priceTableFromRows, type PriceTable } from "../model/price-table";
@@ -29,4 +30,13 @@ export async function readAdminCarrierPricing(client: Pick<SupabaseClient, "rpc"
   const pricing = carrierPricingFromRow(data);
   if (!pricing) throw new Error("경로표가 비었거나 형식이 다르다");
   return pricing;
+}
+
+/** 선물함 서비스료 정가·초기 크리에이터 값 (revgift-box INV-GB14·GB15). 운영자가 아니면 DB 가 거부한다 — 운영자 화면에서는 실패로 본다. */
+export async function readAdminBoxServiceFees(client: Pick<SupabaseClient, "rpc">): Promise<BoxServiceFees> {
+  const { data, error } = await client.rpc("admin_box_service_fees");
+  if (error) throw new Error(`선물함 서비스료를 읽지 못했다: ${error.code}`);
+  const fees = boxServiceFeesFromRow(data);
+  if (!fees) throw new Error("선물함 서비스료의 형식이 다르다");
+  return fees;
 }
