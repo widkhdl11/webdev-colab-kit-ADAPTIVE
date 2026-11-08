@@ -3,12 +3,14 @@
 import { useRef, useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from "react";
 import { z } from "zod";
 import { importSealingPublicKey, sealEnvelope, type Envelope } from "@/shared/lib/envelope/envelope";
+import { basicAddressOf, loadPostcode, type PostcodeResult } from "@/shared/lib/postcode/load-postcode";
 import s from "./sealed-address-form.module.css";
 
 // 봉인 주소 입력 칸 (address-protection INV-P1·P16). 크리에이터 받는 주소(features/creator-address)와 팬 받을 주소(features/fan-address)가
 // 같이 쓴다 — 칸·순서·오류 문구·이름표 고르기·봉인·저장 흐름이 같고, 봉인할 내용(누구의 식별값을 묶는지)·저장 경로·버튼만 부르는 쪽이 정한다.
 // 주소는 이 브라우저에서 봉인한 뒤 봉인된 값만 보낸다 — 평문 주소는 서버로 가지 않고, 저장되면 화면 상태에도 남기지 않는다.
-// 우편번호 찾기 서비스는 아직 붙이지 않았다 — 다섯 자리를 직접 입력한다.
+// 「주소 검색」은 카카오(다음) 우편번호 서비스를 누를 때만 불러와 이 폼 안에 검색 화면을 띄우고, 고른 우편번호·기본 주소를 칸에 채운다(INV-P20 ①).
+// 칸은 직접 고칠 수도 있다. 우편번호는 봉인 속에만 들어가고, 서버로는 부르는 쪽이 우편번호로 정한 값(classify)만 따로 보낸다(INV-P20 ②).
 // 이름표는 고르기만 한다 — 주소는 본인에게도 다시 보이지 않아서, 확인 창은 이 이름표와 바꾼 날로 확인한다(INV-P16).
 
 /** 주소 봉인 공개키가 없을 때(설정 전) — 주소 입력 대신 이 안내만 보인다 */
@@ -38,7 +40,7 @@ function badFields(err: unknown): AddressFieldName[] {
   return FIELD_ORDER.filter((f) => names.has(f));
 }
 
-export type SealedAddressFormProps<L extends string> = {
+export type SealedAddressFormProps<L extends string, C> = {
   /** 칸 id 머리 — 한 화면에 폼이 하나뿐이어도 다른 칸과 겹치지 않게 */
   idPrefix: string;
   sealingKeyPem: string;
@@ -49,7 +51,9 @@ export type SealedAddressFormProps<L extends string> = {
   initialLabel?: L | null;
   /** 이름표 아래 안내 한 줄 */
   labelHint: string;
-  send: (envelope: Envelope, label: L) => Promise<SealedAddressSendOutcome>;
+  /** 우편번호(다섯 자리 숫자)로 정하는 값 — 봉인과 별도로 서버에 함께 보낸다. 우편번호 자체는 보내지 않는다 */
+  classify: (zipCode: string) => C | null;
+  send: (envelope: Envelope, label: L, classified: C) => Promise<SealedAddressSendOutcome>;
   /** 저장 버튼 — 모양과 글자(보내는 중 글자 포함)는 부르는 쪽이 정한다 */
   submitClassName: string;
   submitContent: (busy: boolean) => ReactNode;
@@ -60,13 +64,14 @@ export type SealedAddressFormProps<L extends string> = {
   onLoginExpired: () => void;
 };
 
-export function SealedAddressForm<L extends string>({
+export function SealedAddressForm<L extends string, C>({
   idPrefix,
   sealingKeyPem,
   toPlaintext,
   labelOptions,
   initialLabel = null,
   labelHint,
+  classify,
   send,
   submitClassName,
   submitContent,
@@ -74,7 +79,7 @@ export function SealedAddressForm<L extends string>({
   onSaved,
   onCancel,
   onLoginExpired,
-}: SealedAddressFormProps<L>) {
+}: SealedAddressFormProps<L, C>) {
   const [values, setValues] = useState(EMPTY);
   const [label, setLabel] = useState<L | null>(initialLabel);
   const [labelMissing, setLabelMissing] = useState(false);
@@ -83,6 +88,34 @@ export function SealedAddressForm<L extends string>({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const fieldRefs = useRef<Partial<Record<AddressFieldName, HTMLInputElement | null>>>({});
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState(false);
+  const searchBoxRef = useRef<HTMLDivElement | null>(null);
+
+  // 검색 결과로 우편번호·기본 주소를 채우고 상세 주소로 넘어간다
+  const picked = (r: PostcodeResult) => {
+    setValues((v) => ({ ...v, zipCode: r.zonecode, address1: basicAddressOf(r) }));
+    setErrors((e) => e.filter((x) => x !== "zipCode" && x !== "address1"));
+    setSearching(false);
+    fieldRefs.current.address2?.focus();
+  };
+
+  const search = () => {
+    setSearchError(false);
+    setSearching(true);
+    loadPostcode().then(
+      (Postcode) => {
+        const box = searchBoxRef.current;
+        if (!box) return;
+        box.replaceChildren();
+        new Postcode({ oncomplete: picked, width: "100%", height: "100%" }).embed(box, { autoClose: true });
+      },
+      () => {
+        setSearching(false);
+        setSearchError(true);
+      },
+    );
+  };
 
   const set = (name: AddressFieldName, value: string) => {
     setValues((v) => ({ ...v, [name]: value }));
@@ -109,10 +142,15 @@ export function SealedAddressForm<L extends string>({
       labelRef.current?.focus();
       return;
     }
+    const classified = classify(values.zipCode.trim());
+    if (classified === null) {
+      setSubmitError("주소를 다시 확인해 주세요.");
+      return;
+    }
     setBusy(true);
     try {
       const envelope = await sealEnvelope(plaintext, await importSealingPublicKey(sealingKeyPem));
-      const outcome = await send(envelope, label);
+      const outcome = await send(envelope, label, classified);
       if (outcome.kind === "ok") {
         setValues(EMPTY); // 입력한 주소를 화면 상태에 남기지 않는다
         onSaved(label);
@@ -160,15 +198,26 @@ export function SealedAddressForm<L extends string>({
 
   return (
     <form className={s["form-grid"]} onSubmit={submit} noValidate>
-      {field("zipCode", "우편번호", {
-        type: "text",
-        inputMode: "numeric",
-        autoComplete: "postal-code",
-        maxLength: 5,
-        placeholder: "숫자 5자리",
-        required: true,
-        autoFocus: autoFocusFirst,
-      })}
+      <div className={s["zip-row"]}>
+        {field("zipCode", "우편번호", {
+          type: "text",
+          inputMode: "numeric",
+          autoComplete: "postal-code",
+          maxLength: 5,
+          placeholder: "숫자 5자리",
+          required: true,
+          autoFocus: autoFocusFirst,
+        })}
+        <button className={`btn btn--soft ${s["zip-search"]}`} type="button" onClick={search} aria-expanded={searching}>
+          주소 검색
+        </button>
+      </div>
+      <div ref={searchBoxRef} className={s.postcode} hidden={!searching} />
+      {searchError ? (
+        <p className={s.error} role="alert">
+          주소 검색을 불러오지 못했습니다. 우편번호와 주소를 직접 입력해 주세요.
+        </p>
+      ) : null}
       {field("address1", "기본 주소", { type: "text", autoComplete: "address-line1", maxLength: 120, placeholder: "도로명 또는 지번 주소", required: true })}
       {field("address2", "상세 주소", { type: "text", autoComplete: "address-line2", maxLength: 120, placeholder: "동·호수 등을 입력해 주세요" })}
       <div className={s.two}>

@@ -1,9 +1,10 @@
 import { z } from "zod";
 import type { AddressLabel } from "@/entities/address/model/address-label";
+import type { SurchargeRegion } from "@/entities/address/model/surcharge-region";
 import type { Envelope } from "@/shared/lib/envelope/envelope";
 
-// 브라우저에서 팬 받을 주소를 저장·지운다(/api/me/address, /api/me/address/delete). 저장 본문에는 봉인된 주소와 고른 이름표만 싣는다 —
-// 평문 주소가 들어갈 칸이 없다(address-protection INV-P1·P16·P17).
+// 브라우저에서 팬 받을 주소를 저장·지운다(/api/me/address, /api/me/address/delete). 저장 본문에는 봉인된 주소와 고른 이름표, 할증 지역 구분만 싣는다 —
+// 평문 주소·우편번호가 들어갈 칸이 없다(address-protection INV-P1·P16·P17·P20).
 // ok = 됐다 / login = 세션이 끝났다 / refused = 서버가 거부했다(문구를 그대로 보인다) / failed = 그 밖의 실패
 
 export type FanAddressOutcome = { kind: "ok" } | { kind: "login" } | { kind: "refused"; message: string } | { kind: "failed" };
@@ -24,8 +25,8 @@ async function post(path: string, body: unknown): Promise<FanAddressOutcome> {
   }
 }
 
-export function sendFanAddress(envelope: Envelope, label: AddressLabel): Promise<FanAddressOutcome> {
-  return post("/api/me/address", { address: envelope, label });
+export function sendFanAddress(envelope: Envelope, label: AddressLabel, region: SurchargeRegion): Promise<FanAddressOutcome> {
+  return post("/api/me/address", { address: envelope, label, region });
 }
 
 export function sendFanAddressDelete(): Promise<FanAddressOutcome> {

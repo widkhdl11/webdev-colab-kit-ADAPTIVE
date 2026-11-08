@@ -152,7 +152,7 @@ describe("INV-R5: 서버는 봉인 형식이 아닌 주소를 받지 않는다",
     const no = await paidShareFor(PROFILE.byeolbit);
     const fan = await signedInClient("byeolbit_fan");
     for (const bad of ["서울시 마포구 어딘가 1", { address: "서울시 마포구" }, { ...sampleEnvelope(), wrappedKey: "AAAA" }, { ...sampleEnvelope(), extra: 1 }]) {
-      expect((await fan.rpc("set_my_fan_address", { p_envelope: bad, p_label: "home" })).error?.code).toBe("22023");
+      expect((await fan.rpc("set_my_fan_address", { p_envelope: bad, p_label: "home", p_region: "none" })).error?.code).toBe("22023");
     }
     expect(fanEnvelope(PROFILE.byeolbit)).toBe("");
     expect((await fan.rpc("accept_revgift", { p_order_no: no })).error?.code).toBe("P0026");
@@ -281,7 +281,7 @@ describe("리뷰 뒤 보강 (2026-10-03)", () => {
       { ...sampleEnvelope(), ciphertext: b64(8) },
     ];
     for (const env of bad) {
-      expect((await fan.rpc("set_my_fan_address", { p_envelope: env, p_label: "home" })).error?.code).toBe("22023");
+      expect((await fan.rpc("set_my_fan_address", { p_envelope: env, p_label: "home", p_region: "none" })).error?.code).toBe("22023");
     }
     expect(fanEnvelope(PROFILE.byeolbit)).toBe("");
     expect(addressCount(no)).toBe(0);

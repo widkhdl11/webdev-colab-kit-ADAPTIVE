@@ -4,6 +4,7 @@ import { parseChargeBreakdown } from "../model/charge";
 import { InvalidRegistrationError, OrderNoTakenError, PriceChangedError, SenderRefusedError, type PaymentStore, type StoredPayment } from "./payment-store";
 
 // 결제 기록 저장소 — DB 구현. 관리자 키 클라이언트를 받는다(앱 서버 전용).
+// 제주·도서 할증(INV-M24)은 등록 함수가 크리에이터 주소의 구분을 읽어 더한다 — 앱은 구분을 읽거나 넘기지 않고, 저장된 할증만 다시 읽는다.
 // 쓰기는 전부 DB 함수(register_order·claim_payment·settle_payment)로 한다 — 한 처리 안에서 일어나야 하는 것들이
 // (주문+상자+결제 대기, 결제 완료+등록+승인 요청) DB 안에서 한 번에 일어나게.
 // 읽은 행은 신뢰 경계 밖이라 여기서 형식을 검사한다.
@@ -15,6 +16,7 @@ const rowSchema = z.object({
   service_fee_krw: z.number().int(),
   inspection_fee_krw: z.number().int(),
   shipping_fee_krw: z.number().int(),
+  surcharge_krw: z.number().int().nonnegative(),
   status: z.enum(["pending", "confirming", "done", "failed"]),
   payment_key: z.string().nullable(),
   orders: z.object({ order_no: z.string(), fan_id: z.string(), profiles: z.object({ nickname: z.string() }) }),
@@ -31,6 +33,8 @@ function toStored(row: unknown): StoredPayment {
   });
   // INV-M7: 저장된 네 칸의 합이 금액과 다르면 이 기록으로 결제를 진행하지 않는다
   if (!charge) throw new Error("결제 기록의 칸 합계가 금액과 다르다");
+  // INV-M24 ①: 할증은 배송비 칸 안의 몫이다 — 배송비 칸보다 크면 이 기록으로 진행하지 않는다
+  if (r.surcharge_krw > r.shipping_fee_krw) throw new Error("결제 기록의 할증이 배송비 칸보다 크다");
   return {
     orderId: r.toss_order_id,
     orderNo: r.orders.order_no,
@@ -38,12 +42,13 @@ function toStored(row: unknown): StoredPayment {
     status: r.status,
     paymentKey: r.payment_key,
     charge,
+    surchargeKrw: r.surcharge_krw,
     fanId: r.orders.fan_id,
     fanNickname: r.orders.profiles.nickname,
   };
 }
 
-const SELECT = "toss_order_id, amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw, status, payment_key, orders(order_no, fan_id, profiles(nickname))";
+const SELECT = "toss_order_id, amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw, surcharge_krw, status, payment_key, orders(order_no, fan_id, profiles(nickname))";
 
 export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore {
   async function find(orderId: string): Promise<StoredPayment | null> {

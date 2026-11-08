@@ -2,6 +2,7 @@
 
 import { ADDRESS_LABELS, ADDRESS_LABEL_NAME, type AddressLabel } from "@/entities/address/model/address-label";
 import { fanAddressPlaintext } from "@/entities/address/model/fan-address-plaintext";
+import { surchargeRegionOf } from "@/entities/address/model/surcharge-region";
 import { SealedAddressForm } from "@/shared/ui/sealed-address-form";
 import { sendFanAddress } from "../api/send-fan-address";
 
@@ -37,6 +38,7 @@ export function FanAddressForm({ accountId, sealingKeyPem, initialLabel = null, 
       labelOptions={LABEL_OPTIONS}
       initialLabel={initialLabel}
       labelHint={receiveHint ? `${HINT_HIDDEN} ${HINT_RECEIVE}` : HINT_HIDDEN}
+      classify={(zip) => surchargeRegionOf(zip)}
       send={sendFanAddress}
       submitClassName="btn"
       submitContent={(busy) => (busy ? "저장 중…" : "저장")}

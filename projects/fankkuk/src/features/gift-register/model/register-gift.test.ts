@@ -316,3 +316,22 @@ describe("together INV-F7: 입력 검사를 지나 DB 가 길이로 거부해도
     expect(r).toEqual({ ok: false, status: 400, errors: {} });
   });
 });
+
+describe("payment INV-M24: 제주·도서 할증", () => {
+  it("INV-M24 S24: 저장소가 상자마다 할증을 더해 저장하면 그 금액과 할증을 돌려준다 — 화면이 「제주·도서 지역 할증」 줄을 그린다", async () => {
+    const store = createMemoryPaymentStore({ env: { NODE_ENV: "test" }, surchargePerBox: { [form.creatorId]: 4000 } });
+    const r = await registerGift({ store, newOrderNo: () => "FC-TEST1", creatorRelation: FOLLOWING, readPrices, viewer: FAN }, form);
+    expect(r).toMatchObject({ ok: true, amountKrw: 22700 + 3 * 4000, surchargeKrw: 3 * 4000 });
+  });
+
+  it("INV-M24 S24b: 할증이 없으면 0 — 금액은 요금표 합 그대로", async () => {
+    const { deps } = setup();
+    expect(await registerGift({ ...deps, viewer: FAN }, form)).toMatchObject({ ok: true, amountKrw: 22700, surchargeKrw: 0 });
+  });
+
+  it("INV-M24 (실패경로): 화면이 보여 준 합계(할증 전)는 할증 때문에 「요금이 바뀌었다」로 거부되지 않는다", async () => {
+    const store = createMemoryPaymentStore({ env: { NODE_ENV: "test" }, surchargePerBox: { [form.creatorId]: 5000 } });
+    const r = await registerGift({ store, newOrderNo: () => "FC-TEST1", creatorRelation: FOLLOWING, readPrices, viewer: FAN }, form);
+    expect(r.ok).toBe(true);
+  });
+});

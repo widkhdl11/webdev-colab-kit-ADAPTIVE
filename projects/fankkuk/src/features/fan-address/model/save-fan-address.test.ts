@@ -32,15 +32,15 @@ function fakeClient(result: { data?: unknown; error?: { code: string } | null } 
 describe("팬 받을 주소 등록·변경 (address-protection INV-P1·P16·P17)", () => {
   it("INV-P17 S17: 봉인 하나와 고른 이름표만 저장 함수에 넘긴다 — 누구의 칸인지는 로그인 토큰이 정한다", async () => {
     const f = fakeClient();
-    expect(await saveFanAddress({ client: f.client, viewer: BYEOLBIT }, { address: envelope, label: "home" })).toEqual({ ok: true });
-    expect(f.calls).toEqual([{ fn: "set_my_fan_address", args: { p_envelope: envelope, p_label: "home" } }]);
+    expect(await saveFanAddress({ client: f.client, viewer: BYEOLBIT }, { address: envelope, label: "home", region: "none" })).toEqual({ ok: true });
+    expect(f.calls).toEqual([{ fn: "set_my_fan_address", args: { p_envelope: envelope, p_label: "home", p_region: "none" } }]);
   });
 
   it("INV-P17 S17b: 본문에 다른 계정 값을 붙여도 저장 함수에는 넘기지 않는다", async () => {
     const f = fakeClient();
-    const body = { address: envelope, label: "studio", accountId: "00000000-0000-4000-a000-000000000002", p_account_id: "x" };
+    const body = { address: envelope, label: "studio", region: "none", accountId: "00000000-0000-4000-a000-000000000002", p_account_id: "x" };
     expect(await saveFanAddress({ client: f.client, viewer: BYEOLBIT }, body)).toEqual({ ok: true });
-    expect(f.calls).toEqual([{ fn: "set_my_fan_address", args: { p_envelope: envelope, p_label: "studio" } }]);
+    expect(f.calls).toEqual([{ fn: "set_my_fan_address", args: { p_envelope: envelope, p_label: "studio", p_region: "none" } }]);
   });
 
   it("INV-P17 S17b (실패경로): 로그인하지 않았으면 401, 크리에이터·운영자면 403 — DB 를 부르지 않는다", async () => {
@@ -50,13 +50,13 @@ describe("팬 받을 주소 등록·변경 (address-protection INV-P1·P16·P17)
       [{ userId: "o", role: "operator" }, 403],
     ] as const) {
       const f = fakeClient();
-      expect(await saveFanAddress({ client: f.client, viewer }, { address: envelope, label: "home" })).toMatchObject({ ok: false, status });
+      expect(await saveFanAddress({ client: f.client, viewer }, { address: envelope, label: "home", region: "none" })).toMatchObject({ ok: false, status });
       expect(f.calls).toEqual([]);
     }
   });
 
   it("INV-P1 S17b (실패경로): 평문 주소·봉인 형식이 아닌 값은 400 — DB 를 부르지 않는다", async () => {
-    for (const body of [{ address: "서울시 마포구 어울마당로 1", label: "home" }, { address: { ...envelope, iv: "AAAA" }, label: "home" }, null, {}]) {
+    for (const body of [{ address: "서울시 마포구 어울마당로 1", label: "home", region: "none" }, { address: { ...envelope, iv: "AAAA" }, label: "home", region: "none" }, null, {}]) {
       const f = fakeClient();
       expect(await saveFanAddress({ client: f.client, viewer: BYEOLBIT }, body)).toMatchObject({ ok: false, status: 400 });
       expect(f.calls).toEqual([]);
@@ -66,7 +66,7 @@ describe("팬 받을 주소 등록·변경 (address-protection INV-P1·P16·P17)
   it("INV-P16 S17b (실패경로): 이름표가 없거나 목록 밖(주소 글자 포함)이면 400 — DB 를 부르지 않는다", async () => {
     for (const label of [undefined, "", "역삼동 집", "HOME"]) {
       const f = fakeClient();
-      expect(await saveFanAddress({ client: f.client, viewer: BYEOLBIT }, { address: envelope, label })).toEqual({
+      expect(await saveFanAddress({ client: f.client, viewer: BYEOLBIT }, { address: envelope, label, region: "none" })).toEqual({
         ok: false,
         status: 400,
         message: "주소 별칭을 선택해 주세요.",
@@ -76,7 +76,7 @@ describe("팬 받을 주소 등록·변경 (address-protection INV-P1·P16·P17)
   });
 
   it("INV-P17 (실패경로): DB 가 팬이 아니라고 하면 403, 형식 오류면 400, 모르는 답·그 밖의 오류는 던진다", async () => {
-    const body = { address: envelope, label: "home" };
+    const body = { address: envelope, label: "home", region: "none" };
     expect(await saveFanAddress({ client: fakeClient({ data: "not_fan" }).client, viewer: BYEOLBIT }, body)).toMatchObject({ ok: false, status: 403 });
     expect(await saveFanAddress({ client: fakeClient({ error: { code: "22023" } }).client, viewer: BYEOLBIT }, body)).toMatchObject({
       ok: false,
@@ -107,5 +107,23 @@ describe("팬 받을 주소 지우기 (address-protection INV-P17)", () => {
     }
     expect(await deleteFanAddress({ client: fakeClient({ data: "not_fan" }).client, viewer: BYEOLBIT })).toMatchObject({ ok: false, status: 403 });
     await expect(deleteFanAddress({ client: fakeClient({ error: { code: "42501" } }).client, viewer: BYEOLBIT })).rejects.toThrow();
+  });
+});
+
+describe("할증 지역 구분 (address-protection INV-P20)", () => {
+  it("INV-P20 S20: 브라우저가 보낸 구분(도서)을 저장 함수에 넘긴다 — 본문에 우편번호 칸이 붙어 와도 넘기지 않는다", async () => {
+    const f = fakeClient();
+    const body = { address: envelope, label: "home", region: "island", zipCode: "23100" };
+    expect(await saveFanAddress({ client: f.client, viewer: BYEOLBIT }, body)).toEqual({ ok: true });
+    expect(f.calls).toEqual([{ fn: "set_my_fan_address", args: { p_envelope: envelope, p_label: "home", p_region: "island" } }]);
+    expect(JSON.stringify(f.calls)).not.toContain("23100");
+  });
+
+  it("INV-P20 (실패경로): 구분이 없거나 목록 밖이면 400 — DB 를 부르지 않는다", async () => {
+    for (const region of [undefined, null, "", "23100", "ISLAND"]) {
+      const f = fakeClient();
+      expect(await saveFanAddress({ client: f.client, viewer: BYEOLBIT }, { address: envelope, label: "home", region })).toMatchObject({ ok: false, status: 400 });
+      expect(f.calls).toEqual([]);
+    }
   });
 });

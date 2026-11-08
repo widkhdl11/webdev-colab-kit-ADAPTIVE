@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { parseAddressInput } from "@/entities/address/model/address-ciphertext";
 import { parseAddressLabel } from "@/entities/address/model/address-label";
+import { parseSurchargeRegion } from "@/entities/address/model/surcharge-region";
 import type { Viewer } from "@/entities/session/model/viewer";
 
 // 팬 받을 주소 등록·변경·지우기 (address-protection INV-P1·P16·P17, 카드 d100).
@@ -36,8 +37,11 @@ export async function saveFanAddress(deps: Deps, body: unknown): Promise<FanAddr
   // INV-P16: 이름표는 정해진 목록에서 고른 값만
   const label = parseAddressLabel((body as { label?: unknown }).label);
   if (!label) return NO_LABEL;
+  // INV-P20 ②: 할증 지역 구분은 목록에서만 — 우편번호는 받지 않는다
+  const region = parseSurchargeRegion((body as { region?: unknown }).region);
+  if (!region) return NOT_SEALED;
 
-  const { data, error } = await deps.client.rpc("set_my_fan_address", { p_envelope: input.value, p_label: label });
+  const { data, error } = await deps.client.rpc("set_my_fan_address", { p_envelope: input.value, p_label: label, p_region: region });
   if (error) {
     if (error.code === "22023") return NOT_SEALED;
     throw new Error(`받을 주소를 저장하지 못했다: ${error.code}`);

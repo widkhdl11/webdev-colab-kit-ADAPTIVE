@@ -4,6 +4,9 @@ import { PHOTO_BODY_LIMIT } from "./src/shared/lib/image/photo-limits";
 // 보안 헤더(CSP) — 2026-10-14 추가분 3. 지금은 막지 않고 위반만 브라우저 콘솔에 남기는 모드(Report-Only)다.
 // 결제 창(토스)·글꼴(jsdelivr)·프로필 사진(Supabase 저장소)이 깨지지 않는 것을 운영에서 확인한 뒤 막는 모드로 바꾼다(BACKLOG).
 // 기준: Next 문서의 「Without Nonces」 예시 + 이 사이트가 실제로 부르는 바깥 출처.
+// 우편번호 서비스(address-protection INV-P20 ①): 스크립트 주소 하나(「주소 검색」을 누를 때만 불러온다)와 그 스크립트가 폼 안에 띄우는 검색 화면 주소 하나만 더한다.
+const POSTCODE_SCRIPT_ORIGIN = "https://t1.daumcdn.net";
+const POSTCODE_FRAME_ORIGIN = "https://postcode.map.kakao.com";
 const isDev = process.env.NODE_ENV === "development";
 const storageOrigin = (() => {
   try {
@@ -14,12 +17,12 @@ const storageOrigin = (() => {
 })();
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' https://js.tosspayments.com${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://js.tosspayments.com ${POSTCODE_SCRIPT_ORIGIN}${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
   "font-src 'self' data: https://cdn.jsdelivr.net",
   `img-src 'self' blob: data: ${storageOrigin}`.trim(),
   "connect-src 'self' https://*.tosspayments.com",
-  "frame-src https://*.tosspayments.com",
+  `frame-src https://*.tosspayments.com ${POSTCODE_FRAME_ORIGIN}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self' https://*.tosspayments.com",

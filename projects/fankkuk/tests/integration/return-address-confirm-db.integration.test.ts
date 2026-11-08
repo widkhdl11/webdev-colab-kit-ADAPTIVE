@@ -236,7 +236,7 @@ describe("반송 주소 확인 (office-workflow INV-W15, address-protection INV-
     const existing = psql(`select count(*) from pii.creator_addresses where creator_id = '${SEED.haruCreatorId}'`);
     const envelope = sampleEnvelope();
     if (existing === "0") {
-      const saved = await adminClient().rpc("set_creator_address", { p_actor_id: SEED.creatorProfileId, p_envelope: envelope, p_label: "home", p_method: "fake" });
+      const saved = await adminClient().rpc("set_creator_address", { p_actor_id: SEED.creatorProfileId, p_envelope: envelope, p_label: "home", p_region: "none", p_method: "fake" });
       expect(saved.error).toBeNull();
       haruAddressAdded = true;
     }

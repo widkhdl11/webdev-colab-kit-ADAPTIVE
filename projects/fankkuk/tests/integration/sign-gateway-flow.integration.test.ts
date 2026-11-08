@@ -119,7 +119,7 @@ async function tokenOf(loginId: string): Promise<string> {
 async function registerAddress(): Promise<void> {
   psql(`delete from pii.creator_addresses where creator_id = '${ADDRESS_CREATOR_ID}'`);
   const envelope = await sealEnvelope(creatorAddressPlaintext({ creatorId: ADDRESS_CREATOR_ID, ...LABEL }), keys.publicKey);
-  const r = await adminClient().rpc("set_creator_address", { p_actor_id: TEST_CREATOR.profileId, p_envelope: envelope, p_label: "home", p_method: "fake" });
+  const r = await adminClient().rpc("set_creator_address", { p_actor_id: TEST_CREATOR.profileId, p_envelope: envelope, p_label: "home", p_region: "none", p_method: "fake" });
   if (r.error) throw new Error(`set_creator_address 실패: ${r.error.message}`);
 }
 

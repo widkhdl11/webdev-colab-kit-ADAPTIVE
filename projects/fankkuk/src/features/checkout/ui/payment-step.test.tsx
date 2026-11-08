@@ -55,3 +55,24 @@ describe("d113 D-3: 선물 등록 결제창이 실패하면 선물 보내기로 
     expect(req.failUrl).toBe(`${window.location.origin}/gifts/FC-U8P2K?payment=failed`);
   });
 });
+
+describe("payment INV-M24 ②: 결제 화면의 할증 줄", () => {
+  async function show(pending: { orderId: string; orderNo: string; amountKrw: number; surchargeKrw?: number }) {
+    await act(async () => root.render(<PaymentStep clientKey="test_ck" pending={pending} />));
+  }
+
+  it("INV-M24 S24: 할증이 있으면 「제주·도서 지역 할증 8,000원」 한 줄이 결제 금액 줄 바로 앞에 있다 — 지역 이름은 없다", async () => {
+    await show({ orderId: "pay_1", orderNo: "FC-U8P2K", amountKrw: 21800, surchargeKrw: 8000 });
+    const line = [...host.querySelectorAll("p")].find((p) => p.textContent?.startsWith("제주·도서 지역 할증"));
+    expect(line?.textContent).toBe("제주·도서 지역 할증8,000원");
+    expect(line?.nextElementSibling?.textContent).toBe("결제 금액21,800원");
+    expect(host.textContent).not.toMatch(/제주시|서귀포|도서 지역(?! 할증)/);
+  });
+
+  it("INV-M24 S24b (실패경로): 할증이 0 이거나 없으면 할증 줄이 없다", async () => {
+    for (const surchargeKrw of [0, undefined]) {
+      await show({ orderId: "pay_1", orderNo: "FC-U8P2K", amountKrw: 13800, surchargeKrw });
+      expect(host.textContent).not.toContain("할증");
+    }
+  });
+});

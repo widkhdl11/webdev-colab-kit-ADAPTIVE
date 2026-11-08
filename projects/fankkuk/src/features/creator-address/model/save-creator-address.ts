@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { parseAddressInput } from "@/entities/address/model/address-ciphertext";
 import { parseAddressLabel } from "@/entities/address/model/address-label";
+import { parseSurchargeRegion } from "@/entities/address/model/surcharge-region";
 import type { Viewer } from "@/entities/session/model/viewer";
 import type { ApprovalSigner } from "@/shared/api/approval-signer/signer";
 
@@ -10,6 +11,7 @@ import type { ApprovalSigner } from "@/shared/api/approval-signer/signer";
 // 카카오 재서명 자리는 승인과 같은 서명 창구가 맡는다. 창구가 없으면(운영, 카카오 연결 전) 저장하지 않는다.
 // 저장 함수가 크리에이터 역할·봉인 형식을 한 번 더 보고, 주소 칸과 등록 기록을 한 처리에서 쓴다.
 // 본문의 이름표(INV-P16)는 정해진 목록에서 고른 값만 받는다 — 저장 함수도 같은 목록으로 한 번 더 본다.
+// 할증 지역 구분(INV-P20 ②)도 목록에서만 — 브라우저가 우편번호로 정해 보낸 값이다. 본문의 다른 칸(우편번호 등)은 읽지 않는다.
 
 const resultSchema = z.enum(["saved", "not_creator", "method_refused"]);
 
@@ -34,11 +36,14 @@ export async function saveCreatorAddress(
   if (!input.ok) return NOT_SEALED;
   const label = parseAddressLabel((body as { label?: unknown }).label);
   if (!label) return NO_LABEL;
+  const region = parseSurchargeRegion((body as { region?: unknown }).region);
+  if (!region) return NOT_SEALED;
 
   const { data, error } = await deps.admin.rpc("set_creator_address", {
     p_actor_id: deps.viewer.userId,
     p_envelope: input.value,
     p_label: label,
+    p_region: region,
     p_method: deps.signer.kind,
   });
   if (error) {

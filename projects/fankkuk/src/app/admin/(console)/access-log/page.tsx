@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { readAdminAccessLog } from "@/entities/address/api/admin-access-log";
+import { readSurchargeMismatches } from "@/entities/address/api/surcharge-mismatches";
 import { AccessLogPanel } from "@/widgets/admin-access-log/ui/access-log-panel";
 import { loadAdminSession } from "@/widgets/admin-shell/api/admin-session";
 
@@ -14,6 +15,6 @@ export async function generateMetadata(): Promise<Metadata> {
 // 운영자가 아니면 그 전에 404 고, DB 함수도 운영자가 아니면 거부한다.
 export default async function Page() {
   const { supabase } = await loadAdminSession();
-  const entries = await readAdminAccessLog(supabase);
-  return <AccessLogPanel entries={entries} />;
+  const [entries, mismatches] = await Promise.all([readAdminAccessLog(supabase), readSurchargeMismatches(supabase)]);
+  return <AccessLogPanel entries={entries} mismatches={mismatches} />;
 }

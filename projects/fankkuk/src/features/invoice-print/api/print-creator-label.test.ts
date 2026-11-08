@@ -68,8 +68,8 @@ type Claim = Record<string, unknown> | null;
 const LOG_ID = 4242;
 
 /** logId 를 null 로 주면 「연 줄」의 id 를 돌려주지 않는 옛 DB 함수(manual/0010 적용 전)의 응답이다. */
-async function openedClaim(printNo = 1, sealedFor = HARU, logId: number | null = LOG_ID): Promise<Claim> {
-  const envelope = await sealEnvelope(creatorAddressPlaintext({ creatorId: sealedFor, ...fields }), keys.publicKey);
+async function openedClaim(printNo = 1, sealedFor = HARU, logId: number | null = LOG_ID, labelFields = fields): Promise<Claim> {
+  const envelope = await sealEnvelope(creatorAddressPlaintext({ creatorId: sealedFor, ...labelFields }), keys.publicKey);
   const claim: Record<string, unknown> = { result: "opened", print_no: printNo, order_id: ORDER_ID, creator_id: HARU, envelope };
   if (logId !== null) claim.log_id = logId;
   return claim;
@@ -142,7 +142,7 @@ describe("송장 출력 — 주소 열기 (INV-P4·P5·P14)", () => {
     const { db, calls, logs } = fakeDb(goodContext(), await openedClaim(1));
     const res = await printCreatorLabel(deps(db), ask);
     expect(res).toEqual({ kind: "printed", waybill: NEW_WAYBILL, reprint: false, label: fields });
-    expect(fnNames(calls)).toEqual(["invoice_print_context", "invoice_claim_print", "invoice_finish_print"]);
+    expect(fnNames(calls)).toEqual(["invoice_print_context", "invoice_claim_print", "invoice_finish_print", "invoice_report_surcharge_region"]);
     expect(calls[1]?.args).toEqual({ p_qr: QR, p_requester: OWNER });
     expect(calls[2]?.args).toEqual({ p_qr: QR, p_waybill: NEW_WAYBILL });
     expect(logs).toEqual([]);
@@ -419,5 +419,43 @@ describe("송장 출력 — 송장이 안 나온 시도 돌려주기 (INV-P15)",
     const { db, calls } = fakeDb(goodContext(), claim);
     expect(await printCreatorLabel(deps(db), ask)).toEqual({ kind: "failed" });
     expect(fnNames(calls)).not.toContain("invoice_release_print");
+  });
+});
+
+describe("송장 출력 — 할증 지역 재판정 (INV-P20 ③)", () => {
+  const jejuFields = { ...fields, zipCode: "63309", address1: "제주특별자치도 제주시 첨단로 242" };
+  const reportCall = (calls: { fn: string; args: unknown }[]) => calls.filter((c) => c.fn === "invoice_report_surcharge_region");
+
+  it("INV-P20 S20c: 연 우편번호가 제주면 그 상자와 「제주」 구분만 DB 에 넘긴다 — 저장 구분과 비교·기록은 DB 가 한다, 출력은 그대로", async () => {
+    const { db, calls } = fakeDb(goodContext(), await openedClaim(1, HARU, LOG_ID, jejuFields));
+    const res = await printCreatorLabel(deps(db), ask);
+    expect(res).toEqual({ kind: "printed", waybill: NEW_WAYBILL, reprint: false, label: jejuFields });
+    expect(reportCall(calls)).toEqual([{ fn: "invoice_report_surcharge_region", args: { p_box_id: BOX_ID, p_opened_region: "jeju" } }]);
+    expect(JSON.stringify(reportCall(calls))).not.toContain("63309");
+    expect(JSON.stringify(reportCall(calls))).not.toContain("첨단로");
+  });
+
+  it("INV-P20: 제주가 아닌 우편번호면 「할증 없음」으로 넘긴다", async () => {
+    const { db, calls } = fakeDb(goodContext(), await openedClaim(1));
+    await printCreatorLabel(deps(db), ask);
+    expect(reportCall(calls)).toEqual([{ fn: "invoice_report_surcharge_region", args: { p_box_id: BOX_ID, p_opened_region: "none" } }]);
+  });
+
+  it("INV-P20 (실패경로): 재판정 기록이 오류여도 출력 결과는 그대로다", async () => {
+    const { db } = fakeDb(goodContext(), await openedClaim(1, HARU, LOG_ID, jejuFields));
+    const throwing = {
+      ...db,
+      rpc: async (fn: string, args: unknown) => {
+        if (fn === "invoice_report_surcharge_region") throw new Error("연결 끊김");
+        return db.rpc(fn, args as never);
+      },
+    } as unknown as CreatorLabelDeps["db"];
+    expect(await printCreatorLabel(deps(throwing), ask)).toEqual({ kind: "printed", waybill: NEW_WAYBILL, reprint: false, label: jejuFields });
+  });
+
+  it("INV-P20 (실패경로): 송장이 나오지 않은 출력(마무리 실패)에는 재판정을 남기지 않는다", async () => {
+    const { db, calls } = fakeDb(goodContext(), await openedClaim(1, HARU, LOG_ID, jejuFields), { data: null, error: { code: "XX000", message: "x" } });
+    expect(await printCreatorLabel(deps(db), ask)).toEqual({ kind: "failed" });
+    expect(reportCall(calls)).toEqual([]);
   });
 });

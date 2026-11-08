@@ -88,3 +88,25 @@ describe("INV-P7 (D12): 운영자 내부 열람 기록 화면", () => {
     expect(host.textContent).toContain("아직 기록이 없어요.");
   });
 });
+
+describe("INV-P20 ③: 할증 지역 불일치 줄", () => {
+  it("INV-P20 S20c: 불일치가 있으면 상자·저장 구분·출력 때 구분을 한 줄씩 보인다 — 주소는 없다", () => {
+    act(() =>
+      root.render(
+        <AccessLogPanel entries={[]} mismatches={[{ at: "2026-11-08T03:00:00.000Z", box: "FC-4T7NX-2", stored: "none", opened: "jeju" }]} />,
+      ),
+    );
+    const section = [...host.querySelectorAll("section")].find((s) => s.querySelector("h2")?.textContent === "할증 지역 불일치");
+    expect(section).toBeTruthy();
+    const items = [...section!.querySelectorAll("li")].map((li) => li.textContent);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toContain("FC-4T7NX-2");
+    expect(items[0]).toContain("저장 할증 없음");
+    expect(items[0]).toContain("송장 주소 제주");
+  });
+
+  it("INV-P20 (실패경로): 불일치가 없으면 그 구역이 없다", () => {
+    act(() => root.render(<AccessLogPanel entries={[]} mismatches={[]} />));
+    expect(host.textContent).not.toContain("할증 지역 불일치");
+  });
+});

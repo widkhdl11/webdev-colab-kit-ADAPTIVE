@@ -2,6 +2,7 @@
 
 import { ADDRESS_LABELS, ADDRESS_LABEL_NAME, type AddressLabel } from "@/entities/address/model/address-label";
 import { creatorAddressPlaintext } from "@/entities/address/model/creator-address-plaintext";
+import { surchargeRegionOf } from "@/entities/address/model/surcharge-region";
 import { KakaoBubble } from "@/shared/ui/kakao-bubble";
 import { SealedAddressForm } from "@/shared/ui/sealed-address-form";
 import { sendCreatorAddress } from "../api/send-creator-address";
@@ -36,6 +37,7 @@ export function AddressChangeForm({ creatorId, sealingKeyPem, initialLabel = nul
       labelOptions={LABEL_OPTIONS}
       initialLabel={initialLabel}
       labelHint={approvalHint ? "등록한 주소는 다시 조회할 수 없습니다. 선물 승인 시 주소 별칭과 등록일로 확인해 주세요." : "등록한 주소는 다시 조회할 수 없습니다."}
+      classify={(zip) => surchargeRegionOf(zip)}
       send={sendCreatorAddress}
       submitClassName="btn btn--kakao"
       submitContent={(busy) => (

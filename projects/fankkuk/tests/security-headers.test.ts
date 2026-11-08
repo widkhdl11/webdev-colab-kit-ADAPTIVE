@@ -23,3 +23,19 @@ describe("보안 헤더", () => {
     expect(h["Content-Security-Policy"]).toBeUndefined();
   });
 });
+
+describe("address-protection INV-P20 ①: 우편번호 서비스", () => {
+  const directive = (csp: string, name: string) => csp.split(";").map((d) => d.trim()).find((d) => d.startsWith(`${name} `)) ?? "";
+
+  it("INV-P20: 스크립트 허용 목록에 우편번호 서비스 스크립트 주소, 프레임 허용 목록에 검색 화면 주소가 있다", async () => {
+    const csp = (await siteHeaders())["Content-Security-Policy-Report-Only"] ?? "";
+    expect(directive(csp, "script-src").split(" ")).toContain("https://t1.daumcdn.net");
+    expect(directive(csp, "frame-src").split(" ")).toContain("https://postcode.map.kakao.com");
+  });
+
+  it("INV-P20 (실패경로): 그 서비스 주소만 더한다 — 다음·카카오의 다른 주소나 넓은 와일드카드는 없다", async () => {
+    const csp = (await siteHeaders())["Content-Security-Policy-Report-Only"] ?? "";
+    const kakaoish = csp.split(/[\s;]+/).filter((t) => /daum|kakao/.test(t));
+    expect(kakaoish.sort()).toEqual(["https://postcode.map.kakao.com", "https://t1.daumcdn.net"]);
+  });
+});

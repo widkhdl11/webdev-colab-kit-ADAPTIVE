@@ -10,3 +10,10 @@
 @media (max-width: 767px) {
   .two { grid-template-columns: 1fr; }
 }
+/* 우편번호 칸 옆 「주소 검색」 — 버튼은 칸 아래 줄에 맞춘다. 칸이 좁아지면 버튼이 아래로 내려간다 */
+.zip-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.zip-row > :first-child { flex: 1 1 160px; min-width: 0; }
+.zip-search { flex: 0 0 auto; }
+/* 우편번호 서비스 검색 화면(그 서비스가 이 칸 안에 끼워 넣는다) */
+.postcode { height: 440px; overflow: hidden; border-radius: var(--r-card); box-shadow: var(--hair); }
+.postcode[hidden] { display: none; }

@@ -57,6 +57,8 @@ export type ApprovalRequestDraft = { requestId: string; payload: string; request
 export type StoredPayment = PendingPayment & {
   orderNo: string;
   charge: ChargeBreakdown;
+  /** 제주·도서 할증(payment INV-M24) — 등록 함수가 결제 순간 크리에이터 주소의 구분으로 상자마다 더해 배송비 칸에 넣은 몫의 합. 없으면 0. 결제 화면의 할증 줄에만 쓴다 */
+  surchargeKrw: number;
   paymentKey: string | null;
   /** 이 결제를 등록한 팬 — 결제 승인은 이 팬의 요청만 처리한다(INV-L3). */
   fanId: string;

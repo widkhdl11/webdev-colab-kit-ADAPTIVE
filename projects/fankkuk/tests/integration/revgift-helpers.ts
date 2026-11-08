@@ -126,7 +126,7 @@ export function sampleEnvelope(): Record<string, unknown> {
  * 이미 있으면 덮어쓴다. 실패하면 예외.
  */
 export async function registerFanAddress(fan: SupabaseClient, envelope: unknown = sampleEnvelope(), label = "home"): Promise<void> {
-  const { data, error } = await fan.rpc("set_my_fan_address", { p_envelope: envelope, p_label: label });
+  const { data, error } = await fan.rpc("set_my_fan_address", { p_envelope: envelope, p_label: label, p_region: "none" });
   if (error || data !== "saved") throw new Error(`set_my_fan_address 실패: ${error?.code ?? String(data)}`);
 }
 

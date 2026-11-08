@@ -12,7 +12,7 @@ import { decideSender, refusalStatus, SENDER_REFUSAL_MESSAGE, senderRoleAllowed 
 // 선물 등록 = 주문 + 상자 + 결제 대기를 한 번에 만든다. 결제가 끝나야 크리에이터에게 승인 요청이 간다(INV-M6).
 
 export type RegisterGiftResult =
-  | { ok: true; orderId: string; orderNo: string; amountKrw: number }
+  | { ok: true; orderId: string; orderNo: string; amountKrw: number; surchargeKrw: number }
   | { ok: false; status: 401 | 403 | 404 | 409; message: string; reason?: "hard_item" }
   | { ok: false; status: 400; errors: Partial<Record<keyof RegisterFormValues, string>> };
 
@@ -67,8 +67,9 @@ export async function registerGift(
   for (let attempt = 1; ; attempt += 1) {
     try {
       const stored = await deps.store.create({ orderId: newPaymentOrderId(), orderNo: (deps.newOrderNo ?? newOrderNo)(), charge, registration });
-      // 결제 기록의 칸 나눔(택배 원가·서비스료)은 돌려주지 않는다 — 팬에게는 한 금액만(INV-M7)
-      return { ok: true, orderId: stored.orderId, orderNo: stored.orderNo, amountKrw: stored.amountKrw };
+      // 결제 기록의 칸 나눔(택배 원가·서비스료)은 돌려주지 않는다 — 팬에게는 한 금액만(INV-M7).
+      // 할증(INV-M24)은 등록 함수가 정해 더한 몫 — 결제 화면이 「제주·도서 지역 할증」 한 줄로 따로 보인다. 화면 합계(할증 전)와의 비교는 위에서 끝났다
+      return { ok: true, orderId: stored.orderId, orderNo: stored.orderNo, amountKrw: stored.amountKrw, surchargeKrw: stored.surchargeKrw };
     } catch (e) {
       if (e instanceof PriceChangedError) return { ok: false, status: 409, message: GIFT_PRICE_CHANGED_MESSAGE };
       // 입력 검사를 지나 DB 가 값을 거부했다(22023) — 입력 오류로 돌려준다. 정상 흐름에서는 입력 검사가 먼저 막으므로 남겨 둔다

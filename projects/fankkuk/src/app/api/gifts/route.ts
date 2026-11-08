@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     body,
   );
   const headers = { "Cache-Control": "no-store" };
-  if (result.ok) return NextResponse.json({ orderId: result.orderId, orderNo: result.orderNo, amountKrw: result.amountKrw }, { headers });
+  if (result.ok) return NextResponse.json({ orderId: result.orderId, orderNo: result.orderNo, amountKrw: result.amountKrw, surchargeKrw: result.surchargeKrw }, { headers });
   if (result.status === 400) return NextResponse.json({ errors: result.errors }, { status: 400, headers });
   return NextResponse.json({ message: result.message, ...(result.reason ? { reason: result.reason } : {}) }, { status: result.status, headers });
 }

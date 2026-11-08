@@ -64,7 +64,8 @@ const STEP_FIELDS: Record<Exclude<StepNo, 4>, (keyof RegisterFormValues)[]> = {
 
 
 /** 등록이 끝나 결제창으로 넘길 값. 금액은 서버가 계산한 것이다. */
-export type RegisteredGift = { orderId: string; orderNo: string; amountKrw: number };
+/** surchargeKrw: 서버가 더한 제주·도서 할증(payment INV-M24) — 결제 화면이 할증 줄로 보인다 */
+export type RegisteredGift = { orderId: string; orderNo: string; amountKrw: number; surchargeKrw?: number };
 
 /**
  * 오른쪽 「보낼 선물」 칸·휴대폰 아래 합계 줄(위젯)이 그리는 지금 입력. 금액은 이 폼과 같은 summarizeBoxes 결과다(design-rules 33절).
@@ -286,7 +287,10 @@ export function RegisterForm({
       });
       const body = (await res.json().catch(() => ({}))) as RegisterResponse;
       if (res.ok && body.orderId && body.orderNo && typeof body.amountKrw === "number") {
-        await onRegistered({ orderId: body.orderId, orderNo: body.orderNo, amountKrw: body.amountKrw }, photo);
+        await onRegistered(
+          { orderId: body.orderId, orderNo: body.orderNo, amountKrw: body.amountKrw, surchargeKrw: typeof body.surchargeKrw === "number" ? body.surchargeKrw : 0 },
+          photo,
+        );
         return;
       }
       if (res.status === 401) setSubmitError({ message: "로그인이 필요합니다.", needsLogin: true });

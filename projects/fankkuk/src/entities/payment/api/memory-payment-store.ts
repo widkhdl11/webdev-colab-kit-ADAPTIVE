@@ -13,7 +13,12 @@ export type MemoryPaymentStore = PaymentStore & {
  * 유닛 시험용 메모리 저장소. 프로세스가 재시작하면 기록이 사라지므로 운영 환경에서는 만들 수 없다.
  * nicknames: 팬 ID → 닉네임(없으면 ID 를 닉네임으로 쓴다).
  */
-export function createMemoryPaymentStore(opts: { env: EnvLike; nicknames?: Record<string, string> }): MemoryPaymentStore {
+export function createMemoryPaymentStore(opts: {
+  env: EnvLike;
+  nicknames?: Record<string, string>;
+  /** 크리에이터 ID → 상자 하나의 제주·도서 할증(INV-M24). DB 등록 함수처럼 상자마다 배송비 칸에 더한다. 없으면 0 */
+  surchargePerBox?: Record<string, number>;
+}): MemoryPaymentStore {
   if (opts.env.NODE_ENV === "production" || opts.env.VERCEL_ENV === "production") {
     throw new Error("메모리 결제 저장소는 운영 환경에서 쓸 수 없다 — DB 저장소를 연결해야 한다");
   }
@@ -25,11 +30,13 @@ export function createMemoryPaymentStore(opts: { env: EnvLike; nicknames?: Recor
     async create({ orderId, orderNo, charge, registration }) {
       if (rows.has(orderId)) throw new Error("이미 있는 결제 orderId");
       if ([...rows.values()].some((r) => r.orderNo === orderNo)) throw new OrderNoTakenError();
+      const surchargeKrw = (opts.surchargePerBox?.[registration.creatorId] ?? 0) * registration.boxes.length;
       const row: StoredPayment = {
         orderId,
         orderNo,
-        charge,
-        amountKrw: charge.totalKrw,
+        charge: { ...charge, shippingFeeKrw: charge.shippingFeeKrw + surchargeKrw, totalKrw: charge.totalKrw + surchargeKrw },
+        surchargeKrw,
+        amountKrw: charge.totalKrw + surchargeKrw,
         status: "pending",
         paymentKey: null,
         fanId: registration.fanId,

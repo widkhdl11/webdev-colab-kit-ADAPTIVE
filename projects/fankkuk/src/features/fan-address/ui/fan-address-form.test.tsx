@@ -127,3 +127,77 @@ describe("팬 받을 주소 입력 (INV-P1·P16·P17)", () => {
     expect(hint()).toBe("등록한 주소는 다시 조회할 수 없습니다.");
   });
 });
+
+describe("주소 검색과 할증 지역 구분 (address-protection INV-P20)", () => {
+  const POSTCODE_SRC = "https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+  const scripts = () => Array.from(document.querySelectorAll<HTMLScriptElement>("script")).filter((x) => x.src.includes("postcode"));
+  const searchButton = () => Array.from(host.querySelectorAll("button")).find((b) => b.textContent === "주소 검색");
+  let embedded: { oncomplete: (d: Record<string, string>) => void; target: Element | null }[];
+
+  beforeEach(() => {
+    for (const x of scripts()) x.remove();
+    embedded = [];
+    delete (window as { daum?: unknown }).daum;
+  });
+
+  function render() {
+    act(() =>
+      root.render(<FanAddressForm accountId={ACCOUNT} sealingKeyPem={publicPem} initialLabel="home" onSaved={() => {}} onCancel={() => {}} onLoginExpired={() => {}} />),
+    );
+  }
+
+  /** 우편번호 서비스 스크립트가 다 내려온 것처럼 — 그 스크립트가 만드는 전역 객체를 두고 load 를 알린다 */
+  async function scriptLoaded() {
+    (window as { daum?: unknown }).daum = {
+      Postcode: class {
+        constructor(private readonly o: { oncomplete: (d: Record<string, string>) => void }) {}
+        embed(target: Element) {
+          embedded.push({ oncomplete: this.o.oncomplete, target });
+        }
+      },
+    };
+    await act(async () => {
+      scripts()[0]!.dispatchEvent(new Event("load"));
+      await new Promise((r) => setTimeout(r, 0));
+    });
+  }
+
+  it("INV-P20 S20b: 주소 화면을 열기만 하면 우편번호 서비스 스크립트를 부르지 않는다 — 「주소 검색」을 누를 때 한 번만 부른다", async () => {
+    render();
+    expect(scripts()).toHaveLength(0);
+    act(() => searchButton()!.click());
+    expect(scripts().map((x) => x.src)).toEqual([POSTCODE_SRC]);
+    await scriptLoaded();
+    act(() => searchButton()!.click());
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(scripts()).toHaveLength(1);
+    expect(embedded).toHaveLength(2);
+  });
+
+  it("INV-P20 S20: 검색 결과로 우편번호·기본 주소를 채우고, 저장 요청에는 봉인 값·이름표·구분(제주)만 — 우편번호 평문이 없다", async () => {
+    sendFanAddress.mockResolvedValue({ kind: "ok" });
+    render();
+    act(() => searchButton()!.click());
+    await scriptLoaded();
+    act(() => embedded[0]!.oncomplete({ zonecode: "63309", roadAddress: "제주특별자치도 제주시 첨단로 242", jibunAddress: "", address: "", userSelectedType: "R" }));
+    expect(host.querySelector<HTMLInputElement>('input[name="zipCode"]')!.value).toBe("63309");
+    expect(host.querySelector<HTMLInputElement>('input[name="address1"]')!.value).toBe("제주특별자치도 제주시 첨단로 242");
+    type("recipientName", "김별빛");
+    type("phone", "010-1234-5678");
+    await submit();
+    expect(sendFanAddress).toHaveBeenCalledTimes(1);
+    const [envelope, label, region] = sendFanAddress.mock.calls[0] as [Envelope, string, string];
+    expect([label, region]).toEqual(["home", "jeju"]);
+    expect(JSON.stringify({ address: envelope, label, region })).not.toContain("63309");
+  });
+
+  it("INV-P20: 제주가 아닌 우편번호를 직접 넣으면 구분은 「할증 없음」", async () => {
+    sendFanAddress.mockResolvedValue({ kind: "ok" });
+    render();
+    fill();
+    await submit();
+    expect(sendFanAddress.mock.calls[0]?.[2]).toBe("none");
+  });
+});

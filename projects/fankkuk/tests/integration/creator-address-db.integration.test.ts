@@ -28,7 +28,7 @@ function newEvents(): { event: string; method: string; actor: string }[] {
 }
 
 function setAddress(actorId: string, envelope: unknown, method = "fake", label: string | null = "home") {
-  return adminClient().rpc("set_creator_address", { p_actor_id: actorId, p_envelope: envelope, p_label: label, p_method: method });
+  return adminClient().rpc("set_creator_address", { p_actor_id: actorId, p_envelope: envelope, p_label: label, p_region: "none", p_method: method });
 }
 
 const storedLabel = () => psql(`select coalesce(label, '-') from pii.creator_addresses where creator_id = '${CREATOR_ID}'`);
@@ -99,8 +99,8 @@ describe("INV-P13: 크리에이터 주소는 로그인한 크리에이터 본인
   it("INV-P13 S13c (실패경로): 로그인 키·익명 키로는 저장 함수를 부를 수 없다", async () => {
     clearAddress();
     const creator = await signedInClient(TEST_CREATOR.loginId);
-    expect((await creator.rpc("set_creator_address", { p_actor_id: CREATOR_PROFILE, p_envelope: sampleEnvelope(), p_label: "home", p_method: "fake" })).error).not.toBeNull();
-    expect((await anonClient().rpc("set_creator_address", { p_actor_id: CREATOR_PROFILE, p_envelope: sampleEnvelope(), p_label: "home", p_method: "fake" })).error).not.toBeNull();
+    expect((await creator.rpc("set_creator_address", { p_actor_id: CREATOR_PROFILE, p_envelope: sampleEnvelope(), p_label: "home", p_region: "none", p_method: "fake" })).error).not.toBeNull();
+    expect((await anonClient().rpc("set_creator_address", { p_actor_id: CREATOR_PROFILE, p_envelope: sampleEnvelope(), p_label: "home", p_region: "none", p_method: "fake" })).error).not.toBeNull();
     expect(addressRows()).toBe(0);
   });
 
@@ -121,7 +121,7 @@ describe("INV-P13: 크리에이터 주소는 로그인한 크리에이터 본인
   it("INV-P13 S13d (실패경로): 가짜 서명 허용 줄이 없는 DB(운영)에서는 방식 fake 를 거부한다", () => {
     clearAddress();
     const out = psql(
-      `begin; delete from public.local_dev_flags; select public.set_creator_address('${CREATOR_PROFILE}'::uuid, '${JSON.stringify(sampleEnvelope())}'::jsonb, 'home', 'fake'); rollback;`,
+      `begin; delete from public.local_dev_flags; select public.set_creator_address('${CREATOR_PROFILE}'::uuid, '${JSON.stringify(sampleEnvelope())}'::jsonb, 'home', 'none', 'fake'); rollback;`,
     );
     expect(out.split("\n")).toContain("method_refused");
     expect(addressRows()).toBe(0);

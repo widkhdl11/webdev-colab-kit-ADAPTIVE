@@ -29,7 +29,7 @@ describe("INV-P17: 팬 받을 주소는 로그인한 팬 본인 칸에만 쓴다
     expect((await fan.rpc("my_fan_address_status")).data).toEqual([{ registered: false, label: null, updated_at: null }]);
 
     const first = sampleEnvelope();
-    expect((await fan.rpc("set_my_fan_address", { p_envelope: first, p_label: "home" })).data).toBe("saved");
+    expect((await fan.rpc("set_my_fan_address", { p_envelope: first, p_label: "home", p_region: "none" })).data).toBe("saved");
     const status = (await fan.rpc("my_fan_address_status")).data as { registered: boolean; label: string; updated_at: string }[];
     expect(status).toHaveLength(1);
     expect(status[0]).toMatchObject({ registered: true, label: "home" });
@@ -38,7 +38,7 @@ describe("INV-P17: 팬 받을 주소는 로그인한 팬 본인 칸에만 쓴다
     expect(events(PROFILE.byeolbit).slice(before)).toEqual(["registered"]);
 
     const second = sampleEnvelope();
-    expect((await fan.rpc("set_my_fan_address", { p_envelope: second, p_label: "office" })).data).toBe("saved");
+    expect((await fan.rpc("set_my_fan_address", { p_envelope: second, p_label: "office", p_region: "none" })).data).toBe("saved");
     expect(psql(`select count(*) from pii.fan_addresses where account_id = '${PROFILE.byeolbit}'`)).toBe("1");
     expect(stored(PROFILE.byeolbit)).toBe(`${psql(`select '${JSON.stringify(second)}'::jsonb::text`)}|office`);
     expect(events(PROFILE.byeolbit).slice(before)).toEqual(["registered", "changed"]);
@@ -54,7 +54,7 @@ describe("INV-P17: 팬 받을 주소는 로그인한 팬 본인 칸에만 쓴다
       [sampleEnvelope(), null],
       [sampleEnvelope(), "역삼동 집"],
     ] as const) {
-      expect((await fan.rpc("set_my_fan_address", { p_envelope: envelope, p_label: label })).error?.code).toBe("22023");
+      expect((await fan.rpc("set_my_fan_address", { p_envelope: envelope, p_label: label, p_region: "none" })).error?.code).toBe("22023");
     }
     expect(stored(PROFILE.byeolbit)).toBe("");
     expect(events(PROFILE.byeolbit)).toHaveLength(before);
@@ -63,21 +63,21 @@ describe("INV-P17: 팬 받을 주소는 로그인한 팬 본인 칸에만 쓴다
   it("INV-P17 S17b (실패경로): 달토끼의 칸에 쓰는 길이 없다 — 별빛의 등록은 별빛 칸에만, 계정 인자를 붙이면 함수가 없다", async () => {
     clearFanAddresses(FANS);
     const fan = await signedInClient("byeolbit_fan");
-    expect((await fan.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "home" })).data).toBe("saved");
+    expect((await fan.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "home", p_region: "none" })).data).toBe("saved");
     expect(stored(PROFILE.daltokki)).toBe("");
-    expect((await fan.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "home", p_account_id: PROFILE.daltokki })).error).not.toBeNull();
+    expect((await fan.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "home", p_region: "none", p_account_id: PROFILE.daltokki })).error).not.toBeNull();
     expect(stored(PROFILE.daltokki)).toBe("");
   });
 
   it("INV-P17 S17b (실패경로): 크리에이터·운영자는 팬 주소를 등록하지 못하고, 로그인 안 함·앱 서버 키는 부를 수 없다", async () => {
     for (const login of ["haru_creator", "fankkuk_staff"]) {
       const c = await signedInClient(login);
-      expect((await c.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "home" })).data).toBe("not_fan");
+      expect((await c.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "home", p_region: "none" })).data).toBe("not_fan");
       expect((await c.rpc("delete_my_fan_address")).data).toBe("not_fan");
     }
     expect(psql(`select count(*) from pii.fan_addresses where account_id = '${PROFILE.haru}'`)).toBe("0");
     for (const c of [anonClient(), adminClient()]) {
-      expect((await c.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "home" })).error).not.toBeNull();
+      expect((await c.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "home", p_region: "none" })).error).not.toBeNull();
       expect((await c.rpc("delete_my_fan_address")).error).not.toBeNull();
       expect((await c.rpc("my_fan_address_status")).error).not.toBeNull();
     }
@@ -85,7 +85,7 @@ describe("INV-P17: 팬 받을 주소는 로그인한 팬 본인 칸에만 쓴다
 
   it("INV-P17 S17b (실패경로): 별빛 주소 상태를 크리에이터·운영자·다른 팬이 읽으면 별빛의 이름표·시각이 오지 않는다", async () => {
     const fan = await signedInClient("byeolbit_fan");
-    await fan.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "studio" });
+    await fan.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "studio", p_region: "none" });
     for (const login of ["haru_creator", "fankkuk_staff"]) {
       expect((await (await signedInClient(login)).rpc("my_fan_address_status")).data).toEqual([]);
     }
@@ -97,7 +97,7 @@ describe("INV-P17: 팬 받을 주소는 로그인한 팬 본인 칸에만 쓴다
 describe("INV-P17: 지우면 설정의 칸만 빈다", () => {
   it("INV-P17 S17c: 별빛이 지우면 칸이 비고 기록에 지우기 한 줄 — 비어 있을 때 다시 지우면 none, 기록은 늘지 않는다", async () => {
     const fan = await signedInClient("byeolbit_fan");
-    await fan.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "home" });
+    await fan.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "home", p_region: "none" });
     const before = events(PROFILE.byeolbit).length;
     expect((await fan.rpc("delete_my_fan_address")).data).toBe("deleted");
     expect(stored(PROFILE.byeolbit)).toBe("");
@@ -121,7 +121,7 @@ describe("INV-P9·P17: 팬 주소 칸은 개인정보 구역에만 있고, 기�
 
   it("INV-P17 (실패경로): 기록은 고치거나 지우거나 비울 수 없고, 주소·이름표 칸이 없다", async () => {
     const fan = await signedInClient("byeolbit_fan");
-    await fan.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "home" });
+    await fan.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "home", p_region: "none" });
     expect(psqlError(`update pii.fan_address_events set event = 'changed' where account_id = '${PROFILE.byeolbit}'`)).not.toBeNull();
     expect(psqlError(`delete from pii.fan_address_events where account_id = '${PROFILE.byeolbit}'`)).not.toBeNull();
     expect(psqlError(`truncate pii.fan_address_events`)).not.toBeNull();

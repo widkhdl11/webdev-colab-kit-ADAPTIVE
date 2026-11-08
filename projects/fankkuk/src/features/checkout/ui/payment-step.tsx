@@ -7,8 +7,8 @@ import s from "./payment-step.module.css";
 // 선물 등록 뒤 결제창. 금액은 서버가 등록 때 정한 값을 그대로 쓴다 — 여기서 바꿔도 승인 단계에서 서버가 거부한다(INV-M2).
 // 결제가 끝나면 토스가 /api/checkout/success 로 돌려보내고, 서버가 승인한 뒤 선물 상세로 보낸다.
 
-/** 결제창이 받는 값 — 등록이 돌려준 결제 orderId·주문번호·서버가 계산한 금액. */
-export type CheckoutTarget = { orderId: string; orderNo: string; amountKrw: number };
+/** 결제창이 받는 값 — 등록이 돌려준 결제 orderId·주문번호·서버가 계산한 금액. surchargeKrw 는 그 금액에 든 제주·도서 할증(payment INV-M24). */
+export type CheckoutTarget = { orderId: string; orderNo: string; amountKrw: number; surchargeKrw?: number };
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
@@ -94,6 +94,13 @@ export function PaymentStep({ clientKey, pending, route }: { clientKey: string; 
         <h2 id={`pay-h-${id}`} className={s.title} ref={title} tabIndex={-1}>
           결제 수단 선택
         </h2>
+        {/* payment INV-M24 ②: 할증이 있을 때만 금액 줄 바로 앞에 한 줄 — 크리에이터의 주소·지역 이름은 없다 */}
+        {pending.surchargeKrw ? (
+          <p className={s.extra}>
+            <span>제주·도서 지역 할증</span>
+            <span>{won(pending.surchargeKrw)}</span>
+          </p>
+        ) : null}
         <p className={s.sum}>
           <span>결제 금액</span>
           <strong>{won(pending.amountKrw)}</strong>

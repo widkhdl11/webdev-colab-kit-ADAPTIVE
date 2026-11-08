@@ -1,4 +1,6 @@
 import { ADMIN_ACCESS_LOG_LIMIT, type AdminAccessEntry } from "@/entities/address/api/admin-access-log";
+import type { SurchargeMismatch } from "@/entities/address/api/surcharge-mismatches";
+import { SURCHARGE_REGION_NAME } from "@/entities/address/model/surcharge-region";
 import { printLabelOf } from "@/entities/address/model/access-log";
 import { ACCESS_DENY_TEXT, ACCESS_REQUESTER_TEXT, RETURN_ACCESS_DENY_TEXT, REVGIFT_ACCESS_DENY_TEXT } from "@/entities/address/ui/access-log-text";
 import { formatStamp } from "@/shared/lib/format/datetime";
@@ -22,7 +24,7 @@ function whoOf(e: AdminAccessEntry): string {
   return e.requesterNickname ? `${role} · ${e.requesterNickname}` : role;
 }
 
-export function AccessLogPanel({ entries }: { entries: readonly AdminAccessEntry[] }) {
+export function AccessLogPanel({ entries, mismatches = [] }: { entries: readonly AdminAccessEntry[]; mismatches?: readonly SurchargeMismatch[] }) {
   return (
     <>
       <div className={a.pageHead}>
@@ -34,6 +36,22 @@ export function AccessLogPanel({ entries }: { entries: readonly AdminAccessEntry
           </p>
         </div>
       </div>
+      {/* address-protection INV-P20 ③: 송장 출력 때 연 주소의 할증 구분이 저장된 구분과 다른 상자 — 있을 때만. 주소는 없다 */}
+      {mismatches.length > 0 ? (
+        <section className={a.card} style={{ marginBottom: 16 }} aria-labelledby="surcharge-mismatch-h">
+          <div className={a.sectionH}>
+            <h2 id="surcharge-mismatch-h">할증 지역 불일치</h2>
+          </div>
+          <ul>
+            {mismatches.map((m) => (
+              <li key={`${m.box}-${m.at}`}>
+                <span className={`${a.mono} ${a.nowrap}`}>{formatStamp(m.at)}</span> · <strong className={a.mono}>{m.box}</strong> · 저장{" "}
+                {SURCHARGE_REGION_NAME[m.stored]} · 송장 주소 {SURCHARGE_REGION_NAME[m.opened]}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       <div className={a.tblWrap}>
         <table className={a.tbl} style={{ minWidth: 820 }}>
           <caption className="sr-only">주소 열람 내부 기록. 최근 순</caption>

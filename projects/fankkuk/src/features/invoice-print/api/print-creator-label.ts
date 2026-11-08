@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { ACCESS_DENY_REASONS, type AccessDenyReason } from "@/entities/address/model/access-log";
 import type { CreatorAddressLabel } from "@/entities/address/model/creator-address-plaintext";
+import { surchargeRegionOf } from "@/entities/address/model/surcharge-region";
 import { sha256Hex, type RecordedApproval } from "@/entities/order/model/evaluate-approval";
 import { ORDER_STATUSES, type OrderStatus } from "@/entities/order/model/order-status";
 import type { SignatureMethod } from "@/shared/api/approval-signer/accepted-method";
@@ -213,5 +214,21 @@ export async function printCreatorLabel(deps: CreatorLabelDeps, input: { qr: str
   const finished = finishShape.safeParse(finish.data);
   // 응답만 깨지고 상자는 넘어갔을 수 있다 — 그러면 DB 가 (d)로 돌려주기를 거부한다
   if (!finished.success) return releaseOpened(deps, logId, requesterId);
+  await reportSurchargeRegion(deps, ctx.box_id, opened.label.zipCode);
   return { kind: "printed", waybill: finished.data.waybill, reprint: !finished.data.first, label: opened.label };
+}
+
+/**
+ * address-protection INV-P20 ③: 송장이 나온 뒤 연 우편번호로 할증 구분을 다시 정해 상자와 그 구분만 DB 에 넘긴다 —
+ * 저장된 구분과 비교해 다르면 운영자 화면에 남기는 것은 DB 함수가 한다(우편번호·주소는 넘기지 않는다).
+ * 출력은 이미 끝났으므로 오류·함수 없음(manual/0030 적용 전)이어도 결과를 바꾸지 않는다.
+ */
+async function reportSurchargeRegion(deps: CreatorLabelDeps, boxId: string, zipCode: string): Promise<void> {
+  const region = surchargeRegionOf(zipCode);
+  if (region === null) return;
+  try {
+    await deps.db.rpc("invoice_report_surcharge_region", { p_box_id: boxId, p_opened_region: region });
+  } catch {
+    // 출력 결과에 영향 없음
+  }
 }
