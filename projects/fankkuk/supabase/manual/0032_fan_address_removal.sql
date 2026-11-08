@@ -27,6 +27,9 @@
 --   5) office_drop_address_copies() — manual/0024 그대로에 「끝난 주문의 반송 주소 사본 지우기」를 더한다(INV-M25 ④). 끝남은 public.order_is_finished(탈퇴·보관 기한이 쓰는 판정).
 --      돌려주는 값에 order_return(지운 주문 사본 수)이 더해진다.
 --   6) pii.withdraw_account — manual/0029 그대로에서 pii.fan_addresses 지우기를 빼고, 그 계정의 주문 사본·선물함 신청 사본 지우기를 더한다.
+--   7) pii.revgift_box_save_copy — 지금 0031 과 같은 본문으로 다시 쓴다. 옛 0031(99eb38ee 판, 봉인이 없으면 등록 주소를 복사하던 갈래)이 이미 적용된 DB 에서도
+--      이 파일 하나로 새 0031 → 0032 를 적용한 DB 와 같은 상태가 된다(옛 판의 갈래는 지워진 pii.fan_addresses 를 읽어 실행 때 실패했을 것이다).
+--      그래서 이미 0031 을 적용한 DB 에 0031 을 다시 넣지 않는다.
 --
 -- ■ 앱과 DB 가 한쪽만 바뀐 상태
 --   이 파일만(옛 앱): 설정의 받을 주소 저장·역조공 받기(한 인자)·반송 주소 확인(두 인자)·선물함 신청(봉인 없이)이 「함수 없음」·22023 으로 실패한다(아무것도 저장되지 않는다).
@@ -305,6 +308,25 @@ begin
   end if;
 end $fn$;
 
+-- ── 7) 선물함 신청 사본 저장 — 옛 0031 판 정리(새 0031 과 같은 본문) ─────
+
+create or replace function pii.revgift_box_save_copy(p_application_id uuid, p_fan_id uuid, p_envelope jsonb, p_region text)
+returns void
+language plpgsql security definer set search_path = ''
+as $$
+begin
+  if not exists (select 1 from public.revgift_box_applications a where a.id = p_application_id and a.fan_id = p_fan_id and a.status = 'applied') then
+    raise exception '신청을 찾을 수 없다' using errcode = 'P0002';
+  end if;
+  -- INV-GB6: 신청 때 입력한 봉인만 받는다 — 팬 등록 주소는 없고(2026-11-08), 봉인 없이 신청하는 길도 없다
+  if p_envelope is null or not pii.is_sealed_envelope(p_envelope) or p_region is null or p_region not in ('none', 'jeju', 'island') then
+    raise exception '봉인된 주소가 아니다' using errcode = '22023';
+  end if;
+  insert into pii.revgift_box_addresses (application_id, envelope, surcharge_region) values (p_application_id, p_envelope, p_region)
+  on conflict (application_id) do update set envelope = excluded.envelope, surcharge_region = excluded.surcharge_region, created_at = now();
+  insert into public.revgift_box_address_events (application_id, event) values (p_application_id, 'entered');
+end $$;
+
 -- ── 권한 ─────────────────────────────────────────
 
 -- 사본 저장·받기·반송 확인은 로그인한 본인만 — 앱 서버 키로도 남의 주문·몫·상자에 주소를 넣는 길이 없다
@@ -317,6 +339,7 @@ grant execute on function public.accept_revgift(text, jsonb) to authenticated;
 -- 예약 작업 실행자(postgres)만(0024 와 같다)
 revoke all on function public.office_drop_address_copies() from public, anon, authenticated, service_role;
 revoke all on function pii.withdraw_account(uuid, uuid, uuid) from public, anon, authenticated, service_role;
+revoke all on function pii.revgift_box_save_copy(uuid, uuid, jsonb, text) from public, anon, authenticated, service_role;
 
 notify pgrst, 'reload schema';
 
@@ -327,3 +350,11 @@ select to_regclass('pii.fan_addresses') is null as fan_addresses_gone;
 select to_regprocedure('public.set_my_fan_address(jsonb, text, text)') is null and to_regprocedure('public.my_fan_address_status()') is null as fan_address_functions_gone;
 select to_regprocedure('public.confirm_return_address(text, integer, jsonb)') is not null and to_regprocedure('public.accept_revgift(text, jsonb)') is not null as new_functions_exist;
 select to_regclass('pii.order_return_addresses') is not null as order_copy_table_exists;
+select prosrc not like '%fan_addresses%' as box_save_copy_no_registered_branch from pg_proc where oid = 'pii.revgift_box_save_copy(uuid, uuid, jsonb, text)'::regprocedure;
+
+-- 두 경로(옛 0031 → 0032, 새 0031 → 0032)가 같은 상태인지 — 두 DB 에서 각각 돌려 결과 줄이 같으면 같다(읽기만 한다)
+-- select p.oid::regprocedure::text as fn, md5(pg_get_functiondef(p.oid)) as def_md5
+-- from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+-- where n.nspname in ('public', 'pii') and (p.proname like '%revgift_box%' or p.proname like '%return_address%' or p.proname like '%fan_address%'
+--   or p.proname in ('accept_revgift', 'office_drop_address_copies', 'withdraw_account', 'save_my_order_return_address'))
+-- order by 1;
