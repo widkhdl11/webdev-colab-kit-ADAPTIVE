@@ -68,8 +68,7 @@ export function PricingPanel({ table, changes, carrier, boxFees, access }: Props
 
         <CarrierPricingForm pricing={carrier} table={table} editable={owner} />
 
-        {/* 저장 뒤 서버 값으로 입력칸을 다시 그린다 */}
-        <BoxServiceFeeForm key={`${boxFees.regularKrw}/${boxFees.earlyKrw}`} fees={boxFees} editable={owner} />
+        <BoxServiceFeeForm fees={boxFees} editable={owner} />
 
         <section aria-labelledby="h-price-log">
           <div className={a.sectionH}>
