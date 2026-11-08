@@ -36,7 +36,7 @@ export function AddressChangeForm({ creatorId, sealingKeyPem, initialLabel = nul
       toPlaintext={(f) => creatorAddressPlaintext({ creatorId, ...f })}
       labelOptions={LABEL_OPTIONS}
       initialLabel={initialLabel}
-      labelHint={approvalHint ? "등록한 주소는 다시 조회할 수 없습니다. 선물 승인 시 주소 별칭과 등록일로 확인해 주세요." : "등록한 주소는 다시 조회할 수 없습니다."}
+      labelHint={approvalHint ? "등록한 주소는 다시 조회할 수 없습니다. 선물 승인 시 주소 별칭과 등록일로 확인해 주세요. 제주·도서 지역 주소면 팬의 결제 화면에 할증이 표시됩니다." : "등록한 주소는 다시 조회할 수 없습니다. 제주·도서 지역 주소면 팬의 결제 화면에 할증이 표시됩니다."}
       classify={(zip) => surchargeRegionOf(zip)}
       send={sendCreatorAddress}
       submitClassName="btn btn--kakao"

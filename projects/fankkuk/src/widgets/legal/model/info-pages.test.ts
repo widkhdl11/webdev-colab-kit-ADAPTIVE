@@ -166,6 +166,13 @@ describe("안내·법정 페이지 공통", () => {
     expect(openItems(privacyDoc()).some((t) => t.includes("택배 중개 플랫폼 (출시 전 기재)"))).toBe(true);
   });
 
+  it("제3자 제공 절에 제주·도서 할증으로 크리에이터 주소 지역이 팬에게 드러나는 범위를 적는다(DECISIONS 2026-11-07, payment INV-M24)", () => {
+    const provide = privacyDoc().sections.find((s) => s.id === "provide");
+    const text = JSON.stringify(provide);
+    expect(text).toContain("제주·도서 지역");
+    expect(text).toContain("주소는 표시하지 않습니다");
+  });
+
   it("출시 기념 요금·할인 줄이 없다(2026-10-14 적용하지 않기로 함)", () => {
     for (const doc of Object.values(docs)) expect(text(doc)).not.toMatch(/출시 기념|할인/);
   });
