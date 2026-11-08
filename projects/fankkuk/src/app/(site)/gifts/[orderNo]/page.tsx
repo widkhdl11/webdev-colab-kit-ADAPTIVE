@@ -3,7 +3,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { readActionItemsOrNull, readCreatorActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
 import { actionItemsOfOrder, differenceDueKrw, type ActionItem } from "@/entities/action-item/model/action-items";
 import { sentGiftTodoOf } from "@/entities/action-item/model/creator-action-items";
-import { readMyFanAddressStatus } from "@/entities/address/api/my-fan-address-status";
 import { readMyGiftReplies } from "@/entities/gift-reply/api/gift-reply-reads";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
 import { readMyGiftMemo } from "@/entities/order/api/my-gift-memo";
@@ -42,11 +41,10 @@ const DIFFERENCE_NOTICES = ["paid", "failed", "in_progress", "closed"] as const;
 /** 받은 역조공 몫 — 받는 팬 본인만(읽기 함수가 판정). 크리에이터·운영자 계정에게는 팬 상세가 없다 */
 async function revgiftDetail({ supabase, viewer }: Session, orderNo: string) {
   if (viewer.role !== "fan") notFound();
-  // 넷은 서로 기다릴 일이 없다 — 남의 몫이면 기록 읽기도 빈 목록이라 먼저 불러도 새는 것이 없다
-  const [item, accessLog, address, actions] = await Promise.all([
+  // 셋은 서로 기다릴 일이 없다 — 남의 몫이면 기록 읽기도 빈 목록이라 먼저 불러도 새는 것이 없다
+  const [item, accessLog, actions] = await Promise.all([
     readReceivedRevgift(supabase, orderNo),
     readMyRevgiftAccessLog(supabase, orderNo),
-    readMyFanAddressStatus(supabase).catch(() => null),
     readActionItemsOrNull(supabase),
   ]);
   if (!item) notFound();
@@ -58,7 +56,6 @@ async function revgiftDetail({ supabase, viewer }: Session, orderNo: string) {
         todo={actions !== null && actionItemsOfOrder(actions, item.orderNo).length > 0}
         nowMs={Date.now()}
         accountId={viewer.userId}
-        address={address}
         sealingKeyPem={readSealingPublicKeyPem(process.env)}
         accessLog={accessLog}
       />
@@ -88,15 +85,13 @@ async function giftDetail({ supabase, viewer }: Session, orderNo: string, differ
   if (!view) return unpaidDetail({ supabase, viewer }, orderNo, gifts);
   const fan = viewer.role === "fan";
   // 서로 기다릴 필요가 없어 함께 읽는다. 상자·차액·결제·답장·메모 읽기는 모두 로그인한 사람의 주문이 아니면 빈 값을 준다.
-  // 처리할 일과 받을 주소 상태(반송 주소 확인 창 — 이름표·바꾼 날만, address-protection INV-P16)는 팬만
-  const [boxes, differences, payment, replies, memo, actions, addressStatus] = await Promise.all([
+  const [boxes, differences, payment, replies, memo, actions] = await Promise.all([
     readMyGiftBoxes(supabase, view.orderNo),
     readMyDifferences(supabase, view.orderNo),
     readMyGiftPayment(supabase, view.orderNo),
     readMyGiftReplies(supabase, view.orderNo),
     readMyGiftMemo(supabase, view.orderNo),
     readDetailTodo(supabase, viewer, view.orderNo),
-    fan ? readMyFanAddressStatus(supabase).catch(() => null) : Promise.resolve(null),
   ]);
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
   const notice = DIFFERENCE_NOTICES.find((n) => n === differenceParam) ?? null;
@@ -125,7 +120,7 @@ async function giftDetail({ supabase, viewer }: Session, orderNo: string, differ
               items={todoItems}
               clientKey={clientKey}
               now={new Date().toISOString()}
-              address={{ accountId: viewer.userId, status: addressStatus, sealingKeyPem: readSealingPublicKeyPem(process.env) }}
+              address={{ accountId: viewer.userId, sealingKeyPem: readSealingPublicKeyPem(process.env) }}
             />
           ) : null
         }
@@ -145,7 +140,6 @@ async function unpaidDetail({ supabase, viewer }: Session, orderNo: string, gift
   const todoItems = actions.items;
   const unpaid = todoItems.find((it) => it.kind === "unpaid");
   if (!unpaid) notFound();
-  const addressStatus = viewer.role === "fan" ? await readMyFanAddressStatus(supabase).catch(() => null) : null;
   return (
     <>
       <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts", actions.header)} />
@@ -157,7 +151,7 @@ async function unpaidDetail({ supabase, viewer }: Session, orderNo: string, gift
           orderNo={orderNo}
           clientKey={process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? ""}
           now={new Date().toISOString()}
-          address={{ accountId: viewer.userId, status: addressStatus, sealingKeyPem: readSealingPublicKeyPem(process.env) }}
+          address={{ accountId: viewer.userId, sealingKeyPem: readSealingPublicKeyPem(process.env) }}
         />
       </MyShell>
       <SiteFooter />

@@ -10,6 +10,7 @@ import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import { pickOrder } from "@/features/gift-register/model/pick-order";
 import { sendList } from "@/features/gift-register/model/sender-rule";
 import { GiftRegisterPage } from "@/widgets/gift-register/ui/gift-register-page";
+import { readSealingPublicKeyPem } from "@/shared/lib/envelope/sealing-key-config";
 import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-header";
 import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
@@ -90,6 +91,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
         signedIn={signedIn}
         followFirst={followFirst}
         today={kstToday(new Date())}
+        // payment INV-M25: 팬이 보낼 때만 결제 단계에 반송 주소 칸 — 크리에이터는 등록 주소로 반송한다
+        returnAddress={viewer?.role === "fan" ? { accountId: viewer.userId, sealingKeyPem: readSealingPublicKeyPem(process.env) } : null}
       />
       <SiteFooter />
     </>

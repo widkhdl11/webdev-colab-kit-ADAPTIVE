@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { giftDetailHref } from "@/entities/action-item/model/action-items";
-import type { MyFanAddressStatus } from "@/entities/address/api/my-fan-address-status";
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import type { FanAccessEntry } from "@/entities/revgift/model/fan-access-log";
 import type { ReceivedRevgift } from "@/entities/revgift/model/revgift-rows";
 import { daysLeft, receivedStage } from "@/entities/revgift/model/received-stage";
 import { replyDeadlineText } from "@/entities/revgift/ui/received-status";
-import { FanAddressForm } from "@/features/fan-address/ui/fan-address-form";
+import { FanAddressFields } from "@/entities/address/ui/fan-address-fields";
 import { ReceiveFlow } from "@/features/revgift-receive/ui/receive-flow";
 import { ADDRESS_KEY_MISSING_TEXT } from "@/shared/ui/sealed-address-form";
 import { RevgiftAccessLog } from "./revgift-access-log";
@@ -19,13 +18,12 @@ import s from "./revgift-receive.module.css";
 // todo: 이 몫이 처리할 일 읽기 결과에 있다 — 그때만 맨 위 칸(#todo)에서 받기·받지 않기·주소 입력을 한다(INV-J13).
 // 남은 날·기한 문구는 서버에서 한 번 계산해 넘긴다 — 브라우저 시계로 다시 계산하면 첫 화면과 글자가 달라질 수 있다.
 // accessLog: 이 몫의 내 주소 열람 기록(INV-R16). null 이면 읽지 못한 것 — 그 칸만 안내로 바뀐다.
-// 받기 판의 주소 칸은 받을 주소 기능(features/fan-address)의 입력 칸을 붙인다 — 받기 기능과 주소 기능은 서로 import 하지 않는다(FSD).
-// 봉인 속 식별값은 로그인한 팬의 계정(reverse-gift INV-R5, address-protection INV-P17).
+// 받기 판의 주소 칸은 팬 주소 입력 칸(entities/address)을 붙이고, 보내는 일(봉인한 주소로 받기)은 받기 기능이 정한다(reverse-gift INV-R4).
+// 봉인 속 식별값은 로그인한 팬의 계정(reverse-gift INV-R5, address-protection INV-P17). 팬 등록 주소는 없다(2026-11-08).
 export function RevgiftReceivePage({
   item,
   nowMs,
   accountId,
-  address,
   sealingKeyPem,
   accessLog,
   todo,
@@ -35,8 +33,6 @@ export function RevgiftReceivePage({
   nowMs: number;
   /** 로그인한 팬의 계정 ID — 받을 주소를 봉인할 때 묶는다 */
   accountId: string;
-  /** 로그인한 팬의 받을 주소 상태. 읽지 못했으면 null */
-  address: MyFanAddressStatus | null;
   sealingKeyPem: string | null;
   accessLog: readonly FanAccessEntry[] | null;
 }) {
@@ -62,18 +58,18 @@ export function RevgiftReceivePage({
             deadlineText={replyDeadlineText(item.deadline)}
             todo={todo}
             address={{
-              status: address,
               canEnter: sealingKeyPem !== null,
               missingKeyText: ADDRESS_KEY_MISSING_TEXT,
               renderForm: (p) =>
                 sealingKeyPem ? (
-                  <FanAddressForm
+                  <FanAddressFields
+                    idPrefix="rv"
                     accountId={accountId}
                     sealingKeyPem={sealingKeyPem}
-                    initialLabel={p.initialLabel}
-                    autoFocusFirst={p.autoFocusFirst}
-                    onSaved={p.onSaved}
+                    send={(envelope) => p.send(envelope)}
+                    onSaved={p.onDone}
                     onCancel={p.onCancel}
+                    submitContent={(busy) => (busy ? "보내는 중…" : "받기")}
                     onLoginExpired={() => router.push(`/login?next=${encodeURIComponent(giftDetailHref(item.orderNo))}`)}
                   />
                 ) : null,

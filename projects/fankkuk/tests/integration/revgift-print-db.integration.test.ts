@@ -123,7 +123,7 @@ async function print(qr: string, loginId = "fankkuk_admin") {
   return decryptor({ qr, accessToken: await tokenOf(loginId) });
 }
 
-describe("INV-R7: 역조공 몫의 주소는 조건이 모두 참일 때만 열린다", () => {
+describe("INV-R7: 역조공 몫의 주소는 조건이 모두 참일 때만 열린다 (manual/0032 뒤)", () => {
   it("INV-R7 S7: 받기·검수가 끝난 몫을 대표가 출력하면 라벨 다섯 칸과 송장번호만 오고, 「연 줄」 하나가 남는다", async () => {
     const s = await inspectedShare();
     const r = await print(s.qr);
@@ -237,7 +237,7 @@ describe("INV-R7: 역조공 몫의 주소는 조건이 모두 참일 때만 열�
   });
 });
 
-describe("INV-R7 · R9 (카드 d120): 출고 확정 뒤에도 72시간 안에는 남은 횟수로 재출력한다", () => {
+describe("INV-R7 · R9 (카드 d120): 출고 확정 뒤에도 72시간 안에는 남은 횟수로 재출력한다 (manual/0032 뒤)", () => {
   async function shipped(): Promise<Share & { out: string }> {
     const s = await inspectedShare();
     const first = await print(s.qr);
@@ -295,7 +295,7 @@ describe("INV-R7 · R9 (카드 d120): 출고 확정 뒤에도 72시간 안에는
   });
 });
 
-describe("INV-R7: 앱 판정을 건너뛰어도 DB 가 잠근 자리에서 다시 본다", () => {
+describe("INV-R7: 앱 판정을 건너뛰어도 DB 가 잠근 자리에서 다시 본다 (manual/0032 뒤)", () => {
   const cases: [string, (s: Share) => void, string][] = [
     ["팬이 받기를 하지 않음", (s) => psql(`update public.revgift_shares set reply = 'waiting', replied_at = null where id = '${s.shareId}'`), "no_valid_approval"],
     [
@@ -343,7 +343,7 @@ describe("INV-R7: 앱 판정을 건너뛰어도 DB 가 잠근 자리에서 다�
   });
 });
 
-describe("INV-R13: 주소를 연 뒤 송장이 나오기 전에 실패하면 그 「연 줄」을 돌려준다", () => {
+describe("INV-R13: 주소를 연 뒤 송장이 나오기 전에 실패하면 그 「연 줄」을 돌려준다 (manual/0032 뒤)", () => {
   it("INV-R13 S13b (실패경로): 앱 서버 키(RLS 를 건너뛴다)로도 돌려줌 줄·열람 기록 줄을 직접 넣지 못한다", async () => {
     const s = await inspectedShare();
     claim(s.qr);

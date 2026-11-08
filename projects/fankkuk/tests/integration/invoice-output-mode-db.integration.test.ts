@@ -197,7 +197,7 @@ describe("INV-P21 운송장 번호 저장 — 대표만, 상자마다 하나", (
   });
 });
 
-describe("INV-P21 역조공 상자도 같은 방식", () => {
+describe("INV-P21 역조공 상자도 같은 방식 (manual/0032 뒤)", () => {
   it("INV-P21 ③: 역조공 상자도 운송장 번호 없이 주소를 열고, 대표가 번호를 넣은 뒤 출고 확정된다", async () => {
     const s = await inspectedShare();
     expect(await openManual(s.qr)).toEqual({ kind: "printed", waybill: null, reprint: false, label: LABEL });

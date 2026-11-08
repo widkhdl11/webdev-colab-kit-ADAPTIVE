@@ -1,27 +1,24 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { MyFanAddressStatus } from "@/entities/address/api/my-fan-address-status";
 import type { FanBox } from "@/entities/revgift-box/api/box-reads";
 import { FollowButton } from "@/features/creator-follow/ui/follow-button";
-import { FanAddressForm } from "@/features/fan-address/ui/fan-address-form";
+import { FanAddressFields } from "@/entities/address/ui/fan-address-fields";
 import { BoxApplyPanel } from "@/features/revgift-box-apply/ui/box-apply-panel";
 import { ADDRESS_KEY_MISSING_TEXT } from "@/shared/ui/sealed-address-form";
 import s from "./revgift-box.module.css";
 
 // 팬 신청 화면(revgift-box INV-GB4·GB6 · 화면 명세 docs/ux/pages/gift-boxes-boxId.md). 머리: 크리에이터 이름 · 선물함 이름.
-// 신청 기능에 받을 주소 입력 칸(팬 받을 주소 기능)과 팔로우 버튼(팔로우 기능)을 조립해 넘긴다 — 기능끼리는 서로 import 하지 않는다(FSD).
+// 신청 기능에 받을 주소 입력 칸(entities 의 팬 주소 칸)과 팔로우 버튼(팔로우 기능)을 조립해 넘긴다 — 기능끼리는 서로 import 하지 않는다(FSD).
 export function BoxApplyPage({
   box,
   token,
   accountId,
-  address,
   sealingKeyPem,
 }: {
   box: FanBox;
   token: string | null;
   accountId: string | null;
-  address: MyFanAddressStatus | null;
   sealingKeyPem: string | null;
 }) {
   const router = useRouter();
@@ -40,18 +37,17 @@ export function BoxApplyPage({
           token={token}
           followSlot={<FollowButton creatorId={box.creator.id} creatorName={box.creator.name} initialFollowing={false} variant="profile" mode="save" />}
           address={{
-            status: address,
             canEnter: sealingKeyPem !== null && accountId !== null,
             missingKeyText: ADDRESS_KEY_MISSING_TEXT,
             renderForm: (p) =>
               sealingKeyPem && accountId ? (
-                <FanAddressForm
+                <FanAddressFields
+                  idPrefix="ba"
                   accountId={accountId}
                   sealingKeyPem={sealingKeyPem}
-                  initialLabel={p.initialLabel}
-                  autoFocusFirst={p.autoFocusFirst}
-                  onSaved={p.onSaved}
-                  onCancel={p.onCancel}
+                  send={p.send}
+                  onSaved={p.onDone}
+                  submitContent={(busy) => (busy ? "신청 중…" : "신청")}
                   onLoginExpired={() => router.push(`/login?next=${encodeURIComponent(here)}`)}
                 />
               ) : null,

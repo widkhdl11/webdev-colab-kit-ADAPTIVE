@@ -1,17 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { parseAddressInput } from "@/entities/address/model/address-ciphertext";
 import type { Viewer } from "@/entities/session/model/viewer";
 
 // 반송 주소 확인 (office-workflow INV-W15, address-protection INV-P18, action-center INV-J4). 요청한 사람의 세션 클라이언트로 DB 함수
 // confirm_return_address 를 부른다 — DB 가 로그인 토큰으로 그 상자 주문을 보낸 사람인지, 반송 대기·확인 전 출력·기한 전인지 잠근 뒤 다시 보고,
-// 그 사람의 등록 주소 암호문을 상자에 복사한다. 이 경로는 주소를 받지도 돌려주지도 않는다 — 「바꾸기」는 설정의 주소 등록(INV-P13·P17)을 먼저 부른다.
-// 본문에서는 주문번호와 상자 순번(팬 선물만 — 역조공 몫은 주문번호 하나)만 꺼낸다.
+// 반송 주소 암호문을 상자에 복사한다 — 팬 선물은 결제 때 받은 주문 사본(payment INV-M25), 「다른 주소 입력」이면 그 봉인, 역조공 몫은 크리에이터 등록 주소.
+// 본문에서는 주문번호·상자 순번(팬 선물만 — 역조공 몫은 주문번호 하나)·봉인된 주소(다른 주소 입력 때만)를 꺼낸다. 봉인 꼴이 아니면 DB 를 부르기 전에 거부한다.
+// 주소를 돌려주지는 않는다.
 // 화면 문구는 용어집(return_address 행)으로 다음 묶음에서 넣는다 — 거부 사유는 코드값(reason)으로만 돌려준다.
 
 const inputSchema = z
   .object({
     orderNo: z.string().regex(/^[A-Z0-9][A-Z0-9-]{0,39}$/),
     boxSeq: z.number().int().min(1).max(99).optional(),
+    // 다른 주소 입력 — 봉인 꼴은 아래에서 따로 본다(INV-P1)
+    address: z.unknown().optional(),
   })
   .strict();
 
@@ -34,7 +38,15 @@ export async function confirmReturnAddress(deps: { client: Pick<SupabaseClient, 
   const parsed = inputSchema.safeParse(body);
   if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청입니다." };
   const { orderNo, boxSeq } = parsed.data;
-  const { data, error } = await deps.client.rpc("confirm_return_address", { p_order_no: orderNo, p_box_seq: boxSeq ?? null });
+  let envelope = null;
+  if ("address" in parsed.data) {
+    const input = parseAddressInput({ address: parsed.data.address });
+    if (!input.ok) return { ok: false, status: 400, message: "주소를 다시 입력해 주세요." };
+    envelope = input.value;
+  }
+  const { data, error } = await deps.client.rpc("confirm_return_address", { p_order_no: orderNo, p_box_seq: boxSeq ?? null, p_envelope: envelope });
+  // 봉인을 DB 가 거부했다(꼴 · 역조공 몫에 봉인) — 입력 오류다
+  if (error?.code === "22023") return { ok: false, status: 400, message: "주소를 다시 입력해 주세요." };
   // 잠그는 사이 상자 연결이 바뀌었다(office_lock_parcel 의 40001) — 다시 하면 된다. 복사되지 않았다
   if (error?.code === "40001") return { ok: false, status: 409, reason: "retry" };
   if (error) throw new Error(`반송 주소를 확인하지 못했다: ${error.code}`);

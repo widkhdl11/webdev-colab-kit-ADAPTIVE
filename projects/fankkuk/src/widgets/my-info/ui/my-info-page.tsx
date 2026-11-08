@@ -3,18 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
-import type { MyFanAddressStatus } from "@/entities/address/api/my-fan-address-status";
-import { addressOnFileText } from "@/entities/address/ui/address-on-file-text";
 import type { MyAccount } from "@/entities/fan/model/my-account";
 import { MustDeliverNotice } from "@/entities/notification/ui/must-deliver-notice";
 import { FAN_PROFILE_EDIT } from "@/entities/session/model/home-path";
 import { postAccount } from "@/features/account-edit/api/save-account-client";
-import { sendFanAddressDelete } from "@/features/fan-address/api/send-fan-address";
-import { FanAddressForm } from "@/features/fan-address/ui/fan-address-form";
 import { planAccountSettingsSave } from "@/features/account-edit/model/settings-input";
 import { PasswordChangePanel } from "@/features/password-change/ui/password-change-panel";
 import { PhoneChangePanel } from "@/features/phone-change/ui/phone-change-panel";
-import { ADDRESS_KEY_MISSING_TEXT } from "@/shared/ui/sealed-address-form";
 import { AccountEmailField } from "./account-email-field";
 import s from "./my-info.module.css";
 
@@ -22,7 +17,7 @@ import s from "./my-info.module.css";
 // 2차 정돈 4파트(41절, 시안 part4-v4-20261101): 구간 이름을 첫 줄 글자 높이에, 「되돌리기」 선 버튼 48, 선 버튼 짙은 선, 결과 상자 앞 원,
 // 이메일은 가입과 같은 「앞부분 @ 도메인 고르기」(AccountEmailField — 서버로는 전체 주소 한 줄 그대로).
 // 카드 없이 880 기둥 안 12열 4 + 8 묶음 넷 — 왼쪽 구간 이름, 오른쪽 줄(버튼은 줄 오른쪽). 순서는
-// 보안 → 받을 주소 → 개인정보(아이디·이메일) → 알림 → 저장 줄 → 회원 탈퇴. 저장하기가 보내는 이메일·알림을 저장 줄 바로 위에 둔다.
+// 보안 → 개인정보(아이디·이메일) → 알림 → 저장 줄 → 회원 탈퇴. 저장하기가 보내는 이메일·알림을 저장 줄 바로 위에 둔다.
 // 지금 있는 기능만 옮겨 담았다:
 // - 비밀번호 변경(session-login INV-L12)·번호 변경(카카오 재인증, signup INV-U12)은 「변경」을 눌러야 그 줄 아래에 칸이 펼쳐진다. 두 칸은 저장과 따로 서버에 보낸다.
 // - 이메일·알림 둘은 아래 「저장」으로 보낸다(/api/me). 이메일은 바로 바뀌지 않고 확인 메일의 링크를 눌러야 바뀐다(my-account INV-A7).
@@ -31,12 +26,11 @@ import s from "./my-info.module.css";
 // - 알림 스위치 설명은 시안의 스위치별 문구 그대로다. 시안에 없는 안내 문구는 두지 않는다(2026-10-16 사용자 — 문구 남발 금지).
 //   「아이디는 바꿀 수 없어요 …」 문장은 머리 설명·「프로필 수정」 버튼과 겹쳐 뺐다(카드 d114).
 // 「되돌리기」는 이메일 칸을 새로 그려(resetCount) 처음 값에 돌아가고, 알림 스위치도 처음 값으로 돌린다.
-// - 받을 주소(address-protection INV-P17, 2026-10-17 카드 d100): 크리에이터 설정의 받는 주소와 같은 흐름 — 주소는 다시 보이지 않고 이름표와 등록한 날만.
-//   「등록/변경」을 누르면 그 줄 아래에 입력 칸이 펼쳐지고, 저장은 아래 저장하기와 따로 서버에 보낸다(이 브라우저에서 봉인한 값만).
-//   주소 입력도 폼이라 폼 안에 폼이 들어가지 않게, 계정 저장 폼은 아래 저장 줄만 감싸고 이메일 칸은 form 속성으로 그 폼에 붙인다.
+// - 받을 주소 칸은 없다(2026-11-08 팬 주소 등록을 없앴다 — address-protection INV-P17). 주소는 선물마다 그때 입력한다.
+//   계정 저장 폼은 아래 저장 줄만 감싸고 이메일 칸은 form 속성으로 그 폼에 붙인다.
 
 type Notice = { tone: "ok" | "error"; text: string } | null;
-type Reveal = "phone" | "password" | "leave" | "address" | "address-delete";
+type Reveal = "phone" | "password" | "leave";
 
 // 줄 전체가 누르는 칸(높이 64) — 스위치 버튼 안에 이름·설명을 넣고, 이름은 지금처럼 aria-labelledby 로 붙인다
 function Switch({ id, title, desc, on, onChange }: { id: string; title: string; desc: string; on: boolean; onChange: (v: boolean) => void }) {
@@ -53,35 +47,18 @@ function Switch({ id, title, desc, on, onChange }: { id: string; title: string; 
   );
 }
 
-export function MyInfoPanel({
-  account,
-  accountId,
-  address,
-  sealingKeyPem,
-}: {
-  account: MyAccount;
-  /** 로그인한 팬의 계정 ID — 받을 주소를 봉인할 때 묶는다(INV-P17) */
-  accountId: string;
-  /** 받을 주소 상태. 읽지 못했으면 null — 그 줄만 안내로 바뀐다 */
-  address: MyFanAddressStatus | null;
-  /** 주소 봉인 공개키(PEM). 없으면 입력 대신 안내만 보인다 */
-  sealingKeyPem: string | null;
-}) {
+export function MyInfoPanel({ account }: { account: MyAccount }) {
   const id = useId();
   const f = (name: string) => `${id}-${name}`;
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
   const [open, setOpen] = useState<Reveal | null>(null);
-  const [addressOnFile, setAddressOnFile] = useState(address);
-  const [addressMsg, setAddressMsg] = useState<Notice>(null);
-  const [addressBusy, setAddressBusy] = useState(false);
   const [kakao, setKakao] = useState(account.notifyKakao);
   const [mail, setMail] = useState(account.notifyEmail);
   const [instant, setInstant] = useState(account.notifyInstant);
   const [resetCount, setResetCount] = useState(0);
   const toggle = (which: Reveal) => {
-    if (which === "address" || which === "address-delete") setAddressMsg(null);
     setOpen((cur) => (cur === which ? null : which));
   };
   const toLogin = () => router.push("/login?next=/me");
@@ -106,23 +83,6 @@ export function MyInfoPanel({
     router.refresh();
   };
 
-  const deleteAddress = async () => {
-    if (addressBusy) return;
-    setAddressBusy(true);
-    const outcome = await sendFanAddressDelete();
-    setAddressBusy(false);
-    if (outcome.kind === "login") return toLogin();
-    if (outcome.kind !== "ok") {
-      return setAddressMsg({ tone: "error", text: outcome.kind === "refused" ? outcome.message : "삭제하지 못했습니다. 잠시 후 다시 시도해 주세요." });
-    }
-    setAddressOnFile({ registered: false, label: null, updatedAt: null });
-    setOpen(null);
-    setAddressMsg({ tone: "ok", text: "받을 주소가 삭제되었습니다." });
-    router.refresh();
-  };
-
-  const addressRegistered = addressOnFile?.registered ?? false;
-
   return (
     <div className={s.wrap}>
       <header className="page-head">
@@ -134,7 +94,7 @@ export function MyInfoPanel({
             프로필 수정
           </Link>
         </div>
-        <p className="ph-desc">보안·받을 주소·알림을 관리합니다. 닉네임은 ‘프로필 수정’에서 변경해 주세요.</p>
+        <p className="ph-desc">보안·알림을 관리합니다. 닉네임은 ‘프로필 수정’에서 변경해 주세요.</p>
       </header>
 
       <section className={s.grp} aria-labelledby={f("sec1")} data-me-group="security">
@@ -175,88 +135,6 @@ export function MyInfoPanel({
               </div>
             )}
           </div>
-        </div>
-      </section>
-
-      <section className={s.grp} aria-labelledby={f("sec-addr")} data-me-group="address">
-        <h2 className={`${s.nm} ${s.nmLine}`} id={f("sec-addr")}>
-          받을 주소
-        </h2>
-        <div className={s.rows}>
-          <div className={s.item}>
-            <div className={s.row}>
-              <p className={s.txt}>
-                <span className={s.v} data-address-on-file="">
-                  {addressOnFile === null ? "주소 정보를 불러오지 못했습니다" : addressRegistered ? addressOnFileText(addressOnFile) : "등록된 주소 없음"}
-                </span>
-              </p>
-              {addressOnFile !== null ? (
-                <div className={s.act}>
-                  <button className="btn btn--line btn--sm" type="button" aria-expanded={open === "address"} aria-controls={f("addr-panel")} onClick={() => toggle("address")}>
-                    {addressRegistered ? "변경" : "등록"}
-                  </button>
-                  {addressRegistered ? (
-                    <button
-                      className="btn btn--line btn--sm"
-                      type="button"
-                      aria-expanded={open === "address-delete"}
-                      aria-controls={f("addr-del-panel")}
-                      onClick={() => toggle("address-delete")}
-                    >
-                      삭제
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-            {open === "address" && (
-              <div className={s.panel} id={f("addr-panel")}>
-                {sealingKeyPem ? (
-                  <FanAddressForm
-                    accountId={accountId}
-                    sealingKeyPem={sealingKeyPem}
-                    initialLabel={addressOnFile?.label ?? null}
-                    autoFocusFirst
-                    onSaved={(label) => {
-                      // 서버에 저장된 뒤에만 바뀐다 — 「등록한 날」은 다음에 화면을 열면 서버에 저장된 시각으로 바뀐다
-                      setAddressMsg({ tone: "ok", text: addressRegistered ? "받을 주소가 변경되었습니다." : "받을 주소가 등록되었습니다." });
-                      setAddressOnFile({ registered: true, label, updatedAt: new Date().toISOString() });
-                      setOpen(null);
-                      router.refresh();
-                    }}
-                    onCancel={() => setOpen(null)}
-                    onLoginExpired={toLogin}
-                  />
-                ) : (
-                  <p className="err" role="status">
-                    {ADDRESS_KEY_MISSING_TEXT}
-                  </p>
-                )}
-              </div>
-            )}
-            {open === "address-delete" && (
-              <div className={s.panel} id={f("addr-del-panel")}>
-                <p className={s.sub}>이미 ‘받기’를 누른 선물은 당시 등록된 주소로 배송됩니다.</p>
-                <div className={`btnrow ${s.panelBtns}`}>
-                  <button className="btn btn--line btn--sm" type="button" onClick={() => setOpen(null)}>
-                    취소
-                  </button>
-                  <button
-                    className={`btn btn--sm ${s.danger}`}
-                    type="button"
-                    aria-disabled={addressBusy || undefined}
-                    aria-busy={addressBusy || undefined}
-                    onClick={() => void deleteAddress()}
-                  >
-                    {addressBusy ? "삭제 중…" : "주소 삭제"}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-          <p className={`${addressMsg?.tone === "error" ? "err" : "okmsg"} ${s.msg}`} role="status">
-            {addressMsg?.text ?? ""}
-          </p>
         </div>
       </section>
 

@@ -2,8 +2,8 @@ import { z } from "zod";
 import { REVGIFT_ORDER_NO_PATTERN } from "./revgift-order-no";
 
 // INV-R5 (2026-10-17 전): 받기 때마다 주소를 입력하던 때의 봉인 — 택배 라벨에 필요한 값(받는 사람 이름·전화번호·주소)과
-// 그 몫의 주문번호가 함께 들어 있다. 지금은 받기 때 팬 등록 주소(계정이 묶인 봉인, entities/address/model/fan-address-plaintext)를
-// 몫에 복사하므로 새로 만들지 않는다. 그 전에 받기를 한 몫은 이 꼴 그대로 열린다(INV-R7 b — 주문번호 대조).
+// 그 몫의 주문번호가 함께 들어 있다. 지금은 받기 때 입력한 계정이 묶인 봉인(entities/address/model/fan-address-plaintext)을
+// 몫에 넣으므로 새로 만들지 않는다. 그 전에 받기를 한 몫은 이 꼴 그대로 열린다(INV-R7 b — 주문번호 대조).
 // 만드는 함수는 시험이 옛 몫을 재현할 때만 쓴다.
 
 const text = (max: number) => z.string().trim().min(1).max(max);

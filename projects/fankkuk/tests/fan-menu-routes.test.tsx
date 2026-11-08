@@ -74,9 +74,8 @@ vi.mock("@/entities/revgift/api/revgift-reads", async (orig) => ({
   readReceivedRevgift: vi.fn(async (_c: unknown, orderNo: string) => state.revgifts.find((r) => r.orderNo === orderNo) ?? null),
   readMyRevgiftAccessLog: vi.fn(async () => []),
 }));
-vi.mock("@/entities/address/api/my-fan-address-status", () => ({
-  readMyFanAddressStatus: vi.fn(async () => ({ registered: true, label: "home", updatedAt: "2026-10-03T05:00:00Z" })),
-}));
+// 받기 칸은 그 자리에서 주소를 입력해야 받을 수 있다(reverse-gift INV-R4 — 팬 등록 주소는 없다) — 봉인 공개키가 있는 것으로 둔다
+vi.mock("@/shared/lib/envelope/sealing-key-config", () => ({ readSealingPublicKeyPem: () => "-----BEGIN PUBLIC KEY-----\nTEST\n-----END PUBLIC KEY-----" }));
 vi.mock("@/entities/together/api/together-reads", async (orig) => {
   const real = await orig<typeof import("@/entities/together/api/together-reads")>();
   const summary = (t: TogetherRow) => ({

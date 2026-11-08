@@ -99,7 +99,7 @@ async function readAs(loginId: string, orderNo: string) {
   return client.rpc("my_revgift_access_log", { p_order_no: orderNo });
 }
 
-describe("INV-R16: 팬은 자기 몫 주소의 열람 기록을 본다", () => {
+describe("INV-R16: 팬은 자기 몫 주소의 열람 기록을 본다 (manual/0032 뒤)", () => {
   it("INV-R9 · R16 (실패경로): 출고 확정 뒤 72시간 안에는 대표의 재출력이 열리고(같은 송장번호) 직원 시도는 그때도 거부된다 — 팬에게는 연 줄만 늘고 거부 줄은 가지 않는다", async () => {
     const s = await inspectedShare();
     const first = await print(s.qr, "fankkuk_admin");
@@ -212,7 +212,7 @@ describe("INV-R16: 팬은 자기 몫 주소의 열람 기록을 본다", () => {
   });
 });
 
-describe("INV-R16 (D12): 몫의 거부 줄과 대표·직원 구분은 운영자 내부 기록에만 있다", () => {
+describe("INV-R16 (D12): 몫의 거부 줄과 대표·직원 구분은 운영자 내부 기록에만 있다 (manual/0032 뒤)", () => {
   it("INV-R16 S16c (D12): 운영자는 그 몫의 연 줄(대표)·직원 거부 줄(대표 아님)·출고 뒤 대표 거부 줄(대표)을 본다 — 계정 id 없이", async () => {
     const s = await openedDeniedShipped();
     for (const login of ["fankkuk_admin", "fankkuk_staff"]) {

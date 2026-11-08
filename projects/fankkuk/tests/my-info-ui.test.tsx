@@ -6,13 +6,12 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: 
 const postAccount = vi.fn();
 vi.mock("@/features/account-edit/api/save-account-client", () => ({ postAccount: (...args: unknown[]) => postAccount(...args) }));
 
-import type { MyFanAddressStatus } from "@/entities/address/api/my-fan-address-status";
 import type { MyAccount } from "@/entities/fan/model/my-account";
 import { FAN_PROFILE_EDIT } from "@/entities/session/model/home-path";
 import { MyInfoPanel } from "@/widgets/my-info/ui/my-info-page";
 
 // 계정 설정(팬) /me — 정돈 시범(design-rules 27절, 카드 d114, 시안 pilot-2026-10-22/me.html).
-// 카드 없이 묶음 넷: 보안 → 받을 주소 → 개인정보 → 알림 → 저장 줄 → 회원 탈퇴. 동작은 그대로, 배치만 바뀌었다.
+// 카드 없이 묶음 셋: 보안 → 개인정보 → 알림 → 저장 줄 → 회원 탈퇴. 받을 주소 묶음은 없다(2026-11-08 팬 주소 등록 없앰 — address-protection INV-P17).
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -26,7 +25,6 @@ const account: MyAccount = {
   notifyEmail: false,
   notifyInstant: false,
 };
-const registered: MyFanAddressStatus = { registered: true, label: "home", updatedAt: "2026-10-22T03:00:00.000Z" };
 
 let host: HTMLDivElement;
 let root: Root;
@@ -44,7 +42,7 @@ afterEach(() => {
 
 function render(props: Partial<Parameters<typeof MyInfoPanel>[0]> = {}) {
   act(() => {
-    root.render(<MyInfoPanel account={account} accountId="00000000-0000-4000-a000-000000000001" address={registered} sealingKeyPem={null} {...props} />);
+    root.render(<MyInfoPanel account={account} {...props} />);
   });
 }
 
@@ -65,9 +63,9 @@ function typeInto(el: HTMLInputElement | HTMLSelectElement, value: string) {
 const buttonByText = (text: string) => [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === text);
 
 describe("계정 설정(팬) — 묶음 순서", () => {
-  it("묶음은 보안 → 받을 주소 → 개인정보 → 알림 순이다", () => {
+  it("묶음은 보안 → 개인정보 → 알림 순이다", () => {
     render();
-    expect(sectionTitles()).toEqual(["보안", "받을 주소", "개인정보", "알림"]);
+    expect(sectionTitles()).toEqual(["보안", "개인정보", "알림"]);
   });
 
   it("저장 줄은 알림 바로 뒤, 그 위가 개인정보(이메일)다 — 저장이 보내는 칸이 저장 줄 바로 위에 있다", () => {
@@ -109,7 +107,7 @@ describe("계정 설정(팬) — 뺀 문장과 남은 칸", () => {
     const editLinks = host.querySelectorAll(`a[href="${FAN_PROFILE_EDIT}"]`);
     expect(editLinks).toHaveLength(1);
     expect(editLinks[0].closest("header")).not.toBeNull();
-    expect(host.querySelector(".ph-desc")?.textContent).toBe("보안·받을 주소·알림을 관리합니다. 닉네임은 ‘프로필 수정’에서 변경해 주세요.");
+    expect(host.querySelector(".ph-desc")?.textContent).toBe("보안·알림을 관리합니다. 닉네임은 ‘프로필 수정’에서 변경해 주세요.");
   });
 
   it("아이디는 개인정보 묶음에 이름·값으로 보인다", () => {
@@ -200,31 +198,12 @@ describe("계정 설정(팬) — 이메일 칸은 가입과 같은 「앞부분 
   });
 });
 
-describe("계정 설정(팬) — 받을 주소 상태", () => {
-  it("등록돼 있으면 변경·삭제, 삭제를 누르면 그 아래 확인 칸이 펼쳐진다", () => {
+describe("계정 설정(팬) — 받을 주소 칸 없음 (address-protection INV-P17)", () => {
+  it("INV-P17 S17: 팬 설정에는 받을 주소 묶음·등록·삭제 버튼이 없다 — 주소는 선물마다 그때 입력한다", () => {
     render();
-    const addrButtons = [...host.querySelectorAll('[data-me-group="address"] button')].map((b) => b.textContent?.trim());
-    expect(addrButtons).toEqual(["변경", "삭제"]);
-    const del = buttonByText("삭제")!;
-    act(() => del.click());
-    // 확인 칸은 삭제 버튼이 가리키는 자리에 펼쳐진다
-    const panel = document.getElementById(del.getAttribute("aria-controls")!)!;
-    expect(panel.textContent).toContain("이미 ‘받기’를 누른 선물은 당시 등록된 주소로 배송됩니다.");
-    expect(buttonByText("주소 삭제")).toBeDefined();
-    expect(buttonByText("취소")).toBeDefined();
-  });
-
-  it("없으면 「등록된 주소 없음」과 등록만", () => {
-    render({ address: { registered: false, label: null, updatedAt: null } });
-    expect(host.querySelector("[data-address-on-file]")?.textContent).toBe("등록된 주소 없음");
-    expect(buttonByText("등록")).toBeDefined();
-    expect(buttonByText("삭제")).toBeUndefined();
-  });
-
-  it("읽지 못했으면 안내만 있고 버튼이 없다", () => {
-    render({ address: null });
-    expect(host.querySelector("[data-address-on-file]")?.textContent).toBe("주소 정보를 불러오지 못했습니다");
-    expect(host.querySelectorAll('[data-me-group="address"] button').length).toBe(0);
+    expect(host.querySelector('[data-me-group="address"]')).toBeNull();
+    expect(host.querySelector("[data-address-on-file]")).toBeNull();
+    expect(host.textContent).not.toContain("받을 주소");
   });
 });
 

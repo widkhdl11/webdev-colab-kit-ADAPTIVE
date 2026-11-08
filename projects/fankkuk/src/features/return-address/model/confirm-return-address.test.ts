@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Viewer } from "@/entities/session/model/viewer";
 import { confirmReturnAddress } from "./confirm-return-address";
 
-// 반송 주소 확인 (office-workflow INV-W15, action-center INV-J4). DB 함수가 보낸 사람·상태·기한·등록 주소 복사를 지키고,
+// 반송 주소 확인 (office-workflow INV-W15, action-center INV-J4). DB 함수가 보낸 사람·상태·기한·주소 복사(결제 때 주문 사본·새 봉인·크리에이터 등록 주소)를 지키고,
 // 여기서는 세션·본문 꼴·부르는 함수·결과 갈래만 본다.
 
 const FAN: Viewer = { userId: "f-1", role: "fan", nickname: "별빛" };
@@ -24,10 +24,25 @@ describe("반송 주소 확인 (INV-W15)", () => {
   it("INV-W15 (S15): 팬 선물 상자는 주문번호·상자 순번, 역조공 몫은 주문번호만 DB 에 넘긴다 — 주소·계정 칸은 없다", async () => {
     const gift = fakeClient({ data: "confirmed" });
     expect(await confirmReturnAddress({ client: gift.client, viewer: FAN }, { orderNo: "FC-7K3M9", boxSeq: 2 })).toEqual({ ok: true });
-    expect(gift.calls).toEqual([{ fn: "confirm_return_address", args: { p_order_no: "FC-7K3M9", p_box_seq: 2 } }]);
+    expect(gift.calls).toEqual([{ fn: "confirm_return_address", args: { p_order_no: "FC-7K3M9", p_box_seq: 2, p_envelope: null } }]);
     const share = fakeClient({ data: "confirmed" });
     expect(await confirmReturnAddress({ client: share.client, viewer: CREATOR }, { orderNo: "RG-AAA111" })).toEqual({ ok: true });
-    expect(share.calls).toEqual([{ fn: "confirm_return_address", args: { p_order_no: "RG-AAA111", p_box_seq: null } }]);
+    expect(share.calls).toEqual([{ fn: "confirm_return_address", args: { p_order_no: "RG-AAA111", p_box_seq: null, p_envelope: null } }]);
+  });
+
+  it("INV-W15 (S15): 「다른 주소 입력」은 봉인된 주소(address)를 같이 넘긴다 — DB 가 결제 때 사본보다 앞세운다", async () => {
+    const sealed = { v: 1, alg: "RSA-OAEP-256+A256GCM", wrappedKey: btoa("k".repeat(256)), iv: btoa("i".repeat(12)), ciphertext: btoa("c".repeat(40)) };
+    const gift = fakeClient({ data: "confirmed" });
+    expect(await confirmReturnAddress({ client: gift.client, viewer: FAN }, { orderNo: "FC-7K3M9", boxSeq: 1, address: sealed })).toEqual({ ok: true });
+    expect(gift.calls).toEqual([{ fn: "confirm_return_address", args: { p_order_no: "FC-7K3M9", p_box_seq: 1, p_envelope: sealed } }]);
+  });
+
+  it("INV-W15 (S15f, 실패경로): 봉인 꼴이 아닌 주소(평문·틀린 봉인)는 400 — DB 를 부르지 않는다", async () => {
+    for (const address of ["서울시 마포구 1", { v: 1 }, null]) {
+      const c = fakeClient({ data: "confirmed" });
+      expect(await confirmReturnAddress({ client: c.client, viewer: FAN }, { orderNo: "FC-7K3M9", boxSeq: 1, address })).toMatchObject({ ok: false, status: 400 });
+      expect(c.calls).toEqual([]);
+    }
   });
 
   it("INV-W15 (실패경로): 로그인 없음 401 · 운영자 403 · 꼴이 틀린 본문(주소·계정 칸 포함) 400 — DB 를 부르지 않는다", async () => {

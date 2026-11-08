@@ -15,14 +15,28 @@ const PRICES: PriceTable = {
 const readPrices = async (): Promise<PriceTable> => PRICES;
 
 const FAN = { userId: "fan-byeolbit", role: "fan" } as const;
-const form = { creatorId: "00000000-0000-4000-b000-000000000001", itemCategory: "other", itemOther: "손편지", smallCount: "2", mediumCount: "1", largeCount: "0", electronicsOrMetal: "no", quotedTotalKrw: 22700 };
+// payment INV-M25: 팬이 보내는 등록에는 결제 화면에서 봉인한 반송 주소와 할증 구분이 같이 온다(형식만 맞춘 봉인 — 복호화는 이 시험의 대상이 아니다)
+const SEALED = { v: 1, alg: "RSA-OAEP-256+A256GCM", wrappedKey: btoa("k".repeat(256)), iv: btoa("i".repeat(12)), ciphertext: btoa("c".repeat(40)) };
+const form = { creatorId: "00000000-0000-4000-b000-000000000001", itemCategory: "other", itemOther: "손편지", smallCount: "2", mediumCount: "1", largeCount: "0", electronicsOrMetal: "no", quotedTotalKrw: 22700, returnAddress: SEALED, returnRegion: "none" };
 
 // INV-L9: 팬·크리에이터 모두 관계(받는 크리에이터를 팔로우했는가)를 읽는다. 기본은 팔로우한 상태
 const FOLLOWING = async (): Promise<CreatorRelation | null> => ({ receiverIsSelf: false, senderFollows: true });
 
+/** 반송 주소 사본 저장(payment INV-M25 ②) — 부른 순서와 인자를 남긴다 */
+function returnSaver(reply: "saved" | "not_found" | "closed" | Error = "saved") {
+  const calls: { orderNo: string; address: unknown; region: string }[] = [];
+  const save = async (orderNo: string, address: unknown, region: string) => {
+    calls.push({ orderNo, address, region });
+    if (reply instanceof Error) throw reply;
+    return reply;
+  };
+  return { calls, save };
+}
+
 function setup(relation: (senderId: string, creatorId: string) => Promise<CreatorRelation | null> = FOLLOWING) {
   const store = createMemoryPaymentStore({ env: { NODE_ENV: "test" } });
-  return { store, deps: { store, newOrderNo: () => "FC-TEST1", creatorRelation: relation, readPrices } };
+  const saver = returnSaver();
+  return { store, saver, deps: { store, newOrderNo: () => "FC-TEST1", creatorRelation: relation, readPrices, saveReturnAddress: saver.save } };
 }
 
 const CREATOR = { userId: "creator-byeolbit", role: "creator" } as const;
@@ -49,6 +63,52 @@ describe("선물 등록 = 주문 + 결제 대기", () => {
     const r = await registerGift({ ...deps, viewer: FAN }, { ...form, smallCount: "11", mediumCount: "0" });
     expect(r).toMatchObject({ ok: false, status: 400 });
     expect(store.registrations()).toEqual([]);
+  });
+});
+
+describe("payment INV-M25: 팬 선물의 반송 주소는 결제 화면에서 받아 주문 사본으로 둔다", () => {
+  it("INV-M25 (S25): 등록한 주문에 봉인된 반송 주소와 구분을 그 주문번호로 저장한다", async () => {
+    const { deps, saver } = setup();
+    const r = await registerGift({ ...deps, viewer: FAN }, { ...form, returnRegion: "jeju" });
+    expect(r).toMatchObject({ ok: true, orderNo: "FC-TEST1" });
+    expect(saver.calls).toEqual([{ orderNo: "FC-TEST1", address: SEALED, region: "jeju" }]);
+  });
+
+  it("INV-M25 (S25b, 실패경로): 반송 주소가 없으면 400, 주문을 만들지 않는다", async () => {
+    const { deps, store, saver } = setup();
+    const { returnAddress: _omit, ...withoutAddress } = form;
+    void _omit;
+    expect(await registerGift({ ...deps, viewer: FAN }, withoutAddress)).toMatchObject({ ok: false, status: 400 });
+    expect(store.registrations()).toEqual([]);
+    expect(saver.calls).toEqual([]);
+  });
+
+  it("INV-M25 (S25b, 실패경로): 봉인 꼴이 아닌 주소(평문)·목록 밖 구분이면 400, 주문을 만들지 않는다", async () => {
+    const { deps, store, saver } = setup();
+    for (const bad of [{ returnAddress: "서울시 마포구 1" }, { returnAddress: { ...SEALED, v: 2 } }, { returnRegion: "63000" }, { returnRegion: undefined }]) {
+      expect(await registerGift({ ...deps, viewer: FAN }, { ...form, ...bad })).toMatchObject({ ok: false, status: 400 });
+    }
+    expect(store.registrations()).toEqual([]);
+    expect(saver.calls).toEqual([]);
+  });
+
+  it("INV-M25 (S25b, 실패경로): 사본을 저장하지 못하면(결과가 saved 가 아님·오류) 결제창으로 가지 않는다", async () => {
+    for (const reply of ["not_found", "closed", new Error("db")] as const) {
+      const { deps } = setup();
+      const saver = returnSaver(reply);
+      const r = await registerGift({ ...deps, saveReturnAddress: saver.save, viewer: FAN }, form);
+      expect(r).toMatchObject({ ok: false, status: 503 });
+      expect(saver.calls).toHaveLength(1);
+    }
+  });
+
+  it("INV-M25: 크리에이터가 보내는 선물은 반송 주소를 받지 않는다 — 크리에이터 등록 주소를 쓴다(address-protection INV-P13)", async () => {
+    const { deps, saver } = setup();
+    const { returnAddress: _a, returnRegion: _r, ...creatorForm } = form;
+    void _a;
+    void _r;
+    expect(await registerGift({ ...deps, viewer: CREATOR }, creatorForm)).toMatchObject({ ok: true });
+    expect(saver.calls).toEqual([]);
   });
 });
 
@@ -203,8 +263,8 @@ describe("주문번호", () => {
     const store = createMemoryPaymentStore({ env: { NODE_ENV: "test" } });
     const nos = ["FC-SAME1", "FC-SAME1", "FC-OTHER"];
     const newNo = () => nos.shift()!;
-    const first = await registerGift({ store, viewer: FAN, newOrderNo: newNo, creatorRelation: FOLLOWING, readPrices }, form);
-    const second = await registerGift({ store, viewer: FAN, newOrderNo: newNo, creatorRelation: FOLLOWING, readPrices }, form);
+    const first = await registerGift({ store, viewer: FAN, newOrderNo: newNo, creatorRelation: FOLLOWING, readPrices, saveReturnAddress: returnSaver().save }, form);
+    const second = await registerGift({ store, viewer: FAN, newOrderNo: newNo, creatorRelation: FOLLOWING, readPrices, saveReturnAddress: returnSaver().save }, form);
     expect(first).toMatchObject({ ok: true, orderNo: "FC-SAME1" });
     expect(second).toMatchObject({ ok: true, orderNo: "FC-OTHER" });
     expect(store.registrations()).toHaveLength(2);
@@ -320,7 +380,7 @@ describe("together INV-F7: 입력 검사를 지나 DB 가 길이로 거부해도
 describe("payment INV-M24: 제주·도서 할증", () => {
   it("INV-M24 S24: 저장소가 상자마다 할증을 더해 저장하면 그 금액과 할증을 돌려준다 — 화면이 「제주·도서 지역 할증」 줄을 그린다", async () => {
     const store = createMemoryPaymentStore({ env: { NODE_ENV: "test" }, surchargePerBox: { [form.creatorId]: 4000 } });
-    const r = await registerGift({ store, newOrderNo: () => "FC-TEST1", creatorRelation: FOLLOWING, readPrices, viewer: FAN }, form);
+    const r = await registerGift({ store, newOrderNo: () => "FC-TEST1", creatorRelation: FOLLOWING, readPrices, saveReturnAddress: returnSaver().save, viewer: FAN }, form);
     expect(r).toMatchObject({ ok: true, amountKrw: 22700 + 3 * 4000, surchargeKrw: 3 * 4000 });
   });
 
@@ -331,7 +391,7 @@ describe("payment INV-M24: 제주·도서 할증", () => {
 
   it("INV-M24 (실패경로): 화면이 보여 준 합계(할증 전)는 할증 때문에 「요금이 바뀌었다」로 거부되지 않는다", async () => {
     const store = createMemoryPaymentStore({ env: { NODE_ENV: "test" }, surchargePerBox: { [form.creatorId]: 5000 } });
-    const r = await registerGift({ store, newOrderNo: () => "FC-TEST1", creatorRelation: FOLLOWING, readPrices, viewer: FAN }, form);
+    const r = await registerGift({ store, newOrderNo: () => "FC-TEST1", creatorRelation: FOLLOWING, readPrices, saveReturnAddress: returnSaver().save, viewer: FAN }, form);
     expect(r.ok).toBe(true);
   });
 });

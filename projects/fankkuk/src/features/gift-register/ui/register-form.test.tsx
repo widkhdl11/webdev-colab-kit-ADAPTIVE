@@ -395,3 +395,98 @@ describe("결제 전 동의 — 이용약관·개인정보처리방침·취소·
     ]);
   });
 });
+
+describe("payment INV-M25: 결제 단계의 반송 주소 칸(팬)", () => {
+  const ACCOUNT = "00000000-0000-4000-a000-000000000001";
+  let pem = "";
+
+  async function renderFan() {
+    if (!pem) {
+      const pair = await crypto.subtle.generateKey(
+        { name: "RSA-OAEP", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
+        true,
+        ["encrypt", "decrypt"],
+      );
+      const spki = new Uint8Array(await crypto.subtle.exportKey("spki", pair.publicKey));
+      pem = `-----BEGIN PUBLIC KEY-----\n${btoa(String.fromCharCode(...spki))}\n-----END PUBLIC KEY-----`;
+    }
+    act(() =>
+      root.render(
+        <RegisterForm creators={creators("block")} prices={prices} initialCreatorId={MOMO} onRegistered={() => {}} today={today} returnAddress={{ accountId: ACCOUNT, sealingKeyPem: pem }} />,
+      ),
+    );
+    await settle();
+    await toStep2("stationery");
+    await click(button("다음"));
+    await click(button("다음"));
+    expect(visibleStep()).toEqual([4]);
+  }
+
+  function type(id: string, value: string) {
+    const input = host.querySelector<HTMLInputElement>(`#${id}`);
+    if (!input) throw new Error(`칸 없음: ${id}`);
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+    act(() => {
+      setter.call(input, value);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  }
+
+  async function fillAddress() {
+    type("ra-zipCode", "63100");
+    type("ra-address1", "제주특별자치도 제주시 첨단로 242");
+    type("ra-address2", "101호");
+    type("ra-recipientName", "김별빛");
+    type("ra-phone", "010-1234-5678");
+    await click(button("입력 완료"));
+    // 봉인(Web Crypto)이 끝날 때까지
+    for (let i = 0; i < 20 && !host.textContent?.includes("반송 주소를 입력했습니다."); i += 1) await settle();
+  }
+
+  it("INV-M25 S25: 입력한 반송 주소는 봉인된 값과 할증 구분만 등록 요청에 실린다 — 이름·번호·주소·우편번호 평문은 없다", async () => {
+    await renderFan();
+    expect(host.querySelector('[role="group"][aria-label="반송 주소"]')).not.toBeNull();
+    await fillAddress();
+    expect(host.textContent).toContain("반송 주소를 입력했습니다.");
+    await agreeAndPay();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const raw = String(fetchMock.mock.calls[0]?.[1]?.body);
+    const sent = JSON.parse(raw) as { returnAddress?: Record<string, unknown>; returnRegion?: string };
+    expect(Object.keys(sent.returnAddress ?? {}).sort()).toEqual(["alg", "ciphertext", "iv", "v", "wrappedKey"]);
+    expect(sent.returnRegion).toBe("jeju");
+    for (const plain of ["63100", "첨단로", "101호", "김별빛", "01012345678", "010-1234-5678"]) expect(raw).not.toContain(plain);
+  });
+
+  it("INV-M25 S25b (실패경로): 반송 주소를 입력하지 않고 결제하기를 누르면 보내지 않고 안내가 보인다", async () => {
+    await renderFan();
+    await agreeAndPay();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(host.textContent).toContain("반송 주소를 입력해 주세요.");
+    expect(document.activeElement?.id).toBe("return-address-title");
+  });
+
+  it("INV-M25: 칸 안에서 Enter 는 결제(바깥 폼)가 아니라 이 칸의 봉인으로 간다 — 기본 동작(제출)을 막는다", async () => {
+    await renderFan();
+    type("ra-zipCode", "63100");
+    type("ra-address1", "제주특별자치도 제주시 첨단로 242");
+    type("ra-recipientName", "김별빛");
+    type("ra-phone", "01012345678");
+    const name = host.querySelector<HTMLInputElement>("#ra-recipientName")!;
+    const enter = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+    await act(async () => name.dispatchEvent(enter));
+    for (let i = 0; i < 20 && !host.textContent?.includes("반송 주소를 입력했습니다."); i += 1) await settle();
+    expect(enter.defaultPrevented).toBe(true);
+    expect(host.textContent).toContain("반송 주소를 입력했습니다.");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("INV-M25: 크리에이터가 보낼 때(returnAddress 없음)는 반송 주소 칸이 없고 그대로 결제로 간다", async () => {
+    await render("block", MOMO);
+    await toStep2("stationery");
+    await click(button("다음"));
+    await click(button("다음"));
+    expect(host.querySelector("#return-address-title")).toBeNull();
+    await agreeAndPay();
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).not.toHaveProperty("returnAddress");
+  });
+});

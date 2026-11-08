@@ -12,19 +12,23 @@ import {
   inspect,
   markNotMineForTest,
   markReturnConfirmedForTest,
+  orderReturnCopies,
   paidGift,
   paidShare,
   parcelState,
+  putOrderReturnCopy,
   receiveAndLabel,
   returnConfirmedAtSql,
   scanInbound,
   waybill,
   type Unit,
 } from "./office-helpers";
-import { clearFanAddresses, deleteTestRevgifts, registerFanAddress, sampleEnvelope } from "./revgift-helpers";
+import { clearFanAddresses, deleteTestRevgifts, sampleEnvelope } from "./revgift-helpers";
 
-// 반송 주소 확인 — 등록 주소를 상자에 복사하는 확인과 반송 송장의 주소 열기(개인정보 구역). supabase/manual/0020_return_address.sql 을 적용해야 돈다.
-// 스펙: office-workflow INV-W15 (S15·S15b·S15c·S15e), address-protection INV-P17·P18 (S17c·S18·S18b·S18c), action-center INV-J1·J4 (S1d)
+// 반송 주소 확인 — 결제 때 받은 주문 사본(또는 「다른 주소 입력」 봉인, 크리에이터는 등록 주소)을 상자에 복사하는 확인과 반송 송장의 주소 열기(개인정보 구역).
+// supabase/manual/0020_return_address.sql 과 0032_fan_address_removal.sql(세 인자 확인·주문 사본 표)을 적용해야 돈다 — 0032 전에는 빨간불이 맞다.
+// 스펙: office-workflow INV-W15 (S15·S15b·S15c·S15e·S15f), address-protection INV-P18 (S18·S18b·S18c), payment INV-M25, action-center INV-J1·J4 (S1d)
+// 주문 사본은 이미 결제된 시험 주문에 DB 관리자 연결로 넣는다(putOrderReturnCopy) — 결제 대기 때 넣는 앱 경로는 order-return-address-db 가 본다.
 // 시드: 별빛(byeolbit_fan) = 보낸 팬, 달토끼(daltokki_fan) = 다른 팬, 하루(haru_creator) = 받는 크리에이터·역조공을 보내는 크리에이터, fankkuk_admin = 대표.
 // 시험이 쓰는 등록 주소는 형식만 맞춘 봉투다(복호화는 송장 출력 함수의 유닛 시험이 본다). 하루의 주소 칸은 비어 있을 때만 시험 값을 넣고 끝나면 지운다.
 
@@ -36,10 +40,10 @@ const RETURN_FAIL = { ...FAN_PASS, outcome: "return" } as const;
 let haruAddressAdded = false;
 
 afterEach(() => {
+  clearFanAddresses([BYEOLBIT, DALTOKKI]);
   deleteTestOrders();
   deleteTestRevgifts();
   deleteTestUnmatched();
-  clearFanAddresses([BYEOLBIT, DALTOKKI]);
 });
 afterAll(() => {
   if (haruAddressAdded) psql(`delete from pii.creator_addresses where creator_id = '${SEED.haruCreatorId}'`);
@@ -61,8 +65,9 @@ async function returnWaitingGift(n = 1): Promise<{ g: Unit; qrs: string[] }> {
   return { g, qrs };
 }
 
-const confirm = async (orderNo: string, seq: number | null, login = "byeolbit_fan") =>
-  (await signedInClient(login)).rpc("confirm_return_address", { p_order_no: orderNo, p_box_seq: seq });
+/** 반송 주소 확인 — envelope 를 주면 「다른 주소 입력」(새 봉인), 안 주면 주문 사본·등록 주소 */
+const confirm = async (orderNo: string, seq: number | null, login = "byeolbit_fan", envelope: unknown = null) =>
+  (await signedInClient(login)).rpc("confirm_return_address", { p_order_no: orderNo, p_box_seq: seq, p_envelope: envelope });
 const copyOf = (qr: string) =>
   psql(`select coalesce((select a.envelope::text from pii.return_addresses a join public.office_parcels p on p.id = a.parcel_id where p.qr_code = '${qr}'), 'none')`);
 const copies = (qr: string) => psql(`select count(*) from pii.return_addresses a join public.office_parcels p on p.id = a.parcel_id where p.qr_code = '${qr}'`);
@@ -71,8 +76,6 @@ const backdateReturnWaiting = (qr: string, interval: string) =>
   psql(`update public.office_parcels set return_waiting_at = now() - interval '${interval}' where qr_code = '${qr}'`);
 const events = (qr: string) =>
   psql(`select coalesce(string_agg(e.event || ',' || e.outcome, ';' order by e.id), '') from public.return_address_events e join public.office_parcels p on p.id = e.parcel_id where p.qr_code = '${qr}'`);
-/** 설정의 등록 주소 줄 수(읽기만) */
-const fanAddressRows = (accountId: string) => psql(`select count(*) from pii.fan_addresses where account_id = '${accountId}'`);
 /** 송장 출력 함수(복호화 역할)가 부르는 봉투 내주기 — 시험은 DB 관리자 연결로 부른다(판정은 같다). 결과 json */
 const claim = (qr: string, requester = OWNER) => JSON.parse(psql(`select public.return_claim_print('${qr}', '${requester}')::text`)) as Record<string, unknown>;
 const logRows = (qr: string) =>
@@ -96,51 +99,50 @@ async function bothWaitOnLock(both: Promise<unknown>): Promise<{ settled: boolea
   return { settled, waiting };
 }
 
-describe("반송 주소 확인 (office-workflow INV-W15, address-protection INV-P17·P18)", () => {
-  it("INV-W15 · P18 (S15): 등록 주소가 있는 별빛이 확인 → 그 암호문이 상자에 복사, 그 뒤 설정 주소를 바꾸거나 지워도 상자의 주소는 그대로(S17c)", async () => {
+describe("반송 주소 확인 (office-workflow INV-W15, address-protection INV-P18, payment INV-M25) (manual/0032 뒤)", () => {
+  it("INV-W15 · M25 · P18 (S15): 결제 때 주문 사본이 있는 별빛이 확인 → 그 암호문이 상자에 복사, 그 뒤 주문 사본이 바뀌거나 지워져도 상자의 주소는 그대로", async () => {
     const { g, qrs } = await returnWaitingGift();
-    const home = sampleEnvelope();
-    await registerFanAddress(await signedInClient("byeolbit_fan"), home);
+    const home = putOrderReturnCopy(g.orderId);
     const r = await confirm(g.orderNo, 1);
     expect(r.error).toBeNull();
     expect(r.data).toBe("confirmed");
     expect(JSON.parse(copyOf(qrs[0]!))).toEqual(home);
     expect(confirmedAt(qrs[0]!)).toBe("t");
-    await registerFanAddress(await signedInClient("byeolbit_fan"), sampleEnvelope());
+    putOrderReturnCopy(g.orderId, sampleEnvelope());
     expect(JSON.parse(copyOf(qrs[0]!))).toEqual(home);
-    expect((await (await signedInClient("byeolbit_fan")).rpc("delete_my_fan_address")).data).toBe("deleted");
+    psql(`delete from pii.order_return_addresses where order_id = '${g.orderId}'`);
     expect(JSON.parse(copyOf(qrs[0]!))).toEqual(home);
   });
 
-  it("INV-W15 (S15): 등록 주소가 없으면 no_address — 아무것도 바뀌지 않는다. 그 자리에서 등록한 뒤 확인하면 같은 결과, 「바꾸기」로 새 주소 등록 뒤 다시 확인하면 새 주소가 복사된다", async () => {
+  it("INV-W15 (S15f): 팬 주문에 주문 사본이 없으면 no_address — 아무것도 바뀌지 않는다. 그 자리에서 주소를 입력(봉인)해 확인하면 복사되고, 다시 다른 주소를 입력해 확인하면 새 주소가 복사된다", async () => {
     const { g, qrs } = await returnWaitingGift();
     expect((await confirm(g.orderNo, 1)).data).toBe("no_address");
     expect(copies(qrs[0]!)).toBe("0");
     expect(confirmedAt(qrs[0]!)).toBe("f");
     const first = sampleEnvelope();
-    await registerFanAddress(await signedInClient("byeolbit_fan"), first);
-    expect((await confirm(g.orderNo, 1)).data).toBe("confirmed");
+    expect((await confirm(g.orderNo, 1, "byeolbit_fan", first)).data).toBe("confirmed");
+    expect(JSON.parse(copyOf(qrs[0]!))).toEqual(first);
     const changed = sampleEnvelope();
-    await registerFanAddress(await signedInClient("byeolbit_fan"), changed);
-    expect((await confirm(g.orderNo, 1)).data).toBe("confirmed");
+    expect((await confirm(g.orderNo, 1, "byeolbit_fan", changed)).data).toBe("confirmed");
     expect(copies(qrs[0]!)).toBe("1");
     expect(JSON.parse(copyOf(qrs[0]!))).toEqual(changed);
   });
 
   it("INV-W15 (S15b, 실패경로): 다른 팬·받는 크리에이터·없는 상자·로그인 없음은 같은 not_found, 아무것도 복사되지 않는다", async () => {
     const { g, qrs } = await returnWaitingGift();
-    await registerFanAddress(await signedInClient("daltokki_fan"), sampleEnvelope());
+    putOrderReturnCopy(g.orderId);
     expect((await confirm(g.orderNo, 1, "daltokki_fan")).data).toBe("not_found");
+    expect((await confirm(g.orderNo, 1, "daltokki_fan", sampleEnvelope())).data).toBe("not_found");
     expect((await confirm(g.orderNo, 1, "haru_creator")).data).toBe("not_found");
     expect((await confirm(g.orderNo, 2)).data).toBe("not_found");
     expect((await confirm("FC-TNOSUCH", 1)).data).toBe("not_found");
-    expect((await adminClient().rpc("confirm_return_address", { p_order_no: g.orderNo, p_box_seq: 1 })).error).not.toBeNull();
+    expect((await adminClient().rpc("confirm_return_address", { p_order_no: g.orderNo, p_box_seq: 1, p_envelope: null })).error).not.toBeNull();
     expect(copies(qrs[0]!)).toBe("0");
   });
 
   it("INV-W15 (S15c, 실패경로): 반송 대기 + 720시간 정각부터는 처분 대상 전이라도 expired, 처분 대상이 된 뒤에도 expired. 반송 송장을 출력한 뒤에는 closed", async () => {
     const { g, qrs } = await returnWaitingGift(2);
-    await registerFanAddress(await signedInClient("byeolbit_fan"), sampleEnvelope());
+    putOrderReturnCopy(g.orderId);
     backdateReturnWaiting(qrs[0]!, "720 hours");
     expect((await confirm(g.orderNo, 1)).data).toBe("expired");
     await (await staff()).rpc("office_run_expiry", { p_order_no: g.orderNo });
@@ -156,12 +158,12 @@ describe("반송 주소 확인 (office-workflow INV-W15, address-protection INV-
 
   it("INV-W15 (S15e, 동시): 반송 대기 + 720시간 상자에 확인과 자동 처리가 같은 잠금 뒤에 줄 서도 하나만 — 처분 대상, 복사본 없음, 확인은 expired", async () => {
     const { g, qrs } = await returnWaitingGift();
-    await registerFanAddress(await signedInClient("byeolbit_fan"), sampleEnvelope());
+    putOrderReturnCopy(g.orderId);
     backdateReturnWaiting(qrs[0]!, "720 hours");
     const fan = await signedInClient("byeolbit_fan");
     const op = await staff();
     const held = await holdRowLock(`select 1 from public.orders where id = '${g.orderId}' for update`, 2);
-    const both = Promise.all([fan.rpc("confirm_return_address", { p_order_no: g.orderNo, p_box_seq: 1 }), op.rpc("office_run_expiry", { p_order_no: g.orderNo })]);
+    const both = Promise.all([fan.rpc("confirm_return_address", { p_order_no: g.orderNo, p_box_seq: 1, p_envelope: null }), op.rpc("office_run_expiry", { p_order_no: g.orderNo })]);
     // 주문 줄을 잡아 둔 동안 두 요청은 잠금을 기다린다 — 끝나지 않았고, DB 에서 잠금 대기 중이다(줄 서지 않고 지나가면 이 시험은 동시를 보지 못한다)
     expect(await bothWaitOnLock(both)).toEqual({ settled: false, waiting: 2 });
     const [c, e] = await both;
@@ -175,7 +177,7 @@ describe("반송 주소 확인 (office-workflow INV-W15, address-protection INV-
   // 719시간이면 336시간 재알림은 이미 나갔다 — 먼저 한 번 돌려 그 상태를 만든다. 그래야 둘 중 어느 쪽이 먼저 잠금을 잡아도 결과가 같다
   it("INV-W15 (S15e, 동시): 720시간 전 상자에 확인과 자동 처리가 겹치면 확인만 반영 — 반송 대기 그대로, 재알림이 더 늘지 않는다", async () => {
     const { g, qrs } = await returnWaitingGift();
-    await registerFanAddress(await signedInClient("byeolbit_fan"), sampleEnvelope());
+    putOrderReturnCopy(g.orderId);
     backdateReturnWaiting(qrs[0]!, "719 hours 59 minutes");
     const fan = await signedInClient("byeolbit_fan");
     const op = await staff();
@@ -183,7 +185,7 @@ describe("반송 주소 확인 (office-workflow INV-W15, address-protection INV-
     const reminders = (): string => psql(`select count(*) from public.notification_outbox where order_id = '${g.orderId}' and kind = 'return_address_reminder' and channel = 'email'`);
     expect(reminders()).toBe("1");
     const held = await holdRowLock(`select 1 from public.orders where id = '${g.orderId}' for update`, 2);
-    const both = Promise.all([fan.rpc("confirm_return_address", { p_order_no: g.orderNo, p_box_seq: 1 }), op.rpc("office_run_expiry", { p_order_no: g.orderNo })]);
+    const both = Promise.all([fan.rpc("confirm_return_address", { p_order_no: g.orderNo, p_box_seq: 1, p_envelope: null }), op.rpc("office_run_expiry", { p_order_no: g.orderNo })]);
     // 주문 줄을 잡아 둔 동안 두 요청은 잠금을 기다린다 — 끝나지 않았고, DB 에서 잠금 대기 중이다(줄 서지 않고 지나가면 이 시험은 동시를 보지 못한다)
     expect(await bothWaitOnLock(both)).toEqual({ settled: false, waiting: 2 });
     const [c, e] = await both;
@@ -198,20 +200,19 @@ describe("반송 주소 확인 (office-workflow INV-W15, address-protection INV-
 
   it("INV-W15: 이미 확인한 상자는 반송 대기 + 720시간이 지나도 다시 확인할 수 있고, 자동 처리가 처분 대상으로 바꾸지 않는다", async () => {
     const { g, qrs } = await returnWaitingGift();
-    await registerFanAddress(await signedInClient("byeolbit_fan"), sampleEnvelope());
+    putOrderReturnCopy(g.orderId);
     expect((await confirm(g.orderNo, 1)).data).toBe("confirmed");
     backdateReturnWaiting(qrs[0]!, "721 hours");
     const changed = sampleEnvelope();
-    await registerFanAddress(await signedInClient("byeolbit_fan"), changed);
-    expect((await confirm(g.orderNo, 1)).data).toBe("confirmed");
+    expect((await confirm(g.orderNo, 1, "byeolbit_fan", changed)).data).toBe("confirmed");
     expect(JSON.parse(copyOf(qrs[0]!))).toEqual(changed);
     await (await staff()).rpc("office_run_expiry", { p_order_no: g.orderNo });
     expect(parcelState(qrs[0]!)).toBe("return_waiting");
   });
 
-  it("INV-P18: 복사본이 있는 상자가 처분되면 같은 처리 안에서 복사본이 지워지고 지운 기록(deleted, disposed) 한 줄 — 설정의 등록 주소는 그대로", async () => {
+  it("INV-P18: 복사본이 있는 상자가 처분되면 같은 처리 안에서 복사본이 지워지고 지운 기록(deleted, disposed) 한 줄 — 지우는 것은 상자 복사본뿐(주문 사본은 그대로)", async () => {
     const { g, qrs } = await returnWaitingGift();
-    await registerFanAddress(await signedInClient("byeolbit_fan"), sampleEnvelope());
+    putOrderReturnCopy(g.orderId);
     expect((await confirm(g.orderNo, 1)).data).toBe("confirmed");
     expect(copies(qrs[0]!)).toBe("1");
     // 확인한 상자는 자동 처리로 처분 대상이 되지 않는다 — 처분 기록 갈래만 보려고 public 상태 칸만 바꾼다
@@ -219,12 +220,12 @@ describe("반송 주소 확인 (office-workflow INV-W15, address-protection INV-
     expect((await (await staff()).rpc("office_record_disposal", { p_qr: qrs[0] })).data).toBe("disposed");
     expect(copies(qrs[0]!)).toBe("0");
     expect(events(qrs[0]!)).toBe("deleted,disposed");
-    expect(fanAddressRows(BYEOLBIT)).toBe("1");
+    expect(orderReturnCopies(g.orderId)).toBe("1");
   });
 
   it("INV-J1 · J4 (S1d): 「확인」 뒤 다시 읽으면 그 상자의 「반송 주소 확인」 카드가 없다", async () => {
     const { g } = await returnWaitingGift();
-    await registerFanAddress(await signedInClient("byeolbit_fan"), sampleEnvelope());
+    putOrderReturnCopy(g.orderId);
     const fan = await signedInClient("byeolbit_fan");
     const cards = async () => ((await fan.rpc("my_action_items")).data as { kind: string; order_no: string }[]).filter((c) => c.order_no === g.orderNo).map((c) => c.kind);
     expect(await cards()).toEqual(["return_address"]);
@@ -252,10 +253,10 @@ describe("반송 주소 확인 (office-workflow INV-W15, address-protection INV-
   });
 });
 
-describe("반송 송장의 주소 열기 (address-protection INV-P18)", () => {
+describe("반송 송장의 주소 열기 (address-protection INV-P18) (manual/0032 뒤)", () => {
   async function confirmedBox(): Promise<{ g: Unit; qr: string }> {
     const { g, qrs } = await returnWaitingGift();
-    await registerFanAddress(await signedInClient("byeolbit_fan"), sampleEnvelope());
+    putOrderReturnCopy(g.orderId);
     expect((await confirm(g.orderNo, 1)).data).toBe("confirmed");
     return { g, qr: qrs[0]! };
   }
@@ -290,8 +291,6 @@ describe("반송 송장의 주소 열기 (address-protection INV-P18)", () => {
     dropAddressCopies();
     expect(copies(qr)).toBe("0");
     expect(events(qr)).toBe("deleted,returned");
-    // 지우는 것은 상자 복사본뿐 — 설정의 등록 주소는 그대로다
-    expect(fanAddressRows(BYEOLBIT)).toBe("1");
     expect(claim(qr)).toEqual({ result: "denied", reason: "order_not_printable" });
     const after = (await (await signedInClient("byeolbit_fan")).rpc("my_return_access_log", { p_order_no: g.orderNo })).data as { kind: string; outcome: string | null }[];
     expect(after.map((r) => [r.kind, r.outcome])).toEqual([["deleted", "returned"], ["opened", null], ["opened", null], ["opened", null]]);
@@ -334,8 +333,7 @@ describe("반송 송장의 주소 열기 (address-protection INV-P18)", () => {
   it("INV-W15 · P18 (실패경로): 봉투를 내준 뒤 보낸 사람이 다른 주소로 다시 확인하면, 먼저 내준 때의 확인 시각으로는 반송 송장 출력 단계로 넘어가지 않는다", async () => {
     const { g, qr } = await confirmedBox();
     const firstAt = psql(`select return_confirmed_at::text from public.office_parcels where qr_code = '${qr}'`);
-    await registerFanAddress(await signedInClient("byeolbit_fan"), sampleEnvelope());
-    expect((await confirm(g.orderNo, 1)).data).toBe("confirmed");
+    expect((await confirm(g.orderNo, 1, "byeolbit_fan", sampleEnvelope())).data).toBe("confirmed");
     expect(finishReturnPrint(qr, waybill(), `'${firstAt}'::timestamptz`)).toBe("P0041");
     expect(finishReturnPrint(qr, waybill(), "null")).toBe("P0041");
     expect(parcelState(qr)).toBe("return_waiting");
@@ -398,7 +396,7 @@ describe("반송 송장의 주소 열기 (address-protection INV-P18)", () => {
     const qr = qrs[0]!;
     expect(claim(qr)).toEqual({ result: "denied", reason: "no_valid_approval" });
     expect(claim(qr)).toEqual({ result: "denied", reason: "no_valid_approval" });
-    await registerFanAddress(await signedInClient("byeolbit_fan"), sampleEnvelope());
+    putOrderReturnCopy(g.orderId);
     expect((await confirm(g.orderNo, 1)).data).toBe("confirmed");
     for (let i = 1; i <= 3; i++) expect(claim(qr)).toMatchObject({ result: "opened", print_no: i });
     expect(claim(qr)).toEqual({ result: "denied", reason: "decrypt_limit_reached" });
@@ -408,7 +406,7 @@ describe("반송 송장의 주소 열기 (address-protection INV-P18)", () => {
   it("INV-P18 (S18c): 봉투를 내줄 때 그 상자 주문을 보낸 계정을 같이 내준다 — 송장 출력 함수가 봉인 속 계정과 대조한다", async () => {
     const { qr } = await confirmedBox();
     const other = await returnWaitingGift();
-    await registerFanAddress(await signedInClient("daltokki_fan"), sampleEnvelope());
+    putOrderReturnCopy(other.g.orderId);
     // 달토끼 주문이 아니어도 계정 칸은 상자 주문의 보낸 사람이다 — 별빛 상자에서 열면 별빛
     expect(claim(qr).sender_id).toBe(BYEOLBIT);
     expect(claim(other.qrs[0]!)).toEqual({ result: "denied", reason: "no_valid_approval" });

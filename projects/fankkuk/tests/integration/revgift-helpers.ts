@@ -121,24 +121,18 @@ export function sampleEnvelope(): Record<string, unknown> {
   return { v: 1, alg: "RSA-OAEP-256+A256GCM", wrappedKey: b64(256), iv: b64(12), ciphertext: b64(40) };
 }
 
-/**
- * 로그인한 팬의 받을 주소를 등록한다(address-protection INV-P17, manual/0019). 받기는 이 주소의 암호문을 몫에 복사한다(reverse-gift INV-R4).
- * 이미 있으면 덮어쓴다. 실패하면 예외.
- */
-export async function registerFanAddress(fan: SupabaseClient, envelope: unknown = sampleEnvelope(), label = "home"): Promise<void> {
-  const { data, error } = await fan.rpc("set_my_fan_address", { p_envelope: envelope, p_label: label, p_region: "none" });
-  if (error || data !== "saved") throw new Error(`set_my_fan_address 실패: ${error?.code ?? String(data)}`);
-}
-
-/** 받을 주소를 등록한 뒤 받기를 한다 — 받기 함수의 답을 그대로 돌려준다. */
+/** 받기를 한다 — 받기 창에서 입력한 봉인을 함께 보낸다(reverse-gift INV-R4, manual/0032 뒤 두 인자). 받기 함수의 답을 그대로 돌려준다. */
 export async function acceptWithAddress(fan: SupabaseClient, orderNo: string, envelope: unknown = sampleEnvelope()) {
-  await registerFanAddress(fan, envelope);
-  return fan.rpc("accept_revgift", { p_order_no: orderNo });
+  return fan.rpc("accept_revgift", { p_order_no: orderNo, p_envelope: envelope });
 }
 
-/** 시험 팬들의 받을 주소를 비운다(기록은 추가만 되므로 남는다). */
+/**
+ * 시험 팬들이 결제 때 넣은 주문 반송 주소 사본을 비운다(payment INV-M25, manual/0032). 기록 줄은 남는다.
+ * 팬 등록 주소(pii.fan_addresses)는 0032 가 없앴다 — 0032 전에는 사본 표가 없으니 아무것도 하지 않는다.
+ */
 export function clearFanAddresses(profileIds: readonly string[]): void {
-  psql(`delete from pii.fan_addresses where account_id in (${profileIds.map((id) => `'${id}'`).join(", ")})`);
+  if (psql("select to_regclass('pii.order_return_addresses') is not null") !== "t") return;
+  psql(`delete from pii.order_return_addresses where account_id in (${profileIds.map((id) => `'${id}'`).join(", ")})`);
 }
 
 /** 받지 않음·기한 지남으로 살려 둔 몫의 6자리를 hours 시간 전에 살려 둔 것처럼 옮긴다(reverse-gift INV-R11 — 168시간 뒤 자동 처리가 닫는다). */

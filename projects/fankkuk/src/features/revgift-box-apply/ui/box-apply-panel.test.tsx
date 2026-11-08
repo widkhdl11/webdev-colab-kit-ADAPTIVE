@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FanBox } from "@/entities/revgift-box/api/box-reads";
 
 // 팬 신청 판 (revgift-box INV-GB4·GB6·GB9, 정할 것 Q5·Q6). 서버로 가는 신청·신청 취소와 주소 입력 칸은 가짜로 둔다 —
-// 시험 대상은 상태마다 보이는 것과, 신청 요청이 주소 없이 선물함·토큰만 보내는지다.
+// 시험 대상은 상태마다 보이는 것과, 신청 요청이 선물함·토큰과 칸이 봉인한 값·구분만 보내는지다(INV-GB6 — 팬 등록 주소는 없다, 2026-11-08).
 const sendApply = vi.fn();
 const sendWithdraw = vi.fn();
 const refresh = vi.fn();
@@ -38,11 +38,25 @@ const BOX: FanBox = {
   myState: "none",
 };
 
+const SEALED = { v: 1, alg: "RSA-OAEP-256+A256GCM", wrappedKey: "k", iv: "i", ciphertext: "c" } as const;
+
 const ADDRESS: ApplyAddressStep = {
-  status: { registered: true, label: "home", updatedAt: "2026-11-01T01:00:00Z" },
   canEnter: true,
   missingKeyText: "열쇠 없음",
-  renderForm: () => <form data-address-form="" />,
+  renderForm: (p) => (
+    <div data-address-form="">
+      <button
+        type="button"
+        onClick={async () => {
+          const o = await p.send(SEALED as never, "jeju");
+          if (o.kind === "ok") p.onDone();
+          else if (o.kind === "refused") host.setAttribute("data-refused", o.message);
+        }}
+      >
+        가짜 봉인 후 신청
+      </button>
+    </div>
+  ),
 };
 
 let host: HTMLDivElement;
@@ -70,28 +84,31 @@ function render(box: Partial<FanBox>, address: Partial<ApplyAddressStep> = {}, t
 const buttons = () => [...host.querySelectorAll("button")].map((b) => b.textContent).filter((x) => x);
 
 describe("팬 신청 판", () => {
-  it("INV-GB6 S6: 등록 주소가 있으면 이름표·날짜만 보이고 「이 주소로 신청」은 선물함·토큰만 보낸다", async () => {
+  it("INV-GB6 S6: 신청 폼은 입력 칸 하나 — 칸이 봉인한 값·구분과 선물함·토큰만 보내고 다시 읽는다", async () => {
     sendApply.mockResolvedValue({ ok: true });
     render({}, {}, "t".repeat(32));
-    expect(host.textContent).toContain("집");
-    expect(host.querySelector("[data-address-form]")).toBeNull();
-    const btn = [...host.querySelectorAll("button")].find((b) => b.textContent === "이 주소로 신청")!;
+    expect(host.querySelector("[data-address-form]")).not.toBeNull();
+    expect(buttons()).not.toContain("이 주소로 신청");
+    expect(buttons()).not.toContain("주소 변경");
+    const btn = [...host.querySelectorAll("button")].find((b) => b.textContent === "가짜 봉인 후 신청")!;
     await act(async () => btn.click());
-    expect(sendApply).toHaveBeenCalledWith(BOX.id, "t".repeat(32));
+    expect(sendApply.mock.calls).toEqual([[BOX.id, "t".repeat(32), SEALED, "jeju"]]);
     expect(refresh).toHaveBeenCalled();
   });
 
-  it("INV-GB6: 등록 주소가 없으면 입력 칸이 먼저, 서버가 「주소 없음」으로 돌려보내면 입력 칸으로 돌아간다", async () => {
-    render({}, { status: { registered: false, label: null, updatedAt: null } });
-    expect(host.querySelector("[data-address-form]")).not.toBeNull();
-    expect(buttons()).not.toContain("이 주소로 신청");
-
-    sendApply.mockResolvedValue({ ok: false, status: 422, message: "받을 주소를 먼저 입력해 주세요.", noAddress: true });
+  it("INV-GB6 (실패경로): 서버가 거부하면 그 문구를 칸에 돌려주고, 마감·다 참이면 다시 읽는다", async () => {
+    sendApply.mockResolvedValue({ ok: false, status: 409, message: "받을 인원이 다 찼습니다." });
     render({});
-    const btn = [...host.querySelectorAll("button")].find((b) => b.textContent === "이 주소로 신청")!;
+    const btn = [...host.querySelectorAll("button")].find((b) => b.textContent === "가짜 봉인 후 신청")!;
     await act(async () => btn.click());
-    expect(host.querySelector("[data-address-form]")).not.toBeNull();
-    expect(host.textContent).toContain("받을 주소를 먼저 입력해 주세요.");
+    expect(host.getAttribute("data-refused")).toBe("받을 인원이 다 찼습니다.");
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it("INV-GB6 (실패경로): 봉인 공개키가 없으면 입력 칸 대신 안내", () => {
+    render({}, { canEnter: false });
+    expect(host.querySelector("[data-address-form]")).toBeNull();
+    expect(host.textContent).toContain("열쇠 없음");
   });
 
   it("INV-GB4 S4b: 팔로우하지 않은 팬에게는 안내와 팔로우 버튼만 — 신청 폼이 열리지 않는다", () => {

@@ -2,18 +2,17 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { MyFanAddressStatus } from "@/entities/address/api/my-fan-address-status";
-import { FanAddressForm } from "@/features/fan-address/ui/fan-address-form";
+import { giftDetailHref } from "@/entities/action-item/model/action-items";
+import { FanAddressFields } from "@/entities/address/ui/fan-address-fields";
 import { ReturnAddressWindow, type ReturnTarget } from "@/features/return-address/ui/return-address-window";
 import { ADDRESS_KEY_MISSING_TEXT } from "@/shared/ui/sealed-address-form";
-import { giftDetailHref } from "@/entities/action-item/model/action-items";
 
-// 선물 상세 「지금 할 일」 칸의 「돌려받을 주소 확인」 버튼(action-center INV-J1·J4·J13, office-workflow INV-W15). 반송 주소 확인 창과
-// 팬 받을 주소 입력 칸을 위젯이 잇는다(기능끼리는 서로 import 하지 않는다 — FSD). 확인은 기존 확인 처리를 그대로 부른다.
+// 선물 상세 「지금 할 일」 칸의 「돌려받을 주소 확인」 버튼(action-center INV-J1·J4·J13, office-workflow INV-W15). 반송 주소 확인 창(결제 때 입력한
+// 반송 주소 확인 · 다른 주소 입력, payment INV-M25)과 팬 주소 입력 칸을 위젯이 잇는다. 팬 등록 주소는 없다(2026-11-08, address-protection INV-P17).
 // 확인이 끝나면 같은 상세를 ?address=confirmed 로 다시 읽는다 — 상세 맨 위에 「돌려받을 주소를 확인했어요.」(2026-10-22 d113 진단 C-3, features/return-address ReturnConfirmedNotice).
 
-/** 팬의 받을 주소 — 라우트가 읽어 넘긴다. 상태를 읽지 못했으면 status null, 봉인 공개키가 없으면 sealingKeyPem null */
-export type FanReturnAddress = { accountId: string; status: MyFanAddressStatus | null; sealingKeyPem: string | null };
+/** 팬의 주소 입력에 필요한 것 — 라우트가 넘긴다. 봉인 공개키가 없으면 sealingKeyPem null */
+export type FanReturnAddress = { accountId: string; sealingKeyPem: string | null };
 
 /** focusAfterIds: 확인이 끝나 칸이 사라지면 포커스를 옮길, 새로 읽어도 남는 요소(tabIndex -1)의 id 후보 — 앞에서부터 그려져 있는 첫 요소로 */
 export function ReturnAddressButton({ target, meta, address, focusAfterIds = [] }: { target: ReturnTarget; meta: string; address: FanReturnAddress; focusAfterIds?: readonly string[] }) {
@@ -45,19 +44,20 @@ export function ReturnAddressButton({ target, meta, address, focusAfterIds = [] 
             router.replace(`${pathname}?address=confirmed`, { scroll: false });
           }}
           address={{
-            status: address.status,
+            kind: "order",
             canEnter: sealingKeyPem !== null,
             missingKeyText: ADDRESS_KEY_MISSING_TEXT,
             renderForm: (p) =>
               sealingKeyPem ? (
-                <FanAddressForm
+                <FanAddressFields
+                  idPrefix="ret"
                   accountId={accountId}
                   sealingKeyPem={sealingKeyPem}
-                  initialLabel={p.initialLabel}
-                  autoFocusFirst={p.autoFocusFirst}
-                  onSaved={p.onSaved}
+                  send={(envelope) => p.send(envelope)}
+                  onSaved={p.onDone}
                   onCancel={p.onCancel}
-                  receiveHint={false}
+                  autoFocusFirst={p.autoFocusFirst}
+                  submitContent={(busy) => (busy ? "확인 중…" : "주소 확인")}
                   onLoginExpired={() => router.push(`/login?next=${encodeURIComponent(giftDetailHref(target.orderNo))}`)}
                 />
               ) : null,

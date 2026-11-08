@@ -10,7 +10,6 @@ import {
   PROFILE,
   registerTestRevgift,
   acceptWithAddress,
-  registerFanAddress,
   shareReply,
   unfollowHaru,
 } from "./revgift-helpers";
@@ -59,7 +58,7 @@ afterAll(() => {
   unfollowHaru(ADDED_FOLLOWERS);
 });
 
-describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫고 팬 주소를 지운다(출고된 몫은 72시간 뒤)", () => {
+describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫고 팬 주소를 지운다(출고된 몫은 72시간 뒤) (manual/0032 뒤)", () => {
   it("INV-R9 S9: 출고 확정 스캔 한 번으로 몫이 닫히고, 주소는 출고 확정 + 72시간 자동 처리에서 지워지며 지운 기록이 한 줄 남는다(카드 d120)", async () => {
     const { orderNo, qr } = await acceptedAndLabeled();
     const staff = await signedInClient("fankkuk_staff");
@@ -188,7 +187,7 @@ describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫
   });
 });
 
-describe("INV-R10 · INV-K1: 역조공 받기 기한 처리는 운영자가 관리자 화면에서 부른다", () => {
+describe("INV-R10 · INV-K1: 역조공 받기 기한 처리는 운영자가 관리자 화면에서 부른다 (manual/0032 뒤)", () => {
   it("INV-R10 S10: 운영자가 한 몫만 「지금 돌리기」 하면 그 몫만 받지 않음이 되고 같은 보내기의 다른 몫은 그대로다", async () => {
     const send = await registerTestRevgift([
       { fanId: PROFILE.byeolbit, tier: "small" },
@@ -326,8 +325,7 @@ describe("INV-R10 · INV-K1: 역조공 받기 기한 처리는 운영자가 관�
       const no = send.orderNos[0]!;
       // 기한이 300ms 뒤에 닥친다 — 받기는 바로 보내고, 기한 처리는 기한을 넘겨 보낸다
       psql(`update public.revgift_sends set settled_at = now() - interval '168 hours' + interval '300 milliseconds' where id = '${send.sendId}'`);
-      await registerFanAddress(fan);
-      const accepting = fan.rpc("accept_revgift", { p_order_no: no });
+      const accepting = acceptWithAddress(fan, no);
       await new Promise((r) => setTimeout(r, 300));
       const [accepted] = await Promise.all([accepting, staff.rpc("office_run_expiry", { p_order_no: no })]);
       const reply = shareReply(no);

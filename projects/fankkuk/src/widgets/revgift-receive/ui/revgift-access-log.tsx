@@ -46,8 +46,6 @@ export function RevgiftAccessLog({ entries, finished }: { entries: readonly FanA
         이 선물의 주소는 송장 출력 시에만 확인하며, 재출력 포함 최대 {REVGIFT_MAX_DECRYPTS}회입니다.
         <br />
         배송용 주소 사본은 택배사 집하 확인 시 삭제합니다. 집하 확인이 연동되기 전에는 출고 72시간 후 삭제됩니다. 반송·취소 등으로 종료된 경우에는 해당 처리에 따라 삭제됩니다.
-        <br />
-        계정 설정에 등록한 주소는 유지됩니다.
       </p>
       {entries === null ? (
         <p className={s.empty} role="status">

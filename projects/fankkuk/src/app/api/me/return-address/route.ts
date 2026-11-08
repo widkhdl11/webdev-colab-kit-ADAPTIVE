@@ -3,9 +3,10 @@ import { confirmReturnAddress } from "@/features/return-address/model/confirm-re
 import { createRequestSupabase } from "@/shared/api/supabase/server";
 import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
 
-// 반송 주소 확인(office-workflow INV-W15, action-center INV-J4) — 보낸 사람이 등록 주소 확인 창에서 「확인」을 누른다.
+// 반송 주소 확인(office-workflow INV-W15, action-center INV-J4) — 보낸 사람이 확인 창에서 「주소 확인」을 누르거나 다른 주소를 입력한다.
 // 같은 사이트의 JSON 요청만 받고, 모든 응답에 no-store 를 붙인다. 확인하는 사람은 세션에서 확인한 사람이다(INV-L2) —
-// DB 도 로그인 토큰으로 그 상자 주문을 보낸 사람인지 다시 확인하고, 그 사람의 등록 주소 암호문을 상자에 복사한다. 주소는 오가지 않는다.
+// DB 도 로그인 토큰으로 그 상자 주문을 보낸 사람인지 다시 확인하고, 결제 때 주문 사본(payment INV-M25)·새로 입력한 봉인·크리에이터 등록 주소를 상자에 복사한다.
+// 평문 주소는 오가지 않는다 — 다른 주소 입력 때도 브라우저에서 봉인한 값만 온다.
 export async function POST(req: Request) {
   return handlePrivateJsonPost(req, async (body) => {
     const supabase = await createRequestSupabase();

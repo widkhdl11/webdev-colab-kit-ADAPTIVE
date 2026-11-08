@@ -85,7 +85,7 @@ function render(items: ActionItem[]) {
         items={items}
         clientKey=""
         now="2026-10-17T03:00:00.000Z"
-        address={{ accountId: "a1", status: { registered: true, label: "home", updatedAt: "2026-10-03T05:00:00Z" }, sealingKeyPem: null }}
+        address={{ accountId: "a1", sealingKeyPem: null }}
       />,
     ),
   );
@@ -176,7 +176,7 @@ describe("INV-M22 (C-2): 결제 이어 하기가 실패로 돌아오면", () => 
     resume.mockResolvedValue({ ok: true, checkout: { orderId: "pay_2", orderNo: "FC-7K3M9", amountKrw: 6900 } });
     act(() =>
       root.render(
-        <GiftTodoBox items={[UNPAID]} clientKey="test_ck" now="2026-10-17T03:00:00.000Z" address={{ accountId: "a1", status: null, sealingKeyPem: null }} />,
+        <GiftTodoBox items={[UNPAID]} clientKey="test_ck" now="2026-10-17T03:00:00.000Z" address={{ accountId: "a1", sealingKeyPem: null }} />,
       ),
     );
     await act(async () => host.querySelector<HTMLButtonElement>('#todo [data-kind="unpaid"] button')?.click());
@@ -212,7 +212,7 @@ describe("INV-J13·M11: 칸의 차액 결제가 결제창까지 이어진다(아
           items={[{ kind: "difference", orderNo: "FC-7K3M9", boxId: RETURN.boxId, boxLabel: "FC-7K3M9-2", boxSeq: 2, creatorName: "하루", declaredTier: "small", measuredTier: "medium", amountKrw: 3000, dueAt: null }]}
           clientKey="test_ck"
           now="2026-10-17T03:00:00.000Z"
-          address={{ accountId: "a1", status: null, sealingKeyPem: null }}
+          address={{ accountId: "a1", sealingKeyPem: null }}
         />,
       ),
     );

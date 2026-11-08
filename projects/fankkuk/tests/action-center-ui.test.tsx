@@ -158,7 +158,7 @@ async function counts(rows: readonly unknown[]) {
   const empty = host.querySelector('[data-testid="action-empty"]');
 
   const mine = actionItemsOfOrder(items, ORDER);
-  const todo = mine.length > 0 ? <GiftTodoBox items={mine} clientKey="" now={NOW} address={{ accountId: "a1", status: null, sealingKeyPem: null }} /> : null;
+  const todo = mine.length > 0 ? <GiftTodoBox items={mine} clientKey="" now={NOW} address={{ accountId: "a1", sealingKeyPem: null }} /> : null;
   act(() => root.render(<GiftStatusPage view={view!} boxes={[]} memo={null} todo={todo} />));
   const box = host.querySelector("main #todo");
   const detailTasks = box ? box.querySelectorAll("[data-kind]").length : null;
@@ -242,7 +242,7 @@ describe("INV-J1·J4·J13: 상세 「지금 할 일」 칸의 처리와 지금 �
 
   /** 상세 칸 — 그 주문(FC-W5N3T)의 줄만(라우트가 거르는 그대로) */
   function card(kind: string): Element {
-    act(() => root.render(<GiftTodoBox items={actionItemsOfOrder(items, ORDER)} clientKey="" now={NOW} address={{ accountId: "a1", status: null, sealingKeyPem: null }} />));
+    act(() => root.render(<GiftTodoBox items={actionItemsOfOrder(items, ORDER)} clientKey="" now={NOW} address={{ accountId: "a1", sealingKeyPem: null }} />));
     const el = host.querySelector(`#todo [data-kind="${kind}"]`);
     if (!el) throw new Error(`${kind} 줄이 없다`);
     return el;

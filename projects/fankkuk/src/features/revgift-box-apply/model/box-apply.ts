@@ -1,13 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { parseAddressInput } from "@/entities/address/model/address-ciphertext";
+import { parseSurchargeRegion } from "@/entities/address/model/surcharge-region";
 import type { Viewer } from "@/entities/session/model/viewer";
 
 // 선물함 신청·신청 취소 (revgift-box INV-GB4·GB5·GB6, 정할 것 Q5). 팬이 부른다.
-// 신청 본문에는 초대 토큰만 싣는다 — 받을 주소는 팬이 설정에 등록한 주소(봉인된 값)를 DB 신청 함수가 그 신청에 복사한다(INV-GB6, reverse-gift INV-R4).
+// 신청 본문에는 초대 토큰과 신청 폼에서 봉인한 주소(address)·할증 구분(region)만 싣는다(INV-GB6 — 팬 등록 주소는 없다, 2026-11-08).
+// 봉인이 없거나 꼴이 틀리면 DB 를 부르기 전에 거부한다 — 평문 주소가 들어올 자리가 없다(address-protection INV-P1).
 // 팔로우·인원·마감·이미 신청·비공개 토큰은 모두 DB 신청 함수가 로그인 토큰으로 판정한다(선물함 줄·팔로우 줄 잠금 뒤).
 
 type Deps = { client: Pick<SupabaseClient, "rpc">; viewer: Viewer | null };
-export type ApplyRefusal = { ok: false; status: 401 | 403 | 404 | 409 | 422; message: string; reason?: "no_address" };
+export type ApplyRefusal = { ok: false; status: 400 | 401 | 403 | 404 | 409; message: string };
 
 const LOGIN: ApplyRefusal = { ok: false, status: 401, message: "로그인이 필요합니다." };
 const FAN_ONLY: ApplyRefusal = { ok: false, status: 403, message: "팬 계정만 신청할 수 있습니다." };
@@ -28,19 +31,23 @@ const APPLY_REFUSAL: Record<string, ApplyRefusal> = {
   P0023: { ok: false, status: 409, message: "받을 인원이 다 찼습니다." },
   P0025: { ok: false, status: 403, message: "팔로우한 팬만 신청할 수 있습니다." },
   P0027: { ok: false, status: 409, message: "이미 신청했습니다." },
-  P0026: { ok: false, status: 422, message: "받을 주소를 먼저 입력해 주세요.", reason: "no_address" },
+  "22023": { ok: false, status: 400, message: "주소를 다시 입력해 주세요." },
 };
 
 export async function applyBox(deps: Deps, boxId: string, body: unknown): Promise<{ ok: true } | ApplyRefusal> {
   const refused = gate(deps.viewer);
   if (refused) return refused;
   if (!uuid.safeParse(boxId).success) return NOT_FOUND;
+  const raw = typeof body === "object" && body !== null ? (body as { address?: unknown; region?: unknown }) : {};
+  const address = parseAddressInput({ address: raw.address });
+  const region = parseSurchargeRegion(raw.region);
+  if (!address.ok || !region) return APPLY_REFUSAL["22023"];
   const token = z.object({ token: z.string().max(200) }).safeParse(body);
   const { error } = await deps.client.rpc("revgift_box_apply", {
     p_box_id: boxId,
     p_token: token.success ? token.data.token : null,
-    p_envelope: null,
-    p_region: null,
+    p_envelope: address.value,
+    p_region: region,
   });
   if (error) {
     const known = APPLY_REFUSAL[error.code];

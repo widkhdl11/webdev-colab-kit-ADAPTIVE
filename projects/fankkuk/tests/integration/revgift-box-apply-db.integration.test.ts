@@ -2,17 +2,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { BOX_CAPACITY_MAX, BOX_NAME_MAX } from "@/entities/revgift-box/model/box-rules";
 import { adminClient, anonClient, deleteTestFollows, followForTest, holdRowLock, psql, signedInClient } from "./helpers";
-import { clearFanAddresses, PROFILE, registerFanAddress, sampleEnvelope } from "./revgift-helpers";
+import { PROFILE, sampleEnvelope } from "./revgift-helpers";
 
 // 선물함(팬에게 보내기) 2부 — 만들기 · 초대 링크 · 신청 · 신청 관리 · 마감 · 선물함 취소 (revgift-box INV-GB1~GB9, S1c·S2b·S3~S9c).
 // 선물함 주인은 시드 크리에이터 하루, 다른 크리에이터는 모모. 팬: 별빛(시드에서 하루를 팔로우), 달토끼(팔로우 안 함), 구름빵·솜사탕(시험이 팔로우를 붙인다).
 // 신청의 주소 사본은 pii 에 있어 supabase/manual/0031_revgift_box_address.sql 이 적용돼야 신청·신청 취소·마감·선물함 취소가 성공한다 —
 // 그 시험은 이름에 「(manual/0031 뒤)」를 달았다. 그 전에 거부되는 경로(역할·팔로우·인원·상태·꼴)는 0031 없이 돈다.
+// 봉인 없이 신청하면 등록 주소를 복사하던 옛 0031 판(99eb38ee)은 0032 가 새 본문(봉인 없으면 22023)으로 바꾼다 — 그 시험은 「(manual/0032 뒤)」.
 // 받을 인원·이름 길이 경계는 규칙 함수(revgift_box_rules)에서 읽는다.
 
 const HARU_CREATOR = "00000000-0000-4000-b000-000000000001";
 const MOMO_CREATOR = "00000000-0000-4000-b000-000000000002";
-const FANS = [PROFILE.byeolbit, PROFILE.daltokki, PROFILE.gureumppang, PROFILE.somsatang];
 
 type Rules = { capacity_max: number; name_max: number };
 let rules: Rules;
@@ -76,7 +76,6 @@ beforeEach(() => deleteBoxes());
 afterAll(() => {
   deleteBoxes();
   deleteTestFollows();
-  if (psql("select to_regclass('pii.revgift_box_addresses') is not null") === "t") clearFanAddresses(FANS);
 });
 
 describe("INV-GB3: 선물함은 크리에이터만 자기 이름으로 — 이름·받을 인원·공개 여부 셋만", () => {
@@ -353,24 +352,8 @@ describe("INV-GB8 · INV-GB1: 마감·선물함 취소 — 전환표 밖은 거�
 // ── 여기부터 manual/0031(신청 주소 사본) 이 적용돼야 성공한다 ──
 
 describe("INV-GB6: 신청 = 주소 사본 저장까지 한 처리 (manual/0031 뒤)", () => {
-  it("INV-GB6 S6 · INV-GB4 S4: 별빛이 등록 주소로 신청 → 사본은 등록 주소 암호문·구분 그대로, 설정을 바꿔도 사본은 그대로", async () => {
+  it("INV-GB6 S6 · INV-GB4 S4: 신청 때 입력한 봉인 주소와 구분 「제주」로 신청 → 사본은 그 값·기록 entered 한 줄, 내 신청 상태는 applied", async () => {
     const boxId = makeBox();
-    const envelope = sampleEnvelope();
-    await registerFanAddress(byeolbit, envelope);
-    const res = await apply(byeolbit, boxId);
-    expect(res.error).toBeNull();
-    const appId = res.data as string;
-    expect(JSON.parse(copyOf(appId).split("|")[0])).toEqual(envelope);
-    expect(copyOf(appId).split("|")[1]).toBe("none");
-    expect(copyEvents(appId)).toEqual(["copied"]);
-    await registerFanAddress(byeolbit, sampleEnvelope(), "office");
-    expect(JSON.parse(copyOf(appId).split("|")[0])).toEqual(envelope);
-    expect((await byeolbit.rpc("revgift_box_for_fan", { p_box_id: boxId, p_token: null })).data).toMatchObject({ my_state: "applied" });
-  });
-
-  it("INV-GB6: 새로 입력한 봉인 주소와 구분 「제주」로 신청 → 사본은 그 값, 등록 주소는 건드리지 않는다", async () => {
-    const boxId = makeBox();
-    clearFanAddresses([PROFILE.gureumppang]);
     const envelope = sampleEnvelope();
     const res = await apply(gureum, boxId, { envelope, region: "jeju" });
     expect(res.error).toBeNull();
@@ -378,14 +361,20 @@ describe("INV-GB6: 신청 = 주소 사본 저장까지 한 처리 (manual/0031 �
     expect(JSON.parse(stored)).toEqual(envelope);
     expect(region).toBe("jeju");
     expect(copyEvents(res.data as string)).toEqual(["entered"]);
-    expect(psql(`select count(*) from pii.fan_addresses where account_id = '${PROFILE.gureumppang}'`)).toBe("0");
+    expect((await gureum.rpc("revgift_box_for_fan", { p_box_id: boxId, p_token: null })).data).toMatchObject({ my_state: "applied" });
   });
+});
 
-  it("INV-GB6: 등록 주소가 없는데 봉인 없이 신청 → P0026, 신청 줄도 남지 않는다(한 처리)", async () => {
+describe("INV-GB6: 봉인 없이 신청하는 길이 없다 — 등록 주소를 복사하지 않는다 (manual/0032 뒤)", () => {
+  it("INV-GB6 · P17 (실패경로): 봉인·구분 없이 신청 → 22023, 신청 줄·사본·기록 모두 남지 않는다(한 처리)", async () => {
     const boxId = makeBox();
-    clearFanAddresses([PROFILE.somsatang]);
-    expect((await apply(somsa, boxId)).error?.code).toBe("P0026");
+    for (const fan of [byeolbit, somsa]) {
+      expect((await apply(fan, boxId)).error?.code).toBe("22023");
+    }
     expect(appCount(boxId)).toBe(0);
+    expect(psql(`select count(*) from public.revgift_box_address_events e join public.revgift_box_applications a on a.id = e.application_id where a.box_id = '${boxId}'`)).toBe("0");
+    // 사본 저장 함수 본문에 등록 주소를 읽는 갈래가 없다(옛 0031 판을 0032 가 바꿨다)
+    expect(psql("select prosrc not like '%fan_addresses%' from pg_proc where oid = 'pii.revgift_box_save_copy(uuid, uuid, jsonb, text)'::regprocedure")).toBe("t");
   });
 });
 

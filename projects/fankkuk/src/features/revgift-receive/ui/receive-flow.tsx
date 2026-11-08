@@ -4,9 +4,8 @@ import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import type { MyFanAddressStatus } from "@/entities/address/api/my-fan-address-status";
-import type { AddressLabel } from "@/entities/address/model/address-label";
-import { addressOnFileText } from "@/entities/address/ui/address-on-file-text";
+import type { SealedAddressSendOutcome } from "@/shared/ui/sealed-address-form";
+import type { Envelope } from "@/shared/lib/envelope/envelope";
 import { TODO_FRAGMENT } from "@/entities/action-item/model/action-items";
 import type { ReceivedStage } from "@/entities/revgift/model/received-stage";
 import { settledStageCopy } from "@/entities/revgift/ui/received-status";
@@ -17,10 +16,9 @@ import { PROMISE } from "@/shared/config/site-copy";
 import s from "./receive-flow.module.css";
 
 // 받은 역조공 하나 — 받기·받지 않기. 시안: docs/design/mockups/site/v18/revgift-receive.html (가운데 한 기둥에 판을 세로로 쌓음)
-// 받기를 누르면 설정에 등록한 받을 주소를 확인하는 판이 열린다(reverse-gift INV-R4, address-protection INV-P16·P17, 2026-10-17 카드 d100):
-//   등록돼 있으면 「주소를 확인해 주세요」 — 이름표와 등록한 날만 보이고 주소는 보이지 않는다. 「이 주소로 받기」를 누르면 서버가 등록 주소를 이 선물에 복사한다.
-//   등록 전이면 「주소를 입력해 주세요」 — 그 자리에서 받을 주소를 등록한 뒤(이 브라우저에서 봉인한 값만 — INV-R5) 확인 판으로 넘어간다.
-// 주소 입력 칸은 위젯이 받을 주소 기능으로 조립해 넘긴다(기능끼리는 서로 import 하지 않는다 — FSD). 승인 창의 주소 단계와 같은 꼴이다.
+// 받기를 누르면 받을 주소를 입력하는 판이 열린다(reverse-gift INV-R4·R5, address-protection INV-P17 — 2026-11-08 팬 주소 등록을 없앴다):
+//   받는 분 이름·휴대폰 번호·주소를 입력하고 「받기」를 누르면 이 브라우저에서 봉인한 값을 받기 요청에 실어 보낸다 — 서버가 그 봉인을 이 선물에 저장한다.
+// 주소 입력 칸은 위젯이 조립해 넘긴다(봉인 공개키·계정 식별값은 위젯이 안다). 보내는 일(받기 요청)은 이 기능이 정해 칸에 넘긴다.
 // 2026-10-21(action-center INV-J12·J13): 받은 역조공 상세는 선물 상세 하나(`/gifts/RG-…`)이고, 받기·받지 않기·주소 입력은
 //   맨 위 칸(#todo) 안에서만 한다. 칸은 그 몫이 처리할 일 읽기 결과에 있을 때만(todo) — 이 화면이 따로 「받을 수 있는가」를 계산하지 않는다.
 // 모양은 시안 v35-part1/revgift-detail.html(design-rules 22절): 보낸 크리에이터·상자 머리가 있는 하늘 판 하나에 받을지 정하는 칸만 크게,
@@ -28,12 +26,10 @@ import s from "./receive-flow.module.css";
 
 /** 받기 판의 주소 칸 — 위젯이 넘긴다. */
 export type ReceiveAddressStep = {
-  /** 로그인한 팬의 받을 주소 상태. 읽지 못했으면 null */
-  status: MyFanAddressStatus | null;
   /** 주소 입력 칸을 그릴 수 있는가(봉인 공개키가 있다). 없으면 입력 대신 안내만 보인다 */
   canEnter: boolean;
-  /** 주소 입력 칸 */
-  renderForm: (p: { initialLabel: AddressLabel | null; autoFocusFirst: boolean; onSaved: (label: AddressLabel) => void; onCancel: () => void }) => ReactNode;
+  /** 주소 입력 칸 — send 는 봉인된 주소로 받기를 보낸다. 성공하면 onDone */
+  renderForm: (p: { send: (envelope: Envelope) => Promise<SealedAddressSendOutcome>; onDone: () => void; onCancel: () => void }) => ReactNode;
   /** canEnter 가 아닐 때 입력 칸 자리에 보이는 안내 */
   missingKeyText: string;
 };
@@ -68,19 +64,11 @@ function splitDays(text: string): ReactNode {
   );
 }
 
-function addressHead(registered: boolean, editing: boolean): string {
-  if (!registered) return "받을 주소 입력";
-  return editing ? "받을 주소 변경" : "받을 주소 확인";
-}
-
 export function ReceiveFlow(props: ReceiveFlowProps) {
   const { orderNo, creatorName, tierName, tierRule, daysLeftText, deadlineText, address } = props;
   const router = useRouter();
   const [stage, setStage] = useState<ReceivedStage>(props.stage);
   const [stepOpen, setStepOpen] = useState(false);
-  const [status, setStatus] = useState(address.status);
-  const [editing, setEditing] = useState(false);
-  const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -95,43 +83,27 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
     const target = focusNext.current === "step" ? stepTitle.current : focusNext.current === "result" ? resultTitle.current : null;
     focusNext.current = null;
     target?.focus();
-  }, [stepOpen, stage, editing, status?.registered]);
+  }, [stepOpen, stage]);
 
   const waiting = stage === "waiting";
-  const registered = status?.registered ?? false;
-  // 등록 주소가 있으면 공개키 없이도 받을 수 있다(복사는 서버가 한다). 없으면 입력 칸이 있어야 받을 수 있다.
-  const canReceive = status !== null && (registered || address.canEnter);
+  // 받으려면 그 자리에서 주소를 입력해야 한다 — 입력 칸을 그릴 수 없으면(봉인 공개키 없음) 받기 버튼을 두지 않는다
+  const canReceive = address.canEnter;
 
   const openStep = () => {
     setSubmitError(null);
-    setSavedMsg(null);
-    setEditing(false);
     focusNext.current = "step";
     setStepOpen(true);
   };
 
-  const accept = async () => {
-    if (busy) return;
-    setBusy(true);
+  // 입력 칸이 봉인한 주소로 받기를 보낸다(INV-R4). 결과는 칸에 돌려준다 — 거부 문구는 칸이 보인다
+  const accept = async (envelope: Envelope): Promise<SealedAddressSendOutcome> => {
     setSubmitError(null);
-    const outcome = await acceptRevgift(orderNo);
-    setBusy(false);
-    if (outcome.ok) {
-      focusNext.current = "result";
-      setStepOpen(false);
-      setStage("accepted");
-      return;
-    }
-    setSubmitError(outcome.message);
-    // 서버가 「등록 주소 없음」으로 돌려보냈다 — 화면이 들고 있던 「등록됨」이 틀렸으니 입력부터 다시
-    if (outcome.noAddress) {
-      focusNext.current = "step";
-      setStatus({ registered: false, label: null, updatedAt: null });
-      setEditing(false);
-      setSavedMsg(null);
-    }
+    const outcome = await acceptRevgift(orderNo, envelope);
+    if (outcome.ok) return { kind: "ok" };
+    if (outcome.status === 401) return { kind: "login" };
     // 이미 정해졌거나 기한이 지났으면 지금 상태를 다시 읽어 그 안내로 바꾼다
     if (outcome.status === 409) router.refresh();
+    return { kind: "refused", message: outcome.message };
   };
 
   const decline = async () => {
@@ -155,42 +127,6 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
   const settled = stage === "waiting" ? null : settledStageCopy(stage);
 
   const addressBody = () => {
-    if (!status) return <p className="err">받을 주소를 불러오지 못했습니다. 새로고침한 뒤 다시 시도해 주세요.</p>;
-    if (registered && !editing) {
-      return (
-        <>
-          <p className={s.tagrow} data-address-on-file="">
-            {addressOnFileText(status)}
-          </p>
-          <p className={s.addrNote}>등록한 주소는 다시 조회할 수 없습니다. 받을 곳이 바뀌었다면 수락 전에 주소를 변경해 주세요.</p>
-          <p className={`t-meta ${s["addr-saved"]}`} role="status">
-            {savedMsg ?? ""}
-          </p>
-          <div role="alert">{submitError ? <p className={`err ${s.alert}`}>{submitError}</p> : null}</div>
-          {/* 이 주소로 받기 · 주소 바꾸기(시안). 받지 않기는 이 단계에서도 남긴다 — 받기를 누른 뒤에도 거절할 수 있던 흐름 그대로 */}
-          <div className={s.choice}>
-            <button className="btn" type="button" onClick={() => void accept()} aria-disabled={busy || undefined} aria-busy={busy || undefined}>
-              이 주소로 받기
-            </button>
-            <button
-              className="btn btn--line"
-              type="button"
-              onClick={() => {
-                setSavedMsg(null);
-                setSubmitError(null);
-                focusNext.current = "step";
-                setEditing(true);
-              }}
-            >
-              주소 변경
-            </button>
-            <button className="btn btn--line" type="button" onClick={() => setSheetOpen(true)}>
-              받지 않기
-            </button>
-          </div>
-        </>
-      );
-    }
     if (!address.canEnter) {
       return (
         <p className="err" role="status">
@@ -205,21 +141,13 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
         </p>
         <div role="alert">{submitError ? <p className={`err ${s.alert}`}>{submitError}</p> : null}</div>
         {address.renderForm({
-          initialLabel: status.label,
-          autoFocusFirst: registered,
-          onSaved: (label) => {
-            // 서버에 저장된 뒤에만 바뀐다 — 이어서 같은 판에서 「이 주소로 받기」를 누른다
-            setSavedMsg(registered ? "주소가 변경되었습니다." : "주소가 등록되었습니다.");
-            setSubmitError(null);
-            focusNext.current = "step";
-            setStatus({ registered: true, label, updatedAt: new Date().toISOString() });
-            setEditing(false);
+          send: accept,
+          onDone: () => {
+            focusNext.current = "result";
+            setStepOpen(false);
+            setStage("accepted");
           },
-          onCancel: () => {
-            focusNext.current = registered ? "step" : null;
-            if (registered) setEditing(false);
-            else setStepOpen(false);
-          },
+          onCancel: () => setStepOpen(false),
         })}
       </>
     );
@@ -257,7 +185,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
             </div>
             {canReceive ? null : (
               <p className={s.warn} role="status">
-                {status === null ? "받을 주소를 불러오지 못했습니다. 새로고침한 뒤 다시 시도해 주세요." : address.missingKeyText}
+                {address.missingKeyText}
               </p>
             )}
             <div className={s.choice}>
@@ -278,7 +206,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
         {showTodo && stepOpen ? (
           <div className={s.addr}>
             <h2 className={`${s.askTitle} ${s.focusable}`} id="rv-step-title" ref={stepTitle} tabIndex={-1}>
-              {addressHead(registered, editing)}
+              받을 주소 입력
             </h2>
             {addressBody()}
           </div>

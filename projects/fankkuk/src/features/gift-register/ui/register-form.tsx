@@ -29,7 +29,16 @@ import { summarizeBoxes, type BoxSummary } from "../model/box-summary";
 import { movingNotice } from "../model/sender-rule";
 import { GIFT_PRICE_CHANGED_MESSAGE, MAX_BOX_COUNT, registerFormSchema, type RegisterFormOutput, type RegisterFormValues } from "../model/register-input";
 import { PROMISE } from "@/shared/config/site-copy";
+import { FanAddressFields } from "@/entities/address/ui/fan-address-fields";
+import type { SurchargeRegion } from "@/entities/address/model/surcharge-region";
+import type { Envelope } from "@/shared/lib/envelope/envelope";
+import { ADDRESS_KEY_MISSING_TEXT } from "@/shared/ui/sealed-address-form";
 import f from "./register-form.module.css";
+
+/** payment INV-M25: 결제 화면의 반송 주소 칸 — 팬이 보낼 때만 넘긴다(크리에이터는 등록 주소로 반송, address-protection INV-P13). 봉인 공개키가 없으면 sealingKeyPem null */
+export type ReturnAddressInput = { accountId: string; sealingKeyPem: string | null };
+
+const RETURN_ADDRESS_MISSING = "반송 주소를 입력해 주세요.";
 
 /** 고를 수 있는 크리에이터 한 명. 소개 칸(태그·채널 이름·로마자 이름)이 없으면 목록 한 줄에 플랫폼 이름만 보인다. */
 export type CreatorOption = Pick<CreatorCard, "id" | "name" | "platform" | "approvalMinutes"> &
@@ -97,6 +106,7 @@ export function RegisterForm({
   onCreatorChange,
   onDraftChange,
   today,
+  returnAddress = null,
 }: {
   creators: readonly CreatorOption[];
   /** 지금 공개 요금표(받는 값만) — 서버 page 가 DB 공개 읽기 함수로 읽어 넘긴다. */
@@ -115,6 +125,8 @@ export function RegisterForm({
   onDraftChange?: (draft: RegisterDraft) => void;
   /** 한국 시간 오늘 — 서버가 정해 넘긴다(쉬는 중·기념일 7일·다음 달 1일 계산, creator-receiving) */
   today: CalendarDate;
+  /** payment INV-M25: 팬이면 결제 단계에 반송 주소 칸을 둔다. null 이면(크리에이터) 칸이 없다 */
+  returnAddress?: ReturnAddressInput | null;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<StepNo>(1);
@@ -128,6 +140,10 @@ export function RegisterForm({
   // 결제 전 동의(약관·처리방침·취소·환불 규정) — 체크하지 않으면 결제로 넘어가지 않는다
   const [consented, setConsented] = useState(false);
   const [consentMissing, setConsentMissing] = useState(false);
+  // payment INV-M25: 결제 단계에서 봉인한 반송 주소 — 평문은 칸이 봉인한 뒤 바로 지운다. 봉인한 값과 할증 구분만 들고 있다가 등록 요청에 싣는다
+  const [sealedReturn, setSealedReturn] = useState<{ envelope: Envelope; region: SurchargeRegion } | null>(null);
+  const [returnMissing, setReturnMissing] = useState(false);
+  const returnTitle = useRef<HTMLHeadingElement>(null);
   const [noticeShown, setNoticeShown] = useState(true);
   // creator-receiving INV-B9: 「{기념일} 선물」 표시를 고른 크리에이터 — 다른 크리에이터로 바꾸면 고른 것이 풀린다
   const [markedFor, setMarkedFor] = useState<string | null>(null);
@@ -244,6 +260,13 @@ export function RegisterForm({
       go(2, "hard-note");
       return;
     }
+    // payment INV-M25: 팬은 반송 주소를 입력해야 결제로 넘어간다
+    if (returnAddress && !sealedReturn) {
+      e.preventDefault();
+      setReturnMissing(true);
+      returnTitle.current?.focus();
+      return;
+    }
     if (!consented) {
       e.preventDefault();
       setConsentMissing(true);
@@ -283,6 +306,8 @@ export function RegisterForm({
           ...(anniversaryMark && markAnniversary ? { anniversaryName: anniversaryMark } : {}),
           // metrics INV-Q5: 이 크리에이터에게서 안내가 뜬 품목(없으면 보내지 않는다)
           ...(noticed && noticed.creatorId === creatorId ? { hardNoticeCategory: noticed.category } : {}),
+          // payment INV-M25: 봉인된 반송 주소와 할증 구분만 — 평문·우편번호는 싣지 않는다
+          ...(sealedReturn ? { returnAddress: sealedReturn.envelope, returnRegion: sealedReturn.region } : {}),
         }),
       });
       const body = (await res.json().catch(() => ({}))) as RegisterResponse;
@@ -303,6 +328,8 @@ export function RegisterForm({
         router.refresh();
         go(2, "hard-note");
       }
+      // payment INV-M25: 반송 주소 사본을 넣지 못해 결제창을 열지 않았다 — 서버 문구를 그대로
+      else if (res.status === 503) setSubmitError({ message: body.message ?? "선물을 등록하지 못했습니다. 잠시 후 다시 시도해 주세요.", needsLogin: false });
       else if (res.status === 409) {
         // 화면을 연 뒤 요금이 바뀌었다(INV-K3) — 서버 page 를 다시 그려 새 요금표로 금액을 보여 준다. 고른 값은 그대로 남는다
         setSubmitError({ message: body.message ?? GIFT_PRICE_CHANGED_MESSAGE, needsLogin: false });
@@ -924,6 +951,41 @@ tierCountText(summary.counts) || "없음";
               </div>
             ) : null}
           </dl>
+          {returnAddress ? (
+            <section className={f.returnaddr} aria-labelledby="return-address-title">
+              <h3 className={f["returnaddr-title"]} id="return-address-title" ref={returnTitle} tabIndex={-1}>
+                반송 주소
+              </h3>
+              {sealedReturn ? (
+                <div className={f["returnaddr-done"]}>
+                  <p role="status">반송 주소를 입력했습니다.</p>
+                  <button className="btn btn--sm btn--line" type="button" onClick={() => setSealedReturn(null)}>
+                    다시 입력
+                  </button>
+                </div>
+              ) : returnAddress.sealingKeyPem ? (
+                <FanAddressFields
+                  idPrefix="ra"
+                  mode="group"
+                  groupLabel="반송 주소"
+                  accountId={returnAddress.accountId}
+                  sealingKeyPem={returnAddress.sealingKeyPem}
+                  send={async (envelope, region) => {
+                    setSealedReturn({ envelope, region });
+                    setReturnMissing(false);
+                    return { kind: "ok" };
+                  }}
+                  onSaved={() => undefined}
+                  onLoginExpired={() => setSubmitError({ message: "로그인이 필요합니다.", needsLogin: true })}
+                  submitClassName="btn btn--line"
+                  submitContent={() => "입력 완료"}
+                />
+              ) : (
+                <p className={f.error}>{ADDRESS_KEY_MISSING_TEXT}</p>
+              )}
+              <div role="alert">{returnMissing && !sealedReturn ? <p className={f.error}>{RETURN_ADDRESS_MISSING}</p> : null}</div>
+            </section>
+          ) : null}
           {/* 승인을 기다리지 않고 보내는 대신 거절되면 반송비를 뺀다 — 결제 전에 반드시 보이게 조건 없이 둔다(2026-10-02 사용자 결정). 두 카드를 회색 칸 하나로(25절) */}
           <div className={f.gnote} role="note" aria-labelledby="return-notice-title">
             <h3 id="return-notice-title">반송·환불 안내</h3>

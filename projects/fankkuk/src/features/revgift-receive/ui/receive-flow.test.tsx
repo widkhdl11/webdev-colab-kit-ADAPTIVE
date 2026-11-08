@@ -1,10 +1,9 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { MyFanAddressStatus } from "@/entities/address/api/my-fan-address-status";
 
-// 역조공 받기 판 — 등록한 받을 주소 확인 / 없으면 입력 (reverse-gift INV-R4·R6, address-protection INV-P16·P17).
-// 서버로 가는 받기·받지 않기와 주소 입력 칸(봉인·저장)은 가짜로 둔다 — 시험 대상은 판의 단계와, 받기 요청이 주소 없이 그 선물 하나만 보내는지다.
+// 역조공 받기 판 — 받기 때 받을 주소 입력 (reverse-gift INV-R4·R6, address-protection INV-P17 — 팬 등록 주소는 없다, 2026-11-08).
+// 서버로 가는 받기·받지 않기와 주소 입력 칸(봉인)은 가짜로 둔다 — 시험 대상은 판의 단계와, 받기 요청이 그 선물 번호와 칸이 봉인한 값만 보내는지다.
 const acceptRevgift = vi.fn();
 const declineRevgift = vi.fn();
 const refresh = vi.fn();
@@ -46,18 +45,24 @@ afterEach(() => {
 });
 
 const ORDER_NO = "RG-ABC123";
-const NONE: MyFanAddressStatus = { registered: false, label: null, updatedAt: null };
-const HOME: MyFanAddressStatus = { registered: true, label: "home", updatedAt: "2026-10-03T05:00:00Z" };
+// 칸이 봉인한 값 — 받기 요청에 그대로 실려야 한다
+const SEALED = { v: 1, alg: "RSA-OAEP-256+A256GCM", wrappedKey: "k", iv: "i", ciphertext: "c" } as const;
 
-function render(status: MyFanAddressStatus | null, canEnter = true) {
+function render(canEnter = true) {
   const address: ReceiveAddressStep = {
-    status,
     canEnter,
     missingKeyText: "주소 보호 설정이 아직 안 돼 있어요.",
     renderForm: (p) => (
       <div data-form="">
-        <button type="button" onClick={() => p.onSaved("studio")}>
-          가짜 저장
+        <button
+          type="button"
+          onClick={async () => {
+            const o = await p.send(SEALED as never);
+            if (o.kind === "ok") p.onDone();
+            else if (o.kind === "refused") host.setAttribute("data-refused", o.message);
+          }}
+        >
+          가짜 봉인 후 받기
         </button>
         <button type="button" onClick={p.onCancel}>
           가짜 돌아가기
@@ -89,81 +94,48 @@ const click = async (text: string) => {
 };
 const stepHead = () => host.querySelector("#rv-step-title")?.textContent;
 
-describe("받기 — 등록한 받을 주소 확인 (INV-R4·R6, INV-P16)", () => {
-  it("INV-R4 S4: 등록돼 있으면 「주소를 확인해 주세요」 — 이름표와 등록한 날만 보이고, 「이 주소로 받기」는 그 선물 번호만 보낸다", async () => {
+describe("받기 — 그 자리에서 받을 주소 입력 (INV-R4·R5·R6, INV-P17)", () => {
+  it("INV-R4 S4: 받기를 누르면 「받을 주소 입력」과 입력 칸 — 칸이 봉인한 값과 선물 번호만 받기로 보내고 수락 완료가 된다", async () => {
     acceptRevgift.mockResolvedValue({ ok: true });
-    render(HOME);
+    render();
     await click("받기");
-    expect(stepHead()).toBe("받을 주소 확인");
-    expect(host.querySelector("[data-address-on-file]")?.textContent).toContain("집 · ");
-    expect(host.querySelector("[data-form]")).toBeNull();
-    await click("이 주소로 받기");
-    expect(acceptRevgift).toHaveBeenCalledWith(ORDER_NO);
-    expect(acceptRevgift.mock.calls[0]).toHaveLength(1);
+    expect(stepHead()).toBe("받을 주소 입력");
+    expect(host.querySelector("[data-form]")).not.toBeNull();
+    expect(host.querySelector("[data-address-on-file]")).toBeNull();
+    await click("가짜 봉인 후 받기");
+    expect(acceptRevgift.mock.calls).toEqual([[ORDER_NO, SEALED]]);
     expect(host.textContent).toContain("선물 수락 완료");
   });
 
-  it("INV-R6 S6: 받기 판에서 주소 변경을 누르면 「받을 주소 변경」, 저장하면 바꾼 이름표로 다시 확인한다", async () => {
-    render(HOME);
+  it("INV-R6 S6: 등록 주소를 확인하는 판·「이 주소로 받기」·「주소 변경」은 없다 — 받을 때마다 입력한다", async () => {
+    render();
     await click("받기");
-    await click("주소 변경");
-    expect(stepHead()).toBe("받을 주소 변경");
-    await click("가짜 저장");
-    expect(stepHead()).toBe("받을 주소 확인");
-    expect(host.querySelector("[data-address-on-file]")?.textContent).toContain("작업실");
-    expect(host.textContent).toContain("주소가 변경되었습니다.");
-    expect(acceptRevgift).not.toHaveBeenCalled();
-  });
-});
-
-describe("받기 — 등록 전이면 그 자리에서 입력 (INV-R4, INV-P17)", () => {
-  it("INV-R4 S4: 등록 전이면 「주소를 입력해 주세요」와 입력 칸 — 저장한 뒤에야 확인 판과 「이 주소로 받기」가 나온다", async () => {
-    acceptRevgift.mockResolvedValue({ ok: true });
-    render(NONE);
-    await click("받기");
-    expect(stepHead()).toBe("받을 주소 입력");
-    expect(host.querySelector("[data-form]")).not.toBeNull();
     expect(button("이 주소로 받기")).toBeUndefined();
-    await click("가짜 저장");
-    expect(stepHead()).toBe("받을 주소 확인");
-    expect(host.textContent).toContain("주소가 등록되었습니다.");
-    await click("이 주소로 받기");
-    expect(acceptRevgift).toHaveBeenCalledWith(ORDER_NO);
+    expect(button("주소 변경")).toBeUndefined();
   });
 
-  it("INV-R4 (실패경로): 서버가 「등록 주소 없음」으로 돌려보내면 입력부터 다시 — 받기는 끝나지 않는다", async () => {
-    acceptRevgift.mockResolvedValue({ ok: false, status: 422, message: "받을 주소를 먼저 입력해 주세요.", noAddress: true });
-    render(HOME);
+  it("INV-R4 (실패경로): 서버가 거부하면 그 문구를 칸에 돌려주고 받기는 끝나지 않는다 — 이미 정해진 선물이면 다시 읽는다", async () => {
+    acceptRevgift.mockResolvedValue({ ok: false, status: 409, message: "이미 수락 여부를 선택했거나 기한이 지난 선물입니다." });
+    render();
     await click("받기");
-    await click("이 주소로 받기");
-    expect(stepHead()).toBe("받을 주소 입력");
-    expect(host.querySelector("[data-form]")).not.toBeNull();
-    expect(host.textContent).toContain("받을 주소를 먼저 입력해 주세요.");
+    await click("가짜 봉인 후 받기");
+    expect(host.getAttribute("data-refused")).toBe("이미 수락 여부를 선택했거나 기한이 지난 선물입니다.");
     expect(host.textContent).not.toContain("선물 수락 완료");
+    expect(refresh).toHaveBeenCalled();
   });
 
   it("INV-R4 (실패경로): 입력을 그만두면 판이 닫히고 받기·받지 않기로 돌아간다", async () => {
-    render(NONE);
+    render();
     await click("받기");
     await click("가짜 돌아가기");
     expect(stepHead()).toBeUndefined();
     expect(button("받기")).toBeDefined();
   });
 
-  it("INV-R5 (실패경로): 봉인 공개키가 없으면 등록 전 팬은 받기 버튼 대신 안내 — 등록돼 있으면 공개키 없이도 받을 수 있다", async () => {
-    render(NONE, false);
+  it("INV-R5 (실패경로): 봉인 공개키가 없으면 받기 버튼 대신 안내", () => {
+    render(false);
     expect(button("받기")).toBeUndefined();
     expect(host.textContent).toContain("주소 보호 설정이 아직 안 돼 있어요.");
-    act(() => root.unmount());
-    root = createRoot(host);
-    render(HOME, false);
-    expect(button("받기")).toBeDefined();
-  });
-
-  it("INV-P17 (실패경로): 받을 주소를 읽지 못했으면 받기 버튼 대신 안내", () => {
-    render(null);
-    expect(button("받기")).toBeUndefined();
-    expect(host.textContent).toContain("받을 주소를 불러오지 못했습니다");
   });
 });
 
@@ -179,7 +151,7 @@ describe("끝난 역조공의 결과 (office-workflow INV-W15)", () => {
           stage={stage}
           daysLeftText="5일 남음"
           deadlineText="10월 22일까지 정해 주세요"
-          address={{ status: HOME, canEnter: true, missingKeyText: "", renderForm: () => null }}
+          address={{ canEnter: true, missingKeyText: "", renderForm: () => null }}
           todo={false}
         />,
       ),
@@ -211,7 +183,7 @@ describe("받기 칸은 「지금 할 일」 칸 안에만 (action-center INV-J1
           stage="waiting"
           daysLeftText="5일 남음"
           deadlineText="10월 22일까지 정해 주세요"
-          address={{ status: HOME, canEnter: true, missingKeyText: "", renderForm: () => null }}
+          address={{ canEnter: true, missingKeyText: "", renderForm: () => null }}
           todo={todo}
         />,
       ),

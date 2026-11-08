@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { adminClient, approveRpc, clearWaybillAttempts, payTestOrder, psql, registerTestOrder, signedInClient } from "./helpers";
-import { payTestRevgift, PROFILE, registerTestRevgift } from "./revgift-helpers";
+import { payTestRevgift, PROFILE, registerTestRevgift, sampleEnvelope } from "./revgift-helpers";
 
 // 사무실 작업 흐름 통합 시험 공용 (office-workflow INV-W1~W8).
 // 시드: fankkuk_admin = 대표 운영자, fankkuk_staff = 직원 운영자, byeolbit_fan = 별빛(시험 주문의 팬), haru_creator = 하루.
@@ -204,7 +204,7 @@ export function returnConfirmedAtSql(qr: string): string {
 
 /**
  * 보낸 사람이 반송 주소를 확인한 것으로 표시만 한다(확인 시각 칸) — 기한·카드·출력 단계의 갈래를 보는 시험의 준비용.
- * 등록 주소를 상자에 복사하는 실제 확인(confirm_return_address, manual/0020)은 return-address-confirm-db 가 본다.
+ * 주문 사본·새 봉인·크리에이터 등록 주소를 상자에 복사하는 실제 확인(confirm_return_address, manual/0032)은 return-address-confirm-db 가 본다.
  */
 export function markReturnConfirmedForTest(qr: string): void {
   psql(`update public.office_parcels set return_confirmed_at = now() where qr_code = '${qr}'`);
@@ -215,8 +215,25 @@ export function markReturnConfirmedForTest(qr: string): void {
  * 예약 작업 대신 한 번 돌린다. 함수는 manual/0024 가 만든다 — 적용 전에는 함수가 없어 이 호출이 실패한다(빨간불이 맞다).
  * 돌려주는 값: {revgift, return} — 이번에 지운 몫 사본 수 · 반송 상자 사본 수.
  */
-export function dropAddressCopies(): { revgift: number; return: number } {
-  return JSON.parse(psql("select public.office_drop_address_copies()::text")) as { revgift: number; return: number };
+export function dropAddressCopies(): { revgift: number; return: number; order_return?: number } {
+  return JSON.parse(psql("select public.office_drop_address_copies()::text")) as { revgift: number; return: number; order_return?: number };
+}
+
+/**
+ * 결제 때 받은 팬 선물 반송 주소 사본(payment INV-M25, manual/0032)을 그 주문에 넣는다 — 이미 결제된 시험 주문의 준비용(DB 관리자 연결).
+ * 앱 경로(save_my_order_return_address — 결제 대기 때 보낸 사람 본인만)는 order-return-address-db 가 본다. 넣은 봉인을 돌려준다.
+ */
+export function putOrderReturnCopy(orderId: string, envelope: Record<string, unknown> = sampleEnvelope(), region: "none" | "jeju" | "island" = "none"): Record<string, unknown> {
+  psql(
+    `insert into pii.order_return_addresses (order_id, account_id, envelope, surcharge_region) select id, fan_id, '${JSON.stringify(envelope)}'::jsonb, '${region}' from public.orders where id = '${orderId}' ` +
+      "on conflict (order_id) do update set envelope = excluded.envelope, surcharge_region = excluded.surcharge_region",
+  );
+  return envelope;
+}
+
+/** 그 주문의 반송 주소 사본 수(0 또는 1) */
+export function orderReturnCopies(orderId: string): string {
+  return psql(`select count(*) from pii.order_return_addresses where order_id = '${orderId}'`);
 }
 
 /** 몫의 출고 확정 시각을 hours 시간 앞으로 당긴다 — 72시간 사본 지우기의 시계(revgift_shares.shipped_at) */

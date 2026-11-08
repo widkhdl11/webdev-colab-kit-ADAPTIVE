@@ -1,3 +1,5 @@
+import { parseAddressInput, type AddressCiphertext } from "@/entities/address/model/address-ciphertext";
+import { parseSurchargeRegion, type SurchargeRegion } from "@/entities/address/model/surcharge-region";
 import { newOrderNo } from "@/entities/order/model/order-no";
 import { InvalidRegistrationError, OrderNoTakenError, PriceChangedError, SenderRefusedError, type PaymentStore } from "@/entities/payment/api/payment-store";
 import { computeCharge } from "@/entities/payment/model/charge";
@@ -13,10 +15,24 @@ import { decideSender, refusalStatus, SENDER_REFUSAL_MESSAGE, senderRoleAllowed 
 
 export type RegisterGiftResult =
   | { ok: true; orderId: string; orderNo: string; amountKrw: number; surchargeKrw: number }
-  | { ok: false; status: 401 | 403 | 404 | 409; message: string; reason?: "hard_item" }
+  | { ok: false; status: 401 | 403 | 404 | 409 | 503; message: string; reason?: "hard_item" }
   | { ok: false; status: 400; errors: Partial<Record<keyof RegisterFormValues, string>> };
 
 const quotedShape = z.object({ quotedTotalKrw: quotedTotalSchema });
+
+/** payment INV-M25 ②: 주문 사본 저장 결과 — saved 말고는 결제창을 열지 않는다 */
+export type SaveReturnAddress = (orderNo: string, address: AddressCiphertext, region: SurchargeRegion) => Promise<"saved" | "not_found" | "closed">;
+
+export const RETURN_ADDRESS_SAVE_FAILED = "반송 주소를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+
+/** 팬이 보내는 등록에서 반송 주소(봉인)와 할증 구분을 꺼낸다. 하나라도 틀리면 null — 주문을 만들기 전에 거부한다(INV-M25 ②) */
+function readReturnAddress(body: unknown): { address: AddressCiphertext; region: SurchargeRegion } | null {
+  if (typeof body !== "object" || body === null) return null;
+  const raw = body as { returnAddress?: unknown; returnRegion?: unknown };
+  const input = parseAddressInput({ address: raw.returnAddress });
+  const region = parseSurchargeRegion(raw.returnRegion);
+  return input.ok && region ? { address: input.value, region } : null;
+}
 
 /** 토스 orderId 규칙: 영문·숫자·-·_ 6~64자. */
 function newPaymentOrderId(): string {
@@ -37,6 +53,8 @@ export async function registerGift(
     viewer: Viewer | null;
     creatorRelation: CreatorRelationReader;
     readPrices: () => Promise<PriceTable>;
+    /** payment INV-M25 ②: 결제 대기 주문에 반송 주소 사본을 넣는다 — 로그인한 그 팬의 토큰으로 부르는 DB 함수 */
+    saveReturnAddress: SaveReturnAddress;
     newOrderNo?: () => string;
     /** 한도 문구의 「다음 달 1일」을 정할 지금 시각(시험이 고정한다) */
     now?: () => Date;
@@ -51,6 +69,11 @@ export async function registerGift(
   if (!parsed.success) return { ok: false, status: 400, errors: parsed.errors };
   const quoted = quotedShape.safeParse(body);
   if (!quoted.success) return { ok: false, status: 400, errors: {} };
+
+  // payment INV-M25: 팬이 보내는 선물은 결제 화면에서 봉인한 반송 주소가 있어야 한다 — 없거나 꼴이 틀리면 주문을 만들기 전에 거부한다.
+  // 크리에이터가 보내는 선물은 받지 않는다 — 반송은 크리에이터 등록 주소(address-protection INV-P13)로 간다
+  const returnAddress = deps.viewer.role === "fan" ? readReturnAddress(body) : null;
+  if (deps.viewer.role === "fan" && !returnAddress) return { ok: false, status: 400, errors: {} };
 
   const { creatorId, itemCategory, itemOther, boxes, hasElectronicsOrMetal, anniversaryName, hardNoticeCategory, memo } = parsed.data;
   // INV-L8·INV-L9: 받는 크리에이터와의 관계(자기 자신인가·팔로우했는가)를 로그인한 사람 기준으로 서버가 읽어 판정한다
@@ -67,6 +90,14 @@ export async function registerGift(
   for (let attempt = 1; ; attempt += 1) {
     try {
       const stored = await deps.store.create({ orderId: newPaymentOrderId(), orderNo: (deps.newOrderNo ?? newOrderNo)(), charge, registration });
+      // INV-M25 ②: 반송 주소 사본을 넣지 못하면 결제창을 열지 않는다 — 이 결제 대기는 이어 하기 없이 24시간 뒤 닫힌다(INV-M22)
+      if (returnAddress) {
+        const saved = await deps.saveReturnAddress(stored.orderNo, returnAddress.address, returnAddress.region).catch((e: unknown) => {
+          console.error(`선물 등록: 반송 주소 사본을 넣지 못했다 (${e instanceof Error ? e.message : typeof e})`);
+          return null;
+        });
+        if (saved !== "saved") return { ok: false, status: 503, message: RETURN_ADDRESS_SAVE_FAILED };
+      }
       // 결제 기록의 칸 나눔(택배 원가·서비스료)은 돌려주지 않는다 — 팬에게는 한 금액만(INV-M7).
       // 할증(INV-M24)은 등록 함수가 정해 더한 몫 — 결제 화면이 「제주·도서 지역 할증」 한 줄로 따로 보인다. 화면 합계(할증 전)와의 비교는 위에서 끝났다
       return { ok: true, orderId: stored.orderId, orderNo: stored.orderNo, amountKrw: stored.amountKrw, surchargeKrw: stored.surchargeKrw };

@@ -18,6 +18,7 @@ import {
   type CreatorOption,
   type RegisterDraft,
   type RegisteredGift,
+  type ReturnAddressInput,
 } from "@/features/gift-register/ui/register-form";
 import { GiftSumBar, GiftSummaryCard } from "./gift-summary";
 import s from "./gift-register-page.module.css";
@@ -39,6 +40,7 @@ export function GiftRegisterPage({
   signedIn = true,
   followFirst = null,
   today,
+  returnAddress = null,
 }: {
   creators: readonly CreatorOption[];
   /** 지금 공개 요금표 — 서버 page 가 DB 공개 읽기 함수로 읽어 넘긴다. */
@@ -55,6 +57,8 @@ export function GiftRegisterPage({
   followFirst?: { id: string; name: string; platform: string } | null;
   /** 한국 시간 오늘 — 서버가 정해 넘긴다(creator-receiving 계산) */
   today: CalendarDate;
+  /** payment INV-M25: 팬이면 결제 단계의 반송 주소 칸(계정 ID·봉인 공개키). 크리에이터는 null */
+  returnAddress?: ReturnAddressInput | null;
 }) {
   const [registered, setRegistered] = useState<RegisteredGift | null>(null);
   const [photoNote, setPhotoNote] = useState<string | null>(null);
@@ -212,6 +216,7 @@ export function GiftRegisterPage({
                 onCreatorChange={setPickedId}
                 onDraftChange={setDraft}
                 today={today}
+                returnAddress={returnAddress}
               />
               {draft?.step === 3 ? <GiftSumBar draft={draft} /> : null}
             </div>

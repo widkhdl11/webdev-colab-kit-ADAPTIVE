@@ -44,7 +44,7 @@ afterEach(() => {
   host.remove();
 });
 
-type Status = ReturnAddressStep["status"];
+type Status = Extract<ReturnAddressStep, { status: unknown }>["status"];
 const NONE: Status = { registered: false, label: null, updatedAt: null };
 const HOME: Status = { registered: true, label: "home", updatedAt: "2026-10-03T05:00:00Z" };
 
@@ -79,7 +79,7 @@ async function click(name: string) {
   });
 }
 
-describe("INV-W15: 등록 주소가 있으면 이름표·바꾼 날과 「확인」「바꾸기」", () => {
+describe("INV-W15: (크리에이터) 등록 주소가 있으면 이름표·바꾼 날과 「확인」「바꾸기」", () => {
   it("INV-W15·P16: 창 제목은 「반송 주소 확인」, 이름표와 등록한 날만 보이고 주소 입력 칸은 없다", () => {
     render(HOME);
     expect(text()).toContain("반송 주소 확인");
@@ -153,6 +153,92 @@ describe("INV-W15·P17: 등록 전이면 그 자리에서 입력한 뒤 확인",
 
   it("INV-P17 (실패경로): 봉인 공개키가 없으면 입력 칸 대신 안내만", () => {
     render(NONE, 2, false);
+    expect(text()).toContain("주소 보호 설정이 아직 안 돼 있어요.");
+    expect(host.ownerDocument.querySelector("[data-form]")).toBeNull();
+  });
+});
+
+// 팬 선물 상자(order) — 결제 때 입력한 반송 주소를 확인하거나 다른 주소를 입력한다(payment INV-M25, address-protection INV-P17·P18). 팬 등록 주소는 없다.
+const SEALED = { v: 1, alg: "RSA-OAEP-256+A256GCM", wrappedKey: "k", iv: "i", ciphertext: "c" } as const;
+
+function renderOrder(canEnter = true) {
+  const address: ReturnAddressStep = {
+    kind: "order",
+    canEnter,
+    missingKeyText: "주소 보호 설정이 아직 안 돼 있어요.",
+    renderForm: (p) => (
+      <div data-form="">
+        <button
+          type="button"
+          onClick={async () => {
+            const o = await p.send(SEALED as never);
+            if (o.kind === "ok") p.onDone();
+            else if (o.kind === "refused") host.setAttribute("data-refused", o.message);
+          }}
+        >
+          가짜 봉인 후 확인
+        </button>
+        {p.onCancel ? (
+          <button type="button" onClick={p.onCancel}>
+            가짜 돌아가기
+          </button>
+        ) : null}
+      </div>
+    ),
+  };
+  act(() => root.render(<ReturnAddressWindow target={{ orderNo: "FC-7K3M9", boxSeq: 2 }} meta="하루님께 보낸 선물 · 상자 2" address={address} open onClose={onClose} />));
+}
+
+describe("INV-W15 · INV-M25: (팬) 결제 때 입력한 반송 주소 확인", () => {
+  it("INV-W15 S15: 「결제할 때 입력한 반송 주소」와 「주소 확인」「다른 주소 입력」 — 이름표·등록일·입력 칸은 없다", () => {
+    renderOrder();
+    expect(text()).toContain("결제할 때 입력한 반송 주소");
+    expect(button("주소 확인")).toBeDefined();
+    expect(button("다른 주소 입력")).toBeDefined();
+    expect(host.ownerDocument.querySelector("[data-address-on-file]")).toBeNull();
+    expect(host.ownerDocument.querySelector("[data-form]")).toBeNull();
+  });
+
+  it("INV-W15 S15: 「주소 확인」은 주문번호·상자 순번만 보낸다(사본 복사는 DB) — 끝나면 닫고 다시 읽는다", async () => {
+    sendReturnConfirm.mockResolvedValue({ kind: "ok" });
+    renderOrder();
+    await click("주소 확인");
+    expect(sendReturnConfirm.mock.calls).toEqual([[{ orderNo: "FC-7K3M9", boxSeq: 2 }]]);
+    expect(refresh).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("INV-W15 S15: 「다른 주소 입력」은 칸이 봉인한 값을 같이 보내 바로 확인한다", async () => {
+    sendReturnConfirm.mockResolvedValue({ kind: "ok" });
+    renderOrder();
+    await click("다른 주소 입력");
+    expect(text()).toContain("주소 입력");
+    await click("가짜 봉인 후 확인");
+    expect(sendReturnConfirm.mock.calls).toEqual([[{ orderNo: "FC-7K3M9", boxSeq: 2, address: SEALED }]]);
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("INV-W15 S15 (실패경로): 결제 때 사본이 없으면(no_address) 입력 칸으로 바뀌고 돌아갈 확인 단계가 없다", async () => {
+    sendReturnConfirm.mockResolvedValue({ kind: "refused", reason: "no_address" });
+    renderOrder();
+    await click("주소 확인");
+    expect(host.ownerDocument.querySelector("[data-form]")).not.toBeNull();
+    expect(button("가짜 돌아가기")).toBeUndefined();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("INV-W15 S15f (실패경로): 서버가 봉인을 받지 않으면 그 문구를 칸에 돌려주고 창은 닫지 않는다", async () => {
+    sendReturnConfirm.mockResolvedValue({ kind: "invalid", message: "주소를 다시 입력해 주세요." });
+    renderOrder();
+    await click("다른 주소 입력");
+    await click("가짜 봉인 후 확인");
+    expect(host.getAttribute("data-refused")).toBe("주소를 다시 입력해 주세요.");
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("INV-W15 (실패경로): 봉인 공개키가 없으면 다른 주소 입력 칸 대신 안내", async () => {
+    renderOrder(false);
+    await click("다른 주소 입력");
     expect(text()).toContain("주소 보호 설정이 아직 안 돼 있어요.");
     expect(host.ownerDocument.querySelector("[data-form]")).toBeNull();
   });

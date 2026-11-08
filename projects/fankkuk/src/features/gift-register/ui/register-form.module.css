@@ -223,3 +223,11 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
   .lines[data-side-covered] { display: none; }
   .lines[data-side-covered] + .tag-line { margin-top: 0; }
 }
+
+/* ── 4 결제 — 반송 주소 칸(payment INV-M25, 팬만). 확인 줄 아래, 반송·환불 안내 위 ── */
+.returnaddr { margin-top: var(--space-6); }
+.returnaddr-title { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); line-height: 1.6; color: var(--ink); margin-bottom: var(--space-3); }
+.returnaddr-title:focus { outline: none; }
+.returnaddr-title:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.returnaddr-done { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); min-height: 56px; padding: var(--space-2) 0; border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); }
+.returnaddr-done p { min-width: 0; font-weight: var(--fw-btn); }

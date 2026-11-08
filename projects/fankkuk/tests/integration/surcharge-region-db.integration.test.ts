@@ -4,7 +4,7 @@ import { sampleEnvelope } from "./revgift-helpers";
 import { createTestCreator, removeTestCreator, TEST_CREATOR } from "./test-creator";
 
 // 할증 지역 구분 — 개인정보 구역(pii) 주소 줄의 구분 칸과 그것을 읽는 함수. supabase/manual/0030_surcharge_region.sql 을 적용해야 돈다(manual/0030 뒤).
-// 스펙: address-protection INV-P20(S20·S20c), payment INV-M24(S24~S24c).
+// 스펙: address-protection INV-P20(S20·S20c), payment INV-M24(S24~S24c)·INV-M25(반송 주소 사본의 구분, manual/0032 뒤).
 // 시험 전용 크리에이터(test-creator.ts)의 주소 칸만 쓰고, 끝나면 그 크리에이터를 주소·기록째 지운다.
 
 const fee = (region: "jeju" | "island") => Number(psql(`select fee_krw from public.surcharge_fees where region = '${region}'`));
@@ -42,7 +42,7 @@ describe("INV-P20 ②: 주소 줄에는 암호문과 구분만 — 우편번호 
     expect(error).toBeNull();
     expect(data).toBe("saved");
     expect(storedRegion()).toBe("jeju");
-    const columns = psql("select string_agg(column_name, ',' order by column_name) from information_schema.columns where table_schema = 'pii' and table_name in ('creator_addresses', 'fan_addresses')");
+    const columns = psql("select string_agg(column_name, ',' order by column_name) from information_schema.columns where table_schema = 'pii' and table_name in ('creator_addresses', 'order_return_addresses', 'revgift_box_addresses')");
     expect(columns).not.toMatch(/zip|postal|postcode/);
   });
 
@@ -59,22 +59,17 @@ describe("INV-P20 ②: 주소 줄에는 암호문과 구분만 — 우편번호 
     expect(psql("select count(*) from pg_proc where proname = 'set_creator_address' and pronargs = 4")).toBe("0");
     expect(psql("select count(*) from pg_proc where proname = 'set_my_fan_address' and pronargs = 2")).toBe("0");
   });
+});
 
-  it("INV-P20 S20: 팬 받을 주소도 구분과 함께 저장된다 — 목록 밖이면 22023", async () => {
+describe("INV-P20 ② · INV-M25: 팬 선물 반송 주소 사본도 구분과 함께 (manual/0032 뒤)", () => {
+  it("INV-P20 S20 · M25: 결제 대기 주문의 반송 주소 사본은 구분과 함께 저장된다 — 목록 밖(우편번호)이면 22023, 저장된 값은 그대로", async () => {
     const fan = await signedInClient("byeolbit_fan");
-    const fanId = psql("select id from public.profiles where login_id = 'byeolbit_fan'");
-    const before = psql(`select coalesce(envelope::text, '') || '|' || coalesce(label, '') || '|' || coalesce(surcharge_region, '') from pii.fan_addresses where account_id = '${fanId}'`);
-    try {
-      expect((await fan.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "home", p_region: "island" })).data).toBe("saved");
-      expect(psql(`select surcharge_region from pii.fan_addresses where account_id = '${fanId}'`)).toBe("island");
-      expect((await fan.rpc("set_my_fan_address", { p_envelope: sampleEnvelope(), p_label: "home", p_region: "23100" })).error?.code).toBe("22023");
-    } finally {
-      if (before === "") psql(`delete from pii.fan_addresses where account_id = '${fanId}'`);
-      else {
-        const [envelope, label, region] = before.split("|");
-        psql(`update pii.fan_addresses set envelope = '${envelope}'::jsonb, label = '${label}', surcharge_region = '${region}' where account_id = '${fanId}'`);
-      }
-    }
+    const o = await registerTestOrder(1);
+    const save = (region: string) => fan.rpc("save_my_order_return_address", { p_order_no: o.orderNo, p_envelope: sampleEnvelope(), p_region: region });
+    expect((await save("island")).data).toBe("saved");
+    expect(psql(`select surcharge_region from pii.order_return_addresses where order_id = '${o.orderId}'`)).toBe("island");
+    expect((await save("23100")).error?.code).toBe("22023");
+    expect(psql(`select surcharge_region from pii.order_return_addresses where order_id = '${o.orderId}'`)).toBe("island");
   });
 });
 
@@ -131,7 +126,7 @@ describe("INV-M24: 결제 대기를 만드는 순간의 주소 구분으로 상�
 
   it("INV-M24 ⑤: 등록 함수 밖에서 pii 주소 줄의 구분 칸을 읽는 공개 함수는 구분 읽기 함수·재판정 함수 둘뿐이다", () => {
     const readers = psql(
-      "select string_agg(p.proname, ',' order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prosrc like '%surcharge_region%' and p.prosrc like '%pii.%' and p.proname not in ('set_creator_address', 'set_my_fan_address')",
+      "select string_agg(p.proname, ',' order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prosrc like '%surcharge_region%' and p.prosrc like '%pii.%' and p.proname not in ('set_creator_address', 'set_my_fan_address', 'save_my_order_return_address')",
     );
     expect(readers).toBe("creator_surcharge_region,invoice_report_surcharge_region");
   });

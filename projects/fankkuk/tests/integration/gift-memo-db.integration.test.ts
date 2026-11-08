@@ -5,6 +5,7 @@ import { createCreatorRelationReader } from "@/features/gift-register/api/creato
 import { registerGift } from "@/features/gift-register/model/register-gift";
 import { memoResponseProblems, runPiiExposureCheck } from "../../scripts/pii-exposure.mjs";
 import { adminClient, anonClient, approveRpc, deleteTestOrders, followForTest, payTestOrder, psql, SEED, signedInClient } from "./helpers";
+import { sampleEnvelope } from "./revgift-helpers";
 
 // 나만 보는 선물 메모(together INV-F7·F8, S7~S8b) — 실제 DB 로.
 // 메모는 주문 표가 아니라 따로 된 표(gift_memos)에 있고, 그 표를 읽거나 쓰는 함수는 등록·본인 상세·본인 목록 셋뿐이다.
@@ -22,7 +23,10 @@ const CANARY_BODY_MARK = "심은메모내용KX9";
 
 const fan = { userId: SEED.fanId, role: "fan" } as const;
 const store = () => createSupabasePaymentStore(adminClient());
-const deps = () => ({ store: store(), viewer: fan, creatorRelation: createCreatorRelationReader(adminClient()), readPrices: () => readTierPrices(adminClient()) });
+const deps = () => ({ store: store(), viewer: fan, creatorRelation: createCreatorRelationReader(adminClient()), readPrices: () => readTierPrices(adminClient()),
+  // 반송 주소 사본 저장은 이 시험의 대상이 아니다 — 저장 함수 자체는 order-return-address-db 가 본다
+  saveReturnAddress: async () => "saved" as const,
+});
 const form = (extra: Record<string, unknown> = {}) => ({
   creatorId: SEED.haruCreatorId,
   itemCategory: "other",
@@ -32,6 +36,9 @@ const form = (extra: Record<string, unknown> = {}) => ({
   largeCount: "0",
   electronicsOrMetal: "no",
   quotedTotalKrw: 6900,
+  // 팬이 보낼 때 필수인 반송 주소(봉인)와 할증 구분(payment INV-M25)
+  returnAddress: sampleEnvelope(),
+  returnRegion: "none",
   ...extra,
 });
 

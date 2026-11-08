@@ -95,7 +95,7 @@ afterAll(() => {
   deleteTestUnmatched();
 });
 
-describe("INV-J1: 카드는 세 종류, 상자(몫) 하나에 하나, 보이는 조건은 처리 함수가 받아 주는 조건", () => {
+describe("INV-J1: 카드는 세 종류, 상자(몫) 하나에 하나, 보이는 조건은 처리 함수가 받아 주는 조건 (manual/0032 뒤)", () => {
   it("INV-J1 S1: 차액 요청(미결제, 검수 뒤 기한 전) → 추가 결제 1 · 결제 뒤 15일 입고 전 상자 → 도착하지 않은 상자 1 · 13일 된 상자는 없음", async () => {
     const d = await differenceOrder();
     await inspected(d.qr);
