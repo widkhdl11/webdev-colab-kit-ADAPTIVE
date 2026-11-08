@@ -190,18 +190,26 @@ describe("INV-GB6: 신청 주소는 봉인된 값만 — 평문·우편번호가
     const fns = psql(
       "select string_agg(p.proname, ',' order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname like '%revgift_box%' and has_function_privilege('authenticated', p.oid, 'execute')",
     ).split(",");
-    // 화면 키가 부를 수 있는 선물함 함수는 이것뿐이다 — 주소를 받는 것은 팬 본인의 신청 하나
+    // 화면 키가 부를 수 있는 선물함 함수는 이것뿐이다 — 주소를 받는 것은 팬 본인의 신청 하나.
+    // 3부(20261109000001)가 더한 일곱은 구간·상자 수·팬 고르기·카드 고르기·읽기뿐이고 주소 칸이 없다
     expect(fns).toEqual([
       "create_revgift_box",
       "creator_open_revgift_boxes",
       "my_revgift_box",
+      "my_revgift_box_cards",
+      "my_revgift_box_labels",
       "my_revgift_boxes",
       "revgift_box_apply",
       "revgift_box_cancel",
+      "revgift_box_choose_cancelled_arrival",
       "revgift_box_close",
       "revgift_box_for_fan",
+      "revgift_box_price_table",
       "revgift_box_renew_invite",
+      "revgift_box_resolve_hold",
+      "revgift_box_set_carton_count",
       "revgift_box_set_excluded",
+      "revgift_box_submit_tiers",
       "revgift_box_withdraw",
     ]);
     expect(psql("select has_function_privilege('service_role', 'public.revgift_box_apply(uuid, text, jsonb, text)', 'execute')")).toBe("f");
@@ -290,10 +298,24 @@ describe("INV-GB9: 크리에이터에게 보이는 팬 정보는 닉네임·신�
     addApp(boxId, PROFILE.gureumppang, "excluded");
     addApp(boxId, PROFILE.somsatang, "withdrawn");
     const box = (await haru.rpc("my_revgift_box", { p_box_id: boxId })).data as Record<string, unknown> & { applications: Record<string, unknown>[] };
-    expect(Object.keys(box).sort()).toEqual(["applications", "capacity", "created_at", "id", "invite_token", "is_public", "name", "status"]);
+    // 3부(20261109000001)가 6자리·보낸/받은 상자 수·명세서와 신청마다 고른 구간을 더했다 — 사람 칸은 여전히 닉네임뿐
+    expect(Object.keys(box).sort()).toEqual([
+      "applications",
+      "capacity",
+      "carton_count",
+      "cartons_received",
+      "created_at",
+      "id",
+      "inbound_code",
+      "invite_token",
+      "invoice",
+      "is_public",
+      "name",
+      "status",
+    ]);
     expect(box.applications.map((a) => Object.keys(a).sort())).toEqual([
-      ["applied_at", "id", "nickname", "status"],
-      ["applied_at", "id", "nickname", "status"],
+      ["applied_at", "chosen_tier", "id", "nickname", "status"],
+      ["applied_at", "chosen_tier", "id", "nickname", "status"],
     ]);
     expect(box.applications.map((a) => a.nickname)).toEqual(["별빛", "구름빵"]);
     const list = (await haru.rpc("my_revgift_boxes")).data as Record<string, unknown>[];

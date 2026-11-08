@@ -39,3 +39,23 @@
   .search { flex-basis: 100%; }
   .actions > .btn { flex: 1 1 140px; }
 }
+
+/* 3부 — 상자 선택(2페이지)·보낸 상자 수·처리할 일 카드 */
+.fees { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-2); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+.fee { display: grid; gap: var(--space-1); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--r-card); background: var(--white); box-shadow: var(--card-shadow); }
+.feeName { font-weight: var(--fw-btn); }
+.feeRule { color: var(--sub); font-size: var(--fs-small); }
+.feeKrw { font-variant-numeric: tabular-nums; font-weight: var(--fw-bold); }
+.notes { display: grid; gap: var(--space-1); margin: var(--space-4) 0 0; padding-left: 20px; color: var(--sub); font-size: var(--fs-small); }
+.tierRow { grid-template-columns: minmax(0, 1fr) auto; }
+.tierSelect { width: 140px; min-height: 44px; }
+.estimate { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.estimate strong { font-size: var(--fs-card); font-variant-numeric: tabular-nums; }
+.estimateNote { color: var(--sub); font-size: var(--fs-small); }
+.cartons { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3); }
+.cartons :global(.input) { width: 120px; }
+.card { display: grid; gap: var(--space-3); padding: var(--space-6); border: 1px solid var(--border); border-radius: var(--r-card); background: var(--white); box-shadow: var(--card-shadow); }
+.cardTitle { font-weight: var(--fw-bold); }
+.cardMeta { color: var(--sub); font-size: var(--fs-small); overflow-wrap: anywhere; }
+.cardPick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.cardPick select { min-width: 160px; max-width: 100%; min-height: 44px; }

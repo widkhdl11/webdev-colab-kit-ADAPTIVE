@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { readMyBox } from "@/entities/revgift-box/api/box-reads";
+import { readBoxCards, readMyBox, readPriceTable } from "@/entities/revgift-box/api/box-reads";
 import { FAN_HOME } from "@/entities/session/model/home-path";
 import { requestOrigin } from "@/widgets/creator-profile/model/link-metadata";
 import { BoxManagePage } from "@/widgets/revgift-box/ui/box-manage-page";
@@ -22,12 +22,17 @@ export default async function Page({ params }: { params: Promise<{ boxId: string
   if (viewer?.role !== "creator") redirect(`/login?next=${encodeURIComponent(`/creator/revgift-boxes/${boxId}`)}`);
   const [header, box] = await Promise.all([readSiteHeader(supabase, viewer, "/creator/revgift-boxes"), readMyBox(supabase, boxId)]);
   if (!box) notFound();
+  // 2페이지 예상 금액용 요금(마감 때만) · 확인 필요 카드(확인 필요 때만) — 표시용이라 실패해도 화면은 그린다
+  const [price, cards] = await Promise.all([
+    box.status === "closed" ? readPriceTable(supabase).catch(() => null) : Promise.resolve(null),
+    box.status === "held" ? readBoxCards(supabase).catch(() => []) : Promise.resolve([]),
+  ]);
   const url = new URL(`/gift-boxes/${box.id}`, requestOrigin(await headers()));
   if (box.inviteToken) url.searchParams.set("invite", box.inviteToken);
   return (
     <>
       <SiteHeader {...header} />
-      <BoxManagePage box={box} applyUrl={url.toString()} />
+      <BoxManagePage box={box} applyUrl={url.toString()} price={price} cards={cards} />
       <SiteFooter />
     </>
   );

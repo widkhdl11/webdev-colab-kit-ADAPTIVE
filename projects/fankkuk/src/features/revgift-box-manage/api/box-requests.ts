@@ -39,3 +39,17 @@ export function sendCancelBox(boxId: string) {
 export function sendRenewInvite(boxId: string) {
   return postBox(`${base(boxId)}/invite`, {}, (d) => z.object({ token: z.string() }).parse(d).token);
 }
+
+// ── 3부 (revgift-box INV-GB1·GB11·GB12·GB23) ──
+export function sendSubmitTiers(boxId: string, tiers: Record<string, string>) {
+  return postBox(`${base(boxId)}/tiers`, { tiers }, () => null);
+}
+export function sendCartonCount(boxId: string, count: number) {
+  return postBox(`${base(boxId)}/cartons`, { count }, () => null);
+}
+export function sendResolveHold(holdId: string, applicationId: string) {
+  return postBox(`/api/revgift-box-cards/${encodeURIComponent(holdId)}/resolve`, { applicationId }, () => null);
+}
+export function sendChooseCancelledArrival(cardId: string, choice: "reopen" | "return") {
+  return postBox(`/api/revgift-box-cards/${encodeURIComponent(cardId)}/choose`, { choice }, () => null);
+}

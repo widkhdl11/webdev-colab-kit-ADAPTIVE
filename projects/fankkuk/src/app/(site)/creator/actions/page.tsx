@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { readMyAddressStatus } from "@/entities/address/api/my-address-status";
 import { readCreatorActionItems } from "@/entities/action-item/api/read-action-items";
+import { readBoxCards } from "@/entities/revgift-box/api/box-reads";
 import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
 import { isOrderNo } from "@/entities/order/model/order-no";
 import { FAN_HOME } from "@/entities/session/model/home-path";
@@ -25,10 +26,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
   if (viewer?.role !== "creator") redirect(`/login?next=${encodeURIComponent(orderNo ? `${CREATOR_ACTION_CENTER_HREF}?order=${orderNo}` : CREATOR_ACTION_CENTER_HREF)}`);
-  const [items, candidates, address] = await Promise.all([
+  // 선물함 카드(revgift-box INV-GB12 확인 필요 · GB23 취소한 선물함 상자)는 처리할 일 줄과 따로 읽어 제목 아래 맨 위에 둔다 — 읽기가 실패해도 목록은 그린다
+  const [items, candidates, address, boxCards] = await Promise.all([
     readCreatorActionItems(supabase),
     readSentBoxCandidates(supabase).catch(() => []),
     readMyAddressStatus(supabase).catch(() => null),
+    readBoxCards(supabase).catch(() => []),
   ]);
   const header = await readSiteHeader(supabase, viewer, CREATOR_ACTION_CENTER_HREF, items);
   return (
@@ -42,6 +45,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
           address={address}
           sealingKeyPem={readSealingPublicKeyPem(process.env)}
           openOrderNo={orderNo}
+          boxCards={boxCards}
         />
       </MyShell>
       <SiteFooter />

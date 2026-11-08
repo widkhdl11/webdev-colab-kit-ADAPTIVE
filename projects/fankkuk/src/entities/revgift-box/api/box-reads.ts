@@ -10,6 +10,7 @@ import {
   type BoxViewer,
   type FanBoxState,
 } from "../model/box-status";
+import { CHOSEN_TIERS, INVOICE_TIERS, SURCHARGE_REGIONS, type ChosenTier, type InvoiceTier, type SurchargeRegion } from "../model/box-tiers";
 
 // 선물함 읽기 (revgift-box INV-GB7·GB9). 누구의 것인지는 DB 읽기 함수가 로그인 토큰으로 정한다 — 주인이 아니면 null.
 // 크리에이터에게 보이는 팬 정보는 닉네임·신청 시각·상태뿐이다(INV-GB9). 그 밖의 칸이 섞이면 받지 않는다(strict) —
@@ -20,7 +21,10 @@ type Rpc = Pick<SupabaseClient, "rpc">;
 const uuid = z.string().uuid();
 
 export type MyBoxRow = { id: string; name: string; capacity: number; isPublic: boolean; status: BoxStatus; createdAt: string; activeCount: number };
-export type BoxApplication = { id: string; nickname: string; appliedAt: string; status: ApplicationStatus };
+export type BoxApplication = { id: string; nickname: string; appliedAt: string; status: ApplicationStatus; chosenTier: ChosenTier | null };
+/** 명세서 줄 — 크리에이터에게 보이는 것은 닉네임·구간·택배비·할증 구분·할증·서비스료·금액뿐(INV-GB9·GB13) */
+export type InvoiceLine = { nickname: string; tier: InvoiceTier; shippingFeeKrw: number; surchargeRegion: SurchargeRegion; surchargeKrw: number; serviceFeeKrw: number; amountKrw: number };
+export type BoxInvoice = { amountKrw: number; shippingFeeKrw: number; serviceFeeKrw: number; cartonCodKrw: number; createdAt: string; lines: InvoiceLine[] };
 export type MyBox = {
   id: string;
   name: string;
@@ -29,7 +33,12 @@ export type MyBox = {
   status: BoxStatus;
   inviteToken: string | null;
   createdAt: string;
+  /** 사무실 주소 6자리 — 상자 보내 주세요·도착·확인 필요일 때만(INV-GB10) */
+  inboundCode: string | null;
+  cartonCount: number | null;
+  cartonsReceived: number;
   applications: BoxApplication[];
+  invoice: BoxInvoice | null;
 };
 export type FanBox = { id: string; name: string; creator: { id: string; slug: string; name: string }; open: boolean; viewer: BoxViewer; myState: FanBoxState };
 export type CreatorOpenBox = { id: string; name: string };
@@ -46,7 +55,31 @@ const myBoxRow = z
   })
   .strict();
 
-const applicationRow = z.object({ id: uuid, nickname: z.string(), applied_at: z.string(), status: applicationStatusSchema }).strict();
+const applicationRow = z
+  .object({ id: uuid, nickname: z.string(), applied_at: z.string(), status: applicationStatusSchema, chosen_tier: z.enum(CHOSEN_TIERS).nullable() })
+  .strict();
+
+const invoiceLineRow = z
+  .object({
+    nickname: z.string(),
+    tier: z.enum(INVOICE_TIERS),
+    shipping_fee_krw: z.number().int(),
+    surcharge_region: z.enum(SURCHARGE_REGIONS),
+    surcharge_krw: z.number().int(),
+    service_fee_krw: z.number().int(),
+    amount_krw: z.number().int(),
+  })
+  .strict();
+const invoiceRow = z
+  .object({
+    amount_krw: z.number().int(),
+    shipping_fee_krw: z.number().int(),
+    service_fee_krw: z.number().int(),
+    carton_cod_krw: z.number().int(),
+    created_at: z.string(),
+    lines: z.array(invoiceLineRow),
+  })
+  .strict();
 
 const myBoxSchema = z
   .object({
@@ -57,7 +90,11 @@ const myBoxSchema = z
     status: boxStatusSchema,
     invite_token: z.string().nullable(),
     created_at: z.string(),
+    inbound_code: z.string().regex(/^[0-9A-Z]{6}$/).nullable(),
+    carton_count: z.number().int().nullable(),
+    cartons_received: z.number().int(),
     applications: z.array(applicationRow),
+    invoice: invoiceRow.nullable(),
   })
   .strict();
 
@@ -98,9 +135,118 @@ export async function readMyBox(client: Rpc, boxId: string): Promise<MyBox | nul
     status: b.status,
     inviteToken: b.invite_token,
     createdAt: b.created_at,
-    applications: b.applications.map((a) => ({ id: a.id, nickname: a.nickname, appliedAt: a.applied_at, status: a.status })),
+    inboundCode: b.inbound_code,
+    cartonCount: b.carton_count,
+    cartonsReceived: b.cartons_received,
+    applications: b.applications.map((a) => ({ id: a.id, nickname: a.nickname, appliedAt: a.applied_at, status: a.status, chosenTier: a.chosen_tier })),
+    invoice: b.invoice
+      ? {
+          amountKrw: b.invoice.amount_krw,
+          shippingFeeKrw: b.invoice.shipping_fee_krw,
+          serviceFeeKrw: b.invoice.service_fee_krw,
+          cartonCodKrw: b.invoice.carton_cod_krw,
+          createdAt: b.invoice.created_at,
+          lines: b.invoice.lines.map((l) => ({
+            nickname: l.nickname,
+            tier: l.tier,
+            shippingFeeKrw: l.shipping_fee_krw,
+            surchargeRegion: l.surcharge_region,
+            surchargeKrw: l.surcharge_krw,
+            serviceFeeKrw: l.service_fee_krw,
+            amountKrw: l.amount_krw,
+          })),
+        }
+      : null,
   };
 }
+
+// ── 3부: 번호 라벨 · 처리할 일 카드 · 예상 금액 요금 (INV-GB9·GB10·GB12·GB13·GB23) ──
+
+export type BoxLabel = { nickname: string; barcode: string };
+const labelRow = z.object({ nickname: z.string(), barcode: z.string().regex(/^GB[0-9]{8,12}$/) }).strict();
+
+/** 번호 라벨 — 주인만, 상자 보내 주세요부터. 닉네임 + 바코드(신청 번호)뿐(INV-GB9) */
+export async function readBoxLabels(client: Rpc, boxId: string): Promise<{ kind: "ok"; labels: BoxLabel[] } | { kind: "not_found" } | { kind: "not_yet" }> {
+  if (!uuid.safeParse(boxId).success) return { kind: "not_found" };
+  const { data, error } = await client.rpc("my_revgift_box_labels", { p_box_id: boxId });
+  if (error?.code === "P0002") return { kind: "not_found" };
+  if (error?.code === "P0022") return { kind: "not_yet" };
+  if (error) throw new Error(`번호 라벨을 읽지 못했다: ${error.code}`);
+  return { kind: "ok", labels: z.array(labelRow).parse(data) };
+}
+
+export type HoldCard = {
+  kind: "hold";
+  id: string;
+  boxId: string;
+  boxName: string;
+  writtenNickname: string;
+  createdAt: string;
+  dueAt: string;
+  candidates: { applicationId: string; nickname: string }[];
+};
+export type CancelledArrivalCard = { kind: "cancelled_arrival"; id: string; boxId: string; boxName: string; createdAt: string; dueAt: string };
+export type BoxCard = HoldCard | CancelledArrivalCard;
+
+const cardRow = z.discriminatedUnion("kind", [
+  z
+    .object({
+      kind: z.literal("hold"),
+      id: uuid,
+      box_id: uuid,
+      box_name: z.string(),
+      written_nickname: z.string(),
+      created_at: z.string(),
+      due_at: z.string(),
+      candidates: z.array(z.object({ application_id: uuid, nickname: z.string() }).strict()),
+    })
+    .strict(),
+  z.object({ kind: z.literal("cancelled_arrival"), id: uuid, box_id: uuid, box_name: z.string(), created_at: z.string(), due_at: z.string() }).strict(),
+]);
+
+/** 처리할 일 카드 — 확인 필요(INV-GB12)·취소한 선물함 상자(INV-GB23). 주인 본인 것만 */
+export async function readBoxCards(client: Rpc): Promise<BoxCard[]> {
+  const { data, error } = await client.rpc("my_revgift_box_cards");
+  if (error) throw new Error(`선물함 카드를 읽지 못했다: ${error.code}`);
+  return z
+    .array(cardRow)
+    .parse(data)
+    .map(
+      (c): BoxCard =>
+        c.kind === "hold"
+          ? {
+              kind: "hold",
+              id: c.id,
+              boxId: c.box_id,
+              boxName: c.box_name,
+              writtenNickname: c.written_nickname,
+              createdAt: c.created_at,
+              dueAt: c.due_at,
+              candidates: c.candidates.map((x) => ({ applicationId: x.application_id, nickname: x.nickname })),
+            }
+          : { kind: "cancelled_arrival", id: c.id, boxId: c.box_id, boxName: c.box_name, createdAt: c.created_at, dueAt: c.due_at },
+    );
+}
+
+export type PriceTable = { fees: Record<ChosenTier, number>; serviceFeeKrw: number; earlyFeeKrw: number; earlyLeft: number };
+const priceRow = z
+  .object({
+    fees: z.object({ xsmall: z.number().int(), small: z.number().int(), medium: z.number().int(), large: z.number().int() }).strict(),
+    service_fee_krw: z.number().int(),
+    early_fee_krw: z.number().int(),
+    early_left: z.number().int(),
+  })
+  .strict();
+
+/** 2페이지 예상 금액용 요금(표시일 뿐, 명세서는 실측 뒤 서버가 계산 — INV-GB13). 크리에이터가 아니면 null */
+export async function readPriceTable(client: Rpc): Promise<PriceTable | null> {
+  const { data, error } = await client.rpc("revgift_box_price_table");
+  if (error) throw new Error(`요금을 읽지 못했다: ${error.code}`);
+  if (data === null) return null;
+  const p = priceRow.parse(data);
+  return { fees: p.fees, serviceFeeKrw: p.service_fee_krw, earlyFeeKrw: p.early_fee_krw, earlyLeft: Math.max(0, p.early_left) };
+}
+
 
 /** 팬이 보는 선물함 하나 — 비공개는 맞는 초대 토큰이 있어야 하고, 아니면 없는 선물함과 같이 null(INV-GB4) */
 export async function readBoxForFan(client: Rpc, boxId: string, token: string | null): Promise<FanBox | null> {

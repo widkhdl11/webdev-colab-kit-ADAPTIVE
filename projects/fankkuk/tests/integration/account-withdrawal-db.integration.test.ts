@@ -1010,6 +1010,8 @@ const MOVED_PROFILE_COLUMNS = [
   "prohibited_item_changes.changed_by",
   "refunds.manual_by",
   "refunds.requested_by",
+  // 선물함 확인 필요 선물을 기록한 운영자(revgift-box INV-GB12) — 운영자가 누른 기록이라 탈퇴 회원을 가리키지 않는다
+  "revgift_box_holds.recorded_by",
   "revgift_sends.sender_id",
   "revgift_shares.fan_id",
   "review_cancels.requested_by",

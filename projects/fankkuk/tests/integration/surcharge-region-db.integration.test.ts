@@ -124,11 +124,14 @@ describe("INV-M24: 결제 대기를 만드는 순간의 주소 구분으로 상�
     }
   });
 
-  it("INV-M24 ⑤: 등록 함수 밖에서 pii 주소 줄의 구분 칸을 읽는 공개 함수는 구분 읽기 함수·재판정 함수 둘뿐이다", () => {
+  it("INV-M24 ⑤: 등록 함수 밖에서 pii 주소 줄의 구분 칸을 읽는 공개 함수는 구분 읽기 함수·재판정 함수 둘뿐이다(+ 선물함 명세서 생성 하나)", () => {
     const readers = psql(
       "select string_agg(p.proname, ',' order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prosrc like '%surcharge_region%' and p.prosrc like '%pii.%' and p.proname not in ('set_creator_address', 'set_my_fan_address', 'save_my_order_return_address')",
     );
-    expect(readers).toBe("creator_surcharge_region,invoice_report_surcharge_region");
+    // revgift_box_try_invoice: 선물함 명세서 생성이 신청 사본의 구분을 읽어 줄에 적는다(revgift-box INV-GB17 — 「명세서 생성 함수(공개 구역)가 pii 의 구분 읽기 함수를 부름」).
+    // 아무 권한에도 열려 있지 않다(입고·실측·팬 고르기가 안에서 부른다)
+    expect(readers).toBe("creator_surcharge_region,invoice_report_surcharge_region,revgift_box_try_invoice");
+    expect(psql("select has_function_privilege('authenticated', 'public.revgift_box_try_invoice(uuid)', 'execute') or has_function_privilege('service_role', 'public.revgift_box_try_invoice(uuid)', 'execute')")).toBe("f");
   });
 });
 

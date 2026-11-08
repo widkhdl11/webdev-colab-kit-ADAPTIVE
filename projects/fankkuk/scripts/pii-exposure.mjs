@@ -97,6 +97,14 @@ export const PII_FUNCTIONS = {
   admin_move_held_share: "찾기로 이은 상자를 같은 크리에이터의 다른 팬별 선물로 옮김 → 몫 정리, 돌려주는 것은 결과 글자(moved)",
   // 물품 보관소 입고 처리(inbound-address-code INV-C13) — 운영자 잇기와 같은 판정·입고 마무리(office_finish_held_receive → office_sync)로 닿는다
   admin_accept_storage_claim: "물품 보관소 확인 요청의 입고 처리 → 몫 정리 경로, 돌려주는 것은 결과 글자(linked)",
+  // 선물함(revgift-box) — 신청의 주소 사본은 pii(manual/0031). 2부 넷은 사본을 넣거나 지우기만 하고, 3부 셋은 명세서를 만들 때 사본의 할증 구분을 읽는다(manual/0033, INV-GB17)
+  revgift_box_apply: "선물함 신청 — 팬이 봉인한 주소를 그 신청의 사본으로 저장만 한다, 돌려주는 것은 신청 번호(INV-GB6)",
+  revgift_box_withdraw: "신청 취소 — 그 신청의 사본을 지우기만 한다, 돌려주는 것 없음(INV-GB7 Q5)",
+  revgift_box_close: "마감 — 제외된 신청의 사본을 지우기만 한다, 돌려주는 것은 담길 신청 수(INV-GB7)",
+  revgift_box_cancel: "선물함 취소 — 모든 신청의 사본을 지우기만 한다, 돌려주는 것 없음(INV-GB20)",
+  office_gift_box_receive: "선물함 큰 상자 입고 — 마지막 상자면 명세서 생성이 할증 구분만 읽어 줄에 적는다, 돌려주는 것은 결과·선물함 이름(INV-GB10·GB17)",
+  office_gift_box_measure: "선물 실측 — 마지막 선물이면 명세서 생성이 할증 구분만 읽어 줄에 적는다, 돌려주는 것은 결과·닉네임·구간(INV-GB12·GB17)",
+  revgift_box_resolve_hold: "확인 필요 팬 고르기 — 마지막이면 명세서 생성이 할증 구분만 읽어 줄에 적는다, 돌려주는 것 없음(INV-GB12·GB17)",
   // 회원 탈퇴(my-account INV-A15, manual/0025) — 대표만(첫 줄에서 거부). 개인정보 구역은 지우기만 하고 읽어 돌려주지 않는다
   withdraw_account: "회원 탈퇴 — 개인정보 구역의 연락처·주소·키를 지우기만 한다, 돌려주는 것은 가명 식별자와 저장소에서 지울 사진 경로",
 };

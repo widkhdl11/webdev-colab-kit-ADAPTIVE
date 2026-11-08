@@ -19,7 +19,9 @@ import {
 } from "@/entities/action-item/model/creator-action-items";
 import { disposeDueText } from "@/entities/action-item/model/action-items";
 import { tierName } from "@/entities/parcel/model/size-tier";
+import type { BoxCard } from "@/entities/revgift-box/api/box-reads";
 import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
+import { BoxCards } from "@/features/revgift-box-manage/ui/box-cards";
 import type { SentBoxCandidate } from "@/features/box-waybill/ui/find-sent-box";
 import { FindSentBoxButton } from "@/features/box-waybill/ui/find-sent-box-button";
 import { BluetoothWindow, boxPlace, CancelChoiceButton, choiceText, signalThing } from "@/features/creator-check/ui/bluetooth-window";
@@ -49,6 +51,8 @@ type Props = {
   sealingKeyPem: string | null;
   /** 알림톡 [승인 화면 열기]의 주문번호(?order=) — 그 주문의 승인 요청 줄이 있으면 처음부터 그 승인 창을 연다. 없으면 목록만 */
   openOrderNo?: string | null;
+  /** 선물함 카드(확인 필요 · 취소한 선물함 상자) — 없으면 빈 목록 */
+  boxCards?: readonly BoxCard[];
 };
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
@@ -97,7 +101,7 @@ function initialOpen(items: readonly CreatorActionItem[], orderNo: string | null
   return item ? { kind: "approval", item, start: "ask" } : null;
 }
 
-export function CreatorActionCenterPage({ items, now, candidates, address, sealingKeyPem, openOrderNo = null }: Props) {
+export function CreatorActionCenterPage({ items, now, candidates, address, sealingKeyPem, openOrderNo = null, boxCards = [] }: Props) {
   const [open, setOpen] = useState<Open>(() => initialOpen(items, openOrderNo));
   const close = () => setOpen(null);
   const { received, sent } = splitBoards(items);
@@ -260,7 +264,10 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
         </div>
       </header>
 
-      {items.length === 0 ? (
+      {/* 선물함 카드(revgift-box INV-GB12 확인 필요 · GB23 취소한 선물함 상자) — 처리할 일 읽기와 따로 읽어 맨 위에 둔다 */}
+      <BoxCards cards={boxCards} />
+
+      {items.length === 0 && boxCards.length === 0 ? (
         <section className={`card ${s.empty}`} aria-labelledby="ca-empty">
           <img className={s.emptyImg} src="/images/home/icon-approve.webp" alt="" width={72} height={72} />
           <h2 id="ca-empty">현재 처리할 일이 없습니다</h2>
