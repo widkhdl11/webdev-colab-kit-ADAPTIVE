@@ -21,6 +21,7 @@ import { FandomBadge } from "@/entities/creator/ui/fandom-badge";
 import type { PublicCreatorLook } from "@/entities/creator/model/link-images";
 import type { ProhibitedItem } from "@/entities/parcel/model/prohibited-item";
 import { lowestPriceKrw, type PublicPriceTable } from "@/entities/payment/model/price-table";
+import type { CreatorOpenBox } from "@/entities/revgift-box/api/box-reads";
 import { ProfileFollowActions } from "@/features/creator-follow/ui/profile-follow-actions";
 import type { FollowMode } from "@/features/creator-follow/model/follow-mode";
 import type { LinkPageSend } from "@/features/gift-register/model/sender-rule";
@@ -72,6 +73,8 @@ export type CreatorProfilePageProps = {
   backgroundUrl?: string | null;
   /** 팬마크 공개 주소 — 팬덤 이름이 없을 때만 감사 문장 위에 작게(INV-E7) */
   symbolUrl?: string | null;
+  /** 공개·신청 받는 중인 선물함(revgift-box INV-GB4 — 크리에이터 상세의 입구). 이름뿐이다. 비면 칸을 그리지 않는다 */
+  openBoxes?: readonly CreatorOpenBox[];
 };
 
 function Chevron() {
@@ -155,6 +158,7 @@ export function CreatorProfilePage({
   channel = null,
   backgroundUrl = null,
   symbolUrl = null,
+  openBoxes = [],
 }: CreatorProfilePageProps) {
   // INV-B2: 쉬는 중이면 버튼 자리에 쉬는 기간 한 줄, 받기 어려운 선물 알림을 숨긴다. 버튼을 비울지는 send 가 이미 정해 왔다.
   const restingText = restingNotice(receiving?.resumeOn ?? null, today);
@@ -212,6 +216,20 @@ export function CreatorProfilePage({
           <aside className={s.alert} aria-labelledby="hard-items-h">
             <h2 id="hard-items-h">받기 어려운 선물</h2>
             <HardItemsLine hardItems={hardItems} />
+          </aside>
+        ) : null}
+
+        {/* 선물함 입구(revgift-box UX 명세 정한 것 ②) — 공개·신청 받는 중인 선물함 이름과 신청 링크. 신청 자격은 신청 화면·서버가 본다 */}
+        {openBoxes.length > 0 ? (
+          <aside className={s.alert} aria-labelledby="boxes-h">
+            <h2 id="boxes-h">선물함</h2>
+            <ul className={s.boxLinks}>
+              {openBoxes.map((b) => (
+                <li key={b.id}>
+                  <Link href={`/gift-boxes/${b.id}`}>{`${b.name} 신청`}</Link>
+                </li>
+              ))}
+            </ul>
           </aside>
         ) : null}
 

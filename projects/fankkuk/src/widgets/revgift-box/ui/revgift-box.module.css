@@ -1,0 +1,43 @@
+/* 선물함 화면 틀 — 보내기 화면(design-rules 25·39절)의 가운데 넓은 기둥 1040, 신청 화면은 받기 판과 같은 좁은 기둥 720(22절).
+   흰 카드 = 1px --border + --card-shadow, 회색 안내 칸 = 면 + 1px --gray-200, 강조 면은 --primary-50. */
+
+.col { width: 100%; max-width: 1040px; margin-inline: auto; min-width: 0; }
+.narrow { width: 100%; max-width: 720px; margin-inline: auto; min-width: 0; }
+.stack { display: grid; gap: var(--space-6); }
+.head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.title { overflow-wrap: anywhere; }
+.headTags { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.kicker { color: var(--sub); font-weight: var(--fw-btn); overflow-wrap: anywhere; }
+.back { display: inline-flex; align-items: center; min-height: 44px; color: var(--sub); font-weight: var(--fw-btn); }
+
+/* 1페이지 그림 — 크리에이터 → 팬꾹 → 팬 */
+.flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-8); margin: 0; padding: var(--space-8); border-radius: var(--r-panel); background: var(--primary-50); list-style: none; counter-reset: none; }
+.flow > li { position: relative; display: grid; place-items: center; min-height: 88px; padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--r-card); background: var(--white); font-weight: var(--fw-bold); text-align: center; }
+.flow > li + li::before { content: "→"; position: absolute; left: calc(-1 * var(--space-6)); top: 50%; transform: translateY(-50%); color: var(--sub); font-weight: var(--fw-bold); }
+.compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.cmp { min-width: 0; margin: 0; padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.cmpOn { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
+.cmpH { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; }
+.cmp p { margin-top: var(--space-2); color: var(--sub); }
+.cmpOn p { color: var(--ink); }
+.note { color: var(--sub); }
+.prep { padding: var(--space-6); border: 1px solid var(--border); border-radius: var(--r-card); background: var(--white); box-shadow: var(--card-shadow); }
+.prep ul { display: grid; gap: var(--space-1); margin: var(--space-2) 0 0; padding-left: var(--space-6); list-style: disc; }
+
+/* 선물함 목록 */
+.none { padding: var(--space-12) var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--white); color: var(--sub); text-align: center; }
+.list { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.item { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-1) var(--space-4); align-items: center; padding: var(--space-4) var(--space-6); border: 1px solid var(--border); border-radius: var(--r-card); background: var(--white); box-shadow: var(--card-shadow); }
+.itemLink { min-width: 0; min-height: 44px; display: flex; align-items: center; color: var(--ink); font-weight: var(--fw-bold); }
+/* 줄 전체를 누를 수 있게 — 이름(최대 40자)은 줄바꿈해 전부 보인다 */
+.itemLink::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.itemName { overflow-wrap: anywhere; }
+.meta { grid-column: 1 / -1; color: var(--sub); font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 767px) {
+  .flow { grid-template-columns: 1fr; gap: var(--space-6); padding: var(--space-6); }
+  .flow > li { min-height: 60px; }
+  .flow > li + li::before { content: "↓"; left: 50%; top: calc(-1 * var(--space-6)); transform: translate(-50%, -10%); }
+  .compare { grid-template-columns: 1fr; }
+  .item { padding: var(--space-4); }
+}

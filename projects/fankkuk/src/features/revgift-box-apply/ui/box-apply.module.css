@@ -1,0 +1,12 @@
+/* 팬 신청 폼 — 역조공 받기 판(design-rules 22·38절)과 같은 흰 카드 하나에 할 일만. 누르는 칸 높이 44 이상. */
+.card { display: grid; gap: var(--space-4); padding: var(--space-8); border: 1px solid var(--border); border-radius: var(--r-panel); background: var(--white); box-shadow: var(--card-shadow); }
+.card > p { overflow-wrap: anywhere; }
+.secH { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
+.done { font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; }
+.onFile { padding: var(--space-4); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: inset 0 0 0 1px var(--gray-200); font-weight: var(--fw-btn); }
+.choice { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+@media (max-width: 767px) {
+  .card { padding: var(--space-6); }
+  .choice > :global(.btn) { flex: 1 1 140px; }
+}

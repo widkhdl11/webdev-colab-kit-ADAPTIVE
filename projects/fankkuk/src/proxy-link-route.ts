@@ -25,6 +25,7 @@ export const STATIC_FIRST_SEGMENTS: ReadonlySet<string> = new Set([
   "creators",
   "dispute",
   "faq",
+  "gift-boxes",
   "gifts",
   "guide",
   "home",

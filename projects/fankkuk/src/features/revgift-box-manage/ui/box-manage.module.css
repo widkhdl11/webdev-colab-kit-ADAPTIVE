@@ -1,0 +1,41 @@
+/* 선물함 만들기·신청 관리 창 — 보내기 화면(design-rules 25·39절)과 크리에이터 화면(40절)의 부품을 그대로 쓴다.
+   흰 카드 = 1px --border + --card-shadow, 회색 안내 칸 = 면 + 1px --gray-200, 누르는 칸 경계 --gray-500, 버튼 높이 44 이상. */
+
+.stack { display: grid; gap: var(--space-8); }
+.secH { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
+.count { margin-left: var(--space-2); color: var(--sub); font-size: var(--fs-body); font-weight: var(--fw-btn); font-variant-numeric: tabular-nums; }
+.alert { margin-top: var(--space-4); }
+
+/* 초대 링크 — 회색 안내 칸 */
+.invite { display: grid; gap: var(--space-3); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.link { min-width: 0; color: var(--sub); font-size: var(--fs-small); overflow-wrap: anywhere; }
+.linkBtns { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* 신청한 팬 목록 */
+.listHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3) var(--space-6); }
+.search { flex: 0 1 280px; min-width: 0; }
+.rows { display: grid; gap: var(--space-2); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-4); align-items: center; min-height: 60px; padding: var(--space-2) var(--space-6); border: 1px solid var(--border); border-radius: var(--r-card); background: var(--white); box-shadow: var(--card-shadow); }
+.row.off { background: var(--surface-muted); box-shadow: none; color: var(--sub); }
+/* 닉네임(최대 20자) — 한 줄 말줄임, 전체는 title */
+.nick { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: var(--fw-btn); }
+.when { color: var(--sub); font-size: var(--fs-small); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.check { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; cursor: pointer; }
+.check input { margin: 0; } /* 칸 모양은 base.css 18) 체크박스 */
+.none { margin-top: var(--space-4); padding: var(--space-10) var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--white); color: var(--sub); text-align: center; }
+
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.actions > .btn { min-width: 160px; }
+
+/* 만들기 폼 */
+.form { display: grid; gap: var(--space-6); max-width: 560px; }
+.pubOpts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.fs { margin: 0; padding: 0; border: 0; min-width: 0; }
+
+@media (max-width: 767px) {
+  .row { grid-template-columns: minmax(0, 1fr) auto; padding: var(--space-2) var(--space-4); }
+  .when { grid-column: 1; grid-row: 2; }
+  .row .check, .row :global(.tag) { grid-column: 2; grid-row: 1 / span 2; }
+  .search { flex-basis: 100%; }
+  .actions > .btn { flex: 1 1 140px; }
+}

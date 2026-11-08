@@ -8,6 +8,7 @@ import { creatorBackgroundUrl, creatorPhotoUrl, creatorSymbolUrl, type PublicCre
 import { kstToday, restingNotice } from "@/entities/creator/model/receiving";
 import { readCreatorHardItems } from "@/entities/gift-item/api/hard-items-reads";
 import { readReplyWall } from "@/entities/gift-reply/api/gift-reply-reads";
+import { readCreatorOpenBoxes } from "@/entities/revgift-box/api/box-reads";
 import { readProhibitedItems } from "@/entities/parcel/api/read-prohibited-items";
 import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import type { Viewer } from "@/entities/session/model/viewer";
@@ -44,7 +45,7 @@ export async function loadCreatorLinkPage(input: {
   // 크리에이터가 자기 페이지를 보면 선물 보내기를 숨긴다(INV-L8). 팔로우하지 않았으면 「팔로우하고 선물 보내기」(INV-L9)
   const asCreator = viewer?.role === "creator";
   const followedIds = viewer ? await readMyFollowIds(client) : [];
-  const [others, ownCreatorId, prices, prohibited, receiving, hardItems, monthFans, replies, extras, linked] = await Promise.all([
+  const [others, ownCreatorId, prices, prohibited, receiving, hardItems, monthFans, replies, extras, linked, openBoxes] = await Promise.all([
     readOtherCreatorCards(client, { excludeId: creatorId, limit: OTHERS_SHOWN, followedIds }),
     asCreator ? readOwnCreatorId(client) : Promise.resolve(null),
     readPublicPrices(client),
@@ -58,6 +59,8 @@ export async function loadCreatorLinkPage(input: {
     readReplyWall(client, creatorId),
     readCreatorLinkExtras(client, creatorId),
     readCreatorSignatureLinked(client, creatorId),
+    // revgift-box: 공개·신청 받는 중인 선물함 이름만(입구). 읽지 못해도 페이지는 연다
+    readCreatorOpenBoxes(client, creatorId).catch(() => []),
   ]);
   const creator = { ...base, following: followedIds.includes(creatorId) };
   const today = kstToday(new Date());
@@ -82,6 +85,7 @@ export async function loadCreatorLinkPage(input: {
       look: extras.look,
       backgroundUrl: creatorBackgroundUrl(photoBase, extras.look.bgPath),
       symbolUrl: creatorSymbolUrl(photoBase, extras.look.symbolPath),
+      openBoxes,
     },
   };
 }
