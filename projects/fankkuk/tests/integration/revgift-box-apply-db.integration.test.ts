@@ -399,7 +399,11 @@ describe("INV-GB5 · INV-GB8: 마지막 자리·마감과 신청이 겹쳐도 �
     addApp(first, PROFILE.byeolbit);
     let hold = await holdRowLock(`select 1 from public.revgift_boxes where id = '${first}' for update`, 1);
     const closing = haru.rpc("revgift_box_close", { p_box_id: first });
-    await new Promise((r) => setTimeout(r, 300));
+    // 0.3초 기다리기만 하면 마감 요청이 늦게 닿을 때 신청이 먼저 줄을 선다 — 마감이 선물함 줄 잠금을 실제로 기다릴 때까지 본다
+    for (let i = 0; i < 100; i++) {
+      if (psql("select count(*) from pg_stat_activity where wait_event_type = 'Lock' and query like '%revgift_box_close%'") !== "0") break;
+      await new Promise((r) => setTimeout(r, 50));
+    }
     const late = apply(gureum, first, { envelope: sampleEnvelope(), region: "none" });
     await hold.released;
     expect((await closing).error).toBeNull();

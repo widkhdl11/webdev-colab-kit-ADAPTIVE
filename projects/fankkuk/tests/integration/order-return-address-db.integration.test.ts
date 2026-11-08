@@ -215,7 +215,8 @@ describe("INV-M25 ④: 끝난 주문의 반송 주소 사본은 예약 작업이
 
     // 결제하지 않고 떠난 결제 대기: 첫 결제 줄이 닫혔고(실패) 만든 지 24시간이 지났다 — 주문 줄은 결제 대기 그대로
     replica(`update public.payments set status = 'failed', created_at = now() - interval '25 hours' where order_id = '${stale.orderId}' and kind = 'initial'`);
-    replica(`update public.orders set status = 'canceled' where id = '${canceled.orderId}'`);
+    // 취소된 주문은 등록(결제)된 뒤에만 있다 — 결제 대기·거절 말고는 등록 시각이 있어야 한다(orders_registered_unless_unpaid)
+    replica(`update public.orders set status = 'canceled', registered_at = now() where id = '${canceled.orderId}'`);
     expect(psql(`select public.order_is_finished('${stale.orderId}') || '|' || public.order_is_finished('${canceled.orderId}') || '|' || public.order_is_finished('${pending.orderId}') || '|' || public.order_is_finished('${inProgress.orderId}')`)).toBe(
       "true|true|false|false",
     );
