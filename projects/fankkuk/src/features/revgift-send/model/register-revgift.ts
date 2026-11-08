@@ -9,6 +9,9 @@ import type { Viewer } from "@/entities/session/model/viewer";
 
 export const MAX_REVGIFT_SHARES = 10;
 
+/** 옛 보내기는 닫혔다(revgift-box INV-GB22) — 등록 API 가 이 문구로 거부한다. 아래 등록 함수는 닫기 전 기록을 위한 코드로만 남는다(부르는 곳 없음). */
+export const REVGIFT_SEND_CLOSED_MESSAGE = "팬에게 보내기는 선물함으로만 할 수 있습니다.";
+
 export type RevgiftShareDraft = { fanId: string; tier: PricedTier; orderNo: string; amountKrw: number; shippingFeeKrw: number };
 
 export type RevgiftCreateInput = { senderId: string; tossOrderId: string; charge: ChargeBreakdown; shares: RevgiftShareDraft[] };

@@ -12,7 +12,7 @@ import type { TossLookup } from "@/shared/api/toss-payments/client";
 /** 한 회차의 시간 예산. 이 시간이 지난 뒤에는 새 줄의 결제사 조회를 시작하지 않는다. */
 export const RECONCILE_RUN_BUDGET_MS = 40_000;
 
-export type ReconcileSourceKind = "initial" | "difference" | "revgift";
+export type ReconcileSourceKind = "initial" | "difference" | "revgift" | "revgift_box";
 
 export type ReconcileTarget = { source: ReconcileSourceKind; tossOrderId: string; amountKrw: number; confirmingAt: Date };
 

@@ -1010,8 +1010,12 @@ const MOVED_PROFILE_COLUMNS = [
   "prohibited_item_changes.changed_by",
   "refunds.manual_by",
   "refunds.requested_by",
+  // 선물함 신청한 팬·선물함을 만든 크리에이터(revgift-box). 탈퇴 때 팬의 신청은 같은 처리에서 끝나고(revgift_box_end_for_withdrawal, Q17),
+  // 크리에이터는 끝나지 않은 선물함이 있으면 탈퇴되지 않는다(account_has_open_work). 자동 삭제가 끝난 지 5년 된 선물함의 두 칸을 같이 쓰는 표시로 바꾼다
+  "revgift_box_applications.fan_id",
   // 선물함 확인 필요 선물을 기록한 운영자(revgift-box INV-GB12) — 운영자가 누른 기록이라 탈퇴 회원을 가리키지 않는다
   "revgift_box_holds.recorded_by",
+  "revgift_boxes.owner_id",
   "revgift_sends.sender_id",
   "revgift_shares.fan_id",
   "review_cancels.requested_by",

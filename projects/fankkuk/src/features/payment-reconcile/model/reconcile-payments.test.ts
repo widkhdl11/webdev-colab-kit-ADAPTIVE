@@ -49,21 +49,23 @@ function harness(targets: ReconcileTarget[], lookups: Record<string, TossLookup 
       if (r instanceof Error) throw r;
       return r ?? { kind: "error" };
     },
-    settlers: { initial: settler("initial"), difference: settler("difference"), revgift: settler("revgift") },
+    settlers: { initial: settler("initial"), difference: settler("difference"), revgift: settler("revgift"), revgift_box: settler("revgift_box") },
     now: clock,
   };
   return { deps, log, listArgs, touched };
 }
 
 describe("INV-M19: 다시 확인 실행", () => {
-  it("INV-M19 (S19·S19f): 세 종류 모두 — 승인됨·일치면 그 종류의 완료 반영을 조회 응답의 결제 키로 부른다", async () => {
-    const h = harness([target("initial", "g1"), target("difference", "d1", 11, 2000), target("revgift", "r1")], {
+  it("INV-M19 (S19·S19f): 네 종류 모두(선물함 결제 revgift-box INV-GB18 포함) — 승인됨·일치면 그 종류의 완료 반영을 조회 응답의 결제 키로 부른다", async () => {
+    // 선물함 명세서 결제(revgift-box INV-GB18)도 같은 길로 반영된다
+    const h = harness([target("initial", "g1"), target("difference", "d1", 11, 2000), target("revgift", "r1"), target("revgift_box", "b1")], {
       g1: doneLookup("g1"),
       d1: doneLookup("d1", 2000),
       r1: doneLookup("r1"),
+      b1: doneLookup("b1"),
     });
     const r = await reconcilePayments(h.deps, null);
-    expect(r).toEqual({ ok: true, counts: { checked: 3, done: 3, failed: 0, review: 0, kept: 0, errors: 0, skipped: 0 } });
+    expect(r).toEqual({ ok: true, counts: { checked: 4, done: 4, failed: 0, review: 0, kept: 0, errors: 0, skipped: 0 } });
     expect(h.log).toEqual([
       "lookup:g1",
       "initial:done:g1:pk_toss_g1",
@@ -71,6 +73,8 @@ describe("INV-M19: 다시 확인 실행", () => {
       "difference:done:d1:pk_toss_d1",
       "lookup:r1",
       "revgift:done:r1:pk_toss_r1",
+      "lookup:b1",
+      "revgift_box:done:b1:pk_toss_b1",
     ]);
   });
 

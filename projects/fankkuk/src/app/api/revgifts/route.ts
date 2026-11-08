@@ -1,20 +1,9 @@
 import type { NextRequest } from "next/server";
-import { readTierPrices } from "@/entities/payment/api/read-tier-prices";
-import { readViewer } from "@/entities/session/model/viewer";
-import { createSupabaseRevgiftStore } from "@/features/revgift-send/api/supabase-revgift-store";
-import { registerRevgift } from "@/features/revgift-send/model/register-revgift";
-import { createAdminSupabase } from "@/shared/api/supabase/admin";
-import { createRequestSupabase } from "@/shared/api/supabase/server";
+import { REVGIFT_SEND_CLOSED_MESSAGE } from "@/features/revgift-send/model/register-revgift";
 import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
 
-// 역조공 보내기 등록: 보내기 + 몫 + 결제 대기. 보내는 크리에이터는 세션에서 확인한 사람이다 — 본문의 사람·금액 칸은 읽지 않는다(INV-R3).
-// 받는 팬이 나를 팔로우하는지는 DB 등록 함수가 판정한다(INV-R1). 응답에는 결제창에 필요한 값만 싣는다.
+// 옛 역조공 보내기 등록 — 닫았다(revgift-box INV-GB22). 새 보내기를 만드는 길은 선물함 하나뿐이다(/creator/revgift-boxes/new).
+// 세션·본문을 읽지 않고, DB 등록 함수(register_revgift)도 부르지 않는다. 닫기 전에 결제된 옛 보내기는 받기·6자리·환불이 옛 규칙대로 그대로 돈다.
 export async function POST(req: NextRequest) {
-  return handlePrivateJsonPost(req, async (body) => {
-    const viewer = await readViewer(await createRequestSupabase());
-    const admin = createAdminSupabase();
-    const result = await registerRevgift({ store: createSupabaseRevgiftStore(admin), viewer, readPrices: () => readTierPrices(admin) }, body);
-    if (!result.ok) return { status: result.status, body: { message: result.message } };
-    return { status: 200, body: { tossOrderId: result.tossOrderId, amountKrw: result.amountKrw, orderNos: result.orderNos } };
-  });
+  return handlePrivateJsonPost(req, async () => ({ status: 410, body: { message: REVGIFT_SEND_CLOSED_MESSAGE, next: "/creator/revgift-boxes/new" } }));
 }

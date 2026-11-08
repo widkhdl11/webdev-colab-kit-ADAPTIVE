@@ -4,6 +4,8 @@ import { createSupabaseDifferenceStore } from "@/features/difference-pay/api/sup
 import { settleDifferenceDone } from "@/features/difference-pay/model/confirm-difference";
 import { createSupabaseReconcileStore } from "@/features/payment-reconcile/api/supabase-reconcile-store";
 import { reconcilePayments, type ReconcileResult } from "@/features/payment-reconcile/model/reconcile-payments";
+import { createSupabaseBoxPaymentStore } from "@/features/revgift-box-pay/api/supabase-box-payment-store";
+import { settleBoxDone } from "@/features/revgift-box-pay/model/box-payment";
 import { createSupabaseRevgiftPaymentStore } from "@/features/revgift-send/api/supabase-revgift-store";
 import { settleRevgiftDone } from "@/features/revgift-send/model/confirm-revgift";
 import { createAdminSupabase } from "@/shared/api/supabase/admin";
@@ -19,6 +21,7 @@ export function runServerReconcile(orderNo: string | null): Promise<ReconcileRes
   const gifts = createSupabasePaymentStore(admin);
   const differences = createSupabaseDifferenceStore(admin);
   const revgifts = createSupabaseRevgiftPaymentStore(admin);
+  const boxes = createSupabaseBoxPaymentStore(admin);
   let toss: TossPaymentsClient | null = null;
   const tossClient = (): TossPaymentsClient => {
     toss ??= createTossPaymentsClient({ secretKey: readTossSecretKey(process.env), fetchImpl: fetch });
@@ -44,6 +47,11 @@ export function runServerReconcile(orderNo: string | null): Promise<ReconcileRes
         revgift: {
           settleDone: (tossOrderId, paymentKey) => settleRevgiftDone(revgifts, tossOrderId, paymentKey),
           settleFailed: (tossOrderId) => revgifts.settle(tossOrderId, { status: "failed" }),
+        },
+        // 선물함 명세서 결제(revgift-box INV-GB18) — 완료 반영은 성공 주소의 확정과 같은 함수
+        revgift_box: {
+          settleDone: (tossOrderId, paymentKey) => settleBoxDone(boxes, tossOrderId, paymentKey),
+          settleFailed: (tossOrderId) => boxes.settle(tossOrderId, { status: "failed" }),
         },
       },
       now: () => new Date(),

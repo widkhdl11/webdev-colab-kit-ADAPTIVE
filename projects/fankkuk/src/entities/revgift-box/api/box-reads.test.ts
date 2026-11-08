@@ -53,7 +53,7 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
 
   it("INV-GB9 S9b: 신청 줄에 다른 칸(로그인 아이디·주소 등)이 섞이면 받지 않는다", async () => {
     const row = { id: BOX, name: "a", capacity: 1, is_public: true, status: "open", invite_token: null, created_at: "2026-11-08T01:00:00+00:00", inbound_code: null, carton_count: null, cartons_received: 0, invoice: null };
-    for (const extra of [{ login_id: "byeolbit_fan" }, { address: "서울" }, { fan_id: APP }]) {
+    for (const extra of [{ login_id: "byeolbit_fan" }, { address: "서울" }, { fan_id: APP }, { waybill: "123456789012" }]) {
       const f = fakeClient({ ...row, applications: [{ id: APP, nickname: "별빛", applied_at: "2026-11-08T02:00:00+00:00", status: "applied", chosen_tier: null, ...extra }] });
       await expect(readMyBox(f.client, BOX)).rejects.toThrow();
     }
@@ -107,8 +107,8 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
 
 describe("선물함 3부 읽기 (revgift-box INV-GB9·GB10·GB12·GB13·GB23)", () => {
   const base = { id: BOX, name: "a", capacity: 1, is_public: true, status: "invoiced", invite_token: null, created_at: "2026-11-08T01:00:00+00:00", applications: [] };
-  const line = { nickname: "별빛", tier: "oversize", shipping_fee_krw: 13000, surcharge_region: "jeju", surcharge_krw: 4000, service_fee_krw: 700, amount_krw: 17700 };
-  const invoice = { amount_krw: 17700, shipping_fee_krw: 17000, service_fee_krw: 700, carton_cod_krw: 0, created_at: "2026-11-09T01:00:00+00:00", lines: [line] };
+  const line = { nickname: "별빛", tier: "oversize", shipping_fee_krw: 13000, surcharge_region: "jeju", surcharge_krw: 4000, service_fee_krw: 700, amount_krw: 17700, progress: "unpaid" };
+  const invoice = { amount_krw: 17700, shipping_fee_krw: 17000, service_fee_krw: 700, carton_cod_krw: 0, created_at: "2026-11-09T01:00:00+00:00", pay_due_at: "2026-11-12T01:00:00+00:00", return_at: "2026-11-16T01:00:00+00:00", paying: false, paid_at: null, lines: [line] };
 
   it("INV-GB10 · GB13 S10·S17: 6자리·보낸/받은 상자 수·명세서 줄(닉네임·구간·택배비·할증 구분·할증·서비스료·금액)을 받는다", async () => {
     const f = fakeClient({ ...base, inbound_code: "3479AC", carton_count: 2, cartons_received: 1, invoice });
@@ -120,7 +120,11 @@ describe("선물함 3부 읽기 (revgift-box INV-GB9·GB10·GB12·GB13·GB23)", 
       serviceFeeKrw: 700,
       cartonCodKrw: 0,
       createdAt: "2026-11-09T01:00:00+00:00",
-      lines: [{ nickname: "별빛", tier: "oversize", shippingFeeKrw: 13000, surchargeRegion: "jeju", surchargeKrw: 4000, serviceFeeKrw: 700, amountKrw: 17700 }],
+      payDueAt: "2026-11-12T01:00:00+00:00",
+      returnAt: "2026-11-16T01:00:00+00:00",
+      paying: false,
+      paidAt: null,
+      lines: [{ nickname: "별빛", tier: "oversize", shippingFeeKrw: 13000, surchargeRegion: "jeju", surchargeKrw: 4000, serviceFeeKrw: 700, amountKrw: 17700, progress: "unpaid" }],
     });
   });
 

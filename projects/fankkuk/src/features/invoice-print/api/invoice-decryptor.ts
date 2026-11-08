@@ -7,6 +7,7 @@ import { RECIPIENT_PHONE_ON_LABEL, type RecipientPhoneMode } from "@/shared/conf
 import type { DeployEnv } from "@/shared/lib/env/is-production";
 import { createDevKeyUnwrapper, type KeyUnwrapper } from "@/shared/lib/envelope/dev-key-unwrapper";
 import { readDecryptorSecrets } from "./decryptor-secrets";
+import { BOX_LABEL_PATTERN, printBoxLabel } from "./print-box-label";
 import { printCreatorLabel, type CreatorLabelResult, type StoredSignatureVerifier } from "./print-creator-label";
 import { printReturnLabel, type ReturnLabelResult } from "./print-return-label";
 import { printShareLabel } from "./print-share-label";
@@ -137,6 +138,8 @@ export function invoiceDecryptorFrom(deps: DecryptorDeps): InvoiceDecryptor {
   // 상자 종류는 각 출력 함수가 DB 판정 재료로 가린다 — 팬 선물 함수가 「팬 선물 상자가 아님」이라고 하면 역조공 함수로 간다.
   // 받는 사람 번호는 열린 라벨에 설정값대로 적용한다(INV-P19) — 실제 번호 설정이면 그대로다
   return async (input) => {
+    // 선물함 신청 번호(GB…)는 사무실 상자 QR 이 아니다 — 선물함 송장 출력 함수만 본다(revgift-box INV-GB20)
+    if (BOX_LABEL_PATTERN.test(input.qr)) return withRecipientPhone(await printBoxLabel(deps, input), deps.phoneOnLabel);
     const gift = await printCreatorLabel(deps, input);
     if (gift.kind !== "not_gift") return withRecipientPhone(gift, deps.phoneOnLabel);
     const share = await printShareLabel(deps, input);

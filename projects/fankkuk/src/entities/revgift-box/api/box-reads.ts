@@ -23,8 +23,33 @@ const uuid = z.string().uuid();
 export type MyBoxRow = { id: string; name: string; capacity: number; isPublic: boolean; status: BoxStatus; createdAt: string; activeCount: number };
 export type BoxApplication = { id: string; nickname: string; appliedAt: string; status: ApplicationStatus; chosenTier: ChosenTier | null };
 /** 명세서 줄 — 크리에이터에게 보이는 것은 닉네임·구간·택배비·할증 구분·할증·서비스료·금액뿐(INV-GB9·GB13) */
-export type InvoiceLine = { nickname: string; tier: InvoiceTier; shippingFeeKrw: number; surchargeRegion: SurchargeRegion; surchargeKrw: number; serviceFeeKrw: number; amountKrw: number };
-export type BoxInvoice = { amountKrw: number; shippingFeeKrw: number; serviceFeeKrw: number; cartonCodKrw: number; createdAt: string; lines: InvoiceLine[] };
+/** 줄 진행(4부) — 결제 전 · 결제됨(발송 준비) · 출고 · 출고 전에 끝남(환불 대상) · 환불됨 */
+export const LINE_PROGRESS = ["unpaid", "paid", "shipped", "ended", "refunded"] as const;
+export type LineProgress = (typeof LINE_PROGRESS)[number];
+export type InvoiceLine = {
+  nickname: string;
+  tier: InvoiceTier;
+  shippingFeeKrw: number;
+  surchargeRegion: SurchargeRegion;
+  surchargeKrw: number;
+  serviceFeeKrw: number;
+  amountKrw: number;
+  progress: LineProgress;
+};
+export type BoxInvoice = {
+  amountKrw: number;
+  shippingFeeKrw: number;
+  serviceFeeKrw: number;
+  cartonCodKrw: number;
+  createdAt: string;
+  /** 결제 기한(명세서 발행 + 72시간, INV-GB18) · 착불 반송 시각(+ 168시간, INV-GB19) */
+  payDueAt: string;
+  returnAt: string;
+  /** 결제사 승인을 기다리는 결제가 있다 — 결제 버튼 대신 「확인 중」 */
+  paying: boolean;
+  paidAt: string | null;
+  lines: InvoiceLine[];
+};
 export type MyBox = {
   id: string;
   name: string;
@@ -68,6 +93,7 @@ const invoiceLineRow = z
     surcharge_krw: z.number().int(),
     service_fee_krw: z.number().int(),
     amount_krw: z.number().int(),
+    progress: z.enum(LINE_PROGRESS),
   })
   .strict();
 const invoiceRow = z
@@ -77,6 +103,10 @@ const invoiceRow = z
     service_fee_krw: z.number().int(),
     carton_cod_krw: z.number().int(),
     created_at: z.string(),
+    pay_due_at: z.string(),
+    return_at: z.string(),
+    paying: z.boolean(),
+    paid_at: z.string().nullable(),
     lines: z.array(invoiceLineRow),
   })
   .strict();
@@ -146,6 +176,10 @@ export async function readMyBox(client: Rpc, boxId: string): Promise<MyBox | nul
           serviceFeeKrw: b.invoice.service_fee_krw,
           cartonCodKrw: b.invoice.carton_cod_krw,
           createdAt: b.invoice.created_at,
+          payDueAt: b.invoice.pay_due_at,
+          returnAt: b.invoice.return_at,
+          paying: b.invoice.paying,
+          paidAt: b.invoice.paid_at,
           lines: b.invoice.lines.map((l) => ({
             nickname: l.nickname,
             tier: l.tier,
@@ -154,6 +188,7 @@ export async function readMyBox(client: Rpc, boxId: string): Promise<MyBox | nul
             surchargeKrw: l.surcharge_krw,
             serviceFeeKrw: l.service_fee_krw,
             amountKrw: l.amount_krw,
+            progress: l.progress,
           })),
         }
       : null,

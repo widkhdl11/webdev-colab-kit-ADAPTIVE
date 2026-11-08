@@ -50,15 +50,18 @@ describe("크리에이터 메뉴 — 묶음", () => {
   });
 });
 
-describe("크리에이터 메뉴 — 팬에게 보내기 하위 줄", () => {
+describe("크리에이터 메뉴 — 팬에게 보내기는 한 줄 (revgift-box INV-GB22)", () => {
   const parent = group("보내기").items.find((i) => i.label === "팬에게 보내기")!;
 
-  it("몇 명에게는 역조공 보내기 화면으로 가는 링크, 합포장은 링크 없는 준비 중 칸", () => {
-    expect(parent.sub).toEqual([{ label: "몇 명에게", href: "/creator/revgifts/new#count" }, { label: "합포장", soon: true }]);
+  it("INV-GB22: 선물함 목록으로 가는 한 줄 — 하위 줄 「몇 명에게 / 합포장」이 없다", () => {
+    expect(parent.href).toBe("/creator/revgift-boxes");
+    expect(parent.sub).toBeUndefined();
+    expect(CREATOR_APP_MENU.flatMap((g) => g.items).filter((i) => i.sub)).toEqual([]);
   });
 
-  it("하위 줄이 있는 칸은 이 하나뿐", () => {
-    expect(CREATOR_APP_MENU.flatMap((g) => g.items).filter((i) => i.sub).map((i) => i.label)).toEqual(["팬에게 보내기"]);
+  it("INV-GB22 (실패경로): 메뉴 어디에도 옛 보내기 화면(/creator/revgifts/new)으로 가는 링크가 없다", () => {
+    const hrefs = CREATOR_APP_MENU.flatMap((g) => g.items).flatMap((i) => [i.href, ...(i.also ?? [])]);
+    expect(hrefs.filter((h) => h.startsWith("/creator/revgifts/new"))).toEqual([]);
   });
 });
 
@@ -68,8 +71,9 @@ describe("현재 칸 — 보낸 내역은 두 화면에서 켜진다", () => {
     expect(currentMenuItem(CREATOR_APP_MENU, CREATOR_SENT_HREFS.creators)?.label).toBe("보낸 내역");
   });
 
-  it("역조공 보내기 화면은 부모 칸 「팬에게 보내기」 — 하위 줄(#count)은 고르지 않는다", () => {
-    expect(currentMenuItem(CREATOR_APP_MENU, "/creator/revgifts/new")?.label).toBe("팬에게 보내기");
+  it("선물함 목록·1페이지(설명 → 만들기)는 「팬에게 보내기」", () => {
+    expect(currentMenuItem(CREATOR_APP_MENU, "/creator/revgift-boxes")?.label).toBe("팬에게 보내기");
+    expect(currentMenuItem(CREATOR_APP_MENU, "/creator/revgift-boxes/new")?.label).toBe("팬에게 보내기");
   });
 
   it("메뉴에 없는 주소는 아무 칸도 켜지 않는다", () => {

@@ -15,8 +15,11 @@ export const metadata: Metadata = { title: "신청 관리 — 팬꾹" };
 
 // 신청 관리 창(크리에이터, revgift-box INV-GB7·GB9). 읽기 함수가 주인 본인일 때만 돌려준다 — 아니면 없는 주소.
 // 신청 링크는 서버가 만든다(비공개면 초대 토큰을 붙인다 — 토큰은 주인에게만 보인다).
-export default async function Page({ params }: { params: Promise<{ boxId: string }> }) {
+export default async function Page({ params, searchParams }: { params: Promise<{ boxId: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { boxId } = await params;
+  const q = await searchParams;
+  // 결제창에서 돌아온 결과(revgift-box INV-GB18) — 문구 고르기에만 쓴다. 결제 상태는 읽기 함수가 정한다
+  const notice = q.paid === "1" ? "paid" : q.payment === "failed" ? "failed" : q.payment === "in_progress" ? "in_progress" : null;
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
   if (viewer?.role !== "creator") redirect(`/login?next=${encodeURIComponent(`/creator/revgift-boxes/${boxId}`)}`);
@@ -32,7 +35,7 @@ export default async function Page({ params }: { params: Promise<{ boxId: string
   return (
     <>
       <SiteHeader {...header} />
-      <BoxManagePage box={box} applyUrl={url.toString()} price={price} cards={cards} />
+      <BoxManagePage box={box} applyUrl={url.toString()} price={price} cards={cards} clientKey={process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? ""} notice={notice} />
       <SiteFooter />
     </>
   );

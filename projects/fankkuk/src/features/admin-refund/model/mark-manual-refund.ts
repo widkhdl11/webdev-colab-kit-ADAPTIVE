@@ -28,7 +28,7 @@ export const MANUAL_REFUND_MESSAGE = {
 
 // 메모 길이는 DB 가 다시 본다(앞뒤 빈칸을 뺀 1~200자) — 여기서는 터무니없이 긴 본문만 DB 앞에서 끊는다.
 const bodyShape = z
-  .object({ kind: z.enum(["gift", "gift_box", "revgift"]), unitId: z.uuid(), memo: z.string().max(1000) })
+  .object({ kind: z.enum(["gift", "gift_box", "revgift", "revgift_box"]), unitId: z.uuid(), memo: z.string().max(1000) })
   .strict();
 
 function errorReply(code: string | undefined): ManualRefundReply {

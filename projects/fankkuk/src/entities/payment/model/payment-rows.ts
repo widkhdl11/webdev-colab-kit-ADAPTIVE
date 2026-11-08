@@ -8,13 +8,13 @@ import { z } from "zod";
 
 export const REFUND_STATUSES = ["none", "due", "requesting", "failed", "done"] as const;
 export type RefundStatus = (typeof REFUND_STATUSES)[number];
-export type RefundUnitKind = "gift" | "gift_box" | "revgift";
+export type RefundUnitKind = "gift" | "gift_box" | "revgift" | "revgift_box";
 
 export type PaymentRow = {
   unitKind: RefundUnitKind;
   unitId: string;
   orderNo: string;
-  paymentKind: "initial" | "difference" | "missing_box" | "revgift";
+  paymentKind: "initial" | "difference" | "missing_box" | "revgift" | "revgift_box";
   payerNickname: string;
   amountKrw: number;
   goodsKrw: number;
@@ -33,10 +33,10 @@ export type PaymentRow = {
 const won = z.number().int().min(0);
 const rowShape = z
   .object({
-    unit_kind: z.enum(["gift", "gift_box", "revgift"]),
+    unit_kind: z.enum(["gift", "gift_box", "revgift", "revgift_box"]),
     unit_id: z.uuid(),
     order_no: z.string().min(1),
-    payment_kind: z.enum(["initial", "difference", "missing_box", "revgift"]),
+    payment_kind: z.enum(["initial", "difference", "missing_box", "revgift", "revgift_box"]),
     payer_nickname: z.string(),
     amount_krw: won,
     goods_krw: won,

@@ -78,6 +78,8 @@ export const PII_FUNCTIONS = {
   office_confirm_label: "라벨 부착 확인 → 몫 닫기, 돌려주는 것 없음",
   office_confirm_return: "반송 확정 → 몫 닫기(주소 지움), 돌려주는 것 없음",
   office_confirm_shipment: "출고 확정 → 몫 닫기(주소 지움), 돌려주는 것 없음",
+  // 수동 입력 운송장 번호 넣기(address-protection INV-P21 ③) — 대표만. 번호를 넣은 뒤 office_sync 를 불러 같은 경로로 닿는다. 주소를 읽지 않는다
+  office_set_outbound_waybill: "운송장 번호 넣기 → 몫 정리 경로, 돌려주는 것은 결과 글자(saved·denied)",
   office_print_return_label: "반송 송장 출력 → 몫 닫기, 돌려주는 것은 원 송장 봉투 번호",
   office_scan_inbound: "입고 스캔 → 몫 닫기, 돌려주는 것은 결과·QR(office-workflow INV-W1)",
   office_scan_inspect: "검수 완료 스캔 → 몫 닫기, 돌려주는 것은 다음 단계 글자",

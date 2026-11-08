@@ -22,5 +22,6 @@ export async function GET(req: NextRequest) {
     { orderId: q.get("orderId") ?? "", amount: q.get("amount") ?? "", paymentKey: q.get("paymentKey") ?? "" },
   );
   if (outcome.ok) return seeOther("/creator/revgifts?paid=1");
-  return seeOther(`/creator/revgifts/new?payment=${outcome.reason === "in_progress" ? "in_progress" : "failed"}`);
+  // 옛 보내기 화면은 닫혔다(revgift-box INV-GB22) — 결과를 모르면 보낸 역조공 목록으로
+  return seeOther(`/creator/revgifts?payment=${outcome.reason === "in_progress" ? "in_progress" : "failed"}`);
 }

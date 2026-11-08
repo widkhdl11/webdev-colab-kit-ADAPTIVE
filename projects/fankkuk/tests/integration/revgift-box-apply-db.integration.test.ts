@@ -209,6 +209,8 @@ describe("INV-GB6: 신청 주소는 봉인된 값만 — 평문·우편번호가
       "revgift_box_resolve_hold",
       "revgift_box_set_carton_count",
       "revgift_box_set_excluded",
+      // 4부(20261109000002): 명세서 결제 대기 만들기 — 받는 값은 선물함 id 뿐이다
+      "revgift_box_start_payment",
       "revgift_box_submit_tiers",
       "revgift_box_withdraw",
     ]);

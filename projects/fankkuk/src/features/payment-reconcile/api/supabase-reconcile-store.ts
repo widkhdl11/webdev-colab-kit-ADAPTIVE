@@ -8,7 +8,7 @@ import type { ReconcileDeps, ReconcileSourceKind, ReconcileTarget } from "../mod
 // 확인 필요 표시: 승인 중이고 아직 표시가 없는 줄에만 단다. 완료·실패 반영은 결제 종류마다 기존 반영 함수를 쓴다(여기 없음).
 
 const targetRow = z.object({
-  source: z.enum(["initial", "difference", "revgift"]),
+  source: z.enum(["initial", "difference", "revgift", "revgift_box"]),
   toss_order_id: z.string().min(1),
   amount_krw: z.number().int().positive(),
   confirming_at: z.string(),

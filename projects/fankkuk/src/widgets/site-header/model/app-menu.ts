@@ -85,6 +85,9 @@ export const CREATOR_BOXES_HREF = "/creator/boxes";
 /** 「내 팬꾹 꾸미기」 화면 — 링크 미리보기 이미지·공지 이미지 받기. */
 export const CREATOR_CUSTOMIZE_HREF = "/creator/customize";
 
+/** 「팬에게 보내기」 — 내 선물함 목록(revgift-box INV-GB22) */
+export const CREATOR_GIFT_BOXES_HREF = "/creator/revgift-boxes";
+
 /** 「보낸 내역」 한 칸이 맡는 두 화면 — 팬에게 보낸 역조공과 크리에이터에게 보낸 선물(탭으로 잇는다) */
 export const CREATOR_SENT_HREFS = { fans: "/creator/revgifts", creators: "/gifts" } as const;
 
@@ -111,12 +114,9 @@ export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
   {
     label: "보내기",
     items: [
-      {
-        href: "/creator/revgifts/new",
-        label: "팬에게 보내기",
-        icon: "package-plus",
-        sub: [{ label: "몇 명에게", href: "/creator/revgifts/new#count" }, { label: "합포장", soon: true }],
-      },
+      // 팬에게 보내기는 선물함 흐름 하나뿐이다 — 하위 줄 「몇 명에게 / 합포장」을 없애고 한 줄로(revgift-box INV-GB22, UX 명세 확정 1).
+      // 내 선물함 목록이 입구이고, 1페이지(설명 → 만들기)에서도 이 칸이 켜진다
+      { href: CREATOR_GIFT_BOXES_HREF, label: "팬에게 보내기", icon: "package-plus", also: ["/creator/revgift-boxes/new"] },
       { href: "/gifts/new", label: "다른 크리에이터에게 선물", icon: "gift" },
       // 크리에이터끼리 선물은 둘 중 한쪽이 팔로우해야 보낸다(creators_follow_either_way) — 팔로우 목록은 팬과 같은 화면(2026-10-22 사용자)
       { href: "/me/following", label: "팔로우한 크리에이터", icon: "heart" },

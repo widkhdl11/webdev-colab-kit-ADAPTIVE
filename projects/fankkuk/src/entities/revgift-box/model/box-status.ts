@@ -22,9 +22,24 @@ export const BOX_STATUS_NAME: Record<BoxStatus, string> = {
   cancelled: "취소",
 };
 
-export const APPLICATION_STATUSES = ["applied", "excluded", "selected", "measured", "missing", "rejected", "paid", "shipped", "delivered", "ended"] as const;
+export const APPLICATION_STATUSES = ["applied", "excluded", "withdrawn", "selected", "measured", "missing", "rejected", "paid", "shipped", "delivered", "ended"] as const;
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 export const applicationStatusSchema = z.enum(APPLICATION_STATUSES);
+
+/** 사무실 화면의 신청 상태 표기(출고 화면) — 크리에이터·팬 화면에는 쓰지 않는다 */
+export const APPLICATION_STATUS_OFFICE_NAME: Record<ApplicationStatus, string> = {
+  applied: "신청",
+  excluded: "제외",
+  withdrawn: "신청 취소",
+  selected: "담길 차례",
+  measured: "실측됨",
+  missing: "도착 안 함",
+  rejected: "보낼 수 없음",
+  paid: "결제 완료",
+  shipped: "출고",
+  delivered: "배송 완료",
+  ended: "끝남",
+};
 
 /** 크리에이터 신청 관리 창에서 「제외」로 보이는가 — 제외된 줄은 흐리게 목록에 남는다(INV-GB7) */
 export function isExcluded(status: ApplicationStatus): boolean {
