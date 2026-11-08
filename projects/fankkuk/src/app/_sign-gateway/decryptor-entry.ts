@@ -6,7 +6,10 @@ import {
   type InvoiceDecryptor,
   type ReturnLabelPrinter,
 } from "@/features/invoice-print/api/invoice-decryptor";
+import { outboundWaybillSource } from "@/features/invoice-print/model/outbound-waybill-source";
 import { devWaybillNo } from "@/features/office-outbound/model/dev-waybill";
+import { UNCONTRACTED_COURIER_API } from "@/shared/api/courier/courier-api";
+import { INVOICE_OUTPUT_MODE } from "@/shared/config/courier";
 
 // 서명 게이트웨이(sign.fankkuk.com)가 돌리는 송장 출력 함수의 진입점 — address-protection 「복호화 함수」.
 // 라우트가 아니다(밑줄 폴더는 Next 가 주소로 만들지 않는다). sign-gateway/scripts/build-decryptor.mjs 가 이 파일을
@@ -22,8 +25,10 @@ export type GatewayDecryptorOptions = {
   unwrap: (wrappedKeyBase64: string) => Promise<Uint8Array>;
   /** 허용 목록을 거치는 요청 통로 */
   fetch: typeof fetch;
-  /** 첫 출력의 송장번호. 없으면 개발용 난수(택배사 연동 전) */
-  newWaybill?: () => string;
+  /** 출고 송장의 첫 운송장 번호. 없으면 송장 출력 방식(INV-P21)대로 — 기본 수동 입력이면 null */
+  newWaybill?: () => string | null;
+  /** 반송 송장 번호. 없으면 개발용 난수(택배사 연동 전) */
+  newReturnWaybill?: () => string;
   /**
    * 저장된 카카오 서명(전자서명문)을 체인·서명·폐기까지 다시 검증하고, 감싼 틀을 벗긴 원문이 그 주문 서명 요청의 원문과 같은지 본다(INV-P4 a).
    * 게이트웨이가 넣는다(sign-gateway/lib/stored-signature.mjs). 없으면 kakao 서명 기록은 승인으로 치지 않는다.
@@ -40,7 +45,8 @@ export function createGatewayDecryptors(o: GatewayDecryptorOptions): {
     dbKey: o.dbKey,
     ownerUserId: o.ownerUserId,
     unwrapper: { unwrap: o.unwrap },
-    newWaybill: o.newWaybill ?? devWaybillNo,
+    newWaybill: o.newWaybill ?? outboundWaybillSource(INVOICE_OUTPUT_MODE, UNCONTRACTED_COURIER_API),
+    newReturnWaybill: o.newReturnWaybill ?? devWaybillNo,
     fetch: o.fetch,
     verifyStoredSignature: o.verifyStoredSignature,
   });

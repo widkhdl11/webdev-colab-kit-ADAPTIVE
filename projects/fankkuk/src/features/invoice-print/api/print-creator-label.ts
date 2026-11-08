@@ -33,15 +33,15 @@ export type CreatorLabelDeps = {
    * (게이트웨이 밖에는 카카오 인증기관 인증서·폐기 조회 통로가 없다).
    */
   verifyStoredSignature?: StoredSignatureVerifier | undefined;
-  /** 첫 출력의 새 송장번호(택배사 연동 전 개발용) */
-  newWaybill: () => string;
+  /** 첫 출력의 새 송장번호. 수동 입력이면 null — 대표가 택배 접수 뒤 넣는다(INV-P21 ③, outbound-waybill-source) */
+  newWaybill: () => string | null;
 };
 
 /** 저장된 전자서명문(base64)을 다시 검증하고, 서명된 원문(감싼 틀을 벗긴 것)이 plaintext 와 바이트 단위로 같으면 true. 오류도 false. */
 export type StoredSignatureVerifier = (input: { signature: string; plaintext: string }) => Promise<boolean>;
 
 export type CreatorLabelResult =
-  | { kind: "printed"; waybill: string; reprint: boolean; label: CreatorAddressLabel }
+  | { kind: "printed"; waybill: string | null; reprint: boolean; label: CreatorAddressLabel }
   | { kind: "denied"; reason: AccessDenyReason }
   | { kind: "unauthenticated" }
   | { kind: "not_found" }
@@ -69,7 +69,8 @@ const giftContext = z.object({
 });
 const contextShape = z.union([giftContext, z.object({ kind: z.literal("share") })]);
 
-const finishShape = z.object({ waybill: z.string().min(1), first: z.boolean() });
+// 운송장 번호는 수동 입력이면 아직 없다(null, INV-P21 ③) — 칸 자체가 없으면 꼴이 틀린 응답이다
+const finishShape = z.object({ waybill: z.string().min(1).nullable(), first: z.boolean() });
 
 const claimShape = z.union([
   z.object({

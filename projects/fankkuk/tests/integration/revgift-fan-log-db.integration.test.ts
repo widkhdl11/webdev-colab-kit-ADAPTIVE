@@ -72,7 +72,7 @@ async function openedDeniedShipped(): Promise<{ orderNo: string; shareId: string
   const s = await inspectedShare();
   const first = await print(s.qr, "fankkuk_admin");
   expect(first.kind).toBe("printed");
-  if (first.kind !== "printed") throw new Error("첫 출력 실패");
+  if (first.kind !== "printed" || first.waybill === null) throw new Error("첫 출력 실패");
   expect(await print(s.qr, "fankkuk_staff")).toEqual({ kind: "denied", reason: "not_owner" });
   const staff = await signedInClient("fankkuk_staff");
   const shipped = await staff.rpc("office_confirm_shipment", { p_qr: s.qr, p_waybill: first.waybill });
@@ -103,7 +103,7 @@ describe("INV-R16: 팬은 자기 몫 주소의 열람 기록을 본다", () => {
   it("INV-R9 · R16 (실패경로): 출고 확정 뒤 72시간 안에는 대표의 재출력이 열리고(같은 송장번호) 직원 시도는 그때도 거부된다 — 팬에게는 연 줄만 늘고 거부 줄은 가지 않는다", async () => {
     const s = await inspectedShare();
     const first = await print(s.qr, "fankkuk_admin");
-    if (first.kind !== "printed") throw new Error("첫 출력 실패");
+    if (first.kind !== "printed" || first.waybill === null) throw new Error("첫 출력 실패");
     const staff = await signedInClient("fankkuk_staff");
     const shipped = await staff.rpc("office_confirm_shipment", { p_qr: s.qr, p_waybill: first.waybill });
     expect(shipped.error).toBeNull();

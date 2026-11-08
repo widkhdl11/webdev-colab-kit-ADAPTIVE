@@ -241,7 +241,7 @@ describe("INV-R7 · R9 (카드 d120): 출고 확정 뒤에도 72시간 안에는
   async function shipped(): Promise<Share & { out: string }> {
     const s = await inspectedShare();
     const first = await print(s.qr);
-    if (first.kind !== "printed") throw new Error("첫 출력 실패");
+    if (first.kind !== "printed" || first.waybill === null) throw new Error("첫 출력 실패");
     const staff = await signedInClient("fankkuk_staff");
     expect((await staff.rpc("office_confirm_shipment", { p_qr: s.qr, p_waybill: first.waybill })).error).toBeNull();
     expect(parcelState(s.qr)).toBe("shipped");

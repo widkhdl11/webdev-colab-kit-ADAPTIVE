@@ -16,16 +16,18 @@ const label = z.object({
   address2: z.string(),
 });
 
-const common = [
-  z.object({ kind: z.literal("printed"), waybill: z.string().min(1), reprint: z.boolean(), label }),
+const printedOf = <W extends z.ZodType<string | null>>(waybill: W) => z.object({ kind: z.literal("printed"), waybill, reprint: z.boolean(), label });
+
+const rest = [
   z.object({ kind: z.literal("denied"), reason: z.enum(ACCESS_DENY_REASONS) }),
   z.object({ kind: z.literal("unauthenticated") }),
   z.object({ kind: z.literal("not_found") }),
   z.object({ kind: z.literal("failed") }),
 ] as const;
 
-const labelReply = z.union([...common, z.object({ kind: z.literal("no_address") })]);
-const returnReply = z.union([...common, z.object({ kind: z.literal("not_linked") })]);
+// 출고 송장은 수동 입력이면 운송장 번호 없이 연다(address-protection INV-P21 ③) — 반송 송장은 늘 번호가 있다
+const labelReply = z.union([printedOf(z.string().min(1).nullable()), ...rest, z.object({ kind: z.literal("no_address") })]);
+const returnReply = z.union([printedOf(z.string().min(1)), ...rest, z.object({ kind: z.literal("not_linked") })]);
 
 export { readGatewayConfig, type GatewayConfig } from "@/shared/api/sign-gateway/gateway-config";
 

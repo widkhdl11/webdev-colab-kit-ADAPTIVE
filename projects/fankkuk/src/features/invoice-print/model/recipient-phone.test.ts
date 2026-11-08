@@ -44,3 +44,17 @@ describe("송장 라벨의 받는 사람 번호 (address-protection INV-P19)", (
     expect(await withRecipientPhone(denied, recipientPhoneOnLabel("courier_safe_number", async () => SAFE))).toBe(denied);
   });
 });
+
+describe("수동 입력과 안심번호 (INV-P19·P21)", () => {
+  it("INV-P19·P21 (실패경로): 안심번호 설정에서 운송장 번호 없이 연 주소는 실제 번호로 대신 찍지 않고 실패한다", async () => {
+    const issue = vi.fn(async () => SAFE);
+    const res = await withRecipientPhone({ ...printed, waybill: null }, recipientPhoneOnLabel("courier_safe_number", issue));
+    expect(res).toEqual({ kind: "failed" });
+    expect(issue).not.toHaveBeenCalled();
+  });
+
+  it("INV-P19·P21: 실제 번호 설정이면 운송장 번호 없이 연 주소도 그대로 돌려준다", async () => {
+    const res = await withRecipientPhone({ ...printed, waybill: null }, recipientPhoneOnLabel("real", undefined));
+    expect(res).toEqual({ ...printed, waybill: null });
+  });
+});

@@ -172,3 +172,68 @@ describe("출고 화면 — 반송·처분·경찰 인계 (INV-W8·W14·W15)", (
     expect(host.textContent).toContain("파쇄");
   });
 });
+
+describe("출고 화면 — 수동 입력 (address-protection INV-P21 ③)", () => {
+  const typeWaybill = (value: string) => {
+    const input = host.querySelector<HTMLInputElement>("#outbound-waybill")!;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+    act(() => {
+      setter?.call(input, value);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  };
+
+  it("INV-P21 ③: 「주소 열기」를 누르면 연 주소가 화면에 보이고, 운송장 번호를 넣어 저장하면 주소가 사라진다", async () => {
+    await scanQr(parcel("inspected", "print_label"));
+    api.postOutbound.mockResolvedValueOnce({ kind: "ok", body: { waybill: null, reprint: false, label: LABEL } });
+    api.postOutbound.mockResolvedValueOnce(parcel("label_printed", "enter_waybill"));
+    await click("주소 열기");
+    expect(writes().at(-2)).toEqual({ kind: "print_label", qr: QR });
+    const shown = host.querySelector("#out-address");
+    expect(shown?.textContent).toContain("테헤란로 1");
+    expect(shown?.closest(".print-only")).toBeNull();
+    typeWaybill("6401 2345 7788");
+    api.postOutbound.mockResolvedValueOnce({ kind: "ok", body: { ok: true } });
+    api.postOutbound.mockResolvedValueOnce(parcel("label_printed", "confirm_shipment"));
+    await click("운송장 번호 저장");
+    expect(writes()).toContainEqual({ kind: "set_waybill", qr: QR, waybill: "640123457788" });
+    expect(host.textContent).not.toContain("테헤란로");
+  });
+
+  it("INV-P21 ③: 다른 상자를 스캔하면 연 주소는 화면에서 사라진다", async () => {
+    await scanQr(parcel("inspected", "print_label"));
+    api.postOutbound.mockResolvedValueOnce({ kind: "ok", body: { waybill: null, reprint: false, label: LABEL } });
+    api.postOutbound.mockResolvedValueOnce(parcel("label_printed", "enter_waybill"));
+    await click("주소 열기");
+    expect(host.textContent).toContain("테헤란로 1");
+    await scanQr(parcel("label_printed", "enter_waybill"));
+    expect(host.textContent).not.toContain("테헤란로");
+    // 주소 없이도 번호는 넣을 수 있고, 주소를 다시 열 수 있다(열람 기록·횟수에 남는다)
+    expect(host.querySelector("#outbound-waybill")).not.toBeNull();
+    expect(button("주소 다시 열기")).toBeTruthy();
+  });
+
+  it("INV-P21 (실패경로): 번호 꼴이 아니면 보내지 않고 입력 칸 아래에 알린다", async () => {
+    await scanQr(parcel("label_printed", "enter_waybill"));
+    typeWaybill("12");
+    await click("운송장 번호 저장");
+    expect(writes().filter((w) => w.kind === "set_waybill")).toEqual([]);
+    expect(host.querySelector("#outbound-waybill-error")?.textContent).toContain("숫자 10~14자리");
+  });
+
+  it("INV-P21 (S21d, 실패경로): 직원 화면에는 운송장 번호 입력 칸이 없다", async () => {
+    act(() => root.render(<OutboundWorkbench access="staff" operatorNickname="담당" />));
+    api.postOutbound.mockResolvedValueOnce(parcel("label_printed", "enter_waybill"));
+    const scan = host.querySelector<HTMLInputElement>("#outbound-scan")!;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+    act(() => {
+      setter.call(scan, QR);
+      scan.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      scan.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    });
+    expect(host.querySelector("#outbound-waybill")).toBeNull();
+    expect(host.textContent).toContain("운송장 번호는 대표만 넣을 수 있어요");
+  });
+});

@@ -5,6 +5,7 @@ import type { CreatorAddressLabel } from "@/entities/address/model/creator-addre
 import { lookupParcelReply } from "@/entities/parcel/api/lookup-parcel";
 import { officeErrorReply } from "@/entities/parcel/model/office-error";
 import { qrCode, waybillNo } from "@/entities/parcel/model/scan-code";
+import { parseWaybillInput } from "@/entities/parcel/model/waybill-no";
 import { readAdminAccess } from "@/entities/session/api/read-admin-access";
 import { MESSAGE_NOT_FOUND } from "@/shared/lib/http/pg-error-reply";
 import type { JsonReply } from "@/shared/lib/http/private-json";
@@ -22,7 +23,9 @@ import { MESSAGE_POLICE_MEMO, POLICE_MEMO_MAX } from "./police-memo";
 // - print_return: 반송 송장 출력 — 운영자 누구나. 봉투 번호는 DB 가 그 상자 것만 돌려준다(INV-W8)
 // - confirm_return: 반송 송장 바코드 스캔 → 반송 확정(+ 봉투 파쇄 기록)
 // - record_disposal: 처분 대상 상자 처분 기록(INV-W15) · record_police_handover: 신고 보관 상자 경찰 인계 기록(INV-W14, 메모 1~200자)
-// 출력 송장번호는 서버가 만든다 — 화면이 보내는 송장번호·봉투 번호는 strict 라 400.
+// - set_waybill: 수동 입력(address-protection INV-P21 ③) — 대표가 택배 접수 뒤 받은 운송장 번호를 주소를 연 상자에 넣는다. 대표만, 상자마다 하나.
+//   직원이 눌러도 DB 함수까지 보낸다 — 그 함수가 「대표 아님」 거부 줄을 남기고 denied 를 돌려준다.
+// 출력 송장번호는 서버가 만든다(수동 입력이면 set_waybill 로만) — 출력 요청에 화면이 보내는 송장번호·봉투 번호는 strict 라 400.
 
 export type OutboundDeps = {
   /** 로그인한 사람의 세션 클라이언트 — DB 가 그 토큰의 사람으로 운영자·대표를 판정한다. 관리자 키를 쓰면 이 판정이 사라진다 */
@@ -44,7 +47,8 @@ export type ReturnLabelOutcome =
   | { kind: "failed" };
 
 export type LabelOutcome =
-  | { kind: "printed"; waybill: string; reprint: boolean; label: CreatorAddressLabel }
+  // 수동 입력이면 운송장 번호 없이 주소만 연다(INV-P21 ③) — waybill null
+  | { kind: "printed"; waybill: string | null; reprint: boolean; label: CreatorAddressLabel }
   | { kind: "denied"; reason: AccessDenyReason }
   | { kind: "unauthenticated" }
   | { kind: "not_found" }
@@ -74,6 +78,8 @@ const MESSAGE_SIGN_IN = "로그인을 다시 확인해 주세요.";
 
 const MESSAGE_SHAPE = "스캔한 값의 형식이 맞지 않아요. 다시 스캔해 주세요.";
 const MESSAGE_OWNER_ONLY = "송장 출력은 대표만 할 수 있어요.";
+const MESSAGE_WAYBILL_OWNER_ONLY = "운송장 번호는 대표만 넣을 수 있어요.";
+const MESSAGE_WAYBILL_SET = "이미 운송장 번호를 넣었거나 주소를 열기 전이에요.";
 const FAILED = "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 const MESSAGES = { limit: MESSAGE_SHAPE, failed: FAILED };
 
@@ -83,6 +89,8 @@ const bodyShape = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("lookup"), qr: qrCode }).strict(),
   z.object({ kind: z.literal("print_label"), qr: qrCode }).strict(),
   z.object({ kind: z.literal("confirm_shipment"), qr: qrCode, waybill: waybillNo }).strict(),
+  // 사람이 옮겨 적는 번호라 띄어쓰기·하이픈을 받고 숫자만 남긴다
+  z.object({ kind: z.literal("set_waybill"), qr: qrCode, waybill: z.string().max(40) }).strict(),
   z.object({ kind: z.literal("print_return"), qr: qrCode }).strict(),
   z.object({ kind: z.literal("confirm_return"), qr: qrCode, waybill: waybillNo }).strict(),
   z.object({ kind: z.literal("record_disposal"), qr: qrCode }).strict(),
@@ -151,6 +159,17 @@ export async function scanOutbound(deps: OutboundDeps, body: unknown): Promise<J
       if (error) return officeErrorReply(error.code, MESSAGES);
       if (typeof data !== "string" || data === "") return { status: 500, body: { message: FAILED } };
       return { status: 200, body: { waybill, envelopeNo: data } };
+    }
+
+    case "set_waybill": {
+      // INV-P21: 대표만, 상자마다 하나 — 판정은 DB 함수가 로그인한 사람으로 한다(직원이면 거부 줄을 남기고 denied)
+      const parsed = parseWaybillInput(input.waybill);
+      if (!parsed.ok) return { status: 400, body: { message: parsed.message } };
+      const { data, error } = await client.rpc("office_set_outbound_waybill", { p_qr: input.qr, p_waybill: parsed.value });
+      if (error) return officeErrorReply(error.code, { ...MESSAGES, conflict: MESSAGE_WAYBILL_SET });
+      if (data === "denied") return { status: 403, body: { message: MESSAGE_WAYBILL_OWNER_ONLY } };
+      if (data !== "saved") return { status: 500, body: { message: FAILED } };
+      return { status: 200, body: { ok: true } };
     }
 
     case "record_disposal": {

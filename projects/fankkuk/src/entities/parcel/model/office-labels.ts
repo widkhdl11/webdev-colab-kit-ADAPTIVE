@@ -47,6 +47,7 @@ export const NEXT_STEP_TEXT: Record<NextStep, string> = {
   on_hold: "보류 중이라 출고하지 않아요 — 보류 상자 화면에서 확인",
   print_return: "출고 화면에서 QR 스캔하면 반송 송장 출력",
   confirm_return: "출고 화면에서 반송 송장 바코드 스캔",
+  enter_waybill: "출고 화면에서 QR 스캔 뒤 운송장 번호 입력(대표)",
   confirm_shipment: "출고 화면에서 출력한 송장 바코드 스캔",
   // 추적기 보관·신고 보관(INV-W14)
   tracker_held: "크리에이터가 신고하기·신고하지 않기를 고르면 위 목록에서 처리해요(7일이 지나면 고른 쪽대로, 고르지 않았으면 반송 대기)",

@@ -82,3 +82,15 @@ describe("createGatewayLabelPrinters", () => {
     }
   });
 });
+
+describe("createGatewayLabelPrinters — 수동 입력 (address-protection INV-P21 ③)", () => {
+  it("INV-P21 ③: 출고 송장 응답은 운송장 번호가 비어 있어도 받는다", async () => {
+    const { printLabel } = createGatewayLabelPrinters(cfg, reply(200, { kind: "printed", waybill: null, reprint: false, label: LABEL }));
+    expect(await printLabel({ qr: "Q1", accessToken: "A1" })).toEqual({ kind: "printed", waybill: null, reprint: false, label: LABEL });
+  });
+
+  it("INV-P21 (실패경로): 반송 송장 응답은 운송장 번호가 비면 꼴이 틀린 응답이다", async () => {
+    const { printReturnLabel } = createGatewayLabelPrinters(cfg, reply(200, { kind: "printed", waybill: null, reprint: false, label: LABEL }));
+    expect(await printReturnLabel({ qr: "Q1", accessToken: "A1" })).toEqual({ kind: "failed" });
+  });
+});

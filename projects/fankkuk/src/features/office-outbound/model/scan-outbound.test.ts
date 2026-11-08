@@ -271,3 +271,37 @@ describe("경찰 인계 기록 (office-workflow INV-W14·W8)", () => {
     expect(await scanOutbound(deps(tooLong.client), { kind: "record_police_handover", qr: "Q-000123", memo: "인계" })).toEqual({ status: 400, body: { message: "메모를 1~200자로 적어 주세요." } });
   });
 });
+
+describe("운송장 번호 입력 (address-protection INV-P21)", () => {
+  it("INV-P21 ③: 수동 입력의 주소 열기는 운송장 번호 없이 라벨 칸을 돌려준다", async () => {
+    const { client } = fakeClient({});
+    const printer = giftPrinter({ kind: "printed", waybill: null, reprint: false, label: LABEL });
+    expect(await scanOutbound(deps(client, printer), { kind: "print_label", qr: "Q-000123" })).toEqual({
+      status: 200,
+      body: { waybill: null, reprint: false, label: LABEL },
+    });
+  });
+
+  it("INV-P21: 대표가 넣은 운송장 번호는 DB 저장 함수로 간다 — 띄어 쓴 번호도 숫자만", async () => {
+    const { calls, client } = fakeClient({ office_set_outbound_waybill: { data: "saved", error: null } });
+    expect(await scanOutbound(deps(client), { kind: "set_waybill", qr: "Q-000123", waybill: "6401 2345 7788" })).toEqual({ status: 200, body: { ok: true } });
+    expect(calls).toEqual([{ fn: "office_set_outbound_waybill", args: { p_qr: "Q-000123", p_waybill: "640123457788" } }]);
+  });
+
+  it("INV-P21 (S21d, 실패경로): 직원이 넣으면 DB 가 거부 줄을 남기고 「denied」 — 403", async () => {
+    const { calls, client } = fakeClient({ office_set_outbound_waybill: { data: "denied", error: null } }, { operator: true, owner: false });
+    expect(await scanOutbound(deps(client), { kind: "set_waybill", qr: "Q-000123", waybill: "640123457788" })).toEqual({
+      status: 403,
+      body: { message: "운송장 번호는 대표만 넣을 수 있어요." },
+    });
+    expect(calls.map((c) => c.fn)).toEqual(["office_set_outbound_waybill"]);
+  });
+
+  it("INV-P21 (실패경로): 번호 꼴이 아니면 DB 를 부르지 않고 400, 이미 넣은 상자·지금 넣을 수 없는 단계는 409", async () => {
+    const bad = fakeClient({});
+    expect((await scanOutbound(deps(bad.client), { kind: "set_waybill", qr: "Q-000123", waybill: "12" })).status).toBe(400);
+    expect(bad.calls).toEqual([]);
+    const done = fakeClient({ office_set_outbound_waybill: { error: { code: "55000" } } });
+    expect((await scanOutbound(deps(done.client), { kind: "set_waybill", qr: "Q-000123", waybill: "640123457788" })).status).toBe(409);
+  });
+});

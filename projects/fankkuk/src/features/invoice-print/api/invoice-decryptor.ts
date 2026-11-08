@@ -44,7 +44,10 @@ export type DecryptorWiring = {
   /** 대표 계정 ID(INV-P8) */
   ownerUserId: string;
   unwrapper: KeyUnwrapper;
-  newWaybill: () => string;
+  /** 출고 송장의 첫 운송장 번호 — 송장 출력 방식(INV-P21)이 정한다. 수동 입력이면 null(outbound-waybill-source) */
+  newWaybill: () => string | null;
+  /** 반송 송장의 운송장 번호. 없으면 newWaybill 이 번호를 주는 함수여야 한다 — 반송은 아직 송장 출력 방식과 따로다 */
+  newReturnWaybill?: () => string;
   /** DB·로그인 확인 요청을 보낼 통로. 게이트웨이는 허용 목록을 거치는 통로를 넣는다 — 없으면 기본 fetch */
   fetch?: typeof fetch;
   /** 저장된 카카오 서명 재검증(INV-P4 a). 게이트웨이만 넣는다 — 로컬 조립에는 없으므로 로컬에서는 kakao 서명 주소가 열리지 않는다 */
@@ -78,16 +81,26 @@ export function wireDecryptorDeps(w: DecryptorWiring) {
     acceptedMethod,
     verifyStoredSignature: w.verifyStoredSignature,
     newWaybill: w.newWaybill,
+    newReturnWaybill: w.newReturnWaybill ?? returnWaybillFrom(w.newWaybill),
     phoneOnLabel,
+  };
+}
+
+/** 반송 번호를 따로 주지 않은 조립(옛 호출) — 출고 번호 함수가 번호를 주면 그대로 쓰고, 비우면(수동 입력) 반송 출력은 실패한다. */
+function returnWaybillFrom(newWaybill: () => string | null): () => string {
+  return () => {
+    const no = newWaybill();
+    if (no === null) throw new Error("반송 송장 번호를 받을 곳이 없다");
+    return no;
   };
 }
 
 export type DecryptorDeps = ReturnType<typeof wireDecryptorDeps>;
 
-function decryptorDeps(env: DecryptorEnv, readFile: () => string, newWaybill: () => string): DecryptorDeps {
+function decryptorDeps(env: DecryptorEnv, readFile: () => string, newWaybill: () => string | null, newReturnWaybill?: () => string): DecryptorDeps {
   const secrets = readDecryptorSecrets(env, readFile);
   const unwrapper = createDevKeyUnwrapper({ privateKeyPem: secrets.privateKeyPem, env });
-  return wireDecryptorDeps({ env, dbKey: secrets.dbKey, ownerUserId: secrets.ownerUserId, unwrapper, newWaybill });
+  return wireDecryptorDeps({ env, dbKey: secrets.dbKey, ownerUserId: secrets.ownerUserId, unwrapper, newWaybill, newReturnWaybill });
 }
 
 /** 송장 출력과 같은 설정 파일·같은 복호화 역할로 반송 송장 출력 함수를 조립한다. 운영 환경이면 파일을 읽기 전에 실패한다(INV-P12). */
@@ -95,7 +108,7 @@ export function createReturnLabelPrinter(env: DecryptorEnv, readFile: () => stri
   return returnLabelPrinterFrom(decryptorDeps(env, readFile, newWaybill));
 }
 
-export function createInvoiceDecryptor(env: DecryptorEnv, readFile: () => string, newWaybill: () => string): InvoiceDecryptor {
+export function createInvoiceDecryptor(env: DecryptorEnv, readFile: () => string, newWaybill: () => string | null): InvoiceDecryptor {
   return invoiceDecryptorFrom(decryptorDeps(env, readFile, newWaybill));
 }
 
@@ -103,15 +116,20 @@ export function createInvoiceDecryptor(env: DecryptorEnv, readFile: () => string
 export type LabelPrinters = { printLabel: InvoiceDecryptor; printReturnLabel: ReturnLabelPrinter };
 
 /** 로컬 송장 출력 함수 한 쌍 — 설정 파일을 한 번 읽고 재료를 둘이 같이 쓴다. 운영 환경이면 파일을 읽기 전에 실패한다(INV-P12). */
-export function createLocalLabelPrinters(env: DecryptorEnv, readFile: () => string, newWaybill: () => string): LabelPrinters {
-  const deps = decryptorDeps(env, readFile, newWaybill);
+export function createLocalLabelPrinters(
+  env: DecryptorEnv,
+  readFile: () => string,
+  newWaybill: () => string | null,
+  newReturnWaybill?: () => string,
+): LabelPrinters {
+  const deps = decryptorDeps(env, readFile, newWaybill, newReturnWaybill);
   return { printLabel: invoiceDecryptorFrom(deps), printReturnLabel: returnLabelPrinterFrom(deps) };
 }
 
 /** 반송 송장 출력 함수를 재료로 만든다. */
 export function returnLabelPrinterFrom(deps: DecryptorDeps): ReturnLabelPrinter {
-  const { acceptedMethod: _acceptedMethod, verifyStoredSignature: _verifyStoredSignature, phoneOnLabel, ...rest } = deps;
-  return async (input) => withRecipientPhone(await printReturnLabel(rest, input), phoneOnLabel);
+  const { acceptedMethod: _acceptedMethod, verifyStoredSignature: _verifyStoredSignature, phoneOnLabel, newReturnWaybill, ...rest } = deps;
+  return async (input) => withRecipientPhone(await printReturnLabel({ ...rest, newWaybill: newReturnWaybill }, input), phoneOnLabel);
 }
 
 /** 송장 출력 함수를 재료로 만든다. */

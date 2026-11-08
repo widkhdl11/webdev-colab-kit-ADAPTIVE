@@ -459,3 +459,18 @@ describe("송장 출력 — 할증 지역 재판정 (INV-P20 ③)", () => {
     expect(reportCall(calls)).toEqual([]);
   });
 });
+
+describe("송장 출력 방식 — 수동 입력 (INV-P21 ③)", () => {
+  it("INV-P21 ③: 수동 입력이면 주소를 열고 운송장 번호 없이 출력 단계로 넘긴다 — 결과의 운송장 번호는 비어 있다", async () => {
+    const { db, calls } = fakeDb(goodContext(), await openedClaim(1), { waybill: null as unknown as string, first: true });
+    const res = await printCreatorLabel(deps(db, { newWaybill: () => null }), ask);
+    expect(res).toEqual({ kind: "printed", waybill: null, reprint: false, label: fields });
+    expect(calls[2]?.args).toEqual({ p_qr: QR, p_waybill: null });
+  });
+
+  it("INV-P21 ③ (실패경로): 마무리 응답에 운송장 번호 칸 자체가 없으면 실패로 보고 연 줄을 돌려받는다", async () => {
+    const { db, calls } = fakeDb(goodContext(), await openedClaim(1), { first: true } as unknown as { waybill: string; first: boolean });
+    expect(await printCreatorLabel(deps(db, { newWaybill: () => null }), ask)).toEqual({ kind: "failed" });
+    expect(fnNames(calls)).toContain("invoice_release_print");
+  });
+});

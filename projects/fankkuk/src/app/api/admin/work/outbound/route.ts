@@ -2,9 +2,12 @@ import type { NextRequest } from "next/server";
 import { chooseLabelPrinters } from "@/features/invoice-print/api/choose-label-printers";
 import { createGatewayLabelPrinters } from "@/features/invoice-print/api/gateway-client";
 import { createLocalLabelPrinters, readDecryptFile, type LabelPrinters } from "@/features/invoice-print/api/invoice-decryptor";
+import { outboundWaybillSource } from "@/features/invoice-print/model/outbound-waybill-source";
 import { devWaybillNo } from "@/features/office-outbound/model/dev-waybill";
 import { scanOutbound, type LabelOutcome, type ReturnLabelOutcome } from "@/features/office-outbound/model/scan-outbound";
+import { UNCONTRACTED_COURIER_API } from "@/shared/api/courier/courier-api";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
+import { INVOICE_OUTPUT_MODE } from "@/shared/config/courier";
 import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
 
 // 출고 — QR 로 불러오기·송장 출력(대표만)·출고 확정·반송 송장 출력·반송 확정 (office-workflow INV-W1·W3·W8).
@@ -13,7 +16,8 @@ import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
 // 팬 선물의 송장 출력은 송장 출력 함수(주소를 여는 유일한 서버 코드, address-protection INV-P4)에 로그인 토큰을 넘겨 맡긴다 —
 // 그 함수가 토큰을 스스로 검증하고 자기 설정의 대표 ID 로 판단한다(INV-P8). 앱 서버는 키·복호화 자격을 갖지 않는다.
 // 어디서 뽑을지(서명 게이트웨이·로컬)는 chooseLabelPrinters 한 곳이 정한다.
-// 송장번호는 택배사 API 가 아직 없어 개발용 난수(devWaybillNo)로 만든다. 택배사 API 가 붙으면 newWaybill 을 그 호출로 바꾼다.
+// 출고 송장의 운송장 번호는 송장 출력 방식(address-protection INV-P21)이 정한다 — 기본 「수동 입력」이면 주소를 열 때 번호가 없고 대표가 나중에 넣는다.
+// 택배사 API 는 계약 전이라 연결 자리만 있다(그 방식으로 바꾸면 조립이 실패한다). 반송 송장 번호는 아직 개발용 난수(devWaybillNo)다.
 
 let printers: LabelPrinters | null = null;
 
@@ -21,7 +25,7 @@ let printers: LabelPrinters | null = null;
 function labelPrinters(): LabelPrinters | null {
   printers ??= chooseLabelPrinters(process.env, {
     gateway: (cfg) => createGatewayLabelPrinters(cfg),
-    local: () => createLocalLabelPrinters(process.env, readDecryptFile, devWaybillNo),
+    local: () => createLocalLabelPrinters(process.env, readDecryptFile, outboundWaybillSource(INVOICE_OUTPUT_MODE, UNCONTRACTED_COURIER_API), devWaybillNo),
   });
   return printers;
 }

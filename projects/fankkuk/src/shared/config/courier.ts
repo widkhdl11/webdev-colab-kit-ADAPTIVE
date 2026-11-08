@@ -6,3 +6,11 @@
 export type RecipientPhoneMode = "real" | "courier_safe_number";
 
 export const RECIPIENT_PHONE_ON_LABEL: RecipientPhoneMode = "real";
+
+// 송장 출력 방식(address-protection INV-P21). 세 방식 모두 주소는 송장 출력 함수만 열고, 상자마다 기존 규칙(INV-P4·P5·P7·P8)을 지킨다.
+// - "courier_api": 택배사 API 가 운송장 번호를 주고 라벨을 찍는다. 택배사 계약·연결(shared/api/courier) 뒤에만 — 계약 전 연결이면 출력 기능 조립이 실패한다.
+// - "excel": 엑셀 반자동 — 고른 상자들로 택배 중개 플랫폼 일괄 등록 파일을 만든다. 아직 만들지 않았다(BACKLOG) — 고르면 조립이 실패한다.
+// - "manual": 수동 입력 — 대표가 상자 하나씩 주소를 열어 택배 접수 화면에 옮긴 뒤 운송장 번호를 넣는다. 택배사 계약 전 값이다.
+export type InvoiceOutputMode = "courier_api" | "excel" | "manual";
+
+export const INVOICE_OUTPUT_MODE: InvoiceOutputMode = "manual";

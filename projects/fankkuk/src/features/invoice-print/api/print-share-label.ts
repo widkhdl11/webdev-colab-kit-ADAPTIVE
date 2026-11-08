@@ -14,7 +14,7 @@ import type { CreatorLabelDeps } from "./print-creator-label";
 export type ShareLabelDeps = Omit<CreatorLabelDeps, "acceptedMethod">;
 
 export type ShareLabelResult =
-  | { kind: "printed"; waybill: string; reprint: boolean; label: RevgiftAddressLabel }
+  | { kind: "printed"; waybill: string | null; reprint: boolean; label: RevgiftAddressLabel }
   | { kind: "denied"; reason: AccessDenyReason }
   | { kind: "unauthenticated" }
   | { kind: "not_found" }
@@ -50,7 +50,8 @@ const claimShape = z.union([
   z.object({ result: z.literal("denied"), reason: z.enum(ACCESS_DENY_REASONS) }),
 ]);
 
-const finishShape = z.object({ waybill: z.string().min(1), first: z.boolean() });
+// 운송장 번호는 수동 입력이면 아직 없다(null, address-protection INV-P21 ③)
+const finishShape = z.object({ waybill: z.string().min(1).nullable(), first: z.boolean() });
 
 type ShareContext = z.infer<typeof shareContext>;
 

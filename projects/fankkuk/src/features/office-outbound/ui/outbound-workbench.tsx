@@ -7,6 +7,8 @@ import { DIFFERENCE_DEADLINE_DAYS } from "@/entities/payment/config/difference-d
 import { KIND_LABEL, NEXT_STEP_TEXT, STATE_LABEL, TIER_LABEL } from "@/entities/parcel/model/office-labels";
 import { parcelFromLookupBody, type NextStep, type ParcelDetail } from "@/entities/parcel/model/office-parcel";
 import { readScan } from "@/entities/parcel/model/scan-code";
+import { formatWaybill, parseWaybillInput } from "@/entities/parcel/model/waybill-no";
+import { INVOICE_OUTPUT_MODE } from "@/shared/config/courier";
 import { formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
 import { ScanInput, type ScanInputHandle } from "@/shared/ui/scan-input";
@@ -34,8 +36,9 @@ const DONE_TEXT: Record<Done["kind"], { tag: string; title: string; what: string
   handed: { tag: "경찰 인계", title: "경찰 인계를 기록했어요", what: "경찰 인계 기록과 함께 파쇄 기록이 남았어요." },
 };
 type RecordWrite = { kind: "record_disposal" } | { kind: "record_police_handover"; memo: string };
-/** 방금 연 라벨 — 그 상자(qr)의 인쇄에만 쓴다 */
-type OpenedLabel = { qr: string; waybill: string; fields: PrintedLabel };
+/** 방금 연 라벨 — 그 상자(qr)의 인쇄에만 쓴다. 수동 입력(INV-P21 ③)이면 운송장 번호 없이 화면에 보이고, 번호를 저장하거나 다른 상자를 스캔하면 버린다 */
+type OpenedLabel = { qr: string; waybill: string | null; fields: PrintedLabel };
+const MANUAL = INVOICE_OUTPUT_MODE === "manual";
 
 function PrintLabel({ orderNo, opened }: { orderNo: string; opened: OpenedLabel }) {
   const f = opened.fields;
@@ -47,7 +50,7 @@ function PrintLabel({ orderNo, opened }: { orderNo: string; opened: OpenedLabel 
         ({f.zipCode}) {f.address1} {f.address2}
       </span>
       <span>
-        송장번호 {opened.waybill} · 주문번호 {orderNo}
+        {opened.waybill ? `송장번호 ${opened.waybill} · ` : ""}주문번호 {orderNo}
       </span>
     </div>
   );
@@ -191,6 +194,27 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
     scan.current?.focus();
   }
 
+  /** 수동 입력의 운송장 번호 저장(INV-P21 ③) — 저장되면 연 주소를 화면에서 지우고 상자를 다시 읽는다(다음은 출고 확정 스캔) */
+  async function saveWaybill(waybill: string) {
+    if (!parcel || busy) return;
+    setBusy(true);
+    setError(null);
+    const outcome = await postOutbound({ kind: "set_waybill", qr: parcel.qr, waybill });
+    if (outcome.kind === "failed") {
+      setError({ title: "운송장 번호를 저장하지 못했어요", message: outcome.message });
+      if (needsReload(outcome)) {
+        setParcel(await lookup(parcel.qr, true));
+        router.refresh();
+      }
+      setBusy(false);
+      return;
+    }
+    setOpened(null);
+    setParcel(await lookup(parcel.qr, true));
+    setBusy(false);
+    scan.current?.focus();
+  }
+
   /** 처분 기록(INV-W15) · 경찰 인계 기록(INV-W14). 끝나면 봉투 파쇄를 안내하고 상자를 다시 읽는다 */
   async function record(write: RecordWrite) {
     if (!parcel || busy) return;
@@ -259,7 +283,15 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
         )}
 
         {parcel && !done && (
-          <ParcelCard parcel={parcel} access={access} busy={busy} onPrint={print} onRecord={record} opened={opened?.qr === parcel.qr ? opened : null} />
+          <ParcelCard
+            parcel={parcel}
+            access={access}
+            busy={busy}
+            onPrint={print}
+            onRecord={record}
+            onSaveWaybill={saveWaybill}
+            opened={opened?.qr === parcel.qr ? opened : null}
+          />
         )}
       </div>
     </div>
@@ -272,8 +304,89 @@ type CardProps = {
   busy: boolean;
   onPrint: (kind: "print_label" | "print_return") => void;
   onRecord: (write: RecordWrite) => void;
+  onSaveWaybill: (waybill: string) => void;
   opened: OpenedLabel | null;
 };
+
+/** 수동 입력으로 연 주소(INV-P21 ③) — 대표가 택배 접수 화면에 옮겨 적도록 화면에 보인다. 저장하지 않고, 번호를 저장하거나 다른 상자를 스캔하면 사라진다 */
+function OpenedAddress({ fields }: { fields: PrintedLabel }) {
+  return (
+    <dl className={a.kv} id="out-address">
+      <dt>받는 사람</dt>
+      <dd>{fields.recipientName}</dd>
+      <dt>전화번호</dt>
+      <dd className={a.mono}>{fields.phone}</dd>
+      <dt>우편번호</dt>
+      <dd className={a.mono}>{fields.zipCode}</dd>
+      <dt>주소</dt>
+      <dd style={{ overflowWrap: "anywhere" }}>
+        {fields.address1} {fields.address2}
+      </dd>
+    </dl>
+  );
+}
+
+/** 운송장 번호 입력(INV-P21) — 대표만. 꼴(숫자 10~14자리)은 보내기 전에 보고, 대표 여부·상자마다 하나는 서버(DB)가 본다 */
+function WaybillForm({ busy, onSave }: { busy: boolean; onSave: (waybill: string) => void }) {
+  const [value, setValue] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  return (
+    <form
+      className={a.stack}
+      style={{ gap: 8 }}
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        const parsed = parseWaybillInput(value);
+        if (!parsed.ok) {
+          setMessage(parsed.message);
+          inputRef.current?.focus();
+          return;
+        }
+        onSave(parsed.value);
+      }}
+    >
+      <div className={a.field}>
+        <label htmlFor="outbound-waybill">운송장 번호</label>
+        <input
+          ref={inputRef}
+          id="outbound-waybill"
+          className={`${a.input} ${a.mono}`}
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder="예: 6401 2345 7788"
+          aria-describedby={message ? "outbound-waybill-hint outbound-waybill-error" : "outbound-waybill-hint"}
+          aria-invalid={message !== null}
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setMessage(null);
+          }}
+        />
+        <p className={a.hint} id="outbound-waybill-hint">
+          택배 접수 화면에서 받은 번호예요. 상자마다 한 번만 넣을 수 있어요.
+        </p>
+      </div>
+      <div role="alert">
+        {message && (
+          <p className={a.errorLine} id="outbound-waybill-error">
+            <span className={a.errorMark} aria-hidden="true">
+              !
+            </span>
+            {message}
+          </p>
+        )}
+      </div>
+      <div className={a.btnRow}>
+        <button className={`${a.btn} ${a.btnLg}`} type="submit" aria-disabled={busy}>
+          {busy ? "저장하는 중…" : "운송장 번호 저장"}
+        </button>
+      </div>
+    </form>
+  );
+}
 
 /** 경찰 인계 기록(INV-W14) — 메모 1~200자. 실명·주소·전화번호는 적지 않는다(INV-W7) */
 function PoliceHandoverCard({ parcel, busy, onRecord }: { parcel: ParcelDetail; busy: boolean; onRecord: CardProps["onRecord"] }) {
@@ -349,7 +462,7 @@ function PoliceHandoverCard({ parcel, busy, onRecord }: { parcel: ParcelDetail; 
   );
 }
 
-function ParcelCard({ parcel, access, busy, onPrint, onRecord, opened }: CardProps) {
+function ParcelCard({ parcel, access, busy, onPrint, onRecord, onSaveWaybill, opened }: CardProps) {
   switch (parcel.nextStep) {
     case "print_label":
       return (
@@ -375,11 +488,13 @@ function ParcelCard({ parcel, access, busy, onPrint, onRecord, opened }: CardPro
             <div>
               <div className={a.btnRow}>
                 <button className={`${a.btn} ${a.btnLg}`} type="button" onClick={() => onPrint("print_label")} aria-disabled={busy}>
-                  {busy ? "출력하는 중…" : "송장 출력"}
+                  {busy ? (MANUAL ? "여는 중…" : "출력하는 중…") : MANUAL ? "주소 열기" : "송장 출력"}
                 </button>
               </div>
               <p className={a.hint} style={{ marginTop: 6 }}>
-                받는 사람의 주소는 화면에 보이지 않고 송장에만 찍혀요. 주소는 송장을 출력할 때만 열려요(이 상자는 다시 출력 포함 최대 3번).
+                {MANUAL
+                  ? "주소를 열면 이 화면에 보여요. 택배 접수 화면에 옮겨 적은 뒤 받은 운송장 번호를 넣어 주세요. 주소를 열 때마다 열람 기록에 남아요(이 상자는 다시 열기 포함 최대 3번)."
+                  : "받는 사람의 주소는 화면에 보이지 않고 송장에만 찍혀요. 주소는 송장을 출력할 때만 열려요(이 상자는 다시 출력 포함 최대 3번)."}
               </p>
             </div>
           ) : (
@@ -387,6 +502,48 @@ function ParcelCard({ parcel, access, busy, onPrint, onRecord, opened }: CardPro
               <InfoIcon />
               <p>
                 <strong>송장 출력은 대표만 할 수 있어요.</strong> 이 상자를 대표에게 넘겨 주세요. 상자 상태는 그대로예요.
+              </p>
+            </div>
+          )}
+        </section>
+      );
+
+    case "enter_waybill":
+      // 수동 입력(address-protection INV-P21 ③): 주소를 열었고 운송장 번호를 넣기 전. 번호를 넣어야 출고 확정 스캔을 한다
+      return (
+        <section className={`${w.result} ${w.resultOk}`} aria-labelledby="out-enter-waybill">
+          <div className={w.resultHead}>
+            <span className={`${a.tag} ${a.tagBrand}`}>운송장 번호 입력 전</span>
+            <h2 id="out-enter-waybill" className={a.mono}>
+              {parcel.orderNo}
+            </h2>
+          </div>
+          <Facts parcel={parcel} />
+          {access === "owner" ? (
+            <div className={w.nextStep}>
+              <h3>택배 접수 뒤 운송장 번호를 넣어 주세요</h3>
+              {opened ? (
+                <>
+                  <OpenedAddress fields={opened.fields} />
+                  <p className={a.hint}>이 주소는 저장되지 않아요. 운송장 번호를 저장하거나 다른 상자를 스캔하면 사라져요.</p>
+                </>
+              ) : (
+                <>
+                  <div className={a.btnRow}>
+                    <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => onPrint("print_label")} aria-disabled={busy}>
+                      {busy ? "여는 중…" : "주소 다시 열기"}
+                    </button>
+                  </div>
+                  <p className={a.hint}>주소를 다시 열면 열람 기록에 남아요(처음 포함 최대 3번).</p>
+                </>
+              )}
+              <WaybillForm busy={busy} onSave={onSaveWaybill} />
+            </div>
+          ) : (
+            <div className={`${a.note} ${w.noteWarn}`}>
+              <InfoIcon />
+              <p>
+                <strong>운송장 번호는 대표만 넣을 수 있어요.</strong> 이 상자를 대표에게 넘겨 주세요. 상자 상태는 그대로예요.
               </p>
             </div>
           )}
@@ -403,11 +560,13 @@ function ParcelCard({ parcel, access, busy, onPrint, onRecord, opened }: CardPro
             </h2>
           </div>
           <Facts parcel={parcel} />
-          {parcel.outboundWaybillNo && <WaybillBox label="출력한 송장번호 (개발용 — 택배사 연동 전)" waybill={parcel.outboundWaybillNo} />}
+          {parcel.outboundWaybillNo && (
+            <WaybillBox label={MANUAL ? "운송장 번호" : "출력한 송장번호 (개발용 — 택배사 연동 전)"} waybill={MANUAL ? formatWaybill(parcel.outboundWaybillNo) : parcel.outboundWaybillNo} />
+          )}
           <div className={w.nextStep}>
-            <h3>송장이 출력됐어요</h3>
+            <h3>{MANUAL ? "운송장 번호를 넣었어요" : "송장이 출력됐어요"}</h3>
             <p>
-              상자에 송장을 붙인 뒤, <strong>출력된 송장의 바코드</strong>를 스캔하면 출고가 확정돼요. 위 스캔 칸을 쓰세요.
+              상자에 송장을 붙인 뒤, <strong>{MANUAL ? "택배 송장의 바코드" : "출력된 송장의 바코드"}</strong>를 스캔하면 출고가 확정돼요. 위 스캔 칸을 쓰세요.
             </p>
             {opened ? (
               <>

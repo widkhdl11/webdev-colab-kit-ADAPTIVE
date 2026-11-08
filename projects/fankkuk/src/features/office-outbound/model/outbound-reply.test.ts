@@ -24,3 +24,11 @@ describe("출고 응답 다시 읽기 (office-workflow INV-W3·W8)", () => {
     expect(returnPrintedReplyFromBody({ waybill: "555566667777" })).toBeNull();
   });
 });
+
+describe("수동 입력의 주소 열기 응답 (address-protection INV-P21 ③)", () => {
+  it("INV-P21 ③: 운송장 번호가 비어 있는 응답도 라벨 칸과 함께 읽는다", () => {
+    const label = { recipientName: "김하루", phone: "01012345678", zipCode: "06236", address1: "서울시 강남구 테헤란로 123", address2: "" };
+    expect(printedReplyFromBody({ waybill: null, reprint: false, label })).toEqual({ waybill: null, reprint: false, label });
+    expect(printedReplyFromBody({ waybill: null, reprint: false })).toBeNull();
+  });
+});

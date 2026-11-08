@@ -35,6 +35,8 @@ export const NEXT_STEPS = [
   "on_hold",
   "print_return",
   "confirm_return",
+  // 수동 입력(address-protection INV-P21 ③): 주소를 열었고 운송장 번호를 넣기 전 — 대표가 번호를 넣어야 출고 확정 스캔을 한다
+  "enter_waybill",
   "confirm_shipment",
   "done",
 ] as const;
