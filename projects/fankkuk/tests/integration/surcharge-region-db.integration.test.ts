@@ -131,7 +131,7 @@ describe("INV-M24: 결제 대기를 만드는 순간의 주소 구분으로 상�
 
   it("INV-M24 ⑤: 등록 함수 밖에서 pii 주소 줄의 구분 칸을 읽는 공개 함수는 구분 읽기 함수·재판정 함수 둘뿐이다", () => {
     const readers = psql(
-      "select string_agg(p.proname, ',' order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prosrc like '%surcharge_region%' and p.prosrc like '%pii.%'",
+      "select string_agg(p.proname, ',' order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prosrc like '%surcharge_region%' and p.prosrc like '%pii.%' and p.proname not in ('set_creator_address', 'set_my_fan_address')",
     );
     expect(readers).toBe("creator_surcharge_region,invoice_report_surcharge_region");
   });
@@ -141,7 +141,8 @@ describe("INV-P20 ③: 송장 출력 때 재판정 — 다르면 운영자 화�
   async function printedBox(): Promise<{ boxId: string; orderNo: string }> {
     const o = await toTestCreator(1);
     const boxId = psql(`select id from public.boxes where order_id = '${o.orderId}'`);
-    setup(`update public.office_parcels set state = 'label_printed', printed_at = now() where box_id = '${boxId}'`);
+    // 등록만 한 상자에는 사무실 소포 줄이 아직 없다(update 는 0줄로 조용히 끝났다) — 출력된 소포 줄을 직접 만든다. 출력 상태는 운송장 번호가 있어야 한다
+    setup(`insert into public.office_parcels (box_id, state, received_at, inspected_at, printed_at, outbound_waybill_no) values ('${boxId}', 'label_printed', now(), now(), now(), '7' || lpad((floor(random() * 1e11))::bigint::text, 11, '0'))`);
     return { boxId, orderNo: o.orderNo };
   }
   const report = (boxId: string, region: string) =>
