@@ -38,6 +38,7 @@ const BOX: FanBox = {
   open: true,
   viewer: "follower",
   myState: "none",
+  waitlistNo: null,
   delivery: null,
 };
 /** 화면을 그린 서버 시각 — 서울 11월 12일 낮 */

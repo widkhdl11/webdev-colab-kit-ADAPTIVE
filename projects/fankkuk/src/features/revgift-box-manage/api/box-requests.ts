@@ -30,8 +30,9 @@ export function sendCreateBox(input: { name: string; capacity: number; isPublic:
 export function sendSetExcluded(boxId: string, applicationId: string, excluded: boolean) {
   return postBox(`${base(boxId)}/exclude`, { applicationId, excluded }, (d) => z.object({ status: z.enum(["applied", "excluded"]) }).parse(d).status);
 }
-export function sendCloseBox(boxId: string) {
-  return postBox(`${base(boxId)}/close`, {}, () => null);
+/** 마감 — 넣을 대기 신청 번호(비어도 된다, revgift-box INV-GB8) */
+export function sendCloseBox(boxId: string, waitlisted: readonly string[] = []) {
+  return postBox(`${base(boxId)}/close`, { waitlisted }, () => null);
 }
 export function sendCancelBox(boxId: string) {
   return postBox(`${base(boxId)}/cancel`, {}, () => null);

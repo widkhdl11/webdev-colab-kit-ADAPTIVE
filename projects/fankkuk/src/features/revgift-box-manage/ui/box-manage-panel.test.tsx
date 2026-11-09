@@ -47,8 +47,8 @@ const BOX: MyBox = {
   cartonsReceived: 0,
   invoice: null,
   applications: [
-    { id: A, nickname: "별빛", appliedAt: "2026-11-08T02:00:00Z", status: "applied", chosenTier: null },
-    { id: B, nickname: "달토끼", appliedAt: "2026-11-08T03:00:00Z", status: "excluded", chosenTier: null },
+    { id: A, nickname: "별빛", appliedAt: "2026-11-08T02:00:00Z", status: "applied", chosenTier: null, waitlistNo: null },
+    { id: B, nickname: "달토끼", appliedAt: "2026-11-08T03:00:00Z", status: "excluded", chosenTier: null, waitlistNo: null },
   ],
 };
 const URL_ = `http://localhost:3100/gift-boxes/${BOX.id}?invite=${"a".repeat(32)}`;

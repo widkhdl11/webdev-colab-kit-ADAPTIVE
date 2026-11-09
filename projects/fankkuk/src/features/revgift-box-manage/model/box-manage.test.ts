@@ -58,10 +58,30 @@ describe("신청 관리 (revgift-box INV-GB5·GB7·GB8·GB1)", () => {
     expect(await setExcluded({ client: fakeClient().client, viewer: HARU }, BOX, { applicationId: APP })).toMatchObject({ ok: false, status: 400 });
   });
 
-  it("INV-GB8 S8b: 마감 — 제외 안 된 신청이 없으면 409 와 그 문구, 되면 담긴 수", async () => {
-    expect(await closeBox({ client: fakeClient({ data: 3 }).client, viewer: HARU }, BOX)).toEqual({ ok: true, selected: 3 });
-    const none = await closeBox({ client: fakeClient({ error: { code: "P0024" } }).client, viewer: HARU }, BOX);
-    expect(none).toMatchObject({ ok: false, status: 409 });
+  it("INV-GB8 S8b·S8c: 마감 — 넣을 대기 신청 번호만 넘긴다(겹치면 하나로), 본문이 없으면 빈 목록. 0명이어도 담긴 수 0 으로 성공", async () => {
+    const W = "1f2e3d4c-5b6a-4789-8abc-def012345678";
+    const f = fakeClient({ data: 3 });
+    expect(await closeBox({ client: f.client, viewer: HARU }, BOX, { waitlisted: [W, W], selected: 99 })).toEqual({ ok: true, selected: 3 });
+    expect(await closeBox({ client: fakeClient({ data: 0 }).client, viewer: HARU }, BOX)).toEqual({ ok: true, selected: 0 });
+    await closeBox({ client: f.client, viewer: HARU }, BOX, null);
+    expect(f.calls).toEqual([
+      { fn: "revgift_box_close", args: { p_box_id: BOX, p_waitlisted: [W] } },
+      { fn: "revgift_box_close", args: { p_box_id: BOX, p_waitlisted: [] } },
+    ]);
+  });
+
+  it("INV-GB8 S8d (실패경로): 넣을 목록 꼴이 틀리면 400 — DB 를 부르지 않는다. DB 가 목록을 거부(P0028)하면 409 와 다른 문구", async () => {
+    const f = fakeClient();
+    for (const body of [{ waitlisted: ["x"] }, { waitlisted: "a" }, { waitlisted: [1] }]) {
+      expect(await closeBox({ client: f.client, viewer: HARU }, BOX, body)).toMatchObject({ ok: false, status: 400 });
+    }
+    expect(f.calls).toEqual([]);
+    const bad = await closeBox({ client: fakeClient({ error: { code: "P0028" } }).client, viewer: HARU }, BOX, { waitlisted: [] });
+    const late = await closeBox({ client: fakeClient({ error: { code: "P0022" } }).client, viewer: HARU }, BOX, { waitlisted: [] });
+    expect([bad, late].map((r) => (r.ok ? 0 : r.status))).toEqual([409, 409]);
+    expect(bad.ok || late.ok ? "" : bad.message === late.message).toBe(false);
+    // 옛 오류(제외 안 된 신청 없음)는 더 오지 않는다 — 오면 던진다
+    await expect(closeBox({ client: fakeClient({ error: { code: "P0024" } }).client, viewer: HARU }, BOX)).rejects.toThrow();
   });
 
   it("INV-GB1: 선물함 취소·링크 다시 만들기 — 팬은 부르지 않는다, 상태가 맞지 않으면 409", async () => {

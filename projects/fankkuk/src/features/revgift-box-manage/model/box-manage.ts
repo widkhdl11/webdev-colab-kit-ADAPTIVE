@@ -4,6 +4,7 @@ import { BOX_CAPACITY_MAX, BOX_NAME_MAX } from "@/entities/revgift-box/model/box
 import type { Viewer } from "@/entities/session/model/viewer";
 
 // 선물함 만들기·신청 관리 (revgift-box INV-GB1·GB3·GB5·GB7·GB8). 크리에이터가 부른다.
+// 마감 때 넣을 대기 신청 목록을 받는다(2026-11-09 개정 — 정원과 무관, 0명이어도 마감).
 // DB 함수가 로그인 토큰으로 누구의 선물함인지·주인인지·상태가 맞는지를 판정한다 — 그래서 로그인 토큰을 실은 요청용 클라이언트로 부르고,
 // 본문에서는 정해진 칸만 꺼낸다(계정·크리에이터 id 를 본문에서 받지 않는다). 상태를 직접 고르는 길은 없다(INV-GB1).
 
@@ -70,14 +71,21 @@ export async function setExcluded(deps: Deps, boxId: string, body: unknown): Pro
   return { ok: true, status: z.enum(["applied", "excluded"]).parse(data) };
 }
 
-/** 마감 — 제외 안 된 신청이 1명 이상일 때(INV-GB8). 돌려주는 값: 담길 신청 수 */
-export async function closeBox(deps: Deps, boxId: string): Promise<{ ok: true; selected: number } | Refusal> {
+const closeBody = z.object({ waitlisted: z.array(uuid).max(100).default([]) });
+
+/**
+ * 마감(INV-GB8) — 넣을 대기 신청 목록(비어도 된다). 정원을 넘겨도 되고, 0명이어도 마감한다.
+ * 목록이 그 선물함의 대기 신청인지는 DB 가 선물함 줄을 잠근 뒤 대조한다(하나라도 아니면 마감 전체 거부). 돌려주는 값: 담길 신청 수(0 이면 끝난 마감)
+ */
+export async function closeBox(deps: Deps, boxId: string, body: unknown = {}): Promise<{ ok: true; selected: number } | Refusal> {
   const refused = gate(deps.viewer);
   if (refused) return refused;
   if (!uuid.safeParse(boxId).success) return NOT_FOUND;
-  const { data, error } = await deps.client.rpc("revgift_box_close", { p_box_id: boxId });
+  const input = closeBody.safeParse(body ?? {});
+  if (!input.success) return { ok: false, status: 400, message: "다시 시도해 주세요." };
+  const { data, error } = await deps.client.rpc("revgift_box_close", { p_box_id: boxId, p_waitlisted: [...new Set(input.data.waitlisted)] });
   if (error) {
-    if (error.code === "P0024") return { ok: false, status: 409, message: "제외하지 않은 신청이 1명 이상 있어야 마감할 수 있습니다." };
+    if (error.code === "P0028") return { ok: false, status: 409, message: "대기 목록이 바뀌었습니다. 목록을 새로 불러와 다시 골라 주세요." };
     return refusalOf(error.code, "이미 마감했거나 취소한 선물함입니다.", "마감하지 못했다");
   }
   return { ok: true, selected: z.number().int().parse(data) };

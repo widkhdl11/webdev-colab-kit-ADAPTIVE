@@ -17,7 +17,6 @@ type Rules = {
   name_max: number;
   early_max_rank: number;
   early_monthly_lines: number;
-  early_months: number;
   personal_max_krw: number;
   cod_max_krw: number;
 };
@@ -413,24 +412,51 @@ describe("초기 크리에이터 서비스료 (INV-GB14·GB15)", () => {
   const NOV = "2026-11-01";
   const AT_NOV = "2026-11-20 12:00+09";
 
-  it("INV-GB14 S14b: 승인일부터 달력 3개월 안이면 초기 요금, 지나면 정가", () => {
+  // 2026-11-09 개정 — 혜택 기간은 계정을 유지하는 동안(앞선 「승인일부터 달력 3개월」을 대체). 탈퇴하면 끝.
+  const setWithdrawn = (at: string | null) =>
+    psql(
+      `begin; set local session_replication_role = replica; update public.creators set withdrawn_at = ${at === null ? "null" : `'${at}'::timestamptz`} where id = '${OWNER.creatorId}'; commit;`,
+    );
+
+  it("INV-GB14 S14b: 순번이 있고 계정을 유지하면 석 달·2년이 지나도 초기 요금", () => {
     makeEarly("2026-11-10 10:00+09");
-    const a = makeBox(1);
-    writeInvoice(a.boxId, [{ application_id: a.apps[0], tier: "small", region: "none" }], "2027-02-10 09:59+09");
-    expect(linesOf(a.boxId)[0]).toMatchObject({ service_fee_krw: fee.early, early_rate: true });
-    const b = makeBox(1);
-    writeInvoice(b.boxId, [{ application_id: b.apps[0], tier: "small", region: "none" }], "2027-02-10 10:00+09");
-    expect(linesOf(b.boxId)[0]).toMatchObject({ service_fee_krw: fee.regular, early_rate: false });
+    for (const at of ["2027-02-10 10:00+09", "2028-11-10 10:00+09"]) {
+      const a = makeBox(1);
+      writeInvoice(a.boxId, [{ application_id: a.apps[0], tier: "small", region: "none" }], at);
+      expect(linesOf(a.boxId)[0]).toMatchObject({ service_fee_krw: fee.early, early_rate: true });
+    }
   });
 
-  it("INV-GB14: 3개월은 달력 기준 — 같은 날이 없으면 그 달 마지막 날(한국 시간)", () => {
-    makeEarly("2026-11-30 23:30+09");
+  it("INV-GB14 (실패경로): 승인 전 시각의 명세서는 정가 — 혜택은 순번을 받은 때부터", () => {
+    makeEarly("2026-11-10 10:00+09");
     const a = makeBox(1);
-    writeInvoice(a.boxId, [{ application_id: a.apps[0], tier: "small", region: "none" }], "2027-02-28 23:29+09");
-    expect(linesOf(a.boxId)[0].early_rate).toBe(true);
-    const b = makeBox(1);
-    writeInvoice(b.boxId, [{ application_id: b.apps[0], tier: "small", region: "none" }], "2027-02-28 23:31+09");
-    expect(linesOf(b.boxId)[0].early_rate).toBe(false);
+    writeInvoice(a.boxId, [{ application_id: a.apps[0], tier: "small", region: "none" }], "2026-11-10 09:59+09");
+    expect(linesOf(a.boxId)[0]).toMatchObject({ service_fee_krw: fee.regular, early_rate: false });
+  });
+
+  it("INV-GB14 S14d (실패경로): 탈퇴한 초기 크리에이터 — 탈퇴 뒤 명세서는 정가, 월 사용도 세지 않는다", () => {
+    makeEarly("2026-11-02 10:00+09");
+    try {
+      setWithdrawn("2026-11-15 10:00+09");
+      const before = makeBox(1);
+      writeInvoice(before.boxId, [{ application_id: before.apps[0], tier: "small", region: "none" }], "2026-11-14 10:00+09");
+      expect(linesOf(before.boxId)[0].early_rate).toBe(true);
+      const after = makeBox(1);
+      writeInvoice(after.boxId, [{ application_id: after.apps[0], tier: "small", region: "none" }], "2026-11-20 12:00+09");
+      expect(linesOf(after.boxId)[0]).toMatchObject({ service_fee_krw: fee.regular, early_rate: false });
+      expect(usageOf("2026-11-01")).toBe(1);
+    } finally {
+      setWithdrawn(null);
+    }
+  });
+
+  it("INV-GB14 S14d (실패경로): 탈퇴한 계정의 순번은 비어도 다시 채우지 않는다 — 다음 승인은 카운터 다음 순번", () => {
+    psql(`update public.early_creator_counter set last_rank = 20`);
+    psql(`insert into public.creator_verification_events (creator_id, acted_by, action) values ('${CV.summer.creatorId}', '${OWNER_ID}', 'approve')`);
+    expect(rankOf(CV.summer.creatorId)).toBe("21");
+    psql(`delete from public.early_creators where creator_id = '${CV.summer.creatorId}'`); // 탈퇴·자동 삭제로 순번 줄이 없어진 경우
+    psql(`insert into public.creator_verification_events (creator_id, acted_by, action) values ('${CV.haru.creatorId}', '${OWNER_ID}', 'approve')`);
+    expect(rankOf(CV.haru.creatorId)).toBe("22");
   });
 
   it("INV-GB14 S14c: 순번이 없는 크리에이터는 정가, 월 사용도 세지 않는다", () => {

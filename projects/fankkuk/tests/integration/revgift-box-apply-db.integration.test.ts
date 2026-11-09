@@ -226,12 +226,15 @@ describe("INV-GB6: 신청 주소는 봉인된 값만 — 평문·우편번호가
   });
 });
 
-describe("INV-GB5: 제외 안 된 신청 수는 받을 인원을 넘지 않는다", () => {
-  it("INV-GB5 S5b: 인원 2·신청 2 → 새 신청 P0023. 하나 제외하면 자리가 난다, 다 차면 다시 넣기 P0023", async () => {
+describe("INV-GB5: 정원 안 신청 수는 받을 인원을 넘지 않는다 — 다 차면 대기(2026-11-09 개정)", () => {
+  it("INV-GB5 S5b: 인원 2·신청 2 → 새 신청은 정원 밖(P0023 거부가 아니라 대기 — manual/0031 뒤). 하나 제외하면 자리가 난다, 다 차면 다시 넣기 P0023", async () => {
     const boxId = makeBox({ capacity: 2 });
     const a = addApp(boxId, PROFILE.byeolbit);
     addApp(boxId, PROFILE.gureumppang);
-    expect((await apply(somsa, boxId, { envelope: sampleEnvelope(), region: "none" })).error?.code).toBe("P0023");
+    const late = await apply(somsa, boxId, { envelope: sampleEnvelope(), region: "none" });
+    expect(late.error).toBeNull();
+    expect(appStatus(late.data as string)).toBe("waitlisted");
+    psql(`delete from public.revgift_box_applications where id = '${late.data as string}'`);
     expect((await haru.rpc("revgift_box_set_excluded", { p_box_id: boxId, p_application_id: a, p_excluded: true })).data).toBe("excluded");
     // 제외된 별빛 자리에 다른 신청이 들어온 것처럼 채운다
     addApp(boxId, PROFILE.somsatang);
@@ -317,9 +320,10 @@ describe("INV-GB9: 크리에이터에게 보이는 팬 정보는 닉네임·신�
       "name",
       "status",
     ]);
+    // 2026-11-09: 대기 순번(waitlist_no — 대기 신청이 아니면 null)이 더해졌다
     expect(box.applications.map((a) => Object.keys(a).sort())).toEqual([
-      ["applied_at", "chosen_tier", "id", "nickname", "status"],
-      ["applied_at", "chosen_tier", "id", "nickname", "status"],
+      ["applied_at", "chosen_tier", "id", "nickname", "status", "waitlist_no"],
+      ["applied_at", "chosen_tier", "id", "nickname", "status", "waitlist_no"],
     ]);
     expect(box.applications.map((a) => a.nickname)).toEqual(["별빛", "구름빵"]);
     const list = (await haru.rpc("my_revgift_boxes")).data as Record<string, unknown>[];
@@ -331,7 +335,8 @@ describe("INV-GB9: 크리에이터에게 보이는 팬 정보는 닉네임·신�
     addApp(boxId, PROFILE.byeolbit, "excluded");
     addApp(boxId, PROFILE.gureumppang);
     const seen = (await byeolbit.rpc("revgift_box_for_fan", { p_box_id: boxId, p_token: null })).data as Record<string, unknown>;
-    expect(Object.keys(seen).sort()).toEqual(["creator", "delivery", "id", "my_state", "name", "open", "viewer"]);
+    // 2026-11-09: 자기 대기 순번(waitlist_no — 대기가 아니면 null)이 더해졌다
+    expect(Object.keys(seen).sort()).toEqual(["creator", "delivery", "id", "my_state", "name", "open", "viewer", "waitlist_no"]);
     expect(seen.delivery).toBeNull(); // 송장 출력 전 — 배송 재료 없음(delivery-status INV-DS6)
     expect(seen.my_state).toBe("applied");
     expect(JSON.stringify(seen)).not.toContain("구름빵");
@@ -345,15 +350,7 @@ describe("INV-GB9: 크리에이터에게 보이는 팬 정보는 닉네임·신�
 });
 
 describe("INV-GB8 · INV-GB1: 마감·선물함 취소 — 전환표 밖은 거부", () => {
-  it("INV-GB8 S8b: 신청이 모두 제외된 선물함 마감 → P0024, 그대로 open", async () => {
-    const boxId = makeBox();
-    const a = addApp(boxId, PROFILE.byeolbit, "excluded");
-    expect((await haru.rpc("revgift_box_close", { p_box_id: boxId })).error?.code).toBe("P0024");
-    expect(boxStatus(boxId)).toBe("open");
-    expect(appStatus(a)).toBe("excluded");
-    const empty = makeBox();
-    expect((await haru.rpc("revgift_box_close", { p_box_id: empty })).error?.code).toBe("P0024");
-  });
+  // INV-GB8 S8b 「모두 제외된 선물함 마감 → 거부」는 2026-11-09 개정으로 「0명 마감」이 됐다 — revgift-box-waitlist-db 가 본다.
 
   it("INV-GB1: 마감된 선물함 다시 마감 → P0022. 큰 상자가 입고된 선물함·끝난 선물함 취소 → P0022", async () => {
     const closed = makeBox({ status: "closed" });
@@ -406,7 +403,7 @@ describe("INV-GB6: 봉인 없이 신청하는 길이 없다 — 등록 주소를
 });
 
 describe("INV-GB5 · INV-GB8: 마지막 자리·마감과 신청이 겹쳐도 하나만 (manual/0031 뒤)", () => {
-  it("INV-GB5 S5: 인원 2·신청 1, 구름빵·솜사탕이 동시에 신청 → 하나만, 다른 하나는 P0023", async () => {
+  it("INV-GB5 S5: 인원 2·신청 1, 구름빵·솜사탕이 동시에 신청 → 하나만 정원 안, 다른 하나는 대기 1번(2026-11-09 개정)", async () => {
     const boxId = makeBox({ capacity: 2 });
     addApp(boxId, PROFILE.byeolbit);
     // 두 팬의 팔로우 줄을 잡아 두면 두 신청 모두 선물함 줄 잠금 뒤에서(잠금이 없으면 개수를 세기 전에) 멈춘다
@@ -416,8 +413,11 @@ describe("INV-GB5 · INV-GB8: 마지막 자리·마감과 신청이 겹쳐도 �
     );
     const results = await Promise.all([gureum, somsa].map((f) => apply(f, boxId, { envelope: sampleEnvelope(), region: "none" })));
     await hold.released;
-    expect(results.map((r) => (r.error ? r.error.code : "ok")).sort()).toEqual(["P0023", "ok"]);
-    expect(appCount(boxId)).toBe(2);
+    expect(results.map((r) => r.error)).toEqual([null, null]);
+    expect(results.map((r) => appStatus(r.data as string)).sort()).toEqual(["applied", "waitlisted"]);
+    expect(Number(psql(`select count(*) from public.revgift_box_applications where box_id = '${boxId}' and status = 'applied'`))).toBe(2);
+    const waiting = ((await haru.rpc("my_revgift_box", { p_box_id: boxId })).data as { applications: { status: string; waitlist_no: number | null }[] }).applications;
+    expect(waiting.filter((a) => a.status === "waitlisted").map((a) => a.waitlist_no)).toEqual([1]);
   });
 
   it("INV-GB8 S8: 마감과 신청이 겹침 — 마감이 먼저면 신청은 P0022, 신청이 먼저면 담길 차례 목록에 있다", async () => {

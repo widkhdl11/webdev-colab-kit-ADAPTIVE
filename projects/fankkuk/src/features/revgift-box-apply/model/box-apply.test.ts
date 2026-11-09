@@ -45,11 +45,15 @@ describe("선물함 신청 (revgift-box INV-GB4·GB5·GB6)", () => {
     expect(f.calls.map((c) => (c.args as { p_token: unknown }).p_token)).toEqual([null, null]);
   });
 
-  it("INV-GB4 S4b·S4c·S4d · INV-GB5 S5 · INV-GB8: DB 오류마다 상태와 문구가 다르다", async () => {
-    const codes = ["P0002", "42501", "P0022", "P0023", "P0025", "P0027", "22023"];
+  it("INV-GB4 S4b·S4c·S4d · INV-GB8: DB 오류마다 상태와 문구가 다르다", async () => {
+    const codes = ["P0002", "42501", "P0022", "P0025", "P0027", "22023"];
     const replies = await Promise.all(codes.map((code) => applyBox({ client: fakeClient({ error: { code } }).client, viewer: BYEOLBIT }, BOX, ADDR)));
-    expect(replies.map((r) => (r.ok ? 0 : r.status))).toEqual([404, 403, 409, 409, 403, 409, 400]);
+    expect(replies.map((r) => (r.ok ? 0 : r.status))).toEqual([404, 403, 409, 403, 409, 400]);
     expect(new Set(replies.map((r) => (r.ok ? "" : r.message))).size).toBe(codes.length);
+  });
+
+  it("INV-GB5 S5c (2026-11-09 개정): 정원이 차도 대기로 받으므로 「다 찼다」 거부는 없다 — 그 오류가 오면 성공으로 치지 않고 던진다", async () => {
+    await expect(applyBox({ client: fakeClient({ error: { code: "P0023" } }).client, viewer: BYEOLBIT }, BOX, ADDR)).rejects.toThrow();
   });
 
   it("INV-GB4 S4d: 크리에이터·로그인 안 함은 부르지도 않는다", async () => {

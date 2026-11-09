@@ -4,7 +4,8 @@ import { parseAddressInput } from "@/entities/address/model/address-ciphertext";
 import { parseSurchargeRegion } from "@/entities/address/model/surcharge-region";
 import type { Viewer } from "@/entities/session/model/viewer";
 
-// 선물함 신청·신청 취소 (revgift-box INV-GB4·GB5·GB6, 정할 것 Q5). 팬이 부른다.
+// 선물함 신청·신청 취소 (revgift-box INV-GB4·GB5·GB6, 정할 것 Q5·Q20). 팬이 부른다.
+// 정원이 차 있으면 DB 가 대기 신청으로 받는다(2026-11-09 개정) — 「다 찼다」 거부는 없다. 대기 여부·순번은 선물함 읽기로 본다.
 // 신청 본문에는 초대 토큰과 신청 폼에서 봉인한 주소(address)·할증 구분(region)만 싣는다(INV-GB6 — 팬 등록 주소는 없다, 2026-11-08).
 // 봉인이 없거나 꼴이 틀리면 DB 를 부르기 전에 거부한다 — 평문 주소가 들어올 자리가 없다(address-protection INV-P1).
 // 팔로우·인원·마감·이미 신청·비공개 토큰은 모두 DB 신청 함수가 로그인 토큰으로 판정한다(선물함 줄·팔로우 줄 잠금 뒤).
@@ -28,7 +29,6 @@ const APPLY_REFUSAL: Record<string, ApplyRefusal> = {
   P0002: NOT_FOUND,
   "42501": FAN_ONLY,
   P0022: { ok: false, status: 409, message: "신청이 마감된 선물함입니다." },
-  P0023: { ok: false, status: 409, message: "받을 인원이 다 찼습니다." },
   P0025: { ok: false, status: 403, message: "팔로우한 팬만 신청할 수 있습니다." },
   P0027: { ok: false, status: 409, message: "이미 신청했습니다." },
   "22023": { ok: false, status: 400, message: "주소를 다시 입력해 주세요." },

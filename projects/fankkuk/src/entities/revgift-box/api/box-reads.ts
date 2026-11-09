@@ -14,7 +14,7 @@ import {
 import { CHOSEN_TIERS, INVOICE_TIERS, SURCHARGE_REGIONS, type ChosenTier, type InvoiceTier, type SurchargeRegion } from "../model/box-tiers";
 
 // 선물함 읽기 (revgift-box INV-GB7·GB9). 누구의 것인지는 DB 읽기 함수가 로그인 토큰으로 정한다 — 주인이 아니면 null.
-// 크리에이터에게 보이는 팬 정보는 닉네임·신청 시각·상태뿐이다(INV-GB9). 그 밖의 칸이 섞이면 받지 않는다(strict) —
+// 크리에이터에게 보이는 팬 정보는 닉네임·신청 시각·상태·대기 순번뿐이다(INV-GB9). 그 밖의 칸이 섞이면 받지 않는다(strict) —
 // DB 가 실수로 칸을 더해도 화면까지 오지 않는다.
 
 type Rpc = Pick<SupabaseClient, "rpc">;
@@ -24,7 +24,8 @@ const uuid = z.string().uuid();
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 export type MyBoxRow = { id: string; name: string; capacity: number; isPublic: boolean; status: BoxStatus; createdAt: string; activeCount: number };
-export type BoxApplication = { id: string; nickname: string; appliedAt: string; status: ApplicationStatus; chosenTier: ChosenTier | null };
+/** waitlistNo — 신청 받는 중인 선물함의 대기 신청이면 순번(1부터, 신청 시각 순), 아니면 null(INV-GB5·GB9) */
+export type BoxApplication = { id: string; nickname: string; appliedAt: string; status: ApplicationStatus; chosenTier: ChosenTier | null; waitlistNo: number | null };
 /** 명세서 줄 — 크리에이터에게 보이는 것은 닉네임·구간·택배비·할증 구분·할증·서비스료·금액뿐(INV-GB9·GB13) */
 /** 줄 진행(4부) — 결제 전 · 결제됨(발송 준비) · 출고 · 출고 전에 끝남(환불 대상) · 환불됨 */
 export const LINE_PROGRESS = ["unpaid", "paid", "shipped", "ended", "refunded"] as const;
@@ -79,6 +80,8 @@ export type FanBox = {
   open: boolean;
   viewer: BoxViewer;
   myState: FanBoxState;
+  /** 내 대기 순번 — 대기일 때만. 다른 대기자·신청자는 보이지 않는다(INV-GB9) */
+  waitlistNo: number | null;
   delivery: FanBoxDelivery | null;
 };
 export type CreatorOpenBox = { id: string; name: string };
@@ -96,7 +99,14 @@ const myBoxRow = z
   .strict();
 
 const applicationRow = z
-  .object({ id: uuid, nickname: z.string(), applied_at: z.string(), status: applicationStatusSchema, chosen_tier: z.enum(CHOSEN_TIERS).nullable() })
+  .object({
+    id: uuid,
+    nickname: z.string(),
+    applied_at: z.string(),
+    status: applicationStatusSchema,
+    chosen_tier: z.enum(CHOSEN_TIERS).nullable(),
+    waitlist_no: z.number().int().positive().nullable(),
+  })
   .strict();
 
 const invoiceLineRow = z
@@ -155,6 +165,7 @@ const fanBoxSchema = z
     open: z.boolean(),
     viewer: z.enum(BOX_VIEWERS),
     my_state: z.enum(FAN_BOX_STATES),
+    waitlist_no: z.number().int().positive().nullable(),
     delivery: z
       .object({ shipped_on: day.nullable(), received: z.boolean(), can_confirm: z.boolean(), carrier: z.enum(CARRIER_DELIVERY_STATES).nullable() })
       .strict()
@@ -191,7 +202,7 @@ export async function readMyBox(client: Rpc, boxId: string): Promise<MyBox | nul
     inboundCode: b.inbound_code,
     cartonCount: b.carton_count,
     cartonsReceived: b.cartons_received,
-    applications: b.applications.map((a) => ({ id: a.id, nickname: a.nickname, appliedAt: a.applied_at, status: a.status, chosenTier: a.chosen_tier })),
+    applications: b.applications.map((a) => ({ id: a.id, nickname: a.nickname, appliedAt: a.applied_at, status: a.status, chosenTier: a.chosen_tier, waitlistNo: a.waitlist_no })),
     invoice: b.invoice
       ? {
           amountKrw: b.invoice.amount_krw,
@@ -315,7 +326,7 @@ export async function readBoxForFan(client: Rpc, boxId: string, token: string | 
   if (data === null) return null;
   const b = fanBoxSchema.parse(data);
   const delivery = b.delivery ? { shippedOn: b.delivery.shipped_on, received: b.delivery.received, canConfirm: b.delivery.can_confirm, carrier: b.delivery.carrier } : null;
-  return { id: b.id, name: b.name, creator: b.creator, open: b.open, viewer: b.viewer, myState: b.my_state, delivery };
+  return { id: b.id, name: b.name, creator: b.creator, open: b.open, viewer: b.viewer, myState: b.my_state, waitlistNo: b.waitlist_no, delivery };
 }
 
 /** 크리에이터 상세의 입구 — 그 크리에이터의 공개·신청 받는 중인 선물함 */

@@ -22,7 +22,9 @@ export const BOX_STATUS_NAME: Record<BoxStatus, string> = {
   cancelled: "취소",
 };
 
-export const APPLICATION_STATUSES = ["applied", "excluded", "withdrawn", "selected", "measured", "missing", "rejected", "paid", "shipped", "delivered", "ended"] as const;
+// waitlisted 대기(2026-11-09 개정, INV-GB2·GB5) — 정원이 찬 뒤 들어온 신청. 정원을 차지하지 않고, 마감 때 크리에이터가 고른 것만 담긴다.
+// 선물함이 신청 받는 중이 아니면 waitlisted 는 끝난 상태다(마감 때 고르지 않은 대기 신청).
+export const APPLICATION_STATUSES = ["applied", "excluded", "withdrawn", "waitlisted", "selected", "measured", "missing", "rejected", "paid", "shipped", "delivered", "ended"] as const;
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 export const applicationStatusSchema = z.enum(APPLICATION_STATUSES);
 
@@ -31,6 +33,7 @@ export const APPLICATION_STATUS_OFFICE_NAME: Record<ApplicationStatus, string> =
   applied: "신청",
   excluded: "제외",
   withdrawn: "신청 취소",
+  waitlisted: "대기",
   selected: "담길 차례",
   measured: "실측됨",
   missing: "도착 안 함",
@@ -46,8 +49,13 @@ export function isExcluded(status: ApplicationStatus): boolean {
   return status === "excluded";
 }
 
-/** 팬에게 보이는 내 신청 — 제외 여부는 드러내지 않는다(정할 것 Q6) */
-export const FAN_BOX_STATES = ["none", "applied", "preparing", "closed", "cancelled"] as const;
+/** 크리에이터 신청 관리 창에서 「대기」로 보이는가 — 신청 받는 중인 선물함의 대기 신청(INV-GB5). 마감 뒤에는 끝난 상태다 */
+export function isWaitlisted(status: ApplicationStatus, boxStatus: BoxStatus): boolean {
+  return status === "waitlisted" && boxStatus === "open";
+}
+
+/** 팬에게 보이는 내 신청 — 제외 여부는 드러내지 않는다(정할 것 Q6). waitlisted = 신청 받는 중인 선물함의 대기(자기 순번은 따로, INV-GB9) */
+export const FAN_BOX_STATES = ["none", "applied", "waitlisted", "preparing", "closed", "cancelled"] as const;
 export type FanBoxState = (typeof FAN_BOX_STATES)[number];
 
 /** 팬 화면을 보는 사람 — guest 로그인 안 함 · owner 선물함 주인 · not_fan 팬 계정 아님 · follower · not_follower */
