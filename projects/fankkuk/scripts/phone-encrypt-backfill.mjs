@@ -9,6 +9,7 @@
 //   환경 파일에 SUPABASE_URL · SUPABASE_SECRET_KEY(관리자 키) · 번호 키 두 개(앱과 같은 값)가 있어야 한다.
 //   --dry-run: 남은 줄 수만 센다(쓰지 않는다).
 
+import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { decryptPhone, phoneBundle, phoneHash, readPhoneKeys } from "../src/shared/api/phone-crypto/phone-crypto.ts";
 
@@ -16,7 +17,25 @@ const dryRun = process.argv.includes("--dry-run");
 const url = process.env.SUPABASE_URL;
 const secret = process.env.SUPABASE_SECRET_KEY;
 if (!url || !secret) {
-  console.error("SUPABASE_URL · SUPABASE_SECRET_KEY 가 없다 — --env-file 로 넘긴다");
+  // 무엇이 빠졌는지 이름만 알린다(값은 찍지 않는다). 넘긴 파일이 UTF-16 이면 node 가 한 줄도 못 읽으므로 그것도 알린다
+  const NEEDED = ["SUPABASE_URL", "SUPABASE_SECRET_KEY", "FANKKUK_PHONE_ENC_KEY", "FANKKUK_PHONE_HASH_KEY"];
+  console.error(`읽지 못한 이름: ${NEEDED.filter((n) => !process.env[n]).join(" · ")}`);
+  const envArg = process.execArgv.find((a) => a.startsWith("--env-file="));
+  if (!envArg) {
+    console.error("--env-file=<파일> 을 node 뒤, 스크립트 앞에 넘긴다");
+  } else {
+    const path = envArg.slice("--env-file=".length);
+    try {
+      const head = readFileSync(path).subarray(0, 2);
+      if ((head[0] === 0xff && head[1] === 0xfe) || (head[0] === 0xfe && head[1] === 0xff)) {
+        console.error(`${path} 가 UTF-16 으로 저장돼 있다 — 메모장 「다른 이름으로 저장」에서 인코딩을 UTF-8 로 바꿔 저장한다`);
+      } else {
+        console.error(`${path} 에 위 이름이 「이름=값」 한 줄로 있는지 본다(앞에 공백·export 없이)`);
+      }
+    } catch {
+      console.error(`${path} 를 열지 못했다 — 지금 폴더(projects/fankkuk) 기준 경로인지 본다`);
+    }
+  }
   process.exit(2);
 }
 const keys = readPhoneKeys(process.env);
