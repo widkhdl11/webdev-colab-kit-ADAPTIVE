@@ -1,6 +1,6 @@
 ---
 feature: 관리자 화면 — 권한·요금·대형 상자·목록 관리 (admin console)
-status: draft
+status: approved
 # ↑ 값은 반드시 이 줄에 붙여 쓴다.
 # 2026-11-09 개정 초안 — 요금 인상은 저장 뒤 30일 뒤 적용 (재승인 전까지 draft)
 # 이력:
