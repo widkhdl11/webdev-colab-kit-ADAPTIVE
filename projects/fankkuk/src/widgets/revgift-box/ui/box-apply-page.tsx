@@ -15,11 +15,14 @@ export function BoxApplyPage({
   token,
   accountId,
   sealingKeyPem,
+  now,
 }: {
   box: FanBox;
   token: string | null;
   accountId: string | null;
   sealingKeyPem: string | null;
+  /** 화면을 그린 서버 시각 — 배송 단계의 날짜 경계(delivery-status INV-DS1) */
+  now: string;
 }) {
   const router = useRouter();
   const here = `/gift-boxes/${box.id}${token ? `?invite=${encodeURIComponent(token)}` : ""}`;
@@ -35,6 +38,7 @@ export function BoxApplyPage({
           key={`${box.viewer}-${box.myState}-${box.open}`}
           box={box}
           token={token}
+          now={now}
           followSlot={<FollowButton creatorId={box.creator.id} creatorName={box.creator.name} initialFollowing={false} variant="profile" mode="save" />}
           address={{
             canEnter: sealingKeyPem !== null && accountId !== null,

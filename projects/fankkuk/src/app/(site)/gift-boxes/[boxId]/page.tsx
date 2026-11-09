@@ -30,7 +30,7 @@ export default async function Page({
   return (
     <>
       <SiteHeader {...header} />
-      <BoxApplyPage box={box} token={token} accountId={viewer?.userId ?? null} sealingKeyPem={readSealingPublicKeyPem(process.env)} />
+      <BoxApplyPage box={box} token={token} accountId={viewer?.userId ?? null} sealingKeyPem={readSealingPublicKeyPem(process.env)} now={new Date().toISOString()} />
       <SiteFooter />
     </>
   );

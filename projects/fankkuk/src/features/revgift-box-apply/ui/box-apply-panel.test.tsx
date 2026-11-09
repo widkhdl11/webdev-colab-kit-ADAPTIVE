@@ -7,10 +7,12 @@ import type { FanBox } from "@/entities/revgift-box/api/box-reads";
 // 시험 대상은 상태마다 보이는 것과, 신청 요청이 선물함·토큰과 칸이 봉인한 값·구분만 보내는지다(INV-GB6 — 팬 등록 주소는 없다, 2026-11-08).
 const sendApply = vi.fn();
 const sendWithdraw = vi.fn();
+const sendReceived = vi.fn();
 const refresh = vi.fn();
 vi.mock("../api/apply-requests", () => ({
   sendApply: (...a: unknown[]) => sendApply(...a),
   sendWithdraw: (...a: unknown[]) => sendWithdraw(...a),
+  sendReceived: (...a: unknown[]) => sendReceived(...a),
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh, push: () => {} }) }));
 
@@ -36,7 +38,10 @@ const BOX: FanBox = {
   open: true,
   viewer: "follower",
   myState: "none",
+  delivery: null,
 };
+/** 화면을 그린 서버 시각 — 서울 11월 12일 낮 */
+const NOW = "2026-11-12T03:00:00.000Z";
 
 const SEALED = { v: 1, alg: "RSA-OAEP-256+A256GCM", wrappedKey: "k", iv: "i", ciphertext: "c" } as const;
 
@@ -67,6 +72,7 @@ beforeEach(() => {
   root = createRoot(host);
   sendApply.mockReset();
   sendWithdraw.mockReset();
+  sendReceived.mockReset();
   refresh.mockReset();
 });
 afterEach(() => {
@@ -78,7 +84,7 @@ let mount = 0;
 /** 부를 때마다 새로 그린다(앞 상태를 이어받지 않게) */
 function render(box: Partial<FanBox>, address: Partial<ApplyAddressStep> = {}, token: string | null = null) {
   mount += 1;
-  act(() => root.render(<BoxApplyPanel key={mount} box={{ ...BOX, ...box }} token={token} address={{ ...ADDRESS, ...address }} followSlot={<button type="button">팔로우</button>} />));
+  act(() => root.render(<BoxApplyPanel key={mount} box={{ ...BOX, ...box }} token={token} address={{ ...ADDRESS, ...address }} followSlot={<button type="button">팔로우</button>} now={NOW} />));
 }
 /** 글자가 있는 버튼(확인 창의 닫기 아이콘 버튼은 뺀다) */
 const buttons = () => [...host.querySelectorAll("button")].map((b) => b.textContent).filter((x) => x);
@@ -149,5 +155,49 @@ describe("팬 신청 판", () => {
     expect(host.textContent).toBe("팬 계정만 신청할 수 있습니다.");
     render({ viewer: "owner" });
     expect(host.querySelector("a")?.getAttribute("href")).toBe(`/creator/revgift-boxes/${BOX.id}`);
+  });
+});
+
+describe("선물함 선물의 배송 단계 — 받는 쪽은 팬 (delivery-status INV-DS1·DS2·DS6)", () => {
+  const stageText = () => host.querySelector("[data-delivery-stage]")?.textContent ?? null;
+
+  it("INV-DS6: 송장 출력 전(배송 없음)은 그대로 「선물이 준비되고 있어요.」", () => {
+    render({ myState: "preparing", open: false, delivery: null });
+    expect(host.textContent).toBe("선물이 준비되고 있어요.");
+  });
+
+  it("INV-DS1: 송장 출력만 → 「팬꾹에서 보냈어요」, [받았어요] 없음(출고 전)", () => {
+    render({ myState: "preparing", open: false, delivery: { shippedOn: null, received: false, canConfirm: false } });
+    expect(stageText()).toBe("팬꾹에서 보냈어요");
+    expect(buttons()).toEqual([]);
+  });
+
+  it("INV-DS1: 출고 다음 날 → 「보통 1~2일 안에 도착해요」, 출고 + 3일 → 「도착했어요(예상)」 흐리게", () => {
+    render({ myState: "preparing", open: false, delivery: { shippedOn: "2026-11-11", received: false, canConfirm: true } });
+    expect(stageText()).toBe("보통 1~2일 안에 도착해요");
+    render({ myState: "preparing", open: false, delivery: { shippedOn: "2026-11-09", received: false, canConfirm: true } });
+    expect(stageText()).toBe("도착했어요(예상)");
+    expect(host.querySelector("[data-delivery-stage]")!.className).toMatch(/estimated/);
+  });
+
+  it("INV-DS2·DS6: [받았어요]를 누르면 선물함 ID 만 보내고 다시 읽는다 — 확인이 있으면 「도착했어요」, 버튼 없음", async () => {
+    sendReceived.mockResolvedValue({ ok: true });
+    render({ myState: "preparing", open: false, delivery: { shippedOn: "2026-11-11", received: false, canConfirm: true } });
+    const btn = [...host.querySelectorAll("button")].find((b) => b.textContent === "받았어요")!;
+    await act(async () => btn.click());
+    expect(sendReceived.mock.calls).toEqual([[BOX.id]]);
+    expect(refresh).toHaveBeenCalled();
+    render({ myState: "preparing", open: false, delivery: { shippedOn: "2026-11-09", received: true, canConfirm: false } });
+    expect(stageText()).toBe("도착했어요");
+    expect(host.querySelector("[data-delivery-stage]")!.className).not.toMatch(/estimated/);
+    expect(buttons()).toEqual([]);
+  });
+
+  it("INV-DS2 (실패경로): 서버가 거부하면 문구를 보이고 다시 읽지 않는다", async () => {
+    sendReceived.mockResolvedValue({ ok: false, status: 409, message: "아직 발송되지 않은 선물입니다." });
+    render({ myState: "preparing", open: false, delivery: { shippedOn: "2026-11-11", received: false, canConfirm: true } });
+    await act(async () => [...host.querySelectorAll("button")].find((b) => b.textContent === "받았어요")!.click());
+    expect(host.querySelector("[role=alert]")!.textContent).toBe("아직 발송되지 않은 선물입니다.");
+    expect(refresh).not.toHaveBeenCalled();
   });
 });

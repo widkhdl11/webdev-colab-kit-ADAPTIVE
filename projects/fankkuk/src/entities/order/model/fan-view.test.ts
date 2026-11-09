@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { OrderRecord } from "./order-record";
-import { toFanView, type FanOrderRecord } from "./fan-view";
+import { toFanView, withDeliveryStage, type FanOrderRecord } from "./fan-view";
 
 /** DB 판정(order_send_guide_shown)과 같게 addressShown 을 채운다 — 승인 중이거나 「먼저 보내기」를 눌렀으면 참. 승인 이력만 있는 경우는 직접 준다 */
 const fanView = (r: OrderRecord & { addressShown?: boolean }, office: string) =>
@@ -180,5 +180,43 @@ describe("office-workflow INV-W14: 추적기 보관·신고 보관·경찰 인�
     for (const inspection of [null, { result: "passed" as const, at: "2026-10-02T02:00:00.000Z" }, { result: "returned" as const, at: "2026-10-02T02:00:00.000Z" }]) {
       expect(fanView({ ...received, inspection }, OFFICE).inspectionChecking).toBe(false);
     }
+  });
+});
+
+describe("delivery-status: 팬 상세의 배송 단계", () => {
+  const printed = { ...shipped, status: "label_printed" as const, shippedAt: null, delivery: null };
+  it("INV-DS1: 송장 출력·출고 상태면 outboundPrinted, 그 전·끝난 주문은 아니다", () => {
+    expect(fanView(printed, OFFICE).outboundPrinted).toBe(true);
+    expect(fanView({ ...shipped, delivery: null }, OFFICE).outboundPrinted).toBe(true);
+    expect(fanView({ ...printed, status: "inspected" }, OFFICE).outboundPrinted).toBe(false);
+    expect(fanView({ ...printed, status: "canceled" }, OFFICE).outboundPrinted).toBe(false);
+  });
+
+  it("INV-DS3: 팬 보기 어디에도 크리에이터행 송장번호가 없다 — 값으로 찾아본다", () => {
+    const v = fanView(shipped, OFFICE);
+    expect(JSON.stringify(v)).not.toContain(shipped.outboundWaybillNo!);
+    expect(JSON.stringify(v)).toContain(shipped.fanTrackingNo!); // 같은 방법으로 팬이 넣은 자기 송장은 찾힌다 — 찾는 방법이 동작한다
+  });
+
+  const stepState = (v: ReturnType<typeof fanView>) => Object.fromEntries(v.steps.map((st) => [st.key, `${st.state}${st.estimated ? "~" : ""}`]));
+  const outbound = fanView({ ...shipped, delivery: null }, OFFICE);
+
+  it("INV-DS1: 보통 1~2일 → 배송 중 끝, 수령이 다음 단계", () => {
+    const st = stepState(withDeliveryStage(outbound, "on_the_way"));
+    expect([st.in_transit, st.delivered]).toEqual(["done", "current"]);
+  });
+  it("INV-DS2: 받는 쪽이 확인하면 수령까지 끝", () => {
+    const st = stepState(withDeliveryStage(outbound, "arrived"));
+    expect([st.in_transit, st.delivered]).toEqual(["done", "done"]);
+  });
+  it("INV-DS2 (실패경로): 예상 도착은 수령을 끝내지 않고 흐리게만 — 확정과 다르다", () => {
+    const st = stepState(withDeliveryStage(outbound, "arrived_estimated"));
+    expect([st.in_transit, st.delivered]).toEqual(["done", "current~"]);
+  });
+  it("INV-DS1: 팬꾹에서 보냈어요·단계 없음·끝난 주문은 막대를 바꾸지 않는다", () => {
+    expect(withDeliveryStage(outbound, "sent")).toBe(outbound);
+    expect(withDeliveryStage(outbound, null)).toBe(outbound);
+    const returned = fanView({ ...shipped, inspection: { result: "returned", at: "2026-10-02T02:00:00.000Z" } }, OFFICE);
+    expect(withDeliveryStage(returned, "arrived")).toBe(returned);
   });
 });

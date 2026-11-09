@@ -1,3 +1,4 @@
+import type { DeliveryStage } from "@/shared/lib/delivery/delivery-stage";
 import { isApprovalDeadlinePassed } from "./approval-time-left";
 import type { OrderRecord } from "./order-record";
 
@@ -10,7 +11,7 @@ import type { OrderRecord } from "./order-record";
 export type FanStepKey = "registered" | "received" | "inspected" | "shipped" | "in_transit" | "delivered";
 
 /** stopped = 그 단계에서 끝났다(검수 반송). 시각은 멈춘 때. */
-export type FanStep = { key: FanStepKey; at: string | null; state: "done" | "current" | "todo" | "stopped" };
+export type FanStep = { key: FanStepKey; at: string | null; state: "done" | "current" | "todo" | "stopped"; estimated?: boolean };
 
 /** 크리에이터 승인 — 줄 세운 단계가 아니라 출고의 조건이라 따로 둔다(언제 끝나도 된다, 출고 전에만 있으면 된다).
  *  waiting = 검수가 끝나 출고가 승인만 기다린다 / todo = 아직 기다릴 때가 아니다(검수 전) */
@@ -30,6 +31,8 @@ export type FanGiftView = {
   canEnterTrackingNo: boolean;
   fanTrackingNo: string | null;
   expectedArrivalDate: string | null;
+  /** 크리에이터행 송장을 출력했는가(송장 출력·출고 상태) — 배송 단계 「팬꾹에서 보냈어요」의 시작(delivery-status INV-DS1). 송장번호 자체는 없다 */
+  outboundPrinted: boolean;
   /** 승인 전 진행 중 주문인데 「먼저 보내기」를 아직 누르지 않았다 — 받는 주소가 아직 없으니 「보내 주세요」라고 하지 않는다(INV-S9) */
   earlySendPending: boolean;
   /** 나만 보는 메모의 선물 이름(together INV-F7) — 보낸 사람 본인 목록 읽기(my_gifts)만 채운다. 없으면 null·없음 */
@@ -91,6 +94,7 @@ export function toFanView(r: FanOrderRecord, officeAddress: string): FanGiftView
     officeAddress: outcome === "in_progress" ? officeAddress : null,
     canEnterTrackingNo: outcome === "in_progress" && r.receivedAt === null,
     fanTrackingNo: r.fanTrackingNo,
+    outboundPrinted: outcome === "in_progress" && (r.status === "label_printed" || r.status === "shipped"),
     expectedArrivalDate: r.expectedArrivalDate,
     // INV-S9 · approval-cancel INV-AC6: 승인 중 · 「먼저 보내기」 기록 · 승인 이력(DB 판정 addressShown) 중 하나라도 있으면 안내를 띄우지 않는다
     earlySendPending: outcome === "in_progress" && !r.addressShown,
@@ -116,4 +120,21 @@ export function withApprovalDeadline(view: FanGiftView, now: string): FanGiftVie
     earlySendPending: false,
     inspectionChecking: false,
   };
+}
+
+/**
+ * 배송 단계(delivery-status INV-DS1·DS2)를 단계 막대에 얹는다 — 상세 화면만 쓴다. 단계는 shared/lib/delivery 의 deliveryStage 가 정하고(받는 쪽 확인은
+ * 상자별 받았어요 읽기에서 온다), 여기서는 막대의 「배송 중」·「수령」 칸만 바꾼다:
+ * 보통 1~2일 → 배송 중 끝 · 수령이 다음 / 도착했어요(확정) → 수령까지 끝 / 도착했어요(예상) → 수령은 아직 다음 단계이고 흐리게(estimated).
+ * 목록·헤더 아이콘·탈퇴 기준은 이 값을 쓰지 않는다 — 웹훅 연결 전에는 출고 기준 그대로(결정 ⑧).
+ */
+export function withDeliveryStage(view: FanGiftView, stage: DeliveryStage | null): FanGiftView {
+  if (view.outcome !== "in_progress" || stage === null || stage === "sent") return view;
+  const doneKeys: FanStepKey[] = stage === "arrived" ? ["in_transit", "delivered"] : ["in_transit"];
+  const steps: FanStep[] = view.steps.map((st) => {
+    if (doneKeys.includes(st.key)) return { ...st, state: "done" };
+    if (st.key === "delivered") return { ...st, state: "current", ...(stage === "arrived_estimated" ? { estimated: true } : {}) };
+    return st;
+  });
+  return { ...view, steps };
 }

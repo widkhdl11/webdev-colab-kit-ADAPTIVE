@@ -203,6 +203,8 @@ describe("INV-GB6: 신청 주소는 봉인된 값만 — 평문·우편번호가
       "revgift_box_cancel",
       "revgift_box_choose_cancelled_arrival",
       "revgift_box_close",
+      // 배송 현황(20261109000004): 받는 팬의 받았어요 — 받는 값은 선물함 id 뿐이다(delivery-status INV-DS6)
+      "revgift_box_fan_received",
       "revgift_box_for_fan",
       "revgift_box_price_table",
       "revgift_box_renew_invite",
@@ -329,7 +331,8 @@ describe("INV-GB9: 크리에이터에게 보이는 팬 정보는 닉네임·신�
     addApp(boxId, PROFILE.byeolbit, "excluded");
     addApp(boxId, PROFILE.gureumppang);
     const seen = (await byeolbit.rpc("revgift_box_for_fan", { p_box_id: boxId, p_token: null })).data as Record<string, unknown>;
-    expect(Object.keys(seen).sort()).toEqual(["creator", "id", "my_state", "name", "open", "viewer"]);
+    expect(Object.keys(seen).sort()).toEqual(["creator", "delivery", "id", "my_state", "name", "open", "viewer"]);
+    expect(seen.delivery).toBeNull(); // 송장 출력 전 — 배송 재료 없음(delivery-status INV-DS6)
     expect(seen.my_state).toBe("applied");
     expect(JSON.stringify(seen)).not.toContain("구름빵");
     // 크리에이터 상세의 입구 — 공개·open 선물함 이름뿐, 로그인 없이도

@@ -3,7 +3,6 @@ import { CREATOR_ACTION_CENTER_HREF, daysLeftOf, type ApprovalItem, type Creator
 import { actionTargetsOf, hasActionButton } from "../model/action-targets";
 import {
   canFind,
-  canTrack,
   countProgress,
   receivedStepOf,
   sentStepOf,
@@ -18,17 +17,16 @@ import { tierName } from "@/entities/parcel/model/size-tier";
 import { ApprovalCancelButton } from "@/features/approval-request/ui/approval-cancel-button";
 import type { SentBoxCandidate } from "@/features/box-waybill/ui/find-sent-box";
 import { FindSentBoxButton } from "@/features/box-waybill/ui/find-sent-box-button";
-import { TrackBoxButton } from "@/features/box-waybill/ui/track-box-button";
 import { formatDateTime, formatMonthDayKo } from "@/shared/lib/format/datetime";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import s from "./gift-progress.module.css";
 
-// 크리에이터 선물 현황 (action-center INV-J9~J11, design-rules 23-3절, 시안 v37-part2/progress.html · 배송 조회 창은 v21-addendum3/cre-action-center-c.html 창 A).
+// 크리에이터 선물 현황 (action-center INV-J9~J11, design-rules 23-3절, 시안 v37-part2/progress.html).
 // 승인 대기는 하늘 판 하나(건수·팬 얼굴·「지금 할 일」), 받는 선물은 같은 모양 카드(5칸 막대 + n/5), 보내는 선물은 보낸 날별 촘촘한 줄.
 // 읽기 전용 — 줄·카드는 DB 읽기 한 번의 결과 그대로다.
 // 카드·줄마다 다섯 칸 막대 + 단계 이름(단계는 기존 읽기에서 — J9). 늦거나 손이 필요한 줄은 단계 이름을 강조색.
-// 버튼은 필요한 줄에만: 배송 조회(보내는 선물의 늦은 입고 전 몫 — J11, 받는 선물에는 없다 카드 d93 ④) ·
-// 「내 상자 찾기」(보내는 선물의 입고 전 몫마다, 늦지 않아도 — J10 카드 d96 ①) · 「처리할 일」(처리할 일 읽기 결과에 있는 줄만 — J11).
+// 버튼은 필요한 줄에만: 「내 상자 찾기」(보내는 선물의 입고 전 몫마다, 늦지 않아도 — J10 카드 d96 ①) · 「처리할 일」(처리할 일 읽기 결과에 있는 줄만 — J11).
+// 배송 조회(외부 택배사 조회 링크)는 두지 않는다(2026-11-09 결정 ③, delivery-status INV-DS3).
 // 받는 선물 카드에는 서버가 취소 가능하다고 준 주문(approval-cancel INV-AC4 — 송장 출력 전)에만 「승인 취소」 글자 버튼(「지금 할 일」 왼쪽, UX 명세 creator-requests).
 // 그 밖에 상태를 바꾸는 처리는 여기 없다 — 「내 상자 찾기」 창이 정해진 찾기 처리를 부를 뿐이다(inbound-address-code INV-C4 ②-나).
 
@@ -139,7 +137,6 @@ export function GiftProgressPage({ progress, items, candidates, cancelTargets = 
   function sentRow(r: SentProgress, sentAt: string, i: number) {
     const step = sentStepOf(r);
     const action = hasActionButton(r, targets);
-    const meta = `${r.nickname}님 · ${tierName(r.tier)} 상자 · ${formatMonthDayKo(sentAt)} 결제 완료`;
     return (
       <li key={r.orderNo} className={`lrow ${s.row}`} data-row="">
         <FaceAvatar index={i} className="face face--sm" />
@@ -152,7 +149,6 @@ export function GiftProgressPage({ progress, items, candidates, cancelTargets = 
             <Cells step={step} className="segs" />
             <StepLabel step={step} alert={step.key === "late" || action} />
           </span>
-          {canTrack(r) ? <TrackBoxButton className="btn btn--sm btn--line" meta={meta} label={`배송 조회(${r.nickname}님)`} /> : null}
           {canFind(r, findable) ? (
             <FindSentBoxButton className="btn btn--sm btn--line" candidates={candidates} shareId={r.shareId} meta={`${formatMonthDayKo(sentAt)} 결제 완료`} label={`내 상자 찾기(${r.nickname}님)`} />
           ) : null}

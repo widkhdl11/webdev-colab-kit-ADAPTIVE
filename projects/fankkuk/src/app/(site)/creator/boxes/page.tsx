@@ -24,7 +24,7 @@ export default async function Page() {
     <>
       <SiteHeader {...header} />
       <MyShell width="list">
-        <ReceivedBoxesPage received={received} replyPending={replyPending} />
+        <ReceivedBoxesPage received={received} replyPending={replyPending} now={new Date().toISOString()} />
       </MyShell>
       <SiteFooter />
     </>

@@ -35,7 +35,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   return (
     <>
       <SiteHeader {...header} />
-      <BoxManagePage box={box} applyUrl={url.toString()} price={price} cards={cards} clientKey={process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? ""} notice={notice} />
+      <BoxManagePage box={box} applyUrl={url.toString()} price={price} cards={cards} clientKey={process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? ""} notice={notice} now={new Date().toISOString()} />
       <SiteFooter />
     </>
   );

@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseCreatorActionItems } from "@/entities/action-item/model/creator-action-items";
 import { parseGiftProgressRows } from "../model/gift-progress";
 
-// 크리에이터 선물 현황 화면 (action-center INV-J9~J11, design-rules 13절, 시안 v21-addendum3/cre-progress.html · 배송 조회 창은 cre-action-center-c.html 창 A).
-// 버튼은 배송 조회(늦은 입고 전 몫), 「내 상자 찾기」(입고 전 몫마다), 「처리할 일」(처리할 일 읽기 결과에 있는 줄)뿐 — 상태를 바꾸는 처리는 없다.
+// 크리에이터 선물 현황 화면 (action-center INV-J9~J11, design-rules 13절, 시안 v21-addendum3/cre-progress.html).
+// 버튼은 「내 상자 찾기」(입고 전 몫마다), 「처리할 일」(처리할 일 읽기 결과에 있는 줄)뿐 — 상태를 바꾸는 처리는 없다. 배송 조회(외부 택배사 링크)는 2026-11-09 결정 ③으로 뺐다.
 const postFind = vi.fn();
 vi.mock("@/features/box-waybill/api/post-waybill-client", async (orig) => ({ ...(await orig<object>()), postFind: (...a: unknown[]) => postFind(...a) }));
 const refresh = vi.fn();
@@ -168,13 +168,12 @@ describe("INV-J11·J10: 버튼은 필요한 줄에만", () => {
     expect(step(rowOf("꿀단지님", "보내는 선물")).late).toBe(false);
   });
 
-  it("INV-J11: 배송 조회는 보내는 선물의 늦은 입고 전 줄에만 — 받는 선물(배송 중이어도)·늦지 않은 줄에는 없다(카드 d93 ④)", () => {
+  it("INV-DS3 (INV-J10 고침): 배송 조회 버튼·외부 택배사 조회 링크는 어느 줄에도 없다 — 늦은 입고 전 줄에도", () => {
     render();
-    const track = (li: Element) => buttonsIn(li).filter((t) => t === "배송 조회").length;
-    expect(track(rowOf("모카님", "보내는 선물"))).toBe(1);
-    expect(track(rowOf("꿀단지님", "보내는 선물"))).toBe(0);
-    expect(track(rowOf("소라님", "받는 선물"))).toBe(0);
-    expect([...host.querySelectorAll("button")].filter((b) => b.textContent === "배송 조회")).toHaveLength(1);
+    expect([...host.querySelectorAll("button")].filter((b) => b.textContent === "배송 조회")).toHaveLength(0);
+    expect(host.querySelector("a[target=_blank]")).toBeNull();
+    // 같은 줄의 「내 상자 찾기」는 그대로 있다 — 줄을 제대로 그린 상태에서 본 것이다
+    expect(buttonsIn(rowOf("모카님", "보내는 선물"))).toContain("내 상자 찾기");
   });
 
   it("INV-J10 (카드 d96 ①): 「내 상자 찾기」는 보내는 선물의 입고 전 줄마다 — 늦지 않아도 있고, 출고된 줄·받는 선물에는 없다", () => {
@@ -239,58 +238,6 @@ describe("INV-C4 ②-나: 찾은 뒤", () => {
     expect(refresh).not.toHaveBeenCalled();
     act(() => d.querySelector<HTMLButtonElement>('button[aria-label="닫기"]')!.click());
     expect(refresh).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("INV-J10 S10b: 배송 조회 창은 택배사 조회 페이지 링크만 — 서버를 부르지 않는다", () => {
-  it("INV-J10 S10b: 택배사·송장번호를 넣으면 그 택배사 조회 주소가 새 탭 링크로, 찾기·저장 요청은 없다", () => {
-    render();
-    const btn = [...rowOf("모카님", "보내는 선물").querySelectorAll("button")].find((b) => b.textContent === "배송 조회")!;
-    act(() => btn.click());
-    const d = host.querySelector("dialog[open]")!;
-    expect(d.querySelector("h2")?.textContent).toBe("배송 조회");
-    expect(d.querySelector("a[target=_blank]")).toBeNull();
-    const select = d.querySelector("select")!;
-    // 화면 리뷰 U3: 열리면 첫 초점은 택배사 칸
-    expect(document.activeElement).toBe(select);
-    expect([...select.options].map((o) => o.value)).not.toContain("etc");
-    act(() => {
-      select.value = "cj";
-      select.dispatchEvent(new Event("change", { bubbles: true }));
-    });
-    const input = d.querySelector<HTMLInputElement>("input")!;
-    act(() => {
-      const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
-      set.call(input, "5689 1234 0017");
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    const link = d.querySelector<HTMLAnchorElement>("a[target=_blank]")!;
-    expect(link.href).toContain("cjlogistics.com");
-    expect(link.href).toContain("568912340017");
-    expect(link.rel).toBe("noopener noreferrer");
-    expect(link.textContent).toBe("CJ대한통운에서 배송 조회(새 탭)");
-    expect(link.querySelector("svg[aria-hidden=true]")).not.toBeNull();
-    act(() => link.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })));
-    expect(postFind).not.toHaveBeenCalled();
-    expect(fetchSpy).not.toHaveBeenCalled();
-    expect(refresh).not.toHaveBeenCalled();
-  });
-
-  it("INV-J10 S10b (실패경로): 송장번호 꼴이 아니면 링크가 없다", () => {
-    render();
-    act(() => [...rowOf("모카님", "보내는 선물").querySelectorAll("button")].find((b) => b.textContent === "배송 조회")!.click());
-    const d = host.querySelector("dialog[open]")!;
-    const select = d.querySelector("select")!;
-    act(() => {
-      select.value = "cj";
-      select.dispatchEvent(new Event("change", { bubbles: true }));
-    });
-    const input = d.querySelector<HTMLInputElement>("input")!;
-    act(() => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "1234");
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    expect(d.querySelector("a[target=_blank]")).toBeNull();
   });
 });
 

@@ -3,6 +3,8 @@
 .card > p { overflow-wrap: anywhere; }
 .secH { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
 .done { font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; }
+/* 「도착했어요(예상)」 — 받았어요 없이 날짜로 짐작한 도착은 흐린 글(delivery-status INV-DS2) */
+.estimated { color: var(--faint); font-weight: 400; }
 .onFile { padding: var(--space-4); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: inset 0 0 0 1px var(--gray-200); font-weight: var(--fw-btn); }
 .choice { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 

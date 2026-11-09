@@ -63,3 +63,6 @@
   .noPrint { display: none !important; }
   .labels { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* 명세서 진행 칸 「도착했어요(예상)」 — 받았어요 없이 날짜로 짐작한 도착은 흐린 글(delivery-status INV-DS2) */
+.estimated { color: var(--faint); }

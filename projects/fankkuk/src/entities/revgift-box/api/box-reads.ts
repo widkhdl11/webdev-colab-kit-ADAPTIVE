@@ -19,6 +19,8 @@ import { CHOSEN_TIERS, INVOICE_TIERS, SURCHARGE_REGIONS, type ChosenTier, type I
 type Rpc = Pick<SupabaseClient, "rpc">;
 
 const uuid = z.string().uuid();
+/** 서울 날짜 YYYY-MM-DD — 시각이 섞여 오면 받지 않는다 */
+const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 export type MyBoxRow = { id: string; name: string; capacity: number; isPublic: boolean; status: BoxStatus; createdAt: string; activeCount: number };
 export type BoxApplication = { id: string; nickname: string; appliedAt: string; status: ApplicationStatus; chosenTier: ChosenTier | null };
@@ -35,6 +37,8 @@ export type InvoiceLine = {
   serviceFeeKrw: number;
   amountKrw: number;
   progress: LineProgress;
+  /** 배송 단계 재료(delivery-status INV-DS1·DS2) — 송장 출력 여부 · 출고한 서울 날짜 · 팬의 받았어요. 송장번호는 없다(INV-DS3) */
+  delivery: { printed: boolean; shippedOn: string | null; received: boolean };
 };
 export type BoxInvoice = {
   amountKrw: number;
@@ -65,7 +69,17 @@ export type MyBox = {
   applications: BoxApplication[];
   invoice: BoxInvoice | null;
 };
-export type FanBox = { id: string; name: string; creator: { id: string; slug: string; name: string }; open: boolean; viewer: BoxViewer; myState: FanBoxState };
+/** 팬의 내 배송 — 송장을 출력했거나 출고된 내 신청일 때만. 송장번호는 없다(delivery-status INV-DS3). canConfirm = 출고됐고 아직 받았어요 전 */
+export type FanBoxDelivery = { shippedOn: string | null; received: boolean; canConfirm: boolean };
+export type FanBox = {
+  id: string;
+  name: string;
+  creator: { id: string; slug: string; name: string };
+  open: boolean;
+  viewer: BoxViewer;
+  myState: FanBoxState;
+  delivery: FanBoxDelivery | null;
+};
 export type CreatorOpenBox = { id: string; name: string };
 
 const myBoxRow = z
@@ -94,6 +108,9 @@ const invoiceLineRow = z
     service_fee_krw: z.number().int(),
     amount_krw: z.number().int(),
     progress: z.enum(LINE_PROGRESS),
+    printed: z.boolean(),
+    shipped_on: day.nullable(),
+    received: z.boolean(),
   })
   .strict();
 const invoiceRow = z
@@ -136,6 +153,7 @@ const fanBoxSchema = z
     open: z.boolean(),
     viewer: z.enum(BOX_VIEWERS),
     my_state: z.enum(FAN_BOX_STATES),
+    delivery: z.object({ shipped_on: day.nullable(), received: z.boolean(), can_confirm: z.boolean() }).strict().nullable(),
   })
   .strict();
 
@@ -189,6 +207,7 @@ export async function readMyBox(client: Rpc, boxId: string): Promise<MyBox | nul
             serviceFeeKrw: l.service_fee_krw,
             amountKrw: l.amount_krw,
             progress: l.progress,
+            delivery: { printed: l.printed, shippedOn: l.shipped_on, received: l.received },
           })),
         }
       : null,
@@ -290,7 +309,8 @@ export async function readBoxForFan(client: Rpc, boxId: string, token: string | 
   if (error) throw new Error(`선물함을 읽지 못했다: ${error.code}`);
   if (data === null) return null;
   const b = fanBoxSchema.parse(data);
-  return { id: b.id, name: b.name, creator: b.creator, open: b.open, viewer: b.viewer, myState: b.my_state };
+  const delivery = b.delivery ? { shippedOn: b.delivery.shipped_on, received: b.delivery.received, canConfirm: b.delivery.can_confirm } : null;
+  return { id: b.id, name: b.name, creator: b.creator, open: b.open, viewer: b.viewer, myState: b.my_state, delivery };
 }
 
 /** 크리에이터 상세의 입구 — 그 크리에이터의 공개·신청 받는 중인 선물함 */

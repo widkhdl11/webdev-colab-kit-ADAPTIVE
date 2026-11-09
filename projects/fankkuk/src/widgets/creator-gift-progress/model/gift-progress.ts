@@ -180,11 +180,6 @@ export function sentStepOf(r: Pick<SentProgress, "replyState" | "boxState" | "la
   return { key: "to_office", cells: 2 };
 }
 
-/** INV-J11: 배송 조회 버튼 — 보내는 선물의 입고 전 몫이 늦을 때만(DB late 칸, 처리할 일 미확인 상자 줄과 같은 함수) */
-export function canTrack(r: Pick<SentProgress, "late" | "beforeInbound">): boolean {
-  return r.late && r.beforeInbound;
-}
-
 /** INV-J10(카드 d96 ①): 「내 상자 찾기」 버튼 — 입고 전 몫이고, 찾기 창 후보(같은 판정의 읽기)에 그 몫이 있을 때. 늦지 않아도 */
 export function canFind(r: Pick<SentProgress, "beforeInbound" | "shareId">, candidateShareIds: ReadonlySet<string>): boolean {
   return r.beforeInbound && candidateShareIds.has(r.shareId);

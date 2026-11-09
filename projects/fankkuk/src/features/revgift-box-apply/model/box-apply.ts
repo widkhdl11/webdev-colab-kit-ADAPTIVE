@@ -69,3 +69,21 @@ export async function withdrawBox(deps: Deps, boxId: string): Promise<{ ok: true
   }
   return { ok: true };
 }
+
+/**
+ * 팬의 [받았어요](delivery-status INV-DS2·DS6) — 선물함 ID 만 보낸다. 신청은 DB 가 로그인 토큰의 팬 것만 찾고, 출고 뒤에만 남긴다.
+ * 이미 남겼으면 그대로 성공(처음 시각 하나만 남는다).
+ */
+export async function confirmBoxReceived(deps: Deps, boxId: string): Promise<{ ok: true } | ApplyRefusal> {
+  if (!deps.viewer) return LOGIN;
+  if (deps.viewer.role !== "fan") return { ok: false, status: 403, message: "팬 계정만 확인할 수 있습니다." };
+  if (!uuid.safeParse(boxId).success) return NOT_FOUND;
+  const { error } = await deps.client.rpc("revgift_box_fan_received", { p_box_id: boxId });
+  if (error) {
+    if (error.code === "P0002") return { ok: false, status: 404, message: "신청 내역을 찾을 수 없습니다." };
+    if (error.code === "P0022") return { ok: false, status: 409, message: "아직 발송되지 않은 선물입니다." };
+    if (error.code === "42501") return LOGIN;
+    throw new Error(`받았어요를 저장하지 못했다: ${error.code}`);
+  }
+  return { ok: true };
+}

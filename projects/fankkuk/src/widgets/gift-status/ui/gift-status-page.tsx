@@ -2,7 +2,8 @@ import { statusTagClass } from "@/shared/ui/status-tone";
 import { DIFFERENCE_DEADLINE_DAYS } from "@/entities/payment/config/difference-deadline";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { withApprovalDeadline, type FanGiftView, type FanStep } from "@/entities/order/model/fan-view";
+import { withApprovalDeadline, withDeliveryStage, type FanGiftView, type FanStep } from "@/entities/order/model/fan-view";
+import { deliveryStage, isEstimatedStage } from "@/shared/lib/delivery/delivery-stage";
 import {
   APPROVAL_LABEL,
   awaitsApproval,
@@ -112,7 +113,14 @@ export function GiftStatusPage({
   paid?: boolean;
 }) {
   // 기한이 지났는데 자동 처리 전인 승인 전 주문은 자동 반려와 같게(INV-S6 S6c) — 아래 판정은 모두 이 view 로
-  const view = now ? withApprovalDeadline(readView, now) : readView;
+  const deadlineView = now ? withApprovalDeadline(readView, now) : readView;
+  // 배송 단계(delivery-status INV-DS1·DS2) — 송장 출력·출고 날·크리에이터의 받았어요(답장 스탬프 포함)와 지금 시각으로. 송장번호는 이 계산에도 화면에도 없다(INV-DS3)
+  const outboundShippedAt = deadlineView.steps.find((st) => st.key === "shipped" && st.state === "done")?.at ?? null;
+  const stage =
+    now && deadlineView.outcome === "in_progress"
+      ? deliveryStage({ printed: deadlineView.outboundPrinted, shippedAt: outboundShippedAt, confirmed: replies.some((r) => r.received) }, now)
+      : null;
+  const view = withDeliveryStage(deadlineView, stage);
   const progress = fanProgress(view);
   // 배지의 「N/6」은 지금 있는 단계 번호다 — 끝낸 단계 수(4)를 쓰면 아래 진행 줄의 현재 단계(5번 배송중)와 숫자가 어긋났다(2026-10-09 디자인 점검)
   const currentIdx = view.steps.findIndex((st) => st.state === "current");
@@ -132,7 +140,8 @@ export function GiftStatusPage({
   const badges = fanDetailBadges(view);
   // 승인 전 진행 중 — 출고 아래 「승인 필요」, 선물 정보 카드의 노란 칸(INV-S9)
   const approvalPending = awaitsApproval(view);
-  const headline = fanHeadline(view);
+  const headline = fanHeadline(view, stage);
+  const headlineEstimated = stage !== null && isEstimatedStage(stage);
   const anyAddress = officeAddress !== null && boxes.some((b) => giftAddressCode(b, officeAddress, inProgress) !== null);
   // 차액 줄은 고른 뒤의 길이로 섹션을 그릴지 정한다 — 끝난 주문에 낸 기록이 없으면 빈 섹션을 그리지 않는다.
   // 결제가 필요한 줄은 맨 위 「지금 할 일」 칸에서만 결제한다(INV-J13) — 아래에는 확인 중·완료·닫힘 줄만. 결제창에서 돌아온 안내는 줄이 없어도 보인다
@@ -205,14 +214,16 @@ export function GiftStatusPage({
                   </p>
                 ) : null}
               </div>
-              <p className={s.msg}>{headline}</p>
+              <p className={headlineEstimated ? `${s.msg} ${s.estimated}` : s.msg} data-delivery-stage={stage ?? undefined}>
+                {headline}
+              </p>
             </div>
             {showsProgress ? (
               <ol className={s.steps} aria-label={`선물 진행 단계 ${progress.total}단계 중 ${progress.done}단계 완료`}>
                 {view.steps.map((st, i) => {
                   const note = stepNote(st, i);
                   return (
-                    <li key={st.key} className={STEP_CLASS[st.state]} aria-current={st.state === "current" ? "step" : undefined}>
+                    <li key={st.key} className={st.estimated ? `${STEP_CLASS[st.state] ?? ""} ${s.estimated}` : STEP_CLASS[st.state]} aria-current={st.state === "current" ? "step" : undefined}>
                       {FAN_STEP_LABEL[st.key]}
                       {st.state === "done" ? <span className="sr-only"> 완료</span> : null}
                       {st.state === "stopped" ? <span className="sr-only"> 멈춤</span> : null}

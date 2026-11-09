@@ -17,6 +17,8 @@ import {
   replyLineMessage,
   type ReplyPhrase,
 } from "@/entities/gift-reply/model/reply";
+import { DELIVERY_STAGE_LABEL } from "@/shared/config/delivery-status";
+import { deliveryStage, isEstimatedStage, type DeliveryStage } from "@/shared/lib/delivery/delivery-stage";
 import { monthHeadKo, seoulYearMonth } from "@/shared/lib/format/datetime";
 import { charCount } from "@/shared/lib/validation/char-count";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
@@ -143,18 +145,23 @@ function ReplyForm({ box, mode, onDone }: { box: ReceivedBox; mode: FormMode; on
   );
 }
 
-/** 카드 아래·줄 오른쪽 한 줄 — 출고 날 + 답장 상태 */
-function footText(box: ReceivedBox, dense: boolean): string {
+/** 배송 단계(delivery-status INV-DS1·DS2) — 받는 쪽은 이 크리에이터다. 받았어요(답장 포함)를 남겼으면 「도착했어요」. 날짜 경계는 화면을 그린 서버 시각으로 */
+function stageOf(box: ReceivedBox, now: string): DeliveryStage | null {
+  return deliveryStage({ printed: true, shippedAt: box.shippedOn, confirmed: box.replyState !== "none" || box.receivedOn !== null }, now);
+}
+
+/** 카드 아래·줄 오른쪽 한 줄 — 출고 날 + 답장 상태. 아직 받았어요를 남기지 않은 상자는 배송 단계 */
+function footText(box: ReceivedBox, dense: boolean, stage: DeliveryStage | null): string {
   const shipped = `${monthDayText(box.shippedOn)} 출고`;
   if (box.replyState === "confirmed") return `${shipped} · 수령 확인`;
   if (box.replyState === "deleted") return `${shipped} · 답장 삭제`;
   if (box.replyState === "replied" && box.reply) {
     return dense ? `${shipped} · 「${REPLY_PHRASE_TEXT[box.reply.phrase]}」 답장` : `${shipped} · ${monthDayText(box.reply.repliedOn)} 답장`;
   }
-  return shipped;
+  return stage ? `${shipped} · ${DELIVERY_STAGE_LABEL[stage]}` : shipped;
 }
 
-function ReceivedRow({ box, index, dense, onStatus }: { box: ReceivedBox; index: number; dense: boolean; onStatus: (text: string) => void }) {
+function ReceivedRow({ box, index, dense, now, onStatus }: { box: ReceivedBox; index: number; dense: boolean; now: string; onStatus: (text: string) => void }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -163,6 +170,8 @@ function ReceivedRow({ box, index, dense, onStatus }: { box: ReceivedBox; index:
   const actions = replyActionsOf(box.replyState);
   const formMode: FormMode = actions.confirm ? "confirm" : "add";
   const formOpen = open && (actions.confirm || actions.addReply);
+  const stage = stageOf(box, now);
+  const footClass = stage && isEstimatedStage(stage) ? s.estimated : undefined;
 
   const remove = async () => {
     if (busy) return;
@@ -224,7 +233,9 @@ function ReceivedRow({ box, index, dense, onStatus }: { box: ReceivedBox; index:
             <span className="meta">{boxText(box)}</span>
           </p>
           <div className={`lrow-side ${s.dside}`}>
-            <span>{footText(box, true)}</span>
+            <span className={footClass} data-delivery-stage={stage ?? undefined}>
+              {footText(box, true, stage)}
+            </span>
             {action}
           </div>
         </div>
@@ -257,7 +268,9 @@ function ReceivedRow({ box, index, dense, onStatus }: { box: ReceivedBox; index:
           ) : null}
           {errorLine}
           <div className={s.bfoot}>
-            <span>{footText(box, false)}</span>
+            <span className={footClass} data-delivery-stage={stage ?? undefined}>
+              {footText(box, false, stage)}
+            </span>
             {action}
           </div>
         </>
@@ -279,7 +292,8 @@ function byMonth(boxes: readonly ReceivedBox[]): Month[] {
   return out;
 }
 
-export function ReceivedBoxList({ boxes, pending }: { boxes: readonly ReceivedBox[]; pending: number }) {
+/** now = 화면을 그린 서버 시각(배송 단계의 날짜 경계) */
+export function ReceivedBoxList({ boxes, pending, now }: { boxes: readonly ReceivedBox[]; pending: number; now: string }) {
   const [status, setStatus] = useState("");
   const months = byMonth(boxes);
   const base = months[0]?.key ?? "";
@@ -302,7 +316,7 @@ export function ReceivedBoxList({ boxes, pending }: { boxes: readonly ReceivedBo
               {/* 가장 최근 달만 카드, 지난 달은 촘촘한 줄(design-rules 23-3) */}
               <ul className={mi === 0 ? s.bcards : `lrows ${s.drows}`} aria-label={`${monthHeadKo(m.key, base)} 받은 선물 상자`}>
                 {m.boxes.map((b) => (
-                  <ReceivedRow key={b.boxId} box={b} index={n++} dense={mi > 0} onStatus={setStatus} />
+                  <ReceivedRow key={b.boxId} box={b} index={n++} dense={mi > 0} now={now} onStatus={setStatus} />
                 ))}
               </ul>
             </section>

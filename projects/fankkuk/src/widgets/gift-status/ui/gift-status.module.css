@@ -31,12 +31,15 @@
 .when :global(.tag.tag--warn) { background: var(--warn-soft); color: var(--warn-ink); }
 .big.big { margin-top: var(--space-2); overflow-wrap: anywhere; }
 .msg { min-width: 0; font-weight: var(--fw-btn); overflow-wrap: anywhere; }
+/* 「도착했어요(예상)」 — 받는 쪽 확인 없이 날짜로 짐작한 도착은 흐리게(delivery-status INV-DS2). 글자 색은 보조 글자 색, 막대 칸은 반쯤 채움 */
+.msg.estimated { color: var(--sub); font-weight: 400; } /* 하늘 판 위라 --faint 는 4.5:1 아래 — 보조 글 색 + 보통 굵기로 흐리게 */
 
 /* 6단계 — 칸마다 막대 8 + 이름·작은 글 (시안 .dsteps). 끝낸 단계 하늘, 다음 단계는 테두리만 */
 .steps { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--space-1); margin: var(--space-6) 0 0; padding: 0; list-style: none; }
 .steps > li { min-width: 0; font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
 .steps > li::before { content: ""; display: block; height: 8px; margin-bottom: var(--space-2); border-radius: var(--r-pill); background: var(--white); }
 .steps > li.done, .steps > li.stopped { color: var(--ink); }
+.steps > li.estimated::before { background: var(--bar-fill-fx); opacity: 0.45; }
 .steps > li.done::before { background: var(--bar-fill-fx); transform-origin: left center; animation: bar-fill 0.5s var(--ease-micro) both; } /* 채운 칸 옅은 면 + 왼쪽부터 차례로 차오름(23-2) */
 .steps > li.done:nth-child(2)::before { animation-delay: 0.05s; }
 .steps > li.done:nth-child(3)::before { animation-delay: 0.1s; }

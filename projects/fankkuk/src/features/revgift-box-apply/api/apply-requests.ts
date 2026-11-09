@@ -31,3 +31,6 @@ export function sendApply(boxId: string, token: string | null, envelope: Envelop
 export function sendWithdraw(boxId: string): Promise<ApplyOutcome> {
   return post(`/api/revgift-boxes/${encodeURIComponent(boxId)}/withdraw`, {});
 }
+export function sendReceived(boxId: string): Promise<ApplyOutcome> {
+  return post(`/api/revgift-boxes/${encodeURIComponent(boxId)}/received`, {});
+}

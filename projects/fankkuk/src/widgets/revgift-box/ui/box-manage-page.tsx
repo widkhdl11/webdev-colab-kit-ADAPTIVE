@@ -18,6 +18,7 @@ export function BoxManagePage({
   cards,
   clientKey,
   notice,
+  now,
 }: {
   box: MyBox;
   applyUrl: string;
@@ -25,6 +26,8 @@ export function BoxManagePage({
   cards: readonly BoxCard[];
   clientKey: string;
   notice: PayNotice;
+  /** 화면을 그린 서버 시각 — 명세서 줄의 배송 단계 */
+  now: string;
 }) {
   return (
     <main id="main" className="page-centered v34">
@@ -52,7 +55,7 @@ export function BoxManagePage({
             <p>{box.status === "returning" ? "팬꾹에 온 물건은 큰 상자를 보낸 주소로 착불 반송합니다." : "팬꾹에 온 물건은 큰 상자를 보낸 주소로 착불 반송했습니다."}</p>
           </section>
         ) : box.invoice ? (
-          <BoxInvoiceSection boxId={box.id} boxName={box.name} status={box.status} invoice={box.invoice} clientKey={clientKey} notice={notice} />
+          <BoxInvoiceSection boxId={box.id} boxName={box.name} status={box.status} invoice={box.invoice} clientKey={clientKey} notice={notice} now={now} />
         ) : (
           <BoxManagePanel key={`${box.status}-${box.applications.length}`} box={box} applyUrl={applyUrl} />
         )}

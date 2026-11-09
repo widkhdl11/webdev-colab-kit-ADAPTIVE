@@ -1,3 +1,5 @@
+import { DELIVERY_STAGE_LABEL } from "@/shared/config/delivery-status";
+import type { DeliveryStage } from "@/shared/lib/delivery/delivery-stage";
 import { formatDate } from "@/shared/lib/format/datetime";
 import type { StatusTone } from "@/shared/ui/status-tone";
 import { APPROVAL_DEADLINE_DAYS } from "../config/approval-deadline";
@@ -62,12 +64,14 @@ export function fanDetailBadges(view: FanGiftView): FanBadge[] {
   return base.kind === "approval_wait" ? [wait] : [base, wait];
 }
 
-/** 지금 상황 한 줄. "지금 단계"는 아직 끝나지 않은 단계라, 그 단계를 기다리는 말로 쓴다. */
-export function fanHeadline(view: FanGiftView): string {
+/** 지금 상황 한 줄. "지금 단계"는 아직 끝나지 않은 단계라, 그 단계를 기다리는 말로 쓴다.
+ *  송장을 출력한 뒤에는 배송 단계 문구(delivery-status INV-DS1 — 상세 화면이 deliveryStage 로 구해 넘긴다)가 이 줄이 된다. */
+export function fanHeadline(view: FanGiftView, stage: DeliveryStage | null = null): string {
   if (view.outcome === "declined") return declinedText(view.creatorName);
   if (view.outcome === "expired") return EXPIRED_TEXT;
   if (view.outcome === "returned") return "검수 불합격으로 반송 대상이 된 선물입니다";
   if (view.outcome === "canceled") return "취소된 선물입니다";
+  if (stage !== null) return DELIVERY_STAGE_LABEL[stage];
   switch (currentKey(view)) {
     case "received":
       if (view.earlySendPending) return notApprovedYetText(view.creatorName);
@@ -81,7 +85,8 @@ export function fanHeadline(view: FanGiftView): string {
     case "delivered":
       return "크리에이터에게 배송 중입니다";
     default:
-      return "배송이 완료되었습니다";
+      // 웹훅 연결 전에는 배달 완료를 모른다 — 「배송 완료」라고 쓰지 않는다(결정 ④)
+      return "발송이 완료되었습니다";
   }
 }
 
@@ -134,14 +139,15 @@ export function fanProgress(view: FanGiftView): { done: number; total: number } 
   return { done: view.steps.filter((st) => st.state === "done").length, total: view.steps.length };
 }
 
-/** 헤더 선물 아이콘의 모양. 검수 뒤 승인 대기 = 모래시계(점선), 배송 완료 = 체크(초록 채움), 그 사이 = 트럭.
+/** 헤더 선물 아이콘의 모양. 검수 뒤 승인 대기 = 모래시계(점선), 발송 완료 = 체크(초록 채움), 그 사이 = 트럭.
+ *  배송 조회 웹훅 연결 전에는 배달 완료를 모르므로 체크는 출고 기준이다 — 「배송 완료」가 아니라 「발송 완료」(결정 ④⑧, delivery-status INV-DS5).
  *  진행이 끝난 선물(받지 않음·반송·취소)은 헤더에 띄우지 않는다 — null. */
 export type HeaderGiftState = "wait" | "move" | "done";
 
 export function headerGiftState(view: FanGiftView): HeaderGiftState | null {
   if (view.outcome !== "in_progress") return null;
   const current = currentKey(view);
-  if (!current) return "done";
+  if (!current || hasShipped(view)) return "done";
   if (view.approval.state === "waiting") return "wait";
   return "move";
 }

@@ -2,6 +2,8 @@ import type { BoxInvoice, LineProgress } from "@/entities/revgift-box/api/box-re
 import type { BoxStatus } from "@/entities/revgift-box/model/box-status";
 import { REGION_NAME, TIER_NAME } from "@/entities/revgift-box/model/box-tiers";
 import { BoxPayButton } from "@/features/revgift-box-pay/ui/box-pay-button";
+import { DELIVERY_STAGE_LABEL } from "@/shared/config/delivery-status";
+import { deliveryStage, isEstimatedStage } from "@/shared/lib/delivery/delivery-stage";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import s from "./revgift-box.module.css";
 
@@ -12,6 +14,7 @@ import s from "./revgift-box.module.css";
 // - 결제 「승인 중」이 있으면 결제하기 대신 확인 중 문장(두 번 결제되지 않게)
 // - 발송 중·끝: 「결제했어요. 바로 발송합니다」 · 줄마다 진행 칸
 // - 착불 반송·반송됨: 「결제가 없어 착불로 돌려보냈어요」
+// - 진행 칸: 송장을 출력한 줄은 배송 단계(delivery-status INV-DS1·DS2·DS6 — 팬의 받았어요가 확정, 확인 없이 출고 + 3일이면 예상으로 흐리게). 송장번호는 없다(INV-DS3)
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
@@ -23,6 +26,19 @@ const PROGRESS_NAME: Record<LineProgress, string> = {
   refunded: "환불 완료",
 };
 
+function ProgressCell({ line, now }: { line: BoxInvoice["lines"][number]; now: string }) {
+  const stage =
+    line.progress === "paid" || line.progress === "shipped"
+      ? deliveryStage({ printed: line.delivery.printed, shippedAt: line.delivery.shippedOn, confirmed: line.delivery.received }, now)
+      : null;
+  if (!stage) return <td>{PROGRESS_NAME[line.progress]}</td>;
+  return (
+    <td className={isEstimatedStage(stage) ? s.estimated : undefined} data-delivery-stage={stage}>
+      {DELIVERY_STAGE_LABEL[stage]}
+    </td>
+  );
+}
+
 export type PayNotice = "paid" | "failed" | "in_progress" | null;
 
 export function BoxInvoiceSection({
@@ -32,6 +48,7 @@ export function BoxInvoiceSection({
   invoice,
   clientKey,
   notice,
+  now,
 }: {
   boxId: string;
   boxName: string;
@@ -39,6 +56,8 @@ export function BoxInvoiceSection({
   invoice: BoxInvoice;
   clientKey: string;
   notice: PayNotice;
+  /** 화면을 그린 서버 시각 — 배송 단계의 날짜 경계 */
+  now: string;
 }) {
   const payable = status === "invoiced" || status === "overdue";
   const paid = status === "paid" || status === "done";
@@ -72,7 +91,7 @@ export function BoxInvoiceSection({
                 <td>{l.surchargeRegion === "none" ? "—" : `${REGION_NAME[l.surchargeRegion]} ${won(l.surchargeKrw)}`}</td>
                 <td>{won(l.serviceFeeKrw)}</td>
                 <td>{won(l.amountKrw)}</td>
-                {paid ? <td>{PROGRESS_NAME[l.progress]}</td> : null}
+                {paid ? <ProgressCell line={l} now={now} /> : null}
               </tr>
             ))}
           </tbody>

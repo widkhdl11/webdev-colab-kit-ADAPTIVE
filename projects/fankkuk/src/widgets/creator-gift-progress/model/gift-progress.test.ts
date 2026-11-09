@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canFind, canTrack, parseGiftProgressRows, receivedStepOf, sentStepOf, type ReceivedProgress, type SentProgress } from "./gift-progress";
+import { canFind, parseGiftProgressRows, receivedStepOf, sentStepOf, type ReceivedProgress, type SentProgress } from "./gift-progress";
 
 // 크리에이터 선물 현황 읽기 응답(action-center INV-J9~J11). DB 가 계산한 칸을 화면 모양으로 바꾸고, 단계 막대 칸 수와 단계 이름 열쇠를 정한다.
 // 단계는 받은 선물 읽기(INV-W9)의 stage, 보낸 역조공 읽기의 받기 상태·상자 상태에서만 나온다 — 현황만의 단계 칸은 없다(J9).
@@ -80,13 +80,7 @@ describe("INV-J9: 다섯 칸 막대와 단계 이름 열쇠 — 기존 읽기의
   });
 });
 
-describe("INV-J10·J11: 배송 조회·「내 상자 찾기」 자리", () => {
-  it("INV-J11: 배송 조회는 늦고 입고 전일 때만 — 늦지 않거나 입고됐으면 없다", () => {
-    expect(canTrack({ late: true, beforeInbound: true })).toBe(true);
-    expect(canTrack({ late: false, beforeInbound: true })).toBe(false);
-    expect(canTrack({ late: true, beforeInbound: false })).toBe(false);
-  });
-
+describe("INV-J10: 「내 상자 찾기」 자리", () => {
   it("INV-J10 (카드 d96 ①): 찾기는 입고 전이고 후보에 있을 때 — 입고 전이 아니면 후보에 있어도 없고, 후보에 없으면 입고 전이어도 없다", () => {
     const ids = new Set([S1]);
     expect(canFind({ beforeInbound: true, shareId: S1 }, ids)).toBe(true);

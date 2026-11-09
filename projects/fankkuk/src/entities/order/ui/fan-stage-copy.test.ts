@@ -27,6 +27,7 @@ function view(
     officeAddress: null,
     canEnterTrackingNo: false,
     fanTrackingNo: null,
+    outboundPrinted: doneCount >= 4 && outcome === "in_progress",
     expectedArrivalDate: null,
     earlySendPending: false,
   };
@@ -62,11 +63,14 @@ describe("headerGiftState", () => {
   it("검수를 마치고 승인을 기다리는 선물은 모래시계(wait)", () => {
     expect(headerGiftState(view(3, "in_progress", { state: "waiting", at: null }))).toBe("wait");
   });
-  it("그 밖의 수령 전 선물은 트럭(move) — 승인 전이라도 보내는 중이면 트럭", () => {
-    for (let n = 1; n < KEYS.length; n++) expect(headerGiftState(view(n))).toBe("move");
+  it("그 밖의 출고 전 선물은 트럭(move) — 승인 전이라도 보내는 중이면 트럭", () => {
+    for (let n = 1; n < 4; n++) expect(headerGiftState(view(n))).toBe("move");
   });
-  it("모든 단계가 끝나면 체크(done)", () => {
-    expect(headerGiftState(view(KEYS.length))).toBe("done");
+  it("INV-DS5: 웹훅 연결 전에는 출고하면 체크(done, 발송 완료) — 배송 중·수령을 기다리지 않는다", () => {
+    for (let n = 4; n <= KEYS.length; n++) expect(headerGiftState(view(n))).toBe("done");
+  });
+  it("INV-DS5 (실패경로): 출고 전(검수까지 끝)은 체크가 아니다", () => {
+    expect(headerGiftState(view(3, "in_progress", { state: "done", at: null }))).toBe("move");
   });
   it("받지 않음·반송·취소는 헤더에 띄우지 않는다", () => {
     expect(headerGiftState(view(1, "declined"))).toBeNull();
@@ -160,5 +164,20 @@ describe("office-workflow INV-W14: 「확인 중」 표시 — 무엇이 나왔�
     const step = checking.steps.find((s) => s.key === "inspected");
     const texts = [fanBadge(checking).text, fanHeadline(checking), step ? fanStepDetail(step, checking) : ""].join(" ");
     expect(texts).not.toMatch(/추적|신고|경찰/);
+  });
+});
+
+describe("배송 단계 문구 (delivery-status INV-DS1·DS5)", () => {
+  it("INV-DS1: 송장을 출력한 뒤 큰 줄은 배송 단계 문구", () => {
+    expect(fanHeadline(view(4), "sent")).toBe("팬꾹에서 보냈어요");
+    expect(fanHeadline(view(5), "on_the_way")).toBe("보통 1~2일 안에 도착해요");
+    expect(fanHeadline(view(6), "arrived")).toBe("도착했어요");
+    expect(fanHeadline(view(5), "arrived_estimated")).toBe("도착했어요(예상)");
+  });
+  it("INV-DS1 (실패경로): 끝난 선물에는 단계가 와도 단계 문구를 쓰지 않는다", () => {
+    expect(fanHeadline(view(3, "returned"), "sent")).toBe("검수 불합격으로 반송 대상이 된 선물입니다");
+  });
+  it("INV-DS5: 모든 단계가 끝나도 「배송 완료」라고 쓰지 않는다 — 「발송 완료」", () => {
+    expect(fanHeadline(view(KEYS.length))).toBe("발송이 완료되었습니다");
   });
 });
