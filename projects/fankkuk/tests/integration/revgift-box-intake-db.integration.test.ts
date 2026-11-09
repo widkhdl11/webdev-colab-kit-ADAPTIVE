@@ -413,7 +413,8 @@ describe("INV-GB11 · INV-GB13 · INV-GB17: 다 실측되면 명세서 (manual/0
     const all = JSON.stringify(mine) + JSON.stringify((await haru.rpc("my_revgift_box_labels", { p_box_id: boxId })).data);
     expect(all).not.toMatch(/ciphertext|wrappedKey|01[016789]-?\d{3,4}-?\d{4}|fan_id/);
     // progress = 줄마다 진행(결제 전·출고 전·출고·환불 대상·환불 완료, 4부 INV-GB18~GB21) — 사람을 가리키는 칸이 아니다
-    expect(Object.keys(mine.invoice.lines[0]!).sort()).toEqual(["amount_krw", "nickname", "printed", "progress", "received", "service_fee_krw", "shipped_on", "shipping_fee_krw", "surcharge_krw", "surcharge_region", "tier"]);
+    // carrier = 배송 단계(INV-DS6 「크리에이터는 명세서 줄의 진행 칸에서 같은 단계를 본다」) — 택배사 상태 코드만, 사람을 가리키는 칸이 아니다
+    expect(Object.keys(mine.invoice.lines[0]!).sort()).toEqual(["amount_krw", "carrier", "nickname", "printed", "progress", "received", "service_fee_krw", "shipped_on", "shipping_fee_krw", "surcharge_krw", "surcharge_region", "tier"]);
   });
 
   it("INV-GB17 S17b: 하루·서버 키는 할증 구분 읽기 함수를 부를 수 없다(명세서 줄로만)", async () => {
