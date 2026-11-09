@@ -6,7 +6,7 @@ import type { IngestCounts } from "./receive-webhook";
 
 // 운영자 수동 조회 (delivery-status INV-DS14). 몸통 { ids: [조회 줄 ID…] } — 50개까지.
 // 운영자 판정과 송장번호는 DB(admin_delivery_trace_targets)가 로그인 토큰으로 준다 — 운영자가 아니면 404.
-// 받은 결과는 웹훅과 같은 수신 처리로 저장한다(INV-DS8~DS10). 응답에는 수만 — 송장번호·이력 없음.
+// 받은 결과는 웹훅과 같은 수신 처리로 단계·시각만 반영한다(INV-DS8~DS10) — 조회 응답 원본은 저장하지 않는다. 응답에는 수만 — 송장번호·이력 없음.
 
 export type TraceTarget = { trackingId: string; courierCode: string; waybillNo: string };
 

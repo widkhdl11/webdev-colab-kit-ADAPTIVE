@@ -982,6 +982,36 @@ describe("자동 삭제 — 사무실 상자가 있는 주문 (코드 리뷰 반
     expect(orderRows(o.orderId).startsWith("1,")).toBe(true);
   });
 
+  it("INV-A16 (DECISIONS 2026-11-09): 배송 단계·시각 기록은 주문 기록과 같이 보관된다 — 배송 단계 수신도 「마지막 기록」이라 최근이면 주문이 남고, 5년 1일 전이면 주문과 함께 단계·이력이 지워진다", async () => {
+    const fan = await createTestAccount({ tag: "wdr7f", phone: null });
+    const cre = await createTestAccount({ tag: "wdr7c", phone: null });
+    const o = await shippedOrder({ senderId: fan.userId, creatorId: makeCreator(cre) });
+    const parcel = officeTrail(o.orderId, { fanId: fan.userId, creatorProfileId: cre.userId, state: "returned" });
+    const tracking = idLine(
+      psql(
+        `insert into public.delivery_trackings (courier_code, waybill_no, parcel_id, subscribe_state, subscribed_at, carrier_state, last_status, last_event_at, delivered_at)
+         values ('cj', '7${rand(11)}', '${parcel}', 'subscribed', now(), 'delivered', 'DELIVERED', now(), now()) returning id`,
+      ),
+    );
+    psql(`insert into public.delivery_tracking_events (tracking_id, at, status) values ('${tracking}', now(), 'DELIVERED')`);
+    const deliveryRows = () =>
+      psql(`select (select count(*) from public.delivery_trackings where id = '${tracking}') || ',' || (select count(*) from public.delivery_tracking_events where tracking_id = '${tracking}')`);
+    expect((await withdraw(fan.loginId)).error).toBeNull();
+    expect((await withdraw(cre.loginId)).error).toBeNull();
+    ageOrder(o.orderId, "5 years 1 day");
+    ageOffice(parcel, "5 years 1 day");
+    purge();
+    expect(orderRows(o.orderId).startsWith("1,")).toBe(true);
+    expect(deliveryRows()).toBe("1,1");
+    psql(
+      `update public.delivery_trackings set subscribed_at = subscribed_at - interval '5 years 1 day', last_event_at = last_event_at - interval '5 years 1 day',
+              delivered_at = delivered_at - interval '5 years 1 day', created_at = created_at - interval '5 years 1 day' where id = '${tracking}'`,
+    );
+    purge();
+    expect(orderRows(o.orderId)).toBe("0,0,0,0,0");
+    expect(deliveryRows()).toBe("0,0");
+  });
+
   it("카드 d123: 탈퇴 때 가명으로 옮기는 칸 목록이 바뀌면 이 시험이 알린다 — 새 칸은 자동 삭제의 「같이 쓰는 표시로 바꾸기」와 함께 본다", () => {
     const moved = psql(
       `select c.conrelid::regclass || '.' || a.attname from pg_constraint c join pg_attribute a on a.attrelid = c.conrelid and a.attnum = c.conkey[1]

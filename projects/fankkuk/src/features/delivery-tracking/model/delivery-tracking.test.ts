@@ -5,17 +5,17 @@ import { runManualTrace } from "./manual-trace";
 import { receiveDeliveryWebhook, toIngestPayload } from "./receive-webhook";
 import { runSubscribeSweep } from "./subscribe-sweep";
 
-// delivery-status INV-DS7(서명 뒤에만 저장) · INV-DS12(조용히 꺼짐·실패해도 막지 않음) · INV-DS13(넘기는 칸) · INV-DS14(수동 조회는 운영자만).
+// delivery-status INV-DS7(서명 뒤에만 저장) · INV-DS10(원본은 넘기지도 저장하지도 않는다) · INV-DS12(조용히 꺼짐·실패해도 막지 않음) · INV-DS13(넘기는 칸) · INV-DS14(수동 조회는 운영자만).
 
-const SECRET = "whsec_unit";
+const HOOK_KEY = "whsec_unit";
 const NOW_MS = Date.parse("2026-11-09T03:00:00Z");
 const TS = String(Math.floor(NOW_MS / 1000));
 const BODY = JSON.stringify({ event: "tracking.polled", items: [{ courierCode: "cj", trackingNumber: "123456789012", currentStatus: "IN_TRANSIT", trackingData: { receiverName: "홍길동" } }] });
-const sig = (body: string, ts = TS) => `sha256=${createHmac("sha256", SECRET).update(`${ts}.${body}`).digest("hex")}`;
+const sig = (body: string, ts = TS) => `sha256=${createHmac("sha256", HOOK_KEY).update(`${ts}.${body}`).digest("hex")}`;
 
 function webhookDeps() {
   const ingest = vi.fn(async () => ({ saved: 1, ignored: 0 }));
-  return { deps: { webhookSecret: SECRET, ingest }, ingest };
+  return { deps: { webhookSecret: HOOK_KEY, ingest }, ingest };
 }
 
 describe("receiveDeliveryWebhook (INV-DS7)", () => {
@@ -26,6 +26,18 @@ describe("receiveDeliveryWebhook (INV-DS7)", () => {
     expect(ingest).toHaveBeenCalledTimes(1);
     const payload = toIngestPayload((ingest.mock.calls[0] as unknown as [Parameters<typeof toIngestPayload>[0]])[0]);
     expect(payload[0]).toMatchObject({ courier_code: "cj", tracking_number: "123456789012", status: "IN_TRANSIT" });
+  });
+
+  it("INV-DS10: 원본은 어디에도 넘기지 않는다 — 수신 처리가 받는 항목과 DB 로 보내는 꼴에 수령인 글자도 원본 칸도 없다", async () => {
+    const { deps, ingest } = webhookDeps();
+    await receiveDeliveryWebhook(deps, { timestamp: TS, signature: sig(BODY), rawBody: BODY, nowMs: NOW_MS });
+    const items = (ingest.mock.calls[0] as unknown as [Parameters<typeof toIngestPayload>[0]])[0];
+    const payload = toIngestPayload(items);
+    expect(JSON.stringify(items)).not.toContain("홍길동");
+    expect(JSON.stringify(payload)).not.toContain("홍길동");
+    expect(Object.keys(payload[0]!).sort()).toEqual(["courier_code", "progresses", "status", "tracking_number"]);
+    // 찾는 방법이 동작한다 — 받은 본문에는 그 글자가 있다
+    expect(BODY).toContain("홍길동");
   });
 
   it("INV-DS7 (실패경로): 틀린 서명 · 시각 초과 · 본문 한 글자 변조 · 키 없음 → 401, 수신 처리를 부르지 않고 내용 없음", async () => {
@@ -97,6 +109,10 @@ describe("runManualTrace (INV-DS14)", () => {
     expect(reply).toEqual({ status: 200, body: { saved: 1, ignored: 0, failed: 0 } });
     expect(JSON.stringify(reply.body)).not.toContain("123456789012");
     expect(ingest).toHaveBeenCalledTimes(1);
+    // 조회 응답 원본도 저장하지 않는다 — 수신 처리에는 단계·시각만 간다(INV-DS10)
+    const items = (ingest.mock.calls[0] as unknown as [Parameters<typeof toIngestPayload>[0]])[0];
+    expect(JSON.stringify(items)).not.toContain("홍길동");
+    expect(JSON.stringify(toIngestPayload(items))).not.toContain("홍길동");
   });
 
   it("몸통 꼴: ID 가 아니거나 50개를 넘으면 400 · 키가 없으면 503", async () => {

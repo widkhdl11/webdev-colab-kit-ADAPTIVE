@@ -3,7 +3,7 @@ import { verifyWebhookSignature } from "@/shared/api/delivery-api/signature";
 import type { JsonReply } from "@/shared/lib/http/private-json";
 
 // 배송 조회 웹훅 수신 (delivery-status INV-DS7~DS10).
-// 순서: 서명(받은 본문 그대로) → 그 문자열을 해석 → 정리 → DB 수신 처리(모르는 송장 무시·단계 앞으로만·원본 따로).
+// 순서: 서명(받은 본문 그대로) → 그 문자열을 해석 → 정리 → DB 수신 처리(모르는 송장 무시·단계 앞으로만·원본은 저장하지 않음).
 // 서명이 틀리면 401, 내용은 비운다. 응답에는 수만 담고 송장·이력은 담지 않는다. 조회 서비스는 3초 안의 200 을 기다린다.
 
 export type IngestCounts = { saved: number; ignored: number };
@@ -17,9 +17,14 @@ export type WebhookRequest = { timestamp: string | null; signature: string | nul
 
 export const MAX_WEBHOOK_BODY_BYTES = 1_000_000;
 
-/** DB 수신 처리로 넘길 꼴 — 원본(raw)은 원본 표에만 들어간다 */
+/** DB 수신 처리로 넘길 꼴 — 택배사·송장·상태 코드·이력(시각·상태 코드)만. 원본은 넘기지 않는다(INV-DS10, 저장하지 않는다) */
 export function toIngestPayload(items: readonly NormalizedTrackingItem[]) {
-  return items.map((i) => ({ courier_code: i.courierCode, tracking_number: i.trackingNumber, status: i.status, progresses: i.progresses, raw: i.raw }));
+  return items.map((i) => ({
+    courier_code: i.courierCode,
+    tracking_number: i.trackingNumber,
+    status: i.status,
+    progresses: i.progresses.map((p) => ({ at: p.at, status: p.status })),
+  }));
 }
 
 export async function receiveDeliveryWebhook(deps: WebhookDeps, req: WebhookRequest): Promise<JsonReply> {

@@ -16,7 +16,7 @@ const RECEIVER = "홍길동수령";
 const BRANCH = "가산대리점시험";
 
 const setSource = (s: "estimate" | "webhook") => psql(`update public.delivery_settings set source = '${s}'`);
-const settings = () => JSON.parse(psql("select row_to_json(s)::text from public.delivery_settings s")) as { copy_after_delivery_hours: number; no_signal_days: number; stale_hours: number; raw_keep_days: number };
+const settings = () => JSON.parse(psql("select row_to_json(s)::text from public.delivery_settings s")) as { copy_after_delivery_hours: number; no_signal_days: number; stale_hours: number };
 
 function deleteBoxes(): void {
   psql(`delete from public.revgift_boxes where creator_id = '${HARU_CREATOR}' and name = '배송 조회 시험 선물함'`);
@@ -48,6 +48,7 @@ function shippedApplication(shippedHoursAgo = 1): { boxId: string; appId: string
   return { boxId, appId, waybillNo };
 }
 
+// raw 칸은 앱이 더는 보내지 않는다 — 그래도 섞여 오면 DB 가 읽지 않는지 보려고 일부러 넣는다(INV-DS10, 원본은 저장하지 않는다)
 const item = (waybillNo: string, status: string, progresses: { at: string; status: string }[] = [], courier = "cj") => ({
   courier_code: courier,
   tracking_number: waybillNo,
@@ -142,21 +143,19 @@ describe("INV-DS12: 송장번호 저장 → 구독 대기 줄", () => {
 
 describe("INV-DS8·DS9: 수신 처리", () => {
   it("INV-DS9 (실패경로): 팬꾹이 등록하지 않은 송장은 아무것도 남기지 않는다", async () => {
-    const before = count("select count(*) from public.delivery_tracking_raw");
-    expect(await ingest([item("990000000001", "DELIVERED")])).toEqual({ saved: 0, ignored: 1 });
-    expect(count("select count(*) from public.delivery_tracking_raw")).toBe(before);
+    const before = count("select (select count(*) from public.delivery_trackings) + (select count(*) from public.delivery_tracking_events)");
+    expect(await ingest([item("990000000001", "DELIVERED", [{ at: "2026-11-09T10:00:00+09:00", status: "DELIVERED" }])])).toEqual({ saved: 0, ignored: 1 });
+    expect(count("select (select count(*) from public.delivery_trackings) + (select count(*) from public.delivery_tracking_events)")).toBe(before);
   });
 
-  it("INV-DS8: 같은 본문 두 번 → 이력·원본 줄 수 그대로, 단계 같음", async () => {
+  it("INV-DS8: 같은 본문 두 번 → 이력 줄 수 그대로, 단계 같음", async () => {
     const g = shippedGift();
     const body = [item(g.waybillNo, "IN_TRANSIT", [{ at: "2026-11-09T10:00:00+09:00", status: "PICKED_UP" }, { at: "2026-11-09T18:00:00+09:00", status: "IN_TRANSIT" }])];
     await ingest(body);
     const events = count(`select count(*) from public.delivery_tracking_events where tracking_id = '${g.trackingId}'`);
-    const raws = count(`select count(*) from public.delivery_tracking_raw where tracking_id = '${g.trackingId}'`);
-    expect([events, raws]).toEqual([2, 1]);
+    expect(events).toBe(2);
     await ingest(body);
     expect(count(`select count(*) from public.delivery_tracking_events where tracking_id = '${g.trackingId}'`)).toBe(events);
-    expect(count(`select count(*) from public.delivery_tracking_raw where tracking_id = '${g.trackingId}'`)).toBe(raws);
     expect(tracking(g.trackingId).carrier_state).toBe("in_transit");
   });
 
@@ -180,13 +179,12 @@ describe("INV-DS8·DS9: 수신 처리", () => {
   });
 });
 
-describe("INV-DS10: 원본은 따로, 화면·응답에는 단계만", () => {
+describe("INV-DS10: 원본은 저장하지 않는다, 화면·응답에는 단계만", () => {
   it("INV-DS10: 원본에는 수령인·대리점이 있지만 팬·크리에이터·운영자 읽기 응답 어디에도 없다 — 단계는 있다", async () => {
     setSource("webhook");
     const g = shippedGift();
     const app = shippedApplication();
     await ingest([item(g.waybillNo, "IN_TRANSIT"), item(app.waybillNo, "IN_TRANSIT")]);
-    expect(psql(`select body::text from public.delivery_tracking_raw where tracking_id = '${g.trackingId}'`)).toContain(RECEIVER);
 
     const creator = await linkClient(A.login);
     const fanX = await linkClient(FAN_X.login);
@@ -215,23 +213,45 @@ describe("INV-DS10: 원본은 따로, 화면·응답에는 단계만", () => {
 
   it("INV-DS10 (실패경로): 로그인 사용자·익명은 원본·이력·조회 줄 표를 읽지 못한다", async () => {
     const fan = await linkClient(FAN_X.login);
-    for (const table of ["delivery_tracking_raw", "delivery_tracking_events", "delivery_trackings", "delivery_settings"]) {
+    for (const table of ["delivery_tracking_events", "delivery_trackings", "delivery_settings"]) {
       expect((await fan.from(table).select("*").limit(1)).error, table).not.toBeNull();
       expect((await anonClient().from(table).select("*").limit(1)).error, table).not.toBeNull();
     }
   });
 
-  it("INV-DS10: 받은 때 + 90일이 지난 원본은 정리 처리에서 지워지고, 그 안쪽은 남는다", async () => {
+  it("INV-DS10: 원본은 어디에도 저장되지 않는다 — 웹훅·수동 조회로 수령인·대리점이 든 항목을 받아도 DB 의 어느 표에도 그 글자가 없다", async () => {
     const g = shippedGift();
-    await ingest([item(g.waybillNo, "PICKED_UP")]);
-    await ingest([item(g.waybillNo, "IN_TRANSIT", [{ at: "2026-11-09T18:00:00+09:00", status: "IN_TRANSIT" }])]);
-    const keep = settings().raw_keep_days;
-    const ids = psql(`select string_agg(id::text, ',' order by id) from public.delivery_tracking_raw where tracking_id = '${g.trackingId}'`).split(",");
-    expect(ids.length).toBe(2);
-    psql(`update public.delivery_tracking_raw set received_at = now() - make_interval(days => ${keep}) - interval '1 minute' where id = ${ids[0]}`);
-    psql(`update public.delivery_tracking_raw set received_at = now() - make_interval(days => ${keep}) + interval '1 hour' where id = ${ids[1]}`);
-    psql("select public.delivery_raw_purge()");
-    expect(psql(`select coalesce(string_agg(id::text, ','), '') from public.delivery_tracking_raw where tracking_id = '${g.trackingId}'`)).toBe(ids[1]);
+    const progresses = [{ at: "2026-11-09T18:00:00+09:00", status: "IN_TRANSIT" }];
+    await ingest([item(g.waybillNo, "IN_TRANSIT", progresses)]);
+    const traced = await adminClient().rpc("delivery_ingest", { p_items: [item(g.waybillNo, "DELIVERED", progresses)], p_origin: "trace" });
+    expect(traced.error).toBeNull();
+    // 단계·시각은 남는다 — 찾는 방법이 동작한다
+    expect(tracking(g.trackingId).carrier_state).toBe("delivered");
+    expect(count(`select count(*) from public.delivery_tracking_events where tracking_id = '${g.trackingId}'`)).toBe(1);
+    // public·pii·예약 작업·외부 호출 기록의 모든 표를 줄 단위 글자로 훑는다
+    const tablesContaining = (needle: string) =>
+      psql(
+        `select n.nspname || '.' || c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+          where c.relkind in ('r', 'p') and n.nspname in ('public', 'pii', 'cron', 'net')
+            and (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %I.%I t where t::text like %L', n.nspname, c.relname, '%${needle}%'), false, true, '')))[1]::text::integer > 0
+          order by 1`,
+      );
+    expect(tablesContaining(RECEIVER)).toBe("");
+    expect(tablesContaining(BRANCH)).toBe("");
+    // 찾는 방법이 동작한다 — 같은 훑기가 실제로 저장된 송장번호는 찾는다
+    expect(tablesContaining(g.waybillNo).split(/\r?\n/)).toContain("public.delivery_trackings");
+  });
+
+  it("INV-DS10 (실패경로): 원본 표·원본 정리 예약 작업·보관 일수 칸이 없고, 단계·이력 표에는 정해진 칸만 있다(대리점·수령인 칸 없음)", () => {
+    expect(psql("select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relname like 'delivery%raw%'")).toBe("0");
+    expect(psql("select count(*) from cron.job where jobname = 'fankkuk-delivery-raw-purge'")).toBe("0");
+    expect(psql("select count(*) from pg_proc where proname = 'delivery_raw_purge'")).toBe("0");
+    const cols = (t: string) => psql(`select string_agg(column_name, ',' order by column_name) from information_schema.columns where table_schema = 'public' and table_name = '${t}'`);
+    expect(cols("delivery_settings")).toBe("copy_after_delivery_hours,id,no_signal_days,source,stale_hours");
+    expect(cols("delivery_tracking_events")).toBe("at,received_at,status,tracking_id");
+    expect(cols("delivery_trackings")).toBe(
+      "application_id,carrier_state,courier_code,created_at,delivered_at,id,last_event_at,last_status,next_try_at,parcel_id,subscribe_error,subscribe_state,subscribe_tries,subscribed_at,waybill_no",
+    );
   });
 });
 

@@ -42,7 +42,7 @@ export const SITE_INFO: SiteInfo = {
     kakaoAuth: "㈜드림시큐리티", // 전자서명 인증 중계(간편인증-API, DECISIONS 2026-10-29 (2))
     alimtalk: "",  // 알림톡 발송 대행사 계약 후
     mail: "",      // 메일 발송 서비스(예: Resend, AWS SES) 정한 뒤
-    carrier: "",   // 택배사 계약 후(예: "우체국", "CJ대한통운")
+    carrier: "CJ대한통운(㈜로지아이 통해 접수)", // 실제 운송사(로지아이 소호사업자택배 — DECISIONS 2026-11-09 「배송 조회 원본은 저장하지 않는다」 같이 정함)
     courierBroker: "㈜로지아이", // 택배 예약·송장 출력(소호사업자택배 — DECISIONS 2026-11-09 「배송 현황 표시·조회 연동」 ⑩ · 「로지아이 답 반영」 ⑤)
     keyVault: "",  // 주소 키 보관처(예: "Supabase Vault", "AWS KMS") 정한 뒤
   },

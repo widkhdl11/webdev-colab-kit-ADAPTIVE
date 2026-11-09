@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { normalizeCarrierTime, normalizeTraceResponse, normalizeWebhookBody } from "./normalize";
 
-// delivery-status INV-DS10 — 정리한 꼴(원본 raw 를 뺀 칸)에는 위치·설명·사람 칸이 없다. 원본은 raw 에만.
+// delivery-status INV-DS10 — 정리한 꼴에는 위치·설명·사람 칸이 없고, 원본을 담는 칸도 없다(원본은 저장하지 않는다, DECISIONS 2026-11-09).
 // 본문 모양은 문서 예시(webhook-guide · docs, 2026-11-09 읽음)를 옮겨 적은 녹화본이다.
 
 const PII = { receiverName: "홍길동", senderName: "팬꾹", arrivalBranch: "가산대리점" };
@@ -32,10 +32,10 @@ const WEBHOOK = {
 };
 
 describe("normalizeWebhookBody (INV-DS10)", () => {
-  it("INV-DS10: 정리한 칸은 택배사·송장·상태 코드·이력(시각·코드)뿐 — 수령인·대리점·기사 글자는 raw 에만 있다", () => {
+  it("INV-DS10: 정리한 칸은 택배사·송장·상태 코드·이력(시각·코드)뿐 — 수령인·대리점·기사 글자는 어디에도 남지 않는다", () => {
     const [it0] = normalizeWebhookBody(WEBHOOK)!;
-    const { raw, ...rest } = it0!;
-    expect(rest).toEqual({
+    const rest = it0!;
+    expect(rest).toStrictEqual({
       courierCode: "cj",
       trackingNumber: "123456789012",
       status: "DELIVERED",
@@ -46,8 +46,8 @@ describe("normalizeWebhookBody (INV-DS10)", () => {
     });
     const shown = JSON.stringify(rest);
     for (const v of [...Object.values(PII), "곤지암", "김기사", "010-", "본인 수령"]) expect(shown).not.toContain(v);
-    // 원본은 그대로 남는다(분쟁용) — 찾는 방법이 동작한다
-    expect(JSON.stringify(raw)).toContain("홍길동");
+    // 찾는 방법이 동작한다 — 같은 검사가 받은 본문에서는 그 글자를 찾는다
+    expect(JSON.stringify(WEBHOOK)).toContain("홍길동");
   });
 
   it("INV-DS10 (실패경로): 꼴이 아닌 본문은 null, 꼴이 아닌 항목·상태 코드는 건너뛴다", () => {
@@ -79,9 +79,9 @@ describe("normalizeTraceResponse", () => {
       },
     })!;
     expect(res.failed).toBe(1);
-    const { raw, ...rest } = res.items[0]!;
-    expect(rest).toEqual({ courierCode: "cj", trackingNumber: "123456789012", status: "IN_TRANSIT", progresses: [{ at: "2026-01-12T18:20:00+09:00", status: "PICKED_UP" }] });
-    expect(JSON.stringify(raw)).toContain("홍길동");
+    expect(res.items[0]).toStrictEqual({ courierCode: "cj", trackingNumber: "123456789012", status: "IN_TRANSIT", progresses: [{ at: "2026-01-12T18:20:00+09:00", status: "PICKED_UP" }] });
+    expect(JSON.stringify(res)).not.toContain("홍길동");
+    expect(JSON.stringify(res)).not.toContain("가산대리점");
     expect(normalizeTraceResponse({ isSuccess: false })).toBeNull();
   });
 });

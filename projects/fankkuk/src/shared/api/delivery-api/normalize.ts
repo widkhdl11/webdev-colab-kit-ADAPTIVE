@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 // 배송 조회 서비스가 준 본문(웹훅 · 수동 조회 응답)을 한 꼴로 정리한다. 서명 검증이 끝난 본문만 넘긴다.
-// 정리한 꼴: { courierCode, trackingNumber, status(상태 코드), progresses[{ at(ISO, 시간대 포함), status }], raw(받은 항목 그대로) }.
-// raw 에는 대리점·기사·수령인 칸이 그대로 있다 — 원본 표에만 넣고 화면·응답으로 보내지 않는다(부르는 쪽 책임).
+// 정리한 꼴: { courierCode, trackingNumber, status(상태 코드), progresses[{ at(ISO, 시간대 포함), status }] } — 이것뿐이다.
+// 받은 본문의 대리점·터미널·기사·수령인·발송인 칸은 여기서 버린다. 원본은 어디에도 저장하지 않는다(delivery-status INV-DS10, DECISIONS 2026-11-09).
 // 근거: https://www.deliveryapi.co.kr/docs · /blog/webhook-guide (2026-11-09 읽음)
 // - 웹훅: { event, requestId, timestamp, items: [{ courierCode, trackingNumber, clientId, previousStatus, currentStatus, hasChanged, isDelivered,
 //          trackingData: { progresses: [{ dateTime, location, status, statusCode, description }], receiverName, senderName, arrivalBranch } }] }
@@ -13,7 +13,6 @@ export type NormalizedTrackingItem = {
   trackingNumber: string;
   status: string | null;
   progresses: { at: string; status: string }[];
-  raw: Record<string, unknown>;
 };
 
 const CODE = /^[A-Z_]{1,30}$/;
@@ -62,15 +61,14 @@ export function normalizeWebhookBody(body: unknown): NormalizedTrackingItem[] | 
   const parsed = webhookBody.safeParse(body);
   if (!parsed.success) return null;
   const out: NormalizedTrackingItem[] = [];
-  for (const raw of parsed.data.items) {
-    const it = webhookItem.safeParse(raw);
+  for (const entry of parsed.data.items) {
+    const it = webhookItem.safeParse(entry);
     if (!it.success) continue;
     out.push({
       courierCode: it.data.courierCode,
       trackingNumber: it.data.trackingNumber,
       status: codeOf(it.data.currentStatus),
       progresses: progressesOf(it.data.trackingData?.progresses),
-      raw: raw as Record<string, unknown>,
     });
   }
   return out;
@@ -100,8 +98,8 @@ export function normalizeTraceResponse(body: unknown): { items: NormalizedTracki
   if (!parsed.success) return null;
   const items: NormalizedTrackingItem[] = [];
   let failed = 0;
-  for (const raw of parsed.data.data.results) {
-    const r = traceResult.safeParse(raw);
+  for (const entry of parsed.data.data.results) {
+    const r = traceResult.safeParse(entry);
     if (!r.success || !r.data.success || !r.data.data) {
       failed += 1;
       continue;
@@ -111,7 +109,6 @@ export function normalizeTraceResponse(body: unknown): { items: NormalizedTracki
       trackingNumber: r.data.data.trackingNumber,
       status: codeOf(r.data.data.deliveryStatus),
       progresses: progressesOf(r.data.data.progresses),
-      raw: r.data.data as Record<string, unknown>,
     });
   }
   return { items, failed };
