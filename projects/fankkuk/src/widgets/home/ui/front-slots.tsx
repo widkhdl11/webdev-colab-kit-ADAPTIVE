@@ -94,12 +94,12 @@ export function HeroBand({ title, eyebrow, control, actions = null }: { title: s
 }
 
 /** 승인된 역할 홈의 공통 순서(20절) — 첫 화면 → 바로가기 넷(첫 화면 아래 걸침, 35절) → 배너 → 역할별 본문. 구간 사이는 두 홈 모두 --section-gap */
-export function RoleHome({ hero, tiles, tilesLabel, banner, children }: { hero: ReactNode; tiles: readonly FrontTile[]; tilesLabel: string; banner: ReactNode; children: ReactNode }) {
+export function RoleHome({ hero, tiles, tilesLabel, tilesClassName = "", banner, children }: { hero: ReactNode; tiles: readonly FrontTile[]; tilesLabel: string; tilesClassName?: string; banner: ReactNode; children: ReactNode }) {
   return (
     <main id="main" className={`${s.landing} ${s.roleHome}`}>
       {hero}
       <div className={s.col}>
-        <HomeTiles tiles={tiles} label={tilesLabel} />
+        <HomeTiles tiles={tiles} label={tilesLabel} className={tilesClassName} />
         {banner ? <div className={l.banner}>{banner}</div> : null}
         {children}
       </div>
@@ -108,9 +108,9 @@ export function RoleHome({ hero, tiles, tilesLabel, banner, children }: { hero: 
 }
 
 /** 바로가기 넷 — 메인과 같은 카드(하늘 원 44 안 그림 28 → 이름 → 설명, 왼쪽 정렬) */
-function HomeTiles({ tiles, label }: { tiles: readonly FrontTile[]; label: string }) {
+function HomeTiles({ tiles, label, className }: { tiles: readonly FrontTile[]; label: string; className: string }) {
   return (
-    <ul className={l.tiles} aria-label={label}>
+    <ul className={`${l.tiles} ${className}`} aria-label={label}>
       {tiles.map((t) => (
         <li key={t.label}>
           <Link className={`card ${l.tile}`} href={t.href}>

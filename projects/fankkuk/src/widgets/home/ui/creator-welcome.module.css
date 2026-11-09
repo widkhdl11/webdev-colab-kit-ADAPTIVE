@@ -1,0 +1,134 @@
+.hero, .tiles {
+  --welcome-line: #dce7ee;
+  --welcome-label: #526c7e;
+  --welcome-greeting: #477d99;
+  --welcome-description: #526170;
+  --welcome-state: #465d6c;
+  --welcome-sky: #dbf1fc;
+  --welcome-orbit: #ffffffbb;
+  --welcome-muted: #536677;
+  --welcome-fandom: #315a72;
+  --welcome-divider: #e7edf2;
+  --welcome-radius: 32px;
+  --welcome-menu-radius: 20px;
+  --welcome-mobile-radius: 24px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  width: min(880px, calc(100% - 48px));
+  margin: 32px auto 0;
+  background: var(--white);
+  border: 1px solid var(--welcome-line);
+  border-radius: var(--welcome-radius);
+  overflow: hidden;
+}
+
+.copy {
+  min-width: 0;
+  padding: 48px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.label { margin: 0 0 22px; font-size: 14px; color: var(--welcome-label); }
+.copy h1 {
+  margin: 0;
+  font-family: var(--font-round);
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -.03em;
+  overflow-wrap: anywhere;
+}
+.copy h1 span { color: var(--welcome-greeting); }
+.description { margin: 24px 0 0; color: var(--welcome-description); line-height: 1.8; }
+.state { margin: 28px 0 0; font-size: 14px; color: var(--welcome-state); }
+.state > span { margin-right: 8px; }
+.state a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-underline-offset: 4px; }
+.fanSpace {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  min-height: 420px;
+  padding: 32px;
+  background: var(--welcome-sky);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.fanSpace::before, .fanSpace::after {
+  content: "";
+  position: absolute;
+  width: 330px;
+  height: 330px;
+  border: 1px solid var(--welcome-orbit);
+  border-radius: 50%;
+  top: 82px;
+  pointer-events: none;
+  z-index: -1;
+}
+.fanSpace::after { width: 430px; height: 430px; top: 32px; }
+.fanSpace dl { margin: 0; max-width: 100%; text-align: center; }
+.fanSpace dt { font-size: 14px; color: var(--welcome-muted); }
+.fanSpace dd { margin: 2px 0 0; font: 800 38px/1.4 var(--font-round); color: var(--welcome-fandom); overflow-wrap: anywhere; }
+.fanSpace img { width: 208px; max-width: 100%; height: auto; margin-top: 22px; }
+
+.tiles.tiles {
+  gap: 0;
+  margin-top: 24px;
+  background: var(--white);
+  border: 1px solid var(--welcome-line);
+  border-radius: var(--welcome-menu-radius);
+  overflow: hidden;
+}
+.tiles > li + li { border-left: 1px solid var(--welcome-divider); }
+.tiles > li > a:global(.card) {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.tiles > li > a:global(.card)::after { content: "↗"; position: absolute; right: 22px; top: 24px; color: var(--welcome-label); font-size: 20px; }
+.tiles > li > a:global(.card) > span:first-child { background: transparent; margin-bottom: 8px; }
+.tiles > li > a:global(.card):hover { background: var(--tint); }
+.tiles > li > a:global(.card):focus-visible { outline-offset: -4px; }
+
+@media (max-width: 879.98px) {
+  .tiles.tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tiles > li:nth-child(3) { border-left: 0; }
+  .tiles > li:nth-child(n+3) { border-top: 1px solid var(--welcome-divider); }
+}
+
+@media (max-width: 750px) {
+  .hero { grid-template-columns: 1fr; width: calc(100% - 32px); border-radius: var(--welcome-mobile-radius); margin-top: 24px; }
+  .copy { padding: 32px 26px; }
+  .copy h1 { font-size: 36px; }
+  .label { margin-bottom: 16px; }
+  .description { margin-top: 18px; }
+  .state { margin-top: 22px; }
+  .fanSpace { min-height: 240px; flex-direction: row; padding: 28px; gap: 20px; }
+  .fanSpace::before { top: -20px; }
+  .fanSpace::after { top: -70px; }
+  .fanSpace dl { text-align: left; min-width: 0; }
+  .fanSpace dd { font-size: 30px; }
+  .fanSpace img { width: 148px; flex-shrink: 0; margin: 0; }
+  .tiles.tiles { margin-top: 18px; }
+  .tiles > li > a:global(.card) { padding: 20px; }
+}
+
+@media (max-width: 360px) {
+  .copy { padding: 28px 22px; }
+  .copy h1 { font-size: 32px; }
+  .fanSpace { padding: 22px; gap: 10px; min-height: 220px; }
+  .fanSpace img { width: 128px; }
+  .tiles > li > a:global(.card) { padding: 18px 14px; }
+}

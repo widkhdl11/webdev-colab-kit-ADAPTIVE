@@ -87,10 +87,30 @@ describe("승인된 세 역할 홈", () => {
     expect([...host.querySelectorAll("a")].some((a) => a.textContent === "내 페이지 보기")).toBe(false);
   });
 
-  it("공개 페이지와 단계·출력 실패를 이미 읽은 값 그대로 표시한다", () => {
+  it("단계·출력 실패를 이미 읽은 값 그대로 표시한다", () => {
     draw(creator({ publicHref: "/haru", progressRows: [{ id: "FC-1", title: "별빛님이 보낸 선물", description: "목도리", status: "검수 완료" }], ongoingCount: 1, accessLog: [{ orderNo: "FC-1", at: "2026-10-20T00:00:00Z", printNo: 1, released: true }] }));
-    expect(host.querySelector('a[href="/haru"]')?.textContent).toBe("내 페이지 보기");
     expect(host.querySelector('[aria-labelledby="creator-progress-title"]')!.textContent).toContain("검수 완료");
     expect(host.querySelector('[aria-labelledby="creator-log-title"]')!.textContent).toContain("출력 실패");
+  });
+
+  it("새 크리에이터 인사 영역은 이름을 한 번 표시하고 팬덤을 별도로 소개한다", () => {
+    draw(creator());
+    const hero = host.querySelector('[aria-labelledby="hero-title"]')!;
+    expect(hero.textContent?.match(/하루/g)).toHaveLength(1);
+    expect(hero.querySelector("dd")?.textContent).toBe("하늘별");
+    expect(hero.textContent).toContain("지금은 처리할 일이 없어요");
+    expect(hero.textContent).not.toContain("프로필 수정");
+    draw(creator({ profile: { ...profile, fanName: "" } }));
+    expect(host.querySelector('[aria-labelledby="hero-title"] dl')).toBeNull();
+  });
+
+  it("처리할 일이 있으면 실제 건수로 이동하고, 읽기 실패에는 완료 안내를 표시하지 않는다", () => {
+    draw(creator({ actionCount: 4 }));
+    const hero = () => host.querySelector('[aria-labelledby="hero-title"]')!;
+    expect(hero().querySelector('a[href="/creator/actions"]')?.textContent).toContain("4건");
+    expect(hero().textContent).not.toContain("처리할 일이 없어요");
+    draw(creator({ actionCount: null }));
+    expect(hero().textContent).not.toContain("처리할 일이 없어요");
+    expect(hero().textContent).not.toContain("0건");
   });
 });

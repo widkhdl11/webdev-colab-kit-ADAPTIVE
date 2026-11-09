@@ -3,15 +3,15 @@ import type { ReactNode } from "react";
 import { CREATOR_ACTION_CENTER_HREF, type CreatorActionItem } from "@/entities/action-item/model/creator-action-items";
 import { printLabelOf, type AddressAccessEntry } from "@/entities/address/model/access-log";
 import type { CreatorColors } from "@/entities/creator/model/creator-color";
-import { FandomBadge } from "@/entities/creator/ui/fandom-badge";
+
 import { CREATOR_GIFT_PROGRESS_HREF } from "@/entities/gift-progress/model/progress-href";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
-import { CREATOR_PROFILE_EDIT } from "@/entities/session/model/home-path";
+
 import { NO_ADDRESS_ASK } from "@/shared/config/site-copy";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import type { StatusTone } from "@/shared/ui/status-tone";
-import { EmptyCard, HeroBand, NoticesSlot, RoleHome, SlotSection, StatusBadge, type FrontNotice, type FrontTile } from "./front-slots";
-import s from "./front.module.css";
+import { EmptyCard, NoticesSlot, RoleHome, SlotSection, StatusBadge, type FrontNotice, type FrontTile } from "./front-slots";
+import welcome from "./creator-welcome.module.css";
 import h from "./home.module.css";
 
 export type CreatorHomeProfile = {
@@ -77,7 +77,7 @@ function SummaryRows({ rows, href, label }: { rows: readonly HomeProgressRow[]; 
   );
 }
 
-export function CreatorHomePage({ profile, publicHref = null, actionCount, actions, accessLog, notices, ongoingCount, progressRows = [], sentGifts, banner = null }: Props) {
+export function CreatorHomePage({ profile, actionCount, actions, accessLog, notices, ongoingCount, progressRows = [], sentGifts, banner = null }: Props) {
   const tiles: FrontTile[] = [
     { href: CREATOR_ACTION_CENTER_HREF, label: "지금 할 일", note: countNote(actionCount), icon: "icon-approve" },
     { href: CREATOR_GIFT_PROGRESS_HREF, label: "선물 현황", note: ongoingCount === null ? "" : `진행 중 ${ongoingCount}건`, icon: "icon-gift" },
@@ -91,22 +91,23 @@ export function CreatorHomePage({ profile, publicHref = null, actionCount, actio
     status: ACTION_LABEL[item.kind],
     tone: "warn",
   }));
-  const control = (
-    <div className={s.heroProfile} aria-label="내 프로필">
-      <span className={s.heroAvatar} aria-hidden="true">{profile.photoUrl ? <img src={profile.photoUrl} width={40} height={40} alt="" /> : profile.initial}</span>
-      <span className={s.heroProfileName}>{profile.name}</span>
-      {profile.fanName ? <FandomBadge name={profile.fanName} symbolUrl={profile.symbolUrl} themeColor={profile.colors.personal} size="medium" /> : null}
-    </div>
-  );
-  // 채움 버튼은 「내 페이지 보기」 하나, 「프로필 수정」은 테두리(공개 페이지가 없으면 프로필 수정만 — 20절)
-  const heroActions = (
-    <div className={s.heroActions}>
-      {publicHref ? <Link className="btn" href={publicHref}>내 페이지 보기</Link> : null}
-      <Link className={`btn ${publicHref ? "btn--line" : ""}`} href={CREATOR_PROFILE_EDIT}>프로필 수정</Link>
-    </div>
-  );
   return (
-    <RoleHome hero={<HeroBand title={`${profile.name}님, 반가워요`} eyebrow="팬들이 보낸 선물과 승인 요청을 확인해 주세요" control={control} actions={heroActions} />} tiles={tiles} tilesLabel="내 바로가기" banner={banner}>
+    <RoleHome hero={
+      <section className={welcome.hero} aria-labelledby="hero-title">
+        <div className={welcome.copy}>
+          <p className={welcome.label}>나의 팬꾹</p>
+          <h1 id="hero-title">{profile.name}님,<br /><span>반가워요</span></h1>
+          <p className={welcome.description}>팬들이 보낸 선물과<br />승인 요청을 여기서 확인하세요.</p>
+          {actionCount !== null ? <p className={welcome.state}>
+            {actionCount === 0 ? <><span aria-hidden="true">✓</span> 지금은 처리할 일이 없어요</> : <Link href={CREATOR_ACTION_CENTER_HREF}>지금 할 일 {actionCount}건 확인하기 →</Link>}
+          </p> : null}
+        </div>
+        <div className={welcome.fanSpace}>
+          {profile.fanName ? <dl><dt>함께하는 팬덤</dt><dd>{profile.fanName}</dd></dl> : null}
+          <img src="/images/home/creator-cat.webp" width={208} height={208} alt="" />
+        </div>
+      </section>
+    } tiles={tiles} tilesLabel="내 바로가기" tilesClassName={welcome.tiles} banner={banner}>
       <SlotSection id="creator-actions" title="지금 할 일" meta={countNote(actionCount)} more={{ href: CREATOR_ACTION_CENTER_HREF, label: "지금 할 일 모두 보기" }}>
         {actionRows.length > 0 ? <SummaryRows rows={actionRows} href={CREATOR_ACTION_CENTER_HREF} label="지금 할 일" /> : <EmptyCard icon="check" text={actionCount === null ? "지금 할 일을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." : "현재 처리할 일이 없습니다."} />}
       </SlotSection>
