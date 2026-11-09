@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>팬에게 보내기 — 선물함 목록·설명·만들기 모달 시안 (2026-11-09)</title>
+<!--
+시안: 팬에게 보내기 — 선물함 목록 · 설명 · 선물함 만들기 모달 (정적, 로직 없음. 위 상태 전환 버튼만 JS)
+근거: docs/design/design-prompt.md(전부) · docs/ux/pages/creator-revgifts-new.md 「2026-11-09 바꿀 것」(승인) · docs/design/tokens.md · design-rules.md
+값: 같은 폴더 tokens.css = src/shared/ui/tokens.css 복사본(시안은 mockups 폴더만 서빙되어 링크할 수 없다), shell.css = 사이드바·위 막대 CSS 복사본.
+글꼴 Pretendard(사이트와 같은 CDN) · 제목 티머니 둥근바람(fonts/). 시안에서 새로 지은 색·글꼴 없음 — 유일한 값 --em-ink 는 프롬프트 토큰(강조 글자 #0369A1).
+설명 내용·문구·상태: 명세 그대로. 원칙 번호는 notes.md.
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" crossorigin="anonymous">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="shell.css">
+<style>
+@font-face { font-family: "Tmoney Round Wind"; src: url("fonts/TmoneyRoundWindRegular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Tmoney Round Wind"; src: url("fonts/TmoneyRoundWindExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+:root { --em-ink: #0369a1; /* 프롬프트 토큰: 강조 글자(3-8) */ }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--background); color: var(--ink); font-family: var(--font); font-size: var(--fs-body); line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }
+h1, h2, h3, h4, p, ol, ul, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+h1, h2, h3 { font-family: var(--font-round); font-weight: var(--fw-title); font-synthesis: none; text-wrap: balance; }
+img { display: block; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+a { color: inherit; }
+
+/* ---- 시안 전용 위 막대(실제 화면 아님) ---- */
+.mock-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; padding: 8px 16px; background: var(--gray-900); color: var(--white); font-size: var(--fs-small); }
+.mock-bar .mb-t { font-weight: var(--fw-bold); }
+.mb-g { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.mb-g > span { color: var(--gray-300); }
+.mock-bar button { min-height: 44px; padding: 0 12px; border: 1px solid var(--gray-300); border-radius: var(--r-btn); background: transparent; color: var(--white); font-size: var(--fs-small); cursor: pointer; }
+.mock-bar button[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-brand); font-weight: var(--fw-bold); }
+.mock-bar button:focus-visible { outline-color: var(--white); }
+
+/* ---- 앱 틀: 사이드바 240 + 본문 ---- */
+body:has(.sidebar) { padding-left: 0; }
+.stage { position: relative; transform: translateZ(0); padding-left: var(--sidebar-w); min-height: 900px; }
+@media (max-width: 768px) { .stage { padding-left: 0; min-height: 844px; } }
+.stage .sidebar { position: absolute; }
+.stage .topbar { position: sticky; }
+.stage.is-modal { height: 880px; overflow: hidden; min-height: 0; }
+@media (max-width: 768px) { .stage.is-modal { height: 844px; } }
+
+.page { display: none; width: 100%; min-width: 0; padding: var(--space-10) var(--gutter) var(--space-16); }
+.stage[data-page="list0"] .page-list0, .stage[data-page="list2"] .page-list2 { display: block; }
+.col { width: 100%; max-width: 1040px; margin-inline: auto; min-width: 0; display: grid; gap: var(--space-12); }
+@media (max-width: 768px) { .page { padding: var(--space-6) var(--space-4) var(--space-12); } .col { gap: var(--space-12); } }
+
+/* ---- 버튼·태그·입력 (base.css 값 그대로) ---- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--btn-h); padding: 0 var(--space-6); border: 0; border-radius: var(--r-btn); background: var(--brand); color: var(--on-brand); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.25; cursor: pointer; transition: background-color var(--dur-hover) var(--ease-out); }
+.btn:hover { background: var(--brand-hover); }
+.btn--line { background: var(--white); box-shadow: var(--hair); }
+.btn--line:hover { background: var(--surface-hover); }
+.btn--text { background: none; padding-inline: var(--space-4); }
+.btn--text:hover { background: var(--gray-100); }
+.btn[disabled] { background: var(--disabled); color: var(--disabled-ink); box-shadow: none; cursor: not-allowed; }
+.tag { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.4; white-space: nowrap; }
+.tag--dot::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: var(--r-pill); background: currentColor; }
+.tag--info { background: var(--info-soft); color: var(--info); }
+.tag--warn { background: var(--warn-soft); color: var(--warn-ink); }
+.chip { display: inline-flex; align-items: center; padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1.4; }
+
+/* ---- 페이지 머리 ---- */
+.phead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.ph-title { font-size: var(--fs-page); line-height: 1.3; letter-spacing: var(--ls-title); }
+@media (max-width: 768px) { .phead { flex-direction: column; align-items: stretch; } .phead .btn { width: 100%; } }
+.sec { display: grid; gap: var(--space-6); align-content: start; }
+.sec-h { font-size: var(--fs-card); line-height: 1.4; letter-spacing: 0; }
+.endrow { display: flex; justify-content: flex-end; }
+@media (max-width: 768px) { .endrow .btn { width: 100%; } }
+
+/* ---- 소개: 정의 한 문장 + 큰 그림 한 장(주인공) ---- */
+.hero-head { align-items: flex-start; }
+.hero-t { min-width: 0; max-width: 680px; }
+.def { margin-top: var(--space-2); color: var(--sub); font-size: var(--fs-body); }
+.story-box { container-type: inline-size; }
+.story { display: grid; gap: 0; padding: var(--panel-pad); border-radius: var(--r-panel); background: var(--surface-brand); box-shadow: inset 0 0 0 1px var(--tint-line); color: var(--gray-600);
+  grid-template-columns: minmax(0, 1fr); grid-template-areas: "a" "ca" "ab" "b" "cb" "fv" "c" "cc"; }
+.s-a { grid-area: a; } .s-b { grid-area: b; } .s-c { grid-area: c; } .arr-ab { grid-area: ab; }
+.cap-a { grid-area: ca; } .cap-b { grid-area: cb; } .cap-c { grid-area: cc; }
+.fan-v { grid-area: fv; display: block; width: 100%; height: 96px; }
+.fan-h { display: none; grid-area: fh; }
+.s-pic { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--space-2); height: 160px; padding-top: var(--space-6); border-radius: var(--r-icon); background: var(--white); box-shadow: inset 0 0 0 1px var(--tint-line); }
+.s-b { padding-top: 0; }
+.s-pic img { width: auto; height: auto; max-height: 96px; max-width: 45%; object-fit: contain; }
+.s-b img { max-height: 112px; max-width: 70%; }
+.chip-a { position: absolute; top: var(--space-2); left: var(--space-2); background: var(--primary-50); }
+.arr { display: grid; place-items: center; color: var(--gray-600); }
+.arr svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.arr-ab { height: 48px; }
+.arr-ab svg { transform: rotate(90deg); }
+.fans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); align-self: center; }
+.fan { display: grid; justify-items: center; align-content: center; gap: var(--space-1); min-height: 88px; padding: var(--space-2); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--tint-line); color: var(--ink); font-size: var(--fs-small); font-weight: var(--fw-bold); }
+.fan img { width: auto; height: 32px; }
+.s-cap { margin-top: var(--space-3); color: var(--ink); }
+.s-cap h3 { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
+.s-cap p { margin-top: var(--space-2); color: var(--sub); }
+.cap-b { margin-top: var(--space-3); } .cap-c { margin-top: var(--space-3); }
+@container (min-width: 900px) {
+  .story { grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr) 96px minmax(0, 1fr); grid-template-rows: 192px auto; align-items: center;
+    grid-template-areas: "a ab b fh c" "ca . cb . cc"; }
+  .s-pic { align-self: center; }
+  .arr-ab { height: auto; }
+  .arr-ab svg { transform: none; }
+  .fan-v { display: none; }
+  .fan-h { display: block; }
+  .fans { grid-template-columns: 1fr; gap: var(--space-3); }
+  .fan { grid-template-columns: auto 1fr; justify-items: start; align-items: center; min-height: 52px; padding: 0 var(--space-3); gap: var(--space-3); }
+  .s-cap { align-self: start; }
+  .story .s-cap + .s-cap { margin-top: var(--space-3); }
+}
+
+/* ---- 아래 한 단계 낮은 설명: 단계 글(그림 없음) + 비용 ---- */
+.detail { display: grid; gap: var(--space-8); padding: var(--card-pad); border: 1px solid var(--border); border-radius: var(--r-card); background: var(--white); box-shadow: var(--card-shadow); container-type: inline-size; }
+.dsteps { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
+@container (min-width: 640px) { .dsteps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-6) var(--space-8); } }
+.who { display: flex; align-items: center; gap: var(--space-2); color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1.5; }
+.num { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: var(--r-pill); background: var(--primary-50); color: var(--ink); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1; }
+.st-h { margin-top: var(--space-2); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.5; }
+.st-p { margin-top: var(--space-1); color: var(--sub); font-size: var(--fs-small); line-height: 1.5; }
+
+/* ---- 비용 ---- */
+.cost { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: var(--space-8); align-items: start; padding-top: var(--space-8); border-top: 1px solid var(--gray-200); }
+.cost-l { display: grid; gap: var(--space-4); }
+.cost-l dt { font-weight: var(--fw-bold); }
+.cost-l dd { color: var(--sub); }
+.cost-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.cost-t caption { padding-bottom: var(--space-2); text-align: left; font-weight: var(--fw-bold); font-size: var(--fs-small); }
+.cost-t caption .chip { margin-left: var(--space-2); }
+.cost-t th, .cost-t td { padding: var(--space-2) 0; border-top: 1px solid var(--gray-200); text-align: left; font-weight: 400; font-size: var(--fs-small); }
+.cost-t th { color: var(--ink); font-weight: var(--fw-bold); }
+.cost-t th small { margin-left: var(--space-1); color: var(--sub); font-size: var(--fs-small); font-weight: 400; }
+.cost-t td { text-align: right; font-weight: var(--fw-bold); }
+@media (max-width: 900px) { .cost { grid-template-columns: 1fr; gap: var(--space-6); } }
+
+/* ---- 선물함 목록 ---- */
+.boxes-box { container-type: inline-size; }
+.boxes { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--card-gap); }
+@container (min-width: 560px) { .boxes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.bcard { position: relative; display: grid; grid-template-rows: auto minmax(56px, 1fr) auto auto auto; gap: var(--space-3); padding: var(--card-pad); border: 1px solid var(--border); border-radius: var(--r-card); background: var(--white); box-shadow: var(--card-shadow); transition: box-shadow var(--dur-hover) var(--ease-out); }
+.bcard:hover { box-shadow: var(--card-shadow-hover); }
+.b-top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-2); }
+.b-top .tag { max-width: 100%; white-space: normal; }
+.b-pic { display: grid; place-items: center; width: 72px; height: 64px; border-radius: var(--r-icon); background: var(--primary-50); }
+.b-pic img { width: auto; height: auto; max-width: 48px; max-height: 48px; object-fit: contain; }
+.b-n { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; letter-spacing: 0; }
+.b-a { display: block; min-height: 44px; color: inherit; text-decoration: none; overflow-wrap: anywhere; }
+.b-a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.b-a:focus-visible { outline: none; }
+.b-a:focus-visible::after { outline: 2px solid var(--focus); outline-offset: 2px; }
+.b-cnt { display: grid; gap: var(--space-2); }
+.b-num { font-size: var(--fs-small); color: var(--sub); font-variant-numeric: tabular-nums; }
+.b-num b { color: var(--ink); font-size: var(--fs-body); }
+.b-bar { height: 6px; border-radius: var(--r-bar); background: var(--track); overflow: hidden; }
+.b-bar i { display: block; height: 100%; border-radius: var(--r-bar); background: var(--primary); }
+.b-m { color: var(--sub); font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
+.b-go { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); min-height: 24px; padding-top: var(--space-3); border-top: 1px solid var(--gray-200); font-size: var(--fs-small); font-weight: var(--fw-bold); }
+.b-go svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tag--brand { background: var(--primary-50); color: var(--brand-ink); }
+.tag--success { background: var(--success-soft); color: var(--success); }
+
+/* ---- 모달 ---- */
+.ov { position: absolute; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; padding: var(--space-6); background: var(--scrim); }
+.stage[data-modal~="m1"] .ov-m1, .stage[data-modal~="m1e"] .ov-m1e, .stage[data-modal~="m2"] .ov-m2, .stage[data-modal~="m2e"] .ov-m2e, .stage[data-modal~="m3"] .ov-m3, .stage[data-modal~="m3s"] .ov-m3s, .stage[data-modal~="m3e"] .ov-m3e, .stage[data-modal~="done"] .ov-done, .stage[data-modal~="discard"] .ov-discard { display: flex; }
+.ov-discard { z-index: 70; }
+.dlg { display: flex; flex-direction: column; width: 520px; max-width: 100%; max-height: 100%; padding: var(--panel-pad); border-radius: var(--r-panel); background: var(--white); box-shadow: var(--float); }
+.dlg.small { width: 400px; gap: var(--space-4); }
+.mhead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-4); }
+.m-title { font-size: var(--fs-card); line-height: 1.4; letter-spacing: 0; }
+.done-t { display: flex; align-items: center; gap: var(--space-2); }
+.done-t .ico { flex: none; width: 24px; height: 24px; color: var(--success); }
+.x { display: grid; place-items: center; flex: none; width: 44px; height: 44px; margin-right: calc(-1 * var(--space-2)); padding: 10px; border: 0; border-radius: var(--r-pill); background: none; cursor: pointer; }
+.x:hover { background: var(--gray-100); }
+.mbody { display: grid; gap: var(--space-6); align-content: start; min-height: 232px; overflow-y: auto; }
+.dlg.small .mbody { min-height: 0; }
+.mfoot { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-8); }
+.dlg.small .mfoot { margin-top: var(--space-2); }
+.mfoot .btn:first-child:not(:only-child) { margin-right: auto; }
+.dc-b { color: var(--sub); }
+
+.prog .bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-1); }
+.prog .bar i { height: 6px; border-radius: var(--r-bar); background: var(--track); }
+.prog .bar i.on { background: var(--gray-900); }
+.prog-t { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 var(--space-4); margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+.prog-t b { color: var(--ink); }
+
+.field > label, .scope legend { display: block; margin-bottom: var(--space-2); font-weight: var(--fw-btn); padding: 0; }
+.input { display: block; width: 100%; min-width: 0; min-height: 52px; padding: 0 var(--space-4); border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font-size: var(--fs-body); }
+.input:focus, .input.is-focus { outline: 2px solid transparent; box-shadow: inset 0 0 0 var(--field-ring) var(--field-focus); }
+.input[aria-invalid="true"] { box-shadow: inset 0 0 0 var(--field-ring) var(--danger-line); }
+.suffix { position: relative; }
+.suffix .input { padding-right: var(--space-12); }
+.suffix span { position: absolute; right: var(--space-4); top: 50%; transform: translateY(-50%); color: var(--sub); }
+input[type="number"]::-webkit-inner-spin-button { display: none; }
+.hint { margin-top: var(--space-2); color: var(--sub); font-size: var(--fs-small); line-height: 1.5; }
+.ferr { display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-2); color: var(--danger); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; }
+.ferr .ico { flex: none; width: 16px; height: 16px; margin-top: 2px; }
+.ferr-box { margin-top: 0; padding: var(--space-4); border-radius: var(--r-btn); background: var(--danger-soft); font-size: var(--fs-body); }
+.ferr-box .ico { width: 20px; height: 20px; margin-top: 2px; }
+
+.scope { margin: 0; padding: 0; border: 0; min-width: 0; display: grid; gap: var(--space-2); }
+.scope legend { float: left; width: 100%; }
+.scope legend + * { clear: both; }
+.opt { display: flex; align-items: center; gap: var(--space-3); min-height: 64px; padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); cursor: pointer; }
+.opt input { flex: none; width: var(--icon-xs); height: var(--icon-xs); margin: 0; accent-color: var(--brand-line); }
+.opt span { display: grid; line-height: 1.5; }
+.opt b { font-weight: var(--fw-btn); }
+.opt small { color: var(--sub); font-size: var(--fs-small); }
+.opt:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
+.opt:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+fieldset[disabled] .opt { cursor: not-allowed; }
+.sum { display: grid; gap: var(--space-1); padding: var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.sum > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 var(--space-4); font-size: var(--fs-small); }
+.sum dt { color: var(--sub); }
+.sum dd { font-weight: var(--fw-bold); text-align: right; }
+
+.made { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); }
+.made-n { font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; }
+.linkbox { display: grid; gap: var(--space-2); padding: var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.lk-l { font-weight: var(--fw-btn); }
+.lk-r { display: flex; align-items: center; gap: var(--space-4); }
+.lk { flex: 1; min-width: 0; color: var(--sub); font-size: var(--fs-small); line-height: 1.5; }
+.lk-r .btn { flex: none; min-height: 44px; }
+
+/* 휴대폰: 모달은 화면 전체를 덮는 시트, 주요 버튼 폭 전체(8-1) */
+@media (max-width: 768px) {
+  .ov { padding: 0; background: var(--white); align-items: stretch; }
+  .ov-discard, .ov-mgc1, .ov-mgc0 { background: var(--scrim); align-items: center; padding: var(--space-4); }
+  .dlg { width: 100%; height: 100%; padding: 0; border-radius: 0; box-shadow: none; }
+  .dlg.small { width: 100%; height: auto; padding: var(--space-6); border-radius: var(--r-panel); box-shadow: var(--float); }
+  .mhead { margin: 0; padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); border-bottom: 1px solid var(--gray-200); min-height: 56px; padding-top: max(var(--space-2), env(safe-area-inset-top)); }
+  .x { margin-right: 0; }
+  .mbody { flex: 1; min-height: 0; padding: var(--space-6) var(--space-4); }
+  .dlg.small .mbody { padding: 0; }
+  .mfoot { flex-direction: column-reverse; margin: 0; padding: var(--space-4) var(--space-4) max(var(--space-4), env(safe-area-inset-bottom)); border-top: 1px solid var(--gray-200); }
+  .mfoot .btn { width: 100%; margin-right: 0 !important; }
+  .dlg.small .mfoot { padding: 0; border: 0; margin-top: var(--space-2); }
+  .lk-r { flex-direction: column; align-items: stretch; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.dlg.small .mfoot .btn { margin-right: 0 !important; }
+
+/* ---- 신청 관리 ---- */
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.stage[data-page="mgopen"] .page-mgopen, .stage[data-page="mgfull"] .page-mgfull, .stage[data-page="mgzero"] .page-mgzero, .stage[data-page="mgdone0"] .page-mgdone0 { display: block; }
+.stage[data-modal~="mgc1"] .ov-mgc1, .stage[data-modal~="mgc0"] .ov-mgc0 { display: flex; }
+.mcol { display: grid; gap: var(--space-6); align-content: start; }
+.mcol > p:first-child { margin: 0; }
+.back { display: inline-flex; align-items: center; min-height: 44px; color: var(--sub); font-weight: var(--fw-btn); text-decoration: none; }
+.mhd { display: grid; gap: var(--space-3); }
+.mhd .ph-title { overflow-wrap: anywhere; }
+.mtags { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tag--line { background: var(--white); color: var(--gray-900); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.mlink .lk { color: var(--ink); }
+.mfans { display: grid; gap: var(--space-4); }
+.mlisthead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.mcount { margin-left: var(--space-2); color: var(--sub); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); font-variant-numeric: tabular-nums; }
+.msearch { width: 280px; max-width: 100%; }
+.fullbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--surface-brand); box-shadow: inset 0 0 0 1px var(--tint-line); }
+.mrows { display: grid; border: 1px solid var(--border); border-radius: var(--r-card); background: var(--white); box-shadow: var(--card-shadow); }
+.mrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: var(--space-4); min-height: 56px; padding: var(--space-1) var(--space-6); }
+.mrow + .mrow { border-top: 1px solid var(--gray-200); }
+.m-nick { font-weight: var(--fw-bold); overflow-wrap: anywhere; }
+.m-when { color: var(--sub); font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
+.check { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-2); cursor: pointer; font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.check input { width: var(--icon-xs); height: var(--icon-xs); margin: 0; accent-color: var(--brand-line); }
+.none { padding: var(--space-8) var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--white); color: var(--sub); text-align: center; }
+.mact { display: flex; justify-content: flex-end; align-items: center; gap: var(--space-2); }
+.mact .btn--line { order: 2; }
+.m-end { padding: var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--surface-muted); color: var(--ink); }
+@media (max-width: 768px) {
+  .mrow { grid-template-columns: minmax(0, 1fr) auto; gap: 0 var(--space-2); padding: var(--space-2) var(--space-4); }
+  .m-when { grid-column: 1; grid-row: 2; }
+  .check { grid-column: 2; grid-row: 1 / span 2; }
+  .msearch { width: 100%; }
+  .fullbar { flex-direction: column; align-items: stretch; padding: var(--space-4); }
+  .fullbar .btn, .mact .btn { width: 100%; }
+  .mact { flex-direction: column; align-items: stretch; }
+  .mact .btn--line { order: 0; }
+  .ov-mgc1, .ov-mgc0 { background: var(--scrim); align-items: center; padding: var(--space-4); }
+}
+.b-tags { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-1); }
+.b-pic.is-off img { filter: grayscale(1); }
+
+</style>
+</head>
+<body>
+<nav class="mock-bar" aria-label="시안 상태 전환 (실제 화면 아님)">
+  <p class="mb-t">상태 전환</p>
+  <div class="mb-g"><span>목록</span><button type="button" data-st="list0">선물함 0개</button><button type="button" data-st="list2">선물함 2개</button></div>
+  <div class="mb-g"><span>모달</span><button type="button" data-st="m1">1/3 이름</button><button type="button" data-st="m1e">1/3 빈 칸 오류</button><button type="button" data-st="m2">2/3 인원</button><button type="button" data-st="m2e">2/3 범위 밖 오류</button><button type="button" data-st="m3">3/3 공개 범위</button><button type="button" data-st="m3s">만드는 중</button><button type="button" data-st="m3e">저장 실패</button><button type="button" data-st="done">만들었어요</button><button type="button" data-st="discard">닫기 확인</button></div>
+<div class="mb-g"><span>신청 관리</span><button type="button" data-st="mgopen">신청 받는 중 12/20</button><button type="button" data-st="mgfull">인원 다 참 20/20</button><button type="button" data-st="mgzero">신청 0명</button><button type="button" data-st="mgclose">마감 확인(1명 이상)</button><button type="button" data-st="mgclose0">마감 확인(0명)</button><button type="button" data-st="mgdone0">신청 없이 마감</button></div>
+</nav>
+<div class="stage" id="stage" data-page="list0" data-modal="">
+<header class="topbar"><a class="logo" aria-label="팬꾹 홈" href="#"><img src="img/logo-mark.png" alt="" aria-hidden="true" width="28" height="28" style="border-radius:var(--r-logo);display:block;flex:none">팬꾹</a><button class="icon-btn" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="app-sidebar"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path></svg></button></header>
+<aside class="sidebar" id="app-sidebar" aria-label="크리에이터 메뉴"><div class="sb-top"><button class="sb-mark" type="button" aria-label="사이드바 펼치기" aria-controls="app-sidebar" aria-expanded="true"><span class="m-txt" aria-hidden="true"><img src="img/logo-mark.png" alt="" aria-hidden="true" width="28" height="28" style="border-radius:var(--r-logo);display:block;flex:none"></span><svg class="ico m-ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path><path d="m14 9 3 3-3 3"></path></svg></button><a class="logo" aria-label="팬꾹 홈" href="#"><img src="img/logo-mark.png" alt="" aria-hidden="true" width="28" height="28" style="border-radius:var(--r-logo);display:block;flex:none">팬꾹</a><button class="sb-btn sb-fold" type="button" aria-label="사이드바 접기" aria-controls="app-sidebar"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path><path d="m16 15-3-3 3-3"></path></svg></button><button class="sb-btn sb-close" type="button" aria-label="메뉴 닫기"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div><nav class="sb-nav" aria-label="크리에이터 메뉴"><div><p class="sb-group" id="sb-g0"><span class="sb-group-t">기본</span></p><ul aria-labelledby="sb-g0"><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg><span class="sb-label">홈</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg><span class="sb-label">선물 현황</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path></svg><span class="sb-label">지금 할 일</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg><span class="sb-label">크리에이터 찾기</span></a></li></ul></div><div><p class="sb-group" id="sb-g1"><span class="sb-group-t">받기</span></p><ul aria-labelledby="sb-g1"><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"></path><path d="m3 7 2 2 4-4"></path><path d="M13 6h8"></path><path d="M13 12h8"></path><path d="M13 18h8"></path></svg><span class="sb-label">승인 내역</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><path d="m7.5 4.27 9 5.15"></path></svg><span class="sb-label">받은 선물</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg><span class="sb-label">열람 기록</span></a></li></ul></div><div><p class="sb-group" id="sb-g2"><span class="sb-group-t">보내기</span></p><ul aria-labelledby="sb-g2"><li><a aria-current="page" href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 16h6"></path><path d="M19 13v6"></path><path d="M21 14V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"></path><path d="m7.5 4.27 9 5.15"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" x2="12" y1="22" y2="12"></line></svg><span class="sb-label">팬에게 보내기</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v14"></path><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"></path><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"></path><rect x="3" y="7" width="18" height="4" rx="1"></rect></svg><span class="sb-label">다른 크리에이터에게 선물</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"></path></svg><span class="sb-label">팔로우한 크리에이터</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg><span class="sb-label">보낸 내역</span></a></li></ul></div><div><p class="sb-group" id="sb-g3"><span class="sb-group-t">내 팬꾹</span></p><ul aria-labelledby="sb-g3"><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"></path><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle></svg><span class="sb-label">꾸미기</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 0 0-16 0"></path></svg><span class="sb-label">프로필 수정</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"></path><circle cx="12" cy="12" r="3"></circle></svg><span class="sb-label">상세 설정</span></a></li></ul></div></nav><div class="sb-bottom"><details class="sb-menu"><summary aria-label="하루님 계정 메뉴"><span class="sb-avatar" aria-hidden="true">하</span><span class="sb-name">하루<!-- -->님</span><svg class="ico sb-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 15 5 5 5-5"></path><path d="m7 9 5-5 5 5"></path></svg></summary><div class="sb-menu-list"><a href="#">계정 설정</a><button class="menu-action" type="button" aria-disabled="false">로그아웃</button></div></details></div></aside>
+<main id="main" class="page page-list0"><div class="col"><header class="phead hero-head">
+  <div class="hero-t">
+    <h1 class="ph-title">팬에게 보내기란?</h1>
+    <p class="def">여러 팬에게 줄 선물을 큰 상자 하나에 담아 팬꾹으로 보내면, 팬꾹이 열어 팬마다 나눠 보냅니다.</p>
+  </div>
+  <button class="btn" type="button" data-go="m1" data-opener>선물함 만들기</button>
+</header><div class="story-box"><div class="story">
+  <div class="s-pic s-a" data-s="a"><span class="chip chip-a">택배 접수 1번</span><img src="img/revgift-pack.png" alt="" width="112" height="112"></div>
+  <span class="arr arr-ab" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M1 8h13M9 3l5 5-5 5"/></svg></span>
+  <div class="s-pic s-b" data-s="b"><img src="img/icon-inspect.webp" alt="" width="112" height="112"></div>
+  <svg class="fan-h" viewBox="0 0 96 192" width="96" height="192" aria-hidden="true"><defs><marker id="h2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.5 8.5 5 1 8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker></defs><g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"><line x1="16" y1="96" x2="80" y2="32" marker-end="url(#h2)"/><line x1="16" y1="96" x2="80" y2="96" marker-end="url(#h2)"/><line x1="16" y1="96" x2="80" y2="160" marker-end="url(#h2)"/></g></svg>
+  <svg class="fan-v" width="100%" height="96" aria-hidden="true"><defs><marker id="v2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.5 8.5 5 1 8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker></defs><g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"><line x1="50%" y1="16" x2="16.67%" y2="80" marker-end="url(#v2)"/><line x1="50%" y1="16" x2="50%" y2="80" marker-end="url(#v2)"/><line x1="50%" y1="16" x2="83.33%" y2="80" marker-end="url(#v2)"/></g></svg>
+  <ul class="fans s-c" role="list" aria-label="팬 여러 명 예시" data-s="c"><li class="fan"><img src="img/gift-box-small.png" alt="" height="32"><span>별빛</span></li><li class="fan"><img src="img/gift-box-small.png" alt="" height="32"><span>하늘</span></li><li class="fan"><img src="img/gift-box-small.png" alt="" height="32"><span>보라</span></li></ul>
+  <div class="s-cap cap-a"><h3>큰 상자 하나, 택배 접수 한 번</h3><p>선물마다 닉네임을 적거나 번호 라벨을 붙여 큰 상자에 함께 담아 팬꾹으로 보냅니다.</p></div>
+  <div class="s-cap cap-b"><h3>팬꾹이 열어 실제 크기를 잽니다</h3><p>도착한 선물을 하나씩 재서 명세서를 만들고, 그 금액을 한 번 결제합니다. 미리 결제하지 않습니다.</p></div>
+  <div class="s-cap cap-c"><h3>팬마다 따로 발송합니다</h3><p>팬이 신청할 때 받을 주소를 팬꾹에 입력합니다. 크리에이터에게는 닉네임만 보입니다.</p></div>
+</div></div><section class="detail" aria-label="진행 단계와 비용">
+  <ol class="dsteps" role="list">
+    <li><p class="who"><span class="num" aria-hidden="true">1</span>크리에이터</p><h3 class="st-h">선물함 만들기</h3><p class="st-p">이름 · 받을 인원(1~100명) · 공개 범위를 정합니다.</p></li>
+    <li><p class="who"><span class="num" aria-hidden="true">2</span>팬</p><h3 class="st-h">신청</h3><p class="st-p">나를 팔로우한 팬이 받을 주소를 입력해 신청합니다.</p></li>
+    <li><p class="who"><span class="num" aria-hidden="true">3</span>크리에이터</p><h3 class="st-h">마감하고 상자 크기 고르기</h3><p class="st-p">팬마다 상자 크기를 고르면 예상 금액을 확인합니다.</p></li>
+    <li><p class="who"><span class="num" aria-hidden="true">4</span>크리에이터</p><h3 class="st-h">큰 상자로 팬꾹에 보내기</h3><p class="st-p">번호 라벨을 붙여 팬꾹 주소(선물함 번호 6자리)로 보냅니다.</p></li>
+    <li><p class="who"><span class="num" aria-hidden="true">5</span>팬꾹 → 크리에이터</p><h3 class="st-h">실측 뒤 명세서 · 결제</h3><p class="st-p">72시간 안에 결제합니다. 168시간까지 결제가 없으면 착불로 돌려보냅니다.</p></li>
+    <li><p class="who"><span class="num" aria-hidden="true">6</span>팬꾹 → 팬</p><h3 class="st-h">팬마다 발송</h3><p class="st-p">크리에이터와 팬이 배송 단계를 봅니다.</p></li>
+  </ol>
+  <div class="cost">
+    <dl class="cost-l">
+      <div><dt>팬마다</dt><dd>상자 크기별 택배비 + 서비스료</dd></div>
+      <div><dt>큰 상자를 팬꾹으로 보낼 때</dt><dd>택배비는 크리에이터가 부담합니다(착불 가능).</dd></div>
+      <div><dt>대형을 넘는 선물</dt><dd>우체국 실비로 개인접수합니다.</dd></div>
+    </dl>
+    <table class="cost-t">
+      <caption><span>상자 크기별 택배비</span><span class="chip">예시</span></caption>
+      <tbody>
+        <tr><th scope="row">극소형 <small>80cm · 2kg</small></th><td>3,000원</td></tr>
+        <tr><th scope="row">소형 <small>100cm · 5kg</small></th><td>3,500원</td></tr>
+        <tr><th scope="row">중형 <small>120cm · 10kg</small></th><td>4,400원</td></tr>
+        <tr><th scope="row">대형 <small>140cm · 15kg</small></th><td>5,500원</td></tr>
+        <tr class="sv"><th scope="row">서비스료 <small>팬마다</small></th><td>700원</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section><div class="endrow"><button class="btn" type="button" data-go="m1" data-opener>선물함 만들기</button></div></div></main>
+<main id="main" class="page page-list2"><div class="col"><header class="phead">
+  <h1 class="ph-title">팬에게 보내기</h1>
+  <button class="btn" type="button" data-go="m1" data-opener>선물함 만들기</button>
+</header><section class="sec" aria-labelledby="mine-h">
+  <h2 class="sec-h" id="mine-h">내 선물함</h2>
+  <div class="boxes-box"><ul class="boxes" role="list">
+    <li class="bcard"><div class="b-top"><div class="b-pic"><img src="img/promise-message.webp" alt="" height="48"></div><span class="tag tag--dot tag--info">신청 받는 중</span></div>
+      <h3 class="b-n"><a class="b-a" href="#" data-go="mgopen">11월 팬미팅 선물</a></h3>
+      <div class="b-cnt"><p class="b-num">신청 <b>12명</b> / 20명</p><div class="b-bar" role="progressbar" aria-label="신청 12명 / 20명" aria-valuemin="0" aria-valuemax="20" aria-valuenow="12"><i style="width:60%"></i></div></div>
+      <p class="b-m">공개 · 11월 9일 (월)</p>
+      <p class="b-go" aria-hidden="true">신청 관리<svg viewBox="0 0 16 16"><path d="M1 8h13M9 3l5 5-5 5"/></svg></p></li>
+    <li class="bcard"><div class="b-top"><div class="b-pic"><img src="img/promise-message.webp" alt="" height="48"></div><span class="b-tags"><span class="tag tag--dot tag--info">신청 받는 중</span><span class="tag tag--line">인원 마감</span></span></div>
+      <h3 class="b-n"><a class="b-a" href="#" data-go="mgfull">12월 크리스마스 선물</a></h3>
+      <div class="b-cnt"><p class="b-num">신청 <b>20명</b> / 20명</p><div class="b-bar" role="progressbar" aria-label="신청 20명 / 20명" aria-valuemin="0" aria-valuemax="20" aria-valuenow="20"><i style="width:100%"></i></div></div>
+      <p class="b-m">공개 · 11월 8일 (일)</p>
+      <p class="b-go" aria-hidden="true">마감하기<svg viewBox="0 0 16 16"><path d="M1 8h13M9 3l5 5-5 5"/></svg></p></li>
+    <li class="bcard"><div class="b-top"><div class="b-pic"><img src="img/revgift-pack.png" alt="" height="48"></div><span class="tag tag--dot tag--warn">팬꾹으로 배송하기</span></div>
+      <h3 class="b-n"><a class="b-a" href="#">10월 생일 감사 선물</a></h3>
+      <div class="b-cnt"><p class="b-num">신청 <b>8명</b> / 10명</p><div class="b-bar" role="progressbar" aria-label="신청 8명 / 10명" aria-valuemin="0" aria-valuemax="10" aria-valuenow="8"><i style="width:80%"></i></div></div>
+      <p class="b-m">비공개 · 10월 20일 (화)</p>
+      <p class="b-go" aria-hidden="true">신청 관리<svg viewBox="0 0 16 16"><path d="M1 8h13M9 3l5 5-5 5"/></svg></p></li>
+    <li class="bcard"><div class="b-top"><div class="b-pic"><img src="img/icon-fee.webp" alt="" height="48"></div><span class="tag tag--dot tag--brand">결제 요청</span></div>
+      <h3 class="b-n"><a class="b-a" href="#">9월 콘서트 후기 선물</a></h3>
+      <div class="b-cnt"><p class="b-num">신청 <b>15명</b> / 15명</p><div class="b-bar" role="progressbar" aria-label="신청 15명 / 15명" aria-valuemin="0" aria-valuemax="15" aria-valuenow="15"><i style="width:100%"></i></div></div>
+      <p class="b-m">공개 · 9월 28일 (월)</p>
+      <p class="b-go" aria-hidden="true">신청 관리<svg viewBox="0 0 16 16"><path d="M1 8h13M9 3l5 5-5 5"/></svg></p></li>
+    <li class="bcard"><div class="b-top"><div class="b-pic"><img src="img/icon-truck.webp" alt="" height="48"></div><span class="tag tag--dot tag--success">발송 중</span></div>
+      <h3 class="b-n"><a class="b-a" href="#">8월 팬레터 답장 선물</a></h3>
+      <div class="b-cnt"><p class="b-num">신청 <b>6명</b> / 8명</p><div class="b-bar" role="progressbar" aria-label="신청 6명 / 8명" aria-valuemin="0" aria-valuemax="8" aria-valuenow="6"><i style="width:75%"></i></div></div>
+      <p class="b-m">비공개 · 8월 14일 (금)</p>
+      <p class="b-go" aria-hidden="true">신청 관리<svg viewBox="0 0 16 16"><path d="M1 8h13M9 3l5 5-5 5"/></svg></p></li>
+    <li class="bcard"><div class="b-top"><div class="b-pic is-off"><img src="img/icon-gift.webp" alt="" height="48"></div><span class="tag tag--dot">신청 없이 마감</span></div>
+      <h3 class="b-n"><a class="b-a" href="#" data-go="mgdone0">7월 안부 선물</a></h3>
+      <div class="b-cnt"><p class="b-num">신청 <b>0명</b> / 20명</p><div class="b-bar" role="progressbar" aria-label="신청 0명 / 20명" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0"><i style="width:0%"></i></div></div>
+      <p class="b-m">공개 · 7월 3일 (금)</p>
+      <p class="b-go" aria-hidden="true">신청 관리<svg viewBox="0 0 16 16"><path d="M1 8h13M9 3l5 5-5 5"/></svg></p></li>
+  </ul></div>
+</section><section class="sec" aria-labelledby="what-h"><div><h2 class="sec-h" id="what-h">팬에게 보내기란?</h2><p class="def">여러 팬에게 줄 선물을 큰 상자 하나에 담아 팬꾹으로 보내면, 팬꾹이 열어 팬마다 나눠 보냅니다.</p></div><div class="story-box"><div class="story">
+  <div class="s-pic s-a" data-s="a"><span class="chip chip-a">택배 접수 1번</span><img src="img/revgift-pack.png" alt="" width="112" height="112"></div>
+  <span class="arr arr-ab" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M1 8h13M9 3l5 5-5 5"/></svg></span>
+  <div class="s-pic s-b" data-s="b"><img src="img/icon-inspect.webp" alt="" width="112" height="112"></div>
+  <svg class="fan-h" viewBox="0 0 96 192" width="96" height="192" aria-hidden="true"><defs><marker id="h1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.5 8.5 5 1 8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker></defs><g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"><line x1="16" y1="96" x2="80" y2="32" marker-end="url(#h1)"/><line x1="16" y1="96" x2="80" y2="96" marker-end="url(#h1)"/><line x1="16" y1="96" x2="80" y2="160" marker-end="url(#h1)"/></g></svg>
+  <svg class="fan-v" width="100%" height="96" aria-hidden="true"><defs><marker id="v1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.5 8.5 5 1 8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker></defs><g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"><line x1="50%" y1="16" x2="16.67%" y2="80" marker-end="url(#v1)"/><line x1="50%" y1="16" x2="50%" y2="80" marker-end="url(#v1)"/><line x1="50%" y1="16" x2="83.33%" y2="80" marker-end="url(#v1)"/></g></svg>
+  <ul class="fans s-c" role="list" aria-label="팬 여러 명 예시" data-s="c"><li class="fan"><img src="img/gift-box-small.png" alt="" height="32"><span>별빛</span></li><li class="fan"><img src="img/gift-box-small.png" alt="" height="32"><span>하늘</span></li><li class="fan"><img src="img/gift-box-small.png" alt="" height="32"><span>보라</span></li></ul>
+  <div class="s-cap cap-a"><h3>큰 상자 하나, 택배 접수 한 번</h3><p>선물마다 닉네임을 적거나 번호 라벨을 붙여 큰 상자에 함께 담아 팬꾹으로 보냅니다.</p></div>
+  <div class="s-cap cap-b"><h3>팬꾹이 열어 실제 크기를 잽니다</h3><p>도착한 선물을 하나씩 재서 명세서를 만들고, 그 금액을 한 번 결제합니다. 미리 결제하지 않습니다.</p></div>
+  <div class="s-cap cap-c"><h3>팬마다 따로 발송합니다</h3><p>팬이 신청할 때 받을 주소를 팬꾹에 입력합니다. 크리에이터에게는 닉네임만 보입니다.</p></div>
+</div></div></section><section class="detail" aria-label="진행 단계와 비용">
+  <ol class="dsteps" role="list">
+    <li><p class="who"><span class="num" aria-hidden="true">1</span>크리에이터</p><h3 class="st-h">선물함 만들기</h3><p class="st-p">이름 · 받을 인원(1~100명) · 공개 범위를 정합니다.</p></li>
+    <li><p class="who"><span class="num" aria-hidden="true">2</span>팬</p><h3 class="st-h">신청</h3><p class="st-p">나를 팔로우한 팬이 받을 주소를 입력해 신청합니다.</p></li>
+    <li><p class="who"><span class="num" aria-hidden="true">3</span>크리에이터</p><h3 class="st-h">마감하고 상자 크기 고르기</h3><p class="st-p">팬마다 상자 크기를 고르면 예상 금액을 확인합니다.</p></li>
+    <li><p class="who"><span class="num" aria-hidden="true">4</span>크리에이터</p><h3 class="st-h">큰 상자로 팬꾹에 보내기</h3><p class="st-p">번호 라벨을 붙여 팬꾹 주소(선물함 번호 6자리)로 보냅니다.</p></li>
+    <li><p class="who"><span class="num" aria-hidden="true">5</span>팬꾹 → 크리에이터</p><h3 class="st-h">실측 뒤 명세서 · 결제</h3><p class="st-p">72시간 안에 결제합니다. 168시간까지 결제가 없으면 착불로 돌려보냅니다.</p></li>
+    <li><p class="who"><span class="num" aria-hidden="true">6</span>팬꾹 → 팬</p><h3 class="st-h">팬마다 발송</h3><p class="st-p">크리에이터와 팬이 배송 단계를 봅니다.</p></li>
+  </ol>
+  <div class="cost">
+    <dl class="cost-l">
+      <div><dt>팬마다</dt><dd>상자 크기별 택배비 + 서비스료</dd></div>
+      <div><dt>큰 상자를 팬꾹으로 보낼 때</dt><dd>택배비는 크리에이터가 부담합니다(착불 가능).</dd></div>
+      <div><dt>대형을 넘는 선물</dt><dd>우체국 실비로 개인접수합니다.</dd></div>
+    </dl>
+    <table class="cost-t">
+      <caption><span>상자 크기별 택배비</span><span class="chip">예시</span></caption>
+      <tbody>
+        <tr><th scope="row">극소형 <small>80cm · 2kg</small></th><td>3,000원</td></tr>
+        <tr><th scope="row">소형 <small>100cm · 5kg</small></th><td>3,500원</td></tr>
+        <tr><th scope="row">중형 <small>120cm · 10kg</small></th><td>4,400원</td></tr>
+        <tr><th scope="row">대형 <small>140cm · 15kg</small></th><td>5,500원</td></tr>
+        <tr class="sv"><th scope="row">서비스료 <small>팬마다</small></th><td>700원</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section><div class="endrow"><button class="btn" type="button" data-go="m1" data-opener>선물함 만들기</button></div></div></main>
+<main id="main" class="page page-mgopen"><div class="col"><div class="mcol"><p><a class="back" href="#" data-go="list2">선물함 목록</a></p><header class="mhd"><h1 class="ph-title">11월 팬미팅 선물</h1><p class="mtags"><span class="tag tag--info tag--dot">신청 받는 중</span><span class="tag tag--line">공개</span></p></header><section class="linkbox mlink" aria-label="신청 링크"><p class="lk-l">신청 링크</p><div class="lk-r"><p class="lk">https://fankkuk.com/gift-boxes/3f8a1c52-9d4e-4b7a-8e21-6c0a5d93b7f4</p><button class="btn " type="button">링크 복사</button></div></section><section class="mfans" aria-labelledby="mf-o"><div class="mlisthead"><h2 class="sec-h" id="mf-o">신청한 팬 <span class="mcount">12명 / 20명</span></h2><div class="msearch"><label class="sr-only" for="ms-o">닉네임 검색</label><input id="ms-o" class="input" type="search" placeholder="닉네임 검색" maxlength="20"></div></div><ul class="mrows" role="list"><li class="mrow"><span class="m-nick">별빛</span><span class="m-when">11월 9일 (월) 오후 8:10</span><label class="check"><input type="checkbox" aria-label="별빛 제외">제외</label></li><li class="mrow"><span class="m-nick">하늘</span><span class="m-when">11월 9일 (월) 오후 7:25</span><label class="check"><input type="checkbox" aria-label="하늘 제외">제외</label></li><li class="mrow"><span class="m-nick">보라</span><span class="m-when">11월 9일 (월) 오후 6:40</span><label class="check"><input type="checkbox" aria-label="보라 제외">제외</label></li><li class="mrow"><span class="m-nick">달무리</span><span class="m-when">11월 9일 (월) 오후 5:05</span><label class="check"><input type="checkbox" aria-label="달무리 제외">제외</label></li><li class="mrow"><span class="m-nick">민트초코</span><span class="m-when">11월 9일 (월) 오후 4:50</span><label class="check"><input type="checkbox" aria-label="민트초코 제외">제외</label></li><li class="mrow"><span class="m-nick">구름빵</span><span class="m-when">11월 8일 (일) 오후 8:10</span><label class="check"><input type="checkbox" aria-label="구름빵 제외">제외</label></li><li class="mrow"><span class="m-nick">소나기</span><span class="m-when">11월 8일 (일) 오후 7:25</span><label class="check"><input type="checkbox" aria-label="소나기 제외">제외</label></li><li class="mrow"><span class="m-nick">새벽별</span><span class="m-when">11월 8일 (일) 오후 6:40</span><label class="check"><input type="checkbox" aria-label="새벽별 제외">제외</label></li><li class="mrow"><span class="m-nick">은하수</span><span class="m-when">11월 8일 (일) 오후 5:05</span><label class="check"><input type="checkbox" aria-label="은하수 제외">제외</label></li><li class="mrow"><span class="m-nick">해바라기</span><span class="m-when">11월 8일 (일) 오후 4:50</span><label class="check"><input type="checkbox" aria-label="해바라기 제외">제외</label></li><li class="mrow"><span class="m-nick">도토리</span><span class="m-when">11월 7일 (토) 오후 8:10</span><label class="check"><input type="checkbox" aria-label="도토리 제외">제외</label></li><li class="mrow"><span class="m-nick">라일락</span><span class="m-when">11월 7일 (토) 오후 7:25</span><label class="check"><input type="checkbox" aria-label="라일락 제외">제외</label></li></ul></section><div class="mact"><button class="btn btn--line" type="button" data-go="mgclose">마감하기</button><button class="btn btn--text" type="button">선물함 취소</button></div></div></div></main>
+<main id="main" class="page page-mgfull"><div class="col"><div class="mcol"><p><a class="back" href="#" data-go="list2">선물함 목록</a></p><header class="mhd"><h1 class="ph-title">12월 크리스마스 선물</h1><p class="mtags"><span class="tag tag--info tag--dot">신청 받는 중</span><span class="tag tag--line">인원 마감</span><span class="tag tag--line">공개</span></p></header><section class="linkbox mlink" aria-label="신청 링크"><p class="lk-l">신청 링크</p><div class="lk-r"><p class="lk">https://fankkuk.com/gift-boxes/3f8a1c52-9d4e-4b7a-8e21-6c0a5d93b7f4</p><button class="btn btn--line" type="button">링크 복사</button></div></section><section class="mfans" aria-labelledby="mf-f"><div class="mlisthead"><h2 class="sec-h" id="mf-f">신청한 팬 <span class="mcount">20명 / 20명</span></h2><div class="msearch"><label class="sr-only" for="ms-f">닉네임 검색</label><input id="ms-f" class="input" type="search" placeholder="닉네임 검색" maxlength="20"></div></div><div class="fullbar"><p><b>받을 인원 20명이 다 찼습니다</b></p><button class="btn" type="button" data-go="mgclose">마감하기</button></div><ul class="mrows" role="list"><li class="mrow"><span class="m-nick">별빛</span><span class="m-when">11월 9일 (월) 오후 8:10</span><label class="check"><input type="checkbox" aria-label="별빛 제외">제외</label></li><li class="mrow"><span class="m-nick">하늘</span><span class="m-when">11월 9일 (월) 오후 7:25</span><label class="check"><input type="checkbox" aria-label="하늘 제외">제외</label></li><li class="mrow"><span class="m-nick">보라</span><span class="m-when">11월 9일 (월) 오후 6:40</span><label class="check"><input type="checkbox" aria-label="보라 제외">제외</label></li><li class="mrow"><span class="m-nick">달무리</span><span class="m-when">11월 9일 (월) 오후 5:05</span><label class="check"><input type="checkbox" aria-label="달무리 제외">제외</label></li><li class="mrow"><span class="m-nick">민트초코</span><span class="m-when">11월 9일 (월) 오후 4:50</span><label class="check"><input type="checkbox" aria-label="민트초코 제외">제외</label></li><li class="mrow"><span class="m-nick">구름빵</span><span class="m-when">11월 8일 (일) 오후 8:10</span><label class="check"><input type="checkbox" aria-label="구름빵 제외">제외</label></li><li class="mrow"><span class="m-nick">소나기</span><span class="m-when">11월 8일 (일) 오후 7:25</span><label class="check"><input type="checkbox" aria-label="소나기 제외">제외</label></li><li class="mrow"><span class="m-nick">새벽별</span><span class="m-when">11월 8일 (일) 오후 6:40</span><label class="check"><input type="checkbox" aria-label="새벽별 제외">제외</label></li><li class="mrow"><span class="m-nick">은하수</span><span class="m-when">11월 8일 (일) 오후 5:05</span><label class="check"><input type="checkbox" aria-label="은하수 제외">제외</label></li><li class="mrow"><span class="m-nick">해바라기</span><span class="m-when">11월 8일 (일) 오후 4:50</span><label class="check"><input type="checkbox" aria-label="해바라기 제외">제외</label></li><li class="mrow"><span class="m-nick">도토리</span><span class="m-when">11월 7일 (토) 오후 8:10</span><label class="check"><input type="checkbox" aria-label="도토리 제외">제외</label></li><li class="mrow"><span class="m-nick">라일락</span><span class="m-when">11월 7일 (토) 오후 7:25</span><label class="check"><input type="checkbox" aria-label="라일락 제외">제외</label></li><li class="mrow"><span class="m-nick">파랑새</span><span class="m-when">11월 7일 (토) 오후 6:40</span><label class="check"><input type="checkbox" aria-label="파랑새 제외">제외</label></li><li class="mrow"><span class="m-nick">보름달</span><span class="m-when">11월 7일 (토) 오후 5:05</span><label class="check"><input type="checkbox" aria-label="보름달 제외">제외</label></li><li class="mrow"><span class="m-nick">솜사탕</span><span class="m-when">11월 7일 (토) 오후 4:50</span><label class="check"><input type="checkbox" aria-label="솜사탕 제외">제외</label></li><li class="mrow"><span class="m-nick">아침이슬</span><span class="m-when">11월 6일 (금) 오후 8:10</span><label class="check"><input type="checkbox" aria-label="아침이슬 제외">제외</label></li><li class="mrow"><span class="m-nick">햇살</span><span class="m-when">11월 6일 (금) 오후 7:25</span><label class="check"><input type="checkbox" aria-label="햇살 제외">제외</label></li><li class="mrow"><span class="m-nick">모래시계</span><span class="m-when">11월 6일 (금) 오후 6:40</span><label class="check"><input type="checkbox" aria-label="모래시계 제외">제외</label></li><li class="mrow"><span class="m-nick">단풍</span><span class="m-when">11월 6일 (금) 오후 5:05</span><label class="check"><input type="checkbox" aria-label="단풍 제외">제외</label></li><li class="mrow"><span class="m-nick">겨울잠</span><span class="m-when">11월 6일 (금) 오후 4:50</span><label class="check"><input type="checkbox" aria-label="겨울잠 제외">제외</label></li></ul></section><div class="mact"><button class="btn btn--text" type="button">선물함 취소</button></div></div></div></main>
+<main id="main" class="page page-mgzero"><div class="col"><div class="mcol"><p><a class="back" href="#" data-go="list2">선물함 목록</a></p><header class="mhd"><h1 class="ph-title">1월 새해 인사 선물</h1><p class="mtags"><span class="tag tag--info tag--dot">신청 받는 중</span><span class="tag tag--line">공개</span></p></header><section class="linkbox mlink" aria-label="신청 링크"><p class="lk-l">신청 링크</p><div class="lk-r"><p class="lk">https://fankkuk.com/gift-boxes/3f8a1c52-9d4e-4b7a-8e21-6c0a5d93b7f4</p><button class="btn " type="button">링크 복사</button></div></section><section class="mfans" aria-labelledby="mf-z"><div class="mlisthead"><h2 class="sec-h" id="mf-z">신청한 팬 <span class="mcount">0명 / 20명</span></h2><div class="msearch"><label class="sr-only" for="ms-z">닉네임 검색</label><input id="ms-z" class="input" type="search" placeholder="닉네임 검색" maxlength="20"></div></div><p class="none">아직 신청한 팬이 없습니다.</p></section><div class="mact"><button class="btn btn--line" type="button" data-go="mgclose0">마감하기</button><button class="btn btn--text" type="button">선물함 취소</button></div></div></div></main>
+<main id="main" class="page page-mgdone0"><div class="col"><div class="mcol"><p><a class="back" href="#" data-go="list2">선물함 목록</a></p><header class="mhd"><h1 class="ph-title">1월 새해 인사 선물</h1><p class="mtags"><span class="tag tag--dot">신청 없이 마감</span><span class="tag tag--line">공개</span></p></header><p class="m-end">신청한 팬이 없어 보낼 선물이 없습니다.</p></div></div></main>
+<div class="ov ov-m1"><div class="dlg " role="dialog" aria-modal="true" aria-labelledby="t-m1"><div class="mhead"><h2 class="m-title" id="t-m1">선물함 만들기</h2><button class="x" type="button" aria-label="닫기" data-go="discard"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div><div class="mbody"><div class="prog"><div class="bar" role="progressbar" aria-label="선물함 만들기 진행" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1" aria-valuetext="3단계 중 1단계, 이름"><i class="on"></i><i></i><i></i></div><p class="prog-t"><b>1/3 이름</b><span>다음: 받을 인원</span></p></div><div class="field"><label for="f-name">선물함 이름</label><input class="input is-focus" id="f-name" type="text" maxlength="40" autocomplete="off" value="11월 팬미팅 선물"></div></div><div class="mfoot"><button class="btn" type="button" data-go="m2">다음</button></div></div></div>
+<div class="ov ov-m1e"><div class="dlg " role="dialog" aria-modal="true" aria-labelledby="t-m1e"><div class="mhead"><h2 class="m-title" id="t-m1e">선물함 만들기</h2><button class="x" type="button" aria-label="닫기" data-go="discard"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div><div class="mbody"><div class="prog"><div class="bar" role="progressbar" aria-label="선물함 만들기 진행" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1" aria-valuetext="3단계 중 1단계, 이름"><i class="on"></i><i></i><i></i></div><p class="prog-t"><b>1/3 이름</b><span>다음: 받을 인원</span></p></div><div class="field"><label for="f-name">선물함 이름</label><input class="input" id="f-name" type="text" maxlength="40" autocomplete="off" value="" aria-invalid="true" aria-describedby="e-name"><p class="ferr" id="e-name" role="alert"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg><span>선물함 이름을 입력해 주세요.</span></p></div></div><div class="mfoot"><button class="btn" type="button" data-go="m2">다음</button></div></div></div>
+<div class="ov ov-m2"><div class="dlg " role="dialog" aria-modal="true" aria-labelledby="t-m2"><div class="mhead"><h2 class="m-title" id="t-m2">선물함 만들기</h2><button class="x" type="button" aria-label="닫기" data-go="discard"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div><div class="mbody"><div class="prog"><div class="bar" role="progressbar" aria-label="선물함 만들기 진행" aria-valuemin="1" aria-valuemax="3" aria-valuenow="2" aria-valuetext="3단계 중 2단계, 받을 인원"><i class="on"></i><i class="on"></i><i></i></div><p class="prog-t"><b>2/3 받을 인원</b><span>다음: 공개 범위</span></p></div><div class="field"><label for="f-count">받을 인원</label><div class="suffix"><input class="input is-focus" id="f-count" type="number" inputmode="numeric" min="1" max="100" step="1" value="20" aria-describedby="h-count"><span aria-hidden="true">명</span></div><p class="hint" id="h-count">1~100명</p></div></div><div class="mfoot"><button class="btn btn--line" type="button" data-go="m1">이전</button><button class="btn" type="button" data-go="m3">다음</button></div></div></div>
+<div class="ov ov-m2e"><div class="dlg " role="dialog" aria-modal="true" aria-labelledby="t-m2e"><div class="mhead"><h2 class="m-title" id="t-m2e">선물함 만들기</h2><button class="x" type="button" aria-label="닫기" data-go="discard"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div><div class="mbody"><div class="prog"><div class="bar" role="progressbar" aria-label="선물함 만들기 진행" aria-valuemin="1" aria-valuemax="3" aria-valuenow="2" aria-valuetext="3단계 중 2단계, 받을 인원"><i class="on"></i><i class="on"></i><i></i></div><p class="prog-t"><b>2/3 받을 인원</b><span>다음: 공개 범위</span></p></div><div class="field"><label for="f-count">받을 인원</label><div class="suffix"><input class="input" id="f-count" type="number" inputmode="numeric" min="1" max="100" step="1" value="0" aria-describedby="e-count" aria-invalid="true"><span aria-hidden="true">명</span></div><p class="ferr" id="e-count" role="alert"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg><span>받을 인원을 1~100명으로 입력해 주세요.</span></p></div></div><div class="mfoot"><button class="btn btn--line" type="button" data-go="m1">이전</button><button class="btn" type="button" data-go="m3">다음</button></div></div></div>
+<div class="ov ov-m3"><div class="dlg " role="dialog" aria-modal="true" aria-labelledby="t-m3"><div class="mhead"><h2 class="m-title" id="t-m3">선물함 만들기</h2><button class="x" type="button" aria-label="닫기" data-go="discard"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div><div class="mbody"><div class="prog"><div class="bar" role="progressbar" aria-label="선물함 만들기 진행" aria-valuemin="1" aria-valuemax="3" aria-valuenow="3" aria-valuetext="3단계 중 3단계, 공개 범위"><i class="on"></i><i class="on"></i><i class="on"></i></div><p class="prog-t"><b>3/3 공개 범위</b><span>다음: 신청 링크 받기</span></p></div><fieldset class="scope"><legend>공개 범위</legend>
+  <label class="opt"><input type="radio" name="scope-m3" checked><span><b>공개</b><small>내 크리에이터 페이지에서 신청</small></span></label>
+  <label class="opt"><input type="radio" name="scope-m3"><span><b>비공개</b><small>신청 링크로만 신청</small></span></label></fieldset><dl class="sum"><div><dt>선물함 이름</dt><dd>11월 팬미팅 선물</dd></div><div><dt>받을 인원</dt><dd>20명</dd></div></dl></div><div class="mfoot"><button class="btn btn--line" type="button" data-go="m2">이전</button><button class="btn" type="button" data-go="done">선물함 만들기</button></div></div></div>
+<div class="ov ov-m3s"><div class="dlg " role="dialog" aria-modal="true" aria-labelledby="t-m3s"><div class="mhead"><h2 class="m-title" id="t-m3s">선물함 만들기</h2><button class="x" type="button" aria-label="닫기" data-go="discard"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div><div class="mbody"><div class="prog"><div class="bar" role="progressbar" aria-label="선물함 만들기 진행" aria-valuemin="1" aria-valuemax="3" aria-valuenow="3" aria-valuetext="3단계 중 3단계, 공개 범위"><i class="on"></i><i class="on"></i><i class="on"></i></div><p class="prog-t"><b>3/3 공개 범위</b><span>다음: 신청 링크 받기</span></p></div><fieldset class="scope" disabled><legend>공개 범위</legend>
+  <label class="opt"><input type="radio" name="scope-m3s" checked><span><b>공개</b><small>내 크리에이터 페이지에서 신청</small></span></label>
+  <label class="opt"><input type="radio" name="scope-m3s"><span><b>비공개</b><small>신청 링크로만 신청</small></span></label></fieldset><dl class="sum"><div><dt>선물함 이름</dt><dd>11월 팬미팅 선물</dd></div><div><dt>받을 인원</dt><dd>20명</dd></div></dl></div><div class="mfoot"><button disabled aria-disabled="true" class="btn btn--line" type="button" data-go="m2">이전</button><button class="btn" type="button" disabled aria-disabled="true" aria-busy="true">만드는 중</button></div></div></div>
+<div class="ov ov-m3e"><div class="dlg " role="dialog" aria-modal="true" aria-labelledby="t-m3e"><div class="mhead"><h2 class="m-title" id="t-m3e">선물함 만들기</h2><button class="x" type="button" aria-label="닫기" data-go="discard"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div><div class="mbody"><div class="prog"><div class="bar" role="progressbar" aria-label="선물함 만들기 진행" aria-valuemin="1" aria-valuemax="3" aria-valuenow="3" aria-valuetext="3단계 중 3단계, 공개 범위"><i class="on"></i><i class="on"></i><i class="on"></i></div><p class="prog-t"><b>3/3 공개 범위</b><span>다음: 신청 링크 받기</span></p></div><fieldset class="scope"><legend>공개 범위</legend>
+  <label class="opt"><input type="radio" name="scope-m3e" checked><span><b>공개</b><small>내 크리에이터 페이지에서 신청</small></span></label>
+  <label class="opt"><input type="radio" name="scope-m3e"><span><b>비공개</b><small>신청 링크로만 신청</small></span></label></fieldset><dl class="sum"><div><dt>선물함 이름</dt><dd>11월 팬미팅 선물</dd></div><div><dt>받을 인원</dt><dd>20명</dd></div></dl><p class="ferr ferr-box" role="alert"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg><span>선물함을 만들지 못했습니다. 입력한 내용은 그대로 있습니다.</span></p></div><div class="mfoot"><button class="btn btn--line" type="button" data-go="m2">이전</button><button class="btn" type="button" data-go="done">다시 만들기</button></div></div></div>
+<div class="ov ov-done"><div class="dlg " role="dialog" aria-modal="true" aria-labelledby="t-done"><div class="mhead"><h2 class="m-title done-t" id="t-done"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16 9.5"/></svg><span>선물함을 만들었습니다</span></h2><button class="x" type="button" aria-label="닫기" data-go="list0"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button></div><div class="mbody"><div class="made"><p class="made-n">11월 팬미팅 선물</p><span class="tag tag--info tag--dot">신청 받는 중</span></div>
+   <div class="linkbox"><p class="lk-l" id="lk-l">신청 링크</p><div class="lk-r"><p class="lk" aria-labelledby="lk-l">https://fankkuk.com/gift-boxes/3f8a1c52-9d4e-4b7a-8e21-6c0a5d93b7f4</p><button class="btn btn--line" type="button">링크 복사</button></div></div></div><div class="mfoot"><button class="btn btn--text" type="button" data-go="list2">닫기</button><button class="btn" type="button" data-go="list2">신청 관리 열기</button></div></div></div>
+<div class="ov ov-discard"><div class="dlg small" role="alertdialog" aria-modal="true" aria-labelledby="t-dc" aria-describedby="d-dc"><h2 class="m-title" id="t-dc">입력한 내용을 지울까요?</h2><p class="dc-b" id="d-dc">선물함 이름 · 11월 팬미팅 선물</p><div class="mfoot"><button class="btn btn--line" type="button" data-go="list0">지우기</button><button class="btn" type="button" data-go="m2">계속 만들기</button></div></div></div>
+<div class="ov ov-mgc1"><div class="dlg small" role="alertdialog" aria-modal="true" aria-labelledby="t-mgc1" aria-describedby="d-mgc1"><h2 class="m-title" id="t-mgc1">신청을 마감할까요?</h2><p class="dc-b" id="d-mgc1">신청한 팬 12명으로 마감합니다. 마감한 뒤에는 신청을 받거나 제외를 바꿀 수 없습니다.</p><div class="mfoot"><button class="btn btn--line" type="button" data-go="mgopen">취소</button><button class="btn" type="button" data-go="mgopen">마감</button></div></div></div>
+<div class="ov ov-mgc0"><div class="dlg small" role="alertdialog" aria-modal="true" aria-labelledby="t-mgc0" aria-describedby="d-mgc0"><h2 class="m-title" id="t-mgc0">신청을 마감할까요?</h2><p class="dc-b" id="d-mgc0">신청한 팬이 없습니다. 마감하면 보낼 선물이 없어 이 선물함은 끝납니다.</p><div class="mfoot"><button class="btn btn--line" type="button" data-go="mgzero">취소</button><button class="btn" type="button" data-go="mgdone0">마감</button></div></div></div>
+</div>
+<script>
+(function () {
+  var S = { list0: ["list0", ""], list2: ["list2", ""], m1: ["list0", "m1"], m1e: ["list0", "m1e"], m2: ["list0", "m2"], m2e: ["list0", "m2e"], m3: ["list0", "m3"], m3s: ["list0", "m3s"], m3e: ["list0", "m3e"], done: ["list0", "done"], discard: ["list0", "m2 discard"], mgopen: ["mgopen", ""], mgfull: ["mgfull", ""], mgzero: ["mgzero", ""], mgdone0: ["mgdone0", ""], mgclose: ["mgopen", "mgc1"], mgclose0: ["mgzero", "mgc0"] };
+  var stage = document.getElementById("stage");
+  function go(k) {
+    if (!S[k]) k = "list0";
+    stage.dataset.page = S[k][0];
+    stage.dataset.modal = S[k][1];
+    stage.classList.toggle("is-modal", S[k][1] !== "");
+    document.querySelectorAll("[data-st]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.st === k)); });
+    history.replaceState(null, "", "#" + k);
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest("[data-st],[data-go]");
+    if (t) { if (t.tagName === "A") e.preventDefault(); go(t.dataset.st || t.dataset.go); }
+  });
+  go(location.hash.slice(1) || "list0");
+})();
+</script>
+</body>
+</html>

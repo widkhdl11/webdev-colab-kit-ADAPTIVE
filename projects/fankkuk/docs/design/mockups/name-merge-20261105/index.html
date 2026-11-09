@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>이름 통일 비교 시안 · 공개 이름·채널 이름 → 닉네임</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="name-merge.css">
+<!--
+  사용자 지시(2026-11-05): 「크리에이터 가입에서 공개이름 없애랬는데 왜 아직도 있음. 닉네임으로 통일한다」 「채널이름 없애라 — 없는 사람도 많아서 혼란. 닉네임으로 대체」
+  화면 다섯 곳의 「지금 / 바꾼 뒤」 비교. 「지금」은 코드 기준으로 옮겼다. 앱 코드는 고치지 않았다.
+  노란 표시 = 바뀌는 자리(양쪽 모두). 토큰은 src/shared/ui/tokens.css 값 그대로.
+-->
+</head><body>
+<div class="page">
+<header>
+  <h1>이름 통일 — 공개 이름·채널 이름을 닉네임 하나로</h1>
+  <p>화면 다섯 곳의 지금 모습과 바뀐 뒤 모습입니다. 왼쪽이 지금, 오른쪽이 바뀐 뒤입니다.</p>
+  <p class="legend"><span class="mk">노란 표시</span> 바뀌는 자리</p>
+</header>
+
+<!-- ============ 1. 가입 2단계 ============ -->
+<section class="set" aria-labelledby="s1">
+  <h2 id="s1">1. 가입 2단계 · 정보 입력 (크리에이터)</h2>
+  <p class="diff">「공개 이름」「채널 이름」 칸이 없어지고, 닉네임 칸 설명이 채널 확인 때 쓰는 이름이라는 안내로 바뀝니다.</p>
+  <div class="pair">
+    <div class="side side--before">
+      <span class="tagline">지금</span>
+      <form class="card" onsubmit="return false">
+        <h3 class="t-card">회원 정보 입력</h3>
+        <div class="grp"><h4 class="grp-title">계정 정보</h4><div class="form">
+          <div><label class="label" for="b-id">아이디</label><input class="field" id="b-id" value="haru_game" readonly><p class="hint">영문 소문자·숫자·밑줄(_) 4~20자 · 가입 후 변경 불가</p></div>
+          <div><label class="label" for="b-nick">닉네임</label><input class="field" id="b-nick" value="하루" readonly><p class="hint">팬꾹에서 사용할 이름 · 최대 12자 · 중복 사용 불가<br>가입 후 ‘프로필 수정’에서 변경할 수 있습니다.</p></div>
+          <div><label class="label">이메일</label><div class="mail"><span class="field">haru</span><span class="at" aria-hidden="true">@</span><span class="field sel">naver.com</span></div></div>
+          <div><label class="label" for="b-pw">비밀번호</label><input class="field" id="b-pw" type="password" value="password12!" readonly><p class="hint">8~64자 · 영문·숫자·특수문자 모두 포함 · 아이디와 다르게 설정</p></div>
+          <div><label class="label" for="b-pw2">비밀번호 확인</label><input class="field" id="b-pw2" type="password" value="password12!" readonly></div>
+        </div></div>
+        <div class="grp"><h4 class="grp-title">채널 정보</h4><div class="form">
+          <div class="mkb"><label class="label" for="b-pub">공개 이름</label><input class="field" id="b-pub" value="하루" readonly><p class="hint">팬에게 표시되는 이름 · 최대 20자</p></div>
+          <div class="mkb"><label class="label" for="b-ch">채널 이름</label><input class="field" id="b-ch" value="하루의 놀이터" readonly><p class="hint">채널 주소는 4단계에서 입력합니다.</p></div>
+          <div><label class="label" for="b-fan">팬덤 이름 <span class="opt">(선택)</span></label><input class="field ph" id="b-fan" placeholder="예: 꿀벌단" readonly><p class="hint">팬을 부르는 이름 · 최대 10자 · 선택 입력<br>가입 후 ‘상세 설정 &gt; 팬덤’에서 변경할 수 있습니다.</p></div>
+          <div><p class="label">태그</p><div class="chips"><span class="chip">SOOP</span><span class="chip">치지직</span><span class="chip">유튜브</span><span class="chip">알플레이</span><span class="chip">인스타그램</span><span class="chip">버추얼</span></div></div>
+        </div></div>
+        <div class="grp"><h4 class="grp-title">선택 입력 사항</h4><div class="form">
+          <div><label class="label">어디서 알게 되셨나요 <span class="opt">(선택)</span></label><span class="field sel">선택 안 함</span></div>
+        </div></div>
+      </form>
+    </div>
+    <div class="side side--after">
+      <span class="tagline">바뀐 뒤</span>
+      <form class="card" onsubmit="return false">
+        <h3 class="t-card">회원 정보 입력</h3>
+        <div class="grp"><h4 class="grp-title">계정 정보</h4><div class="form">
+          <div><label class="label" for="a-id">아이디</label><input class="field" id="a-id" value="haru_game" readonly><p class="hint">영문 소문자·숫자·밑줄(_) 4~20자 · 가입 후 변경 불가</p></div>
+          <div class="mkb"><label class="label" for="a-nick">닉네임</label><p class="hint hint--top">팬에게 보이는 이름입니다. 채널 확인 때 방송 채널에 보이는 이름과 같은지 확인합니다.<br>가입 후 ‘프로필 수정’에서 변경할 수 있습니다.</p><input class="field" id="a-nick" value="하루" readonly><p class="hint">최대 12자 · 중복 사용 불가</p></div>
+          <div><label class="label">이메일</label><div class="mail"><span class="field">haru</span><span class="at" aria-hidden="true">@</span><span class="field sel">naver.com</span></div></div>
+          <div><label class="label" for="a-pw">비밀번호</label><input class="field" id="a-pw" type="password" value="password12!" readonly><p class="hint">8~64자 · 영문·숫자·특수문자 모두 포함 · 아이디와 다르게 설정</p></div>
+          <div><label class="label" for="a-pw2">비밀번호 확인</label><input class="field" id="a-pw2" type="password" value="password12!" readonly></div>
+        </div></div>
+        <div class="grp"><h4 class="grp-title">채널 정보</h4><div class="form">
+          <div><label class="label" for="a-fan">팬덤 이름 <span class="opt">(선택)</span></label><p class="hint hint--top">팬을 부르는 이름입니다. 가입 후 ‘상세 설정 &gt; 팬덤’에서 변경할 수 있습니다.</p><input class="field ph" id="a-fan" placeholder="예: 꿀벌단" readonly><p class="hint">최대 10자 · 선택 입력</p></div>
+          <div><p class="label">태그</p><div class="chips"><span class="chip">SOOP</span><span class="chip">치지직</span><span class="chip">유튜브</span><span class="chip">알플레이</span><span class="chip">인스타그램</span><span class="chip">버추얼</span></div></div>
+        </div></div>
+        <div class="grp"><h4 class="grp-title">선택 입력 사항</h4><div class="form">
+          <div><label class="label">어디서 알게 되셨나요 <span class="opt">(선택)</span></label><span class="field sel">선택 안 함</span></div>
+        </div></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. 프로필 편집 ============ -->
+<section class="set" aria-labelledby="s2">
+  <h2 id="s2">2. 프로필 편집 · /creator/profile</h2>
+  <p class="diff">「소개」 판의 「공개 이름」 칸이 같은 자리에서 「닉네임」 칸(최대 12자)으로 바뀝니다.</p>
+  <div class="pair">
+    <div class="side side--before">
+      <span class="tagline">지금</span>
+      <form class="card pe" onsubmit="return false">
+        <h3 class="sec-t">소개</h3>
+        <div class="sb mkb"><label class="sub-t" for="pb-name">공개 이름</label><input class="field w360" id="pb-name" value="하루" readonly><p class="hint">팬에게 표시되는 이름</p></div>
+        <div class="sb"><div class="sub-t" style="display:flex;justify-content:space-between;gap:8px"><label for="pb-bio">한 줄 소개 <span class="count">(60자까지)</span></label><span class="count">19/60</span></div><textarea class="field" id="pb-bio" rows="2" readonly style="resize:none">매일 밤 9시, 잔잔한 게임 방송</textarea></div>
+      </form>
+    </div>
+    <div class="side side--after">
+      <span class="tagline">바뀐 뒤</span>
+      <form class="card pe" onsubmit="return false">
+        <h3 class="sec-t">소개</h3>
+        <div class="sb mkb"><label class="sub-t" for="pa-name">닉네임</label><input class="field w360" id="pa-name" value="하루" readonly><p class="hint">팬에게 표시되는 이름 · 최대 12자</p></div>
+        <div class="sb"><div class="sub-t" style="display:flex;justify-content:space-between;gap:8px"><label for="pa-bio">한 줄 소개 <span class="count">(60자까지)</span></label><span class="count">19/60</span></div><textarea class="field" id="pa-bio" rows="2" readonly style="resize:none">매일 밤 9시, 잔잔한 게임 방송</textarea></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. 크리에이터 카드 ============ -->
+<section class="set" aria-labelledby="s3">
+  <h2 id="s3">3. 크리에이터 카드 · 찾기·홈</h2>
+  <p class="diff">이름 자리에 닉네임이 들어가고, 둘째 줄은 「채널 이름 · 소개」에서 「소개」만 남습니다. 두 번째 카드는 닉네임 12자 예시입니다.</p>
+  <div class="pair">
+    <div class="side side--before">
+      <span class="tagline">지금</span>
+      <ul class="cards">
+        <li class="ccard" style="--pastel:#cfe3fa"><div class="cover" aria-hidden="true"></div>
+          <div class="who"><span class="photo" style="--face:#fbe3a8" aria-hidden="true">하</span><div class="id"><p class="cname"><span class="mk">하루</span></p><p class="badge-row"><span class="fbadge">꿀벌단</span></p></div></div>
+          <p class="cline"><span class="mk">하루의 놀이터 · </span>매일 밤 9시, 잔잔한 게임 방송</p>
+          <div class="ctags"><span class="ctag">유튜브</span><span class="ctag">치지직</span></div>
+          <div class="acts"><span class="cbtn">팔로우</span></div></li>
+        <li class="ccard" style="--pastel:#dcd3f6"><div class="cover" aria-hidden="true"></div>
+          <div class="who"><span class="photo" style="--face:#dcd3f6" aria-hidden="true">달</span><div class="id"><p class="cname"><span class="mk">달빛소녀</span></p><p class="badge-row"><span class="fbadge">별지기</span></p></div></div>
+          <p class="cline"><span class="mk">달빛소녀의 밤하늘 방송 · </span>별 보며 수다 떠는 밤 방송, 매주 화·목·토 밤 10시에 켜요</p>
+          <div class="ctags"><span class="ctag">SOOP</span></div>
+          <div class="acts"><span class="cbtn">팔로우</span></div></li>
+      </ul>
+    </div>
+    <div class="side side--after">
+      <span class="tagline">바뀐 뒤</span>
+      <ul class="cards">
+        <li class="ccard" style="--pastel:#cfe3fa"><div class="cover" aria-hidden="true"></div>
+          <div class="who"><span class="photo" style="--face:#fbe3a8" aria-hidden="true">하</span><div class="id"><p class="cname"><span class="mk">하루</span></p><p class="badge-row"><span class="fbadge">꿀벌단</span></p></div></div>
+          <p class="cline"><span class="mk">매일 밤 9시, 잔잔한 게임 방송</span></p>
+          <div class="ctags"><span class="ctag">유튜브</span><span class="ctag">치지직</span></div>
+          <div class="acts"><span class="cbtn">팔로우</span></div></li>
+        <li class="ccard" style="--pastel:#dcd3f6"><div class="cover" aria-hidden="true"></div>
+          <div class="who"><span class="photo" style="--face:#dcd3f6" aria-hidden="true">달</span><div class="id"><p class="cname" title="달빛소녀의 밤하늘 방송"><span class="mk">달빛소녀의 밤하늘 방송</span></p><p class="badge-row"><span class="fbadge">별지기</span></p></div></div>
+          <p class="cline"><span class="mk">별 보며 수다 떠는 밤 방송, 매주 화·목·토 밤 10시에 켜요</span></p>
+          <div class="ctags"><span class="ctag">SOOP</span></div>
+          <div class="acts"><span class="cbtn">팔로우</span></div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. 채널 확인 칸 ============ -->
+<section class="set" aria-labelledby="s4">
+  <h2 id="s4">4. 채널 확인 칸 · 가입 4단계·설정</h2>
+  <p class="diff">「채널 이름」 줄이 「닉네임」 줄로 바뀝니다. 값은 운영자가 방송 채널에 보이는 이름과 비교하는 이름입니다.</p>
+  <div class="pair">
+    <div class="side side--before">
+      <span class="tagline">지금</span>
+      <div class="stack">
+        <div><p class="subhead">확인 전</p>
+          <section class="vp" aria-label="채널 소유자 확인(지금)"><h3>채널 소유자 확인</h3>
+            <p class="lead">다른 사람이 내 채널로 가입하지 못하도록, 채널 소유자를 확인해 주세요.</p>
+            <div class="name mkb"><span class="k">채널 이름</span><strong>하루의 놀이터</strong></div>
+          </section></div>
+        <div><p class="subhead">요청 보냄</p>
+          <section class="vp" aria-label="채널 확인 요청 보냄(지금)">
+            <div><p class="sent"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>채널 확인 요청을 보냈습니다</p><p class="sub16">운영자가 채널을 확인하면 채널 확인이 완료됩니다.</p></div>
+            <dl class="kv"><div class="mkb" style="padding-inline:8px"><dt>채널 이름</dt><dd>하루의 놀이터</dd></div><div><dt>채널 주소</dt><dd>https://www.youtube.com/@honeypot</dd></div><div><dt>팬꾹 링크</dt><dd>fankkuk.com/haru</dd></div></dl>
+          </section></div>
+      </div>
+    </div>
+    <div class="side side--after">
+      <span class="tagline">바뀐 뒤</span>
+      <div class="stack">
+        <div><p class="subhead">확인 전</p>
+          <section class="vp" aria-label="채널 소유자 확인(바뀐 뒤)"><h3>채널 소유자 확인</h3>
+            <p class="lead">다른 사람이 내 채널로 가입하지 못하도록, 채널 소유자를 확인해 주세요.</p>
+            <div class="name mkb"><span class="k">닉네임</span><strong>하루</strong></div>
+          </section></div>
+        <div><p class="subhead">요청 보냄 (닉네임 12자 예시)</p>
+          <section class="vp" aria-label="채널 확인 요청 보냄(바뀐 뒤)">
+            <div><p class="sent"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>채널 확인 요청을 보냈습니다</p><p class="sub16">운영자가 채널을 확인하면 채널 확인이 완료됩니다.</p></div>
+            <dl class="kv"><div class="mkb" style="padding-inline:8px"><dt>닉네임</dt><dd>달빛소녀의 밤하늘 방송</dd></div><div><dt>채널 주소</dt><dd>https://www.sooplive.co.kr/station/dalbit</dd></div><div><dt>팬꾹 링크</dt><dd>fankkuk.com/dalbit</dd></div></dl>
+          </section></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. 운영자 확인 표 ============ -->
+<section class="set" aria-labelledby="s5">
+  <h2 id="s5">5. 운영자 · 크리에이터 확인 표</h2>
+  <p class="diff">「채널 이름」 열이 없어지고 첫 열 「닉네임」만 남습니다. 안내 문구와 반려 사유 한 줄도 바뀝니다. 표가 넓어 이 묶음은 넓은 폭에서도 위아래로 둡니다.</p>
+  <div class="pair" style="grid-template-columns:minmax(0,1fr)">
+    <div class="side side--before">
+      <span class="tagline">지금</span>
+      <div class="admin">
+        <div class="sectionH"><h2>확인 대기 <span>2건</span></h2><span class="mk">채널 이름이 같은지, 소개·프로필 링크에 찾을 링크가 걸려 있는지 확인해 주세요</span></div>
+        <div class="tblWrap"><table class="tbl" style="min-width:900px"><caption class="sr-only">확인 대기 신청 — 오래된 순</caption>
+          <thead><tr><th scope="col">닉네임</th><th scope="col">채널</th><th scope="col" class="hl">채널 이름</th><th scope="col">찾을 링크</th><th scope="col">요청 시각</th><th scope="col">쓴 횟수</th><th scope="col"><span class="sr-only">처리</span></th></tr></thead>
+          <tbody>
+            <tr><td><div class="chan"><b>하루</b><span class="mono sub">haru_game</span></div></td><td><div class="chan"><span><span class="atag">유튜브</span></span><span class="sub">youtube.com/@honeypot</span></div></td><td class="hl"><b>하루의 놀이터</b></td><td class="mono">fankkuk.com/haru</td><td class="mono">2026.11.02 09:14</td><td class="mono">1/10회</td><td><span class="abtn">승인</span> <span class="abtn abtn--line">반려</span></td></tr>
+            <tr><td><div class="chan"><b>달빛소녀</b><span class="mono sub">dalbit_k</span></div></td><td><div class="chan"><span><span class="atag">SOOP</span></span><span class="sub">sooplive.co.kr/station/dalbit</span></div></td><td class="hl"><b>달빛소녀의 밤하늘 방송</b></td><td class="mono">fankkuk.com/dalbit</td><td class="mono">2026.11.03 21:40</td><td class="mono">2/10회</td><td><span class="abtn">승인</span> <span class="abtn abtn--line">반려</span></td></tr>
+          </tbody></table></div>
+        <div class="dlg" role="group" aria-label="반려 사유(지금)"><h3>하루님의 확인 요청을 반려할까요?</h3>
+          <div class="reasons"><label><input type="radio" name="rb" checked> 팬꾹 링크를 찾지 못함</label><label><input type="radio" name="rb"> 링크 주소가 다름</label><label><input type="radio" name="rb"> <span class="mk">채널 이름이 다름</span></label><label><input type="radio" name="rb"> 채널 주소가 열리지 않음</label><label><input type="radio" name="rb"> 그 밖</label></div>
+          <div class="btnRow"><span class="abtn abtn--line">닫기</span><span class="abtn">반려</span></div></div>
+      </div>
+    </div>
+    <div class="side side--after">
+      <span class="tagline">바뀐 뒤</span>
+      <div class="admin">
+        <div class="sectionH"><h2>확인 대기 <span>2건</span></h2><span class="mk">닉네임이 채널에 보이는 이름과 같은지, 소개·프로필 링크에 찾을 링크가 걸려 있는지 확인해 주세요</span></div>
+        <div class="tblWrap"><table class="tbl" style="min-width:900px"><caption class="sr-only">확인 대기 신청 — 오래된 순</caption>
+          <thead><tr><th scope="col" class="hl">닉네임</th><th scope="col">채널</th><th scope="col">찾을 링크</th><th scope="col">요청 시각</th><th scope="col">쓴 횟수</th><th scope="col"><span class="sr-only">처리</span></th></tr></thead>
+          <tbody>
+            <tr><td class="hl"><div class="chan"><b>하루</b><span class="mono sub">haru_game</span></div></td><td><div class="chan"><span><span class="atag">유튜브</span></span><span class="sub">youtube.com/@honeypot</span></div></td><td class="mono">fankkuk.com/haru</td><td class="mono">2026.11.02 09:14</td><td class="mono">1/10회</td><td><span class="abtn">승인</span> <span class="abtn abtn--line">반려</span></td></tr>
+            <tr><td class="hl"><div class="chan"><b>달빛소녀의 밤하늘 방송</b><span class="mono sub">dalbit_k</span></div></td><td><div class="chan"><span><span class="atag">SOOP</span></span><span class="sub">sooplive.co.kr/station/dalbit</span></div></td><td class="mono">fankkuk.com/dalbit</td><td class="mono">2026.11.03 21:40</td><td class="mono">2/10회</td><td><span class="abtn">승인</span> <span class="abtn abtn--line">반려</span></td></tr>
+          </tbody></table></div>
+        <div class="dlg" role="group" aria-label="반려 사유(바뀐 뒤)"><h3>하루님의 확인 요청을 반려할까요?</h3>
+          <div class="reasons"><label><input type="radio" name="ra" checked> 팬꾹 링크를 찾지 못함</label><label><input type="radio" name="ra"> 링크 주소가 다름</label><label><input type="radio" name="ra"> <span class="mk">이름이 다름</span></label><label><input type="radio" name="ra"> 채널 주소가 열리지 않음</label><label><input type="radio" name="ra"> 그 밖</label></div>
+          <div class="btnRow"><span class="abtn abtn--line">닫기</span><span class="abtn">반려</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+</body></html>

@@ -1,0 +1,464 @@
+{
+  "rows": [
+    {
+      "width": 1440,
+      "height": 2449,
+      "overflow": false,
+      "headings": [
+        {
+          "text": "팬에게 보내기",
+          "lines": 1
+        },
+        {
+          "text": "선물은 한 상자에,배송은 팬꾹이.",
+          "lines": 2
+        },
+        {
+          "text": "신청부터 마감까지",
+          "lines": 1
+        },
+        {
+          "text": "선물함 만들기",
+          "lines": 1
+        },
+        {
+          "text": "선물 신청하기",
+          "lines": 1
+        },
+        {
+          "text": "신청 마감하기",
+          "lines": 1
+        },
+        {
+          "text": "한 번에 보내면, 나눠서 배송합니다",
+          "lines": 1
+        },
+        {
+          "text": "한 상자에 모아 보내기",
+          "lines": 1
+        },
+        {
+          "text": "열어서 선물 확인",
+          "lines": 1
+        },
+        {
+          "text": "팬마다 개별 배송",
+          "lines": 1
+        },
+        {
+          "text": "배송비는 크기에 맞게,서비스료는 선물마다.",
+          "lines": 2
+        },
+        {
+          "text": "보내기 전, 두 가지만 확인해 주세요",
+          "lines": 1
+        },
+        {
+          "text": "선물마다 팬 닉네임을 꼭 적어 주세요",
+          "lines": 1
+        },
+        {
+          "text": "팬꾹으로 보내는 택배는 직접 접수해 주세요",
+          "lines": 1
+        },
+        {
+          "text": "이제 팬들의 신청을 받아 보세요",
+          "lines": 1
+        }
+      ],
+      "contrastMin": 7.04,
+      "contrastFailures": [],
+      "broken": [],
+      "smallText": [],
+      "shortControls": [],
+      "fonts": [
+        "Pretendard Variable",
+        "Tmoney Round Wind"
+      ]
+    },
+    {
+      "width": 1024,
+      "height": 2530,
+      "overflow": false,
+      "headings": [
+        {
+          "text": "팬에게 보내기",
+          "lines": 1
+        },
+        {
+          "text": "선물은 한 상자에,배송은 팬꾹이.",
+          "lines": 2
+        },
+        {
+          "text": "신청부터 마감까지",
+          "lines": 1
+        },
+        {
+          "text": "선물함 만들기",
+          "lines": 1
+        },
+        {
+          "text": "선물 신청하기",
+          "lines": 1
+        },
+        {
+          "text": "신청 마감하기",
+          "lines": 1
+        },
+        {
+          "text": "한 번에 보내면, 나눠서 배송합니다",
+          "lines": 1
+        },
+        {
+          "text": "한 상자에 모아 보내기",
+          "lines": 1
+        },
+        {
+          "text": "열어서 선물 확인",
+          "lines": 1
+        },
+        {
+          "text": "팬마다 개별 배송",
+          "lines": 1
+        },
+        {
+          "text": "배송비는 크기에 맞게,서비스료는 선물마다.",
+          "lines": 2
+        },
+        {
+          "text": "보내기 전, 두 가지만 확인해 주세요",
+          "lines": 1
+        },
+        {
+          "text": "선물마다 팬 닉네임을 꼭 적어 주세요",
+          "lines": 2
+        },
+        {
+          "text": "팬꾹으로 보내는 택배는 직접 접수해 주세요",
+          "lines": 2
+        },
+        {
+          "text": "이제 팬들의 신청을 받아 보세요",
+          "lines": 1
+        }
+      ],
+      "contrastMin": 7.04,
+      "contrastFailures": [],
+      "broken": [],
+      "smallText": [],
+      "shortControls": [],
+      "fonts": [
+        "Pretendard Variable",
+        "Tmoney Round Wind"
+      ]
+    },
+    {
+      "width": 769,
+      "height": 3030,
+      "overflow": false,
+      "headings": [
+        {
+          "text": "팬에게 보내기",
+          "lines": 1
+        },
+        {
+          "text": "선물은 한 상자에,배송은 팬꾹이.",
+          "lines": 2
+        },
+        {
+          "text": "신청부터 마감까지",
+          "lines": 1
+        },
+        {
+          "text": "선물함 만들기",
+          "lines": 1
+        },
+        {
+          "text": "선물 신청하기",
+          "lines": 1
+        },
+        {
+          "text": "신청 마감하기",
+          "lines": 1
+        },
+        {
+          "text": "한 번에 보내면, 나눠서 배송합니다",
+          "lines": 1
+        },
+        {
+          "text": "한 상자에 모아 보내기",
+          "lines": 2
+        },
+        {
+          "text": "열어서 선물 확인",
+          "lines": 2
+        },
+        {
+          "text": "팬마다 개별 배송",
+          "lines": 2
+        },
+        {
+          "text": "배송비는 크기에 맞게,서비스료는 선물마다.",
+          "lines": 2
+        },
+        {
+          "text": "보내기 전, 두 가지만 확인해 주세요",
+          "lines": 1
+        },
+        {
+          "text": "선물마다 팬 닉네임을 꼭 적어 주세요",
+          "lines": 1
+        },
+        {
+          "text": "팬꾹으로 보내는 택배는 직접 접수해 주세요",
+          "lines": 1
+        },
+        {
+          "text": "이제 팬들의 신청을 받아 보세요",
+          "lines": 2
+        }
+      ],
+      "contrastMin": 7.04,
+      "contrastFailures": [],
+      "broken": [],
+      "smallText": [],
+      "shortControls": [],
+      "fonts": [
+        "Pretendard Variable",
+        "Tmoney Round Wind"
+      ]
+    },
+    {
+      "width": 768,
+      "height": 3773,
+      "overflow": false,
+      "headings": [
+        {
+          "text": "팬에게 보내기",
+          "lines": 1
+        },
+        {
+          "text": "선물은 한 상자에,배송은 팬꾹이.",
+          "lines": 2
+        },
+        {
+          "text": "신청부터 마감까지",
+          "lines": 1
+        },
+        {
+          "text": "선물함 만들기",
+          "lines": 1
+        },
+        {
+          "text": "선물 신청하기",
+          "lines": 1
+        },
+        {
+          "text": "신청 마감하기",
+          "lines": 1
+        },
+        {
+          "text": "한 번에 보내면, 나눠서 배송합니다",
+          "lines": 1
+        },
+        {
+          "text": "한 상자에 모아 보내기",
+          "lines": 1
+        },
+        {
+          "text": "열어서 선물 확인",
+          "lines": 1
+        },
+        {
+          "text": "팬마다 개별 배송",
+          "lines": 1
+        },
+        {
+          "text": "배송비는 크기에 맞게,서비스료는 선물마다.",
+          "lines": 2
+        },
+        {
+          "text": "보내기 전, 두 가지만 확인해 주세요",
+          "lines": 1
+        },
+        {
+          "text": "선물마다 팬 닉네임을 꼭 적어 주세요",
+          "lines": 1
+        },
+        {
+          "text": "팬꾹으로 보내는 택배는 직접 접수해 주세요",
+          "lines": 1
+        },
+        {
+          "text": "이제 팬들의 신청을 받아 보세요",
+          "lines": 1
+        }
+      ],
+      "contrastMin": 7.04,
+      "contrastFailures": [],
+      "broken": [],
+      "smallText": [],
+      "shortControls": [],
+      "fonts": [
+        "Pretendard Variable",
+        "Tmoney Round Wind"
+      ]
+    },
+    {
+      "width": 390,
+      "height": 4323,
+      "overflow": false,
+      "headings": [
+        {
+          "text": "팬에게 보내기",
+          "lines": 1
+        },
+        {
+          "text": "선물은 한 상자에,배송은 팬꾹이.",
+          "lines": 2
+        },
+        {
+          "text": "신청부터 마감까지",
+          "lines": 1
+        },
+        {
+          "text": "선물함 만들기",
+          "lines": 1
+        },
+        {
+          "text": "선물 신청하기",
+          "lines": 1
+        },
+        {
+          "text": "신청 마감하기",
+          "lines": 1
+        },
+        {
+          "text": "한 번에 보내면, 나눠서 배송합니다",
+          "lines": 2
+        },
+        {
+          "text": "한 상자에 모아 보내기",
+          "lines": 1
+        },
+        {
+          "text": "열어서 선물 확인",
+          "lines": 1
+        },
+        {
+          "text": "팬마다 개별 배송",
+          "lines": 1
+        },
+        {
+          "text": "배송비는 크기에 맞게,서비스료는 선물마다.",
+          "lines": 2
+        },
+        {
+          "text": "보내기 전, 두 가지만 확인해 주세요",
+          "lines": 2
+        },
+        {
+          "text": "선물마다 팬 닉네임을 꼭 적어 주세요",
+          "lines": 2
+        },
+        {
+          "text": "팬꾹으로 보내는 택배는 직접 접수해 주세요",
+          "lines": 2
+        },
+        {
+          "text": "이제 팬들의 신청을 받아 보세요",
+          "lines": 1
+        }
+      ],
+      "contrastMin": 7.04,
+      "contrastFailures": [],
+      "broken": [],
+      "smallText": [],
+      "shortControls": [],
+      "fonts": [
+        "Pretendard Variable",
+        "Tmoney Round Wind"
+      ]
+    },
+    {
+      "width": 360,
+      "height": 4397,
+      "overflow": false,
+      "headings": [
+        {
+          "text": "팬에게 보내기",
+          "lines": 1
+        },
+        {
+          "text": "선물은 한 상자에,배송은 팬꾹이.",
+          "lines": 2
+        },
+        {
+          "text": "신청부터 마감까지",
+          "lines": 1
+        },
+        {
+          "text": "선물함 만들기",
+          "lines": 1
+        },
+        {
+          "text": "선물 신청하기",
+          "lines": 1
+        },
+        {
+          "text": "신청 마감하기",
+          "lines": 1
+        },
+        {
+          "text": "한 번에 보내면, 나눠서 배송합니다",
+          "lines": 2
+        },
+        {
+          "text": "한 상자에 모아 보내기",
+          "lines": 1
+        },
+        {
+          "text": "열어서 선물 확인",
+          "lines": 1
+        },
+        {
+          "text": "팬마다 개별 배송",
+          "lines": 1
+        },
+        {
+          "text": "배송비는 크기에 맞게,서비스료는 선물마다.",
+          "lines": 2
+        },
+        {
+          "text": "보내기 전, 두 가지만 확인해 주세요",
+          "lines": 2
+        },
+        {
+          "text": "선물마다 팬 닉네임을 꼭 적어 주세요",
+          "lines": 2
+        },
+        {
+          "text": "팬꾹으로 보내는 택배는 직접 접수해 주세요",
+          "lines": 2
+        },
+        {
+          "text": "이제 팬들의 신청을 받아 보세요",
+          "lines": 2
+        }
+      ],
+      "contrastMin": 7.04,
+      "contrastFailures": [],
+      "broken": [],
+      "smallText": [],
+      "shortControls": [],
+      "fonts": [
+        "Pretendard Variable",
+        "Tmoney Round Wind"
+      ]
+    }
+  ],
+  "overflowDetectionControl": {
+    "detected": true,
+    "restored": true
+  }
+}
