@@ -103,8 +103,8 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
 
   it("delivery-status INV-DS3: 팬의 내 배송은 출고 날짜·받았어요·버튼 여부뿐 — 송장번호 칸이 섞여 오면 받지 않는다, 날짜에 시각이 섞여도", async () => {
     const seen = { id: BOX, name: "겨울 선물", creator: { id: BOX, slug: "haru", name: "하루" }, open: false, viewer: "follower", my_state: "preparing" };
-    const delivery = { shipped_on: "2026-11-09", received: false, can_confirm: true };
-    expect((await readBoxForFan(fakeClient({ ...seen, delivery }).client, BOX, null))?.delivery).toEqual({ shippedOn: "2026-11-09", received: false, canConfirm: true });
+    const delivery = { shipped_on: "2026-11-09", received: false, can_confirm: true, carrier: "in_transit" };
+    expect((await readBoxForFan(fakeClient({ ...seen, delivery }).client, BOX, null))?.delivery).toEqual({ shippedOn: "2026-11-09", received: false, canConfirm: true, carrier: "in_transit" });
     await expect(readBoxForFan(fakeClient({ ...seen, delivery: { ...delivery, waybill_no: "123456789012" } }).client, BOX, null)).rejects.toThrow();
     await expect(readBoxForFan(fakeClient({ ...seen, delivery: { ...delivery, shipped_on: "2026-11-09T05:00:00Z" } }).client, BOX, null)).rejects.toThrow();
   });
@@ -117,7 +117,7 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
 
 describe("선물함 3부 읽기 (revgift-box INV-GB9·GB10·GB12·GB13·GB23)", () => {
   const base = { id: BOX, name: "a", capacity: 1, is_public: true, status: "invoiced", invite_token: null, created_at: "2026-11-08T01:00:00+00:00", applications: [] };
-  const line = { nickname: "별빛", tier: "oversize", shipping_fee_krw: 13000, surcharge_region: "jeju", surcharge_krw: 4000, service_fee_krw: 700, amount_krw: 17700, progress: "unpaid", printed: false, shipped_on: null, received: false };
+  const line = { nickname: "별빛", tier: "oversize", shipping_fee_krw: 13000, surcharge_region: "jeju", surcharge_krw: 4000, service_fee_krw: 700, amount_krw: 17700, progress: "unpaid", printed: false, shipped_on: null, received: false, carrier: null };
   const invoice = { amount_krw: 17700, shipping_fee_krw: 17000, service_fee_krw: 700, carton_cod_krw: 0, created_at: "2026-11-09T01:00:00+00:00", pay_due_at: "2026-11-12T01:00:00+00:00", return_at: "2026-11-16T01:00:00+00:00", paying: false, paid_at: null, lines: [line] };
 
   it("INV-GB10 · GB13 S10·S17: 6자리·보낸/받은 상자 수·명세서 줄(닉네임·구간·택배비·할증 구분·할증·서비스료·금액)을 받는다", async () => {
@@ -134,7 +134,7 @@ describe("선물함 3부 읽기 (revgift-box INV-GB9·GB10·GB12·GB13·GB23)", 
       returnAt: "2026-11-16T01:00:00+00:00",
       paying: false,
       paidAt: null,
-      lines: [{ nickname: "별빛", tier: "oversize", shippingFeeKrw: 13000, surchargeRegion: "jeju", surchargeKrw: 4000, serviceFeeKrw: 700, amountKrw: 17700, progress: "unpaid", delivery: { printed: false, shippedOn: null, received: false } }],
+      lines: [{ nickname: "별빛", tier: "oversize", shippingFeeKrw: 13000, surchargeRegion: "jeju", surchargeKrw: 4000, serviceFeeKrw: 700, amountKrw: 17700, progress: "unpaid", delivery: { printed: false, shippedOn: null, received: false, carrier: null } }],
     });
   });
 

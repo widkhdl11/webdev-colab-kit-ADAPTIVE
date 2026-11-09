@@ -1,4 +1,4 @@
-import { DELIVERY_STAGE_LABEL } from "@/shared/config/delivery-status";
+import { DELIVERY_STAGE_LABEL, type DeliveryStatusSource } from "@/shared/config/delivery-status";
 import type { DeliveryStage } from "@/shared/lib/delivery/delivery-stage";
 import { formatDate } from "@/shared/lib/format/datetime";
 import type { StatusTone } from "@/shared/ui/status-tone";
@@ -139,14 +139,21 @@ export function fanProgress(view: FanGiftView): { done: number; total: number } 
   return { done: view.steps.filter((st) => st.state === "done").length, total: view.steps.length };
 }
 
-/** 헤더 선물 아이콘의 모양. 검수 뒤 승인 대기 = 모래시계(점선), 발송 완료 = 체크(초록 채움), 그 사이 = 트럭.
- *  배송 조회 웹훅 연결 전에는 배달 완료를 모르므로 체크는 출고 기준이다 — 「배송 완료」가 아니라 「발송 완료」(결정 ④⑧, delivery-status INV-DS5).
+/** 헤더 선물 아이콘의 모양. 검수 뒤 승인 대기 = 모래시계(점선), 체크(초록 채움) = 끝, 그 사이 = 트럭.
+ *  체크의 기준은 DB 의 단계 설정값 하나를 따른다(결정 ⑧, delivery-status INV-DS5·DS11 ①):
+ *  estimate = 출고(배달 완료를 모르므로 「발송 완료」), webhook = 택배사의 배달 완료(「배송 완료」 — 출고만 했으면 트럭).
  *  진행이 끝난 선물(받지 않음·반송·취소)은 헤더에 띄우지 않는다 — null. */
 export type HeaderGiftState = "wait" | "move" | "done";
 
-export function headerGiftState(view: FanGiftView): HeaderGiftState | null {
+/** 체크가 뜻하는 말 — 설정값마다 하나 */
+export const HEADER_GIFT_DONE_LABEL: Record<DeliveryStatusSource, string> = { estimate: "발송 완료", webhook: "배송 완료" };
+
+export function headerGiftState(view: FanGiftView, source: DeliveryStatusSource): HeaderGiftState | null {
   if (view.outcome !== "in_progress") return null;
   const current = currentKey(view);
+  if (source === "webhook" && hasShipped(view)) {
+    return view.steps.some((st) => st.key === "delivered" && st.state === "done") ? "done" : "move";
+  }
   if (!current || hasShipped(view)) return "done";
   if (view.approval.state === "waiting") return "wait";
   return "move";

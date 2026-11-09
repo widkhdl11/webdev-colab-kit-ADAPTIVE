@@ -95,6 +95,7 @@ vi.mock("@/entities/parcel/api/box-reads", () => ({ readMyGiftBoxes: vi.fn(async
 vi.mock("@/entities/payment/api/read-my-differences", () => ({ readMyDifferences: vi.fn(async () => []) }));
 vi.mock("@/entities/payment/api/read-my-gift-payment", () => ({ readMyGiftPayment: vi.fn(async () => null) }));
 vi.mock("@/entities/gift-reply/api/gift-reply-reads", async (orig) => ({ ...(await orig<object>()), readMyGiftReplies: vi.fn(async () => []) }));
+vi.mock("@/features/delivery-tracking/api/read-delivery-source", () => ({ readDeliveryStatusSource: vi.fn(async () => "estimate") })); // 배송 단계 설정값(delivery-status INV-DS11)
 vi.mock("@/entities/order/api/my-gift-memo", async (orig) => ({ ...(await orig<object>()), readMyGiftMemo: vi.fn(async () => null) }));
 
 import ActionsRoute from "@/app/(site)/me/actions/page";

@@ -1,3 +1,4 @@
+import { CARRIER_DELIVERY_STATES, type CarrierDeliveryState } from "@/shared/lib/delivery/delivery-stage";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import {
@@ -38,7 +39,7 @@ export type InvoiceLine = {
   amountKrw: number;
   progress: LineProgress;
   /** 배송 단계 재료(delivery-status INV-DS1·DS2) — 송장 출력 여부 · 출고한 서울 날짜 · 팬의 받았어요. 송장번호는 없다(INV-DS3) */
-  delivery: { printed: boolean; shippedOn: string | null; received: boolean };
+  delivery: { printed: boolean; shippedOn: string | null; received: boolean; carrier: CarrierDeliveryState | null };
 };
 export type BoxInvoice = {
   amountKrw: number;
@@ -70,7 +71,7 @@ export type MyBox = {
   invoice: BoxInvoice | null;
 };
 /** 팬의 내 배송 — 송장을 출력했거나 출고된 내 신청일 때만. 송장번호는 없다(delivery-status INV-DS3). canConfirm = 출고됐고 아직 받았어요 전 */
-export type FanBoxDelivery = { shippedOn: string | null; received: boolean; canConfirm: boolean };
+export type FanBoxDelivery = { shippedOn: string | null; received: boolean; canConfirm: boolean; carrier: CarrierDeliveryState | null };
 export type FanBox = {
   id: string;
   name: string;
@@ -111,6 +112,7 @@ const invoiceLineRow = z
     printed: z.boolean(),
     shipped_on: day.nullable(),
     received: z.boolean(),
+    carrier: z.enum(CARRIER_DELIVERY_STATES).nullable(),
   })
   .strict();
 const invoiceRow = z
@@ -153,7 +155,10 @@ const fanBoxSchema = z
     open: z.boolean(),
     viewer: z.enum(BOX_VIEWERS),
     my_state: z.enum(FAN_BOX_STATES),
-    delivery: z.object({ shipped_on: day.nullable(), received: z.boolean(), can_confirm: z.boolean() }).strict().nullable(),
+    delivery: z
+      .object({ shipped_on: day.nullable(), received: z.boolean(), can_confirm: z.boolean(), carrier: z.enum(CARRIER_DELIVERY_STATES).nullable() })
+      .strict()
+      .nullable(),
   })
   .strict();
 
@@ -207,7 +212,7 @@ export async function readMyBox(client: Rpc, boxId: string): Promise<MyBox | nul
             serviceFeeKrw: l.service_fee_krw,
             amountKrw: l.amount_krw,
             progress: l.progress,
-            delivery: { printed: l.printed, shippedOn: l.shipped_on, received: l.received },
+            delivery: { printed: l.printed, shippedOn: l.shipped_on, received: l.received, carrier: l.carrier },
           })),
         }
       : null,
@@ -309,7 +314,7 @@ export async function readBoxForFan(client: Rpc, boxId: string, token: string | 
   if (error) throw new Error(`선물함을 읽지 못했다: ${error.code}`);
   if (data === null) return null;
   const b = fanBoxSchema.parse(data);
-  const delivery = b.delivery ? { shippedOn: b.delivery.shipped_on, received: b.delivery.received, canConfirm: b.delivery.can_confirm } : null;
+  const delivery = b.delivery ? { shippedOn: b.delivery.shipped_on, received: b.delivery.received, canConfirm: b.delivery.can_confirm, carrier: b.delivery.carrier } : null;
   return { id: b.id, name: b.name, creator: b.creator, open: b.open, viewer: b.viewer, myState: b.my_state, delivery };
 }
 

@@ -13,6 +13,7 @@ vi.mock("next/navigation", () => ({
 import { parseFanGiftRows } from "@/entities/order/api/fan-gift-rows";
 import type { GiftBox } from "@/entities/parcel/model/box-rows";
 import type { FanBoxReply } from "@/entities/gift-reply/api/gift-reply-reads";
+import type { DeliveryStatusSource } from "@/shared/config/delivery-status";
 import { GiftStatusPage } from "./gift-status-page";
 
 // 보낸 선물 상세의 배송 단계(delivery-status INV-DS1·DS2·DS3) — 이 파일은 visibility 시험의 준비 코드를 그대로 쓴다.
@@ -91,8 +92,8 @@ const SHIPPED = { ...PASSED, status: "shipped", shipped_at: "2026-11-09T06:00:00
 /** 서울 11월 (9 + days)일 0시 + 분 */
 const seoul = (days: number, minutes = 0) => new Date(Date.parse("2026-11-08T15:00:00Z") + days * 86_400_000 + minutes * 60_000).toISOString();
 
-function render(over: Record<string, unknown>, now: string, replies: FanBoxReply[] = []) {
-  act(() => root.render(<GiftStatusPage view={viewOf(over)} boxes={[box()]} memo={null} now={now} replies={replies} />));
+function render(over: Record<string, unknown>, now: string, replies: FanBoxReply[] = [], deliverySource: DeliveryStatusSource = "estimate") {
+  act(() => root.render(<GiftStatusPage view={viewOf(over)} boxes={[box()]} memo={null} now={now} deliverySource={deliverySource} replies={replies} />));
 }
 const stage = () => host.querySelector("[data-delivery-stage]");
 const steps = () => [...host.querySelectorAll("ol li")].map((li) => li.className);
@@ -130,6 +131,20 @@ describe("delivery-status: 팬 선물 상세의 배송 단계", () => {
   it("INV-DS2 (실패경로): 받았어요가 없는 상자 줄만 있으면 확정이 아니다", () => {
     render(SHIPPED, seoul(5), [reply(false)]);
     expect(stage()?.textContent).toBe("도착했어요(예상)");
+  });
+  it("INV-DS4·DS11: webhook 이면 주문의 배송 칸(택배사 단계)으로 — 없음 → 보냈어요, 배송 중 → 보통 1~2일, 배달 완료 → 도착했어요 막대 끝까지", () => {
+    render(SHIPPED, seoul(10), [], "webhook");
+    expect(stage()?.textContent).toBe("팬꾹에서 보냈어요");
+    render({ ...SHIPPED, delivery: "in_transit" }, seoul(0, 900), [], "webhook");
+    expect(stage()?.textContent).toBe("보통 1~2일 안에 도착해요");
+    render({ ...SHIPPED, delivery: "delivered" }, seoul(0, 900), [], "webhook");
+    expect(stage()?.textContent).toBe("도착했어요");
+    expect(stage()!.className).not.toMatch(/estimated/);
+    expect(steps().at(-1)).toMatch(/done/);
+  });
+  it("INV-DS4 (실패경로): estimate 에서는 주문의 배송 칸이 배달 완료여도 날짜로 정한다", () => {
+    render({ ...SHIPPED, delivery: "delivered" }, seoul(1), [], "estimate");
+    expect(stage()?.textContent).toBe("보통 1~2일 안에 도착해요");
   });
   it("INV-DS3: 화면 어디에도 크리에이터행 송장번호·택배사 조회 링크가 없다", () => {
     render(SHIPPED, seoul(1));

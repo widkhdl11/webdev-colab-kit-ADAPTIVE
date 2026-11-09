@@ -19,6 +19,7 @@ import { readSealingPublicKeyPem } from "@/shared/lib/envelope/sealing-key-confi
 import { GiftTodoBox } from "@/widgets/action-center/ui/gift-todo-box";
 import { UnpaidGiftPage } from "@/widgets/action-center/ui/unpaid-gift-page";
 import { MyShell } from "@/widgets/my-nav/ui/my-shell";
+import { readDeliveryStatusSource } from "@/features/delivery-tracking/api/read-delivery-source";
 import { GiftStatusPage } from "@/widgets/gift-status/ui/gift-status-page";
 import { RevgiftReceivePage } from "@/widgets/revgift-receive/ui/revgift-receive-page";
 import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-header";
@@ -85,13 +86,14 @@ async function giftDetail({ supabase, viewer }: Session, orderNo: string, differ
   if (!view) return unpaidDetail({ supabase, viewer }, orderNo, gifts);
   const fan = viewer.role === "fan";
   // 서로 기다릴 필요가 없어 함께 읽는다. 상자·차액·결제·답장·메모 읽기는 모두 로그인한 사람의 주문이 아니면 빈 값을 준다.
-  const [boxes, differences, payment, replies, memo, actions] = await Promise.all([
+  const [boxes, differences, payment, replies, memo, actions, deliverySource] = await Promise.all([
     readMyGiftBoxes(supabase, view.orderNo),
     readMyDifferences(supabase, view.orderNo),
     readMyGiftPayment(supabase, view.orderNo),
     readMyGiftReplies(supabase, view.orderNo),
     readMyGiftMemo(supabase, view.orderNo),
     readDetailTodo(supabase, viewer, view.orderNo),
+    readDeliveryStatusSource(supabase),
   ]);
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
   const notice = DIFFERENCE_NOTICES.find((n) => n === differenceParam) ?? null;
@@ -103,6 +105,7 @@ async function giftDetail({ supabase, viewer }: Session, orderNo: string, differ
         view={view}
         // 승인 기한이 지났는데 자동 처리 전인 주문을 「기한 지남」으로(approval-signature INV-S6 S6c)
         now={new Date().toISOString()}
+        deliverySource={deliverySource}
         boxes={boxes}
         difference={{ differences, notice }}
         dueKrw={differenceDueKrw(todoItems)}

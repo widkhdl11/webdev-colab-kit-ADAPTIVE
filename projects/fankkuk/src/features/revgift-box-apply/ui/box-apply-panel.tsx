@@ -10,6 +10,7 @@ import d from "@/shared/ui/dialog-parts.module.css";
 import type { Envelope } from "@/shared/lib/envelope/envelope";
 import type { SealedAddressSendOutcome } from "@/shared/ui/sealed-address-form";
 import { DELIVERY_STAGE_LABEL } from "@/shared/config/delivery-status";
+import type { DeliveryStatusSource } from "@/shared/config/delivery-status";
 import { deliveryStage, isEstimatedStage } from "@/shared/lib/delivery/delivery-stage";
 import { sendApply, sendReceived, sendWithdraw } from "../api/apply-requests";
 import s from "./box-apply.module.css";
@@ -30,11 +31,23 @@ export type ApplyAddressStep = {
  * 내 선물의 배송 단계(delivery-status INV-DS1·DS2·DS6) — 팬꾹에서 보냈어요 → 보통 1~2일 안에 도착해요 → 도착했어요(팬의 받았어요) / 확인 없이 출고 + 3일이면 도착했어요(예상, 흐리게).
  * 받는 쪽은 팬이다 — 출고 뒤 [받았어요]를 누르면 확정. 송장번호·택배사 조회 링크는 없다(INV-DS3).
  */
-function BoxDeliveryCard({ box, delivery, now, here }: { box: FanBox; delivery: NonNullable<FanBox["delivery"]>; now: string; here: string }) {
+function BoxDeliveryCard({
+  box,
+  delivery,
+  now,
+  deliverySource,
+  here,
+}: {
+  box: FanBox;
+  delivery: NonNullable<FanBox["delivery"]>;
+  now: string;
+  deliverySource: DeliveryStatusSource;
+  here: string;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const stage = deliveryStage({ printed: true, shippedAt: delivery.shippedOn, confirmed: delivery.received }, now);
+  const stage = deliveryStage({ printed: true, shippedAt: delivery.shippedOn, confirmed: delivery.received, carrier: delivery.carrier }, now, deliverySource);
   const confirm = async () => {
     if (busy) return;
     setBusy(true);
@@ -76,6 +89,7 @@ export function BoxApplyPanel({
   address,
   followSlot,
   now,
+  deliverySource,
 }: {
   box: FanBox;
   token: string | null;
@@ -83,6 +97,8 @@ export function BoxApplyPanel({
   followSlot: ReactNode;
   /** 화면을 그린 서버 시각 — 배송 단계의 날짜 경계 */
   now: string;
+  /** DB 의 단계 설정값(delivery-status INV-DS11) */
+  deliverySource: DeliveryStatusSource;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +129,7 @@ export function BoxApplyPanel({
   if (box.viewer === "not_fan") return <p className={s.card}>팬 계정만 신청할 수 있습니다.</p>;
 
   if (box.myState === "preparing") {
-    if (box.delivery) return <BoxDeliveryCard box={box} delivery={box.delivery} now={now} here={here} />;
+    if (box.delivery) return <BoxDeliveryCard box={box} delivery={box.delivery} now={now} deliverySource={deliverySource} here={here} />;
     return <p className={s.card}>선물이 준비되고 있어요.</p>;
   }
   if (box.myState === "cancelled") return <p className={s.card}>선물함이 취소됐어요.</p>;

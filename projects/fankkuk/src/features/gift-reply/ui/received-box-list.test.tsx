@@ -8,6 +8,7 @@ import type { ReceivedBox } from "@/entities/gift-reply/api/gift-reply-reads";
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
 vi.mock("../api/send-gift-reply", () => ({ sendConfirmGiftBox: vi.fn(), sendDeleteGiftReply: vi.fn() }));
 
+import type { DeliveryStatusSource } from "@/shared/config/delivery-status";
 import { ReceivedBoxList } from "./received-box-list";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -36,13 +37,14 @@ const box = (over: Partial<ReceivedBox>): ReceivedBox => ({
   receivedOn: null,
   replyState: "none",
   reply: null,
+  carrier: null,
   ...over,
 });
 /** 서울 11월 (9 + days)일 0시 + 분 */
 const seoul = (days: number, minutes = 0) => new Date(Date.parse("2026-11-08T15:00:00Z") + days * 86_400_000 + minutes * 60_000).toISOString();
 
-function render(b: ReceivedBox, now: string) {
-  act(() => root.render(<ReceivedBoxList boxes={[b]} pending={0} now={now} />));
+function render(b: ReceivedBox, now: string, deliverySource: DeliveryStatusSource = "estimate") {
+  act(() => root.render(<ReceivedBoxList boxes={[b]} pending={0} now={now} deliverySource={deliverySource} />));
 }
 const foot = () => host.querySelector("[data-delivery-stage]");
 
@@ -68,5 +70,20 @@ describe("delivery-status: 크리에이터 받은 선물의 배송 단계", () =
     render(box({}), seoul(10));
     expect(foot()?.getAttribute("data-delivery-stage")).toBe("arrived_estimated");
     expect([...host.querySelectorAll("button")].map((b) => b.textContent)).toContain("받았어요");
+  });
+
+  it("INV-DS4·DS11: webhook 이면 날짜가 아니라 택배사 단계 — 아직 없음 → 보냈어요, 배송 중 → 보통 1~2일, 배달 완료 → 도착했어요(흐리지 않음)", () => {
+    render(box({ carrier: null }), seoul(10), "webhook");
+    expect(foot()?.getAttribute("data-delivery-stage")).toBe("sent");
+    render(box({ carrier: "in_transit" }), seoul(0, 1), "webhook");
+    expect(foot()?.getAttribute("data-delivery-stage")).toBe("on_the_way");
+    render(box({ carrier: "delivered" }), seoul(0, 1), "webhook");
+    expect(foot()?.getAttribute("data-delivery-stage")).toBe("arrived");
+    expect(foot()!.className).not.toMatch(/estimated/);
+  });
+
+  it("INV-DS4 (실패경로): estimate 에서는 택배사 단계가 와도 쓰지 않는다", () => {
+    render(box({ carrier: "delivered" }), seoul(1), "estimate");
+    expect(foot()?.getAttribute("data-delivery-stage")).toBe("on_the_way");
   });
 });

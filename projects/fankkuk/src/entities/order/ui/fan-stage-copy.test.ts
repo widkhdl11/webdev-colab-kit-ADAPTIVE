@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FanApproval, FanGiftView, FanStep, FanStepKey } from "../model/fan-view";
-import { awaitsApproval, fanBadge, fanDetailBadges, fanGiftBucket, fanHeadline, fanStepDetail, headerGiftState } from "./fan-stage-copy";
+import { awaitsApproval, fanBadge, fanDetailBadges, fanGiftBucket, fanHeadline, fanStepDetail, HEADER_GIFT_DONE_LABEL, headerGiftState } from "./fan-stage-copy";
 
 const KEYS: FanStepKey[] = ["registered", "received", "inspected", "shipped", "in_transit", "delivered"];
 
@@ -61,22 +61,33 @@ describe("INV-S9: 「먼저 보내기」 전 표시", () => {
 
 describe("headerGiftState", () => {
   it("검수를 마치고 승인을 기다리는 선물은 모래시계(wait)", () => {
-    expect(headerGiftState(view(3, "in_progress", { state: "waiting", at: null }))).toBe("wait");
+    expect(headerGiftState(view(3, "in_progress", { state: "waiting", at: null }), "estimate")).toBe("wait");
   });
   it("그 밖의 출고 전 선물은 트럭(move) — 승인 전이라도 보내는 중이면 트럭", () => {
-    for (let n = 1; n < 4; n++) expect(headerGiftState(view(n))).toBe("move");
+    for (let n = 1; n < 4; n++) expect(headerGiftState(view(n), "estimate")).toBe("move");
   });
   it("INV-DS5: 웹훅 연결 전에는 출고하면 체크(done, 발송 완료) — 배송 중·수령을 기다리지 않는다", () => {
-    for (let n = 4; n <= KEYS.length; n++) expect(headerGiftState(view(n))).toBe("done");
+    for (let n = 4; n <= KEYS.length; n++) expect(headerGiftState(view(n), "estimate")).toBe("done");
+  });
+  it("INV-DS11 ①: webhook 이면 체크는 배달 완료 — 출고·배송 중은 트럭, 배달 완료에서 체크(배송 완료)", () => {
+    expect(headerGiftState(view(KEYS.indexOf("shipped") + 1), "webhook")).toBe("move");
+    expect(headerGiftState(view(KEYS.indexOf("in_transit") + 1), "webhook")).toBe("move");
+    expect(headerGiftState(view(KEYS.indexOf("delivered") + 1), "webhook")).toBe("done");
+    expect(HEADER_GIFT_DONE_LABEL).toEqual({ estimate: "발송 완료", webhook: "배송 완료" });
+  });
+  it("INV-DS11 ① (실패경로): 같은 출고된 선물이 estimate 에서는 체크, webhook 에서는 체크가 아니다", () => {
+    const shipped = view(KEYS.indexOf("shipped") + 1);
+    expect(headerGiftState(shipped, "estimate")).toBe("done");
+    expect(headerGiftState(shipped, "webhook")).not.toBe("done");
   });
   it("INV-DS5 (실패경로): 출고 전(검수까지 끝)은 체크가 아니다", () => {
-    expect(headerGiftState(view(3, "in_progress", { state: "done", at: null }))).toBe("move");
+    expect(headerGiftState(view(3, "in_progress", { state: "done", at: null }), "estimate")).toBe("move");
   });
   it("받지 않음·반송·취소는 헤더에 띄우지 않는다", () => {
-    expect(headerGiftState(view(1, "declined"))).toBeNull();
-    expect(headerGiftState(view(1, "expired"))).toBeNull();
-    expect(headerGiftState(view(3, "returned"))).toBeNull();
-    expect(headerGiftState(view(1, "canceled"))).toBeNull();
+    expect(headerGiftState(view(1, "declined"), "estimate")).toBeNull();
+    expect(headerGiftState(view(1, "expired"), "estimate")).toBeNull();
+    expect(headerGiftState(view(3, "returned"), "estimate")).toBeNull();
+    expect(headerGiftState(view(1, "canceled"), "estimate")).toBeNull();
   });
 });
 
@@ -87,7 +98,7 @@ describe("fanGiftBucket", () => {
   });
   it("모든 단계가 끝난 선물은 ended — 헤더 아이콘(done)과 달리 진행 중으로 세지 않는다", () => {
     expect(fanGiftBucket(view(KEYS.length))).toBe("ended");
-    expect(headerGiftState(view(KEYS.length))).toBe("done");
+    expect(headerGiftState(view(KEYS.length), "estimate")).toBe("done");
   });
   it("반송·취소는 ended, 거절·자동 반려는 not_accepted", () => {
     expect(fanGiftBucket(view(3, "returned"))).toBe("ended");

@@ -6,6 +6,7 @@ import { FollowButton } from "@/features/creator-follow/ui/follow-button";
 import { FanAddressFields } from "@/entities/address/ui/fan-address-fields";
 import { BoxApplyPanel } from "@/features/revgift-box-apply/ui/box-apply-panel";
 import { ADDRESS_KEY_MISSING_TEXT } from "@/shared/ui/sealed-address-form";
+import type { DeliveryStatusSource } from "@/shared/config/delivery-status";
 import s from "./revgift-box.module.css";
 
 // 팬 신청 화면(revgift-box INV-GB4·GB6 · 화면 명세 docs/ux/pages/gift-boxes-boxId.md). 머리: 크리에이터 이름 · 선물함 이름.
@@ -16,6 +17,7 @@ export function BoxApplyPage({
   accountId,
   sealingKeyPem,
   now,
+  deliverySource,
 }: {
   box: FanBox;
   token: string | null;
@@ -23,6 +25,8 @@ export function BoxApplyPage({
   sealingKeyPem: string | null;
   /** 화면을 그린 서버 시각 — 배송 단계의 날짜 경계(delivery-status INV-DS1) */
   now: string;
+  /** DB 의 단계 설정값(delivery-status INV-DS11) */
+  deliverySource: DeliveryStatusSource;
 }) {
   const router = useRouter();
   const here = `/gift-boxes/${box.id}${token ? `?invite=${encodeURIComponent(token)}` : ""}`;
@@ -39,6 +43,7 @@ export function BoxApplyPage({
           box={box}
           token={token}
           now={now}
+          deliverySource={deliverySource}
           followSlot={<FollowButton creatorId={box.creator.id} creatorName={box.creator.name} initialFollowing={false} variant="profile" mode="save" />}
           address={{
             canEnter: sealingKeyPem !== null && accountId !== null,

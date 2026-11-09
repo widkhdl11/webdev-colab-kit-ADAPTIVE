@@ -3,6 +3,7 @@ import type { BoxStatus } from "@/entities/revgift-box/model/box-status";
 import { REGION_NAME, TIER_NAME } from "@/entities/revgift-box/model/box-tiers";
 import { BoxPayButton } from "@/features/revgift-box-pay/ui/box-pay-button";
 import { DELIVERY_STAGE_LABEL } from "@/shared/config/delivery-status";
+import type { DeliveryStatusSource } from "@/shared/config/delivery-status";
 import { deliveryStage, isEstimatedStage } from "@/shared/lib/delivery/delivery-stage";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import s from "./revgift-box.module.css";
@@ -26,10 +27,14 @@ const PROGRESS_NAME: Record<LineProgress, string> = {
   refunded: "환불 완료",
 };
 
-function ProgressCell({ line, now }: { line: BoxInvoice["lines"][number]; now: string }) {
+function ProgressCell({ line, now, deliverySource }: { line: BoxInvoice["lines"][number]; now: string; deliverySource: DeliveryStatusSource }) {
   const stage =
     line.progress === "paid" || line.progress === "shipped"
-      ? deliveryStage({ printed: line.delivery.printed, shippedAt: line.delivery.shippedOn, confirmed: line.delivery.received }, now)
+      ? deliveryStage(
+          { printed: line.delivery.printed, shippedAt: line.delivery.shippedOn, confirmed: line.delivery.received, carrier: line.delivery.carrier },
+          now,
+          deliverySource,
+        )
       : null;
   if (!stage) return <td>{PROGRESS_NAME[line.progress]}</td>;
   return (
@@ -49,6 +54,7 @@ export function BoxInvoiceSection({
   clientKey,
   notice,
   now,
+  deliverySource,
 }: {
   boxId: string;
   boxName: string;
@@ -58,6 +64,8 @@ export function BoxInvoiceSection({
   notice: PayNotice;
   /** 화면을 그린 서버 시각 — 배송 단계의 날짜 경계 */
   now: string;
+  /** DB 의 단계 설정값(delivery-status INV-DS11) */
+  deliverySource: DeliveryStatusSource;
 }) {
   const payable = status === "invoiced" || status === "overdue";
   const paid = status === "paid" || status === "done";
@@ -91,7 +99,7 @@ export function BoxInvoiceSection({
                 <td>{l.surchargeRegion === "none" ? "—" : `${REGION_NAME[l.surchargeRegion]} ${won(l.surchargeKrw)}`}</td>
                 <td>{won(l.serviceFeeKrw)}</td>
                 <td>{won(l.amountKrw)}</td>
-                {paid ? <ProgressCell line={l} now={now} /> : null}
+                {paid ? <ProgressCell line={l} now={now} deliverySource={deliverySource} /> : null}
               </tr>
             ))}
           </tbody>

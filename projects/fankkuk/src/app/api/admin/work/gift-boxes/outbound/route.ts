@@ -1,4 +1,5 @@
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
+import { subscribePendingQuietly } from "@/features/delivery-tracking/api/server-deps";
 import { chooseLabelPrinters } from "@/features/invoice-print/api/choose-label-printers";
 import { createGatewayLabelPrinters } from "@/features/invoice-print/api/gateway-client";
 import { createLocalLabelPrinters, readDecryptFile, type LabelPrinters } from "@/features/invoice-print/api/invoice-decryptor";
@@ -34,6 +35,9 @@ export async function POST(req: NextRequest) {
       const { data } = await client.auth.getSession();
       return run({ qr: label, accessToken: data.session?.access_token ?? "" });
     };
-    return shipGiftBox({ client, printLabel }, body);
+    const reply = await shipGiftBox({ client, printLabel }, body);
+    // 송장번호가 저장되면 DB 가 구독 대기 줄을 만든다 — 처리가 성공했을 때만, 응답을 보낸 뒤 그 줄을 배송 조회 서비스에 보낸다(실패해도 이 처리와 무관, delivery-status INV-DS12)
+    if (reply.status === 200) after(subscribePendingQuietly);
+    return reply;
   });
 }

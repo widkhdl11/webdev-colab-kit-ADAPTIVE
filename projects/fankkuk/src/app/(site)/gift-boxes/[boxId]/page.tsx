@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { readBoxForFan } from "@/entities/revgift-box/api/box-reads";
+import { readDeliveryStatusSource } from "@/features/delivery-tracking/api/read-delivery-source";
 import { readSealingPublicKeyPem } from "@/shared/lib/envelope/sealing-key-config";
 import { BoxApplyPage } from "@/widgets/revgift-box/ui/box-apply-page";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
@@ -26,11 +27,14 @@ export default async function Page({
   const { supabase, viewer } = await loadSession();
   const box = await readBoxForFan(supabase, boxId, token);
   if (!box) notFound();
-  const header = await readSiteHeader(supabase, viewer, `/gift-boxes/${box.id}`);
+  const [header, deliverySource] = await Promise.all([readSiteHeader(supabase, viewer, `/gift-boxes/${box.id}`), readDeliveryStatusSource(supabase)]);
   return (
     <>
       <SiteHeader {...header} />
-      <BoxApplyPage box={box} token={token} accountId={viewer?.userId ?? null} sealingKeyPem={readSealingPublicKeyPem(process.env)} now={new Date().toISOString()} />
+      <BoxApplyPage
+        box={box} token={token} accountId={viewer?.userId ?? null} sealingKeyPem={readSealingPublicKeyPem(process.env)} now={new Date().toISOString()}
+        deliverySource={deliverySource}
+      />
       <SiteFooter />
     </>
   );

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { readBoxCards, readMyBox, readPriceTable } from "@/entities/revgift-box/api/box-reads";
+import { readDeliveryStatusSource } from "@/features/delivery-tracking/api/read-delivery-source";
 import { FAN_HOME } from "@/entities/session/model/home-path";
 import { requestOrigin } from "@/widgets/creator-profile/model/link-metadata";
 import { BoxManagePage } from "@/widgets/revgift-box/ui/box-manage-page";
@@ -23,7 +24,11 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
   if (viewer?.role !== "creator") redirect(`/login?next=${encodeURIComponent(`/creator/revgift-boxes/${boxId}`)}`);
-  const [header, box] = await Promise.all([readSiteHeader(supabase, viewer, "/creator/revgift-boxes"), readMyBox(supabase, boxId)]);
+  const [header, box, deliverySource] = await Promise.all([
+    readSiteHeader(supabase, viewer, "/creator/revgift-boxes"),
+    readMyBox(supabase, boxId),
+    readDeliveryStatusSource(supabase),
+  ]);
   if (!box) notFound();
   // 2페이지 예상 금액용 요금(마감 때만) · 확인 필요 카드(확인 필요 때만) — 표시용이라 실패해도 화면은 그린다
   const [price, cards] = await Promise.all([
@@ -35,7 +40,11 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   return (
     <>
       <SiteHeader {...header} />
-      <BoxManagePage box={box} applyUrl={url.toString()} price={price} cards={cards} clientKey={process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? ""} notice={notice} now={new Date().toISOString()} />
+      <BoxManagePage
+        box={box} applyUrl={url.toString()} price={price} cards={cards} clientKey={process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? ""} notice={notice}
+        now={new Date().toISOString()}
+        deliverySource={deliverySource}
+      />
       <SiteFooter />
     </>
   );

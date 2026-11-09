@@ -1,9 +1,4 @@
-import {
-  DELIVERY_ESTIMATED_ARRIVAL_DAYS,
-  DELIVERY_ON_THE_WAY_AFTER_DAYS,
-  DELIVERY_STATUS_SOURCE,
-  type DeliveryStatusSource,
-} from "@/shared/config/delivery-status";
+import { DELIVERY_ESTIMATED_ARRIVAL_DAYS, DELIVERY_ON_THE_WAY_AFTER_DAYS, type DeliveryStatusSource } from "@/shared/config/delivery-status";
 import { seoulDaysUntil } from "@/shared/lib/format/datetime";
 
 // 배송 현황 단계 계산 — 팬 선물(팬 → 크리에이터)과 선물함(크리에이터 → 팬)이 같은 함수를 쓴다(delivery-status INV-DS1·DS2·DS4).
@@ -13,8 +8,9 @@ import { seoulDaysUntil } from "@/shared/lib/format/datetime";
 
 export type DeliveryStage = "sent" | "on_the_way" | "arrived" | "arrived_estimated";
 
-/** 웹훅이 줄 택배사 상태의 단계만(집하·배송 중·배달 완료). 이력의 다른 칸은 이 형에 없다 */
-export type CarrierDeliveryState = "picked_up" | "in_transit" | "delivered";
+/** 웹훅이 준 택배사 상태의 단계만(집하·배송 중·배달 완료). 이력의 다른 칸은 이 형에 없다 */
+export const CARRIER_DELIVERY_STATES = ["picked_up", "in_transit", "delivered"] as const;
+export type CarrierDeliveryState = (typeof CARRIER_DELIVERY_STATES)[number];
 
 export type DeliveryStageInput = {
   /** 송장을 출력했는가(팬꾹에서 보냄) */
@@ -35,8 +31,9 @@ export function isEstimatedStage(stage: DeliveryStage): boolean {
 
 const asInstant = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? `${v}T12:00:00+09:00` : v);
 
-/** 지금 보일 배송 단계. 송장을 출력하지도 출고하지도 않았으면 null(배송 단계가 아직 없다). */
-export function deliveryStage(input: DeliveryStageInput, nowIso: string, source: DeliveryStatusSource = DELIVERY_STATUS_SOURCE): DeliveryStage | null {
+/** 지금 보일 배송 단계. 송장을 출력하지도 출고하지도 않았으면 null(배송 단계가 아직 없다).
+ *  source 는 DB 의 단계 설정값 하나(delivery-status INV-DS11) — 기본값을 두지 않는다. 화면은 읽은 값을 넘겨받아 부른다. */
+export function deliveryStage(input: DeliveryStageInput, nowIso: string, source: DeliveryStatusSource): DeliveryStage | null {
   if (!input.printed && input.shippedAt === null) return null;
   if (input.confirmed) return "arrived";
   if (source === "webhook") {

@@ -5,6 +5,7 @@ import { BoxManagePanel } from "@/features/revgift-box-manage/ui/box-manage-pane
 import { BoxTierPanel } from "@/features/revgift-box-manage/ui/box-tier-panel";
 import { BoxInvoiceSection, type PayNotice } from "./box-invoice-section";
 import { BoxSendSection } from "./box-send-section";
+import type { DeliveryStatusSource } from "@/shared/config/delivery-status";
 import s from "./revgift-box.module.css";
 
 // 신청 관리 창 화면(크리에이터, revgift-box INV-GB7). 머리: 선물함 이름 · 상태 · 공개 여부. 본문은 신청 관리 기능.
@@ -19,6 +20,7 @@ export function BoxManagePage({
   clientKey,
   notice,
   now,
+  deliverySource,
 }: {
   box: MyBox;
   applyUrl: string;
@@ -28,6 +30,8 @@ export function BoxManagePage({
   notice: PayNotice;
   /** 화면을 그린 서버 시각 — 명세서 줄의 배송 단계 */
   now: string;
+  /** DB 의 단계 설정값(delivery-status INV-DS11) */
+  deliverySource: DeliveryStatusSource;
 }) {
   return (
     <main id="main" className="page-centered v34">
@@ -55,7 +59,7 @@ export function BoxManagePage({
             <p>{box.status === "returning" ? "팬꾹에 온 물건은 큰 상자를 보낸 주소로 착불 반송합니다." : "팬꾹에 온 물건은 큰 상자를 보낸 주소로 착불 반송했습니다."}</p>
           </section>
         ) : box.invoice ? (
-          <BoxInvoiceSection boxId={box.id} boxName={box.name} status={box.status} invoice={box.invoice} clientKey={clientKey} notice={notice} now={now} />
+          <BoxInvoiceSection boxId={box.id} boxName={box.name} status={box.status} invoice={box.invoice} clientKey={clientKey} notice={notice} now={now} deliverySource={deliverySource} />
         ) : (
           <BoxManagePanel key={`${box.status}-${box.applications.length}`} box={box} applyUrl={applyUrl} />
         )}

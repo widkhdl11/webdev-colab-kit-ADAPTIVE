@@ -121,12 +121,14 @@ describe("INV-DS3·DS6: 선물함 읽기 — 배송 재료만, 송장번호 없�
       shipped_on: null,
       received: false,
       can_confirm: false,
+      // 택배사 단계(delivery-status INV-DS4 · 20261109000010) — 송장 출력만 했으면 조회 줄은 있어도 단계가 아직 없다
+      carrier: null,
     });
 
     const shipped = boxWithApp("shipped", { shippedDaysAgo: 2 });
     const seen = (await fan.rpc("revgift_box_for_fan", { p_box_id: shipped.boxId, p_token: null })).data;
     const day = psql(`select to_char((shipped_at at time zone 'Asia/Seoul')::date, 'YYYY-MM-DD') from public.revgift_box_applications where id = '${shipped.appId}'`);
-    expect((seen as { delivery: unknown }).delivery).toEqual({ shipped_on: day, received: false, can_confirm: true });
+    expect((seen as { delivery: unknown }).delivery).toEqual({ shipped_on: day, received: false, can_confirm: true, carrier: null });
     expect(JSON.stringify(seen)).not.toContain(OUT_WAYBILL);
   });
 

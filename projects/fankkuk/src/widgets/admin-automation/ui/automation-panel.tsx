@@ -5,6 +5,8 @@ import { RunExpiryButton } from "@/features/office-expiry-run/ui/run-expiry-butt
 import { formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
 import type { UnsignedOpenAlert } from "@/entities/address/api/unsigned-open-alerts";
+import type { DeliveryWatchRow } from "@/features/delivery-tracking/api/read-delivery-watch";
+import { DeliveryWatchSection } from "./delivery-watch-section";
 
 // 관리자 「자동 처리 현황」 (office-workflow INV-W6, 시안 admin/automation.html).
 // 여섯 묶음: 알림 지금 보내기(notifications INV-N5) · 보내지 못한 알림(INV-N10) · 7일 미승인 팬 선물 반려 · 역조공 받기 기한 · 차액 미납 반송
@@ -55,9 +57,11 @@ type Props = {
   now: string;
   /** 승인 서명 없이 열린 주소 열람 줄(creator-link INV-E11) — 수와 마지막 시각만 */
   unsignedOpens: UnsignedOpenAlert;
+  /** 배송 조회 — 웹훅이 멈춘 송장·구독 대기(delivery-status INV-DS14) */
+  deliveryWatch: readonly DeliveryWatchRow[];
 };
 
-export function AutomationPanel({ rows, failures, now, unsignedOpens }: Props) {
+export function AutomationPanel({ rows, failures, now, unsignedOpens, deliveryWatch }: Props) {
   const at = new Date(now);
   return (
     <>
@@ -89,6 +93,7 @@ export function AutomationPanel({ rows, failures, now, unsignedOpens }: Props) {
             <p className={a.hint}>모든 주소 열람이 서명된 승인 뒤에 일어났어요.</p>
           )}
         </section>
+        <DeliveryWatchSection rows={deliveryWatch} />
         <section aria-labelledby="auto-notifications">
           <div className={a.sectionH}>
             <h2 id="auto-notifications">알림 보내기</h2>

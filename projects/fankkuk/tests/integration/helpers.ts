@@ -190,6 +190,8 @@ export function officeRowsDelete(unitIds: string, column: "box_id" | "share_id")
     `delete from public.office_not_mine_reports where parcel_id in (${parcels});`,
     `delete from public.notification_outbox where parcel_id in (${parcels});`,
     `update public.inbound_codes set first_parcel_id = null where first_parcel_id in (${parcels});`,
+    // 배송 조회 줄(delivery-status INV-DS12 — 송장번호가 저장되면 생긴다). replica 에서는 연쇄 삭제가 꺼지므로 먼저 지운다. 표가 있을 때만
+    `do $$ begin if to_regclass('public.delivery_trackings') is not null then delete from public.delivery_trackings where parcel_id in (${parcels}); end if; end $$;`,
     `delete from public.office_parcels where ${column} in (${unitIds});`,
   ];
 }

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { readMyReceivedBoxes, readMyReplyPending } from "@/entities/gift-reply/api/gift-reply-reads";
+import { readDeliveryStatusSource } from "@/features/delivery-tracking/api/read-delivery-source";
 import { FAN_HOME } from "@/entities/session/model/home-path";
 import { ReceivedBoxesPage } from "@/widgets/approval-requests/ui/received-boxes-page";
 import { MyShell } from "@/widgets/my-nav/ui/my-shell";
@@ -15,16 +16,17 @@ export default async function Page() {
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
   if (viewer?.role !== "creator") redirect("/login");
-  const [header, received, replyPending] = await Promise.all([
+  const [header, received, replyPending, deliverySource] = await Promise.all([
     readSiteHeader(supabase, viewer, "/creator/boxes"),
     readMyReceivedBoxes(supabase),
     readMyReplyPending(supabase),
+    readDeliveryStatusSource(supabase),
   ]);
   return (
     <>
       <SiteHeader {...header} />
       <MyShell width="list">
-        <ReceivedBoxesPage received={received} replyPending={replyPending} now={new Date().toISOString()} />
+        <ReceivedBoxesPage received={received} replyPending={replyPending} now={new Date().toISOString()} deliverySource={deliverySource} />
       </MyShell>
       <SiteFooter />
     </>

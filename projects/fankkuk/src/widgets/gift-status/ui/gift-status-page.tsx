@@ -3,6 +3,7 @@ import { DIFFERENCE_DEADLINE_DAYS } from "@/entities/payment/config/difference-d
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { withApprovalDeadline, withDeliveryStage, type FanGiftView, type FanStep } from "@/entities/order/model/fan-view";
+import type { DeliveryStatusSource } from "@/shared/config/delivery-status";
 import { deliveryStage, isEstimatedStage } from "@/shared/lib/delivery/delivery-stage";
 import {
   APPROVAL_LABEL,
@@ -79,6 +80,7 @@ type DifferenceProps = { differences: readonly GiftDifference[]; notice: Differe
 export function GiftStatusPage({
   view: readView,
   now,
+  deliverySource,
   boxes,
   difference,
   payment = null,
@@ -93,6 +95,8 @@ export function GiftStatusPage({
   view: FanGiftView;
   /** 화면을 그리는 서버의 지금 시각 — 승인 기한이 지났는데 자동 처리 전인 주문을 「기한 지남」으로 보이는 데 쓴다(INV-S6 S6c). 라우트가 넘긴다, 없으면 기한을 보지 않는다 */
   now?: string;
+  /** DB 의 단계 설정값(delivery-status INV-DS11) — 라우트가 now 와 함께 넘긴다. 둘 중 하나라도 없으면 배송 단계를 그리지 않는다 */
+  deliverySource?: DeliveryStatusSource;
   boxes: readonly GiftBox[];
   difference?: DifferenceProps;
   /** 결제 금액(저장된 값). 없으면 결제 내역을 그리지 않는다. */
@@ -116,9 +120,15 @@ export function GiftStatusPage({
   const deadlineView = now ? withApprovalDeadline(readView, now) : readView;
   // 배송 단계(delivery-status INV-DS1·DS2) — 송장 출력·출고 날·크리에이터의 받았어요(답장 스탬프 포함)와 지금 시각으로. 송장번호는 이 계산에도 화면에도 없다(INV-DS3)
   const outboundShippedAt = deadlineView.steps.find((st) => st.key === "shipped" && st.state === "done")?.at ?? null;
+  // 택배사 단계(INV-DS4) — webhook 이면 DB 가 주문의 배송 칸(배송 중·배달 완료)에 반영해 둔 값. estimate 에서는 단계 계산이 쓰지 않는다
+  const carrier = deadlineView.steps.some((st) => st.key === "delivered" && st.state === "done")
+    ? "delivered"
+    : deadlineView.steps.some((st) => st.key === "in_transit" && st.state === "done")
+      ? "in_transit"
+      : null;
   const stage =
-    now && deadlineView.outcome === "in_progress"
-      ? deliveryStage({ printed: deadlineView.outboundPrinted, shippedAt: outboundShippedAt, confirmed: replies.some((r) => r.received) }, now)
+    now && deliverySource && deadlineView.outcome === "in_progress"
+      ? deliveryStage({ printed: deadlineView.outboundPrinted, shippedAt: outboundShippedAt, confirmed: replies.some((r) => r.received), carrier }, now, deliverySource)
       : null;
   const view = withDeliveryStage(deadlineView, stage);
   const progress = fanProgress(view);

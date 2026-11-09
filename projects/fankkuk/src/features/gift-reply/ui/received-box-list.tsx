@@ -18,6 +18,7 @@ import {
   type ReplyPhrase,
 } from "@/entities/gift-reply/model/reply";
 import { DELIVERY_STAGE_LABEL } from "@/shared/config/delivery-status";
+import type { DeliveryStatusSource } from "@/shared/config/delivery-status";
 import { deliveryStage, isEstimatedStage, type DeliveryStage } from "@/shared/lib/delivery/delivery-stage";
 import { monthHeadKo, seoulYearMonth } from "@/shared/lib/format/datetime";
 import { charCount } from "@/shared/lib/validation/char-count";
@@ -146,8 +147,12 @@ function ReplyForm({ box, mode, onDone }: { box: ReceivedBox; mode: FormMode; on
 }
 
 /** 배송 단계(delivery-status INV-DS1·DS2) — 받는 쪽은 이 크리에이터다. 받았어요(답장 포함)를 남겼으면 「도착했어요」. 날짜 경계는 화면을 그린 서버 시각으로 */
-function stageOf(box: ReceivedBox, now: string): DeliveryStage | null {
-  return deliveryStage({ printed: true, shippedAt: box.shippedOn, confirmed: box.replyState !== "none" || box.receivedOn !== null }, now);
+function stageOf(box: ReceivedBox, now: string, source: DeliveryStatusSource): DeliveryStage | null {
+  return deliveryStage(
+    { printed: true, shippedAt: box.shippedOn, confirmed: box.replyState !== "none" || box.receivedOn !== null, carrier: box.carrier },
+    now,
+    source,
+  );
 }
 
 /** 카드 아래·줄 오른쪽 한 줄 — 출고 날 + 답장 상태. 아직 받았어요를 남기지 않은 상자는 배송 단계 */
@@ -161,7 +166,21 @@ function footText(box: ReceivedBox, dense: boolean, stage: DeliveryStage | null)
   return stage ? `${shipped} · ${DELIVERY_STAGE_LABEL[stage]}` : shipped;
 }
 
-function ReceivedRow({ box, index, dense, now, onStatus }: { box: ReceivedBox; index: number; dense: boolean; now: string; onStatus: (text: string) => void }) {
+function ReceivedRow({
+  box,
+  index,
+  dense,
+  now,
+  deliverySource,
+  onStatus,
+}: {
+  box: ReceivedBox;
+  index: number;
+  dense: boolean;
+  now: string;
+  deliverySource: DeliveryStatusSource;
+  onStatus: (text: string) => void;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -170,7 +189,7 @@ function ReceivedRow({ box, index, dense, now, onStatus }: { box: ReceivedBox; i
   const actions = replyActionsOf(box.replyState);
   const formMode: FormMode = actions.confirm ? "confirm" : "add";
   const formOpen = open && (actions.confirm || actions.addReply);
-  const stage = stageOf(box, now);
+  const stage = stageOf(box, now, deliverySource);
   const footClass = stage && isEstimatedStage(stage) ? s.estimated : undefined;
 
   const remove = async () => {
@@ -292,8 +311,18 @@ function byMonth(boxes: readonly ReceivedBox[]): Month[] {
   return out;
 }
 
-/** now = 화면을 그린 서버 시각(배송 단계의 날짜 경계) */
-export function ReceivedBoxList({ boxes, pending, now }: { boxes: readonly ReceivedBox[]; pending: number; now: string }) {
+/** now = 화면을 그린 서버 시각(배송 단계의 날짜 경계) · deliverySource = DB 의 단계 설정값(delivery-status INV-DS11) */
+export function ReceivedBoxList({
+  boxes,
+  pending,
+  now,
+  deliverySource,
+}: {
+  boxes: readonly ReceivedBox[];
+  pending: number;
+  now: string;
+  deliverySource: DeliveryStatusSource;
+}) {
   const [status, setStatus] = useState("");
   const months = byMonth(boxes);
   const base = months[0]?.key ?? "";
@@ -316,7 +345,7 @@ export function ReceivedBoxList({ boxes, pending, now }: { boxes: readonly Recei
               {/* 가장 최근 달만 카드, 지난 달은 촘촘한 줄(design-rules 23-3) */}
               <ul className={mi === 0 ? s.bcards : `lrows ${s.drows}`} aria-label={`${monthHeadKo(m.key, base)} 받은 선물 상자`}>
                 {m.boxes.map((b) => (
-                  <ReceivedRow key={b.boxId} box={b} index={n++} dense={mi > 0} now={now} onStatus={setStatus} />
+                  <ReceivedRow key={b.boxId} box={b} index={n++} dense={mi > 0} now={now} deliverySource={deliverySource} onStatus={setStatus} />
                 ))}
               </ul>
             </section>

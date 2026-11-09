@@ -1,3 +1,4 @@
+import { CARRIER_DELIVERY_STATES, type CarrierDeliveryState } from "@/shared/lib/delivery/delivery-stage";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { REPLY_PHRASES, type ReplyPhrase, type ReplyState } from "../model/reply";
@@ -29,6 +30,8 @@ export type ReceivedBox = {
   shippedOn: string;
   receivedOn: string | null;
   replyState: ReplyState;
+  /** 택배사 단계(delivery-status INV-DS4) — 웹훅이 준 집하·배송 중·배달 완료. 송장번호·이력은 없다 */
+  carrier: CarrierDeliveryState | null;
   reply: { phrase: ReplyPhrase; line: string | null; repliedOn: string } | null;
 };
 
@@ -47,6 +50,7 @@ const receivedRow = z
     phrase: phrase.nullable(),
     line: z.string().nullable(),
     replied_on: day.nullable(),
+    carrier: z.enum(CARRIER_DELIVERY_STATES).nullable(),
   })
   .strict();
 
@@ -65,6 +69,7 @@ export function parseReceivedBoxes(rows: unknown): ReceivedBox[] {
       shippedOn: r.shipped_on,
       receivedOn: r.received_on,
       replyState: r.reply_state,
+      carrier: r.carrier,
       reply: r.reply_state === "replied" && r.phrase && r.replied_on ? { phrase: r.phrase, line: r.line, repliedOn: r.replied_on } : null,
     }));
 }

@@ -131,7 +131,8 @@ describe("안내·법정 페이지 공통", () => {
     const boxSizes = (id: string) => pv.sections.find((s) => s.id === id)!.blocks.flatMap((b) => (b.kind === "rows" ? [b.rows.length] : []));
     expect(boxSizes("collect")).toEqual([3, 3, 3, 2, 2, 2]);
     // 2026-11-08 「선물함 신청 시 입력한 받을 주소」 줄을 더해 첫 상자가 7줄(팬 등록 주소 없앰 — address-protection INV-P17)
-    expect(boxSizes("retention")).toEqual([7, 6, 6]);
+    // 2026-11-09 「배송 조회 결과」(원본 90일, delivery-status INV-DS10) 줄을 더해 첫 상자가 8줄
+    expect(boxSizes("retention")).toEqual([8, 6, 6]);
     expect(boxSizes("outsource")).toEqual([4, 5]);
     // 줄 꼬리표는 쓰지 않는다 — 칩은 절만 거른다
     for (const s of pv.sections) for (const b of s.blocks) if (b.kind === "rows") for (const r of b.rows) expect(r.tags).toBeUndefined();
@@ -163,8 +164,10 @@ describe("안내·법정 페이지 공통", () => {
     expect(text(filled)).toContain("김보호");
     expect(text(filled)).toContain("택배사 — 예시택배");
     expect(openItems(privacyDoc()).some((t) => t.includes("택배사 (출시 전 기재)"))).toBe(true);
-    expect(text(filled)).toContain("택배 중개 플랫폼 — 예시중개");
-    expect(openItems(privacyDoc()).some((t) => t.includes("택배 중개 플랫폼 (출시 전 기재)"))).toBe(true);
+    // 택배 예약 업체는 이름 그대로(2026-11-09 결정 ⑩ — 「㈜로지아이 — 택배 예약·송장 출력」), 비면 자리표시
+    expect(text(filled)).toContain('{"title":"예시중개","fields":[["위탁 업무","택배 예약·송장 출력"]]}');
+    expect(openItems(privacyDoc({ ...SITE_INFO, vendors: { ...SITE_INFO.vendors, courierBroker: "" } })).some((t) => t.includes("택배 예약 업체 (출시 전 기재)"))).toBe(true);
+    expect(text(privacyDoc())).toContain('{"title":"㈜로지아이","fields":[["위탁 업무","택배 예약·송장 출력"]]}');
   });
 
   it("제3자 제공 절에 제주·도서 할증으로 크리에이터 주소 지역이 팬에게 드러나는 범위를 적는다(DECISIONS 2026-11-07, payment INV-M24)", () => {
