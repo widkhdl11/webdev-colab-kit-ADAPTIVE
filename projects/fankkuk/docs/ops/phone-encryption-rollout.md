@@ -52,7 +52,14 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 1. Vercel → Settings → Environment Variables 에 시험 사이트용 키 두 개를 **Sensitive** 로 넣는다(Production·Preview).
 2. 0028 을 원격 DB 에 적용한다(Supabase SQL 편집기에 파일 내용을 붙여 실행하거나 psql 로). 끝의 네 줄이 `t`.
 3. 바로 앱을 배포한다(push → Vercel).
-4. 변환 — 원격 주소·관리자 키·시험 사이트용 번호 키 네 줄만 담은 임시 파일(예: `.env.remote-backfill`)을 만들어:
+4. 변환 — 아래 네 줄만 담은 임시 파일(예: `.env.remote-backfill`)을 `projects/fankkuk` 폴더에 만든다. 이름은 정확히 이대로다(`NEXT_PUBLIC_SUPABASE_URL` 같은 앱 쪽 이름은 읽지 않는다).
+   ```
+   SUPABASE_URL=https://<프로젝트 ref>.supabase.co
+   SUPABASE_SECRET_KEY=<Supabase → Project Settings → API Keys 의 secret 키>
+   FANKKUK_PHONE_ENC_KEY=<Vercel 에 넣은 값과 같게>
+   FANKKUK_PHONE_HASH_KEY=<Vercel 에 넣은 값과 같게>
+   ```
+   메모장으로 만들고 UTF-8 로 저장한다. PowerShell 의 `echo … > 파일` 은 UTF-16 으로 저장돼 node 가 한 줄도 읽지 못한다. 그다음:
    ```
    node --env-file=.env.remote-backfill scripts/phone-encrypt-backfill.mjs --dry-run
    node --env-file=.env.remote-backfill scripts/phone-encrypt-backfill.mjs
