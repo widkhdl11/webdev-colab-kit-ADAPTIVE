@@ -10,7 +10,7 @@ export const boxStatusSchema = z.enum(BOX_STATUSES);
 export const BOX_STATUS_NAME: Record<BoxStatus, string> = {
   open: "신청 받는 중",
   closed: "마감",
-  awaiting_box: "상자 보내 주세요",
+  awaiting_box: "팬꾹으로 배송하기", // 2026-11-09 사용자 「상자보내주세요 -> 팬꾹으로 배송하기로 바꿔주고」
   arrived: "도착 · 실측 중",
   held: "확인 필요",
   invoiced: "결제 요청",
