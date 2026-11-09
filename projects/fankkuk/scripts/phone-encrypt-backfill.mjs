@@ -53,9 +53,13 @@ const duplicates = [];
 if (dryRun) {
   const rows = await pending(500);
   console.log(`남은 줄 ${rows.length}${rows.length === 500 ? " 이상" : ""} (쓰지 않음)`);
-  process.exit(0);
+} else {
+  await run();
 }
 
+// 끝낼 때 process.exit 를 부르지 않고 exitCode 만 정한다 — 열린 네트워크 연결을 강제로 끊으면
+// Windows 의 Node 가 결과를 다 찍은 뒤 「Assertion failed … async.c」로 죽는다(2026-11-09, Node 24)
+async function run() {
 for (;;) {
   const rows = await pending(100);
   const todo = rows.filter((r) => !duplicates.includes(r.account_id));
@@ -77,6 +81,8 @@ const left = (await pending(500)).length;
 console.log(`변환 ${counts.done} · 이미 바뀜 ${counts.skipped} · 겹침 ${counts.duplicate} · 남은 줄 ${left}`);
 if (duplicates.length > 0) {
   console.error(`같은 번호가 이미 다른 계정에 있다(변환 전 번호와 같은 번호로 새 가입) — 계정: ${duplicates.join(", ")}. 한 계정의 번호를 지운 뒤 다시 돌린다`);
-  process.exit(1);
+  process.exitCode = 1;
+  return;
 }
-process.exit(left === 0 ? 0 : 1);
+process.exitCode = left === 0 ? 0 : 1;
+}
