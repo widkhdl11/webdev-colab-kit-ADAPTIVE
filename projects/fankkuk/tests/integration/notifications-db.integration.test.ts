@@ -1163,16 +1163,33 @@ describe("일꾼 함수 고침 (INV-N5·N8) — 20261006000011", () => {
     expect(await ids()).toContain(k);
   });
 
-  it("INV-N3: 송장만 출력된 주문(출고 전)에는 출고 알림이 없다 — 출고돼야 생긴다", async () => {
+  it("INV-N3 (2026-11-09): 출고 알림은 송장 출력 때 생긴다 — 검수 완료에서는 없고, 출고 확정 때 더 생기지 않는다", async () => {
     const { g, staff, qrs } = await arrivedGift();
     await inspect(staff, qrs[0]!, FAN_PASS);
+    expect(orderStatus(g.orderId)).toBe("inspected");
+    expect(outboxRows(g.orderId).filter((r) => r.startsWith("shipped|"))).toEqual([]);
     const parcel = psql(`select id from public.office_parcels where qr_code = '${qrs[0]}'`);
     psql(`begin; set local session_replication_role = replica; update public.office_parcels set state = 'label_printed', printed_at = now(), outbound_waybill_no = '${waybill()}' where id = '${parcel}'; commit;`);
     psql(`select public.office_sync_order('${g.orderId}')`);
     expect(orderStatus(g.orderId)).toBe("label_printed");
-    expect(outboxRows(g.orderId).filter((r) => r.startsWith("shipped|"))).toEqual([]);
+    expect(outboxRows(g.orderId).filter((r) => r.startsWith("shipped|"))).toEqual(["shipped|1|byeolbit_fan|email|pending"]);
     psql(`begin; set local session_replication_role = replica; update public.office_parcels set state = 'shipped', shipped_at = now() where id = '${parcel}'; commit;`);
     psql(`select public.office_sync_order('${g.orderId}')`);
+    expect(orderStatus(g.orderId)).toBe("shipped");
+    expect(outboxRows(g.orderId).filter((r) => r.startsWith("shipped|"))).toEqual(["shipped|1|byeolbit_fan|email|pending"]);
+  });
+
+  it("INV-N3 (2026-11-09, 실패경로): 상자 둘 중 하나만 송장 출력하면 출고 알림이 없다 — 주문 상태가 송장 출력이 될 때 한 번", async () => {
+    const { g, staff, qrs } = await arrivedGift(2);
+    await inspect(staff, qrs[0]!, FAN_PASS);
+    await inspect(staff, qrs[1]!, FAN_PASS);
+    await approve(g);
+    expect(orderStatus(g.orderId)).toBe("inspected");
+    expect(finishPrint(qrs[0], waybill())).toBeNull();
+    expect(orderStatus(g.orderId)).toBe("inspected");
+    expect(outboxRows(g.orderId).filter((r) => r.startsWith("shipped|"))).toEqual([]);
+    expect(finishPrint(qrs[1], waybill())).toBeNull();
+    expect(orderStatus(g.orderId)).toBe("label_printed");
     expect(outboxRows(g.orderId).filter((r) => r.startsWith("shipped|"))).toEqual(["shipped|1|byeolbit_fan|email|pending"]);
   });
 

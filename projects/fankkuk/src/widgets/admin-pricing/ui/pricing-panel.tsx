@@ -1,6 +1,7 @@
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import type { BoxServiceFees } from "@/entities/payment/model/box-service-fees";
 import type { CarrierPricing } from "@/entities/payment/model/carrier-pricing";
+import type { MonthlyShipments } from "@/entities/payment/model/monthly-shipments";
 import { PRICE_FIELD_NAME, type PriceChange } from "@/entities/payment/model/price-change";
 import type { PriceTable } from "@/entities/payment/model/price-table";
 import { formatWon } from "@/features/admin-pricing-edit/model/price-input";
@@ -8,6 +9,7 @@ import { BoxServiceFeeForm } from "@/features/admin-pricing-edit/ui/box-service-
 import { CarrierPricingForm } from "@/features/admin-pricing-edit/ui/carrier-pricing-form";
 import { PricingForm } from "@/features/admin-pricing-edit/ui/pricing-form";
 import a from "@/shared/ui/admin.module.css";
+import { MonthlyShipmentsSection } from "./monthly-shipments-section";
 
 // 관리자 「요금표」 본문 (admin-console INV-K2·K4·K5·K15·K16, revgift-box INV-GB13~GB15, 시안 admin/pricing.html, ux pages/admin-pricing.md).
 // 대표만 고칠 수 있다 — 직원에게는 입력칸·버튼 없이 값만 보인다. 바꾼 기록은 고치거나 지울 수 없다(DB 가 막는다).
@@ -30,9 +32,9 @@ function InfoIcon() {
   );
 }
 
-type Props = { table: PriceTable; changes: readonly PriceChange[]; carrier: CarrierPricing; boxFees: BoxServiceFees; access: "staff" | "owner" };
+type Props = { table: PriceTable; changes: readonly PriceChange[]; carrier: CarrierPricing; boxFees: BoxServiceFees; shipments: MonthlyShipments; access: "staff" | "owner" };
 
-export function PricingPanel({ table, changes, carrier, boxFees, access }: Props) {
+export function PricingPanel({ table, changes, carrier, boxFees, shipments, access }: Props) {
   const owner = access === "owner";
   return (
     <>
@@ -67,6 +69,8 @@ export function PricingPanel({ table, changes, carrier, boxFees, access }: Props
         </p>
 
         <CarrierPricingForm pricing={carrier} table={table} editable={owner} />
+
+        <MonthlyShipmentsSection shipments={shipments} />
 
         <BoxServiceFeeForm fees={boxFees} editable={owner} />
 

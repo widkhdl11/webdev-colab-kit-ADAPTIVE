@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { boxServiceFeesFromRow, type BoxServiceFees } from "../model/box-service-fees";
 import { carrierPricingFromRow, type CarrierPricing } from "../model/carrier-pricing";
+import { monthlyShipmentsFromRow, type MonthlyShipments } from "../model/monthly-shipments";
 import { priceChangesFromRows, type PriceChange } from "../model/price-change";
 import { priceTableFromRows, type PriceTable } from "../model/price-table";
 
@@ -39,4 +40,13 @@ export async function readAdminBoxServiceFees(client: Pick<SupabaseClient, "rpc"
   const fees = boxServiceFeesFromRow(data);
   if (!fees) throw new Error("선물함 서비스료의 형식이 다르다");
   return fees;
+}
+
+/** 월 발송 건수와 경로 재검토 기준 (admin-console INV-K17). 운영자가 아니면 DB 가 null 을 준다 — 운영자 화면에서는 실패로 본다. */
+export async function readAdminMonthlyShipments(client: Pick<SupabaseClient, "rpc">): Promise<MonthlyShipments> {
+  const { data, error } = await client.rpc("admin_monthly_shipments");
+  if (error) throw new Error(`월 발송 건수를 읽지 못했다: ${error.code}`);
+  const shipments = monthlyShipmentsFromRow(data);
+  if (!shipments) throw new Error("월 발송 건수의 형식이 다르다");
+  return shipments;
 }

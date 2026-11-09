@@ -14,3 +14,12 @@ export const RECIPIENT_PHONE_ON_LABEL: RecipientPhoneMode = "real";
 export type InvoiceOutputMode = "courier_api" | "excel" | "manual";
 
 export const INVOICE_OUTPUT_MODE: InvoiceOutputMode = "manual";
+
+// 엑셀 반자동(INV-P21 ②)에서 로지아이 일괄 예약 양식의 받는 사람 전화 칸에 무엇을 넣는가(DECISIONS 2026-11-09 「로지아이 답 반영」 ②).
+// 로지아이는 안심번호를 발급하지 않으므로 택배사 안심번호(RECIPIENT_PHONE_ON_LABEL 의 courier_safe_number)는 이 방식에 없다.
+// - "real": 받는 사람의 실제 번호. 지금 값이다.
+// - "safe_number_api": 안심번호 업체(shared/api/safe-number)가 그 상자에 준 번호. 업체 연결 뒤에만 바꾼다 —
+//   연결 없이 바꾸면 엑셀 만들기 조립이 실패한다. 번호를 못 받은 상자는 실제 번호로 대신 넣지 않고 그 상자를 파일에서 뺀다.
+export type ExcelRecipientPhoneMode = "real" | "safe_number_api";
+
+export const EXCEL_RECIPIENT_PHONE: ExcelRecipientPhoneMode = "real";
