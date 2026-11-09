@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>선물함 그림 시안 v2 (3D 점토 PNG)</title>
+<!--
+피드백 원문: 「시안이 design-rules.md 3. 그림 절과 110행을 어긴다. 설명 그림은 3D 점토 PNG 만, 그림 안 글자·사람 얼굴 없음, 납작한 SVG 금지.」
+바꾼 것: v1 의 SVG 를 모두 버리고 public/img 의 icon-gift·icon-inspect·icon-truck PNG 만 쓴다. 이름·구간 값은 그림 밖 HTML 글자.
+색·바탕은 src/shared/ui/tokens.css 의 --primary-50 #e0f2fe · --tint #f0f8ff · --border #e5e7eb · --ink #1f2937 · --gray-600 #4b5563 · --r-panel 24 · --r-card 16.
+값 근거: DECISIONS 2026-11-07 요금 11-07 최종 + src/entities/revgift-box/model/box-tiers.ts
+-->
+<style>
+:root{--ink:#1f2937;--sub:#4b5563;--border:#e5e7eb;--tint:#f0f8ff;--primary-50:#e0f2fe;--r-panel:24px;--r-card:16px;--u:1px}
+*{box-sizing:border-box}body{margin:0;padding:32px 24px 96px;font-family:Pretendard,"Noto Sans KR",sans-serif;color:var(--ink);background:#fff}
+main{max-width:880px;margin:0 auto}h1{font-size:24px}h2{font-size:20px;margin:48px 0 8px}h3{font-size:16px;margin:24px 0 8px;color:var(--sub)}
+.phone{width:390px;max-width:100%;border:1px solid var(--border);border-radius:var(--r-panel);padding:16px;--u:.75px}
+.panel{background:var(--tint);border-radius:var(--r-panel);padding:32px 24px}
+.flow{display:flex;align-items:center;justify-content:center;gap:24px}
+.node{display:flex;flex-direction:column;align-items:center;gap:8px;width:160px;text-align:center;font-size:16px;font-weight:700}
+.node .chip{width:128px;height:128px;border-radius:var(--r-panel);background:var(--primary-50);display:grid;place-items:center}
+.node img{width:96px;height:96px}
+.arrow{width:40px;height:24px;flex:none;color:var(--ink)}
+.phone .panel{padding:24px 16px}.phone .flow{flex-direction:column;gap:12px}.phone .arrow{transform:rotate(90deg)}
+.tiers{display:grid;gap:16px}.t3{grid-template-columns:repeat(3,180px)}.t4{grid-template-columns:repeat(4,180px)}
+.phone .tiers{grid-template-columns:repeat(2,1fr);gap:12px}
+.tier{border:1px solid var(--border);border-radius:var(--r-card);background:#fff;padding:16px 8px;text-align:center}
+.tier .stage{height:calc(140 * var(--u) + 8px);display:flex;align-items:flex-end;justify-content:center}
+.tier img{display:block}
+.tier b{display:block;font-size:20px;margin-top:8px}.tier span{display:block;font-size:14px;color:var(--sub);margin-top:4px}
+.todo{height:240px;border:1px dashed #9ca3af;border-radius:var(--r-card);background:var(--tint);display:grid;place-items:center;font-size:16px;color:var(--sub);max-width:720px}
+.phone .todo{height:200px}
+a{color:var(--ink)}
+</style></head><body><main>
+<h1>선물함 그림 시안 v2</h1>
+<p><a href="compare.html">v1 과 나란히 보기</a> · <a href="../index.html">v1 (납작 SVG)</a></p>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="ar" viewBox="0 0 40 24"><path d="M2 12h34M26 4l10 8-10 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></symbol></svg>
+
+<h2>1. 1페이지 흐름</h2>
+<h3>PC</h3>
+<div class="panel"><div class="flow">
+ <div class="node"><div class="chip"><img src="../../../../../public/images/home/icon-gift.webp" alt=""></div>크리에이터</div>
+ <svg class="arrow" aria-hidden="true"><use href="#ar"/></svg>
+ <div class="node"><div class="chip"><img src="../../../../../public/images/home/icon-inspect.webp" alt=""></div>팬꾹</div>
+ <svg class="arrow" aria-hidden="true"><use href="#ar"/></svg>
+ <div class="node"><div class="chip"><img src="../../../../../public/images/home/icon-truck.webp" alt=""></div>팬</div>
+</div></div>
+<h3>390px</h3>
+<div class="phone"><div class="panel"><div class="flow">
+ <div class="node"><div class="chip"><img src="../../../../../public/images/home/icon-gift.webp" alt=""></div>크리에이터</div>
+ <svg class="arrow" aria-hidden="true"><use href="#ar"/></svg>
+ <div class="node"><div class="chip"><img src="../../../../../public/images/home/icon-inspect.webp" alt=""></div>팬꾹</div>
+ <svg class="arrow" aria-hidden="true"><use href="#ar"/></svg>
+ <div class="node"><div class="chip"><img src="../../../../../public/images/home/icon-truck.webp" alt=""></div>팬</div>
+</div></div></div>
+
+<h2>2. 3페이지 담는 법</h2>
+<h3>PC</h3><div class="panel" style="display:grid;place-items:center;max-width:720px"><img src="img/pack.png" alt="" style="width:240px;height:240px"></div>
+<h3>390px</h3><div class="phone"><div class="panel" style="display:grid;place-items:center;max-width:720px"><img src="img/pack.png" alt="" style="width:240px;height:240px"></div></div>
+
+<h2>3-1. 팬이 보내기 (3구간)</h2>
+<h3>PC</h3>
+<div class="tiers t3">
+ <div class="tier"><div class="stage"><img src="../../../../../public/images/home/gift-box-small.png" alt="" style="width:calc(100 * var(--u))"></div><b>소형</b><span>세 변 합 100cm 이하</span><span>5kg 이하</span></div>
+ <div class="tier"><div class="stage"><img src="../../../../../public/images/home/gift-box-medium.png" alt="" style="width:calc(120 * var(--u))"></div><b>중형</b><span>세 변 합 120cm 이하</span><span>10kg 이하</span></div>
+ <div class="tier"><div class="stage"><img src="../../../../../public/images/home/gift-box-large.png" alt="" style="width:calc(140 * var(--u))"></div><b>대형</b><span>세 변 합 140cm 이하</span><span>15kg 이하</span></div>
+</div>
+<h3>390px</h3>
+<div class="phone"><div class="tiers">
+ <div class="tier"><div class="stage"><img src="../../../../../public/images/home/gift-box-small.png" alt="" style="width:calc(100 * var(--u))"></div><b>소형</b><span>세 변 합 100cm 이하</span><span>5kg 이하</span></div>
+ <div class="tier"><div class="stage"><img src="../../../../../public/images/home/gift-box-medium.png" alt="" style="width:calc(120 * var(--u))"></div><b>중형</b><span>세 변 합 120cm 이하</span><span>10kg 이하</span></div>
+ <div class="tier"><div class="stage"><img src="../../../../../public/images/home/gift-box-large.png" alt="" style="width:calc(140 * var(--u))"></div><b>대형</b><span>세 변 합 140cm 이하</span><span>15kg 이하</span></div>
+</div></div>
+
+<h2>3-2. 크리에이터가 팬에게 보내기 (4구간)</h2>
+<h3>PC</h3>
+<div class="tiers t4">
+ <div class="tier"><div class="stage"><img src="../../../../../public/images/home/gift-box-small.png" alt="" style="width:calc(80 * var(--u))"></div><b>극소형</b><span>세 변 합 80cm 이하</span><span>2kg 이하</span></div>
+ <div class="tier"><div class="stage"><img src="../../../../../public/images/home/gift-box-small.png" alt="" style="width:calc(100 * var(--u))"></div><b>소형</b><span>세 변 합 100cm 이하</span><span>5kg 이하</span></div>
+ <div class="tier"><div class="stage"><img src="../../../../../public/images/home/gift-box-medium.png" alt="" style="width:calc(120 * var(--u))"></div><b>중형</b><span>세 변 합 120cm 이하</span><span>10kg 이하</span></div>
+ <div class="tier"><div class="stage"><img src="../../../../../public/images/home/gift-box-large.png" alt="" style="width:calc(140 * var(--u))"></div><b>대형</b><span>세 변 합 140cm 이하</span><span>15kg 이하</span></div>
+</div>
+<h3>390px</h3>
+<div class="phone"><div class="tiers">
+ <div class="tier"><div class="stage"><img src="../../../../../public/images/home/gift-box-small.png" alt="" style="width:calc(80 * var(--u))"></div><b>극소형</b><span>세 변 합 80cm 이하</span><span>2kg 이하</span></div>
+ <div class="tier"><div class="stage"><img src="../../../../../public/images/home/gift-box-small.png" alt="" style="width:calc(100 * var(--u))"></div><b>소형</b><span>세 변 합 100cm 이하</span><span>5kg 이하</span></div>
+ <div class="tier"><div class="stage"><img src="../../../../../public/images/home/gift-box-medium.png" alt="" style="width:calc(120 * var(--u))"></div><b>중형</b><span>세 변 합 120cm 이하</span><span>10kg 이하</span></div>
+ <div class="tier"><div class="stage"><img src="../../../../../public/images/home/gift-box-large.png" alt="" style="width:calc(140 * var(--u))"></div><b>대형</b><span>세 변 합 140cm 이하</span><span>15kg 이하</span></div>
+</div></div>
+</main></body></html>

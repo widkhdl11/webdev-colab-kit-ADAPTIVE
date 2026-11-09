@@ -120,6 +120,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .qtiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
 .qtile { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); min-width: 0; padding: var(--space-6) var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--white); text-align: center; }
 .qtile-text { min-width: 0; }
+.qtile-img { display: block; width: 88px; height: 88px; object-fit: contain; flex: none; }
 .qn { font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; }
 .qm { font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
 /* 상자 설명은 「세 변의 합 …이하·」 / 「무게 …이하」 두 줄 — 숫자 앞에서 우연히 끊기지 않게 줄마다 끊지 않는다 (시안 .qm span, 39절) */
@@ -183,6 +184,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
   .qtiles { grid-template-columns: minmax(0, 1fr); }
   .qtile { flex-direction: row; justify-content: space-between; padding: var(--space-4); text-align: left; }
   .qtile-text { flex: 1; }
+  .qtile-img { width: 56px; height: 56px; }
   .sum-row { grid-template-columns: minmax(0, 1fr) auto; gap: 0 var(--space-3); padding: var(--space-3) 0; }
   .sum-row dt { grid-column: 1 / -1; }
   .paybox { padding: var(--space-4); }
@@ -194,6 +196,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
   .qtiles { grid-template-columns: minmax(0, 1fr); }
   .qtile { flex-direction: row; justify-content: space-between; padding: var(--space-4); text-align: left; }
   .qtile-text { flex: 1; }
+  .qtile-img { width: 56px; height: 56px; }
   /* 설명 두 줄은 줄 안에서 끊지 않으므로, 칸이 그보다 좁으면(360 폭 등) −/+ 묶음이 글자 위에 겹치지 않고 아래 줄로 내려간다 */
   .qtile { flex-wrap: wrap; row-gap: var(--space-3); }
   .qtile-text { flex: 1 1 auto; min-width: auto; }

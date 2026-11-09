@@ -13,6 +13,8 @@
 /* 1페이지 그림 — 크리에이터 → 팬꾹 → 팬 */
 .flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-8); margin: 0; padding: var(--space-8); border-radius: var(--r-panel); background: var(--primary-50); list-style: none; counter-reset: none; }
 .flow > li { position: relative; display: grid; place-items: center; min-height: 88px; padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--r-card); background: var(--white); font-weight: var(--fw-bold); text-align: center; }
+.flowImg { display: block; width: 72px; height: 72px; margin: 0 auto var(--space-2); object-fit: contain; }
+.packImg { display: block; width: 160px; height: 160px; margin: var(--space-4) auto 0; object-fit: contain; }
 .flow > li + li::before { content: "→"; position: absolute; left: calc(-1 * var(--space-6)); top: 50%; transform: translateY(-50%); color: var(--sub); font-weight: var(--fw-bold); }
 .compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 .cmp { min-width: 0; margin: 0; padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }

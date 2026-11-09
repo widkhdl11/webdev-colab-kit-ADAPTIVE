@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>선물함 그림 시안 2026-11-09</title>
+<!-- 시안: 선물함 1페이지 흐름 / 3페이지 담는 법 / 구간 그림 두 벌. 값 근거: DECISIONS 2026-11-07 요금 11-07 최종 + src/entities/revgift-box/model/box-tiers.ts -->
+<style>
+:root{--ink:#1F2937;--sub:#4B5563;--line:#DFE3E8}
+*{box-sizing:border-box}body{margin:0;padding:32px 24px 96px;font-family:Pretendard,'Noto Sans KR',sans-serif;color:var(--ink);background:#fff}
+main{max-width:880px;margin:0 auto}h1{font-size:24px}h2{font-size:20px;margin:48px 0 8px}h3{font-size:16px;margin:24px 0 8px;color:var(--sub)}
+img{display:block;max-width:100%;height:auto}
+.pc{width:100%;max-width:720px}
+.phone{width:390px;max-width:100%;border:1px solid var(--line);border-radius:24px;padding:16px;background:#fff}
+.phone .m{width:100%}
+.tiers{display:grid;gap:16px}.t3{grid-template-columns:repeat(3,180px)}.t4{grid-template-columns:repeat(4,180px)}
+.phone .tiers{grid-template-columns:repeat(2,1fr);gap:12px}
+</style></head><body><main>
+<h1>선물함 그림 시안 (v1, 납작 SVG: 디자인 규칙 위반으로 폐기 후보)</h1><p><a href="v2/index.html">v2 (3D 점토 PNG)</a> · <a href="v2/compare.html">나란히 보기</a></p>
+
+<h2>1. 1페이지 흐름 그림</h2>
+<h3>PC</h3><img class="pc" src="flow-pc.svg" alt="크리에이터가 큰 상자 하나를 팬꾹으로 보내면 팬꾹이 팬마다 발송합니다">
+<h3>390px</h3><div class="phone"><img class="m" src="flow-mobile.svg" alt="크리에이터가 큰 상자 하나를 팬꾹으로 보내면 팬꾹이 팬마다 발송합니다"></div>
+
+<h2>2. 3페이지 담는 법 그림</h2>
+<h3>PC</h3><img class="pc" src="pack-pc.svg" alt="큰 상자에 닉네임을 적거나 번호 라벨을 붙인 선물을 담아 팬꾹으로 보냅니다">
+<h3>390px</h3><div class="phone"><img class="m" src="pack-mobile.svg" alt="큰 상자에 닉네임을 적거나 번호 라벨을 붙인 선물을 담아 팬꾹으로 보냅니다"></div>
+
+<h2>3-1. 팬이 보내기 (3구간)</h2>
+<h3>PC</h3><div class="tiers t3"><img src="tier-small.svg" alt="소형 세 변 합 100cm 이하 5kg 이하"><img src="tier-medium.svg" alt="중형 세 변 합 120cm 이하 10kg 이하"><img src="tier-large.svg" alt="대형 세 변 합 140cm 이하 15kg 이하"></div>
+<h3>390px</h3><div class="phone"><div class="tiers"><img src="tier-small.svg" alt="소형 100cm 5kg"><img src="tier-medium.svg" alt="중형 120cm 10kg"><img src="tier-large.svg" alt="대형 140cm 15kg"></div></div>
+
+<h2>3-2. 크리에이터가 팬에게 보내기 (4구간)</h2>
+<h3>PC</h3><div class="tiers t4"><img src="tier-xsmall.svg" alt="극소형 세 변 합 80cm 이하 2kg 이하"><img src="tier-small.svg" alt="소형 100cm 5kg"><img src="tier-medium.svg" alt="중형 120cm 10kg"><img src="tier-large.svg" alt="대형 140cm 15kg"></div>
+<h3>390px</h3><div class="phone"><div class="tiers"><img src="tier-xsmall.svg" alt="극소형 80cm 2kg"><img src="tier-small.svg" alt="소형 100cm 5kg"><img src="tier-medium.svg" alt="중형 120cm 10kg"><img src="tier-large.svg" alt="대형 140cm 15kg"></div></div>
+</main></body></html>

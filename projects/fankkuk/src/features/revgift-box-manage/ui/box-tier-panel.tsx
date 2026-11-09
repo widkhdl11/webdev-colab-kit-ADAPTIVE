@@ -45,6 +45,14 @@ export function BoxTierPanel({ box, price }: { box: MyBox; price: PriceTable }) 
         <ul className={s.fees}>
           {CHOSEN_TIERS.map((t) => (
             <li key={t} className={s.fee}>
+              <img
+                className={`${s.feeImg} ${s[`feeImg_${t}`] ?? ""}`}
+                src={t === "medium" ? "/images/home/gift-box-medium.png" : t === "large" ? "/images/home/gift-box-large.png" : "/images/home/gift-box-small.png"}
+                alt=""
+                aria-hidden="true"
+                width={96}
+                height={96}
+              />
               <span className={s.feeName}>{TIER_NAME[t]}</span>
               <span className={s.feeRule}>
                 세 변 합 {TIER_RULE[t].sizeCm}cm · {TIER_RULE[t].weightKg}kg

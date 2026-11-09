@@ -28,6 +28,7 @@ export function BoxSendSection({ box, cards }: { box: MyBox; cards: readonly Box
         <h2 className={s.cmpH} id="send-how">
           큰 상자에 닉네임을 적은(또는 라벨을 붙인) 선물을 담아 팬꾹으로 보내 주세요
         </h2>
+        <img className={s.packImg} src="/images/home/revgift-pack.png" alt="" aria-hidden="true" width={160} height={160} />
         <ul>
           <li>
             <Link href={`/creator/revgift-boxes/${box.id}/labels`}>번호 라벨 인쇄</Link> — 손글씨 닉네임도 됩니다.

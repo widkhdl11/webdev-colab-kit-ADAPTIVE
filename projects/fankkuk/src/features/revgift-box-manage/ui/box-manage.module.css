@@ -43,6 +43,8 @@
 /* 3부 — 상자 선택(2페이지)·보낸 상자 수·처리할 일 카드 */
 .fees { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-2); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
 .fee { display: grid; gap: var(--space-1); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--r-card); background: var(--white); box-shadow: var(--card-shadow); }
+.feeImg { display: block; width: 96px; height: 96px; margin: 0 auto var(--space-2); object-fit: contain; }
+.feeImg_xsmall { width: 72px; height: 72px; margin-top: var(--space-6); }
 .feeName { font-weight: var(--fw-btn); }
 .feeRule { color: var(--sub); font-size: var(--fs-small); }
 .feeKrw { font-variant-numeric: tabular-nums; font-weight: var(--fw-bold); }

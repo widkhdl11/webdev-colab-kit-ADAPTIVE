@@ -29,9 +29,18 @@ export function BoxNewPage() {
         {step === "explain" ? (
           <div className={s.stack}>
             <ol className={s.flow} aria-label="보내는 흐름">
-              <li>크리에이터</li>
-              <li>팬꾹</li>
-              <li>팬</li>
+              <li>
+                <img className={s.flowImg} src="/images/home/icon-gift.webp" alt="" aria-hidden="true" width={72} height={72} />
+                크리에이터
+              </li>
+              <li>
+                <img className={s.flowImg} src="/images/home/icon-inspect.webp" alt="" aria-hidden="true" width={72} height={72} />
+                팬꾹
+              </li>
+              <li>
+                <img className={s.flowImg} src="/images/home/icon-truck.webp" alt="" aria-hidden="true" width={72} height={72} />
+                팬
+              </li>
             </ol>
             <div className={s.compare}>
               <section className={s.cmp}>

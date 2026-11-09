@@ -860,6 +860,7 @@ tierCountText(summary.counts) || "없음";
               const guide = PARCEL_TIER_GUIDE[tier];
               return (
                 <div key={tier} className={`${f.qtile} ${summary.counts[tier] === 0 ? f.zero : ""}`}>
+                  <img className={f["qtile-img"]} src={`/images/home/gift-box-${tier}.png`} alt="" aria-hidden="true" width={88} height={88} />
                   <div className={f["qtile-text"]}>
                     <p className={f.qn}>{guide.name} 상자</p>
                     <p className={f.qm}>
