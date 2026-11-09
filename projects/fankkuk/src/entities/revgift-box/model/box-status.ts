@@ -53,3 +53,12 @@ export type FanBoxState = (typeof FAN_BOX_STATES)[number];
 /** 팬 화면을 보는 사람 — guest 로그인 안 함 · owner 선물함 주인 · not_fan 팬 계정 아님 · follower · not_follower */
 export const BOX_VIEWERS = ["guest", "owner", "not_fan", "follower", "not_follower"] as const;
 export type BoxViewer = (typeof BOX_VIEWERS)[number];
+
+/** 착불 반송의 까닭 — unpaid 명세서 결제 없음(INV-GB19) · all_missing 모든 신청이 도착 안 함, 명세서 없음(INV-GB11 · Q12) */
+export const RETURN_REASONS = ["unpaid", "all_missing"] as const;
+export type ReturnReason = (typeof RETURN_REASONS)[number];
+/** 사무실 반송 목록의 까닭 표기 */
+export const RETURN_REASON_NAME: Record<ReturnReason, string> = {
+  unpaid: "결제 없음",
+  all_missing: "모두 도착 안 함",
+};

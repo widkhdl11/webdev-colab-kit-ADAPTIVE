@@ -3,7 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { postOffice } from "@/entities/parcel/api/post-office-client";
 import { formatWaybill } from "@/entities/parcel/model/waybill-no";
-import { APPLICATION_STATUS_OFFICE_NAME, BOX_STATUS_NAME, type ApplicationStatus, type BoxStatus } from "@/entities/revgift-box/model/box-status";
+import {
+  APPLICATION_STATUS_OFFICE_NAME,
+  BOX_STATUS_NAME,
+  RETURN_REASON_NAME,
+  type ApplicationStatus,
+  type BoxStatus,
+  type ReturnReason,
+} from "@/entities/revgift-box/model/box-status";
 import { TIER_NAME, type InvoiceTier } from "@/entities/revgift-box/model/box-tiers";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
@@ -27,7 +34,7 @@ type Application = {
   tier: InvoiceTier | null;
 };
 type LabelFields = { recipientName: string; phone: string; zipCode: string; address1: string; address2: string };
-type ReturnBox = { id: string; name: string; creatorName: string; returningAt: string | null; cartonWaybills: string[] };
+type ReturnBox = { id: string; name: string; creatorName: string; returningAt: string | null; reason: ReturnReason; cartonWaybills: string[] };
 
 const post = (w: ShipGiftBoxWrite) => postOffice("/api/admin/work/gift-boxes/outbound", w);
 
@@ -197,6 +204,7 @@ function ReturnsCard() {
               <tr>
                 <th scope="col">선물함</th>
                 <th scope="col">크리에이터</th>
+                <th scope="col">까닭</th>
                 <th scope="col">원 송장번호</th>
                 <th scope="col">반송 시작</th>
                 <th scope="col">반송 송장번호</th>
@@ -207,6 +215,7 @@ function ReturnsCard() {
                 <tr key={b.id}>
                   <td>{b.name}</td>
                   <td>{b.creatorName}</td>
+                  <td>{RETURN_REASON_NAME[b.reason]}</td>
                   <td className={a.mono}>{b.cartonWaybills.map(formatWaybill).join(", ") || "—"}</td>
                   <td>{b.returningAt ? formatDateTime(b.returningAt) : "—"}</td>
                   <td>

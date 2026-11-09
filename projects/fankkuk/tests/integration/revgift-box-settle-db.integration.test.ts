@@ -55,8 +55,9 @@ function waybill(): string {
  */
 function invoicedBox(fanIds: string[], o: { hoursAgo?: number; regions?: string[]; envelopes?: unknown[]; early?: boolean } = {}): { boxId: string; apps: string[]; invoiceId: string; amount: number } {
   const boxId = psql(
-    `insert into public.revgift_boxes (owner_id, creator_id, name, capacity, is_public, status, inbound_code, carton_count, box_requested_at, first_received_at)
-     values ('${PROFILE.haru}', '${HARU_CREATOR}', '시험 선물함', 10, true, 'arrived', null, 1, now(), now()) returning id`,
+    // 실제 결제 요청 선물함처럼 6자리가 있고 명세서 때 무효가 됐다(Q7) — 6자리 없이 무효 시각만 적는 상태는 표가 거부한다
+    `insert into public.revgift_boxes (owner_id, creator_id, name, capacity, is_public, status, inbound_code, code_voided_at, carton_count, box_requested_at, first_received_at)
+     values ('${PROFILE.haru}', '${HARU_CREATOR}', '시험 선물함', 10, true, 'arrived', public.inbound_code_draw(), now(), 1, now(), now()) returning id`,
   ).split("\n")[0]!;
   const apps = fanIds.map((f, i) => {
     const id = psql(
@@ -87,6 +88,8 @@ const payStatuses = (boxId: string) => psql(`select coalesce(string_agg(status::
 const usage = () => Number(psql(`select coalesce((select used from public.early_creator_monthly_usage where creator_id = '${HARU_CREATOR}' and month = date_trunc('month', now() at time zone 'Asia/Seoul')::date), 0)`));
 const lineOf = (appId: string) => psql(`select id from public.revgift_box_invoice_lines where application_id = '${appId}'`);
 const labelOf = (appId: string) => psql(`select public.revgift_box_label_text(label_no) from public.revgift_box_applications where id = '${appId}'`);
+/** 결제 뒤 출고 전에 그 줄을 끝낸다 — 계정 정지(Q17, 아직 기능 없음 · BACKLOG)가 할 일과 같은 상태. 팬 탈퇴는 이제 신청을 끝내지 않는다(2026-11-09) */
+const endLine = (appId: string) => psql(`update public.revgift_box_applications set status_before_end = status, status = 'ended' where id = '${appId}'`);
 function tick(): Record<string, number> {
   return JSON.parse(psql("select public.revgift_box_tick()::text")) as Record<string, number>;
 }
@@ -311,6 +314,89 @@ describe("INV-GB19: 명세서 발행 + 168시간 미결제 → 착불 반송, �
   });
 });
 
+describe("INV-GB11 · Q12: 모든 신청이 도착 안 함 — 명세서 없이 착불 반송, 반송 확정이면 반송됨", () => {
+  const waitHours = () => Number(psql("select (public.revgift_box_rules() ->> 'carton_wait_hours')::integer"));
+  /** 첫 큰 상자가 hoursAgo 시간 전에 들어온 도착 · 실측 중 선물함 — 신청 statuses 마다 하나(담길 차례면 사본도) */
+  function arrivedBox(statuses: string[], hoursAgo: number): { boxId: string; apps: string[]; carton: string } {
+    const boxId = psql(
+      `insert into public.revgift_boxes (owner_id, creator_id, name, capacity, is_public, status, inbound_code, carton_count, box_requested_at, first_received_at)
+       values ('${PROFILE.haru}', '${HARU_CREATOR}', '시험 선물함', 10, true, 'arrived', public.inbound_code_draw(), 2, now() - interval '1 hour' * ${hoursAgo + 1}, now() - interval '1 hour' * ${hoursAgo}) returning id`,
+    ).split("\n")[0]!;
+    const fans = [PROFILE.byeolbit, PROFILE.gureumppang];
+    const apps = statuses.map((st, i) => {
+      const measured = st === "measured";
+      const id = psql(
+        `insert into public.revgift_box_applications (box_id, fan_id, status, chosen_tier${measured ? ", measured_tier, measured_size_cm, measured_weight_kg, measured_at" : ""})
+         values ('${boxId}', '${fans[i]}', '${st}', 'small'${measured ? ", 'small', 90, 3, now()" : ""}) returning id`,
+      ).split("\n")[0]!;
+      psql(`insert into pii.revgift_box_addresses (application_id, envelope, surcharge_region) values ('${id}', '${JSON.stringify(sampleEnvelope())}'::jsonb, 'none')`);
+      return id;
+    });
+    const carton = waybill();
+    psql(`insert into public.revgift_box_cartons (box_id, cod_fee_krw, waybill_no) values ('${boxId}', 3000, '${carton}')`);
+    return { boxId, apps, carton };
+  }
+  const invoices = (boxId: string) => psql(`select count(*) from public.revgift_box_invoices where box_id = '${boxId}'`);
+
+  it("Q12: 168시간이 지나 담길 차례 둘이 모두 도착 안 함 — 같은 예약 작업에서 착불 반송, 명세서 없음, 사본 삭제, 6자리 무효", () => {
+    const b = arrivedBox(["selected", "selected"], waitHours() + 0.05);
+    const t = tick();
+    expect(t.missing).toBe(2);
+    expect(boxStatus(b.boxId)).toBe("returning");
+    expect(invoices(b.boxId)).toBe("0");
+    expect(b.apps.map(appStatus)).toEqual(["missing", "missing"]);
+    expect(b.apps.map(hasCopy)).toEqual([false, false]);
+    expect(psql(`select returning_at is not null and code_voided_at is not null from public.revgift_boxes where id = '${b.boxId}'`)).toBe("t");
+  });
+
+  it("Q12 (실패경로): 하나라도 실측됐으면 반송하지 않고 그 신청으로 명세서를 만든다", () => {
+    const b = arrivedBox(["measured", "selected"], waitHours() + 0.05);
+    tick();
+    expect(boxStatus(b.boxId)).toBe("invoiced");
+    expect(invoices(b.boxId)).toBe("1");
+  });
+
+  it("Q12: 실측됐지만 사본이 없는 신청뿐(취소 뒤 다시 연 선물함에서 주소를 다시 넣지 않음, INV-GB23) — 그 신청은 끝나고 명세서 없이 착불 반송", () => {
+    const b = arrivedBox(["measured"], waitHours() + 0.05);
+    psql(`delete from pii.revgift_box_addresses where application_id = '${b.apps[0]}'`);
+    tick();
+    expect(appStatus(b.apps[0]!)).toBe("ended");
+    expect(boxStatus(b.boxId)).toBe("returning");
+    expect(invoices(b.boxId)).toBe("0");
+  });
+
+  it("Q12 (실패경로): 168시간 전이고 아직 올 큰 상자가 있으면 그대로 도착 · 실측 중", () => {
+    const b = arrivedBox(["selected"], waitHours() - 0.05);
+    tick();
+    expect(boxStatus(b.boxId)).toBe("arrived");
+  });
+
+  it("Q12 (실패경로): 확인 필요 선물이 남았으면 반송하지 않는다 — 풀린 뒤에 반송", () => {
+    const b = arrivedBox(["missing"], waitHours() + 0.05);
+    psql(`update public.revgift_boxes set status = 'held' where id = '${b.boxId}'`);
+    const hold = psql(`insert into public.revgift_box_holds (box_id, written_nickname, measured_tier, measured_size_cm, measured_weight_kg, recorded_by) values ('${b.boxId}', '시험', 'small', 90, 3, '${STAFF_ID}') returning id`).split("\n")[0]!;
+    tick();
+    expect(boxStatus(b.boxId)).toBe("held");
+    psql(`update public.revgift_box_holds set resolved_at = now() where id = '${hold}'`);
+    psql(`update public.revgift_boxes set status = 'arrived' where id = '${b.boxId}'`);
+    tick();
+    expect(boxStatus(b.boxId)).toBe("returning");
+  });
+
+  it("Q12 · Q16: 사무실 반송 목록에 까닭 「모두 도착 안 함」과 큰 상자 원 송장번호, 반송 송장번호를 넣으면 반송됨(끝). 미결제 반송은 까닭 「결제 없음」", async () => {
+    const b = arrivedBox(["selected"], waitHours() + 0.05);
+    tick();
+    const unpaid = invoicedBox([PROFILE.gureumppang]);
+    psql(`update public.revgift_boxes set status = 'returning', returning_at = now() where id = '${unpaid.boxId}'`);
+    const list = (await staff.rpc("office_gift_box_returns")).data as { id: string; reason: string; carton_waybills: string[] }[];
+    expect(list.find((x) => x.id === b.boxId)).toMatchObject({ reason: "all_missing", carton_waybills: [b.carton] });
+    expect(list.find((x) => x.id === unpaid.boxId)?.reason).toBe("unpaid");
+    expect((await staff.rpc("office_gift_box_confirm_return", { p_box_id: b.boxId, p_waybill: waybill() })).error).toBeNull();
+    expect(boxStatus(b.boxId)).toBe("returned");
+    expect(psql(`select ended_at is not null from public.revgift_boxes where id = '${b.boxId}'`)).toBe("t");
+  });
+});
+
 describe("INV-GB15 Q15: 300원 줄 건수 — 결제 없이 반송된 명세서·환불된 줄은 그 달 안이면 돌려준다", () => {
   const isEarly = () => psql(`select public.early_creator_active('${HARU_CREATOR}', now())`) === "t";
 
@@ -454,9 +540,9 @@ describe("INV-GB20: 출고 — 결제된 신청에서만, 대표만, 송장 한 
 });
 
 describe("INV-GB21: 줄 환불 — 금액은 서버가 줄 상태로, 결제 뒤 출고 전에 끝난 줄만, 한 번만, 합계는 결제 금액 이하", () => {
-  it("INV-GB21 S21 (동시): 결제 뒤 출고 전 팬 탈퇴로 끝난 별빛 줄 — 환불 잡기 둘이 동시에 와도 하나만, 금액은 그 줄의 택배비·서비스료·할증 합", async () => {
+  it("INV-GB21 S21 (동시): 결제 뒤 출고 전에 끝난 별빛 줄(계정 정지 — Q17) — 환불 잡기 둘이 동시에 와도 하나만, 금액은 그 줄의 택배비·서비스료·할증 합", async () => {
     const b = await paidBox([PROFILE.byeolbit, PROFILE.gureumppang], { regions: ["jeju", "none"] });
-    psql(`select public.revgift_box_end_for_withdrawal('${PROFILE.byeolbit}')`);
+    endLine(b.apps[0]!);
     expect(appStatus(b.apps[0]!)).toBe("ended");
     const line = lineOf(b.apps[0]!);
     const lineAmount = Number(psql(`select shipping_fee_krw + surcharge_krw + service_fee_krw from public.revgift_box_invoice_lines where id = '${line}'`));
@@ -472,7 +558,7 @@ describe("INV-GB21: 줄 환불 — 금액은 서버가 줄 상태로, 결제 뒤
 
   it("INV-GB21 · INV-GB1: 환불이 끝나면 300원 건수를 돌려주고, 남은 줄이 출고됐으면 선물함이 끝난다", async () => {
     const b = await paidBox([PROFILE.byeolbit, PROFILE.gureumppang]);
-    psql(`select public.revgift_box_end_for_withdrawal('${PROFILE.byeolbit}')`);
+    endLine(b.apps[0]!);
     const line = lineOf(b.apps[0]!);
     psql(`update public.revgift_box_applications set status = 'shipped', printed_at = now(), outbound_waybill_no = '${waybill()}', shipped_at = now() where id = '${b.apps[1]}'`);
     psql(`select public.revgift_box_try_done('${b.boxId}')`);
@@ -525,7 +611,7 @@ describe("INV-GB21: 줄 환불 — 금액은 서버가 줄 상태로, 결제 뒤
 
   it("INV-GB21: 관리자 결제·환불 내역에 줄마다 한 줄 — 환불 대상이면 「환불할 금액」이 줄 금액, 아니면 대상 아님", async () => {
     const b = await paidBox([PROFILE.byeolbit, PROFILE.gureumppang]);
-    psql(`select public.revgift_box_end_for_withdrawal('${PROFILE.byeolbit}')`);
+    endLine(b.apps[0]!);
     const rows = (await owner.rpc("admin_payment_rows")).data as { unit_kind: string; unit_id: string; refund_status: string; refund_krw: number | null; amount_krw: number }[];
     const mine = rows.filter((r) => r.unit_kind === "revgift_box" && [lineOf(b.apps[0]!), lineOf(b.apps[1]!)].includes(r.unit_id));
     expect(mine).toHaveLength(2);
@@ -535,7 +621,7 @@ describe("INV-GB21: 줄 환불 — 금액은 서버가 줄 상태로, 결제 뒤
   });
 });
 
-describe("탈퇴 (my-account INV-A15 · revgift-box Q17) — 크리에이터는 끝나지 않은 선물함이 있으면 막히고, 팬은 신청이 같은 처리에서 끝난다", () => {
+describe("탈퇴 (my-account INV-A15 · revgift-box Q17) — 크리에이터는 끝나지 않은 선물함이, 팬은 끝나지 않은 신청이 있으면 막힌다(2026-11-09)", () => {
   // 판정은 다른 진행 중 일이 없는 계정으로 본다 — 시드 계정(하루·별빛)은 시드 주문이 있어 늘 「진행 중」이다
   it("INV-A15 (실패경로): 끝나지 않은 선물함(결제 요청)을 가진 크리에이터 — 진행 중으로 본다. 끝나면(반송됨) 막지 않는다", () => {
     const ownerId = ghostProfile("creator");
@@ -553,7 +639,7 @@ describe("탈퇴 (my-account INV-A15 · revgift-box Q17) — 크리에이터는 
     const fan = ghostProfile();
     const b = await paidBox([fan]);
     psql(`update public.revgift_boxes set owner_id = '${ownerId}' where id = '${b.boxId}'`);
-    psql(`select public.revgift_box_end_for_withdrawal('${fan}')`);
+    endLine(b.apps[0]!);
     psql(`update public.revgift_boxes set status = 'done' where id = '${b.boxId}'`); // 끝 상태로 두고 환불 판정만 본다
     const open = () => psql(`select public.account_has_open_work('${ownerId}', null)`);
     expect(open()).toBe("t");
@@ -563,30 +649,79 @@ describe("탈퇴 (my-account INV-A15 · revgift-box Q17) — 크리에이터는 
     expect(open()).toBe("f");
   });
 
-  it("Q17: 팬 신청은 탈퇴를 막지 않는다 — 신청 받는 중이면 신청 취소와 같고(자리가 빈다), 결제된 줄은 끝나 환불 대상이 된다", async () => {
-    const fan = ghostProfile();
-    const openBox = psql(
-      `insert into public.revgift_boxes (owner_id, creator_id, name, capacity, is_public, status) values ('${PROFILE.haru}', '${HARU_CREATOR}', '시험 선물함', 1, true, 'open') returning id`,
+  // 2026-11-09 결정 — 선물함에 진행 중인 신청이 있는 팬은 탈퇴되지 않는다. 신청한 순간부터 그 선물이 끝날 때(출고 · 제외 · 신청 취소 · 선물함 반송 확정·끝·취소)까지
+  const openBoxOf = (capacity = 3) =>
+    psql(
+      `insert into public.revgift_boxes (owner_id, creator_id, name, capacity, is_public, status) values ('${PROFILE.haru}', '${HARU_CREATOR}', '시험 선물함', ${capacity}, true, 'open') returning id`,
     ).split("\n")[0]!;
-    const applied = psql(`insert into public.revgift_box_applications (box_id, fan_id, status) values ('${openBox}', '${fan}', 'applied') returning id`).split("\n")[0]!;
-    const b = await paidBox([fan, PROFILE.gureumppang]);
-    expect(psql(`select public.account_has_open_work('${fan}', null)`)).toBe("f");
-    expect(psql(`select public.revgift_box_end_for_withdrawal('${fan}')`)).toBe("2");
-    expect(appStatus(applied)).toBe("withdrawn");
-    expect(appStatus(b.apps[0]!)).toBe("ended");
-    expect(appStatus(b.apps[1]!)).toBe("paid");
-    expect(psql(`select public.revgift_box_line_refund_due('${lineOf(b.apps[0]!)}') is not null`)).toBe("t");
+  const applyTo = (boxId: string, fan: string, status = "applied") =>
+    psql(`insert into public.revgift_box_applications (box_id, fan_id, status) values ('${boxId}', '${fan}', '${status}') returning id`).split("\n")[0]!;
+  const fanOpen = (fan: string) => psql(`select public.account_has_open_work('${fan}', null)`);
+
+  it("INV-A15 (실패경로): 신청 받는 중인 선물함에 신청한 팬 — 진행 중. 팬이 신청을 취소하면 막지 않는다", () => {
+    const fan = ghostProfile();
+    const app = applyTo(openBoxOf(), fan);
+    expect(fanOpen(fan)).toBe("t");
+    psql(`update public.revgift_box_applications set status = 'withdrawn' where id = '${app}'`);
+    expect(fanOpen(fan)).toBe("f");
   });
 
-  it("Q17: 탈퇴 처리(withdraw_account)가 같은 처리에서 그 팬의 신청을 끝낸다 — 결제된 줄은 끝나고, 신청 칸은 가명으로 바뀐다", async () => {
+  it("INV-A15 (실패경로): 결제된 신청(출고 전) — 진행 중, 출고되면 막지 않는다", async () => {
+    const fan = ghostProfile();
+    const b = await paidBox([fan, PROFILE.gureumppang]);
+    expect(fanOpen(fan)).toBe("t");
+    psql(`update public.revgift_box_applications set status = 'shipped', printed_at = now(), outbound_waybill_no = '${waybill()}', shipped_at = now() where id = '${b.apps[0]}'`);
+    expect(fanOpen(fan)).toBe("f");
+  });
+
+  it("INV-A15 (실패경로): 담길 차례·실측됨·결제 요청 중인 신청 — 진행 중", () => {
+    const fan = ghostProfile();
+    invoicedBox([fan]);
+    expect(fanOpen(fan)).toBe("t");
+  });
+
+  it("INV-A15 (실패경로): 미결제 반송으로 끝난 신청이어도 선물함이 아직 착불 반송 중이면 진행 중, 반송 확정 뒤에는 막지 않는다", async () => {
+    const fan = ghostProfile();
+    const b = invoicedBox([fan]);
+    psql(`update public.revgift_box_applications set status_before_end = status, status = 'ended' where id = '${b.apps[0]}'`);
+    psql(`update public.revgift_boxes set status = 'returning', returning_at = now() where id = '${b.boxId}'`);
+    expect(fanOpen(fan)).toBe("t");
+    expect((await staff.rpc("office_gift_box_confirm_return", { p_box_id: b.boxId, p_waybill: waybill() })).error).toBeNull();
+    expect(fanOpen(fan)).toBe("f");
+  });
+
+  it("INV-A15: 제외된 신청은 막지 않는다 — 신청 받는 중 선물함이면 탈퇴 처리가 같은 처리에서 신청 취소로 닫는다(다시 넣지 못하게). 마감 뒤 제외는 그대로", async () => {
+    const acc = await createTestAccount({ tag: "gbx", phone: null });
+    const openApp = applyTo(openBoxOf(), acc.userId, "excluded");
+    const closedBox = openBoxOf();
+    const closedApp = applyTo(closedBox, acc.userId, "excluded");
+    psql(`update public.revgift_boxes set status = 'closed' where id = '${closedBox}'`);
+    expect(fanOpen(acc.userId)).toBe("f");
+    expect((await owner.rpc("withdraw_account", { p_login_id: acc.loginId })).error).toBeNull();
+    expect([appStatus(openApp), appStatus(closedApp)]).toEqual(["withdrawn", "excluded"]);
+  });
+
+  it("INV-A15 · Q17 (실패경로): 결제된 신청이 있는 팬의 탈퇴 처리 — 거부, 신청·사본·계정이 그대로다(줄이 끝나거나 환불 대상이 되지 않는다)", async () => {
     const acc = await createTestAccount({ tag: "gbw", phone: null });
     const b = await paidBox([acc.userId, PROFILE.gureumppang]);
     const r = await owner.rpc("withdraw_account", { p_login_id: acc.loginId });
+    expect(r.error?.code).toBe("55000");
+    expect(appStatus(b.apps[0]!)).toBe("paid");
+    expect(hasCopy(b.apps[0]!)).toBe(true);
+    expect(psql(`select fan_id from public.revgift_box_applications where id = '${b.apps[0]}'`)).toBe(acc.userId);
+    expect(psql(`select public.revgift_box_line_refund_due('${lineOf(b.apps[0]!)}') is null`)).toBe("t");
+    expect(psql(`select count(*) from public.profiles where id = '${acc.userId}'`)).toBe("1");
+  });
+
+  it("INV-A15: 선물이 출고된 뒤 탈퇴 처리 — 된다, 신청 칸은 가명으로 바뀌고 출고 상태는 그대로", async () => {
+    const acc = await createTestAccount({ tag: "gbs", phone: null });
+    const b = await paidBox([acc.userId, PROFILE.gureumppang]);
+    psql(`update public.revgift_box_applications set status = 'shipped', printed_at = now(), outbound_waybill_no = '${waybill()}', shipped_at = now() where id = '${b.apps[0]}'`);
+    const r = await owner.rpc("withdraw_account", { p_login_id: acc.loginId });
     expect(r.error).toBeNull();
     const pseudonym = (r.data as { pseudonym: string }).pseudonym;
-    expect(appStatus(b.apps[0]!)).toBe("ended");
+    expect(appStatus(b.apps[0]!)).toBe("shipped");
     expect(psql(`select fan_id from public.revgift_box_applications where id = '${b.apps[0]}'`)).toBe(pseudonym);
-    expect(hasCopy(b.apps[0]!)).toBe(false);
     expect(appStatus(b.apps[1]!)).toBe("paid");
   });
 

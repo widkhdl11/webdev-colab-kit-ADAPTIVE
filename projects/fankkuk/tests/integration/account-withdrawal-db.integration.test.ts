@@ -318,6 +318,34 @@ describe("탈퇴 처리 — 가명 처리 (my-account INV-A15)", () => {
     // 같이 쓰는 「탈퇴한 회원」 계정(자동 삭제가 쓰는 고정 ID) 말고는 가명 계정이 생기지 않았다
     expect(pseudonyms()).toBe(pseudonymsBefore);
   });
+
+  it("INV-A15 (S15e, 실패경로): 선물함에 진행 중인 신청(신청 받는 중·결제됨)이 있으면 거부되고 신청은 그대로다. 신청을 취소하거나 출고되면 탈퇴된다", async () => {
+    const fan = await createTestAccount({ tag: "wdgbox", phone: "01090006670" });
+    // 하루의 선물함 둘 — 신청 받는 중 하나, 결제된 신청이 있는 발송 중 하나
+    const haruBox = (status: string) =>
+      psql(
+        `insert into public.revgift_boxes (owner_id, creator_id, name, capacity, is_public, status)
+         select c.profile_id, c.id, '탈퇴 시험 선물함', 3, true, '${status}' from public.creators c where c.id = '00000000-0000-4000-b000-000000000001' returning id`,
+      ).split("\n")[0]!;
+    const openBox = haruBox("open");
+    const paidBox = haruBox("paid");
+    try {
+      const applied = psql(`insert into public.revgift_box_applications (box_id, fan_id, status) values ('${openBox}', '${fan.userId}', 'applied') returning id`).split("\n")[0]!;
+      const paid = psql(`insert into public.revgift_box_applications (box_id, fan_id, status) values ('${paidBox}', '${fan.userId}', 'paid') returning id`).split("\n")[0]!;
+      expect((await withdraw(fan.loginId)).error?.code).toBe("55000");
+      psql(`update public.revgift_box_applications set status = 'withdrawn' where id = '${applied}'`); // 팬이 신청 취소
+      expect((await withdraw(fan.loginId)).error?.code).toBe("55000"); // 결제된 신청이 아직 출고 전
+      expect([profileRows(fan.userId), psql(`select status || ':' || fan_id from public.revgift_box_applications where id = '${paid}'`)]).toEqual([1, `paid:${fan.userId}`]);
+      psql(`update public.revgift_box_applications set status = 'shipped', printed_at = now(), outbound_waybill_no = '7710000000999', shipped_at = now() where id = '${paid}'`);
+      const r = await withdraw(fan.loginId);
+      expect(r.error).toBeNull();
+      const pseudonym = (r.data as { pseudonym: string }).pseudonym;
+      expect(psql(`select status || ':' || fan_id from public.revgift_box_applications where id = '${paid}'`)).toBe(`shipped:${pseudonym}`);
+      expect(profileRows(fan.userId)).toBe(0);
+    } finally {
+      psql(`delete from public.revgift_boxes where id in ('${openBox}', '${paidBox}')`);
+    }
+  });
 });
 
 describe("탈퇴한 크리에이터 (approval-signature INV-S14·S15)", () => {
@@ -1010,7 +1038,7 @@ const MOVED_PROFILE_COLUMNS = [
   "prohibited_item_changes.changed_by",
   "refunds.manual_by",
   "refunds.requested_by",
-  // 선물함 신청한 팬·선물함을 만든 크리에이터(revgift-box). 탈퇴 때 팬의 신청은 같은 처리에서 끝나고(revgift_box_end_for_withdrawal, Q17),
+  // 선물함 신청한 팬·선물함을 만든 크리에이터(revgift-box). 팬은 끝나지 않은 신청이 있으면 탈퇴되지 않고(2026-11-09, my-account INV-A15),
   // 크리에이터는 끝나지 않은 선물함이 있으면 탈퇴되지 않는다(account_has_open_work). 자동 삭제가 끝난 지 5년 된 선물함의 두 칸을 같이 쓰는 표시로 바꾼다
   "revgift_box_applications.fan_id",
   // 선물함 확인 필요 선물을 기록한 운영자(revgift-box INV-GB12) — 운영자가 누른 기록이라 탈퇴 회원을 가리키지 않는다

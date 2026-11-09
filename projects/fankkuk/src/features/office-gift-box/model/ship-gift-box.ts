@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { AccessDenyReason } from "@/entities/address/model/access-log";
 import { parseWaybillInput } from "@/entities/parcel/model/waybill-no";
-import { applicationStatusSchema, boxStatusSchema } from "@/entities/revgift-box/model/box-status";
+import { applicationStatusSchema, boxStatusSchema, RETURN_REASONS } from "@/entities/revgift-box/model/box-status";
 import { INVOICE_TIERS } from "@/entities/revgift-box/model/box-tiers";
 import { readAdminAccess } from "@/entities/session/api/read-admin-access";
 import { MESSAGE_FORBIDDEN, MESSAGE_NOT_FOUND } from "@/shared/lib/http/pg-error-reply";
@@ -85,7 +85,15 @@ const lookupReply = z
   .strict();
 const returnsReply = z.array(
   z
-    .object({ id: z.string().uuid(), name: z.string(), creator_name: z.string(), returning_at: z.string().nullable(), carton_waybills: z.array(z.string()) })
+    .object({
+      id: z.string().uuid(),
+      name: z.string(),
+      creator_name: z.string(),
+      returning_at: z.string().nullable(),
+      // unpaid 명세서 결제 없음(INV-GB19) · all_missing 모든 신청이 도착 안 함, 명세서 없음(INV-GB11 · Q12)
+      reason: z.enum(RETURN_REASONS),
+      carton_waybills: z.array(z.string()),
+    })
     .strict(),
 );
 
@@ -179,7 +187,7 @@ export async function shipGiftBox(deps: ShipGiftBoxDeps, body: unknown): Promise
       if (!r.success) return { status: 500, body: { message: FAILED } };
       return {
         status: 200,
-        body: { boxes: r.data.map((b) => ({ id: b.id, name: b.name, creatorName: b.creator_name, returningAt: b.returning_at, cartonWaybills: b.carton_waybills })) },
+        body: { boxes: r.data.map((b) => ({ id: b.id, name: b.name, creatorName: b.creator_name, returningAt: b.returning_at, reason: b.reason, cartonWaybills: b.carton_waybills })) },
       };
     }
 
