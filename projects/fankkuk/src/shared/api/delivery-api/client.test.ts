@@ -4,7 +4,7 @@ import { createDeliveryApi, DeliveryApiError } from "./client";
 
 // delivery-status INV-DS12(키가 없으면 조용히 꺼짐) · INV-DS13(넘기는 것은 택배사 코드·송장번호·내부 번호뿐, 키는 머리에만).
 
-const cred = { apiKey: "key_live_x", apiSecret: "sec_live_y" };
+const cred = { apiKey: "k_live", apiSecret: "s_live" };
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
 
 describe("배송 조회 서비스 설정 (INV-DS12)", () => {
@@ -27,23 +27,23 @@ describe("createDeliveryApi (INV-DS13)", () => {
     );
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, { headers: Record<string, string>; body: string }];
     expect(url).toBe("https://api.deliveryapi.co.kr/v1/webhooks/register");
-    expect(init.headers.Authorization).toBe("Bearer key_live_x:sec_live_y");
+    expect(init.headers.Authorization).toBe("Bearer k_live:s_live");
     expect(JSON.parse(init.body)).toEqual({
       items: [{ courierCode: "cj", trackingNumber: "123456789012", clientId: "6f1d2c1e-0000-4000-8000-000000000001" }],
       recurring: true,
       endpointId: "ep_1",
     });
-    expect(init.body).not.toContain("key_live_x");
+    expect(init.body).not.toContain("k_live");
   });
 
   it("INV-DS13 (실패경로): 실패는 정해진 코드로만 — 응답의 오류 문장·키가 예외 메시지에 없다", async () => {
-    const api = createDeliveryApi(cred, async () => ({ ok: false, status: 429, json: async () => ({ isSuccess: false, errorCode: "RATE_LIMITED", error: "key_live_x 한도 초과" }) }));
+    const api = createDeliveryApi(cred, async () => ({ ok: false, status: 429, json: async () => ({ isSuccess: false, errorCode: "RATE_LIMITED", error: "k_live 한도 초과" }) }));
     const e = await api.trace([{ courierCode: "cj", trackingNumber: "123456789012", clientId: "a" }]).catch((x: unknown) => x);
     expect(e).toBeInstanceOf(DeliveryApiError);
     expect((e as DeliveryApiError).code).toBe("RATE_LIMITED");
-    expect((e as Error).message).not.toContain("key_live_x");
+    expect((e as Error).message).not.toContain("k_live");
     const net = await createDeliveryApi(cred, async () => {
-      throw new Error("ECONNRESET key_live_x");
+      throw new Error("ECONNRESET k_live");
     })
       .subscribe([{ courierCode: "cj", trackingNumber: "123456789012", clientId: "a" }], "ep")
       .catch((x: unknown) => x);

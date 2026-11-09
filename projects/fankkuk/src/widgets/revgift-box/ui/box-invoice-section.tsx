@@ -1,7 +1,7 @@
 import type { BoxInvoice, LineProgress } from "@/entities/revgift-box/api/box-reads";
 import type { BoxStatus } from "@/entities/revgift-box/model/box-status";
 import { REGION_NAME, TIER_NAME } from "@/entities/revgift-box/model/box-tiers";
-import { BoxPayButton } from "@/features/revgift-box-pay/ui/box-pay-button";
+import { BoxPayButton } from "./box-pay-button";
 import { DELIVERY_STAGE_LABEL } from "@/shared/config/delivery-status";
 import type { DeliveryStatusSource } from "@/shared/config/delivery-status";
 import { deliveryStage, isEstimatedStage } from "@/shared/lib/delivery/delivery-stage";
