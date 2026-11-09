@@ -132,8 +132,13 @@ describe("INV-J6: 실제 라우트 — 사이드바 숫자·홈 「처리할 일
     const r = await draw(CreatorHomeRoute());
     expect(reads.calls).toBe(1);
     expect(r.badge).toBe("3");
-    const row = [...host.querySelectorAll("main a")].find((a) => a.textContent?.startsWith("지금 할 일"));
+    // 바로가기 칸 — 첫 화면 인사의 「지금 할 일 3건 확인하기」 링크(design-rules 2026-11-06 creator-welcome)와 따로 찾는다
+    const row = [...host.querySelectorAll('ul[aria-label="내 바로가기"] a')].find((a) => a.textContent?.startsWith("지금 할 일"));
     expect(row?.textContent).toBe("지금 할 일3건");
+    // 첫 화면 인사의 링크도 같은 한 번의 읽기에서 같은 건수
+    const hero = [...host.querySelectorAll("main a")].find((a) => a.textContent?.includes("확인하기"));
+    expect(hero?.textContent).toContain("지금 할 일 3건");
+    expect(hero?.getAttribute("href")).toBe("/creator/actions");
   });
 
   it("INV-J6 S6: 처리할 일 — 한 번 읽고, 사이드바 3 · 제목 「3건」 · 줄 3", async () => {
@@ -147,7 +152,7 @@ describe("INV-J6: 실제 라우트 — 사이드바 숫자·홈 「처리할 일
   it("INV-J6 S6 (실패경로): 0건이면 사이드바 숫자가 없고 홈은 「0건」, 처리할 일은 빈 상태", async () => {
     reads.rows = [];
     expect((await draw(CreatorHomeRoute())).badge).toBeNull();
-    expect([...host.querySelectorAll("main a")].find((a) => a.textContent?.startsWith("지금 할 일"))?.textContent).toBe("지금 할 일0건");
+    expect([...host.querySelectorAll('ul[aria-label="내 바로가기"] a')].find((a) => a.textContent?.startsWith("지금 할 일"))?.textContent).toBe("지금 할 일0건");
     reads.calls = 0;
     expect((await draw(CreatorActionsRoute({ searchParams: Promise.resolve({}) }))).badge).toBeNull();
     expect(host.textContent).toContain("현재 처리할 일이 없습니다");
@@ -200,24 +205,15 @@ describe("INV-J6·J11: 선물 현황 라우트 — 「처리할 일」 버튼은
     expect(tile?.textContent).toBe("선물 현황");
   });
 
-  it("INV-E5: 공개 아이디가 있으면 실제 홈의 내 페이지 버튼은 그 주소로 간다", async () => {
+  it("크리에이터 홈 첫 화면에는 「내 페이지 보기」·「프로필 수정」 버튼이 없다 — 공개 아이디가 있어도(design-rules 2026-11-06 creator-welcome)", async () => {
     vi.mocked(readMyCreatorLink).mockResolvedValueOnce({ handle: "haru", lockedDays: 0, photoPath: null });
     vi.mocked(resolveCreatorHandle).mockResolvedValueOnce({ creatorId: "00000000-0000-4000-b000-000000000001", handle: "haru" });
     await draw(CreatorHomeRoute());
-    expect([...host.querySelectorAll("main a")].find((a) => a.textContent === "내 페이지 보기")?.getAttribute("href")).toBe("/haru");
-  });
-
-  it("INV-E5: 아이디가 없어도 공개 카드가 있으면 기존 ID 주소로 가고, 공개 카드가 없으면 숨긴다", async () => {
-    const id = "00000000-0000-4000-b000-000000000001";
-    vi.mocked(readOwnCreatorId).mockResolvedValueOnce(id);
-    vi.mocked(readCreatorCards).mockResolvedValueOnce([{ id, name: "하루", platform: "치지직", tags: [], channelTitle: "하루", intro: "", alias: "", approvalMinutes: null, faceTone: "var(--face-1)", following: false, handle: null, photoPath: null }]);
-    await draw(CreatorHomeRoute());
-    expect([...host.querySelectorAll("main a")].find((a) => a.textContent === "내 페이지 보기")?.getAttribute("href")).toBe(`/creators/${id}`);
-    expect(readCreatorCards).toHaveBeenCalledWith(expect.anything(), { onlyId: id, signedIn: false });
-    vi.mocked(readOwnCreatorId).mockResolvedValueOnce(id);
-    vi.mocked(readCreatorCards).mockResolvedValueOnce([]);
-    await draw(CreatorHomeRoute());
-    expect([...host.querySelectorAll("main a")].find((a) => a.textContent === "내 페이지 보기")).toBeUndefined();
+    const labels = [...host.querySelectorAll("main a")].map((a) => a.textContent);
+    expect(labels).not.toContain("내 페이지 보기");
+    expect(labels).not.toContain("프로필 수정");
+    // 첫 화면은 그려졌다(빈 화면이라 없는 것이 아니다)
+    expect(host.querySelector("main h1")?.textContent).toContain("반가워요");
   });
 });
 
