@@ -124,3 +124,11 @@ body:has(.sidebar) { --sb-cur: var(--sidebar-w); padding-left: var(--sb-cur); tr
   .sb-scrim { position: fixed; inset: 0; z-index: 44; display: block; background: var(--gray-900); opacity: 0; visibility: hidden; transition: opacity var(--dur-w) ease; }
   html[data-open="1"] .sb-scrim { opacity: 0.4; visibility: visible; }
 }
+
+/* 손가락으로 누르는 기기(태블릿 가로 등 769 이상에서도 사이드바가 보임)는 누르는 칸 44 —
+   마우스·터치패드는 36 그대로(디자인 프롬프트 8-12 예외, 2026-11-09 사용자 「그렇게 하자」).
+   계정 칸은 --prof-h − 16 이라 60 으로 44 를 만든다. 로고 옆 접기 버튼(.sb-mark)도 44. */
+@media (pointer: coarse) {
+  .sidebar { --nav-item-h: 44px; --prof-h: 60px; }
+  .sb-mark { top: calc((var(--topbar-h) - 44px) / 2); left: calc((var(--rail-w) - 44px) / 2); width: 44px; height: 44px; }
+}
