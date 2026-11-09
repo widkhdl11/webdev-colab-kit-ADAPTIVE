@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>운영자 요금표 — 올린 요금은 30일 뒤 적용 시안 (2026-11-09)</title>
+<!--
+시안: /admin/pricing 「2026-11-09 바꿀 것」(admin-console INV-K18). 상태 3개: 적용 대기 칸(#pending) · 저장 직후 올림+내림(#saved-mix) · 저장 직후 올림만(#saved-raise).
+구성은 지금 요금표 화면(src/widgets/admin-pricing) 중 이번에 바뀌는 구역: 팬에게 보내기 택배비 · 선물함 서비스료 · 요금 바꾼 기록. 요금표(구간별)·경로표·월 발송 건수는 바뀌지 않아 뺐다.
+값: tokens.css = src/shared/ui/tokens.css 복사본. 운영자 화면은 업무 화면 예외(design-rules 8절: 본문 14~15, 사이드바 232). 입력칸·버튼 높이는 프롬프트 8-12 에 따라 44(지금 구현은 36)로 그렸다 — (가정).
+적용 시각은 서버가 정한다(저장 + 30일). 날짜 고르는 칸 없음.
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" crossorigin="anonymous">
+<link rel="stylesheet" href="tokens.css">
+<style>
+@font-face { font-family: "Tmoney Round Wind"; src: url("fonts/TmoneyRoundWindExtraBold.woff2") format("woff2"); font-weight: 800; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 1024px; background: var(--background); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.5; word-break: keep-all; }
+h1, h2, p, ul, dl { margin: 0; } ul { padding: 0; list-style: none; }
+h1 { font-family: var(--font-round); font-weight: var(--fw-title); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 16px; background: var(--gray-900); color: var(--white); font-size: 14px; }
+.bar button { min-height: 44px; padding: 0 12px; border: 1px solid var(--gray-300); border-radius: var(--r-btn); background: transparent; color: var(--white); font: inherit; cursor: pointer; }
+.bar button[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-brand); font-weight: 700; }
+.frame { position: relative; transform: translateZ(0); min-height: 900px; padding-left: 232px; }
+.side { position: absolute; inset: 0 auto 0 0; width: 232px; background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
+.logo { display: flex; align-items: center; gap: 8px; height: 56px; padding: 0 20px; font-family: var(--font-logo); font-size: 20px; font-weight: 700; }
+.logo small { font-size: 13px; font-weight: 700; color: var(--sub); }
+.nav { padding: 4px 12px 24px; }
+.sg { margin-top: 16px; }
+.sg h2 { padding: 0 8px 4px; font-size: 13px; font-weight: 700; color: var(--sub); letter-spacing: .2px; }
+.nav a { display: flex; align-items: center; min-height: 36px; padding: 0 10px; border-radius: var(--r-btn); text-decoration: none; font-weight: 600; font-size: 14px; color: var(--ink); }
+.nav a:hover { background: var(--surface-hover); }
+.nav a[aria-current="page"] { background: var(--white); color: var(--brand-ink); font-weight: 800; box-shadow: var(--hair); }
+.top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 16px; height: 56px; padding: 0 24px; background: var(--white); box-shadow: 0 1px 0 var(--divider); }
+.crumb { font-size: 14px; color: var(--sub); } .crumb strong { color: var(--ink); }
+.who { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
+.face { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--avatar-soft); color: var(--brand-ink); font-size: 14px; }
+.badge { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 9999px; background: var(--brand); color: var(--on-brand); font-size: 14px; font-weight: 700; }
+.content { padding: 24px 24px 64px; max-width: 1560px; display: grid; gap: 24px; }
+.ph h1 { font-size: 26px; letter-spacing: -.6px; line-height: 1.3; }
+.ph p { margin-top: 2px; color: var(--sub); font-size: 14px; }
+.note { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; border-radius: var(--r-btn); background: var(--brand-soft); color: var(--brand-ink); font-size: 14px; }
+.sh { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.sh h2 { font-size: 17px; font-weight: 800; letter-spacing: -.3px; line-height: 1.5; }
+.sh span { font-size: 14px; color: var(--sub); }
+.tw { overflow-x: auto; border-radius: var(--r-card); box-shadow: var(--hair); background: var(--white); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { padding: 10px 12px; background: var(--surface); color: var(--sub); font-size: 14px; font-weight: 700; text-align: left; white-space: nowrap; }
+td { padding: 8px 12px; border-top: 1px solid var(--divider); vertical-align: top; }
+th.num, td.num { text-align: right; }
+.num { font-variant-numeric: tabular-nums; } .nowrap { white-space: nowrap; } .mono { font-variant-numeric: tabular-nums; }
+.input { width: 116px; min-height: 44px; padding: 0 10px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font: inherit; font-size: 14px; text-align: right; }
+.input:focus { outline: 2px solid transparent; box-shadow: inset 0 0 0 var(--field-ring) var(--field-focus); }
+.pend { display: flex; align-items: flex-start; justify-content: flex-end; gap: 4px; margin-top: 4px; max-width: 260px; margin-left: auto; color: var(--warn-ink); font-size: 14px; font-weight: 600; line-height: 1.4; text-align: right; }
+.pend svg { flex: none; width: 16px; height: 16px; margin-top: 2px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.msg { font-size: 14px; font-weight: 700; color: var(--brand-ink); min-height: 24px; }
+.btns { display: flex; gap: 8px; margin-left: auto; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; border: 0; border-radius: var(--r-btn); background: var(--brand); color: var(--on-brand); font: inherit; font-weight: 700; font-size: 15px; cursor: pointer; }
+.btn:hover { background: var(--brand-hover); }
+.btn-line { background: var(--white); box-shadow: var(--field); }
+.btn[aria-disabled="true"] { background: var(--surface); color: var(--sub); box-shadow: none; cursor: not-allowed; }
+.tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; font-size: 14px; font-weight: 700; line-height: 1.4; }
+.tag-w { background: var(--warn-soft); color: var(--warn-ink); }
+[hidden] { display: none !important; }
+</style></head><body>
+<nav class="bar" aria-label="시안 상태 전환 (실제 화면 아님)"><b>상태</b>
+<button type="button" data-st="pending">적용 대기 칸</button>
+<button type="button" data-st="saved-mix">저장 직후 · 올림+내림</button>
+<button type="button" data-st="saved-raise">저장 직후 · 올림만</button></nav>
+<div class="frame" id="frame" data-state="pending">
+<aside class="side" aria-label="운영자 메뉴"><div class="logo"><img src="img/logo-mark.png" alt="" width="28" height="28" style="border-radius:22%">팬꾹 <small>운영</small></div><nav class="nav" aria-label="화면 이동"><div class="sg"><h2 id="g0">작업</h2><ul aria-labelledby="g0"><li><a href="#">대시보드</a></li><li><a href="#">입고</a></li><li><a href="#">검수</a></li><li><a href="#">출고</a></li><li><a href="#">선물함 입고·실측</a></li><li><a href="#">선물함 출고·반송</a></li><li><a href="#">들어온 상자</a></li><li><a href="#">보류 상자</a></li><li><a href="#">자동 처리 현황</a></li><li><a href="#">역조공 처리</a></li></ul></div><div class="sg"><h2 id="g1">돈</h2><ul aria-labelledby="g1"><li><a href="#">결제·환불</a></li><li><a href="#" aria-current="page">요금표</a></li></ul></div><div class="sg"><h2 id="g2">고객</h2><ul aria-labelledby="g2"><li><a href="#">1:1 문의</a></li><li><a href="#">공지</a></li><li><a href="#">크리에이터 확인</a></li></ul></div><div class="sg"><h2 id="g3">관리</h2><ul aria-labelledby="g3"><li><a href="#">광고 배너</a></li><li><a href="#">보낼 수 없는 물품</a></li><li><a href="#">주소 열람 기록</a></li><li><a href="#">측정</a></li></ul></div></nav></aside>
+<header class="top"><p class="crumb">돈 / <strong>요금표</strong></p><p class="who"><span class="face" aria-hidden="true">정</span>정재원<span class="badge">대표</span></p></header>
+<main id="main" class="content">
+<div class="ph"><h1>요금표</h1><p>구간별로 받는 값과 원가를 정해요. 요금은 대표만 고칠 수 있어요.</p></div>
+<div class="note"><p><b>새 주문부터 적용돼요.</b> 이미 등록했거나 결제한 주문은 등록할 때의 요금 그대로예요.</p></div>
+
+<section aria-labelledby="h-send"><div class="sh"><h2 id="h-send">팬에게 보내기 택배비</h2><span>역조공 결제에는 아직 쓰지 않아요</span></div>
+<form onsubmit="return false"><div class="tw"><table><caption class="sr-only">팬에게 보내기 구간별 택배비</caption><thead><tr><th scope="col" class="num">극소형</th><th scope="col" class="num">소형</th><th scope="col" class="num">중형</th><th scope="col" class="num">대형</th></tr></thead><tbody><tr><td class="num"><label class="sr-only" for="send-0">팬에게 보내기 극소형 택배비</label><input id="send-0" class="input num" inputmode="numeric" autocomplete="off" value="3,000"></td><td class="num"><label class="sr-only" for="send-1">팬에게 보내기 소형 택배비</label><input id="send-1" class="input num" inputmode="numeric" autocomplete="off" value="3,500"></td><td class="num"><label class="sr-only" for="send-2">팬에게 보내기 중형 택배비</label><input id="send-2" class="input num" inputmode="numeric" autocomplete="off" value="4,400"><p class="pend" data-s="pending saved-mix saved-raise"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>4,700원 · 12월 9일 (수) 오후 3:20부터</span></p></td><td class="num"><label class="sr-only" for="send-3">팬에게 보내기 대형 택배비</label><input id="send-3" class="input num" inputmode="numeric" autocomplete="off" value="5,500" data-s="pending saved-raise"><input id="send-3b" class="input num" inputmode="numeric" autocomplete="off" value="5,400" data-s="saved-mix"></td></tr></tbody></table></div>
+<div class="foot"><p class="msg" role="status"><span data-s="saved-mix">올린 요금은 12월 9일 (수) 오후 3:20부터 적용됩니다. 내린 요금은 바로 적용됐습니다.</span><span data-s="saved-raise">올린 요금은 12월 9일 (수) 오후 3:20부터 적용됩니다.</span></p>
+<div class="btns"><button type="button" class="btn btn-line">되돌리기</button><button type="submit" class="btn">택배비 저장</button></div></div></form></section>
+
+<section aria-labelledby="h-fee"><div class="sh"><h2 id="h-fee">선물함 서비스료</h2><span>이미 만든 명세서는 그대로예요</span></div>
+<form onsubmit="return false"><div class="tw"><table><caption class="sr-only">선물함 서비스료</caption><thead><tr><th scope="col" class="num">기본</th><th scope="col" class="num">초기 크리에이터 <span style="font-weight:400">채널 확인 순서로 앞선 50명, 3개월 동안 한 달 30건까지</span></th></tr></thead><tbody><tr>
+<td class="num"><label class="sr-only" for="fee-reg">선물함 서비스료 기본</label><input id="fee-reg" class="input num" inputmode="numeric" value="700"><p class="pend" data-s="pending"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>800원 · 12월 9일 (수) 오후 3:20부터</span></p></td>
+<td class="num"><label class="sr-only" for="fee-early">선물함 서비스료 초기 크리에이터</label><input id="fee-early" class="input num" inputmode="numeric" value="300"></td></tr></tbody></table></div>
+<div class="foot"><p class="msg" role="status"></p><div class="btns"><button type="button" class="btn btn-line">되돌리기</button><button type="submit" class="btn">서비스료 저장</button></div></div></form></section>
+
+<section aria-labelledby="h-log"><div class="sh"><h2 id="h-log">요금 바꾼 기록</h2><span>고치거나 지울 수 없어요</span></div>
+<div class="tw"><table style="min-width:760px"><caption class="sr-only">요금 변경 기록</caption><thead><tr><th scope="col">시각</th><th scope="col">대표</th><th scope="col">구간</th><th scope="col">칸</th><th scope="col" class="num">전</th><th scope="col" class="num">후</th><th scope="col">적용 시각</th></tr></thead><tbody><tr data-s="saved-mix"><td class="mono nowrap">11월 9일 (월) 오후 3:20</td><td>정재원</td><td>중형</td><td>팬에게 보내기 택배비</td><td class="num mono">4,400원</td><td class="num mono"><b>4,700원</b></td><td class="mono nowrap">12월 9일 (수) 오후 3:20 <span class="tag tag-w">적용 대기</span></td></tr><tr data-s="saved-mix"><td class="mono nowrap">11월 9일 (월) 오후 3:20</td><td>정재원</td><td>대형</td><td>팬에게 보내기 택배비</td><td class="num mono">5,500원</td><td class="num mono"><b>5,400원</b></td><td class="mono nowrap"><span class="sr-only">저장 시각과 같음</span></td></tr><tr data-s="saved-raise"><td class="mono nowrap">11월 9일 (월) 오후 3:20</td><td>정재원</td><td>중형</td><td>팬에게 보내기 택배비</td><td class="num mono">4,400원</td><td class="num mono"><b>4,700원</b></td><td class="mono nowrap">12월 9일 (수) 오후 3:20 <span class="tag tag-w">적용 대기</span></td></tr><tr data-s="pending"><td class="mono nowrap">11월 9일 (월) 오후 3:20</td><td>정재원</td><td>중형</td><td>팬에게 보내기 택배비</td><td class="num mono">4,400원</td><td class="num mono"><b>4,700원</b></td><td class="mono nowrap">12월 9일 (수) 오후 3:20 <span class="tag tag-w">적용 대기</span></td></tr><tr data-s="pending"><td class="mono nowrap">11월 9일 (월) 오후 3:20</td><td>정재원</td><td>—</td><td>선물함 서비스료 기본</td><td class="num mono">700원</td><td class="num mono"><b>800원</b></td><td class="mono nowrap">12월 9일 (수) 오후 3:20 <span class="tag tag-w">적용 대기</span></td></tr><tr><td class="mono nowrap">11월 7일 (토) 오전 10:05</td><td>정재원</td><td>소형</td><td>받는 값</td><td class="num mono">5,200원</td><td class="num mono"><b>5,400원</b></td><td></td></tr><tr><td class="mono nowrap">11월 7일 (토) 오전 10:05</td><td>정재원</td><td>소형</td><td>검수비</td><td class="num mono">800원</td><td class="num mono"><b>900원</b></td><td></td></tr><tr><td class="mono nowrap">11월 4일 (수) 오후 2:41</td><td>정재원</td><td>중형</td><td>받는 값</td><td class="num mono">7,000원</td><td class="num mono"><b>7,300원</b></td><td></td></tr></tbody></table></div></section>
+</main></div>
+<script>
+(function () {
+  var f = document.getElementById("frame");
+  function go(k) {
+    if (["pending", "saved-mix", "saved-raise"].indexOf(k) < 0) k = "pending";
+    f.dataset.state = k;
+    document.querySelectorAll("[data-s]").forEach(function (e) { e.hidden = e.dataset.s.split(" ").indexOf(k) < 0; });
+    document.querySelectorAll("[data-st]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.st === k)); });
+    history.replaceState(null, "", "#" + k);
+  }
+  document.querySelectorAll("[data-st]").forEach(function (b) { b.addEventListener("click", function () { go(b.dataset.st); }); });
+  go(location.hash.slice(1));
+})();
+</script></body></html>
