@@ -6,7 +6,7 @@
 <title>버튼 길이·정렬 정리 — 지금과 바꾼 뒤</title>
 <!--
   2026-11-10 사용자: 「쓸데없이 최대 길이나 긴 길이를 차지하는 버튼·레이아웃을 찾고 적절한 길이로 바꾼 시안」 → 같은 날 「디자인 프롬프트 수정했다, 참고해서 다시」.
-  다시 그린 기준: design-prompt 2-16~2-22(내용과 버튼의 정렬, 2026-11-10 추가)·1-4·8-1.
+  다시 그린 기준: design-prompt 2-16~2-22(내용과 버튼의 정렬, 2026-11-10 추가)·1-4·8-1 + ux-designer 스킬(references 07·08·16, 같은 날 사용자 지시로 설치).
   찾은 방법: 로컬 사이트 42개 주소를 로그인 전·팬·크리에이터 세 상태로 열어 PC 1366 폭에서 실측 + 코드에서 btn--block·width:100% 사용처.
   값은 사이트 tokens.css 복사본만 쓴다. 버튼 최소 폭 240 은 사이트 btn--wide 값. 회원가입 버튼 최소 폭 120 은 지금 회원가입 화면 값.
 -->
@@ -69,12 +69,16 @@
   .tag.keep { background: #EEF1F4; color: #4B5563; }
   .tag.done { background: #DCFCE7; color: #166534; }
   .tag.unk { background: #FEF3C7; color: #92400E; }
+  .phones { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 24px; }
+  .stage.narrow { width: 320px; padding: 24px 16px; } /* 휴대폰 320 화면: 가장자리 여백 16 (2-3) */
+  .su-act.m { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-200); }
   @media (max-width: 900px) { .pair { grid-template-columns: minmax(0, 1fr); } }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>버튼 길이·정렬 정리</h1>
+  <p class="lead" style="margin-top:12px"><b>이번 판:</b> 디자인 프롬프트(2-16~2-22)에 더해 ux-designer 스킬(폼 07·첫 사용 16·모바일 08) 기준으로 다시 판정했습니다. 다섯 곳 모두 두 기준의 판정이 같습니다. 결제 버튼은 두 기준 모두 정한 것이 없어 그대로 「판단 필요」입니다.</p>
   <p class="lead">고친 디자인 프롬프트의 「내용과 버튼의 정렬」(2-16~2-22) 기준으로 다시 그렸습니다. 사이트 42개 주소를 로그인 전·팬·크리에이터 세 상태로 열어 PC 폭(1366)에서 잰 결과입니다.<br>
   바꿀 곳은 다섯 곳입니다. 1~4번은 폼 버튼이 폭 전체로 늘어난 곳이고, 5번은 같은 안내인데 버튼 크기가 다른 곳입니다.</p>
 
@@ -83,7 +87,7 @@
     <h2>1. 고객센터 「문의 등록」</h2>
     <p class="where">/support · 팬·크리에이터로 로그인했을 때 · 실측 버튼 680px (글자 59px)</p>
     <p class="why">입력칸 아래 제출 버튼이 글 폭 전체로 늘어나 있습니다. 표준 크기 버튼을 입력칸 왼쪽 끝에 맞춰 마지막 입력칸 바로 아래에 둡니다. 휴대폰은 지금처럼 폭 전체입니다.</p>
-    <p class="rule">근거 <b>2-21 1)</b> 한 열 폼 PC는 primary를 입력칸 왼쪽 끝에 · <b>2-21 2)</b> 휴대폰은 폭 전체 · <b>1-4</b></p>
+    <p class="rule">근거 <b>2-21 1)</b> 한 열 폼 PC는 primary를 입력칸 왼쪽 끝에 · <b>2-21 2)</b> 휴대폰은 폭 전체 · <b>1-4</b><br>ux-designer <b>폼 07 「Single Column」</b> 버튼은 입력칸 아래 왼쪽 · <b>「Button Placement」</b> 휴대폰은 폭 전체 — 같은 판정</p>
     <div class="stack">
       <div>
         <span class="col-label">지금</span>
@@ -114,7 +118,7 @@
     <h2>2. 선물 상세 「찾기」 (주소 없이 보낸 상자 찾기)</h2>
     <p class="where">/gifts/[주문번호] · 팬 · 「주소 끝 6자리 없이 보낸 상자 찾기」를 펼쳤을 때 · 실측 버튼 480px (글자 28px)</p>
     <p class="why">입력 상자 안의 한 열 폼인데 제출 버튼이 상자 폭 전체입니다. 1번과 같은 규칙으로 바꿉니다. 지난 시안에서는 「입력칸과 같은 폭이라 유지」로 봤는데, 새 규칙은 폼 버튼을 폭 전체로 두는 경우를 로그인 카드와 휴대폰으로만 한정합니다.</p>
-    <p class="rule">근거 <b>2-21 1)</b> · <b>2-21 7)</b> 폭 전체는 로그인 카드만</p>
+    <p class="rule">근거 <b>2-21 1)</b> · <b>2-21 7)</b> 폭 전체는 로그인 카드만<br>ux-designer <b>폼 07 「Single Column」</b> — 같은 판정</p>
     <div class="pair">
       <div>
         <span class="col-label">지금</span>
@@ -145,7 +149,7 @@
     <h2>3. 회원가입 「다음」</h2>
     <p class="where">/signup · 로그인 전 · 1단계 실측 버튼 432px (글자 28px) · 2단계부터는 「이전」 120px + 「다음」이 나머지 폭 전체</p>
     <p class="why">세 단계로 나뉜 폼인데 1단계는 「다음」이 카드 폭 전체, 2·3단계는 「이전」 옆에서 남은 폭을 다 차지합니다. 「이전」은 왼쪽 끝, 「다음」은 오른쪽 끝에 같은 크기로 두면 단계가 바뀌어도 「다음」 자리가 그대로입니다.</p>
-    <p class="rule">근거 <b>2-21 3)</b> 여러 단계 폼은 「이전」 왼쪽 끝·「다음」 오른쪽 끝 · <b>2-22</b> 같은 형태끼리 배치 통일 · 휴대폰은 지금처럼 「이전」 1 : 「다음」 2 비율의 한 줄(<b>2-21 2)</b>)</p>
+    <p class="rule">근거 <b>2-21 3)</b> 여러 단계 폼은 「이전」 왼쪽 끝·「다음」 오른쪽 끝 · <b>2-22</b> 같은 형태끼리 배치 통일 · 휴대폰은 지금처럼 「이전」 1 : 「다음」 2 비율의 한 줄(<b>2-21 2)</b>)<br>ux-designer <b>폼 07 「Button Placement」</b> primary는 오른쪽, 이전·취소는 왼쪽 · <b>「Multi-Step Forms」</b> 단계 표시·이전으로 돌아가기 — 같은 판정</p>
     <div class="pair">
       <div>
         <span class="col-label">지금 · 1단계</span>
@@ -186,7 +190,7 @@
     <h2>4. 크리에이터 채널 인증 「채널 확인 요청」</h2>
     <p class="where">/creator/account · 회원가입 크리에이터 단계 · 코드 기준(시험 계정이 이미 인증돼 화면에서는 이 칸이 뜨지 않았습니다)</p>
     <p class="why">채널 주소 입력칸 아래 버튼이 칸 폭 전체입니다(코드의 width: 100%). 1번과 같은 규칙으로 바꿉니다.</p>
-    <p class="rule">근거 <b>2-21 1)</b></p>
+    <p class="rule">근거 <b>2-21 1)</b><br>ux-designer <b>폼 07 「Single Column」</b> — 같은 판정</p>
     <div class="pair">
       <div>
         <span class="col-label">지금</span>
@@ -211,7 +215,7 @@
     <h2>5. 선물 보내기 「로그인」 — 같은 안내끼리 크기 맞추기</h2>
     <p class="where">/gifts/new · 로그인 전 · 실측 버튼 90px</p>
     <p class="why">빈 상태 카드라 가운데 정렬은 그대로 맞습니다. 다만 같은 안내인 선물함 신청의 「로그인」(최소 240)과 크기가 달라 맞춥니다. 「팔로우한 크리에이터가 없습니다」의 「크리에이터 찾기」도 같은 자리라 같이 바뀝니다.</p>
-    <p class="rule">근거 <b>2-17</b> 메시지 하나·본문 2줄 이하라 가운데 정렬 · <b>2-21 8)</b> 버튼은 문구 아래 가운데 · <b>2-22</b> 같은 형태끼리 통일</p>
+    <p class="rule">근거 <b>2-17</b> 메시지 하나·본문 2줄 이하라 가운데 정렬 · <b>2-21 8)</b> 버튼은 문구 아래 가운데 · <b>2-22</b> 같은 형태끼리 통일<br>ux-designer <b>첫 사용 16 「Empty States」</b> 그림 + 짧은 설명 + 다음 행동 버튼 하나 — 지금 구성이 이미 맞고, 크기만 맞춥니다</p>
     <div class="pair">
       <div>
         <span class="col-label">지금</span>
@@ -225,6 +229,31 @@
     </div>
   </section>
 
+  <!-- 좁은 폭 -->
+  <section class="item">
+    <h2>휴대폰 가장 좁은 폭(320)에서 — 바꾼 뒤</h2>
+    <p class="why">ux-designer 스킬은 가장 좁은 폭에서 확인하라고 합니다. 휴대폰에서는 다섯 곳 모두 지금처럼 폭 전체로 두므로, 휴대폰 모양은 바뀌지 않습니다. 대표로 1번과 3번만 그렸습니다.</p>
+    <p class="rule">근거 <b>8-1</b> · <b>2-21 2)</b> · ux-designer <b>폼 07 「Button Placement」</b> 휴대폰은 폭 전체 · <b>모바일 08 「Thumb Zone」</b></p>
+    <div class="phones">
+      <div>
+        <span class="col-label after">1. 문의 등록</span>
+        <div class="stage narrow">
+          <span class="lab">제목</span><span class="field">문의 제목을 입력해 주세요</span>
+          <span class="lab">내용</span><span class="field area">문의 내용을 자세히 입력해 주세요</span>
+          <div class="act"><button class="btn block">문의 등록</button></div>
+        </div>
+      </div>
+      <div>
+        <span class="col-label after">3. 회원가입 2단계</span>
+        <div class="stage narrow">
+          <h3 style="font-size:20px;font-weight:700">정보 입력</h3>
+          <span class="lab" style="margin-top:16px">아이디</span><span class="field"></span>
+          <div class="su-act m"><button class="btn line">이전</button><button class="btn">다음</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- 표 -->
   <section class="item">
     <h2>그대로 두는 곳과 이유</h2>
@@ -233,7 +262,7 @@
       <tbody>
         <tr><td>선물함 신청 안내 카드</td><td>카드 480 · 버튼 240 · 가운데</td><td><span class="tag done">오늘 고침</span></td><td>메시지 하나·본문 한 줄이라 가운데 정렬, 버튼도 문구 아래 가운데 (2-17·2-21 8)</td></tr>
         <tr><td>로그인 · 비밀번호 찾기</td><td>폼 폭 432 전체</td><td><span class="tag keep">유지</span></td><td>로그인 카드는 primary를 카드 안쪽 폭 전체로 (2-21 7)</td></tr>
-        <tr><td>결제 단계 「OO원 결제하기」</td><td>결제창 폭 전체(약 672)</td><td><span class="tag unk">판단 필요</span></td><td>프롬프트에 결제 화면 규칙이 없습니다. 결제 버튼을 폭 전체로 두는 것이 결제 화면 관례라 유지를 추천합니다 (가정). 한 열 폼(2-21 1)으로 보면 240 왼쪽이 됩니다</td></tr>
+        <tr><td>결제 단계 「OO원 결제하기」</td><td>결제창 폭 전체(약 672)</td><td><span class="tag unk">판단 필요</span></td><td>프롬프트에 결제 화면 규칙이 없습니다. 결제 버튼을 폭 전체로 두는 것이 결제 화면 관례라 유지를 추천합니다 (가정). 한 열 폼(2-21 1)으로 보면 240 왼쪽이 됩니다. ux-designer 스킬에도 결제 버튼 폭 기준은 없습니다</td></tr>
         <tr><td>역조공 보내기 오른쪽 「OO원 결제하기」</td><td>요약 카드 폭 전체</td><td><span class="tag keep">유지</span></td><td>카드 안 행동은 카드 글과 같은 왼쪽 선 (2-21 10) — 폭 전체도 이 선을 지킵니다</td></tr>
         <tr><td>함께 보내기 「팔로우하고 보내기」</td><td>안내 문장 폭</td><td><span class="tag unk">화면 못 봄</span></td><td>가운데 정렬 안내 띠 안이라 2-21 8)에 맞는 구조입니다. 팔로우 안 한 상태가 시험 데이터에 없어 화면으로는 못 봤습니다</td></tr>
         <tr><td>소개 끝 띠 · 고객센터 1:1 문의 띠</td><td>화면 폭</td><td><span class="tag keep">유지</span></td><td>구역 바탕 띠이고, 안의 버튼은 이미 글자 크기입니다</td></tr>
