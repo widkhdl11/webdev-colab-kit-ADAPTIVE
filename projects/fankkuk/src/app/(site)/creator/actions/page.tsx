@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { readMyAddressStatus } from "@/entities/address/api/my-address-status";
-import { readCreatorActionItems } from "@/entities/action-item/api/read-action-items";
+import { readCreatorActionItems } from "@/features/creator-action-items/api/read-creator-action-items";
 import { readBoxCards } from "@/entities/revgift-box/api/box-reads";
 import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
 import { isOrderNo } from "@/entities/order/model/order-no";

@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { readCreatorActionItems } from "@/entities/action-item/api/read-action-items";
+import { readCreatorActionItems } from "@/features/creator-action-items/api/read-creator-action-items";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { createInvoiceDecryptor, type InvoiceDecryptor } from "@/features/invoice-print/api/invoice-decryptor";
 import {

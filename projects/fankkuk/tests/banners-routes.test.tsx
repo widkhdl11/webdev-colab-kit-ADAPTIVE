@@ -44,6 +44,8 @@ vi.mock("@/widgets/site-header/api/session-header", async (orig) => ({
 vi.mock("@/shared/api/supabase/detached", () => ({ readPublicStorageBase: () => "http://storage.test" }));
 vi.mock("@/entities/action-item/api/read-action-items", () => ({
   readActionItemsOrNull: vi.fn(async () => []),
+}));
+vi.mock("@/features/creator-action-items/api/read-creator-action-items", () => ({
   readCreatorActionItemsOrNull: vi.fn(async () => []),
 }));
 vi.mock("@/entities/creator/api/creator-reads", async (orig) => ({

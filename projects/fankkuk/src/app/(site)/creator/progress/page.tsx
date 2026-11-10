@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { readCreatorActionItems } from "@/entities/action-item/api/read-action-items";
+import { readCreatorActionItems } from "@/features/creator-action-items/api/read-creator-action-items";
 import { readMyGiftProgress } from "@/widgets/creator-gift-progress/api/read-gift-progress";
 import { CREATOR_GIFT_PROGRESS_HREF } from "@/entities/gift-progress/model/progress-href";
 import { readApprovalCancelTargets } from "@/entities/order/api/approval-cancel-rows";

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { readActionItemsOrNull, readCreatorActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
+import { readActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
+import { readCreatorActionItemsOrNull } from "@/features/creator-action-items/api/read-creator-action-items";
 import type { ActionItem } from "@/entities/action-item/model/action-items";
 import { sentGiftTodoOf } from "@/entities/action-item/model/creator-action-items";
 import { readCreatorCards } from "@/entities/creator/api/creator-reads";

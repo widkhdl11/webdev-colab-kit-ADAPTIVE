@@ -8,7 +8,7 @@ import { readMyCreatorSettings } from "@/entities/creator/api/my-creator-setting
 import { creatorBackgroundUrl, creatorPhotoUrl, creatorSymbolUrl, nameInitial } from "@/entities/creator/model/link-images";
 import { NO_COLORS } from "@/entities/creator/model/creator-color";
 import { readNotices } from "@/entities/notice/api/notice-reads";
-import { readCreatorActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
+import { readCreatorActionItemsOrNull } from "@/features/creator-action-items/api/read-creator-action-items";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
 import { FAN_HOME } from "@/entities/session/model/home-path";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";

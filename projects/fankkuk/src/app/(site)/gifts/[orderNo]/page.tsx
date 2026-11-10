@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { readActionItemsOrNull, readCreatorActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
+import { readActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
+import { readCreatorActionItemsOrNull } from "@/features/creator-action-items/api/read-creator-action-items";
 import { actionItemsOfOrder, differenceDueKrw, type ActionItem } from "@/entities/action-item/model/action-items";
 import { sentGiftTodoOf } from "@/entities/action-item/model/creator-action-items";
 import { readMyGiftReplies } from "@/entities/gift-reply/api/gift-reply-reads";

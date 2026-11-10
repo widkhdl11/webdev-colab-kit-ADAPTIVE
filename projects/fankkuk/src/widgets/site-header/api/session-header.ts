@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { readActionItemsOrNull, readCreatorActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
+import { readActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
+import { readCreatorActionItemsOrNull } from "@/features/creator-action-items/api/read-creator-action-items";
 import { homePathOf } from "@/entities/session/model/home-path";
 import { readViewer, type Viewer } from "@/entities/session/model/viewer";
 import { createRequestSupabase } from "@/shared/api/supabase/server";

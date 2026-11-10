@@ -24,7 +24,8 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/shared/api/supabase/server", () => ({ createRequestSupabase: vi.fn() }));
 
 const reads = vi.hoisted(() => ({ calls: 0, rows: [] as unknown[] }));
-vi.mock("@/entities/action-item/api/read-action-items", async (orig) => {
+// 화면들이 부르는 크리에이터 처리할 일 읽기(features/creator-action-items — DB 줄 + 승인 서명 연결 줄)를 바꿔 끼운다. 이 시험의 크리에이터는 연결된 상태로 본다
+vi.mock("@/features/creator-action-items/api/read-creator-action-items", async (orig) => {
   const real = await orig<object>();
   const { parseCreatorActionItems } = await import("@/entities/action-item/model/creator-action-items");
   const next = async () => {

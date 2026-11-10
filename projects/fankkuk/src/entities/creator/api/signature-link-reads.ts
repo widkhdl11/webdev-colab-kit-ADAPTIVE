@@ -10,15 +10,27 @@ export type MySignatureLink = { linked: boolean; linkedAt: string | null };
 
 const myRow = z.object({ linked: z.boolean(), linked_at: z.string().nullable() });
 
-export async function readMySignatureLink(client: Pick<SupabaseClient, "rpc">): Promise<MySignatureLink> {
+/** my_signature_link 응답 한 줄 → 연결 여부. 꼴이 틀리면 던진다 — 연결 여부를 읽는 곳은 모두 이 함수를 쓴다 */
+export function parseMySignatureLink(data: unknown): MySignatureLink {
+  const row = myRow.parse(Array.isArray(data) ? data[0] : data);
+  return { linked: row.linked, linkedAt: row.linked ? row.linked_at : null };
+}
+
+/** 못 읽으면 던진다 — 처리할 일 줄처럼 「연결 전」을 지어내면 안 되는 곳(action-center INV-J6) */
+export async function readMySignatureLinkOrThrow(client: Pick<SupabaseClient, "rpc">): Promise<MySignatureLink> {
   const { data, error } = await client.rpc("my_signature_link");
-  if (error) {
-    console.error("my_signature_link 읽기 실패", error.code);
+  if (error) throw new Error(`승인 서명 연결 여부를 읽지 못했다: ${error.code}`);
+  return parseMySignatureLink(data);
+}
+
+/** 못 읽으면 연결 전으로 본다(닫힌 쪽) — 설정·가입 화면용 */
+export async function readMySignatureLink(client: Pick<SupabaseClient, "rpc">): Promise<MySignatureLink> {
+  try {
+    return await readMySignatureLinkOrThrow(client);
+  } catch (e) {
+    console.error(e instanceof Error ? e.message : "my_signature_link 읽기 실패");
     return { linked: false, linkedAt: null };
   }
-  const row = myRow.safeParse(Array.isArray(data) ? data[0] : data);
-  if (!row.success) return { linked: false, linkedAt: null };
-  return { linked: row.data.linked, linkedAt: row.data.linked ? row.data.linked_at : null };
 }
 
 export async function readCreatorSignatureLinked(client: Pick<SupabaseClient, "rpc">, creatorId: string): Promise<boolean> {

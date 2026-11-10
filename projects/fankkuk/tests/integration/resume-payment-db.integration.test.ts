@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { readActionItems, readCreatorActionItems } from "@/entities/action-item/api/read-action-items";
+import { readActionItems } from "@/entities/action-item/api/read-action-items";
+import { readCreatorActionItems } from "@/features/creator-action-items/api/read-creator-action-items";
 import { actionItemsOfOrder } from "@/entities/action-item/model/action-items";
 import { createSupabasePaymentStore } from "@/entities/payment/api/supabase-payment-store";
 import { confirmPayment } from "@/features/checkout/model/checkout";

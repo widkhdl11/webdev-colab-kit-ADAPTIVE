@@ -164,7 +164,7 @@ export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = 
     // 직접 입력이 태그 필터에 걸림(creator-tags INV-T7) — 사유마다 문구
     const filtered = tagFilterMessage(account.error.code);
     if (filtered && input.role === "creator") return { ok: false, status: 400, field: "tags", message: filtered };
-    // 이름·채널 이름은 위에서 같은 규칙으로 걸렀다 — DB 가 거부하면 태그다(그 사이 숨긴 선택지 등, creator-tags INV-T3)
+    // 크리에이터 가입에서 DB 의 꼴 거부(22023)는 태그다 — 그 사이 숨긴 선택지 등(creator-tags INV-T3). 다른 칸은 앞의 입력 검사가 같은 규칙으로 걸렀다
     if (account.error.code === "22023")
       return input.role === "creator"
         ? { ok: false, status: 400, field: "tags", message: "선택할 수 없는 태그가 포함되어 있습니다. 새로고침한 뒤 다시 선택해 주세요." }
