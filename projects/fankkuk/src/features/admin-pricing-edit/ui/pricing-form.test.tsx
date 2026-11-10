@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PriceTable } from "@/entities/payment/model/price-table";
 import { DraftScope } from "@/shared/lib/form-draft/use-form-draft";
+import { postPricing } from "../api/post-pricing-client";
 import { formatWon } from "../model/price-input";
 
 // 요금표에 붙인 임시 저장 (docs/specs/session-login.md INV-L20 — 서버 값을 고치는 폼).
@@ -14,6 +15,19 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: () => {} }) }))
 import { PricingForm } from "./pricing-form";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+beforeAll(() => {
+  // jsdom 에는 <dialog>.showModal·close 가 없다 — 브라우저처럼 열고, 닫을 때 close 이벤트를 보낸다
+  const proto = HTMLDialogElement.prototype as unknown as Record<"showModal" | "close", (this: HTMLDialogElement) => void>;
+  proto.showModal = function () {
+    this.setAttribute("open", "");
+  };
+  proto.close = function () {
+    if (!this.hasAttribute("open")) return;
+    this.removeAttribute("open");
+    this.dispatchEvent(new Event("close"));
+  };
+});
 
 const OWNER = "00000000-0000-4000-a000-0000000000a1";
 const DAY = 24 * 60 * 60 * 1000;
@@ -84,5 +98,69 @@ describe("요금표 임시 저장 (INV-L20)", () => {
     mount(CHANGED_TABLE);
     expect(smallPrice().value).toBe(formatWon(CHANGED_TABLE.small.priceKrw));
     expect(Object.keys(localStorage).filter((k) => k.startsWith("fk-draft:"))).toEqual([]);
+  });
+});
+
+describe("요금을 올려 저장할 때 30일 공지 확인 창 (ux pages/admin-pricing.md raise_notice_confirm)", () => {
+  const save = vi.mocked(postPricing);
+  const dialog = () => host.querySelector<HTMLDialogElement>("dialog")!;
+  const saveButton = () => host.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+  const dialogButton = (name: string) => [...dialog().querySelectorAll("button")].find((b) => b.textContent === name)!;
+  const field = (tier: string, key: string) => host.querySelector<HTMLInputElement>(`#price-${tier}-${key}`)!;
+
+  beforeEach(() => {
+    save.mockReset();
+    save.mockResolvedValue({ kind: "ok" } as Awaited<ReturnType<typeof postPricing>>);
+  });
+  async function pressSave() {
+    await act(async () => {
+      saveButton().click();
+    });
+  }
+
+  it("받는 값을 올리면 저장 전에 창이 뜨고, 아직 저장하지 않는다", async () => {
+    mount(SAVED_TABLE);
+    type(smallPrice(), String(SAVED_TABLE.small.priceKrw + 500));
+    await pressSave();
+    expect(dialog().hasAttribute("open")).toBe(true);
+    expect(dialog().querySelector("h2")!.textContent).toBe("요금을 변경할까요?");
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("「취소」는 저장하지 않고 창을 닫고, 입력값은 그대로이며 초점은 저장 버튼으로 돌아간다", async () => {
+    mount(SAVED_TABLE);
+    const raised = String(SAVED_TABLE.small.priceKrw + 500);
+    type(smallPrice(), raised);
+    await pressSave();
+    await act(async () => dialogButton("취소").click());
+    expect(dialog().hasAttribute("open")).toBe(false);
+    expect(save).not.toHaveBeenCalled();
+    expect(smallPrice().value).toBe(raised);
+    expect(document.activeElement).toBe(saveButton());
+  });
+
+  it("「요금 변경」은 지금 저장 동작 그대로 저장한다", async () => {
+    mount(SAVED_TABLE);
+    type(smallPrice(), String(SAVED_TABLE.small.priceKrw + 500));
+    await pressSave();
+    await act(async () => dialogButton("요금 변경").click());
+    expect(dialog().hasAttribute("open")).toBe(false);
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it("받는 값을 내리기만 하면 창 없이 바로 저장한다", async () => {
+    mount(SAVED_TABLE);
+    type(smallPrice(), String(SAVED_TABLE.small.priceKrw - 500));
+    await pressSave();
+    expect(dialog().hasAttribute("open")).toBe(false);
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it("검수비만 올리면(손님 금액 아님) 창 없이 바로 저장한다", async () => {
+    mount(SAVED_TABLE);
+    type(field("large", "inspectionFeeKrw"), String(SAVED_TABLE.large.inspectionFeeKrw + 100));
+    await pressSave();
+    expect(dialog().hasAttribute("open")).toBe(false);
+    expect(save).toHaveBeenCalledTimes(1);
   });
 });

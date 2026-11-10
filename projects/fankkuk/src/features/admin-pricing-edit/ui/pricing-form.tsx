@@ -9,7 +9,9 @@ import { PRICED_TIERS, checkPriceTable, type PriceTable, type PricedTier, type T
 import a from "@/shared/ui/admin.module.css";
 import { postPricing } from "../api/post-pricing-client";
 import { PRICE_RULES, formatWon, parseWon, ruleOfProblem } from "../model/price-input";
+import { raisesPriceTable } from "../model/price-raise";
 import { pricingRowsOf } from "../model/save-pricing";
+import { RaiseNoticeDialog } from "./raise-notice-dialog";
 
 // 요금표 표 (admin-console INV-K2·K4, 시안 admin/pricing.html).
 // 대표(editable)는 구간마다 세 칸을 고치고 「저장 전 검사」를 통과해야 저장된다. 직원은 같은 표를 값으로만 본다 —
@@ -54,6 +56,9 @@ export function PricingForm({ table, editable }: { table: PriceTable; editable: 
   // 서버 요금표를 기준값으로 함께 남긴다 — 다시 열 때 그사이 요금표가 바뀌었으면 옛 입력으로 덮지 않는다
   const formRef = useRef<HTMLFormElement>(null);
   const { clear } = useFormDraft(formRef, "admin-pricing-form", { baseline: JSON.stringify(table) });
+  // 받는 값을 올리는 저장이면 30일 공지 확인 창을 먼저 띄운다(ux pages/admin-pricing.md raise_notice_confirm)
+  const noticeRef = useRef<HTMLDialogElement>(null);
+  const saveRef = useRef<HTMLButtonElement>(null);
 
   const numbers = numbersOf(draft);
   const checked = checkPriceTable(numbers);
@@ -72,8 +77,18 @@ export function PricingForm({ table, editable }: { table: PriceTable; editable: 
     if (Number.isFinite(n)) edit(tier, key, formatWon(n));
   }
 
-  async function submit(e: FormEvent) {
+  function submit(e: FormEvent) {
     e.preventDefault();
+    if (!checked.ok || !canSave) return;
+    // 비교 기준은 서버에서 읽은 지금 값(table)이다 — 되돌리기·저장 뒤에도 같은 값이다
+    if (raisesPriceTable(table, checked.table)) {
+      noticeRef.current?.showModal();
+      return;
+    }
+    void save();
+  }
+
+  async function save() {
     if (!checked.ok || !canSave) return;
     setBusy(true);
     const outcome = await postPricing(pricingRowsOf(checked.table));
@@ -197,10 +212,11 @@ export function PricingForm({ table, editable }: { table: PriceTable; editable: 
             >
               되돌리기
             </button>
-            <button type="submit" className={`${a.btn} ${a.btnLg}`} aria-disabled={!canSave}>
+            <button ref={saveRef} type="submit" className={`${a.btn} ${a.btnLg}`} aria-disabled={!canSave}>
               {saveLabel}
             </button>
           </div>
+          <RaiseNoticeDialog dialogRef={noticeRef} returnFocusRef={saveRef} onConfirm={() => void save()} />
         </div>
       )}
     </form>

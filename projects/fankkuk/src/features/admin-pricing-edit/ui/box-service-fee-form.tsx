@@ -1,11 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { boxServiceFeesProblem, type BoxServiceFees } from "@/entities/payment/model/box-service-fees";
 import a from "@/shared/ui/admin.module.css";
 import { postBoxServiceFees } from "../api/post-box-service-fees-client";
+import { raisesBoxServiceFees } from "../model/price-raise";
 import { formatWon, parseWon } from "../model/price-input";
+import { RaiseNoticeDialog } from "./raise-notice-dialog";
 
 // 선물함 서비스료 — 기본·초기 크리에이터 (revgift-box INV-GB13~GB15, ux pages/admin-pricing.md).
 // 대표(editable)만 입력칸·저장 버튼이 있다. 저장 권한과 범위는 서버·DB 가 다시 판정한다.
@@ -28,6 +30,9 @@ export function BoxServiceFeeForm({ fees, editable }: Props) {
   const [draft, setDraft] = useState<Draft>(() => draftOf(fees));
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  // 정가·초기를 올리는 저장이면 30일 공지 확인 창을 먼저 띄운다(ux pages/admin-pricing.md raise_notice_confirm)
+  const noticeRef = useRef<HTMLDialogElement>(null);
+  const saveRef = useRef<HTMLButtonElement>(null);
 
   const next: BoxServiceFees = { regularKrw: parseWon(draft.regular), earlyKrw: parseWon(draft.early) };
   const problem = boxServiceFeesProblem(next);
@@ -39,8 +44,17 @@ export function BoxServiceFeeForm({ fees, editable }: Props) {
   else if (problem) saveLabel = "금액을 확인해 주세요";
   else if (!changed) saveLabel = "바뀐 곳이 없어요";
 
-  async function submit(e: FormEvent) {
+  function submit(e: FormEvent) {
     e.preventDefault();
+    if (!canSave) return;
+    if (raisesBoxServiceFees(fees, next)) {
+      noticeRef.current?.showModal();
+      return;
+    }
+    void save();
+  }
+
+  async function save() {
     if (!canSave) return;
     setBusy(true);
     const outcome = await postBoxServiceFees({ regular_krw: next.regularKrw, early_krw: next.earlyKrw });
@@ -134,10 +148,11 @@ export function BoxServiceFeeForm({ fees, editable }: Props) {
             >
               되돌리기
             </button>
-            <button type="submit" className={`${a.btn} ${a.btnLg}`} aria-disabled={!canSave}>
+            <button ref={saveRef} type="submit" className={`${a.btn} ${a.btnLg}`} aria-disabled={!canSave}>
               {saveLabel}
             </button>
           </div>
+          <RaiseNoticeDialog dialogRef={noticeRef} returnFocusRef={saveRef} onConfirm={() => void save()} />
         </div>
       )}
     </form>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import {
   CARRIER_ROUTES,
   CARRIER_ROUTE_NAME,
@@ -15,8 +15,10 @@ import {
 import { PRICED_TIERS, type PriceTable, type PricedTier } from "@/entities/payment/model/price-table";
 import a from "@/shared/ui/admin.module.css";
 import { postCarrierPricing } from "../api/post-carrier-pricing-client";
+import { raisesCarrierPricing } from "../model/price-raise";
 import { formatWon, parseWon } from "../model/price-input";
 import type { CarrierPricingBody } from "../model/save-carrier-pricing";
+import { RaiseNoticeDialog } from "./raise-notice-dialog";
 
 // 택배 원가 경로표 · 기본 경로 · 팬에게 보내기 택배비 (admin-console INV-K15·K16, ux pages/admin-pricing.md).
 // 대표(editable)만 입력칸·저장 버튼이 있다. 저장 권한과 검사는 DB 가 다시 판정한다.
@@ -121,6 +123,10 @@ export function CarrierPricingForm({ pricing, table, editable }: Props) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [problems, setProblems] = useState<PricingProblem[]>([]);
+  // 택배비·함께 저장하는 받는 값을 올리는 저장이면 30일 공지 확인 창을 먼저 띄운다(ux pages/admin-pricing.md raise_notice_confirm).
+  // 경로별 택배 원가·기본 경로만 바꾼 저장에는 창이 없다
+  const noticeRef = useRef<HTMLDialogElement>(null);
+  const saveRef = useRef<HTMLButtonElement>(null);
 
   const built = buildBody(pricing, table, routes, defaultRoute, fees, prices);
   const canSave = built.ok && built.body !== null && !busy;
@@ -153,8 +159,17 @@ export function CarrierPricingForm({ pricing, table, editable }: Props) {
     setMessage(null);
   }
 
-  async function submit(e: FormEvent) {
+  function submit(e: FormEvent) {
     e.preventDefault();
+    if (!built.ok || !built.body || busy) return;
+    if (raisesCarrierPricing(pricing.sendFees, table, built.body)) {
+      noticeRef.current?.showModal();
+      return;
+    }
+    void save();
+  }
+
+  async function save() {
     if (!built.ok || !built.body || busy) return;
     setBusy(true);
     const outcome = await postCarrierPricing(built.body);
@@ -382,11 +397,12 @@ export function CarrierPricingForm({ pricing, table, editable }: Props) {
               <button type="button" className={`${a.btn} ${a.btnLine}`} onClick={reset}>
                 되돌리기
               </button>
-              <button type="submit" className={`${a.btn} ${a.btnLg}`} aria-disabled={!canSave}>
+              <button ref={saveRef} type="submit" className={`${a.btn} ${a.btnLg}`} aria-disabled={!canSave}>
                 {saveLabel}
               </button>
             </div>
           </div>
+          <RaiseNoticeDialog dialogRef={noticeRef} returnFocusRef={saveRef} onConfirm={() => void save()} />
         </div>
       )}
     </form>
