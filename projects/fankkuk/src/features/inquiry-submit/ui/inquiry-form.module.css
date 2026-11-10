@@ -12,3 +12,5 @@
 .error { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 var(--space-2); color: var(--gray-900); font-weight: var(--fw-btn); }
 .error::before { content: "!"; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--gray-900); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1; }
 .done { margin: 0 0 var(--space-2); color: var(--brand-ink); font-weight: var(--fw-btn); }
+/* 「문의 등록」 — PC 는 최소 폭 240 을 입력칸 왼쪽 끝에(디자인 프롬프트 2-21 1), 휴대폰은 btn--wide 가 폭 전체로 늘린다(2-21 2). 칸 묶음 안이라 늘어나지 않게 붙인다 */
+.submit { justify-self: start; align-self: flex-start; }

@@ -165,7 +165,7 @@ export function InquiryForm({ signedIn, restricted = false }: { signedIn: boolea
           )}
         </div>
         <div role="status">{done && <p className={s.done}>문의가 등록되었습니다. 답변은 ‘내 문의’에서 확인할 수 있습니다.</p>}</div>
-        <button type="submit" className="btn btn--block" aria-disabled={busy}>
+        <button type="submit" className={`btn btn--wide ${s.submit}`} aria-disabled={busy}>
           {busy ? "등록 중…" : "문의 등록"}
         </button>
       </div>
