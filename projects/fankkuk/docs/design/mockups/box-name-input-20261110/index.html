@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>선물함 만들기 입력칸 — 지금과 바꾼 뒤</title>
+<!--
+  2026-11-10 사용자: 「테두리 같은 게 없지만 딱 봐도 input box 라는 느낌이 나면서도, 입력한 텍스트만큼만 아래에 밑줄」 → 적용 범위 1번(선물함 만들기 모달만) 선택.
+  바뀐 쪽: 테두리 없음 · 연한 회색 바탕(--gray-100, 마우스를 올리면 --gray-200) · 글자 20px 굵게 · 입력한 글자 폭만큼 초점색(--field-focus) 밑줄 2px · 오류면 바탕 --danger-soft, 밑줄 --danger-line.
+  적용 원칙: design-prompt 4-6(선은 입력창처럼 꼭 필요한 곳에만 — 칸 테두리 대신 밑줄 하나) · 8-2(한 열 폼) · 토큰(글자 20·간격 8의 배수·반경 12).
+  벗어난 것: 입력칸 경계 3:1(WCAG 1.4.11)은 회색 바탕만으로는 못 지킨다(gray-100/흰 약 1.1:1). 라벨·커서·밑줄로 입력칸임을 보인다.
+  밑줄 폭은 입력칸 뒤에 같은 글꼴로 깐 보이지 않는 글자 복사본의 폭이다(field-sizing 은 일부 브라우저 미지원이라 쓰지 않는다).
+  값은 사이트 tokens.css 복사본만 쓴다.
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" crossorigin="anonymous">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Pretendard Variable", Pretendard, sans-serif; background: #F7F9FB; color: var(--ink); font-size: 16px; line-height: 1.6; padding: 48px 24px 96px; }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.3; }
+  .lead { margin-top: 8px; color: var(--sub); max-width: 760px; }
+  .item { margin-top: 56px; }
+  .item h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+  .why { margin-top: 8px; max-width: 760px; color: var(--sub); }
+  .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; margin-top: 24px; }
+  .col-label { display: inline-block; margin-bottom: 8px; padding: 2px 12px; border-radius: 999px; font-size: 14px; font-weight: 700; background: #E5E9EE; color: var(--ink); }
+  .col-label.after { background: #DFF1FB; color: #0369A1; }
+  .phone { max-width: 390px; }
+  @media (max-width: 900px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+
+  /* 모달 흉내 */
+  .dlg { background: var(--white); border-radius: var(--r-panel); box-shadow: 0 8px 32px rgba(17,24,39,.12); overflow: hidden; }
+  .dlg-head { padding: 24px 24px 0; }
+  .dlg-title { font-size: 20px; font-weight: 800; }
+  .prog { margin-top: 4px; font-size: 14px; color: var(--sub); }
+  .bar { margin-top: 12px; height: 4px; border-radius: 2px; background: var(--gray-100); }
+  .bar i { display: block; height: 100%; border-radius: 2px; background: var(--brand); }
+  .dlg-body { padding: 24px; }
+  .dlg-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px 24px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px 24px; border: 0; border-radius: var(--r-btn); background: var(--brand); color: var(--on-brand); font: inherit; font-weight: 700; }
+  .btn--line { background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--ink); }
+  label.lab { display: block; margin-bottom: 8px; font-weight: 700; }
+  .hint { margin-top: 8px; font-size: 14px; color: var(--sub); }
+  .ferr { display: flex; gap: 8px; margin-top: 8px; color: var(--danger); font-size: 14px; font-weight: 700; }
+  .ferr svg { flex: none; width: 16px; height: 16px; margin-top: 3px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+
+  /* 지금 — 사이트 공통 .input */
+  .input { display: block; width: 100%; min-height: 52px; padding: 0 16px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font: inherit; color: var(--ink); }
+  .input:focus, .input.is-focus { outline: 0; box-shadow: inset 0 0 0 var(--field-ring) var(--field-focus); }
+  .input.is-err { box-shadow: inset 0 0 0 var(--field-ring) var(--danger-line); }
+  .suffix { position: relative; }
+  .suffix .input { padding-right: 48px; }
+  .suffix > span.unit { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--sub); }
+
+  /* 바뀐 뒤 — 테두리 없는 칸 + 입력한 글자만큼 밑줄 */
+  .ul { position: relative; display: flex; align-items: center; min-height: 56px; padding: 0 16px; border-radius: var(--r-btn); background: var(--gray-100); transition: background .15s; }
+  .ul:hover { background: var(--gray-200); }
+  .ul.is-err { background: var(--danger-soft); }
+  .ul input { position: relative; z-index: 1; flex: 1; min-width: 0; height: 56px; padding: 0; border: 0; background: transparent; font: inherit; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); caret-color: var(--field-focus); }
+  .ul input:focus { outline: 0; }
+  .ul input::-webkit-inner-spin-button { display: none; }
+  /* 입력값을 그대로 담은 보이지 않는 복사본 — 이 폭이 밑줄 폭이다 */
+  .ul .mirror { position: absolute; left: 16px; top: 50%; max-width: calc(100% - 32px); transform: translateY(calc(-50% + 2px)); padding-bottom: 2px; border-bottom: 2px solid var(--field-focus); white-space: pre; overflow: hidden; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; color: transparent; pointer-events: none; }
+  .ul .mirror:empty { display: none; }
+  .ul.is-err .mirror { border-bottom-color: var(--danger-line); }
+  .ul .unit { position: relative; z-index: 1; flex: none; margin-left: 8px; font-size: 16px; color: var(--sub); }
+  .ul.num input { flex: 0 1 auto; }
+  /* 초점 표시는 깜빡이는 하늘색 커서와 밑줄이 맡는다 — 칸 바깥 고리를 두면 결국 테두리로 보인다 */
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>선물함 만들기 — 이름 칸</h1>
+  <p class="lead">왼쪽은 지금 화면, 오른쪽은 바꾼 뒤입니다. 오른쪽 칸들은 실제로 글자를 쳐 볼 수 있습니다. 테두리를 없애고 연한 회색 바탕을 깔았으며, 입력한 글자 폭만큼만 아래에 하늘색 밑줄이 생깁니다.</p>
+
+  <!-- 1. 비어 있을 때 -->
+  <section class="item">
+    <h2>1. 처음 열었을 때 (비어 있음)</h2>
+    <p class="why">바뀐 뒤에는 회색 바탕과 깜빡이는 커서로 입력할 자리를 보여 줍니다. 밑줄은 아직 없습니다.</p>
+    <div class="pair">
+      <div><span class="col-label">지금</span>
+        <div class="dlg"><div class="dlg-head"><p class="dlg-title">선물함 만들기</p><p class="prog">1/3 이름 · 다음: 받을 인원</p><div class="bar"><i style="width:33%"></i></div></div>
+          <div class="dlg-body"><label class="lab">선물함 이름</label><div class="input is-focus"></div></div>
+          <div class="dlg-foot"><button class="btn">다음</button></div></div>
+      </div>
+      <div><span class="col-label after">바뀐 뒤</span>
+        <div class="dlg"><div class="dlg-head"><p class="dlg-title">선물함 만들기</p><p class="prog">1/3 이름 · 다음: 받을 인원</p><div class="bar"><i style="width:33%"></i></div></div>
+          <div class="dlg-body"><label class="lab" for="a1">선물함 이름</label>
+            <div class="ul"><span class="mirror"></span><input id="a1" type="text" maxlength="30" autocomplete="off"></div></div>
+          <div class="dlg-foot"><button class="btn">다음</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 입력 중 -->
+  <section class="item">
+    <h2>2. 입력하는 중</h2>
+    <p class="why">지금은 칸 전체 테두리가 하늘색으로 바뀝니다. 바뀐 뒤에는 쓴 글자 아래에만 밑줄이 그어지고, 글자가 늘면 밑줄도 같이 늘어납니다.</p>
+    <div class="pair">
+      <div><span class="col-label">지금</span>
+        <div class="dlg"><div class="dlg-head"><p class="dlg-title">선물함 만들기</p><p class="prog">1/3 이름 · 다음: 받을 인원</p><div class="bar"><i style="width:33%"></i></div></div>
+          <div class="dlg-body"><label class="lab">선물함 이름</label><input class="input is-focus" value="12월 연말 선물함"></div>
+          <div class="dlg-foot"><button class="btn">다음</button></div></div>
+      </div>
+      <div><span class="col-label after">바뀐 뒤</span>
+        <div class="dlg"><div class="dlg-head"><p class="dlg-title">선물함 만들기</p><p class="prog">1/3 이름 · 다음: 받을 인원</p><div class="bar"><i style="width:33%"></i></div></div>
+          <div class="dlg-body"><label class="lab" for="a2">선물함 이름</label>
+            <div class="ul"><span class="mirror"></span><input id="a2" type="text" maxlength="30" autocomplete="off" value="12월 연말 선물함"></div></div>
+          <div class="dlg-foot"><button class="btn">다음</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 오류 -->
+  <section class="item">
+    <h2>3. 비운 채로 「다음」을 눌렀을 때 (오류)</h2>
+    <p class="why">바뀐 뒤에는 바탕이 연한 빨강으로 바뀌고, 오류 문구는 지금과 같습니다. 글자를 치기 시작하면 오류가 사라지고 회색 바탕으로 돌아갑니다.</p>
+    <div class="pair">
+      <div><span class="col-label">지금</span>
+        <div class="dlg"><div class="dlg-head"><p class="dlg-title">선물함 만들기</p><p class="prog">1/3 이름 · 다음: 받을 인원</p><div class="bar"><i style="width:33%"></i></div></div>
+          <div class="dlg-body"><label class="lab">선물함 이름</label><div class="input is-err"></div>
+            <p class="ferr"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg><span>선물함 이름을 입력해 주세요.</span></p></div>
+          <div class="dlg-foot"><button class="btn">다음</button></div></div>
+      </div>
+      <div><span class="col-label after">바뀐 뒤</span>
+        <div class="dlg"><div class="dlg-head"><p class="dlg-title">선물함 만들기</p><p class="prog">1/3 이름 · 다음: 받을 인원</p><div class="bar"><i style="width:33%"></i></div></div>
+          <div class="dlg-body"><label class="lab" for="a3">선물함 이름</label>
+            <div class="ul is-err" data-err><span class="mirror"></span><input id="a3" type="text" maxlength="30" autocomplete="off"></div>
+            <p class="ferr" data-errline><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg><span>선물함 이름을 입력해 주세요.</span></p></div>
+          <div class="dlg-foot"><button class="btn">다음</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 받을 인원 -->
+  <section class="item">
+    <h2>4. 2단계 받을 인원 칸</h2>
+    <p class="why">같은 모양을 숫자 칸에도 씁니다. 「명」은 숫자 바로 뒤에 붙어서 「12명」으로 읽힙니다.</p>
+    <div class="pair">
+      <div><span class="col-label">지금</span>
+        <div class="dlg"><div class="dlg-head"><p class="dlg-title">선물함 만들기</p><p class="prog">2/3 받을 인원 · 다음: 공개 범위</p><div class="bar"><i style="width:66%"></i></div></div>
+          <div class="dlg-body"><label class="lab">받을 인원</label><div class="suffix"><input class="input is-focus" value="12"><span class="unit">명</span></div><p class="hint">1~100명</p></div>
+          <div class="dlg-foot"><button class="btn btn--line">이전</button><button class="btn">다음</button></div></div>
+      </div>
+      <div><span class="col-label after">바뀐 뒤</span>
+        <div class="dlg"><div class="dlg-head"><p class="dlg-title">선물함 만들기</p><p class="prog">2/3 받을 인원 · 다음: 공개 범위</p><div class="bar"><i style="width:66%"></i></div></div>
+          <div class="dlg-body"><label class="lab" for="a4">받을 인원</label>
+            <div class="ul num"><span class="mirror"></span><input id="a4" type="number" inputmode="numeric" min="1" max="100" value="12"><span class="unit">명</span></div><p class="hint">1~100명</p></div>
+          <div class="dlg-foot"><button class="btn btn--line">이전</button><button class="btn">다음</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 휴대폰 -->
+  <section class="item">
+    <h2>5. 휴대폰 폭 (390)</h2>
+    <p class="why">긴 이름을 넣어도 밑줄은 칸 안쪽까지만 늘어납니다.</p>
+    <div class="pair">
+      <div class="phone"><span class="col-label">지금</span>
+        <div class="dlg"><div class="dlg-head"><p class="dlg-title">선물함 만들기</p><p class="prog">1/3 이름 · 다음: 받을 인원</p><div class="bar"><i style="width:33%"></i></div></div>
+          <div class="dlg-body"><label class="lab">선물함 이름</label><input class="input is-focus" value="생일 기념 팬 선물함"></div>
+          <div class="dlg-foot"><button class="btn" style="width:100%">다음</button></div></div>
+      </div>
+      <div class="phone"><span class="col-label after">바뀐 뒤</span>
+        <div class="dlg"><div class="dlg-head"><p class="dlg-title">선물함 만들기</p><p class="prog">1/3 이름 · 다음: 받을 인원</p><div class="bar"><i style="width:33%"></i></div></div>
+          <div class="dlg-body"><label class="lab" for="a5">선물함 이름</label>
+            <div class="ul"><span class="mirror"></span><input id="a5" type="text" maxlength="30" autocomplete="off" value="생일 기념 팬 선물함"></div></div>
+          <div class="dlg-foot"><button class="btn" style="width:100%">다음</button></div></div>
+      </div>
+    </div>
+  </section>
+</div>
+<script>
+  // 입력값을 보이지 않는 복사본에 그대로 옮긴다 — 복사본 폭이 곧 밑줄 폭.
+  // 입력칸이 가로로 밀려 스크롤되면 복사본도 같은 만큼 민다.
+  document.querySelectorAll('.ul').forEach(function (box) {
+    var input = box.querySelector('input');
+    var mirror = box.querySelector('.mirror');
+    function sync() {
+      mirror.textContent = input.value;
+      if (box.hasAttribute('data-err') && input.value) {
+        box.classList.remove('is-err');
+        var line = box.parentElement.querySelector('[data-errline]');
+        if (line) line.remove();
+      }
+      // 숫자 칸은 입력칸 폭을 글자 폭에 맞춰 「명」이 숫자 바로 뒤에 오게 한다
+      if (box.classList.contains('num')) input.style.width = (mirror.offsetWidth || 12) + 4 + 'px';
+    }
+    input.addEventListener('input', sync);
+    sync();
+  });
+  document.getElementById('a1').focus();
+</script>
+</body>
+</html>
