@@ -166,7 +166,8 @@ describe("d113 D-2: 지금 보낼 수 없는 크리에이터(이사 중·쉬는 
     expect(radio(LIMIT)?.disabled).toBe(true);
     expect(radio(NARU)?.disabled).toBe(true);
     expect(radio(MOVE)?.disabled).toBe(true);
-    expect(card(MOVE)?.textContent).toContain("모아의 방 · 채널 변경 확인 중 · 선물 받기 중단");
+    expect(card(MOVE)?.textContent).toContain("치지직 · 채널 변경 확인 중 · 선물 받기 중단"); // INV-CN4: 채널 이름 대신 플랫폼
+    expect(card(MOVE)?.textContent).not.toContain("모아의 방");
     expect(card(MOVE)?.className).not.toBe(card(MOMO)?.className);
     expect(card(LIMIT)?.className).toBe(card(MOVE)?.className);
     expect(card(NARU)?.className).toBe(card(MOVE)?.className);

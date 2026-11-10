@@ -148,10 +148,11 @@ describe("카드 미리보기 — 찾기 화면 카드 그대로(design-rules 17
     expect(aside.querySelector("#pv-t")?.nextElementSibling?.hasAttribute("data-card-preview")).toBe(true);
   });
 
-  it("INV-E13: 채널 이름·소개 · 아래 띠에 누를 수 없는 「팔로우」 모양(평균 승인 시간 없음), 링크 없음", async () => {
+  it("INV-E13·INV-CN4: 소개(채널 이름 없음) · 아래 띠에 누를 수 없는 「팔로우」 모양(평균 승인 시간 없음), 링크 없음", async () => {
     await render();
     const card = host.querySelector<HTMLElement>("[data-card-preview]")!;
-    expect(card.textContent).toContain("하루의 놀이터 · 게임 방송을 해요.");
+    expect(card.textContent).toContain("게임 방송을 해요.");
+    expect(card.textContent).not.toContain("하루의 놀이터");
     expect(card.textContent).toContain("치지직");
     const foot = card.querySelector("[data-card-foot]");
     expect(foot?.textContent).toContain("치지직");

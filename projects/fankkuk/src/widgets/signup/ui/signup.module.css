@@ -87,6 +87,8 @@
 .grp + .grp { margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--gray-200); }
 .grp-title { margin: 0 0 24px; font-family: var(--font); font-size: 16px; line-height: 1.5; font-weight: var(--fw-h3); }
 .opt { font-weight: 400; }
+/* 라벨 바로 아래·입력칸 위 설명(이름 통일 시안 name-merge-20261105) */
+.hint-top { margin: 0 0 8px; }
 .terms { display: grid; gap: 4px; }
 .row { display: flex; align-items: center; gap: 12px; }
 .row :global(.check) { flex: 1; min-width: 0; }

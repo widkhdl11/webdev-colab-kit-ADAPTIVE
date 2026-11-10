@@ -35,6 +35,7 @@ import s from "./verification-panel.module.css";
 // 남은 요청 횟수는 어디에도 보이지 않는다(INV-V15). 단계·뱃지·알림 문구는 entities 모델이 정하고 여기서는 그리기만 한다.
 // 거부·허용은 서버와 DB 가 다시 판정하고, 처리 뒤에는 화면을 다시 읽는다.
 
+// 「채널 이름」 줄 대신 「닉네임」 줄(state.name — 크리에이터 이름은 닉네임과 같다, creator-display-name INV-CN1·CN4). 이름은 대조하지 않는다(INV-V18).
 type Variant = "signup" | "account";
 type Note = { tone: "ok" | "error"; text: string } | null;
 
@@ -170,8 +171,8 @@ export function VerificationPanel({ variant, state, rows, loginId }: Props) {
         </div>
         <dl className={s.kv}>
           <div>
-            <dt>채널 이름</dt>
-            <dd>{state.channelTitle}</dd>
+            <dt>닉네임</dt>
+            <dd>{state.name}</dd>
           </div>
           <div>
             <dt>채널 주소</dt>
@@ -213,8 +214,8 @@ export function VerificationPanel({ variant, state, rows, loginId }: Props) {
         </div>
       </div>
       <div className={s.name}>
-        <span className={s.k}>채널 이름</span>
-        <strong>{state.channelTitle}</strong>
+        <span className={s.k}>닉네임</span>
+        <strong>{state.name}</strong>
       </div>
       {requestForm(false)}
     </div>
@@ -270,8 +271,8 @@ export function VerificationPanel({ variant, state, rows, loginId }: Props) {
     <div className={s.body}>
       {notice ? <ErrorBox>{notice}</ErrorBox> : null}
       <div className={s.name}>
-        <span className={s.k}>채널 이름</span>
-        <strong>{state.channelTitle}</strong>
+        <span className={s.k}>닉네임</span>
+        <strong>{state.name}</strong>
       </div>
       {requestForm(again)}
     </div>
@@ -299,8 +300,8 @@ export function VerificationPanel({ variant, state, rows, loginId }: Props) {
             </div>
             <dl className={s.kv}>
               <div>
-                <dt>채널 이름</dt>
-                <dd>{state.channelTitle}</dd>
+                <dt>닉네임</dt>
+                <dd>{state.name}</dd>
               </div>
               {state.channelUrl ? (
                 <div>

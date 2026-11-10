@@ -50,7 +50,7 @@ export function MyFollowingPanel({
             <ul className={s.rows}>
               {list.map((c) => {
                 // 둘째 줄 — 크리에이터 카드와 같은 「채널 이름 · 소개」. 넘치면 한 줄 말줄임 — 이름 링크가 이 칸을 덮어 title 은 뜨지 않으니 전체는 크리에이터 페이지에서(design-rules 27절)
-                const intro = creatorLineText(c.channelTitle, c.intro);
+                const intro = creatorLineText(c.intro);
                 return (
                   <li key={c.id} className={s.row}>
                     <CreatorPhoto photoUrl={photos[c.id] ?? null} tone={c.faceTone} className={`face face--sm ${s.face}`} />

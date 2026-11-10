@@ -40,7 +40,7 @@ function LandingSearch({ id }: { id: string }) {
       <label className="sr-only" htmlFor={id}>
         크리에이터 검색
       </label>
-      <input id={id} type="search" name="q" placeholder="크리에이터 이름 또는 채널 이름" autoComplete="off" />
+      <input id={id} type="search" name="q" placeholder="크리에이터 이름" autoComplete="off" />
       <button className={s.searchGo} type="submit" aria-label="검색">
         <SearchGlyph />
         <span className={s.searchLabel}>검색</span>

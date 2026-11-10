@@ -64,7 +64,7 @@ function HeroSearch() {
       <label className="sr-only" htmlFor="hero-q">
         크리에이터 검색
       </label>
-      <input id="hero-q" type="search" name="q" placeholder="크리에이터 이름 또는 채널 이름 검색" autoComplete="off" />
+      <input id="hero-q" type="search" name="q" placeholder="크리에이터 이름 검색" autoComplete="off" />
       <button className={l.searchGo} type="submit" aria-label="검색">
         <SearchGlyph />
         <span className={l.searchLabel}>검색</span>
@@ -311,7 +311,7 @@ export function CreatorCardsSlot({
         colors={c.colors}
         faceTone={c.faceTone}
       />
-      <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
+      <CreatorCardLine intro={c.intro} />
       <CreatorCardFoot tags={c.tags} />
       {/* 팔로우 버튼을 주는 화면(로그인한 홈)만 버튼 줄 — 한 줄의 카드가 모두 같은 화면이라 높이가 같다 */}
       {action ? (

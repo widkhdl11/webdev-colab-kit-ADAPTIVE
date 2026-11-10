@@ -112,7 +112,7 @@ export function CreatorSearchPage({
           </h1>
         </div>
         <p className="ph-desc">
-          크리에이터 이름 또는 채널 이름으로 검색해 주세요.
+          크리에이터 이름으로 검색해 주세요.
         </p>
         <p className={s.verify}>
           <CheckIcon />
@@ -131,7 +131,7 @@ export function CreatorSearchPage({
         }}
       >
         <label className="sr-only" htmlFor={inputId}>
-          크리에이터 이름 또는 채널 이름
+          크리에이터 이름
         </label>
         <input
           id={inputId}
@@ -189,7 +189,7 @@ export function CreatorSearchPage({
                   colors={c.colors}
                   faceTone={c.faceTone}
                 />
-                <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
+                <CreatorCardLine intro={c.intro} />
                 <CreatorCardFoot tags={c.tags} />
                 {/* 본인은 버튼 줄 자리에 「내 페이지」 태그, 운영자(hidden)는 줄 없음 — 운영자 화면은 모든 카드에 줄이 없어 높이가 같다 */}
                 {own ? (

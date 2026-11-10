@@ -145,11 +145,11 @@ describe("크리에이터 카드 v28 — 사진 왼쪽 + 이름 줄·뱃지 줄,
     expect(row.querySelector("a, button")).toBeNull();
   });
 
-  it("「채널 이름 · 소개」가 둘 다 없어도 줄은 남는다", () => {
-    const empty = dom(renderToStaticMarkup(<CreatorCardLine channelTitle=" " intro="" />));
+  it("INV-CN4: 둘째 줄은 「소개」만 — 채널 이름은 보이지 않고, 소개가 없어도 줄은 남는다", () => {
+    const empty = dom(renderToStaticMarkup(<CreatorCardLine intro="" />));
     expect(empty.querySelector("p")?.textContent).toBe("");
-    const full = dom(renderToStaticMarkup(<CreatorCardLine channelTitle="새벽달의 밤하늘" intro="수다 방송을 해요." />));
-    expect(full.querySelector("p")?.textContent).toBe("새벽달의 밤하늘 · 수다 방송을 해요.");
+    const full = dom(renderToStaticMarkup(<CreatorCardLine intro="수다 방송을 해요." />));
+    expect(full.querySelector("p")?.textContent).toBe("수다 방송을 해요.");
   });
 
   it("칩이 없어도 칩 줄은 남는다 · 재기 전에는 모든 칩을 그린다", () => {

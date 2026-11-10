@@ -50,7 +50,7 @@ async function render(patch: Partial<CreatorProfileEditProps> = {}) {
 }
 
 describe("프로필 수정 — 저장은 예전 두 경로 그대로 (INV-A9)", () => {
-  it("INV-A9: 공개 이름·한 줄 소개·찾기 노출만 /api/creator/profile 로, 이어서 태그 — 팬덤 이름·색은 보내지 않는다(상세 설정의 칸을 덮어쓰지 않게)", async () => {
+  it("INV-A9·INV-CN2: 닉네임·한 줄 소개·찾기 노출만 /api/creator/profile 로, 이어서 태그 — 팬덤 이름·색은 보내지 않는다(상세 설정의 칸을 덮어쓰지 않게)", async () => {
     await render();
     fetchMock.mockImplementation(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
     const save = [...host.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent === "저장")!;
@@ -59,7 +59,7 @@ describe("프로필 수정 — 저장은 예전 두 경로 그대로 (INV-A9)", 
       await new Promise((r) => setTimeout(r, 0));
     });
     const calls = fetchMock.mock.calls.map(([url, init]) => [url, JSON.parse(String((init as RequestInit).body))]);
-    expect(calls[0]).toEqual(["/api/creator/profile", { name: "하루", intro: "느긋한 방송", searchable: false }]);
+    expect(calls[0]).toEqual(["/api/creator/profile", { nickname: "하루", intro: "느긋한 방송", searchable: false }]);
     expect(calls[1]?.[0]).toBe("/api/creator/tags");
     expect(host.querySelector("#pe-msg")?.textContent).toBe("저장되었습니다.");
   });

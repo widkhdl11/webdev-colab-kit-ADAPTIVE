@@ -209,7 +209,7 @@ export function FandomSection(p: FandomSectionProps) {
                 colors={{ personal: theme }}
                 faceTone={p.card.faceTone}
               />
-              <CreatorCardLine channelTitle={p.card.channelTitle} intro={p.card.intro} />
+              <CreatorCardLine intro={p.card.intro} />
               <CreatorCardFoot tags={p.card.tags} />
               {/* 처음 보는 팬에게 보이는 모양 — 「팔로우」 하나(누를 수 없는 모양) */}
               <CreatorCardActions creatorId={p.card.creatorId} colors={{ personal: theme }}>

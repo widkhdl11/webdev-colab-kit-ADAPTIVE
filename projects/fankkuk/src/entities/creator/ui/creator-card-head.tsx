@@ -15,7 +15,7 @@ import s from "./creator-card-head.module.css";
 // 위에서 아래로(줄 사이 8): 배너 2:1(배경사진, 없으면 테마 색 면 그대로 또는 파스텔 + 오른쪽 흐린 고양이)
 // → 사진 64(배너에 32 걸침, 왼쪽) + 오른쪽에 이름(600·한 줄 말줄임) 한 줄, 그 아래 팬덤 뱃지 한 줄(CreatorCardHead)
 //   — 한 줄에 나란히 두면 긴 이름이 뱃지를 「하..」까지 밀어내서 두 줄로 나눴다(2026-10-18 사용자 「A로」)
-// → 「채널 이름 · 소개」 최대 두 줄(CreatorCardLine)
+// → 「소개」 최대 두 줄(CreatorCardLine) — 채널 이름은 보이지 않는다(2026-11-10 이름 통일, creator-display-name INV-CN4, 시안 name-merge-20261105)
 // → 칩 줄(CreatorCardFoot): 플랫폼 칩이 카드 폭 전체(넘치면 +N). 평균 승인 시간은 카드에 없다(2026-10-18).
 // → 아래 색 띠(CreatorCardActions, 카드 맨 아래에 붙음 — 위 배너와 세트): 팔로우 안 함 = 「팔로우」 하나 / 팔로우 중 = 「선물 보내기」(넓은 주) · 「팔로우 취소」(좁은 보조). 본인은 띠에 「내 페이지」 태그(CreatorCardMineRow), 운영자는 띠 없음.
 // 줄마다 자리가 고정이다 — 소개·칩이 없어도 빈칸으로 남아 카드 높이가 같다.
@@ -74,16 +74,16 @@ export function CreatorCardHead({
   );
 }
 
-/** 「채널 이름 · 소개」 최대 두 줄 — 넘치면 둘째 줄 끝에서 말줄임. 전체 소개는 카드를 눌러 가는 크리에이터 페이지에서 본다
+/** 「소개」 최대 두 줄 — 넘치면 둘째 줄 끝에서 말줄임. 전체 소개는 카드를 눌러 가는 크리에이터 페이지에서 본다
  *  (카드 전체를 덮는 이름 링크 때문에 이 줄의 title 은 뜨지 않는다 — 글자는 다 들어 있어 화면 낭독기는 전체를 읽는다).
- *  둘 다 없어도 두 줄 자리는 남는다(카드 높이를 같게). */
-export function CreatorCardLine({ channelTitle, intro }: { channelTitle: string; intro: string }) {
-  return <p className={s.line}>{creatorLineText(channelTitle, intro)}</p>;
+ *  없어도 두 줄 자리는 남는다(카드 높이를 같게). */
+export function CreatorCardLine({ intro }: { intro: string }) {
+  return <p className={s.line}>{creatorLineText(intro)}</p>;
 }
 
-/** 「채널 이름 · 소개」 글자 — 카드와 팔로우 목록 줄이 같은 규칙으로 만든다. 둘 다 없으면 빈 글자 */
-export function creatorLineText(channelTitle: string, intro: string): string {
-  return [channelTitle.trim(), intro.trim()].filter(Boolean).join(" · ");
+/** 「소개」 글자 — 카드와 팔로우 목록 줄이 같은 규칙으로 만든다. 없으면 빈 글자 */
+export function creatorLineText(intro: string): string {
+  return intro.trim();
 }
 
 /** 칩 줄 — 플랫폼 칩이 카드 폭을 다 쓰고, 넘치면 「+N」. 칩이 없어도 줄 자리는 남는다.

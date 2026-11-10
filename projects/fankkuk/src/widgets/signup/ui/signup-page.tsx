@@ -24,7 +24,6 @@ import {
 import {
   checkDetails,
   checkField,
-  CREATOR_PROFILE_LIMITS,
   type DetailsField,
   type LiveField,
   type LiveValues,
@@ -68,8 +67,6 @@ const LIVE_IDS: Partial<Record<LiveField, string>> = {
   email: "mail",
   password: "pw",
   passwordConfirm: "pw2",
-  creatorName: "cr-name",
-  channelTitle: "cr-channel",
 };
 const LIVE_FIELDS = Object.keys(LIVE_IDS) as LiveField[];
 const isLiveField = (x: ErrorField): x is LiveField => Object.hasOwn(LIVE_IDS, x);
@@ -124,8 +121,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [phone, setPhone] = useState("");
   // 크리에이터로 가입할 때만 받는 기본 공개 정보(creator-verification INV-V1). 채널 주소는 가입 뒤 본인 확인 때 받는다.
-  const [creatorName, setCreatorName] = useState("");
-  const [channelTitle, setChannelTitle] = useState("");
+  // 크리에이터 이름은 닉네임 하나다 — 공개 이름·채널 이름 칸은 없다(creator-display-name INV-CN2·CN4, 시안 name-merge-20261105)
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [customTag, setCustomTag] = useState("");
   // 팬덤 이름(추가 요청 3) — 선택. 비우면 없음
@@ -196,8 +192,6 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     password,
     passwordConfirm,
     phone,
-    creatorName,
-    channelTitle,
   };
   const touch = (field: LiveField) => setTouched((t) => (t[field] ? t : { ...t, [field]: true }));
   // 칸을 고치면 그 칸에 걸려 있던 「다음」·서버 오류를 내리고 실시간 안내로 돌아간다
@@ -263,13 +257,11 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     const t = tagSelection();
     return t.ok
       ? {
-          name: creatorName,
-          channelTitle,
           tagIds: t.tagIds,
           customTag: t.customTag ?? "",
           fanName,
         }
-      : { name: creatorName, channelTitle, tagIds, customTag, fanName };
+      : { tagIds, customTag, fanName };
   };
   const details = (): { field: DetailsField; message: string } | null => {
     const problem = checkDetails({
@@ -577,6 +569,13 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     <label className="label" htmlFor={f("nick")}>
                       닉네임
                     </label>
+                    {role === "creator" ? (
+                      <p className={`hint ${s["hint-top"]}`} id={f("nick-t")}>
+                        {"팬에게 보이는 이름입니다."}
+                        <br />
+                        {"가입 후 ‘프로필 수정’에서 변경할 수 있습니다."}
+                      </p>
+                    ) : null}
                     <input
                       className="field"
                       id={f("nick")}
@@ -589,14 +588,20 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                         edited("nickname");
                       }}
                       onBlur={() => touch("nickname")}
-                      {...liveAttrs("nickname", f("nick-h"))}
+                      {...liveAttrs("nickname", role === "creator" ? `${f("nick-t")} ${f("nick-h")}` : f("nick-h"))}
                     />
                     {liveLine("nickname")}
-                    <p className="hint" id={f("nick-h")}>
-                      {"팬꾹에서 사용할 이름 · 최대 12자 · 중복 사용 불가"}
-                      <br />
-                      {"가입 후 ‘프로필 수정’에서 변경할 수 있습니다."}
-                    </p>
+                    {role === "creator" ? (
+                      <p className="hint" id={f("nick-h")}>
+                        {"최대 12자 · 중복 사용 불가"}
+                      </p>
+                    ) : (
+                      <p className="hint" id={f("nick-h")}>
+                        {"팬꾹에서 사용할 이름 · 최대 12자 · 중복 사용 불가"}
+                        <br />
+                        {"가입 후 ‘프로필 수정’에서 변경할 수 있습니다."}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="label" htmlFor={f("mail")}>
@@ -716,56 +721,12 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                   <h3 className={s["grp-title"]}>채널 정보</h3>
                   <div className="form">
                     <div>
-                      <label className="label" htmlFor={f("cr-name")}>
-                        공개 이름
-                      </label>
-                      <input
-                        className="field"
-                        id={f("cr-name")}
-                        type="text"
-                        autoComplete="off"
-                        maxLength={CREATOR_PROFILE_LIMITS.name}
-                        value={creatorName}
-                        onChange={(e) => {
-                          setCreatorName(e.target.value);
-                          edited("creatorName");
-                        }}
-                        onBlur={() => touch("creatorName")}
-                        {...liveAttrs("creatorName", f("cr-name-h"))}
-                      />
-                      {liveLine("creatorName")}
-                      <p className="hint" id={f("cr-name-h")}>
-                        {`팬에게 표시되는 이름 · 최대 ${CREATOR_PROFILE_LIMITS.name}자`}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="label" htmlFor={f("cr-channel")}>
-                        채널 이름
-                      </label>
-                      <input
-                        className="field"
-                        id={f("cr-channel")}
-                        type="text"
-                        autoComplete="off"
-                        placeholder="예: 꿀단지TV"
-                        maxLength={CREATOR_PROFILE_LIMITS.channelTitle}
-                        value={channelTitle}
-                        onChange={(e) => {
-                          setChannelTitle(e.target.value);
-                          edited("channelTitle");
-                        }}
-                        onBlur={() => touch("channelTitle")}
-                        {...liveAttrs("channelTitle", f("cr-channel-h"))}
-                      />
-                      {liveLine("channelTitle")}
-                      <p className="hint" id={f("cr-channel-h")}>
-                        채널 주소는 4단계에서 입력합니다.
-                      </p>
-                    </div>
-                    <div>
                       <label className="label" htmlFor={f("cr-fan")}>
                         팬덤 이름 <span className={`t-meta ${s.opt}`}>(선택)</span>
                       </label>
+                      <p className={`hint ${s["hint-top"]}`} id={f("cr-fan-t")}>
+                        {"팬을 부르는 이름입니다. 가입 후 ‘상세 설정 > 팬덤’에서 변경할 수 있습니다."}
+                      </p>
                       <input
                         className="field"
                         id={f("cr-fan")}
@@ -778,13 +739,11 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                           setFanName(e.target.value);
                           setError((x) => (x?.field === "fanName" ? null : x));
                         }}
-                        aria-describedby={error?.field === "fanName" ? `${f("cr-fan-h")} ${f("error")}` : f("cr-fan-h")}
+                        aria-describedby={error?.field === "fanName" ? `${f("cr-fan-t")} ${f("cr-fan-h")} ${f("error")}` : `${f("cr-fan-t")} ${f("cr-fan-h")}`}
                         aria-invalid={error?.field === "fanName" ? true : undefined}
                       />
                       <p className="hint" id={f("cr-fan-h")}>
-                        {`팬을 부르는 이름 · 최대 ${FAN_NAME_MAX}자 · 선택 입력`}
-                        <br />
-                        {"가입 후 ‘상세 설정 > 팬덤’에서 변경할 수 있습니다."}
+                        {`최대 ${FAN_NAME_MAX}자 · 선택 입력`}
                       </p>
                     </div>
                     <TagPicker

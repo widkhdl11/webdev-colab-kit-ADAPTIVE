@@ -8,22 +8,23 @@ import { resolveTagSelection, type TagOption } from "@/entities/creator/model/cr
 import { creatorBackgroundUrl, creatorPhotoUrl, nameInitial } from "@/entities/creator/model/link-images";
 import { CreatorHead } from "@/entities/creator/ui/creator-head";
 import { CREATOR_HOME } from "@/entities/session/model/home-path";
+import { NICKNAME_MAX } from "@/entities/session/model/nickname-rule";
 import { deleteCreatorImage, sendCreatorImage } from "@/features/creator-photo/api/send-creator-image";
 import { deleteCreatorPhoto, sendCreatorPhoto } from "@/features/creator-photo/api/send-creator-photo";
 import { ImageField, type ImageSendResult } from "@/features/creator-photo/ui/image-field";
 import { sendCreatorProfile } from "@/features/creator-settings-save/api/send-creator-settings";
-import { clipChars, INTRO_MAX, oneLine, PUBLIC_NAME_MAX } from "@/features/creator-settings-save/model/creator-settings-input";
+import { clipChars, INTRO_MAX, oneLine } from "@/features/creator-settings-save/model/creator-settings-input";
 import { sendCreatorTags } from "@/features/creator-tags-edit/api/send-creator-tags";
 import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { charCount } from "@/shared/lib/validation/char-count";
 import s from "./creator-profile-edit.module.css";
 
 // 크리에이터 프로필 수정 (design-rules 27절 「4파트 나머지」, 시안 docs/design/mockups/site/pilot-2026-10-22/creator-profile.html, 틀 1200).
-// 상세 설정 「팬덤」과 같은 입력 + 미리보기: 왼쪽 「사진」 판 → 「소개」 판, 오른쪽 프로필 머리 미리보기(배경 띠·사진·공개 이름·팬덤 뱃지·소개 — 입력하는 대로 바뀐다).
+// 상세 설정 「팬덤」과 같은 입력 + 미리보기: 왼쪽 「사진」 판 → 「소개」 판, 오른쪽 프로필 머리 미리보기(배경 띠·사진·닉네임·팬덤 뱃지·소개 — 입력하는 대로 바뀐다).
 // 예전에 「내 팬꾹 꾸미기」(사진·배경사진·공개 이름·한 줄 소개)와 「주소와 설정」(태그·찾기 노출)에 흩어져 있던 칸을 이 화면에 모았다.
 // 저장 경로는 그대로다 — 새 저장 규칙은 없다:
 // - 사진·배경사진은 고르는 즉시 서버로 보낸다(creator-link INV-E9 — 서버가 열어 보고 사진 정보를 지운 뒤 다시 굽는다).
-// - 공개 이름·한 줄 소개·찾기 노출은 「저장」으로 /api/creator/profile 에(my-account INV-A9 — 보낸 칸만 바뀐다), 이어서 태그를 /api/creator/tags 에(creator-tags INV-T3).
+// - 닉네임(= 크리에이터 이름, 2026-11-10 공개 이름 칸을 대신함)·한 줄 소개·찾기 노출은 「저장」으로 /api/creator/profile 에(my-account INV-A9 — 보낸 칸만 바뀐다), 이어서 태그를 /api/creator/tags 에(creator-tags INV-T3).
 
 export type CreatorProfileEditProps = {
   name: string;
@@ -71,7 +72,7 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
     setTagsBad(!tags.ok);
     if (!tags.ok) return setMsg({ ok: false, text: tags.message });
     setSaving(true);
-    const r = await sendCreatorProfile({ name, intro, searchable: visible });
+    const r = await sendCreatorProfile({ nickname: name, intro, searchable: visible });
     const t = r.kind === "ok" ? await sendCreatorTags({ tagIds: tags.tagIds, customTag: tags.customTag }) : r;
     setSaving(false);
     if (r.kind === "login" || t.kind === "login") return toLogin();
@@ -79,11 +80,11 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
     if (t.kind === "failed") {
       setTagsBad(true);
       setMsg({ ok: false, text: t.message });
-      router.refresh(); // 공개 이름은 저장됐다 — 사이드바 이름도 새로
+      router.refresh(); // 닉네임은 저장됐다 — 사이드바 이름도 새로
       return;
     }
     setMsg({ ok: true, text: "저장되었습니다." });
-    router.refresh(); // 사이드바 이름 메뉴도 새 공개 이름으로
+    router.refresh(); // 사이드바 이름 메뉴도 새 닉네임으로
   };
 
   return (
@@ -154,7 +155,7 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
                 소개
               </h2>
               <label className={s.subT} htmlFor="pe-name">
-                공개 이름
+                닉네임
               </label>
               <input
                 className={`field ${s.w360}`}
@@ -163,11 +164,12 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
                 value={name}
                 autoComplete="off"
                 // 글자 수는 저장 검사와 같은 셈(코드 포인트)으로 막는다 — maxLength 는 이모지를 두 글자로 센다
-                onChange={(e) => setName(clipChars(e.currentTarget.value, PUBLIC_NAME_MAX))}
+                // 크리에이터 이름은 닉네임이다(creator-display-name INV-CN2) — 저장하면 닉네임이 바뀌고 이름이 따라 바뀐다
+                onChange={(e) => setName(clipChars(e.currentTarget.value, NICKNAME_MAX))}
                 aria-describedby="pe-name-h"
               />
               <p className={s.hint} id="pe-name-h">
-                팬에게 표시되는 이름
+                {`팬에게 표시되는 이름 · 최대 ${NICKNAME_MAX}자`}
               </p>
             </div>
             <div className={s.sub}>

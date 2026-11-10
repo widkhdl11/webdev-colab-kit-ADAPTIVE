@@ -65,7 +65,7 @@ const count = () => host.querySelector("[data-follow-count]")?.textContent;
 const panel = () => host.querySelector('aside[aria-label="팔로우 요약"]');
 
 describe("팔로우한 크리에이터 — 줄 목록", () => {
-  it("한 사람이 한 줄 — 얼굴 · 이름 링크(전체 이름 title) · 채널 칩 · 「채널 이름 · 소개」 · 「선물 보내기」 · 「팔로우 취소」(이름이 붙은 아이콘 버튼)", () => {
+  it("한 사람이 한 줄 — 얼굴 · 이름 링크(전체 이름 title) · 채널 칩 · 「소개」(채널 이름 없음, INV-CN4) · 「선물 보내기」 · 「팔로우 취소」(이름이 붙은 아이콘 버튼)", () => {
     act(() => root.render(<MyFollowingPanel creators={[base, second]} photos={{ [base.id]: "https://example.test/p.webp" }} />));
     expect(rows()).toHaveLength(2);
     const [first, two] = rows();
@@ -81,7 +81,8 @@ describe("팔로우한 크리에이터 — 줄 목록", () => {
     expect(name?.getAttribute("title")).toBe("하루");
     // 채널 칩은 이름과 같은 줄(이름 링크의 형제)
     expect(name?.parentElement?.querySelector(".ctag")?.textContent).toBe("치지직");
-    expect(first!.textContent).toContain("하루의 놀이 · 게임 방송을 해요.");
+    expect(first!.textContent).toContain("게임 방송을 해요.");
+    expect(first!.textContent).not.toContain("하루의 놀이");
 
     const gift = first!.querySelector<HTMLAnchorElement>('[data-card-btn="main"]');
     expect(gift?.textContent).toBe("선물 보내기");

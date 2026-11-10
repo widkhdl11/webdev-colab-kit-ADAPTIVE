@@ -40,7 +40,7 @@ export type ReturnAddressInput = { accountId: string; sealingKeyPem: string | nu
 
 const RETURN_ADDRESS_MISSING = "반송 주소를 입력해 주세요.";
 
-/** 고를 수 있는 크리에이터 한 명. 소개 칸(태그·채널 이름·로마자 이름)이 없으면 목록 한 줄에 플랫폼 이름만 보인다. */
+/** 고를 수 있는 크리에이터 한 명. 소개 칸(태그·로마자 이름)이 없으면 목록 한 줄에 플랫폼 이름만 보인다. */
 export type CreatorOption = Pick<CreatorCard, "id" | "name" | "platform" | "approvalMinutes"> &
   Partial<Pick<CreatorCard, "tags" | "channelTitle" | "alias" | "faceTone" | "following" | "handle">> & {
     /** 채널 이사 중(creator-verification INV-V12) — 찾기에는 나오지만 지금은 선물을 받지 않는다 */
@@ -353,7 +353,7 @@ export function RegisterForm({
     if (hasCountError) void trigger(["smallCount", "mediumCount", "largeCount"]);
   };
 
-  // 크리에이터 찾기 화면과 같은 검색 규칙(이름·로마자 이름·태그·채널 이름·플랫폼)
+  // 크리에이터 찾기 화면과 같은 검색 규칙(이름·로마자 이름·태그·플랫폼)
   const matches = creators.filter((c) => matchesCreatorQuery(c, query));
   // 검색하지 않을 때는 앞의 pickLimit 명만(미리 고른 사람·최근에 선물한 사람이 앞에 온다). 고른 사람은 접어도 보이게 남긴다.
   const searching = query.trim() !== "";
@@ -534,7 +534,7 @@ tierCountText(summary.counts) || "없음";
             className="field"
             id="pick-q"
             type="search"
-            placeholder="이름 또는 채널 이름 검색"
+            placeholder="이름 검색"
             autoComplete="off"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -563,7 +563,8 @@ tierCountText(summary.counts) || "없음";
                   : reason === "resting"
                     ? restingStopText(c.receiving?.resumeOn ?? null, today)
                     : approvalTimeText(c.approvalMinutes);
-              const meta = reason === "limit" ? limitReachedMessage(today) : [c.channelTitle ?? c.platform, second].filter(Boolean).join(" · ");
+              // 채널 이름 대신 플랫폼(creator-display-name INV-CN4)
+              const meta = reason === "limit" ? limitReachedMessage(today) : [c.platform, second].filter(Boolean).join(" · ");
               return (
                 <li key={c.id} hidden={!visible.includes(c)}>
                   <label className={`${f.pick} ${stopped ? f.stop : ""}`}>

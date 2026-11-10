@@ -31,8 +31,9 @@ import a from "@/shared/ui/admin.module.css";
 import c from "./creators-panel.module.css";
 
 // 관리자 「크리에이터 확인」 본문 (creator-verification INV-V5·V6·V9·V11·V13·V15, admin-console INV-K10·K8, 시안 admin/creators.html).
-// 확인 대기 표 — 채널 이름·찾을 링크(요청 때의 팬꾹 링크)·채널 열기·승인·반려(INV-V18·V19), 끝난 요청(횟수 풀기). 사람은 닉네임·아이디로만(INV-K8).
-// 2026-11-02 팬꾹 링크 게시 확인(UX 명세 admin-creators.md, 시안 channel-link-verify-20261102/admin.html): 확인 대기(채널 이름·찾을 링크) →
+// 2026-11-10 이름 통일(creator-display-name INV-CN4): 확인 대기 표에 「채널 이름」 열이 없다 — 이름은 대조하지 않고 링크만 본다(INV-V18).
+// 확인 대기 표 — 찾을 링크(요청 때의 팬꾹 링크)·채널 열기·승인·반려(INV-V18·V19), 끝난 요청(횟수 풀기). 사람은 닉네임·아이디로만(INV-K8).
+// 2026-11-02 팬꾹 링크 게시 확인(UX 명세 admin-creators.md, 시안 channel-link-verify-20261102/admin.html): 확인 대기(찾을 링크) →
 // 재확인(지금 아이디로 찾을 링크·오른 이유, 링크 있음·없음) → 유예 중(유예 끝 날·「다시 확인 요청됨」, 링크 있음)(INV-V20). 코드 받음 표·인증 코드 칸은 없다.
 // 「채널 열기」는 서버가 채널 키로 다시 만든 주소만 연다(INV-V2) — 크리에이터가 적은 문자열이 아니다.
 
@@ -122,7 +123,7 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
             <h2 id="h-cv-posted" tabIndex={-1}>
               확인 대기 <span>{posted.length}건</span>
             </h2>
-            <span>채널 이름이 같은지, 소개·프로필 링크에 찾을 링크가 걸려 있는지 확인해 주세요</span>
+            <span>채널의 소개·프로필 링크에 찾을 링크가 걸려 있는지 확인해 주세요</span>
           </div>
           <div className={a.tblWrap}>
             <table className={a.tbl} style={{ minWidth: 1040 }}>
@@ -132,7 +133,6 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
                   <th scope="col">닉네임</th>
                   <th scope="col">휴대폰</th>
                   <th scope="col">채널</th>
-                  <th scope="col">채널 이름</th>
                   <th scope="col">찾을 링크</th>
                   <th scope="col">요청 시각</th>
                   <th scope="col">쓴 횟수</th>
@@ -144,7 +144,7 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
               <tbody>
                 {posted.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className={a.empty}>
+                    <td colSpan={7} className={a.empty}>
                       확인을 기다리는 신청이 없어요.
                     </td>
                   </tr>
@@ -157,9 +157,6 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
                       {phoneOf(v.loginId, v.creatorName ?? v.nickname)}
                       <td>
                         <Channel platform={v.platform} url={v.channelUrl} name={v.creatorName ?? v.nickname} />
-                      </td>
-                      <td>
-                        <b>{v.channelTitle ?? "—"}</b>
                       </td>
                       <td className={`${a.mono} ${c.findlink}`}>{v.linkHandle ? giftLinkText(v.linkHandle) : "—"}</td>
                       <td className={`${a.mono} ${a.nowrap}`}>{v.postedAt ? formatStamp(v.postedAt) : "—"}</td>
@@ -321,7 +318,8 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
                           ) : null}
                         </td>
                         <td>
-                          {c.channel ? <span className={a.tag}>{c.channel}</span> : null} {c.channelTitle}
+                          {/* 채널 이름은 보이지 않는다(creator-display-name INV-CN4) */}
+                          {c.channel ? <span className={a.tag}>{c.channel}</span> : null}
                         </td>
                         <td>{last?.actorNickname ?? <span className={a.faint}>기록 없음</span>}</td>
                         <td className={`${a.mono} ${a.nowrap}`}>{last ? formatStamp(last.at) : <span className={a.faint}>—</span>}</td>
@@ -501,12 +499,12 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
 
         <section aria-labelledby="h-creators-names">
           <div className={a.sectionH}>
-            <h2 id="h-creators-names">공개 이름 바꾼 기록</h2>
+            <h2 id="h-creators-names">닉네임 바꾼 기록</h2>
             <span>크리에이터가 직접 바꿔요 · 채널은 승인으로만 바뀌어요</span>
           </div>
           <div className={a.tblWrap}>
             <table className={a.tbl} style={{ minWidth: 640 }}>
-              <caption className="sr-only">크리에이터 공개 이름 바꾼 기록 — 언제·전·후</caption>
+              <caption className="sr-only">크리에이터 닉네임 바꾼 기록 — 언제·전·후</caption>
               <thead>
                 <tr>
                   <th scope="col">시각</th>
@@ -519,7 +517,7 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
                 {nameChanges.length === 0 ? (
                   <tr>
                     <td colSpan={4} className={a.empty}>
-                      아직 공개 이름을 바꾼 크리에이터가 없어요.
+                      아직 닉네임을 바꾼 크리에이터가 없어요.
                     </td>
                   </tr>
                 ) : (
