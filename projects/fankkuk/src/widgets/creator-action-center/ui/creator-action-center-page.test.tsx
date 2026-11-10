@@ -107,7 +107,7 @@ describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
     expect(host.querySelector("h1")?.textContent).toBe("지금 할 일4건");
     // v37 A안: 가장 급한 승인 요청은 하늘 판 하나(그 판이 곧 그 줄), 나머지 구간은 머리에 「N건」
     const panels = [...host.querySelectorAll("section")].map((p) => `${p.querySelector("h2")?.textContent}:${p.hasAttribute("data-row") ? 1 : p.querySelectorAll("[data-row]").length}`);
-    expect(panels).toEqual(["받은 선물2건:2", "다온님의 선물 승인 요청:1", "보낸 선물1건:1"]);
+    expect(panels).toEqual(["받은 선물 2건:2", "다온님의 선물 승인 요청:1", "보낸 선물 1건:1"]);
     expect(rows().map((r) => r.querySelector("[data-title]")?.textContent)).toEqual([
       "별사탕님 선물 · 블루투스 기기 발견",
       "꿀단지님 선물 · 블루투스 기기 발견",
@@ -378,16 +378,16 @@ describe("승인 서명 연결 줄 (signup INV-U20 · approval-signature INV-S16
     const go = [...rows[0]!.querySelectorAll("a")].find((a) => a.textContent === "연결");
     expect(go?.getAttribute("href")).toBe("/creator/settings/signature");
     expect(host.querySelector(".ph-count")?.textContent).toBe("2건");
-    expect(host.querySelector("#ca-account")?.textContent).toBe("계정 설정1건");
+    expect(host.querySelector("#ca-account")?.textContent).toBe("계정 설정 1건");
     // 받은 선물 묶음은 선물만 센다
-    expect(host.querySelector("#ca-in")?.textContent).toBe("받은 선물1건");
+    expect(host.querySelector("#ca-in")?.textContent).toBe("받은 선물 1건");
     expect(host.querySelector("#ca-in")?.closest("section")?.textContent).not.toContain("카카오톡 인증 알림 연결");
   });
 
   it("(실패경로) 받은 선물이 0개면 「받은 선물」 묶음이 없다 — 연결 줄을 선물로 세지 않는다. 계정 설정 1, 전체 1", () => {
     render([{ kind: "signature_link" }]);
     expect(host.querySelector("#ca-in")).toBeNull();
-    expect(host.querySelector("#ca-account")?.textContent).toBe("계정 설정1건");
+    expect(host.querySelector("#ca-account")?.textContent).toBe("계정 설정 1건");
     expect(host.querySelector(".ph-count")?.textContent).toBe("1건");
   });
 

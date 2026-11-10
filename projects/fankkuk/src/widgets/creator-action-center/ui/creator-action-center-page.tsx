@@ -299,7 +299,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       {account.length > 0 ? (
         <section className={s.sec} aria-labelledby="ca-account">
           <h2 className={s.secH} id="ca-account">
-            계정 설정<small>{account.length}건</small>
+            계정 설정{" "}<small>{account.length}건</small>
           </h2>
           <ul className={`lrows ${s.rows}`}>{account.map(accountRow)}</ul>
         </section>
@@ -309,7 +309,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       {checks.length > 0 ? (
         <section className={s.sec} aria-labelledby="ca-in">
           <h2 className={s.secH} id="ca-in">
-            받은 선물<small>{checks.length}건</small>
+            받은 선물{" "}<small>{checks.length}건</small>
           </h2>
           <ul className={`lrows ${s.rows}`}>{checks.map(checkRow)}</ul>
         </section>
@@ -361,7 +361,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       {restApprovals.length > 0 ? (
         <section className={s.sec} aria-labelledby="ca-more">
           <h2 className={s.secH} id="ca-more">
-            남은 승인 요청<small>{restApprovals.length}건</small>
+            남은 승인 요청{" "}<small>{restApprovals.length}건</small>
           </h2>
           <ul className={s.acards}>{restApprovals.map(approvalCard)}</ul>
         </section>
@@ -370,7 +370,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       {sent.length > 0 ? (
         <section className={s.sec} aria-labelledby="ca-out">
           <h2 className={s.secH} id="ca-out">
-            보낸 선물<small>{sent.length}건</small>
+            보낸 선물{" "}<small>{sent.length}건</small>
           </h2>
           <ul className={`lrows ${s.rows}`}>{sent.map(sentRow)}</ul>
         </section>

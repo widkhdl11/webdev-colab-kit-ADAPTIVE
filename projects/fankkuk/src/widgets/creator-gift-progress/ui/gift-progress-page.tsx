@@ -203,7 +203,7 @@ export function GiftProgressPage({ progress, items, candidates, cancelTargets = 
       <section className={s.sec} aria-labelledby="gp-in">
         <div className={s.secbar}>
           <h2 id="gp-in">
-            받는 선물<small>{moving.length}건</small>
+            받는 선물{" "}<small>{moving.length}건</small>
           </h2>
           <Link href="/creator/boxes">받은 선물 전체 ›</Link>
         </div>
@@ -219,7 +219,7 @@ export function GiftProgressPage({ progress, items, candidates, cancelTargets = 
       <section className={s.sec} aria-labelledby="gp-out">
         <div className={s.secbar}>
           <h2 id="gp-out">
-            보내는 선물<small>{sentCount}건</small>
+            보내는 선물{" "}<small>{sentCount}건</small>
           </h2>
           <Link href="/creator/revgifts">보낸 내역 전체 ›</Link>
         </div>

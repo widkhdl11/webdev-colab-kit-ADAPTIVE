@@ -4,6 +4,7 @@ import Link from "next/link";
 import { channelStepDone, myVerificationPanel, type MyVerification, type MyVerificationState } from "@/entities/creator/model/creator-verification";
 import { CREATOR_HOME } from "@/entities/session/model/home-path";
 import { VerificationPanel } from "@/features/creator-verify/ui/verification-panel";
+import { KakaoDoneCard } from "./signup-kakao-step";
 import s from "./signup.module.css";
 
 // 크리에이터 가입 4단계 — 채널 확인(UX 명세 signup.md 「2026-10-29 단계 화면」 step 4 · 「2026-11-10 크리에이터 3단계 카카오톡 인증」, 시안 v43-signup/signup-4-channel).
@@ -15,7 +16,7 @@ import s from "./signup.module.css";
 // 「이전」은 두지 않는다 — 계정이 이미 있어 3단계로 돌아갈 곳이 없다.
 
 const STEPS = ["유형 선택", "정보 입력", "카카오톡 연결", "채널 확인"] as const;
-const STEP = 4;
+const STEP_PATH = "/signup/creator";
 
 function CheckIcon() {
   return (
@@ -25,16 +26,17 @@ function CheckIcon() {
   );
 }
 
-function StepNav() {
+/** step = 지금 단계, doneThrough = 이 번호까지 완료 표시(kakao_done 은 지금 단계 3 도 완료) */
+function StepNav({ step, doneThrough }: { step: 3 | 4; doneThrough: number }) {
   return (
     <nav className={s["steps-wrap"]} aria-label="가입 단계">
       <ol className={`${s.steps} ${s.many}`}>
         {STEPS.map((label, i) => {
           const k = i + 1;
-          const done = k < STEP;
+          const done = k <= doneThrough;
           return (
             <li key={label}>
-              <span className={done ? `${s.st} ${s["is-done"]} ${s["st-static"]}` : s.st} aria-current={k === STEP ? "step" : undefined}>
+              <span className={done ? `${s.st} ${s["is-done"]} ${s["st-static"]}` : s.st} aria-current={k === step ? "step" : undefined}>
                 <span className={s.dot} aria-hidden="true">
                   {done ? <CheckIcon /> : k}
                 </span>
@@ -48,11 +50,33 @@ function StepNav() {
   );
 }
 
-export type SignupCreatorStepsProps = {
-  verification: { state: MyVerificationState; rows: readonly MyVerification[]; apiPlatforms: readonly string[]; loginId?: string | null };
-};
+type Verification = { state: MyVerificationState; rows: readonly MyVerification[]; apiPlatforms: readonly string[]; loginId?: string | null };
 
-export function SignupCreatorSteps({ verification }: SignupCreatorStepsProps) {
+/** view: 「kakao-done」 = 3단계 서명 완료(?step=3, 가입 화면에서 계정을 만든 직후) · 「channel」 = 4단계 채널 확인 */
+export type SignupCreatorStepsProps = { view: "kakao-done" } | { view?: "channel"; verification: Verification };
+
+export function SignupCreatorSteps(props: SignupCreatorStepsProps) {
+  if (props.view === "kakao-done") {
+    return (
+      <main id="main">
+        <section className={s.page} aria-labelledby="signup-title">
+          <div className={`container auth ${s.box}`}>
+            <div className="head">
+              <h1 className="t-title" id="signup-title">
+                회원가입
+              </h1>
+            </div>
+            <StepNav step={3} doneThrough={3} />
+            <KakaoDoneCard doneHref={STEP_PATH} />
+          </div>
+        </section>
+      </main>
+    );
+  }
+  return <ChannelStep verification={props.verification} />;
+}
+
+function ChannelStep({ verification }: { verification: Verification }) {
   const done = channelStepDone(myVerificationPanel(verification.state, verification.rows).stage);
   return (
     <main id="main">
@@ -63,7 +87,7 @@ export function SignupCreatorSteps({ verification }: SignupCreatorStepsProps) {
               회원가입
             </h1>
           </div>
-          <StepNav />
+          <StepNav step={4} doneThrough={3} />
           <div className={`card ${s.chan}`}>
             <VerificationPanel variant="signup" state={verification.state} rows={verification.rows} loginId={verification.loginId ?? null} />
             <div className={[s["step-actions"], done ? s["no-prev"] : ""].filter(Boolean).join(" ")}>

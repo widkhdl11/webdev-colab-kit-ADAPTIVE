@@ -136,7 +136,7 @@ describe("INV-U19·U20: 크리에이터 3단계 화면", () => {
     await press();
     await settle();
     expect(complete).not.toHaveBeenCalled();
-    // 실패·기한 지남 — 3단계 빨간 오류 상자, 칸이 다시 열린다
+    // 실패·기한 지남 — 3단계 오류 상자(하늘 면), 칸이 다시 열린다
     const box = host.querySelector(".err[role='alert']")!;
     expect(box.textContent).toBe("카카오톡 인증이 완료되지 않았습니다. 다시 요청해 주세요.");
     expect([...host.querySelectorAll("input")].some((i) => i.readOnly)).toBe(false);

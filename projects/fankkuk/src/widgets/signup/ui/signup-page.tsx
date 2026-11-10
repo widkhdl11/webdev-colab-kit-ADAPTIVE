@@ -64,7 +64,7 @@ type ErrorField = DetailsField | "verification" | "form";
 type LiveMessage = { tone: AvailabilityTone; message: string };
 /** 3단계 진행 — idle: 받기 전 · sent: 받은 뒤 입력 중 · verified: 맞힘 */
 type PhonePhase = "idle" | "sent" | "verified";
-/** 휴대폰 칸 오류 — field: 칸 아래 줄(형식) · box: 빨간 상자(발송·한도) · exists: 빨간 상자 + 로그인(INV-U11) */
+/** 휴대폰 칸 오류 — field: 칸 아래 줄(형식) · box: 오류 상자(발송·한도) · exists: 오류 상자 + 로그인(INV-U11) */
 type PhoneProblem = { kind: "field" | "box" | "exists"; message: string };
 
 /** 칸별 안내가 붙는 칸(2단계) → 입력 요소 id 의 꼬리. 「다음」에서 막히면 이 칸으로 포커스를 보낸다. */
@@ -421,8 +421,10 @@ export function SignupPage({ tagOptions, sealingKeyPem = null }: { tagOptions: r
         setAccountMade(true);
         // 3단계를 지났다 — 단계 줄 1~3 체크(UX 명세 kakao_done)
         setReached((n) => Math.max(n, LAST + 1));
-        router.refresh();
-        return { kind: "done" };
+        // 완료 화면은 로그인된 가입 라우트에서 그린다 — 머리글이 로그인 상태로 그려지고, 이 라우트(/signup)를 다시 그리다
+        // 「로그인한 사람은 첫 화면으로」에 걸려 4단계를 건너뛰는 일이 없다(router.refresh 를 하지 않는다)
+        router.push(`${CREATOR_STEP_PATH}?step=3`);
+        return { kind: "moved" };
       }
       router.push("/login");
       return { kind: "moved" };

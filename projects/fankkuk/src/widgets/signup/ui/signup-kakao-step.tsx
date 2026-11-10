@@ -11,7 +11,7 @@ import s from "./signup.module.css";
 // 크리에이터 가입 3단계 — 카카오톡 인증 알림 연결(UX 명세 signup.md 「2026-11-10 크리에이터 3단계 카카오톡 인증」, 시안 creator-signup-kakao-20261110 ①~④).
 // kakao_input → 「카카오톡 인증 요청」 → kakao_waiting(칸 읽기 전용, 몇 초마다 서버에 결과를 묻는다)
 //   → 서버가 서명을 검증하면(INV-U19) 곧바로 가입을 보낸다 → kakao_done(「다음」 하나, 이전 없음 — 계정이 생겼다)
-//   / 실패·5분 지남 → kakao_failed(빨간 상자, 칸 다시 열림) / 이미 가입된 번호 → kakao_exists(로그인)
+//   / 실패·5분 지남 → kakao_failed(오류 상자, 칸 다시 열림) / 이미 가입된 번호 → kakao_exists(로그인)
 //   / 서버가 창구 장애를 확인함(INV-U20) → 부르는 쪽(onDown)이 6자리 길(⑤)로 바꾼다. 6자리로 가는 버튼은 어디에도 없다.
 // 이름·생년월일·번호는 이 브라우저에서 공개키로 봉인한 뒤에만 보낸다. 봉인 내용의 크리에이터 ID 는 요청마다 새로 정한다 — 서버가 그 요청에 묶고,
 // 계정이 만들어지면 그 크리에이터 행의 ID 가 된다. 「서명 완료」는 서버의 답으로만 안다.
@@ -66,6 +66,29 @@ function CheckIcon() {
     <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
       <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
+  );
+}
+
+/** kakao_done 카드 — 완료 상자 · 「다음」 하나(이전 없음, 계정이 생겼다). 로그인된 가입 라우트(/signup/creator?step=3)가 그린다 */
+export function KakaoDoneCard({ doneHref }: { doneHref: string }) {
+  return (
+    <div className="card">
+      <section className={s.step} aria-labelledby="kakao-done-h">
+        <h2 className={`t-card ${s.focusable}`} id="kakao-done-h" tabIndex={-1}>
+          카카오톡 인증 알림 연결
+        </h2>
+        <p className={`t-desc ${s.lead}`}>앞으로 선물 승인 요청을 카카오톡으로 받기 위한 연결이에요.</p>
+        <div className={s.connected} role="status">
+          <CheckIcon />
+          <span>카카오톡 인증 알림 연결이 완료되었습니다.</span>
+        </div>
+      </section>
+      <div className={`${s["step-actions"]} ${s["no-prev"]}`}>
+        <Link className={`btn ${s.next}`} href={doneHref}>
+          다음
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -207,20 +230,7 @@ export function SignupKakaoStep({ sealingKeyPem, phone, onPhoneChange, onPrev, o
     return (
       <>
         {nav}
-        <div className="card">
-          <section className={s.step} aria-label="카카오톡 인증 알림 연결">
-            {head}
-            <div className={s.connected} role="status">
-              <CheckIcon />
-              <span>카카오톡 인증 알림 연결이 완료되었습니다.</span>
-            </div>
-          </section>
-          <div className={`${s["step-actions"]} ${s["no-prev"]}`}>
-            <Link className={`btn ${s.next}`} href={doneHref}>
-              다음
-            </Link>
-          </div>
-        </div>
+        <KakaoDoneCard doneHref={doneHref} />
       </>
     );
   }

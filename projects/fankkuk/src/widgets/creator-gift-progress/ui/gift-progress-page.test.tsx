@@ -80,7 +80,7 @@ const CANDIDATES = [
 function render(rows: unknown[] = ROWS, items = ITEMS) {
   act(() => root.render(<GiftProgressPage progress={parseGiftProgressRows(rows)} items={items} candidates={CANDIDATES} now="2026-10-16T03:00:00.000Z" />));
 }
-// 구간 머리는 「받는 선물2건」처럼 이름 + 건수 — 이름으로 찾는다
+// 구간 머리는 「받는 선물 2건」처럼 이름 + 건수 — 이름으로 찾는다
 const rowOf = (name: string, board: "받는 선물" | "보내는 선물") =>
   [...host.querySelectorAll(`section[aria-labelledby] li`)].find((li) => li.closest("section")?.querySelector("h2")?.textContent?.startsWith(board) && li.querySelector("[data-title]")?.textContent?.startsWith(name))!;
 // 승인 대기 하늘 판(v37 — 승인 대기 선물은 줄 대신 판 하나로 모은다)
@@ -99,7 +99,7 @@ describe("INV-J9: 판 둘 — 받는 선물은 선물마다, 보내는 선물은
     render();
     expect(host.querySelector("h1")?.textContent).toBe("선물 현황· 진행 중 6건");
     const heads = [...host.querySelectorAll("section h2")].map((h) => h.textContent);
-    expect(heads).toEqual(["승인 대기 선물", "받는 선물2건", "보내는 선물3건"]);
+    expect(heads).toEqual(["승인 대기 선물", "받는 선물 2건", "보내는 선물 3건"]);
     expect(waitingPanel()?.querySelector(".num-big")?.textContent).toBe("1건");
     expect(waitingPanel()?.textContent).toContain("가장 빠른 승인 기한: 6일 남음 · 하루님의 선물");
     expect([...host.querySelectorAll("[data-subhead]")].map((p) => p.textContent)).toEqual(["10월 2일 오전 10:00 결제 완료 · 팬 2명", "10월 9일 오전 10:00 결제 완료 · 팬 1명"]);
