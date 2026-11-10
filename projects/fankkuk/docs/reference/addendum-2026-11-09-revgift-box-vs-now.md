@@ -103,7 +103,7 @@
 
 | # | 원문 요지 | 지금 정해진 것 | 지금 만들어진 것 | 판정 | 비고 |
 |---|---|---|---|---|---|
-| 31 | 로지아이 엑셀 반자동: 출고분 엑셀 생성(대표만, 주소 복호화 1회, 열람 기록, 10분 만료) → 업로드·출력 → 송장번호 엑셀 가져오기 → 출고 알림 | 엑셀 반자동 기본(DECISIONS:1456, 2026-11-09) · 상세 INV-P21 ②(`docs/specs/address-protection.md:219-235`) — 원문과 같다. 단 같은 조 첫 줄은 「계약 전 기본값은 수동 입력」(`:215`) | 설정값은 `"manual"`, 엑셀 생성은 아직 없음(`src/shared/config/courier.ts:12-16`, 양식 파일 대기 — `workspace/fee-final-plan.md:13`). 선물함 출고 알림 없음(`docs/BACKLOG.md:327`) | 일부 | 정해진 것은 같고 코드가 없다 |
+| 31 | 로지아이 엑셀 반자동: 출고분 엑셀 생성(대표만, 주소 복호화 1회, 열람 기록, 10분 만료) → 업로드·출력 → 송장번호 엑셀 가져오기 → 출고 알림 | 엑셀 반자동 기본(DECISIONS:1456, 2026-11-09) · 상세 INV-P21 ②(`docs/specs/address-protection.md:219-235`) — 원문과 같다. 단 같은 조 첫 줄은 「계약 전 기본값은 수동 입력」(`:215`) | 설정값은 `"manual"`, 엑셀 생성은 아직 없음(`src/shared/config/courier.ts:12-16`, 로지아이 엑셀 일괄 예약 양식 파일을 기다리는 중). 선물함 출고 알림 없음(`docs/BACKLOG.md:327`) | 일부 | 정해진 것은 같고 코드가 없다 |
 | 32 | 웹훅 전 「팬꾹에서 보냈어요 → 보통 1~2일 → 도착했어요(팬 [받았어요]) → +3일 도착했어요(예상)」, 택배API 연결 후 실제 단계. 지점명·기사·지역 표시 금지 | DECISIONS:1454·1458(2026-11-09), delivery-status INV-DS3·DS6(`docs/specs/delivery-status.md:46-50,62`) | 단계 문구(`src/shared/config/delivery-status.ts:10-20`), 선물함 팬 화면(`src/features/revgift-box-apply/ui/box-apply-panel.tsx:31`), 받았어요(`src/app/api/revgift-boxes/[boxId]/received/route.ts`) | 같음 | 원문 「송장번호 외」는 「앞서 보낸 지시대로」를 따른다 — 지시는 팬 화면에 송장번호도 내지 않는다 |
 
 ### 약관·안내
