@@ -12,3 +12,20 @@
   .card { padding: var(--space-6); }
   .choice > :global(.btn) { flex: 1 1 140px; }
 }
+
+/* 신청 모달(design-rules 43절 「모달 공통」 · 시안 「팬」 묶음 #fa1~#fadone) — 페이지에는 버튼 하나 */
+.applyAct { display: flex; }
+.stepForm { display: grid; gap: var(--space-4); }
+.stepFields { display: grid; gap: var(--space-4); }
+.stepFields[hidden] { display: none; }
+.meta { color: var(--sub); font-size: var(--fs-small); }
+.sum { display: grid; gap: var(--space-1); margin: 0; padding: var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.sum > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 var(--space-4); font-size: var(--fs-small); }
+.sum dt { color: var(--sub); }
+.sum dd { margin: 0; min-width: 0; font-weight: var(--fw-bold); text-align: right; overflow-wrap: anywhere; }
+.ferrBox { padding: var(--space-4); border-radius: var(--r-btn); background: var(--danger-soft); color: var(--danger); font-weight: var(--fw-btn); }
+.madeName { font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; overflow-wrap: anywhere; }
+
+@media (max-width: 768px) {
+  .applyAct :global(.btn) { width: 100%; }
+}

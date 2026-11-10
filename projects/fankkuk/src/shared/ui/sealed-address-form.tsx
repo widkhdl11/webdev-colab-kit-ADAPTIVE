@@ -125,30 +125,38 @@ export type SealedAddressFormProps<L extends string, C> = (
   groupLabel?: string;
 };
 
-export function SealedAddressForm<L extends string, C>(
-  props: SealedAddressFormProps<L, C>,
-) {
-  const {
-    idPrefix,
-    sealingKeyPem,
-    toPlaintext,
-    labelOptions,
-    classify,
-    submitClassName,
-    submitContent,
-    autoFocusFirst = false,
-    onCancel,
-    onLoginExpired,
-    mode = "form",
-    groupLabel,
-  } = props;
+/** 칸 묶음 — place 받을 곳(우편번호·기본·상세 주소) · person 받는 분(이름·휴대폰 번호). 단계형 창이 묶음마다 한 단계로 나눈다 */
+export type AddressFieldGroup = "place" | "person";
+const GROUP_FIELDS: Record<AddressFieldGroup, readonly AddressFieldName[]> = {
+  place: ["zipCode", "address1", "address2"],
+  person: ["recipientName", "phone"],
+};
+
+/** 봉인 결과 — invalid 는 칸 오류를 이미 표시하고 첫 칸으로 초점을 옮겼다 */
+export type SealedAddressResult<C> =
+  | { kind: "ok"; envelope: Envelope; classified: C }
+  | { kind: "invalid" }
+  | { kind: "error"; message: string };
+
+/**
+ * 봉인 주소 칸의 상태·칸·봉인 — SealedAddressForm 과 단계형 창(선물함 신청 모달)이 같이 쓴다.
+ * 칸 모양·순서·오류 문구·주소 검색·봉인은 여기 하나다. 보내기·버튼·단계 나누기는 부르는 쪽이 정한다.
+ */
+export function useSealedAddressEntry<C>({
+  idPrefix,
+  sealingKeyPem,
+  toPlaintext,
+  classify,
+  autoFocusFirst = false,
+}: {
+  idPrefix: string;
+  sealingKeyPem: string;
+  toPlaintext: (fields: AddressFieldValues) => string;
+  classify: (zipCode: string) => C | null;
+  autoFocusFirst?: boolean;
+}) {
   const [values, setValues] = useState(EMPTY);
-  const [label, setLabel] = useState<L | null>(props.initialLabel ?? null);
-  const [labelMissing, setLabelMissing] = useState(false);
-  const labelRef = useRef<HTMLInputElement | null>(null);
   const [errors, setErrors] = useState<AddressFieldName[]>([]);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const fieldRefs = useRef<
     Partial<Record<AddressFieldName, HTMLInputElement | null>>
   >({});
@@ -194,66 +202,69 @@ export function SealedAddressForm<L extends string, C>(
     if (errors.includes(name)) setErrors((e) => e.filter((x) => x !== name));
   };
 
-  const submit = async (e: FormEvent | KeyboardEvent | null) => {
-    e?.preventDefault();
-    if (busy) return;
-    setSubmitError(null);
+  const normalized = (): AddressFieldValues => ({
+    ...values,
+    zipCode: values.zipCode.trim(),
+    phone: values.phone.replace(/[^0-9]/g, ""),
+  });
+
+  /** 칸을 검사한다 — groups 를 주면 그 묶음의 칸 오류만 표시한다(단계형 「다음」). 틀린 칸이 있으면 첫 칸으로 초점 */
+  const check = (groups?: readonly AddressFieldGroup[]): boolean => {
+    const only = groups
+      ? new Set(groups.flatMap((g) => GROUP_FIELDS[g]))
+      : null;
+    try {
+      toPlaintext(normalized());
+      setErrors([]);
+      return true;
+    } catch (err) {
+      const bad = badFields(err).filter((f) => !only || only.has(f));
+      setErrors(bad);
+      if (bad[0]) {
+        fieldRefs.current[bad[0]]?.focus();
+        return false;
+      }
+      // 묶음 밖 칸만 틀렸거나 칸 이름 없는 오류 — 이 단계는 통과, 봉인(seal)이 다시 검사해 문구를 돌려준다
+      return true;
+    }
+  };
+
+  /** 칸 전체를 검사하고 이 브라우저에서 봉인한다. 평문 주소는 서버로 가지 않는다 */
+  const seal = async (): Promise<SealedAddressResult<C>> => {
     let plaintext: string;
     try {
-      plaintext = toPlaintext({
-        ...values,
-        zipCode: values.zipCode.trim(),
-        phone: values.phone.replace(/[^0-9]/g, ""),
-      });
+      plaintext = toPlaintext(normalized());
     } catch (err) {
       const bad = badFields(err);
       setErrors(bad);
-      if (bad[0]) fieldRefs.current[bad[0]]?.focus();
-      else setSubmitError("주소를 다시 확인해 주세요.");
-      return;
+      if (bad[0]) {
+        fieldRefs.current[bad[0]]?.focus();
+        return { kind: "invalid" };
+      }
+      return { kind: "error", message: "주소를 다시 확인해 주세요." };
     }
     setErrors([]);
-    if (labelOptions && !label) {
-      setLabelMissing(true);
-      labelRef.current?.focus();
-      return;
-    }
     const classified = classify(values.zipCode.trim());
-    if (classified === null) {
-      setSubmitError("주소를 다시 확인해 주세요.");
-      return;
-    }
-    setBusy(true);
+    if (classified === null)
+      return { kind: "error", message: "주소를 다시 확인해 주세요." };
     try {
       const envelope = await sealEnvelope(
         plaintext,
         await importSealingPublicKey(sealingKeyPem),
       );
-      const outcome = props.labelOptions
-        ? await props.send(envelope, label as L, classified)
-        : await props.send(envelope, classified);
-      if (outcome.kind === "ok") {
-        setValues(EMPTY); // 입력한 주소를 화면 상태에 남기지 않는다
-        if (props.labelOptions) props.onSaved(label as L);
-        else props.onSaved();
-        return;
-      }
-      if (outcome.kind === "login") {
-        onLoginExpired();
-        return;
-      }
-      setSubmitError(
-        outcome.kind === "refused"
-          ? outcome.message
-          : "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
-      );
+      return { kind: "ok", envelope, classified };
     } catch {
-      setSubmitError(
-        "주소를 저장하지 못했습니다. 새로고침한 뒤 다시 시도해 주세요.",
-      );
-    } finally {
-      setBusy(false);
+      return {
+        kind: "error",
+        message: "주소를 저장하지 못했습니다. 새로고침한 뒤 다시 시도해 주세요.",
+      };
     }
+  };
+
+  /** 입력한 주소를 화면 상태에 남기지 않는다 */
+  const clear = () => {
+    setValues(EMPTY);
+    setErrors([]);
   };
 
   const field = (
@@ -288,7 +299,7 @@ export function SealedAddressForm<L extends string, C>(
     );
   };
 
-  const fields = (
+  const placeFields = (
     <>
       <div className={s["zip-row"]}>
         {field("zipCode", "우편번호", {
@@ -328,23 +339,114 @@ export function SealedAddressForm<L extends string, C>(
         maxLength: 120,
         placeholder: "동·호수 등을 입력해 주세요",
       })}
-      <div className={s.two}>
-        {field("recipientName", "받는 사람 이름", {
-          type: "text",
-          autoComplete: "name",
-          maxLength: 30,
-          placeholder: "송장에 표시할 이름",
-          required: true,
-        })}
-        {field("phone", "휴대폰 번호", {
-          type: "tel",
-          inputMode: "tel",
-          autoComplete: "tel",
-          maxLength: 13,
-          placeholder: "010-0000-0000",
-          required: true,
-        })}
-      </div>
+    </>
+  );
+
+  const personFields = (
+    <div className={s.two}>
+      {field("recipientName", "받는 사람 이름", {
+        type: "text",
+        autoComplete: "name",
+        maxLength: 30,
+        placeholder: "송장에 표시할 이름",
+        required: true,
+      })}
+      {field("phone", "휴대폰 번호", {
+        type: "tel",
+        inputMode: "tel",
+        autoComplete: "tel",
+        maxLength: 13,
+        placeholder: "010-0000-0000",
+        required: true,
+      })}
+    </div>
+  );
+
+  const focusFirst = (group: AddressFieldGroup) =>
+    fieldRefs.current[GROUP_FIELDS[group][0]]?.focus();
+
+  return { values, placeFields, personFields, check, seal, clear, focusFirst };
+}
+
+export function SealedAddressForm<L extends string, C>(
+  props: SealedAddressFormProps<L, C>,
+) {
+  const {
+    idPrefix,
+    sealingKeyPem,
+    toPlaintext,
+    labelOptions,
+    classify,
+    submitClassName,
+    submitContent,
+    autoFocusFirst = false,
+    onCancel,
+    onLoginExpired,
+    mode = "form",
+    groupLabel,
+  } = props;
+  const entry = useSealedAddressEntry({
+    idPrefix,
+    sealingKeyPem,
+    toPlaintext,
+    classify,
+    autoFocusFirst,
+  });
+  const [label, setLabel] = useState<L | null>(props.initialLabel ?? null);
+  const [labelMissing, setLabelMissing] = useState(false);
+  const labelRef = useRef<HTMLInputElement | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: FormEvent | KeyboardEvent | null) => {
+    e?.preventDefault();
+    if (busy) return;
+    setSubmitError(null);
+    if (!entry.check()) return;
+    if (labelOptions && !label) {
+      setLabelMissing(true);
+      labelRef.current?.focus();
+      return;
+    }
+    setBusy(true);
+    try {
+      const sealed = await entry.seal();
+      if (sealed.kind === "invalid") return;
+      if (sealed.kind === "error") {
+        setSubmitError(sealed.message);
+        return;
+      }
+      const outcome = props.labelOptions
+        ? await props.send(sealed.envelope, label as L, sealed.classified)
+        : await props.send(sealed.envelope, sealed.classified);
+      if (outcome.kind === "ok") {
+        entry.clear(); // 입력한 주소를 화면 상태에 남기지 않는다
+        if (props.labelOptions) props.onSaved(label as L);
+        else props.onSaved();
+        return;
+      }
+      if (outcome.kind === "login") {
+        onLoginExpired();
+        return;
+      }
+      setSubmitError(
+        outcome.kind === "refused"
+          ? outcome.message
+          : "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      );
+    } catch {
+      setSubmitError(
+        "주소를 저장하지 못했습니다. 새로고침한 뒤 다시 시도해 주세요.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const fields = (
+    <>
+      {entry.placeFields}
+      {entry.personFields}
       {labelOptions ? (
         <fieldset className={s.labels}>
           <legend className="label">주소 별칭</legend>

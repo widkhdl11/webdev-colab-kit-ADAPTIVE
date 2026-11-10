@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import type { Envelope } from "@/shared/lib/envelope/envelope";
-import { SealedAddressForm, type SealedAddressSendOutcome } from "@/shared/ui/sealed-address-form";
+import { SealedAddressForm, useSealedAddressEntry, type SealedAddressSendOutcome } from "@/shared/ui/sealed-address-form";
 import { fanAddressPlaintext } from "../model/fan-address-plaintext";
 import { surchargeRegionOf, type SurchargeRegion } from "../model/surcharge-region";
 
@@ -47,3 +47,18 @@ export function FanAddressFields({ accountId, submitClassName = "btn", ...p }: F
     />
   );
 }
+
+/**
+ * 단계형 창(선물함 신청 모달)용 — 같은 칸·같은 봉인 내용(그 팬의 계정 ID)·같은 할증 구분을 칸 묶음(받을 곳 / 받는 분)으로 나눠 쓴다.
+ * 보내기는 부르는 쪽이 seal() 의 봉인값으로 한다.
+ */
+export function useFanAddressEntry({ idPrefix, accountId, sealingKeyPem }: { idPrefix: string; accountId: string; sealingKeyPem: string }) {
+  return useSealedAddressEntry<SurchargeRegion>({
+    idPrefix,
+    sealingKeyPem,
+    toPlaintext: (f) => fanAddressPlaintext({ accountId, ...f }),
+    classify: (zip) => surchargeRegionOf(zip),
+  });
+}
+
+export type FanAddressEntry = ReturnType<typeof useFanAddressEntry>;
