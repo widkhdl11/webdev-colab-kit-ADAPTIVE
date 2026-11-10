@@ -396,12 +396,12 @@ describe("드림시큐리티 어댑터 (가짜 드림 서버)", () => {
   // 가입 3단계 요청(signup INV-U19 ②·INV-U16 정함) — 앱이 지정 번호와 최소 나이를 같이 보낸다
   it("INV-U19 ②: 가입 요청의 signer.phone 이 봉투 속 번호와 다르면 400 invalid_signer(딜러사에 묻지 않음) — 같으면 201", async () => {
     const before = fake.calls.length;
-    const res = await start(IDENTITY, { phone: "01099998888" });
+    const res = await start(IDENTITY, { phone: "01099998888", minAge: 14 });
     assert.equal(res.status, 400);
     assert.deepEqual(await res.json(), { error: "invalid_signer" });
     assert.equal(fake.calls.length, before);
-    assert.equal((await start(IDENTITY, { phone: 1012345678 })).status, 400);
-    assert.equal((await start(IDENTITY, { phone: "010-1234-5678" })).status, 201);
+    assert.equal((await start(IDENTITY, { phone: 1012345678, minAge: 14 })).status, 400);
+    assert.equal((await start(IDENTITY, { phone: "010-1234-5678", minAge: 14 })).status, 201);
   });
 
   /** 지금(한국시간) 기준 만 n세가 되는 날의 생년월일 */
@@ -426,6 +426,32 @@ describe("드림시큐리티 어댑터 (가짜 드림 서버)", () => {
     assert.equal((await (await result(plain.txId)).json()).state, "signed");
   });
 
+  it("INV-U20 (실패경로): 봉투 속 생년월일이 없는 날짜·미래·120세 초과면 400 invalid_signer(딜러사에 묻지 않아 장애로 꾸밀 수 없다)", async () => {
+    const before = fake.calls.length;
+    for (const birth of ["20991399", "20230230", "19990001", birthAged(0, 1), birthAged(121)]) {
+      const bad = { ...IDENTITY, birth };
+      const res = await start(bad, { phone: bad.phone, minAge: 14 });
+      assert.equal(res.status, 400, birth);
+      assert.deepEqual(await res.json(), { error: "invalid_signer" });
+    }
+    assert.equal(fake.calls.length, before);
+    // 경계 — 오늘 태어남(0세)·만 120세는 꼴로는 받는다(나이 판정은 minAge 가 한다)
+    assert.equal((await start({ ...IDENTITY, birth: birthAged(0) })).status, 201);
+    assert.equal((await start({ ...IDENTITY, birth: birthAged(120) })).status, 201);
+  });
+
+  it("INV-U19 ②·U16 (실패경로): 가입 요청(지정 번호 있음)에 minAge 가 없으면 400 — 나이 확인을 건너뛰는 길이 없다", async () => {
+    const res = await start(IDENTITY, { phone: IDENTITY.phone });
+    assert.equal(res.status, 400);
+    assert.equal((await start(IDENTITY, { phone: IDENTITY.phone, minAge: 14 })).status, 201);
+  });
+
+  it("INV-S16: 설정 연결(번호 없이 minAge 만)도 만 14세 미만이면 422 signer_mismatch", async () => {
+    const young = { ...IDENTITY, birth: birthAged(14, 1) };
+    const { txId } = await (await start(young, { minAge: 14 })).json();
+    assert.equal((await result(txId)).status, 422);
+  });
+
   it("INV-U16 (실패경로): minAge 꼴이 틀리면 400 invalid_signer", async () => {
     for (const minAge of ["14", -1, 14.5, 200]) {
       assert.equal((await start(IDENTITY, { phone: IDENTITY.phone, minAge })).status, 400, String(minAge));
@@ -435,14 +461,14 @@ describe("드림시큐리티 어댑터 (가짜 드림 서버)", () => {
   it("INV-U20: 풀 수 없는 wrappedKey(KMS 가 암호문을 거부) → 400 invalid_signer — 장애(502)가 아니다", async () => {
     const sealed = sealIdentity(IDENTITY, kms.publicKey);
     const junk = { ...sealed, wrappedKey: crypto.randomBytes(256).toString("base64") };
-    const res = await call("/v1/sign/requests", { requestId: "r", plaintext: PLAINTEXT, requestMessage: REQUEST_MESSAGE, signer: { envelope: junk, creatorId: IDENTITY.creatorId, phone: IDENTITY.phone } });
+    const res = await call("/v1/sign/requests", { requestId: "r", plaintext: PLAINTEXT, requestMessage: REQUEST_MESSAGE, signer: { envelope: junk, creatorId: IDENTITY.creatorId, phone: IDENTITY.phone, minAge: 14 } });
     assert.equal(res.status, 400);
     assert.deepEqual(await res.json(), { error: "invalid_signer" });
   });
 
   it("INV-U20: KMS 연결 실패 → 502 upstream_error(장애)", async () => {
     ctx.kmsDown = true;
-    const res = await start(IDENTITY, { phone: IDENTITY.phone });
+    const res = await start(IDENTITY, { phone: IDENTITY.phone, minAge: 14 });
     assert.equal(res.status, 502);
     assert.deepEqual(await res.json(), { error: "upstream_error" });
   });

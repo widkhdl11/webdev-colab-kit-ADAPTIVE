@@ -47,8 +47,27 @@ function openEnvelope(parsed, dek) {
 const NAME_SHAPE = /^[가-힣A-Za-z][가-힣A-Za-z .·-]*$/;
 const PHONE_SHAPE = /^01[016789][0-9]{7,8}$/;
 
-/** 승인 서명 연결 정보 평문 → { name, birth, phone, creatorId }. 꼴이 아니면 TypeError. */
-function parseLinkIdentity(text) {
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const MAX_AGE = 120;
+
+/** yyyyMMdd 가 실제 있는 날짜이고, 한국시간 nowMs 기준 미래가 아니고, 만 나이가 0~120 이면 true */
+function plausibleBirth(birth, nowMs) {
+  const y = Number(birth.slice(0, 4));
+  const m = Number(birth.slice(4, 6));
+  const d = Number(birth.slice(6, 8));
+  const date = new Date(Date.UTC(y, m - 1, d));
+  if (date.getUTCFullYear() !== y || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d) return false;
+  const today = new Date(nowMs + KST_OFFSET_MS).toISOString().slice(0, 10).replace(/-/g, "");
+  // 미래 날짜는 만 나이가 음수가 되어 아래에서 걸린다
+  const age = Number(today.slice(0, 4)) - y - (today.slice(4) >= birth.slice(4) ? 0 : 1);
+  return age >= 0 && age <= MAX_AGE;
+}
+
+/**
+ * 승인 서명 연결 정보 평문 → { name, birth, phone, creatorId }. 꼴이 아니면 TypeError(→ 400 invalid_signer).
+ * 생년월일은 있는 날짜·미래 아님·만 0~120세만 받는다 — 딜러사가 받지 않을 값을 보내 창구 오류(502, 장애)를 꾸미지 못하게(signup INV-U20).
+ */
+function parseLinkIdentity(text, nowMs = Date.now()) {
   let value;
   try {
     value = JSON.parse(text);
@@ -58,7 +77,7 @@ function parseLinkIdentity(text) {
   if (value === null || typeof value !== "object" || value.v !== 1) throw new TypeError("연결 정보 판이 다르다");
   const { name, birth, phone, creatorId } = value;
   if (typeof name !== "string" || name.length === 0 || name.length > 30 || !NAME_SHAPE.test(name)) throw new TypeError("이름 꼴");
-  if (typeof birth !== "string" || !/^\d{8}$/.test(birth)) throw new TypeError("생년월일 꼴");
+  if (typeof birth !== "string" || !/^\d{8}$/.test(birth) || !plausibleBirth(birth, nowMs)) throw new TypeError("생년월일 꼴");
   if (typeof phone !== "string" || !PHONE_SHAPE.test(phone)) throw new TypeError("번호 꼴");
   if (typeof creatorId !== "string" || creatorId.length === 0 || creatorId.length > 128) throw new TypeError("크리에이터 꼴");
   return { name, birth, phone, creatorId };

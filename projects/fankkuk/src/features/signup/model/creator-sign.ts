@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { LINK_REQUEST_MESSAGE } from "@/entities/creator/model/signature-link-request";
+import { LINK_MIN_AGE, LINK_REQUEST_MESSAGE } from "@/entities/creator/model/signature-link-request";
 import { sameSignedPlaintext } from "@/entities/order/model/evaluate-approval";
 import type { ApprovalSigner, SignatureResult, SignRequestStart } from "@/shared/api/approval-signer/signer";
 import { phoneHash, type PhoneKeys } from "@/shared/api/phone-crypto/phone-crypto";
@@ -30,7 +30,7 @@ export type CreatorSignDeps = {
 };
 
 /** INV-U16 정함: 서명 결과의 생년월일로 창구가 확인하는 최소 나이 */
-export const CREATOR_SIGN_MIN_AGE = 14;
+export const CREATOR_SIGN_MIN_AGE = LINK_MIN_AGE;
 
 export type CreatorSignFail = { ok: false; status: 400 | 404 | 429 | 503; message: string };
 export type StartCreatorSignResult =

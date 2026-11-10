@@ -53,7 +53,7 @@ describe("INV-S16: 연결 요청 시작", () => {
       { fn: "start_signature_link", args: { p_actor_id: HARU.userId, p_envelope: identity, p_method: "fake", p_ip_hash: IP } },
       { fn: "record_signature_link_tx", args: { p_actor_id: HARU.userId, p_request_id: REQ, p_tx_id: "tx_link" } },
     ]);
-    expect(asked).toEqual([{ requestId: REQ, plaintext: PAYLOAD, requestMessage: "팬꾹 승인 서명 연결", envelope: identity, creatorId: "c0000000-0000-4000-8000-000000000001" }]);
+    expect(asked).toEqual([{ requestId: REQ, plaintext: PAYLOAD, requestMessage: "팬꾹 승인 서명 연결", envelope: identity, creatorId: "c0000000-0000-4000-8000-000000000001", minAge: 14 }]);
   });
 
   it("INV-S16 (실패경로): 평문 이름·번호·봉인 형식이 아닌 값은 거부 — DB 를 부르지 않는다", async () => {
@@ -100,7 +100,7 @@ describe("INV-S16: 연결 요청 시작", () => {
 
   it("INV-S16 (실패경로): 창구가 요청을 받지 못하면 그 요청을 실패로 닫는다", async () => {
     const f = fakeAdmin(started);
-    const spy: ApprovalSigner = { ...signer!, requestSignature: async () => ({ ok: false }) };
+    const spy: ApprovalSigner = { ...signer!, requestSignature: async () => ({ ok: false, down: true }) };
     expect(await startSignatureLink({ admin: f.admin, viewer: HARU, signer: spy }, { identity }, IP)).toMatchObject({ ok: false, status: 503 });
     expect(f.calls.at(-1)).toEqual({
       fn: "settle_signature_link",

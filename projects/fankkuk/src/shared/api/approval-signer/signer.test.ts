@@ -154,6 +154,12 @@ describe("INV-U19·U20: 가입 3단계 카카오 서명 — 창구 요청", () =
     expect(JSON.parse(String(f.calls[0]!.init.body)).signer).toEqual({ envelope: identity, creatorId: "c1", phone: "01012345678", minAge: 14 });
   });
 
+  it("INV-S16: 설정 연결은 번호 없이 최소 나이만 보낸다 — signer 에 minAge 만 붙는다", async () => {
+    const f = fakeFetch([{ status: 201, body: { requestId: "r1", txId: "tx_1", expiresAt: "2026-11-10T01:05:00Z" } }]);
+    await ask(createGatewaySigner(cfg, f.impl), { minAge: 14 });
+    expect(JSON.parse(String(f.calls[0]!.init.body)).signer).toEqual({ envelope: identity, creatorId: "c1", minAge: 14 });
+  });
+
   it("INV-U20: 연결 실패·5xx(게이트웨이 upstream_error 502 포함)·답 꼴 틀림은 창구 장애(down: true)", async () => {
     for (const reply of [{ status: 502, body: { error: "upstream_error" } }, { status: 503, body: {} }, { status: 500, body: {} }, { status: 201, body: { requestId: "r1" } }]) {
       expect(await ask(createGatewaySigner(cfg, fakeFetch([reply]).impl)), JSON.stringify(reply)).toEqual({ ok: false, down: true });

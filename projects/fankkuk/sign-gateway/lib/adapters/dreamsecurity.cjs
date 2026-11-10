@@ -218,7 +218,7 @@ function createDreamsecurityAdapter(config, deps) {
       if (err !== null && typeof err === "object" && KMS_BAD_INPUT.has(err.type)) throw new TypeError("signer.envelope.wrappedKey");
       throw new UpstreamError("kms_decrypt");
     }
-    const identity = envelope.parseLinkIdentity(envelope.openEnvelope(parsed, dek));
+    const identity = envelope.parseLinkIdentity(envelope.openEnvelope(parsed, dek), now());
     // 앱은 DB 가 그 요청의 크리에이터로 돌려준 ID 를 꼭 같이 보낸다 — 봉투 안의 것과 같아야 한다(다른 크리에이터의 봉투를 옮겨 붙이지 못하게).
     // 없거나 다르면 400 invalid_signer
     if (typeof signer.creatorId !== "string" || signer.creatorId.length === 0 || signer.creatorId !== identity.creatorId) {
@@ -228,7 +228,9 @@ function createDreamsecurityAdapter(config, deps) {
     if (signer.phone !== undefined) {
       if (typeof signer.phone !== "string" || signer.phone.replace(/\D/g, "") !== identity.phone.replace(/\D/g, "")) throw new TypeError("signer.phone");
     }
-    // 가입 3단계(INV-U16 정함): 서명 결과의 생년월일로 볼 최소 나이
+    // 가입 요청(지정 번호가 있음)은 최소 나이가 꼭 있어야 한다 — 가입 경로에서 나이 확인을 건너뛰는 길이 없게
+    if (signer.phone !== undefined && signer.minAge === undefined) throw new TypeError("signer.minAge");
+    // 가입 3단계(INV-U16 정함)·설정 연결(INV-S16): 서명 결과의 생년월일로 볼 최소 나이
     if (signer.minAge !== undefined && !(Number.isInteger(signer.minAge) && signer.minAge >= 0 && signer.minAge <= 150)) {
       throw new TypeError("signer.minAge");
     }

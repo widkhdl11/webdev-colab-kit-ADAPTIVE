@@ -13,8 +13,9 @@ import type { SignatureMethod } from "./accepted-method";
 // 같은 창구를 승인(요청 구분 「팬꾹 선물 수령 승인」)과 승인 서명 연결의 시험 서명(「팬꾹 승인 서명 연결」)이 쓴다 — 문구는 부르는 쪽이 넘긴다.
 // HTTP 약속(게이트웨이와 맞춘 값):
 //   POST {URL}/v1/sign/requests  Bearer 토큰  { requestId, plaintext, requestMessage, signer: { envelope, creatorId, phone?, minAge? } } → 201 { requestId, txId, expiresAt }
-//     phone·minAge 는 가입 3단계 요청에만 붙는다(signup INV-U19 ②·INV-U16): 게이트웨이는 phone 이 봉투 속 지정 번호·서명 결과 번호와 같은지,
-//     서명 결과의 생년월일로 만 minAge 세 이상인지 보고, 아니면 결과를 422(대상자 불일치)로 답한다.
+//     phone 은 가입 3단계 요청에만, minAge 는 가입 3단계와 설정의 승인 서명 연결에 붙는다(signup INV-U19 ②·INV-U16, approval-signature INV-S16).
+//     게이트웨이는 phone 이 봉투 속 지정 번호·서명 결과 번호와 같은지(다르면 400), 서명 결과의 생년월일로 만 minAge 세 이상인지(아니면 422) 본다.
+//     phone 이 있는데 minAge 가 없으면 400 — 가입 경로에서 나이 확인을 건너뛰지 못한다.
 //   POST {URL}/v1/sign/requests/{requestId}/result  { txId, plaintext } → { state: pending|rejected|expired } | { state: signed, method, signedPlaintext, signature, signedAt }
 //   409 원문 불일치 · 422 서명/대상자 불일치
 
@@ -46,7 +47,7 @@ export type ApprovalSigner = {
   /**
    * 서명 요청. envelope 는 서명 대상을 지정할 봉인된 이름·생년월일·휴대폰 번호(연결 정보) — 열지 않고 넘긴다.
    * creatorId 는 DB 가 그 요청의 크리에이터로 돌려준 ID — 게이트웨이가 봉투 안의 크리에이터 ID 와 대조한다(다른 크리에이터 봉투를 옮겨 붙이지 못하게).
-   * phone·minAge 는 가입 3단계 요청만 넘긴다(signup INV-U19 ②·INV-U16 — 위 HTTP 약속).
+   * phone 은 가입 3단계 요청만, minAge 는 가입 3단계와 승인 서명 연결이 넘긴다(위 HTTP 약속).
    */
   requestSignature(input: { requestId: string; plaintext: string; requestMessage: string; envelope: Envelope; creatorId: string; phone?: string; minAge?: number }): Promise<SignRequestStart>;
   /** 결과 확인. txId 는 요청 때 받은 거래 ID 그대로. */
@@ -99,7 +100,7 @@ export function createGatewaySigner(cfg: GatewayConfig, fetchImpl: typeof fetch 
   return {
     kind: "kakao",
     async requestSignature({ requestId, plaintext, requestMessage, envelope, creatorId, phone, minAge }) {
-      const signer = phone === undefined ? { envelope, creatorId } : { envelope, creatorId, phone, ...(minAge === undefined ? {} : { minAge }) };
+      const signer = { envelope, creatorId, ...(phone === undefined ? {} : { phone }), ...(minAge === undefined ? {} : { minAge }) };
       const res = await post(cfg, "/v1/sign/requests", { requestId, plaintext, requestMessage, signer }, fetchImpl);
       // 연결 실패·시간 초과 — 창구 장애(signup INV-U20)
       if (!res) return { ok: false, down: true };

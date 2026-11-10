@@ -4,7 +4,7 @@ import type { Viewer } from "@/entities/session/model/viewer";
 import type { ApprovalSigner } from "@/shared/api/approval-signer/signer";
 import { parseEnvelope } from "@/shared/lib/envelope/envelope";
 import { sameSignedPlaintext } from "@/entities/order/model/evaluate-approval";
-import { LINK_REQUEST_MESSAGE } from "@/entities/creator/model/signature-link-request";
+import { LINK_MIN_AGE, LINK_REQUEST_MESSAGE } from "@/entities/creator/model/signature-link-request";
 
 // 승인 서명 연결하기 (approval-signature INV-S16) — 앱 서버 쪽 두 단계.
 // 1) 시작: 본문에서 봉인된 연결 정보(이름·생년월일·휴대폰 번호) 하나만 꺼내 DB 에 요청을 만들고(고정 원문 = 연결 요청 ID + 요청 시각, 5분 기한)
@@ -88,7 +88,8 @@ export async function startSignatureLink(deps: Deps, body: unknown, ipHash: stri
   if (row.result === "too_many_day") return TOO_MANY_DAY;
   if (!row.request_id || !row.payload || !row.expires_at || !row.creator_id) throw new Error("연결 요청 응답에 칸이 비었다");
 
-  const sent = await g.signer.requestSignature({ requestId: row.request_id, plaintext: row.payload, requestMessage: LINK_REQUEST_MESSAGE, envelope: identity, creatorId: row.creator_id });
+  // minAge: 장애 대비 길로 가입한 크리에이터가 가입 때 건너뛴 나이 확인을 여기서 받는다(approval-signature INV-S16)
+  const sent = await g.signer.requestSignature({ requestId: row.request_id, plaintext: row.payload, requestMessage: LINK_REQUEST_MESSAGE, envelope: identity, creatorId: row.creator_id, minAge: LINK_MIN_AGE });
   const recorded = sent.ok
     ? await deps.admin.rpc("record_signature_link_tx", { p_actor_id: g.viewer.userId, p_request_id: row.request_id, p_tx_id: sent.txId })
     : null;

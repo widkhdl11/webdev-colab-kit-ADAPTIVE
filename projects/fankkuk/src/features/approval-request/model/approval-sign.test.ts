@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { APPROVAL_EXPIRED_MESSAGE } from "@/entities/order/config/approval-deadline";
 import { buildApprovalPlaintext } from "@/entities/order/model/approval-plaintext";
-import type { ApprovalSigner, SignatureResult } from "@/shared/api/approval-signer/signer";
+import type { ApprovalSigner, SignatureResult, SignRequestStart } from "@/shared/api/approval-signer/signer";
 import { APPROVAL_REQUEST_MESSAGE, checkApprovalSign, startApprovalSign } from "./approval-sign";
 
 // approval-signature INV-S2·S7·S11·S12·S17 — 「승인」 누를 때 서명 요청 → 결과 확인 → 승인. DB 판정(원문 대조·기한·한도·주소)은 통합 시험(approval-sign-db)이 본다.
@@ -33,7 +33,7 @@ function fakeAdmin(replies: Record<string, Reply | Reply[]>) {
   };
 }
 
-function spySigner(result: SignatureResult = { state: "pending" }, start: { ok: true; txId: string } | { ok: false } = { ok: true, txId: "tx_1" }) {
+function spySigner(result: SignatureResult = { state: "pending" }, start: SignRequestStart = { ok: true, txId: "tx_1" }) {
   const asked: { requested: unknown[]; results: unknown[] } = { requested: [], results: [] };
   const signer: ApprovalSigner = {
     kind: "fake",
@@ -78,7 +78,7 @@ describe("INV-S17: 「승인」을 누를 때 서명 요청을 만든다", () =>
 
   it("INV-S17 (실패경로): 창구가 요청을 받지 못하면 그 요청을 끝내고 다시 요청할 수 있게 답한다", async () => {
     const f = fakeAdmin({ start_approval_sign: started, close_approval_sign: { data: "closed" } });
-    const s = spySigner(undefined, { ok: false });
+    const s = spySigner(undefined, { ok: false, down: true });
     const r = await startApprovalSign({ admin: f.admin, viewer: HARU, signer: s.signer }, { requestId: REQ });
     expect(r).toMatchObject({ ok: false, status: 503 });
     expect(f.calls[1]).toEqual({ fn: "close_approval_sign", args: { p_actor_id: HARU.userId, p_sign_request_id: SIGN, p_outcome: "failed" } });
