@@ -284,7 +284,7 @@ export function BoxManageDialog({
                 <h3 className={s.pkH} id={`mg-w-${box.id}`}>
                   대기 <span className={s.count}>{`${waitlist.length}명`}</span>
                 </h3>
-                <ul className={s.pgrid}>
+                <ul className={`${s.pgrid} ${s.pgridWait}`}>
                   {shownWait.map((r) => {
                     const on = picked.has(r.id);
                     return (
@@ -297,7 +297,7 @@ export function BoxManageDialog({
                             <span className={s.cmN} title={r.nickname}>
                               {r.nickname}
                             </span>
-                            <span className={s.cmW}>{`대기 ${r.waitlistNo}번 · ${formatMonthDayTimeKo(r.appliedAt)}`}</span>
+                            <span className={s.cmW} title={`대기 ${r.waitlistNo}번 · ${formatMonthDayTimeKo(r.appliedAt)}`}>{`대기 ${r.waitlistNo}번 · ${formatMonthDayTimeKo(r.appliedAt)}`}</span>
                           </span>
                           <input
                             type="checkbox"

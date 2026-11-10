@@ -7,6 +7,36 @@ import m from "./step-dialog.module.css";
 // 폭 520, 최대 높이 = 보이는 화면 − 위아래 24, 머리·진행 표시·고정 칸·버튼은 고정이고 본문만 줄어들며 스크롤한다. 768 이하는 화면 전체를 덮는 시트.
 // 브라우저 기본 <dialog> 의 모달 모드(showModal)를 써서 초점이 창 안에 머문다. 닫기·Esc·바깥 누름은 닫지 않고 onRequestClose 만 부른다 —
 // 입력이 있으면 「입력한 내용을 지울까요?」를 띄울지 부르는 쪽이 정한다. 창이 닫히면 열 때 초점이 있던 요소(또는 returnFocusRef)로 초점을 돌린다.
+// 열려 있는 동안 뒤 페이지는 스크롤하지 않는다 — 문서의 overflow 를 막고 사라진 스크롤 막대 폭만큼 오른쪽을 채워 밀림이 없게 한다.
+// 스크롤 위치는 건드리지 않으므로 닫으면 원래 자리 그대로다. 창이 둘 겹쳐 열려도(만들기 → 신청 관리) 마지막 창이 닫힐 때 풀린다.
+
+let scrollLocks = 0;
+let savedOverflow = "";
+let savedPadding = "";
+
+/** 뒤 페이지 스크롤을 막는다. 돌려준 함수를 부르면 푼다(겹쳐 연 창이 모두 닫혀야 풀린다) */
+export function lockPageScroll(doc: Document = document): () => void {
+  const root = doc.documentElement;
+  const body = doc.body;
+  if (scrollLocks === 0) {
+    const bar = (doc.defaultView?.innerWidth ?? root.clientWidth) - root.clientWidth;
+    savedOverflow = root.style.overflow;
+    savedPadding = body.style.paddingRight;
+    root.style.overflow = "hidden";
+    if (bar > 0) body.style.paddingRight = `${bar}px`;
+  }
+  scrollLocks += 1;
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    scrollLocks -= 1;
+    if (scrollLocks === 0) {
+      root.style.overflow = savedOverflow;
+      body.style.paddingRight = savedPadding;
+    }
+  };
+}
 
 export type StepProgress = {
   /** 지금 단계(1부터) */
@@ -63,6 +93,12 @@ export function StepDialog({
   const openerRef = useRef<HTMLElement | null>(null);
   const returnRef = useRef(returnFocusRef);
   returnRef.current = returnFocusRef;
+
+  // 열려 있는 동안 뒤 페이지 스크롤을 막는다 — 닫히거나 창이 빠지면 푼다
+  useEffect(() => {
+    if (!open) return;
+    return lockPageScroll(ref.current?.ownerDocument ?? document);
+  }, [open]);
 
   useEffect(() => {
     const dialog = ref.current;
@@ -201,5 +237,5 @@ export function ConfirmDialog({
 function restore(opener: { current: HTMLElement | null }, target: RefObject<HTMLElement | null> | undefined): void {
   const el = target?.current ?? opener.current;
   opener.current = null;
-  if (el && el.isConnected) el.focus();
+  if (el && el.isConnected) el.focus({ preventScroll: true }); // 닫아도 뒤 페이지 위치는 그대로
 }
