@@ -316,7 +316,7 @@ export function BoxApplyPanel({
     return (
       <div className={`${s.card} ${s.notice}`}>
         <p>로그인한 뒤 신청할 수 있습니다.</p>
-        <Link className="btn" href={`/login?next=${encodeURIComponent(here)}`}>
+        <Link className="btn btn--wide" href={`/login?next=${encodeURIComponent(here)}`}>
           로그인
         </Link>
       </div>
@@ -326,7 +326,7 @@ export function BoxApplyPanel({
     return (
       <div className={`${s.card} ${s.notice}`}>
         <p>내가 만든 선물함입니다.</p>
-        <Link className="btn btn--line" href={`/creator/revgift-boxes/${box.id}`}>
+        <Link className="btn btn--line btn--wide" href={`/creator/revgift-boxes/${box.id}`}>
           신청 관리
         </Link>
       </div>
