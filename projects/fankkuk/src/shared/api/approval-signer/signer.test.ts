@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { acceptedSignatureMethod } from "./accepted-method";
-import { chooseApprovalSigner, createGatewaySigner } from "./signer";
+import { chooseApprovalSigner, createGatewaySigner, FAKE_SIGN_DOWN_PHONE_PREFIX, FAKE_SIGN_REJECT_PHONE_PREFIX } from "./signer";
 import { TEST_SITE_ORIGINS } from "@/shared/lib/env/test-site";
 
 const identity = { v: 1, alg: "RSA-OAEP-256+A256GCM", wrappedKey: "A".repeat(344), iv: "c2VlZC1zaWctbG5r", ciphertext: "B".repeat(24) } as const;
@@ -140,5 +140,47 @@ describe("INV-S17·S4: 게이트웨이 창구 — 정해진 HTTP 약속", () => 
       throw new TypeError("fetch failed");
     }) as unknown as typeof fetch);
     expect(await broken.signatureResult({ requestId: "r1", txId: "tx_1", plaintext: PLAIN })).toEqual({ state: "unavailable" });
+  });
+});
+
+describe("INV-U19·U20: 가입 3단계 카카오 서명 — 창구 요청", () => {
+  const cfg = { url: "https://sign.fankkuk.com", token: TOKEN };
+  const ask = (s: ReturnType<typeof createGatewaySigner>, extra: { phone?: string; minAge?: number } = {}) =>
+    s.requestSignature({ requestId: "r1", plaintext: PLAIN, requestMessage: "팬꾹 승인 서명 연결", envelope: identity, creatorId: "c1", ...extra });
+
+  it("INV-U19 ②·INV-U16: 가입 요청은 지정 번호와 최소 나이를 봉투와 같이 보낸다 — 게이트웨이가 봉투 속 번호·결과 번호와 대조하고 생년월일로 나이를 본다", async () => {
+    const f = fakeFetch([{ status: 201, body: { requestId: "r1", txId: "tx_1", expiresAt: "2026-11-10T01:05:00Z" } }]);
+    expect(await ask(createGatewaySigner(cfg, f.impl), { phone: "01012345678", minAge: 14 })).toEqual({ ok: true, txId: "tx_1" });
+    expect(JSON.parse(String(f.calls[0]!.init.body)).signer).toEqual({ envelope: identity, creatorId: "c1", phone: "01012345678", minAge: 14 });
+  });
+
+  it("INV-U20: 연결 실패·5xx·답 꼴 틀림은 창구 장애(down: true)", async () => {
+    for (const reply of [{ status: 503, body: {} }, { status: 500, body: {} }, { status: 201, body: { requestId: "r1" } }]) {
+      expect(await ask(createGatewaySigner(cfg, fakeFetch([reply]).impl)), JSON.stringify(reply)).toEqual({ ok: false, down: true });
+    }
+    const broken = createGatewaySigner(cfg, (async () => {
+      throw new TypeError("fetch failed");
+    }) as unknown as typeof fetch);
+    expect(await ask(broken)).toEqual({ ok: false, down: true });
+  });
+
+  it("INV-U20 (실패경로): 4xx(봉투·번호를 받지 않음)는 장애가 아니다(down: false) — 6자리 길을 열지 않는다", async () => {
+    for (const status of [400, 409, 422]) {
+      expect(await ask(createGatewaySigner(cfg, fakeFetch([{ status, body: {} }]).impl)), String(status)).toEqual({ ok: false, down: false });
+    }
+  });
+
+  it("INV-U20: 로컬 가짜 창구 — 장애 시험 번호(FAKE_SIGN_DOWN_PHONE_PREFIX)는 요청이 장애로, 거절 시험 번호는 결과가 거절로 온다. 그 밖의 번호는 바로 서명", async () => {
+    const s = chooseApprovalSigner({ NODE_ENV: "development" })!;
+    const base = { plaintext: PLAIN, requestMessage: "m", envelope: identity, creatorId: "c1" };
+    expect(await s.requestSignature({ ...base, requestId: "r1", phone: `${FAKE_SIGN_DOWN_PHONE_PREFIX}1234` })).toEqual({ ok: false, down: true });
+    const rej = await s.requestSignature({ ...base, requestId: "r2", phone: `${FAKE_SIGN_REJECT_PHONE_PREFIX}1234` });
+    expect(rej.ok).toBe(true);
+    if (!rej.ok) return;
+    expect(await s.signatureResult({ requestId: "r2", txId: rej.txId, plaintext: PLAIN })).toEqual({ state: "rejected" });
+    const ok = await s.requestSignature({ ...base, requestId: "r3", phone: "01012345678" });
+    expect(ok.ok).toBe(true);
+    if (!ok.ok) return;
+    expect(await s.signatureResult({ requestId: "r3", txId: ok.txId, plaintext: PLAIN })).toMatchObject({ state: "signed", method: "fake" });
   });
 });

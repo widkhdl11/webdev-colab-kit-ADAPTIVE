@@ -12,11 +12,22 @@ import type { SignatureMethod } from "./accepted-method";
 // - 운영인데 게이트웨이 설정이 없으면 창구가 없다(null) — 승인·주소 등록·연결 요청이 모두 거부된다. 가짜로 넘어가지 않는다.
 // 같은 창구를 승인(요청 구분 「팬꾹 선물 수령 승인」)과 승인 서명 연결의 시험 서명(「팬꾹 승인 서명 연결」)이 쓴다 — 문구는 부르는 쪽이 넘긴다.
 // HTTP 약속(게이트웨이와 맞춘 값):
-//   POST {URL}/v1/sign/requests  Bearer 토큰  { requestId, plaintext, requestMessage, signer: { envelope, creatorId } } → 201 { requestId, txId, expiresAt }
+//   POST {URL}/v1/sign/requests  Bearer 토큰  { requestId, plaintext, requestMessage, signer: { envelope, creatorId, phone?, minAge? } } → 201 { requestId, txId, expiresAt }
+//     phone·minAge 는 가입 3단계 요청에만 붙는다(signup INV-U19 ②·INV-U16): 게이트웨이는 phone 이 봉투 속 지정 번호·서명 결과 번호와 같은지,
+//     서명 결과의 생년월일로 만 minAge 세 이상인지 보고, 아니면 결과를 422(대상자 불일치)로 답한다.
 //   POST {URL}/v1/sign/requests/{requestId}/result  { txId, plaintext } → { state: pending|rejected|expired } | { state: signed, method, signedPlaintext, signature, signedAt }
 //   409 원문 불일치 · 422 서명/대상자 불일치
 
-export type SignRequestStart = { ok: true; txId: string } | { ok: false };
+/**
+ * 요청 결과. down = 창구 장애(연결 실패·시간 초과·5xx·답 꼴 틀림 — signup INV-U20 의 판정 재료). 4xx(봉투·번호를 받지 않음)는 장애가 아니다.
+ */
+export type SignRequestStart = { ok: true; txId: string } | { ok: false; down: boolean };
+
+/** 로컬·시험 사이트 가짜 창구의 시험 번호 — 이 앞자리로 시작하는 번호로 가입 서명을 요청하면 창구 장애로 답한다(signup INV-U20 화면 확인용) */
+export const FAKE_SIGN_DOWN_PHONE_PREFIX = "0109999";
+/** 가짜 창구의 시험 번호 — 이 앞자리면 요청은 받고 결과는 서명 거절로 답한다 */
+export const FAKE_SIGN_REJECT_PHONE_PREFIX = "0109998";
+const FAKE_REJECT_TX = "fake-reject-";
 
 /**
  * 결과 확인의 답. signed 는 창구가 서명을 검증한 뒤에만 나온다 — 서명된 원문은 부르는 쪽이 저장 원문과 다시 바이트 대조한다(INV-S2).
@@ -35,18 +46,22 @@ export type ApprovalSigner = {
   /**
    * 서명 요청. envelope 는 서명 대상을 지정할 봉인된 이름·생년월일·휴대폰 번호(연결 정보) — 열지 않고 넘긴다.
    * creatorId 는 DB 가 그 요청의 크리에이터로 돌려준 ID — 게이트웨이가 봉투 안의 크리에이터 ID 와 대조한다(다른 크리에이터 봉투를 옮겨 붙이지 못하게).
+   * phone·minAge 는 가입 3단계 요청만 넘긴다(signup INV-U19 ②·INV-U16 — 위 HTTP 약속).
    */
-  requestSignature(input: { requestId: string; plaintext: string; requestMessage: string; envelope: Envelope; creatorId: string }): Promise<SignRequestStart>;
+  requestSignature(input: { requestId: string; plaintext: string; requestMessage: string; envelope: Envelope; creatorId: string; phone?: string; minAge?: number }): Promise<SignRequestStart>;
   /** 결과 확인. txId 는 요청 때 받은 거래 ID 그대로. */
   signatureResult(input: { requestId: string; txId: string; plaintext: string }): Promise<SignatureResult>;
 };
 
 const fakeSigner: ApprovalSigner = {
   kind: "fake",
-  async requestSignature({ requestId }) {
+  async requestSignature({ requestId, phone }) {
+    if (phone?.startsWith(FAKE_SIGN_DOWN_PHONE_PREFIX)) return { ok: false, down: true };
+    if (phone?.startsWith(FAKE_SIGN_REJECT_PHONE_PREFIX)) return { ok: true, txId: `${FAKE_REJECT_TX}${requestId}` };
     return { ok: true, txId: `fake-${requestId}` };
   },
-  async signatureResult({ plaintext }) {
+  async signatureResult({ txId, plaintext }) {
+    if (txId.startsWith(FAKE_REJECT_TX)) return { state: "rejected" };
     return { state: "signed", method: "fake", signedPlaintext: plaintext, signature: "fake-signature", signedAt: new Date().toISOString() };
   },
 };
@@ -83,17 +98,20 @@ async function post(cfg: GatewayConfig, path: string, body: unknown, fetchImpl: 
 export function createGatewaySigner(cfg: GatewayConfig, fetchImpl: typeof fetch = fetch): ApprovalSigner {
   return {
     kind: "kakao",
-    async requestSignature({ requestId, plaintext, requestMessage, envelope, creatorId }) {
-      const res = await post(cfg, "/v1/sign/requests", { requestId, plaintext, requestMessage, signer: { envelope, creatorId } }, fetchImpl);
-      if (!res) return { ok: false };
+    async requestSignature({ requestId, plaintext, requestMessage, envelope, creatorId, phone, minAge }) {
+      const signer = phone === undefined ? { envelope, creatorId } : { envelope, creatorId, phone, ...(minAge === undefined ? {} : { minAge }) };
+      const res = await post(cfg, "/v1/sign/requests", { requestId, plaintext, requestMessage, signer }, fetchImpl);
+      // 연결 실패·시간 초과 — 창구 장애(signup INV-U20)
+      if (!res) return { ok: false, down: true };
       if (res.status !== 201) {
         console.error("서명 게이트웨이 요청 응답", res.status);
-        return { ok: false };
+        // 4xx 는 이 요청을 받지 않은 것(봉투·번호) — 장애가 아니다. 5xx·그 밖의 답은 창구 오류
+        return { ok: false, down: !(res.status >= 400 && res.status < 500) };
       }
       const parsed = startReply.safeParse(await res.json().catch(() => null));
       if (!parsed.success || parsed.data.requestId !== requestId) {
         console.error("서명 게이트웨이 요청 응답 꼴이 틀림");
-        return { ok: false };
+        return { ok: false, down: true };
       }
       return { ok: true, txId: parsed.data.txId };
     },
