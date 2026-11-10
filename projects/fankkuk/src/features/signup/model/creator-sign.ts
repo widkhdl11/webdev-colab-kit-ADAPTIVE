@@ -12,7 +12,7 @@ import { phoneSchema } from "./signup-input";
 // 1) 시작: 본문에서 봉투(이름·생년월일·번호를 브라우저가 공개키로 봉인)·크리에이터 ID(봉투 안에도 같은 값)·번호를 받는다. 앱 서버는 봉투를 열지 않는다.
 //    번호는 해시로만 DB 에 넘기고(INV-U18), 원문은 창구에만 넘긴다 — 창구가 봉투 속 번호·서명 결과 번호와 같은지 본다(INV-U19 ②).
 //    번호표(확인 ID)는 요청마다 새로 발급한다. 앞 번호표의 기다리는 요청은 DB 가 같은 처리에서 끝낸다.
-//    창구 요청이 장애로 실패하면 한 번 더 불러 보고, 그래도 장애면 그 번호표에 「창구 장애 확인」을 적는다(INV-U20) — 그때만 6자리 길이 열린다.
+//    창구 요청이 장애로 실패하면(닿지 못한 것이 확실할 때만) 한 번 더 불러 보고, 그래도 장애면 그 번호표에 「창구 장애 확인」을 적는다(INV-U20) — 그때만 6자리 길이 열린다.
 // 2) 결과 확인: 본문에서는 요청 ID 하나만 받고 번호표는 쿠키에서만 읽는다. 결과는 서버가 창구에 직접 묻는다.
 //    서명된 원문이 저장 원문과 바이트 단위로 같고 방식이 이 창구의 방식일 때만 「서명됨」으로 넘기고, DB 가 다시 대조한 뒤 확인 줄에 「확인됨」을 적는다(INV-U1).
 //    서명 거절·기한 지남·대상자 불일치는 장애가 아니다(실패). 결과 조회가 두 번 연달아 실패하면 장애다(INV-U20 정함).
@@ -117,8 +117,8 @@ export async function startCreatorSign(deps: CreatorSignDeps, body: unknown, ipH
   const ask = () =>
     signer.requestSignature({ requestId, plaintext: row.payload!, requestMessage: LINK_REQUEST_MESSAGE, envelope, creatorId, phone, minAge: CREATOR_SIGN_MIN_AGE });
   let sent: SignRequestStart = await ask();
-  // INV-U20: 장애면 한 번 더 불러 본다
-  if (!sent.ok && sent.down) sent = await ask();
+  // INV-U20: 장애면 한 번 더 불러 본다 — 단 요청이 딜러사에 닿지 못한 것이 확실할 때만(시간 초과는 카카오톡이 이미 갔을 수 있어 다시 부르지 않는다)
+  if (!sent.ok && sent.down && sent.retry) sent = await ask();
   if (!sent.ok) {
     if (sent.down) {
       // 두 번 다 장애 — 그 번호표에 「창구 장애 확인」. 적지 못하면 6자리 길을 열지 않는다(막힌 쪽)

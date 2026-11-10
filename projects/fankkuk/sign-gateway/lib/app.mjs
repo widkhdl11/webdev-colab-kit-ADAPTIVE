@@ -205,8 +205,9 @@ export function createHandler({ config, adapter, invoice = null, log = console.l
         status = 409;
         code = "plaintext_mismatch";
       } else if (err instanceof UpstreamError) {
-        status = 502;
-        code = "upstream_error";
+        // 503 upstream_unreachable = 서명 요청이 딜러사에 가지 않음(앱이 다시 불러도 된다) · 502 = 갔을 수 있음(다시 부르지 않는다)
+        status = err.retryable ? 503 : 502;
+        code = err.retryable ? "upstream_unreachable" : "upstream_error";
         log(`upstream ${err.code}`);
       } else if (err instanceof UnknownTransactionError) {
         status = 404;

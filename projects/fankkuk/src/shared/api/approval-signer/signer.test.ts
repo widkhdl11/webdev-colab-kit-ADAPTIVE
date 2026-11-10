@@ -160,27 +160,35 @@ describe("INV-U19·U20: 가입 3단계 카카오 서명 — 창구 요청", () =
     expect(JSON.parse(String(f.calls[0]!.init.body)).signer).toEqual({ envelope: identity, creatorId: "c1", minAge: 14 });
   });
 
-  it("INV-U20: 연결 실패·5xx(게이트웨이 upstream_error 502 포함)·답 꼴 틀림은 창구 장애(down: true)", async () => {
-    for (const reply of [{ status: 502, body: { error: "upstream_error" } }, { status: 503, body: {} }, { status: 500, body: {} }, { status: 201, body: { requestId: "r1" } }]) {
-      expect(await ask(createGatewaySigner(cfg, fakeFetch([reply]).impl)), JSON.stringify(reply)).toEqual({ ok: false, down: true });
+  it("INV-U20: 5xx·답 꼴 틀림·시간 초과는 창구 장애(down: true) — 요청이 딜러사에 닿았을 수 있어 다시 부르지 않는다(retry: false, 카카오톡이 두 번 가지 않게)", async () => {
+    for (const reply of [{ status: 502, body: { error: "upstream_error" } }, { status: 500, body: {} }, { status: 201, body: { requestId: "r1" } }]) {
+      expect(await ask(createGatewaySigner(cfg, fakeFetch([reply]).impl)), JSON.stringify(reply)).toEqual({ ok: false, down: true, retry: false });
     }
+    const slow = createGatewaySigner(cfg, (async () => {
+      throw new DOMException("The operation was aborted due to timeout", "TimeoutError");
+    }) as unknown as typeof fetch);
+    expect(await ask(slow)).toEqual({ ok: false, down: true, retry: false });
+  });
+
+  it("INV-U20: 게이트웨이에 닿지 못함(연결 실패)·게이트웨이가 딜러사에 닿지 못함(503 upstream_unreachable)은 장애이고 한 번 더 불러도 된다(retry: true)", async () => {
     const broken = createGatewaySigner(cfg, (async () => {
       throw new TypeError("fetch failed");
     }) as unknown as typeof fetch);
-    expect(await ask(broken)).toEqual({ ok: false, down: true });
+    expect(await ask(broken)).toEqual({ ok: false, down: true, retry: true });
+    expect(await ask(createGatewaySigner(cfg, fakeFetch([{ status: 503, body: { error: "upstream_unreachable" } }]).impl))).toEqual({ ok: false, down: true, retry: true });
   });
 
   // 게이트웨이는 풀 수 없는 봉투(쓰레기 wrappedKey 포함)·번호 불일치를 400 invalid_signer 로 답한다 — 장애로 꾸밀 수 없다
   it("INV-U20 (실패경로): 4xx(봉투·번호를 받지 않음)는 장애가 아니다(down: false) — 6자리 길을 열지 않는다", async () => {
     for (const status of [400, 409, 422]) {
-      expect(await ask(createGatewaySigner(cfg, fakeFetch([{ status, body: {} }]).impl)), String(status)).toEqual({ ok: false, down: false });
+      expect(await ask(createGatewaySigner(cfg, fakeFetch([{ status, body: {} }]).impl)), String(status)).toEqual({ ok: false, down: false, retry: false });
     }
   });
 
   it("INV-U20: 로컬 가짜 창구 — 장애 시험 번호(FAKE_SIGN_DOWN_PHONE_PREFIX)는 요청이 장애로, 거절 시험 번호는 결과가 거절로 온다. 그 밖의 번호는 바로 서명", async () => {
     const s = chooseApprovalSigner({ NODE_ENV: "development" })!;
     const base = { plaintext: PLAIN, requestMessage: "m", envelope: identity, creatorId: "c1" };
-    expect(await s.requestSignature({ ...base, requestId: "r1", phone: `${FAKE_SIGN_DOWN_PHONE_PREFIX}1234` })).toEqual({ ok: false, down: true });
+    expect(await s.requestSignature({ ...base, requestId: "r1", phone: `${FAKE_SIGN_DOWN_PHONE_PREFIX}1234` })).toEqual({ ok: false, down: true, retry: true });
     const rej = await s.requestSignature({ ...base, requestId: "r2", phone: `${FAKE_SIGN_REJECT_PHONE_PREFIX}1234` });
     expect(rej.ok).toBe(true);
     if (!rej.ok) return;

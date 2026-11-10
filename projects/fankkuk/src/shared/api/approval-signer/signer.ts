@@ -21,8 +21,10 @@ import type { SignatureMethod } from "./accepted-method";
 
 /**
  * 요청 결과. down = 창구 장애(연결 실패·시간 초과·5xx·답 꼴 틀림 — signup INV-U20 의 판정 재료). 4xx(봉투·번호를 받지 않음)는 장애가 아니다.
+ * retry = 한 번 더 불러도 되는가 — 요청이 딜러사에 닿지 못한 것이 확실할 때만(게이트웨이에 연결 못 함 · 게이트웨이 503 upstream_unreachable).
+ * 시간 초과·502·답 꼴 틀림은 딜러사가 이미 카카오톡을 보냈을 수 있어 다시 부르지 않는다(카카오톡이 두 번 가지 않게, 2026-11-11 코드 리뷰).
  */
-export type SignRequestStart = { ok: true; txId: string } | { ok: false; down: boolean };
+export type SignRequestStart = { ok: true; txId: string } | { ok: false; down: boolean; retry: boolean };
 
 /** 로컬·시험 사이트 가짜 창구의 시험 번호 — 이 앞자리로 시작하는 번호로 가입 서명을 요청하면 창구 장애로 답한다(signup INV-U20 화면 확인용) */
 export const FAKE_SIGN_DOWN_PHONE_PREFIX = "0109999";
@@ -57,7 +59,7 @@ export type ApprovalSigner = {
 const fakeSigner: ApprovalSigner = {
   kind: "fake",
   async requestSignature({ requestId, phone }) {
-    if (phone?.startsWith(FAKE_SIGN_DOWN_PHONE_PREFIX)) return { ok: false, down: true };
+    if (phone?.startsWith(FAKE_SIGN_DOWN_PHONE_PREFIX)) return { ok: false, down: true, retry: true };
     if (phone?.startsWith(FAKE_SIGN_REJECT_PHONE_PREFIX)) return { ok: true, txId: `${FAKE_REJECT_TX}${requestId}` };
     return { ok: true, txId: `fake-${requestId}` };
   },
@@ -79,7 +81,8 @@ const resultReply = z.union([
   }),
 ]);
 
-async function post(cfg: GatewayConfig, path: string, body: unknown, fetchImpl: typeof fetch): Promise<Response | null> {
+/** 게이트웨이 부르기 — 응답, 또는 부르지 못한 까닭(timeout = 보냈지만 답이 늦음 · unreachable = 닿지 못함) */
+async function post(cfg: GatewayConfig, path: string, body: unknown, fetchImpl: typeof fetch): Promise<Response | "timeout" | "unreachable"> {
   try {
     return await fetchImpl(`${cfg.url}${path}`, {
       method: "POST",
@@ -90,8 +93,10 @@ async function post(cfg: GatewayConfig, path: string, body: unknown, fetchImpl: 
       signal: AbortSignal.timeout(15_000),
     });
   } catch (e) {
-    console.error("서명 게이트웨이 요청 실패", e instanceof Error ? e.name : typeof e);
-    return null;
+    // AbortSignal.timeout 이 던지는 DOMException 은 환경에 따라 Error 의 하위가 아니다 — 이름으로 본다
+    const name = typeof e === "object" && e !== null && typeof (e as { name?: unknown }).name === "string" ? (e as { name: string }).name : typeof e;
+    console.error("서명 게이트웨이 요청 실패", name);
+    return name === "TimeoutError" || name === "AbortError" ? "timeout" : "unreachable";
   }
 }
 
@@ -102,23 +107,25 @@ export function createGatewaySigner(cfg: GatewayConfig, fetchImpl: typeof fetch 
     async requestSignature({ requestId, plaintext, requestMessage, envelope, creatorId, phone, minAge }) {
       const signer = { envelope, creatorId, ...(phone === undefined ? {} : { phone }), ...(minAge === undefined ? {} : { minAge }) };
       const res = await post(cfg, "/v1/sign/requests", { requestId, plaintext, requestMessage, signer }, fetchImpl);
-      // 연결 실패·시간 초과 — 창구 장애(signup INV-U20)
-      if (!res) return { ok: false, down: true };
+      // 연결 실패 — 장애, 게이트웨이에 닿지 못했으니 다시 불러도 된다 · 시간 초과 — 장애, 닿았을 수 있어 다시 부르지 않는다(signup INV-U20)
+      if (res === "unreachable") return { ok: false, down: true, retry: true };
+      if (res === "timeout") return { ok: false, down: true, retry: false };
       if (res.status !== 201) {
         console.error("서명 게이트웨이 요청 응답", res.status);
-        // 4xx 는 이 요청을 받지 않은 것(봉투·번호) — 장애가 아니다. 5xx·그 밖의 답은 창구 오류
-        return { ok: false, down: !(res.status >= 400 && res.status < 500) };
+        // 4xx 는 이 요청을 받지 않은 것(봉투·번호) — 장애가 아니다. 503 은 게이트웨이가 딜러사에 닿지 못함(다시 불러도 된다). 그 밖의 5xx·답은 창구 오류
+        if (res.status >= 400 && res.status < 500) return { ok: false, down: false, retry: false };
+        return { ok: false, down: true, retry: res.status === 503 };
       }
       const parsed = startReply.safeParse(await res.json().catch(() => null));
       if (!parsed.success || parsed.data.requestId !== requestId) {
         console.error("서명 게이트웨이 요청 응답 꼴이 틀림");
-        return { ok: false, down: true };
+        return { ok: false, down: true, retry: false };
       }
       return { ok: true, txId: parsed.data.txId };
     },
     async signatureResult({ requestId, txId, plaintext }) {
       const res = await post(cfg, `/v1/sign/requests/${encodeURIComponent(requestId)}/result`, { txId, plaintext }, fetchImpl);
-      if (!res) return { state: "unavailable" };
+      if (typeof res === "string") return { state: "unavailable" };
       // 409 원문 불일치 · 422 서명/대상자 불일치(INV-S2·S4) — 그 요청은 끝난다
       if (res.status === 409 || res.status === 422) return { state: "mismatch" };
       if (res.status !== 200) {

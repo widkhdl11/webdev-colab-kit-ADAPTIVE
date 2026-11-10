@@ -12,11 +12,12 @@ import { after, before, beforeEach, describe, it } from "node:test";
 import { createAdapter } from "../lib/adapters/index.mjs";
 import { createHandler } from "../lib/app.mjs";
 import { ConfigError, loadConfig } from "../lib/config.mjs";
-import { assertAllowedUrl } from "../lib/outbound.mjs";
+import { assertAllowedUrl, OutboundTimeoutError } from "../lib/outbound.mjs";
 import { makeCert, makeOcspResponse, makePki, makeSignedData } from "./helpers/pki.mjs";
 
 const require = createRequire(import.meta.url);
-const { unwrapKakaoContent, parseIssueDate, kstStamp } = require("../lib/adapters/dreamsecurity.cjs");
+const { unwrapKakaoContent, parseIssueDate, kstStamp, TX_TTL_MS, ISSUE_MAX_AGE_MS } = require("../lib/adapters/dreamsecurity.cjs");
+const { MAX_AGE } = require("../lib/envelope.cjs");
 const signedDataLib = require("../lib/signed-data.cjs");
 
 const TOKEN = "t".repeat(40);
@@ -67,6 +68,8 @@ function fakeDream(ctx) {
     calls.push({ url, body: opts.body });
     const s = ctx.scenario;
     const json = (o) => ({ status: 200, headers: {}, body: JSON.stringify(o), rawBody: Buffer.from(JSON.stringify(o)) });
+    // 딜러사 부르기 실패 흉내 — connect: 닿지 못함 · timeout: 보냈지만 답이 늦음(진짜 창구 outboundRequest 와 같은 오류)
+    if (s.fail && u.pathname === s.fail.path) throw s.fail.kind === "timeout" ? new OutboundTimeoutError() : new Error("connect ECONNREFUSED");
     if (u.hostname === "ocsp.kakao.com") {
       if (s.ocspFail) throw new Error("connect");
       const body = makeOcspResponse({ request: opts.body, responderKey: s.ocspKey ?? ctx.pki.ca.key, status: s.ocspStatus });
@@ -211,7 +214,7 @@ describe("드림시큐리티 어댑터 (가짜 드림 서버)", () => {
     const created = await r1.json();
     assert.match(created.txId, /^FANKKUK[0-9a-f]{32}$/);
     assert.equal(created.requestId, "req_1");
-    assert.equal(Date.parse(created.expiresAt), ctx.clock + 5 * 60 * 1000);
+    assert.equal(Date.parse(created.expiresAt), ctx.clock + TX_TTL_MS);
 
     // 딜러사로 간 값: 개발 주소, 거래 ID 는 「한국시간|clientTxId」, 서명 요청은 카카오·sign·PlainText·hubtoken·MB
     const tx = [...fake.tokens.values()].find((t) => t.clientTxId === created.txId);
@@ -350,15 +353,15 @@ describe("드림시큐리티 어댑터 (가짜 드림 서버)", () => {
     assert.equal((await result(txId)).status, 422);
   });
 
-  it("발급 시각이 10분 넘게 지난 결과 → 422", async () => {
-    ctx.scenario.issueDate = kstIssue(ctx.clock - 11 * 60 * 1000);
+  it("발급 시각이 정한 시간(ISSUE_MAX_AGE_MS)을 넘게 지난 결과 → 422", async () => {
+    ctx.scenario.issueDate = kstIssue(ctx.clock - ISSUE_MAX_AGE_MS - 60 * 1000);
     const { txId } = await (await start()).json();
     assert.equal((await result(txId)).status, 422);
   });
 
   it("만료(5분) 지난 txId·모르는 txId·재시작 뒤 txId 는 expired", async () => {
     const { txId } = await (await start()).json();
-    ctx.clock += 5 * 60 * 1000 + 1000;
+    ctx.clock += TX_TTL_MS + 1000;
     assert.deepEqual(await (await result(txId)).json(), { requestId: "req_1", state: "expired" });
     assert.deepEqual(await (await result("FANKKUKunknown")).json(), { requestId: "req_1", state: "expired" });
   });
@@ -428,7 +431,7 @@ describe("드림시큐리티 어댑터 (가짜 드림 서버)", () => {
 
   it("INV-U20 (실패경로): 봉투 속 생년월일이 없는 날짜·미래·120세 초과면 400 invalid_signer(딜러사에 묻지 않아 장애로 꾸밀 수 없다)", async () => {
     const before = fake.calls.length;
-    for (const birth of ["20991399", "20230230", "19990001", birthAged(0, 1), birthAged(121)]) {
+    for (const birth of ["20991399", "20230230", "19990001", birthAged(0, 1), birthAged(MAX_AGE + 1)]) {
       const bad = { ...IDENTITY, birth };
       const res = await start(bad, { phone: bad.phone, minAge: 14 });
       assert.equal(res.status, 400, birth);
@@ -437,7 +440,7 @@ describe("드림시큐리티 어댑터 (가짜 드림 서버)", () => {
     assert.equal(fake.calls.length, before);
     // 경계 — 오늘 태어남(0세)·만 120세는 꼴로는 받는다(나이 판정은 minAge 가 한다)
     assert.equal((await start({ ...IDENTITY, birth: birthAged(0) })).status, 201);
-    assert.equal((await start({ ...IDENTITY, birth: birthAged(120) })).status, 201);
+    assert.equal((await start({ ...IDENTITY, birth: birthAged(MAX_AGE) })).status, 201);
   });
 
   it("INV-U19 ②·U16 (실패경로): 가입 요청(지정 번호 있음)에 minAge 가 없으면 400 — 나이 확인을 건너뛰는 길이 없다", async () => {
@@ -450,6 +453,10 @@ describe("드림시큐리티 어댑터 (가짜 드림 서버)", () => {
     const young = { ...IDENTITY, birth: birthAged(14, 1) };
     const { txId } = await (await start(young, { minAge: 14 })).json();
     assert.equal((await result(txId)).status, 422);
+    // 대조: 오늘 만 14세가 되는 생년월일이면 서명된다
+    const adult = { ...IDENTITY, birth: birthAged(14) };
+    const ok = await (await start(adult, { minAge: 14 })).json();
+    assert.equal((await (await result(ok.txId)).json()).state, "signed");
   });
 
   it("INV-U16 (실패경로): minAge 꼴이 틀리면 400 invalid_signer", async () => {
@@ -466,12 +473,28 @@ describe("드림시큐리티 어댑터 (가짜 드림 서버)", () => {
     assert.deepEqual(await res.json(), { error: "invalid_signer" });
   });
 
-  it("INV-U20: KMS 연결 실패 → 502 upstream_error(장애)", async () => {
+  it("INV-U20: KMS 연결 실패 → 503 upstream_unreachable(장애, 카카오톡을 보내기 전이라 앱이 다시 불러도 된다)", async () => {
     ctx.kmsDown = true;
     const res = await start(IDENTITY, { phone: IDENTITY.phone, minAge: 14 });
-    assert.equal(res.status, 502);
-    assert.deepEqual(await res.json(), { error: "upstream_error" });
+    assert.equal(res.status, 503);
+    assert.deepEqual(await res.json(), { error: "upstream_unreachable" });
   });
+
+  // 코드 리뷰 2: 서명 요청(auth-enc-request)을 보냈는데 답이 늦으면 카카오톡이 이미 갔을 수 있다 — 앱이 다시 부르지 않게 502 로 답한다.
+  // 그 전 단계(get-token) 실패와, 서명 요청이 딜러사에 닿지 못한 연결 실패는 카카오톡이 가지 않았으므로 503(다시 불러도 된다)
+  for (const [label, fail, status, error] of [
+    ["get-token 연결 실패", { path: "/agent/get-token", kind: "connect" }, 503, "upstream_unreachable"],
+    ["get-token 시간 초과", { path: "/agent/get-token", kind: "timeout" }, 503, "upstream_unreachable"],
+    ["서명 요청 연결 실패(닿지 못함)", { path: "/agent/auth-enc-request", kind: "connect" }, 503, "upstream_unreachable"],
+    ["서명 요청 시간 초과(닿았을 수 있음)", { path: "/agent/auth-enc-request", kind: "timeout" }, 502, "upstream_error"],
+  ]) {
+    it(`INV-U20 (코드 리뷰): ${label} → ${status} ${error}`, async () => {
+      ctx.scenario.fail = fail;
+      const res = await start(IDENTITY, { phone: IDENTITY.phone, minAge: 14 });
+      assert.equal(res.status, status);
+      assert.deepEqual(await res.json(), { error });
+    });
+  }
 
   it("요청 구분 문구는 1~40자 필수", async () => {
     const body = { requestId: "r", plaintext: PLAINTEXT, signer: { envelope: sealIdentity(IDENTITY, kms.publicKey), creatorId: IDENTITY.creatorId } };

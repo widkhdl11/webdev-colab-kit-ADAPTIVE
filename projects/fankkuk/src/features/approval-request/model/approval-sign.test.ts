@@ -78,7 +78,7 @@ describe("INV-S17: 「승인」을 누를 때 서명 요청을 만든다", () =>
 
   it("INV-S17 (실패경로): 창구가 요청을 받지 못하면 그 요청을 끝내고 다시 요청할 수 있게 답한다", async () => {
     const f = fakeAdmin({ start_approval_sign: started, close_approval_sign: { data: "closed" } });
-    const s = spySigner(undefined, { ok: false, down: true });
+    const s = spySigner(undefined, { ok: false, down: true, retry: false });
     const r = await startApprovalSign({ admin: f.admin, viewer: HARU, signer: s.signer }, { requestId: REQ });
     expect(r).toMatchObject({ ok: false, status: 503 });
     expect(f.calls[1]).toEqual({ fn: "close_approval_sign", args: { p_actor_id: HARU.userId, p_sign_request_id: SIGN, p_outcome: "failed" } });

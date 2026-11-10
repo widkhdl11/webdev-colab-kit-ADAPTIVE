@@ -100,7 +100,7 @@ describe("INV-S16: 연결 요청 시작", () => {
 
   it("INV-S16 (실패경로): 창구가 요청을 받지 못하면 그 요청을 실패로 닫는다", async () => {
     const f = fakeAdmin(started);
-    const spy: ApprovalSigner = { ...signer!, requestSignature: async () => ({ ok: false, down: true }) };
+    const spy: ApprovalSigner = { ...signer!, requestSignature: async () => ({ ok: false, down: true, retry: false }) };
     expect(await startSignatureLink({ admin: f.admin, viewer: HARU, signer: spy }, { identity }, IP)).toMatchObject({ ok: false, status: 503 });
     expect(f.calls.at(-1)).toEqual({
       fn: "settle_signature_link",

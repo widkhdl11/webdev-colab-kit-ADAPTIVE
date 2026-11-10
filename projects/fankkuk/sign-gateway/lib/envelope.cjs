@@ -83,4 +83,4 @@ function parseLinkIdentity(text, nowMs = Date.now()) {
   return { name, birth, phone, creatorId };
 }
 
-module.exports = { ENVELOPE_ALG, parseEnvelope, openEnvelope, parseLinkIdentity };
+module.exports = { ENVELOPE_ALG, parseEnvelope, openEnvelope, parseLinkIdentity, MAX_AGE };

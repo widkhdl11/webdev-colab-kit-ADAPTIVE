@@ -36,7 +36,7 @@ function harness(opts: {
     kind: "fake",
     async requestSignature(input) {
       signerCalls.push({ kind: "request", input });
-      return starts.shift() ?? { ok: false, down: true };
+      return starts.shift() ?? { ok: false, down: true, retry: true };
     },
     async signatureResult(input) {
       signerCalls.push({ kind: "result", input });
@@ -137,8 +137,8 @@ describe("INV-U19: 서명 요청 만들기", () => {
 });
 
 describe("INV-U20: 창구 장애 판정 — 요청 만들기", () => {
-  it("INV-U20 (S20): 창구 요청이 두 번 장애로 실패하면 그 번호표에 「창구 장애 확인」을 적고 6자리 길로 답한다", async () => {
-    const h = harness({ starts: [{ ok: false, down: true }, { ok: false, down: true }] });
+  it("INV-U20 (S20): 다시 불러도 되는 장애(연결 실패)가 두 번이면 그 번호표에 「창구 장애 확인」을 적고 6자리 길로 답한다", async () => {
+    const h = harness({ starts: [{ ok: false, down: true, retry: true }, { ok: false, down: true, retry: true }] });
     const r = await startCreatorSign(h.deps, startBody(), IP, null);
     expect(r).toEqual({ ok: true, state: "down", ticket: TICKET });
     expect(h.signerCalls.filter((c) => c.kind === "request")).toHaveLength(2);
@@ -146,14 +146,21 @@ describe("INV-U20: 창구 장애 판정 — 요청 만들기", () => {
   });
 
   it("INV-U20 (실패경로): 한 번 실패하고 다시 부른 요청이 되면 장애가 아니다 — 기다리는 중", async () => {
-    const h = harness({ starts: [{ ok: false, down: true }, { ok: true, txId: "tx-2" }] });
+    const h = harness({ starts: [{ ok: false, down: true, retry: true }, { ok: true, txId: "tx-2" }] });
     const r = await startCreatorSign(h.deps, startBody(), IP, null);
     expect(r).toMatchObject({ ok: true, state: "pending" });
     expect(h.calls.some((c) => c.fn === "close_signup_sign")).toBe(false);
   });
 
+  it("INV-U20 (코드 리뷰): 시간 초과처럼 요청이 딜러사에 닿았을 수 있는 장애는 다시 부르지 않는다 — 한 번만 부르고 바로 「창구 장애 확인」(카카오톡이 두 번 가지 않게)", async () => {
+    const h = harness({ starts: [{ ok: false, down: true, retry: false }, { ok: true, txId: "tx-2" }] });
+    const r = await startCreatorSign(h.deps, startBody(), IP, null);
+    expect(r).toEqual({ ok: true, state: "down", ticket: TICKET });
+    expect(h.signerCalls.filter((c) => c.kind === "request")).toHaveLength(1);
+  });
+
   it("INV-U20 (S20c, 실패경로): 창구가 요청을 받지 않으면(4xx — 봉투·번호 불일치) 장애가 아니다 — 실패로 닫고 다시 적게 한다", async () => {
-    const h = harness({ starts: [{ ok: false, down: false }] });
+    const h = harness({ starts: [{ ok: false, down: false, retry: false }] });
     const r = await startCreatorSign(h.deps, startBody(), IP, null);
     expect(r).toMatchObject({ ok: false, status: 400 });
     expect(h.signerCalls.filter((c) => c.kind === "request")).toHaveLength(1);

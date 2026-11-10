@@ -20,13 +20,18 @@ export class SignerMismatchError extends Error {
 /** 서명된 원문이 그 거래의 원문과 다르다(INV-S2). 409 plaintext_mismatch. */
 export class PlaintextMismatchError extends Error {}
 
-/** 딜러사(또는 KMS)가 예상 밖의 답을 했다. 502 upstream_error. code 는 딜러사 결과 코드 등 — 개인정보 없음. */
+/**
+ * 딜러사(또는 KMS)가 예상 밖의 답을 했거나 닿지 못했다. code 는 딜러사 결과 코드 등 — 개인정보 없음.
+ * retryable = 카카오톡 서명 요청이 딜러사에 가지 않은 것이 확실하다(앱이 한 번 더 불러도 된다) → 503 upstream_unreachable.
+ * 아니면 502 upstream_error — 서명 요청을 보낸 뒤의 시간 초과·오류는 카카오톡이 이미 갔을 수 있어 앱이 다시 부르지 않는다(signup INV-U20).
+ */
 export class UpstreamError extends Error {
-  constructor(code) {
+  constructor(code, retryable = false) {
     // 딜러사가 준 값이 섞이므로 로그에 넣기 전에 꼴을 좁힌다
     const safe = String(code).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 64);
     super(`upstream ${safe}`);
     this.code = safe;
+    this.retryable = retryable === true;
   }
 }
 

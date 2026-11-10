@@ -178,6 +178,9 @@ function createDreamsecurityAdapter(config, deps) {
     return `https://${host}/agent/${name}`;
   }
 
+  // 서명 요청(auth-enc-request)을 딜러사가 받았을 수 있는가 — 받았다면 카카오톡이 갔을 수 있어 앱이 다시 부르면 안 된다(retryable false).
+  // 그 전 단계(get-token)의 실패와 서명 요청이 아예 닿지 못한 연결 실패만 다시 불러도 된다(signup INV-U20, 2026-11-11 코드 리뷰)
+  const SENDS_KAKAO = new Set(["auth-enc-request"]);
   async function post(name, payload) {
     let res;
     try {
@@ -187,10 +190,11 @@ function createDreamsecurityAdapter(config, deps) {
         headers: { "content-type": "application/json; charset=utf-8", accept: "application/json" },
         body: JSON.stringify(payload),
       });
-    } catch {
-      throw new UpstreamError(`${name}_unreachable`);
+    } catch (err) {
+      const timedOut = err !== null && typeof err === "object" && err.name === "OutboundTimeoutError";
+      throw new UpstreamError(`${name}_${timedOut ? "timeout" : "unreachable"}`, !SENDS_KAKAO.has(name) || !timedOut);
     }
-    if (res.status !== 200) throw new UpstreamError(`${name}_http_${res.status}`);
+    if (res.status !== 200) throw new UpstreamError(`${name}_http_${res.status}`, !SENDS_KAKAO.has(name));
     try {
       const parsed = JSON.parse(res.body);
       if (parsed === null || typeof parsed !== "object") throw new Error();
@@ -216,7 +220,8 @@ function createDreamsecurityAdapter(config, deps) {
     } catch (err) {
       // 쓰레기 wrappedKey 로 장애 기록(6자리 길)을 만들지 못하게 — KMS 가 암호문을 거부한 것은 400 invalid_signer
       if (err !== null && typeof err === "object" && KMS_BAD_INPUT.has(err.type)) throw new TypeError("signer.envelope.wrappedKey");
-      throw new UpstreamError("kms_decrypt");
+      // 카카오톡을 보내기 전 단계라 다시 불러도 된다
+      throw new UpstreamError("kms_decrypt", true);
     }
     const identity = envelope.parseLinkIdentity(envelope.openEnvelope(parsed, dek), now());
     // 앱은 DB 가 그 요청의 크리에이터로 돌려준 ID 를 꼭 같이 보낸다 — 봉투 안의 것과 같아야 한다(다른 크리에이터의 봉투를 옮겨 붙이지 못하게).
@@ -253,8 +258,8 @@ function createDreamsecurityAdapter(config, deps) {
       siteUrl,
       encClientTxId: mod.RSAEncrypt(`${kstStamp(createdAt)}|${clientTxId}`),
     });
-    if (String(token.resultCode) !== "2000") throw new UpstreamError(`get-token_${token.resultCode}`);
-    if (typeof token.userToken !== "string" || typeof token.publicKey !== "string") throw new UpstreamError("get-token_shape");
+    if (String(token.resultCode) !== "2000") throw new UpstreamError(`get-token_${token.resultCode}`, true);
+    if (typeof token.userToken !== "string" || typeof token.publicKey !== "string") throw new UpstreamError("get-token_shape", true);
 
     const jsonData = {
       siteUrl,
@@ -424,4 +429,4 @@ function createDreamsecurityAdapter(config, deps) {
   };
 }
 
-module.exports = { createDreamsecurityAdapter, unwrapKakaoContent, parseIssueDate, kstStamp, HOSTS };
+module.exports = { createDreamsecurityAdapter, unwrapKakaoContent, parseIssueDate, kstStamp, HOSTS, TX_TTL_MS, ISSUE_MAX_AGE_MS };

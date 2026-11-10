@@ -87,6 +87,14 @@ export function assertAllowedUrl(rawUrl, allowedHosts) {
   return url;
 }
 
+/** 요청은 보냈는데 정해진 시간 안에 답이 없다 — 상대가 이미 처리했을 수 있다(연결 실패와 구분한다, 서명 요청을 다시 보내지 않게) */
+export class OutboundTimeoutError extends Error {
+  constructor() {
+    super("외부 요청 시간 초과");
+    this.name = "OutboundTimeoutError";
+  }
+}
+
 /**
  * @param {string} rawUrl
  * @param {{ allowedHosts: string[], method?: string, headers?: Record<string,string>, body?: string|Buffer, timeoutMs?: number }} opts body 는 OCSP 처럼 이진이면 Buffer
@@ -127,7 +135,7 @@ export function outboundRequest(rawUrl, opts) {
         res.on("error", reject);
       },
     );
-    req.on("timeout", () => req.destroy(new Error("외부 요청 시간 초과")));
+    req.on("timeout", () => req.destroy(new OutboundTimeoutError()));
     req.on("error", reject);
     if (opts.body !== undefined) req.write(opts.body);
     req.end();
