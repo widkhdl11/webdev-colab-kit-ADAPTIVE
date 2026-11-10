@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CREATOR_SIGNATURE_LINK_PATH } from "@/shared/config/creator-paths";
 import { seoulDaysUntil } from "@/shared/lib/format/datetime";
 import type { ActionItem } from "./action-items";
 
@@ -9,8 +10,8 @@ import type { ActionItem } from "./action-items";
 
 /** 크리에이터 처리할 일 화면 주소 — 승인 요청·확인할 선물 알림 링크도 이곳이다(notifications INV-N9) */
 export const CREATOR_ACTION_CENTER_HREF = "/creator/actions";
-/** 승인 서명 연결 화면 — 상세 설정의 「승인 서명」 줄이 여는 곳(session home-path 의 CREATOR_SIGNATURE_LINK 와 같은 값, 시험이 붙잡는다) */
-export const CREATOR_SIGNATURE_LINK_HREF = "/creator/settings/signature";
+/** 승인 서명 연결 화면 — 상세 설정의 「승인 서명」 줄이 여는 곳과 같은 주소(shared/config/creator-paths 한 곳에서 가져온다) */
+export const CREATOR_SIGNATURE_LINK_HREF = CREATOR_SIGNATURE_LINK_PATH;
 
 export type CreatorCheckChoice = "accept" | "return";
 /** 추적 장치 발견 줄의 선택 — report 신고하기 · no_report 신고하지 않기(office-workflow INV-W14) */

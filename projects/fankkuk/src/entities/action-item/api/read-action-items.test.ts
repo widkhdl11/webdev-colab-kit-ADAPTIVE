@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CREATOR_SIGNATURE_LINK } from "@/entities/session/model/home-path";
+import { CREATOR_SIGNATURE_LINK_PATH } from "@/shared/config/creator-paths";
 import { readCreatorActionItems, readCreatorActionItemsOrNull } from "./read-action-items";
 import { creatorActionHref } from "../model/creator-action-items";
 
@@ -42,7 +42,7 @@ describe("INV-U20·S16: 승인 서명 연결 줄", () => {
   });
 
   it("INV-U20: 연결 줄을 누르면 승인 서명 연결 화면(설정의 「승인 서명」 줄이 여는 곳)으로 간다", () => {
-    expect(creatorActionHref({ kind: "signature_link" })).toBe(CREATOR_SIGNATURE_LINK);
-    expect(CREATOR_SIGNATURE_LINK).toBe("/creator/settings/signature");
+    expect(creatorActionHref({ kind: "signature_link" })).toBe(CREATOR_SIGNATURE_LINK_PATH);
+    expect(CREATOR_SIGNATURE_LINK_PATH).toBe("/creator/settings/signature");
   });
 });

@@ -1,3 +1,4 @@
+import { CREATOR_SIGNATURE_LINK_PATH } from "@/shared/config/creator-paths";
 import type { ViewerRole } from "./viewer";
 
 // 로그인한 사람의 첫 화면. 로그인 뒤 이동·로고 링크·남의 화면에서 돌려보내는 곳이 모두 이 값을 쓴다.
@@ -20,6 +21,6 @@ export const FAN_PROFILE_EDIT = "/me/profile";
 export const CREATOR_PROFILE_EDIT = "/creator/profile";
 export const CREATOR_SETTINGS = "/creator/settings";
 /** 크리에이터 승인 서명 연결하기(approval-signature INV-S16) — 상세 설정의 「승인 서명」 줄이 여는 화면(장애 대비 길로 가입한 크리에이터의 첫 연결·다시 연결, signup INV-U20). */
-export const CREATOR_SIGNATURE_LINK = "/creator/settings/signature";
+export const CREATOR_SIGNATURE_LINK = CREATOR_SIGNATURE_LINK_PATH;
 /** 크리에이터 계정 설정(본인 확인·알림·계정 보안 — 2026-10-16 상세 설정에서 옮김). */
 export const CREATOR_ACCOUNT = "/creator/account";
