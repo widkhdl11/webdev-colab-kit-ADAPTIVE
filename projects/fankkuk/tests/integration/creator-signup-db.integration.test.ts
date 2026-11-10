@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import { adminClient, anonClient, deleteTestSignups, psql, signedInClient, TEST_SIGNUP_PHONE_PREFIX, testPhoneBundle, verifiedTestPhone } from "./helpers";
+import { adminClient, anonClient, deleteTestSignups, psql, signedInClient, signedTestPhone, TEST_SIGNUP_PHONE_PREFIX, testPhoneBundle } from "./helpers";
 
 // 크리에이터 가입 때 공개 정보 행을 만든다(creator-verification INV-V1 「기본 공개 정보는 가입 때 받아 둔 것을 쓴다」,
 // 「지금 코드와 다른 점」, signup INV-U5 「크리에이터로 가입해도 채널 인증 전에는 찾기에 없음」).
@@ -17,8 +17,8 @@ function phone(): string {
   return `${TEST_SIGNUP_PHONE_PREFIX}${String(seq).padStart(4, "0")}`;
 }
 
-/** 인증번호를 맞혀 확인까지 끝낸 번호표(INV-U1·U15). */
-const verifiedPhone = (p: string): Promise<string> => verifiedTestPhone(p);
+/** 카카오 서명으로 확인까지 끝낸 번호표(signup INV-U19 — 2026-11-10 부터 크리에이터 가입은 서명 번호표로 만든다, manual/0037). */
+const verifiedPhone = async (p: string): Promise<string> => (await signedTestPhone(p)).ticket;
 
 async function authUser(loginId: string): Promise<string> {
   const r = await adminClient().auth.admin.createUser({ email: `${loginId}@login.fankkuk.invalid`, password: "long-enough-pw", email_confirm: true });

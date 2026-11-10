@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { saveAccount } from "@/features/account-edit/model/save-account";
 import { signUp } from "@/features/signup/model/sign-up";
-import { adminClient, anonClient, deleteTestSignups, psql, psqlError, SEED, signedInClient, TEST_SIGNUP_PHONE_PREFIX, verifiedTestPhone, testPhoneBundle, phoneKeyEnv } from "./helpers";
+import { adminClient, anonClient, deleteTestSignups, phoneKeyEnv, psql, psqlError, SEED, signedInClient, signedTestPhone, TEST_SIGNUP_PHONE_PREFIX, testPhoneBundle, verifiedTestPhone } from "./helpers";
 
 // 가입 닉네임(signup INV-U13)·아이디·닉네임 미리 확인(INV-U14)을 실제 DB 로.
 // 시험 계정은 it_nk 로 시작하는 아이디, 0109000 의 7000번대 번호만 쓴다 — 끝나면 지운다.
@@ -187,7 +187,7 @@ describe("INV-U13: 가입 때 받은 닉네임으로 계정이 생긴다", () =>
   it("INV-U13·추가 요청 3 · INV-CN1: 크리에이터 가입 — 닉네임은 적은 값이고 크리에이터 이름도 그 닉네임, 팬덤 이름은 선택으로 저장", async () => {
     const p = phone();
     const creator = { tagIds: [psql(`select id from public.creator_tag_options where name = 'SOOP'`)], customTag: "", fanName: " 별님들 " };
-    const r = await signUp(signUpDeps(), signupBody("it_nk_cr", "크리닉", p, await verified(p), { role: "creator", creator }));
+    const r = await signUp(signUpDeps(), signupBody("it_nk_cr", "크리닉", p, (await signedTestPhone(p)).ticket, { role: "creator", creator }));
     expect(r).toMatchObject({ ok: true });
     expect(nicknameOfLogin("it_nk_cr")).toBe("크리닉");
     expect(psql(`select c.name || '|' || coalesce(c.fan_name, '-') from public.creators c join public.profiles p on p.id = c.profile_id where p.login_id = 'it_nk_cr';`)).toBe(

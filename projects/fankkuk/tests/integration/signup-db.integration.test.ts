@@ -2,7 +2,7 @@ import { passwordAttemptsOf } from "@/entities/session/api/password-attempts";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { signIn } from "@/features/auth/model/sign-in";
 import { signUp } from "@/features/signup/model/sign-up";
-import { adminClient, anonClient, deleteTestSignups, psql, psqlError, signedInClient, TEST_SIGNUP_PHONE_PREFIX, requestTestPhoneCode, verifiedTestPhone, waitPhoneCodeMinute, storedTestPhone, testPhoneHash, testPhoneBundle, phoneKeyEnv } from "./helpers";
+import { adminClient, anonClient, deleteTestSignups, phoneKeyEnv, psql, psqlError, requestTestPhoneCode, signedInClient, signedTestPhone, storedTestPhone, TEST_SIGNUP_PHONE_PREFIX, testPhoneBundle, testPhoneHash, verifiedTestPhone, waitPhoneCodeMinute } from "./helpers";
 
 // 가입을 실제 DB·실제 Supabase Auth 로. 문자만 보내지 않는다(인증번호는 시험 도구가 꺼내 맞힌다).
 // 시험 계정은 it_ 로 시작하는 아이디, 0109000 으로 시작하는 번호만 쓴다 — 끝나면 지운다.
@@ -246,7 +246,7 @@ describe("INV-U5·U6: 역할과 입력 경계는 DB 도 다시 본다", () => {
     const p = phone();
     const soop = psql(`select id from public.creator_tag_options where name = 'SOOP'`);
     const creator = { tagIds: [soop], customTag: " 시험 " };
-    expect((await signUp(signUpDeps(), signupBody("it_lima", p, await verified(p), { role: "creator", creator }))).ok).toBe(true);
+    expect((await signUp(signUpDeps(), signupBody("it_lima", p, (await signedTestPhone(p)).ticket, { role: "creator", creator }))).ok).toBe(true);
     expect(psql(`select role from public.profiles where login_id = 'it_lima';`)).toBe("creator");
     const listed = (await anonClient().rpc("list_creators")).data as { name?: string; slug?: string }[] | null;
     expect(JSON.stringify(listed ?? [])).not.toContain("it_lima");

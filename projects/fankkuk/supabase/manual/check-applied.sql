@@ -65,6 +65,8 @@ from (values
   ('0035', coalesce((select prosrc like '%delivery_copy_drop_due%' from pg_proc where oid = to_regprocedure('public.office_drop_address_copies()')), false),
            '역조공 몫 사본 삭제가 배송 설정값을 따른다'),
   ('0036', coalesce((select prosrc like '%waitlist_at_close%' from pg_proc where oid = to_regprocedure('pii.revgift_box_drop_copies(uuid[],text)')), false),
-           '사본 삭제 까닭에 「마감 때 고르지 않은 대기 신청」')
+           '사본 삭제 까닭에 「마감 때 고르지 않은 대기 신청」'),
+  ('0037', to_regclass('pii.signup_sign_requests') is not null,
+           '크리에이터 가입 카카오 서명 요청 표')
 ) as v(file, applied, marker)
 order by file;

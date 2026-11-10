@@ -2,6 +2,8 @@ import { decryptPhone, encryptPhone, phoneBundle, phoneHash, phoneParts, readPho
 import { execFileSync, spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { checkPhoneCode, startPhoneVerification } from "@/features/signup/model/phone-verification";
+import { checkCreatorSign, startCreatorSign } from "@/features/signup/model/creator-sign";
+import { chooseApprovalSigner } from "@/shared/api/approval-signer/signer";
 import { readPhoneCodeSecret } from "@/shared/api/phone-verifier/verifier";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
@@ -207,6 +209,8 @@ export function deleteTestSignups(): void {
       `delete from auth.users where email like '${TEST_SIGNUP_ID_PREFIX.replace("_", "\\_")}%@login.fankkuk.invalid';`,
       // 확인 기록에는 번호 대신 번호 해시만 있다(INV-U18) — 시험 번호 앞자리의 번호 만 개를 서버와 같은 키·방식(HMAC-SHA256)으로 DB 안에서 해시해 지운다
       `delete from pii.phone_verifications where phone_hash in (select encode(extensions.hmac(convert_to('fankkuk.phone.v1:${TEST_SIGNUP_PHONE_PREFIX}' || lpad(i::text, 4, '0'), 'UTF8'), decode('${testPhoneKeys().hashKey.toString("base64")}', 'base64'), 'sha256'), 'hex') from generate_series(0, 9999) i);`,
+      // 가입 서명 요청(signup INV-U19, manual/0037) — 표가 있을 때만(0037 적용 전에도 정리가 멈추지 않게)
+      `do $$ begin if to_regclass('pii.signup_sign_requests') is not null then delete from pii.signup_sign_requests where phone_hash in (select encode(extensions.hmac(convert_to('fankkuk.phone.v1:${TEST_SIGNUP_PHONE_PREFIX}' || lpad(i::text, 4, '0'), 'UTF8'), decode('${testPhoneKeys().hashKey.toString("base64")}', 'base64'), 'sha256'), 'hex') from generate_series(0, 9999) i); end if; end $$;`,
     ].join(" "),
   );
 }
@@ -496,6 +500,28 @@ export async function requestTestPhoneCode(phone: string, ipHash?: string): Prom
  */
 export function waitPhoneCodeMinute(phone: string): void {
   psql(`update pii.phone_verifications set requested_at = requested_at - interval '61 seconds' where phone_hash = '${testPhoneHash(phone)}' and requested_at > now() - interval '1 minute';`);
+}
+
+/** 가입 서명 시험의 자리 표시 봉투 iv — 「it-signup-sg」. */
+export const DUMMY_SIGNUP_SIGN_IV = Buffer.from("it-signup-sg").toString("base64");
+
+/** 봉인 형식(pii.is_sealed_envelope)을 지나는 자리 표시 봉투 — 앱 서버·DB 는 봉투를 열지 않는다. */
+export function dummySignupEnvelope(): Record<string, unknown> {
+  const b64 = (n: number) => Buffer.from(crypto.getRandomValues(new Uint8Array(n))).toString("base64");
+  return { v: 1, alg: "RSA-OAEP-256+A256GCM", wrappedKey: b64(256), iv: DUMMY_SIGNUP_SIGN_IV, ciphertext: b64(40) };
+}
+
+/**
+ * 크리에이터 가입 3단계 카카오 서명(signup INV-U19, manual/0037)을 가짜 서명 창구로 끝낸 번호표 — 가입 화면과 같은 함수로 요청하고 결과를 확인한다.
+ * 0037 이후 크리에이터 계정은 이 번호표(또는 「창구 장애 확인」이 있는 인증번호 번호표)로만 만들어진다.
+ */
+export async function signedTestPhone(phone: string, creatorId: string = crypto.randomUUID()): Promise<{ ticket: string; creatorId: string }> {
+  const deps = { admin: adminClient(), signer: chooseApprovalSigner({ NODE_ENV: "test" }), phoneKeys: testPhoneKeys };
+  const started = await startCreatorSign(deps, { identity: dummySignupEnvelope(), creatorId, phone }, randomBytes(32).toString("hex"), null);
+  if (!started.ok || started.state !== "pending") throw new Error(`가입 서명 요청 실패: ${JSON.stringify(started)}`);
+  const checked = await checkCreatorSign(deps, { requestId: started.requestId }, started.ticket);
+  if (!checked.ok || checked.state !== "verified") throw new Error(`가입 서명 확인 실패: ${JSON.stringify(checked)}`);
+  return { ticket: started.ticket, creatorId };
 }
 
 /** 인증번호를 맞혀 확인까지 끝낸 번호표(INV-U1). */
