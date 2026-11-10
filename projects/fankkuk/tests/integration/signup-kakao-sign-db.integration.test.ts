@@ -157,8 +157,9 @@ describe("(manual/0037 뒤) INV-U19: 카카오 서명으로 크리에이터 가�
   it("INV-U4·U19 (S19e, 실패경로): 연결 기록 만들기가 실패하면 로그인 정보·프로필·연락처 모두 없고 확인은 미사용", async () => {
     const p = phone();
     const { ticket, creatorId } = await signedTestPhone(p);
-    // 연결 기록을 미리 다른 요청의 크리에이터 ID 로 바꿔 둔다 — 링크 함수가 FKU01 로 거부한다
-    psql(`update pii.signup_sign_requests set creator_id = gen_random_uuid() where ticket = '${ticket}'`);
+    // 연결 기록에 옮길 봉투를 비워 둔다 — 계정·연락처·크리에이터 행을 만든 뒤 마지막 단계(pii.signup_sign_link)가 FKU01 로 거부한다.
+    // (요청 줄의 creator_id 를 바꾸는 것은 실패를 만들지 않는다 — 가입이 그 칸에서 크리에이터 ID 를 읽어 같은 값으로 연결한다)
+    psql(`update pii.signup_sign_requests set envelope = null where ticket = '${ticket}'`);
     await expect(signUp(signUpDeps(), creatorBody("it_ks_rollback", p, ticket))).resolves.toMatchObject({ ok: false, field: "verification" });
     expect(profileCount("it_ks_rollback")).toBe("0");
     expect(psql(`select count(*) from auth.users where email = 'it_ks_rollback@login.fankkuk.invalid'`)).toBe("0");
@@ -207,9 +208,16 @@ describe("(manual/0037 뒤) INV-U20: 장애 대비 6자리 길", () => {
     const uid = u.data.user!.id;
     const r = await adminClient().rpc("create_creator_account", {
       p_user_id: uid, p_login_id: "it_ks_bypass2", p_email: "it.ks@example.com", p_phone: testPhoneBundle(uid, p), p_verification_id: vid,
-      p_terms: TERMS, p_tag_ids: [soop()], p_custom_tag: null, p_nickname: "it_ks_bypass2",
+      p_terms: TERMS, p_tag_ids: [soop()], p_custom_tag: null, p_nickname: "it_ks_bp2", // 닉네임은 1~12자(INV-U13) — 앞 검사를 다 지나 확인 방법 대조에 닿게
     });
-    expect(r.error?.code).toBe("FKU01");
+    expect(r.error?.code, r.error?.message).toBe("FKU01");
+    // 대조: 같은 번호표·같은 인자에 「창구 장애 확인」 하나만 붙이면 통과한다 — 막은 것이 확인 방법 대조(INV-U20)라는 근거
+    psql(`update pii.phone_verifications set gateway_down_at = now() where id = '${vid}'`);
+    const again = await adminClient().rpc("create_creator_account", {
+      p_user_id: uid, p_login_id: "it_ks_bypass2", p_email: "it.ks@example.com", p_phone: testPhoneBundle(uid, p), p_verification_id: vid,
+      p_terms: TERMS, p_tag_ids: [soop()], p_custom_tag: null, p_nickname: "it_ks_bp2",
+    });
+    expect(again.error).toBeNull();
     expect(profileCount("it_ks_bypass")).toBe("0");
   });
 
