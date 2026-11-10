@@ -103,10 +103,15 @@ describe("크리에이터 가입 때 공개 정보 (INV-V1 · signup INV-U5)", (
     );
   });
 
-  it("INV-CN2 INV-CN4 (실패경로): 가입 함수는 공개 이름·채널 이름 인자를 받지 않는다 — 넘기면 함수가 없다고 거부", async () => {
-    const { body } = await args("it_cv_named", { p_name: "가짜이름", p_channel_title: "가짜채널" });
-    expect((await adminClient().rpc("create_creator_account", body)).error).not.toBeNull();
-    expect(psql(`select count(*) from public.profiles where login_id = 'it_cv_named'`)).toBe("0");
+  it("INV-CN2 INV-CN4 (실패경로): 가입 함수는 공개 이름·채널 이름 인자를 받지 않는다 — 하나씩 넘겨도 함수가 없다고(PGRST202) 거부", async () => {
+    for (const [loginId, extra] of [
+      ["it_cv_named", { p_name: "가짜이름" }],
+      ["it_cv_titled", { p_channel_title: "가짜채널" }],
+    ] as const) {
+      const { body } = await args(loginId, extra);
+      expect((await adminClient().rpc("create_creator_account", body)).error?.code, loginId).toBe("PGRST202");
+      expect(psql(`select count(*) from public.profiles where login_id = '${loginId}'`)).toBe("0");
+    }
   });
 
   it("INV-V1 INV-T3 (실패경로): 태그가 0개·6개·직접 입력 21자·숨긴 선택지면 거부하고 아무것도 남지 않는다", async () => {

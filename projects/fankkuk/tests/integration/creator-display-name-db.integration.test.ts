@@ -93,7 +93,8 @@ describe("INV-CN2: 크리에이터가 이름을 따로 정하는 길은 없다",
   it("INV-CN2 (실패경로): 저장 함수에 옛 이름 인자(p_name)를 넘기면 함수가 없다고 거부 — 이름·닉네임 그대로", async () => {
     const c = await signedInClient("haru_creator");
     const r = await c.rpc("update_my_creator_profile", { p_name: "가짜이름" });
-    expect(r.error).not.toBeNull();
+    // 그런 인자를 받는 함수가 없다(PGRST202) — 다른 이유(권한·꼴)로 실패한 것과 가른다
+    expect(r.error?.code).toBe("PGRST202");
     expect([nickname(), creatorName()]).toEqual([originalNickname, originalNickname]);
   });
 

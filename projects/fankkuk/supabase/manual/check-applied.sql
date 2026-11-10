@@ -67,6 +67,8 @@ from (values
   ('0036', coalesce((select prosrc like '%waitlist_at_close%' from pg_proc where oid = to_regprocedure('pii.revgift_box_drop_copies(uuid[],text)')), false),
            '사본 삭제 까닭에 「마감 때 고르지 않은 대기 신청」'),
   ('0037', to_regclass('pii.signup_sign_requests') is not null,
-           '크리에이터 가입 카카오 서명 요청 표')
+           '크리에이터 가입 카카오 서명 요청 표'),
+  ('0038', to_regprocedure('pii.signup_sign_down_window()') is not null,
+           '장애 기록 시간 기준 함수 · 장애 기록 넘기기')
 ) as v(file, applied, marker)
 order by file;

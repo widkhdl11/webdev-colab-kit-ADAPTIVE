@@ -12,6 +12,7 @@ import {
   phoneKeyEnv,
   psql,
   requestTestPhoneCode,
+  waitPhoneCodeMinute,
   signedTestPhone,
   TEST_SIGNUP_PHONE_PREFIX,
   testPhoneBundle,
@@ -74,17 +75,46 @@ const requestOf = (ticket: string) => psql(`select state || '|' || (envelope is 
 
 /** 서명 요청만 만든다(결과 확인 전) */
 async function startOnly(p: string, signer?: ApprovalSigner) {
-  const r = await startCreatorSign(signDeps(signer), { identity: dummySignupEnvelope(), creatorId: crypto.randomUUID(), phone: p }, ip(), null);
+  const creatorId = crypto.randomUUID();
+  const r = await startCreatorSign(signDeps(signer), { identity: dummySignupEnvelope(), creatorId, phone: p }, ip(), null);
   if (!r.ok || r.state !== "pending") throw new Error(`요청 실패: ${JSON.stringify(r)}`);
-  return r;
+  return { ...r, creatorId };
 }
+
+/** 요청 줄을 그 요청의 결과 유효 시간(DB 가 정한 expires_at - requested_at)보다 1초 더 지난 것으로 — 숫자를 시험에 쓰지 않는다 */
+const expireRequest = (ticket: string) =>
+  psql(`update pii.signup_sign_requests set requested_at = requested_at - (expires_at - requested_at) - interval '1 second', expires_at = expires_at - (expires_at - requested_at) - interval '1 second' where ticket = '${ticket}'`);
+const linkCount = (creatorId: string) => psql(`select count(*) from pii.signature_links where creator_id = '${creatorId}'`);
 
 /** 창구가 늘 장애로 답하는 서명 창구 */
 const downSigner: ApprovalSigner = {
   kind: "fake",
-  requestSignature: async () => ({ ok: false, down: true }),
+  requestSignature: async () => ({ ok: false, down: true, retry: true }),
   signatureResult: async () => ({ state: "unavailable" }),
 };
+
+/** 인증번호를 받아(장애 번호표를 앞 번호표로 넘김) 맞힌 번호표 */
+async function codeTicketFrom(p: string, fromTicket: string): Promise<string> {
+  let text = "";
+  const verifier = { kind: "fake" as const, sendKakaoCode: async () => false, sendSms: async (_to: string, body: string) => void (text = body) };
+  const deps = { admin: adminClient(), verifier, codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }), phoneKeys: testPhoneKeys };
+  const started = await startPhoneVerification(deps, { phone: p }, ip(), { carryDownFrom: fromTicket });
+  if (!started.ok) throw new Error("인증번호 요청 실패");
+  const code = /인증번호 (\d{6})/.exec(text)?.[1] ?? "";
+  const checked = await checkPhoneCode(deps, { verificationId: started.verificationId, code });
+  if (!checked.ok) throw new Error("인증번호 확인 실패");
+  return started.verificationId;
+}
+
+/** 이미 받은 번호표의 인증번호를 맞힌다(가짜 문자 창구 — 마지막 문자에서 꺼낸다) */
+async function verifyCode(p: string, verificationId: string): Promise<string> {
+  // 고정 인증번호(000000)로 받은 번호표만 — 받을 때 fixedCode 를 준 창구로 받는다
+  const deps = { admin: adminClient(), verifier: { kind: "fake" as const, fixedCode: "000000", sendKakaoCode: async () => true, sendSms: async () => {} }, codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }), phoneKeys: testPhoneKeys };
+  void p;
+  const checked = await checkPhoneCode(deps, { verificationId, code: "000000" });
+  if (!checked.ok) throw new Error(`인증번호 확인 실패: ${checked.reason}`);
+  return verificationId;
+}
 
 /** 장애 대비 길: 서명 요청이 장애로 끝난 번호표를 앞 번호표로 넘겨 인증번호를 받고 맞힌다 */
 async function downCodeTicket(p: string): Promise<string> {
@@ -122,20 +152,29 @@ describe("(manual/0037 뒤) INV-U19: 카카오 서명으로 크리에이터 가�
     expect(psql(`select count(*) from pii.account_contacts where phone_hash = '${testPhoneHash(p)}'`)).toBe("1");
   });
 
-  it("INV-U19 (S19b, 실패경로): 서명 전 가입 · 원문이 다른 서명 · 기한 지난 서명이면 계정·연결 기록 없음", async () => {
+  it("INV-U19 (S19b, 실패경로): 서명 전 가입 · 원문이 다른 서명 · 기한 지난 서명 — 각각 가입하면 「다시 확인」, 계정·연결 기록 없음", async () => {
     const p = phone();
     const pending = await startOnly(p);
     expect(await signUp(signUpDeps(), creatorBody("it_ks_early", p, pending.ticket))).toMatchObject({ ok: false, field: "verification" });
+    expect(profileCount("it_ks_early")).toBe("0");
+    expect(linkCount(pending.creatorId)).toBe("0");
 
-    const bad = await startOnly(phone());
+    const pb = phone();
+    const bad = await startOnly(pb);
     const settled = await adminClient().rpc("settle_signup_sign", { p_ticket: bad.ticket, p_request_id: bad.requestId, p_outcome: "signed", p_signed_content: "다른 원문", p_method: "fake" });
     expect(settled.data).toEqual([{ result: "failed" }]);
+    expect(await signUp(signUpDeps(), creatorBody("it_ks_badsig", pb, bad.ticket))).toMatchObject({ ok: false, field: "verification" });
+    expect(profileCount("it_ks_badsig")).toBe("0");
+    expect(linkCount(bad.creatorId)).toBe("0");
 
-    const late = await startOnly(phone());
-    psql(`update pii.signup_sign_requests set requested_at = requested_at - interval '6 minutes', expires_at = expires_at - interval '6 minutes' where ticket = '${late.ticket}'`);
+    const pl = phone();
+    const late = await startOnly(pl);
+    expireRequest(late.ticket);
     expect(await checkCreatorSign(signDeps(), { requestId: late.requestId }, late.ticket)).toEqual({ ok: true, state: "failed" });
     expect(requestOf(late.ticket)).toBe("expired|true");
-    expect(profileCount("it_ks_early")).toBe("0");
+    expect(await signUp(signUpDeps(), creatorBody("it_ks_late", pl, late.ticket))).toMatchObject({ ok: false, field: "verification" });
+    expect(profileCount("it_ks_late")).toBe("0");
+    expect(linkCount(late.creatorId)).toBe("0");
   });
 
   it("INV-U19 ② (S19c, 실패경로): 서명한 번호와 가입 입력 번호가 다르면 거부, 계정 없음", async () => {
@@ -159,12 +198,18 @@ describe("(manual/0037 뒤) INV-U19: 카카오 서명으로 크리에이터 가�
     const { ticket, creatorId } = await signedTestPhone(p);
     // 연결 기록에 옮길 봉투를 비워 둔다 — 계정·연락처·크리에이터 행을 만든 뒤 마지막 단계(pii.signup_sign_link)가 FKU01 로 거부한다.
     // (요청 줄의 creator_id 를 바꾸는 것은 실패를 만들지 않는다 — 가입이 그 칸에서 크리에이터 ID 를 읽어 같은 값으로 연결한다)
+    const envelope = psql(`select envelope::text from pii.signup_sign_requests where ticket = '${ticket}'`);
     psql(`update pii.signup_sign_requests set envelope = null where ticket = '${ticket}'`);
     await expect(signUp(signUpDeps(), creatorBody("it_ks_rollback", p, ticket))).resolves.toMatchObject({ ok: false, field: "verification" });
     expect(profileCount("it_ks_rollback")).toBe("0");
     expect(psql(`select count(*) from auth.users where email = 'it_ks_rollback@login.fankkuk.invalid'`)).toBe("0");
-    expect(psql(`select coalesce(used_at::text, '') from pii.phone_verifications where id = '${ticket}'`)).toBe("");
-    expect(psql(`select count(*) from pii.signature_links where creator_id = '${creatorId}'`)).toBe("0");
+    // 확인 줄은 그대로 하나, 쓴 표시 없음(되돌려짐)
+    expect(psql(`select count(*) = 1 and bool_and(used_at is null) from pii.phone_verifications where id = '${ticket}'`)).toBe("t");
+    expect(linkCount(creatorId)).toBe("0");
+    // 대조: 봉투를 되돌리면 같은 호출이 성공한다 — 막은 것이 연결 단계라는 근거
+    psql(`update pii.signup_sign_requests set envelope = '${envelope}'::jsonb where ticket = '${ticket}'`);
+    expect(await signUp(signUpDeps(), creatorBody("it_ks_rollback", p, ticket))).toMatchObject({ ok: true });
+    expect(linkCount(creatorId)).toBe("1");
   });
 
   it("INV-U2·U19 (S19f, 동시): 검증된 서명 한 건으로 가입 둘을 동시에 — 하나만 성공, 연결 기록 하나", async () => {
@@ -221,11 +266,24 @@ describe("(manual/0037 뒤) INV-U20: 장애 대비 6자리 길", () => {
     expect(profileCount("it_ks_bypass")).toBe("0");
   });
 
-  it("INV-U20 정함 (실패경로): 「창구 장애 확인」은 10분만 — 11분 지난 장애 기록이면 크리에이터 가입 거부", async () => {
-    const p = phone();
-    const vid = await downCodeTicket(p);
-    psql(`update pii.phone_verifications set gateway_down_at = gateway_down_at - interval '11 minutes' where id = '${vid}'`);
-    expect(await signUp(signUpDeps(), creatorBody("it_ks_stale", p, vid))).toMatchObject({ ok: false, field: "verification" });
+  it("(manual/0038 뒤) INV-U20 정함: 장애 기록은 기록된 때부터 정한 시간 안에 인증번호 요청에 옮겨져야 한다 — 1초 넘으면 계정 만들기 함수가 FKU01, 1분 남았으면 받는다", async () => {
+    const windowSec = Number(psql(`select public.signup_sign_down_window_seconds()`));
+    expect(windowSec).toBeGreaterThan(60);
+    const attempt = async (shiftSec: number, loginId: string) => {
+      const p = phone();
+      const down = await startCreatorSign(signDeps(downSigner), { identity: dummySignupEnvelope(), creatorId: crypto.randomUUID(), phone: p }, ip(), null);
+      if (!down.ok || down.state !== "down") throw new Error("장애 판정 실패");
+      psql(`update pii.signup_sign_requests set finished_at = finished_at - interval '${shiftSec} seconds' where ticket = '${down.ticket}'`);
+      const vid = await codeTicketFrom(p, down.ticket);
+      const u = await adminClient().auth.admin.createUser({ email: `${loginId}@login.fankkuk.invalid`, password: "long-enough-pw1", email_confirm: true });
+      const uid = u.data.user!.id;
+      return adminClient().rpc("create_creator_account", {
+        p_user_id: uid, p_login_id: loginId, p_email: `${loginId.replace("_", ".")}@example.com`, p_phone: testPhoneBundle(uid, p), p_verification_id: vid,
+        p_terms: TERMS, p_tag_ids: [soop()], p_custom_tag: null, p_nickname: loginId.slice(0, 12),
+      });
+    };
+    expect((await attempt(windowSec + 1, "it_ks_stale")).error?.code).toBe("FKU01");
+    expect((await attempt(windowSec - 60, "it_ks_fresh")).error).toBeNull();
   });
 
   it("INV-U20 (S20c, 실패경로): 서명 거절·기한 지남은 장애가 아니다 — 그 번호표를 넘겨 받은 인증번호에는 장애 기록이 옮겨지지 않는다", async () => {
@@ -242,18 +300,46 @@ describe("(manual/0037 뒤) INV-U20: 장애 대비 6자리 길", () => {
     expect(psql(`select coalesce(gateway_down_at::text, '') from pii.phone_verifications where id = '${started.verificationId}'`)).toBe("");
   });
 
-  it("INV-U20 (실패경로): 장애 기록은 한 번만 옮겨진다 — 같은 장애 번호표로 두 번째 인증번호를 받으면 그 번호표에는 장애 기록이 없다", async () => {
+  it("(manual/0038 뒤) INV-U20 (코드 리뷰): 장애 길에서 인증번호를 다시 받으면 장애 기록이 새 번호표로 넘어간다 — 원래 시각 그대로, 앞 번호표는 잃는다(한 번호표만). 다시 받은 인증번호로 가입된다", async () => {
     const p = phone();
     const down = await startCreatorSign(signDeps(downSigner), { identity: dummySignupEnvelope(), creatorId: crypto.randomUUID(), phone: p }, ip(), null);
     if (!down.ok || down.state !== "down") throw new Error("장애 판정 실패");
-    const deps = { admin: adminClient(), verifier: { kind: "fake" as const, sendKakaoCode: async () => true, sendSms: async () => {} }, codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }), phoneKeys: testPhoneKeys };
+    const deps = { admin: adminClient(), verifier: { kind: "fake" as const, fixedCode: "000000", sendKakaoCode: async () => true, sendSms: async () => {} }, codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }), phoneKeys: testPhoneKeys };
     const first = await startPhoneVerification(deps, { phone: p }, ip(), { carryDownFrom: down.ticket });
-    psql(`update pii.phone_verifications set requested_at = requested_at - interval '61 seconds' where phone_hash = '${testPhoneHash(p)}'`);
-    const second = await startPhoneVerification(deps, { phone: p }, ip(), { carryDownFrom: down.ticket });
-    if (!first.ok || !second.ok) throw new Error("인증번호 요청 실패");
+    if (!first.ok) throw new Error("인증번호 요청 실패");
+    waitPhoneCodeMinute(p);
+    // 화면의 쿠키는 이제 첫 인증번호 번호표다 — 그것을 앞 번호표로 넘긴다
+    const second = await startPhoneVerification(deps, { phone: p }, ip(), { carryDownFrom: first.verificationId });
+    if (!second.ok) throw new Error("인증번호 요청 실패");
     const downAt = (id: string) => psql(`select coalesce(gateway_down_at::text, '') from pii.phone_verifications where id = '${id}'`);
-    expect(downAt(first.verificationId)).not.toBe("");
-    expect(downAt(second.verificationId)).toBe("");
+    const recorded = psql(`select finished_at::text from pii.signup_sign_requests where ticket = '${down.ticket}'`);
+    expect(downAt(first.verificationId)).toBe("");
+    expect(downAt(second.verificationId)).toBe(recorded);
+    const vid = await verifyCode(p, second.verificationId);
+    expect(await signUp(signUpDeps(), creatorBody("it_ks_resend", p, vid))).toMatchObject({ ok: true });
+  });
+
+  it("(manual/0038 뒤) INV-U20 (코드 리뷰): 인증번호 발송이 실패해 버려져도 장애 기록을 잃지 않는다 — 다음 요청(쿠키는 그대로 장애 번호표)이 다시 가져간다", async () => {
+    const p = phone();
+    const down = await startCreatorSign(signDeps(downSigner), { identity: dummySignupEnvelope(), creatorId: crypto.randomUUID(), phone: p }, ip(), null);
+    if (!down.ok || down.state !== "down") throw new Error("장애 판정 실패");
+    const failing = { admin: adminClient(), verifier: { kind: "fake" as const, sendKakaoCode: async () => false, sendSms: async () => { throw new Error("sms down"); } }, codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }), phoneKeys: testPhoneKeys };
+    const lost = await startPhoneVerification(failing, { phone: p }, ip(), { carryDownFrom: down.ticket });
+    expect(lost.ok).toBe(false);
+    waitPhoneCodeMinute(p);
+    const vid = await codeTicketFrom(p, down.ticket);
+    expect(psql(`select public.signup_verification_kind('${vid}')`)).toBe("code_down");
+  });
+
+  it("(manual/0038 뒤) INV-U20 (실패경로): 장애 기록을 가진 번호표가 이미 확인됐으면 넘기지 않는다 — 언제나 한 번호표만 쓸 수 있다", async () => {
+    const p = phone();
+    const vid = await downCodeTicket(p);
+    waitPhoneCodeMinute(p);
+    const deps = { admin: adminClient(), verifier: { kind: "fake" as const, sendKakaoCode: async () => true, sendSms: async () => {} }, codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }), phoneKeys: testPhoneKeys };
+    const other = await startPhoneVerification(deps, { phone: p }, ip(), { carryDownFrom: vid });
+    if (!other.ok) throw new Error("인증번호 요청 실패");
+    expect(psql(`select coalesce(gateway_down_at::text, '') from pii.phone_verifications where id = '${other.verificationId}'`)).toBe("");
+    expect(psql(`select public.signup_verification_kind('${vid}')`)).toBe("code_down");
   });
 
   it("INV-U1 (실패경로): 팬은 카카오 서명 번호표로 가입할 수 없다(DB 가 FKU01)", async () => {
@@ -278,7 +364,7 @@ describe("(manual/0037 뒤) INV-U12 정함 · INV-U19 ⑤ 정함", () => {
 
   it("INV-U19 ⑤ 정함: 끝나는 처리를 거치지 않은 기다리는 요청은 기한 뒤 정리 작업이 봉투를 지운다", async () => {
     const req = await startOnly(phone());
-    psql(`update pii.signup_sign_requests set requested_at = requested_at - interval '6 minutes', expires_at = expires_at - interval '6 minutes' where ticket = '${req.ticket}'`);
+    expireRequest(req.ticket);
     psql(`select public.purge_signup_sign_requests()`);
     expect(requestOf(req.ticket)).toBe("expired|true");
   });
