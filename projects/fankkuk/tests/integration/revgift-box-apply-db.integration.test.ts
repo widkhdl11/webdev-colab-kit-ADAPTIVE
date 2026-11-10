@@ -337,7 +337,9 @@ describe("INV-GB9: 크리에이터에게 보이는 팬 정보는 닉네임·신�
     addApp(boxId, PROFILE.gureumppang);
     const seen = (await byeolbit.rpc("revgift_box_for_fan", { p_box_id: boxId, p_token: null })).data as Record<string, unknown>;
     // 2026-11-09: 자기 대기 순번(waitlist_no — 대기가 아니면 null)이 더해졌다
-    expect(Object.keys(seen).sort()).toEqual(["creator", "delivery", "id", "my_state", "name", "open", "viewer", "waitlist_no"]);
+    // 2026-11-10: 다 찼는지(full) 참/거짓 하나 — 숫자(신청 수·받을 인원·대기 수)는 여전히 없다(정할 것 Q6)
+    expect(Object.keys(seen).sort()).toEqual(["creator", "delivery", "full", "id", "my_state", "name", "open", "viewer", "waitlist_no"]);
+    expect(typeof seen.full).toBe("boolean");
     expect(seen.delivery).toBeNull(); // 송장 출력 전 — 배송 재료 없음(delivery-status INV-DS6)
     expect(seen.my_state).toBe("applied");
     expect(JSON.stringify(seen)).not.toContain("구름빵");
