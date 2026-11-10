@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { CREATOR_ACTION_CENTER_HREF, type CreatorActionItem } from "@/entities/action-item/model/creator-action-items";
+import { CREATOR_ACTION_CENTER_HREF, creatorActionHref, type CreatorActionItem } from "@/entities/action-item/model/creator-action-items";
 import { printLabelOf, type AddressAccessEntry } from "@/entities/address/model/access-log";
 import type { CreatorColors } from "@/entities/creator/model/creator-color";
 
@@ -25,8 +25,8 @@ export type CreatorHomeProfile = {
   symbolUrl: string | null;
 };
 
-/** 상태 이름은 기존 표시 함수를 라우트에서 적용한 값이다. tone = 뱃지 색 갈래(없으면 회색) */
-export type HomeProgressRow = { id: string; title: string; description: string; status: string; tone?: StatusTone };
+/** 상태 이름은 기존 표시 함수를 라우트에서 적용한 값이다. tone = 뱃지 색 갈래(없으면 회색). href = 그 줄만 다른 곳으로 갈 때(없으면 묶음의 주소) */
+export type HomeProgressRow = { id: string; title: string; description: string; status: string; tone?: StatusTone; href?: string };
 
 type Props = {
   profile: CreatorHomeProfile;
@@ -44,7 +44,7 @@ type Props = {
 
 export const CREATOR_HOME_LOG_ROWS = 1;
 const ACTION_LABEL: Record<CreatorActionItem["kind"], string> = {
-  approval: "승인 대기", bluetooth: "확인할 선물", tracker: "확인할 선물", unconfirmed: "내 상자 찾기",
+  signature_link: "연결 전", approval: "승인 대기", bluetooth: "확인할 선물", tracker: "확인할 선물", unconfirmed: "내 상자 찾기",
   difference: "추가 결제", missing_box: "내 상자 찾기", return_address: "반송 주소 확인", unpaid: "결제 대기",
 };
 const countNote = (n: number | null) => n === null ? "" : `${n}건`;
@@ -63,7 +63,7 @@ function SummaryRows({ rows, href, label }: { rows: readonly HomeProgressRow[]; 
     <ul className={h.rows} aria-label={label}>
       {rows.slice(0, 3).map((row) => (
         <li key={row.id}>
-          <Link href={href} className={h.row}>
+          <Link href={row.href ?? href} className={h.row}>
             <span className={h.w}>
               <b>{row.title}</b>
               <span>{row.description}</span>
@@ -77,6 +77,22 @@ function SummaryRows({ rows, href, label }: { rows: readonly HomeProgressRow[]; 
   );
 }
 
+/** 홈 「지금 할 일」 한 줄 — 승인 서명 연결 줄(signup INV-U20)은 연결 화면으로, 나머지는 처리할 일 화면으로 간다 */
+export function creatorActionRows(actions: readonly CreatorActionItem[]): HomeProgressRow[] {
+  return actions.map((item): HomeProgressRow => {
+    if (item.kind === "signature_link") {
+      return { id: item.kind, title: "카카오톡 인증 알림 연결", description: "연결 전에는 선물을 받을 수 없습니다", status: ACTION_LABEL[item.kind], tone: "warn", href: creatorActionHref(item) };
+    }
+    return {
+      id: `${item.kind}-${item.orderNo}-${"boxId" in item ? item.boxId ?? "" : "shareId" in item ? item.shareId ?? "" : "boxSeq" in item ? item.boxSeq : ""}`,
+      title: `${"nickname" in item ? item.nickname : item.creatorName}님`,
+      description: "itemKind" in item ? item.itemKind : item.orderNo,
+      status: ACTION_LABEL[item.kind],
+      tone: "warn",
+    };
+  });
+}
+
 export function CreatorHomePage({ profile, actionCount, actions, accessLog, notices, ongoingCount, progressRows = [], sentGifts, banner = null }: Props) {
   const tiles: FrontTile[] = [
     { href: CREATOR_ACTION_CENTER_HREF, label: "지금 할 일", note: countNote(actionCount), icon: "icon-approve" },
@@ -84,13 +100,7 @@ export function CreatorHomePage({ profile, actionCount, actions, accessLog, noti
     { href: "/gifts", label: "보낸 선물", note: `${sentGifts.length}개`, icon: "icon-truck" },
     { href: "/creator/log", label: "주소 열람 기록", note: "배송지 열람 내역", icon: "icon-help" },
   ];
-  const actionRows: HomeProgressRow[] = (actions ?? []).map((item) => ({
-    id: `${item.kind}-${item.orderNo}-${"boxId" in item ? item.boxId ?? "" : "shareId" in item ? item.shareId ?? "" : "boxSeq" in item ? item.boxSeq : ""}`,
-    title: `${"nickname" in item ? item.nickname : item.creatorName}님`,
-    description: "itemKind" in item ? item.itemKind : item.orderNo,
-    status: ACTION_LABEL[item.kind],
-    tone: "warn",
-  }));
+  const actionRows: HomeProgressRow[] = creatorActionRows(actions ?? []);
   return (
     <RoleHome hero={
       <div className={welcome.col}>

@@ -7,6 +7,7 @@ import { priorHistoryLabel } from "@/entities/order/model/prior-history";
 import type { MyAddressStatus } from "@/entities/address/api/my-address-status";
 import {
   approvalShowsDaysLeft,
+  creatorActionHref,
   daysLeftOf,
   splitBoards,
   type ApprovalItem,
@@ -14,6 +15,7 @@ import {
   type CreatorActionItem,
   type ReturnAddressItem,
   type SentGiftItem,
+  type SignatureLinkItem,
   type TrackerItem,
   type UnconfirmedItem,
 } from "@/entities/action-item/model/creator-action-items";
@@ -92,7 +94,7 @@ type Open =
   | { kind: "missing_box"; item: Extract<SentGiftItem, { kind: "missing_box" }> }
   | null;
 
-const keyOf = (it: CreatorActionItem) => `${it.kind}:${it.orderNo}:${"boxSeq" in it ? it.boxSeq : "-"}`;
+const keyOf = (it: CreatorActionItem) => (it.kind === "signature_link" ? it.kind : `${it.kind}:${it.orderNo}:${"boxSeq" in it ? it.boxSeq : "-"}`);
 
 /** 처음 열 창 — 알림톡 링크의 주문번호가 이 크리에이터의 승인 요청 줄일 때만(notifications INV-N9) */
 function initialOpen(items: readonly CreatorActionItem[], orderNo: string | null | undefined): Open {
@@ -106,12 +108,27 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
   const close = () => setOpen(null);
   const { received, sent } = splitBoards(items);
 
-  const checks = received.filter((it): it is TrackerItem | BluetoothItem => it.kind !== "approval");
+  // 승인 서명 연결 줄(signup INV-U20)은 받은 선물 판 맨 위 — 연결 전에는 선물을 받지 않는다(approval-signature INV-S16)
+  const checks = received.filter((it): it is SignatureLinkItem | TrackerItem | BluetoothItem => it.kind !== "approval");
   const approvals = received.filter((it): it is ApprovalItem => it.kind === "approval");
   // 첫 승인 요청 하나만 하늘 판(design-rules 23-3 A안), 나머지는 카드. 순서는 읽기가 준다(INV-J5 — 결제 뒤 24시간 안인 새 요청을 최근 순으로 먼저, 나머지는 오래된 순, 2026-10-30)
   const [top, ...restApprovals] = approvals;
 
-  function checkRow(it: TrackerItem | BluetoothItem) {
+  function checkRow(it: SignatureLinkItem | TrackerItem | BluetoothItem) {
+    if (it.kind === "signature_link") {
+      return (
+        <Row
+          key={keyOf(it)}
+          title="카카오톡 인증 알림 연결"
+          meta="연결 전 · 연결 전에는 선물을 받을 수 없습니다"
+          action={
+            <Link className="btn btn--sm btn--line" href={creatorActionHref(it)}>
+              연결
+            </Link>
+          }
+        />
+      );
+    }
     const due = daysLeftOf(it.dueAt, now);
     if (it.kind === "tracker") {
       return (

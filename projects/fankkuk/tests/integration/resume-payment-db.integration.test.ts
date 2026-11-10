@@ -279,11 +279,11 @@ describe("INV-M22 ⑤ · INV-J5·J6: 크리에이터 계정이 보낸 결제 대
     const header = await readSiteHeader(client, { userId: HARU, role: "creator", nickname: "하루" }, "/gifts", items);
     expect(items).toHaveLength(before.length + 1);
     expect(header.role === "creator" ? header.actionCount : -1).toBe(items.length);
-    expect(items.filter((it) => it.orderNo === o.orderNo).map((it) => it.kind)).toEqual(["unpaid"]);
+    expect(items.filter((it) => "orderNo" in it && it.orderNo === o.orderNo).map((it) => it.kind)).toEqual(["unpaid"]);
     await confirmPayment({ store: store(), toss: fakeToss().client }, HARU, { orderId: o.tossOrderId, amount: "6900", paymentKey: "pk_haru" });
     const after = await readCreatorActionItems(client);
     expect(after).toHaveLength(before.length);
-    expect(after.filter((it) => it.orderNo === o.orderNo)).toEqual([]);
+    expect(after.filter((it) => "orderNo" in it && it.orderNo === o.orderNo)).toEqual([]);
   });
 });
 

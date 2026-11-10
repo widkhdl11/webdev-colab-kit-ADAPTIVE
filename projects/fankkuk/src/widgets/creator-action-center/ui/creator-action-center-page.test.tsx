@@ -368,3 +368,20 @@ describe("보낸 선물의 반송 주소 줄 (action-center INV-J5, office-workf
     }
   });
 });
+
+describe("승인 서명 연결 줄 (signup INV-U20 · approval-signature INV-S16)", () => {
+  it("INV-U20: 연결 줄은 받은 선물 판 맨 위의 촘촘한 줄 하나 — 「연결」이 승인 서명 연결 화면으로 가고, 제목 숫자에 들어간다", () => {
+    render([{ kind: "signature_link" }, BT_OPEN]);
+    const rows = [...host.querySelectorAll("[data-row]")];
+    expect(rows[0]?.querySelector("[data-title]")?.textContent).toBe("카카오톡 인증 알림 연결");
+    expect(rows[0]?.textContent).toContain("연결 전에는 선물을 받을 수 없습니다");
+    const go = [...rows[0]!.querySelectorAll("a")].find((a) => a.textContent === "연결");
+    expect(go?.getAttribute("href")).toBe("/creator/settings/signature");
+    expect(host.querySelector(".ph-count")?.textContent).toBe("2건");
+  });
+
+  it("INV-S16: 연결된 크리에이터(줄 없음)에게는 연결 줄이 보이지 않는다", () => {
+    render([BT_OPEN]);
+    expect(host.textContent).not.toContain("카카오톡 인증 알림 연결");
+  });
+});

@@ -82,7 +82,7 @@ describe("크리에이터 처리할 일 줄 (INV-J5·J6)", () => {
     const items = parseCreatorActionItems([bluetooth, approval, unconfirmed, missing]);
     expect(items.map((i) => i.kind)).toEqual(["bluetooth", "approval", "unconfirmed", "missing_box"]);
     const { received, sent } = splitBoards(items);
-    expect(received.map((i) => i.orderNo)).toEqual(["FC-A1", "FC-B2"]);
+    expect(received.map((i) => ("orderNo" in i ? i.orderNo : i.kind))).toEqual(["FC-A1", "FC-B2"]);
     expect(sent.map((i) => i.orderNo)).toEqual(["RG-C3", "FC-D4"]);
     expect(items[0]).toMatchObject({ choice: "accept", boxCount: 2, priorHistory: { gifts: 3, passed: 3, returned: 0 } });
     expect(items[1]).toMatchObject({ requestId: "apr_FCB2", hasElectronicsOrMetal: false });

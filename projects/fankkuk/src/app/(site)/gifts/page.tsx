@@ -35,7 +35,7 @@ export default async function Page() {
   const todoRead: Promise<{ header: readonly unknown[] | null; items: ActionItem[] }> =
     viewer.role === "fan"
       ? readActionItemsOrNull(supabase).then((a) => ({ header: a, items: (a ?? []).filter((it) => it.kind !== "revgift") }))
-      : readCreatorActionItemsOrNull(supabase).then((c) => ({ header: c, items: [...new Set((c ?? []).map((it) => it.orderNo))].flatMap((no) => sentGiftTodoOf(c ?? [], no)) }));
+      : readCreatorActionItemsOrNull(supabase).then((c) => ({ header: c, items: [...new Set((c ?? []).flatMap((it) => ("orderNo" in it ? [it.orderNo] : [])))].flatMap((no) => sentGiftTodoOf(c ?? [], no)) }));
   const [gifts, together, cards, header, todo] = await Promise.all([
     giftsRead,
     togetherRead,

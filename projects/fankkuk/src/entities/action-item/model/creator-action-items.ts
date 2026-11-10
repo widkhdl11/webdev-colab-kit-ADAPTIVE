@@ -9,6 +9,8 @@ import type { ActionItem } from "./action-items";
 
 /** 크리에이터 처리할 일 화면 주소 — 승인 요청·확인할 선물 알림 링크도 이곳이다(notifications INV-N9) */
 export const CREATOR_ACTION_CENTER_HREF = "/creator/actions";
+/** 승인 서명 연결 화면 — 상세 설정의 「승인 서명」 줄이 여는 곳(session home-path 의 CREATOR_SIGNATURE_LINK 와 같은 값, 시험이 붙잡는다) */
+export const CREATOR_SIGNATURE_LINK_HREF = "/creator/settings/signature";
 
 export type CreatorCheckChoice = "accept" | "return";
 /** 추적 장치 발견 줄의 선택 — report 신고하기 · no_report 신고하지 않기(office-workflow INV-W14) */
@@ -79,7 +81,23 @@ export type ReturnAddressItem = {
   sentAt: string;
 };
 
-export type CreatorActionItem = TrackerItem | BluetoothItem | ApprovalItem | UnconfirmedItem | SentGiftItem | ReturnAddressItem;
+/**
+ * 승인 서명 연결(signup INV-U20 「크리에이터 홈 할 일」 · approval-signature INV-S16) — 연결되지 않은 크리에이터에게 하나. 주문과 상관없다.
+ * 장애 대비 길로 가입했거나 번호를 바꿔 연결이 풀린 크리에이터(signup INV-U12 정함). 연결하면 다음 읽기에서 없다.
+ */
+export type SignatureLinkItem = { kind: "signature_link" };
+
+export type CreatorActionItem = SignatureLinkItem | TrackerItem | BluetoothItem | ApprovalItem | UnconfirmedItem | SentGiftItem | ReturnAddressItem;
+
+/** 승인 서명 연결 여부로 줄 목록을 마저 채운다 — 연결 전이면 맨 앞에 연결 줄 하나(받은 선물 판의 맨 위). 줄 수가 곧 숫자다(INV-J6) */
+export function withSignatureLinkItem(items: readonly CreatorActionItem[], linked: boolean): CreatorActionItem[] {
+  return linked ? [...items] : [{ kind: "signature_link" }, ...items];
+}
+
+/** 줄을 누르면 갈 곳 — 승인 서명 연결 줄은 연결 화면, 나머지는 처리할 일 화면 */
+export function creatorActionHref(item: CreatorActionItem): string {
+  return item.kind === "signature_link" ? CREATOR_SIGNATURE_LINK_HREF : CREATOR_ACTION_CENTER_HREF;
+}
 
 const iso = z.string().min(1).transform((v) => new Date(v).toISOString());
 const count = z.number().int().nonnegative();
@@ -206,15 +224,15 @@ export function parseCreatorActionItems(data: unknown): CreatorActionItem[] {
     });
 }
 
-/** 받은 선물 판(추적 장치 발견 · 블루투스 발견 · 승인 요청)과 보낸 선물 판(미확인 상자 · 보낸 팬 선물 · 반송 주소) — DB 가 정한 순서 그대로 나눈다(INV-J5) */
+/** 받은 선물 판(승인 서명 연결 · 추적 장치 발견 · 블루투스 발견 · 승인 요청)과 보낸 선물 판(미확인 상자 · 보낸 팬 선물 · 반송 주소) — 읽기가 정한 순서 그대로 나눈다(INV-J5) */
 export function splitBoards(items: readonly CreatorActionItem[]): {
-  received: (TrackerItem | BluetoothItem | ApprovalItem)[];
+  received: (SignatureLinkItem | TrackerItem | BluetoothItem | ApprovalItem)[];
   sent: (UnconfirmedItem | SentGiftItem | ReturnAddressItem)[];
 } {
-  const received: (TrackerItem | BluetoothItem | ApprovalItem)[] = [];
+  const received: (SignatureLinkItem | TrackerItem | BluetoothItem | ApprovalItem)[] = [];
   const sent: (UnconfirmedItem | SentGiftItem | ReturnAddressItem)[] = [];
   for (const it of items) {
-    if (it.kind === "tracker" || it.kind === "bluetooth" || it.kind === "approval") received.push(it);
+    if (it.kind === "signature_link" || it.kind === "tracker" || it.kind === "bluetooth" || it.kind === "approval") received.push(it);
     else sent.push(it);
   }
   return { received, sent };
