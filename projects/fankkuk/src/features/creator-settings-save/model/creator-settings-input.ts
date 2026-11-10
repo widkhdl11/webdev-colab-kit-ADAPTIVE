@@ -3,6 +3,7 @@ import { charCount } from "@/shared/lib/validation/char-count";
 import { HIDDEN_CHAR } from "@/shared/lib/validation/hidden-char";
 import { FAN_NAME_MAX } from "@/entities/creator/model/fan-name";
 import { isThemeColor } from "@/entities/creator/model/creator-color";
+import { nicknameSchema } from "@/entities/session/model/nickname-rule";
 
 /**
  * 테마 색(저장 칸 이름은 퍼스널 컬러, creator-link INV-E13) — 빈 문자열이면 기본 모양으로 되돌리기, 아니면 파스텔 8색 가운데 하나(대소문자 무관)를 대문자로.
@@ -30,24 +31,16 @@ export function oneLine(s: string): string {
   return s.replace(/[\r\n\u2028\u2029]+/g, " ");
 }
 
-/** 공개 이름에 둘 수 없는 글자(제어 문자·보이지 않는 글자). DB 함수(update_my_creator_profile)도 같은 목록으로 거부한다. */
-export { HIDDEN_CHAR };
-
-export const PUBLIC_NAME_MAX = 20;
 /** 한 줄 소개 — 40자, 줄바꿈 없음(creator-link INV-E6). DB 함수가 같은 길이와 태그 필터로 다시 검사한다. */
 export const INTRO_MAX = 40;
 /** 팬을 부르는 이름 — 선택, 10자, 줄바꿈 없음(추가분 4-1). 금칙어·연락처 꼴은 DB 가 한 줄 소개와 같은 필터로 다시 본다. */
 export { FAN_NAME_MAX };
 
 // 다섯 칸 모두 없어도 된다 — 없는 칸은 DB 가 지금 값 그대로 둔다. 화면은 자기가 고치는 칸만 보낸다
-// (「내 팬꾹 꾸미기」 = 공개 이름·한 줄 소개·팬을 부르는 이름, 「주소와 설정」 = 찾기 노출). 보낸 칸 가운데 하나라도 틀리면 아무 칸도 바꾸지 않는다(INV-A9).
+// (프로필 수정 = 닉네임·한 줄 소개·찾기 노출, 상세 설정 「팬덤」 = 팬을 부르는 이름·테마 색). 보낸 칸 가운데 하나라도 틀리면 아무 칸도 바꾸지 않는다(INV-A9).
+// 크리에이터 이름은 닉네임이다 — 따로 정하는 이름 칸은 없다(creator-display-name INV-CN2). 닉네임 규칙은 가입·내 정보와 같다(signup INV-U13).
 export const profileInputSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .refine((s) => charCount(s) >= 1 && charCount(s) <= PUBLIC_NAME_MAX, `공개 이름은 1~${PUBLIC_NAME_MAX}자로 입력해 주세요.`)
-    .refine((s) => !HIDDEN_CHAR.test(s), "공개 이름에 보이지 않는 문자나 줄바꿈은 입력할 수 없습니다.")
-    .optional(),
+  nickname: nicknameSchema.optional(),
   intro: z
     .string()
     .trim()

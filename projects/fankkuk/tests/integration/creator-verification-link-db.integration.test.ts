@@ -149,8 +149,8 @@ describe("운영자 판정 (INV-V18·V19)", () => {
     expect(rows.find((r) => r.id === a.application_id)).toMatchObject({ link_handle: handle, channel_title: `${CV.summer.name} 채널` });
   });
 
-  it("INV-V19 (S19): 새 반려 사유 다섯은 받고, 크리에이터에게 사유 값만 보이고 메모는 없다", async () => {
-    for (const code of ["link_not_found", "link_mismatch", "name_mismatch", "channel_unreachable", "other"]) {
+  it("INV-V19 (S19): 새 반려 사유 넷은 받고, 크리에이터에게 사유 값만 보이고 메모는 없다", async () => {
+    for (const code of ["link_not_found", "link_mismatch", "channel_unreachable", "other"]) {
       const a = await requestOk("ggul", SOOP(`ggul${code.replace(/_/g, "")}`.slice(0, 24)));
       expect([code, (await reject(a.application_id, code, MEMO)).error]).toEqual([code, null]);
       const mine = (await (await as("ggul")).rpc("my_creator_verifications")).data as { id: string; reason_code: string }[];
@@ -160,9 +160,9 @@ describe("운영자 판정 (INV-V18·V19)", () => {
     }
   });
 
-  it("INV-V19 (실패경로): 옛 반려 사유(코드를 찾지 못함·가입 정보 다름)는 거부, 요청은 확인 대기 그대로", async () => {
+  it("INV-V19 (실패경로): 옛 반려 사유(코드를 찾지 못함·가입 정보 다름·채널 이름이 다름)는 거부, 요청은 확인 대기 그대로", async () => {
     const a = await requestOk("ggul", SOOP("ggulold"));
-    for (const code of ["code_not_found", "profile_mismatch"]) expect((await reject(a.application_id, code)).error?.code).toBe("22023");
+    for (const code of ["code_not_found", "profile_mismatch", "name_mismatch"]) expect((await reject(a.application_id, code)).error?.code).toBe("22023");
     expect(appStatus(a.application_id)).toBe("posted");
   });
 

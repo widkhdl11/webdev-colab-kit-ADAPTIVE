@@ -38,7 +38,8 @@ export function isOperatorCheckedApplication(method: VerificationMethod): boolea
 }
 
 /** INV-V19: 반려 사유 목록 — DB 의 admin_reject_creator_verification 이 받는 값과 같다. */
-export const REJECT_REASONS = ["link_not_found", "link_mismatch", "name_mismatch", "channel_unreachable", "other"] as const;
+/** 이름은 대조하지 않는다(2026-11-10 — 「채널 이름이 다름」 name_mismatch 는 옛 기록을 읽을 때만, creator-display-name INV-CN4). */
+export const REJECT_REASONS = ["link_not_found", "link_mismatch", "channel_unreachable", "other"] as const;
 export type RejectReason = (typeof REJECT_REASONS)[number];
 /** INV-V9·V20: 승인 취소 사유 목록 — DB 의 admin_revoke_creator 가 받는 값과 같다. link_removed 는 유예 끝 취소도 쓴다. */
 export const REVOKE_REASONS = ["channel_gone", "not_owner_confirmed", "policy_violation", "link_removed", "other"] as const;
@@ -49,7 +50,6 @@ export const CLOSE_REASON = "owner_confirmed_elsewhere";
 export const REJECT_REASON_LABEL: Record<RejectReason, string> = {
   link_not_found: "팬꾹 링크를 찾지 못함",
   link_mismatch: "링크 주소가 다름",
-  name_mismatch: "채널 이름이 다름",
   channel_unreachable: "채널 주소가 열리지 않음",
   other: "그 밖",
 };
@@ -65,7 +65,11 @@ const CLOSE_REASON_LABELS: Record<string, string> = {
   method_changed: "확인 방식이 바뀌었습니다. 새로 확인을 요청해 주세요.",
 };
 /** 지금은 고를 수 없지만 예전 기록에 남아 있을 수 있는 사유 — 읽을 때만 쓴다. */
-const LEGACY_REJECT_REASON_LABEL: Record<string, string> = { code_not_found: "코드를 찾지 못함", profile_mismatch: "채널과 가입 정보가 맞지 않음" };
+const LEGACY_REJECT_REASON_LABEL: Record<string, string> = {
+  code_not_found: "코드를 찾지 못함",
+  profile_mismatch: "채널과 가입 정보가 맞지 않음",
+  name_mismatch: "채널 이름이 다름",
+};
 const LEGACY_REVOKE_REASON_LABEL: Record<string, string> = { code_removed: "채널에서 코드가 사라짐" };
 
 /** 운영자 메모 한도(INV-V9) — DB 와 같은 기준(글자 수). */
@@ -329,7 +333,7 @@ export type AdminVerification = {
   nickname: string;
   loginId: string;
   creatorName: string | null;
-  /** 가입 때 적은 채널 이름 — 승인 조건 (1)의 비교 대상(INV-V18) */
+  /** 예전에 가입 때 적은 채널 이름 — 2026-11-10 부터 받지 않고 화면에도 없다(creator-display-name INV-CN4). 읽기 함수 칸이라 남는다 */
   channelTitle: string | null;
   platform: string;
   channelUrl: string;

@@ -46,8 +46,6 @@ async function args(loginId: string, extra: Record<string, unknown> = {}) {
       p_phone: testPhoneBundle(userId, p),
       p_verification_id: verificationId,
       p_terms: TERMS,
-      p_name: "꿀단지",
-      p_channel_title: "꿀단지의 부엌",
       p_tag_ids: [optionId("유튜브")],
       p_custom_tag: "요리",
       p_nickname: loginId.slice(0, 12), // 가입 닉네임(signup INV-U13) — 계정마다 다르게
@@ -65,18 +63,18 @@ beforeEach(cleanup);
 afterAll(cleanup);
 
 describe("크리에이터 가입 때 공개 정보 (INV-V1 · signup INV-U5)", () => {
-  it("INV-V1 INV-T3: 크리에이터로 가입하면 이름·채널 이름·태그가 든 공개 정보 행이 확인 안 됨으로 생기고, slug 는 서버가 정한다", async () => {
+  it("INV-V1 INV-T3 · INV-CN1 · INV-CN4 (S2b): 크리에이터로 가입하면 이름 = 닉네임·채널 이름 빈 값·태그가 든 공개 정보 행이 확인 안 됨으로 생기고, slug 는 서버가 정한다", async () => {
     const { userId, body } = await args("it_cv_ggul");
     const r = await adminClient().rpc("create_creator_account", body);
     expect(r.error).toBeNull();
     expect(psql(`select role from public.profiles where id = '${userId}'`)).toBe("creator");
-    // 닉네임은 가입 때 적은 값이다(signup INV-U13, 2026-10-15) — 공개 이름(꿀단지)으로 덮지 않는다
+    // 크리에이터 이름은 가입 닉네임이다 — 공개 이름·채널 이름은 받지 않는다(creator-display-name INV-CN1·CN4, 2026-11-10)
     expect(psql(`select nickname from public.profiles where id = '${userId}'`)).toBe("it_cv_ggul");
     const row = psql(
       `select name || '|' || channel_title || '|' || identity_verified || '|' || coalesce(channel_url, '-') || '|' || intro || '|' || slug from public.creators where profile_id = '${userId}'`,
     );
     const [name, title, verified, url, intro, slug] = row.split("|");
-    expect([name, title, verified, url, intro]).toEqual(["꿀단지", "꿀단지의 부엌", "false", "-", ""]);
+    expect([name, title, verified, url, intro]).toEqual(["it_cv_ggul", "", "false", "-", ""]);
     // 태그 — 선택지 유튜브 + 직접 입력 「요리」. 분야 칸은 더는 쓰지 않는다(처음 값 그대로)
     const creatorId = psql(`select id from public.creators where profile_id = '${userId}'`);
     expect(psql(`select string_agg(o.name, '|') from public.creator_tags t join public.creator_tag_options o on o.id = t.option_id where t.creator_id = '${creatorId}'`)).toBe("유튜브");
@@ -105,15 +103,17 @@ describe("크리에이터 가입 때 공개 정보 (INV-V1 · signup INV-U5)", (
     );
   });
 
-  it("INV-V1 INV-T3 (실패경로): 이름·채널 이름이 비었거나 길거나, 태그가 0개·6개·직접 입력 21자·숨긴 선택지면 거부하고 아무것도 남지 않는다", async () => {
+  it("INV-CN2 INV-CN4 (실패경로): 가입 함수는 공개 이름·채널 이름 인자를 받지 않는다 — 넘기면 함수가 없다고 거부", async () => {
+    const { body } = await args("it_cv_named", { p_name: "가짜이름", p_channel_title: "가짜채널" });
+    expect((await adminClient().rpc("create_creator_account", body)).error).not.toBeNull();
+    expect(psql(`select count(*) from public.profiles where login_id = 'it_cv_named'`)).toBe("0");
+  });
+
+  it("INV-V1 INV-T3 (실패경로): 태그가 0개·6개·직접 입력 21자·숨긴 선택지면 거부하고 아무것도 남지 않는다", async () => {
     psql(`update public.creator_tag_options set hidden = true where name = '틱톡'`);
     try {
       const five = ["SOOP", "치지직", "유튜브", "알플레이", "X"].map(optionId);
       const cases: Record<string, unknown>[] = [
-        { p_name: "" },
-        { p_name: "가".repeat(21) },
-        { p_channel_title: "  " },
-        { p_channel_title: "가".repeat(41) },
         { p_tag_ids: [], p_custom_tag: null },
         { p_tag_ids: [], p_custom_tag: "  " },
         { p_custom_tag: "가".repeat(21) },

@@ -21,9 +21,9 @@ export async function readAdminCreators(client: Pick<SupabaseClient, "rpc">): Pr
 /** 공개 이름 바꾼 기록, 최근 것부터(admin_creator_name_changes — 운영자가 아니면 줄이 없다, my-account INV-A9). */
 export async function readNameChanges(client: Pick<SupabaseClient, "rpc">): Promise<NameChange[]> {
   const { data, error } = await client.rpc("admin_creator_name_changes");
-  if (error) throw new Error(`공개 이름 바꾼 기록을 읽지 못했다: ${error.code}`);
+  if (error) throw new Error(`닉네임 바꾼 기록을 읽지 못했다: ${error.code}`);
   const changes = nameChangesFromRows(data);
-  if (!changes) throw new Error("공개 이름 바꾼 기록의 형식이 다르다");
+  if (!changes) throw new Error("닉네임 바꾼 기록의 형식이 다르다");
   return changes;
 }
 

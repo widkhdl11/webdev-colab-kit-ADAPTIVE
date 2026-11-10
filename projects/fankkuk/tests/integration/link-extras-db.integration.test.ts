@@ -25,7 +25,7 @@ function resetFanNames(): void {
 
 async function saveProfile(login: string, fanName?: string) {
   const name = Object.values(CV).find((c) => c.login === login)?.name ?? "시험";
-  const args: Record<string, unknown> = { p_name: name, p_intro: "", p_searchable: true };
+  const args: Record<string, unknown> = { p_nickname: name, p_intro: "", p_searchable: true };
   if (fanName !== undefined) args.p_fan_name = fanName;
   return (await signedInClient(login)).rpc("update_my_creator_profile", args);
 }
@@ -96,8 +96,8 @@ describe("팬을 부르는 이름 — 저장 (추가분 4-1)", () => {
 
   it("(실패경로) 팬 계정·로그인 안 함은 저장하지 못한다", async () => {
     const fan = await signedInClient("byeolbit_fan");
-    expect((await fan.rpc("update_my_creator_profile", { p_name: "팬", p_intro: "", p_searchable: true, p_fan_name: "팬덤" })).error?.code).toBe("42501");
-    expect((await anonClient().rpc("update_my_creator_profile", { p_name: "팬", p_intro: "", p_searchable: true, p_fan_name: "팬덤" })).error).not.toBeNull();
+    expect((await fan.rpc("update_my_creator_profile", { p_nickname: "팬", p_intro: "", p_searchable: true, p_fan_name: "팬덤" })).error?.code).toBe("42501");
+    expect((await anonClient().rpc("update_my_creator_profile", { p_nickname: "팬", p_intro: "", p_searchable: true, p_fan_name: "팬덤" })).error).not.toBeNull();
   });
 });
 

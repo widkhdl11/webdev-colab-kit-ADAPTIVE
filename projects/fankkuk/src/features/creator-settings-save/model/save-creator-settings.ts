@@ -1,4 +1,5 @@
 import { HANDLE_REJECT_MESSAGE } from "@/entities/creator/model/creator-handle";
+import { nicknameRejection } from "@/entities/session/model/nickname-rule";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Viewer } from "@/entities/session/model/viewer";
 import { notifyInputSchema, profileInputSchema } from "./creator-settings-input";
@@ -14,7 +15,7 @@ import { previewPickInputSchema } from "./preview-pick-input";
 
 export type SaveCreatorSettingsDeps = { client: Pick<SupabaseClient, "rpc">; viewer: Viewer | null };
 
-export type SaveCreatorSettingsResult = { ok: true } | { ok: false; status: 400 | 401 | 403; message: string };
+export type SaveCreatorSettingsResult = { ok: true } | { ok: false; status: 400 | 401 | 403 | 409; message: string };
 
 function gate(viewer: Viewer | null): SaveCreatorSettingsResult | null {
   if (!viewer) return { ok: false, status: 401, message: "로그인이 필요합니다." };
@@ -30,6 +31,9 @@ async function call(
 ): Promise<SaveCreatorSettingsResult> {
   const { error } = await deps.client.rpc(fn, args);
   if (!error) return { ok: true };
+  // 닉네임 겹침(FKU04)·필터(FKU05~07) — 가입·내 정보와 같은 문구(signup INV-U13)
+  const nick = nicknameRejection(error.code);
+  if (nick) return { ok: false, status: nick.status, message: nick.message };
   const known = messages[error.code];
   if (known) return { ok: false, status: 400, message: known };
   if (error.code === "22023") return { ok: false, status: 400, message: "입력한 정보를 확인해 주세요." };
@@ -42,11 +46,11 @@ export async function saveCreatorProfile(deps: SaveCreatorSettingsDeps, body: un
   if (denied) return denied;
   const parsed = profileInputSchema.safeParse(body);
   if (!parsed.success) return { ok: false, status: 400, message: parsed.error.issues[0]?.message ?? "입력한 정보를 확인해 주세요." };
-  const { name, intro, searchable, fanName, personalColor } = parsed.data;
+  const { nickname, intro, searchable, fanName, personalColor } = parsed.data;
   // creator-link INV-E6: 한 줄 소개는 직접 입력 태그와 같은 필터를 거친다(DB 가 사유별 코드로 거부).
   // 팬을 부르는 이름(추가분 4-1)도 같은 필터. 본문에 없는 칸은 넘기지 않는다 — DB 가 지금 값 그대로 둔다(다른 화면이 고친 칸을 덮어쓰지 않게)
   const args: Record<string, string | boolean> = {};
-  if (name !== undefined) args.p_name = name;
+  if (nickname !== undefined) args.p_nickname = nickname;
   if (intro !== undefined) args.p_intro = intro;
   if (searchable !== undefined) args.p_searchable = searchable;
   if (fanName !== undefined) args.p_fan_name = fanName;

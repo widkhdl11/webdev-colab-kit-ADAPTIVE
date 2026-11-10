@@ -30,8 +30,8 @@ describe("운영자의 본인 확인 처리 (creator-verification INV-V6·V9·V1
     expect(direct.calls).toEqual([]);
   });
 
-  it("INV-V19: 반려는 사유 목록 값 + 메모(앞뒤 공백 뗌)로 간다 — 목록은 팬꾹 링크 확인의 다섯 값", async () => {
-    for (const reasonCode of ["link_not_found", "link_mismatch", "name_mismatch", "channel_unreachable", "other"]) {
+  it("INV-V19: 반려는 사유 목록 값 + 메모(앞뒤 공백 뗌)로 간다 — 목록은 팬꾹 링크 확인의 네 값", async () => {
+    for (const reasonCode of ["link_not_found", "link_mismatch", "channel_unreachable", "other"]) {
       const { calls, client } = fakeClient(null);
       const r = await decideCreatorVerification(client, { action: "reject", applicationId: APP, reasonCode, memo: "  다른 계정과 대조 " });
       expect(r.status).toBe(200);
@@ -41,8 +41,8 @@ describe("운영자의 본인 확인 처리 (creator-verification INV-V6·V9·V1
     }
   });
 
-  it("INV-V19 (실패경로): 옛 반려 사유(코드를 찾지 못함·가입 정보 다름)는 받지 않는다", async () => {
-    for (const reasonCode of ["code_not_found", "profile_mismatch"]) {
+  it("INV-V19 (실패경로): 옛 반려 사유(코드를 찾지 못함·가입 정보 다름·채널 이름이 다름)는 받지 않는다", async () => {
+    for (const reasonCode of ["code_not_found", "profile_mismatch", "name_mismatch"]) {
       const { calls, client } = fakeClient(null);
       expect((await decideCreatorVerification(client, { action: "reject", applicationId: APP, reasonCode, memo: "" })).status).toBe(400);
       expect(calls).toEqual([]);

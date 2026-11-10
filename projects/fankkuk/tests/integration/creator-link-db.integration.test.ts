@@ -46,7 +46,7 @@ async function resolve(handle: string): Promise<{ creator_id: string; handle: st
 
 async function saveProfile(login: string, intro: string) {
   const name = Object.values(CV).find((c) => c.login === login)?.name ?? "시험";
-  return (await client(login)).rpc("update_my_creator_profile", { p_name: name, p_intro: intro, p_searchable: true });
+  return (await client(login)).rpc("update_my_creator_profile", { p_nickname: name, p_intro: intro, p_searchable: true });
 }
 
 async function monthFans(creatorId: string): Promise<number> {
@@ -106,7 +106,7 @@ describe("INV-E1: 링크용 아이디·소개·사진은 본인만 바꾼다", (
     const fan = await client("byeolbit_fan");
     expect((await fan.rpc("update_my_creator_handle", { p_handle: "fan_handle" })).error?.code).toBe("42501");
     expect((await anonClient().rpc("update_my_creator_handle", { p_handle: "anon_handle" })).error).not.toBeNull();
-    expect((await fan.rpc("update_my_creator_profile", { p_name: "팬", p_intro: "소개", p_searchable: true })).error?.code).toBe("42501");
+    expect((await fan.rpc("update_my_creator_profile", { p_nickname: "팬", p_intro: "소개", p_searchable: true })).error?.code).toBe("42501");
     expect(Number(psql("select count(*) from public.creator_handles where handle in ('fan_handle', 'anon_handle')"))).toBe(0);
   });
 

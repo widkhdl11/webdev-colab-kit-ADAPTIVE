@@ -64,16 +64,15 @@ function normalize(text: string): string {
   return text.toLowerCase().replace(/\s+/g, "");
 }
 
-/** 검색이 보는 칸. 소개 칸(로마자 이름·태그·채널 이름)은 없을 수 있다. */
-export type CreatorSearchFields = Pick<CreatorCard, "name" | "platform"> &
-  Partial<Pick<CreatorCard, "alias" | "tags" | "channelTitle">>;
+/** 검색이 보는 칸. 소개 칸(로마자 이름·태그)은 없을 수 있다. 채널 이름은 화면에 없어 검색하지 않는다(creator-display-name INV-CN4). */
+export type CreatorSearchFields = Pick<CreatorCard, "name" | "platform"> & Partial<Pick<CreatorCard, "alias" | "tags">>;
 
 /**
- * 실시간 검색 — 이름·로마자 이름·태그·채널 이름·방송 플랫폼 중 하나에 검색어가 들어 있으면 통과. 띄어쓰기·대소문자는 무시한다.
+ * 실시간 검색 — 이름(닉네임)·로마자 이름·태그·방송 플랫폼 중 하나에 검색어가 들어 있으면 통과. 띄어쓰기·대소문자는 무시한다.
  * 크리에이터 찾기와 선물 보내기의 크리에이터 고르기가 같은 규칙을 쓴다.
  */
 export function matchesCreatorQuery(card: CreatorSearchFields, query: string): boolean {
   const q = normalize(query);
   if (!q) return true;
-  return normalize([card.name, card.alias, ...(card.tags ?? []), card.channelTitle, card.platform].filter(Boolean).join(" ")).includes(q);
+  return normalize([card.name, card.alias, ...(card.tags ?? []), card.platform].filter(Boolean).join(" ")).includes(q);
 }

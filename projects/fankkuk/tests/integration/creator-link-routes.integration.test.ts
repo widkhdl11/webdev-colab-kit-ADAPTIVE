@@ -66,7 +66,7 @@ async function redirectOf(path: string): Promise<[number, string]> {
 }
 
 async function saveIntro(login: string, name: string, intro: string): Promise<void> {
-  const r = await (await linkClient(login)).rpc("update_my_creator_profile", { p_name: name, p_intro: intro, p_searchable: true });
+  const r = await (await linkClient(login)).rpc("update_my_creator_profile", { p_nickname: name, p_intro: intro, p_searchable: true });
   if (r.error) throw new Error(`소개 저장 실패: ${r.error.code}`);
 }
 

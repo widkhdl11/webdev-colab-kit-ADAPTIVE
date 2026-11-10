@@ -33,8 +33,6 @@ const FIELDS: readonly SignUpField[] = [
   "passwordConfirm",
   "phone",
   "terms",
-  "creatorName",
-  "channelTitle",
   "tags",
   "fanName",
   "form",

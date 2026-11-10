@@ -18,34 +18,34 @@ function fakeClient(error: { code: string } | null = null) {
 }
 
 describe("크리에이터 공개 정보 저장 (my-account INV-A9)", () => {
-  it("INV-A9: 공개 이름·소개글·노출 세 칸만 DB 함수에 넘긴다 — 본문의 크리에이터 ID·채널·본인 확인은 넘기지 않는다", async () => {
+  it("INV-A9: 닉네임·소개글·노출 세 칸만 DB 함수에 넘긴다(크리에이터 이름은 닉네임 — creator-display-name INV-CN2) — 본문의 크리에이터 ID·채널·본인 확인은 넘기지 않는다", async () => {
     const f = fakeClient();
     const r = await saveCreatorProfile(
       { client: f.client, viewer: HARU },
-      { name: "  하루달 ", intro: " 안녕하세요 ", searchable: false, creatorId: "momo", channel: "https://x", identityVerified: true },
+      { nickname: "  하루달 ", intro: " 안녕하세요 ", searchable: false, creatorId: "momo", channel: "https://x", identityVerified: true },
     );
     expect(r).toEqual({ ok: true });
-    expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_name: "하루달", p_intro: "안녕하세요", p_searchable: false } }]);
+    expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_nickname: "하루달", p_intro: "안녕하세요", p_searchable: false } }]);
   });
 
   it("INV-A9: 본문에 있는 칸만 DB 에 넘긴다 — 없는 칸은 DB 가 지금 값 그대로 둔다(화면마다 자기 칸만 저장)", async () => {
     const f = fakeClient();
     expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { searchable: false })).toEqual({ ok: true });
-    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { name: "하루달", intro: "소개", fanName: "" })).toEqual({ ok: true });
+    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { nickname: "하루달", intro: "소개", fanName: "" })).toEqual({ ok: true });
     expect(f.calls).toEqual([
       { fn: "update_my_creator_profile", args: { p_searchable: false } },
-      { fn: "update_my_creator_profile", args: { p_name: "하루달", p_intro: "소개", p_fan_name: "" } },
+      { fn: "update_my_creator_profile", args: { p_nickname: "하루달", p_intro: "소개", p_fan_name: "" } },
     ]);
   });
 
-  it("INV-A9 S9b (실패경로): 공개 이름 21자·빈 이름·소개 41자·소개 줄바꿈·노출 빈 값은 400, DB 를 부르지 않는다", async () => {
+  it("INV-A9 S9b (실패경로): 닉네임 13자·빈 닉네임·소개 41자·소개 줄바꿈·노출 빈 값은 400, DB 를 부르지 않는다", async () => {
     for (const body of [
-      { name: "가".repeat(21), intro: "", searchable: true },
-      { name: "   ", intro: "", searchable: true },
-      { name: "하루달", intro: "가".repeat(41), searchable: true },
-      { name: "하루달", intro: "첫 줄\n둘째 줄", searchable: true },
-      { name: "하루달", intro: "", searchable: "yes" },
-      { name: "하루달", intro: null, searchable: true },
+      { nickname: "가".repeat(13), intro: "", searchable: true },
+      { nickname: "   ", intro: "", searchable: true },
+      { nickname: "하루달", intro: "가".repeat(41), searchable: true },
+      { nickname: "하루달", intro: "첫 줄\n둘째 줄", searchable: true },
+      { nickname: "하루달", intro: "", searchable: "yes" },
+      { nickname: "하루달", intro: null, searchable: true },
       { searchable: null },
       null,
     ]) {
@@ -55,25 +55,25 @@ describe("크리에이터 공개 정보 저장 (my-account INV-A9)", () => {
     }
   });
 
-  it("INV-A9: 경계 안 — 공개 이름 20자(이모지 한 글자 포함)·한 줄 소개 40자는 넘긴다 (creator-link INV-E6)", async () => {
+  it("INV-A9: 경계 안 — 닉네임 12자(이모지 한 글자 포함)·한 줄 소개 40자는 넘긴다 (creator-link INV-E6)", async () => {
     const f = fakeClient();
-    const name = "가".repeat(19) + "🎁";
-    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { name, intro: "나".repeat(40), searchable: true })).toEqual({ ok: true });
+    const name = "가".repeat(11) + "🎁";
+    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { nickname: name, intro: "나".repeat(40), searchable: true })).toEqual({ ok: true });
     expect(f.calls).toHaveLength(1);
   });
 
-  it("INV-A9 (실패경로): 공개 이름에 제어 문자·보이지 않는 글자가 있으면 400, DB 를 부르지 않는다", async () => {
+  it("INV-A9 (실패경로): 닉네임에 제어 문자·보이지 않는 글자가 있으면 400, DB 를 부르지 않는다", async () => {
     for (const bad of ["하루\u200b달", "하루\u200c달", "하루\u200d달", "하루\u2060달", "하루\ufeff달", "하루\u202e달", "하루\n달", "하루\t달", "하루\u0007달", "\u3164", "하루\u00ad달"]) {
       const f = fakeClient();
-      expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { name: bad, intro: "", searchable: true })).toMatchObject({ ok: false, status: 400 });
+      expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { nickname: bad, intro: "", searchable: true })).toMatchObject({ ok: false, status: 400 });
       expect(f.calls).toEqual([]);
     }
   });
 
   it("INV-A9: 앞뒤의 탭·줄바꿈·전각 공백은 빼고 넘긴다(DB 와 같은 범위)", async () => {
     const f = fakeClient();
-    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { name: "\t\u3000하루달\n ", intro: "\u3000소개\n", searchable: true })).toEqual({ ok: true });
-    expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_name: "하루달", p_intro: "소개", p_searchable: true } }]);
+    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { nickname: "\t\u3000하루달\n ", intro: "\u3000소개\n", searchable: true })).toEqual({ ok: true });
+    expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_nickname: "하루달", p_intro: "소개", p_searchable: true } }]);
   });
 
   it("INV-A9 S9b (실패경로): 로그인하지 않았으면 401, 팬·운영자면 403 — DB 를 부르지 않는다", async () => {
@@ -83,13 +83,25 @@ describe("크리에이터 공개 정보 저장 (my-account INV-A9)", () => {
       [{ userId: "o", role: "operator" }, 403],
     ] as const) {
       const f = fakeClient();
-      expect(await saveCreatorProfile({ client: f.client, viewer }, { name: "하루달", intro: "", searchable: true })).toMatchObject({ ok: false, status });
+      expect(await saveCreatorProfile({ client: f.client, viewer }, { nickname: "하루달", intro: "", searchable: true })).toMatchObject({ ok: false, status });
       expect(f.calls).toEqual([]);
     }
   });
 
+  it("INV-CN2 (실패경로): 본문의 「name」(옛 공개 이름 칸)은 읽지도 넘기지도 않는다", async () => {
+    const f = fakeClient();
+    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { name: "가짜이름", intro: "소개" })).toEqual({ ok: true });
+    expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_intro: "소개" } }]);
+  });
+
+  it("INV-CN2 (실패경로): DB 가 닉네임을 거부하면 가입과 같은 문구 — 겹침은 409, 필터는 400", async () => {
+    const body = { nickname: "별빛", intro: "" };
+    expect(await saveCreatorProfile({ client: fakeClient({ code: "FKU04" }).client, viewer: HARU }, body)).toEqual({ ok: false, status: 409, message: "이미 사용 중인 닉네임입니다." });
+    expect(await saveCreatorProfile({ client: fakeClient({ code: "FKU06" }).client, viewer: HARU }, body)).toMatchObject({ ok: false, status: 400 });
+  });
+
   it("DB 가 입력을 거부하면 400, 권한을 거부하면 401", async () => {
-    const body = { name: "하루달", intro: "", searchable: true };
+    const body = { nickname: "하루달", intro: "", searchable: true };
     expect(await saveCreatorProfile({ client: fakeClient({ code: "22023" }).client, viewer: HARU }, body)).toMatchObject({ ok: false, status: 400 });
     expect(await saveCreatorProfile({ client: fakeClient({ code: "42501" }).client, viewer: HARU }, body)).toMatchObject({ ok: false, status: 401 });
     await expect(saveCreatorProfile({ client: fakeClient({ code: "XX000" }).client, viewer: HARU }, body)).rejects.toThrow();
@@ -155,15 +167,15 @@ describe("팬을 부르는 이름 저장 (추가분 4-1)", () => {
       ["가".repeat(9) + "🎁", "가".repeat(9) + "🎁"],
     ] as const) {
       const f = fakeClient();
-      expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { name: "하루달", intro: "", searchable: true, fanName: input })).toEqual({ ok: true });
-      expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_name: "하루달", p_intro: "", p_searchable: true, p_fan_name: sent } }]);
+      expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { nickname: "하루달", intro: "", searchable: true, fanName: input })).toEqual({ ok: true });
+      expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_nickname: "하루달", p_intro: "", p_searchable: true, p_fan_name: sent } }]);
     }
   });
 
   it("(실패경로) 팬덤 이름 11자·줄바꿈·보이지 않는 글자·문자열 아님은 400, DB 를 부르지 않는다", async () => {
     for (const fanName of ["가".repeat(11), "꿀벌\n단", "꿀벌 단", "꿀​벌", 3]) {
       const f = fakeClient();
-      expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { name: "하루달", intro: "", searchable: true, fanName })).toMatchObject({ ok: false, status: 400 });
+      expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { nickname: "하루달", intro: "", searchable: true, fanName })).toMatchObject({ ok: false, status: 400 });
       expect(f.calls).toEqual([]);
     }
   });
@@ -175,7 +187,7 @@ describe("팬을 부르는 이름 저장 (추가분 4-1)", () => {
       ["P0086", "팬덤 이름에 글자나 숫자를 하나 이상 넣어 주세요."],
     ] as const) {
       const f = fakeClient({ code });
-      expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { name: "하루달", intro: "", searchable: true, fanName: "꿀벌단" })).toEqual({
+      expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { nickname: "하루달", intro: "", searchable: true, fanName: "꿀벌단" })).toEqual({
         ok: false,
         status: 400,
         message: text,

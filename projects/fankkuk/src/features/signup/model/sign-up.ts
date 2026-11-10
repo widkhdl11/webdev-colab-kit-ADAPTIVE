@@ -120,8 +120,6 @@ export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = 
       input.role === "creator" && input.creator
         ? await deps.admin.rpc("create_creator_account", {
             ...common,
-            p_name: input.creator.name,
-            p_channel_title: input.creator.channelTitle,
             p_tag_ids: input.creator.tagIds,
             p_custom_tag: input.creator.customTag === "" ? null : input.creator.customTag,
             // 팬덤 이름(추가 요청 3) — 비우면 null

@@ -21,11 +21,13 @@ describe("matchesCreatorQuery — 크리에이터 찾기 실시간 검색", () =
     expect(matchesCreatorQuery(haru, "")).toBe(true);
     expect(matchesCreatorQuery(haru, "   ")).toBe(true);
   });
-  it("이름·로마자 이름·태그·채널 이름 어느 것으로도 걸린다", () => {
+  it("이름·로마자 이름·태그 어느 것으로도 걸린다", () => {
     expect(matchesCreatorQuery(haru, "하루")).toBe(true);
     expect(matchesCreatorQuery(haru, "HARU")).toBe(true);
     expect(matchesCreatorQuery(haru, "버추얼")).toBe(true);
-    expect(matchesCreatorQuery(haru, "놀이터")).toBe(true);
+  });
+  it("INV-CN4 (실패경로): 화면에 없는 채널 이름으로는 걸리지 않는다", () => {
+    expect(matchesCreatorQuery(haru, "놀이터")).toBe(false);
   });
   it("방송 플랫폼 이름으로도 걸린다 — 선물 보내기의 크리에이터 고르기와 같은 규칙", () => {
     expect(matchesCreatorQuery(haru, "치지직")).toBe(true);
@@ -38,7 +40,7 @@ describe("matchesCreatorQuery — 크리에이터 찾기 실시간 검색", () =
     expect(matchesCreatorQuery(bare, "게임")).toBe(false);
   });
   it("띄어쓰기는 무시한다", () => {
-    expect(matchesCreatorQuery(haru, "하루의 놀이 터")).toBe(true);
+    expect(matchesCreatorQuery(haru, "버 추얼")).toBe(true);
   });
   it("어디에도 없는 말은 걸리지 않는다", () => {
     expect(matchesCreatorQuery(haru, "노래")).toBe(false);

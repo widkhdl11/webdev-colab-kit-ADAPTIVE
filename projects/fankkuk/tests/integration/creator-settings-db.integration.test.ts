@@ -69,15 +69,14 @@ async function save(login: string, args: Record<string, unknown>) {
 }
 
 describe("INV-A9: 크리에이터 공개 정보 고치기", () => {
-  it("INV-A9 S9: 공개 이름을 「하루달」로 저장하면 내 공개 이름만 바뀌고 바꾼 기록 한 줄(언제·전·후)", async () => {
+  it("INV-A9 S9 · INV-CN1 · INV-CN3: 닉네임을 「하루달」로 저장하면 내 닉네임과 크리에이터 이름만 바뀌고 바꾼 기록 한 줄(언제·전·후)", async () => {
     const momoBefore = creatorRow(MOMO_CREATOR_ID);
     const otherBefore = creatorRow(OTHER.creatorId);
-    const r = await save(ME.login, { p_name: "하루달", p_intro: "안녕하세요", p_searchable: true });
+    const r = await save(ME.login, { p_nickname: "하루달", p_intro: "안녕하세요", p_searchable: true });
     expect(r.error).toBeNull();
     expect(psql(`select name || '|' || intro from public.creators where id = '${ME.creatorId}'`)).toBe("하루달|안녕하세요");
-    // 머리 메뉴·인사말에 쓰이는 계정 닉네임도 같이 바뀐다(가입 때 공개 이름으로 정한 것과 같게)
-    // 공개 이름은 계정 닉네임을 덮지 않는다(signup INV-U13, 2026-10-15 — 닉네임은 1~12자·계정마다 다름, 공개 이름은 20자)
-    expect(psql(`select nickname from public.profiles where id = '${ME.id}'`)).toBe(ME.name);
+    // 크리에이터 이름은 닉네임이다(creator-display-name INV-CN1, 2026-11-10)
+    expect(psql(`select nickname from public.profiles where id = '${ME.id}'`)).toBe("하루달");
     expect(psql(`select before_name || '|' || after_name || '|' || (at is not null) from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe(
       `${ME.name}|하루달|true`,
     );
@@ -85,8 +84,8 @@ describe("INV-A9: 크리에이터 공개 정보 고치기", () => {
     expect(creatorRow(OTHER.creatorId)).toBe(otherBefore);
   });
 
-  it("INV-A9: 공개 이름이 그대로면 바꾼 기록을 남기지 않는다(소개글만 고침)", async () => {
-    expect((await save(ME.login, { p_name: ME.name, p_intro: "소개만", p_searchable: true })).error).toBeNull();
+  it("INV-A9 · INV-CN3: 닉네임이 그대로면 바꾼 기록을 남기지 않는다(소개글만 고침)", async () => {
+    expect((await save(ME.login, { p_nickname: ME.name, p_intro: "소개만", p_searchable: true })).error).toBeNull();
     expect(psql(`select count(*) from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe("0");
     expect(psql(`select intro from public.creators where id = '${ME.creatorId}'`)).toBe("소개만");
   });
@@ -101,35 +100,36 @@ describe("INV-A9: 크리에이터 공개 정보 고치기", () => {
       { p_account_id: ME.id },
     ];
     for (const e of extra) {
-      const r = await save(ME.login, { p_name: "하루달", p_intro: "", p_searchable: true, ...e });
+      const r = await save(ME.login, { p_nickname: "하루달", p_intro: "", p_searchable: true, ...e });
       expect(r.error).not.toBeNull();
     }
     expect(creatorRow(MOMO_CREATOR_ID)).toBe(momoBefore);
     expect(creatorRow(ME.creatorId)).toBe(meBefore);
   });
 
-  it("INV-A9 S9b (실패경로): 공개 이름 21자·빈 이름·소개 41자는 거부되고 아무 칸도 안 바뀐다", async () => {
+  it("INV-A9 S9b (실패경로): 닉네임 13자·빈 닉네임·소개 41자는 거부되고 아무 칸도 안 바뀐다", async () => {
     const before = creatorRow(ME.creatorId);
     for (const args of [
-      { p_name: "가".repeat(21), p_intro: "바뀌면 안 됨", p_searchable: false },
-      { p_name: "   ", p_intro: "바뀌면 안 됨", p_searchable: false },
-      { p_name: "하루달", p_intro: "가".repeat(41), p_searchable: false },
+      { p_nickname: "가".repeat(13), p_intro: "바뀌면 안 됨", p_searchable: false },
+      { p_nickname: "   ", p_intro: "바뀌면 안 됨", p_searchable: false },
+      { p_nickname: "하루달", p_intro: "가".repeat(41), p_searchable: false },
       { p_searchable: false, p_fan_name: "가".repeat(11) },
-      { p_name: "하루달", p_searchable: false, p_intro: "가".repeat(41) },
+      { p_nickname: "하루달", p_searchable: false, p_intro: "가".repeat(41) },
     ]) {
       const r = await save(ME.login, args);
       expect(r.error?.code).toBe("22023");
     }
     expect(creatorRow(ME.creatorId)).toBe(before);
+    expect(psql(`select nickname from public.profiles where id = '${ME.id}'`)).toBe(ME.name);
     expect(psql(`select searchable from public.creators where id = '${ME.creatorId}'`)).toBe("t");
     expect(psql(`select count(*) from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe("0");
   });
 
-  it("INV-A9: 「내 팬꾹 꾸미기」 저장(공개 이름·한 줄 소개·팬을 부르는 이름)은 「주소와 설정」에서 끈 찾기 노출을 되돌리지 않는다", async () => {
+  it("INV-A9: 「프로필 수정」 저장(닉네임·한 줄 소개·팬을 부르는 이름)은 「주소와 설정」에서 끈 찾기 노출을 되돌리지 않는다", async () => {
     const client = await signedInClient(ME.login);
     const viewer = { userId: ME.id, role: "creator" as const };
     expect(await saveCreatorProfile({ client, viewer }, { searchable: false })).toEqual({ ok: true });
-    expect(await saveCreatorProfile({ client, viewer }, { name: "하루달", intro: "새 소개", fanName: "달빛지기" })).toEqual({ ok: true });
+    expect(await saveCreatorProfile({ client, viewer }, { nickname: "하루달", intro: "새 소개", fanName: "달빛지기" })).toEqual({ ok: true });
     expect(psql(`select name || '|' || intro || '|' || fan_name || '|' || searchable from public.creators where id = '${ME.creatorId}'`)).toBe("하루달|새 소개|달빛지기|false");
     expect(psql(`select count(*) from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe("1");
   });
@@ -137,11 +137,10 @@ describe("INV-A9: 크리에이터 공개 정보 고치기", () => {
   it("INV-A9: 「주소와 설정」 저장(찾기 노출만)은 「내 팬꾹 꾸미기」에서 바꾼 이름·소개·팬을 부르는 이름을 덮어쓰지 않고 이름 변경 기록도 남기지 않는다", async () => {
     const client = await signedInClient(ME.login);
     const viewer = { userId: ME.id, role: "creator" as const };
-    expect(await saveCreatorProfile({ client, viewer }, { name: "하루달", intro: "새 소개", fanName: "달빛지기" })).toEqual({ ok: true });
+    expect(await saveCreatorProfile({ client, viewer }, { nickname: "하루달", intro: "새 소개", fanName: "달빛지기" })).toEqual({ ok: true });
     expect(await saveCreatorProfile({ client, viewer }, { searchable: false })).toEqual({ ok: true });
     expect(psql(`select name || '|' || intro || '|' || fan_name || '|' || searchable from public.creators where id = '${ME.creatorId}'`)).toBe("하루달|새 소개|달빛지기|false");
-    // 공개 이름은 계정 닉네임을 덮지 않는다(signup INV-U13, 2026-10-15 — 닉네임은 1~12자·계정마다 다름, 공개 이름은 20자)
-    expect(psql(`select nickname from public.profiles where id = '${ME.id}'`)).toBe(ME.name);
+    expect(psql(`select nickname from public.profiles where id = '${ME.id}'`)).toBe("하루달");
     expect(psql(`select count(*) from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe("1");
   });
 
@@ -153,53 +152,54 @@ describe("INV-A9: 크리에이터 공개 정보 고치기", () => {
     expect(psql(`select count(*) from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe("0");
   });
 
-  it("INV-A9: 경계 안 — 공개 이름 20자·한 줄 소개 40자는 저장된다 (creator-link INV-E6)", async () => {
-    const r = await save(ME.login, { p_name: "가".repeat(20), p_intro: "나".repeat(40), p_searchable: true });
+  it("INV-A9: 경계 안 — 닉네임 12자·한 줄 소개 40자는 저장된다 (creator-link INV-E6)", async () => {
+    const r = await save(ME.login, { p_nickname: "가".repeat(11) + "시", p_intro: "나".repeat(40), p_searchable: true });
     expect(r.error).toBeNull();
-    expect(psql(`select char_length(name) || '|' || char_length(intro) from public.creators where id = '${ME.creatorId}'`)).toBe("20|40");
+    expect(psql(`select char_length(name) || '|' || char_length(intro) from public.creators where id = '${ME.creatorId}'`)).toBe("12|40");
   });
 
-  it("INV-A9: DB 함수도 앞뒤의 탭·줄바꿈·전각 공백을 앱과 같은 범위로 빼고 저장한다", async () => {
-    const r = await save(ME.login, { p_name: "\t\u3000 하루달\n\u3000", p_intro: "\u3000소개\n", p_searchable: true });
+  it("INV-A9: DB 함수도 한 줄 소개의 앞뒤 탭·줄바꿈·전각 공백을 앱과 같은 범위로 빼고, 닉네임은 앞뒤 공백을 빼고 저장한다", async () => {
+    const r = await save(ME.login, { p_nickname: " 하루달 ", p_intro: "\u3000소개\n", p_searchable: true });
     expect(r.error).toBeNull();
     expect(psql(`select name || '|' || intro from public.creators where id = '${ME.creatorId}'`)).toBe("하루달|소개");
     expect(psql(`select after_name from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe("하루달");
   });
 
-  it("INV-A9 S9b (실패경로): DB 함수를 직접 불러도 공개 이름의 제어 문자·보이지 않는 글자는 거부되고 아무 칸도 안 바뀐다", async () => {
+  it("INV-A9 S9b (실패경로): DB 함수를 직접 불러도 닉네임의 제어 문자·보이지 않는 글자는 거부되고 아무 칸도 안 바뀐다", async () => {
     const before = creatorRow(ME.creatorId);
     for (const bad of ["하루\u200b달", "하루\u200c달", "하루\u200d달", "하루\u2060달", "하루\ufeff달", "하루\u202e달", "하루\n달", "하루\t달", "하루\u0007달", "\u3164", "하루\u00ad달"]) {
-      const r = await save(ME.login, { p_name: bad, p_intro: "바뀌면 안 됨", p_searchable: false });
-      expect(r.error?.code, JSON.stringify(bad)).toBe("22023");
+      const r = await save(ME.login, { p_nickname: bad, p_intro: "바뀌면 안 됨", p_searchable: false });
+      expect(r.error, JSON.stringify(bad)).not.toBeNull();
     }
     expect(creatorRow(ME.creatorId)).toBe(before);
     expect(psql(`select count(*) from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe("0");
   });
 
   it("INV-A9 S9b (실패경로): 팬 계정으로 부르면 거부, 로그인하지 않으면 부를 수 없다", async () => {
-    const fan = await save("byeolbit_fan", { p_name: "하루달", p_intro: "", p_searchable: true });
+    const fan = await save("byeolbit_fan", { p_nickname: "하루달", p_intro: "", p_searchable: true });
     expect(fan.error?.code).toBe("42501");
-    const anon = await anonClient().rpc("update_my_creator_profile", { p_name: "하루달", p_intro: "", p_searchable: true });
+    const anon = await anonClient().rpc("update_my_creator_profile", { p_nickname: "하루달", p_intro: "", p_searchable: true });
     expect(anon.error).not.toBeNull();
   });
 
   it("INV-A9 (실패경로): 로그인한 사용자는 공개 정보 표·바꾼 기록 표를 직접 고치지 못한다", async () => {
     const me = await signedInClient(ME.login);
     await me.from("creators").update({ name: "직접바꿈" }).eq("id", ME.creatorId);
+    await me.from("profiles").update({ nickname: "직접바꿈" }).eq("id", ME.id);
     expect(psql(`select name from public.creators where id = '${ME.creatorId}'`)).toBe(ME.name);
     const read = await me.from("creator_name_changes").select("*");
     expect(read.error).not.toBeNull();
   });
 
   it("INV-A9: 바꾼 기록은 추가만 된다 — 고치기·지우기는 DB 가 거부한다", async () => {
-    await save(ME.login, { p_name: "하루달", p_intro: "", p_searchable: true });
+    await save(ME.login, { p_nickname: "하루달", p_intro: "", p_searchable: true });
     expect(psqlError(`update public.creator_name_changes set after_name = '조작' where creator_id = '${ME.creatorId}'`)).not.toBeNull();
     expect(psqlError(`delete from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).not.toBeNull();
     expect(psql(`select after_name from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe("하루달");
   });
 
   it("INV-A9: 바꾼 기록은 운영자 크리에이터 목록에서 보이고, 팬·크리에이터에게는 보이지 않는다", async () => {
-    await save(ME.login, { p_name: "하루달", p_intro: "", p_searchable: true });
+    await save(ME.login, { p_nickname: "하루달", p_intro: "", p_searchable: true });
     const owner = await signedInClient("fankkuk_admin");
     const r = await owner.rpc("admin_creator_name_changes");
     expect(r.error).toBeNull();
@@ -230,20 +230,20 @@ describe("INV-A10: 찾기 목록 = 본인 확인됨 그리고 찾기 노출 켜�
   });
 
   it("INV-A10 S10 (실패경로): 확인 전 + 켜짐 → 찾기에 안 나온다", async () => {
-    expect((await save(ME.login, { p_name: ME.name, p_intro: "", p_searchable: true })).error).toBeNull();
+    expect((await save(ME.login, { p_nickname: ME.name, p_intro: "", p_searchable: true })).error).toBeNull();
     expect(await found()).not.toContain(ME.creatorId);
   });
 
   it("INV-A10 S10 (실패경로): 확인됨 + 꺼짐 → 찾기에도, 손님의 목록 읽기에도 안 나온다", async () => {
     verify(ME.creatorId, "cvt-haru");
-    expect((await save(ME.login, { p_name: ME.name, p_intro: "", p_searchable: false })).error).toBeNull();
+    expect((await save(ME.login, { p_nickname: ME.name, p_intro: "", p_searchable: false })).error).toBeNull();
     expect(await found()).not.toContain(ME.creatorId);
     expect(await listed()).not.toContain(ME.creatorId);
   });
 
   it("INV-A10 S10b: 노출을 꺼도 팔로우한 팬·본인의 목록에는 나오고, 팔로우 안 한 팬에게는 안 나온다", async () => {
     verify(ME.creatorId, "cvt-haru");
-    await save(ME.login, { p_name: ME.name, p_intro: "", p_searchable: false });
+    await save(ME.login, { p_nickname: ME.name, p_intro: "", p_searchable: false });
     const ids = async (login: string) => (((await (await signedInClient(login)).rpc("list_creators")).data ?? []) as { id: string }[]).map((x) => x.id);
     const fan = await signedInClient("byeolbit_fan");
     expect((await fan.rpc("set_follow", { p_creator_id: ME.creatorId, p_following: true })).error).toBeNull();
@@ -260,7 +260,7 @@ describe("INV-A10: 찾기 목록 = 본인 확인됨 그리고 찾기 노출 켜�
     const one = async () => ((await anonClient().rpc("creator_by_id", { p_id: ME.creatorId })).data ?? []) as { id: string; name: string }[];
     expect(await one()).toEqual([]);
     verify(ME.creatorId, "cvt-haru");
-    await save(ME.login, { p_name: ME.name, p_intro: "", p_searchable: false });
+    await save(ME.login, { p_nickname: ME.name, p_intro: "", p_searchable: false });
     expect((await one()).map((x) => x.id)).toEqual([ME.creatorId]);
     const fan = await signedInClient("daltokki_fan");
     expect((((await fan.rpc("creator_by_id", { p_id: ME.creatorId })).data ?? []) as { id: string }[]).map((x) => x.id)).toEqual([ME.creatorId]);
@@ -283,7 +283,7 @@ describe("INV-A10: 찾기 목록 = 본인 확인됨 그리고 찾기 노출 켜�
 
   it("INV-A10: 노출을 끈 크리에이터에게도 팔로우와 새 선물 등록은 그대로 된다", async () => {
     verify(ME.creatorId, "cvt-haru");
-    await save(ME.login, { p_name: ME.name, p_intro: "", p_searchable: false });
+    await save(ME.login, { p_nickname: ME.name, p_intro: "", p_searchable: false });
     const fan = await signedInClient("byeolbit_fan");
     const f = await fan.rpc("set_follow", { p_creator_id: ME.creatorId, p_following: true });
     expect(f.error).toBeNull();
@@ -393,8 +393,13 @@ describe("INV-E13·E14: 테마 색(저장 칸 퍼스널 컬러) — 파스텔 8�
       ].join(" "),
     );
   }
+  // 저장 함수(update_my_creator_profile)는 그 뒤 마이그레이션이 이름 칸을 닉네임 칸으로 바꿔 다시 만들었다(creator-display-name, 2026-11-10).
+  // 옛 정의로 다시 만들 수 있게 먼저 지우고, 이 마이그레이션을 돌린 뒤 지금 정의를 다시 얹는다.
+  const LATER = new URL("../../supabase/migrations/20261110000030_creator_name_is_nickname.sql", import.meta.url);
   function runMigration(): void {
+    psql("drop function if exists public.update_my_creator_profile(text, text, boolean, text, text, text)");
     psql(readFileSync(MIGRATION, "utf8"));
+    psql(readFileSync(LATER, "utf8"));
   }
 
   it("INV-E13 S12: 하루로 #dcebff 저장 → #DCEBFF, 팬덤 이름만 보내면 색은 그대로, 빈 값이면 기본(null)으로", async () => {
@@ -428,7 +433,7 @@ describe("INV-E13·E14: 테마 색(저장 칸 퍼스널 컬러) — 파스텔 8�
     expect((await save(ME.login, { p_personal_color: "#FFF1B8" })).error).toBeNull();
     const before = creatorRow(ME.creatorId);
     for (const bad of ["#1E3A8A", "#FFFFFF", "#DCEBFE", "red", "#12345", "#DCEBFF; background:url(x)", "DCEBFF", " #DCEBFF", "#GGGGGG"]) {
-      const r = await save(ME.login, { p_name: "바뀌면안됨", p_fan_name: "바뀌면안됨", p_personal_color: bad });
+      const r = await save(ME.login, { p_nickname: "바뀌면안됨", p_fan_name: "바뀌면안됨", p_personal_color: bad });
       expect(r.error?.code, bad).toBe("22023");
     }
     expect(colors(ME.creatorId)).toBe("#FFF1B8|-");

@@ -73,9 +73,9 @@ const stateRow = {
 };
 
 describe("사유 목록 (INV-V9·V19·V20)", () => {
-  it("INV-V19: 반려 사유는 다섯 — 팬꾹 링크를 찾지 못함·링크 주소가 다름·채널 이름이 다름·채널 주소가 열리지 않음·그 밖", () => {
-    expect([...REJECT_REASONS]).toEqual(["link_not_found", "link_mismatch", "name_mismatch", "channel_unreachable", "other"]);
-    expect(REJECT_REASONS.map((r) => REJECT_REASON_LABEL[r])).toEqual(["팬꾹 링크를 찾지 못함", "링크 주소가 다름", "채널 이름이 다름", "채널 주소가 열리지 않음", "그 밖"]);
+  it("INV-V19: 반려 사유는 넷 — 팬꾹 링크를 찾지 못함·링크 주소가 다름·채널 주소가 열리지 않음·그 밖(이름은 대조하지 않는다)", () => {
+    expect([...REJECT_REASONS]).toEqual(["link_not_found", "link_mismatch", "channel_unreachable", "other"]);
+    expect(REJECT_REASONS.map((r) => REJECT_REASON_LABEL[r])).toEqual(["팬꾹 링크를 찾지 못함", "링크 주소가 다름", "채널 주소가 열리지 않음", "그 밖"]);
   });
 
   it("INV-V20: 승인 취소 사유에 「팬꾹 링크가 채널에서 내려감」이 있다", () => {

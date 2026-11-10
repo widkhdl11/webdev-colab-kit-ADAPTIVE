@@ -59,20 +59,11 @@ const detailsObject = z.object({
 
 /**
  * 크리에이터 기본 공개 정보 — 가입 때 받는다(creator-verification INV-V1, 「정한 것」 2026-10-05).
- * 이름 1~20자 · 채널 이름 1~40자(앞뒤 공백 뗀 글자 수) · 태그 1~5개(creator-tags INV-T3 — 선택지 id + 직접 입력 0~1개).
+ * 태그 1~5개(creator-tags INV-T3 — 선택지 id + 직접 입력 0~1개)와 팬덤 이름(선택).
+ * 이름은 닉네임 하나다 — 공개 이름·채널 이름은 받지 않는다(creator-display-name INV-CN2·CN4, 2026-11-10).
  * DB 함수 create_creator_account 가 같은 기준으로 다시 검사한다(선택지가 있는지·숨겼는지도 DB 가 본다).
  */
-export const CREATOR_PROFILE_LIMITS = { name: 20, channelTitle: 40 } as const;
-
-const trimmedWithin = (max: number, message: string) =>
-  z
-    .string()
-    .trim()
-    .refine((s) => charCount(s) >= 1 && charCount(s) <= max, message);
-
 const creatorProfileObject = z.object({
-  name: trimmedWithin(CREATOR_PROFILE_LIMITS.name, `공개 이름을 1~${CREATOR_PROFILE_LIMITS.name}자로 입력해 주세요.`),
-  channelTitle: trimmedWithin(CREATOR_PROFILE_LIMITS.channelTitle, `채널 이름을 1~${CREATOR_PROFILE_LIMITS.channelTitle}자로 입력해 주세요.`),
   ...tagSelectionFields,
   // 팬덤 이름(PRODUCT 「추가 요청 3」) — 선택, 0~10자. 내 팬꾹 꾸미기의 「팬을 부르는 이름」과 같은 칸(creators.fan_name)·같은 규칙.
   // 금칙어·연락처 필터는 DB 함수 create_creator_account 가 본다(P0084~P0086).
@@ -90,9 +81,9 @@ export const creatorProfileSchema = creatorProfileObject
 export type CreatorProfileInput = z.infer<typeof creatorProfileSchema>;
 
 /** 화면이 보내는 크리에이터 공개 정보 — 태그는 고른 선택지 id 와 직접 입력(없으면 ""). */
-export type CreatorProfileBody = { name: string; channelTitle: string; tagIds: readonly string[]; customTag: string; fanName?: string };
+export type CreatorProfileBody = { tagIds: readonly string[]; customTag: string; fanName?: string };
 
-const CREATOR_REQUIRED = { message: "크리에이터 정보를 입력해 주세요.", path: ["creator", "name"] };
+const CREATOR_REQUIRED = { message: "크리에이터 정보를 입력해 주세요.", path: ["creator", "tagIds"] };
 const creatorWhenCreator = (v: { role?: string; creator?: unknown }) => v.role !== "creator" || v.creator !== undefined;
 
 const passwordNotLoginId = <T extends { loginId: string; password: string }>(v: T) => v.password !== v.loginId;
@@ -121,20 +112,18 @@ export type DetailsField =
   | "passwordConfirm"
   | "phone"
   | "terms"
-  | "creatorName"
-  | "channelTitle"
   | "tags"
   | "fanName";
 
 const DETAILS_FIELDS: readonly string[] = ["loginId", "nickname", "email", "password", "phone", "terms"];
-const CREATOR_FIELDS: Record<string, DetailsField> = { name: "creatorName", channelTitle: "channelTitle", tagIds: "tags", customTag: "tags", fanName: "fanName" };
+const CREATOR_FIELDS: Record<string, DetailsField> = { tagIds: "tags", customTag: "tags", fanName: "fanName" };
 
 /** zod 오류의 첫 칸 이름. 2단계 칸이 아니면 null. */
 export function detailsFieldOf(path: readonly PropertyKey[]): DetailsField | null {
   const head = path[0];
   if (head === "creator") {
     const sub = path[1];
-    return typeof sub === "string" ? (CREATOR_FIELDS[sub] ?? "creatorName") : "creatorName";
+    return typeof sub === "string" ? (CREATOR_FIELDS[sub] ?? "tags") : "tags";
   }
   return typeof head === "string" && DETAILS_FIELDS.includes(head) ? (head as DetailsField) : null;
 }
@@ -150,7 +139,7 @@ export function checkDetails(v: {
   password: string;
   passwordConfirm: string;
   terms: { age14: boolean; service: boolean; privacy: boolean };
-  /** 크리에이터로 가입할 때만 — 공개 이름·채널 이름(INV-V1)·태그(creator-tags INV-T3) */
+  /** 크리에이터로 가입할 때만 — 태그(creator-tags INV-T3)·팬덤 이름 */
   creator?: CreatorProfileBody;
 }): { field: DetailsField; message: string } | null {
   // 휴대폰 번호는 3단계에서 받는다 — 2단계 검사에서 뺀다
@@ -168,7 +157,7 @@ export function checkDetails(v: {
 }
 
 /** 입력하는 동안 칸 바로 아래에 안내를 띄우는 칸 */
-export type LiveField = "loginId" | "nickname" | "email" | "password" | "passwordConfirm" | "phone" | "creatorName" | "channelTitle";
+export type LiveField = "loginId" | "nickname" | "email" | "password" | "passwordConfirm" | "phone";
 
 /** 칸별 안내에 쓰는 값 — 이메일은 칸 셋(앞부분·고른 주소·직접 입력) 그대로 */
 export type LiveValues = {
@@ -178,8 +167,6 @@ export type LiveValues = {
   password: string;
   passwordConfirm: string;
   phone: string;
-  creatorName: string;
-  channelTitle: string;
 };
 
 // 비밀번호 칸의 확인 문구 — 표 안에 글자로 바로 두면 비밀 값 검사가 비밀번호로 잘못 잡는다(2026-10-15)
@@ -193,8 +180,6 @@ const LIVE_OK: Record<LiveField, string> = {
   password: PW_FIELD_OK,
   passwordConfirm: "비밀번호가 일치합니다.",
   phone: "올바른 번호 형식입니다.",
-  creatorName: "올바른 형식입니다.",
-  channelTitle: "올바른 형식입니다.",
 };
 
 const firstMessage = (r: { success: boolean; error?: { issues: { message: string }[] } }): string | null =>
@@ -213,7 +198,6 @@ function emailPartsProblem(p: EmailParts): string | null {
  */
 export function checkField(field: LiveField, v: LiveValues): { ok: boolean; message: string } {
   const shape = detailsObject.shape;
-  const creatorShape = creatorProfileObject.shape;
   let problem: string | null;
   switch (field) {
     case "loginId":
@@ -233,12 +217,6 @@ export function checkField(field: LiveField, v: LiveValues): { ok: boolean; mess
       break;
     case "phone":
       problem = firstMessage(phoneSchema.safeParse(v.phone));
-      break;
-    case "creatorName":
-      problem = firstMessage(creatorShape.name.safeParse(v.creatorName));
-      break;
-    case "channelTitle":
-      problem = firstMessage(creatorShape.channelTitle.safeParse(v.channelTitle));
       break;
   }
   return problem === null ? { ok: true, message: LIVE_OK[field] } : { ok: false, message: problem };

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { LINK_HOST } from "./creator-handle";
-import { giftLinkText, isSameChannelName, isSameGiftLink } from "./gift-link-match";
+import { giftLinkText, isSameGiftLink } from "./gift-link-match";
 
 // 팬꾹 링크 게시 확인의 판정 (creator-verification INV-V18).
 
-describe("INV-V18 (2): 링크 칸의 주소가 요청 줄의 팬꾹 링크와 같은가", () => {
+describe("INV-V18: 링크 칸의 주소가 요청 줄의 팬꾹 링크와 같은가", () => {
   it("INV-V18: https·http·www 가 붙거나 빠진 것, 끝의 / 하나, 아이디 대소문자만 다른 것은 같다", () => {
     for (const found of [
       "fankkuk.com/haru",
@@ -43,18 +43,6 @@ describe("INV-V18 (2): 링크 칸의 주소가 요청 줄의 팬꾹 링크와 �
     ]) {
       expect([found, isSameGiftLink(found, "haru")]).toEqual([found, false]);
     }
-  });
-});
-
-describe("INV-V18 (1): 공개 페이지의 채널 이름이 가입 때 적은 채널 이름과 같은가", () => {
-  it("INV-V18: 앞뒤 공백과 영문 대소문자 차이만 같은 것으로 본다", () => {
-    expect(isSameChannelName("  Haru TV ", "haru tv")).toBe(true);
-    expect(isSameChannelName("여름밤", "여름밤")).toBe(true);
-  });
-
-  it("INV-V18 (실패경로): 글자가 다르거나 가운데 공백이 다르면 다르다", () => {
-    expect(isSameChannelName("여름밤TV", "여름밤")).toBe(false);
-    expect(isSameChannelName("Haru  TV", "haru tv")).toBe(false);
   });
 });
 

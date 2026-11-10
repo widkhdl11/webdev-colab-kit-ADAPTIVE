@@ -184,18 +184,18 @@ describe("INV-U13: 가입 때 받은 닉네임으로 계정이 생긴다", () =>
     expect(Number(authCount("it_nk_dup1")) + Number(authCount("it_nk_dup2"))).toBe(1);
   });
 
-  it("INV-U13·추가 요청 3: 크리에이터 가입 — 닉네임은 적은 값(공개 이름이 아님), 팬덤 이름은 선택으로 저장", async () => {
+  it("INV-U13·추가 요청 3 · INV-CN1: 크리에이터 가입 — 닉네임은 적은 값이고 크리에이터 이름도 그 닉네임, 팬덤 이름은 선택으로 저장", async () => {
     const p = phone();
-    const creator = { name: "닉크리", channelTitle: "닉 채널", tagIds: [psql(`select id from public.creator_tag_options where name = 'SOOP'`)], customTag: "", fanName: " 별님들 " };
+    const creator = { tagIds: [psql(`select id from public.creator_tag_options where name = 'SOOP'`)], customTag: "", fanName: " 별님들 " };
     const r = await signUp(signUpDeps(), signupBody("it_nk_cr", "크리닉", p, await verified(p), { role: "creator", creator }));
     expect(r).toMatchObject({ ok: true });
     expect(nicknameOfLogin("it_nk_cr")).toBe("크리닉");
     expect(psql(`select c.name || '|' || coalesce(c.fan_name, '-') from public.creators c join public.profiles p on p.id = c.profile_id where p.login_id = 'it_nk_cr';`)).toBe(
-      "닉크리|별님들",
+      "크리닉|별님들",
     );
 
     const p2 = phone();
-    const noFan = { ...creator, name: "닉크리둘", fanName: "" };
+    const noFan = { ...creator, fanName: "" };
     expect(await signUp(signUpDeps(), signupBody("it_nk_cr2", "크리닉둘", p2, await verified(p2), { role: "creator", creator: noFan }))).toMatchObject({ ok: true });
     expect(psql(`select coalesce(c.fan_name, '-') from public.creators c join public.profiles p on p.id = c.profile_id where p.login_id = 'it_nk_cr2';`)).toBe("-");
   });
@@ -211,22 +211,23 @@ describe("INV-U13: 가입 때 받은 닉네임으로 계정이 생긴다", () =>
     for (const [fanName, field] of cases) {
       i += 1;
       const p = phone();
-      const creator = { name: `팬덤시험${i}`, channelTitle: "채널", tagIds: [psql(`select id from public.creator_tag_options where name = 'SOOP'`)], customTag: "", fanName };
+      const creator = { tagIds: [psql(`select id from public.creator_tag_options where name = 'SOOP'`)], customTag: "", fanName };
       const r = await signUp(signUpDeps(), signupBody(`it_nk_fan${i}`, `팬덤닉${i}`, p, await verified(p), { role: "creator", creator }));
       expect([fanName, r]).toMatchObject([fanName, { ok: false, field }]);
       expect(authCount(`it_nk_fan${i}`)).toBe("0");
     }
   });
 
-  it("INV-U13 (실패경로): 공개 이름을 바꿔도 닉네임은 그대로다 — 다른 사람 닉네임과 같은 공개 이름으로 바꿔도 막히지 않는다", async () => {
+  it("INV-U13 · INV-CN2 (S2, 실패경로): 프로필 저장으로 다른 사람이 쓰는 닉네임(별빛)으로 바꾸면 FKU04 — 닉네임·크리에이터 이름·소개 모두 그대로", async () => {
     const p = phone();
-    const creator = { name: "이름바꿈", channelTitle: "채널", tagIds: [psql(`select id from public.creator_tag_options where name = 'SOOP'`)], customTag: "" };
+    const creator = { tagIds: [psql(`select id from public.creator_tag_options where name = 'SOOP'`)], customTag: "" };
     expect(await signUp(signUpDeps(), signupBody("it_nk_rename", "바꿈닉", p, await verified(p), { role: "creator", creator }))).toMatchObject({ ok: true });
     const c = anonClient();
     expect((await c.auth.signInWithPassword({ email: "it_nk_rename@login.fankkuk.invalid", password: "long-enough-pw1" })).error).toBeNull();
-    const r = await c.rpc("update_my_creator_profile", { p_name: "별빛" });
-    expect(r.error).toBeNull();
+    const r = await c.rpc("update_my_creator_profile", { p_nickname: "별빛", p_intro: "바뀌면 안 됨" });
+    expect(r.error?.code).toBe("FKU04");
     expect(nicknameOfLogin("it_nk_rename")).toBe("바꿈닉");
+    expect(psql(`select c.name || '|' || c.intro from public.creators c join public.profiles p on p.id = c.profile_id where p.login_id = 'it_nk_rename';`)).toBe("바꿈닉|");
     psql(`begin; set local session_replication_role = replica; delete from public.creator_name_changes where creator_id in (select c.id from public.creators c join public.profiles p on p.id = c.profile_id where p.login_id = 'it_nk_rename'); commit;`);
   });
 });
