@@ -12,7 +12,7 @@ import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 export const dynamic = "force-dynamic";
 
 // 크리에이터 상세 설정 → 「승인 서명 연결하기」·「다시 연결」(approval-signature INV-S16, UX 명세 signup.md 「크리에이터 설정 — 승인 서명 줄」).
-// 가입 5단계와 같은 카드(SignatureLinkPanel)다 — 「이전」은 상세 설정으로, 「나중에 하기」는 없다, 연결되면 「확인」으로 상세 설정에 돌아간다.
+// 크리에이터 설정의 승인 서명 연결 카드(SignatureLinkPanel — 가입 3단계 카카오 서명과 같은 시험 서명, 2026-11-10 전에는 가입 5단계)다 — 「이전」은 상세 설정으로, 「나중에 하기」는 없다, 연결되면 「확인」으로 상세 설정에 돌아간다.
 // 다시 연결해도 새 시험 서명이 검증될 때까지 지금 연결은 그대로다(DB 가 검증된 요청의 정보로만 바꾼다).
 export default async function Page() {
   const { supabase, viewer } = await loadSession();

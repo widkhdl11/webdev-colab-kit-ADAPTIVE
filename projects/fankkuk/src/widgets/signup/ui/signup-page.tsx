@@ -30,12 +30,14 @@ import {
 } from "@/features/signup/model/signup-input";
 import { useCountdown } from "@/shared/lib/time/use-countdown";
 import { Sentences } from "@/shared/ui/sentences";
-import { SIGNUP_PHONE_KEY } from "../model/signup-phone-key";
+import { SignupKakaoStep, type KakaoSignupOutcome } from "./signup-kakao-step";
 import s from "./signup.module.css";
 
 // 회원가입 단계 화면. 시안: docs/design/mockups/site/v43-signup/signup-1-role·2-info·3-phone (UX 명세 signup.md 「2026-10-29 단계 화면」) · 스펙: docs/specs/signup.md
-// 팬은 세 단계(유형 선택 → 정보 입력 → 휴대폰 확인), 크리에이터는 다섯 단계(+ 채널 확인 → 승인 서명)다. 한 번에 지금 단계의 카드 한 장만 보인다.
-// 3단계: 「인증번호 받기」 → 문자로 받은 6자리 입력 → 「확인」 → 「가입 완료」(크리에이터는 「다음」). 계정은 여기서 만들어진다.
+// 팬은 세 단계(유형 선택 → 정보 입력 → 휴대폰 확인), 크리에이터는 네 단계(유형 선택 → 정보 입력 → 카카오톡 연결 → 채널 확인, 2026-11-10)다. 한 번에 지금 단계의 카드 한 장만 보인다.
+// 팬 3단계: 「인증번호 받기」 → 문자로 받은 6자리 입력 → 「확인」 → 「가입 완료」. 계정은 여기서 만들어진다.
+// 크리에이터 3단계: 카카오 서명 한 번으로 휴대폰 확인과 승인 서명 연결(signup INV-U19, 시안 creator-signup-kakao-20261110 — SignupKakaoStep).
+//   서버가 카카오 서명 창구의 장애를 확인했을 때만(INV-U20) 같은 3단계가 6자리 화면으로 바뀐다(위 장애 안내 상자 + 지금 번호 칸 미리 채움, 「다음」).
 // 브라우저는 번호표(쿠키)와 입력한 6자리만 다룬다 — 맞혔는지는 서버가 판정한다(INV-U1·U15). 남은 시간 표시는 화면 편의일 뿐 만료 판정은 DB 가 한다.
 // 입력칸에 name 을 두지 않는다 — 폼 기본 제출이 일어나도 값이 주소창에 실리지 않게.
 // 2단계 칸은 입력하거나 칸을 떠난 뒤부터 바로 아래에 안내를 띄운다(맞으면 짧은 확인, 틀리면 무엇이 틀렸는지 — 판정은 checkField).
@@ -44,8 +46,12 @@ import s from "./signup.module.css";
 // 줄바꿈(29절): 칸 안내는 문장마다 줄(<Sentences>), 붙여 쓰는 말은  , 가운뎃점 덩어리는 ⁠ 으로 붙인다.
 
 const FORM_STEPS = ["유형 선택", "정보 입력", "휴대폰 확인"] as const;
-// 크리에이터만 더 붙는 단계 — 계정을 만든 뒤라 로그인한 화면(/signup/creator, widgets/signup/ui/signup-creator-steps)이 맡는다
-const CREATOR_STEPS = ["채널 확인", "카카오톡 연결"] as const;
+// 크리에이터 단계 이름 — 3단계는 「카카오톡 연결」(장애 대비 길에서도 같다). 4단계는 계정을 만든 뒤라 로그인한 화면(/signup/creator, widgets/signup/ui/signup-creator-steps)이 맡는다
+const CREATOR_FORM_STEPS = ["유형 선택", "정보 입력", "카카오톡 연결"] as const;
+const CREATOR_STEPS = ["채널 확인"] as const;
+const CREATOR_STEP_PATH = "/signup/creator";
+/** 장애 대비 길 안내(UX 명세 2026-11-10 kakao_down) — 두 번째 문장은 선물을 받으려면 남은 일이 있다는 결과라 뺄 수 없다 */
+const KAKAO_DOWN_TEXT = "카카오톡 인증을 지금 사용할 수 없습니다. 인증번호로 가입해 주세요. 카카오톡 인증 알림 연결은 가입 후 크리에이터 홈에서 할 수 있습니다.";
 const LAST = FORM_STEPS.length;
 /** 인증번호를 맞힐 수 있는 시간(INV-U15) — 표시용. 판정은 DB 가 한다 */
 const CODE_SECONDS = PHONE_CODE_TTL_SECONDS;
@@ -102,7 +108,8 @@ function CheckIcon({ size }: { size: number }) {
 }
 
 /** tagOptions: 크리에이터가 고를 수 있는 태그 선택지(숨기지 않은 것, 선택지 순서 — creator-tags INV-T3) */
-export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] }) {
+/** sealingKeyPem: 크리에이터 3단계에서 이름·생년월일·번호를 봉인할 공개키(없으면 요청 버튼이 꺼진다) */
+export function SignupPage({ tagOptions, sealingKeyPem = null }: { tagOptions: readonly TagOption[]; sealingKeyPem?: string | null }) {
   const router = useRouter();
   const id = useId();
   const f = (name: string) => `${id}-${name}`;
@@ -143,6 +150,10 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   // 다섯 번 틀려 버려진 인증번호 — 다시 받기 전까지 입력·확인을 잠근다(INV-U10)
   const [locked, setLocked] = useState(false);
   const [phoneProblem, setPhoneProblem] = useState<PhoneProblem | null>(null);
+  // 크리에이터 3단계: 서버가 카카오 서명 창구의 장애를 확인했다(INV-U20) — 6자리 길. 화면에서 고르는 버튼은 없다
+  const [kakaoDown, setKakaoDown] = useState(false);
+  // 크리에이터 3단계에서 계정이 만들어졌다 — 단계 표시로 앞 단계에 돌아가지 않는다(계정이 이미 있다)
+  const [accountMade, setAccountMade] = useState(false);
   const [busy, setBusy] = useState(false);
   // server: 가입 요청에서 서버가 돌려준 오류(칸별 안내 칸이라도 낭독기에 알린다)
   const [error, setError] = useState<{
@@ -170,7 +181,9 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   const expired = phase === "sent" && countdown.expired;
   const timerText = countdown.text;
 
-  const steps: readonly string[] = role === "creator" ? [...FORM_STEPS, ...CREATOR_STEPS] : FORM_STEPS;
+  const steps: readonly string[] = role === "creator" ? [...CREATOR_FORM_STEPS, ...CREATOR_STEPS] : FORM_STEPS;
+  // 크리에이터 3단계의 카카오 서명 카드(장애 대비 길이 아니면)
+  const kakaoStep = step === LAST && role === "creator" && !kakaoDown;
 
   const go = (n: number) => {
     const next = Math.max(1, Math.min(LAST, n));
@@ -370,14 +383,9 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
       heardFrom,
     });
     if (r.ok) {
-      // 팬: 「/」 가 역할별 첫 화면으로 나눈다. 크리에이터: 4단계(채널 확인)로 — 5단계가 3단계 번호를 미리 채우도록 이 탭에만 남긴다
+      // 팬: 「/」 가 역할별 첫 화면으로 나눈다. 크리에이터(장애 대비 길): 4단계(채널 확인)로
       if (role === "creator" && r.loggedIn) {
-        try {
-          window.sessionStorage.setItem(SIGNUP_PHONE_KEY, phone);
-        } catch {
-          // 저장소를 못 쓰면 5단계에서 번호를 다시 적는다
-        }
-        router.push("/signup/creator");
+        router.push(CREATOR_STEP_PATH);
       } else {
         router.push(r.loggedIn ? "/" : "/login");
       }
@@ -390,6 +398,37 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     if (r.dropVerification) return resetPhone({ kind: "box", message: r.message });
     showError({ field: r.field, message: r.message, server: true });
     if (r.field !== "verification" && r.field !== "form") go(2);
+  };
+
+  // 크리에이터 3단계 — 서명이 검증된 뒤 가입을 보낸다. 칸 오류면 그 칸이 있는 2단계로 옮긴다(팬 3단계와 같은 기준)
+  const completeKakaoSignup = async (): Promise<KakaoSignupOutcome> => {
+    setError(null);
+    const r = await completeSignup({
+      role,
+      loginId: loginId.trim(),
+      nickname: nickname.trim(),
+      email,
+      password,
+      phone,
+      terms: agreed,
+      creator: creatorProfile(),
+      heardFrom,
+    });
+    if (r.ok) {
+      if (r.loggedIn) {
+        setAccountMade(true);
+        router.refresh();
+        return { kind: "done" };
+      }
+      router.push("/login");
+      return { kind: "moved" };
+    }
+    // INV-U11: 번호 중복은 서명이 검증된 뒤에만 — 로그인으로 안내한다
+    if (r.field === "phone") return { kind: "exists", message: r.message };
+    if (r.dropVerification || r.field === "form") return { kind: "retry", message: r.message };
+    showError({ field: r.field, message: r.message, server: true });
+    go(2);
+    return { kind: "moved" };
   };
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -470,6 +509,41 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   const codeLine: LiveMessage | null = expired && !locked ? { tone: "bad", message: EXPIRED_MESSAGE } : codeNote;
   const codeClosed = busy || phase !== "sent" || locked || expired;
 
+  const stepNav = (
+    <nav className={s["steps-wrap"]} aria-label="가입 단계" ref={navRef}>
+      <ol className={steps.length > FORM_STEPS.length ? `${s.steps} ${s.many}` : s.steps}>
+        {steps.map((label, i) => {
+          const k = i + 1;
+          const done = k !== step && k < reached; // 지나온 단계만 완료 — 아직 넘지 않은 마지막 단계는 숫자 그대로(선물 보내기와 같은 기준)
+          return (
+            <li key={label}>
+              <button
+                className={done ? `${s.st} ${s["is-done"]}` : s.st}
+                type="button"
+                disabled={k > reached || busy || accountMade}
+                aria-current={k === step ? "step" : undefined}
+                onClick={() => {
+                  // 단계 표시로 3단계에 갈 때도 2단계 검사를 거친다 — 고친 칸이 틀렸으면 2단계에 남는다
+                  if (k === LAST) {
+                    void leaveDetails();
+                    return;
+                  }
+                  setError(null);
+                  go(k);
+                }}
+              >
+                <span className={s.dot} aria-hidden="true">
+                  {done ? <CheckIcon size={16} /> : k}
+                </span>
+                <span className={s.lbl}>{label}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+
   return (
     <main id="main">
       <section className={s.page} aria-labelledby={f("title")}>
@@ -480,38 +554,30 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
             </h1>
           </div>
 
-          <nav className={s["steps-wrap"]} aria-label="가입 단계" ref={navRef}>
-            <ol className={steps.length > FORM_STEPS.length ? `${s.steps} ${s.many}` : s.steps}>
-              {steps.map((label, i) => {
-                const k = i + 1;
-                const done = k !== step && k < reached; // 지나온 단계만 완료 — 아직 넘지 않은 마지막 단계는 숫자 그대로(선물 보내기와 같은 기준)
-                return (
-                  <li key={label}>
-                    <button
-                      className={done ? `${s.st} ${s["is-done"]}` : s.st}
-                      type="button"
-                      disabled={k > reached || busy}
-                      aria-current={k === step ? "step" : undefined}
-                      onClick={() => {
-                        // 단계 표시로 3단계에 갈 때도 2단계 검사를 거친다 — 고친 칸이 틀렸으면 2단계에 남는다
-                        if (k === LAST) {
-                          void leaveDetails();
-                          return;
-                        }
-                        setError(null);
-                        go(k);
-                      }}
-                    >
-                      <span className={s.dot} aria-hidden="true">
-                        {done ? <CheckIcon size={16} /> : k}
-                      </span>
-                      <span className={s.lbl}>{label}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-          </nav>
+          {kakaoStep ? (
+            <SignupKakaoStep
+              nav={stepNav}
+              sealingKeyPem={sealingKeyPem}
+              phone={phone}
+              onPhoneChange={(v) => setPhone(v)}
+              onPrev={() => {
+                setError(null);
+                go(2);
+              }}
+              onDown={() => {
+                // 6자리 길 — 적은 번호를 미리 채우고 받기 전 상태로
+                resetPhone(null);
+                setKakaoDown(true);
+              }}
+              completeSignup={completeKakaoSignup}
+              headingRef={(el) => {
+                headingRefs.current[LAST - 1] = el;
+              }}
+              doneHref={CREATOR_STEP_PATH}
+            />
+          ) : (
+            <>
+          {stepNav}
 
           <form className="card" onSubmit={onSubmit} aria-label="회원가입 입력" noValidate>
             <fieldset className={s.step} hidden={step !== 1}>
@@ -847,8 +913,20 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
             </fieldset>
 
             <fieldset className={s.step} hidden={step !== 3}>
-              <legend className="sr-only">휴대폰 번호 확인</legend>
-              {heading(3, "휴대폰 번호 확인")}
+              <legend className="sr-only">{role === "creator" ? "카카오톡 인증 알림 연결" : "휴대폰 번호 확인"}</legend>
+              {role === "creator" ? (
+                <>
+                  {heading(3, "카카오톡 인증 알림 연결")}
+                  <p className={`t-desc ${s.lead}`}>앞으로 선물 승인 요청을 카카오톡으로 받기 위한 연결이에요.</p>
+                  {kakaoDown ? (
+                    <div className={`err ${s["down-box"]}`} role="alert">
+                      <Sentences text={KAKAO_DOWN_TEXT} />
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                heading(3, "휴대폰 번호 확인")
+              )}
               <div className="form">
                 <div>
                   <label className="label" htmlFor={f("tel")}>
@@ -966,6 +1044,8 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
               </button>
             </div>
           </form>
+            </>
+          )}
           <p className="foot-line">
             이미 회원이신가요? <Link href="/login">로그인</Link>
           </p>

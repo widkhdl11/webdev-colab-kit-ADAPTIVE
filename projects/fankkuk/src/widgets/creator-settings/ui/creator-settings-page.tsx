@@ -169,7 +169,7 @@ export function CreatorSettingsPage({
             주소와 설정
           </h2>
           {/* 승인 서명 줄(UX 명세 signup.md 「크리에이터 설정 — 승인 서명 줄」, 시안 v43-signup/creator-settings-signature) — 묶음 맨 위.
-              연결 전: 누르면 가입 5단계와 같은 카드로. 연결됨: 연결한 날과 「다시 연결」. 등록한 값은 다시 보이지 않는다(INV-S16) */}
+              연결 전: 누르면 승인 서명 연결 카드로(장애 대비 길로 가입한 크리에이터, signup INV-U20). 연결됨: 연결한 날과 「다시 연결」. 등록한 값은 다시 보이지 않는다(INV-S16) */}
           {signatureLink.linked ? (
             <div className={s.linkRow} data-signature-link="linked">
               <span>카카오톡 인증 알림</span>

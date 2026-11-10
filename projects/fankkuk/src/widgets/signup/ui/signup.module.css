@@ -4,7 +4,7 @@
    37절 값은 가입 화면 안에서만 쓴다(공용 .btn--line·.input·.card·--col-form 은 로그인 후 설정 화면도 써서 그대로 둔다) */
 
 .box {
-  --su-col: 480px; /* 37절 — 1~5단계 카드 폭 하나 */
+  --su-col: 480px; /* 37절 — 1~4단계 카드 폭 하나 */
   --su-line: var(--gray-500); /* 짙은 선 #6B7280 — 흰 바탕 4.83:1(누르는 칸 경계 3:1) */
 }
 .page { padding: var(--space-24) 0 var(--section-gap); } /* 위 96(간격 단계, 2026-10-18 재진단 — 88 이던 것) */
@@ -31,7 +31,7 @@
 .st[aria-current="step"] { background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
 .st[aria-current="step"] .dot { background: var(--gray-900); color: var(--white); }
 .st[disabled] { opacity: 1; }
-/* 4·5단계의 1~3단계 — 계정이 이미 있어 돌아가지 않는다(누를 수 없는 표시) */
+/* 4단계의 1~3단계 — 계정이 이미 있어 돌아가지 않는다(누를 수 없는 표시) */
 .st.st-static { cursor: default; }
 .st.st-static:hover .lbl { text-decoration: none; }
 .st:is(a) { text-decoration: none; }
@@ -65,7 +65,7 @@
   .steps li:not(:has([aria-current])) { flex: 0 0 auto; }
   .steps li:has([aria-current]) { flex: 1 1 0; }
 }
-/* 크리에이터 다섯 단계 — 480 에 이름 다섯이 안 들어가 PC 도 휴대폰 모양(지금 단계만 이름, 나머지는 48 원 칸, 37절) */
+/* 크리에이터 네 단계 — 480 에 이름 넷이 안 들어가(2026-11-10 UX 명세) PC 도 휴대폰 모양(지금 단계만 이름, 나머지는 48 원 칸, 37절) */
 .steps.many li:not(:has([aria-current])) { flex: 0 0 auto; }
 .steps.many li:has([aria-current]) { flex: 1 1 0; }
 .steps.many .st:not([aria-current]) { width: 48px; padding: 0; }
@@ -126,9 +126,20 @@
 .step > .error { margin-top: 24px; }
 
 /* 4단계 채널 확인(크리에이터) — 채널 확인 부품은 상세 설정과 같이 쓰므로 가입 카드(.chan) 안에서만 덮어쓴다(37절) */
-.chan :global(.input) { min-height: 48px; } /* 채널 주소 칸 48 — 1~3·5단계 칸과 같게(공용 .input 52 는 그대로) */
+.chan :global(.input) { min-height: 48px; } /* 채널 주소 칸 48 — 1~3단계 칸과 같게(공용 .input 52 는 그대로) */
 
-/* 5단계 버튼 줄(카카오 위 꽉 차게, 아래 「이전 | 나중에 하기」 반씩)은 승인 서명 부품의 .three 가 맡는다(가입에서만 붙는 클래스) */
-/* 실패 상자 앞 「!」 원 — 색만으로 알리지 않는다(장식이라 읽지 않음) */
-.sig :global(.err) { display: flex; align-items: flex-start; gap: 12px; }
-.sig :global(.err)::before { content: "!" / ""; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--brand-ink); font-weight: var(--fw-btn); line-height: 1; }
+/* 크리에이터 3단계 카카오톡 인증 알림 연결(시안 creator-signup-kakao-20261110, 2026-11-10 승인) — 칸·버튼 줄은 1~3단계와 같다(.step-actions, 카카오 노랑은 요청 버튼에만).
+   기다리는 중 번호 원 두 줄·다시 보내기·완료 상자는 승인 서명 연결 카드(signature-link-panel)와 같은 값. 실패·기한 지남은 3단계 빨간 오류 상자 그대로(.err) */
+.after { margin-top: 24px; }
+.kakao-list { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; counter-reset: k; }
+.kakao-list li { position: relative; min-height: 28px; padding-left: 40px; counter-increment: k; overflow-wrap: anywhere; }
+.kakao-list li::before { content: counter(k); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
+.kakao-list strong { font-weight: var(--fw-btn); }
+.again { margin-top: 16px; }
+.text-btn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--brand-ink); font: inherit; font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.text-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.connected { display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: var(--r-btn); background: var(--success-soft); color: var(--success); font-weight: var(--fw-btn); }
+.connected svg { flex-shrink: 0; }
+.bubble { width: 24px; height: 24px; color: var(--kakao-ink); }
+.step-actions :global(.btn--kakao) { gap: 8px; }
+.down-box { margin-bottom: 24px; } /* 장애 대비 길(kakao_down) 안내 상자 — 설명 아래, 휴대폰 번호 칸 위 */

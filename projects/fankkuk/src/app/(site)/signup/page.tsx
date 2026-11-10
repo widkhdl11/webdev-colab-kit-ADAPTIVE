@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { readTagOptions } from "@/entities/creator/api/creator-tag-reads";
+import { readSealingPublicKeyPem } from "@/shared/lib/envelope/sealing-key-config";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 import { loadSession, signedInHome } from "@/widgets/site-header/api/session-header";
 import { SiteHeader } from "@/widgets/site-header/ui/site-header";
@@ -17,7 +18,8 @@ export default async function Page() {
   return (
     <>
       <SiteHeader role="guest" current="/signup" />
-      <SignupPage tagOptions={tagOptions} />
+      {/* 크리에이터 3단계에서 이름·생년월일·번호를 봉인할 공개키(signup INV-U19 ⑤ — 승인 서명 연결과 같은 키) */}
+      <SignupPage tagOptions={tagOptions} sealingKeyPem={readSealingPublicKeyPem(process.env)} />
       <SiteFooter />
     </>
   );
