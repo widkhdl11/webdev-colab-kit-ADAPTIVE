@@ -314,7 +314,7 @@ export function BoxApplyPanel({
 
   if (box.viewer === "guest") {
     return (
-      <div className={s.card}>
+      <div className={`${s.card} ${s.notice}`}>
         <p>로그인한 뒤 신청할 수 있습니다.</p>
         <Link className="btn" href={`/login?next=${encodeURIComponent(here)}`}>
           로그인
@@ -324,7 +324,7 @@ export function BoxApplyPanel({
   }
   if (box.viewer === "owner") {
     return (
-      <div className={s.card}>
+      <div className={`${s.card} ${s.notice}`}>
         <p>내가 만든 선물함입니다.</p>
         <Link className="btn btn--line" href={`/creator/revgift-boxes/${box.id}`}>
           신청 관리
@@ -332,7 +332,7 @@ export function BoxApplyPanel({
       </div>
     );
   }
-  if (box.viewer === "not_fan") return <p className={s.card}>팬 계정만 신청할 수 있습니다.</p>;
+  if (box.viewer === "not_fan") return <p className={`${s.card} ${s.notice}`}>팬 계정만 신청할 수 있습니다.</p>;
 
   if (box.myState === "preparing") {
     if (box.delivery) return <BoxDeliveryCard box={box} delivery={box.delivery} now={now} deliverySource={deliverySource} here={here} />;

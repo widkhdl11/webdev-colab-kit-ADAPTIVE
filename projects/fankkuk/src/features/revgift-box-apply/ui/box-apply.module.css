@@ -1,8 +1,9 @@
 /* 팬 신청 폼 — 역조공 받기 판(design-rules 22·38절)과 같은 흰 카드 하나에 할 일만. 누르는 칸 높이 44 이상. */
 .card { display: grid; gap: var(--space-4); padding: var(--space-8); border: 1px solid var(--border); border-radius: var(--r-panel); background: var(--white); box-shadow: var(--card-shadow); }
 .card > p { overflow-wrap: anywhere; }
-/* 카드 바로 아래 버튼(로그인·신청 관리)은 글자 폭 — grid 칸 폭으로 늘어나지 않게. 신청하기 버튼(.applyAct)과 같은 왼쪽 정렬 */
-.card > :global(.btn) { justify-self: start; }
+/* 문장 한 줄 + 버튼 하나뿐인 안내 카드(로그인 전·내 선물함·팬 아님) — 카드도 내용만큼 좁게(최대 400), 기둥 가운데, 글·버튼 가운데.
+   버튼만 줄이고 카드를 기둥 폭 720 으로 두면 빈 카드가 남는다(2026-11-10 사용자). */
+.notice { width: 100%; max-width: 400px; margin-inline: auto; justify-items: center; text-align: center; }
 .secH { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
 .done { font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; }
 /* 「도착했어요(예상)」 — 받았어요 없이 날짜로 짐작한 도착은 흐린 글(delivery-status INV-DS2) */
