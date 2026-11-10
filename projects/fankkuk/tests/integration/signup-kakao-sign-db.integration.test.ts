@@ -234,6 +234,20 @@ describe("(manual/0037 뒤) INV-U20: 장애 대비 6자리 길", () => {
     expect(psql(`select coalesce(gateway_down_at::text, '') from pii.phone_verifications where id = '${started.verificationId}'`)).toBe("");
   });
 
+  it("INV-U20 (실패경로): 장애 기록은 한 번만 옮겨진다 — 같은 장애 번호표로 두 번째 인증번호를 받으면 그 번호표에는 장애 기록이 없다", async () => {
+    const p = phone();
+    const down = await startCreatorSign(signDeps(downSigner), { identity: dummySignupEnvelope(), creatorId: crypto.randomUUID(), phone: p }, ip(), null);
+    if (!down.ok || down.state !== "down") throw new Error("장애 판정 실패");
+    const deps = { admin: adminClient(), verifier: { kind: "fake" as const, sendKakaoCode: async () => true, sendSms: async () => {} }, codeSecret: () => readPhoneCodeSecret({ NODE_ENV: "test" }), phoneKeys: testPhoneKeys };
+    const first = await startPhoneVerification(deps, { phone: p }, ip(), { carryDownFrom: down.ticket });
+    psql(`update pii.phone_verifications set requested_at = requested_at - interval '61 seconds' where phone_hash = '${testPhoneHash(p)}'`);
+    const second = await startPhoneVerification(deps, { phone: p }, ip(), { carryDownFrom: down.ticket });
+    if (!first.ok || !second.ok) throw new Error("인증번호 요청 실패");
+    const downAt = (id: string) => psql(`select coalesce(gateway_down_at::text, '') from pii.phone_verifications where id = '${id}'`);
+    expect(downAt(first.verificationId)).not.toBe("");
+    expect(downAt(second.verificationId)).toBe("");
+  });
+
   it("INV-U1 (실패경로): 팬은 카카오 서명 번호표로 가입할 수 없다(DB 가 FKU01)", async () => {
     const p = phone();
     const { ticket } = await signedTestPhone(p);

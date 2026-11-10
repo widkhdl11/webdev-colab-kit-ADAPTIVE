@@ -19,8 +19,8 @@
 --      한도(INV-U19 ④): 같은 번호 해시 1시간 5번·하루 5번, 같은 접속 주소 하루 20번. 인증번호 한도(INV-U10)와 따로 센다.
 --      서명이 검증되면 그 번호표로 확인 줄(method sign)을 만든다 — 가입 요청은 기존 번호표 규칙(10분·한 번, INV-U2)을 그대로 지난다.
 --      검증된 번호가 이미 가입된 번호면 확인 줄을 만들지 않고 exists 로 끝낸다(INV-U3·U11).
---   4) 장애 대비 길(INV-U20) — carry_signup_sign_down(앞 번호표, 새 번호표): 앞 번호표의 요청이 down 으로 끝났고 10분 안이고 번호 해시가 같을 때만
---      새 인증번호 번호표에 gateway_down_at 을 옮긴다. signup_verification_kind(번호표) → sign | code_down | code (앱 서버가 가입 전에 본다).
+--   4) 장애 대비 길(INV-U20) — carry_signup_sign_down(앞 번호표, 새 번호표): 앞 번호표의 요청이 down 으로 끝났고 10분 안이고 번호 해시가 같고
+--      아직 옮기지 않았을 때만 새 인증번호 번호표에 gateway_down_at 을 옮기고, 그 요청에 옮긴 번호표(carried_to)를 적는다 — 한 번만 옮긴다. signup_verification_kind(번호표) → sign | code_down | code (앱 서버가 가입 전에 본다).
 --   5) 계정 만들기(public.create_account — 0028 본문 그대로에 두 줄): 팬이 서명 번호표로 가입하면 거부, 크리에이터가 인증번호 번호표로 가입하면
 --      gateway_down_at 이 10분 안일 때만(정함 — 「창구 장애 확인」은 번호표와 같은 10분). 아니면 FKU01.
 --      pii.signup_sign_creator_id · pii.signup_sign_link — 마이그레이션의 create_creator_account 가 부른다. 연결 기록은 계정과 한 처리에서만 생긴다.
@@ -75,6 +75,8 @@ create table if not exists pii.signup_sign_requests (
   expires_at timestamptz not null,
   state text not null default 'pending' check (state in ('pending', 'verified', 'used', 'failed', 'expired', 'exists', 'down', 'superseded')),
   finished_at timestamptz,
+  -- 「창구 장애 확인」을 옮겨 받은 인증번호 번호표 — 한 번만 옮긴다(여러 번호표로 퍼지지 않게, 보안 리뷰 낮음1)
+  carried_to uuid,
   check (expires_at = requested_at + interval '5 minutes'),
   check ((state = 'pending') = (finished_at is null)),
   -- 기다림·검증됨만 봉투를 가진다
@@ -82,6 +84,7 @@ create table if not exists pii.signup_sign_requests (
 );
 create index if not exists signup_sign_requests_phone on pii.signup_sign_requests (phone_hash, requested_at);
 create index if not exists signup_sign_requests_ip on pii.signup_sign_requests (ip_hash, requested_at);
+alter table pii.signup_sign_requests add column if not exists carried_to uuid;
 alter table pii.signup_sign_requests enable row level security;
 revoke all on pii.signup_sign_requests from public, anon, authenticated;
 
@@ -261,12 +264,18 @@ returns boolean
 language plpgsql security definer set search_path = ''
 as $fn$
 begin
+  -- 장애 기록은 한 번만 옮긴다 — 옮긴 요청에 carried_to 를 적고, 이미 옮긴 요청은 다시 옮기지 않는다(줄을 잠가 동시에 와도 하나만)
+  update pii.signup_sign_requests r set carried_to = p_to
+    from pii.phone_verifications v
+   where r.ticket = p_from and r.state = 'down' and r.carried_to is null and r.finished_at > now() - interval '10 minutes'
+     and v.id = p_to and v.method = 'code' and v.verified_at is null and v.phone_hash = r.phone_hash;
+  if not found then
+    return false;
+  end if;
   update pii.phone_verifications v set gateway_down_at = r.finished_at
     from pii.signup_sign_requests r
-   where v.id = p_to and v.method = 'code' and v.verified_at is null
-     and r.ticket = p_from and r.state = 'down' and r.finished_at > now() - interval '10 minutes'
-     and r.phone_hash = v.phone_hash;
-  return found;
+   where v.id = p_to and r.ticket = p_from and r.carried_to = p_to;
+  return true;
 end;
 $fn$;
 
