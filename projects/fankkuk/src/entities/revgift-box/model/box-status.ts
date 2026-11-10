@@ -45,6 +45,30 @@ export const APPLICATION_STATUS_OFFICE_NAME: Record<ApplicationStatus, string> =
 };
 
 /**
+ * 마감 뒤 진행 단계 이름 — 목록 카드의 「마감」 옆 뱃지(design-rules 43절). 상자 고르기 전(closed)은 「상자 크기 고르기」
+ * (진행 순서 3단계 이름, 2026-11-10 정함), 팬꾹으로 배송하기 이후는 상태 표기 그대로.
+ */
+export const BOX_STAGE_NAME: Record<BoxStatus, string> = { ...BOX_STATUS_NAME, closed: "상자 크기 고르기" };
+
+/** 받을 인원이 다 찼는가 — 제외·대기를 뺀 신청 수가 받을 인원 이상(INV-GB5). 다 차면 새 신청은 대기, 제외 칸은 다시 넣을 수 없다 */
+export function isFull(activeCount: number, capacity: number): boolean {
+  return activeCount >= capacity;
+}
+
+/** 제외한 신청을 다시 넣을 수 없는가 — 다시 넣기는 정원 안에서만(INV-GB5 · GB7). 제외가 아니면 해당 없음(false) */
+export function isReincludeLocked(status: ApplicationStatus, full: boolean): boolean {
+  return status === "excluded" && full;
+}
+
+/**
+ * 목록 줄로 보는 0명 마감 — 줄에는 끝난 시각이 없어서 담길 팬 수로 가른다. 마감하면 신청은 담길 차례(selected)로 바뀌고
+ * 제외·대기·취소는 activeCount 에 세지 않으므로, closed 이면서 0명 = 담길 팬 없이 끝난 선물함(isClosedEmpty 와 같은 선물함, INV-GB1 · Q21).
+ */
+export function isClosedEmptyRow(row: { status: BoxStatus; activeCount: number }): boolean {
+  return row.status === "closed" && row.activeCount === 0;
+}
+
+/**
  * 0명 마감인가 — 마감할 때 담길 팬이 없어 그 자리에서 끝난 선물함(closed + 끝난 시각, INV-GB1 · Q21).
  * 상자 고르기·다음 단계·선물함 취소가 없다(명세 closed_empty). 상태 이름은 따로 없다 — 화면 표기도 「마감」 하나다.
  */

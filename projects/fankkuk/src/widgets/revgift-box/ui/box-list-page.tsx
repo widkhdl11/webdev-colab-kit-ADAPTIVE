@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import type { MyBox, MyBoxRow, PriceTable } from "@/entities/revgift-box/api/box-reads";
-import { BOX_STATUS_NAME, type BoxStatus } from "@/entities/revgift-box/model/box-status";
+import { BOX_STAGE_NAME, BOX_STATUS_NAME, isClosedEmptyRow, isFull, type BoxStatus } from "@/entities/revgift-box/model/box-status";
 import { BoxCreateDialog } from "@/features/revgift-box-manage/ui/box-create-form";
 import { BoxManageDialog } from "@/features/revgift-box-manage/ui/box-manage-panel";
 import { formatMonthDayKo } from "@/shared/lib/format/datetime";
@@ -25,6 +25,7 @@ const LIST_PATH = "/creator/revgift-boxes";
 type Tone = "info" | "warn" | "brand" | "success" | "danger" | "plain";
 /** 마감 뒤 진행 단계 꼬리표의 색 — 신청 받는 중=info · 팬꾹으로 배송하기=warn · 결제 요청=brand · 발송 중=success(design-rules 43절) */
 const STAGE_TONE: Partial<Record<BoxStatus, Tone>> = {
+  closed: "warn",
   awaiting_box: "warn",
   arrived: "warn",
   held: "warn",
@@ -36,10 +37,10 @@ const STAGE_TONE: Partial<Record<BoxStatus, Tone>> = {
 const TONE_CLASS: Record<Tone, string> = {
   info: "tag tag--dot tag--info",
   warn: "tag tag--dot tag--warn",
-  brand: "tag tag--dot tag--brand",
+  brand: `tag tag--dot tag--brand ${s.tBrand}`,
   success: "tag tag--dot tag--success",
   danger: "tag tag--dot tag--danger",
-  plain: "tag tag--dot",
+  plain: `tag tag--dot ${s.tPlain}`,
 };
 
 /** 카드 그림 — 상태가 어느 단계인지 진행 순서 그림과 같은 그림으로 알린다(시안 §7, 정보로 본 그림) */
@@ -56,22 +57,23 @@ function BoxCardTags({ row }: { row: MyBoxRow }) {
     return (
       <>
         <span className={TONE_CLASS.info}>{BOX_STATUS_NAME.open}</span>
-        {row.activeCount >= row.capacity ? <span className="tag tag--line">인원 마감</span> : null}
+        {isFull(row.activeCount, row.capacity) ? <span className={`tag tag--line ${s.tLine}`}>인원 마감</span> : null}
       </>
     );
   }
-  if (row.status === "closed" || row.status === "cancelled") return <span className={TONE_CLASS.plain}>{BOX_STATUS_NAME[row.status]}</span>;
-  // 신청자가 있는 마감 — 「마감」 + 진행 단계 꼬리표(시안 §10)
+  // 0명 마감·취소는 뱃지 하나
+  if (isClosedEmptyRow(row) || row.status === "cancelled") return <span className={TONE_CLASS.plain}>{BOX_STATUS_NAME[row.status]}</span>;
+  // 신청자가 있는 마감 — 「마감」 + 진행 단계 뱃지(상자 고르기 전은 「상자 크기 고르기」, design-rules 43절)
   return (
     <>
       <span className={TONE_CLASS.plain}>{BOX_STATUS_NAME.closed}</span>
-      <span className={TONE_CLASS[STAGE_TONE[row.status] ?? "plain"]}>{BOX_STATUS_NAME[row.status]}</span>
+      <span className={TONE_CLASS[STAGE_TONE[row.status] ?? "plain"]}>{BOX_STAGE_NAME[row.status]}</span>
     </>
   );
 }
 
 function BoxCard({ row, onOpen }: { row: MyBoxRow; onOpen: (boxId: string, el: HTMLElement) => void }) {
-  const off = (row.status === "closed" && row.activeCount === 0) || row.status === "cancelled";
+  const off = isClosedEmptyRow(row) || row.status === "cancelled";
   const pct = Math.min(100, Math.round((row.activeCount / Math.max(1, row.capacity)) * 100));
   return (
     <li className={s.bcard}>
@@ -82,11 +84,11 @@ function BoxCard({ row, onOpen }: { row: MyBoxRow; onOpen: (boxId: string, el: H
         <h3 className={s.bN}>
           {row.status === "open" ? (
             <button type="button" className={s.bA} title={row.name} onClick={(e) => onOpen(row.id, e.currentTarget)}>
-              {row.name}
+              <span className={s.bNm}>{row.name}</span>
             </button>
           ) : (
             <Link className={s.bA} href={`${LIST_PATH}/${row.id}`} title={row.name}>
-              {row.name}
+              <span className={s.bNm}>{row.name}</span>
             </Link>
           )}
         </h3>

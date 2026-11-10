@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type RefObject } from "react";
 import type { BoxApplication, MyBox } from "@/entities/revgift-box/api/box-reads";
-import { BOX_STATUS_NAME, isClosedEmpty, isExcluded, isWaitlisted } from "@/entities/revgift-box/model/box-status";
+import { BOX_STATUS_NAME, isClosedEmpty, isExcluded, isFull, isReincludeLocked, isWaitlisted } from "@/entities/revgift-box/model/box-status";
 import { formatDateTime, formatMonthDayTimeKo } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import d from "@/shared/ui/dialog-parts.module.css";
@@ -56,7 +56,7 @@ export function BoxManageDialog({
   const active = applicants.filter((a) => !isExcluded(a.status)).length;
   const chosenWait = waitlist.filter((w) => picked.has(w.id)).length;
   const total = active + chosenWait;
-  const full = active >= box.capacity;
+  const full = isFull(active, box.capacity);
   const q = query.trim();
   const shownApplicants = q ? applicants.filter((a) => a.nickname.includes(q)) : applicants;
   const shownWait = q ? waitlist.filter((a) => a.nickname.includes(q)) : waitlist;
@@ -178,8 +178,8 @@ export function BoxManageDialog({
         tags={
           <>
             <span className="tag tag--dot tag--info">{BOX_STATUS_NAME.open}</span>
-            {full ? <span className="tag tag--line">인원 마감</span> : null}
-            <span className="tag tag--line">{box.isPublic ? "공개" : "비공개"}</span>
+            {full ? <span className={`tag tag--line ${s.tLine}`}>인원 마감</span> : null}
+            <span className={`tag tag--line ${s.tLine}`}>{box.isPublic ? "공개" : "비공개"}</span>
             <p className={s.linkMsg} role="status">
               {linkMsg}
             </p>
@@ -256,7 +256,7 @@ export function BoxManageDialog({
                 <ul className={s.pgrid}>
                   {shownApplicants.map((r) => {
                     const off = isExcluded(r.status);
-                    const locked = off && full; // 다시 넣기는 정원 안에서만(INV-GB5·GB7)
+                    const locked = isReincludeLocked(r.status, full); // 다시 넣기는 정원 안에서만(INV-GB5·GB7)
                     return (
                       <li key={r.id}>
                         <label className={locked ? `${s.pchip} ${s.isOff} ${s.isLocked}` : off ? `${s.pchip} ${s.isOff}` : s.pchip}>
