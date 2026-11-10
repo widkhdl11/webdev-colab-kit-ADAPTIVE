@@ -4,39 +4,25 @@
 .stack { display: grid; gap: var(--space-8); }
 .secH { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
 .count { margin-left: var(--space-2); color: var(--sub); font-size: var(--fs-body); font-weight: var(--fw-btn); font-variant-numeric: tabular-nums; }
-.alert { margin-top: var(--space-4); }
-
-/* 초대 링크 — 회색 안내 칸 */
-.invite { display: grid; gap: var(--space-3); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
-.link { min-width: 0; color: var(--sub); font-size: var(--fs-small); overflow-wrap: anywhere; }
 .linkBtns { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 
 /* 신청한 팬 목록 */
 .listHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3) var(--space-6); }
-.search { flex: 0 1 280px; min-width: 0; }
 .rows { display: grid; gap: var(--space-2); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
 .row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-4); align-items: center; min-height: 60px; padding: var(--space-2) var(--space-6); border: 1px solid var(--border); border-radius: var(--r-card); background: var(--white); box-shadow: var(--card-shadow); }
 .row.off { background: var(--surface-muted); box-shadow: none; color: var(--sub); }
 /* 닉네임(최대 20자) — 한 줄 말줄임, 전체는 title */
 .nick { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: var(--fw-btn); }
 .when { color: var(--sub); font-size: var(--fs-small); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.check { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; cursor: pointer; }
-.check input { margin: 0; } /* 칸 모양은 base.css 18) 체크박스 */
 .none { margin-top: var(--space-4); padding: var(--space-10) var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--white); color: var(--sub); text-align: center; }
 
 .actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .actions > .btn { min-width: 160px; }
 
-/* 만들기 폼 */
-.form { display: grid; gap: var(--space-6); max-width: 560px; }
-.pubOpts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
-.fs { margin: 0; padding: 0; border: 0; min-width: 0; }
-
 @media (max-width: 767px) {
   .row { grid-template-columns: minmax(0, 1fr) auto; padding: var(--space-2) var(--space-4); }
   .when { grid-column: 1; grid-row: 2; }
-  .row .check, .row :global(.tag) { grid-column: 2; grid-row: 1 / span 2; }
-  .search { flex-basis: 100%; }
+  .row :global(.tag) { grid-column: 2; grid-row: 1 / span 2; }
   .actions > .btn { flex: 1 1 140px; }
 }
 
@@ -61,3 +47,72 @@
 .cardMeta { color: var(--sub); font-size: var(--fs-small); overflow-wrap: anywhere; }
 .cardPick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .cardPick select { min-width: 160px; max-width: 100%; min-height: 44px; }
+
+/* ── 만들기 모달 단계 칸 (design-rules 43절 · 시안 .field·.suffix·.scope·.opt·.sum·.made·.linkbox) ── */
+.stepForm { display: grid; gap: var(--space-6); }
+.suffix { position: relative; }
+.suffix :global(.input) { padding-right: var(--space-12); }
+.suffix > span { position: absolute; right: var(--space-4); top: 50%; transform: translateY(-50%); color: var(--sub); }
+.suffix input[type="number"]::-webkit-inner-spin-button { display: none; }
+.ferr { display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-2); color: var(--danger); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; }
+.ferr :global(.ico) { flex: none; width: 16px; height: 16px; margin-top: 2px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.ferrBox { margin-top: 0; padding: var(--space-4); border-radius: var(--r-btn); background: var(--danger-soft); font-size: var(--fs-body); }
+.ferrBox :global(.ico) { width: 20px; height: 20px; }
+.scope { display: grid; gap: var(--space-2); min-width: 0; margin: 0; padding: 0; border: 0; }
+.scope legend { float: left; width: 100%; margin-bottom: var(--space-2); padding: 0; font-weight: var(--fw-btn); }
+.scope legend + * { clear: both; }
+.scopeOpt { display: flex; align-items: center; gap: var(--space-3); min-height: 64px; padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); cursor: pointer; }
+.scopeOpt input { flex: none; width: var(--icon-xs); height: var(--icon-xs); margin: 0; accent-color: var(--brand-line); }
+.scopeOpt span { display: grid; line-height: 1.5; }
+.scopeOpt b { font-weight: var(--fw-btn); }
+.scopeOpt small { color: var(--sub); font-size: var(--fs-small); }
+.scopeOpt:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
+.scopeOpt:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sum { display: grid; gap: var(--space-1); margin: 0; padding: var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.sum > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 var(--space-4); font-size: var(--fs-small); }
+.sum dt { color: var(--sub); }
+.sum dd { margin: 0; min-width: 0; font-weight: var(--fw-bold); text-align: right; overflow-wrap: anywhere; }
+.doneTitle { display: flex; align-items: center; gap: var(--space-2); }
+.doneTitle svg { flex: none; width: 24px; height: 24px; color: var(--success); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.made { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); }
+.madeName { min-width: 0; font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; overflow-wrap: anywhere; }
+.linkbox { display: grid; gap: var(--space-2); padding: var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.lkLabel { font-weight: var(--fw-btn); }
+.lkRow { display: flex; align-items: center; gap: var(--space-4); }
+.lk { flex: 1; min-width: 0; color: var(--sub); font-size: var(--fs-small); line-height: 1.5; overflow-wrap: anywhere; }
+.lkRow > :global(.btn) { flex: none; min-height: 44px; }
+
+/* ── 신청 관리 모달 (design-rules 43절 「신청 관리 칩」 · 시안 .mg-st·.psearch·.pgrid·.pchip·.pfix) ── */
+.ico { flex: none; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.linkMsg { flex: 1 0 100%; margin: 0; color: var(--sub); font-size: var(--fs-small); }
+.linkMsg:empty { display: none; }
+.mgTop { display: grid; gap: var(--space-3); }
+.mgSt { display: grid; gap: var(--space-2); }
+.rNum { font-size: var(--fs-page); font-weight: var(--fw-bold); line-height: 1.3; font-variant-numeric: tabular-nums; }
+.rNum span { color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.bar { height: 6px; border-radius: var(--r-bar); background: var(--track); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: var(--r-bar); background: var(--primary); }
+.renew { display: flex; }
+.pkH { margin: 0 0 var(--space-2); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; }
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+/* 칩 전체가 누르는 칸(높이 64) — 고름 = 하늘 면 + 진한 테두리 + 체크, 안 고름·제외 = 흰 면(+ 「제외됨」 글자). 색만으로 알리지 않는다(4-2·12-2) */
+.pchip { display: flex; align-items: center; gap: var(--space-3); min-height: 64px; padding: var(--space-2) var(--space-4); border: 1px solid var(--border); border-radius: var(--r-btn); background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); cursor: pointer; }
+.pchip.isOff { background: var(--white); box-shadow: none; }
+.pchip:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.pcT { display: grid; flex: 1; min-width: 0; }
+.cmN { overflow: hidden; font-weight: var(--fw-bold); text-overflow: ellipsis; white-space: nowrap; }
+.cmW { color: var(--sub); font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
+.pchip input { flex: none; order: 3; width: var(--icon-xs); height: var(--icon-xs); margin: 0; accent-color: var(--brand-line); }
+.mNo { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: var(--r-pill); background: var(--primary-50); color: var(--ink); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1; }
+.pickres { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-1) var(--space-4); }
+.pickres b { font-size: var(--fs-card); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.pickres span { color: var(--sub); font-size: var(--fs-small); }
+.pnotes { display: grid; gap: var(--space-1); color: var(--sub); font-size: var(--fs-small); }
+.pnotes p { margin: 0; }
+
+@media (max-width: 768px) {
+  .lkRow { flex-direction: column; align-items: stretch; }
+  .pgrid { grid-template-columns: minmax(0, 1fr); }
+}
+/* 모달 안 빈 칸 — 본문 칸 사이 간격이 이미 있어 위 여백을 없애고 안쪽을 줄인다 */
+.mgTop ~ .none { margin-top: 0; padding: var(--space-6); border-radius: var(--r-card); }

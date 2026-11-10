@@ -1,0 +1,54 @@
+/* 단계형 모달 틀 — design-rules 43절 「모달 공통」(시안 mockups/revgift-box-create-20261109 .dlg·.mhead·.prog·.mbody·.pfix·.mfoot).
+   폭 520 · 반경 24(--r-panel) · 최대 높이 = 화면 − 위아래 24 · 머리·진행 표시·고정 칸·버튼 고정, 본문만 스크롤. 768 이하는 전체 시트. */
+
+.dlg { width: 520px; max-width: calc(100% - var(--space-12)); max-height: calc(100dvh - var(--space-12)); margin: auto; padding: var(--panel-pad); border: 0; border-radius: var(--r-panel); background: var(--white); color: var(--ink); box-shadow: var(--float); overflow: hidden; word-break: keep-all; overflow-wrap: anywhere; }
+.dlg[open] { display: flex; flex-direction: column; }
+.dlg::backdrop, .small::backdrop { background: var(--scrim); }
+.tall { height: min(calc(100dvh - var(--space-12)), 780px); }
+
+.head { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4); }
+.head > * { flex: none; }
+.head > .title { flex: 1 1 0; min-width: 0; }
+.title { margin: 0; font-family: var(--font-round); font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; letter-spacing: 0; overflow-wrap: anywhere; }
+.head > .tags { flex: 1 0 100%; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.x { display: grid; place-items: center; flex: none; width: 44px; height: 44px; margin-right: calc(-1 * var(--space-2)); padding: 0; border: 0; border-radius: var(--r-pill); background: none; color: var(--ink); cursor: pointer; }
+.x:hover { background: var(--gray-100); }
+.x svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+
+.prog { flex: none; margin-bottom: var(--space-6); }
+.bar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--space-1); }
+.bar i { height: 6px; border-radius: var(--r-bar); background: var(--track); }
+.bar i.on { background: var(--gray-900); }
+.progT { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 var(--space-4); margin: var(--space-2) 0 0; color: var(--sub); font-size: var(--fs-small); }
+.progT b { color: var(--ink); }
+
+.body { flex: 0 1 auto; display: grid; gap: var(--space-6); align-content: start; min-height: min(232px, 30dvh); overflow-y: auto; }
+.tall .body { flex: 1 1 auto; min-height: 96px; }
+.body:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.fixed { flex: none; display: grid; gap: var(--space-2); margin-top: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
+.foot { flex: none; display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-8); }
+.fixed + .foot { margin-top: var(--space-4); }
+.foot > :first-child:not(:only-child) { margin-right: auto; }
+
+/* 작은 확인 창 — 폭 400 */
+.small { width: 400px; max-width: calc(100% - var(--space-8)); margin: auto; padding: var(--panel-pad); border: 0; border-radius: var(--r-panel); background: var(--white); color: var(--ink); box-shadow: var(--float); }
+.small[open] { display: grid; gap: var(--space-4); }
+.desc { color: var(--sub); }
+.smallFoot { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }
+
+/* 휴대폰: 화면 전체를 덮는 시트, 주요 버튼 폭 전체(8-1), 안전 영역(8-13) */
+@media (max-width: 768px) {
+  .dlg { width: 100%; height: 100%; max-width: none; max-height: none; padding: 0; border-radius: 0; box-shadow: none; }
+  .tall { height: 100%; }
+  .head { min-height: 56px; margin: 0; padding: max(var(--space-2), env(safe-area-inset-top)) var(--space-2) var(--space-2) var(--space-4); border-bottom: 1px solid var(--gray-200); }
+  .headTags { padding-bottom: var(--space-3); }
+  .x { margin-right: 0; }
+  .prog { margin: 0; padding: var(--space-4) var(--space-4) 0; }
+  .body { flex: 1 1 auto; min-height: 0; padding: var(--space-6) var(--space-4); }
+  .fixed { margin: 0; padding: var(--space-3) var(--space-4) 0; }
+  .foot, .fixed + .foot { flex-direction: column-reverse; margin: 0; padding: var(--space-4) var(--space-4) max(var(--space-4), env(safe-area-inset-bottom)); border-top: 1px solid var(--gray-200); }
+  .fixed + .foot { border-top: 0; }
+  .foot > :global(.btn) { width: 100%; margin-right: 0; }
+  .foot > :first-child:not(:only-child) { margin-right: 0; }
+  .small { padding: var(--space-6); }
+}
