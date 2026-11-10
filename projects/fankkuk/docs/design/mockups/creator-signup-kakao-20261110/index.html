@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>크리에이터 가입 3단계 카카오톡 인증</title>
+<!--
+  2026-11-10 크리에이터 가입 3단계 — 카카오 서명 한 번으로 휴대폰 확인과 승인 서명 연결(DECISIONS 2026-11-10).
+  상태: docs/ux/pages/signup.md 「2026-11-10 크리에이터 3단계 카카오톡 인증」(draft) 의 kakao_input · kakao_waiting · kakao_done · kakao_failed · kakao_down.
+  스펙: signup INV-U19·U20 · approval-signature INV-S16 (둘 다 draft).
+  틀: 지금 가입 화면 그대로(design-rules 37절 part6-v4 — 카드 480 · 단계 줄 · 버튼 줄 · 오류 상자 「!」 원) +
+      지금 5단계 승인 서명 부품(signature-link-panel — 칸 셋 · 번호 원 두 줄 · 「다시 보내기」 · 연결 완료 상자 · 카카오 노랑 버튼).
+  값: tokens.css(사이트 src/shared/ui/tokens.css 복사본)와 design-rules 37절·2026-10-29 절에서만. 새 값 없음.
+  글꼴: 본문 Pretendard · 제목 티머니 둥근바람 — 글꼴 파일은 승인 시안 part6-v4-20261101/assets 를 그대로 쓴다.
+
+  적용한 디자인 프롬프트(docs/design/design-prompt.md) 원칙:
+    적용 규칙 6 — 할 일·입력 항목(이름·생년월일·휴대폰 번호)·버튼 동작·진행 순서는 지금 5단계 그대로, 자리만 3단계로 옮김
+    1-2·1-3 — 채움 버튼 하나(카카오 노랑 「카카오톡 인증 요청」 / 완료 뒤 「다음」), 「이전」은 선 버튼
+    2-1·2-2 — 간격 8의 배수, 칸 사이 24 · 버튼 줄 위 32(묶음 사이) / 번호 원 줄 사이 16
+    2-19·2-21 3) — 카드 안 라벨·칸·오류 왼쪽 정렬, 여러 단계 폼은 「이전」 왼쪽 끝 · 주 버튼 오른쪽 끝 / 휴대폰은 1:2 한 줄(37절 그대로)
+    3-2·3-6 — 글자 단계 32(휴대폰 24)·20·16·14만, 대비 4.5:1 실측
+    4-2 — 오류·완료 상자는 「!」 원·체크 아이콘을 함께(색만으로 알리지 않음)
+    8-10 — 단계 줄은 몇 번째 단계인지(번호·체크) + 지금 단계 이름
+    8-12 — 누르는 칸 높이 44 이상(「다시 보내기」 글자 버튼 44)
+    9-3·9-4 — 새 설명 문장 없음. 새 문구는 장애 대비 상자 두 문장뿐(UX 명세에 근거)
+    13-2 — 6자리로 가는 선택 버튼을 두지 않는다(서버 판정, INV-U20)
+  스킬 기준과 다름: 없음.
+  예시 값(김하루·19980315·010-1234-5678)은 화면 예시다(5-5).
+-->
+<link rel="stylesheet" href="tokens.css">
+<style>
+  @font-face { font-family: Pretendard; src: url("../part6-v4-20261101/assets/Pretendard-Medium.woff") format("woff"); font-weight: 400 500; font-display: swap; }
+  @font-face { font-family: Pretendard; src: url("../part6-v4-20261101/assets/Pretendard-SemiBold.woff") format("woff"); font-weight: 600; font-display: swap; }
+  @font-face { font-family: Pretendard; src: url("../part6-v4-20261101/assets/Pretendard-Bold.woff") format("woff"); font-weight: 700 800; font-display: swap; }
+  @font-face { font-family: "Tmoney Round Wind"; src: url("../part6-v4-20261101/assets/TmoneyRoundWindExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--background); color: var(--ink); font-family: var(--font); font-size: var(--fs-body); font-weight: 400; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }
+  h1, h2, p, ol { margin: 0; }
+  ol { padding: 0; list-style: none; }
+  svg { display: block; flex-shrink: 0; }
+  button, input { font: inherit; color: inherit; }
+  .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* 시안 표지 — 화면 밖 설명(사이트에는 없다) */
+  .mk { padding: var(--space-6) var(--gutter); background: var(--gray-100); border-top: 1px solid var(--gray-200); }
+  .mk-in { max-width: 880px; margin: 0 auto; }
+  .mk b { font-weight: var(--fw-bold); }
+  .mk p { color: var(--gray-600); font-size: var(--fs-small); line-height: 1.5; margin-top: var(--space-1); }
+  .mk-top { padding-block: var(--space-8); border-top: 0; }
+  .mk-top .mk-title { font-size: var(--fs-page); font-weight: var(--fw-bold); line-height: 1.3; }
+
+  /* 가입 화면 — signup.module.css · base.css 그대로 */
+  .page { padding: var(--space-24) 0 var(--section-gap); }
+  .box { --su-col: 480px; --su-line: var(--gray-500); width: 100%; max-width: calc(var(--su-col) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
+  .head { text-align: center; margin-bottom: var(--space-8); }
+  .t-title { font-family: var(--font-round); font-weight: var(--fw-title); font-size: var(--fs-title); line-height: 1.3; letter-spacing: var(--ls-title); }
+  .t-card { font-family: var(--font-round); font-weight: var(--fw-title); font-size: var(--fs-card); line-height: 1.4; }
+  .t-desc { color: var(--sub); }
+
+  .steps-wrap { margin-bottom: 24px; }
+  .steps { display: flex; gap: 8px; }
+  .steps li { flex: 0 0 auto; min-width: 0; }
+  .steps li.cur { flex: 1 1 0; }
+  .st { display: flex; align-items: center; justify-content: center; gap: 8px; width: 48px; min-height: 48px; padding: 0; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font-size: 16px; line-height: 1.2; white-space: nowrap; }
+  .cur .st { width: 100%; padding: 0 8px; background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
+  .st:not([aria-current]) .lbl { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .dot { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--white); color: var(--gray-600); font-weight: var(--fw-btn); line-height: 1; }
+  .st.is-done { background: var(--primary-50); color: var(--brand-ink); }
+  .st.is-done .dot { color: var(--brand-ink); }
+  .cur .dot { background: var(--gray-900); color: var(--white); }
+
+  .card { min-width: 0; padding: var(--card-pad); border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
+  .card h2 { margin-bottom: 8px; }
+  .lead { margin: 0 0 24px; }
+  .form { display: grid; gap: 24px; }
+  .label { display: block; margin-bottom: var(--space-2); font-weight: var(--fw-btn); }
+  .field { display: block; width: 100%; min-width: 0; min-height: var(--btn-h); padding: 0 16px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font-size: var(--fs-body); color: var(--ink); }
+  .field::placeholder { color: var(--gray-500); opacity: 1; }
+  .field[readonly] { background: var(--surface); }
+
+  .after { margin-top: 24px; }
+  .kakao { display: grid; gap: 16px; counter-reset: k; }
+  .kakao li { position: relative; min-height: 28px; padding-left: 40px; counter-increment: k; }
+  .kakao li::before { content: counter(k); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
+  .kakao strong { font-weight: var(--fw-btn); white-space: nowrap; }
+  .hint { margin-top: 16px; font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
+  .text-btn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--brand-ink); font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+
+  /* 오류·안내 상자 — 하늘 면 + 「!」 원(37절) */
+  .err { display: flex; align-items: flex-start; gap: 12px; padding: var(--space-4); border-radius: var(--r-btn); background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
+  .err::before { content: "!" / ""; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--brand-ink); font-weight: var(--fw-btn); line-height: 1; }
+  .err p + p { margin-top: var(--space-2); }
+  .err + .form { margin-top: 24px; }
+  /* 연결 완료 상자 */
+  .connected { display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: var(--r-btn); background: var(--success-soft); color: var(--success); font-weight: var(--fw-btn); }
+
+  /* 3단계 6자리 — 칸 + 버튼 120 한 줄(37절) */
+  .phone-row { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 8px; align-items: start; }
+  .phone-row .btn { width: 100%; min-width: 0; padding-inline: 8px; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--btn-h); padding: 0 var(--space-6); border: 0; border-radius: var(--r-btn); background: var(--brand); color: var(--on-brand); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.25; white-space: nowrap; cursor: pointer; }
+  .btn--line { background: var(--white); color: var(--ink); box-shadow: inset 0 0 0 1px var(--su-line); }
+  .btn--kakao { background: var(--kakao); color: var(--kakao-ink); }
+  .btn[aria-disabled="true"] { background: var(--gray-100); color: var(--gray-600); box-shadow: none; cursor: not-allowed; }
+  .bubble { width: 24px; height: 24px; color: var(--kakao-ink); }
+
+  .step-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-200); }
+  .step-actions .btn { min-width: 120px; }
+  .step-actions .next { flex: 1 0 auto; margin-left: auto; }
+
+  .foot-line { margin-top: 24px; text-align: center; color: var(--gray-600); }
+  .foot-line a { color: var(--brand-ink); font-weight: var(--fw-btn); text-decoration: underline; }
+
+  @media (max-width: 767px) {
+    .page { padding-top: calc(var(--space-4) + var(--space-12)); padding-bottom: var(--space-16); }
+    .box { padding-inline: var(--space-4); }
+    .t-title { font-size: var(--fs-page); }
+    .st { gap: 6px; font-size: 14px; }
+    .dot { width: 24px; height: 24px; font-size: 14px; }
+    .step-actions { display: grid; grid-template-columns: 1fr 2fr; }
+    .step-actions.no-prev { grid-template-columns: 1fr; }
+    .step-actions .next { margin-left: 0; }
+    .step-actions .btn { min-width: 0; }
+    .mk { padding-inline: var(--space-4); }
+  }
+</style>
+</head>
+<body>
+
+<div class="mk mk-top"><div class="mk-in">
+  <div class="mk-title">크리에이터 가입 3단계 — 카카오톡 인증 (시안)</div>
+  <p>가입은 유형 선택 → 정보 입력 → 카카오톡 연결 → 채널 확인, 네 단계입니다. 3단계 서명 한 번으로 휴대폰 확인과 승인 서명 연결이 함께 끝나고, 서명이 확인된 뒤에 계정이 만들어집니다.</p>
+  <p>아래 다섯 장은 3단계의 상태별 화면입니다. 이름·번호는 화면 예시입니다. 문구는 지금 5단계 화면 문구를 그대로 썼고, 새 문구는 ⑤의 안내 두 문장뿐입니다.</p>
+</div></div>
+
+<!-- ① 입력 -->
+<div class="mk" id="input"><div class="mk-in"><b>① 입력</b> · kakao_input<p>「나중에 하기」가 없습니다(가입에서 미룰 수 없음). 계정이 아직 없어 「이전」으로 2단계에 돌아갈 수 있습니다.</p></div></div>
+<main class="page">
+  <div class="box">
+    <div class="head"><h1 class="t-title">회원가입</h1></div>
+    <nav class="steps-wrap" aria-label="가입 단계">
+      <ol class="steps">
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">유형 선택</span></span></li>
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">정보 입력</span></span></li>
+        <li class="cur"><span class="st" aria-current="step"><span class="dot" aria-hidden="true">3</span><span class="lbl">카카오톡 연결</span></span></li>
+        <li><span class="st"><span class="dot" aria-hidden="true">4</span><span class="lbl">채널 확인</span></span></li>
+      </ol>
+    </nav>
+    <form class="card" onsubmit="return false">
+      <h2 class="t-card">카카오톡 인증 알림 연결</h2>
+      <p class="t-desc lead">앞으로 선물 승인 요청을 카카오톡으로 받기 위한 연결이에요.</p>
+      <div class="form">
+        <div><label class="label" for="a-name">이름</label><input class="field" id="a-name" type="text" autocomplete="name"></div>
+        <div><label class="label" for="a-birth">생년월일</label><input class="field" id="a-birth" type="text" inputmode="numeric" placeholder="예: 19900115"></div>
+        <div><label class="label" for="a-tel">휴대폰 번호</label><input class="field" id="a-tel" type="tel" inputmode="numeric" placeholder="010-0000-0000"></div>
+      </div>
+      <div class="step-actions">
+        <button class="btn btn--line" type="button">이전</button>
+        <button class="btn btn--kakao next" type="submit"><svg class="bubble" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3.5c-5 0-9 3.1-9 7 0 2.5 1.7 4.7 4.2 5.9l-.9 3.3c-.1.3.3.6.6.4l3.9-2.6c.4 0 .8.1 1.2.1 5 0 9-3.1 9-7s-4-7.1-9-7.1Z"/></svg>카카오톡 인증 요청</button>
+      </div>
+    </form>
+    <p class="foot-line">이미 회원이신가요? <a href="#">로그인</a></p>
+  </div>
+</main>
+
+<!-- ② 기다리는 중 -->
+<div class="mk" id="waiting"><div class="mk-in"><b>② 카카오톡 서명 기다리는 중</b> · kakao_waiting<p>칸은 읽기 전용입니다. 서명 결과는 서버가 직접 확인하고, 이 동안 계정은 없습니다.</p></div></div>
+<main class="page">
+  <div class="box">
+    <div class="head"><h1 class="t-title">회원가입</h1></div>
+    <nav class="steps-wrap" aria-label="가입 단계">
+      <ol class="steps">
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">유형 선택</span></span></li>
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">정보 입력</span></span></li>
+        <li class="cur"><span class="st" aria-current="step"><span class="dot" aria-hidden="true">3</span><span class="lbl">카카오톡 연결</span></span></li>
+        <li><span class="st"><span class="dot" aria-hidden="true">4</span><span class="lbl">채널 확인</span></span></li>
+      </ol>
+    </nav>
+    <form class="card" onsubmit="return false">
+      <h2 class="t-card">카카오톡 인증 알림 연결</h2>
+      <p class="t-desc lead">앞으로 선물 승인 요청을 카카오톡으로 받기 위한 연결이에요.</p>
+      <div class="form">
+        <div><label class="label" for="b-name">이름</label><input class="field" id="b-name" type="text" value="김하루" readonly></div>
+        <div><label class="label" for="b-birth">생년월일</label><input class="field" id="b-birth" type="text" value="19980315" readonly></div>
+        <div><label class="label" for="b-tel">휴대폰 번호</label><input class="field" id="b-tel" type="tel" value="010-1234-5678" readonly></div>
+      </div>
+      <div class="after">
+        <ol class="kakao">
+          <li><span><strong>010-1234-5678</strong>의 카카오톡으로 서명 요청을 보냈습니다.</span></li>
+          <li><span>카카오톡에서 요청을 열고 인증을 완료해 주세요.</span></li>
+        </ol>
+        <p class="hint">요청이 오지 않았나요? <button class="text-btn" type="button">다시 보내기</button></p>
+      </div>
+      <div class="step-actions">
+        <button class="btn btn--line" type="button">이전</button>
+        <button class="btn btn--kakao next" type="button" aria-disabled="true" aria-busy="true"><svg class="bubble" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3.5c-5 0-9 3.1-9 7 0 2.5 1.7 4.7 4.2 5.9l-.9 3.3c-.1.3.3.6.6.4l3.9-2.6c.4 0 .8.1 1.2.1 5 0 9-3.1 9-7s-4-7.1-9-7.1Z"/></svg>확인 기다리는 중</button>
+      </div>
+    </form>
+    <p class="foot-line">이미 회원이신가요? <a href="#">로그인</a></p>
+  </div>
+</main>
+
+<!-- ③ 완료 -->
+<div class="mk" id="done"><div class="mk-in"><b>③ 완료</b> · kakao_done<p>서명이 확인돼 계정과 연결 기록이 함께 만들어지고 로그인된 상태입니다. 계정이 생겨 「이전」이 없습니다(4단계와 같은 이유).</p></div></div>
+<main class="page">
+  <div class="box">
+    <div class="head"><h1 class="t-title">회원가입</h1></div>
+    <nav class="steps-wrap" aria-label="가입 단계">
+      <ol class="steps">
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">유형 선택</span></span></li>
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">정보 입력</span></span></li>
+        <li class="cur"><span class="st" aria-current="step"><span class="dot" aria-hidden="true">3</span><span class="lbl">카카오톡 연결</span></span></li>
+        <li><span class="st"><span class="dot" aria-hidden="true">4</span><span class="lbl">채널 확인</span></span></li>
+      </ol>
+    </nav>
+    <div class="card">
+      <h2 class="t-card">카카오톡 인증 알림 연결</h2>
+      <p class="t-desc lead">앞으로 선물 승인 요청을 카카오톡으로 받기 위한 연결이에요.</p>
+      <div class="connected" role="status"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>카카오톡 인증 알림 연결이 완료되었습니다.</span></div>
+      <div class="step-actions no-prev">
+        <a class="btn next" href="#">다음</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ④ 실패·기한 지남 -->
+<div class="mk" id="failed"><div class="mk-in"><b>④ 실패·기한 지남</b> · kakao_failed<p>서명 거절·실패·5분 지남은 창구 장애가 아닙니다 — 카카오톡 인증을 다시 요청합니다. 적은 값은 그대로 남고 칸이 다시 열립니다.</p></div></div>
+<main class="page">
+  <div class="box">
+    <div class="head"><h1 class="t-title">회원가입</h1></div>
+    <nav class="steps-wrap" aria-label="가입 단계">
+      <ol class="steps">
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">유형 선택</span></span></li>
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">정보 입력</span></span></li>
+        <li class="cur"><span class="st" aria-current="step"><span class="dot" aria-hidden="true">3</span><span class="lbl">카카오톡 연결</span></span></li>
+        <li><span class="st"><span class="dot" aria-hidden="true">4</span><span class="lbl">채널 확인</span></span></li>
+      </ol>
+    </nav>
+    <form class="card" onsubmit="return false">
+      <h2 class="t-card">카카오톡 인증 알림 연결</h2>
+      <p class="t-desc lead">앞으로 선물 승인 요청을 카카오톡으로 받기 위한 연결이에요.</p>
+      <div class="form">
+        <div><label class="label" for="d-name">이름</label><input class="field" id="d-name" type="text" value="김하루"></div>
+        <div><label class="label" for="d-birth">생년월일</label><input class="field" id="d-birth" type="text" value="19980315"></div>
+        <div><label class="label" for="d-tel">휴대폰 번호</label><input class="field" id="d-tel" type="tel" value="010-1234-5678"></div>
+      </div>
+      <div class="err after" role="alert"><p>카카오톡 인증이 완료되지 않았습니다. 다시 요청해 주세요.</p></div>
+      <div class="step-actions">
+        <button class="btn btn--line" type="button">이전</button>
+        <button class="btn btn--kakao next" type="submit"><svg class="bubble" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3.5c-5 0-9 3.1-9 7 0 2.5 1.7 4.7 4.2 5.9l-.9 3.3c-.1.3.3.6.6.4l3.9-2.6c.4 0 .8.1 1.2.1 5 0 9-3.1 9-7s-4-7.1-9-7.1Z"/></svg>카카오톡 인증 요청</button>
+      </div>
+    </form>
+    <p class="foot-line">이미 회원이신가요? <a href="#">로그인</a></p>
+  </div>
+</main>
+
+<!-- ⑤ 창구 장애 — 6자리 인증 길 -->
+<div class="mk" id="down"><div class="mk-in"><b>⑤ 창구 장애로 6자리 인증</b> · kakao_down<p>서버가 카카오 서명 창구의 장애를 확인했을 때만 이 화면이 됩니다. 6자리로 가는 버튼은 어느 화면에도 없습니다. 휴대폰 번호는 ①에서 적은 번호가 미리 채워지고, 이후는 지금 3단계 인증번호 화면과 같습니다.</p></div></div>
+<main class="page">
+  <div class="box">
+    <div class="head"><h1 class="t-title">회원가입</h1></div>
+    <nav class="steps-wrap" aria-label="가입 단계">
+      <ol class="steps">
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">유형 선택</span></span></li>
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">정보 입력</span></span></li>
+        <li class="cur"><span class="st" aria-current="step"><span class="dot" aria-hidden="true">3</span><span class="lbl">카카오톡 연결</span></span></li>
+        <li><span class="st"><span class="dot" aria-hidden="true">4</span><span class="lbl">채널 확인</span></span></li>
+      </ol>
+    </nav>
+    <form class="card" onsubmit="return false">
+      <h2 class="t-card">카카오톡 인증 알림 연결</h2>
+      <p class="t-desc lead">앞으로 선물 승인 요청을 카카오톡으로 받기 위한 연결이에요.</p>
+      <div class="err" role="alert">
+        <div>
+          <p>카카오톡 인증을 지금 사용할 수 없습니다. 인증번호로 가입해 주세요.</p>
+          <p>카카오톡 인증 알림 연결은 가입 후 크리에이터 홈에서 할 수 있습니다.</p>
+        </div>
+      </div>
+      <div class="form">
+        <div>
+          <label class="label" for="e-tel">휴대폰 번호</label>
+          <div class="phone-row">
+            <input class="field" id="e-tel" type="tel" inputmode="numeric" value="010-1234-5678">
+            <button class="btn btn--line" type="button">인증번호 받기</button>
+          </div>
+        </div>
+      </div>
+      <div class="step-actions">
+        <button class="btn btn--line" type="button">이전</button>
+        <button class="btn next" type="submit" aria-disabled="true">다음</button>
+      </div>
+    </form>
+    <p class="foot-line">이미 회원이신가요? <a href="#">로그인</a></p>
+  </div>
+</main>
+
+</body>
+</html>
