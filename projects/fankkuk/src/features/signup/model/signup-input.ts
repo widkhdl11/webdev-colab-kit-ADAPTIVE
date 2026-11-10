@@ -18,7 +18,7 @@ import { EMAIL_CUSTOM, joinEmail, type EmailParts } from "./signup-fields";
 // 화면의 2단계 미리 보기(checkDetails)도 같은 detailsSchema 를 쓴다 — 규칙과 문구가 한 곳에만 있다.
 
 /** 약관 판 번호는 서버가 정한다. 약관을 고치면 여기 날짜를 바꾼다. */
-export const TERMS_VERSIONS = { age14: "2026-10-29", service: "2026-10-01", privacy: "2026-10-01", news: "2026-10-01" } as const;
+export const TERMS_VERSIONS = { age14: "2026-10-29", service: "2026-10-01", privacy: "2026-11-11", news: "2026-10-01" } as const;
 
 export type TermKey = keyof typeof TERMS_VERSIONS;
 

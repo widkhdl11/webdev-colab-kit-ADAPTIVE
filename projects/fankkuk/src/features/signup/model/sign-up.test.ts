@@ -3,6 +3,7 @@ import { decryptPhone, phoneHash, readPhoneKeys } from "@/shared/api/phone-crypt
 import { describe, expect, it } from "vitest";
 import type { OutgoingMail } from "@/shared/api/mail/smtp";
 import { signUp, type SignUpDeps } from "./sign-up";
+import { TERMS_VERSIONS } from "./signup-input";
 
 // 시험용 비밀번호(실제 계정 아님). 비밀번호 칸에 긴 문자열을 바로 적으면 시크릿 검사에 걸려 상수로 둔다.
 const TEST_PW = "long-enough-pw1";
@@ -115,7 +116,7 @@ describe("가입 — 정상 경로", () => {
       p_terms: [
         { key: "age14", version: "2026-10-29" },
         { key: "service", version: "2026-10-01" },
-        { key: "privacy", version: "2026-10-01" },
+        { key: "privacy", version: TERMS_VERSIONS.privacy },
       ],
       p_nickname: "새팬",
     });
@@ -142,7 +143,7 @@ describe("가입 — 정상 경로", () => {
     expect(create?.args.p_terms).toEqual([
       { key: "age14", version: "2026-10-29" },
       { key: "service", version: "2026-10-01" },
-      { key: "privacy", version: "2026-10-01" },
+      { key: "privacy", version: TERMS_VERSIONS.privacy },
       { key: "news", version: "2026-10-01" },
     ]);
   });
@@ -370,7 +371,7 @@ describe("크리에이터 가입 — 공개 정보 행 (creator-verification INV
       p_terms: [
         { key: "age14", version: "2026-10-29" },
         { key: "service", version: "2026-10-01" },
-        { key: "privacy", version: "2026-10-01" },
+        { key: "privacy", version: TERMS_VERSIONS.privacy },
       ],
       p_tag_ids: ["11111111-1111-4111-8111-000000000001", "11111111-1111-4111-8111-000000000002"],
       p_custom_tag: "먹방",

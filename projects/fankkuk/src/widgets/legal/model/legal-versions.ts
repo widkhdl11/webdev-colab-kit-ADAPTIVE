@@ -14,9 +14,11 @@ export type LegalVersion = { version: string; effectiveDate: string };
 export type ArchivedDoc = LegalVersion & { doc: LegalDoc };
 
 // 세 문서 모두 카드사 심사 전에 시행일을 2026-10-24 로 당겼다(사용자 지시).
+// 개인정보처리방침은 2026-11-11 판 — 크리에이터 이름 통합(11-10)으로 수집 항목에서 공개 이름·채널 이름을 뺐다. 수집 항목을 줄이기만 해 다시 동의받지 않는다(사용자 결정 11-11).
+// 출시 전(운영 가입을 받지 않음)이라 이전 판을 ARCHIVE 에 옮기지 않았다 — 그 판에 동의한 회원이 없다.
 export const CURRENT: Readonly<Record<VersionedKind, LegalVersion>> = {
   terms: { version: TERMS_VERSIONS.service, effectiveDate: "2026-10-24" },
-  privacy: { version: TERMS_VERSIONS.privacy, effectiveDate: "2026-10-24" },
+  privacy: { version: TERMS_VERSIONS.privacy, effectiveDate: "2026-11-11" },
   refund: { version: "2026-10-17", effectiveDate: "2026-10-24" },
 };
 

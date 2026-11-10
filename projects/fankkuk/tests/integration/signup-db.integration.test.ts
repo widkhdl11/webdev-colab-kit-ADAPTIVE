@@ -2,6 +2,7 @@ import { passwordAttemptsOf } from "@/entities/session/api/password-attempts";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { signIn } from "@/features/auth/model/sign-in";
 import { signUp } from "@/features/signup/model/sign-up";
+import { TERMS_VERSIONS } from "@/features/signup/model/signup-input";
 import { adminClient, anonClient, deleteTestSignups, phoneKeyEnv, psql, psqlError, requestTestPhoneCode, signedInClient, signedTestPhone, storedTestPhone, TEST_SIGNUP_PHONE_PREFIX, testPhoneBundle, testPhoneHash, verifiedTestPhone, waitPhoneCodeMinute } from "./helpers";
 
 // 가입을 실제 DB·실제 Supabase Auth 로. 문자만 보내지 않는다(인증번호는 시험 도구가 꺼내 맞힌다).
@@ -93,7 +94,7 @@ describe("INV-U1: 서버가 확인한 번호로만 계정이 생긴다", () => {
     expect(storedTestPhone(psql(`select id from public.profiles where login_id = 'it_alpha';`))).toBe(p);
     expect(
       psql(`select string_agg(term_key || ':' || version, ',' order by term_key) from public.terms_consents t join public.profiles p on p.id = t.account_id where p.login_id = 'it_alpha';`),
-    ).toBe("age14:2026-10-29,news:2026-10-01,privacy:2026-10-01,service:2026-10-01");
+    ).toBe(`age14:${TERMS_VERSIONS.age14},news:${TERMS_VERSIONS.news},privacy:${TERMS_VERSIONS.privacy},service:${TERMS_VERSIONS.service}`);
     expect(await signIn({ attempts: passwordAttemptsOf(adminClient()), auth: anonClient().auth, env: dev }, { loginId: "it_alpha", password: "long-enough-pw1" })).toEqual({ ok: true, next: "/" });
   });
 
