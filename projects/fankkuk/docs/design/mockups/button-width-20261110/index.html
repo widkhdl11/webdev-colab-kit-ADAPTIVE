@@ -3,12 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>버튼 길이·정렬 정리 — 지금과 바꾼 뒤</title>
+<title>버튼 길이 정리 — 지금과 바꾼 뒤</title>
 <!--
-  2026-11-10 사용자: 「쓸데없이 최대 길이나 긴 길이를 차지하는 버튼·레이아웃을 찾고 적절한 길이로 바꾼 시안」 → 같은 날 「디자인 프롬프트 수정했다, 참고해서 다시」.
-  다시 그린 기준: design-prompt 2-16~2-22(내용과 버튼의 정렬, 2026-11-10 추가)·1-4·8-1 + ux-designer 스킬(references 07·08·16, 같은 날 사용자 지시로 설치).
+  2026-11-10 사용자: 「쓸데없이 최대 길이나 긴 길이를 차지하는 버튼·레이아웃을 찾고 적절한 길이로 바꾼 시안」.
+  이번 판(넷째): projects/fankkuk/CLAUDE.md 「디자인 기준의 우선순위」(같은 날 추가) 순서로 다시 판정.
+    1 design-rules.md·tokens.md(값) → 2 design-prompt.md(원칙) → 3 스킬(1·2에 없는 것만: ux-designer 흐름, impeccable 시각).
+  지난 판에서 「바꾼다」던 세 곳(선물 상세 찾기·회원가입 다음·채널 확인 요청)은 승인된 design-rules 값이라 철회.
   찾은 방법: 로컬 사이트 42개 주소를 로그인 전·팬·크리에이터 세 상태로 열어 PC 1366 폭에서 실측 + 코드에서 btn--block·width:100% 사용처.
-  값은 사이트 tokens.css 복사본만 쓴다. 버튼 최소 폭 240 은 사이트 btn--wide 값. 회원가입 버튼 최소 폭 120 은 지금 회원가입 화면 값.
+  값은 사이트 tokens.css 복사본만 쓴다. 최소 폭 240 은 사이트 btn--wide 값.
 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" crossorigin="anonymous">
 <link rel="stylesheet" href="tokens.css">
@@ -18,49 +20,44 @@
   .wrap { max-width: 1200px; margin: 0 auto; }
   h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.3; }
   .lead { margin-top: 8px; color: var(--sub); max-width: 760px; }
-  .item { margin-top: 64px; }
+  .order { margin-top: 16px; padding: 16px 24px; max-width: 760px; border-radius: 16px; background: #fff; border: 1px solid #DCE3EA; font-size: 15px; }
+  .order ol { margin-top: 4px; padding-left: 20px; }
+  .group-title { margin-top: 64px; font-size: 14px; font-weight: 700; color: #0369A1; }
+  .item { margin-top: 24px; }
+  .item + .item { margin-top: 64px; }
   .item h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
   .where { margin-top: 4px; font-size: 14px; color: var(--sub); }
   .why { margin-top: 12px; max-width: 760px; }
   .rule { margin-top: 8px; max-width: 760px; font-size: 14px; color: var(--sub); }
   .rule b { color: #0369A1; }
   .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; margin-top: 24px; align-items: start; }
+  .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 24px; align-items: start; }
   .stack { display: grid; gap: 32px; margin-top: 24px; }
   .col-label { display: inline-block; margin-bottom: 8px; padding: 2px 12px; border-radius: 999px; font-size: 14px; font-weight: 700; background: #E5E9EE; color: var(--ink); }
   .col-label.after { background: #DFF1FB; color: #0369A1; }
   .stage { padding: 32px 24px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DCE3EA; }
-  .stack .stage.w680 { max-width: 728px; } /* 실제 글 폭 680 + 안쪽 24×2 */
+  .stage.w680 { max-width: 728px; } /* 실제 글 폭 680 + 안쪽 24×2 */
   .note { margin-top: 8px; font-size: 14px; color: var(--sub); }
-  /* 사이트 부품 흉내 — 버튼·입력칸·카드 */
+  .keep h3 { font-size: 18px; font-weight: 700; }
+  .keep .src { margin-top: 4px; font-size: 14px; color: var(--sub); }
+  .keep .stage { margin-top: 12px; padding: 24px; }
+  /* 사이트 부품 흉내 */
   .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px 24px; border: 0; border-radius: var(--r-btn); background: var(--brand); color: var(--on-brand); font: inherit; font-weight: 700; box-shadow: var(--lift); white-space: nowrap; }
-  .btn.line { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 1px var(--gray-200); }
+  .btn.line { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 1px #6B7280; }
   .btn.block { width: 100%; }
   .btn.wide { min-width: 240px; }
-  .btn.min120 { min-width: 120px; }
   .field { display: block; height: 48px; border-radius: var(--r-btn); box-shadow: inset 0 0 0 1px var(--field-line); background: #fff; padding: 12px 16px; color: var(--sub); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .area { height: 120px; }
   .lab { display: block; margin: 16px 0 8px; font-weight: 700; font-size: 15px; }
   .lab:first-child { margin-top: 0; }
-  .help { margin-top: 8px; font-size: 14px; color: var(--sub); }
   .act { margin-top: 24px; }
-  .subbox { max-width: 480px; padding: 24px; border-radius: 16px; border: 1px solid var(--gray-200); background: #fff; }
+  .su-act { display: flex; gap: 12px; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--gray-200); }
+  .su-act .next { flex: 1 0 auto; margin-left: auto; }
   .status { padding: 48px 24px 40px; border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: #fff; box-shadow: var(--card-shadow); text-align: center; }
   .gift { display: block; width: 96px; height: 96px; margin: 0 auto; object-fit: contain; }
   .status h3 { margin-top: 16px; font-size: 20px; font-weight: 700; }
   .status p { margin-top: 8px; color: var(--sub); font-size: 15px; }
   .status .btn { margin-top: 24px; }
-  /* 회원가입 카드 — 실제 폭 480(안쪽 432) */
-  .su { max-width: 480px; padding: 24px; border-radius: 16px; border: 1px solid var(--gray-200); background: #fff; }
-  .su h3 { font-size: 20px; font-weight: 700; }
-  .opt { margin-top: 16px; padding: 16px 20px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--field-line); }
-  .opt.on { background: #E6F4FC; box-shadow: inset 0 0 0 2px var(--ink); }
-  .opt b { display: block; font-size: 15px; }
-  .opt span { font-size: 14px; color: var(--sub); }
-  .su-act { display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-200); }
-  .su-act.now .next { flex: 1 0 auto; margin-left: auto; }
-  .su-act.after { justify-content: space-between; }
-  .su-act.after.only { justify-content: flex-end; }
-  .phone { max-width: 390px; }
   table { width: 100%; margin-top: 24px; border-collapse: collapse; background: #fff; border: 1px solid #DCE3EA; border-radius: 16px; overflow: hidden; }
   th, td { padding: 12px 16px; text-align: left; vertical-align: top; border-top: 1px solid #EEF1F4; font-size: 15px; }
   th { background: #F1F4F7; font-size: 14px; border-top: 0; }
@@ -69,25 +66,32 @@
   .tag.keep { background: #EEF1F4; color: #4B5563; }
   .tag.done { background: #DCFCE7; color: #166534; }
   .tag.unk { background: #FEF3C7; color: #92400E; }
-  .phones { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 24px; }
-  .stage.narrow { width: 320px; padding: 24px 16px; } /* 휴대폰 320 화면: 가장자리 여백 16 (2-3) */
-  .su-act.m { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-200); }
-  @media (max-width: 900px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 900px) { .pair, .trio { grid-template-columns: minmax(0, 1fr); } }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>버튼 길이·정렬 정리</h1>
-  <p class="lead" style="margin-top:12px"><b>이번 판:</b> 디자인 프롬프트(2-16~2-22)에 더해 ux-designer 스킬(폼 07·첫 사용 16·모바일 08) 기준으로 다시 판정했습니다. 다섯 곳 모두 두 기준의 판정이 같습니다. 결제 버튼은 두 기준 모두 정한 것이 없어 그대로 「판단 필요」입니다.</p>
-  <p class="lead">고친 디자인 프롬프트의 「내용과 버튼의 정렬」(2-16~2-22) 기준으로 다시 그렸습니다. 사이트 42개 주소를 로그인 전·팬·크리에이터 세 상태로 열어 PC 폭(1366)에서 잰 결과입니다.<br>
-  바꿀 곳은 다섯 곳입니다. 1~4번은 폼 버튼이 폭 전체로 늘어난 곳이고, 5번은 같은 안내인데 버튼 크기가 다른 곳입니다.</p>
+  <h1>버튼 길이 정리</h1>
+  <p class="lead">사이트 42개 주소를 로그인 전·팬·크리에이터 세 상태로 열어 PC 폭(1366)에서 잰 결과를, 오늘 정하신 기준 순서로 다시 판정했습니다. 바꿀 곳은 둘입니다.</p>
+  <div class="order">
+    <b>판정 순서</b> (projects/fankkuk/CLAUDE.md 「디자인 기준의 우선순위」)
+    <ol>
+      <li>design-rules·tokens에 정한 값이 있으면 그 값</li>
+      <li>없으면 디자인 프롬프트 원칙</li>
+      <li>둘 다 없으면 스킬(흐름은 ux-designer, 시각은 impeccable)</li>
+    </ol>
+    지난 시안에서 바꾸자고 했던 세 곳(선물 상세 「찾기」·회원가입 「다음」·채널 「채널 확인 요청」)은 design-rules에 승인된 값이 있어 철회했습니다. 근거는 아래 「그대로 두는 곳」에 있습니다.<br>
+    스킬 기준과 다른 곳: 없음.
+  </div>
+
+  <p class="group-title">바꿀 곳</p>
 
   <!-- 1 -->
   <section class="item">
     <h2>1. 고객센터 「문의 등록」</h2>
     <p class="where">/support · 팬·크리에이터로 로그인했을 때 · 실측 버튼 680px (글자 59px)</p>
-    <p class="why">입력칸 아래 제출 버튼이 글 폭 전체로 늘어나 있습니다. 표준 크기 버튼을 입력칸 왼쪽 끝에 맞춰 마지막 입력칸 바로 아래에 둡니다. 휴대폰은 지금처럼 폭 전체입니다.</p>
-    <p class="rule">근거 <b>2-21 1)</b> 한 열 폼 PC는 primary를 입력칸 왼쪽 끝에 · <b>2-21 2)</b> 휴대폰은 폭 전체 · <b>1-4</b><br>ux-designer <b>폼 07 「Single Column」</b> 버튼은 입력칸 아래 왼쪽 · <b>「Button Placement」</b> 휴대폰은 폭 전체 — 같은 판정</p>
+    <p class="why">입력칸 아래 제출 버튼이 글 폭 전체로 늘어나 있습니다. design-rules 고객센터 절에는 문의 칸 폭(680)만 있고 버튼 값은 없습니다. 승인 시안에도 로그인 전 「로그인하고 문의하기」만 있어 이 버튼은 정한 값이 없습니다. 그래서 프롬프트 원칙대로 표준 크기 버튼을 입력칸 왼쪽 끝에 둡니다. 휴대폰은 지금처럼 폭 전체입니다.</p>
+    <p class="rule">근거 1순위 <b>없음</b>(design-rules 고객센터 절 · 시안 part7-v4) → 2순위 <b>프롬프트 2-21 1)</b> 한 열 폼 PC는 입력칸 왼쪽 끝 · <b>2-21 2)</b> 휴대폰 폭 전체 · 크기는 사이트 넓은 버튼 값 <b>최소 폭 240</b><br>스킬 ux-designer 폼 07 「Single Column」 — 같은 판정</p>
     <div class="stack">
       <div>
         <span class="col-label">지금</span>
@@ -108,114 +112,17 @@
           <span class="lab">내용</span><span class="field area">문의 내용을 자세히 입력해 주세요</span>
           <div class="act"><button class="btn wide">문의 등록</button></div>
         </div>
-        <p class="note">높이 48 · 최소 폭 240 · 입력칸 왼쪽 끝</p>
+        <p class="note">높이 48 · 최소 폭 240 · 입력칸 왼쪽 끝 (휴대폰은 폭 전체)</p>
       </div>
     </div>
   </section>
 
   <!-- 2 -->
   <section class="item">
-    <h2>2. 선물 상세 「찾기」 (주소 없이 보낸 상자 찾기)</h2>
-    <p class="where">/gifts/[주문번호] · 팬 · 「주소 끝 6자리 없이 보낸 상자 찾기」를 펼쳤을 때 · 실측 버튼 480px (글자 28px)</p>
-    <p class="why">입력 상자 안의 한 열 폼인데 제출 버튼이 상자 폭 전체입니다. 1번과 같은 규칙으로 바꿉니다. 지난 시안에서는 「입력칸과 같은 폭이라 유지」로 봤는데, 새 규칙은 폼 버튼을 폭 전체로 두는 경우를 로그인 카드와 휴대폰으로만 한정합니다.</p>
-    <p class="rule">근거 <b>2-21 1)</b> · <b>2-21 7)</b> 폭 전체는 로그인 카드만<br>ux-designer <b>폼 07 「Single Column」</b> — 같은 판정</p>
-    <div class="pair">
-      <div>
-        <span class="col-label">지금</span>
-        <div class="subbox">
-          <span class="lab">상자 선택</span><span class="field">상자 1 · 소형</span>
-          <p class="help">입고 전인 내 상자만 표시</p>
-          <span class="lab">택배사</span><span class="field">택배사 선택</span>
-          <span class="lab">송장번호</span><span class="field">숫자만 입력</span>
-          <div class="act"><button class="btn block">찾기</button></div>
-        </div>
-      </div>
-      <div>
-        <span class="col-label after">바꾼 뒤</span>
-        <div class="subbox">
-          <span class="lab">상자 선택</span><span class="field">상자 1 · 소형</span>
-          <p class="help">입고 전인 내 상자만 표시</p>
-          <span class="lab">택배사</span><span class="field">택배사 선택</span>
-          <span class="lab">송장번호</span><span class="field">숫자만 입력</span>
-          <div class="act"><button class="btn wide">찾기</button></div>
-        </div>
-        <p class="note">높이 48 · 최소 폭 240 · 입력칸 왼쪽 끝</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 3 -->
-  <section class="item">
-    <h2>3. 회원가입 「다음」</h2>
-    <p class="where">/signup · 로그인 전 · 1단계 실측 버튼 432px (글자 28px) · 2단계부터는 「이전」 120px + 「다음」이 나머지 폭 전체</p>
-    <p class="why">세 단계로 나뉜 폼인데 1단계는 「다음」이 카드 폭 전체, 2·3단계는 「이전」 옆에서 남은 폭을 다 차지합니다. 「이전」은 왼쪽 끝, 「다음」은 오른쪽 끝에 같은 크기로 두면 단계가 바뀌어도 「다음」 자리가 그대로입니다.</p>
-    <p class="rule">근거 <b>2-21 3)</b> 여러 단계 폼은 「이전」 왼쪽 끝·「다음」 오른쪽 끝 · <b>2-22</b> 같은 형태끼리 배치 통일 · 휴대폰은 지금처럼 「이전」 1 : 「다음」 2 비율의 한 줄(<b>2-21 2)</b>)<br>ux-designer <b>폼 07 「Button Placement」</b> primary는 오른쪽, 이전·취소는 왼쪽 · <b>「Multi-Step Forms」</b> 단계 표시·이전으로 돌아가기 — 같은 판정</p>
-    <div class="pair">
-      <div>
-        <span class="col-label">지금 · 1단계</span>
-        <div class="su">
-          <h3>어떤 분이세요?</h3>
-          <div class="opt on"><b>팬</b><span>좋아하는 크리에이터에게 선물 보내기</span></div>
-          <div class="opt"><b>크리에이터</b><span>팬이 보내는 선물 받기</span></div>
-          <div class="su-act now"><button class="btn next min120">다음</button></div>
-        </div>
-        <span class="col-label" style="margin-top:24px">지금 · 2단계</span>
-        <div class="su">
-          <h3>정보 입력</h3>
-          <span class="lab" style="margin-top:16px">아이디</span><span class="field"></span>
-          <div class="su-act now"><button class="btn line min120">이전</button><button class="btn next min120">다음</button></div>
-        </div>
-      </div>
-      <div>
-        <span class="col-label after">바꾼 뒤 · 1단계</span>
-        <div class="su">
-          <h3>어떤 분이세요?</h3>
-          <div class="opt on"><b>팬</b><span>좋아하는 크리에이터에게 선물 보내기</span></div>
-          <div class="opt"><b>크리에이터</b><span>팬이 보내는 선물 받기</span></div>
-          <div class="su-act after only"><button class="btn min120">다음</button></div>
-        </div>
-        <span class="col-label after" style="margin-top:24px">바꾼 뒤 · 2단계</span>
-        <div class="su">
-          <h3>정보 입력</h3>
-          <span class="lab" style="margin-top:16px">아이디</span><span class="field"></span>
-          <div class="su-act after"><button class="btn line min120">이전</button><button class="btn min120">다음</button></div>
-        </div>
-        <p class="note">높이 48 · 최소 폭 120(지금 값) · 「다음」은 모든 단계에서 오른쪽 끝</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 4 -->
-  <section class="item">
-    <h2>4. 크리에이터 채널 인증 「채널 확인 요청」</h2>
-    <p class="where">/creator/account · 회원가입 크리에이터 단계 · 코드 기준(시험 계정이 이미 인증돼 화면에서는 이 칸이 뜨지 않았습니다)</p>
-    <p class="why">채널 주소 입력칸 아래 버튼이 칸 폭 전체입니다(코드의 width: 100%). 1번과 같은 규칙으로 바꿉니다.</p>
-    <p class="rule">근거 <b>2-21 1)</b><br>ux-designer <b>폼 07 「Single Column」</b> — 같은 판정</p>
-    <div class="pair">
-      <div>
-        <span class="col-label">지금</span>
-        <div class="subbox" style="max-width:579px">
-          <span class="lab">팬꾹 링크를 올린 채널 주소를 입력해 주세요</span><span class="field">https://www.youtube.com/@핸들</span>
-          <div class="act"><button class="btn block">채널 확인 요청</button></div>
-        </div>
-      </div>
-      <div>
-        <span class="col-label after">바꾼 뒤</span>
-        <div class="subbox" style="max-width:579px">
-          <span class="lab">팬꾹 링크를 올린 채널 주소를 입력해 주세요</span><span class="field">https://www.youtube.com/@핸들</span>
-          <div class="act"><button class="btn wide">채널 확인 요청</button></div>
-        </div>
-        <p class="note">높이 48 · 최소 폭 240 · 입력칸 왼쪽 끝 · 주소 예시 목록은 줄였습니다</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 5 -->
-  <section class="item">
-    <h2>5. 선물 보내기 「로그인」 — 같은 안내끼리 크기 맞추기</h2>
+    <h2>2. 선물 보내기 「로그인」 — 오늘 고친 선물함 안내와 크기 맞추기</h2>
     <p class="where">/gifts/new · 로그인 전 · 실측 버튼 90px</p>
-    <p class="why">빈 상태 카드라 가운데 정렬은 그대로 맞습니다. 다만 같은 안내인 선물함 신청의 「로그인」(최소 240)과 크기가 달라 맞춥니다. 「팔로우한 크리에이터가 없습니다」의 「크리에이터 찾기」도 같은 자리라 같이 바뀝니다.</p>
-    <p class="rule">근거 <b>2-17</b> 메시지 하나·본문 2줄 이하라 가운데 정렬 · <b>2-21 8)</b> 버튼은 문구 아래 가운데 · <b>2-22</b> 같은 형태끼리 통일<br>ux-designer <b>첫 사용 16 「Empty States」</b> 그림 + 짧은 설명 + 다음 행동 버튼 하나 — 지금 구성이 이미 맞고, 크기만 맞춥니다</p>
+    <p class="why">길어서가 아니라, 오늘 지시로 최소 240으로 고친 선물함 신청의 「로그인」과 같은 안내인데 크기가 달라서 넣었습니다. 승인 시안(25절, v39-part3)은 이 버튼을 글자 폭으로 그렸으므로, 바꾸면 design-rules 25절에 「상태 카드 버튼 최소 폭 240」을 같이 적습니다. 「팔로우한 크리에이터가 없습니다」의 「크리에이터 찾기」도 같은 자리라 같이 바뀝니다.</p>
+    <p class="rule">근거 1순위 <b>design-rules 25절 시안</b>은 글자 폭 → 오늘 사용자 지시(같은 안내 카드의 「로그인」을 표준 크기로)를 같은 모양에 맞춤 · 2순위 <b>2-17·2-21 8)</b> 가운데 정렬 그대로 · <b>2-22</b> 같은 형태끼리 통일<br>스킬 ux-designer 첫 사용 16 「Empty States」 — 구성은 이미 맞음</p>
     <div class="pair">
       <div>
         <span class="col-label">지금</span>
@@ -229,44 +136,46 @@
     </div>
   </section>
 
-  <!-- 좁은 폭 -->
-  <section class="item">
-    <h2>휴대폰 가장 좁은 폭(320)에서 — 바꾼 뒤</h2>
-    <p class="why">ux-designer 스킬은 가장 좁은 폭에서 확인하라고 합니다. 휴대폰에서는 다섯 곳 모두 지금처럼 폭 전체로 두므로, 휴대폰 모양은 바뀌지 않습니다. 대표로 1번과 3번만 그렸습니다.</p>
-    <p class="rule">근거 <b>8-1</b> · <b>2-21 2)</b> · ux-designer <b>폼 07 「Button Placement」</b> 휴대폰은 폭 전체 · <b>모바일 08 「Thumb Zone」</b></p>
-    <div class="phones">
-      <div>
-        <span class="col-label after">1. 문의 등록</span>
-        <div class="stage narrow">
-          <span class="lab">제목</span><span class="field">문의 제목을 입력해 주세요</span>
-          <span class="lab">내용</span><span class="field area">문의 내용을 자세히 입력해 주세요</span>
-          <div class="act"><button class="btn block">문의 등록</button></div>
-        </div>
-      </div>
-      <div>
-        <span class="col-label after">3. 회원가입 2단계</span>
-        <div class="stage narrow">
-          <h3 style="font-size:20px;font-weight:700">정보 입력</h3>
-          <span class="lab" style="margin-top:16px">아이디</span><span class="field"></span>
-          <div class="su-act m"><button class="btn line">이전</button><button class="btn">다음</button></div>
-        </div>
+  <p class="group-title">그대로 두는 곳 — 승인된 design-rules 값 (지난 시안에서 철회)</p>
+  <p class="why">세 곳 모두 버튼이 넓지만, 승인할 때 그 폭으로 정한 값입니다. 프롬프트 2-21은 버튼의 <b>위치</b>(입력칸 왼쪽 끝, 「다음」은 오른쪽 끝)를 정하고 폭은 정하지 않습니다. 폭 전체 버튼도 왼쪽 끝에서 시작하고 「다음」도 오른쪽 끝에서 끝나므로 프롬프트와 부딪히지 않습니다.</p>
+  <div class="trio keep">
+    <div>
+      <h3>선물 상세 「찾기」</h3>
+      <p class="src">design-rules 「선물 상세」: 택배사·송장번호 양식은 「입력·버튼 최대 480 · 높이 48」</p>
+      <div class="stage">
+        <span class="lab">송장번호</span><span class="field">숫자만 입력</span>
+        <div class="act"><button class="btn block">찾기</button></div>
       </div>
     </div>
-  </section>
+    <div>
+      <h3>회원가입 「다음」</h3>
+      <p class="src">design-rules 37절, 승인 시안 part6-v4: 「다음」이 「이전」 옆 남은 폭 전체(1단계는 카드 폭 전체)</p>
+      <div class="stage">
+        <span class="lab">아이디</span><span class="field"></span>
+        <div class="su-act"><button class="btn line">이전</button><button class="btn next">다음</button></div>
+      </div>
+    </div>
+    <div>
+      <h3>채널 「채널 확인 요청」</h3>
+      <p class="src">design-rules 42절, 승인 시안 channel-link-verify: 버튼 폭 전체(입력칸과 같은 폭)</p>
+      <div class="stage">
+        <span class="lab">팬꾹 링크를 올린 채널 주소를 입력해 주세요</span><span class="field">https://www.youtube.com/@핸들</span>
+        <div class="act"><button class="btn block">채널 확인 요청</button></div>
+      </div>
+    </div>
+  </div>
 
-  <!-- 표 -->
   <section class="item">
-    <h2>그대로 두는 곳과 이유</h2>
+    <h2>나머지 자리</h2>
     <table>
       <thead><tr><th>자리</th><th>지금</th><th>판단</th><th>근거</th></tr></thead>
       <tbody>
-        <tr><td>선물함 신청 안내 카드</td><td>카드 480 · 버튼 240 · 가운데</td><td><span class="tag done">오늘 고침</span></td><td>메시지 하나·본문 한 줄이라 가운데 정렬, 버튼도 문구 아래 가운데 (2-17·2-21 8)</td></tr>
-        <tr><td>로그인 · 비밀번호 찾기</td><td>폼 폭 432 전체</td><td><span class="tag keep">유지</span></td><td>로그인 카드는 primary를 카드 안쪽 폭 전체로 (2-21 7)</td></tr>
-        <tr><td>결제 단계 「OO원 결제하기」</td><td>결제창 폭 전체(약 672)</td><td><span class="tag unk">판단 필요</span></td><td>프롬프트에 결제 화면 규칙이 없습니다. 결제 버튼을 폭 전체로 두는 것이 결제 화면 관례라 유지를 추천합니다 (가정). 한 열 폼(2-21 1)으로 보면 240 왼쪽이 됩니다. ux-designer 스킬에도 결제 버튼 폭 기준은 없습니다</td></tr>
-        <tr><td>역조공 보내기 오른쪽 「OO원 결제하기」</td><td>요약 카드 폭 전체</td><td><span class="tag keep">유지</span></td><td>카드 안 행동은 카드 글과 같은 왼쪽 선 (2-21 10) — 폭 전체도 이 선을 지킵니다</td></tr>
-        <tr><td>함께 보내기 「팔로우하고 보내기」</td><td>안내 문장 폭</td><td><span class="tag unk">화면 못 봄</span></td><td>가운데 정렬 안내 띠 안이라 2-21 8)에 맞는 구조입니다. 팔로우 안 한 상태가 시험 데이터에 없어 화면으로는 못 봤습니다</td></tr>
+        <tr><td>선물함 신청 안내 카드</td><td>카드 480 · 버튼 240 · 가운데</td><td><span class="tag done">오늘 고침</span></td><td>오늘 사용자 지시 · 프롬프트 2-17·2-21 8)</td></tr>
+        <tr><td>로그인 · 비밀번호 찾기</td><td>카드 안 폭 전체</td><td><span class="tag keep">유지</span></td><td>design-rules 37절(카드 480) · 프롬프트 2-21 7) 로그인 카드는 폭 전체</td></tr>
+        <tr><td>결제 단계 「OO원 결제하기」</td><td>결제창 폭 전체(약 672)</td><td><span class="tag unk">판단 필요</span></td><td>design-rules·프롬프트·두 스킬 모두 결제 버튼 폭 기준이 없습니다. 결제 화면은 폭 전체가 흔해 유지를 추천합니다(가정)</td></tr>
+        <tr><td>역조공 보내기 「OO원 결제하기」</td><td>요약 카드 폭 전체</td><td><span class="tag keep">유지</span></td><td>프롬프트 2-21 10) 카드 안 행동은 카드 글과 같은 왼쪽 선</td></tr>
         <tr><td>소개 끝 띠 · 고객센터 1:1 문의 띠</td><td>화면 폭</td><td><span class="tag keep">유지</span></td><td>구역 바탕 띠이고, 안의 버튼은 이미 글자 크기입니다</td></tr>
-        <tr><td>지금 할 일 「확인할 항목이 없습니다」</td><td>880</td><td><span class="tag keep">유지</span></td><td>목록 자리를 채우는 빈 상태 카드 (2-17)</td></tr>
+        <tr><td>지금 할 일 「확인할 항목이 없습니다」</td><td>880</td><td><span class="tag keep">유지</span></td><td>목록 자리의 빈 상태 카드 (2-17)</td></tr>
         <tr><td>내 정보 알림 줄</td><td>579</td><td><span class="tag keep">유지</span></td><td>목록 줄 안의 켜기·끄기는 줄 오른쪽 끝 (2-21 11)</td></tr>
       </tbody>
     </table>
