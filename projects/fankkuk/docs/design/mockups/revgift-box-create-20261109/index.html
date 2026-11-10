@@ -425,6 +425,22 @@ fieldset[disabled] .opt { cursor: not-allowed; }
   .mg-st { padding: var(--space-3) var(--space-4) 0; margin: 0; }
   .dlg.tall { height: 100%; }
 }
+/* ---- 선물함 카드 작게(2026-11-10): 3~4열, 카드 전체가 누르는 칸(행동 줄 없음) ---- */
+.boxes { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-4); }
+.bcard { grid-template-rows: 45px auto auto 1fr; gap: var(--space-2); padding: var(--space-3) var(--space-4); }
+.b-top { display: flex; flex-wrap: nowrap; align-items: flex-start; justify-content: flex-start; gap: var(--space-3); }
+.b-pic { flex: none; width: 40px; height: 40px; }
+.b-pic img { max-width: 28px; max-height: 28px; }
+.b-n { flex: 1; min-width: 0; min-height: 45px; font-size: var(--fs-body); line-height: 1.4; }
+.b-a { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 45px; }
+.b-tg { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+.b-tags { display: contents; }
+.bcard .tag { padding: 2px var(--space-2); }
+.b-cnt { display: flex; align-items: center; gap: var(--space-2); }
+.b-num { flex: none; font-size: var(--fs-small); }
+.b-num b { font-size: var(--fs-small); }
+.b-bar { flex: 1; min-width: 24px; height: 4px; }
+.b-m { align-self: end; }
 
 </style>
 </head>
@@ -488,36 +504,30 @@ fieldset[disabled] .opt { cursor: not-allowed; }
 </header><section class="sec" aria-labelledby="mine-h">
   <h2 class="sec-h" id="mine-h">내 선물함</h2>
   <div class="boxes-box"><ul class="boxes" role="list">
-    <li class="bcard"><div class="b-top"><div class="b-pic"><img src="img/promise-message.webp" alt="" height="48"></div><span class="tag tag--dot tag--info">신청 받는 중</span></div>
-      <h3 class="b-n"><a class="b-a" href="#" data-go="mgopen">11월 팬미팅 선물</a></h3>
-      <div class="b-cnt"><p class="b-num">신청 <b>12명</b> / 20명</p><div class="b-bar" role="progressbar" aria-label="신청 12명 / 20명" aria-valuemin="0" aria-valuemax="20" aria-valuenow="12"><i style="width:60%"></i></div></div>
-      <p class="b-m">공개 · 11월 9일 (월)</p>
-      <p class="b-go" aria-hidden="true">신청 관리<svg viewBox="0 0 16 16"><path d="M1 8h13M9 3l5 5-5 5"/></svg></p></li>
-    <li class="bcard"><div class="b-top"><div class="b-pic"><img src="img/promise-message.webp" alt="" height="48"></div><span class="b-tags"><span class="tag tag--dot tag--info">신청 받는 중</span><span class="tag tag--line">인원 마감</span></span></div>
-      <h3 class="b-n"><a class="b-a" href="#" data-go="mgfull">12월 크리스마스 선물</a></h3>
-      <div class="b-cnt"><p class="b-num">신청 <b>20명</b> / 20명</p><div class="b-bar" role="progressbar" aria-label="신청 20명 / 20명" aria-valuemin="0" aria-valuemax="20" aria-valuenow="20"><i style="width:100%"></i></div></div>
-      <p class="b-m">공개 · 11월 8일 (일)</p>
-      <p class="b-go" aria-hidden="true">마감하기<svg viewBox="0 0 16 16"><path d="M1 8h13M9 3l5 5-5 5"/></svg></p></li>
-    <li class="bcard"><div class="b-top"><div class="b-pic"><img src="img/revgift-pack.png" alt="" height="48"></div><span class="b-tags"><span class="tag tag--dot ">마감</span><span class="tag tag--dot tag--warn">팬꾹으로 배송하기</span></span></div>
-      <h3 class="b-n"><a class="b-a" href="#">10월 생일 감사 선물</a></h3>
-      <div class="b-cnt"><p class="b-num">신청 <b>8명</b> / 10명</p><div class="b-bar" role="progressbar" aria-label="신청 8명 / 10명" aria-valuemin="0" aria-valuemax="10" aria-valuenow="8"><i style="width:80%"></i></div></div>
-      <p class="b-m">비공개 · 10월 20일 (화)</p>
-      <p class="b-go" aria-hidden="true">신청 관리<svg viewBox="0 0 16 16"><path d="M1 8h13M9 3l5 5-5 5"/></svg></p></li>
-    <li class="bcard"><div class="b-top"><div class="b-pic"><img src="img/icon-fee.webp" alt="" height="48"></div><span class="b-tags"><span class="tag tag--dot ">마감</span><span class="tag tag--dot tag--brand">결제 요청</span></span></div>
-      <h3 class="b-n"><a class="b-a" href="#">9월 콘서트 후기 선물</a></h3>
-      <div class="b-cnt"><p class="b-num">신청 <b>15명</b> / 15명</p><div class="b-bar" role="progressbar" aria-label="신청 15명 / 15명" aria-valuemin="0" aria-valuemax="15" aria-valuenow="15"><i style="width:100%"></i></div></div>
-      <p class="b-m">공개 · 9월 28일 (월)</p>
-      <p class="b-go" aria-hidden="true">신청 관리<svg viewBox="0 0 16 16"><path d="M1 8h13M9 3l5 5-5 5"/></svg></p></li>
-    <li class="bcard"><div class="b-top"><div class="b-pic"><img src="img/icon-truck.webp" alt="" height="48"></div><span class="b-tags"><span class="tag tag--dot ">마감</span><span class="tag tag--dot tag--success">발송 중</span></span></div>
-      <h3 class="b-n"><a class="b-a" href="#">8월 팬레터 답장 선물</a></h3>
-      <div class="b-cnt"><p class="b-num">신청 <b>6명</b> / 8명</p><div class="b-bar" role="progressbar" aria-label="신청 6명 / 8명" aria-valuemin="0" aria-valuemax="8" aria-valuenow="6"><i style="width:75%"></i></div></div>
-      <p class="b-m">비공개 · 8월 14일 (금)</p>
-      <p class="b-go" aria-hidden="true">신청 관리<svg viewBox="0 0 16 16"><path d="M1 8h13M9 3l5 5-5 5"/></svg></p></li>
-    <li class="bcard"><div class="b-top"><div class="b-pic is-off"><img src="img/icon-gift.webp" alt="" height="48"></div><span class="tag tag--dot ">마감</span></div>
-      <h3 class="b-n"><a class="b-a" href="#">7월 안부 선물</a></h3>
-      <div class="b-cnt"><p class="b-num">신청 <b>0명</b> / 20명</p><div class="b-bar" role="progressbar" aria-label="신청 0명 / 20명" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0"><i style="width:0%"></i></div></div>
-      <p class="b-m">공개 · 7월 3일 (금)</p>
-      <p class="b-go" aria-hidden="true">신청 관리<svg viewBox="0 0 16 16"><path d="M1 8h13M9 3l5 5-5 5"/></svg></p></li>
+    <li class="bcard"><div class="b-top"><div class="b-pic"><img src="img/promise-message.webp" alt="" height="28"></div><h3 class="b-n"><a class="b-a" href="#" data-go="mgopen">11월 팬미팅 선물</a></h3></div>
+      <div class="b-tg"><span class="tag tag--dot tag--info">신청 받는 중</span></div>
+      <div class="b-cnt"><p class="b-num">신청 <b>12</b> / 20명</p><div class="b-bar" role="progressbar" aria-label="신청 12명 / 20명" aria-valuemin="0" aria-valuemax="20" aria-valuenow="12"><i style="width:60%"></i></div></div>
+      <p class="b-m">공개 · 11월 9일</p></li>
+    <li class="bcard"><div class="b-top"><div class="b-pic"><img src="img/promise-message.webp" alt="" height="28"></div><h3 class="b-n"><a class="b-a" href="#" data-go="mgfull">12월 크리스마스 선물</a></h3></div>
+      <div class="b-tg"><span class="b-tags"><span class="tag tag--dot tag--info">신청 받는 중</span><span class="tag tag--line">인원 마감</span></span></div>
+      <div class="b-cnt"><p class="b-num">신청 <b>20</b> / 20명</p><div class="b-bar" role="progressbar" aria-label="신청 20명 / 20명" aria-valuemin="0" aria-valuemax="20" aria-valuenow="20"><i style="width:100%"></i></div></div>
+      <p class="b-m">공개 · 11월 8일</p></li>
+    <li class="bcard"><div class="b-top"><div class="b-pic"><img src="img/revgift-pack.png" alt="" height="28"></div><h3 class="b-n"><a class="b-a" href="#">10월 생일 감사 선물</a></h3></div>
+      <div class="b-tg"><span class="b-tags"><span class="tag tag--dot ">마감</span><span class="tag tag--dot tag--warn">팬꾹으로 배송하기</span></span></div>
+      <div class="b-cnt"><p class="b-num">신청 <b>8</b> / 10명</p><div class="b-bar" role="progressbar" aria-label="신청 8명 / 10명" aria-valuemin="0" aria-valuemax="10" aria-valuenow="8"><i style="width:80%"></i></div></div>
+      <p class="b-m">비공개 · 10월 20일</p></li>
+    <li class="bcard"><div class="b-top"><div class="b-pic"><img src="img/icon-fee.webp" alt="" height="28"></div><h3 class="b-n"><a class="b-a" href="#">9월 콘서트 후기 선물</a></h3></div>
+      <div class="b-tg"><span class="b-tags"><span class="tag tag--dot ">마감</span><span class="tag tag--dot tag--brand">결제 요청</span></span></div>
+      <div class="b-cnt"><p class="b-num">신청 <b>15</b> / 15명</p><div class="b-bar" role="progressbar" aria-label="신청 15명 / 15명" aria-valuemin="0" aria-valuemax="15" aria-valuenow="15"><i style="width:100%"></i></div></div>
+      <p class="b-m">공개 · 9월 28일</p></li>
+    <li class="bcard"><div class="b-top"><div class="b-pic"><img src="img/icon-truck.webp" alt="" height="28"></div><h3 class="b-n"><a class="b-a" href="#">8월 팬레터 답장 선물</a></h3></div>
+      <div class="b-tg"><span class="b-tags"><span class="tag tag--dot ">마감</span><span class="tag tag--dot tag--success">발송 중</span></span></div>
+      <div class="b-cnt"><p class="b-num">신청 <b>6</b> / 8명</p><div class="b-bar" role="progressbar" aria-label="신청 6명 / 8명" aria-valuemin="0" aria-valuemax="8" aria-valuenow="6"><i style="width:75%"></i></div></div>
+      <p class="b-m">비공개 · 8월 14일</p></li>
+    <li class="bcard"><div class="b-top"><div class="b-pic is-off"><img src="img/icon-gift.webp" alt="" height="28"></div><h3 class="b-n"><a class="b-a" href="#">7월 안부 선물</a></h3></div>
+      <div class="b-tg"><span class="tag tag--dot ">마감</span></div>
+      <div class="b-cnt"><p class="b-num">신청 <b>0</b> / 20명</p><div class="b-bar" role="progressbar" aria-label="신청 0명 / 20명" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0"><i style="width:0%"></i></div></div>
+      <p class="b-m">공개 · 7월 3일</p></li>
   </ul></div>
 </section><section class="sec" aria-labelledby="what-h"><div><h2 class="sec-h" id="what-h">팬에게 보내기란?</h2><p class="def">여러 팬에게 줄 선물을 큰 상자 하나에 담아 팬꾹으로 보내면, 팬꾹이 열어 팬마다 나눠 보냅니다.</p></div><div class="story-box"><div class="story">
   <div class="s-pic s-a" data-s="a"><span class="chip chip-a">택배 접수 1번</span><img src="img/revgift-pack.png" alt="" width="112" height="112"></div>
