@@ -172,5 +172,9 @@ describe("INV-U19·U20: 크리에이터 3단계 화면", () => {
     const box = host.querySelector(".err[role='alert']")!;
     expect(box.textContent).toContain("이 번호로 가입된 계정이 있습니다.");
     expect(box.querySelector("a")?.getAttribute("href")).toBe("/login");
+    // (실패경로) 이 상태에선 요청 버튼이 없다 — 번호를 고치면 입력 상태로 돌아가 다시 보인다
+    expect([...host.querySelectorAll("button")].some((b) => b.textContent?.includes("카카오톡 인증 요청"))).toBe(false);
+    type("휴대폰 번호", "01012345679");
+    expect([...host.querySelectorAll("button")].some((b) => b.textContent?.includes("카카오톡 인증 요청"))).toBe(true);
   });
 });

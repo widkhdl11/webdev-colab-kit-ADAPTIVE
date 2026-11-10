@@ -30,6 +30,7 @@ import {
 } from "@/features/signup/model/signup-input";
 import { useCountdown } from "@/shared/lib/time/use-countdown";
 import { Sentences } from "@/shared/ui/sentences";
+import { phoneStepHead, stepDone } from "../model/signup-steps";
 import { SignupKakaoStep, type KakaoSignupOutcome } from "./signup-kakao-step";
 import s from "./signup.module.css";
 
@@ -184,6 +185,7 @@ export function SignupPage({ tagOptions, sealingKeyPem = null }: { tagOptions: r
   const steps: readonly string[] = role === "creator" ? [...CREATOR_FORM_STEPS, ...CREATOR_STEPS] : FORM_STEPS;
   // 크리에이터 3단계의 카카오 서명 카드(장애 대비 길이 아니면)
   const kakaoStep = step === LAST && role === "creator" && !kakaoDown;
+  const phoneHead = phoneStepHead(role, kakaoDown);
 
   const go = (n: number) => {
     const next = Math.max(1, Math.min(LAST, n));
@@ -417,6 +419,8 @@ export function SignupPage({ tagOptions, sealingKeyPem = null }: { tagOptions: r
     if (r.ok) {
       if (r.loggedIn) {
         setAccountMade(true);
+        // 3단계를 지났다 — 단계 줄 1~3 체크(UX 명세 kakao_done)
+        setReached((n) => Math.max(n, LAST + 1));
         router.refresh();
         return { kind: "done" };
       }
@@ -514,7 +518,8 @@ export function SignupPage({ tagOptions, sealingKeyPem = null }: { tagOptions: r
       <ol className={steps.length > FORM_STEPS.length ? `${s.steps} ${s.many}` : s.steps}>
         {steps.map((label, i) => {
           const k = i + 1;
-          const done = k !== step && k < reached; // 지나온 단계만 완료 — 아직 넘지 않은 마지막 단계는 숫자 그대로(선물 보내기와 같은 기준)
+          // 지나온 단계만 완료 — 아직 넘지 않은 마지막 단계는 숫자 그대로(선물 보내기와 같은 기준). 크리에이터 3단계에서 계정이 생기면 3단계도 완료(kakao_done 1~3 체크)
+          const done = stepDone({ k, step, reached, accountMade });
           return (
             <li key={label}>
               <button
@@ -913,20 +918,14 @@ export function SignupPage({ tagOptions, sealingKeyPem = null }: { tagOptions: r
             </fieldset>
 
             <fieldset className={s.step} hidden={step !== 3}>
-              <legend className="sr-only">{role === "creator" ? "카카오톡 인증 알림 연결" : "휴대폰 번호 확인"}</legend>
-              {role === "creator" ? (
-                <>
-                  {heading(3, "카카오톡 인증 알림 연결")}
-                  <p className={`t-desc ${s.lead}`}>앞으로 선물 승인 요청을 카카오톡으로 받기 위한 연결이에요.</p>
-                  {kakaoDown ? (
-                    <div className={`err ${s["down-box"]}`} role="alert">
-                      <Sentences text={KAKAO_DOWN_TEXT} />
-                    </div>
-                  ) : null}
-                </>
-              ) : (
-                heading(3, "휴대폰 번호 확인")
-              )}
+              <legend className="sr-only">{phoneHead.title}</legend>
+              {heading(3, phoneHead.title)}
+              {/* 크리에이터 장애 대비 6자리(kakao_down) — 연결 설명 줄 없이 장애 안내 상자만(UX 명세 2026-11-10) */}
+              {phoneHead.downNotice ? (
+                <div className={`err ${s["down-box"]}`} role="alert">
+                  <Sentences text={KAKAO_DOWN_TEXT} />
+                </div>
+              ) : null}
               <div className="form">
                 <div>
                   <label className="label" htmlFor={f("tel")}>

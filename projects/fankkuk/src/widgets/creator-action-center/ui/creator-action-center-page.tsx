@@ -108,27 +108,29 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
   const close = () => setOpen(null);
   const { received, sent } = splitBoards(items);
 
-  // 승인 서명 연결 줄(signup INV-U20)은 받은 선물 판 맨 위 — 연결 전에는 선물을 받지 않는다(approval-signature INV-S16)
-  const checks = received.filter((it): it is SignatureLinkItem | TrackerItem | BluetoothItem => it.kind !== "approval");
+  // 승인 서명 연결 줄(signup INV-U20)은 선물이 아니다 — 「받은 선물」 묶음 밖 맨 위 「계정 설정」 묶음에 두고 그 묶음 숫자에만 센다(전체·사이드바 숫자에는 들어간다)
+  const account = received.filter((it): it is SignatureLinkItem => it.kind === "signature_link");
+  const checks = received.filter((it): it is TrackerItem | BluetoothItem => it.kind === "tracker" || it.kind === "bluetooth");
   const approvals = received.filter((it): it is ApprovalItem => it.kind === "approval");
   // 첫 승인 요청 하나만 하늘 판(design-rules 23-3 A안), 나머지는 카드. 순서는 읽기가 준다(INV-J5 — 결제 뒤 24시간 안인 새 요청을 최근 순으로 먼저, 나머지는 오래된 순, 2026-10-30)
   const [top, ...restApprovals] = approvals;
 
-  function checkRow(it: SignatureLinkItem | TrackerItem | BluetoothItem) {
-    if (it.kind === "signature_link") {
-      return (
-        <Row
-          key={keyOf(it)}
-          title="카카오톡 인증 알림 연결"
-          meta="연결 전 · 연결 전에는 선물을 받을 수 없습니다"
-          action={
-            <Link className="btn btn--sm btn--line" href={creatorActionHref(it)}>
-              연결
-            </Link>
-          }
-        />
-      );
-    }
+  function accountRow(it: SignatureLinkItem) {
+    return (
+      <Row
+        key={keyOf(it)}
+        title="카카오톡 인증 알림 연결"
+        meta="연결 전 · 선물을 받으려면 연결이 필요합니다"
+        action={
+          <Link className="btn btn--sm btn--line" href={creatorActionHref(it)}>
+            연결
+          </Link>
+        }
+      />
+    );
+  }
+
+  function checkRow(it: TrackerItem | BluetoothItem) {
     const due = daysLeftOf(it.dueAt, now);
     if (it.kind === "tracker") {
       return (
@@ -291,6 +293,15 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
           <Link className="btn btn--line" href="/creator">
             홈으로
           </Link>
+        </section>
+      ) : null}
+
+      {account.length > 0 ? (
+        <section className={s.sec} aria-labelledby="ca-account">
+          <h2 className={s.secH} id="ca-account">
+            계정 설정<small>{account.length}건</small>
+          </h2>
+          <ul className={`lrows ${s.rows}`}>{account.map(accountRow)}</ul>
         </section>
       ) : null}
 

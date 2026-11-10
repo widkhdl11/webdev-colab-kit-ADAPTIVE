@@ -335,15 +335,18 @@ export function SignupKakaoStep({ sealingKeyPem, phone, onPhoneChange, onPrev, o
           <button className="btn btn--line" type="button" disabled={busy} onClick={onPrev}>
             이전
           </button>
-          <button
-            className={`btn btn--kakao ${s.next}`}
-            type="submit"
-            aria-disabled={locked || phase === "exists" || !sealingKeyPem ? true : undefined}
-            aria-busy={locked || undefined}
-          >
-            <KakaoBubble />
-            {phase === "waiting" ? "확인 기다리는 중" : "카카오톡 인증 요청"}
-          </button>
+          {/* 이미 가입된 번호(kakao_exists) — 요청 버튼을 숨긴다. 번호를 고치면 입력 상태로 돌아가 다시 보인다 */}
+          {phase === "exists" ? null : (
+            <button
+              className={`btn btn--kakao ${s.next}`}
+              type="submit"
+              aria-disabled={locked || !sealingKeyPem ? true : undefined}
+              aria-busy={locked || undefined}
+            >
+              <KakaoBubble />
+              {phase === "waiting" ? "확인 기다리는 중" : "카카오톡 인증 요청"}
+            </button>
+          )}
         </div>
       </form>
     </>

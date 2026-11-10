@@ -81,7 +81,7 @@ function SummaryRows({ rows, href, label }: { rows: readonly HomeProgressRow[]; 
 export function creatorActionRows(actions: readonly CreatorActionItem[]): HomeProgressRow[] {
   return actions.map((item): HomeProgressRow => {
     if (item.kind === "signature_link") {
-      return { id: item.kind, title: "카카오톡 인증 알림 연결", description: "연결 전에는 선물을 받을 수 없습니다", status: ACTION_LABEL[item.kind], tone: "warn", href: creatorActionHref(item) };
+      return { id: item.kind, title: "카카오톡 인증 알림 연결", description: "선물을 받으려면 연결이 필요합니다", status: ACTION_LABEL[item.kind], tone: "warn", href: creatorActionHref(item) };
     }
     return {
       id: `${item.kind}-${item.orderNo}-${"boxId" in item ? item.boxId ?? "" : "shareId" in item ? item.shareId ?? "" : "boxSeq" in item ? item.boxSeq : ""}`,
