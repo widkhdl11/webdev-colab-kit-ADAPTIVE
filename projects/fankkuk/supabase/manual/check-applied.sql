@@ -57,6 +57,14 @@ from (values
   ('0031', to_regclass('pii.revgift_box_addresses') is not null,
            '선물함 신청 주소 사본 표'),
   ('0032', to_regclass('pii.order_return_addresses') is not null and to_regclass('pii.fan_addresses') is null,
-           '팬 등록 주소를 지우고 주문 반송 주소 사본 표가 있다')
+           '팬 등록 주소를 지우고 주문 반송 주소 사본 표가 있다'),
+  ('0033', to_regprocedure('pii.revgift_box_regions(uuid[])') is not null,
+           '명세서가 읽는 신청 사본 할증 구분 함수'),
+  ('0034', to_regprocedure('public.revgift_box_claim_print(text,uuid)') is not null,
+           '선물함 송장 출력이 사본을 내주는 함수'),
+  ('0035', coalesce((select prosrc like '%delivery_copy_drop_due%' from pg_proc where oid = to_regprocedure('public.office_drop_address_copies()')), false),
+           '역조공 몫 사본 삭제가 배송 설정값을 따른다'),
+  ('0036', coalesce((select prosrc like '%waitlist_at_close%' from pg_proc where oid = to_regprocedure('pii.revgift_box_drop_copies(uuid[],text)')), false),
+           '사본 삭제 까닭에 「마감 때 고르지 않은 대기 신청」')
 ) as v(file, applied, marker)
 order by file;
