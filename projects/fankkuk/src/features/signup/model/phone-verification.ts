@@ -40,6 +40,12 @@ export type StartOptions = {
    * 미룬 일은 오류를 던지지 않는다(실패는 로그만).
    */
   defer?: (task: () => Promise<void>) => void;
+  /**
+   * 가입 3단계 장애 대비 길(signup INV-U20): 앞 번호표(카카오 서명 요청의 번호표, 쿠키에 있던 값). 주면 새 번호표에 그 번호표의 「창구 장애 확인」을
+   * 옮기는 DB 함수를 부른다 — 장애로 닫힌 요청인지·같은 번호인지·10분 안인지는 DB 가 판정하고, 아니면 아무것도 옮기지 않는다.
+   * 옮기지 못해도 인증번호는 보낸다(팬은 장애 기록이 필요 없고, 크리에이터는 가입 때 막힌다).
+   */
+  carryDownFrom?: string | null;
 };
 
 export type StartFailReason = "closed" | "phone" | "rate_minute" | "rate_day" | "send_failed";
@@ -121,6 +127,10 @@ export async function startPhoneVerification(
     if (recorded.error.code === "FK429") return { ok: false, status: 429, reason: "rate_day", message: RATE_DAY_MESSAGE };
     if (recorded.error.code === "22023") return { ok: false, status: 400, reason: "phone", message: PHONE_SHAPE_MESSAGE };
     throw new Error(`인증번호 요청을 기록하지 못했다: ${recorded.error.code}`);
+  }
+  if (options.carryDownFrom && z.string().uuid().safeParse(options.carryDownFrom).success) {
+    const carried = await deps.admin.rpc("carry_signup_sign_down", { p_from: options.carryDownFrom, p_to: verificationId });
+    if (carried.error) console.error(`창구 장애 기록을 옮기지 못했다: ${carried.error.code ?? "코드 없음"}`);
   }
 
   // 비밀번호 찾기: 계정 확인·발송을 응답 뒤로 — 응답 전에 하는 일이 계정이 있든 없든 같다(INV-L10)

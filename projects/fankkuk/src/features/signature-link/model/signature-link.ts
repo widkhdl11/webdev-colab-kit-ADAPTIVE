@@ -4,6 +4,7 @@ import type { Viewer } from "@/entities/session/model/viewer";
 import type { ApprovalSigner } from "@/shared/api/approval-signer/signer";
 import { parseEnvelope } from "@/shared/lib/envelope/envelope";
 import { sameSignedPlaintext } from "@/entities/order/model/evaluate-approval";
+import { LINK_REQUEST_MESSAGE } from "@/entities/creator/model/signature-link-request";
 
 // 승인 서명 연결하기 (approval-signature INV-S16) — 앱 서버 쪽 두 단계.
 // 1) 시작: 본문에서 봉인된 연결 정보(이름·생년월일·휴대폰 번호) 하나만 꺼내 DB 에 요청을 만들고(고정 원문 = 연결 요청 ID + 요청 시각, 5분 기한)
@@ -23,8 +24,8 @@ export type CheckLinkResult = { ok: true; state: LinkCheckState; linkedAt: strin
 type Deps = { admin: Pick<SupabaseClient, "rpc">; viewer: Viewer | null; signer: ApprovalSigner | null };
 
 export const LINK_UNAVAILABLE = "현재 승인 서명을 연결할 수 없습니다.";
-/** INV-S16: 연결 시험 서명의 요청 구분 문구 — 카카오 지갑에 보인다 */
-export const LINK_REQUEST_MESSAGE = "팬꾹 승인 서명 연결";
+/** INV-S16: 연결 시험 서명의 요청 구분 문구 — 가입 3단계(signup INV-U19)와 같은 값이라 entities 에 둔다 */
+export { LINK_REQUEST_MESSAGE };
 const LOGIN = { ok: false, status: 401, message: "로그인이 필요합니다." } as const;
 const CREATOR_ONLY = { ok: false, status: 403, message: "크리에이터 계정만 이용할 수 있습니다." } as const;
 const UNAVAILABLE = { ok: false, status: 503, message: LINK_UNAVAILABLE } as const;

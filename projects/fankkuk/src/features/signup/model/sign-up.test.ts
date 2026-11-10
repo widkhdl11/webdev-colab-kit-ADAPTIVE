@@ -29,6 +29,8 @@ function harness(opts: {
   production?: boolean;
   /** 가입 경로 기록이 실패한다(metrics INV-Q4) */
   recordFails?: boolean;
+  /** 번호표의 확인 방법(signup INV-U19·U20) — 크리에이터 가입만 묻는다. 기본은 카카오 서명 */
+  kind?: { data: unknown; error: { code: string } | null };
 } = {}) {
   const rpcCalls: RpcCall[] = [];
   const created: { email: string; password: string; email_confirm?: boolean }[] = [];
@@ -45,6 +47,8 @@ function harness(opts: {
       async rpc(fn: string, args: Record<string, unknown>) {
         rpcCalls.push({ fn, args });
         if (fn === "usable_phone_verification") return { data: verifiedHash, error: null };
+        if (fn === "signup_verification_kind") return opts.kind ?? { data: "sign", error: null };
+        if (fn === "discard_signup_sign") return { data: null, error: null };
         if (fn === "create_account" || fn === "create_creator_account") return { data: null, error: opts.createAccountError ?? null };
         if (fn === "record_signup_source") return { data: null, error: opts.recordFails ? { code: "XX000" } : null };
         if (fn === "issue_email_verification") {
@@ -560,5 +564,45 @@ describe("INV-U18: 가입 번호는 묶음(해시·암호문·앞 3자리·뒤 4
     await expect(signUp(h.deps, body())).rejects.toThrow();
     expect(h.created).toEqual([]);
     expect(h.rpcCalls.filter((c) => c.fn === "create_account")).toEqual([]);
+  });
+});
+
+describe("INV-U19·U20: 크리에이터 가입의 확인 방법", () => {
+  const creator = { tagIds: ["11111111-1111-4111-8111-000000000001"], customTag: "" };
+  const creatorBody = () => body({ role: "creator", creator });
+
+  it("INV-U19 (S19): 카카오 서명으로 확인된 번호표면 크리에이터 계정을 만든다 — 연결 기록은 같은 DB 처리가 만든다", async () => {
+    const h = harness({ kind: { data: "sign", error: null } });
+    expect(await signUp(h.deps, creatorBody())).toMatchObject({ ok: true });
+    expect(h.rpcCalls.find((c) => c.fn === "signup_verification_kind")?.args).toEqual({ p_id: VID });
+    expect(h.rpcCalls.some((c) => c.fn === "create_creator_account")).toBe(true);
+  });
+
+  it("INV-U20 (S20): 「창구 장애 확인」이 있는 인증번호 확인이면 크리에이터 계정을 만든다(연결은 나중)", async () => {
+    const h = harness({ kind: { data: "code_down", error: null } });
+    expect(await signUp(h.deps, creatorBody())).toMatchObject({ ok: true });
+  });
+
+  it("INV-U20 (S20b, 실패경로): 창구가 정상인데 인증번호로 확인한 번호표면 크리에이터 가입을 거부한다 — 로그인 정보도 만들지 않는다", async () => {
+    const h = harness({ kind: { data: "code", error: null } });
+    const r = await signUp(h.deps, creatorBody());
+    expect(r).toMatchObject({ ok: false, status: 400, field: "verification" });
+    expect(h.created).toEqual([]);
+    expect(h.rpcCalls.some((c) => c.fn === "create_creator_account")).toBe(false);
+  });
+
+  it("INV-U19 (실패경로): 확인 방법을 읽는 DB 함수가 없으면(개인정보 구역 SQL 적용 전) 크리에이터 가입을 받지 않는다 — 팬 가입은 그대로", async () => {
+    const h = harness({ kind: { data: null, error: { code: "PGRST202" } } });
+    expect(await signUp(h.deps, creatorBody())).toMatchObject({ ok: false, status: 503, field: "form" });
+    expect(h.created).toEqual([]);
+    const fan = harness({ kind: { data: null, error: { code: "PGRST202" } } });
+    expect(await signUp(fan.deps, body())).toMatchObject({ ok: true });
+    expect(fan.rpcCalls.some((c) => c.fn === "signup_verification_kind")).toBe(false);
+  });
+
+  it("INV-U19 ⑤ 정함 (S19d): 서명 길에서 이미 가입된 번호(FKU02)면 그 요청의 봉투를 지우는 함수를 부른다", async () => {
+    const h = harness({ kind: { data: "sign", error: null }, createAccountError: { code: "FKU02" } });
+    expect(await signUp(h.deps, creatorBody())).toMatchObject({ ok: false, field: "phone" });
+    expect(h.rpcCalls.find((c) => c.fn === "discard_signup_sign")?.args).toEqual({ p_verification_id: VID });
   });
 });

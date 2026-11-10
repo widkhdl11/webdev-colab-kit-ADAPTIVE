@@ -12,7 +12,7 @@ const KEYS = readPhoneKeys({ FANKKUK_PHONE_ENC_KEY: randomBytes(32).toString("ba
 type Sent = { phone: string; text: string };
 
 function harness(
-  opts: { requestError?: string; sendFails?: number; kakao?: "delivered" | "failed" | "throws"; verifier?: PhoneVerifier | null; checkRow?: { result: string; remaining: number } } = {},
+  opts: { requestError?: string; sendFails?: number; kakao?: "delivered" | "failed" | "throws"; verifier?: PhoneVerifier | null; checkRow?: { result: string; remaining: number }; carryError?: string } = {},
 ) {
   const rpcCalls: { fn: string; args: Record<string, unknown> }[] = [];
   const sent: Sent[] = [];
@@ -47,6 +47,7 @@ function harness(
         rpcCalls.push({ fn, args });
         if (fn === "request_phone_code") return opts.requestError ? { data: null, error: { code: opts.requestError } } : { data: null, error: null };
         if (fn === "discard_phone_code") return { data: null, error: null };
+        if (fn === "carry_signup_sign_down") return opts.carryError ? { data: null, error: { code: opts.carryError } } : { data: true, error: null };
         if (fn === "check_phone_code") return { data: [opts.checkRow ?? { result: "verified", remaining: 5 }], error: null };
         throw new Error(fn);
       },
@@ -329,5 +330,30 @@ describe("비밀번호 찾기용 선택지 (session-login INV-L10)", () => {
     const r = await startPhoneVerification(h.deps, { phone: "010-5555-6666" }, IP);
     expect(r.ok).toBe(false);
     expect(h.rpcCalls.map((c) => c.fn)).toEqual(["request_phone_code", "discard_phone_code"]);
+  });
+});
+
+describe("INV-U20: 장애 대비 길 — 「창구 장애 확인」을 새 번호표로 옮긴다", () => {
+  const DOWN_TICKET = "44444444-5555-4666-8777-888888888888";
+
+  it("INV-U20 (S20): 앞 번호표(카카오 서명 요청)를 넘기면 새 인증번호 번호표에 장애 기록을 옮기는 함수를 보내기 전에 부른다 — 옮길지는 DB 가 판정한다", async () => {
+    const h = harness();
+    const r = await startPhoneVerification(h.deps, { phone: "01055556666" }, IP, { carryDownFrom: DOWN_TICKET });
+    if (!r.ok) throw new Error("요청 실패");
+    const fns = h.rpcCalls.map((c) => c.fn);
+    expect(fns.indexOf("carry_signup_sign_down")).toBeGreaterThan(fns.indexOf("request_phone_code"));
+    expect(h.rpcCalls.find((c) => c.fn === "carry_signup_sign_down")?.args).toEqual({ p_from: DOWN_TICKET, p_to: r.verificationId });
+    expect(h.kakaoSent.length + h.sent.length).toBeGreaterThan(0);
+  });
+
+  it("INV-U20 (실패경로): 앞 번호표가 없거나 꼴이 틀리면 옮기지 않는다. 옮기는 함수가 없어도(SQL 적용 전) 인증번호는 그대로 보낸다 — 크리에이터 가입만 막힌다", async () => {
+    for (const carryDownFrom of [undefined, null, "not-a-uuid"]) {
+      const h = harness();
+      await startPhoneVerification(h.deps, { phone: "01055556666" }, IP, { carryDownFrom });
+      expect(h.rpcCalls.some((c) => c.fn === "carry_signup_sign_down")).toBe(false);
+    }
+    const missing = harness({ carryError: "PGRST202" });
+    const r = await startPhoneVerification(missing.deps, { phone: "01055556666" }, IP, { carryDownFrom: DOWN_TICKET });
+    expect(r.ok).toBe(true);
   });
 });

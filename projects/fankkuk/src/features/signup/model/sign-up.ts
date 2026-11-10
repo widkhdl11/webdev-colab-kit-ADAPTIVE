@@ -13,6 +13,8 @@ import { consentRows, detailsFieldOf, signupInputSchema, type DetailsField } fro
 // 1) 입력 검사(INV-U5·U6). 운영이면 문자 대행사 연결 전이라 여기서 거부(INV-U9). 만 14세 확인이 없으면 거부(INV-U16).
 // 2) 번호표가 쓸 수 있는지, 확인된 번호가 입력 번호와 같은지 본다(INV-U1·U2). 아니면 로그인 정보를 만들지 않는다.
 //    번호 중복은 이 확인을 통과한 뒤에만 알려 준다(INV-U11).
+//    크리에이터는 확인 방법도 본다(INV-U19·U20): 카카오 서명(sign) 또는 「창구 장애 확인」이 있는 인증번호(code_down)만 받는다.
+//    확인 방법을 읽는 DB 함수가 없으면(개인정보 구역 SQL 적용 전) 크리에이터 가입을 받지 않는다. 같은 판정을 DB 계정 만들기 함수가 다시 한다.
 // 3) Supabase Auth 에 로그인 정보를 만든다 — 주소는 아이디로 만든 예약 도메인 주소(INV-U8). 이미 있으면 「쓰는 아이디」.
 // 4) create_account(크리에이터면 create_creator_account — 확인 안 된 공개 정보 행·팬덤 이름까지) 가 프로필·연락처·확인 메일 기록·약관 동의를 한 번에 만들고 번호표를 「씀」으로 바꾼다(INV-U4).
 //    닉네임은 적은 값 그대로 넘긴다 — 겹침(영문 대소문자·앞뒤 공백 무시)과 금칙어·연락처 필터는 DB 가 판정한다(INV-U13, FKU04~07).
@@ -57,6 +59,9 @@ const CLOSED = {
 const REVERIFY = { ok: false, status: 400, field: "verification", message: "휴대폰 번호를 다시 확인해 주세요." } as const;
 const ID_TAKEN = { ok: false, status: 409, field: "loginId", message: "이미 사용 중인 아이디입니다." } as const;
 const PHONE_TAKEN = { ok: false, status: 409, field: "phone", message: "이 번호로 가입된 계정이 있습니다." } as const;
+const CREATOR_REVERIFY = { ok: false, status: 400, field: "verification", message: "카카오톡 인증을 다시 진행해 주세요." } as const;
+/** DB 에 함수가 없다(개인정보 구역 SQL 적용 전) */
+const MISSING_FUNCTION = new Set(["PGRST202", "42883"]);
 
 const FAN_NAME_FILTER: Record<string, string> = {
   P0084: "팬덤 이름에 사용할 수 없는 표현이 포함되어 있습니다.",
@@ -84,6 +89,17 @@ export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = 
   const usable = await deps.admin.rpc("usable_phone_verification", { p_id: input.verificationId });
   if (usable.error) throw new Error(`휴대폰 확인 기록을 읽지 못했다: ${usable.error.code}`);
   if (typeof usable.data !== "string" || usable.data !== phoneHash(phoneKeys, input.phone)) return REVERIFY;
+  let signed = false;
+  if (input.role === "creator") {
+    const kind = await deps.admin.rpc("signup_verification_kind", { p_id: input.verificationId });
+    if (kind.error) {
+      if (kind.error.code && MISSING_FUNCTION.has(kind.error.code)) return CLOSED;
+      throw new Error(`확인 방법을 읽지 못했다: ${kind.error.code}`);
+    }
+    // INV-U20: 창구가 정상인데 인증번호로 확인했으면(code) 크리에이터 계정을 만들지 않는다
+    if (kind.data !== "sign" && kind.data !== "code_down") return CREATOR_REVERIFY;
+    signed = kind.data === "sign";
+  }
 
   const loginEmail = accountLoginEmail(input.loginId);
   if (!loginEmail) return { ok: false, status: 400, field: "loginId", message: "아이디를 확인해 주세요." };
@@ -133,7 +149,11 @@ export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = 
   if (account.error) {
     await removeAuthUser(deps, userId);
     if (account.error.code === "FKU01") return REVERIFY;
-    if (account.error.code === "FKU02") return PHONE_TAKEN;
+    if (account.error.code === "FKU02") {
+      // INV-U19 ⑤ 정함: 계정이 만들어지지 않은 서명 요청의 봉투는 그 자리에서 지운다(실패해도 정리 작업이 지운다)
+      if (signed) await discardSignEnvelope(deps, input.verificationId);
+      return PHONE_TAKEN;
+    }
     if (account.error.code === "FKU03") return ID_TAKEN;
     // INV-U13: 이미 쓰는 닉네임(FKU04, 동시 가입에서 진 쪽 포함)·닉네임 필터(FKU05~07) — 닉네임 칸
     const nick = nicknameRejection(account.error.code);
@@ -176,6 +196,15 @@ async function removeAuthUser(deps: SignUpDeps, userId: string): Promise<void> {
     }
   }
   throw new Error(`계정 만들기 실패 뒤 로그인 정보를 지우지 못했다: ${userId}`);
+}
+
+async function discardSignEnvelope(deps: SignUpDeps, verificationId: string): Promise<void> {
+  try {
+    const { error } = await deps.admin.rpc("discard_signup_sign", { p_verification_id: verificationId });
+    if (error) console.error(`가입 서명 봉투를 지우지 못했다: ${error.code ?? "코드 없음"}`);
+  } catch {
+    console.error("가입 서명 봉투를 지우지 못했다");
+  }
 }
 
 /** metrics INV-Q4: 가입 경로·utm 기록. 측정용이라 실패해도 가입을 되돌리지 않는다 — 서버 기록에만 남긴다. */
