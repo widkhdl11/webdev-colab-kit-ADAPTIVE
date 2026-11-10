@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 # 관리자 요금표 UX 명세 — `/admin/pricing`
 
@@ -66,6 +66,8 @@ status: draft
 - admin-console INV-K17, S17~S17d (월 발송 건수)
 
 ## 2026-11-09 바꿀 것 — 올린 요금은 30일 뒤 적용 (admin-console INV-K18)
+
+2026-11-10 시안 승인(사용자 「추천대로 승인」, 시안 `docs/design/mockups/admin-pricing-pending-20261109/`).
 
 지금 모습: 칸을 고쳐 저장하면 바로 적용되고 「저장했어요.」가 뜬다.
 
