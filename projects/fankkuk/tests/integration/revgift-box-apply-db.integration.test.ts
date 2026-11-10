@@ -312,6 +312,7 @@ describe("INV-GB9: 크리에이터에게 보이는 팬 정보는 닉네임·신�
       "carton_count",
       "cartons_received",
       "created_at",
+      "ended_at",
       "id",
       "inbound_code",
       "invite_token",

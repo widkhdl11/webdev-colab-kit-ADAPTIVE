@@ -44,6 +44,14 @@ export const APPLICATION_STATUS_OFFICE_NAME: Record<ApplicationStatus, string> =
   ended: "끝남",
 };
 
+/**
+ * 0명 마감인가 — 마감할 때 담길 팬이 없어 그 자리에서 끝난 선물함(closed + 끝난 시각, INV-GB1 · Q21).
+ * 상자 고르기·다음 단계·선물함 취소가 없다(명세 closed_empty). 상태 이름은 따로 없다 — 화면 표기도 「마감」 하나다.
+ */
+export function isClosedEmpty(box: { status: BoxStatus; endedAt: string | null }): boolean {
+  return box.status === "closed" && box.endedAt !== null;
+}
+
 /** 크리에이터 신청 관리 창에서 「제외」로 보이는가 — 제외된 줄은 흐리게 목록에 남는다(INV-GB7) */
 export function isExcluded(status: ApplicationStatus): boolean {
   return status === "excluded";

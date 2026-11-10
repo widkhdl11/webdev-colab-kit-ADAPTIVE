@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type RefObject } from "react";
 import type { BoxApplication, MyBox } from "@/entities/revgift-box/api/box-reads";
-import { BOX_STATUS_NAME, isExcluded, isWaitlisted } from "@/entities/revgift-box/model/box-status";
+import { BOX_STATUS_NAME, isClosedEmpty, isExcluded, isWaitlisted } from "@/entities/revgift-box/model/box-status";
 import { formatDateTime, formatMonthDayTimeKo } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import d from "@/shared/ui/dialog-parts.module.css";
@@ -256,18 +256,27 @@ export function BoxManageDialog({
                 <ul className={s.pgrid}>
                   {shownApplicants.map((r) => {
                     const off = isExcluded(r.status);
+                    const locked = off && full; // 다시 넣기는 정원 안에서만(INV-GB5·GB7)
                     return (
                       <li key={r.id}>
-                        <label className={off ? `${s.pchip} ${s.isOff}` : s.pchip}>
+                        <label className={locked ? `${s.pchip} ${s.isOff} ${s.isLocked}` : off ? `${s.pchip} ${s.isOff}` : s.pchip}>
                           <span className={s.pcT}>
                             <span className={s.cmN} title={r.nickname}>
                               {r.nickname}
                             </span>
                             <span className={s.cmW}>{off ? `제외됨 · ${formatMonthDayTimeKo(r.appliedAt)}` : formatMonthDayTimeKo(r.appliedAt)}</span>
+                            {locked ? (
+                              <span className={s.cmW} id={`mg-full-${r.id}`}>
+                                받을 인원이 다 찼습니다
+                              </span>
+                            ) : null}
                           </span>
                           <input
                             type="checkbox"
                             checked={!off}
+                            disabled={locked}
+                            aria-disabled={locked || undefined}
+                            aria-describedby={locked ? `mg-full-${r.id}` : undefined}
                             aria-label={`${r.nickname} 보낼 팬에 넣기`}
                             aria-busy={busyRow === r.id || undefined}
                             onChange={(e) => void toggle(r.id, !e.target.checked)}
@@ -399,7 +408,7 @@ export function BoxManagePanel({ box }: { box: MyBox }) {
         )}
       </section>
 
-      {["closed", "awaiting_box"].includes(box.status) ? (
+      {["closed", "awaiting_box"].includes(box.status) && !isClosedEmpty(box) ? (
         <div className={s.actions}>
           <button className="btn btn--line" type="button" onClick={() => setSheet("cancel")}>
             선물함 취소

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { BoxCard, MyBox, PriceTable } from "@/entities/revgift-box/api/box-reads";
-import { BOX_STATUS_NAME } from "@/entities/revgift-box/model/box-status";
+import { BOX_STATUS_NAME, isClosedEmpty } from "@/entities/revgift-box/model/box-status";
 import { BoxManagePanel } from "@/features/revgift-box-manage/ui/box-manage-panel";
 import { BoxTierPanel } from "@/features/revgift-box-manage/ui/box-tier-panel";
 import { BoxInvoiceSection, type PayNotice } from "./box-invoice-section";
@@ -46,7 +46,13 @@ export function BoxManagePage({
             <span className="tag">{box.isPublic ? "공개" : "비공개"}</span>
           </p>
         </header>
-        {box.status === "closed" && price ? (
+        {isClosedEmpty(box) ? (
+          // 0명 마감(명세 closed_empty) — 「마감」 + 읽기 전용 목록뿐. 상자 고르기·다음 단계·선물함 취소 없음(INV-GB1 · Q21)
+          <section className={s.stack} aria-label="마감">
+            <p>신청한 팬이 없어 보낼 선물이 없습니다.</p>
+            <BoxManagePanel box={box} />
+          </section>
+        ) : box.status === "closed" && price ? (
           <BoxTierPanel box={box} price={price} />
         ) : box.status === "awaiting_box" || box.status === "arrived" || box.status === "held" ? (
           <BoxSendSection box={box} cards={cards} />

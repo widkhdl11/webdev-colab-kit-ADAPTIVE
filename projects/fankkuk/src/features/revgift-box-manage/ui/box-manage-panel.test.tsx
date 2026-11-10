@@ -45,6 +45,7 @@ const BOX: MyBox = {
   status: "open",
   inviteToken: "a".repeat(32),
   createdAt: "2026-11-08T01:00:00Z",
+  endedAt: null,
   inboundCode: null,
   cartonCount: null,
   cartonsReceived: 0,
@@ -104,6 +105,24 @@ describe("신청 관리 모달", () => {
     await act(async () => chip("달토끼").click());
     expect(sendSetExcluded).toHaveBeenLastCalledWith(BOX.id, B, false);
     expect(chip("달토끼").checked).toBe(true);
+  });
+
+  it("INV-GB5 · GB7: 받을 인원이 다 찬 동안 제외된 칩은 다시 넣을 수 없다 — 체크가 막히고 칩에 이유 한 줄, 보내지 않는다", async () => {
+    renderDialog({ capacity: 1 });
+    expect(chip("달토끼").disabled).toBe(true);
+    expect(chip("달토끼").getAttribute("aria-disabled")).toBe("true");
+    expect(chip("달토끼").closest("label")!.textContent).toContain("받을 인원이 다 찼습니다");
+    await act(async () => chip("달토끼").click());
+    expect(sendSetExcluded).not.toHaveBeenCalled();
+    // 신청 칩(제외 아님)은 그대로 누를 수 있다 — 빼면 자리가 나서 제외 칩이 다시 풀린다
+    expect(chip("별빛").disabled).toBe(false);
+    sendSetExcluded.mockResolvedValue({ kind: "ok", data: "excluded" });
+    await act(async () => chip("별빛").click());
+    expect(chip("달토끼").disabled).toBe(false);
+    expect(chip("달토끼").closest("label")!.textContent).not.toContain("받을 인원이 다 찼습니다");
+    // 자리가 있으면 처음부터 막지 않는다
+    renderDialog();
+    expect(chip("달토끼").disabled).toBe(false);
   });
 
   it("INV-GB5 (실패경로): 다시 넣기가 「다 참」으로 거부되면 그 문구, 칩은 제외 그대로", async () => {
@@ -182,6 +201,13 @@ describe("신청 관리 모달", () => {
 });
 
 describe("신청 받는 중이 아닌 선물함 — 읽기 전용", () => {
+  it("INV-GB1 · Q21: 0명 마감(closed + 끝난 시각)에는 선물함 취소가 없다 — 끝난 시각이 없는 마감에는 있다", () => {
+    renderPanel({ status: "closed", endedAt: "2026-11-10T01:00:00Z", applications: [] });
+    expect([...host.querySelectorAll("button")].some((b) => b.textContent === "선물함 취소" && !b.closest("dialog"))).toBe(false);
+    renderPanel({ status: "closed", endedAt: null });
+    expect([...host.querySelectorAll("button")].some((b) => b.textContent === "선물함 취소" && !b.closest("dialog"))).toBe(true);
+  });
+
   it("INV-GB7 · INV-GB1: 마감 뒤에는 체크·마감·링크가 없고 선물함 취소만, 결제 요청 뒤에는 취소도 없다", () => {
     renderPanel({ status: "closed", applications: [{ ...BOX.applications[0], status: "selected" }, BOX.applications[1]] });
     expect(checks()).toEqual([]);

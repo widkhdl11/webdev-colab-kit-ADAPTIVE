@@ -28,6 +28,7 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
       status: "open",
       invite_token: "a".repeat(32),
       created_at: "2026-11-08T01:00:00+00:00",
+      ended_at: null,
       inbound_code: null,
       carton_count: null,
       cartons_received: 0,
@@ -42,6 +43,7 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
       status: "open",
       inviteToken: "a".repeat(32),
       createdAt: "2026-11-08T01:00:00+00:00",
+      endedAt: null,
       inboundCode: null,
       cartonCount: null,
       cartonsReceived: 0,
@@ -52,7 +54,7 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
   });
 
   it("INV-GB9 S9b: 신청 줄에 다른 칸(로그인 아이디·주소 등)이 섞이면 받지 않는다", async () => {
-    const row = { id: BOX, name: "a", capacity: 1, is_public: true, status: "open", invite_token: null, created_at: "2026-11-08T01:00:00+00:00", inbound_code: null, carton_count: null, cartons_received: 0, invoice: null };
+    const row = { id: BOX, name: "a", capacity: 1, is_public: true, status: "open", invite_token: null, created_at: "2026-11-08T01:00:00+00:00", ended_at: null, inbound_code: null, carton_count: null, cartons_received: 0, invoice: null };
     for (const extra of [{ login_id: "byeolbit_fan" }, { address: "서울" }, { fan_id: APP }, { waybill: "123456789012" }]) {
       const f = fakeClient({ ...row, applications: [{ id: APP, nickname: "별빛", applied_at: "2026-11-08T02:00:00+00:00", status: "applied", chosen_tier: null, waitlist_no: null, ...extra }] });
       await expect(readMyBox(f.client, BOX)).rejects.toThrow();
@@ -63,7 +65,7 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
   });
 
   it("INV-GB9 S9d: 대기 신청 줄은 순번(1 이상 정수)을 받는다 — 0·소수·문자열 순번은 받지 않는다. 팬의 내 대기 순번도 같은 꼴", async () => {
-    const row = { id: BOX, name: "a", capacity: 1, is_public: true, status: "open", invite_token: null, created_at: "2026-11-08T01:00:00+00:00", inbound_code: null, carton_count: null, cartons_received: 0, invoice: null };
+    const row = { id: BOX, name: "a", capacity: 1, is_public: true, status: "open", invite_token: null, created_at: "2026-11-08T01:00:00+00:00", ended_at: null, inbound_code: null, carton_count: null, cartons_received: 0, invoice: null };
     const app = { id: APP, nickname: "하늘", applied_at: "2026-11-08T02:00:00+00:00", status: "waitlisted", chosen_tier: null };
     expect((await readMyBox(fakeClient({ ...row, applications: [{ ...app, waitlist_no: 2 }] }).client, BOX))?.applications[0]).toMatchObject({ status: "waitlisted", waitlistNo: 2 });
     for (const bad of [0, 1.5, "2"]) {
@@ -136,7 +138,7 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
 });
 
 describe("선물함 3부 읽기 (revgift-box INV-GB9·GB10·GB12·GB13·GB23)", () => {
-  const base = { id: BOX, name: "a", capacity: 1, is_public: true, status: "invoiced", invite_token: null, created_at: "2026-11-08T01:00:00+00:00", applications: [] };
+  const base = { id: BOX, name: "a", capacity: 1, is_public: true, status: "invoiced", invite_token: null, created_at: "2026-11-08T01:00:00+00:00", ended_at: null, applications: [] };
   const line = { nickname: "별빛", tier: "oversize", shipping_fee_krw: 13000, surcharge_region: "jeju", surcharge_krw: 4000, service_fee_krw: 700, amount_krw: 17700, progress: "unpaid", printed: false, shipped_on: null, received: false, carrier: null };
   const invoice = { amount_krw: 17700, shipping_fee_krw: 17000, service_fee_krw: 700, carton_cod_krw: 0, created_at: "2026-11-09T01:00:00+00:00", pay_due_at: "2026-11-12T01:00:00+00:00", return_at: "2026-11-16T01:00:00+00:00", paying: false, paid_at: null, lines: [line] };
 

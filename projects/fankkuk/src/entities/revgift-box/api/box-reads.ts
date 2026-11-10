@@ -64,6 +64,8 @@ export type MyBox = {
   status: BoxStatus;
   inviteToken: string | null;
   createdAt: string;
+  /** 끝난 시각 — closed 인데 이 값이 있으면 0명 마감(끝, 다음 단계 없음 — INV-GB1 · Q21) */
+  endedAt: string | null;
   /** 사무실 주소 6자리 — 상자 보내 주세요·도착·확인 필요일 때만(INV-GB10) */
   inboundCode: string | null;
   cartonCount: number | null;
@@ -151,6 +153,7 @@ const myBoxSchema = z
     status: boxStatusSchema,
     invite_token: z.string().nullable(),
     created_at: z.string(),
+    ended_at: z.string().nullable(),
     inbound_code: z.string().regex(/^[0-9A-Z]{6}$/).nullable(),
     carton_count: z.number().int().nullable(),
     cartons_received: z.number().int(),
@@ -202,6 +205,7 @@ export async function readMyBox(client: Rpc, boxId: string): Promise<MyBox | nul
     status: b.status,
     inviteToken: b.invite_token,
     createdAt: b.created_at,
+    endedAt: b.ended_at,
     inboundCode: b.inbound_code,
     cartonCount: b.carton_count,
     cartonsReceived: b.cartons_received,
