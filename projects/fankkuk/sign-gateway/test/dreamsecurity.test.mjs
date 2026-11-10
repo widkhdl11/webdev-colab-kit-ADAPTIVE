@@ -160,7 +160,15 @@ describe("드림시큐리티 어댑터 (가짜 드림 서버)", () => {
     mod = fakeModule();
     const adapter = createAdapter(config, {
       outboundRequest: fake.request,
-      unwrapKey: async (w) => crypto.privateDecrypt({ key: kms.privateKey, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING, oaepHash: "sha256" }, w),
+      // KMS 대역 — 실제 KMS(kms.mjs)처럼 풀 수 없는 암호문은 type 이 InvalidCiphertextException 인 오류로, 연결 실패는 그냥 오류로 던진다
+      unwrapKey: async (w) => {
+        if (ctx.kmsDown) throw new Error("connect ECONNREFUSED kms");
+        try {
+          return crypto.privateDecrypt({ key: kms.privateKey, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING, oaepHash: "sha256" }, w);
+        } catch {
+          throw Object.assign(new Error("InvalidCiphertextException: "), { type: "InvalidCiphertextException", status: 400 });
+        }
+      },
       unwrapReady: () => ({ ok: true }),
       loadModule: () => mod,
       now: () => ctx.clock,
@@ -176,6 +184,7 @@ describe("드림시큐리티 어댑터 (가짜 드림 서버)", () => {
   beforeEach(() => {
     ctx.clock = Date.now();
     ctx.scenario = { codes: [] };
+    ctx.kmsDown = false;
   });
 
   const call = (p, body) =>
@@ -382,6 +391,60 @@ describe("드림시큐리티 어댑터 (가짜 드림 서버)", () => {
     assert.equal((await start(IDENTITY, { creatorId: "" })).status, 400);
     assert.equal((await start(IDENTITY, { creatorId: "creator-1" })).status, 201);
     assert.equal((await start({ ...IDENTITY, phone: "0212345678" })).status, 400);
+  });
+
+  // 가입 3단계 요청(signup INV-U19 ②·INV-U16 정함) — 앱이 지정 번호와 최소 나이를 같이 보낸다
+  it("INV-U19 ②: 가입 요청의 signer.phone 이 봉투 속 번호와 다르면 400 invalid_signer(딜러사에 묻지 않음) — 같으면 201", async () => {
+    const before = fake.calls.length;
+    const res = await start(IDENTITY, { phone: "01099998888" });
+    assert.equal(res.status, 400);
+    assert.deepEqual(await res.json(), { error: "invalid_signer" });
+    assert.equal(fake.calls.length, before);
+    assert.equal((await start(IDENTITY, { phone: 1012345678 })).status, 400);
+    assert.equal((await start(IDENTITY, { phone: "010-1234-5678" })).status, 201);
+  });
+
+  /** 지금(한국시간) 기준 만 n세가 되는 날의 생년월일 */
+  const birthAged = (years, dayOffset = 0) => {
+    const d = new Date(ctx.clock + 9 * 3600 * 1000 + dayOffset * 86400 * 1000);
+    const y = d.getUTCFullYear() - years;
+    return `${y}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
+  };
+
+  it("INV-U16 정함: minAge 14 — 검증된 생년월일이 만 13세(내일 14세)면 422 signer_mismatch, 오늘 14세면 signed", async () => {
+    const young = { ...IDENTITY, birth: birthAged(14, 1) };
+    const { txId } = await (await start(young, { phone: young.phone, minAge: 14 })).json();
+    const res = await result(txId);
+    assert.equal(res.status, 422);
+    assert.deepEqual(await res.json(), { error: "signer_mismatch" });
+
+    const adult = { ...IDENTITY, birth: birthAged(14) };
+    const ok = await (await start(adult, { phone: adult.phone, minAge: 14 })).json();
+    assert.equal((await (await result(ok.txId)).json()).state, "signed");
+    // minAge 가 없는 요청(승인·설정 연결)은 나이를 보지 않는다
+    const plain = await (await start(young)).json();
+    assert.equal((await (await result(plain.txId)).json()).state, "signed");
+  });
+
+  it("INV-U16 (실패경로): minAge 꼴이 틀리면 400 invalid_signer", async () => {
+    for (const minAge of ["14", -1, 14.5, 200]) {
+      assert.equal((await start(IDENTITY, { phone: IDENTITY.phone, minAge })).status, 400, String(minAge));
+    }
+  });
+
+  it("INV-U20: 풀 수 없는 wrappedKey(KMS 가 암호문을 거부) → 400 invalid_signer — 장애(502)가 아니다", async () => {
+    const sealed = sealIdentity(IDENTITY, kms.publicKey);
+    const junk = { ...sealed, wrappedKey: crypto.randomBytes(256).toString("base64") };
+    const res = await call("/v1/sign/requests", { requestId: "r", plaintext: PLAINTEXT, requestMessage: REQUEST_MESSAGE, signer: { envelope: junk, creatorId: IDENTITY.creatorId, phone: IDENTITY.phone } });
+    assert.equal(res.status, 400);
+    assert.deepEqual(await res.json(), { error: "invalid_signer" });
+  });
+
+  it("INV-U20: KMS 연결 실패 → 502 upstream_error(장애)", async () => {
+    ctx.kmsDown = true;
+    const res = await start(IDENTITY, { phone: IDENTITY.phone });
+    assert.equal(res.status, 502);
+    assert.deepEqual(await res.json(), { error: "upstream_error" });
   });
 
   it("요청 구분 문구는 1~40자 필수", async () => {

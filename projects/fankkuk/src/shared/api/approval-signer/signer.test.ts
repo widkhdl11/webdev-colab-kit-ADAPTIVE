@@ -154,8 +154,8 @@ describe("INV-U19·U20: 가입 3단계 카카오 서명 — 창구 요청", () =
     expect(JSON.parse(String(f.calls[0]!.init.body)).signer).toEqual({ envelope: identity, creatorId: "c1", phone: "01012345678", minAge: 14 });
   });
 
-  it("INV-U20: 연결 실패·5xx·답 꼴 틀림은 창구 장애(down: true)", async () => {
-    for (const reply of [{ status: 503, body: {} }, { status: 500, body: {} }, { status: 201, body: { requestId: "r1" } }]) {
+  it("INV-U20: 연결 실패·5xx(게이트웨이 upstream_error 502 포함)·답 꼴 틀림은 창구 장애(down: true)", async () => {
+    for (const reply of [{ status: 502, body: { error: "upstream_error" } }, { status: 503, body: {} }, { status: 500, body: {} }, { status: 201, body: { requestId: "r1" } }]) {
       expect(await ask(createGatewaySigner(cfg, fakeFetch([reply]).impl)), JSON.stringify(reply)).toEqual({ ok: false, down: true });
     }
     const broken = createGatewaySigner(cfg, (async () => {
@@ -164,6 +164,7 @@ describe("INV-U19·U20: 가입 3단계 카카오 서명 — 창구 요청", () =
     expect(await ask(broken)).toEqual({ ok: false, down: true });
   });
 
+  // 게이트웨이는 풀 수 없는 봉투(쓰레기 wrappedKey 포함)·번호 불일치를 400 invalid_signer 로 답한다 — 장애로 꾸밀 수 없다
   it("INV-U20 (실패경로): 4xx(봉투·번호를 받지 않음)는 장애가 아니다(down: false) — 6자리 길을 열지 않는다", async () => {
     for (const status of [400, 409, 422]) {
       expect(await ask(createGatewaySigner(cfg, fakeFetch([{ status, body: {} }]).impl)), String(status)).toEqual({ ok: false, down: false });

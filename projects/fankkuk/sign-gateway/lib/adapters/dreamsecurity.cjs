@@ -49,6 +49,17 @@ function kstStamp(ms) {
   return iso.slice(0, 19).replace(/[-T:]/g, "");
 }
 
+/** 생년월일 yyyyMMdd 인 사람의 한국시간 at 기준 만 나이 */
+function ageOn(birth, at) {
+  const today = kstStamp(at).slice(0, 8);
+  const years = Number(today.slice(0, 4)) - Number(birth.slice(0, 4));
+  return today.slice(4) >= birth.slice(4) ? years : years - 1;
+}
+
+// KMS 가 「이 암호문은 풀 수 없다」고 답한 오류(kms.mjs KmsError.type) — 보낸 봉투가 틀린 것이지 창구 장애가 아니다(signup INV-U20).
+// 그 밖의 KMS 오류(연결 실패·시간 초과·권한·한도·5xx)는 창구 쪽 문제라 장애(502)로 둔다.
+const KMS_BAD_INPUT = new Set(["InvalidCiphertextException", "IncorrectKeyException", "ValidationException"]);
+
 /** 발급일 "yyyy-MM-dd HH:mm:ss.SSS"(한국시간) → ms. 꼴이 아니면 NaN */
 function parseIssueDate(value) {
   const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?$/.exec(String(value ?? ""));
@@ -202,7 +213,9 @@ function createDreamsecurityAdapter(config, deps) {
     let dek;
     try {
       dek = Buffer.from(await deps.unwrapKey(parsed.wrappedKey));
-    } catch {
+    } catch (err) {
+      // 쓰레기 wrappedKey 로 장애 기록(6자리 길)을 만들지 못하게 — KMS 가 암호문을 거부한 것은 400 invalid_signer
+      if (err !== null && typeof err === "object" && KMS_BAD_INPUT.has(err.type)) throw new TypeError("signer.envelope.wrappedKey");
       throw new UpstreamError("kms_decrypt");
     }
     const identity = envelope.parseLinkIdentity(envelope.openEnvelope(parsed, dek));
@@ -211,7 +224,15 @@ function createDreamsecurityAdapter(config, deps) {
     if (typeof signer.creatorId !== "string" || signer.creatorId.length === 0 || signer.creatorId !== identity.creatorId) {
       throw new TypeError("signer.creatorId");
     }
-    return identity;
+    // 가입 3단계(signup INV-U19 ②): 앱이 계정에 쓸 번호를 같이 보낸다 — 봉투 속 지정 번호와 같아야 한다(서명 결과 번호와는 결과 조회에서 대조)
+    if (signer.phone !== undefined) {
+      if (typeof signer.phone !== "string" || signer.phone.replace(/\D/g, "") !== identity.phone.replace(/\D/g, "")) throw new TypeError("signer.phone");
+    }
+    // 가입 3단계(INV-U16 정함): 서명 결과의 생년월일로 볼 최소 나이
+    if (signer.minAge !== undefined && !(Number.isInteger(signer.minAge) && signer.minAge >= 0 && signer.minAge <= 150)) {
+      throw new TypeError("signer.minAge");
+    }
+    return { ...identity, minAge: signer.minAge };
   }
 
   async function requestSignature({ requestId, plaintext, requestMessage, signer }) {
@@ -305,6 +326,8 @@ function createDreamsecurityAdapter(config, deps) {
     }
     const id = tx.identity;
     if (!(sameUtf8(name, id.name) && phone === id.phone && birth === id.birth)) throw new SignerMismatchError("identity");
+    // INV-U16 정함: 가입 요청이면 검증된 생년월일로 만 나이를 본다 — 모자라면 계정이 생기지 않게 대상자 불일치로 끝낸다
+    if (id.minAge !== undefined && ageOn(birth, at) < id.minAge) throw new SignerMismatchError("min_age");
 
     // INV-S3: 전자서명문을 직접 검증
     if (typeof result.signedData !== "string" || result.signedData.length === 0) throw new SignatureInvalidError("signed_data_missing");
