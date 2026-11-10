@@ -1,6 +1,6 @@
 ---
 feature: 크리에이터 선물 승인 서명 (approval signature)
-status: draft
+status: approved
 # ↑ 값은 반드시 이 줄에 붙여 쓴다.
 # 이력:
 #   2026-10-01 초안. 원본: docs/reference/fankkuk-decisions.md D-01·3장, fankkuk-design.md 「승인 인증 방법」.
