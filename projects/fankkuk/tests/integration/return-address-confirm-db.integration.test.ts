@@ -27,7 +27,7 @@ import { clearFanAddresses, deleteTestRevgifts, sampleEnvelope } from "./revgift
 
 // 반송 주소 확인 — 결제 때 받은 주문 사본(또는 「다른 주소 입력」 봉인, 크리에이터는 등록 주소)을 상자에 복사하는 확인과 반송 송장의 주소 열기(개인정보 구역).
 // supabase/manual/0020_return_address.sql 과 0032_fan_address_removal.sql(세 인자 확인·주문 사본 표)을 적용해야 돈다 — 0032 전에는 빨간불이 맞다.
-// 스펙: office-workflow INV-W15 (S15·S15b·S15c·S15e·S15f), address-protection INV-P18 (S18·S18b·S18c), payment INV-M25, action-center INV-J1·J4 (S1d)
+// 스펙: office-workflow INV-W15 (S15·S15b·S15c·S15e·S15g), address-protection INV-P18 (S18·S18b·S18c), payment INV-M25, action-center INV-J1·J4 (S1d)
 // 주문 사본은 이미 결제된 시험 주문에 DB 관리자 연결로 넣는다(putOrderReturnCopy) — 결제 대기 때 넣는 앱 경로는 order-return-address-db 가 본다.
 // 시드: 별빛(byeolbit_fan) = 보낸 팬, 달토끼(daltokki_fan) = 다른 팬, 하루(haru_creator) = 받는 크리에이터·역조공을 보내는 크리에이터, fankkuk_admin = 대표.
 // 시험이 쓰는 등록 주소는 형식만 맞춘 봉투다(복호화는 송장 출력 함수의 유닛 시험이 본다). 하루의 주소 칸은 비어 있을 때만 시험 값을 넣고 끝나면 지운다.
@@ -114,7 +114,7 @@ describe("반송 주소 확인 (office-workflow INV-W15, address-protection INV-
     expect(JSON.parse(copyOf(qrs[0]!))).toEqual(home);
   });
 
-  it("INV-W15 (S15f): 팬 주문에 주문 사본이 없으면 no_address — 아무것도 바뀌지 않는다. 그 자리에서 주소를 입력(봉인)해 확인하면 복사되고, 다시 다른 주소를 입력해 확인하면 새 주소가 복사된다", async () => {
+  it("INV-W15 (S15g): 팬 주문에 주문 사본이 없으면 no_address — 아무것도 바뀌지 않는다. 그 자리에서 주소를 입력(봉인)해 확인하면 복사되고, 다시 다른 주소를 입력해 확인하면 새 주소가 복사된다", async () => {
     const { g, qrs } = await returnWaitingGift();
     expect((await confirm(g.orderNo, 1)).data).toBe("no_address");
     expect(copies(qrs[0]!)).toBe("0");
