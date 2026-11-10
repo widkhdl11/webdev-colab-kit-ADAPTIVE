@@ -6,7 +6,7 @@
 <title>버튼 길이 정리 — 지금과 바꾼 뒤</title>
 <!--
   2026-11-10 사용자: 「쓸데없이 최대 길이나 긴 길이를 차지하는 버튼·레이아웃을 찾고 적절한 길이로 바꾼 시안」.
-  이번 판(넷째): projects/fankkuk/CLAUDE.md 「디자인 기준의 우선순위」(같은 날 추가) 순서로 다시 판정.
+  이번 판(다섯째): 프롬프트 적용 규칙 6·1-9·8-2·9-4 추가 반영. 넷째 판: projects/fankkuk/CLAUDE.md 「디자인 기준의 우선순위」(같은 날 추가) 순서로 다시 판정.
     1 design-rules.md·tokens.md(값) → 2 design-prompt.md(원칙) → 3 스킬(1·2에 없는 것만: ux-designer 흐름, impeccable 시각).
   지난 판에서 「바꾼다」던 세 곳(선물 상세 찾기·회원가입 다음·채널 확인 요청)은 승인된 design-rules 값이라 철회.
   찾은 방법: 로컬 사이트 42개 주소를 로그인 전·팬·크리에이터 세 상태로 열어 PC 1366 폭에서 실측 + 코드에서 btn--block·width:100% 사용처.
@@ -58,6 +58,10 @@
   .status h3 { margin-top: 16px; font-size: 20px; font-weight: 700; }
   .status p { margin-top: 8px; color: var(--sub); font-size: 15px; }
   .status .btn { margin-top: 24px; }
+  .phead { padding: 8px 0 0; }
+  .phead h3 { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.3; }
+  .phead p { margin-top: 8px; font-size: 14px; color: var(--sub); }
+  .phead + .status { margin-top: 32px; }
   table { width: 100%; margin-top: 24px; border-collapse: collapse; background: #fff; border: 1px solid #DCE3EA; border-radius: 16px; overflow: hidden; }
   th, td { padding: 12px 16px; text-align: left; vertical-align: top; border-top: 1px solid #EEF1F4; font-size: 15px; }
   th { background: #F1F4F7; font-size: 14px; border-top: 0; }
@@ -72,7 +76,7 @@
 <body>
 <div class="wrap">
   <h1>버튼 길이 정리</h1>
-  <p class="lead">사이트 42개 주소를 로그인 전·팬·크리에이터 세 상태로 열어 PC 폭(1366)에서 잰 결과를, 오늘 정하신 기준 순서로 다시 판정했습니다. 바꿀 곳은 둘입니다.</p>
+  <p class="lead">사이트 42개 주소를 로그인 전·팬·크리에이터 세 상태로 열어 PC 폭(1366)에서 잰 결과를, 오늘 정하신 기준 순서로 다시 판정했습니다. 바꿀 곳은 둘입니다(버튼 크기 둘 + 2번 카드의 반복 문장 하나).</p>
   <div class="order">
     <b>판정 순서</b> (projects/fankkuk/CLAUDE.md 「디자인 기준의 우선순위」)
     <ol>
@@ -81,6 +85,8 @@
       <li>둘 다 없으면 스킬(흐름은 ux-designer, 시각은 impeccable)</li>
     </ol>
     지난 시안에서 바꾸자고 했던 세 곳(선물 상세 「찾기」·회원가입 「다음」·채널 「채널 확인 요청」)은 design-rules에 승인된 값이 있어 철회했습니다. 근거는 아래 「그대로 두는 곳」에 있습니다.<br>
+    이번 판에서 더한 프롬프트 규칙: <b>적용 규칙 6</b>(할 일·입력·버튼 동작·진행 순서는 그대로, 제목·안내 배치만 조정) · <b>1-9</b>(목적은 짧은 제목, 방법은 필요할 때만 안내) · <b>9-4</b>(제목·안내·라벨 반복 금지) · <b>8-2</b>(라벨은 값의 이름).<br>
+    두 곳 모두 버튼이 하는 일·누르는 순서는 바뀌지 않습니다(적용 규칙 6).<br>
     스킬 기준과 다른 곳: 없음.
   </div>
 
@@ -91,7 +97,7 @@
     <h2>1. 고객센터 「문의 등록」</h2>
     <p class="where">/support · 팬·크리에이터로 로그인했을 때 · 실측 버튼 680px (글자 59px)</p>
     <p class="why">입력칸 아래 제출 버튼이 글 폭 전체로 늘어나 있습니다. design-rules 고객센터 절에는 문의 칸 폭(680)만 있고 버튼 값은 없습니다. 승인 시안에도 로그인 전 「로그인하고 문의하기」만 있어 이 버튼은 정한 값이 없습니다. 그래서 프롬프트 원칙대로 표준 크기 버튼을 입력칸 왼쪽 끝에 둡니다. 휴대폰은 지금처럼 폭 전체입니다.</p>
-    <p class="rule">근거 1순위 <b>없음</b>(design-rules 고객센터 절 · 시안 part7-v4) → 2순위 <b>프롬프트 2-21 1)</b> 한 열 폼 PC는 입력칸 왼쪽 끝 · <b>2-21 2)</b> 휴대폰 폭 전체 · 크기는 사이트 넓은 버튼 값 <b>최소 폭 240</b><br>스킬 ux-designer 폼 07 「Single Column」 — 같은 판정</p>
+    <p class="rule">근거 1순위 <b>없음</b>(design-rules 고객센터 절 · 시안 part7-v4) → 2순위 <b>프롬프트 2-21 1)</b> 한 열 폼 PC는 입력칸 왼쪽 끝 · <b>2-21 2)</b> 휴대폰 폭 전체 · 크기는 사이트 넓은 버튼 값 <b>최소 폭 240</b><br>스킬 ux-designer 폼 07 「Single Column」 — 같은 판정 · 라벨(분류·주문번호·제목·내용)은 값의 이름이라 그대로(<b>8-2</b>)</p>
     <div class="stack">
       <div>
         <span class="col-label">지금</span>
@@ -119,19 +125,22 @@
 
   <!-- 2 -->
   <section class="item">
-    <h2>2. 선물 보내기 「로그인」 — 오늘 고친 선물함 안내와 크기 맞추기</h2>
-    <p class="where">/gifts/new · 로그인 전 · 실측 버튼 90px</p>
+    <h2>2. 선물 보내기 로그인 카드 — 버튼 크기 맞추기 · 반복 문장 빼기</h2>
+    <p class="where">/gifts/new · 로그인 전 · 실측 버튼 90px · 머리 설명과 카드 안내가 같은 말</p>
     <p class="why">길어서가 아니라, 오늘 지시로 최소 240으로 고친 선물함 신청의 「로그인」과 같은 안내인데 크기가 달라서 넣었습니다. 승인 시안(25절, v39-part3)은 이 버튼을 글자 폭으로 그렸으므로, 바꾸면 design-rules 25절에 「상태 카드 버튼 최소 폭 240」을 같이 적습니다. 「팔로우한 크리에이터가 없습니다」의 「크리에이터 찾기」도 같은 자리라 같이 바뀝니다.</p>
-    <p class="rule">근거 1순위 <b>design-rules 25절 시안</b>은 글자 폭 → 오늘 사용자 지시(같은 안내 카드의 「로그인」을 표준 크기로)를 같은 모양에 맞춤 · 2순위 <b>2-17·2-21 8)</b> 가운데 정렬 그대로 · <b>2-22</b> 같은 형태끼리 통일<br>스킬 ux-designer 첫 사용 16 「Empty States」 — 구성은 이미 맞음</p>
+    <p class="why"><b>반복 문장</b>: 페이지 머리 설명 「팔로우한 크리에이터에게만 선물을 보낼 수 있습니다.」 바로 아래 카드 안내가 「로그인하면 팔로우한 크리에이터에게 선물을 보낼 수 있습니다.」로 같은 말을 합니다. 카드에는 제목 「로그인 후 이용해 주세요」와 버튼만 남깁니다. 머리 설명은 로그인 전·팔로우 0명 두 상태에서 같이 쓰므로 그대로 둡니다. 팔로우 0명 카드의 안내 「선물을 보낼 크리에이터를 찾아 팔로우해 주세요.」는 할 일을 알려 주는 다른 말이라 그대로입니다.</p>
+    <p class="rule">근거 1순위 <b>design-rules 25절 시안</b>은 글자 폭 → 오늘 사용자 지시(같은 안내 카드의 「로그인」을 표준 크기로)를 같은 모양에 맞춤 · 2순위 <b>2-17·2-21 8)</b> 가운데 정렬 그대로 · <b>2-22</b> 같은 형태끼리 통일 · <b>9-4</b> 제목·안내 반복은 한 곳에만 · <b>1-9</b> 방법 안내는 필요할 때만<br>스킬 ux-designer 첫 사용 16 「Empty States」 — 그림·짧은 문구·다음 행동 하나, 같은 판정</p>
     <div class="pair">
       <div>
         <span class="col-label">지금</span>
+        <div class="phead"><h3>선물 보내기</h3><p>팔로우한 크리에이터에게만 선물을 보낼 수 있습니다.</p></div>
         <div class="status"><img class="gift" src="icon-gift.webp" alt="" width="96" height="96"><h3>로그인 후 이용해 주세요</h3><p>로그인하면 팔로우한 크리에이터에게 선물을 보낼 수 있습니다.</p><a class="btn">로그인</a></div>
       </div>
       <div>
         <span class="col-label after">바꾼 뒤</span>
-        <div class="status"><img class="gift" src="icon-gift.webp" alt="" width="96" height="96"><h3>로그인 후 이용해 주세요</h3><p>로그인하면 팔로우한 크리에이터에게 선물을 보낼 수 있습니다.</p><a class="btn wide">로그인</a></div>
-        <p class="note">높이 48 · 최소 폭 240 · 가운데 (휴대폰은 폭 전체)</p>
+        <div class="phead"><h3>선물 보내기</h3><p>팔로우한 크리에이터에게만 선물을 보낼 수 있습니다.</p></div>
+        <div class="status"><img class="gift" src="icon-gift.webp" alt="" width="96" height="96"><h3>로그인 후 이용해 주세요</h3><a class="btn wide">로그인</a></div>
+        <p class="note">카드 안내 문장 뺌 · 버튼 높이 48 · 최소 폭 240 · 가운데 (휴대폰은 폭 전체)</p>
       </div>
     </div>
   </section>
