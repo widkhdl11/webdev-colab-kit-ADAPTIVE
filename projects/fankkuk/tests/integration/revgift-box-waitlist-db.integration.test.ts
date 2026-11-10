@@ -344,7 +344,9 @@ describe("INV-GB9: 대기 순번 — 크리에이터에게는 순번·닉네임�
     expect(raw).not.toMatch(/01[016789]-?\d{3,4}-?\d{4}/);
     expect(raw).not.toMatch(/ciphertext|wrappedKey|envelope|address|phone|real_name|login_id/);
     const seen = await fanView(haneul, boxId);
-    expect(Object.keys(seen).sort()).toEqual(["creator", "delivery", "id", "my_state", "name", "open", "viewer", "waitlist_no"]);
+    expect(Object.keys(seen).sort()).toEqual(["creator", "delivery", "full", "id", "my_state", "name", "open", "viewer", "waitlist_no"]);
+    // 다 찼는지는 참/거짓 하나(숫자 없음, Q6) — 정원 1명이 찼고 대기가 있으니 참
+    expect(seen.full).toBe(true);
     expect(seen).toMatchObject({ my_state: "waitlisted", waitlist_no: 2 });
     expect(JSON.stringify(seen)).not.toMatch(/솜사탕|별빛/);
     // 대기가 아닌 팬에게는 순번이 없다

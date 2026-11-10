@@ -82,6 +82,8 @@ function BoxDeliveryCard({
 type Step = 1 | 2 | 3 | "done";
 const STEP_NAME = { 1: "받을 주소", 2: "받는 분", 3: "확인" } as const;
 const STEP_NEXT = { 1: "다음: 받는 분", 2: "다음: 확인", 3: "다음: 신청 완료" } as const;
+/** 다 찼을 때 3/3 의 다음 — 대기 순번을 받는다(시안 #fa3w) */
+const WAIT_NEXT = "다음: 대기 순번 확인";
 
 /** 휴대폰 번호 가운데를 가린다 — 010-****-5678 */
 function maskPhone(raw: string): string {
@@ -170,6 +172,9 @@ function ApplyDialog({
   };
 
   const waiting = step === "done" && refreshing;
+  // 다 찼으면(서버가 알려 준 참/거짓 하나, 숫자 없음 — Q6) 창 제목·확인 단계·버튼이 「대기 신청」(INV-GB5, 명세 enter_waitlist)
+  const full = box.full;
+  const applyWord = full ? "대기 신청" : "신청";
   const doneTitle = box.myState === "waitlisted" && box.waitlistNo ? `대기 ${box.waitlistNo}번입니다.` : "신청했습니다";
 
   let body: ReactNode;
@@ -193,6 +198,15 @@ function ApplyDialog({
         </div>
         {step === 3 && summary ? (
           <>
+            {full ? (
+              <p className={s.fullnote} role="status">
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7.5v5l3 2" />
+                </svg>
+                <span>정원이 차서 대기로 신청됩니다</span>
+              </p>
+            ) : null}
             <dl className={s.sum}>
               <div>
                 <dt>받을 주소</dt>
@@ -232,7 +246,7 @@ function ApplyDialog({
           </button>
         ) : null}
         <button className="btn" type="submit" form="ba-form" aria-busy={busy || undefined} aria-disabled={busy || undefined}>
-          {step === 3 ? (busy ? "신청 중…" : error ? "다시 신청" : "신청") : "다음"}
+          {step === 3 ? (busy ? "신청 중…" : error ? `다시 ${applyWord}` : applyWord) : "다음"}
         </button>
       </>
     );
@@ -244,8 +258,8 @@ function ApplyDialog({
     <>
       <StepDialog
         open
-        title={step === "done" ? (waiting ? "신청했습니다" : doneTitle) : "선물함 신청"}
-        progress={step === "done" ? undefined : { step, total: 3, name: STEP_NAME[step], next: STEP_NEXT[step], label: "신청 진행" }}
+        title={step === "done" ? (waiting ? "신청했습니다" : doneTitle) : full ? "대기 신청" : "선물함 신청"}
+        progress={step === "done" ? undefined : { step, total: 3, name: STEP_NAME[step], next: step === 3 && full ? WAIT_NEXT : STEP_NEXT[step], label: "신청 진행" }}
         footer={footer}
         busy={busy}
         onRequestClose={requestClose}
@@ -385,7 +399,7 @@ export function BoxApplyPanel({
     );
   }
 
-  // 신청 전 — 버튼 하나. 신청 수·받을 인원은 보이지 않는다(정할 것 Q6)
+  // 신청 전 — 버튼 하나. 신청 수·받을 인원은 보이지 않는다(정할 것 Q6). 다 찼으면 「대기 신청」(INV-GB5)
   if (!addressKey) {
     return (
       <p className="err" role="status">
@@ -397,7 +411,7 @@ export function BoxApplyPanel({
     <>
       <div className={s.applyAct}>
         <button className="btn" type="button" onClick={() => setApplying(true)}>
-          선물함 신청
+          {box.full ? "대기 신청" : "선물함 신청"}
         </button>
       </div>
       {dialog}

@@ -57,6 +57,7 @@ const BOX: FanBox = {
   name: "겨울 선물",
   creator: { id: "00000000-0000-4000-b000-000000000001", slug: "haru", name: "하루" },
   open: true,
+  full: false,
   viewer: "follower",
   myState: "none",
   waitlistNo: null,
@@ -163,6 +164,31 @@ describe("팬 신청 판", () => {
     expect(host.querySelector("dialog[open]")).toBeNull();
     expect(host.textContent).toContain("대기 3번입니다.");
     expect(host.textContent).not.toMatch(/[0-9]+명/);
+  });
+
+  it("INV-GB5 · Q6: 다 찼으면 페이지 버튼·창 제목·확인 단계 버튼이 「대기 신청」, 3/3 에 「정원이 차서 대기로 신청됩니다」 — 숫자는 없다", async () => {
+    sendApply.mockResolvedValue({ ok: true });
+    render({ full: true });
+    expect(buttons()).toEqual(["대기 신청"]);
+    await act(async () => btn("대기 신청").click());
+    expect(host.querySelector("dialog[open] h2")!.textContent).toBe("대기 신청");
+    type("zipCode", "06236");
+    type("address1", "서울");
+    await act(async () => btn("다음").click());
+    type("recipientName", "김하늘");
+    type("phone", "01012345678");
+    await act(async () => btn("다음").click());
+    expect(host.textContent).toContain("정원이 차서 대기로 신청됩니다");
+    expect(host.textContent).toContain("다음: 대기 순번 확인");
+    expect(host.textContent).not.toMatch(/[0-9]+명/);
+    const submit = [...host.querySelectorAll("dialog[open] button")].find((b) => b.textContent === "대기 신청") as HTMLButtonElement;
+    await act(async () => submit.click());
+    expect(sendApply).toHaveBeenCalledTimes(1);
+    // 자리가 있으면 그 한 줄이 없다
+    render({ full: false });
+    await fillAndConfirm();
+    expect(host.textContent).not.toContain("정원이 차서");
+    expect(buttons()).toContain("신청");
   });
 
   it("INV-GB6 (실패경로): 서버가 거부하면 3/3 에 그 문구와 「다시 신청」, 마감·다 참이면 다시 읽는다", async () => {

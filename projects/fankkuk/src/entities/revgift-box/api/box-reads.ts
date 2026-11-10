@@ -78,6 +78,8 @@ export type FanBox = {
   name: string;
   creator: { id: string; slug: string; name: string };
   open: boolean;
+  /** 새 신청이 대기로 들어가는가 — 신청 받는 중이고 정원이 찼거나 대기 신청이 있다. 숫자(신청 수·받을 인원·대기 수)는 오지 않는다(Q6) */
+  full: boolean;
   viewer: BoxViewer;
   myState: FanBoxState;
   /** 내 대기 순번 — 대기일 때만. 다른 대기자·신청자는 보이지 않는다(INV-GB9) */
@@ -163,6 +165,7 @@ const fanBoxSchema = z
     name: z.string(),
     creator: z.object({ id: uuid, slug: z.string(), name: z.string() }).strict(),
     open: z.boolean(),
+    full: z.boolean(),
     viewer: z.enum(BOX_VIEWERS),
     my_state: z.enum(FAN_BOX_STATES),
     waitlist_no: z.number().int().positive().nullable(),
@@ -326,7 +329,7 @@ export async function readBoxForFan(client: Rpc, boxId: string, token: string | 
   if (data === null) return null;
   const b = fanBoxSchema.parse(data);
   const delivery = b.delivery ? { shippedOn: b.delivery.shipped_on, received: b.delivery.received, canConfirm: b.delivery.can_confirm, carrier: b.delivery.carrier } : null;
-  return { id: b.id, name: b.name, creator: b.creator, open: b.open, viewer: b.viewer, myState: b.my_state, waitlistNo: b.waitlist_no, delivery };
+  return { id: b.id, name: b.name, creator: b.creator, open: b.open, full: b.full, viewer: b.viewer, myState: b.my_state, waitlistNo: b.waitlist_no, delivery };
 }
 
 /** 크리에이터 상세의 입구 — 그 크리에이터의 공개·신청 받는 중인 선물함 */
