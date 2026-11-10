@@ -196,7 +196,7 @@ describe("INV-U13: 가입 때 받은 닉네임으로 계정이 생긴다", () =>
 
     const p2 = phone();
     const noFan = { ...creator, fanName: "" };
-    expect(await signUp(signUpDeps(), signupBody("it_nk_cr2", "크리닉둘", p2, await verified(p2), { role: "creator", creator: noFan }))).toMatchObject({ ok: true });
+    expect(await signUp(signUpDeps(), signupBody("it_nk_cr2", "크리닉둘", p2, (await signedTestPhone(p2)).ticket, { role: "creator", creator: noFan }))).toMatchObject({ ok: true });
     expect(psql(`select coalesce(c.fan_name, '-') from public.creators c join public.profiles p on p.id = c.profile_id where p.login_id = 'it_nk_cr2';`)).toBe("-");
   });
 
@@ -212,7 +212,7 @@ describe("INV-U13: 가입 때 받은 닉네임으로 계정이 생긴다", () =>
       i += 1;
       const p = phone();
       const creator = { tagIds: [psql(`select id from public.creator_tag_options where name = 'SOOP'`)], customTag: "", fanName };
-      const r = await signUp(signUpDeps(), signupBody(`it_nk_fan${i}`, `팬덤닉${i}`, p, await verified(p), { role: "creator", creator }));
+      const r = await signUp(signUpDeps(), signupBody(`it_nk_fan${i}`, `팬덤닉${i}`, p, (await signedTestPhone(p)).ticket, { role: "creator", creator }));
       expect([fanName, r]).toMatchObject([fanName, { ok: false, field }]);
       expect(authCount(`it_nk_fan${i}`)).toBe("0");
     }
@@ -221,7 +221,7 @@ describe("INV-U13: 가입 때 받은 닉네임으로 계정이 생긴다", () =>
   it("INV-U13 · INV-CN2 (S2, 실패경로): 프로필 저장으로 다른 사람이 쓰는 닉네임(별빛)으로 바꾸면 FKU04 — 닉네임·크리에이터 이름·소개 모두 그대로", async () => {
     const p = phone();
     const creator = { tagIds: [psql(`select id from public.creator_tag_options where name = 'SOOP'`)], customTag: "" };
-    expect(await signUp(signUpDeps(), signupBody("it_nk_rename", "바꿈닉", p, await verified(p), { role: "creator", creator }))).toMatchObject({ ok: true });
+    expect(await signUp(signUpDeps(), signupBody("it_nk_rename", "바꿈닉", p, (await signedTestPhone(p)).ticket, { role: "creator", creator }))).toMatchObject({ ok: true });
     const c = anonClient();
     expect((await c.auth.signInWithPassword({ email: "it_nk_rename@login.fankkuk.invalid", password: "long-enough-pw1" })).error).toBeNull();
     const r = await c.rpc("update_my_creator_profile", { p_nickname: "별빛", p_intro: "바뀌면 안 됨" });
