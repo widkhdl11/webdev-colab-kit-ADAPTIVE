@@ -92,9 +92,9 @@ describe("INV-S16: 승인 서명 연결", () => {
     const done = await settle(c.account.userId, req.request_id!, req.payload);
     expect(done.result).toBe("linked");
     expect(await linked(c.creatorId)).toBe(true);
-    // 저장된 것은 봉투 그대로 + 방식 + 때 — 평문 칸이 없다
+    // 저장된 것은 봉투 그대로 + 방식 + 때(연결한 때·가입 3단계에서 연결한 때 — manual/0037, signup INV-U12 정함) — 평문 칸이 없다
     expect(psql(`select string_agg(column_name, ',' order by column_name) from information_schema.columns where table_schema = 'pii' and table_name = 'signature_links'`)).toBe(
-      "creator_id,envelope,linked_at,method",
+      "creator_id,envelope,linked_at,method,signup_linked_at",
     );
     expect(JSON.parse(psql(`select envelope::text from pii.signature_links where creator_id = '${c.creatorId}'`))).toEqual(env);
     expect(psql(`select method from pii.signature_links where creator_id = '${c.creatorId}'`)).toBe("fake");

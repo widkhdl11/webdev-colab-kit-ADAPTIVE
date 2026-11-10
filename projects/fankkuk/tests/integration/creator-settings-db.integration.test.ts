@@ -396,10 +396,14 @@ describe("INV-E13·E14: 테마 색(저장 칸 퍼스널 컬러) — 파스텔 8�
   // 저장 함수(update_my_creator_profile)는 그 뒤 마이그레이션이 이름 칸을 닉네임 칸으로 바꿔 다시 만들었다(creator-display-name, 2026-11-10).
   // 옛 정의로 다시 만들 수 있게 먼저 지우고, 이 마이그레이션을 돌린 뒤 지금 정의를 다시 얹는다.
   const LATER = new URL("../../supabase/migrations/20261110000030_creator_name_is_nickname.sql", import.meta.url);
+  // 030 은 크리에이터 가입 함수(create_creator_account)도 다시 만든다 — 그 뒤에 그 함수를 고친 040(가입 카카오 서명, signup INV-U19)도 다시 얹어야
+  // 이 시험 뒤의 가입 시험이 옛 정의(연결 기록 없음)를 만나지 않는다
+  const LATEST = new URL("../../supabase/migrations/20261110000040_creator_signup_kakao_sign.sql", import.meta.url);
   function runMigration(): void {
     psql("drop function if exists public.update_my_creator_profile(text, text, boolean, text, text, text)");
     psql(readFileSync(MIGRATION, "utf8"));
     psql(readFileSync(LATER, "utf8"));
+    psql(readFileSync(LATEST, "utf8"));
   }
 
   it("INV-E13 S12: 하루로 #dcebff 저장 → #DCEBFF, 팬덤 이름만 보내면 색은 그대로, 빈 값이면 기본(null)으로", async () => {
