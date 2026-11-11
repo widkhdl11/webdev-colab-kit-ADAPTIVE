@@ -200,46 +200,57 @@ export function BoxCreateDialog({
         {step === 1 ? (
           <div className="field">
             <label htmlFor="bc-name">선물함 이름</label>
-            <input
-              ref={inputRef}
-              id="bc-name"
-              className="input"
-              type="text"
-              autoComplete="off"
-              maxLength={BOX_NAME_MAX}
-              value={name}
-              aria-invalid={fieldError ? true : undefined}
-              aria-describedby={fieldError ? "bc-err" : undefined}
-              onChange={(e) => {
-                setName(e.target.value);
-                setFieldError(null);
-              }}
-            />
+            <div className={fieldError ? `${s.ulField} ${s.ulErr}` : s.ulField}>
+              <span className={s.ulMirror} aria-hidden="true">
+                {name}
+              </span>
+              <input
+                ref={inputRef}
+                id="bc-name"
+                className={s.ulInput}
+                type="text"
+                autoComplete="off"
+                maxLength={BOX_NAME_MAX}
+                value={name}
+                aria-invalid={fieldError ? true : undefined}
+                aria-describedby={fieldError ? "bc-err" : undefined}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setFieldError(null);
+                }}
+              />
+            </div>
             {errorLine("bc-err", fieldError)}
           </div>
         ) : step === 2 ? (
           <div className="field">
             <label htmlFor="bc-count">받을 인원</label>
-            <div className={s.suffix}>
-              <input
-                ref={inputRef}
-                id="bc-count"
-                className="input"
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={BOX_CAPACITY_MAX}
-                step={1}
-                value={capacity}
+            {/* 칸 전체가 이 입력칸의 라벨이다 — 입력칸이 글자 폭만큼만 넓어 빈 곳을 눌러도 입력이 시작되게. 안의 글자는 모두 aria-hidden 이라 이름은 위 「받을 인원」 그대로 */}
+            <label htmlFor="bc-count" className={fieldError ? `${s.ulField} ${s.ulErr}` : s.ulField}>
+              <span className={s.ulSizer}>
+                <span aria-hidden="true">{capacity}</span>
+                <input
+                  ref={inputRef}
+                  id="bc-count"
+                  className={s.ulInput}
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={BOX_CAPACITY_MAX}
+                  step={1}
+                  value={capacity}
                   aria-invalid={fieldError ? true : undefined}
-                aria-describedby={fieldError ? "bc-err bc-count-hint" : "bc-count-hint"}
-                onChange={(e) => {
-                  setCapacity(e.target.value);
-                  setFieldError(null);
-                }}
-              />
-              <span aria-hidden="true">명</span>
-            </div>
+                  aria-describedby={fieldError ? "bc-err bc-count-hint" : "bc-count-hint"}
+                  onChange={(e) => {
+                    setCapacity(e.target.value);
+                    setFieldError(null);
+                  }}
+                />
+              </span>
+              <span className={s.ulUnit} aria-hidden="true">
+                명
+              </span>
+            </label>
             <p className="hint" id="bc-count-hint">{`1~${BOX_CAPACITY_MAX}명`}</p>
             {errorLine("bc-err", fieldError)}
           </div>

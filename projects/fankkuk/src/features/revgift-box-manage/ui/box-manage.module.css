@@ -50,10 +50,29 @@
 
 /* ── 만들기 모달 단계 칸 (design-rules 43절 · 시안 .field·.suffix·.scope·.opt·.sum·.made·.linkbox) ── */
 .stepForm { display: grid; gap: var(--space-6); }
-.suffix { position: relative; }
-.suffix :global(.input) { padding-right: var(--space-12); }
-.suffix > span { position: absolute; right: var(--space-4); top: 50%; transform: translateY(-50%); color: var(--sub); }
-.suffix input[type="number"]::-webkit-inner-spin-button { display: none; }
+/* 만들기 모달 입력칸 — 테두리 없는 회색 칸 + 입력한 글자 폭만큼만 밑줄(시안 box-name-input-20261110, 2026-11-11 사용자 「적용해줘」).
+   밑줄은 입력값을 그대로 담은 보이지 않는 복사본(.ulMirror)의 아래 선이다 — field-sizing 은 일부 브라우저가 몰라 쓰지 않는다.
+   초점 표시는 하늘색 커서와 밑줄이 맡는다(칸 바깥 고리를 두면 결국 테두리로 보인다). 회색 면은 흰 모달과 3:1 이 안 돼
+   라벨·커서·밑줄로 입력칸임을 보인다(시안 기록에 적은 벗어남). 값은 토큰만. */
+.ulField { position: relative; display: flex; align-items: center; min-height: 56px; padding: 0 var(--space-4); border-radius: var(--r-btn); background: var(--gray-100); transition: background 0.15s; }
+.ulField:hover { background: var(--gray-200); }
+.ulErr, .ulErr:hover { background: var(--danger-soft); }
+.ulInput { position: relative; z-index: 1; flex: 1 1 auto; min-width: 0; height: 56px; margin: 0; padding: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: var(--fs-card); font-weight: var(--fw-bold); caret-color: var(--field-focus); }
+.ulInput:focus { outline: 2px solid transparent; }
+.ulInput::-webkit-inner-spin-button, .ulInput::-webkit-outer-spin-button { margin: 0; appearance: none; }
+.ulInput[type="number"] { appearance: textfield; }
+/* 이름 칸: 칸 폭 전체를 누를 수 있고, 복사본은 왼쪽 안쪽에 겹쳐 놓는다. 긴 이름이면 칸 안쪽 폭에서 멈춘다 */
+.ulMirror { position: absolute; left: var(--space-4); top: 50%; max-width: calc(100% - var(--space-8)); padding-bottom: 2px; border-bottom: 2px solid var(--field-focus); transform: translateY(calc(-50% + 2px)); overflow: hidden; color: transparent; font-size: var(--fs-card); font-weight: var(--fw-bold); white-space: pre; pointer-events: none; }
+.ulMirror:empty { display: none; }
+.ulErr .ulMirror, .ulErr .ulSizer > span { border-bottom-color: var(--danger-line); }
+/* 숫자 칸: 복사본과 입력칸이 같은 격자 칸에 겹쳐, 입력칸 폭 = 글자 폭 → 「명」이 숫자 바로 뒤에 붙는다 */
+.ulSizer { display: inline-grid; min-width: 2ch; }
+.ulSizer > span, .ulSizer > .ulInput { grid-area: 1 / 1; }
+.ulSizer > span { align-self: center; justify-self: start; padding-bottom: 2px; border-bottom: 2px solid var(--field-focus); color: transparent; font-size: var(--fs-card); font-weight: var(--fw-bold); white-space: pre; pointer-events: none; }
+.ulSizer > span:empty { border-bottom-color: transparent; }
+/* 입력칸의 기본 폭(브라우저가 정하는 약 20글자)이 칸 폭을 정하지 않게 0 에서 시작해 복사본 폭까지만 늘린다 */
+.ulSizer > .ulInput { width: 0; min-width: 100%; }
+.ulUnit { position: relative; z-index: 1; flex: none; margin-left: var(--space-2); color: var(--sub); }
 .ferr { display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-2); color: var(--danger); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; }
 .ferr :global(.ico) { flex: none; width: 16px; height: 16px; margin-top: 2px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .ferrBox { margin-top: 0; padding: var(--space-4); border-radius: var(--r-btn); background: var(--danger-soft); font-size: var(--fs-body); }
