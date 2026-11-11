@@ -13,8 +13,8 @@ import s from "./revgift-box.module.css";
 
 // 팬에게 보내기 — 내 선물함 목록 + 설명 (UX 명세 creator-revgifts-new 「2026-11-09 바꿀 것」·「2026-11-10 시안 승인」 · design-rules 43절).
 // 선물함 0개: 설명 전체(「팬에게 보내기란?」이 h1) + 첫 화면과 끝에 「선물함 만들기」. 1개 이상: 목록이 먼저, 설명은 목록 아래(접지 않는다).
-// 카드 = 흰 선물 상자(하늘 뚜껑 + 리본) · 첫 줄 이름(두 줄 말줄임)과 상태 꼬리표 · 간단한 설명(있을 때만, 두 줄) ·
-// 「신청 인원 N / M명」 + 폭 전체 막대 · 「공개 · 날짜」(사용자 시안 2026-11-11, design-rules 43절). 카드 전체가 누르는 칸 —
+// 카드 = 흰 선물 상자(하늘 뚜껑 + 리본) · 맨 위 상태 꼬리표 · 이름(두 줄 말줄임)과 간단한 설명(있을 때만, 두 줄) 한 묶음 ·
+// 「신청 인원 N / M명」 + 폭 전체 막대 · 「공개 · 날짜」(사용자 시안 2026-11-11 → 같은 날 C안, design-rules 43절). 카드 전체가 누르는 칸 —
 // 신청 받는 중은 목록 위에 신청 관리 모달, 그 밖은 지금의 단계 페이지(/creator/revgift-boxes/[boxId])로 간다.
 // 「선물함 만들기」는 같은 페이지 위 모달이고 주소는 바뀌지 않는다. /new · /[boxId](신청 받는 중)로 들어오면 목록 + 그 모달이 열린 채로 보인다.
 
@@ -78,7 +78,11 @@ function BoxCard({ row, onOpen }: { row: MyBoxRow; onOpen: (boxId: string, el: H
         </svg>
       </div>
       <div className={s.bBody}>
-        <div className={s.bTop}>
+        {/* C안(2026-11-11 사용자): 상태 뱃지는 맨 위 줄 — 카드마다 같은 높이라 줄을 따라 훑으면 단계가 바로 보인다. 그 아래 이름·설명이 한 묶음 */}
+        <div className={s.bTg}>
+          <BoxCardTags row={row} />
+        </div>
+        <div className={s.bWho}>
           <h3 className={s.bN}>
             {row.status === "open" ? (
               <button type="button" className={s.bA} title={row.name} onClick={(e) => onOpen(row.id, e.currentTarget)}>
@@ -90,11 +94,8 @@ function BoxCard({ row, onOpen }: { row: MyBoxRow; onOpen: (boxId: string, el: H
               </Link>
             )}
           </h3>
-          <div className={s.bTg}>
-            <BoxCardTags row={row} />
-          </div>
+          {row.description ? <p className={s.bDesc}>{row.description}</p> : null}
         </div>
-        {row.description ? <p className={s.bDesc}>{row.description}</p> : null}
         <div className={s.bCnt}>
           <p className={s.bNum}>
             <span>신청 인원</span>
