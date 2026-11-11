@@ -113,17 +113,17 @@
 .costT th small { margin-left: var(--space-1); color: var(--sub); font-size: var(--fs-small); font-weight: 400; }
 .costT td { font-weight: var(--fw-bold); text-align: right; }
 
-/* 선물함 카드 — 폭 240 이상 칸 자동 배치(1440 에서 4열), 카드 전체가 누르는 칸(행동 줄 없음, §14) */
+/* 선물함 카드 — 240 고정 폭 칸 자동 배치, 카드 전체가 누르는 칸(행동 줄 없음, §14) */
 /* 카드 칸 240 고정 폭 — 상자가 너무 넓어 보이지 않게(2026-11-11 사용자, 288 → C안 240). 이름 14자·설명 30자는 이 폭에서 두 줄에 들어간다(실측 22자·30자) */
 .boxes { display: grid; grid-template-columns: repeat(auto-fill, 240px); gap: var(--space-6) var(--space-4); margin: 0; padding: 0; list-style: none; }
-/* 흰 선물 상자 — 뚜껑(하늘 면, 몸통보다 양옆 4 넓게) + 리본 + 몸통. 리본 매듭이 뚜껑 위로 12 올라오므로 위 여백을 둔다 */
-.bcard { position: relative; display: flex; flex-direction: column; min-width: 0; padding-top: var(--space-5); }
+/* 흰 선물 상자 — 뚜껑(하늘 면, 몸통보다 양옆 4 넓게) + 리본 + 몸통. 리본 매듭이 뚜껑 위로 22 올라오므로 위 여백을 둔다 */
+.bcard { position: relative; display: flex; flex-direction: column; min-width: 0; padding-top: var(--space-6); }
 .bLid { position: relative; height: 40px; margin: 0 -4px; border-radius: var(--r-card) var(--r-card) 4px 4px; background: var(--primary-50); box-shadow: inset 0 -1px 0 var(--primary); }
 /* 세로 리본 — 뚜껑 가운데 */
 .bLid::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 14px; transform: translateX(-50%); background: var(--primary); }
 .bBow { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); fill: var(--primary); }
 .bKnot { fill: var(--primary-700); }
-.bBody { display: flex; flex: 1; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--space-4) var(--space-5) var(--space-4); border: 1px solid var(--border); border-top: 0; border-radius: 0 0 var(--r-card) var(--r-card); background: var(--white); box-shadow: var(--card-shadow); transition: box-shadow var(--dur-hover) var(--ease-out); }
+.bBody { display: flex; flex: 1; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--space-4) var(--space-6) var(--space-4); border: 1px solid var(--border); border-top: 0; border-radius: 0 0 var(--r-card) var(--r-card); background: var(--white); box-shadow: var(--card-shadow); transition: box-shadow var(--dur-hover) var(--ease-out); }
 .bcard:hover .bBody { box-shadow: var(--card-shadow-hover); }
 /* 0명 마감·취소 — 뚜껑·리본을 회색으로 */
 .bcard.isOff .bLid { background: var(--gray-100); box-shadow: inset 0 -1px 0 var(--gray-300); }
@@ -159,7 +159,7 @@
 @media (max-width: 768px) {
   .phead { flex-direction: column; align-items: stretch; }
   .phead :global(.btn), .endrow :global(.btn) { width: 100%; }
-  /* 휴대폰은 카드 한 열 — 줄 폭 전체(최대 288 은 PC 에서 상자가 너무 넓어 보이지 않게 하려는 값) */
+  /* 휴대폰은 카드 한 열 — 줄 폭 전체(PC 의 240 고정 폭은 상자가 너무 넓어 보이지 않게 하려는 값) */
   .boxes { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) {
