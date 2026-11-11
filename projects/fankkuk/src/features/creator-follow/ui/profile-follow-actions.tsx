@@ -37,6 +37,7 @@ export function ProfileFollowActions({
   initialFollowing,
   signedIn,
   canSend = true,
+  sendClosed = false,
 }: {
   creatorId: string;
   creatorName: string;
@@ -46,6 +47,8 @@ export function ProfileFollowActions({
   signedIn: boolean;
   /** false = 승인 서명 연결 전 — 「선물 보내기」 대신 「승인 수단 등록 전」 배지 */
   canSend?: boolean;
+  /** true = 크리에이터끼리 선물을 닫아 둔 동안(creator-gift-open) — 「선물 보내기」도 「승인 수단 등록 전」도 그리지 않고 팔로우만 */
+  sendClosed?: boolean;
 }) {
   const router = useRouter();
   const [following, setFollowing] = useState(initialFollowing);
@@ -65,7 +68,7 @@ export function ProfileFollowActions({
     (next === "gift" ? giftRef.current : followRef.current)?.focus();
   }, [following]);
 
-  const noSend = <span className={s.noSend}>승인 수단 등록 전</span>;
+  const noSend = sendClosed ? null : <span className={s.noSend}>승인 수단 등록 전</span>;
 
   if (!signedIn) {
     return (
@@ -105,7 +108,7 @@ export function ProfileFollowActions({
     <>
       {following ? (
         <>
-          {canSend ? (
+          {canSend && !sendClosed ? (
           <Link
             ref={giftRef}
             className={`btn ${s.gift}`}

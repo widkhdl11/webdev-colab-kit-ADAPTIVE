@@ -1,3 +1,4 @@
+import { CREATOR_TO_CREATOR_GIFT_OPEN } from "@/features/creator-follow/model/creator-gift-open";
 import { describe, expect, it } from "vitest";
 import { ACCOUNT_MENU, BADGE_SPEECH, CREATOR_APP_MENU, CREATOR_CUSTOMIZE_HREF, CREATOR_SENT_HREFS, currentMenuItem, FAN_APP_MENU, FAN_PROFILE_EDIT_HREF } from "./app-menu";
 
@@ -11,7 +12,12 @@ describe("크리에이터 메뉴 — 묶음", () => {
     expect(CREATOR_APP_MENU.map((g) => g.label)).toEqual(["기본", "받기", "보내기", "내 팬꾹"]);
     expect(labels("기본")).toEqual(["홈", "선물 현황", "지금 할 일", "크리에이터 찾기"]);
     expect(labels("받기")).toEqual(["승인 내역", "받은 선물", "열람 기록"]);
-    expect(labels("보내기")).toEqual(["팬에게 보내기", "다른 크리에이터에게 선물", "팔로우한 크리에이터", "보낸 내역"]);
+    // 「다른 크리에이터에게 선물」은 크리에이터끼리 선물이 열려 있을 때만(2026-11-11 사용자가 닫음 — creator-gift-open)
+    expect(labels("보내기")).toEqual(
+      CREATOR_TO_CREATOR_GIFT_OPEN
+        ? ["팬에게 보내기", "다른 크리에이터에게 선물", "팔로우한 크리에이터", "보낸 내역"]
+        : ["팬에게 보내기", "팔로우한 크리에이터", "보낸 내역"],
+    );
     expect(labels("내 팬꾹")).toEqual(["꾸미기", "프로필 수정", "상세 설정"]);
   });
 

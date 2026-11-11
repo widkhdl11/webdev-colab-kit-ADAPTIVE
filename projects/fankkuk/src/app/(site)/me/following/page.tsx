@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { readCreatorCards } from "@/entities/creator/api/creator-reads";
 import { creatorPhotoUrl } from "@/entities/creator/model/link-images";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
+import { giftSendOpenFor } from "@/features/creator-follow/model/creator-gift-open";
 import { MyFollowingPanel } from "@/widgets/my-following/ui/my-following-page";
 import { MyShell } from "@/widgets/my-nav/ui/my-shell";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
@@ -31,7 +32,7 @@ export default async function Page() {
     <>
       <SiteHeader {...header} />
       <MyShell width="list">
-        <MyFollowingPanel creators={followed} photos={photos} />
+        <MyFollowingPanel creators={followed} photos={photos} canSend={giftSendOpenFor(viewer)} />
       </MyShell>
       <SiteFooter />
     </>

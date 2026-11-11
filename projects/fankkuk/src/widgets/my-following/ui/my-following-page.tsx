@@ -22,10 +22,13 @@ import s from "./my-following.module.css";
 export function MyFollowingPanel({
   creators,
   photos = {},
+  canSend = true,
 }: {
   creators: readonly CreatorCard[];
   /** 크리에이터 ID → 프로필 사진 공개 주소. 없으면 얼굴 자리표시(faceTone) */
   photos?: Readonly<Record<string, string | null>>;
+  /** false = 줄에 「선물 보내기」를 그리지 않는다(크리에이터끼리 선물을 닫아 둔 동안, creator-gift-open) */
+  canSend?: boolean;
 }) {
   const [list, setList] = useState(creators);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -72,6 +75,7 @@ export function MyFollowingPanel({
                         initialFollowing
                         variant="card"
                         mode="save"
+                        canSend={canSend}
                         onUnfollowed={() => removeRow(c)}
                       />
                     </div>

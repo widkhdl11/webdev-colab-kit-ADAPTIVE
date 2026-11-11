@@ -12,6 +12,7 @@ import { readCreatorOpenBoxes } from "@/entities/revgift-box/api/box-reads";
 import { readProhibitedItems } from "@/entities/parcel/api/read-prohibited-items";
 import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import type { Viewer } from "@/entities/session/model/viewer";
+import { giftSendOpenFor } from "@/features/creator-follow/model/creator-gift-open";
 import { followModeOf } from "@/features/creator-follow/model/follow-mode";
 import { sendAvailabilityOf, sendOnLinkPage } from "@/features/gift-register/model/sender-rule";
 import type { CreatorProfilePageProps } from "../ui/creator-profile-page";
@@ -72,6 +73,7 @@ export async function loadCreatorLinkPage(input: {
       creator: { ...creator, photoUrl: creatorPhotoUrl(photoBase, creator.photoPath) },
       others: others.map((o) => ({ ...o, photoUrl: creatorPhotoUrl(photoBase, o.photoPath) })),
       followMode: followModeOf(viewer, { creatorId, ownCreatorId }),
+      sendClosed: !giftSendOpenFor(viewer),
       send,
       prices,
       prohibited,

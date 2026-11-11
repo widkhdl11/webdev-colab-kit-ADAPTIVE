@@ -70,6 +70,7 @@ export function CreatorSearchPage({
   ownCreatorId = null,
   banner = null,
   initialQuery = "",
+  canSend = true,
 }: {
   creators: readonly CreatorCard[];
   looks?: Readonly<Record<string, CardLook>>;
@@ -78,6 +79,8 @@ export function CreatorSearchPage({
   ownCreatorId?: string | null;
   /** 광고 배너 칸 — 보일 배너가 없으면 null */
   banner?: ReactNode;
+  /** false = 카드 띠에 「선물 보내기」를 그리지 않는다(크리에이터끼리 선물을 닫아 둔 동안, creator-gift-open) */
+  canSend?: boolean;
   /** 메인 검색창에서 넘어온 검색어(주소의 q) — 검색칸 처음 값 */
   initialQuery?: string;
 }) {
@@ -202,6 +205,7 @@ export function CreatorSearchPage({
                       initialFollowing={c.following}
                       variant="card"
                       mode={followMode}
+                      canSend={canSend}
                     />
                   </CreatorCardActions>
                 )}

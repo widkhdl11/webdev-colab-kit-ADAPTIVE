@@ -7,6 +7,9 @@ import { readCreatorReceiving, readMyLimitReached } from "@/entities/creator/api
 import { kstToday } from "@/entities/creator/model/receiving";
 import { readCreatorHardItems } from "@/entities/gift-item/api/hard-items-reads";
 import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
+import { redirect } from "next/navigation";
+import { CREATOR_HOME } from "@/entities/session/model/home-path";
+import { giftSendOpenFor } from "@/features/creator-follow/model/creator-gift-open";
 import { pickOrder } from "@/features/gift-register/model/pick-order";
 import { sendList } from "@/features/gift-register/model/sender-rule";
 import { GiftRegisterPage } from "@/widgets/gift-register/ui/gift-register-page";
@@ -36,6 +39,8 @@ const PAYMENT_NOTICE: Record<string, string> = {
 export default async function Page({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const { creator, payment, order } = await searchParams;
   const { supabase, viewer } = await loadSession();
+  // 크리에이터끼리 선물은 지금 닫아 둔다(2026-11-11 사용자) — 크리에이터가 들어오면 크리에이터 홈으로
+  if (!giftSendOpenFor(viewer)) redirect(CREATOR_HOME);
   const creatorSender = viewer?.role === "creator";
   const preselectedId = typeof creator === "string" ? creator : null;
   const signedIn = viewer !== null;

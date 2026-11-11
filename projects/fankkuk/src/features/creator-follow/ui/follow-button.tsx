@@ -28,6 +28,7 @@ export function FollowButton({
   variant,
   mode,
   onUnfollowed,
+  canSend = true,
 }: {
   creatorId: string;
   creatorName: string;
@@ -37,6 +38,8 @@ export function FollowButton({
   mode: FollowMode;
   /** card 만 — 팔로우 취소가 저장된 뒤 부른다(팔로우한 크리에이터 목록에서 카드를 뺄 때) */
   onUnfollowed?: () => void;
+  /** card 만 — false 면 팔로우 중이어도 「선물 보내기」를 그리지 않는다(크리에이터끼리 선물을 닫아 둔 동안, creator-gift-open) */
+  canSend?: boolean;
 }) {
   const router = useRouter();
   const [following, setFollowing] = useState(initialFollowing);
@@ -47,12 +50,14 @@ export function FollowButton({
   // 카드 띠는 상태가 바뀌면 누른 버튼이 사라진다 — 바뀐 뒤 초점을 옮길 자리(팔로우 → 「선물 보내기」, 팔로우 취소 → 「팔로우」)
   const focusNextRef = useRef<"gift" | "follow" | null>(null);
   const giftRef = useRef<HTMLAnchorElement>(null);
+  // 「선물 보내기」를 그리지 않을 때(canSend=false) 팔로우 뒤 초점이 갈 자리 — 「팔로우 취소」
+  const unfollowRef = useRef<HTMLButtonElement>(null);
   const followRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const next = focusNextRef.current;
     if (!next) return;
     focusNextRef.current = null;
-    (next === "gift" ? giftRef.current : followRef.current)?.focus();
+    (next === "gift" ? (giftRef.current ?? unfollowRef.current) : followRef.current)?.focus();
   }, [following]);
 
   // 상태가 바뀐 순간 글자가 0.2초 동안 1.14배까지 커졌다 돌아온다(design-rules 24절, 시안 v38-home-micro 4번) — 표시만, 처음 그릴 때는 튀지 않는다.
@@ -62,7 +67,7 @@ export function FollowButton({
   useEffect(() => {
     if (shownFollowing.current === following) return;
     shownFollowing.current = following;
-    const el = variant === "card" ? (following ? giftRef.current : followRef.current)?.querySelector("span") : labelRef.current;
+    const el = variant === "card" ? (following ? (giftRef.current ?? unfollowRef.current) : followRef.current)?.querySelector("span") : labelRef.current;
     if (!el) return;
     el.classList.remove(s.pop);
     void el.offsetWidth; // 같은 효과를 이어 다시 걸 때 처음부터 다시 돌게
@@ -146,6 +151,7 @@ export function FollowButton({
       <>
         {following ? (
           <>
+            {canSend ? (
             <Link
               ref={giftRef}
               className="btn btn--sm btn--line"
@@ -157,8 +163,19 @@ export function FollowButton({
             >
               <CardButtonLabel icon="gift">선물 보내기</CardButtonLabel>
             </Link>
-            <button className="btn btn--sm btn--line" type="button" aria-label={`${creatorName} 팔로우 취소`} title="팔로우 취소" onClick={onPress} aria-disabled={saving ? true : undefined} data-card-btn="sub">
-              <CardButtonLabel icon="heart-off" hideText>
+            ) : null}
+            {/* 「선물 보내기」가 없으면 「팔로우 취소」가 띠의 주 버튼이 되고 글자도 보인다 */}
+            <button
+              ref={canSend ? undefined : unfollowRef}
+              className="btn btn--sm btn--line"
+              type="button"
+              aria-label={`${creatorName} 팔로우 취소`}
+              title="팔로우 취소"
+              onClick={onPress}
+              aria-disabled={saving ? true : undefined}
+              data-card-btn={canSend ? "sub" : "main"}
+            >
+              <CardButtonLabel icon="heart-off" hideText={canSend}>
                 팔로우 취소
               </CardButtonLabel>
             </button>

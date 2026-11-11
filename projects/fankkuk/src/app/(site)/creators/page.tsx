@@ -7,6 +7,7 @@ import { readPublicBannersOrNull } from "@/entities/banner/api/read-banners";
 import { toCardLooks } from "@/entities/creator/model/card-look";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
 import { readTagOptions } from "@/entities/creator/api/creator-tag-reads";
+import { giftSendOpenFor } from "@/features/creator-follow/model/creator-gift-open";
 import { followModeOf } from "@/features/creator-follow/model/follow-mode";
 import { bannerSlot, memberBannerSlot } from "@/widgets/banner-carousel/ui/banner-slot";
 import { CreatorSearchPage } from "@/widgets/creator-search/ui/creator-search-page";
@@ -60,6 +61,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
         ownCreatorId={ownCreatorId}
         banner={viewer ? memberBannerSlot(banners) : bannerSlot(banners, "column")}
         initialQuery={initialQuery}
+        canSend={giftSendOpenFor(viewer)}
       />
       <SiteFooter />
     </>

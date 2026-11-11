@@ -44,6 +44,8 @@ export type CreatorProfilePageProps = {
   creator: CreatorLinkView;
   others: readonly CreatorLinkView[];
   followMode: FollowMode;
+  /** true = 보는 사람이 크리에이터이고 크리에이터끼리 선물을 닫아 둔 동안 — 「선물 보내기」 자리를 비운다(creator-gift-open) */
+  sendClosed?: boolean;
   /**
    * open = 「선물 보내기」+「팔로우 중」 / self = 크리에이터 자기 페이지(보내지 않음) / needs_follow = 팔로우하지 않음 → 「팔로우」(INV-L9)
    * / hidden = 쉬는 중이라 버튼 자리에 쉬는 기간 한 줄(INV-B2) / unsigned = 승인 서명 연결 전(INV-E15). 판단은 서버가 sendOnLinkPage 로 한다.
@@ -106,7 +108,7 @@ function StatValue({ text }: { text: string }) {
  * 버튼 자리(UX 명세 상태표) — needs_follow·open 은 팔로우 묶음(운영자에게는 없음), self 는 꼬리표, hidden(쉬는 중)은 쉬는 기간 한 줄,
  * unsigned(승인 서명 연결 전 — creator-link INV-E15)는 팔로우 묶음에서 「선물 보내기」 대신 「승인 수단 등록 전」 배지.
  */
-function Actions({ send, creator, followMode, restingText }: { send: LinkPageSend; creator: CreatorLinkView; followMode: FollowMode; restingText: string | null }) {
+function Actions({ send, creator, followMode, restingText, sendClosed }: { send: LinkPageSend; creator: CreatorLinkView; followMode: FollowMode; restingText: string | null; sendClosed: boolean }) {
   if (send === "unsigned") {
     // 운영자는 팔로우하지 않는다 — 배지만 남긴다(누를 것이 없는 안내라 운영자에게도 같은 사실을 보인다)
     if (followMode === "hidden") {
@@ -118,7 +120,7 @@ function Actions({ send, creator, followMode, restingText }: { send: LinkPageSen
     }
     return (
       <div className={s.actions}>
-        <ProfileFollowActions creatorId={creator.id} creatorName={creator.name} initialFollowing={creator.following} signedIn={followMode !== "login"} canSend={false} />
+        <ProfileFollowActions creatorId={creator.id} creatorName={creator.name} initialFollowing={creator.following} signedIn={followMode !== "login"} canSend={false} sendClosed={sendClosed} />
       </div>
     );
   }
@@ -127,7 +129,7 @@ function Actions({ send, creator, followMode, restingText }: { send: LinkPageSen
     if (followMode === "hidden") return null;
     return (
       <div className={s.actions}>
-        <ProfileFollowActions creatorId={creator.id} creatorName={creator.name} initialFollowing={send === "open"} signedIn={followMode !== "login"} />
+        <ProfileFollowActions creatorId={creator.id} creatorName={creator.name} initialFollowing={send === "open"} signedIn={followMode !== "login"} sendClosed={sendClosed} />
       </div>
     );
   }
@@ -146,6 +148,7 @@ export function CreatorProfilePage({
   creator,
   others,
   followMode,
+  sendClosed = false,
   send = "open",
   prices,
   prohibited,
@@ -208,7 +211,7 @@ export function CreatorProfilePage({
           </div>
           {/* 버튼 묶음 — 넓은 칸에서는 머리 오른쪽(2026-10-25 사용자 「팔로우 버튼은 오른쪽 쯤」), 좁은 칸에서는 소개 아래. 읽는 순서는 글 다음 그대로 */}
           <div className={s.side}>
-            <Actions send={send} creator={creator} followMode={followMode} restingText={restingText} />
+            <Actions send={send} creator={creator} followMode={followMode} restingText={restingText} sendClosed={sendClosed} />
           </div>
         </section>
 

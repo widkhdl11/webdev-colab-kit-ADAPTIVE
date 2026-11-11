@@ -1,6 +1,7 @@
 import { ACTION_CENTER_HREF } from "@/entities/action-item/model/action-items";
 import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
 import { CREATOR_GIFT_PROGRESS_HREF } from "@/entities/gift-progress/model/progress-href";
+import { CREATOR_TO_CREATOR_GIFT_OPEN } from "@/features/creator-follow/model/creator-gift-open";
 import { CREATOR_ACCOUNT, CREATOR_HOME, CREATOR_PROFILE_EDIT, CREATOR_SETTINGS, FAN_ACCOUNT_SETTINGS, FAN_HOME, FAN_PROFILE_EDIT } from "@/entities/session/model/home-path";
 
 // 로그인 후 왼쪽 앱 사이드바 메뉴(design-rules 00절, 시안 docs/design/mockups/site/v18/home-fan.html·home-creator.html).
@@ -117,7 +118,8 @@ export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
       // 팬에게 보내기는 선물함 흐름 하나뿐이다 — 하위 줄 「몇 명에게 / 합포장」을 없애고 한 줄로(revgift-box INV-GB22, UX 명세 확정 1).
       // 내 선물함 목록이 입구이고, 1페이지(설명 → 만들기)에서도 이 칸이 켜진다
       { href: CREATOR_GIFT_BOXES_HREF, label: "팬에게 보내기", icon: "package-plus", also: ["/creator/revgift-boxes/new"] },
-      { href: "/gifts/new", label: "다른 크리에이터에게 선물", icon: "gift" },
+      // 크리에이터끼리 선물은 지금 닫아 둔다(2026-11-11 사용자) — 다시 열면 이 줄이 돌아온다
+      ...(CREATOR_TO_CREATOR_GIFT_OPEN ? [{ href: "/gifts/new", label: "다른 크리에이터에게 선물", icon: "gift" } as const] : []),
       // 크리에이터끼리 선물은 둘 중 한쪽이 팔로우해야 보낸다(creators_follow_either_way) — 팔로우 목록은 팬과 같은 화면(2026-10-22 사용자)
       { href: "/me/following", label: "팔로우한 크리에이터", icon: "heart" },
       { href: CREATOR_SENT_HREFS.fans, label: "보낸 내역", icon: "history", also: [CREATOR_SENT_HREFS.creators] },
