@@ -139,15 +139,15 @@ export function GiftRegisterPage({
                 <>
                   <h2>팔로우한 크리에이터가 없습니다</h2>
                   <p>선물을 보낼 크리에이터를 찾아 팔로우해 주세요.</p>
-                  <Link className="btn" href="/creators">
+                  <Link className="btn btn--wide" href="/creators">
                     크리에이터 찾기
                   </Link>
                 </>
               ) : (
                 <>
+                  {/* 안내 문장은 뺐다 — 바로 위 머리 설명 「팔로우한 크리에이터에게만 …」과 같은 말(디자인 프롬프트 9-4, 2026-11-10) */}
                   <h2>로그인 후 이용해 주세요</h2>
-                  <p>로그인하면 팔로우한 크리에이터에게 선물을 보낼 수 있습니다.</p>
-                  <Link className="btn" href="/login">
+                  <Link className="btn btn--wide" href="/login">
                     로그인
                   </Link>
                 </>
