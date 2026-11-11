@@ -147,3 +147,18 @@
 .bubble { width: 24px; height: 24px; color: var(--kakao-ink); }
 .step-actions :global(.btn--kakao) { gap: 8px; }
 .down-box { margin-bottom: 24px; } /* 장애 대비 길(kakao_down) 안내 상자 — 설명 아래, 휴대폰 번호 칸 위 */
+
+/* 크리에이터 4단계 채널 만들기(시안 creator-channel-create-20261111, 2026-11-11 승인 — signup INV-U21).
+   칸은 2단계에서 옮긴 그대로(.step 안 칸·칩·오류 모양). 「채널 만들기」 버튼은 마지막 칸 아래 왼쪽, 휴대폰은 폭 전체.
+   만든 뒤에는 초록 요약 줄(체크 + 글자 — 색만으로 알리지 않는다) 아래 채널 소유자 확인을 구분선 32 로 잇는다 */
+.chan-form > h2 { margin-bottom: 24px; }
+.make-btn { min-width: 120px; }
+.chan-head { margin-bottom: 16px; }
+.made { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border-radius: var(--r-btn); background: var(--success-soft); }
+.made svg { flex-shrink: 0; margin-top: 4px; color: var(--success); }
+.made-t { margin: 0; color: var(--success); font-weight: var(--fw-btn); }
+.made-n { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+.chan-after { margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--gray-200); }
+@media (max-width: 767px) {
+  .make-btn { width: 100%; }
+}

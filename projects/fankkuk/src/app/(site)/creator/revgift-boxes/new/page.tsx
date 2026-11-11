@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { viewerHasChannel } from "@/entities/session/model/viewer";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { FAN_HOME } from "@/entities/session/model/home-path";
@@ -22,7 +23,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <BoxListPage rows={data.rows} manage={data.manage} price={data.price} initial={{ kind: "create" }} />
+      <BoxListPage hasChannel={viewerHasChannel(viewer)} rows={data.rows} manage={data.manage} price={data.price} initial={{ kind: "create" }} />
       <SiteFooter />
     </>
   );

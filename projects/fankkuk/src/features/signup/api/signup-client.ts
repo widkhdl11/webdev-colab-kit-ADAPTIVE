@@ -1,7 +1,6 @@
 import type { HeardFrom } from "@/entities/metrics/model/signup-source";
 import { readPhoneCodeChannel, type PhoneCodeChannel } from "@/entities/session/model/phone-code";
 import type { SignUpField } from "../model/sign-up";
-import type { CreatorProfileBody } from "../model/signup-input";
 
 // 브라우저에서 가입 단계를 서버에 보낸다. 서버가 준 문구를 그대로 보여 준다.
 // 번호표는 브라우저 스크립트가 만지지 않는다 — 서버가 쿠키로 주고 쿠키에서 읽는다(signup INV-U1, S1c).
@@ -9,15 +8,13 @@ import type { CreatorProfileBody } from "../model/signup-input";
 export type SignupBody = {
   role: "fan" | "creator";
   loginId: string;
-  /** 가입 닉네임(INV-U13) */
-  nickname: string;
+  /** 가입 닉네임(INV-U13) — 팬만. 크리에이터는 보내지 않는다(채널 만들기에서, INV-U21) */
+  nickname?: string;
   email: string;
   password: string;
   phone: string;
   /** age14 = 「만 14세 이상입니다」(INV-U16) */
   terms: { age14: boolean; service: boolean; privacy: boolean; news: boolean };
-  /** 크리에이터로 가입할 때만 — 공개 이름·채널 이름·태그(선택지 id + 직접 입력) */
-  creator?: CreatorProfileBody;
   /** 「어디서 알게 되셨나요」(metrics INV-Q4) — 고르지 않으면 null */
   heardFrom: HeardFrom | null;
 };
@@ -33,8 +30,6 @@ const FIELDS: readonly SignUpField[] = [
   "passwordConfirm",
   "phone",
   "terms",
-  "tags",
-  "fanName",
   "form",
 ];
 

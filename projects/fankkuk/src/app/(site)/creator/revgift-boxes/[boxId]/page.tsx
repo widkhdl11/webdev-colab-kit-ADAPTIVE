@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { viewerHasChannel } from "@/entities/session/model/viewer";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { readBoxCards, readMyBox, readPriceTable } from "@/entities/revgift-box/api/box-reads";
@@ -39,7 +40,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
     return (
       <>
         <SiteHeader {...header} />
-        <BoxListPage rows={data.rows} manage={data.manage} price={data.price} initial={{ kind: "manage", boxId: box.id }} />
+        <BoxListPage hasChannel={viewerHasChannel(viewer)} rows={data.rows} manage={data.manage} price={data.price} initial={{ kind: "manage", boxId: box.id }} />
         <SiteFooter />
       </>
     );

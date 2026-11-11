@@ -4,10 +4,19 @@ import { VERIFICATION_METHODS, type VerificationMethod } from "./creator-verific
 // 관리자 「크리에이터 확인」 화면이 읽는 줄 (admin-console INV-K10·K8). 사람은 닉네임·아이디로만 나온다.
 // 꼴이 다른 줄이 하나라도 있으면 null — 처리 기록이 몰래 빠지지 않게.
 
+/** 채널을 만들기 전 크리에이터의 이름 자리(signup INV-U21) — 운영자 화면 표기 */
+export const NO_CHANNEL_NAME = "채널 없음";
+
+/** 운영자 화면에 보일 크리에이터 이름 — 채널이 없으면 「채널 없음」 */
+export function adminCreatorName(c: Pick<AdminCreator, "name">): string {
+  return c.name ?? NO_CHANNEL_NAME;
+}
+
 export type AdminCreator = {
   id: string;
   slug: string;
-  name: string;
+  /** 채널을 만들기 전(signup INV-U21)이면 null — 화면은 「채널 없음」 */
+  name: string | null;
   channel: string;
   channelTitle: string;
   /** 크리에이터 계정이 아직 없으면 null */
@@ -45,7 +54,8 @@ export type VerificationEvent = {
 const creatorRow = z.object({
   id: z.string(),
   slug: z.string(),
-  name: z.string(),
+  // 채널을 만들기 전(signup INV-U21)에는 이름이 비어 있다
+  name: z.string().nullable(),
   channel: z.string(),
   channel_title: z.string(),
   login_id: z.string().nullable(),

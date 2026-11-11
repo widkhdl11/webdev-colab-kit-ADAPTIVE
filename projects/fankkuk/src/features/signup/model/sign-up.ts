@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { tagFilterMessage } from "@/entities/creator/model/creator-tags";
 import { accountLoginEmail, isReservedLoginId } from "@/entities/session/model/login-id";
 import { nicknameRejection } from "@/entities/session/model/nickname-rule";
 import type { SendMail } from "@/shared/api/mail/smtp";
@@ -16,8 +15,9 @@ import { consentRows, detailsFieldOf, signupInputSchema, type DetailsField } fro
 //    크리에이터는 확인 방법도 본다(INV-U19·U20): 카카오 서명(sign) 또는 「창구 장애 확인」이 있는 인증번호(code_down)만 받는다.
 //    확인 방법을 읽는 DB 함수가 없으면(개인정보 구역 SQL 적용 전) 크리에이터 가입을 받지 않는다. 같은 판정을 DB 계정 만들기 함수가 다시 한다.
 // 3) Supabase Auth 에 로그인 정보를 만든다 — 주소는 아이디로 만든 예약 도메인 주소(INV-U8). 이미 있으면 「쓰는 아이디」.
-// 4) create_account(크리에이터면 create_creator_account — 확인 안 된 공개 정보 행·팬덤 이름까지) 가 프로필·연락처·확인 메일 기록·약관 동의를 한 번에 만들고 번호표를 「씀」으로 바꾼다(INV-U4).
-//    닉네임은 적은 값 그대로 넘긴다 — 겹침(영문 대소문자·앞뒤 공백 무시)과 금칙어·연락처 필터는 DB 가 판정한다(INV-U13, FKU04~07).
+// 4) create_account(크리에이터면 create_creator_account — 이름 없는 크리에이터 행까지) 가 프로필·연락처·확인 메일 기록·약관 동의를 한 번에 만들고 번호표를 「씀」으로 바꾼다(INV-U4).
+//    팬 닉네임은 적은 값 그대로 넘긴다 — 겹침(영문 대소문자·앞뒤 공백 무시)과 금칙어·연락처 필터는 DB 가 판정한다(INV-U13, FKU04~07).
+//    크리에이터는 닉네임·팬덤 이름·태그를 넘기지 않는다 — 채널 없는 계정으로 만들어지고, 마지막 단계의 채널 만들기에서 정한다(INV-U21).
 //    실패하면 3)에서 만든 로그인 정보를 지운다 — 로그인은 되는데 프로필이 없는 계정이 남지 않게.
 // 5) 가입 경로(고른 답)와 처음 들어온 공유 링크의 utm(쿠키에서 거른 값)을 계정에 붙인다(metrics INV-Q4). 실패해도 가입은 그대로다.
 // 6) 그 사람으로 로그인해 세션 쿠키를 쓴다. 7) 확인 메일을 보낸다(INV-U7). 5~7 이 실패해도 계정은 그대로 둔다.
@@ -63,13 +63,10 @@ const CREATOR_REVERIFY = { ok: false, status: 400, field: "verification", messag
 /** DB 에 함수가 없다(개인정보 구역 SQL 적용 전) */
 const MISSING_FUNCTION = new Set(["PGRST202", "42883"]);
 
-const FAN_NAME_FILTER: Record<string, string> = {
-  P0084: "팬덤 이름에 사용할 수 없는 표현이 포함되어 있습니다.",
-  P0085: "팬덤 이름에 전화번호·이메일·인터넷 주소는 입력할 수 없습니다.",
-  P0086: "팬덤 이름에 글자나 숫자를 하나 이상 넣어 주세요.",
-};
+const FORM_INVALID = { ok: false, status: 400, field: "form", message: "입력한 정보를 확인해 주세요." } as const;
 
-const issuedSchema = z.array(z.object({ token: z.string(), email: z.string(), nickname: z.string() })).length(1);
+// 확인 메일 발급 줄 — 채널을 만들기 전 크리에이터는 닉네임이 비어 있다(INV-U21)
+const issuedSchema = z.array(z.object({ token: z.string(), email: z.string(), nickname: z.string().nullable() })).length(1);
 
 /** utm: 처음 들어온 공유 링크의 utm — 라우트가 쿠키에서 읽어 다시 거른 값(없으면 null). 본문의 utm 칸은 읽지 않는다. */
 export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = null): Promise<SignUpResult> {
@@ -129,19 +126,12 @@ export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = 
       p_phone: phoneBundle(phoneKeys, userId, input.phone),
       p_verification_id: input.verificationId,
       p_terms: consentRows(input.terms),
-      p_nickname: input.nickname,
     };
-    // creator-verification INV-V1·signup INV-U5: 크리에이터는 계정과 확인 안 된 공개 정보 행을 한 처리에서 만든다
+    // creator-verification INV-V1·signup INV-U5: 크리에이터는 계정과 크리에이터 행을 한 처리에서 만든다 — 이름 없이(채널 없음, INV-U21)
     account =
-      input.role === "creator" && input.creator
-        ? await deps.admin.rpc("create_creator_account", {
-            ...common,
-            p_tag_ids: input.creator.tagIds,
-            p_custom_tag: input.creator.customTag === "" ? null : input.creator.customTag,
-            // 팬덤 이름(추가 요청 3) — 비우면 null
-            p_fan_name: input.creator.fanName ? input.creator.fanName : null,
-          })
-        : await deps.admin.rpc("create_account", { ...common, p_role: input.role });
+      input.role === "creator"
+        ? await deps.admin.rpc("create_creator_account", common)
+        : await deps.admin.rpc("create_account", { ...common, p_role: input.role, p_nickname: input.nickname });
   } catch (e) {
     await removeAuthUser(deps, userId);
     throw e;
@@ -155,20 +145,12 @@ export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = 
       return PHONE_TAKEN;
     }
     if (account.error.code === "FKU03") return ID_TAKEN;
-    // INV-U13: 이미 쓰는 닉네임(FKU04, 동시 가입에서 진 쪽 포함)·닉네임 필터(FKU05~07) — 닉네임 칸
-    const nick = nicknameRejection(account.error.code);
+    // INV-U13: 팬 닉네임 — 이미 쓰는 닉네임(FKU04, 동시 가입에서 진 쪽 포함)·닉네임 필터(FKU05~07) — 닉네임 칸.
+    // 크리에이터는 닉네임을 넘기지 않으므로 이 갈래가 없다(INV-U21)
+    const nick = input.role === "fan" ? nicknameRejection(account.error.code) : null;
     if (nick) return { ok: false, status: nick.status, field: "nickname", message: nick.message };
-    // 팬덤 이름이 필터에 걸림(P0084~P0086) — 팬덤 이름 칸
-    const fan = account.error.code ? FAN_NAME_FILTER[account.error.code] : undefined;
-    if (fan && input.role === "creator") return { ok: false, status: 400, field: "fanName", message: fan };
-    // 직접 입력이 태그 필터에 걸림(creator-tags INV-T7) — 사유마다 문구
-    const filtered = tagFilterMessage(account.error.code);
-    if (filtered && input.role === "creator") return { ok: false, status: 400, field: "tags", message: filtered };
-    // 크리에이터 가입에서 DB 의 꼴 거부(22023)는 태그다 — 그 사이 숨긴 선택지 등(creator-tags INV-T3). 다른 칸은 앞의 입력 검사가 같은 규칙으로 걸렀다
-    if (account.error.code === "22023")
-      return input.role === "creator"
-        ? { ok: false, status: 400, field: "tags", message: "선택할 수 없는 태그가 포함되어 있습니다. 새로고침한 뒤 다시 선택해 주세요." }
-        : { ok: false, status: 400, field: "form", message: "입력한 정보를 확인해 주세요." };
+    // DB 의 꼴 거부(22023) — 칸은 앞의 입력 검사가 같은 규칙으로 걸렀다
+    if (account.error.code === "22023") return FORM_INVALID;
     throw new Error(`계정을 만들지 못했다: ${account.error.code}`);
   }
 

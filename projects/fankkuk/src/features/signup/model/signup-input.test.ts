@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkDetails, checkField, creatorProfileSchema, type LiveValues } from "./signup-input";
+import { checkDetails, checkField, signupInputSchema, type LiveValues } from "./signup-input";
 
 // 시험용 비밀번호(실제 계정 아님). 비밀번호 칸에 긴 문자열을 바로 적으면 시크릿 검사에 걸려 상수로 둔다.
 const TEST_PW = "long-enough-pw1";
@@ -42,33 +42,42 @@ describe("INV-U6: 화면의 2단계 미리 보기 — 서버와 같은 규칙", 
   });
 });
 
-describe("INV-V1·creator-tags INV-T3: 크리에이터 공개 정보 미리 보기 — 서버와 같은 규칙", () => {
-  const creator = { tagIds: ["11111111-1111-4111-8111-000000000001"], customTag: "먹방" };
-  it("INV-V1 INV-T3: 맞는 입력은 통과, 틀린 칸을 알려 준다", () => {
-    expect(checkDetails({ ...ok, creator })).toBeNull();
-    expect(checkDetails({ ...ok, creator: { ...creator, tagIds: [], customTag: "먹방" } })).toBeNull();
+describe("INV-U21: 크리에이터는 2단계에서 닉네임·팬덤 이름·태그를 받지 않는다", () => {
+  const server = {
+    role: "creator",
+    loginId: "newcreator",
+    email: "new.creator@example.com",
+    password: TEST_PW,
+    phone: "010-5555-6666",
+    terms: { age14: true, service: true, privacy: true },
+    verificationId: "22222222-2222-4222-8222-222222222222",
+  };
+
+  it("INV-U21 (S21): 크리에이터는 닉네임 없이 통과 — 결과의 닉네임은 null, 본문의 크리에이터 정보(태그·팬덤 이름)는 남지 않는다", () => {
+    const r = signupInputSchema.safeParse({ ...server, creator: { tagIds: [], customTag: "", fanName: "꿀벌단" } });
+    expect(r.success).toBe(true);
+    expect(r.data?.nickname).toBeNull();
+    expect(r.data).not.toHaveProperty("creator");
   });
-  it("INV-CN2 INV-CN4: 공개 이름·채널 이름은 받지 않는다 — 본문에 와도 결과에 남지 않고 검사도 하지 않는다", () => {
-    const extra = { ...creator, name: " ", channelTitle: "가".repeat(41) } as typeof creator;
-    expect(checkDetails({ ...ok, creator: extra })).toBeNull();
-  });
-  it("INV-T3 (실패경로): 태그 0개 · 6개 · 같은 선택지 두 번 · 직접 입력 21자는 태그 칸을 가리킨다", () => {
-    const six = ["1", "2", "3", "4", "5", "6"].map((n) => `11111111-1111-4111-8111-00000000000${n}`);
-    for (const bad of [
-      { tagIds: [], customTag: "" },
-      { tagIds: [], customTag: "  " },
-      { tagIds: six, customTag: "" },
-      { tagIds: ["11111111-1111-4111-8111-000000000001", "11111111-1111-4111-8111-000000000001"], customTag: "" },
-      { tagIds: ["11111111-1111-4111-8111-000000000002"], customTag: "가".repeat(21) },
-    ]) {
-      expect([bad, checkDetails({ ...ok, creator: { ...creator, ...bad } })?.field]).toEqual([bad, "tags"]);
+
+  it("INV-U21 (실패경로): 크리에이터에게 닉네임이 오면(빈 값 포함) 닉네임 칸으로 거부", () => {
+    for (const nickname of ["꿀단지", ""]) {
+      const r = signupInputSchema.safeParse({ ...server, nickname });
+      expect([nickname, r.success, r.error?.issues[0]?.path]).toEqual([nickname, false, ["nickname"]]);
     }
   });
 
-  it("INV-T3 S3c: 서버 검사는 선택지 5개 + 직접 입력을 6개로 세지 않는다 — 직접 입력이 고른 선택지(유튜브)와 같으면 화면·DB 가 하나로 합친다", () => {
-    const five = ["1", "2", "3", "4", "5"].map((n) => `11111111-1111-4111-8111-00000000000${n}`);
-    expect(checkDetails({ ...ok, creator: { ...creator, tagIds: five, customTag: "유튜브" } })).toBeNull();
-    expect(creatorProfileSchema.safeParse({ ...creator, tagIds: five, customTag: " 유튜브 " }).data).toMatchObject({ tagIds: five, customTag: "유튜브" });
+  it("INV-U13 INV-U21 (S21f, 실패경로): 팬은 닉네임이 그대로 필수 — 없으면 닉네임 칸, 있으면 앞뒤 공백을 뗀 값", () => {
+    const fan = { ...server, role: "fan" };
+    const none = signupInputSchema.safeParse(fan);
+    expect([none.success, none.error?.issues[0]?.path]).toEqual([false, ["nickname"]]);
+    expect(signupInputSchema.safeParse({ ...fan, nickname: " 새팬 " }).data?.nickname).toBe("새팬");
+  });
+
+  it("INV-U21: 2단계 미리 보기 — 크리에이터(닉네임을 넘기지 않음)는 닉네임을 보지 않고, 팬의 빈 닉네임은 닉네임 칸", () => {
+    expect(checkDetails({ ...ok, nickname: undefined })).toBeNull();
+    expect(checkDetails({ ...ok, nickname: undefined, loginId: "abc" })?.field).toBe("loginId");
+    expect(checkDetails({ ...ok, nickname: "" })?.field).toBe("nickname");
   });
 });
 
@@ -114,7 +123,7 @@ describe("INV-U6: 칸별 실시간 안내 — 다음을 누를 때와 같은 규
   });
 });
 
-describe("INV-U13: 닉네임·팬덤 이름 미리 보기 — 서버와 같은 규칙", () => {
+describe("INV-U13: 닉네임 미리 보기 — 서버와 같은 규칙", () => {
   const live: LiveValues = {
     loginId: "newfan",
     nickname: "새팬",
@@ -136,13 +145,5 @@ describe("INV-U13: 닉네임·팬덤 이름 미리 보기 — 서버와 같은 �
   it("INV-U13: 앞뒤 공백을 뺀 12자는 맞는 닉네임", () => {
     expect(checkDetails({ ...ok, nickname: ` ${"가".repeat(12)} ` })).toBeNull();
     expect(checkField("nickname", { ...live, nickname: "🌟".repeat(12) }).ok).toBe(true);
-  });
-
-  it("추가 요청 3 (실패경로): 팬덤 이름은 비워도 되고, 11자·보이지 않는 글자면 팬덤 이름 칸", () => {
-    const creator = { tagIds: ["11111111-1111-4111-8111-000000000001"], customTag: "" };
-    expect(checkDetails({ ...ok, creator: { ...creator, fanName: "" } })).toBeNull();
-    expect(checkDetails({ ...ok, creator: { ...creator, fanName: "가".repeat(10) } })).toBeNull();
-    expect(checkDetails({ ...ok, creator: { ...creator, fanName: "가".repeat(11) } })?.field).toBe("fanName");
-    expect(checkDetails({ ...ok, creator: { ...creator, fanName: "꿀\u200b벌" } })?.field).toBe("fanName");
   });
 });

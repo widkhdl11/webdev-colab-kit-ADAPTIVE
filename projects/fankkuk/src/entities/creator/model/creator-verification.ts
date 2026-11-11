@@ -145,7 +145,8 @@ export function myVerificationsFromRows(rows: unknown): MyVerification[] | null 
 /** 크리에이터 자신의 공개 정보 가운데 확인 상태(my_creator_verification_state). */
 export type MyVerificationState = {
   creatorId: string;
-  name: string;
+  /** 채널을 만들기 전(signup INV-U21)이면 null */
+  name: string | null;
   channelTitle: string;
   verified: boolean;
   platform: string | null;
@@ -166,7 +167,8 @@ export type MyVerificationState = {
 const stateRow = z
   .object({
     creator_id: z.string(),
-    name: z.string(),
+    // 채널을 만들기 전(signup INV-U21)에는 이름이 비어 있다
+    name: z.string().nullable(),
     channel_title: z.string(),
     verified: z.boolean(),
     platform: z.string().nullable(),

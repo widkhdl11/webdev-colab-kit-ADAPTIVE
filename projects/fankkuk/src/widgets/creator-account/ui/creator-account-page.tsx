@@ -17,6 +17,7 @@ import { sendCreatorNotify } from "@/features/creator-settings-save/api/send-cre
 import { VerificationPanel } from "@/features/creator-verify/ui/verification-panel";
 import { PasswordChangePanel } from "@/features/password-change/ui/password-change-panel";
 import { PhoneChangePanel } from "@/features/phone-change/ui/phone-change-panel";
+import { CREATOR_CHANNEL_CREATE_PATH } from "@/shared/config/creator-paths";
 import s from "./creator-account.module.css";
 
 // 크리에이터 계정 설정(design-rules 27절 「4파트 나머지 다섯 화면」, 2026-10-22 카드 d115 · 시안 docs/design/mockups/site/pilot-2026-10-22/creator-account.html).
@@ -179,7 +180,20 @@ export function CreatorAccountPage({
           </div>
           {/* 채널 소유자 확인 — 줄과 펼친 본문을 부품이 함께 그린다(시안 channel-link-verify-20261102 #acct-verified·#acct-recheck, design-rules 42절) */}
           <div className={s.item} id="verify">
-            <VerificationPanel variant="account" state={verification.state} rows={verification.rows} loginId={verification.loginId ?? null} />
+            {verification.state.name === null ? (
+              // signup INV-U21: 채널이 없으면 ①②(팬꾹 링크·채널 주소)를 보이지 않고 채널 만들기로 보낸다(UX 명세 「가입 밖에서 바뀌는 것」)
+              <div className={s.row}>
+                <p className={s.txt}>
+                  <span className={s.k}>채널 소유자 확인</span>
+                  <span className={s.v}>채널 없음</span>
+                </p>
+                <Link className="btn btn--line btn--sm" href={CREATOR_CHANNEL_CREATE_PATH}>
+                  채널 만들기
+                </Link>
+              </div>
+            ) : (
+              <VerificationPanel variant="account" state={verification.state} rows={verification.rows} loginId={verification.loginId ?? null} />
+            )}
           </div>
         </div>
       </section>

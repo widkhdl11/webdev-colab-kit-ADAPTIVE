@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { latestApprovals, type AdminCreator, type NameChange, type VerificationEvent } from "@/entities/creator/model/admin-creator";
+import { adminCreatorName, latestApprovals, type AdminCreator, type NameChange, type VerificationEvent } from "@/entities/creator/model/admin-creator";
 import type { AdminTagOption, BannedWord, CustomTagCount } from "@/entities/creator/model/creator-tags";
 import {
   adminRecheckTables,
@@ -309,7 +309,7 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
                     return (
                       <tr key={c.id}>
                         <td>
-                          <strong>{c.name}</strong>
+                          <strong>{adminCreatorName(c)}</strong>
                           {c.loginId && moving.has(c.loginId) ? (
                             <>
                               {" "}
@@ -324,7 +324,7 @@ export function CreatorsPanel({ creators, verifications, rechecks, events, nameC
                         <td>{last?.actorNickname ?? <span className={a.faint}>기록 없음</span>}</td>
                         <td className={`${a.mono} ${a.nowrap}`}>{last ? formatStamp(last.at) : <span className={a.faint}>—</span>}</td>
                         <td className={a.act}>
-                          <RevokeButton creatorId={c.id} creatorName={c.name} returnFocusId="h-creators-ok" onDone={setDone} />
+                          <RevokeButton creatorId={c.id} creatorName={adminCreatorName(c)} returnFocusId="h-creators-ok" onDone={setDone} />
                         </td>
                       </tr>
                     );

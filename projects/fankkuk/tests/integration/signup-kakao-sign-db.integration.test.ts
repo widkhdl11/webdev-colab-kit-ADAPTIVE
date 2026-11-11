@@ -40,32 +40,45 @@ function phone(): string {
   return `${TEST_SIGNUP_PHONE_PREFIX}${String(seq).padStart(4, "0")}`;
 }
 const ip = () => randomBytes(32).toString("hex");
-const soop = () => psql(`select id from public.creator_tag_options where name = 'SOOP'`);
 
 function signDeps(signer: ApprovalSigner | null = chooseApprovalSigner({ NODE_ENV: "test" })) {
   return { admin: adminClient(), signer, phoneKeys: testPhoneKeys };
 }
 
-function creatorBody(loginId: string, p: string, verificationId: string) {
+/** 크리에이터 가입 본문 — 닉네임·태그·팬덤 이름은 보내지 않는다(가입 뒤 채널 만들기에서 받는다, signup INV-U21) */
+function creatorBody(loginId: string, p: string, verificationId: string): Record<string, unknown> {
   return {
     role: "creator",
     loginId,
-    nickname: loginId.slice(0, 12),
     email: `${loginId.replace("_", ".")}@example.com`,
     password: "long-enough-pw1",
     phone: p,
     terms: { age14: true, service: true, privacy: true, news: false },
     verificationId,
-    creator: { tagIds: [soop()], customTag: "" },
   };
 }
 function fanBody(loginId: string, p: string, verificationId: string) {
-  const body: Record<string, unknown> = { ...creatorBody(loginId, p, verificationId), role: "fan" };
-  delete body.creator;
-  return body;
+  return { ...creatorBody(loginId, p, verificationId), role: "fan", nickname: loginId.slice(0, 12) };
 }
 function signUpDeps() {
   return { env: dev, admin: adminClient(), auth: anonClient().auth, getMailer: () => ({ send: async () => {}, appOrigin: "http://127.0.0.1:3311" }) };
+}
+/** signUpDeps 와 같고, DB 함수 오류(코드·메시지)를 모아 둔다 — 가입 처리는 22023 을 「입력한 정보를 확인」으로 바꿔 돌려주므로 실패 이유를 시험 메시지로 보이게 */
+function tracedSignUpDeps() {
+  const errors: string[] = [];
+  const admin = adminClient();
+  const rpc = admin.rpc.bind(admin);
+  const traced = new Proxy(admin, {
+    get(target, key, receiver) {
+      if (key !== "rpc") return Reflect.get(target, key, receiver);
+      return async (...a: Parameters<typeof rpc>) => {
+        const r = await rpc(...a);
+        if (r.error) errors.push(`${a[0]}: ${r.error.code} ${r.error.message}`);
+        return r;
+      };
+    },
+  });
+  return { deps: { ...signUpDeps(), admin: traced }, errors };
 }
 
 const creatorOf = (loginId: string) => psql(`select coalesce((select c.id::text from public.creators c join public.profiles p on p.id = c.profile_id where p.login_id = '${loginId}'), '')`);
@@ -139,13 +152,14 @@ beforeEach(cleanup);
 afterAll(cleanup);
 
 describe("(manual/0037 뒤) INV-U19: 카카오 서명으로 크리에이터 가입", () => {
-  it("INV-U19 ① (S19) · INV-S16 (S16e): 서명이 검증되면 계정·연락처·연결 기록이 한 처리에서 생기고, 크리에이터 ID 는 봉투에 넣은 값, 6자리 요청은 없다", async () => {
+  it("INV-U19 ① (S19) · INV-S16 (S16e) · INV-U21 (manual/0039 뒤): 서명이 검증되면 계정·연락처·연결 기록이 한 처리에서 생기고, 크리에이터 ID 는 봉투에 넣은 값, 6자리 요청은 없다. 닉네임은 비어 있다(채널 없음)", async () => {
     const p = phone();
     const { ticket, creatorId } = await signedTestPhone(p);
     expect(psql(`select count(*) from pii.phone_verifications where phone_hash = '${testPhoneHash(p)}' and method = 'code'`)).toBe("0");
-    const r = await signUp(signUpDeps(), creatorBody("it_ks_ok", p, ticket));
-    expect(r).toMatchObject({ ok: true });
+    const t = tracedSignUpDeps();
+    expect(await signUp(t.deps, creatorBody("it_ks_ok", p, ticket)), t.errors.join(" / ")).toMatchObject({ ok: true });
     expect(creatorOf("it_ks_ok")).toBe(creatorId);
+    expect(psql("select coalesce(nickname, '<null>') from public.profiles where login_id = 'it_ks_ok'")).toBe("<null>");
     expect(linkOf(creatorId).startsWith("fake|")).toBe(true);
     // 봉투는 연결 기록으로 옮겨지고 요청 줄에서는 지워진다(INV-U19 ⑤)
     expect(requestOf(ticket)).toBe("used|true");
@@ -193,14 +207,15 @@ describe("(manual/0037 뒤) INV-U19: 카카오 서명으로 크리에이터 가�
     expect(psql(`select count(*) from pii.account_contacts where phone_hash = '${testPhoneHash(p)}'`)).toBe("1");
   });
 
-  it("INV-U4·U19 (S19e, 실패경로): 연결 기록 만들기가 실패하면 로그인 정보·프로필·연락처 모두 없고 확인은 미사용", async () => {
+  it("INV-U4·U19 (S19e, 실패경로) · INV-U21 (manual/0039 뒤): 연결 기록 만들기가 실패하면 로그인 정보·프로필·연락처 모두 없고 확인은 미사용", async () => {
     const p = phone();
     const { ticket, creatorId } = await signedTestPhone(p);
     // 연결 기록에 옮길 봉투를 비워 둔다 — 계정·연락처·크리에이터 행을 만든 뒤 마지막 단계(pii.signup_sign_link)가 FKU01 로 거부한다.
     // (요청 줄의 creator_id 를 바꾸는 것은 실패를 만들지 않는다 — 가입이 그 칸에서 크리에이터 ID 를 읽어 같은 값으로 연결한다)
     const envelope = psql(`select envelope::text from pii.signup_sign_requests where ticket = '${ticket}'`);
     psql(`update pii.signup_sign_requests set envelope = null where ticket = '${ticket}'`);
-    await expect(signUp(signUpDeps(), creatorBody("it_ks_rollback", p, ticket))).resolves.toMatchObject({ ok: false, field: "verification" });
+    const t = tracedSignUpDeps();
+    expect(await signUp(t.deps, creatorBody("it_ks_rollback", p, ticket)), t.errors.join(" / ")).toMatchObject({ ok: false, field: "verification" });
     expect(profileCount("it_ks_rollback")).toBe("0");
     expect(psql(`select count(*) from auth.users where email = 'it_ks_rollback@login.fankkuk.invalid'`)).toBe("0");
     // 확인 줄은 그대로 하나, 쓴 표시 없음(되돌려짐)
@@ -208,15 +223,17 @@ describe("(manual/0037 뒤) INV-U19: 카카오 서명으로 크리에이터 가�
     expect(linkCount(creatorId)).toBe("0");
     // 대조: 봉투를 되돌리면 같은 호출이 성공한다 — 막은 것이 연결 단계라는 근거
     psql(`update pii.signup_sign_requests set envelope = '${envelope}'::jsonb where ticket = '${ticket}'`);
-    expect(await signUp(signUpDeps(), creatorBody("it_ks_rollback", p, ticket))).toMatchObject({ ok: true });
+    const t2 = tracedSignUpDeps();
+    expect(await signUp(t2.deps, creatorBody("it_ks_rollback", p, ticket)), t2.errors.join(" / ")).toMatchObject({ ok: true });
     expect(linkCount(creatorId)).toBe("1");
   });
 
-  it("INV-U2·U19 (S19f, 동시): 검증된 서명 한 건으로 가입 둘을 동시에 — 하나만 성공, 연결 기록 하나", async () => {
+  it("INV-U2·U19 (S19f, 동시) · INV-U21 (manual/0039 뒤): 검증된 서명 한 건으로 가입 둘을 동시에 — 하나만 성공, 연결 기록 하나", async () => {
     const p = phone();
     const { ticket, creatorId } = await signedTestPhone(p);
-    const rs = await Promise.all([signUp(signUpDeps(), creatorBody("it_ks_dup1", p, ticket)), signUp(signUpDeps(), creatorBody("it_ks_dup2", p, ticket))]);
-    expect(rs.filter((r) => r.ok)).toHaveLength(1);
+    const t = tracedSignUpDeps();
+    const rs = await Promise.all([signUp(t.deps, creatorBody("it_ks_dup1", p, ticket)), signUp(t.deps, creatorBody("it_ks_dup2", p, ticket))]);
+    expect(rs.filter((r) => r.ok), t.errors.join(" / ")).toHaveLength(1);
     expect(psql(`select count(*) from pii.signature_links where creator_id = '${creatorId}'`)).toBe("1");
   });
 
@@ -234,17 +251,18 @@ describe("(manual/0037 뒤) INV-U19: 카카오 서명으로 크리에이터 가�
 });
 
 describe("(manual/0037 뒤) INV-U20: 장애 대비 6자리 길", () => {
-  it("INV-U20 (S20): 창구 장애가 확인된 번호표를 넘겨 받은 인증번호로 가입하면 계정은 생기고 연결 기록은 없다", async () => {
+  it("INV-U20 (S20) · INV-U21 (manual/0039 뒤): 창구 장애가 확인된 번호표를 넘겨 받은 인증번호로 가입하면 계정은 생기고 연결 기록은 없다", async () => {
     const p = phone();
     const vid = await downCodeTicket(p);
     expect(psql(`select public.signup_verification_kind('${vid}')`)).toBe("code_down");
-    expect(await signUp(signUpDeps(), creatorBody("it_ks_down", p, vid))).toMatchObject({ ok: true });
+    const t = tracedSignUpDeps();
+    expect(await signUp(t.deps, creatorBody("it_ks_down", p, vid)), t.errors.join(" / ")).toMatchObject({ ok: true });
     const creatorId = creatorOf("it_ks_down");
     expect(linkOf(creatorId)).toBe("");
     expect(psql(`select public.creator_signature_linked('${creatorId}')`)).toBe("f");
   });
 
-  it("INV-U20 (S20b, 실패경로): 창구가 정상인데 인증번호를 직접 받아 맞힌 번호표로 크리에이터 가입 — 앱 서버와 DB 둘 다 거부", async () => {
+  it("INV-U20 (S20b, 실패경로) · INV-U21 (manual/0039 뒤): 창구가 정상인데 인증번호를 직접 받아 맞힌 번호표로 크리에이터 가입 — 앱 서버와 DB 둘 다 거부", async () => {
     const p = phone();
     const vid = await verifiedTestPhone(p);
     expect(await signUp(signUpDeps(), creatorBody("it_ks_bypass", p, vid))).toMatchObject({ ok: false, field: "verification" });
@@ -253,20 +271,20 @@ describe("(manual/0037 뒤) INV-U20: 장애 대비 6자리 길", () => {
     const uid = u.data.user!.id;
     const r = await adminClient().rpc("create_creator_account", {
       p_user_id: uid, p_login_id: "it_ks_bypass2", p_email: "it.ks@example.com", p_phone: testPhoneBundle(uid, p), p_verification_id: vid,
-      p_terms: TERMS, p_tag_ids: [soop()], p_custom_tag: null, p_nickname: "it_ks_bp2", // 닉네임은 1~12자(INV-U13) — 앞 검사를 다 지나 확인 방법 대조에 닿게
+      p_terms: TERMS, // 닉네임·태그는 받지 않는다(INV-U21) — 크리에이터는 닉네임 검사 없이 확인 방법 대조에 닿는다(manual/0039)
     });
     expect(r.error?.code, r.error?.message).toBe("FKU01");
     // 대조: 같은 번호표·같은 인자에 「창구 장애 확인」 하나만 붙이면 통과한다 — 막은 것이 확인 방법 대조(INV-U20)라는 근거
     psql(`update pii.phone_verifications set gateway_down_at = now() where id = '${vid}'`);
     const again = await adminClient().rpc("create_creator_account", {
       p_user_id: uid, p_login_id: "it_ks_bypass2", p_email: "it.ks@example.com", p_phone: testPhoneBundle(uid, p), p_verification_id: vid,
-      p_terms: TERMS, p_tag_ids: [soop()], p_custom_tag: null, p_nickname: "it_ks_bp2",
+      p_terms: TERMS,
     });
-    expect(again.error).toBeNull();
+    expect(again.error, again.error?.message).toBeNull();
     expect(profileCount("it_ks_bypass")).toBe("0");
   });
 
-  it("(manual/0038 뒤) INV-U20 정함: 장애 기록은 기록된 때부터 정한 시간 안에 인증번호 요청에 옮겨져야 한다 — 1초 넘으면 계정 만들기 함수가 FKU01, 1분 남았으면 받는다", async () => {
+  it("(manual/0038 뒤) INV-U20 정함 · INV-U21 (manual/0039 뒤): 장애 기록은 기록된 때부터 정한 시간 안에 인증번호 요청에 옮겨져야 한다 — 1초 넘으면 계정 만들기 함수가 FKU01, 1분 남았으면 받는다", async () => {
     const windowSec = Number(psql(`select public.signup_sign_down_window_seconds()`));
     expect(windowSec).toBeGreaterThan(60);
     const attempt = async (shiftSec: number, loginId: string) => {
@@ -279,11 +297,13 @@ describe("(manual/0037 뒤) INV-U20: 장애 대비 6자리 길", () => {
       const uid = u.data.user!.id;
       return adminClient().rpc("create_creator_account", {
         p_user_id: uid, p_login_id: loginId, p_email: `${loginId.replace("_", ".")}@example.com`, p_phone: testPhoneBundle(uid, p), p_verification_id: vid,
-        p_terms: TERMS, p_tag_ids: [soop()], p_custom_tag: null, p_nickname: loginId.slice(0, 12),
+        p_terms: TERMS,
       });
     };
-    expect((await attempt(windowSec + 1, "it_ks_stale")).error?.code).toBe("FKU01");
-    expect((await attempt(windowSec - 60, "it_ks_fresh")).error).toBeNull();
+    const stale = await attempt(windowSec + 1, "it_ks_stale");
+    expect(stale.error?.code, stale.error?.message).toBe("FKU01");
+    const fresh = await attempt(windowSec - 60, "it_ks_fresh");
+    expect(fresh.error, fresh.error?.message).toBeNull();
   });
 
   it("INV-U20 (S20c, 실패경로): 서명 거절·기한 지남은 장애가 아니다 — 그 번호표를 넘겨 받은 인증번호에는 장애 기록이 옮겨지지 않는다", async () => {
@@ -300,7 +320,7 @@ describe("(manual/0037 뒤) INV-U20: 장애 대비 6자리 길", () => {
     expect(psql(`select coalesce(gateway_down_at::text, '') from pii.phone_verifications where id = '${started.verificationId}'`)).toBe("");
   });
 
-  it("(manual/0038 뒤) INV-U20 (코드 리뷰): 장애 길에서 인증번호를 다시 받으면 장애 기록이 새 번호표로 넘어간다 — 원래 시각 그대로, 앞 번호표는 잃는다(한 번호표만). 다시 받은 인증번호로 가입된다", async () => {
+  it("(manual/0038 뒤) INV-U20 (코드 리뷰) · INV-U21 (manual/0039 뒤): 장애 길에서 인증번호를 다시 받으면 장애 기록이 새 번호표로 넘어간다 — 원래 시각 그대로, 앞 번호표는 잃는다(한 번호표만). 다시 받은 인증번호로 가입된다", async () => {
     const p = phone();
     const down = await startCreatorSign(signDeps(downSigner), { identity: dummySignupEnvelope(), creatorId: crypto.randomUUID(), phone: p }, ip(), null);
     if (!down.ok || down.state !== "down") throw new Error("장애 판정 실패");
@@ -316,7 +336,8 @@ describe("(manual/0037 뒤) INV-U20: 장애 대비 6자리 길", () => {
     expect(downAt(first.verificationId)).toBe("");
     expect(downAt(second.verificationId)).toBe(recorded);
     const vid = await verifyCode(p, second.verificationId);
-    expect(await signUp(signUpDeps(), creatorBody("it_ks_resend", p, vid))).toMatchObject({ ok: true });
+    const t = tracedSignUpDeps();
+    expect(await signUp(t.deps, creatorBody("it_ks_resend", p, vid)), t.errors.join(" / ")).toMatchObject({ ok: true });
   });
 
   it("(manual/0038 뒤) INV-U20 (코드 리뷰): 인증번호 발송이 실패해 버려져도 장애 기록을 잃지 않는다 — 다음 요청(쿠키는 그대로 장애 번호표)이 다시 가져간다", async () => {
@@ -350,10 +371,11 @@ describe("(manual/0037 뒤) INV-U20: 장애 대비 6자리 길", () => {
 });
 
 describe("(manual/0037 뒤) INV-U12 정함 · INV-U19 ⑤ 정함", () => {
-  it("INV-U12 정함: 가입 서명으로 연결된 크리에이터가 번호를 바꾸면 연결이 풀린다", async () => {
+  it("INV-U12 정함 · INV-U21 (manual/0039 뒤): 가입 서명으로 연결된 크리에이터가 번호를 바꾸면 연결이 풀린다", async () => {
     const p = phone();
     const { ticket, creatorId } = await signedTestPhone(p);
-    expect((await signUp(signUpDeps(), creatorBody("it_ks_move", p, ticket))).ok).toBe(true);
+    const t = tracedSignUpDeps();
+    expect(await signUp(t.deps, creatorBody("it_ks_move", p, ticket)), t.errors.join(" / ")).toMatchObject({ ok: true });
     const uid = psql(`select id from public.profiles where login_id = 'it_ks_move'`);
     const next = phone();
     const vid = await verifiedTestPhone(next);

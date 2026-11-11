@@ -277,3 +277,20 @@ describe("계정 설정(크리에이터) — 알림", () => {
     expect(last.previousElementSibling?.contains(must)).toBe(true);
   });
 });
+
+describe("채널 없는 크리에이터 (signup INV-U21 · UX 명세 「가입 밖에서 바뀌는 것」)", () => {
+  it("INV-U21: 채널이 없으면 채널 소유자 확인 줄에 ①②(팬꾹 링크·채널 주소) 대신 「채널 만들기」 링크 하나", () => {
+    render({ ...baseState, name: null });
+    const row = host.querySelector("#verify")!;
+    expect(row.textContent).toContain("채널 소유자 확인");
+    expect(row.textContent).toContain("채널 없음");
+    expect([...row.querySelectorAll("a")].map((a) => [a.textContent, a.getAttribute("href")])).toEqual([["채널 만들기", "/signup/creator"]]);
+    expect(row.querySelector("input")).toBeNull();
+  });
+
+  it("INV-U21 (실패경로): 채널이 있으면 지금 채널 확인 그대로 — 「채널 만들기」 링크가 없다", () => {
+    render();
+    expect(host.querySelector("#verify")?.textContent).not.toContain("채널 없음");
+    expect([...host.querySelectorAll("#verify a")].map((a) => a.textContent)).not.toContain("채널 만들기");
+  });
+});

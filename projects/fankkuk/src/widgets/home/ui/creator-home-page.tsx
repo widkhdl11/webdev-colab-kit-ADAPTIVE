@@ -44,7 +44,7 @@ type Props = {
 
 export const CREATOR_HOME_LOG_ROWS = 1;
 const ACTION_LABEL: Record<CreatorActionItem["kind"], string> = {
-  signature_link: "연결 전", approval: "승인 대기", bluetooth: "확인할 선물", tracker: "확인할 선물", unconfirmed: "내 상자 찾기",
+  channel_create: "채널 없음", signature_link: "연결 전", approval: "승인 대기", bluetooth: "확인할 선물", tracker: "확인할 선물", unconfirmed: "내 상자 찾기",
   difference: "추가 결제", missing_box: "내 상자 찾기", return_address: "반송 주소 확인", unpaid: "결제 대기",
 };
 const countNote = (n: number | null) => n === null ? "" : `${n}건`;
@@ -80,6 +80,10 @@ function SummaryRows({ rows, href, label }: { rows: readonly HomeProgressRow[]; 
 /** 홈 「지금 할 일」 한 줄 — 승인 서명 연결 줄(signup INV-U20)은 연결 화면으로, 나머지는 처리할 일 화면으로 간다 */
 export function creatorActionRows(actions: readonly CreatorActionItem[]): HomeProgressRow[] {
   return actions.map((item): HomeProgressRow => {
+    // signup INV-U21: 채널을 만들기 전 — 가입 4단계(채널 만들기)로
+    if (item.kind === "channel_create") {
+      return { id: item.kind, title: "채널 만들기", description: "선물함과 팬꾹 링크를 만들려면 채널이 필요합니다", status: ACTION_LABEL[item.kind], tone: "warn", href: creatorActionHref(item) };
+    }
     if (item.kind === "signature_link") {
       return { id: item.kind, title: "카카오톡 인증 알림 연결", description: "선물을 받으려면 연결이 필요합니다", status: ACTION_LABEL[item.kind], tone: "warn", href: creatorActionHref(item) };
     }

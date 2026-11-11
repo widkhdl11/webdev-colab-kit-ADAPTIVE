@@ -42,6 +42,11 @@ describe("관리자 1:1 문의 읽기 (INV-K11·K8)", () => {
     ]);
   });
 
+  it("INV-U21: 채널 없는 크리에이터(닉네임 없음)의 문의도 목록을 깨지 않고 「채널 없음」으로 옮긴다", () => {
+    const rows = adminInquiriesFromRows([OPEN, { ...OPEN, id: "4f1c2b7a-9d4e-4c1a-8b2f-0a1b2c3d4e5f", author_nickname: null }]);
+    expect(rows?.map((r) => r.authorNickname)).toEqual(["달토끼", "채널 없음"]);
+  });
+
   it("INV-K11: 답이 달린 줄 — 답·답한 시각·답한 사람 닉네임을 옮긴다", () => {
     const row = { ...OPEN, status: "answered", answer: "바꿔 드렸어요.", answered_at: "2026-10-03T01:00:00+00:00", answered_by_nickname: "라임" };
     expect(adminInquiriesFromRows([row])?.[0]).toMatchObject({ status: "answered", answer: "바꿔 드렸어요.", answeredAt: "2026-10-03T01:00:00+00:00", answeredByNickname: "라임" });

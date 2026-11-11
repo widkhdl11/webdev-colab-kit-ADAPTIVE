@@ -129,3 +129,14 @@ describe("신청 관리 (revgift-box INV-GB5·GB7·GB8·GB1)", () => {
     await expect(closeBox({ client: fakeClient({ data: "3" }).client, viewer: HARU }, BOX)).rejects.toThrow();
   });
 });
+
+describe("채널 없는 크리에이터 (signup INV-U21)", () => {
+  it("INV-U21 (S21b, 실패경로): DB 가 채널이 없다고 하면(FKN01) 「채널을 먼저 만들어 주세요.」 409 — 서버 오류가 아니다", async () => {
+    const f = fakeClient({ error: { code: "FKN01" } });
+    expect(await createBox({ client: f.client, viewer: HARU }, { name: "겨울 선물", capacity: 3, isPublic: true })).toEqual({
+      ok: false,
+      status: 409,
+      message: "채널을 먼저 만들어 주세요.",
+    });
+  });
+});

@@ -15,7 +15,8 @@ export type AdminInquiry = InquiryBase & {
 
 const adminInquiryRow = inquiryRowBase.extend({
   author_login_id: z.string(),
-  author_nickname: z.string(),
+  // 채널을 아직 만들지 않은 크리에이터는 닉네임이 없다(signup INV-U21) — 운영자 크리에이터 목록과 같은 「채널 없음」으로 보인다
+  author_nickname: z.string().nullable(),
   answered_by_nickname: z.string().nullable(),
   author_restricted: z.boolean(),
   author_restriction_reason: z.string().nullable(),
@@ -27,7 +28,7 @@ export function adminInquiriesFromRows(rows: unknown): AdminInquiry[] | null {
   return parsed.data.map((r) => ({
     ...inquiryBaseFromRow(r),
     authorLoginId: r.author_login_id,
-    authorNickname: r.author_nickname,
+    authorNickname: r.author_nickname ?? "채널 없음",
     answeredByNickname: r.answered_by_nickname,
     authorRestricted: r.author_restricted,
     authorRestrictionReason: r.author_restriction_reason,

@@ -397,3 +397,22 @@ describe("승인 서명 연결 줄 (signup INV-U20 · approval-signature INV-S16
     expect(host.querySelector("#ca-account")).toBeNull();
   });
 });
+
+describe("채널 만들기 줄 (signup INV-U21)", () => {
+  it("INV-U21: 채널 만들기 줄은 「계정 설정」 묶음 맨 위의 촘촘한 줄 — 「만들기」가 가입 4단계(/signup/creator)로 간다", () => {
+    render([{ kind: "channel_create" }, { kind: "signature_link" }, BT_OPEN]);
+    const rows = [...host.querySelectorAll("[data-row]")];
+    expect(rows[0]?.querySelector("[data-title]")?.textContent).toBe("채널 만들기");
+    const go = [...rows[0]!.querySelectorAll("a")].find((a) => a.textContent === "만들기");
+    expect(go?.getAttribute("href")).toBe("/signup/creator");
+    expect(rows[1]?.querySelector("[data-title]")?.textContent).toBe("카카오톡 인증 알림 연결");
+    expect(host.querySelector("#ca-account")?.textContent).toBe("계정 설정 2건");
+    expect(host.querySelector("#ca-in")?.textContent).toBe("받은 선물 1건");
+    expect(host.querySelector(".ph-count")?.textContent).toBe("3건");
+  });
+
+  it("INV-U21 (실패경로): 채널을 만든 크리에이터(줄 없음)에게는 채널 만들기 줄이 보이지 않는다", () => {
+    render([{ kind: "signature_link" }]);
+    expect(host.textContent).not.toContain("채널 만들기");
+  });
+});

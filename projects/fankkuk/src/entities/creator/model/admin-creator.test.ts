@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adminCreatorsFromRows, verificationEventsFromRows } from "./admin-creator";
+import { adminCreatorName, adminCreatorsFromRows, verificationEventsFromRows } from "./admin-creator";
 
 const ID = "3f1c2b7a-9d4e-4c1a-8b2f-0a1b2c3d4e5f";
 
@@ -58,5 +58,15 @@ describe("관리자 크리에이터 확인 읽기 (INV-K10·K8)", () => {
     const ev = { at: "t", actor_nickname: "라임", creator_id: ID, creator_name: "달무리", reason: "", reason_code: null, method: null, channel_url: null, code: null };
     expect(verificationEventsFromRows([{ ...ev, action: "unknown" }])).toBeNull();
     expect(verificationEventsFromRows([{ ...ev, action: "approve", method: "phone" }])).toBeNull();
+  });
+});
+
+describe("채널 없는 크리에이터 (signup INV-U21)", () => {
+  it("INV-U21: 이름이 비어 있는 줄도 읽고(목록이 통째로 실패하지 않는다), 화면 이름은 「채널 없음」", () => {
+    const row = { id: ID, slug: "c-1", name: null, channel: "", channel_title: "", login_id: "honeypot", verified: false, last_action_at: null, last_actor_nickname: null };
+    const read = adminCreatorsFromRows([row]);
+    expect(read?.[0]?.name).toBeNull();
+    expect(adminCreatorName(read![0]!)).toBe("채널 없음");
+    expect(adminCreatorName({ name: "하루" })).toBe("하루");
   });
 });

@@ -1,19 +1,16 @@
 import { z } from "zod";
-import { FAN_NAME_MAX } from "@/entities/creator/model/fan-name";
-import { TAG_COUNT_MESSAGE, tagCountWithin, tagSelectionFields } from "@/entities/creator/model/creator-tags";
 import { HEARD_FROM } from "@/entities/metrics/model/signup-source";
 import { SIGNUP_LOGIN_ID_PATTERN } from "@/entities/session/model/login-id";
 import { nicknameSchema } from "@/entities/session/model/nickname-rule";
 import { PASSWORD_KINDS, PASSWORD_MAX, PASSWORD_MIN, PASSWORD_SAME_AS_ID, PASSWORD_TOO_LONG, PASSWORD_TOO_SHORT, PASSWORD_WEAK, passwordKinds } from "@/entities/session/model/password-rule";
 import { EMAIL_SHAPE } from "@/shared/lib/validation/email-shape";
-import { charCount } from "@/shared/lib/validation/char-count";
-import { HIDDEN_CHAR, LINE_BREAK } from "@/shared/lib/validation/hidden-char";
 import { mobilePhoneOf, normalizeMobilePhone } from "@/shared/lib/validation/phone-shape";
 import { EMAIL_CUSTOM, joinEmail, type EmailParts } from "./signup-fields";
 
 // 가입 입력 경계(INV-U5·U6·U13). 앱 서버가 먼저 검사하고, DB 함수 create_account 가 같은 규칙으로 다시 검사한다.
 // 본문에서 이 칸들만 꺼낸다 — 「인증 완료」 표시·사용자 ID·약관 판 번호는 와도 읽지 않는다(INV-U1).
-// 닉네임은 가입 때 받는다(INV-U13) — 앞뒤 공백 뺀 1~12자. 금칙어·연락처 필터와 겹침은 DB 가 다시 본다.
+// 닉네임은 팬만 가입 때 받는다(INV-U13) — 앞뒤 공백 뺀 1~12자. 금칙어·연락처 필터와 겹침은 DB 가 다시 본다.
+// 크리에이터는 닉네임·팬덤 이름·태그를 가입 때 받지 않는다 — 마지막 「채널 만들기」 단계에서 받는다(INV-U21, features/creator-channel-create).
 // 휴대폰은 하이픈·공백을 빼고 숫자만 남긴 뒤 검사한다.
 // 화면의 2단계 미리 보기(checkDetails)도 같은 detailsSchema 를 쓴다 — 규칙과 문구가 한 곳에만 있다.
 
@@ -57,49 +54,33 @@ const detailsObject = z.object({
   }),
 });
 
-/**
- * 크리에이터 기본 공개 정보 — 가입 때 받는다(creator-verification INV-V1, 「정한 것」 2026-10-05).
- * 태그 1~5개(creator-tags INV-T3 — 선택지 id + 직접 입력 0~1개)와 팬덤 이름(선택).
- * 이름은 닉네임 하나다 — 공개 이름·채널 이름은 받지 않는다(creator-display-name INV-CN2·CN4, 2026-11-10).
- * DB 함수 create_creator_account 가 같은 기준으로 다시 검사한다(선택지가 있는지·숨겼는지도 DB 가 본다).
- */
-const creatorProfileObject = z.object({
-  ...tagSelectionFields,
-  // 팬덤 이름(PRODUCT 「추가 요청 3」) — 선택, 0~10자. 내 팬꾹 꾸미기의 「팬을 부르는 이름」과 같은 칸(creators.fan_name)·같은 규칙.
-  // 금칙어·연락처 필터는 DB 함수 create_creator_account 가 본다(P0084~P0086).
-  fanName: z
-    .string()
-    .trim()
-    .refine((s) => charCount(s) <= FAN_NAME_MAX, `팬덤 이름은 ${FAN_NAME_MAX}자까지 입력할 수 있습니다.`)
-    .refine((s) => !HIDDEN_CHAR.test(s) && !LINE_BREAK.test(s), "팬덤 이름에 줄바꿈이나 보이지 않는 문자는 입력할 수 없습니다.")
-    .optional(),
-});
-
-export const creatorProfileSchema = creatorProfileObject
-  .refine(tagCountWithin, { message: TAG_COUNT_MESSAGE, path: ["tagIds"] });
-
-export type CreatorProfileInput = z.infer<typeof creatorProfileSchema>;
-
-/** 화면이 보내는 크리에이터 공개 정보 — 태그는 고른 선택지 id 와 직접 입력(없으면 ""). */
-export type CreatorProfileBody = { tagIds: readonly string[]; customTag: string; fanName?: string };
-
-const CREATOR_REQUIRED = { message: "크리에이터 정보를 입력해 주세요.", path: ["creator", "tagIds"] };
-const creatorWhenCreator = (v: { role?: string; creator?: unknown }) => v.role !== "creator" || v.creator !== undefined;
-
 const passwordNotLoginId = <T extends { loginId: string; password: string }>(v: T) => v.password !== v.loginId;
 const PASSWORD_IS_ID = { message: PASSWORD_SAME_AS_ID, path: ["password"] };
 
+/** INV-U21: 크리에이터에게 닉네임이 왔을 때 — 화면은 크리에이터에게 닉네임 칸을 그리지 않으므로 낡은 화면에서만 보인다 */
+export const CREATOR_NICKNAME_LATER = "크리에이터 닉네임은 가입 후 채널 만들기에서 정합니다.";
+
 export const signupInputSchema = detailsObject
+  .omit({ nickname: true })
   .extend({
     role: z.enum(["fan", "creator"], { message: "회원 유형을 선택해 주세요." }),
+    // INV-U13·U21: 팬은 필수(아래에서 닉네임 규칙으로 검사), 크리에이터는 오면 거부. 꼴만 여기서 본다
+    nickname: z.string().optional(),
     verificationId: verificationIdSchema,
-    // 팬이면 와도 쓰지 않는다(sign-up 이 크리에이터일 때만 넘긴다)
-    creator: creatorProfileSchema.optional(),
     // metrics INV-Q4: 「어디서 알게 되셨나요」 — 고르는 것 하나, 답하지 않아도 된다(빈 값 = 고르지 않음). DB 가 같은 목록으로 다시 검사한다
     heardFrom: z.enum(HEARD_FROM, { message: "팬꾹을 알게 된 경로를 목록에서 선택해 주세요." }).nullable().optional(),
   })
   .refine(passwordNotLoginId, PASSWORD_IS_ID)
-  .refine(creatorWhenCreator, CREATOR_REQUIRED);
+  .superRefine((v, ctx) => {
+    if (v.role === "creator") {
+      if (v.nickname !== undefined) ctx.addIssue({ code: "custom", message: CREATOR_NICKNAME_LATER, path: ["nickname"] });
+      return;
+    }
+    const nick = nicknameSchema.safeParse(v.nickname ?? "");
+    if (!nick.success) ctx.addIssue({ code: "custom", message: nick.error.issues[0]?.message ?? "닉네임을 확인해 주세요.", path: ["nickname"] });
+  })
+  // 결과의 닉네임: 팬은 다듬은 닉네임, 크리에이터는 null(채널 없음, INV-U21). 본문의 크리에이터 정보(태그·팬덤 이름)는 남지 않는다
+  .transform((v) => ({ ...v, nickname: v.role === "fan" ? (v.nickname ?? "").trim() : null }));
 
 export type SignupInput = z.infer<typeof signupInputSchema>;
 
@@ -111,20 +92,13 @@ export type DetailsField =
   | "password"
   | "passwordConfirm"
   | "phone"
-  | "terms"
-  | "tags"
-  | "fanName";
+  | "terms";
 
 const DETAILS_FIELDS: readonly string[] = ["loginId", "nickname", "email", "password", "phone", "terms"];
-const CREATOR_FIELDS: Record<string, DetailsField> = { tagIds: "tags", customTag: "tags", fanName: "fanName" };
 
 /** zod 오류의 첫 칸 이름. 2단계 칸이 아니면 null. */
 export function detailsFieldOf(path: readonly PropertyKey[]): DetailsField | null {
   const head = path[0];
-  if (head === "creator") {
-    const sub = path[1];
-    return typeof sub === "string" ? (CREATOR_FIELDS[sub] ?? "tags") : "tags";
-  }
   return typeof head === "string" && DETAILS_FIELDS.includes(head) ? (head as DetailsField) : null;
 }
 
@@ -134,18 +108,17 @@ export function detailsFieldOf(path: readonly PropertyKey[]): DetailsField | nul
  */
 export function checkDetails(v: {
   loginId: string;
-  nickname: string;
+  /** 팬만 — 크리에이터는 넘기지 않는다(닉네임은 채널 만들기에서, INV-U21) */
+  nickname?: string;
   email: string;
   password: string;
   passwordConfirm: string;
   terms: { age14: boolean; service: boolean; privacy: boolean };
-  /** 크리에이터로 가입할 때만 — 태그(creator-tags INV-T3)·팬덤 이름 */
-  creator?: CreatorProfileBody;
 }): { field: DetailsField; message: string } | null {
-  // 휴대폰 번호는 3단계에서 받는다 — 2단계 검사에서 뺀다
+  // 휴대폰 번호는 3단계에서 받는다 — 2단계 검사에서 뺀다. 닉네임이 없으면(크리에이터) 닉네임을 보지 않는다
   const parsed = detailsObject
     .omit({ phone: true })
-    .extend({ creator: creatorProfileSchema.optional() })
+    .extend({ nickname: nicknameSchema.optional() })
     .refine(passwordNotLoginId, PASSWORD_IS_ID)
     .safeParse(v);
   if (!parsed.success) {

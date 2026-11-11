@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>크리에이터 가입 4단계 채널 만들기</title>
+<!--
+  2026-11-11 크리에이터 가입 4단계 「채널 만들기」 — 닉네임·팬덤 이름·태그를 2단계에서 4단계로 옮김(signup INV-U21).
+  상태: docs/ux/pages/signup.md 「2026-11-11 크리에이터 4단계 채널 만들기」의 channel_new · channel_made. 각 상태를 PC(720 칸)·휴대폰(390 칸) 둘로.
+  틀: creator-signup-kakao-20261110 의 가입 카드 틀(단계 줄·카드 480·버튼 줄) 그대로. tokens.css 도 그 폴더 것을 읽는다(복사하지 않음).
+  칸: 닉네임·팬덤 이름은 signup-page.tsx 의 지금 2단계 칸(라벨·위 설명·아래 안내 문구 그대로), 태그는 tag-picker.tsx 의 칩·직접 입력 모양 그대로.
+  channel_made 아래 패널: verification-panel(채널 소유자 확인) ① 팬꾹 링크 만들기 상태 그대로. 팬꾹 링크 칸은 channel_new 에 없다.
+  새 설명 문구 없음 — 명세·지금 코드에 있는 문구만. 예시 값(김하루·꿀벌단·태그)은 화면 예시다(5-5).
+
+  적용한 디자인 프롬프트(docs/design/design-prompt.md) 원칙:
+    적용 규칙 6 — 입력 항목·문구는 2단계에서 옮긴 그대로, 버튼 동작·순서 유지(칸만 4단계로)
+    1-2·1-3 — 채움 버튼은 화면에 하나(채널 만들기). 「나중에 하기」는 선 버튼, 「가입 완료」는 꺼짐
+    1-4·2-21 1) — 한 열 폼: 「채널 만들기」 버튼을 마지막 칸(태그) 아래 왼쪽 끝에, 휴대폰은 폭 전체(2-21 2)
+    2-1·2-2 — 간격 8의 배수, 칸 사이 24 / 라벨↔위 설명↔칸↔아래 안내 8 / 묶음 사이 32
+    2-19 — 카드 안 라벨·칸·안내 왼쪽 정렬
+    2-22 — 하단 버튼 줄은 「보조 → primary」(나중에 하기 → 가입 완료)
+    3-2·3-6 — 글자 단계 20·16·14만, 대비 4.5:1
+    4-2 — 요약 줄은 체크 아이콘 + 글자(색만으로 알리지 않음)
+    8-2·8-12 — 한 열 폼, 누르는 칸 높이 44 이상(태그 칩 44)
+    8-10 — 단계 줄: 몇 번째 단계 + 지금 단계 이름
+    9-3·9-4 — 설명 문장을 새로 덧붙이지 않음, 제목·요약이 같은 정보를 반복하지 않음
+  스킬 기준과 다름: 없음.
+-->
+<link rel="stylesheet" href="../creator-signup-kakao-20261110/tokens.css">
+<style>
+  @font-face { font-family: Pretendard; src: url("../part6-v4-20261101/assets/Pretendard-Medium.woff") format("woff"); font-weight: 400 500; font-display: swap; }
+  @font-face { font-family: Pretendard; src: url("../part6-v4-20261101/assets/Pretendard-SemiBold.woff") format("woff"); font-weight: 600; font-display: swap; }
+  @font-face { font-family: Pretendard; src: url("../part6-v4-20261101/assets/Pretendard-Bold.woff") format("woff"); font-weight: 700 800; font-display: swap; }
+  @font-face { font-family: "Tmoney Round Wind"; src: url("../part6-v4-20261101/assets/TmoneyRoundWindExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--gray-100); color: var(--ink); font-family: var(--font); font-size: var(--fs-body); font-weight: 400; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }
+  h1, h2, h3, p, ol, dl { margin: 0; }
+  ol { padding: 0; list-style: none; }
+  svg { display: block; flex-shrink: 0; }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* 시안 표지 — 화면 밖(사이트에는 없다) */
+  .mk-top { padding: 32px 24px 8px; max-width: 1280px; margin: 0 auto; }
+  .mk-top .mk-title { font-size: var(--fs-page); font-weight: var(--fw-bold); line-height: 1.3; }
+  .mk-top p { margin-top: 4px; color: var(--gray-600); font-size: var(--fs-small); line-height: 1.5; }
+  .state { max-width: 1280px; margin: 0 auto; padding: 24px; }
+  .state > .tagname { display: inline-block; margin-bottom: 16px; padding: 4px 12px; border-radius: var(--r-pill); background: var(--gray-900); color: var(--white); font-size: var(--fs-small); font-weight: var(--fw-bold); }
+  .state > .tagname span { font-weight: 400; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .frame-wrap > .cap { margin-bottom: 8px; color: var(--gray-600); font-size: var(--fs-small); font-weight: var(--fw-bold); }
+  .frame { container-type: inline-size; background: var(--background); border-radius: var(--r-card); box-shadow: var(--hair); overflow: hidden; }
+  .frame.pc { width: 720px; --gutter: 24px; }
+  .frame.ph { width: 390px; --gutter: 16px; }
+
+  /* 가입 화면 — creator-signup-kakao 시안과 같은 값 */
+  .page { padding: 48px 0 48px; }
+  .box { width: 100%; max-width: calc(480px + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); --su-line: var(--gray-500); }
+  .head { text-align: center; margin-bottom: var(--space-8); }
+  .t-title { font-family: var(--font-round); font-weight: var(--fw-title); font-size: var(--fs-title); line-height: 1.3; letter-spacing: var(--ls-title); }
+  .t-card { font-family: var(--font-round); font-weight: var(--fw-title); font-size: var(--fs-card); line-height: 1.4; }
+  .ph .t-title { font-size: var(--fs-page); }
+
+  .steps-wrap { margin-bottom: 24px; }
+  .steps { display: flex; gap: 8px; }
+  .steps li { flex: 0 0 auto; min-width: 0; }
+  .steps li.cur { flex: 1 1 0; }
+  .st { display: flex; align-items: center; justify-content: center; gap: 8px; width: 48px; min-height: 48px; padding: 0; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font-size: 16px; line-height: 1.2; white-space: nowrap; }
+  .cur .st { width: 100%; padding: 0 8px; background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
+  .st:not([aria-current]) .lbl { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .dot { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--white); color: var(--gray-600); font-weight: var(--fw-btn); line-height: 1; }
+  .st.is-done { background: var(--primary-50); color: var(--brand-ink); }
+  .st.is-done .dot { color: var(--brand-ink); }
+  .cur .dot { background: var(--gray-900); color: var(--white); }
+  .ph .st { gap: 6px; font-size: 14px; }
+  .ph .dot { width: 24px; height: 24px; font-size: 14px; }
+
+  .card { min-width: 0; padding: var(--card-pad); border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
+  .card > h2 { margin-bottom: 24px; }
+  .form { display: grid; gap: 24px; }
+  .label { display: block; margin-bottom: var(--space-2); font-weight: var(--fw-bold); }
+  .opt { font-weight: 400; color: var(--gray-600); }
+  .hint { margin-top: var(--space-2); font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
+  .hint-top { margin: 0 0 var(--space-2); }
+  .field { display: block; width: 100%; min-width: 0; min-height: var(--btn-h); padding: 0 16px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font-size: var(--fs-body); color: var(--ink); }
+  .field::placeholder { color: var(--gray-500); opacity: 1; }
+  .field:focus { outline: 2px solid transparent; box-shadow: inset 0 0 0 var(--field-ring) var(--field-focus); }
+
+  /* 태그 고르기 — tag-picker 그대로(칩 44 · 직접 입력 칸) */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 0; border-radius: var(--r-pill); background: var(--surface); color: var(--ink); font-weight: var(--fw-btn); cursor: pointer; }
+  .chip:hover { background: var(--surface-hover); }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--white); }
+  .custom { margin-top: 16px; }
+  .custom label { display: block; margin-bottom: var(--space-2); }
+
+  /* 채널을 만든 뒤 요약 한 줄 */
+  .made { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border-radius: var(--r-btn); background: var(--success-soft); }
+  .made .ck { color: var(--success); margin-top: 3px; }
+  .made .tt { color: var(--success); font-weight: var(--fw-btn); }
+  .made .nm { color: var(--ink); overflow-wrap: anywhere; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--btn-h); padding: 0 var(--space-6); border: 0; border-radius: var(--r-btn); background: var(--brand); color: var(--on-brand); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.25; white-space: nowrap; cursor: pointer; }
+  .btn:hover { background: var(--brand-hover); }
+  .btn--line { background: var(--white); color: var(--ink); box-shadow: inset 0 0 0 1px var(--su-line); }
+  .btn--line:hover { background: var(--btn-ghost-hover); }
+  .btn[aria-disabled="true"] { background: var(--gray-100); color: var(--gray-600); box-shadow: none; cursor: not-allowed; }
+  .make-btn { min-width: 120px; }
+  .ph .make-btn { width: 100%; }
+
+  .step-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-200); }
+  .step-actions .btn { min-width: 120px; }
+  .step-actions .next { flex: 1 0 auto; margin-left: auto; }
+  .ph .step-actions { display: grid; grid-template-columns: 1fr 2fr; }
+  .ph .step-actions .next { margin-left: 0; }
+  .ph .step-actions .btn { min-width: 0; }
+
+  /* 채널 소유자 확인 — verification-panel.module.css 값 그대로(① 팬꾹 링크 만들기) */
+  .panel { margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--gray-200); }
+  .p-head { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }
+  .p-head h2 { font-size: var(--fs-card); line-height: 1.4; }
+  .tag { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 4px 8px; border-radius: var(--r-pill); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1.5; white-space: nowrap; }
+  .tag-state { background: var(--primary-50); color: var(--tag-state-ink); }
+  .lead { margin: 0 0 32px; color: var(--sub); text-wrap: balance; }
+  .vstep { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .vlabel { display: flex; align-items: center; gap: 12px; font-weight: var(--fw-bold); line-height: 1.5; }
+  .no { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-50); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1; }
+  .vdesc { margin: -4px 0 0; color: var(--sub); font-size: var(--fs-small); line-height: 1.6; }
+  .vrow { display: flex; gap: 8px; align-items: stretch; }
+  .handle { flex: 1 1 0; min-width: 0; display: flex; align-items: center; height: 48px; padding: 0 16px; border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--field-line); }
+  .handle:focus-within { box-shadow: inset 0 0 0 var(--field-ring) var(--field-focus); }
+  .handle .pre { flex: none; color: var(--sub); }
+  .handle input { flex: 1 1 0; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: none; font-weight: 400; }
+  .handle input::placeholder { color: var(--gray-500); opacity: 1; }
+  .vrow .btn { flex: none; min-width: 96px; padding: 0 16px; }
+</style>
+</head>
+<body>
+
+<div class="mk-top">
+  <div class="mk-title">크리에이터 가입 4단계 — 채널 만들기 (시안)</div>
+  <p>닉네임 · 팬덤 이름 · 태그가 2단계에서 4단계로 옮겨 왔습니다. 상태 둘(채널 만들기 전 · 채널을 만든 뒤)을 PC 폭과 휴대폰 폭(390)으로 그렸습니다. 이름·태그는 화면 예시입니다.</p>
+</div>
+
+<!-- ============ 상태 A: channel_new ============ -->
+<section class="state" id="channel-new" aria-labelledby="a-h">
+  <h1 class="tagname" id="a-h">A · channel_new <span>— 채널 만들기 (닉네임이 비어 있음)</span></h1>
+  <div class="pair">
+
+    <div class="frame-wrap"><p class="cap">PC</p>
+    <div class="frame pc"><main class="page"><div class="box">
+      <div class="head"><h2 class="t-title">회원가입</h2></div>
+      <nav class="steps-wrap" aria-label="가입 단계"><ol class="steps">
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">유형 선택</span></span></li>
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">정보 입력</span></span></li>
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">카카오톡 연결</span></span></li>
+        <li class="cur"><span class="st" aria-current="step"><span class="dot" aria-hidden="true">4</span><span class="lbl">채널 만들기</span></span></li>
+      </ol></nav>
+      <form class="card" onsubmit="return false">
+        <h2 class="t-card">채널 만들기</h2>
+        <div class="form">
+          <div>
+            <label class="label" for="a1-nick">닉네임</label>
+            <p class="hint hint-top" id="a1-nick-t">팬에게 보이는 이름입니다.<br>가입 후 ‘프로필 수정’에서 변경할 수 있습니다.</p>
+            <input class="field" id="a1-nick" type="text" autocomplete="nickname" aria-describedby="a1-nick-t a1-nick-h">
+            <p class="hint" id="a1-nick-h">최대 12자 · 중복 사용 불가</p>
+          </div>
+          <div>
+            <label class="label" for="a1-fan">팬덤 이름 <span class="opt">(선택)</span></label>
+            <p class="hint hint-top" id="a1-fan-t">팬을 부르는 이름입니다. 가입 후 ‘상세 설정 &gt; 팬덤’에서 변경할 수 있습니다.</p>
+            <input class="field" id="a1-fan" type="text" placeholder="예: 꿀벌단" maxlength="10" autocomplete="off" aria-describedby="a1-fan-t a1-fan-h">
+            <p class="hint" id="a1-fan-h">최대 10자 · 선택 입력</p>
+          </div>
+          <div role="group" aria-labelledby="a1-tag-l" aria-describedby="a1-tag-h">
+            <p class="label" id="a1-tag-l">태그</p>
+            <div class="chips">
+              <button class="chip" type="button" aria-pressed="false">치지직</button>
+              <button class="chip" type="button" aria-pressed="false">유튜브</button>
+              <button class="chip" type="button" aria-pressed="false">SOOP</button>
+              <button class="chip" type="button" aria-pressed="false">트위치</button>
+              <button class="chip" type="button" aria-pressed="false">게임</button>
+              <button class="chip" type="button" aria-pressed="false">먹방</button>
+              <button class="chip" type="button" aria-pressed="false">음악</button>
+              <button class="chip" type="button" aria-pressed="false">토크</button>
+            </div>
+            <div class="custom">
+              <label for="a1-tag-c">태그 직접 입력 (최대 1개)</label>
+              <input class="field" id="a1-tag-c" type="text" placeholder="예: 팝콘TV" autocomplete="off">
+            </div>
+            <p class="hint" id="a1-tag-h">활동 플랫폼과 방송 분야를 선택해&nbsp;주세요.<br>선택·직접 입력 합계: 1~5개 · 현재 0개<br>직접 입력: 최대 10자<br>직접 입력한 태그는 선택한 태그 뒤에 표시됩니다. 욕설·연락처·주소는 입력할&nbsp;수&nbsp;없습니다.</p>
+          </div>
+          <div><button class="btn make-btn" type="submit">채널 만들기</button></div>
+        </div>
+        <div class="step-actions">
+          <button class="btn btn--line" type="button">나중에 하기</button>
+          <button class="btn next" type="button" aria-disabled="true">가입 완료</button>
+        </div>
+      </form>
+    </div></main></div></div>
+
+    <div class="frame-wrap"><p class="cap">휴대폰 390</p>
+    <div class="frame ph"><main class="page"><div class="box">
+      <div class="head"><h2 class="t-title">회원가입</h2></div>
+      <nav class="steps-wrap" aria-label="가입 단계"><ol class="steps">
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">유형 선택</span></span></li>
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">정보 입력</span></span></li>
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">카카오톡 연결</span></span></li>
+        <li class="cur"><span class="st" aria-current="step"><span class="dot" aria-hidden="true">4</span><span class="lbl">채널 만들기</span></span></li>
+      </ol></nav>
+      <form class="card" onsubmit="return false">
+        <h2 class="t-card">채널 만들기</h2>
+        <div class="form">
+          <div>
+            <label class="label" for="a2-nick">닉네임</label>
+            <p class="hint hint-top" id="a2-nick-t">팬에게 보이는 이름입니다.<br>가입 후 ‘프로필 수정’에서 변경할 수 있습니다.</p>
+            <input class="field" id="a2-nick" type="text" autocomplete="nickname" aria-describedby="a2-nick-t a2-nick-h">
+            <p class="hint" id="a2-nick-h">최대 12자 · 중복 사용 불가</p>
+          </div>
+          <div>
+            <label class="label" for="a2-fan">팬덤 이름 <span class="opt">(선택)</span></label>
+            <p class="hint hint-top" id="a2-fan-t">팬을 부르는 이름입니다. 가입 후 ‘상세 설정 &gt; 팬덤’에서 변경할 수 있습니다.</p>
+            <input class="field" id="a2-fan" type="text" placeholder="예: 꿀벌단" maxlength="10" autocomplete="off" aria-describedby="a2-fan-t a2-fan-h">
+            <p class="hint" id="a2-fan-h">최대 10자 · 선택 입력</p>
+          </div>
+          <div role="group" aria-labelledby="a2-tag-l" aria-describedby="a2-tag-h">
+            <p class="label" id="a2-tag-l">태그</p>
+            <div class="chips">
+              <button class="chip" type="button" aria-pressed="false">치지직</button>
+              <button class="chip" type="button" aria-pressed="false">유튜브</button>
+              <button class="chip" type="button" aria-pressed="false">SOOP</button>
+              <button class="chip" type="button" aria-pressed="false">트위치</button>
+              <button class="chip" type="button" aria-pressed="false">게임</button>
+              <button class="chip" type="button" aria-pressed="false">먹방</button>
+              <button class="chip" type="button" aria-pressed="false">음악</button>
+              <button class="chip" type="button" aria-pressed="false">토크</button>
+            </div>
+            <div class="custom">
+              <label for="a2-tag-c">태그 직접 입력 (최대 1개)</label>
+              <input class="field" id="a2-tag-c" type="text" placeholder="예: 팝콘TV" autocomplete="off">
+            </div>
+            <p class="hint" id="a2-tag-h">활동 플랫폼과 방송 분야를 선택해&nbsp;주세요.<br>선택·직접 입력 합계: 1~5개 · 현재 0개<br>직접 입력: 최대 10자<br>직접 입력한 태그는 선택한 태그 뒤에 표시됩니다. 욕설·연락처·주소는 입력할&nbsp;수&nbsp;없습니다.</p>
+          </div>
+          <div><button class="btn make-btn" type="submit">채널 만들기</button></div>
+        </div>
+        <div class="step-actions">
+          <button class="btn btn--line" type="button">나중에 하기</button>
+          <button class="btn next" type="button" aria-disabled="true">가입 완료</button>
+        </div>
+      </form>
+    </div></main></div></div>
+
+  </div>
+</section>
+
+<!-- ============ 상태 B: channel_made ============ -->
+<section class="state" id="channel-made" aria-labelledby="b-h">
+  <h1 class="tagname" id="b-h">B · channel_made <span>— 채널을 만든 뒤 (닉네임이 있음) · 아래 채널 소유자 확인 ① 팬꾹 링크 만들기</span></h1>
+  <div class="pair">
+
+    <div class="frame-wrap"><p class="cap">PC</p>
+    <div class="frame pc"><main class="page"><div class="box">
+      <div class="head"><h2 class="t-title">회원가입</h2></div>
+      <nav class="steps-wrap" aria-label="가입 단계"><ol class="steps">
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">유형 선택</span></span></li>
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">정보 입력</span></span></li>
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">카카오톡 연결</span></span></li>
+        <li class="cur"><span class="st" aria-current="step"><span class="dot" aria-hidden="true">4</span><span class="lbl">채널 만들기</span></span></li>
+      </ol></nav>
+      <div class="card">
+        <h2 class="t-card" style="margin-bottom:16px">채널 만들기</h2>
+        <div class="made" role="status">
+          <svg class="ck" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div><p class="tt">채널을 만들었습니다</p><p class="nm">김하루 · 꿀벌단</p></div>
+        </div>
+        <section class="panel" aria-labelledby="b1-ph">
+          <div class="p-head"><h2 id="b1-ph">채널 소유자 확인</h2><span class="tag tag-state">확인 전</span></div>
+          <p class="lead">다른 사람이 내 채널로 가입하지 못하도록, 채널 소유자를 확인해 주세요.</p>
+          <div class="vstep">
+            <label class="vlabel" for="b1-link"><span class="no" aria-hidden="true">1</span><span>팬꾹 링크를 만들어 주세요</span></label>
+            <p class="vdesc">외부에서 크리에이터님의 팬꾹으로 안내할 때 사용할 주소입니다.</p>
+            <div class="vrow">
+              <div class="handle"><span class="pre" aria-hidden="true">fankkuk.com/</span><input id="b1-link" placeholder="haru" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+              <button class="btn" type="button" aria-disabled="true">만들기</button>
+            </div>
+          </div>
+        </section>
+        <div class="step-actions">
+          <button class="btn btn--line" type="button">나중에 하기</button>
+          <button class="btn next" type="button" aria-disabled="true">가입 완료</button>
+        </div>
+      </div>
+    </div></main></div></div>
+
+    <div class="frame-wrap"><p class="cap">휴대폰 390</p>
+    <div class="frame ph"><main class="page"><div class="box">
+      <div class="head"><h2 class="t-title">회원가입</h2></div>
+      <nav class="steps-wrap" aria-label="가입 단계"><ol class="steps">
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">유형 선택</span></span></li>
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">정보 입력</span></span></li>
+        <li><span class="st is-done"><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">카카오톡 연결</span></span></li>
+        <li class="cur"><span class="st" aria-current="step"><span class="dot" aria-hidden="true">4</span><span class="lbl">채널 만들기</span></span></li>
+      </ol></nav>
+      <div class="card">
+        <h2 class="t-card" style="margin-bottom:16px">채널 만들기</h2>
+        <div class="made" role="status">
+          <svg class="ck" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div><p class="tt">채널을 만들었습니다</p><p class="nm">김하루 · 꿀벌단</p></div>
+        </div>
+        <section class="panel" aria-labelledby="b2-ph">
+          <div class="p-head"><h2 id="b2-ph">채널 소유자 확인</h2><span class="tag tag-state">확인 전</span></div>
+          <p class="lead">다른 사람이 내 채널로 가입하지 못하도록, 채널 소유자를 확인해 주세요.</p>
+          <div class="vstep">
+            <label class="vlabel" for="b2-link"><span class="no" aria-hidden="true">1</span><span>팬꾹 링크를 만들어 주세요</span></label>
+            <p class="vdesc">외부에서 크리에이터님의 팬꾹으로 안내할 때 사용할 주소입니다.</p>
+            <div class="vrow">
+              <div class="handle"><span class="pre" aria-hidden="true">fankkuk.com/</span><input id="b2-link" placeholder="haru" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+              <button class="btn" type="button" aria-disabled="true">만들기</button>
+            </div>
+          </div>
+        </section>
+        <div class="step-actions">
+          <button class="btn btn--line" type="button">나중에 하기</button>
+          <button class="btn next" type="button" aria-disabled="true">가입 완료</button>
+        </div>
+      </div>
+    </div></main></div></div>
+
+  </div>
+</section>
+
+</body>
+</html>

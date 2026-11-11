@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import type { TagOption } from "@/entities/creator/model/creator-tags";
 import { channelStepDone, myVerificationPanel, type MyVerification, type MyVerificationState } from "@/entities/creator/model/creator-verification";
 import { CREATOR_HOME } from "@/entities/session/model/home-path";
 import { VerificationPanel } from "@/features/creator-verify/ui/verification-panel";
+import { ChannelCreateForm, ChannelMadeSummary } from "./channel-create-form";
 import { KakaoDoneCard } from "./signup-kakao-step";
 import s from "./signup.module.css";
 
@@ -14,8 +16,11 @@ import s from "./signup.module.css";
 // 채널 확인(VerificationPanel, 시안 channel-link-verify-20261102 · design-rules 42절) + 아래 버튼 줄. 요청을 보냈거나 확인을 마치면
 // 이 단계가 끝난다 — 마지막 단계라 「가입 완료」만 남는다(팬 3단계 마지막 버튼과 같은 이름). 그 전에는 「나중에 하기 | 가입 완료(꺼짐)」 한 줄.
 // 「이전」은 두지 않는다 — 계정이 이미 있어 3단계로 돌아갈 곳이 없다.
+// 2026-11-11 4단계 이름이 「채널 만들기」가 됐다(signup INV-U21, UX 명세 「2026-11-11 크리에이터 4단계 채널 만들기」, 시안 creator-channel-create-20261111).
+// 채널이 없으면(닉네임 없음, channel_new) 채널 만들기 칸만 보이고 채널 소유자 확인은 아직 그리지 않는다. 만든 뒤(channel_made)에는 요약 한 줄 아래 채널 소유자 확인.
+// 아래 버튼 줄은 두 상태 모두 같다.
 
-const STEPS = ["유형 선택", "정보 입력", "카카오톡 연결", "채널 확인"] as const;
+const STEPS = ["유형 선택", "정보 입력", "카카오톡 연결", "채널 만들기"] as const;
 const STEP_PATH = "/signup/creator";
 
 function CheckIcon() {
@@ -52,8 +57,11 @@ function StepNav({ step, doneThrough }: { step: 3 | 4; doneThrough: number }) {
 
 type Verification = { state: MyVerificationState; rows: readonly MyVerification[]; apiPlatforms: readonly string[]; loginId?: string | null };
 
-/** view: 「kakao-done」 = 3단계 서명 완료(?step=3, 가입 화면에서 계정을 만든 직후) · 「channel」 = 4단계 채널 확인 */
-export type SignupCreatorStepsProps = { view: "kakao-done" } | { view?: "channel"; verification: Verification };
+/** 채널 — none: 아직 없음(만들기 칸, 태그 선택지 필요) · made: 만든 뒤(요약 줄에 닉네임 · 팬덤 이름) */
+export type ChannelInfo = { kind: "none"; tagOptions: readonly TagOption[] } | { kind: "made"; nickname: string; fanName: string | null };
+
+/** view: 「kakao-done」 = 3단계 서명 완료(?step=3, 가입 화면에서 계정을 만든 직후) · 「channel」 = 4단계 채널 만들기 */
+export type SignupCreatorStepsProps = { view: "kakao-done" } | { view?: "channel"; verification: Verification; channel: ChannelInfo };
 
 export function SignupCreatorSteps(props: SignupCreatorStepsProps) {
   if (props.view === "kakao-done") {
@@ -73,10 +81,10 @@ export function SignupCreatorSteps(props: SignupCreatorStepsProps) {
       </main>
     );
   }
-  return <ChannelStep verification={props.verification} />;
+  return <ChannelStep verification={props.verification} channel={props.channel} />;
 }
 
-function ChannelStep({ verification }: { verification: Verification }) {
+function ChannelStep({ verification, channel }: { verification: Verification; channel: ChannelInfo }) {
   const done = channelStepDone(myVerificationPanel(verification.state, verification.rows).stage);
   return (
     <main id="main">
@@ -89,7 +97,16 @@ function ChannelStep({ verification }: { verification: Verification }) {
           </div>
           <StepNav step={4} doneThrough={3} />
           <div className={`card ${s.chan}`}>
-            <VerificationPanel variant="signup" state={verification.state} rows={verification.rows} loginId={verification.loginId ?? null} />
+            {channel.kind === "none" ? (
+              <ChannelCreateForm tagOptions={channel.tagOptions} />
+            ) : (
+              <>
+                <ChannelMadeSummary nickname={channel.nickname} fanName={channel.fanName} />
+                <div className={s["chan-after"]}>
+                  <VerificationPanel variant="signup" state={verification.state} rows={verification.rows} loginId={verification.loginId ?? null} />
+                </div>
+              </>
+            )}
             <div className={[s["step-actions"], done ? s["no-prev"] : ""].filter(Boolean).join(" ")}>
               {done ? null : (
                 <Link className="btn btn--line" href={CREATOR_HOME}>

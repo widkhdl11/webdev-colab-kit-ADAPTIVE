@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CREATOR_SIGNATURE_LINK } from "@/entities/session/model/home-path";
+import { CREATOR_CHANNEL_CREATE_PATH } from "@/shared/config/creator-paths";
 import { creatorActionHref } from "@/entities/action-item/model/creator-action-items";
 import { readCreatorActionItems, readCreatorActionItemsOrNull } from "./read-creator-action-items";
 
@@ -15,7 +16,8 @@ const ROW = {
 };
 const TWO_ROWS = [{ ...ROW, order_no: "RG-1" }, { ...ROW, order_no: "RG-2", share_id: "s2" }];
 
-function client(link: Reply, items: Reply = { data: TWO_ROWS, error: null }) {
+/** profile: 본인 계정 칸(my_profile) — 기본은 채널을 만든 크리에이터(닉네임 있음) */
+function client(link: Reply, items: Reply = { data: TWO_ROWS, error: null }, profile: Reply = { data: [{ role: "creator", nickname: "별빛크리", login_id: "starlight" }], error: null }) {
   const calls: string[] = [];
   return {
     calls,
@@ -23,6 +25,7 @@ function client(link: Reply, items: Reply = { data: TWO_ROWS, error: null }) {
       calls.push(fn);
       if (fn === "my_creator_action_items") return items;
       if (fn === "my_signature_link") return link;
+      if (fn === "my_profile") return profile;
       throw new Error(fn);
     },
   };
@@ -33,7 +36,7 @@ describe("INV-U20·S16: 승인 서명 연결 줄", () => {
   it("INV-U20 (S20): 연결 전이면 [연결 줄, 원래 줄 둘 그대로] — 줄 수(숫자)에 들어가고 원래 줄의 순서는 바뀌지 않는다", async () => {
     const c = client({ data: [{ linked: false, linked_at: null }], error: null });
     expect(orderNos(await readCreatorActionItems(c as never))).toEqual(["signature_link", "RG-1", "RG-2"]);
-    expect(c.calls.sort()).toEqual(["my_creator_action_items", "my_signature_link"]);
+    expect(c.calls.sort()).toEqual(["my_creator_action_items", "my_profile", "my_signature_link"]);
   });
 
   it("INV-S16: 연결 뒤에는 원래 줄 둘 그대로 — 연결 줄이 없다", async () => {
@@ -52,5 +55,37 @@ describe("INV-U20·S16: 승인 서명 연결 줄", () => {
   it("INV-U20: 연결 줄을 누르면 승인 서명 연결 화면(설정의 「승인 서명」 줄이 여는 곳)으로 간다", () => {
     expect(creatorActionHref({ kind: "signature_link" })).toBe(CREATOR_SIGNATURE_LINK);
     expect(CREATOR_SIGNATURE_LINK).toBe("/creator/settings/signature");
+  });
+});
+
+describe("INV-U21: 채널 만들기 줄", () => {
+  const LINKED: Reply = { data: [{ linked: true, linked_at: "2026-11-10T01:00:00Z" }], error: null };
+  const NO_CHANNEL: Reply = { data: [{ role: "creator", nickname: null, login_id: "honeypot" }], error: null };
+
+  it("INV-U21 (S21): 닉네임이 없는(채널 없는) 크리에이터에게는 맨 위에 채널 만들기 줄 — 원래 줄 순서는 그대로", async () => {
+    const c = client(LINKED, undefined, NO_CHANNEL);
+    expect(orderNos(await readCreatorActionItems(c as never))).toEqual(["channel_create", "RG-1", "RG-2"]);
+  });
+
+  it("INV-U21: 승인 서명 연결 전이기도 하면 채널 만들기 줄이 연결 줄보다 위", async () => {
+    const c = client({ data: [{ linked: false, linked_at: null }], error: null }, undefined, NO_CHANNEL);
+    expect(orderNos(await readCreatorActionItems(c as never))).toEqual(["channel_create", "signature_link", "RG-1", "RG-2"]);
+  });
+
+  it("INV-U21 (S21c): 채널을 만든 크리에이터에게는 채널 만들기 줄이 없다", async () => {
+    expect(orderNos(await readCreatorActionItems(client(LINKED) as never))).toEqual(["RG-1", "RG-2"]);
+  });
+
+  it("INV-J6 (실패경로): 계정 칸을 못 읽으면 줄을 지어내지 않는다 — 목록 전체가 실패", async () => {
+    const c = client(LINKED, undefined, { data: null, error: { code: "PGRST202" } });
+    await expect(readCreatorActionItems(c as never)).rejects.toThrow();
+    expect(await readCreatorActionItemsOrNull(c as never)).toBeNull();
+    const odd = client(LINKED, undefined, { data: [{ role: "creator", nickname: 3 }], error: null });
+    await expect(readCreatorActionItems(odd as never)).rejects.toThrow();
+  });
+
+  it("INV-U21: 채널 만들기 줄을 누르면 가입 4단계 화면(/signup/creator)으로 간다", () => {
+    expect(creatorActionHref({ kind: "channel_create" })).toBe(CREATOR_CHANNEL_CREATE_PATH);
+    expect(CREATOR_CHANNEL_CREATE_PATH).toBe("/signup/creator");
   });
 });

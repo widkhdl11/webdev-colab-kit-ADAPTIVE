@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CREATOR_SIGNATURE_LINK_PATH } from "@/shared/config/creator-paths";
+import { CREATOR_CHANNEL_CREATE_PATH, CREATOR_SIGNATURE_LINK_PATH } from "@/shared/config/creator-paths";
 import { seoulDaysUntil } from "@/shared/lib/format/datetime";
 import type { ActionItem } from "./action-items";
 
@@ -88,15 +88,30 @@ export type ReturnAddressItem = {
  */
 export type SignatureLinkItem = { kind: "signature_link" };
 
-export type CreatorActionItem = SignatureLinkItem | TrackerItem | BluetoothItem | ApprovalItem | UnconfirmedItem | SentGiftItem | ReturnAddressItem;
+/**
+ * 채널 만들기(signup INV-U21) — 닉네임이 없는(채널을 만들지 않은) 크리에이터에게 하나, 맨 위. 주문과 상관없다.
+ * 채널을 만들면 다음 읽기에서 없다.
+ */
+export type ChannelCreateItem = { kind: "channel_create" };
+
+/** 선물이 아닌 계정 줄 — 처리할 일 화면의 「계정 설정」 묶음 */
+export type AccountItem = ChannelCreateItem | SignatureLinkItem;
+
+export type CreatorActionItem = ChannelCreateItem | SignatureLinkItem | TrackerItem | BluetoothItem | ApprovalItem | UnconfirmedItem | SentGiftItem | ReturnAddressItem;
 
 /** 승인 서명 연결 여부로 줄 목록을 마저 채운다 — 연결 전이면 맨 앞에 연결 줄 하나(받은 선물 판의 맨 위). 줄 수가 곧 숫자다(INV-J6) */
 export function withSignatureLinkItem(items: readonly CreatorActionItem[], linked: boolean): CreatorActionItem[] {
   return linked ? [...items] : [{ kind: "signature_link" }, ...items];
 }
 
-/** 줄을 누르면 갈 곳 — 승인 서명 연결 줄은 연결 화면, 나머지는 처리할 일 화면 */
+/** 채널이 있는지로 줄 목록을 마저 채운다 — 채널이 없으면 맨 앞에 채널 만들기 줄 하나(승인 서명 연결 줄보다 위). 줄 수가 곧 숫자다(INV-J6) */
+export function withChannelCreateItem(items: readonly CreatorActionItem[], hasChannel: boolean): CreatorActionItem[] {
+  return hasChannel ? [...items] : [{ kind: "channel_create" }, ...items];
+}
+
+/** 줄을 누르면 갈 곳 — 채널 만들기 줄은 가입 4단계, 승인 서명 연결 줄은 연결 화면, 나머지는 처리할 일 화면 */
 export function creatorActionHref(item: CreatorActionItem): string {
+  if (item.kind === "channel_create") return CREATOR_CHANNEL_CREATE_PATH;
   return item.kind === "signature_link" ? CREATOR_SIGNATURE_LINK_HREF : CREATOR_ACTION_CENTER_HREF;
 }
 
@@ -225,15 +240,15 @@ export function parseCreatorActionItems(data: unknown): CreatorActionItem[] {
     });
 }
 
-/** 받은 선물 판(승인 서명 연결 · 추적 장치 발견 · 블루투스 발견 · 승인 요청)과 보낸 선물 판(미확인 상자 · 보낸 팬 선물 · 반송 주소) — 읽기가 정한 순서 그대로 나눈다(INV-J5) */
+/** 받은 선물 판(채널 만들기 · 승인 서명 연결 · 추적 장치 발견 · 블루투스 발견 · 승인 요청)과 보낸 선물 판(미확인 상자 · 보낸 팬 선물 · 반송 주소) — 읽기가 정한 순서 그대로 나눈다(INV-J5) */
 export function splitBoards(items: readonly CreatorActionItem[]): {
-  received: (SignatureLinkItem | TrackerItem | BluetoothItem | ApprovalItem)[];
+  received: (AccountItem | TrackerItem | BluetoothItem | ApprovalItem)[];
   sent: (UnconfirmedItem | SentGiftItem | ReturnAddressItem)[];
 } {
-  const received: (SignatureLinkItem | TrackerItem | BluetoothItem | ApprovalItem)[] = [];
+  const received: (AccountItem | TrackerItem | BluetoothItem | ApprovalItem)[] = [];
   const sent: (UnconfirmedItem | SentGiftItem | ReturnAddressItem)[] = [];
   for (const it of items) {
-    if (it.kind === "signature_link" || it.kind === "tracker" || it.kind === "bluetooth" || it.kind === "approval") received.push(it);
+    if (it.kind === "channel_create" || it.kind === "signature_link" || it.kind === "tracker" || it.kind === "bluetooth" || it.kind === "approval") received.push(it);
     else sent.push(it);
   }
   return { received, sent };

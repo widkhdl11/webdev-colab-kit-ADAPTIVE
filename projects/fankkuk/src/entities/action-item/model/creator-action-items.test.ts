@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCreatorActionItems, sentGiftTodoOf, splitBoards, type CreatorActionItem } from "./creator-action-items";
+import { parseCreatorActionItems, sentGiftTodoOf, splitBoards, withChannelCreateItem, withSignatureLinkItem, type CreatorActionItem } from "./creator-action-items";
 
 // 크리에이터 처리할 일 줄 꼴 (action-center INV-J5·J6·J7). DB 읽기 함수 한 번의 결과가 그대로 숫자·목록이 된다 —
 // 꼴이 다른 줄을 일부만 버리면 사이드바 숫자와 목록이 다른 수를 말하므로 하나라도 틀리면 전체를 거부한다.
@@ -230,5 +230,17 @@ describe("sentGiftTodoOf — 크리에이터 계정이 보낸 선물 상세 맨 
   it("INV-J13 (실패경로): 다른 주문의 일은 옮기지 않고, 일이 없는 주문은 빈 칸", () => {
     expect(sentGiftTodoOf(items, "FC-B").map((it) => it.orderNo)).toEqual(["FC-B"]);
     expect(sentGiftTodoOf(items, "FC-C")).toEqual([]);
+  });
+});
+
+describe("INV-U21: 채널 만들기 줄", () => {
+  const rows: CreatorActionItem[] = [{ kind: "signature_link" }];
+  it("INV-U21: 채널이 없으면 맨 앞에 한 줄, 있으면 그대로", () => {
+    expect(withChannelCreateItem(rows, false).map((i) => i.kind)).toEqual(["channel_create", "signature_link"]);
+    expect(withChannelCreateItem(rows, true).map((i) => i.kind)).toEqual(["signature_link"]);
+    expect(withChannelCreateItem(withSignatureLinkItem([], false), false).map((i) => i.kind)).toEqual(["channel_create", "signature_link"]);
+  });
+  it("INV-U21: 채널 만들기 줄은 받은 선물 판(계정 줄과 같은 판)에 들어간다", () => {
+    expect(splitBoards([{ kind: "channel_create" }]).received.map((i) => i.kind)).toEqual(["channel_create"]);
   });
 });

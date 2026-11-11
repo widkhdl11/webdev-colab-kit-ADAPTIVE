@@ -32,6 +32,8 @@ function harness(opts: {
   recordFails?: boolean;
   /** 번호표의 확인 방법(signup INV-U19·U20) — 크리에이터 가입만 묻는다. 기본은 카카오 서명 */
   kind?: { data: unknown; error: { code: string } | null };
+  /** 확인 메일 발급이 돌려주는 닉네임 — 채널을 만들기 전 크리에이터는 null(INV-U21) */
+  mailNickname?: string | null;
 } = {}) {
   const rpcCalls: RpcCall[] = [];
   const created: { email: string; password: string; email_confirm?: boolean }[] = [];
@@ -53,7 +55,8 @@ function harness(opts: {
         if (fn === "create_account" || fn === "create_creator_account") return { data: null, error: opts.createAccountError ?? null };
         if (fn === "record_signup_source") return { data: null, error: opts.recordFails ? { code: "XX000" } : null };
         if (fn === "issue_email_verification") {
-          return { data: [{ token: "a".repeat(64), email: "new.fan@example.com", nickname: "newfan" }], error: null };
+          const nickname = opts.mailNickname === undefined ? "newfan" : opts.mailNickname;
+          return { data: [{ token: "a".repeat(64), email: "new.fan@example.com", nickname }], error: null };
         }
         throw new Error(`모르는 함수 ${fn}`);
       },
@@ -98,6 +101,12 @@ const body = (extra: Record<string, unknown> = {}) => ({
   verificationId: VID,
   ...extra,
 });
+
+/** 크리에이터 가입 본문 — 닉네임 칸이 없다(INV-U21) */
+const creatorBody = (extra: Record<string, unknown> = {}) => {
+  const { nickname: _nickname, ...rest } = body({ role: "creator", ...extra });
+  return rest;
+};
 
 describe("가입 — 정상 경로", () => {
   it("INV-U1 (S1)·U4·U8: 확인된 번호로 계정을 만들고, 가입 계정 주소로 로그인한다", async () => {
@@ -301,7 +310,7 @@ describe("INV-U5·U6: 입력 경계", () => {
 
   it("INV-U5: 크리에이터 가입은 확인 안 된 공개 정보 행까지 만든다 — 역할 칸 없이 create_creator_account 가 크리에이터로 만든다(creator-verification INV-V1)", async () => {
     const h = harness();
-    await signUp(h.deps, body({ role: "creator", creator: { tagIds: ["11111111-1111-4111-8111-000000000001"], customTag: "" } }));
+    await signUp(h.deps, creatorBody());
     expect(h.rpcCalls.find((c) => c.fn === "create_account")).toBeUndefined();
     expect(h.rpcCalls.find((c) => c.fn === "create_creator_account")?.args).not.toHaveProperty("p_role");
   });
@@ -353,16 +362,15 @@ describe("가입 뒤", () => {
   });
 });
 
-describe("크리에이터 가입 — 공개 정보 행 (creator-verification INV-V1, signup INV-U5)", () => {
-  const creator = { tagIds: ["11111111-1111-4111-8111-000000000001", "11111111-1111-4111-8111-000000000002"], customTag: " 먹방 " };
+describe("INV-U21: 크리에이터 가입은 닉네임·팬덤 이름·태그 없이 (채널은 마지막 단계에서)", () => {
+  const profile = { tagIds: ["11111111-1111-4111-8111-000000000001"], customTag: "먹방", fanName: "꿀벌단" };
 
-  it("INV-V1 INV-T3: 크리에이터면 create_creator_account 로 계정과 공개 정보(태그, 앞뒤 공백 뗌 — 이름은 닉네임, 공개 이름·채널 이름은 넘기지 않는다 INV-CN2·CN4)를 한 번에 만든다", async () => {
+  it("INV-U21 (S21): 크리에이터면 create_creator_account 에 정해진 여섯 칸만 넘긴다 — 닉네임·팬덤 이름·태그는 없다", async () => {
     const h = harness();
-    const r = await signUp(h.deps, body({ role: "creator", creator }));
+    const r = await signUp(h.deps, creatorBody());
     expect(r).toMatchObject({ ok: true });
     expect(h.rpcCalls.filter((c) => c.fn === "create_account")).toEqual([]);
-    const call = h.rpcCalls.find((c) => c.fn === "create_creator_account");
-    expect(call?.args).toEqual({
+    expect(h.rpcCalls.find((c) => c.fn === "create_creator_account")?.args).toEqual({
       p_user_id: USER_ID,
       p_login_id: "newfan",
       p_email: "new.fan@example.com",
@@ -373,75 +381,64 @@ describe("크리에이터 가입 — 공개 정보 행 (creator-verification INV
         { key: "service", version: "2026-10-01" },
         { key: "privacy", version: TERMS_VERSIONS.privacy },
       ],
-      p_tag_ids: ["11111111-1111-4111-8111-000000000001", "11111111-1111-4111-8111-000000000002"],
-      p_custom_tag: "먹방",
-      p_nickname: "새팬",
-      p_fan_name: null,
     });
   });
 
-  it("INV-CN2 INV-CN4 (실패경로): 본문에 공개 이름·채널 이름이 와도 넘기지 않는다", async () => {
+  it("INV-U21 (실패경로): 본문에 태그·팬덤 이름·공개 이름이 와도 넘기지 않는다", async () => {
     const h = harness();
-    const r = await signUp(h.deps, body({ role: "creator", creator: { ...creator, name: "다른이름", channelTitle: "다른채널" } }));
+    const r = await signUp(h.deps, creatorBody({ creator: { ...profile, name: "다른이름", channelTitle: "다른채널" } }));
     expect(r).toMatchObject({ ok: true });
     const args = h.rpcCalls.find((c) => c.fn === "create_creator_account")?.args;
-    expect(args).not.toHaveProperty("p_name");
-    expect(args).not.toHaveProperty("p_channel_title");
-    expect(JSON.stringify(args)).not.toContain("다른");
+    expect(Object.keys(args ?? {}).sort()).toEqual(["p_email", "p_login_id", "p_phone", "p_terms", "p_user_id", "p_verification_id"]);
+    expect(JSON.stringify(args)).not.toMatch(/다른|먹방|꿀벌단/);
   });
 
-  it("INV-T3: 직접 입력이 없으면 빈 값이 아니라 null 로 넘긴다", async () => {
+  it("INV-U21 (실패경로): 크리에이터에게 닉네임이 오면 닉네임 칸 400 — 로그인 정보를 만들지 않는다", async () => {
     const h = harness();
-    await signUp(h.deps, body({ role: "creator", creator: { ...creator, customTag: "  " } }));
-    expect(h.rpcCalls.find((c) => c.fn === "create_creator_account")?.args).toMatchObject({ p_tag_ids: ["11111111-1111-4111-8111-000000000001", "11111111-1111-4111-8111-000000000002"], p_custom_tag: null });
+    expect(await signUp(h.deps, body({ role: "creator" }))).toMatchObject({ ok: false, status: 400, field: "nickname" });
+    expect(h.created).toEqual([]);
+    expect(h.rpcCalls).toEqual([]);
   });
 
   it("INV-V1: 팬이면 크리에이터 칸이 와도 create_account 를 부르고 공개 정보 칸을 넘기지 않는다", async () => {
     const h = harness();
-    await signUp(h.deps, body({ role: "fan", creator }));
+    await signUp(h.deps, body({ role: "fan", creator: profile }));
     expect(h.rpcCalls.filter((c) => c.fn === "create_creator_account")).toEqual([]);
     expect(h.rpcCalls.find((c) => c.fn === "create_account")?.args).toMatchObject({ p_role: "fan" });
-    expect(h.rpcCalls.find((c) => c.fn === "create_account")?.args).not.toHaveProperty("p_name");
+    expect(h.rpcCalls.find((c) => c.fn === "create_account")?.args).not.toHaveProperty("p_tag_ids");
   });
 
-  it("INV-V1 (실패경로): 크리에이터인데 공개 정보가 없거나 한도를 넘으면 그 칸으로 400 — 로그인 정보를 만들지 않는다", async () => {
-    for (const [extra, field] of [
-      [{}, "tags"],
-      [{ creator: { ...creator, tagIds: [], customTag: "" } }, "tags"],
-      [{ creator: { ...creator, customTag: "가".repeat(21) } }, "tags"],
-      [{ creator: { ...creator, tagIds: ["not-a-uuid"] } }, "tags"],
-    ] as const) {
-      const h = harness();
-      const r = await signUp(h.deps, body({ role: "creator", ...extra }));
-      expect(r).toMatchObject({ ok: false, status: 400, field });
-      expect(h.created).toEqual([]);
+  it("INV-U21 (실패경로): 크리에이터 가입에서 DB 의 꼴 거부(22023)는 폼 오류 — 태그 칸이 아니다. 방금 만든 로그인 정보는 지운다", async () => {
+    const h = harness({ createAccountError: { code: "22023" } });
+    expect(await signUp(h.deps, creatorBody())).toEqual({ ok: false, status: 400, field: "form", message: "입력한 정보를 확인해 주세요." });
+    expect(h.deleted).toEqual([USER_ID]);
+  });
+
+  it("INV-U21 (실패경로): 크리에이터 가입이 팬덤 이름·태그 필터 코드를 받아도 그 칸으로 보내지 않는다 — 모르는 오류로 올린다", async () => {
+    for (const code of ["P0084", "P0082"]) {
+      const h = harness({ createAccountError: { code } });
+      await expect(signUp(h.deps, creatorBody())).rejects.toThrow();
+      expect(h.deleted).toEqual([USER_ID]);
     }
   });
 
-  it("INV-V1 INV-T3: 한도 끝 값(직접 입력 20자 + 선택지 4개 = 태그 5개)은 받는다", async () => {
-    const h = harness();
-    const four = ["1", "2", "3", "4"].map((n) => `11111111-1111-4111-8111-00000000000${n}`);
-    const r = await signUp(h.deps, body({ role: "creator", creator: { tagIds: four, customTag: "다".repeat(20) } }));
-    expect(r).toMatchObject({ ok: true });
+  it("INV-U21 INV-U7: 닉네임이 없는 크리에이터에게도 확인 메일이 간다 — 인사말에 빈 이름·null 이 없다", async () => {
+    const h = harness({ mailNickname: null });
+    expect(await signUp(h.deps, creatorBody())).toMatchObject({ ok: true, mailSent: true });
+    expect(h.mails).toHaveLength(1);
+    const first = h.mails[0]!.text.split(String.fromCharCode(10))[0]!;
+    expect(first).not.toMatch(/null|undefined|^님/);
+    expect(first).toContain("팬꾹에 가입해 주셔서 고마워요.");
   });
 
-  it("creator-tags INV-T7 (실패경로): 직접 입력이 태그 필터에 걸리면 태그 칸에 사유 문구, 방금 만든 로그인 정보는 지운다", async () => {
-    const h = harness({ createAccountError: { code: "P0082" } });
-    const r = await signUp(h.deps, body({ role: "creator", creator }));
-    expect(r).toEqual({ ok: false, status: 400, field: "tags", message: "태그에 전화번호·이메일·인터넷 주소를 입력할 수 없습니다." });
-    expect(h.deleted).toEqual([USER_ID]);
-  });
-
-  it("INV-V1 (실패경로): 공개 정보 만들기가 실패하면 방금 만든 로그인 정보를 지운다", async () => {
-    const h = harness({ createAccountError: { code: "22023" } });
-    const r = await signUp(h.deps, body({ role: "creator", creator }));
-    expect(r).toMatchObject({ ok: false, status: 400 });
-    expect(h.deleted).toEqual([USER_ID]);
+  it("INV-U7: 닉네임이 있으면 인사말에 그대로 쓴다", async () => {
+    const h = harness({ mailNickname: "새팬" });
+    await signUp(h.deps, body());
+    expect(h.mails[0]!.text.split(String.fromCharCode(10))[0]).toBe("새팬님, 팬꾹에 가입해 주셔서 고마워요.");
   });
 });
 
 describe("INV-U13: 가입 닉네임", () => {
-  const creator = { tagIds: ["11111111-1111-4111-8111-000000000001"], customTag: "" };
 
   it("INV-U13 (실패경로): 닉네임이 없거나 13자·공백뿐·보이지 않는 글자면 닉네임 칸으로 400, 로그인 정보를 만들지 않는다", async () => {
     for (const nickname of [undefined, "가".repeat(13), "   ", "하\u200b루"]) {
@@ -470,28 +467,6 @@ describe("INV-U13: 가입 닉네임", () => {
       const r = await signUp(h.deps, body());
       expect(r).toMatchObject({ ok: false, status: 400, field: "nickname" });
       expect(r.ok ? "" : r.message).toMatch(/닉네임/);
-      expect(h.deleted).toEqual([USER_ID]);
-    }
-  });
-
-  it("INV-U13·추가 요청 3: 크리에이터도 적은 닉네임을 넘기고, 팬덤 이름은 앞뒤 공백을 떼어 넘긴다(비우면 null)", async () => {
-    const h = harness();
-    await signUp(h.deps, body({ role: "creator", creator: { ...creator, fanName: " 꿀벌들 " } }));
-    expect(h.rpcCalls.find((c) => c.fn === "create_creator_account")?.args).toMatchObject({ p_nickname: "새팬", p_fan_name: "꿀벌들" });
-    const h2 = harness();
-    await signUp(h2.deps, body({ role: "creator", creator: { ...creator, fanName: "  " } }));
-    expect(h2.rpcCalls.find((c) => c.fn === "create_creator_account")?.args).toMatchObject({ p_fan_name: null });
-  });
-
-  it("추가 요청 3 (실패경로): 팬덤 이름 11자·보이지 않는 글자는 팬덤 이름 칸 400, DB 필터(P0084~P0086)도 팬덤 이름 칸", async () => {
-    for (const fanName of ["가".repeat(11), "꿀\u200b벌"]) {
-      const h = harness();
-      expect(await signUp(h.deps, body({ role: "creator", creator: { ...creator, fanName } }))).toMatchObject({ ok: false, status: 400, field: "fanName" });
-      expect(h.created).toEqual([]);
-    }
-    for (const code of ["P0084", "P0085", "P0086"]) {
-      const h = harness({ createAccountError: { code } });
-      expect(await signUp(h.deps, body({ role: "creator", creator: { ...creator, fanName: "꿀벌" } }))).toMatchObject({ ok: false, status: 400, field: "fanName" });
       expect(h.deleted).toEqual([USER_ID]);
     }
   });
@@ -569,8 +544,6 @@ describe("INV-U18: 가입 번호는 묶음(해시·암호문·앞 3자리·뒤 4
 });
 
 describe("INV-U19·U20: 크리에이터 가입의 확인 방법", () => {
-  const creator = { tagIds: ["11111111-1111-4111-8111-000000000001"], customTag: "" };
-  const creatorBody = () => body({ role: "creator", creator });
 
   it("INV-U19 (S19): 카카오 서명으로 확인된 번호표면 크리에이터 계정을 만든다 — 연결 기록은 같은 DB 처리가 만든다", async () => {
     const h = harness({ kind: { data: "sign", error: null } });

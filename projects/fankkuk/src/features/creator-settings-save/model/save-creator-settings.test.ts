@@ -1,6 +1,6 @@
 import { THEME_COLORS } from "@/entities/creator/model/creator-color";
 import { describe, expect, it } from "vitest";
-import { saveCreatorNotify, saveCreatorProfile } from "./save-creator-settings";
+import { saveCreatorHandle, saveCreatorNotify, saveCreatorProfile } from "./save-creator-settings";
 
 const HARU = { userId: "creator-haru", role: "creator" } as const;
 
@@ -254,3 +254,10 @@ describe("테마 색 저장 (creator-link INV-E13·E14, my-account INV-A9)", () 
   });
 });
 
+
+describe("팬꾹 링크 저장 — 채널 없는 크리에이터 (signup INV-U21)", () => {
+  it("INV-U21 (S21b, 실패경로): DB 가 채널이 없다고 하면(FKN01) 「채널을 먼저 만들어 주세요.」 409 — 서버 오류가 아니다", async () => {
+    const f = fakeClient({ code: "FKN01" });
+    expect(await saveCreatorHandle({ client: f.client, viewer: HARU }, { handle: "honeypot2" })).toEqual({ ok: false, status: 409, message: "채널을 먼저 만들어 주세요." });
+  });
+});

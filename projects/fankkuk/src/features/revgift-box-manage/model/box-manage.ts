@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { CHANNEL_REQUIRED_CODE, CHANNEL_REQUIRED_MESSAGE } from "@/entities/creator/model/channel-profile";
 import { BOX_CAPACITY_MAX, BOX_DESCRIPTION_MAX, BOX_NAME_MAX } from "@/entities/revgift-box/model/box-rules";
 import { charCount } from "@/shared/lib/validation/char-count";
 import { HIDDEN_CHAR, LINE_BREAK } from "@/shared/lib/validation/hidden-char";
@@ -25,6 +26,8 @@ const DESCRIPTION_REFUSAL: Record<string, string> = {
   P0089: "간단한 설명에 글자나 숫자를 하나 이상 넣어 주세요.",
 };
 const FULL: Refusal = { ok: false, status: 409, message: "받을 인원이 다 찼습니다." };
+// signup INV-U21: 채널(닉네임)이 없는 크리에이터는 선물함을 만들 수 없다 — DB 트리거가 FKN01 로 거부한다
+const NO_CHANNEL: Refusal = { ok: false, status: 409, message: CHANNEL_REQUIRED_MESSAGE };
 
 const uuid = z.string().uuid();
 
@@ -74,6 +77,7 @@ export async function createBox(deps: Deps, body: unknown): Promise<{ ok: true; 
   });
   if (error) {
     if (error.code === "22023") return BAD_INPUT;
+    if (error.code === CHANNEL_REQUIRED_CODE) return NO_CHANNEL;
     const descriptionMessage = DESCRIPTION_REFUSAL[error.code];
     if (descriptionMessage) return { ok: false, status: 400, message: descriptionMessage };
     return refusalOf(error.code, "선물함을 만들 수 없습니다.", "선물함을 만들지 못했다");

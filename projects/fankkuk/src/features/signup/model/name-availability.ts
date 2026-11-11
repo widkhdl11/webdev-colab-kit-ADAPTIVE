@@ -44,11 +44,13 @@ export function availabilityLine(state: AvailabilityState | null, value: string)
  * 이미 씀·형식 틀림이면 그 칸에서 막는다. 지금 값의 답이 없거나 아직 확인 중이면 「확인 중이에요」로 막는다.
  * 「잠시 뒤에」·요청 실패는 막지 않는다 — 가입 때 서버가 다시 본다(INV-U13).
  */
+/** fields: 판정할 칸 — 크리에이터는 2단계에 닉네임 칸이 없어 아이디만 본다(signup INV-U21) */
 export function availabilityBlock(
   states: Record<NameField, AvailabilityState | null>,
   values: Record<NameField, string>,
+  fields: readonly NameField[] = ["loginId", "nickname"],
 ): { field: NameField; message: string } | null {
-  for (const field of ["loginId", "nickname"] as const) {
+  for (const field of fields) {
     const state = states[field];
     if (!state || state.value !== values[field] || state.status === "checking") return { field, message: NAME_STILL_CHECKING };
     const line = AVAILABILITY_LINE[state.status];

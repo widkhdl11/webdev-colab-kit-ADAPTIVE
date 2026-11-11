@@ -72,6 +72,24 @@ function signUpDeps() {
   };
 }
 
+/** signUpDeps 와 같고, DB 함수 오류(코드·메시지)를 모아 둔다 — 가입 처리는 22023 을 「입력한 정보를 확인」으로 바꿔 돌려주므로 실패 이유를 시험 메시지로 보이게 */
+function tracedSignUpDeps() {
+  const errors: string[] = [];
+  const admin = adminClient();
+  const rpc = admin.rpc.bind(admin);
+  const traced = new Proxy(admin, {
+    get(target, key, receiver) {
+      if (key !== "rpc") return Reflect.get(target, key, receiver);
+      return async (...a: Parameters<typeof rpc>) => {
+        const r = await rpc(...a);
+        if (r.error) errors.push(`${a[0]}: ${r.error.code} ${r.error.message}`);
+        return r;
+      };
+    },
+  });
+  return { deps: { ...signUpDeps(), admin: traced }, errors };
+}
+
 const profileCount = (loginId: string) => psql(`select count(*) from public.profiles where login_id = '${loginId}';`);
 const authCount = (loginId: string) => psql(`select count(*) from auth.users where email = '${loginId}@login.fankkuk.invalid';`);
 const usedAt = (vid: string) => psql(`select coalesce(used_at::text, '') from pii.phone_verifications where id = '${vid}';`);
@@ -243,22 +261,32 @@ describe("INV-U5·U6: 역할과 입력 경계는 DB 도 다시 본다", () => {
     expect(usedAt(vid)).toBe("");
   });
 
-  it("INV-U5 (S5b)·creator-verification INV-V1·creator-tags INV-T3 · INV-CN1: 크리에이터로 가입하면 확인 안 된 공개 정보 행(이름 = 닉네임, 채널 이름 빈 값)과 태그가 생기고, 크리에이터 찾기에는 나오지 않는다", async () => {
+  it("INV-U5 (S5b)·creator-verification INV-V1·creator-tags INV-T3 · INV-CN1 · INV-U21 (manual/0039 뒤): 크리에이터로 가입하면 확인 안 된 공개 정보 행(닉네임·이름 빈 값 = 채널 없음, 채널 이름 빈 값)이 생기고, 크리에이터 찾기에는 나오지 않는다. 채널 만들기에서 닉네임이 이름이 되고 태그가 붙는다", async () => {
     const p = phone();
-    const soop = psql(`select id from public.creator_tag_options where name = 'SOOP'`);
-    const creator = { tagIds: [soop], customTag: " 시험 " };
-    expect((await signUp(signUpDeps(), signupBody("it_lima", p, (await signedTestPhone(p)).ticket, { role: "creator", creator }))).ok).toBe(true);
-    expect(psql(`select role from public.profiles where login_id = 'it_lima';`)).toBe("creator");
+    // 크리에이터는 닉네임·태그를 가입 때 보내지 않는다(INV-U21)
+    const body: Record<string, unknown> = signupBody("it_lima", p, (await signedTestPhone(p)).ticket, { role: "creator" });
+    delete body.nickname;
+    const t = tracedSignUpDeps();
+    expect(await signUp(t.deps, body), t.errors.join(" / ")).toMatchObject({ ok: true });
+    expect(psql(`select role || '|' || coalesce(nickname, '<null>') from public.profiles where login_id = 'it_lima';`)).toBe("creator|<null>");
     const listed = (await anonClient().rpc("list_creators")).data as { name?: string; slug?: string }[] | null;
     expect(JSON.stringify(listed ?? [])).not.toContain("it_lima");
-    expect(
+    const row = () =>
       psql(
-        `select c.name || '|' || c.channel_title || '|' || c.identity_verified || '|' || coalesce(c.channel_url, '-') || '|' ||
-           (select string_agg(o.name, ',') from public.creator_tags t join public.creator_tag_options o on o.id = t.option_id where t.creator_id = c.id) || '|' ||
-           (select x.tag from public.creator_custom_tags x where x.creator_id = c.id)
+        `select coalesce(c.name, '<null>') || '|' || c.channel_title || '|' || c.identity_verified || '|' || coalesce(c.channel_url, '-') || '|' ||
+           coalesce((select string_agg(o.name, ',') from public.creator_tags t join public.creator_tag_options o on o.id = t.option_id where t.creator_id = c.id), '-') || '|' ||
+           coalesce((select x.tag from public.creator_custom_tags x where x.creator_id = c.id), '-')
          from public.creators c join public.profiles p on p.id = c.profile_id where p.login_id = 'it_lima';`,
-      ),
-    ).toBe("it_lima||false|-|SOOP|시험");
+      );
+    expect(row()).toBe("<null>||false|-|-|-");
+
+    // 채널 만들기 — 가입한 계정으로 로그인해 닉네임·태그를 정한다
+    const c = anonClient();
+    expect((await c.auth.signInWithPassword({ email: "it_lima@login.fankkuk.invalid", password: "long-enough-pw1" })).error).toBeNull();
+    const soop = psql(`select id from public.creator_tag_options where name = 'SOOP'`);
+    const made = await c.rpc("create_my_channel", { p_nickname: "it_lima", p_tag_ids: [soop], p_custom_tag: " 시험 " });
+    expect(made.error, made.error?.message).toBeNull();
+    expect(row()).toBe("it_lima||false|-|SOOP|시험");
   });
 
   it("INV-U6 (S6, 실패경로): 필수 약관이 빠지거나 아이디 꼴이 틀리면 DB 가 거부", async () => {

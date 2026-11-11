@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { CHANNEL_REQUIRED_CODE, CHANNEL_REQUIRED_MESSAGE } from "@/entities/creator/model/channel-profile";
 import { CHANNEL_URL_MESSAGE, parseChannelUrl } from "@/entities/creator/model/channel-url";
 import type { Viewer } from "@/entities/session/model/viewer";
 import type { ChannelLoginVerifier } from "@/shared/api/platform-channel/login-verifier";
@@ -44,6 +45,8 @@ const CODE_REPLY: Record<string, JsonReply> = {
   FKV13: { status: 409, body: { message: "현재 소유자 확인이 완료된 채널입니다." } },
   FKV16: { status: 409, body: { message: "운영자 재확인이 필요합니다. 채널 주소로 확인을 요청해 주세요." } },
   FKV17: { status: 409, body: { message: HANDLE_NEEDED_MESSAGE } },
+  // signup INV-U21: 채널(닉네임)이 없는 크리에이터의 확인 요청은 DB 트리거가 거부한다
+  [CHANNEL_REQUIRED_CODE]: { status: 409, body: { message: CHANNEL_REQUIRED_MESSAGE } },
   "22023": { status: 400, body: { message: CHANNEL_URL_MESSAGE.shape } },
   "42501": { status: 403, body: { message: MESSAGE_FORBIDDEN } },
   P0002: { status: 404, body: { message: MESSAGE_NOT_FOUND } },

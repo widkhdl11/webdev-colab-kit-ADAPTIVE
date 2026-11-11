@@ -7,6 +7,7 @@ import type { MyBox, MyBoxRow, PriceTable } from "@/entities/revgift-box/api/box
 import { BOX_STAGE_NAME, BOX_STATUS_NAME, isClosedEmptyRow, isFull, type BoxStatus } from "@/entities/revgift-box/model/box-status";
 import { BoxCreateDialog } from "@/features/revgift-box-manage/ui/box-create-form";
 import { BoxManageDialog } from "@/features/revgift-box-manage/ui/box-manage-panel";
+import { CREATOR_CHANNEL_CREATE_PATH } from "@/shared/config/creator-paths";
 import { formatMonthDayKo } from "@/shared/lib/format/datetime";
 import { BoxDetail, BoxStory } from "./box-explain";
 import s from "./revgift-box.module.css";
@@ -126,6 +127,7 @@ export function BoxListPage({
   manage,
   price,
   initial = null,
+  hasChannel = true,
 }: {
   rows: readonly MyBoxRow[];
   /** 신청 받는 중인 선물함의 신청 관리 내용(모달용) */
@@ -133,9 +135,11 @@ export function BoxListPage({
   price: PriceTable | null;
   /** 들어오자마자 열 모달 — /new 는 만들기, /[boxId] 는 그 선물함의 신청 관리 */
   initial?: OpenDialog;
+  /** signup INV-U21: 채널(닉네임)이 있는지 — 없으면 만들기 버튼이 「채널 만들기」(가입 4단계)로 가는 링크가 되고 만들기 모달은 열지 않는다 */
+  hasChannel?: boolean;
 }) {
   const router = useRouter();
-  const [dialog, setDialog] = useState<OpenDialog>(initial);
+  const [dialog, setDialog] = useState<OpenDialog>(hasChannel || initial?.kind !== "create" ? initial : null);
   const [, startRefresh] = useTransition();
   const createBtnRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
@@ -157,19 +161,24 @@ export function BoxListPage({
     setDialog({ kind: "manage", boxId });
   };
 
-  const createButton = (ref?: typeof createBtnRef) => (
-    <button
-      ref={ref}
-      className="btn"
-      type="button"
-      onClick={(e) => {
-        openerRef.current = e.currentTarget;
-        setDialog({ kind: "create" });
-      }}
-    >
-      선물함 만들기
-    </button>
-  );
+  const createButton = (ref?: typeof createBtnRef) =>
+    !hasChannel ? (
+      <Link className="btn" href={CREATOR_CHANNEL_CREATE_PATH}>
+        채널 만들기
+      </Link>
+    ) : (
+      <button
+        ref={ref}
+        className="btn"
+        type="button"
+        onClick={(e) => {
+          openerRef.current = e.currentTarget;
+          setDialog({ kind: "create" });
+        }}
+      >
+        선물함 만들기
+      </button>
+    );
 
   const explainHead = (level: "h1" | "h2") => {
     const H = level;

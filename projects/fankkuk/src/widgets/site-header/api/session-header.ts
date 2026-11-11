@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { readActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
 import { readCreatorActionItemsOrNull } from "@/features/creator-action-items/api/read-creator-action-items";
 import { homePathOf } from "@/entities/session/model/home-path";
-import { readViewer, type Viewer } from "@/entities/session/model/viewer";
+import { readViewer, viewerOwnName, type Viewer } from "@/entities/session/model/viewer";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
 import type { SiteHeaderProps } from "../ui/site-header";
 
@@ -24,11 +24,12 @@ export async function readSiteHeader(
 ): Promise<SiteHeaderProps> {
   if (viewer?.role === "fan") {
     const actionItems = actions === undefined ? await readActionItemsOrNull(client) : actions;
-    return { role: "fan", current, nickname: viewer.nickname ?? "", actionCount: actionItems?.length ?? 0, viewerId: viewer.userId };
+    return { role: "fan", current, nickname: viewerOwnName(viewer), actionCount: actionItems?.length ?? 0, viewerId: viewer.userId };
   }
   if (viewer?.role === "creator") {
     const items = actions === undefined ? await readCreatorActionItemsOrNull(client) : actions;
-    return { role: "creator", current, nickname: viewer.nickname ?? "", actionCount: items?.length ?? 0, viewerId: viewer.userId };
+    // 채널을 만들기 전(닉네임 없음)이면 본인 로그인 아이디(signup INV-U21 — 본인만 보는 자리)
+    return { role: "creator", current, nickname: viewerOwnName(viewer), actionCount: items?.length ?? 0, viewerId: viewer.userId };
   }
   return { role: "guest", current };
 }

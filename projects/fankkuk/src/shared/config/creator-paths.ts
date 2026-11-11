@@ -3,3 +3,6 @@
 
 /** 크리에이터 승인 서명 연결하기(approval-signature INV-S16) — 상세 설정의 「승인 서명」 줄과 지금 할 일의 연결 줄이 여는 화면(signup INV-U20). */
 export const CREATOR_SIGNATURE_LINK_PATH = "/creator/settings/signature";
+
+/** 채널 만들기(signup INV-U21) — 가입 4단계 화면. 건너뛴 크리에이터는 지금 할 일의 「채널 만들기」 줄로 다시 온다. */
+export const CREATOR_CHANNEL_CREATE_PATH = "/signup/creator";

@@ -169,3 +169,13 @@ describe("플랫폼 로그인 확인 (INV-V14)", () => {
     );
   });
 });
+
+describe("채널 없는 크리에이터 (signup INV-U21)", () => {
+  it("INV-U21 (S21b, 실패경로): 확인 요청에 DB 가 채널이 없다고 하면(FKN01) 「채널을 먼저 만들어 주세요.」 409 — 500 이 아니다", async () => {
+    const { deps } = setup({ replies: { request_creator_verification: { error: { code: "FKN01" } } } });
+    expect(await runVerificationAction(deps, { action: "request", channelUrl: "https://www.youtube.com/@honeypot" })).toEqual({
+      status: 409,
+      body: { message: "채널을 먼저 만들어 주세요." },
+    });
+  });
+});

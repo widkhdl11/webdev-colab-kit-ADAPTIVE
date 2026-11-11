@@ -1,3 +1,4 @@
+import { CHANNEL_REQUIRED_CODE, CHANNEL_REQUIRED_MESSAGE, FAN_NAME_FILTER_MESSAGES } from "@/entities/creator/model/channel-profile";
 import { HANDLE_REJECT_MESSAGE } from "@/entities/creator/model/creator-handle";
 import { nicknameRejection } from "@/entities/session/model/nickname-rule";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -17,6 +18,9 @@ export type SaveCreatorSettingsDeps = { client: Pick<SupabaseClient, "rpc">; vie
 
 export type SaveCreatorSettingsResult = { ok: true } | { ok: false; status: 400 | 401 | 403 | 409; message: string };
 
+// signup INV-U21: 채널(닉네임)이 없는 크리에이터 — 팬꾹 링크 등 채널에 붙는 것을 DB 가 FKN01 로 거부한다
+const NO_CHANNEL = { ok: false, status: 409, message: CHANNEL_REQUIRED_MESSAGE } as const;
+
 function gate(viewer: Viewer | null): SaveCreatorSettingsResult | null {
   if (!viewer) return { ok: false, status: 401, message: "로그인이 필요합니다." };
   if (viewer.role !== "creator") return { ok: false, status: 403, message: "크리에이터 계정만 변경할 수 있는 설정입니다." };
@@ -34,6 +38,7 @@ async function call(
   // 닉네임 겹침(FKU04)·필터(FKU05~07) — 가입·내 정보와 같은 문구(signup INV-U13)
   const nick = nicknameRejection(error.code);
   if (nick) return { ok: false, status: nick.status, message: nick.message };
+  if (error.code === CHANNEL_REQUIRED_CODE) return NO_CHANNEL;
   const known = messages[error.code];
   if (known) return { ok: false, status: 400, message: known };
   if (error.code === "22023") return { ok: false, status: 400, message: "입력한 정보를 확인해 주세요." };
@@ -64,14 +69,12 @@ export async function saveCreatorProfile(deps: SaveCreatorSettingsDeps, body: un
       P0081: "한 줄 소개에 사용할 수 없는 표현이 포함되어 있습니다.",
       P0082: "한 줄 소개에 전화번호·이메일·인터넷 주소는 입력할 수 없습니다.",
       P0083: "한 줄 소개에 글자나 숫자를 하나 이상 넣어 주세요.",
-      P0084: "팬덤 이름에 사용할 수 없는 표현이 포함되어 있습니다.",
-      P0085: "팬덤 이름에 전화번호·이메일·인터넷 주소는 입력할 수 없습니다.",
-      P0086: "팬덤 이름에 글자나 숫자를 하나 이상 넣어 주세요.",
+      ...FAN_NAME_FILTER_MESSAGES,
     },
   );
 }
 
-export type SaveHandleResult = { ok: true; handle: string } | { ok: false; status: 400 | 401 | 403; message: string };
+export type SaveHandleResult = { ok: true; handle: string } | { ok: false; status: 400 | 401 | 403 | 409; message: string };
 
 // creator-link INV-E1~E4: 링크용 아이디 — 아이디 한 칸만 넘긴다. 크리에이터는 DB 가 로그인 토큰으로 정한다.
 export async function saveCreatorHandle(deps: SaveCreatorSettingsDeps, body: unknown): Promise<SaveHandleResult> {
@@ -82,6 +85,7 @@ export async function saveCreatorHandle(deps: SaveCreatorSettingsDeps, body: unk
   const { data, error } = await deps.client.rpc("update_my_creator_handle", { p_handle: parsed.data.handle });
   if (!error && typeof data === "string") return { ok: true, handle: data };
   const code = error?.code ?? "";
+  if (code === CHANNEL_REQUIRED_CODE) return NO_CHANNEL;
   if (code === "P0091") {
     const days = Number(error?.details);
     return { ok: false, status: 400, message: Number.isInteger(days) && days > 0 ? `링크 주소 변경까지 ${days}일 남았습니다.` : "아직 링크 주소를 변경할 수 없습니다." };

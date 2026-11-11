@@ -5,10 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { PASSWORD_HINT } from "@/entities/session/model/password-rule";
 import { PHONE_CODE_EXPIRED_MESSAGE, PHONE_CODE_SENT_MESSAGE, PHONE_CODE_TTL_SECONDS } from "@/entities/session/model/phone-code";
-import { resolveTagSelection, type TagOption } from "@/entities/creator/model/creator-tags";
-import { FAN_NAME_MAX } from "@/entities/creator/model/fan-name";
 import { HEARD_FROM, HEARD_FROM_LABEL, isHeardFrom, type HeardFrom } from "@/entities/metrics/model/signup-source";
-import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { completeSignup } from "@/features/signup/api/complete-signup";
 import { checkPhoneCode, requestPhoneCode } from "@/features/signup/api/signup-client";
 import { availabilityBlock, availabilityLine, type AvailabilityTone } from "@/features/signup/model/name-availability";
@@ -35,13 +32,14 @@ import { SignupKakaoStep, type KakaoSignupOutcome } from "./signup-kakao-step";
 import s from "./signup.module.css";
 
 // 회원가입 단계 화면. 시안: docs/design/mockups/site/v43-signup/signup-1-role·2-info·3-phone (UX 명세 signup.md 「2026-10-29 단계 화면」) · 스펙: docs/specs/signup.md
-// 팬은 세 단계(유형 선택 → 정보 입력 → 휴대폰 확인), 크리에이터는 네 단계(유형 선택 → 정보 입력 → 카카오톡 연결 → 채널 확인, 2026-11-10)다. 한 번에 지금 단계의 카드 한 장만 보인다.
+// 팬은 세 단계(유형 선택 → 정보 입력 → 휴대폰 확인), 크리에이터는 네 단계(유형 선택 → 정보 입력 → 카카오톡 연결 → 채널 만들기, 2026-11-11)다. 한 번에 지금 단계의 카드 한 장만 보인다.
 // 팬 3단계: 「인증번호 받기」 → 문자로 받은 6자리 입력 → 「확인」 → 「가입 완료」. 계정은 여기서 만들어진다.
 // 크리에이터 3단계: 카카오 서명 한 번으로 휴대폰 확인과 승인 서명 연결(signup INV-U19, 시안 creator-signup-kakao-20261110 — SignupKakaoStep).
 //   서버가 카카오 서명 창구의 장애를 확인했을 때만(INV-U20) 같은 3단계가 6자리 화면으로 바뀐다(위 장애 안내 상자 + 지금 번호 칸 미리 채움, 「다음」).
 // 브라우저는 번호표(쿠키)와 입력한 6자리만 다룬다 — 맞혔는지는 서버가 판정한다(INV-U1·U15). 남은 시간 표시는 화면 편의일 뿐 만료 판정은 DB 가 한다.
 // 입력칸에 name 을 두지 않는다 — 폼 기본 제출이 일어나도 값이 주소창에 실리지 않게.
 // 2단계 칸은 입력하거나 칸을 떠난 뒤부터 바로 아래에 안내를 띄운다(맞으면 짧은 확인, 틀리면 무엇이 틀렸는지 — 판정은 checkField).
+// 크리에이터는 2단계에서 닉네임·팬덤 이름·태그를 받지 않는다 — 4단계 채널 만들기에서 받는다(signup INV-U21, UX 명세 「2026-11-11 크리에이터 4단계 채널 만들기」).
 // 아이디·닉네임은 형식이 맞으면 입력을 멈춘 뒤 0.4초에 서버에 미리 묻는다(INV-U14) — 문구는 name-availability.ts.
 // 입력이 바뀌면 이전 답은 버린다. 최종 판정은 가입 때 서버가 한다(INV-U13).
 // 줄바꿈(29절): 칸 안내는 문장마다 줄(<Sentences>), 붙여 쓰는 말은  , 가운뎃점 덩어리는 ⁠ 으로 붙인다.
@@ -49,7 +47,7 @@ import s from "./signup.module.css";
 const FORM_STEPS = ["유형 선택", "정보 입력", "휴대폰 확인"] as const;
 // 크리에이터 단계 이름 — 3단계는 「카카오톡 연결」(장애 대비 길에서도 같다). 4단계는 계정을 만든 뒤라 로그인한 화면(/signup/creator, widgets/signup/ui/signup-creator-steps)이 맡는다
 const CREATOR_FORM_STEPS = ["유형 선택", "정보 입력", "카카오톡 연결"] as const;
-const CREATOR_STEPS = ["채널 확인"] as const;
+const CREATOR_STEPS = ["채널 만들기"] as const;
 const CREATOR_STEP_PATH = "/signup/creator";
 /** 장애 대비 길 안내(UX 명세 2026-11-10 kakao_down) — 두 번째 문장은 선물을 받으려면 남은 일이 있다는 결과라 뺄 수 없다 */
 const KAKAO_DOWN_TEXT = "카카오톡 인증을 지금 사용할 수 없습니다. 인증번호로 가입해 주세요. 카카오톡 인증 알림 연결은 가입 후 크리에이터 홈에서 할 수 있습니다.";
@@ -108,9 +106,8 @@ function CheckIcon({ size }: { size: number }) {
   );
 }
 
-/** tagOptions: 크리에이터가 고를 수 있는 태그 선택지(숨기지 않은 것, 선택지 순서 — creator-tags INV-T3) */
 /** sealingKeyPem: 크리에이터 3단계에서 이름·생년월일·번호를 봉인할 공개키(없으면 요청 버튼이 꺼진다) */
-export function SignupPage({ tagOptions, sealingKeyPem = null }: { tagOptions: readonly TagOption[]; sealingKeyPem?: string | null }) {
+export function SignupPage({ sealingKeyPem = null }: { sealingKeyPem?: string | null }) {
   const router = useRouter();
   const id = useId();
   const f = (name: string) => `${id}-${name}`;
@@ -128,12 +125,6 @@ export function SignupPage({ tagOptions, sealingKeyPem = null }: { tagOptions: r
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [phone, setPhone] = useState("");
-  // 크리에이터로 가입할 때만 받는 기본 공개 정보(creator-verification INV-V1). 채널 주소는 가입 뒤 본인 확인 때 받는다.
-  // 크리에이터 이름은 닉네임 하나다 — 공개 이름·채널 이름 칸은 없다(creator-display-name INV-CN2·CN4, 시안 name-merge-20261105)
-  const [tagIds, setTagIds] = useState<string[]>([]);
-  const [customTag, setCustomTag] = useState("");
-  // 팬덤 이름(추가 요청 3) — 선택. 비우면 없음
-  const [fanName, setFanName] = useState("");
   const [agreed, setAgreed] = useState<Record<TermKey, boolean>>({
     age14: false,
     service: false,
@@ -217,7 +208,8 @@ export function SignupPage({ tagOptions, sealingKeyPem = null }: { tagOptions: r
   // INV-U14: 형식이 맞는 아이디·닉네임만 미리 묻는다(형식이 틀리면 묻지 않고 형식 안내만)
   const askable = (field: "loginId" | "nickname") => (touched[field] && checkField(field, liveValues).ok ? liveValues[field].trim() : null);
   const idCheck = useNameAvailability("loginId", askable("loginId"));
-  const nickCheck = useNameAvailability("nickname", askable("nickname"));
+  // 크리에이터는 닉네임 칸이 없다(INV-U21) — 묻지 않는다
+  const nickCheck = useNameAvailability("nickname", role === "fan" ? askable("nickname") : null);
   // 지금 칸 값에 대한 답이 아니면(아직 묻는 중·이전 값의 답) 확인 중으로 둔다
   const availabilityOf = (field: "loginId" | "nickname"): LiveMessage =>
     availabilityLine((field === "loginId" ? idCheck : nickCheck).state, liveValues[field].trim());
@@ -264,34 +256,17 @@ export function SignupPage({ tagOptions, sealingKeyPem = null }: { tagOptions: r
     requestAnimationFrame(() => document.getElementById(f(LIVE_IDS[field] ?? field))?.focus());
   };
 
-  // 태그는 화면에서 먼저 합친다(creator-tags INV-T3) — 직접 입력이 선택지 이름과 같으면 그 선택지로 세어 보낸다.
-  // 합칠 수 없으면(숨긴 선택지·개수 초과 등) 고른 그대로 두고, details() 가 태그 칸에 문구를 띄운다.
-  const tagSelection = () => resolveTagSelection(tagOptions, tagIds, customTag);
-  const creatorProfile = () => {
-    if (role !== "creator") return undefined;
-    const t = tagSelection();
-    return t.ok
-      ? {
-          tagIds: t.tagIds,
-          customTag: t.customTag ?? "",
-          fanName,
-        }
-      : { tagIds, customTag, fanName };
-  };
-  const details = (): { field: DetailsField; message: string } | null => {
-    const problem = checkDetails({
+  // 팬만 닉네임을 보낸다 — 크리에이터는 채널 만들기에서 정한다(INV-U21)
+  const signupNickname = () => (role === "fan" ? nickname.trim() : undefined);
+  const details = (): { field: DetailsField; message: string } | null =>
+    checkDetails({
       loginId,
-      nickname,
+      nickname: role === "fan" ? nickname : undefined,
       email,
       password,
       passwordConfirm,
       terms: agreed,
-      creator: creatorProfile(),
     });
-    if (problem || role !== "creator") return problem;
-    const t = tagSelection();
-    return t.ok ? null : { field: "tags", message: t.message };
-  };
   // 2단계 → 3단계. 칸 검사가 맞으면 아이디·닉네임 미리 확인의 답이 올 때까지 기다렸다가 판정한다(INV-U14) —
   // 확인 중에 눌러도 「이미 쓰는」 값으로 넘어가지 않게. 「이미 씀」·「형식 틀림」이면 그 칸에서 막는다(그 사이 바뀌는 것은 가입 때 서버가 다시 본다).
   const leaveDetails = async () => {
@@ -303,10 +278,11 @@ export function SignupPage({ tagOptions, sealingKeyPem = null }: { tagOptions: r
       return;
     }
     const values = { loginId: loginId.trim(), nickname: nickname.trim() };
+    const fan = role === "fan";
     setBusy(true);
-    const [idState, nickState] = await Promise.all([idCheck.settle(values.loginId), nickCheck.settle(values.nickname)]);
+    const [idState, nickState] = await Promise.all([idCheck.settle(values.loginId), fan ? nickCheck.settle(values.nickname) : Promise.resolve(null)]);
     setBusy(false);
-    const block = availabilityBlock({ loginId: idState, nickname: nickState }, values);
+    const block = availabilityBlock({ loginId: idState, nickname: nickState }, values, fan ? ["loginId", "nickname"] : ["loginId"]);
     if (block) {
       go(2);
       reject(block);
@@ -376,16 +352,15 @@ export function SignupPage({ tagOptions, sealingKeyPem = null }: { tagOptions: r
     const r = await completeSignup({
       role,
       loginId: loginId.trim(),
-      nickname: nickname.trim(),
+      nickname: signupNickname(),
       email,
       password,
       phone,
       terms: agreed,
-      creator: creatorProfile(),
       heardFrom,
     });
     if (r.ok) {
-      // 팬: 「/」 가 역할별 첫 화면으로 나눈다. 크리에이터(장애 대비 길): 4단계(채널 확인)로
+      // 팬: 「/」 가 역할별 첫 화면으로 나눈다. 크리에이터(장애 대비 길): 4단계(채널 만들기)로
       if (role === "creator" && r.loggedIn) {
         router.push(CREATOR_STEP_PATH);
       } else {
@@ -408,12 +383,11 @@ export function SignupPage({ tagOptions, sealingKeyPem = null }: { tagOptions: r
     const r = await completeSignup({
       role,
       loginId: loginId.trim(),
-      nickname: nickname.trim(),
+      nickname: signupNickname(),
       email,
       password,
       phone,
       terms: agreed,
-      creator: creatorProfile(),
       heardFrom,
     });
     if (r.ok) {
@@ -638,44 +612,33 @@ export function SignupPage({ tagOptions, sealingKeyPem = null }: { tagOptions: r
                       {"영문 소문자⁠·⁠숫자⁠·⁠밑줄(_) 4~20자 · 가입 후 변경 불가"}
                     </p>
                   </div>
-                  <div>
-                    <label className="label" htmlFor={f("nick")}>
-                      닉네임
-                    </label>
-                    {role === "creator" ? (
-                      <p className={`hint ${s["hint-top"]}`} id={f("nick-t")}>
-                        {"팬에게 보이는 이름입니다."}
-                        <br />
-                        {"가입 후 ‘프로필 수정’에서 변경할 수 있습니다."}
-                      </p>
-                    ) : null}
-                    <input
-                      className="field"
-                      id={f("nick")}
-                      type="text"
-                      autoComplete="nickname"
-                      spellCheck={false}
-                      value={nickname}
-                      onChange={(e) => {
-                        setNickname(e.target.value);
-                        edited("nickname");
-                      }}
-                      onBlur={() => touch("nickname")}
-                      {...liveAttrs("nickname", role === "creator" ? `${f("nick-t")} ${f("nick-h")}` : f("nick-h"))}
-                    />
-                    {liveLine("nickname")}
-                    {role === "creator" ? (
+                  {role === "fan" ? (
+                    <div>
+                      <label className="label" htmlFor={f("nick")}>
+                        닉네임
+                      </label>
+                      <input
+                        className="field"
+                        id={f("nick")}
+                        type="text"
+                        autoComplete="nickname"
+                        spellCheck={false}
+                        value={nickname}
+                        onChange={(e) => {
+                          setNickname(e.target.value);
+                          edited("nickname");
+                        }}
+                        onBlur={() => touch("nickname")}
+                        {...liveAttrs("nickname", f("nick-h"))}
+                      />
+                      {liveLine("nickname")}
                       <p className="hint" id={f("nick-h")}>
-                        {"최대 12자 · 중복 사용 불가"}
-                      </p>
-                    ) : (
-                      <p className="hint" id={f("nick-h")}>
-                        {"팬꾹에서 사용할 이름 · 최대 12자 · 중복 사용 불가"}
+                        {"팬꾹에서 사용할 이름 · 최대 12자 · 중복 사용 불가"}
                         <br />
-                        {"가입 후 ‘프로필 수정’에서 변경할 수 있습니다."}
+                        {"가입 후 ‘프로필 수정’에서 변경할 수 있습니다."}
                       </p>
-                    )}
-                  </div>
+                    </div>
+                  ) : null}
                   <div>
                     <label className="label" htmlFor={f("mail")}>
                       이메일
@@ -789,48 +752,6 @@ export function SignupPage({ tagOptions, sealingKeyPem = null }: { tagOptions: r
                   </div>
                 </div>
               </div>
-              {role === "creator" ? (
-                <div className={s.grp}>
-                  <h3 className={s["grp-title"]}>채널 정보</h3>
-                  <div className="form">
-                    <div>
-                      <label className="label" htmlFor={f("cr-fan")}>
-                        팬덤 이름 <span className={`t-meta ${s.opt}`}>(선택)</span>
-                      </label>
-                      <p className={`hint ${s["hint-top"]}`} id={f("cr-fan-t")}>
-                        {"팬을 부르는 이름입니다. 가입 후 ‘상세 설정 > 팬덤’에서 변경할 수 있습니다."}
-                      </p>
-                      <input
-                        className="field"
-                        id={f("cr-fan")}
-                        type="text"
-                        autoComplete="off"
-                        placeholder="예: 꿀벌단"
-                        maxLength={FAN_NAME_MAX}
-                        value={fanName}
-                        onChange={(e) => {
-                          setFanName(e.target.value);
-                          setError((x) => (x?.field === "fanName" ? null : x));
-                        }}
-                        aria-describedby={error?.field === "fanName" ? `${f("cr-fan-t")} ${f("cr-fan-h")} ${f("error")}` : `${f("cr-fan-t")} ${f("cr-fan-h")}`}
-                        aria-invalid={error?.field === "fanName" ? true : undefined}
-                      />
-                      <p className="hint" id={f("cr-fan-h")}>
-                        {`최대 ${FAN_NAME_MAX}자 · 선택 입력`}
-                      </p>
-                    </div>
-                    <TagPicker
-                      idBase={f("cr-tags")}
-                      options={tagOptions}
-                      picked={tagIds}
-                      custom={customTag}
-                      onPickedChange={setTagIds}
-                      onCustomChange={setCustomTag}
-                      invalid={error?.field === "tags" ? { describedBy: f("error") } : null}
-                    />
-                  </div>
-                </div>
-              ) : null}
               <div className={s.grp}>
                 <h3 className={s["grp-title"]}>선택 입력 사항</h3>
                 <div className="form">

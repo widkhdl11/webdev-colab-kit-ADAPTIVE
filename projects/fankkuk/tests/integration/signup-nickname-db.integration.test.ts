@@ -78,6 +78,57 @@ const authCount = (loginId: string) => psql(`select count(*) from auth.users whe
 const ipHash = () => randomBytes(32).toString("hex");
 const check = (hash: string, kind: string, value: string) => adminClient().rpc("signup_name_check", { p_ip_hash: hash, p_kind: kind, p_value: value });
 
+/** signUpDeps 와 같고, DB 함수 오류(코드·메시지)를 모아 둔다 — 가입 처리는 22023 을 「입력한 정보를 확인」으로 바꿔 돌려주므로 실패 이유를 시험 메시지로 보이게 */
+function tracedSignUpDeps() {
+  const errors: string[] = [];
+  const admin = adminClient();
+  const rpc = admin.rpc.bind(admin);
+  const traced = new Proxy(admin, {
+    get(target, key, receiver) {
+      if (key !== "rpc") return Reflect.get(target, key, receiver);
+      return async (...a: Parameters<typeof rpc>) => {
+        const r = await rpc(...a);
+        if (r.error) errors.push(`${a[0]}: ${r.error.code} ${r.error.message}`);
+        return r;
+      };
+    },
+  });
+  return { deps: { ...signUpDeps(), admin: traced }, errors };
+}
+
+/** 크리에이터로 가입(닉네임·태그·팬덤 이름 없이, INV-U21)하고 그 계정으로 로그인한 클라이언트를 돌려준다 */
+async function signUpCreator(loginId: string) {
+  const p = phone();
+  const body: Record<string, unknown> = signupBody(loginId, "", p, (await signedTestPhone(p)).ticket, { role: "creator" });
+  delete body.nickname;
+  const t = tracedSignUpDeps();
+  expect(await signUp(t.deps, body), t.errors.join(" / ")).toMatchObject({ ok: true });
+  const c = anonClient();
+  expect((await c.auth.signInWithPassword({ email: `${loginId}@login.fankkuk.invalid`, password: "long-enough-pw1" })).error).toBeNull();
+  return c;
+}
+
+/** 채널 없는 크리에이터(닉네임·이름 빈 값)를 표에 직접 넣고 로그인한다 — 채널 만들기만 볼 때, 가입 처리를 거치지 않는다 */
+async function channellessCreator(loginId: string) {
+  const uid = await authUser(loginId);
+  psql(
+    `insert into public.profiles (id, login_id, nickname, role) values ('${uid}', '${loginId}', null, 'creator'); ` +
+      `insert into public.creators (profile_id, slug, name, channel, channel_title) values ('${uid}', 'c-${loginId.replace(/_/g, "")}', null, '', '');`,
+  );
+  const c = anonClient();
+  expect((await c.auth.signInWithPassword({ email: `${loginId}@login.fankkuk.invalid`, password: "long-enough-pw1" })).error).toBeNull();
+  return c;
+}
+
+const soopId = () => psql(`select id from public.creator_tag_options where name = 'SOOP'`);
+/** 닉네임|크리에이터 이름|팬덤 이름|태그 수 — 빈 값은 <null> */
+const channelOfLogin = (loginId: string) =>
+  psql(
+    `select coalesce(p.nickname, '<null>') || '|' || coalesce(c.name, '<null>') || '|' || coalesce(c.fan_name, '<null>') || '|' ||
+       ((select count(*) from public.creator_tags t where t.creator_id = c.id) + (select count(*) from public.creator_custom_tags x where x.creator_id = c.id))
+     from public.creators c join public.profiles p on p.id = c.profile_id where p.login_id = '${loginId}';`,
+  );
+
 function cleanup(): void {
   psql(`
     update public.profiles set nickname = '별빛' where id = '${SEED.fanId}';
@@ -184,46 +235,62 @@ describe("INV-U13: 가입 때 받은 닉네임으로 계정이 생긴다", () =>
     expect(Number(authCount("it_nk_dup1")) + Number(authCount("it_nk_dup2"))).toBe(1);
   });
 
-  it("INV-U13·추가 요청 3 · INV-CN1: 크리에이터 가입 — 닉네임은 적은 값이고 크리에이터 이름도 그 닉네임, 팬덤 이름은 선택으로 저장", async () => {
-    const p = phone();
-    const creator = { tagIds: [psql(`select id from public.creator_tag_options where name = 'SOOP'`)], customTag: "", fanName: " 별님들 " };
-    const r = await signUp(signUpDeps(), signupBody("it_nk_cr", "크리닉", p, (await signedTestPhone(p)).ticket, { role: "creator", creator }));
-    expect(r).toMatchObject({ ok: true });
-    expect(nicknameOfLogin("it_nk_cr")).toBe("크리닉");
-    expect(psql(`select c.name || '|' || coalesce(c.fan_name, '-') from public.creators c join public.profiles p on p.id = c.profile_id where p.login_id = 'it_nk_cr';`)).toBe(
-      "크리닉|별님들",
-    );
+  it("INV-U13·추가 요청 3 · INV-CN1 · INV-U21 (manual/0039 뒤): 크리에이터 가입 — 가입 직후 닉네임·이름은 비어 있고, 채널 만들기에서 적은 닉네임(앞뒤 공백 뺌)이 크리에이터 이름도 되며, 팬덤 이름은 선택으로 저장", async () => {
+    const c = await signUpCreator("it_nk_cr");
+    expect(channelOfLogin("it_nk_cr")).toBe("<null>|<null>|<null>|0");
+    const made = await c.rpc("create_my_channel", { p_nickname: " 크리닉 ", p_fan_name: " 별님들 ", p_tag_ids: [soopId()], p_custom_tag: null });
+    expect(made.error, made.error?.message).toBeNull();
+    expect(channelOfLogin("it_nk_cr")).toBe("크리닉|크리닉|별님들|1");
 
-    const p2 = phone();
-    const noFan = { ...creator, fanName: "" };
-    expect(await signUp(signUpDeps(), signupBody("it_nk_cr2", "크리닉둘", p2, (await signedTestPhone(p2)).ticket, { role: "creator", creator: noFan }))).toMatchObject({ ok: true });
-    expect(psql(`select coalesce(c.fan_name, '-') from public.creators c join public.profiles p on p.id = c.profile_id where p.login_id = 'it_nk_cr2';`)).toBe("-");
+    const c2 = await signUpCreator("it_nk_cr2");
+    const made2 = await c2.rpc("create_my_channel", { p_nickname: "크리닉둘", p_fan_name: "", p_tag_ids: [soopId()], p_custom_tag: null });
+    expect(made2.error, made2.error?.message).toBeNull();
+    expect(channelOfLogin("it_nk_cr2")).toBe("크리닉둘|크리닉둘|<null>|1");
   });
 
-  it("추가 요청 3 (실패경로): 팬덤 이름이 11자·연락처·금칙어면 거부하고 계정이 남지 않는다", async () => {
+  it("INV-U13 · INV-U21 (실패경로): 채널 만들기의 닉네임도 가입 닉네임과 같은 검사 — 13자·공백뿐·보이지 않는 글자·금칙어·연락처·기호만·이미 쓰는 닉네임이면 거부하고 아무것도 저장하지 않는다", async () => {
     const banned = psql(`select word from public.creator_tag_banned_words order by word limit 1`);
     const cases: [string, string][] = [
-      ["가".repeat(11), "fanName"],
-      ["010-1234-5678", "fanName"],
-      [`a${banned}`, "fanName"],
+      ["가".repeat(13), "22023"],
+      ["   ", "22023"],
+      ["보이지​않음", "22023"],
+      [`x${banned}x`, "FKU05"],
+      ["010.1234.567", "FKU06"],
+      ["!!!", "FKU07"],
+      [" 하루 ", "FKU04"], // 시드 크리에이터의 닉네임 — 앞뒤 공백만 다르다
     ];
     let i = 0;
-    for (const [fanName, field] of cases) {
+    for (const [nickname, code] of cases) {
       i += 1;
-      const p = phone();
-      const creator = { tagIds: [psql(`select id from public.creator_tag_options where name = 'SOOP'`)], customTag: "", fanName };
-      const r = await signUp(signUpDeps(), signupBody(`it_nk_fan${i}`, `팬덤닉${i}`, p, (await signedTestPhone(p)).ticket, { role: "creator", creator }));
-      expect([fanName, r]).toMatchObject([fanName, { ok: false, field }]);
-      expect(authCount(`it_nk_fan${i}`)).toBe("0");
+      const c = await channellessCreator(`it_nk_chn${i}`);
+      const r = await c.rpc("create_my_channel", { p_nickname: nickname, p_fan_name: "별님들", p_tag_ids: [soopId()], p_custom_tag: null });
+      expect([nickname, r.error?.code]).toEqual([nickname, code]);
+      expect(channelOfLogin(`it_nk_chn${i}`)).toBe("<null>|<null>|<null>|0");
     }
   });
 
-  it("INV-U13 · INV-CN2 (S2, 실패경로): 프로필 저장으로 다른 사람이 쓰는 닉네임(별빛)으로 바꾸면 FKU04 — 닉네임·크리에이터 이름·소개 모두 그대로", async () => {
-    const p = phone();
-    const creator = { tagIds: [psql(`select id from public.creator_tag_options where name = 'SOOP'`)], customTag: "" };
-    expect(await signUp(signUpDeps(), signupBody("it_nk_rename", "바꿈닉", p, (await signedTestPhone(p)).ticket, { role: "creator", creator }))).toMatchObject({ ok: true });
-    const c = anonClient();
-    expect((await c.auth.signInWithPassword({ email: "it_nk_rename@login.fankkuk.invalid", password: "long-enough-pw1" })).error).toBeNull();
+  it("추가 요청 3 · INV-U21 (실패경로): 채널 만들기에서 팬덤 이름이 11자·연락처·금칙어·기호만이면 거부(22023·P0085·P0084·P0086)하고 닉네임·이름·팬덤 이름·태그 아무것도 저장하지 않는다", async () => {
+    const banned = psql(`select word from public.creator_tag_banned_words order by word limit 1`);
+    const cases: [string, string][] = [
+      ["가".repeat(11), "22023"],
+      ["0101234567", "P0085"], // 10자 안의 전화번호 꼴(11자 이상이면 길이에서 먼저 22023)
+      [`a${banned}`, "P0084"],
+      ["!!!", "P0086"],
+    ];
+    let i = 0;
+    for (const [fanName, code] of cases) {
+      i += 1;
+      const c = await channellessCreator(`it_nk_fan${i}`);
+      const r = await c.rpc("create_my_channel", { p_nickname: `팬덤닉${i}`, p_fan_name: fanName, p_tag_ids: [soopId()], p_custom_tag: null });
+      expect([fanName, r.error?.code]).toEqual([fanName, code]);
+      expect(channelOfLogin(`it_nk_fan${i}`)).toBe("<null>|<null>|<null>|0");
+    }
+  });
+
+  it("INV-U13 · INV-CN2 (S2, 실패경로) · INV-U21 (manual/0039 뒤): 가입하고 채널을 만든 크리에이터가 프로필 저장으로 다른 사람이 쓰는 닉네임(별빛)으로 바꾸면 FKU04 — 닉네임·크리에이터 이름·소개 모두 그대로", async () => {
+    const c = await signUpCreator("it_nk_rename");
+    const made = await c.rpc("create_my_channel", { p_nickname: "바꿈닉", p_tag_ids: [soopId()], p_custom_tag: null });
+    expect(made.error, made.error?.message).toBeNull();
     const r = await c.rpc("update_my_creator_profile", { p_nickname: "별빛", p_intro: "바뀌면 안 됨" });
     expect(r.error?.code).toBe("FKU04");
     expect(nicknameOfLogin("it_nk_rename")).toBe("바꿈닉");

@@ -8,7 +8,8 @@ import type { CreatorSettingsView } from "../model/creator-settings";
 // 세 함수 모두 인자 없이 로그인 토큰의 계정 것만 돌려준다. 응답은 신뢰 경계 밖이라 형식을 검사한다.
 
 const settingsRow = z.object({
-  name: z.string(),
+  // 채널을 만들기 전(signup INV-U21)에는 이름이 비어 있다
+  name: z.string().nullable(),
   intro: z.string(),
   searchable: z.boolean(),
   tag_ids: z.array(z.guid()),
@@ -37,7 +38,7 @@ export async function readMyCreatorSettings(client: Pick<SupabaseClient, "rpc">)
   const a = z.array(accountRow).parse(account.data)[0];
   if (!s || !a) return null;
   return {
-    publicName: s.name,
+    publicName: s.name ?? "",
     intro: s.intro,
     visibleInSearch: s.searchable,
     tagIds: s.tag_ids,

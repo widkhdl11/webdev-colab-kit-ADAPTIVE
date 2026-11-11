@@ -183,6 +183,12 @@ describe("INV-U14: 「다음」 판정 — availabilityBlock", () => {
     expect(availabilityBlock(states, values)).toEqual({ field, message });
   });
 
+  it("INV-U21: 크리에이터(아이디 칸만)는 닉네임 답이 없어도 막지 않는다 — 아이디는 그대로 본다", () => {
+    expect(availabilityBlock({ loginId: ok("haru"), nickname: null }, values, ["loginId"])).toBeNull();
+    expect(availabilityBlock({ loginId: { value: "haru", status: "taken" }, nickname: null }, values, ["loginId"])).toMatchObject({ field: "loginId" });
+    expect(availabilityBlock({ loginId: ok("haru"), nickname: null }, values)).toEqual({ field: "nickname", message: NAME_STILL_CHECKING });
+  });
+
   it("INV-U14 (실패경로): 답이 없거나 다른 값의 답·아직 확인 중이면 「확인 중이에요」로 막는다", () => {
     expect(availabilityBlock({ loginId: null, nickname: ok("하루") }, values)).toEqual({ field: "loginId", message: NAME_STILL_CHECKING });
     expect(availabilityBlock({ loginId: ok("haru"), nickname: ok("하루2") }, values)).toEqual({ field: "nickname", message: NAME_STILL_CHECKING });

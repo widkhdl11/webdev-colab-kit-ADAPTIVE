@@ -11,6 +11,7 @@ import { readNotices } from "@/entities/notice/api/notice-reads";
 import { readCreatorActionItemsOrNull } from "@/features/creator-action-items/api/read-creator-action-items";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
 import { FAN_HOME } from "@/entities/session/model/home-path";
+import { viewerOwnName } from "@/entities/session/model/viewer";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
 import type { StatusTone } from "@/shared/ui/status-tone";
 import { readMyGiftProgress } from "@/widgets/creator-gift-progress/api/read-gift-progress";
@@ -63,8 +64,9 @@ export default async function Page() {
     readMyCreatorLook(supabase),
     readPublicBannersOrNull(supabase, photoBase),
   ]);
-  // h1 은 공개 이름(design-rules 12절 「홈」). 크리에이터 줄이 없으면 닉네임.
-  const publicName = settings?.publicName ?? viewer.nickname ?? "";
+  // h1 은 공개 이름(design-rules 12절 「홈」). 크리에이터 줄이 없거나 채널을 아직 만들지 않았으면(이름 빈 값, signup INV-U21)
+  // 위쪽 메뉴와 같은 본인 이름 — 닉네임, 없으면 본인 로그인 아이디(본인만 보는 자리)
+  const publicName = settings?.publicName || viewerOwnName(viewer);
   // 공개로 열리는 아이디인지 기존 공개 읽기로 확인한다. 확인 전·조회 실패면 내 페이지 버튼만 없다.
   const publicCreator = link?.handle ? await resolveCreatorHandle(supabase, link.handle).catch(() => null) : null;
   // 링크 아이디는 선택 사항이다. 미설정 계정도 기존 ID 주소의 공개 페이지를 쓴다(INV-E5).
@@ -82,7 +84,7 @@ export default async function Page() {
     .map(({ id, title, date }) => ({ id, title, date }));
   return (
     <>
-      <SiteHeader role="creator" current="/creator" nickname={viewer.nickname ?? ""} actionCount={actions?.length ?? 0} />
+      <SiteHeader role="creator" current="/creator" nickname={viewerOwnName(viewer)} actionCount={actions?.length ?? 0} />
       <CreatorHomePage
         profile={{
           name: publicName,
