@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
+import { BOX_DESCRIPTION_MAX } from "@/entities/revgift-box/model/box-rules";
 import { cancelBox, closeBox, createBox, renewInvite, setExcluded } from "./box-manage";
 
 const HARU = { userId: "00000000-0000-4000-a000-000000000011", role: "creator" } as const;
@@ -25,7 +26,37 @@ describe("선물함 만들기 (revgift-box INV-GB3)", () => {
     const f = fakeClient({ data: { id: BOX, invite_token: "a".repeat(32) } });
     const r = await createBox({ client: f.client, viewer: HARU }, { name: " 겨울 선물 ", capacity: 30, isPublic: false, creatorId: "x", ownerId: "y" });
     expect(r).toEqual({ ok: true, boxId: BOX });
-    expect(f.calls).toEqual([{ fn: "create_revgift_box", args: { p_name: "겨울 선물", p_capacity: 30, p_is_public: false } }]);
+    expect(f.calls).toEqual([{ fn: "create_revgift_box", args: { p_name: "겨울 선물", p_capacity: 30, p_is_public: false, p_description: null } }]);
+  });
+
+  it("간단한 설명 — 앞뒤 공백을 빼고 넘긴다, 빈 값·공백만·안 보냄은 null", async () => {
+    const f = fakeClient({ data: { id: BOX, invite_token: null } });
+    await createBox({ client: f.client, viewer: HARU }, { name: "a", capacity: 1, isPublic: true, description: "  올해 마지막 선물함  " });
+    for (const description of ["", "   ", null, undefined]) {
+      await createBox({ client: f.client, viewer: HARU }, { name: "a", capacity: 1, isPublic: true, description });
+    }
+    expect(f.calls.map((c) => (c.args as { p_description: unknown }).p_description)).toEqual(["올해 마지막 선물함", null, null, null, null]);
+  });
+
+  it("간단한 설명 — 100자 넘음·줄바꿈·보이지 않는 글자·글자 아닌 값은 부르지도 않고 400, 100자(이모지 포함)는 넘긴다", async () => {
+    const f = fakeClient({ data: { id: BOX, invite_token: null } });
+    const max = "가".repeat(BOX_DESCRIPTION_MAX - 1) + "🎁";
+    for (const description of ["가".repeat(BOX_DESCRIPTION_MAX + 1), "첫 줄\n둘째 줄", "첫 줄\u2028둘째 줄", "보이지\u200b않음", 3]) {
+      expect(await createBox({ client: f.client, viewer: HARU }, { name: "a", capacity: 1, isPublic: true, description })).toMatchObject({ ok: false, status: 400 });
+    }
+    expect(f.calls).toEqual([]);
+    expect(await createBox({ client: f.client, viewer: HARU }, { name: "a", capacity: 1, isPublic: true, description: max })).toEqual({ ok: true, boxId: BOX });
+    expect(f.calls).toHaveLength(1);
+  });
+
+  it("간단한 설명 — DB 필터(팬덤 이름과 같은 금칙어·연락처·기호만) 거부는 칸 이름을 넣은 400 문구로", async () => {
+    const body = { name: "a", capacity: 1, isPublic: true, description: "x" };
+    for (const [code, word] of [["P0087", "사용할 수 없는 표현"], ["P0088", "전화번호"], ["P0089", "글자나 숫자"]] as const) {
+      const r = await createBox({ client: fakeClient({ error: { code } }).client, viewer: HARU }, body);
+      expect(r).toMatchObject({ ok: false, status: 400 });
+      expect(r.ok ? "" : r.message).toContain("간단한 설명");
+      expect(r.ok ? "" : r.message).toContain(word);
+    }
   });
 
   it("INV-GB3 S3b: 팬·로그인 안 함은 부르지도 않는다, 꼴이 틀리면 400, DB 의 22023·42501 은 400·403", async () => {

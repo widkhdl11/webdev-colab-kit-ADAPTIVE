@@ -81,17 +81,20 @@ function BoxCard({ row, onOpen }: { row: MyBoxRow; onOpen: (boxId: string, el: H
         <div className={off ? `${s.bPic} ${s.isOff}` : s.bPic}>
           <img src={pictureOf(row.status)} alt="" width={28} height={28} />
         </div>
-        <h3 className={s.bN}>
-          {row.status === "open" ? (
-            <button type="button" className={s.bA} title={row.name} onClick={(e) => onOpen(row.id, e.currentTarget)}>
-              <span className={s.bNm}>{row.name}</span>
-            </button>
-          ) : (
-            <Link className={s.bA} href={`${LIST_PATH}/${row.id}`} title={row.name}>
-              <span className={s.bNm}>{row.name}</span>
-            </Link>
-          )}
-        </h3>
+        <div className={s.bHead}>
+          <h3 className={s.bN}>
+            {row.status === "open" ? (
+              <button type="button" className={s.bA} title={row.name} onClick={(e) => onOpen(row.id, e.currentTarget)}>
+                <span className={s.bNm}>{row.name}</span>
+              </button>
+            ) : (
+              <Link className={s.bA} href={`${LIST_PATH}/${row.id}`} title={row.name}>
+                <span className={s.bNm}>{row.name}</span>
+              </Link>
+            )}
+          </h3>
+          {row.description ? <p className={s.bDesc}>{row.description}</p> : null}
+        </div>
       </div>
       <div className={s.bTg}>
         <BoxCardTags row={row} />

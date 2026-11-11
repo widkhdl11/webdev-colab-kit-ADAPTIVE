@@ -55,6 +55,7 @@ if (typeof HTMLDialogElement !== "undefined" && !HTMLDialogElement.prototype.sho
 const BOX: FanBox = {
   id: "8b0c2f9e-1f7a-4c1e-9a55-3f0c1d2e4a10",
   name: "겨울 선물",
+  description: null,
   creator: { id: "00000000-0000-4000-b000-000000000001", slug: "haru", name: "하루" },
   open: true,
   full: false,

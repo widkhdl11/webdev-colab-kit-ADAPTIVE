@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { BOX_CAPACITY_MAX, BOX_NAME_MAX } from "@/entities/revgift-box/model/box-rules";
+import { BOX_CAPACITY_MAX, BOX_DESCRIPTION_MAX, BOX_NAME_MAX } from "@/entities/revgift-box/model/box-rules";
+import { charCount } from "@/shared/lib/validation/char-count";
+import { HIDDEN_CHAR, LINE_BREAK } from "@/shared/lib/validation/hidden-char";
 import type { Viewer } from "@/entities/session/model/viewer";
 
 // 선물함 만들기·신청 관리 (revgift-box INV-GB1·GB3·GB5·GB7·GB8). 크리에이터가 부른다.
@@ -15,6 +17,13 @@ const LOGIN: Refusal = { ok: false, status: 401, message: "로그인이 필요�
 const CREATOR_ONLY: Refusal = { ok: false, status: 403, message: "크리에이터 계정만 이용할 수 있습니다." };
 const NOT_FOUND: Refusal = { ok: false, status: 404, message: "선물함을 찾을 수 없습니다." };
 const BAD_INPUT: Refusal = { ok: false, status: 400, message: `선물함 이름은 1~${BOX_NAME_MAX}자, 받을 인원은 1~${BOX_CAPACITY_MAX}명으로 입력해 주세요.` };
+const BAD_DESCRIPTION: Refusal = { ok: false, status: 400, message: `간단한 설명은 한 줄로 ${BOX_DESCRIPTION_MAX}자까지 입력할 수 있습니다.` };
+// 간단한 설명의 글자 검사 — 팬덤 이름과 같은 필터를 DB 가 돌린다(금칙어 · 연락처 꼴 · 기호만)
+const DESCRIPTION_REFUSAL: Record<string, string> = {
+  P0087: "간단한 설명에 사용할 수 없는 표현이 포함되어 있습니다.",
+  P0088: "간단한 설명에 전화번호·이메일·인터넷 주소는 입력할 수 없습니다.",
+  P0089: "간단한 설명에 글자나 숫자를 하나 이상 넣어 주세요.",
+};
 const FULL: Refusal = { ok: false, status: 409, message: "받을 인원이 다 찼습니다." };
 
 const uuid = z.string().uuid();
@@ -38,16 +47,35 @@ const createBody = z.object({
   name: z.string().trim().min(1).max(BOX_NAME_MAX),
   capacity: z.number().int().min(1).max(BOX_CAPACITY_MAX),
   isPublic: z.boolean(),
+  // 선택 — 없거나 빈 값이면 설명 없음(null). 한 줄, 앞뒤 공백을 뺀 뒤 100자
+  description: z.string().trim().nullish(),
 });
+
+/** 간단한 설명 — 빈 값은 null, 줄바꿈·보이지 않는 글자·100자 초과는 거부(undefined). DB 가 같은 규칙에 금칙어 필터까지 다시 본다 */
+export function normalizeBoxDescription(raw: string | null | undefined): string | null | undefined {
+  const s = raw ?? "";
+  if (s === "") return null;
+  if (charCount(s) > BOX_DESCRIPTION_MAX || HIDDEN_CHAR.test(s) || LINE_BREAK.test(s)) return undefined;
+  return s;
+}
 
 export async function createBox(deps: Deps, body: unknown): Promise<{ ok: true; boxId: string } | Refusal> {
   const refused = gate(deps.viewer);
   if (refused) return refused;
   const input = createBody.safeParse(body);
   if (!input.success) return BAD_INPUT;
-  const { data, error } = await deps.client.rpc("create_revgift_box", { p_name: input.data.name, p_capacity: input.data.capacity, p_is_public: input.data.isPublic });
+  const description = normalizeBoxDescription(input.data.description);
+  if (description === undefined) return BAD_DESCRIPTION;
+  const { data, error } = await deps.client.rpc("create_revgift_box", {
+    p_name: input.data.name,
+    p_capacity: input.data.capacity,
+    p_is_public: input.data.isPublic,
+    p_description: description,
+  });
   if (error) {
     if (error.code === "22023") return BAD_INPUT;
+    const descriptionMessage = DESCRIPTION_REFUSAL[error.code];
+    if (descriptionMessage) return { ok: false, status: 400, message: descriptionMessage };
     return refusalOf(error.code, "선물함을 만들 수 없습니다.", "선물함을 만들지 못했다");
   }
   return { ok: true, boxId: z.object({ id: uuid }).parse(data).id };

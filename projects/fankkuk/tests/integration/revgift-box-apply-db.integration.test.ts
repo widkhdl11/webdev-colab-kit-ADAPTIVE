@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { BOX_CAPACITY_MAX, BOX_NAME_MAX } from "@/entities/revgift-box/model/box-rules";
+import { BOX_CAPACITY_MAX, BOX_DESCRIPTION_MAX, BOX_NAME_MAX } from "@/entities/revgift-box/model/box-rules";
 import { adminClient, anonClient, deleteTestFollows, followForTest, holdRowLock, psql, signedInClient } from "./helpers";
 import { PROFILE, sampleEnvelope } from "./revgift-helpers";
 
@@ -107,6 +107,47 @@ describe("INV-GB3: 선물함은 크리에이터만 자기 이름으로 — 이�
     expect(Number(psql(`select count(*) from public.revgift_boxes where creator_id = '${HARU_CREATOR}'`))).toBe(1);
     // 화면 입력 칸의 한도는 DB 규칙 함수와 같다
     expect([BOX_NAME_MAX, BOX_CAPACITY_MAX]).toEqual([rules.name_max, rules.capacity_max]);
+  });
+
+  it("간단한 설명(선택): 앞뒤 공백을 빼고 저장, 빈 값·안 보냄은 null. 한도+1·줄바꿈·보이지 않는 글자는 22023, 팬덤 이름과 같은 필터는 P0087~89", async () => {
+    const make = (description?: string | null) =>
+      haru.rpc("create_revgift_box", { p_name: "겨울 선물", p_capacity: 3, p_is_public: true, ...(description === undefined ? {} : { p_description: description }) });
+    const saved = await make("  올해 마지막 선물함  ");
+    expect(saved.error).toBeNull();
+    const id = (saved.data as { id: string }).id;
+    expect(psql(`select description from public.revgift_boxes where id = '${id}'`)).toBe("올해 마지막 선물함");
+    for (const empty of ["", "   ", null, undefined]) {
+      const r = await make(empty);
+      expect(r.error).toBeNull();
+      expect(psql(`select coalesce(description, '(없음)') from public.revgift_boxes where id = '${(r.data as { id: string }).id}'`)).toBe("(없음)");
+    }
+    expect((await make("가".repeat(BOX_DESCRIPTION_MAX))).error).toBeNull();
+    const before = Number(psql(`select count(*) from public.revgift_boxes where creator_id = '${HARU_CREATOR}'`));
+    for (const bad of ["가".repeat(BOX_DESCRIPTION_MAX + 1), "첫 줄\n둘째 줄", "보이지\u200b않음"]) {
+      expect((await make(bad)).error?.code).toBe("22023");
+    }
+    const word = "렌틸콩시험";
+    psql(`insert into public.creator_tag_banned_words (word) values ('${word}')`);
+    try {
+      expect((await make(`우리 ${word} 선물함`)).error?.code).toBe("P0087");
+    } finally {
+      psql(`delete from public.creator_tag_banned_words where word = '${word}'`);
+    }
+    expect((await make("문의 010-1234-5678")).error?.code).toBe("P0088");
+    expect((await make("!!! ~~~")).error?.code).toBe("P0089");
+    expect(Number(psql(`select count(*) from public.revgift_boxes where creator_id = '${HARU_CREATOR}'`))).toBe(before);
+    // 금칙어가 없으면 같은 문장이 저장된다 — 위 P0087 이 필터 때문임을 확인
+    expect((await make(`우리 ${word} 선물함`)).error).toBeNull();
+    // DB 제약도 같은 규칙 — 함수를 거치지 않은 줄바꿈·공백만은 저장되지 않는다
+    expect(() => psql(`update public.revgift_boxes set description = E'a\nb' where id = '${id}'`)).toThrow();
+    expect(() => psql(`update public.revgift_boxes set description = '  ' where id = '${id}'`)).toThrow();
+    // 읽기 넷이 설명을 돌려준다 — 주인 목록·신청 관리 창·팬 화면·크리에이터 페이지 입구
+    const mine = (await haru.rpc("my_revgift_boxes")).data as { id: string; description: string | null }[];
+    expect(mine.find((b) => b.id === id)?.description).toBe("올해 마지막 선물함");
+    expect(((await haru.rpc("my_revgift_box", { p_box_id: id })).data as { description: string }).description).toBe("올해 마지막 선물함");
+    expect(((await byeolbit.rpc("revgift_box_for_fan", { p_box_id: id, p_token: null })).data as { description: string }).description).toBe("올해 마지막 선물함");
+    const open = (await anonClient().rpc("creator_open_revgift_boxes", { p_creator_id: HARU_CREATOR })).data as { id: string; description: string | null }[];
+    expect(open.find((b) => b.id === id)?.description).toBe("올해 마지막 선물함");
   });
 
   it("INV-GB3 S3b: 팬 별빛·로그인 안 함·앱 서버 키 → 만들 수 없다", async () => {
@@ -312,6 +353,7 @@ describe("INV-GB9: 크리에이터에게 보이는 팬 정보는 닉네임·신�
       "carton_count",
       "cartons_received",
       "created_at",
+      "description",
       "ended_at",
       "id",
       "inbound_code",
@@ -337,15 +379,16 @@ describe("INV-GB9: 크리에이터에게 보이는 팬 정보는 닉네임·신�
     addApp(boxId, PROFILE.gureumppang);
     const seen = (await byeolbit.rpc("revgift_box_for_fan", { p_box_id: boxId, p_token: null })).data as Record<string, unknown>;
     // 2026-11-09: 자기 대기 순번(waitlist_no — 대기가 아니면 null)이 더해졌다
+    // 2026-11-11: 간단한 설명(description — 크리에이터가 쓴 한 줄, 없으면 null)이 더해졌다
     // 2026-11-10: 다 찼는지(full) 참/거짓 하나 — 숫자(신청 수·받을 인원·대기 수)는 여전히 없다(정할 것 Q6)
-    expect(Object.keys(seen).sort()).toEqual(["creator", "delivery", "full", "id", "my_state", "name", "open", "viewer", "waitlist_no"]);
+    expect(Object.keys(seen).sort()).toEqual(["creator", "delivery", "description", "full", "id", "my_state", "name", "open", "viewer", "waitlist_no"]);
     expect(typeof seen.full).toBe("boolean");
     expect(seen.delivery).toBeNull(); // 송장 출력 전 — 배송 재료 없음(delivery-status INV-DS6)
     expect(seen.my_state).toBe("applied");
     expect(JSON.stringify(seen)).not.toContain("구름빵");
     // 크리에이터 상세의 입구 — 공개·open 선물함 이름뿐, 로그인 없이도
     const entry = (await anonClient().rpc("creator_open_revgift_boxes", { p_creator_id: HARU_CREATOR })).data as Record<string, unknown>[];
-    expect(entry).toEqual([{ id: boxId, name: "시험 선물함" }]);
+    expect(entry).toEqual([{ id: boxId, name: "시험 선물함", description: null }]);
     makeBox({ isPublic: false });
     makeBox({ status: "closed" });
     expect(((await anonClient().rpc("creator_open_revgift_boxes", { p_creator_id: HARU_CREATOR })).data as unknown[]).length).toBe(1);

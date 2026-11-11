@@ -41,6 +41,7 @@ export function BoxManagePage({
         </p>
         <header className="page-head">
           <h1 className={`ph-title ${s.title}`}>{box.name}</h1>
+          {box.description ? <p className={`ph-desc ${s.title}`}>{box.description}</p> : null}
           <p className={s.headTags}>
             <span className="tag tag--brand">{BOX_STATUS_NAME[box.status]}</span>
             <span className="tag">{box.isPublic ? "공개" : "비공개"}</span>

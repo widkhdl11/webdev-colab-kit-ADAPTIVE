@@ -24,7 +24,7 @@ export async function postBox<T>(path: string, body: unknown, parse: (data: unkn
 
 const base = (boxId: string) => `/api/revgift-boxes/${encodeURIComponent(boxId)}`;
 
-export function sendCreateBox(input: { name: string; capacity: number; isPublic: boolean }) {
+export function sendCreateBox(input: { name: string; description: string | null; capacity: number; isPublic: boolean }) {
   return postBox("/api/revgift-boxes", input, (d) => z.object({ boxId: z.string() }).parse(d).boxId);
 }
 export function sendSetExcluded(boxId: string, applicationId: string, excluded: boolean) {

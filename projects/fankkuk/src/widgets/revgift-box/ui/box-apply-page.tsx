@@ -30,6 +30,7 @@ export function BoxApplyPage({
         <header className="page-head">
           <p className={s.kicker}>{box.creator.name}</p>
           <h1 className={`ph-title ${s.title}`}>{box.name}</h1>
+          {box.description ? <p className={`ph-desc ${s.title}`}>{box.description}</p> : null}
         </header>
         {/* 팔로우 뒤 서버가 다시 그리면 보는 사람이 바뀐다 — 그때 판을 새로 시작한다. 신청 뒤(신청 상태 변화)에는 열린 신청 창을 이어서 보이려고 새로 시작하지 않는다 */}
         <BoxApplyPanel

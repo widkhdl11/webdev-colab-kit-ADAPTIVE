@@ -48,6 +48,9 @@
 .alert h2 { flex: none; font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.6; letter-spacing: 0; white-space: nowrap; }
 .alert p { min-width: 0; color: var(--sub); font-weight: 400; overflow-wrap: anywhere; }
 .boxLinks { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); min-width: 0; margin: 0; padding: 0; list-style: none; }
+.boxLinks li { min-width: 0; }
+/* 간단한 설명 — 링크 바로 아래 한 줄, 보조 글자색(.alert p). 최대 100자라 길면 줄바꿈 */
+.boxLinks .boxDesc { margin: 0 0 var(--space-2); }
 .boxLinks a { display: inline-flex; align-items: center; min-height: 44px; font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
 
 /* ---------- 숫자 띠: 값 크게 · 단위 작게 ---------- */

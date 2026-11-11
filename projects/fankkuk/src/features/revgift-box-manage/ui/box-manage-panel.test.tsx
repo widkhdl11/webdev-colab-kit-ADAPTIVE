@@ -40,6 +40,7 @@ const W2 = "3d9c4a1e-6b2f-4f3a-8e7d-1c2b3a4d5e6f";
 const BOX: MyBox = {
   id: "8b0c2f9e-1f7a-4c1e-9a55-3f0c1d2e4a10",
   name: "겨울 선물",
+  description: null,
   capacity: 30,
   isPublic: false,
   status: "open",

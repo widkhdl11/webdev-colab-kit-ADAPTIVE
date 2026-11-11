@@ -23,6 +23,7 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
     const f = fakeClient({
       id: BOX,
       name: "겨울 선물",
+      description: "올해 마지막 선물함",
       capacity: 30,
       is_public: false,
       status: "open",
@@ -38,6 +39,7 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
     expect(await readMyBox(f.client, BOX)).toEqual({
       id: BOX,
       name: "겨울 선물",
+      description: "올해 마지막 선물함",
       capacity: 30,
       isPublic: false,
       status: "open",
@@ -54,7 +56,7 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
   });
 
   it("INV-GB9 S9b: 신청 줄에 다른 칸(로그인 아이디·주소 등)이 섞이면 받지 않는다", async () => {
-    const row = { id: BOX, name: "a", capacity: 1, is_public: true, status: "open", invite_token: null, created_at: "2026-11-08T01:00:00+00:00", ended_at: null, inbound_code: null, carton_count: null, cartons_received: 0, invoice: null };
+    const row = { id: BOX, name: "a", description: null, capacity: 1, is_public: true, status: "open", invite_token: null, created_at: "2026-11-08T01:00:00+00:00", ended_at: null, inbound_code: null, carton_count: null, cartons_received: 0, invoice: null };
     for (const extra of [{ login_id: "byeolbit_fan" }, { address: "서울" }, { fan_id: APP }, { waybill: "123456789012" }]) {
       const f = fakeClient({ ...row, applications: [{ id: APP, nickname: "별빛", applied_at: "2026-11-08T02:00:00+00:00", status: "applied", chosen_tier: null, waitlist_no: null, ...extra }] });
       await expect(readMyBox(f.client, BOX)).rejects.toThrow();
@@ -65,13 +67,13 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
   });
 
   it("INV-GB9 S9d: 대기 신청 줄은 순번(1 이상 정수)을 받는다 — 0·소수·문자열 순번은 받지 않는다. 팬의 내 대기 순번도 같은 꼴", async () => {
-    const row = { id: BOX, name: "a", capacity: 1, is_public: true, status: "open", invite_token: null, created_at: "2026-11-08T01:00:00+00:00", ended_at: null, inbound_code: null, carton_count: null, cartons_received: 0, invoice: null };
+    const row = { id: BOX, name: "a", description: null, capacity: 1, is_public: true, status: "open", invite_token: null, created_at: "2026-11-08T01:00:00+00:00", ended_at: null, inbound_code: null, carton_count: null, cartons_received: 0, invoice: null };
     const app = { id: APP, nickname: "하늘", applied_at: "2026-11-08T02:00:00+00:00", status: "waitlisted", chosen_tier: null };
     expect((await readMyBox(fakeClient({ ...row, applications: [{ ...app, waitlist_no: 2 }] }).client, BOX))?.applications[0]).toMatchObject({ status: "waitlisted", waitlistNo: 2 });
     for (const bad of [0, 1.5, "2"]) {
       await expect(readMyBox(fakeClient({ ...row, applications: [{ ...app, waitlist_no: bad }] }).client, BOX)).rejects.toThrow();
     }
-    const fan = { id: BOX, name: "a", creator: { id: BOX, slug: "haru", name: "하루" }, open: true, full: true, viewer: "follower", my_state: "waitlisted", delivery: null };
+    const fan = { id: BOX, name: "a", description: null, creator: { id: BOX, slug: "haru", name: "하루" }, open: true, full: true, viewer: "follower", my_state: "waitlisted", delivery: null };
     expect(await readBoxForFan(fakeClient({ ...fan, waitlist_no: 3 }).client, BOX, null)).toMatchObject({ myState: "waitlisted", waitlistNo: 3 });
     await expect(readBoxForFan(fakeClient({ ...fan, waitlist_no: 0 }).client, BOX, null)).rejects.toThrow();
   });
@@ -83,17 +85,22 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
     expect(f.calls).toEqual([]);
   });
 
-  it("내 선물함 목록은 이름·상태·인원·신청 수만", async () => {
-    const f = fakeClient([{ id: BOX, name: "겨울 선물", capacity: 30, is_public: true, status: "closed", created_at: "2026-11-08T01:00:00+00:00", active_count: 3 }]);
-    expect(await readMyBoxes(f.client)).toEqual([
-      { id: BOX, name: "겨울 선물", capacity: 30, isPublic: true, status: "closed", createdAt: "2026-11-08T01:00:00+00:00", activeCount: 3 },
+  it("내 선물함 목록은 이름·간단한 설명·상태·인원·신청 수만 — 설명 칸이 빠지거나 글자가 아니면 받지 않는다", async () => {
+    const row = { id: BOX, name: "겨울 선물", description: "올해 마지막 선물함", capacity: 30, is_public: true, status: "closed", created_at: "2026-11-08T01:00:00+00:00", active_count: 3 };
+    expect(await readMyBoxes(fakeClient([row]).client)).toEqual([
+      { id: BOX, name: "겨울 선물", description: "올해 마지막 선물함", capacity: 30, isPublic: true, status: "closed", createdAt: "2026-11-08T01:00:00+00:00", activeCount: 3 },
     ]);
+    expect((await readMyBoxes(fakeClient([{ ...row, description: null }]).client))[0]?.description).toBeNull();
+    const { description: _omit, ...noDescription } = row;
+    await expect(readMyBoxes(fakeClient([noDescription]).client)).rejects.toThrow();
+    await expect(readMyBoxes(fakeClient([{ ...row, description: 3 }]).client)).rejects.toThrow();
   });
 
   it("INV-GB4 · GB9 S9c: 팬이 보는 선물함 — 다른 신청자 수 칸이 섞이면 받지 않는다, 비공개 토큰이 틀리면 null", async () => {
     const seen = {
       id: BOX,
       name: "겨울 선물",
+      description: "올해 마지막 선물함",
       creator: { id: BOX, slug: "haru", name: "하루" },
       open: true,
       full: false,
@@ -106,6 +113,7 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
     expect(await readBoxForFan(f.client, BOX, "t".repeat(32))).toEqual({
       id: BOX,
       name: "겨울 선물",
+      description: "올해 마지막 선물함",
       creator: { id: BOX, slug: "haru", name: "하루" },
       open: true,
       full: false,
@@ -120,25 +128,30 @@ describe("선물함 읽기 (revgift-box INV-GB7·GB9)", () => {
     await expect(readBoxForFan(fakeClient({ ...seen, full: 3 }).client, BOX, null)).rejects.toThrow();
     const { full: _omit, ...noFull } = seen;
     await expect(readBoxForFan(fakeClient(noFull).client, BOX, null)).rejects.toThrow();
+    expect((await readBoxForFan(fakeClient({ ...seen, description: null }).client, BOX, null))?.description).toBeNull();
     expect(await readBoxForFan(fakeClient(null).client, BOX, "x")).toBeNull();
   });
 
   it("delivery-status INV-DS3: 팬의 내 배송은 출고 날짜·받았어요·버튼 여부뿐 — 송장번호 칸이 섞여 오면 받지 않는다, 날짜에 시각이 섞여도", async () => {
-    const seen = { id: BOX, name: "겨울 선물", creator: { id: BOX, slug: "haru", name: "하루" }, open: false, full: false, viewer: "follower", my_state: "preparing", waitlist_no: null };
+    const seen = { id: BOX, name: "겨울 선물", description: null, creator: { id: BOX, slug: "haru", name: "하루" }, open: false, full: false, viewer: "follower", my_state: "preparing", waitlist_no: null };
     const delivery = { shipped_on: "2026-11-09", received: false, can_confirm: true, carrier: "in_transit" };
     expect((await readBoxForFan(fakeClient({ ...seen, delivery }).client, BOX, null))?.delivery).toEqual({ shippedOn: "2026-11-09", received: false, canConfirm: true, carrier: "in_transit" });
     await expect(readBoxForFan(fakeClient({ ...seen, delivery: { ...delivery, waybill_no: "123456789012" } }).client, BOX, null)).rejects.toThrow();
     await expect(readBoxForFan(fakeClient({ ...seen, delivery: { ...delivery, shipped_on: "2026-11-09T05:00:00Z" } }).client, BOX, null)).rejects.toThrow();
   });
 
-  it("크리에이터 상세 입구 — 공개 선물함 이름만", async () => {
-    const f = fakeClient([{ id: BOX, name: "겨울 선물" }]);
-    expect(await readCreatorOpenBoxes(f.client, BOX)).toEqual([{ id: BOX, name: "겨울 선물" }]);
+  it("크리에이터 상세 입구 — 공개 선물함 이름·간단한 설명만", async () => {
+    const f = fakeClient([{ id: BOX, name: "겨울 선물", description: "올해 마지막 선물함" }, { id: BOX, name: "봄", description: null }]);
+    expect(await readCreatorOpenBoxes(f.client, BOX)).toEqual([
+      { id: BOX, name: "겨울 선물", description: "올해 마지막 선물함" },
+      { id: BOX, name: "봄", description: null },
+    ]);
+    await expect(readCreatorOpenBoxes(fakeClient([{ id: BOX, name: "겨울 선물" }]).client, BOX)).rejects.toThrow();
   });
 });
 
 describe("선물함 3부 읽기 (revgift-box INV-GB9·GB10·GB12·GB13·GB23)", () => {
-  const base = { id: BOX, name: "a", capacity: 1, is_public: true, status: "invoiced", invite_token: null, created_at: "2026-11-08T01:00:00+00:00", ended_at: null, applications: [] };
+  const base = { id: BOX, name: "a", description: null, capacity: 1, is_public: true, status: "invoiced", invite_token: null, created_at: "2026-11-08T01:00:00+00:00", ended_at: null, applications: [] };
   const line = { nickname: "별빛", tier: "oversize", shipping_fee_krw: 13000, surcharge_region: "jeju", surcharge_krw: 4000, service_fee_krw: 700, amount_krw: 17700, progress: "unpaid", printed: false, shipped_on: null, received: false, carrier: null };
   const invoice = { amount_krw: 17700, shipping_fee_krw: 17000, service_fee_krw: 700, carton_cod_krw: 0, created_at: "2026-11-09T01:00:00+00:00", pay_due_at: "2026-11-12T01:00:00+00:00", return_at: "2026-11-16T01:00:00+00:00", paying: false, paid_at: null, lines: [line] };
 

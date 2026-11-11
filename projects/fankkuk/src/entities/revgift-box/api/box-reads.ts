@@ -23,7 +23,8 @@ const uuid = z.string().uuid();
 /** 서울 날짜 YYYY-MM-DD — 시각이 섞여 오면 받지 않는다 */
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
-export type MyBoxRow = { id: string; name: string; capacity: number; isPublic: boolean; status: BoxStatus; createdAt: string; activeCount: number };
+/** description — 간단한 설명(선택, 한 줄). 없으면 null */
+export type MyBoxRow = { id: string; name: string; description: string | null; capacity: number; isPublic: boolean; status: BoxStatus; createdAt: string; activeCount: number };
 /** waitlistNo — 신청 받는 중인 선물함의 대기 신청이면 순번(1부터, 신청 시각 순), 아니면 null(INV-GB5·GB9) */
 export type BoxApplication = { id: string; nickname: string; appliedAt: string; status: ApplicationStatus; chosenTier: ChosenTier | null; waitlistNo: number | null };
 /** 명세서 줄 — 크리에이터에게 보이는 것은 닉네임·구간·택배비·할증 구분·할증·서비스료·금액뿐(INV-GB9·GB13) */
@@ -59,6 +60,7 @@ export type BoxInvoice = {
 export type MyBox = {
   id: string;
   name: string;
+  description: string | null;
   capacity: number;
   isPublic: boolean;
   status: BoxStatus;
@@ -78,6 +80,7 @@ export type FanBoxDelivery = { shippedOn: string | null; received: boolean; canC
 export type FanBox = {
   id: string;
   name: string;
+  description: string | null;
   creator: { id: string; slug: string; name: string };
   open: boolean;
   /** 새 신청이 대기로 들어가는가 — 신청 받는 중이고 정원이 찼거나 대기 신청이 있다. 숫자(신청 수·받을 인원·대기 수)는 오지 않는다(Q6) */
@@ -88,12 +91,13 @@ export type FanBox = {
   waitlistNo: number | null;
   delivery: FanBoxDelivery | null;
 };
-export type CreatorOpenBox = { id: string; name: string };
+export type CreatorOpenBox = { id: string; name: string; description: string | null };
 
 const myBoxRow = z
   .object({
     id: uuid,
     name: z.string(),
+    description: z.string().nullable(),
     capacity: z.number().int(),
     is_public: z.boolean(),
     status: boxStatusSchema,
@@ -148,6 +152,7 @@ const myBoxSchema = z
   .object({
     id: uuid,
     name: z.string(),
+    description: z.string().nullable(),
     capacity: z.number().int(),
     is_public: z.boolean(),
     status: boxStatusSchema,
@@ -166,6 +171,7 @@ const fanBoxSchema = z
   .object({
     id: uuid,
     name: z.string(),
+    description: z.string().nullable(),
     creator: z.object({ id: uuid, slug: z.string(), name: z.string() }).strict(),
     open: z.boolean(),
     full: z.boolean(),
@@ -179,7 +185,7 @@ const fanBoxSchema = z
   })
   .strict();
 
-const openBoxRow = z.object({ id: uuid, name: z.string() }).strict();
+const openBoxRow = z.object({ id: uuid, name: z.string(), description: z.string().nullable() }).strict();
 
 export async function readMyBoxes(client: Rpc): Promise<MyBoxRow[]> {
   const { data, error } = await client.rpc("my_revgift_boxes");
@@ -187,7 +193,7 @@ export async function readMyBoxes(client: Rpc): Promise<MyBoxRow[]> {
   return z
     .array(myBoxRow)
     .parse(data)
-    .map((r) => ({ id: r.id, name: r.name, capacity: r.capacity, isPublic: r.is_public, status: r.status, createdAt: r.created_at, activeCount: r.active_count }));
+    .map((r) => ({ id: r.id, name: r.name, description: r.description, capacity: r.capacity, isPublic: r.is_public, status: r.status, createdAt: r.created_at, activeCount: r.active_count }));
 }
 
 /** 신청 관리 창 — 주인 본인의 선물함 하나. 없거나 주인이 아니면 null */
@@ -200,6 +206,7 @@ export async function readMyBox(client: Rpc, boxId: string): Promise<MyBox | nul
   return {
     id: b.id,
     name: b.name,
+    description: b.description,
     capacity: b.capacity,
     isPublic: b.is_public,
     status: b.status,
@@ -333,7 +340,7 @@ export async function readBoxForFan(client: Rpc, boxId: string, token: string | 
   if (data === null) return null;
   const b = fanBoxSchema.parse(data);
   const delivery = b.delivery ? { shippedOn: b.delivery.shipped_on, received: b.delivery.received, canConfirm: b.delivery.can_confirm, carrier: b.delivery.carrier } : null;
-  return { id: b.id, name: b.name, creator: b.creator, open: b.open, full: b.full, viewer: b.viewer, myState: b.my_state, waitlistNo: b.waitlist_no, delivery };
+  return { id: b.id, name: b.name, description: b.description, creator: b.creator, open: b.open, full: b.full, viewer: b.viewer, myState: b.my_state, waitlistNo: b.waitlist_no, delivery };
 }
 
 /** 크리에이터 상세의 입구 — 그 크리에이터의 공개·신청 받는 중인 선물함 */

@@ -177,6 +177,7 @@ export function BoxManageDialog({
         }
         tags={
           <>
+            {box.description ? <p className={s.boxDesc}>{box.description}</p> : null}
             <span className="tag tag--dot tag--info">{BOX_STATUS_NAME.open}</span>
             {full ? <span className={`tag tag--line ${s.tLine}`}>인원 마감</span> : null}
             <span className={`tag tag--line ${s.tLine}`}>{box.isPublic ? "공개" : "비공개"}</span>

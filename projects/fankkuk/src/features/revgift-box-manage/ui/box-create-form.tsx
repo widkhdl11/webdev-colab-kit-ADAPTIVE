@@ -2,13 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode, type RefObject } from "react";
-import { BOX_CAPACITY_MAX, BOX_NAME_MAX } from "@/entities/revgift-box/model/box-rules";
+import { BOX_CAPACITY_MAX, BOX_DESCRIPTION_MAX, BOX_NAME_MAX } from "@/entities/revgift-box/model/box-rules";
+import { charCount } from "@/shared/lib/validation/char-count";
+import { HIDDEN_CHAR, LINE_BREAK } from "@/shared/lib/validation/hidden-char";
 import { ConfirmDialog, StepDialog } from "@/shared/ui/step-dialog";
 import { sendCreateBox } from "../api/box-requests";
 import s from "./box-manage.module.css";
 
 // 선물함 만들기 모달 (revgift-box INV-GB3 · UX 명세 creator-revgifts-new 「만들기 모달 — 상태표」 · design-rules 43절).
-// 1/3 이름 → 2/3 받을 인원(1~100) → 3/3 공개 범위(공개 미리 선택) → 만들었습니다. 값 검사는 「다음」을 누를 때 그 칸 아래 한 줄.
+// 1/3 이름(+ 간단한 설명, 선택) → 2/3 받을 인원(1~100) → 3/3 공개 범위(공개 미리 선택) → 만들었습니다. 값 검사는 「다음」을 누를 때 그 칸 아래 한 줄.
 // 입력이 있는데 닫기·Esc·바깥을 누르면 「입력한 내용을 지울까요?」. 만든 뒤 신청 관리로 갈지는 크리에이터가 고른다(바로 이동하지 않는다).
 
 type Step = 1 | 2 | 3 | "done";
@@ -33,6 +35,8 @@ export function BoxCreateDialog({
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [descError, setDescError] = useState<string | null>(null);
   const [capacity, setCapacity] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [fieldError, setFieldError] = useState<string | null>(null);
@@ -42,6 +46,7 @@ export function BoxCreateDialog({
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [copyMsg, setCopyMsg] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const descRef = useRef<HTMLInputElement>(null);
 
   // 단계가 바뀌면 그 단계의 입력 칸으로 초점을 옮긴다(누른 「다음」이 사라지는 자리)
   useEffect(() => {
@@ -51,6 +56,8 @@ export function BoxCreateDialog({
   const reset = () => {
     setStep(1);
     setName("");
+    setDescription("");
+    setDescError(null);
     setCapacity("");
     setIsPublic(true);
     setFieldError(null);
@@ -65,7 +72,7 @@ export function BoxCreateDialog({
   };
   const requestClose = () => {
     if (busy) return;
-    if (step !== "done" && (name.trim() !== "" || capacity.trim() !== "")) setDiscard(true);
+    if (step !== "done" && (name.trim() !== "" || description.trim() !== "" || capacity.trim() !== "")) setDiscard(true);
     else close();
   };
 
@@ -78,6 +85,14 @@ export function BoxCreateDialog({
         return;
       }
       setFieldError(null);
+      // 간단한 설명 — 한 줄 100자, 줄바꿈·보이지 않는 글자 없음. 금칙어 등 필터는 서버(DB)가 팬덤 이름과 같은 기준으로 본다
+      const d = description.trim();
+      if (charCount(d) > BOX_DESCRIPTION_MAX || HIDDEN_CHAR.test(d) || LINE_BREAK.test(d)) {
+        setDescError(`간단한 설명은 한 줄로 ${BOX_DESCRIPTION_MAX}자까지 입력할 수 있습니다.`);
+        descRef.current?.focus();
+        return;
+      }
+      setDescError(null);
       setStep(2);
       return;
     }
@@ -99,7 +114,7 @@ export function BoxCreateDialog({
     if (busy) return;
     setBusy(true);
     setSaveError(null);
-    const o = await sendCreateBox({ name: name.trim(), capacity: Number(capacity), isPublic });
+    const o = await sendCreateBox({ name: name.trim(), description: description.trim() || null, capacity: Number(capacity), isPublic });
     setBusy(false);
     if (o.kind === "ok") {
       setCreatedId(o.data);
@@ -200,6 +215,32 @@ export function BoxCreateDialog({
             </div>
             {errorLine("bc-err", fieldError)}
           </div>
+        ) : null}
+        {step === 1 ? (
+          <div className="field">
+            <label htmlFor="bc-desc">간단한 설명 (선택)</label>
+            <div className={descError ? `${s.ulField} ${s.ulErr}` : s.ulField}>
+              <span className={s.ulMirror} aria-hidden="true">
+                {description}
+              </span>
+              <input
+                ref={descRef}
+                id="bc-desc"
+                className={s.ulInput}
+                type="text"
+                autoComplete="off"
+                maxLength={BOX_DESCRIPTION_MAX}
+                value={description}
+                aria-invalid={descError ? true : undefined}
+                aria-describedby={descError ? "bc-desc-err" : undefined}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  setDescError(null);
+                }}
+              />
+            </div>
+            {errorLine("bc-desc-err", descError)}
+          </div>
         ) : step === 2 ? (
           <div className="field">
             <label htmlFor="bc-count">받을 인원</label>
@@ -240,6 +281,12 @@ export function BoxCreateDialog({
                 <dt>선물함 이름</dt>
                 <dd>{name.trim()}</dd>
               </div>
+              {description.trim() ? (
+                <div>
+                  <dt>간단한 설명</dt>
+                  <dd>{description.trim()}</dd>
+                </div>
+              ) : null}
               <div>
                 <dt>받을 인원</dt>
                 <dd>{`${Number(capacity)}명`}</dd>

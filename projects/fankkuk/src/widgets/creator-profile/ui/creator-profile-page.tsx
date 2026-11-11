@@ -227,6 +227,7 @@ export function CreatorProfilePage({
               {openBoxes.map((b) => (
                 <li key={b.id}>
                   <Link href={`/gift-boxes/${b.id}`}>{`${b.name} 신청`}</Link>
+                  {b.description ? <p className={s.boxDesc}>{b.description}</p> : null}
                 </li>
               ))}
             </ul>
