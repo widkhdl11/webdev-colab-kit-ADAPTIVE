@@ -13,7 +13,8 @@ import s from "./revgift-box.module.css";
 
 // 팬에게 보내기 — 내 선물함 목록 + 설명 (UX 명세 creator-revgifts-new 「2026-11-09 바꿀 것」·「2026-11-10 시안 승인」 · design-rules 43절).
 // 선물함 0개: 설명 전체(「팬에게 보내기란?」이 h1) + 첫 화면과 끝에 「선물함 만들기」. 1개 이상: 목록이 먼저, 설명은 목록 아래(접지 않는다).
-// 카드 = 작은 그림 · 이름(두 줄 말줄임) · 상태 꼬리표 · 「신청 N / M명」+ 막대 · 「공개 · 날짜」. 카드 전체가 누르는 칸 —
+// 카드 = 흰 선물 상자(하늘 뚜껑 + 리본) · 첫 줄 이름(두 줄 말줄임)과 상태 꼬리표 · 간단한 설명(있을 때만, 두 줄) ·
+// 「신청 인원 N / M명」 + 폭 전체 막대 · 「공개 · 날짜」(사용자 시안 2026-11-11, design-rules 43절). 카드 전체가 누르는 칸 —
 // 신청 받는 중은 목록 위에 신청 관리 모달, 그 밖은 지금의 단계 페이지(/creator/revgift-boxes/[boxId])로 간다.
 // 「선물함 만들기」는 같은 페이지 위 모달이고 주소는 바뀌지 않는다. /new · /[boxId](신청 받는 중)로 들어오면 목록 + 그 모달이 열린 채로 보인다.
 
@@ -43,15 +44,6 @@ const TONE_CLASS: Record<Tone, string> = {
   plain: `tag tag--dot ${s.tPlain}`,
 };
 
-/** 카드 그림 — 상태가 어느 단계인지 진행 순서 그림과 같은 그림으로 알린다(시안 §7, 정보로 본 그림) */
-function pictureOf(status: BoxStatus): string {
-  if (status === "open") return "/images/home/promise-message.webp";
-  if (status === "awaiting_box" || status === "arrived" || status === "held") return "/images/home/revgift-pack.png";
-  if (status === "invoiced" || status === "overdue") return "/images/home/icon-fee.webp";
-  if (status === "paid" || status === "done") return "/images/home/icon-truck.webp";
-  return "/images/home/icon-gift.webp";
-}
-
 function BoxCardTags({ row }: { row: MyBoxRow }) {
   if (row.status === "open") {
     return (
@@ -76,12 +68,17 @@ function BoxCard({ row, onOpen }: { row: MyBoxRow; onOpen: (boxId: string, el: H
   const off = isClosedEmptyRow(row) || row.status === "cancelled";
   const pct = Math.min(100, Math.round((row.activeCount / Math.max(1, row.capacity)) * 100));
   return (
-    <li className={s.bcard}>
-      <div className={s.bTop}>
-        <div className={off ? `${s.bPic} ${s.isOff}` : s.bPic}>
-          <img src={pictureOf(row.status)} alt="" width={28} height={28} />
-        </div>
-        <div className={s.bHead}>
+    <li className={off ? `${s.bcard} ${s.isOff}` : s.bcard}>
+      {/* 선물 상자 뚜껑 + 리본 — 꾸밈 그림이라 읽지 않는다(사용자 시안 external-material-box/선물함상자.png, 2026-11-11) */}
+      <div className={s.bLid} aria-hidden="true">
+        <svg className={s.bBow} viewBox="0 0 48 24" width="72" height="36" focusable="false">
+          <path d="M24 13 C18 3, 6 1, 3 7 C1 12, 6 17, 24 14 Z" />
+          <path d="M24 13 C30 3, 42 1, 45 7 C47 12, 42 17, 24 14 Z" />
+          <rect className={s.bKnot} x="19" y="8" width="10" height="9" rx="3" />
+        </svg>
+      </div>
+      <div className={s.bBody}>
+        <div className={s.bTop}>
           <h3 className={s.bN}>
             {row.status === "open" ? (
               <button type="button" className={s.bA} title={row.name} onClick={(e) => onOpen(row.id, e.currentTarget)}>
@@ -93,29 +90,32 @@ function BoxCard({ row, onOpen }: { row: MyBoxRow; onOpen: (boxId: string, el: H
               </Link>
             )}
           </h3>
-          {row.description ? <p className={s.bDesc}>{row.description}</p> : null}
+          <div className={s.bTg}>
+            <BoxCardTags row={row} />
+          </div>
         </div>
-      </div>
-      <div className={s.bTg}>
-        <BoxCardTags row={row} />
-      </div>
-      <div className={s.bCnt}>
-        <p className={s.bNum}>
-          신청 <b>{row.activeCount}</b>
-          {` / ${row.capacity}명`}
-        </p>
-        <div
-          className={s.bBar}
-          role="progressbar"
-          aria-label={`신청 ${row.activeCount}명 / ${row.capacity}명`}
-          aria-valuemin={0}
-          aria-valuemax={row.capacity}
-          aria-valuenow={Math.min(row.activeCount, row.capacity)}
-        >
-          <i style={{ width: `${pct}%` }} />
+        {row.description ? <p className={s.bDesc}>{row.description}</p> : null}
+        <div className={s.bCnt}>
+          <p className={s.bNum}>
+            <span>신청 인원</span>
+            <span>
+              <b>{row.activeCount}</b>
+              {` / ${row.capacity}명`}
+            </span>
+          </p>
+          <div
+            className={s.bBar}
+            role="progressbar"
+            aria-label={`신청 ${row.activeCount}명 / ${row.capacity}명`}
+            aria-valuemin={0}
+            aria-valuemax={row.capacity}
+            aria-valuenow={Math.min(row.activeCount, row.capacity)}
+          >
+            <i style={{ width: `${pct}%` }} />
+          </div>
         </div>
+        <p className={s.bM}>{`${row.isPublic ? "공개" : "비공개"} · ${formatMonthDayKo(row.createdAt)}`}</p>
       </div>
-      <p className={s.bM}>{`${row.isPublic ? "공개" : "비공개"} · ${formatMonthDayKo(row.createdAt)}`}</p>
     </li>
   );
 }
