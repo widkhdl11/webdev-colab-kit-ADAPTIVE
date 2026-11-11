@@ -14,7 +14,7 @@ import { PROFILE, sampleEnvelope } from "./revgift-helpers";
 const HARU_CREATOR = "00000000-0000-4000-b000-000000000001";
 const MOMO_CREATOR = "00000000-0000-4000-b000-000000000002";
 
-type Rules = { capacity_max: number; name_max: number };
+type Rules = { capacity_max: number; name_max: number; description_max: number };
 let rules: Rules;
 let haru: SupabaseClient;
 let momo: SupabaseClient;
@@ -106,7 +106,7 @@ describe("INV-GB3: 선물함은 크리에이터만 자기 이름으로 — 이�
     expect((await haru.rpc("create_revgift_box", { p_name: "가".repeat(rules.name_max), p_capacity: rules.capacity_max, p_is_public: true })).error).toBeNull();
     expect(Number(psql(`select count(*) from public.revgift_boxes where creator_id = '${HARU_CREATOR}'`))).toBe(1);
     // 화면 입력 칸의 한도는 DB 규칙 함수와 같다
-    expect([BOX_NAME_MAX, BOX_CAPACITY_MAX]).toEqual([rules.name_max, rules.capacity_max]);
+    expect([BOX_NAME_MAX, BOX_CAPACITY_MAX, BOX_DESCRIPTION_MAX]).toEqual([rules.name_max, rules.capacity_max, rules.description_max]);
   });
 
   it("간단한 설명(선택): 앞뒤 공백을 빼고 저장, 빈 값·안 보냄은 null. 한도+1·줄바꿈·보이지 않는 글자는 22023, 팬덤 이름과 같은 필터는 P0087~89", async () => {
@@ -121,9 +121,9 @@ describe("INV-GB3: 선물함은 크리에이터만 자기 이름으로 — 이�
       expect(r.error).toBeNull();
       expect(psql(`select coalesce(description, '(없음)') from public.revgift_boxes where id = '${(r.data as { id: string }).id}'`)).toBe("(없음)");
     }
-    expect((await make("가".repeat(BOX_DESCRIPTION_MAX))).error).toBeNull();
+    expect((await make("가".repeat(rules.description_max))).error).toBeNull();
     const before = Number(psql(`select count(*) from public.revgift_boxes where creator_id = '${HARU_CREATOR}'`));
-    for (const bad of ["가".repeat(BOX_DESCRIPTION_MAX + 1), "첫 줄\n둘째 줄", "보이지\u200b않음"]) {
+    for (const bad of ["가".repeat(rules.description_max + 1), "첫 줄\n둘째 줄", "보이지\u200b않음"]) {
       expect((await make(bad)).error?.code).toBe("22023");
     }
     const word = "렌틸콩시험";
@@ -141,6 +141,17 @@ describe("INV-GB3: 선물함은 크리에이터만 자기 이름으로 — 이�
     // DB 제약도 같은 규칙 — 함수를 거치지 않은 줄바꿈·공백만은 저장되지 않는다
     expect(() => psql(`update public.revgift_boxes set description = E'a\nb' where id = '${id}'`)).toThrow();
     expect(() => psql(`update public.revgift_boxes set description = '  ' where id = '${id}'`)).toThrow();
+    // 한도는 새로 쓰는 값만 막는다(2026-11-11 이름·설명 한도를 낮춤) — 한도를 넘는 새 이름·설명은 직접 써도 거부,
+    // 한도를 낮추기 전에 저장된 긴 이름·설명의 선물함은 다른 칸을 바꿀 수 있다
+    expect(() => psql(`update public.revgift_boxes set name = repeat('가', ${rules.name_max + 1}) where id = '${id}'`)).toThrow();
+    expect(() => psql(`update public.revgift_boxes set description = repeat('가', ${rules.description_max + 1}) where id = '${id}'`)).toThrow();
+    psql(`update public.revgift_boxes set name = repeat('가', ${rules.name_max}), description = repeat('가', ${rules.description_max}) where id = '${id}'`);
+    psql(
+      `set session_replication_role = replica; update public.revgift_boxes set name = repeat('나', ${rules.name_max + 1}), description = repeat('나', ${rules.description_max + 1}) where id = '${id}'; set session_replication_role = origin`,
+    );
+    psql(`update public.revgift_boxes set capacity = capacity + 1, is_public = is_public where id = '${id}'`);
+    expect(psql(`select char_length(name) || '|' || char_length(description) from public.revgift_boxes where id = '${id}'`)).toBe(`${rules.name_max + 1}|${rules.description_max + 1}`);
+    psql(`update public.revgift_boxes set name = '겨울 선물', description = '올해 마지막 선물함' where id = '${id}'`);
     // 읽기 넷이 설명을 돌려준다 — 주인 목록·신청 관리 창·팬 화면·크리에이터 페이지 입구
     const mine = (await haru.rpc("my_revgift_boxes")).data as { id: string; description: string | null }[];
     expect(mine.find((b) => b.id === id)?.description).toBe("올해 마지막 선물함");
