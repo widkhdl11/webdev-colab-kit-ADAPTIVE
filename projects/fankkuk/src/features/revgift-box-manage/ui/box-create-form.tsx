@@ -19,21 +19,15 @@ export function BoxCreateDialog({
   open,
   onClose,
   onCreated,
-  onOpenManage,
   linkFor,
-  manageReady,
   returnFocusRef,
 }: {
   open: boolean;
   onClose: () => void;
   /** 저장됐다 — 부르는 쪽이 목록을 다시 읽는다 */
   onCreated: (boxId: string) => void;
-  /** 「신청 관리 열기」 — 이 창을 닫고 신청 관리 모달로 바꿔 연다 */
-  onOpenManage: (boxId: string) => void;
   /** 만든 선물함의 신청 링크 — 목록을 다시 읽기 전이면 null */
   linkFor: (boxId: string) => string | null;
-  /** 만든 선물함의 신청 관리 내용이 도착했는가 */
-  manageReady: (boxId: string) => boolean;
   returnFocusRef?: RefObject<HTMLElement | null>;
 }) {
   const router = useRouter();
@@ -121,7 +115,6 @@ export function BoxCreateDialog({
   };
 
   const link = createdId ? linkFor(createdId) : null;
-  const ready = createdId ? manageReady(createdId) : false;
 
   const errorLine = (id: string, text: string | null) =>
     text ? (
@@ -173,26 +166,11 @@ export function BoxCreateDialog({
         </div>
       </>
     );
+    // 만든 뒤에는 「완료」 하나 — 신청 관리는 내 선물함 목록에서 연다(2026-11-11 사용자 「만들고 난 뒤 선물 관리 들어가는게 불필요」)
     footer = (
-      <>
-        <button className="btn btn--text" type="button" onClick={close}>
-          닫기
-        </button>
-        <button
-          className="btn"
-          type="button"
-          aria-disabled={!ready || undefined}
-          aria-busy={!ready || undefined}
-          onClick={() => {
-            if (!createdId || !ready) return;
-            const id = createdId;
-            reset();
-            onOpenManage(id);
-          }}
-        >
-          신청 관리 열기
-        </button>
-      </>
+      <button className="btn" type="button" onClick={close}>
+        완료
+      </button>
     );
   } else {
     body = (
@@ -256,6 +234,17 @@ export function BoxCreateDialog({
           </div>
         ) : (
           <>
+            {/* 만들 선물함을 먼저 보고 공개 범위를 고르게 — 요약이 위(2026-11-11 사용자 「만들어진 선물함을 보고 선택하는게 더 자연스러워」) */}
+            <dl className={s.sum}>
+              <div>
+                <dt>선물함 이름</dt>
+                <dd>{name.trim()}</dd>
+              </div>
+              <div>
+                <dt>받을 인원</dt>
+                <dd>{`${Number(capacity)}명`}</dd>
+              </div>
+            </dl>
             <fieldset className={s.scope} disabled={busy}>
               <legend>공개 범위</legend>
               <label className={s.scopeOpt}>
@@ -273,16 +262,6 @@ export function BoxCreateDialog({
                 </span>
               </label>
             </fieldset>
-            <dl className={s.sum}>
-              <div>
-                <dt>선물함 이름</dt>
-                <dd>{name.trim()}</dd>
-              </div>
-              <div>
-                <dt>받을 인원</dt>
-                <dd>{`${Number(capacity)}명`}</dd>
-              </div>
-            </dl>
             {saveError ? (
               <p className={`${s.ferr} ${s.ferrBox}`} role="alert">
                 <ErrorIcon />

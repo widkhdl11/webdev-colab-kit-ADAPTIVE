@@ -222,9 +222,7 @@ export function BoxListPage({
           open
           onClose={closeDialog}
           onCreated={() => startRefresh(() => router.refresh())}
-          onOpenManage={(boxId) => setDialog({ kind: "manage", boxId })}
           linkFor={(boxId) => byId.get(boxId)?.applyUrl ?? null}
-          manageReady={(boxId) => byId.has(boxId)}
           returnFocusRef={openerRef}
         />
       ) : null}
