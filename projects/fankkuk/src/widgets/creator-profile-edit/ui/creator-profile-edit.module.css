@@ -34,7 +34,7 @@
 .subT label, label.subT { cursor: pointer; }
 .count { color: var(--sub); font-size: var(--fs-small); font-weight: 400; font-variant-numeric: tabular-nums; }
 .hint { margin: 0; color: var(--sub); font-size: var(--fs-caption); line-height: var(--lh-caption); }
-.bio { height: auto; min-height: 88px; padding: var(--space-3) var(--space-4); resize: vertical; line-height: 1.6; }
+.bio { height: auto; resize: vertical; line-height: 1.6; } /* 최소 높이·안쪽 여백은 공용 입력칸 값(48 · 16) — 88 로 할지는 따로 정한다 */
 
 /* 찾기 노출 — 줄 전체가 누르는 칸(라벨이 스위치를 감싼다, 높이 64 — 계정 설정 줄과 같다) */
 .swRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 64px; cursor: pointer; }

@@ -5,7 +5,7 @@
 .root { min-width: 0; }
 
 /* ── 하늘 단계 판 (시안 .fhero) ── */
-.hero { position: relative; margin-top: var(--space-8); padding: var(--space-8) var(--space-10) var(--space-6); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); scroll-margin-top: calc(var(--header-h) + 72px); }
+.hero { position: relative; margin-top: var(--space-8); padding: var(--space-8) var(--space-10) var(--space-6); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
 .peek { position: absolute; top: -48px; right: var(--space-10); width: 96px; height: 96px; object-fit: contain; pointer-events: none; }
 .hero-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-6); align-items: end; padding-right: 80px; }
 .count.count { margin: 0; white-space: nowrap; }

@@ -21,7 +21,8 @@
 .pickHint { display: block; font-size: var(--fs-small); font-weight: 400; color: var(--gray-600); }
 
 /* 결과 줄 — 비면 공용 :is(.err, .okmsg):empty 가 흐름에서 빼 높이 0(다른 설정 화면과 같음, 낭독용 칸 role=status 는 남는다) */
-.msg { margin: var(--space-2) 0 0; overflow-wrap: anywhere; }
+.msg { overflow-wrap: anywhere; }
+.msg:not(:empty) { margin: var(--space-2) 0 0; }
 
 /* 링크 공유 카드 — 라디오 바로 아래, 폭 최대 360(시안 .cz-cap·.cz-share) */
 .share { margin-top: var(--space-4); }
@@ -57,7 +58,7 @@
 /* 휴대폰 — 한 기둥, 라디오 한 줄에 하나, 공유 카드 그림 72, 버튼은 줄 아래 꽉 차게 */
 @media (max-width: 767px) {
   .grp { display: block; }
-  .grp + .grp { margin-top: var(--space-8); padding-top: var(--space-8); }
+  .grp + .grp { padding-top: var(--space-8); } /* 위 간격은 공용 구간 간격 48 그대로 */
   .rows { margin-top: var(--space-4); }
   .picks { grid-template-columns: minmax(0, 1fr); }
   .shImg { height: 72px; }

@@ -3,7 +3,7 @@
    41절(시안 part4-v4-20261101): 판·접힌 칸 흰 카드(--hair + --card-shadow) · 안쪽 32(휴대폰 24) · 선 버튼 짙은 선 · 스위치 52×32 · 칩·라디오 칸 짙은 선 · 접힌 칸 상태 점 + 글자 뱃지 · 칸 폭은 값 길이.
    공통 부품(.card·.card--soft·.grid·.opt·.sw-row·.tags·.chip·.field·.hint·.err)은 base.css 가 그린다 — 여기는 이 화면에만 있는 것 */
 
-.set { display: grid; gap: 24px; scroll-margin-top: var(--space-6); }
+.set { display: grid; gap: 24px; }
 .set-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .inner { padding: 32px; }
 /* 받기 설정 · 선물 링크 · 감사 답장 판 — 안쪽 32(휴대폰은 아래 24 16, 41절) */
@@ -15,14 +15,14 @@
 .page { display: grid; margin-top: var(--space-6); min-width: 0; }
 .page > * { min-width: 0; }
 .page > section + section { margin-top: 0; }
-.group { display: grid; gap: var(--space-4); scroll-margin-top: var(--space-6); }
+.group { display: grid; gap: var(--space-4); }
 /* 「주소와 설정」 — 팬덤과 같은 폭 · 같은 왼쪽 선, 위 구분선으로 구간이 바뀐 것을 보인다(41절) */
 .more { width: 100%; margin: var(--space-24) 0 0; padding-top: var(--space-12); border-top: 1px solid var(--line-on-white); }
 .page > .more.more { margin-top: var(--space-24); } /* 위 .page > section + section(0)보다 무겁게 — 팬덤 판과 구분선 사이 96(시안) */
 .groupT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
 
 /* 접힌 칸 — 흰 카드(--hair + --card-shadow, 41절) · 제목 줄 56 · 오른쪽 짧은 상태 · 화살표 20 */
-.fold { border-radius: var(--r-btn); background: var(--white); box-shadow: var(--hair), var(--card-shadow); scroll-margin-top: var(--space-6); }
+.fold { border-radius: var(--r-btn); background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
 .fold > summary { display: flex; align-items: center; gap: var(--space-4); min-height: 56px; padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); font-weight: var(--fw-btn); list-style: none; cursor: pointer; }
 .fold > summary::-webkit-details-marker { display: none; }
 .fold > summary:hover { background: var(--gray-50); }

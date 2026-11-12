@@ -45,7 +45,7 @@
 .cat { align-self: flex-end; width: 96px; height: 96px; object-fit: contain; }
 
 /* 빈 상태(0명) — 지금 그림·문구 그대로, 왼쪽 칸에 흰 카드(--hair + --card-shadow, 40·41절 빈 상태 카드) */
-.empty { display: flex; flex-direction: column; align-items: center; gap: var(--group-gap); padding: var(--space-12) var(--space-6); border: 0; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); text-align: center; }
+.empty { display: flex; flex-direction: column; align-items: center; gap: var(--group-gap); padding: var(--space-12) var(--space-6); border: 0; border-radius: var(--r-card); box-shadow: var(--hair), var(--card-shadow); text-align: center; }
 /* 0명일 때 판의 「크리에이터 더 찾기」는 선 버튼(채움은 빈 카드 버튼 하나, 41절) — 짙은 선 */
 .panel.panel > :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
 .empty img { width: 96px; height: 96px; }

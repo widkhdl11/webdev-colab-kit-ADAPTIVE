@@ -43,7 +43,7 @@
 
 /* ── 팬에게 보내기 목록·설명 (design-rules 43절 · 시안 mockups/revgift-box-create-20261109 §8·§14) ── */
 .listCol { display: grid; gap: var(--space-12); }
-.phead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); margin: 0; }
+.phead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .heroHead { align-items: flex-start; }
 .heroT { min-width: 0; max-width: 680px; }
 .def { margin-top: var(--space-2); color: var(--sub); }

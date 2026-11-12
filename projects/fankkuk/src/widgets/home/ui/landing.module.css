@@ -85,7 +85,6 @@
 
 /* 끝 검색 띠 */
 .end { margin-top: var(--section-gap); padding-block: var(--space-16); background: var(--tint); box-shadow: inset 0 1px 0 var(--tint-line); }
-.end h2 { margin: 0; }
 .end .search { margin-top: var(--space-6); }
 
 @media (max-width: 879.98px) {

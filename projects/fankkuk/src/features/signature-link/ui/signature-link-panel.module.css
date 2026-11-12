@@ -3,7 +3,7 @@
 
 .step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .step > h2 { margin-bottom: 8px; }
-.lead { margin: 0 0 24px; }
+.lead { margin-bottom: 24px; } /* 위 간격은 공용 카드 제목 아래 설명 간격(8) */
 .fieldErr { margin-top: 8px; color: var(--danger); font-weight: var(--fw-btn); }
 .after { margin-top: 24px; }
 

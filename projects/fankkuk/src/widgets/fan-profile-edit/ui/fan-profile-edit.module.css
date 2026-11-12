@@ -27,7 +27,7 @@
 /* 짧은 이름 칸(닉네임 12자) 240 — 이름 줄(글자 수)과 칸이 같은 폭(41절 입력 칸 길이) */
 .short { display: flex; flex-direction: column; gap: var(--space-2); width: 100%; max-width: 240px; min-width: 0; }
 .count { color: var(--sub); font-size: var(--fs-small); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.bio { min-height: 120px; resize: vertical; }
+.bio { resize: vertical; } /* 최소 높이는 공용 입력칸 높이(48) — 120 으로 할지는 따로 정한다 */
 
 /* 알림 — 사이트 공통 결과 상자(.err·.okmsg). 칸은 늘 두고(화면 읽기 프로그램이 새 글자를 읽게) 비었을 때는 공통 :empty(position: absolute · 여백 0)가
    흐름에서만 뺀다 — display: none 으로 숨기면 칸이 접근성 트리에서 빠졌다 생겨 첫 저장 결과를 못 읽을 수 있다(2026-11-02 ui-reviewer) */
@@ -63,7 +63,7 @@
 /* 휴대폰 — 한 기둥, 저장 줄은 화면 아래에 붙는다(틀 안쪽 여백 16 만큼 밖으로) */
 @media (max-width: 767px) {
   .grp { display: block; }
-  .grp + .grp { margin-top: var(--space-8); padding-top: var(--space-8); }
+  .grp + .grp { padding-top: var(--space-8); } /* 위 간격은 공용 구간 간격 48 그대로 */
   .rows { margin-top: var(--space-4); }
   .photoRow { flex-wrap: wrap; }
   .nmTwo, .nmField { padding-top: 0; }

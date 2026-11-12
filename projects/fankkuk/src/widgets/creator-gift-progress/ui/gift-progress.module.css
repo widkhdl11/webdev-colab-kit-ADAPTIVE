@@ -32,7 +32,7 @@
 .top { display: flex; align-items: center; gap: var(--space-3); }
 .top strong { min-width: 0; overflow-wrap: anywhere; }
 .name.name { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; overflow-wrap: anywhere; }
-.what { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
+.what { font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
 .pbar { display: flex; gap: var(--space-1); }
 .pbar i { flex: 1; height: 8px; border-radius: var(--r-pill); background: var(--gray-200); }
 .pbar i:global(.on) { background: var(--bar-fill-fx); transform-origin: left center; animation: bar-fill 0.5s var(--ease-micro) both; } /* 왼쪽부터 칸마다 0.05초 늦게 차오름(23-2) */

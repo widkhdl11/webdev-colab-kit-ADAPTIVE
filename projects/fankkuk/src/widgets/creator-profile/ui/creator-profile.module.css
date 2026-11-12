@@ -70,6 +70,8 @@
 
 /* ---------- 구간 ---------- */
 .sec { margin-top: var(--space-16); }
+/* 구간 바로 앞이 구간이면 48 — 공용 「section + section」 간격이 지금까지 이 자리를 정해 왔다(64 와 48 중 무엇으로 할지는 새 시안 구현 때 정한다) */
+section + .sec { margin-top: var(--space-12); }
 .secTitle { margin-bottom: var(--space-6); font-size: var(--fs-title); line-height: 1.3; }
 
 /* 감사 답장 3열 */

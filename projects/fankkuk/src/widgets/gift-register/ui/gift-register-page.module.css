@@ -5,7 +5,7 @@
 .head.head { margin-bottom: 0; }
 .head.head :global(.ph-title) { font-size: var(--fs-title); }
 /* 페이지 설명 문장은 뺐다(25절). 남는 한 줄은 회색 14 (시안 .ph-meta) */
-.top-meta { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+.top-meta { margin-top: var(--space-2); color: var(--sub); } /* 글자 크기는 공용 .page-head 설명 줄(16) */
 /* 맨 위 한 줄 — 미리 고른 크리에이터의 채널 주인이 확인된 페이지라는 사실(추가분 4-4). 하늘 동그라미 20 안 체크 (시안 .owner) */
 .owner { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--fs-small); color: var(--ink); }
 .owner-mark { display: inline-grid; place-items: center; flex: none; width: 20px; height: 20px; border-radius: var(--r-pill); background: var(--primary-50); color: var(--ink); }
