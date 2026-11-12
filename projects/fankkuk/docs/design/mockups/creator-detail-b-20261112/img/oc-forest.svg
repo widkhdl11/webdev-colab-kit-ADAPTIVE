@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><!-- 화면 예시: 다른 크리에이터 배경 사진 대용(숲과 산) -->
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFE6F2"/><stop offset="1" stop-color="#E8F6EF"/></linearGradient></defs>
+<rect width="1200" height="600" fill="url(#g)"/>
+<path d="M0 380 L220 200 L420 360 L620 170 L860 380 L1040 240 L1200 340 L1200 600 L0 600Z" fill="#8CC7A8"/>
+<path d="M0 470 C200 420 380 460 600 430 C820 400 1000 450 1200 420 L1200 600 L0 600Z" fill="#4E9A78"/>
+<g fill="#2F7357"><path d="M140 470 l30-90 30 90z"/><path d="M260 480 l26-76 26 76z"/><path d="M900 460 l32-96 32 96z"/><path d="M1020 470 l26-80 26 80z"/></g></svg>
