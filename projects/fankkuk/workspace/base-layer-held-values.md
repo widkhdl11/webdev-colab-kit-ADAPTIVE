@@ -35,4 +35,7 @@ base.css 를 층(`@layer base`)으로 옮기면 모듈 선언이 살아나 화�
 | 27 | features/checkout/ui/payment-step.module.css:4 | `.title` scroll-margin-top | 160 | 88 | 선언 삭제 — **화면 측정 못 함**(결제 단계까지 진행해야 나온다). id 있는 h2 라 공용 규칙이 이기고 있었다는 코드 판정 |
 | 28 | entities/action-item/ui/todo-box.module.css:2 | `.box` scroll-margin-top | 24 | 88 | 선언 삭제 — **화면 측정 못 함**(처리할 일이 있을 때만 나온다). id 있는 section 이라 같은 판정 |
 
+**화면 확인 필요(27·28번): 선물 보내기 화면을 다룰 때 # 이동으로 확인한다.** 2026-11-12 에는 로컬 DB 에 처리할 일이 있는 주문이 없어(결제 대기는 24시간 뒤 닫힘) 화면에 띄우지 못하고 코드 판정만으로 합쳤다.
+결제 단계 제목(`#pay-h-…`)과 처리할 일 칸(`#todo`)으로 이동했을 때 제목이 상단 바에 가리지 않고 88 아래에 오는지 본다.
+
 scroll-margin-top 은 주소 끝 `#` 으로 그 자리로 이동할 때 위에 남기는 여유다(평소 화면 모양과는 상관없다).
