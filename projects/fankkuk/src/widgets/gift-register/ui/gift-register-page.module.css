@@ -1,6 +1,6 @@
 /* 선물 보내기 바깥 틀 — 시안 docs/design/mockups/site/v39-part3/gifts-new-b.html · v39.css (design-rules 25절 B안). 본문 폼은 features/gift-register/ui/register-form */
 /* 입력 기둥 720 — 가운데 틀(.page-centered) 안 가운데 (시안 .wrap.narrow 800 에서 좌우 안쪽 40 을 뺀 폭) */
-.col { max-width: 720px; margin-inline: auto; min-width: 0; }
+.col { max-width: var(--col-form); margin-inline: auto; min-width: 0; }
 /* 머리 — 제목 32(휴대폰 24, --fs-title) 아래 바로 하늘 단계 판이 온다(전역 .page-head 아래 여백 대신 판의 위 여백 32). 사이드바 화면 제목과 같은 크기 (design-rules 38·39절) */
 .head.head { margin-bottom: 0; }
 .head.head :global(.ph-title) { font-size: var(--fs-title); }
@@ -26,10 +26,10 @@
    칸을 띄울지는 화면 폭이 아니라 본문 칸 폭으로 정한다 — 사이드바가 있는 1000~1183 폭에서는 칸을 띄우면 입력 기둥이 376까지 줄어 상자 칸 버튼이 겹친다.
    본문 칸 880 이상(입력 기둥 560 이상)일 때만 칸, 아니면 휴대폰과 같이 720 한 기둥 + 3단계 아래 합계 줄(gift-summary.module.css 와 폼의 4단계 금액 줄이 같은 이름 gift-send 를 본다) */
 .page { container: gift-send / inline-size; }
-.col.wide { max-width: 1040px; }
+.col.wide { max-width: var(--col-flow); }
 .grid { display: grid; grid-template-columns: minmax(0, 1fr) 288px; gap: var(--space-8); align-items: start; }
 .main { min-width: 0; }
 @container gift-send (max-width: 879px) {
-  .col.wide { max-width: 720px; }
+  .col.wide { max-width: var(--col-form); }
   .grid { grid-template-columns: minmax(0, 1fr); }
 }

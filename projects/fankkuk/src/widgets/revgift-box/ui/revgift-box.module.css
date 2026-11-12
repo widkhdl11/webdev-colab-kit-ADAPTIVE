@@ -1,8 +1,8 @@
 /* 선물함 화면 틀 — 보내기 화면(design-rules 25·39절)의 가운데 넓은 기둥 1040, 신청 화면은 받기 판과 같은 좁은 기둥 720(22절).
    흰 카드 = 1px --border + --card-shadow, 회색 안내 칸 = 면 + 1px --gray-200, 강조 면은 --primary-50. */
 
-.col { width: 100%; max-width: 1040px; margin-inline: auto; min-width: 0; }
-.narrow { width: 100%; max-width: 720px; margin-inline: auto; min-width: 0; }
+.col { width: 100%; max-width: var(--col-flow); margin-inline: auto; min-width: 0; }
+.narrow { width: 100%; max-width: var(--col-form); margin-inline: auto; min-width: 0; }
 .stack { display: grid; gap: var(--space-6); }
 .head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .title { overflow-wrap: anywhere; }

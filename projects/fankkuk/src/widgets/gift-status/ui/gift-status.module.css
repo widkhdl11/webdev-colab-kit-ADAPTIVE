@@ -6,7 +6,7 @@
 
 .page { padding-bottom: var(--section-gap); }
 /* 넓은 틀 — 시안 .wrap.wide 1120 에서 좌우 안쪽 40 을 뺀 1040 */
-.col { max-width: 1040px; margin-inline: auto; }
+.col { max-width: var(--col-flow); margin-inline: auto; }
 
 /* 돌아가기 — 회색 14 (시안 .back) */
 .back { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); color: var(--sub); font-size: var(--fs-small); font-weight: 400; text-decoration: none; }

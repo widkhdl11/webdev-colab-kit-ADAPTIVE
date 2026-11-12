@@ -1,6 +1,6 @@
 /* 팬에게 보내기 — 시안 docs/design/mockups/site/v39-part3/revgifts-new-a.html (design-rules 25절 A안).
    넓은 틀: 시안 .wrap.wide 1120 에서 좌우 안쪽 40 을 뺀 1040. 띠 아래 따로 두던 쪽 여백 96 은 뺐다(39절 96 → 0) — 아래는 가운데 틀(.page-centered) 안쪽 40 만 남는다(시안 .pane-main 40) */
-.col { max-width: 1040px; margin-inline: auto; }
+.col { max-width: var(--col-flow); margin-inline: auto; }
 /* 제목 → 첫 구간 32 (시안 section margin-top 32) */
 .head.head { margin-bottom: var(--space-8); }
 /* 제목 32(휴대폰 24 — --fs-title 이 767 이하에서 24). 이 화면은 MyShell(.my-body) 밖이라 38절 공용 규칙이 닿지 않아 여기서 맞춘다(39절) */
