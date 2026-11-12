@@ -949,7 +949,8 @@ p, .hint, li, dd, label, legend { text-wrap: pretty; }
 /* ---------- 18. 체크박스 — B 젤리 네모 (2026-10-25 design-rules 29절 체크박스 줄, 카드 d130, 시안 part6-2026-10-25/checkbox-options.html B) ----------
    마크업은 그대로(<input type="checkbox">) 두고 appearance: none 으로 칸을 그린다 — 진짜 input 이라 키보드·스크린리더 동작이 그대로다.
    스위치(role="switch", 각 화면이 따로 그림)와 운영자 화면(design-rules 8절, 옛 모양 유지)은 뺀다.
-   선택자 무게(0,2,1)가 화면별 `.check input`(0,1,1) 보다 무거워 크기·색은 여기 한 곳에서 정해진다 */
+   이 파일은 @layer base 안에 있어 화면 CSS 모듈이 선택자 무게와 상관없이 이긴다(2026-11-12). 크기·색을 여기 한 곳에서 정하려면
+   화면별 `.check input` 같은 규칙에 크기·테두리·배경을 적지 않는다(적으면 그 값이 이긴다). */
 input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)) {
   appearance: none;
   -webkit-appearance: none;

@@ -35,6 +35,10 @@ base.css 를 층(`@layer base`)으로 옮기면 모듈 선언이 살아나 화�
 | 27 | features/checkout/ui/payment-step.module.css:4 | `.title` scroll-margin-top | 160 | 88 | 선언 삭제 — **화면 측정 못 함**(결제 단계까지 진행해야 나온다). id 있는 h2 라 공용 규칙이 이기고 있었다는 코드 판정 |
 | 28 | entities/action-item/ui/todo-box.module.css:2 | `.box` scroll-margin-top | 24 | 88 | 선언 삭제 — **화면 측정 못 함**(처리할 일이 있을 때만 나온다). id 있는 section 이라 같은 판정 |
 
+| 29 | features/revgift-box-manage/ui/box-manage.module.css:132 | `.pchip input` width · height(체크박스) | 20 (`--icon-xs`) | 26(공용 체크박스) | 두 선언 삭제 — **화면 측정 못 함**(선물함에 신청한 팬이 있을 때만 나온다). code-reviewer 지적(2026-11-12) |
+| 30 | widgets/my-info/ui/my-info.module.css:67 | `.danger` background(누른 상태, 마우스 없이) | 흰색 | 하늘 면(`--brand-active`) | `.danger:active { background: var(--brand-active) }` 를 `:hover` 앞에 추가 — 누름만 강제로 켜 수정 전후 같음 확인 |
+| 31 | widgets/creator-account/ui/creator-account.module.css:50 | 같음 | 같음 | 같음 | 같은 줄 추가 — 같은 확인 |
+
 **화면 확인 필요(27·28번): 선물 보내기 화면을 다룰 때 # 이동으로 확인한다.** 2026-11-12 에는 로컬 DB 에 처리할 일이 있는 주문이 없어(결제 대기는 24시간 뒤 닫힘) 화면에 띄우지 못하고 코드 판정만으로 합쳤다.
 결제 단계 제목(`#pay-h-…`)과 처리할 일 칸(`#todo`)으로 이동했을 때 제목이 상단 바에 가리지 않고 88 아래에 오는지 본다.
 

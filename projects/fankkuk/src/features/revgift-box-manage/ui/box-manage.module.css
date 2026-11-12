@@ -129,7 +129,7 @@
 .cmW { overflow: hidden; color: var(--sub); font-size: var(--fs-small); font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
 /* 대기 칩은 순번 원·「대기 N번 · 날짜」가 함께라 칸이 넓어야 한 줄이 된다 — 한 줄에 하나(모달 폭 520 에서 칩 456). 더 좁으면 말줄임 + title */
 .pgridWait { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-.pchip input { flex: none; order: 3; width: var(--icon-xs); height: var(--icon-xs); margin: 0; accent-color: var(--brand-line); }
+.pchip input { flex: none; order: 3; margin: 0; accent-color: var(--brand-line); } /* 칸 크기는 공용 체크박스(26) — 예전 20 은 공용 규칙에 눌려 나온 적이 없다 */
 .mNo { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: var(--r-pill); background: var(--primary-50); color: var(--ink); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1; }
 .pickres { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-1) var(--space-4); }
 .pickres b { font-size: var(--fs-card); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
