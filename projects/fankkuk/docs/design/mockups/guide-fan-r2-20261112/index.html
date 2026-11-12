@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>팬 이용 안내 (/guide/fan) — 문서형 대표 시안 2판 · 2026-11-12</title>
+<!--
+  시안: 팬 이용 안내 `/guide/fan` · 문서형 대표 · 2판 (2026-11-12, 디자인 문서 개정 반영)
+  지시: 「팬꾹 전체 디자인 다시 그리기 — 화면 종류별 대표 시안」 중 문서형, 2판. 1판(guide-fan-20261112)은 비교용으로만 보고 복사하지 않았다.
+  요소의 기능·문구·순서는 그대로, 배치와 모양만 바꾼다(design-prompt 적용 규칙 6).
+  명세: docs/ux/pages/guide-fan.md (approved). 상태 3개 — 로그인 전 / 로그인 후(사이드바) / 오류. 위쪽 「시안 도구」 줄에서 바꾼다.
+  문구: src/widgets/legal/model/guide-fan-doc.ts 의 글 그대로. 요금 숫자·송장 예시의 6자리는 예시값(「화면 예시」 표시). 새 안내 문장 없음.
+  폭: 시안 CSS 에 폭 숫자를 직접 적지 않는다 — 본문 --pub-max(바깥 928 = 글 880 + 양옆 여백), 글 --prose-max(680)(design-prompt 2-23). 맞는 토큰이 없는 곳은 「(가정)」 표시.
+  넘침: 전체 폭 배경에 100vw 를 쓰지 않았고, html 에 overflow clip/hidden 도 두지 않았다.
+  값: tokens.css 변수만 쓴다. 글꼴 파일은 레포의 실제 파일을 상대 경로로 불러온다(14-6).
+  ※ 상대 경로가 레포 뿌리를 향하므로 미리보기 서버(projects/fankkuk 가 루트)로 열거나 파일로 직접 연다.
+-->
+<link rel="stylesheet" href="../../../../src/shared/ui/tokens.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../public/fonts/TmoneyRoundWindRegular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Medium.subset.woff") format("woff"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-SemiBold.subset.woff") format("woff"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Bold.subset.woff") format("woff"); font-weight: 700; font-display: swap; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--background); color: var(--ink); font-family: var(--font); font-size: var(--fs-body); font-weight: 400; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; -webkit-text-size-adjust: 100%; }
+h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+h1, h2, h3 { font-family: var(--font-round); font-weight: var(--fw-title); letter-spacing: var(--ls-title); font-synthesis: none; }
+img, svg { display: block; max-width: 100%; }
+svg { flex-shrink: 0; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.ico { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+
+/* ---------- 시안 도구(페이지 바깥) ---------- */
+.tool { position: relative; z-index: 60; background: var(--ink); color: var(--white); font-size: var(--fs-small); }
+.tool-in { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--gutter); }
+.tool b { margin-right: var(--space-2); font-weight: var(--fw-bold); }
+.tool button { min-height: 44px; padding: 0 var(--space-4); border: 1px solid rgb(255 255 255 / .55); border-radius: var(--r-btn); background: transparent; color: var(--white); font: var(--fw-btn) var(--fs-small)/1.2 var(--font); cursor: pointer; }
+.tool button[aria-pressed="true"] { background: var(--white); color: var(--ink); border-color: var(--white); }
+.tool button:focus-visible { outline-color: var(--white); }
+
+/* ---------- 상단 바(로그인 전) · 사이드바(로그인 후) · 바닥글 — 지금 사이트 모양 ---------- */
+.topbar { position: sticky; top: 0; z-index: 40; height: var(--header-h); background: var(--white); border-bottom: 1px solid var(--gray-200); }
+.topbar-in { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); height: 100%; max-width: var(--pub-max); margin: 0 auto; padding: 0 var(--gutter); }
+.logo { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; font-family: var(--font-logo); font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1; text-decoration: none; color: var(--brand-ink); white-space: nowrap; }
+.logo img { width: 28px; height: 28px; border-radius: var(--r-logo); }
+.nav { display: flex; align-items: center; gap: var(--space-6); }
+.nav a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; justify-content: center; color: var(--sub); font-size: var(--fs-nav); font-weight: var(--fw-nav); text-decoration: none; white-space: nowrap; }
+.nav a:hover, .nav a.strong { color: var(--ink); }
+@media (max-width: 767px) { .nav { gap: var(--space-4); } .nav .hide-sm { display: none; } }
+
+.sidebar { display: none; position: fixed; top: 0; left: 0; bottom: 0; z-index: 45; width: var(--sidebar-w); flex-direction: column; background: var(--tint); border-right: 1px solid var(--gray-200); }
+.sb-top { display: flex; align-items: center; height: var(--topbar-h); padding: 0 var(--space-4); }
+.sb-nav { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-2); }
+.sb-nav ul { display: flex; flex-direction: column; gap: 2px; }
+.sb-nav a { display: flex; align-items: center; gap: var(--nav-gap-in); height: var(--nav-item-h); padding: 0 var(--space-3); border-radius: var(--r-nav); color: var(--gray-600); font-size: var(--fs-navitem); font-weight: var(--fw-nav); line-height: 1; text-decoration: none; }
+.sb-nav a:hover { background: var(--gray-100); color: var(--gray-900); }
+.sb-nav a .ico { width: var(--nav-icon); height: var(--nav-icon); }
+.sb-nav .count { margin-left: auto; min-width: 20px; height: 20px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--primary); color: var(--on-brand); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 20px; text-align: center; }
+.sb-bottom { display: flex; align-items: center; height: var(--prof-h); padding: 0 var(--space-2); border-top: 1px solid var(--gray-200); }
+.sb-acc { display: flex; align-items: center; gap: var(--space-2); width: 100%; height: 40px; padding: 0 var(--space-3); border-radius: var(--r-nav); color: var(--gray-900); font-size: var(--fs-navitem); font-weight: var(--fw-nav); }
+.sb-avatar { display: grid; place-items: center; width: var(--avatar-sb); height: var(--avatar-sb); border-radius: var(--r-pill); background: var(--primary-50); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1; }
+.sb-acc .ico { width: 16px; height: 16px; margin-left: auto; color: var(--gray-600); }
+@media (pointer: coarse) { .sb-nav a { height: 44px; } }
+.mtop { display: none; position: sticky; top: 0; z-index: 40; height: var(--topbar-h); align-items: center; justify-content: space-between; padding: 0 var(--space-2) 0 var(--gutter); background: var(--white); border-bottom: 1px solid var(--gray-200); }
+.burger { display: grid; place-items: center; width: 48px; height: 48px; padding: 12px; border: 0; border-radius: var(--r-btn); background: none; color: var(--gray-900); }
+body[data-state="in"] .sidebar { display: flex; }
+body[data-state="in"] { padding-left: var(--sidebar-w); }
+body[data-state="in"] .topbar { display: none; }
+@media (max-width: 768px) {
+  body[data-state="in"] { padding-left: 0; }
+  body[data-state="in"] .sidebar { display: none; }
+  body[data-state="in"] .mtop { display: flex; }
+}
+
+.foot { background: var(--surface); border-top: 1px solid var(--gray-200); }
+.foot-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-6); max-width: var(--pub-max); margin: 0 auto; padding: var(--space-6) var(--gutter); color: var(--sub); font-size: var(--fs-small); }
+.foot nav { display: flex; flex-wrap: wrap; gap: 0 var(--space-4); }
+.foot a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; }
+.foot a:hover { color: var(--ink); text-decoration: underline; }
+
+/* ---------- 오류 상태(사이트 공통 오류 화면 — 상단 바도 함께 사라진다) ---------- */
+.err { display: none; min-height: 70vh; place-items: center; padding: var(--space-16) var(--gutter); text-align: center; }
+.err-in { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); max-width: var(--col-auth); }
+.err h1 { font-size: var(--fs-page); line-height: 1.3; }
+.err p { color: var(--sub); }
+.err .row { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); margin-top: var(--space-2); }
+body[data-state="error"] .err { display: grid; }
+body[data-state="error"] .topbar, body[data-state="error"] main.page, body[data-state="error"] .foot { display: none; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: var(--btn-h); padding: 0 var(--space-6); border: 0; border-radius: var(--r-btn); background: var(--primary); background-image: var(--btn-fill-fx); box-shadow: var(--btn-fill-shadow); color: var(--on-brand); font: var(--fw-btn) var(--fs-body)/1 var(--font); text-decoration: none; cursor: pointer; }
+.btn:hover { background: var(--primary-700); background-image: none; }
+.btn.line { background: var(--white); background-image: none; box-shadow: var(--hair), var(--btn-ghost-shadow); }
+.btn.line:hover { background: var(--btn-ghost-hover); }
+
+/* ================= 문서 ================= */
+/* 쪽 틀 — 글 기둥 880(--pub-max 안쪽). 칸 폭이 좁아지는 경우(사이드바가 붙은 1024 안팎)가 있어 화면 폭이 아니라 칸 폭으로 배치를 바꾼다(14-8) */
+.page { container: pg / inline-size; max-width: var(--pub-max); margin: 0 auto; padding: var(--space-10) var(--gutter) var(--space-24); --stick: var(--header-h); --bar: 44px; }
+body[data-state="in"] .page { --stick: 0px; }
+@media (max-width: 768px) { body[data-state="in"] .page { --stick: var(--topbar-h); } }
+@media (max-width: 767px) { .page { padding-top: var(--space-6); padding-bottom: var(--space-16); } }
+
+/* 머리 — 탭 → 제목·설명 → 핵심 안내 */
+.head { display: flex; flex-direction: column; gap: var(--space-6); }
+.tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tab { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); padding: 0 var(--space-4); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--ink); font-size: var(--fs-small); font-weight: 500; text-decoration: none; white-space: nowrap; }
+.tab:hover { background: var(--gray-50); }
+.tab[aria-current="page"] { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); color: var(--brand-ink); font-weight: var(--fw-btn); }
+@media (max-width: 767px) {
+  .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: calc(-1 * var(--space-2)) calc(-1 * var(--gutter)) calc(-1 * var(--space-2)) calc(-1 * var(--space-2)); padding: var(--space-2) var(--gutter) var(--space-2) var(--space-2); }
+  .tabs::-webkit-scrollbar { display: none; }
+}
+.titlebox { display: flex; flex-direction: column; gap: var(--space-2); max-width: var(--prose-max); }
+.title { font-size: var(--fs-title); line-height: 1.25; }
+.lead { color: var(--sub); }
+
+/* 핵심 안내 — 순서가 있는 세 줄: 하늘 판 안의 가로 세 칸 흐름(6-1). 칸 사이는 직선 화살표, 칸 전체가 해당 조로 가는 누르는 칸(원칙 ④) */
+.sum { padding: var(--space-8); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: inset 0 0 0 1px var(--tint-line), var(--surface-accent-shadow); }
+.sum h2 { margin-bottom: var(--space-4); font-size: var(--fs-card); line-height: 1.4; }
+.sum ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-8); }
+.sum li { position: relative; }
+.tile { display: flex; flex-direction: column; gap: var(--space-3); height: 100%; min-height: 44px; padding: var(--space-4); border-radius: var(--r-card); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--notice-sky-line), var(--card-shadow); color: var(--ink); text-decoration: none; font-weight: var(--fw-btn); transition: box-shadow var(--dur-hover) var(--ease-micro), transform var(--dur-hover) var(--ease-micro); }
+.tile:hover { box-shadow: inset 0 0 0 1px var(--notice-sky-line), var(--card-shadow-hover); }
+@media (hover: hover) { .tile:hover { transform: translateY(-2px); } }
+.tile:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.tile .n { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1; }
+.tile .go { display: flex; align-items: center; align-self: flex-end; margin-top: auto; color: var(--brand-ink); }
+.tile .go svg { width: 20px; height: 20px; }
+.sum li:not(:last-child)::after { content: ""; position: absolute; top: 50%; left: calc(100% + var(--space-2)); width: var(--space-4); height: 2px; margin-top: -1px; background: var(--gray-500); border-radius: 1px; }
+.sum li:not(:last-child)::before { content: ""; position: absolute; top: 50%; left: calc(100% + var(--space-2) + var(--space-4) - 6px); width: 8px; height: 8px; margin-top: -4px; border-top: 2px solid var(--gray-500); border-right: 2px solid var(--gray-500); transform: rotate(45deg); }
+@container pg (max-width: 719px) {
+  .sum ol { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
+  .sum li:not(:last-child)::after { top: calc(100% + var(--space-1)); left: 50%; width: 2px; height: var(--space-4); margin: 0 0 0 -1px; }
+  .sum li:not(:last-child)::before { top: calc(100% + var(--space-4) - 2px); left: 50%; margin: 0 0 0 -4px; transform: rotate(135deg); }
+  .tile { flex-direction: row; align-items: center; }
+  .tile .go { margin: 0 0 0 auto; align-self: center; }
+}
+@media (max-width: 767px) { .sum { padding: var(--space-6) var(--space-4); } }
+
+/* 검색 */
+.search { margin-top: var(--space-8); }
+.search-box { position: relative; display: block; max-width: var(--prose-max); }
+.search-box svg { position: absolute; top: 50%; left: 14px; width: 20px; height: 20px; color: var(--gray-500); transform: translateY(-50%); pointer-events: none; }
+.search-box input { width: 100%; min-height: var(--btn-h); padding: 0 var(--space-4) 0 44px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); color: var(--ink); font: inherit; }
+.search-box input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* 위에 붙는 목차 줄 — 승인된 방식(design-rules 28절): 지금 조 · 찾기 · 목차 열기. 모든 폭 */
+.flow { position: relative; margin-top: var(--space-6); }
+.bar { position: sticky; top: var(--stick); z-index: 30; border-bottom: 1px solid var(--gray-200); background: var(--background); }
+.bar-row { display: flex; align-items: center; gap: var(--space-3); min-height: var(--bar); }
+.bar-now { flex: 1 1 auto; min-width: 0; overflow: hidden; font-size: var(--fs-small); font-weight: var(--fw-btn); text-overflow: ellipsis; white-space: nowrap; }
+.bar-btn { display: inline-flex; align-items: center; gap: var(--space-2); flex: none; min-height: 44px; padding: 0 var(--space-3); border: 0; border-radius: var(--r-btn); background: none; color: var(--ink); font: var(--fw-btn) var(--fs-small)/1.2 var(--font); cursor: pointer; }
+.bar-btn:hover { background: var(--surface-hover); }
+.bar-btn:focus-visible { outline-offset: -2px; }
+.bar-btn svg { width: 20px; height: 20px; }
+.bar-btn .chev { transition: transform var(--dur-hover) var(--ease-micro); }
+.bar-btn[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.panel { position: absolute; top: 100%; right: 0; left: 0; display: flex; flex-direction: column; gap: 2px; max-height: calc(100dvh - var(--stick) - var(--bar) - var(--space-4)); padding: var(--space-3); overflow-y: auto; border-radius: 0 0 var(--r-card) var(--r-card); background: var(--white); box-shadow: var(--hair), var(--float); }
+.toc { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: var(--space-2) var(--space-3); border-radius: var(--r-btn); font-size: var(--fs-small); line-height: 1.5; text-decoration: none; }
+.toc:hover { background: var(--gray-100); }
+.toc[aria-current] { background: var(--primary-50); font-weight: var(--fw-btn); }
+.badge { display: inline-flex; align-items: center; flex: none; padding: 2px var(--space-2); border-radius: var(--r-pill); background: var(--primary-50); color: var(--gray-900); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1.4; white-space: nowrap; }
+.toc[aria-current] .badge { background: var(--white); box-shadow: inset 0 0 0 1px var(--tint-line); }
+
+/* 옆 목차 — 사용자 지시(2026-11-12 「필요하면 폭을 넓히라고 했었는데」): 목차를 빼지 않고 본문 880 밖 오른쪽 여백에 둔다(2-9 조작 요소는 본문 폭 밖에 둘 수 있다).
+   글·그림·카드 폭(880·680)은 그대로. 자리가 되는 폭에서만 보이고, 모자라면 위에 붙는 목차 줄로 돌아간다(14-8).
+   로그인 전: 위쪽 바와 정렬선을 지키려고 본문은 가운데 그대로, 오른쪽 여백이 목차+간격보다 넓을 때(화면 1376 이상)만.
+   로그인 후: 위쪽 바가 없으니 본문+목차 묶음을 사이드바 오른쪽 영역 가운데에 둔다(화면 1400 이상).
+   목차 폭 200 은 맞는 토큰이 없어 (가정) --toc-w — 토큰 추가 제안 */
+.page { --toc-w: 200px; --toc-gap: var(--space-8); }
+.sidetoc { display: none; }
+.sidetoc-in { position: sticky; top: calc(var(--stick) + var(--space-6)); display: flex; flex-direction: column; gap: 2px; max-height: calc(100dvh - var(--stick) - var(--space-12)); overflow-y: auto; }
+.sidetoc-h { margin: 0 0 var(--space-2); padding: 0 var(--space-3); color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+@media (min-width: 1376px) {
+  body:not([data-state="in"]) .sidetoc { display: block; position: absolute; top: 0; bottom: 0; left: calc(100% + var(--toc-gap)); width: var(--toc-w); }
+  body:not([data-state="in"]) .bar { display: none; }
+}
+@media (min-width: 1400px) {
+  body[data-state="in"] .page { max-width: calc(var(--pub-max) + var(--toc-gap) + var(--toc-w)); padding-right: calc(var(--gutter) + var(--toc-gap) + var(--toc-w)); }
+  body[data-state="in"] .sidetoc { display: block; position: absolute; top: 0; bottom: 0; left: calc(100% + var(--toc-gap)); width: var(--toc-w); }
+  body[data-state="in"] .bar { display: none; }
+}
+
+/* 조 — 위 구분선 · 번호(조용하게, 제목 위 한 줄) · 제목 줄(제목 · 주요 · 주소 복사) · 글. 조 사이 48, 조 안 16(2-2) */
+.art { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-12) 0; border-top: 1px solid var(--gray-200); scroll-margin-top: calc(var(--stick) + var(--bar) + var(--space-6)); }
+.art:first-of-type { border-top: 0; padding-top: var(--space-8); }
+.art-top { display: flex; flex-direction: column; gap: var(--space-1); }
+/* 구역 번호 — 7-2 의 #7F97AC 는 흰 바탕 3:1 이라 글자 대비 4.5:1 에 못 미쳐 --gray-500(4.83:1)을 쓴다. aria-hidden(7-5) */
+.no { color: var(--gray-500); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.4; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+.art-head { display: flex; align-items: center; gap: var(--space-2) var(--space-3); }
+.art-t { min-width: 0; font-size: var(--fs-page); line-height: 1.3; }
+.art-t:focus { outline: none; }
+.art-t:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.copy { display: inline-flex; align-items: center; flex: none; }
+.copy-btn { display: grid; place-items: center; width: 44px; height: 44px; margin-block: -8px; padding: 0; border: 0; border-radius: var(--r-btn); background: none; color: var(--gray-600); cursor: pointer; opacity: 0; transition: opacity var(--dur-hover) var(--ease-micro); }
+.copy-btn svg { width: 20px; height: 20px; }
+.copy-btn:hover { background: var(--surface); color: var(--ink); }
+.copy-btn:focus-visible { outline-offset: -2px; }
+.art-head:hover .copy-btn, .copy-btn:focus-visible, .copy-btn.done { opacity: 1; }
+@media (hover: none) { .copy-btn { opacity: 1; } }
+.copied { color: var(--gray-600); font-size: var(--fs-small); }
+.body { display: flex; flex-direction: column; gap: var(--space-4); }
+.text { max-width: var(--prose-max); line-height: 1.75; }
+@media (max-width: 767px) { .art { padding: var(--space-10) 0; } .art-t { font-size: var(--fs-card); line-height: 1.4; } }
+
+/* 화면 예시 표시(5-5) */
+.eg { align-self: flex-start; display: inline-flex; padding: 2px var(--space-3); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-300); color: var(--gray-600); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1.5; }
+
+/* 점 목록 */
+.dots { display: flex; flex-direction: column; gap: var(--space-3); max-width: var(--prose-max); line-height: 1.75; }
+.dots li { position: relative; padding-left: var(--space-4); }
+.dots li::before { content: ""; position: absolute; top: 12px; left: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--gray-500); }
+strong { font-weight: var(--fw-btn); color: var(--brand-ink); }
+
+/* ① 보내는 순서 — 이어지는 세로 단계: 번호 원 + 직선(5-2). 열 단계라 글 폭 */
+.tl { max-width: var(--prose-max); counter-reset: tl; }
+.tl li { position: relative; min-height: 28px; padding: 0 0 var(--space-4) 48px; line-height: 1.75; counter-increment: tl; }
+.tl li:last-child { padding-bottom: 0; }
+.tl li::before { content: counter(tl); position: absolute; top: 0; left: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--tint-line); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1; }
+.tl li:not(:last-child)::after { content: ""; position: absolute; top: 32px; bottom: 4px; left: 13px; width: 2px; background: var(--gray-200); }
+
+/* ② 팬꾹 주소 — 송장 두 장 그림(상자마다 끝 6자리가 다르다 · 보내는 분 칸 = 닉네임) */
+.fig { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
+.slips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.slip { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-300); }
+.slip h3 { font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); color: var(--gray-600); letter-spacing: 0; }
+.slip dl { display: flex; flex-direction: column; gap: var(--space-3); }
+.slip dt { color: var(--gray-600); font-size: var(--fs-small); }
+.slip dd { margin-top: 2px; font-weight: var(--fw-btn); }
+.six { display: flex; gap: var(--space-1); margin-top: var(--space-2); }
+.six i { display: grid; place-items: center; width: 32px; height: 40px; border-radius: var(--r-icon); background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); font-style: normal; font-family: var(--font-round); font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1; font-variant-numeric: tabular-nums; }
+@container pg (max-width: 639px) { .slips { grid-template-columns: minmax(0, 1fr); } }
+
+/* ③ 요금 — 크기를 고르는 대상이라 카드(8-14). 그림 칸 높이·이름·기준·요금 위치 고정(8-8) */
+.tiers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
+.tier { display: grid; grid-template-rows: 96px auto 1fr auto; gap: var(--space-3); padding: var(--space-4) var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
+.tier .pic { display: grid; place-items: center; border-radius: var(--r-btn); background: var(--white); }
+.tier .pic img { width: auto; }
+.tier h3 { font-size: var(--fs-card); line-height: 1.4; }
+.tier .rule { color: var(--gray-600); font-size: var(--fs-small); line-height: 1.6; }
+.tier .price { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--gray-200); font-size: var(--fs-small); color: var(--gray-600); }
+.tier .price b { font-family: var(--font-round); font-size: var(--fs-card); font-weight: var(--fw-title); color: var(--ink); font-variant-numeric: tabular-nums; }
+@container pg (max-width: 639px) {
+  .tiers { grid-template-columns: minmax(0, 1fr); }
+  .tier { grid-template-columns: 80px minmax(0, 1fr); grid-template-rows: auto auto auto; column-gap: var(--space-4); row-gap: var(--space-2); padding: var(--space-4); }
+  .tier .pic { grid-row: 1 / 4; height: 80px; align-self: center; }
+  .tier .price { padding-top: var(--space-2); }
+}
+
+/* ④ 보낼 수 없는 물품 — 안 되는 것(× 줄) · 접수 한도(눈금 칸) · 결과(주의 판). 글자와 × 를 함께 쓴다(4-2) */
+.no-list { display: flex; flex-direction: column; gap: var(--space-3); max-width: var(--prose-max); }
+.no-list li { display: flex; align-items: flex-start; gap: var(--space-3); line-height: 1.75; }
+.no-list .x { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--danger-soft); color: var(--danger); }
+.no-list .x svg { width: 16px; height: 16px; stroke-width: 2.5; }
+.limit { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); box-shadow: var(--muted-shadow); font-weight: var(--fw-btn); }
+.limit svg { width: 24px; height: 24px; color: var(--gray-600); }
+.warn { display: flex; align-items: flex-start; gap: var(--space-3); max-width: var(--prose-max); padding: var(--space-4); border-radius: var(--r-btn); background: var(--warn-soft); color: var(--warn-ink); line-height: 1.75; }
+.warn svg { width: 24px; height: 24px; margin-top: 2px; }
+.warn strong { color: inherit; }
+
+/* ⑤ 진행 단계 — 차례로 표시되는 여섯 단계: 가로 점 + 직선. 칸 폭이 좁으면 세로(2-12) */
+.stages { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.stage { position: relative; display: flex; flex-direction: column; gap: var(--space-1); padding-top: var(--space-12); padding-right: var(--space-2); }
+.stage::before { content: counter(sg); counter-increment: sg; position: absolute; top: 0; left: 0; z-index: 1; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--primary); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1; }
+.stage:not(:last-child)::after { content: ""; position: absolute; top: 15px; left: 32px; right: 0; height: 2px; background: var(--gray-300); }
+.stages { counter-reset: sg; }
+.stage b { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; }
+.stage span { color: var(--gray-600); font-size: var(--fs-small); line-height: 1.5; }
+@container pg (max-width: 719px) {
+  .stages { grid-template-columns: minmax(0, 1fr); }
+  .stage { min-height: 56px; padding: 0 0 var(--space-4) 48px; }
+  .stage:last-child { padding-bottom: 0; }
+  .stage:not(:last-child)::after { top: 36px; bottom: 4px; left: 15px; right: auto; width: 2px; height: auto; }
+}
+
+/* ⑥ 거절·반송·환불 — 규칙·안내는 줄 목록(8-14). 번호는 조용하게 */
+.rows { max-width: var(--prose-max); counter-reset: rw; }
+.rows li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: var(--space-2); padding: var(--space-4) 0; border-top: 1px solid var(--gray-200); line-height: 1.75; counter-increment: rw; }
+.rows li:first-child { padding-top: 0; border-top: 0; }
+.rows li::before { content: counter(rw, decimal-leading-zero); color: var(--gray-500); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.75; font-variant-numeric: tabular-nums; }
+.rows .pill { display: inline-block; padding: 0 var(--space-2); border-radius: var(--r-tag); background: var(--danger-soft); color: var(--danger); font-weight: var(--fw-btn); }
+
+/* ⑦ 송장번호 비공개 — 첫 문장이 이 조의 약속: 한 줄 판 + 잠금 그림 */
+.promise { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
+.promise img { width: 64px; height: 64px; }
+.promise p { font-family: var(--font-round); font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; letter-spacing: var(--ls-title); }
+@container pg (max-width: 479px) { .promise { flex-direction: column; align-items: flex-start; } }
+
+/* ⑨ 차액 결제 — 요청 → 결제 두 칸(직선 화살표), 나머지는 점 목록 */
+.two { display: grid; grid-template-columns: minmax(0, 1fr) var(--space-6) minmax(0, 1fr); align-items: stretch; }
+.two .box { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); box-shadow: var(--muted-shadow); line-height: 1.75; }
+.two .n { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--tint-line); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1; }
+.two .ar { align-self: center; justify-self: center; width: 16px; height: 2px; background: var(--gray-500); position: relative; }
+.two .ar::after { content: ""; position: absolute; top: -3px; right: 0; width: 8px; height: 8px; border-top: 2px solid var(--gray-500); border-right: 2px solid var(--gray-500); transform: rotate(45deg); }
+@container pg (max-width: 639px) {
+  .two { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto var(--space-6) auto; }
+  .two .ar { width: 2px; height: 16px; }
+  .two .ar::after { top: auto; right: -3px; bottom: 0; transform: rotate(135deg); }
+}
+
+/* ⑩ 추가 문의 — 끝 판(하늘 면, design-rules 28절). 문단 + 글 속 링크 */
+.art.closing { gap: var(--space-3); margin-top: var(--space-4); padding: var(--space-8); border-top: 0; border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: inset 0 0 0 1px var(--tint-line), var(--surface-accent-shadow); }
+.closing .copy-btn:hover { background: var(--white); }
+.closing .body { gap: var(--space-3); }
+@media (max-width: 767px) { .art.closing { padding: var(--space-6) var(--space-4); } }
+.inlink { text-decoration: underline; text-decoration-color: var(--gray-500); text-underline-offset: 4px; }
+.inlink:hover { text-decoration-color: var(--ink); }
+.todo { padding: 0 var(--space-2); border-radius: var(--r-tag); background: var(--warn-soft); color: var(--warn-ink); }
+</style>
+</head>
+<body data-state="out">
+<a class="sr-only" href="#main">본문 바로가기</a>
+
+<!-- ===== 시안 도구(페이지 바깥) ===== -->
+<div class="tool" aria-label="시안 도구">
+  <div class="tool-in">
+    <b>상태</b>
+    <button type="button" data-v="out" aria-pressed="true">로그인 전</button>
+    <button type="button" data-v="in" aria-pressed="false">로그인 후</button>
+    <button type="button" data-v="error" aria-pressed="false">오류(요금표 못 읽음)</button>
+  </div>
+</div>
+
+<!-- ===== 상단 바(로그인 전) / 사이드바·위 막대(로그인 후) ===== -->
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="logo" href="#"><img src="img/logo-mark.png" alt="" width="28" height="28">팬꾹</a>
+    <nav class="nav" aria-label="주 메뉴">
+      <a class="hide-sm" href="#">크리에이터 찾기</a>
+      <a class="hide-sm" href="#">팬꾹 소개</a>
+      <a class="hide-sm" href="#">공지사항</a>
+      <a class="strong" href="#">로그인</a>
+    </nav>
+  </div>
+</header>
+<aside class="sidebar" aria-label="팬 메뉴">
+  <div class="sb-top"><a class="logo" href="#"><img src="img/logo-mark.png" alt="" width="28" height="28">팬꾹</a></div>
+  <nav class="sb-nav" aria-label="팬 메뉴">
+    <ul>
+      <li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>홈</span></a></li>
+      <li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg><span>지금 할 일</span><span class="count" aria-label="2건"><span aria-hidden="true">2</span></span></a></li>
+      <li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg><span>크리에이터 찾기</span></a></li>
+      <li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v14"/><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"/><rect x="3" y="7" width="18" height="4" rx="1"/></svg><span>선물 보내기</span></a></li>
+      <li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg><span>보낸 선물</span></a></li>
+      <li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span>받은 선물</span></a></li>
+      <li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg><span>팔로우한 크리에이터</span></a></li>
+      <li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span>문의</span></a></li>
+    </ul>
+  </nav>
+  <div class="sb-bottom"><div class="sb-acc"><span class="sb-avatar" aria-hidden="true">하</span><span>하루님</span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></div></div>
+</aside>
+<div class="mtop"><a class="logo" href="#"><img src="img/logo-mark.png" alt="" width="28" height="28">팬꾹</a>
+  <button class="burger" type="button" aria-label="메뉴 열기"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg></button></div>
+
+<!-- ===== 오류 상태 ===== -->
+<div class="err" role="alert">
+  <div class="err-in">
+    <h1>화면을 불러오지 못했습니다</h1>
+    <p>잠시 후 다시 시도해 주세요. 문제가 계속되면 고객센터로 문의해 주세요.</p>
+    <div class="row"><a class="btn line" href="#">홈으로</a><button class="btn" type="button">다시 시도</button></div>
+  </div>
+</div>
+
+<main id="main" class="page">
+
+  <!-- ===== 머리 ===== -->
+  <section class="head" aria-labelledby="page-title">
+    <nav class="tabs" aria-label="이용 안내">
+      <a class="tab" href="#" aria-current="page">팬 이용 안내</a>
+      <a class="tab" href="#">크리에이터 이용 안내</a>
+      <a class="tab" href="#">검수 기준</a>
+      <a class="tab" href="#">보안 안내</a>
+      <a class="tab" href="#">분쟁 처리 안내</a>
+    </nav>
+    <div class="titlebox">
+      <h1 class="title" id="page-title">팬 이용 안내</h1>
+      <p class="lead">선물 등록·발송 방법과 요금·반송 기준을 확인해 주세요. 크리에이터가 승인한 선물만 배송합니다.</p>
+    </div>
+    <section class="sum" aria-labelledby="sum-h">
+      <h2 id="sum-h">핵심 안내</h2>
+      <ol>
+        <li><a class="tile" href="#receiving-address"><span class="n" aria-hidden="true">1</span><span>결제 후 상자별 팬꾹 주소 발급</span><span class="go" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a></li>
+        <li><a class="tile" href="#how-to-send"><span class="n" aria-hidden="true">2</span><span>상자별 주소를 끝 6자리까지 모두 입력해 팬꾹으로 보내 주세요.</span><span class="go" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a></li>
+        <li><a class="tile" href="#stages"><span class="n" aria-hidden="true">3</span><span>팬꾹 검수·크리에이터 승인 완료 후 배송</span><span class="go" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a></li>
+      </ol>
+    </section>
+  </section>
+
+  <form class="search" role="search" onsubmit="return false">
+    <label class="sr-only" for="q">문서 내 검색</label>
+    <span class="search-box">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+      <input id="q" type="search" placeholder="문서 내 검색" autocomplete="off">
+    </span>
+  </form>
+
+  <!-- ===== 본문 ===== -->
+  <div class="flow">
+    <div class="bar">
+      <div class="bar-row">
+        <p class="bar-now" id="barNow">선물 등록·발송 순서</p>
+        <button type="button" class="bar-btn" id="barFind"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>찾기</button>
+        <button type="button" class="bar-btn" id="barBtn" aria-expanded="false" aria-controls="panel"><span id="barBtnT">목차 열기</span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+      <nav class="panel" id="panel" aria-label="목차" hidden>
+        <a class="toc" href="#how-to-send" data-toc="how-to-send">선물 등록·발송 순서 <span class="badge">주요</span></a>
+        <a class="toc" href="#receiving-address" data-toc="receiving-address">상자별 팬꾹 주소 <span class="badge">주요</span></a>
+        <a class="toc" href="#fee" data-toc="fee">요금</a>
+        <a class="toc" href="#not-allowed" data-toc="not-allowed">보낼 수 없는 물품과 크기</a>
+        <a class="toc" href="#stages" data-toc="stages">진행 단계</a>
+        <a class="toc" href="#declined-returned" data-toc="declined-returned">선물 거절·반송·환불 <span class="badge">주요</span></a>
+        <a class="toc" href="#tracking-number" data-toc="tracking-number">크리에이터 배송 송장번호 비공개 안내</a>
+        <a class="toc" href="#sent-without-address" data-toc="sent-without-address">팬꾹 주소 끝 6자리 누락 시 확인 방법</a>
+        <a class="toc" href="#difference" data-toc="difference">차액 결제</a>
+        <a class="toc" href="#more" data-toc="more">추가 문의</a>
+      </nav>
+    </div>
+
+    <nav class="sidetoc" aria-label="목차 (옆)">
+      <div class="sidetoc-in">
+        <p class="sidetoc-h">목차</p>
+        <a class="toc" href="#how-to-send" data-toc="how-to-send">선물 등록·발송 순서 <span class="badge">주요</span></a>
+        <a class="toc" href="#receiving-address" data-toc="receiving-address">상자별 팬꾹 주소 <span class="badge">주요</span></a>
+        <a class="toc" href="#fee" data-toc="fee">요금</a>
+        <a class="toc" href="#not-allowed" data-toc="not-allowed">보낼 수 없는 물품과 크기</a>
+        <a class="toc" href="#stages" data-toc="stages">진행 단계</a>
+        <a class="toc" href="#declined-returned" data-toc="declined-returned">선물 거절·반송·환불 <span class="badge">주요</span></a>
+        <a class="toc" href="#tracking-number" data-toc="tracking-number">크리에이터 배송 송장번호 비공개 안내</a>
+        <a class="toc" href="#sent-without-address" data-toc="sent-without-address">팬꾹 주소 끝 6자리 누락 시 확인 방법</a>
+        <a class="toc" href="#difference" data-toc="difference">차액 결제</a>
+        <a class="toc" href="#more" data-toc="more">추가 문의</a>
+      </div>
+    </nav>
+
+    <div class="main">
+
+      <!-- 1 선물 등록·발송 순서 — 이어지는 세로 단계 -->
+      <article class="art" id="how-to-send" aria-labelledby="how-to-send-h">
+        <div class="art-top"><span class="no" aria-hidden="true">01</span>
+          <div class="art-head"><h2 class="art-t" id="how-to-send-h" tabindex="-1">선물 등록·발송 순서</h2><span class="badge">주요</span><span class="copy"><button class="copy-btn" type="button" aria-label="「선물 등록·발송 순서」 주소 복사"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button><span class="copied" role="status"></span></span></div></div>
+        <div class="body">
+          <ol class="tl">
+            <li>선물을 보낼 크리에이터를 고르고, 크리에이터 페이지에서 「선물 보내기」를 눌러 주세요.</li>
+            <li>선물 종류를 고르고, 전자기기나 금속 제품이 들어 있는지 알려 주세요.</li>
+            <li>상자 수와 크기를 고른 뒤 결제해 주세요.</li>
+            <li>결제 후 상자별 팬꾹 주소가 발급됩니다. 크리에이터 승인 후 주소를 확인할 수 있습니다.</li>
+            <li>승인 전에 먼저 보내려면 선물 상세에서 「먼저 보내기」를 눌러 주세요. 팬꾹 주소를 볼 수 있습니다.</li>
+            <li>선물 상세의 「전체 주소 복사」를 누르면 마지막 6자리까지 전체 주소가 복사됩니다.</li>
+            <li>송장의 보내는 분 칸에는 팬꾹 닉네임을 입력해 주세요.</li>
+            <li>복사한 주소를 받는 사람 주소 칸에 그대로 써서 상자를 보내 주세요.</li>
+            <li>팬꾹 사무실로 보내는 상자의 배송 상황을 조회하려면 선물 상세에 송장번호를 입력해 주세요. 송장번호 입력은 선택 사항입니다.</li>
+            <li>진행 상황은 「보낸 선물」의 선물 상세에서 확인할 수 있습니다.</li>
+          </ol>
+        </div>
+      </article>
+
+      <!-- 2 상자별 팬꾹 주소 — 송장 두 장 그림 + 점 목록 -->
+      <article class="art" id="receiving-address" aria-labelledby="receiving-address-h">
+        <div class="art-top"><span class="no" aria-hidden="true">02</span>
+          <div class="art-head"><h2 class="art-t" id="receiving-address-h" tabindex="-1">상자별 팬꾹 주소</h2><span class="badge">주요</span><span class="copy"><button class="copy-btn" type="button" aria-label="「상자별 팬꾹 주소」 주소 복사"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button><span class="copied" role="status"></span></span></div></div>
+        <div class="body">
+          <figure class="fig" aria-label="송장 예시 — 상자마다 끝 6자리가 다르다">
+            <span class="eg">화면 예시</span>
+            <div class="slips">
+              <div class="slip"><h3>상자 1</h3><dl><div><dt>보내는 분</dt><dd>팬꾹 닉네임</dd></div><div><dt>받는 사람 주소</dt><dd>팬꾹 사무실 주소</dd><dd class="six" aria-label="끝 6자리 482917"><i>4</i><i>8</i><i>2</i><i>9</i><i>1</i><i>7</i></dd></div></dl></div>
+              <div class="slip"><h3>상자 2</h3><dl><div><dt>보내는 분</dt><dd>팬꾹 닉네임</dd></div><div><dt>받는 사람 주소</dt><dd>팬꾹 사무실 주소</dd><dd class="six" aria-label="끝 6자리 731504"><i>7</i><i>3</i><i>1</i><i>5</i><i>0</i><i>4</i></dd></div></dl></div>
+            </div>
+          </figure>
+          <ul class="dots">
+            <li>팬꾹 주소는 팬꾹 사무실 주소 끝에 상자마다 다른 6자리가 붙은 주소입니다.</li>
+            <li>사무실에서는 이 6자리로 어느 선물의 어느 상자인지 확인합니다.</li>
+            <li>상자마다 안내된 주소를 <strong>끝 6자리까지 모두</strong> 입력해 주세요.</li>
+            <li>한 상자의 주소를 다른 상자에 쓰지 마세요.</li>
+            <li>팬꾹 주소 6자리는 선물을 보낸 본인에게만 표시됩니다. 다른 사람과 공유하지 마세요.</li>
+            <li>선물 상세에서는 6자리가 가려져 있습니다. 「6자리 보기」를 누르면 볼 수 있습니다.</li>
+            <li>상자를 더 보내려면 선물을 새로 등록해 주세요.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 3 요금 — 조건 점 목록 + 크기 셋 카드 -->
+      <article class="art" id="fee" aria-labelledby="fee-h">
+        <div class="art-top"><span class="no" aria-hidden="true">03</span>
+          <div class="art-head"><h2 class="art-t" id="fee-h" tabindex="-1">요금</h2><span class="copy"><button class="copy-btn" type="button" aria-label="「요금」 주소 복사"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button><span class="copied" role="status"></span></span></div></div>
+        <div class="body">
+          <ul class="dots">
+            <li>상자별 요금 적용 · 크리에이터에게 보내는 배송비·검수비·서비스료 포함</li>
+            <li>크기·무게 중 더 높은 요금 구간 적용</li>
+            <li>받는 크리에이터의 비용 부담 없음</li>
+            <li>변경된 요금은 변경 후 등록한 선물부터 적용합니다. 이미 결제한 선물에는 결제 당시 요금을 적용합니다.</li>
+          </ul>
+          <span class="eg">화면 예시 — 요금 숫자</span>
+          <ul class="tiers" aria-label="상자 크기별 요금">
+            <li class="tier"><div class="pic" aria-hidden="true"><img src="img/gift-box-small-clear.png" alt="" width="62" height="49" style="height:49px"></div><h3>소형</h3><p class="rule">세 변의 합 100cm 이하·무게 5kg 이하</p><p class="price">요금 <b>6,900원</b></p></li>
+            <li class="tier"><div class="pic" aria-hidden="true"><img src="img/gift-box-medium-clear.png" alt="" width="68" height="70" style="height:70px"></div><h3>중형</h3><p class="rule">세 변의 합 120cm 이하·무게 10kg 이하</p><p class="price">요금 <b>8,900원</b></p></li>
+            <li class="tier"><div class="pic" aria-hidden="true"><img src="img/gift-box-medium-clear.png" alt="" width="88" height="90" style="height:90px"></div><h3>대형</h3><p class="rule">세 변의 합 140cm 이하·무게 15kg 이하</p><p class="price">요금 <b>10,900원</b></p></li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 4 보낼 수 없는 물품과 크기 — × 줄 · 접수 한도 칸 · 주의 판 -->
+      <article class="art" id="not-allowed" aria-labelledby="not-allowed-h">
+        <div class="art-top"><span class="no" aria-hidden="true">04</span>
+          <div class="art-head"><h2 class="art-t" id="not-allowed-h" tabindex="-1">보낼 수 없는 물품과 크기</h2><span class="copy"><button class="copy-btn" type="button" aria-label="「보낼 수 없는 물품과 크기」 주소 복사"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button><span class="copied" role="status"></span></span></div></div>
+        <div class="body">
+          <ul class="no-list">
+            <li><span class="x" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span><span>추적 장치는 보낼 수 없습니다.</span></li>
+            <li><span class="x" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span><span>선물 보내기 화면과 크리에이터 페이지의 「보낼 수 없는 물품」 목록에 있는 물품도 보낼 수 없습니다. 이 목록은 바뀔 수 있습니다.</span></li>
+          </ul>
+          <p class="limit"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg><span>접수 한도: 세 변의 합 140cm 이하 · 무게 15kg 이하</span></p>
+          <ul class="dots">
+            <li>크리에이터가 받기 어려운 선물로 정해 둔 종류는 선물 보내기 화면에서 미리 안내합니다.</li>
+          </ul>
+          <p class="warn" role="note"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4.5"/><path d="M12 17.5h.01"/></svg><span>보낼 수 없는 물품이 발견된 상자는 검수 기준에 맞지 않는 상자로 처리해 돌려보냅니다. 이때는 검수비·서비스료·반송 택배비를 모두 빼므로 <strong>환불 금액이 없습니다.</strong> 다만 추적 장치가 확인된 상자는 사무실에 보관한 뒤 신고 여부에 따라 경찰에 넘기거나 돌려보내며, 어느 경우에도 환불 금액은 없습니다.</span></p>
+        </div>
+      </article>
+
+      <!-- 5 진행 단계 — 가로 여섯 단계 + 점 목록 -->
+      <article class="art" id="stages" aria-labelledby="stages-h">
+        <div class="art-top"><span class="no" aria-hidden="true">05</span>
+          <div class="art-head"><h2 class="art-t" id="stages-h" tabindex="-1">진행 단계</h2><span class="copy"><button class="copy-btn" type="button" aria-label="「진행 단계」 주소 복사"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button><span class="copied" role="status"></span></span></div></div>
+        <div class="body">
+          <p class="text">선물 상세에는 아래 여섯 단계가 차례로 표시됩니다.</p>
+          <ol class="stages" aria-label="진행 단계 여섯">
+            <li class="stage"><b>등록</b><span>선물 등록·결제 완료</span></li>
+            <li class="stage"><b>입고</b><span>상자가 팬꾹에 도착</span></li>
+            <li class="stage"><b>검수</b><span>상자 검수 진행</span></li>
+            <li class="stage"><b>출고</b><span>팬꾹에서 출고 처리</span></li>
+            <li class="stage"><b>배송 중</b><span>택배사 배송 진행</span></li>
+            <li class="stage"><b>수령</b><span>배송 완료</span></li>
+          </ol>
+          <ul class="dots">
+            <li>크리에이터의 승인 여부는 검수와 출고 사이에 따로 표시됩니다.</li>
+            <li>승인과 검수가 모두 끝난 상자만 출고합니다.</li>
+            <li>승인은 출고 전에만 완료하면 됩니다. 상자는 승인 전에도 먼저 보낼 수 있습니다.</li>
+            <li>결제가 끝난 때부터 7일 안에 크리에이터가 승인하지 않으면, 기한이 지나 받지 않은 선물로 처리됩니다.</li>
+            <li>결제가 끝난 때부터 7일과 14일이 지나도 도착하지 않은 상자가 있으면 알림을 보냅니다. 25일에는 5일 뒤 자동으로 취소된다고 한 번 더 안내합니다.</li>
+            <li>결제가 끝난 때부터 30일이 지나도 도착하지 않은 상자는 자동으로 취소되고, 해당 상자의 결제 금액을 환불합니다. 취소된 뒤에 도착한 상자는 보낸 사람을 확인할 수 없는 상자로 보관합니다. 사무실에 도착한 때부터 30일 안에 선물과 연결되지 않으면 원래 송장의 보낸 사람 주소로 착불로 반송합니다.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 6 선물 거절·반송·환불 — 규칙·안내는 줄 목록(조용한 번호) -->
+      <article class="art" id="declined-returned" aria-labelledby="declined-returned-h">
+        <div class="art-top"><span class="no" aria-hidden="true">06</span>
+          <div class="art-head"><h2 class="art-t" id="declined-returned-h" tabindex="-1">선물 거절·반송·환불</h2><span class="badge">주요</span><span class="copy"><button class="copy-btn" type="button" aria-label="「선물 거절·반송·환불」 주소 복사"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button><span class="copied" role="status"></span></span></div></div>
+        <div class="body">
+          <ol class="rows">
+            <li><span>크리에이터가 받지 않기로 하거나 기한 안에 승인하지 않은 선물은 크리에이터에게 배송하지 않습니다.</span></li>
+            <li><span>거절한 이유는 팬에게 알리지 않습니다.</span></li>
+            <li><span>돌려보낼 상자가 생기면 「반송 주소 확인」에서 결제할 때 입력한 반송 주소를 확인하거나 다른 주소를 입력한 뒤 「주소 확인」을 눌러 주세요.</span></li>
+            <li><span>돌려보낼 상자가 생긴 때부터 7일과 14일이 지나도 주소를 확인하지 않으면 다시 알려 드리고, 25일에는 처분 예정일을 안내합니다. 30일이 지나도 주소를 확인하지 않은 상자는 처분 대상이 됩니다. 처분하더라도 환불 금액은 다시 계산하지 않습니다.</span></li>
+            <li><span>팬꾹 주소가 공개되기 전에 취소·거절·자동 반려되면 결제 금액 <strong>전액을 환불</strong>합니다.</span></li>
+            <li><span>거절되거나 승인 기한이 지난 선물의 상자가 사무실에 도착했다면 「반송 주소 확인」에서 확인한 주소로 반송합니다. 해당 상자의 결제 금액에서 반송 택배비를 뺀 금액을 환불해 드리며, 검수 기준에 맞지 않는 상자는 환불 금액이 없습니다.</span></li>
+            <li><span>팬꾹 주소가 공개된 뒤 취소·거절·자동 반려되었는데 아직 도착하지 않은 상자는 반송 택배비를 뺀 금액을 먼저 환불합니다.</span></li>
+            <li><span>해당 상자가 결제가 끝난 때부터 30일 안에 도착하면 돌려보내며, 추가 환불은 없습니다. 30일이 지나도 도착하지 않으면 보류한 반송 택배비까지 환불합니다.</span></li>
+            <li><span>반송 택배비는 팬꾹이 먼저 부담한 뒤 환불 금액에서 차감합니다.</span></li>
+            <li><span>탐지기 반응이 있었지만 추적 장치가 아닌 상자는 크리에이터에게 수령 여부를 확인합니다. 크리에이터가 받지 않기를 고르거나 검수가 완료된 때부터 7일 안에 답하지 않으면 돌려보냅니다. 이때는 검수비·서비스료·반송 택배비를 모두 빼므로 환불 금액이 없습니다.</span></li>
+            <li><span>입고 전에는 선물 상세의 「선물 취소」로 직접 취소할 수 있습니다. 팬꾹 주소가 공개되기 전이라면 결제 금액 전액을 환불합니다.</span></li>
+            <li><span>입고 후 팬이 취소하려면 고객센터의 1:1 문의를 이용해 주세요. 도착한 상자는 돌려보내고, 상자별 결제 금액에서 검수비와 반송 택배비를 뺀 금액을 환불합니다. 검수 기준에 맞지 않는 상자는 환불 금액이 없습니다.</span></li>
+            <li><span><span class="pill">출고한 뒤에는 환불 금액이 없습니다.</span></span></li>
+            <li><span>환불 금액은 선물 상세의 결제 내역에서 확인할 수 있습니다.</span></li>
+          </ol>
+        </div>
+      </article>
+
+      <!-- 7 송장번호 비공개 — 첫 문장이 약속 -->
+      <article class="art" id="tracking-number" aria-labelledby="tracking-number-h">
+        <div class="art-top"><span class="no" aria-hidden="true">07</span>
+          <div class="art-head"><h2 class="art-t" id="tracking-number-h" tabindex="-1">크리에이터 배송 송장번호 비공개 안내</h2><span class="copy"><button class="copy-btn" type="button" aria-label="「크리에이터 배송 송장번호 비공개 안내」 주소 복사"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button><span class="copied" role="status"></span></span></div></div>
+        <div class="body">
+          <div class="promise"><img src="img/icon-address-lock.png" alt="" width="64" height="64"><p>크리에이터의 주소는 팬에게 공개되지 않습니다.</p></div>
+          <ul class="dots">
+            <li>크리에이터에게 가는 상자의 송장번호로 배송을 조회하면 받는 곳의 일부가 보일 수 있습니다.</li>
+            <li>주소를 지키기 위해 크리에이터에게 가는 송장번호는 공개하지 않습니다.</li>
+            <li>진행 상황은 선물 상세에서 확인할 수 있습니다.</li>
+            <li>팬이 선물 상세에 넣는 송장번호는 팬꾹 사무실로 보내는 상자의 송장번호입니다.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 8 주소 끝 6자리 누락 — 점 목록 + 주의 판 -->
+      <article class="art" id="sent-without-address" aria-labelledby="sent-without-address-h">
+        <div class="art-top"><span class="no" aria-hidden="true">08</span>
+          <div class="art-head"><h2 class="art-t" id="sent-without-address-h" tabindex="-1">팬꾹 주소 끝 6자리 누락 시 확인 방법</h2><span class="copy"><button class="copy-btn" type="button" aria-label="「팬꾹 주소 끝 6자리 누락 시 확인 방법」 주소 복사"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button><span class="copied" role="status"></span></span></div></div>
+        <div class="body">
+          <ul class="dots">
+            <li>주소 끝 6자리가 없으면 어느 선물의 상자인지 바로 확인하기 어렵습니다.</li>
+            <li><strong>송장의 보내는 분 칸에 팬꾹 닉네임을 썼다면,</strong> 선물 상세의 「주소 끝 6자리 없이 보낸 상자 찾기」에서 상자를 고르고 택배사와 송장번호를 넣어 주세요.</li>
+            <li>송장번호와 택배사가 맞으면 해당 선물에 상자를 연결합니다.</li>
+            <li>맞지 않는 입력은 하루에 다섯 번까지 할 수 있습니다.</li>
+            <li><strong>송장의 보낸 사람 칸에 닉네임을 적지 않았다면</strong> 「물품 보관소」의 「내 물품 확인」에서 송장번호와 택배사를 입력해 확인을 요청해 주세요. 팬꾹에서 확인한 뒤 해당 선물에 상자를 연결합니다. 송장번호를 모르면 1:1 문의로 보낸 사람의 이름·주소·전화번호와 내용물을 알려 주세요. 팬꾹에서 전화번호 뒤 4자리로 상자를 찾고 원래 송장과 대조한 뒤 해당 선물에 연결합니다.</li>
+            <li>물품 보관소에는 팬꾹 주소의 6자리와 닉네임이 모두 없는 상자만 표시됩니다. 도착일·택배사·구간·포장 모양을 볼 수 있습니다.</li>
+          </ul>
+          <p class="warn" role="note"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4.5"/><path d="M12 17.5h.01"/></svg><span>사무실에 도착한 때부터 30일 안에 선물과 연결되지 않은 상자는 원래 송장의 보낸 사람 주소로 반송합니다. 이때 반송 택배비는 받는 사람이 부담합니다(<strong>착불</strong>).</span></p>
+        </div>
+      </article>
+
+      <!-- 9 차액 결제 — 요청 → 결제 두 칸 + 점 목록 -->
+      <article class="art" id="difference" aria-labelledby="difference-h">
+        <div class="art-top"><span class="no" aria-hidden="true">09</span>
+          <div class="art-head"><h2 class="art-t" id="difference-h" tabindex="-1">차액 결제</h2><span class="copy"><button class="copy-btn" type="button" aria-label="「차액 결제」 주소 복사"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button><span class="copied" role="status"></span></span></div></div>
+        <div class="body">
+          <div class="two">
+            <div class="box"><span class="n" aria-hidden="true">1</span><p>사무실에서 측정한 상자의 요금 구간이 등록한 구간보다 높으면 차액 결제를 요청합니다.</p></div>
+            <span class="ar" aria-hidden="true"></span>
+            <div class="box"><span class="n" aria-hidden="true">2</span><p>선물 상세의 ‘지금 할 일 &gt; 추가 결제’에서 결제 버튼을 눌러 주세요.</p></div>
+          </div>
+          <ul class="dots">
+            <li>차액을 결제하기 전에는 그 선물을 출고하지 않습니다.</li>
+            <li>검수가 끝난 때부터 7일 안에 차액을 결제하지 않으면 상자를 반송합니다. 이때는 검수 기준에 맞지 않는 상자와 마찬가지로 환불 금액이 없습니다.</li>
+            <li>실제 측정한 요금 구간이 등록한 구간보다 낮더라도 차액은 환불하지 않습니다.</li>
+            <li>세 변의 합이 140cm를 넘거나 무게가 15kg을 넘으면 개인접수로 바뀌어 우체국 실비 기준 차액을 결제 요청합니다. 7일 안에 결제하지 않으면 반송됩니다.</li>
+            <li>추가 결제 알림은 알림을 꺼 두어도 보냅니다.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 10 추가 문의 — 끝 판(하늘 면) -->
+      <article class="art closing" id="more" aria-labelledby="more-h">
+        <div class="art-top"><span class="no" aria-hidden="true">10</span>
+          <div class="art-head"><h2 class="art-t" id="more-h" tabindex="-1">추가 문의</h2><span class="copy"><button class="copy-btn" type="button" aria-label="「추가 문의」 주소 복사"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button><span class="copied" role="status"></span></span></div></div>
+        <div class="body">
+          <p class="text">자세한 기준은 <a class="inlink" href="#">이용약관</a>에서 확인해 주세요.</p>
+          <p class="text">사무실에 도착한 뒤 출고까지 걸리는 기간: <span class="todo">[확인 필요: 입고부터 출고까지 걸리는 기간]</span></p>
+          <p class="text">더 궁금한 점은 고객센터의 <a class="inlink" href="#">1:1 문의</a>로 남겨 주세요.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="foot-in">
+    <nav aria-label="바닥글 링크"><a href="#">이용약관</a><a href="#">개인정보 처리방침</a><a href="#">고객센터</a></nav>
+    <span>© 2026 팬꾹</span>
+  </div>
+</footer>
+
+<script>
+// 시안 도구와 화면 반응만 — 서비스 로직 없음
+const body = document.body;
+function setState(v) { body.dataset.state = v; document.querySelectorAll('.tool [data-v]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === v))); }
+document.querySelectorAll('.tool [data-v]').forEach((b) => b.addEventListener('click', () => { setState(b.dataset.v); location.hash = '#state=' + b.dataset.v; }));
+const m = /state=(out|in|error)/.exec(location.hash); if (m) setState(m[1]);
+
+const barBtn = document.getElementById('barBtn'), panel = document.getElementById('panel');
+function openPanel(o) { barBtn.setAttribute('aria-expanded', String(o)); panel.hidden = !o; document.getElementById('barBtnT').textContent = o ? '목차 닫기' : '목차 열기'; }
+barBtn.addEventListener('click', () => openPanel(barBtn.getAttribute('aria-expanded') !== 'true'));
+panel.addEventListener('click', (e) => { if (e.target.closest('a')) openPanel(false); });
+document.getElementById('barFind').addEventListener('click', () => { const q = document.getElementById('q'); q.scrollIntoView({ block: 'center' }); q.focus({ preventScroll: true }); });
+
+const arts = [...document.querySelectorAll('.art')];
+function spy() {
+  const line = window.innerHeight * 0.3; let cur = arts[0];
+  for (const a of arts) { if (a.getBoundingClientRect().top <= line) cur = a; }
+  document.querySelectorAll('[data-toc]').forEach((l) => { if (l.dataset.toc === cur.id) l.setAttribute('aria-current', 'true'); else l.removeAttribute('aria-current'); });
+  document.getElementById('barNow').textContent = cur.querySelector('.art-t').textContent;
+}
+addEventListener('scroll', spy, { passive: true }); addEventListener('resize', spy); spy();
+
+document.querySelectorAll('.copy-btn').forEach((b) => b.addEventListener('click', () => {
+  const st = b.parentElement.querySelector('.copied'); st.textContent = '복사됨'; b.classList.add('done');
+  setTimeout(() => { st.textContent = ''; b.classList.remove('done'); }, 1600);
+}));
+</script>
+</body>
+</html>

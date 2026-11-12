@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>크리에이터 찾기 (/creators) — 시안 2판 · 2026-11-12</title>
+<!--
+  시안 2판: 크리에이터 찾기 `/creators` · 2026-11-12 · 둘러보기형(design-prompt 6-4)
+  지시: 팬꾹 전체 디자인 다시 그리기 2판(디자인 문서 개정 반영). 1판(creators-20261112)은 비교용으로만 봤고 복사해 고치지 않았다.
+  요소·문구·기능: 지금 구현(creator-search-page.tsx · creator-card-head.tsx · follow-button.tsx) 그대로(적용 규칙 6). 바꾼 것은 배치와 모양뿐. 새 설명 문장 없음. 데이터는 가짜 값.
+  명세: docs/ux/pages/ 에 없음 → 코드의 상태를 시안 도구로 전환.
+  폭: 본문 폭은 tokens.md 3절 토큰만(--pub-max 로그인 전 · --col-list 로그인 후). 시안 CSS 에 본문 폭 숫자를 적지 않았다(2-23). 전체 폭 배경 없음 → 100vw 를 쓰지 않는다.
+  1판과 달라진 것(자세히는 NOTES.md): ① 머리+검색+칩을 하늘 판 하나로 묶고 PC 는 제목(왼쪽)·검색창(오른쪽) 한 줄 ② 결과 줄에 개수(왼쪽)·소유자 확인(오른쪽) ③ 6-5 1 은 구역 구성 대안 다섯 가지를 따져 본 뒤 격자는 균등하게 유지(NOTES 8) ④ 휴대폰 카드 배너 4:1 은 아직 답이 없어 기본을 2:1 로 두고 도구로 전환.
+-->
+<link rel="stylesheet" href="../../../../src/shared/ui/tokens.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../public/fonts/TmoneyRoundWindRegular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Medium.subset.woff") format("woff"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-SemiBold.subset.woff") format("woff"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Bold.subset.woff") format("woff"); font-weight: 700; font-display: swap; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--background); color: var(--ink); font-family: var(--font); font-size: var(--fs-body); font-weight: 400; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; -webkit-text-size-adjust: 100%; }
+h1, h2, h3, p, ul, ol { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+h1, h2, h3 { font-family: var(--font-round); font-weight: var(--fw-title); letter-spacing: var(--ls-title); font-synthesis: none; }
+img, svg { display: block; max-width: 100%; }
+svg { flex-shrink: 0; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- 시안 도구(페이지 바깥) ---------- */
+.tool { background: var(--ink); color: var(--white); font-size: var(--fs-small); }
+.tool-in { max-width: calc(var(--col-wide) + 2 * var(--gutter)); margin: 0 auto; padding: var(--space-3) var(--gutter); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.tool b { font-weight: var(--fw-bold); margin-right: var(--space-2); }
+.tool .sep { width: 1px; height: 24px; background: rgb(255 255 255 / .35); margin: 0 var(--space-2); }
+.tool button { min-height: 44px; padding: 0 var(--space-4); border: 1px solid rgb(255 255 255 / .55); border-radius: var(--r-btn); background: transparent; color: var(--white); font: var(--fw-btn) var(--fs-small)/1.2 var(--font); cursor: pointer; }
+.tool button[aria-pressed="true"] { background: var(--white); color: var(--ink); border-color: var(--white); }
+.tool button:focus-visible { outline-color: var(--white); }
+.tool .cap { flex: 1 0 100%; color: var(--gray-300); }
+
+/* ---------- 상단 바 · 바닥글(지금 사이트 모양, 간단히) ---------- */
+.hdr { position: sticky; top: 0; z-index: 40; height: var(--header-h); background: var(--white); border-bottom: 1px solid var(--gray-200); }
+.hdr-in { display: flex; align-items: stretch; justify-content: space-between; gap: var(--nav-gap); height: 100%; max-width: var(--pub-max); margin-inline: auto; padding-inline: var(--gutter); }
+.logo { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; align-self: center; font-family: var(--font-logo); font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1; letter-spacing: 0; text-decoration: none; color: var(--brand-ink); }
+.logo img { width: 32px; height: 32px; border-radius: var(--r-logo); }
+.hnav { display: flex; flex: 1; gap: var(--nav-gap); }
+.hnav a { display: flex; align-items: center; font-size: var(--fs-nav); font-weight: var(--fw-nav); line-height: 1; color: var(--gray-600); text-decoration: none; border-bottom: 2px solid transparent; white-space: nowrap; }
+.hnav a[aria-current="page"] { color: var(--gray-900); border-bottom-color: var(--primary); }
+.hauth { display: flex; align-items: center; gap: var(--space-4); font-weight: var(--fw-nav); white-space: nowrap; }
+.hauth a { display: inline-flex; align-items: center; min-height: 44px; color: var(--gray-600); text-decoration: none; }
+.hauth a.strong { color: var(--gray-900); }
+.hauth .sep { width: 1px; height: 16px; background: var(--gray-200); }
+.hmenu { display: none; place-items: center; width: 48px; height: 48px; align-self: center; border: 0; border-radius: var(--r-btn); background: none; color: var(--gray-900); }
+@media (max-width: 767px) { .hnav, .hauth { display: none; } .hmenu { display: grid; } }
+.foot { background: var(--gray-50); color: var(--gray-600); font-size: var(--fs-small); }
+.foot-in { max-width: var(--pub-max); margin-inline: auto; padding: var(--space-6) var(--space-6) var(--space-8); display: grid; gap: var(--space-4); }
+.foot-in nav { display: flex; flex-wrap: wrap; gap: 0 var(--space-6); }
+.foot-in a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; }
+.foot-in .biz { display: grid; gap: var(--space-1); line-height: 1.5; }
+@media (max-width: 767px) { .foot-in { padding-inline: var(--gutter); } }
+
+/* ---------- 본문 틀 — 로그인 전 pub-max(상단 바와 같은 선), 로그인 후 목록형 col-list. 둘 다 안쪽 글 폭은 같다 ---------- */
+.page { max-width: var(--pub-max); margin: 0 auto; padding: var(--space-8) var(--gutter) var(--section-gap); min-width: 0; }
+.page[data-login="true"] { max-width: calc(var(--col-list) + 2 * var(--gutter)); }
+@media (max-width: 767px) { .page { padding-top: var(--space-4); padding-bottom: var(--space-12); } }
+
+/* 광고 배너(맨 위, 기둥 폭 그림만 있는 장) — 없으면 칸 없음 */
+.banner { margin-bottom: var(--space-8); }
+.banner img { width: 100%; height: auto; aspect-ratio: 2172 / 724; object-fit: cover; border-radius: var(--r-card); box-shadow: inset 0 0 0 1px var(--gray-200); }
+
+/* ① 찾기 판 = 머리(제목·설명) + 검색창 + 태그 칩을 하늘 면 한 장에. 판 안쪽 --panel-pad.
+   PC(768 이상): 위 줄은 제목 묶음(왼쪽 5fr)·검색창(오른쪽 7fr)을 세로 가운데로 맞추고(2-10), 칩 줄은 판 폭 전체. 휴대폰: 한 열 */
+.find { padding: var(--panel-pad); border-radius: var(--r-panel); background: var(--tint); box-shadow: inset 0 0 0 1px var(--tint-line); }
+.find-top { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: center; column-gap: var(--space-8); row-gap: var(--space-4); }
+.head h1 { font-size: var(--fs-title); line-height: 1.3; text-wrap: balance; }
+.head .desc { margin-top: var(--space-2); color: var(--gray-600); }
+.search { display: flex; align-items: center; gap: var(--space-2); height: 64px; padding: 0 var(--space-2) 0 var(--space-6); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--field-line), var(--card-shadow); }
+.search:focus-within { box-shadow: inset 0 0 0 var(--field-ring) var(--field-focus), var(--card-shadow); }
+.search input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; font: inherit; color: var(--ink); outline: 0; }
+.search input::placeholder { color: var(--gray-600); opacity: 1; }
+.go { display: inline-flex; flex: none; align-items: center; justify-content: center; gap: var(--space-2); min-height: 48px; padding: 0 var(--space-6); border: 0; border-radius: var(--r-icon); background: var(--brand); color: var(--on-brand); font: inherit; font-weight: var(--fw-btn); cursor: pointer; transition: background-color var(--dur-hover) var(--ease-micro), transform var(--dur-press) var(--ease-micro); }
+.go:hover { background: var(--brand-hover); }
+.go:active { transform: scale(.98); }
+.go:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+.chip { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--btn-h-sm); padding: 0 var(--space-4); border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-500); color: var(--gray-900); font: inherit; font-size: var(--fs-small); font-weight: 400; cursor: pointer; }
+.chip[data-icon="true"] { padding-left: var(--space-3); }
+.chip:hover { background: var(--gray-50); }
+.chip[aria-pressed="true"] { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); color: var(--brand-ink); font-weight: var(--fw-btn); }
+.chip:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.pb { display: inline-grid; place-items: center; flex: none; width: 20px; height: 20px; border-radius: var(--r-icon); overflow: hidden; }
+.pb img { width: 100%; height: 100%; object-fit: cover; }
+.pb.glyph img { width: 12px; height: 12px; filter: brightness(0) invert(1); }
+.pb.virtual { background: var(--surface-hover); color: var(--ink); }
+.pb.virtual svg { width: 16px; height: 16px; }
+
+/* ② 결과 줄 — 판과 격자 사이의 작은 정보 단위(6-5 3). 왼쪽 개수, 오른쪽 소유자 확인(한 문장). 위 32 · 아래 16 */
+.results { margin-top: var(--space-8); min-width: 0; container-type: inline-size; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-1) var(--space-6); }
+.count { font-size: var(--fs-small); line-height: var(--lh-caption); font-weight: var(--fw-btn); color: var(--sub); }
+.verify { display: flex; align-items: center; gap: var(--space-2); font-size: var(--fs-small); line-height: var(--lh-caption); color: var(--gray-600); }
+.verify svg { width: 16px; height: 16px; color: var(--brand-ink); }
+.hint { flex: 0 0 100%; font-size: var(--fs-small); line-height: var(--lh-caption); color: var(--gray-600); }
+.bar + ul, .bar + .empty { margin-top: var(--space-4); }
+
+/* ③ 격자 — 카드가 놓이는 칸 폭 기준: 678 이상 3열 · 444 이상 2열 · 아래 1열(design-rules 17절 그대로). 카드는 모두 같은 크기 */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+@container (min-width: 444px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: var(--space-6); } }
+@container (min-width: 678px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* 휴대폰 */
+@media (max-width: 767px) {
+  .find-top { grid-template-columns: minmax(0, 1fr); }
+  .search { height: 56px; padding-left: var(--space-4); }
+  .go { min-height: 44px; padding: 0 var(--space-4); }
+  .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: var(--space-4) calc(-1 * var(--panel-pad)) calc(-1 * var(--space-2)) calc(-1 * var(--space-2)); padding: var(--space-2) var(--panel-pad) var(--space-2) var(--space-2); }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; white-space: nowrap; }
+  .results { margin-top: var(--space-6); }
+  .bar { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 359.98px) { .go .lbl { display: none; } }
+
+/* ---------- 크리에이터 카드 — creator-card-head.module.css 값 그대로(PC). 휴대폰만 배너 4:1(제안) ---------- */
+.card { --personal: #DCEBFF; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--card-pad); border-radius: var(--r-card); background: var(--card-fx); cursor: pointer; box-shadow: var(--card-shadow); transition: transform .25s var(--ease-micro), box-shadow .25s var(--ease-micro); }
+.card::before { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--gray-200); pointer-events: none; transition: box-shadow .15s; }
+.card:hover::before, .card:focus-within::before { box-shadow: inset 0 0 0 1px var(--gray-500); }
+.card:hover { transform: translateY(-2px); box-shadow: var(--card-shadow-hover); }
+.card:has(.name a:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+@media (hover: none) { .card:hover { transform: none; } }
+.head-c { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.cover { position: relative; overflow: hidden; aspect-ratio: 2 / 1; margin: calc(var(--card-pad) * -1) calc(var(--card-pad) * -1) 0; background: var(--personal); }
+.cover img { position: absolute; right: 6%; bottom: -8%; width: auto; height: 80%; opacity: .22; pointer-events: none; transition: scale .4s var(--ease-micro); }
+@media (hover: hover) { .card:hover .cover img { scale: 1.03; } }
+.who { display: flex; align-items: flex-start; gap: var(--space-2); min-width: 0; }
+.photo { position: relative; flex: none; width: 64px; height: 64px; margin-top: -32px; border-radius: 50%; object-fit: cover; background: var(--primary-50); box-shadow: 0 0 0 3px var(--white); }
+.ringed .photo { box-shadow: 0 0 0 3px var(--personal), 0 0 0 6px var(--white); }
+.id { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; min-width: 0; }
+.name { height: 24px; overflow: hidden; font-size: var(--fs-body); font-weight: var(--fw-h3); line-height: 24px; text-overflow: ellipsis; white-space: nowrap; }
+.name a { color: inherit; text-decoration: none; }
+.name a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.name a:focus-visible { outline: none; }
+.name a::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+.badgeRow { display: flex; align-items: center; height: 22px; min-width: 0; }
+.fb { display: inline-flex; align-items: center; gap: var(--space-1); min-width: 0; max-width: 100%; height: 22px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--gray-900); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1; white-space: nowrap; overflow: hidden; }
+.ringed .fb { background: var(--personal); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--personal) 78%, #1F2937); color: var(--badge-ink); }
+.fb:has(.mk) { padding-left: 3px; }
+.mk { flex: none; display: grid; place-items: center; width: 14px; height: 14px; border-radius: var(--r-mark); background: var(--white); overflow: hidden; }
+.mk img { width: 100%; height: 100%; object-fit: cover; }
+.fbt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.line { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; height: calc(var(--fs-small) * var(--lh-caption) * 2); overflow: hidden; font-size: var(--fs-small); line-height: var(--lh-caption); color: var(--gray-600); overflow-wrap: anywhere; }
+.foot-c { display: flex; align-items: center; min-height: 22px; margin-top: var(--space-1); min-width: 0; }
+.tags { position: relative; display: flex; flex: 1 1 auto; flex-wrap: nowrap; gap: 6px; height: 22px; min-width: 0; overflow: hidden; }
+.ctag { flex: none; display: inline-flex; align-items: center; gap: var(--space-1); height: 22px; padding: 0 var(--space-2) 0 3px; border-radius: var(--r-pill); background: var(--f, var(--gray-100)); color: var(--k, var(--ink)); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1; white-space: nowrap; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--k, var(--ink)) 22%, var(--f, var(--gray-100))), var(--shadow); }
+.ctag[data-plain] { padding: 0 var(--space-2); }
+.ctag .bd { display: grid; place-items: center; width: 14px; height: 14px; border-radius: 50%; overflow: hidden; background: var(--white); }
+.ctag .bd img { width: 100%; height: 100%; object-fit: cover; }
+.ctag .bd.glyph img { width: 9px; height: 9px; filter: brightness(0) invert(1); }
+.ctag > svg { width: 14px; height: 14px; padding: 1px; border-radius: 50%; background: var(--ctag-face); }
+.acts { position: relative; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: calc(44px + var(--space-3) * 2); margin: var(--space-2) calc(var(--card-pad) * -1) calc(var(--card-pad) * -1); padding: var(--space-3) var(--card-pad); background: var(--white); }
+.cbtn { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--space-2); min-width: 0; height: 44px; overflow: hidden; border: 0; border-radius: var(--r-btn); color: var(--badge-ink); font: var(--fw-btn) var(--fs-small)/1.25 var(--font); white-space: nowrap; text-decoration: none; cursor: pointer; }
+.cbtn.main { flex: 1 1 0; padding: 0 var(--space-3); background: var(--personal); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--personal) 78%, #1F2937); }
+.cbtn.main:hover { background: color-mix(in srgb, var(--personal) 88%, var(--gray-900)); }
+.cbtn.sub { flex: none; width: 44px; padding: 0; background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); font-weight: 400; }
+.cbtn.sub:hover { background: var(--gray-50); }
+.cbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.mine { pointer-events: none; }
+.mine .tag { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1; }
+/* 휴대폰 1열 카드 배너 비율 — 아직 사용자 답 없음. 기본 2:1(지금 승인값), 도구에서 4:1(제안)로 바꿔 본다 */
+@media (max-width: 767px) { body[data-cover="4"] .cover { aspect-ratio: 4 / 1; } }
+@media (prefers-reduced-motion: reduce) { .card, .cover img, .go { transition: none; } .card:hover { transform: none; } .card:hover .cover img { scale: none; } .go:active { transform: none; } }
+
+/* ---------- 결과 없음 · 목록 비어 있음 — 격자 폭 전체, 안쪽은 가운데 한 묶음(2-17) ---------- */
+.empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); padding: var(--space-12) var(--card-pad); border-radius: var(--r-card); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); color: var(--gray-600); text-align: center; }
+.empty img { width: var(--art-empty); height: var(--art-empty); object-fit: contain; }
+.empty h2 { font-size: var(--fs-card); line-height: 1.4; color: var(--gray-900); }
+.empty p { max-width: 480px; }
+.btn-line { display: inline-flex; align-items: center; justify-content: center; min-height: var(--btn-h); padding: 0 var(--space-6); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--gray-900); font-weight: var(--fw-btn); text-decoration: none; }
+.btn-line:hover { background: var(--gray-50); }
+@media (max-width: 767px) { .empty { padding-block: var(--space-8); } .btn-line { width: 100%; } }
+</style>
+</head>
+<body data-state="all" data-cover="2">
+
+<div class="tool" role="region" aria-label="시안 도구 — 상태 전환">
+  <div class="tool-in">
+    <b>시안 도구</b>
+    <button type="button" data-set="all" aria-pressed="true">전체</button>
+    <button type="button" data-set="chip" aria-pressed="false">태그 고름 (유튜브)</button>
+    <button type="button" data-set="query" aria-pressed="false">검색어 결과 (달)</button>
+    <button type="button" data-set="none" aria-pressed="false">결과 없음</button>
+    <button type="button" data-set="empty" aria-pressed="false">목록 비어 있음</button>
+    <button type="button" data-set="banner" aria-pressed="false">배너 있음</button>
+    <button type="button" data-set="fan" aria-pressed="false">로그인 후 (팬)</button>
+    <button type="button" data-set="creator" aria-pressed="false">로그인 후 (크리에이터)</button>
+    <span class="sep" aria-hidden="true"></span>
+    <b>휴대폰 카드 배너</b>
+    <button type="button" data-cover="2" aria-pressed="true">2:1 (지금)</button>
+    <button type="button" data-cover="4" aria-pressed="false">4:1 (제안·답 없음)</button>
+    <p class="cap">로그인 후 두 상태는 본문 칸만 그렸다(왼쪽 메뉴는 이 시안 범위 밖 — 본문 폭은 같은 목록형 기본 폭). 검색창에 직접 쳐서 걸러 볼 수 있다. 카드 세 번째는 이름 17자 · 팬덤 이름 10자 · 소개 두 줄 넘침.</p>
+  </div>
+</div>
+
+<header class="hdr">
+  <div class="hdr-in">
+    <a class="logo" href="#"><img src="../../../../public/images/logo-mark.png" alt="">팬꾹</a>
+    <nav class="hnav" aria-label="주 메뉴">
+      <a href="#" aria-current="page">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a>
+    </nav>
+    <div class="hauth" id="hauth"><a href="#">로그인</a><span class="sep" aria-hidden="true"></span><a class="strong" href="#">회원가입</a></div>
+    <button class="hmenu" type="button" aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</header>
+
+<main id="main" class="page" data-login="false">
+  <div class="banner" id="banner" hidden><img src="../../../../public/images/banners/launch-01-introduction-no-button.png" alt="팬의 마음을, 크리에이터에게. 승인된 선물을 검수 후 전달합니다." width="2172" height="724"></div>
+
+  <section class="find" aria-labelledby="find-title">
+    <div class="find-top">
+      <header class="head">
+        <h1 id="find-title">선물을 보낼 크리에이터 찾기</h1>
+        <p class="desc">크리에이터 이름으로 검색해 주세요.</p>
+      </header>
+      <form class="search" role="search" onsubmit="event.preventDefault(); this.q.blur();">
+        <label class="sr-only" for="q">크리에이터 이름</label>
+        <input id="q" type="search" name="q" placeholder="예: 하루, 치지직, 새벽달 라디오" autocomplete="off">
+        <button class="go" type="submit" aria-label="검색">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+          <span class="lbl">검색</span>
+        </button>
+      </form>
+    </div>
+    <h2 class="sr-only">태그</h2>
+    <div class="chips" id="chips" role="group" aria-label="태그별 보기"></div>
+  </section>
+
+  <section class="results" aria-label="검색 결과">
+    <div class="bar">
+      <p class="count" id="count" role="status" aria-live="polite"></p>
+      <p class="verify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg>활동 채널 소유자 확인을 완료한 크리에이터만 표시됩니다.</p>
+      <p class="hint" id="hint" hidden>팔로우 시 내 닉네임이 크리에이터에게 표시됩니다.</p>
+    </div>
+    <ul class="grid" id="grid"></ul>
+    <div class="empty" id="empty" hidden>
+      <img src="../../../../public/img/illust-empty-search.png" alt="" width="160" height="160">
+      <h2>검색 결과가 없습니다</h2>
+      <p>검색어와 선택한 태그를 확인해 주세요. 채널 소유자 확인 전인 크리에이터는 검색되지 않습니다.</p>
+      <a class="btn-line" href="#">크리에이터 초대 문의</a>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="foot-in">
+    <nav aria-label="정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">취소·환불 규정</a><a href="#">분쟁 처리 안내</a><a href="#">신고·문의</a><a href="#">고객센터</a></nav>
+    <nav aria-label="안내"><a href="#">팬꾹 소개</a><a href="#">요금 안내</a><a href="#">팬 이용 안내</a><a href="#">크리에이터 이용 안내</a><a href="#">보안 안내</a><a href="#">검수 기준</a><a href="#">자주 묻는 질문</a><a href="#">공지사항</a></nav>
+    <div class="biz"><span>상호 팬꾹 · 대표자 정재원 · 사업자등록번호 260-12-03086</span><span>© 2026 팬꾹. All rights reserved.</span></div>
+  </div>
+</footer>
+
+<script>
+/* 시안 도구 전용 — 더미 데이터를 그리고 상태를 바꾼다. 비즈니스 로직 아님 */
+var BR = "../../../../public/brand/";
+var BRAND = {
+  "SOOP": { src: BR + "soop.png", f: "#EAF5FE", k: "#0B5CAD", kind: "app" },
+  "치지직": { src: BR + "chzzk.png", f: "#E6FFF5", k: "#006B47", kind: "app" },
+  "유튜브": { src: BR + "youtube.svg", f: "#FFECEC", k: "#C00000", kind: "glyph", bg: "#FF0000" },
+  "알플레이": { src: BR + "rplay.png", f: "#E8F6FC", k: "#0A6A96", kind: "app" },
+  "인스타그램": { src: BR + "instagram.svg", f: "#FFEBF3", k: "#B8004D", kind: "glyph", bg: "radial-gradient(circle at 30% 107%, #FDF497 0%, #FDF497 5%, #FD5949 45%, #D6249F 60%, #285AEB 90%)" },
+  "X": { src: BR + "x.svg", f: "#F2F2F3", k: "#343039", kind: "glyph", bg: "#000" },
+  "스레드": { src: BR + "threads.svg", f: "#F2F2F3", k: "#343039", kind: "glyph", bg: "#000" },
+  "버추얼": { f: "#F2F2F3", k: "#343039", kind: "virtual" }
+};
+var CHIP_ORDER = ["SOOP", "치지직", "유튜브", "알플레이", "인스타그램", "X", "스레드", "버추얼"];
+var VIRT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5C3 8.4 3.9 7.5 5 7.5h14c1.1 0 2 .9 2 2v5c0 1.1-.9 2-2 2h-3.2c-.7 0-1.3-.4-1.7-1l-.7-1.2c-.5-.8-1.7-.8-2.2 0l-.7 1.2c-.4.6-1 1-1.7 1H5c-1.1 0-2-.9-2-2z"/></svg>';
+var P = ["#FDE2E4", "#FFE5CC", "#FFF1B8", "#DFF5D8", "#D3F0EC", "#DCEBFF", "#E6E0FF", "#F6DFF0"];
+var PAW = "../../../../public/img/default-face/paw.webp";
+var CREATORS = [
+  { n: "하루", p: 4, fan: "하루네", sym: 1, intro: "매일 저녁 게임하며 수다 떠는 방송이에요.", tags: ["치지직", "버추얼"], th: 1 },
+  { n: "모모", p: 5, fan: "", intro: "노래 방송을 해요.", tags: ["유튜브", "인스타그램"] },
+  { n: "작은 책방 새벽달 라디오 하루 방송", p: 2, fan: "달빛서재단원들모여", sym: 1, intro: "새벽에 이야기를 나누고 책에서 고른 문장을 천천히 읽어 드려요. 사연은 방송 중에 읽습니다.", tags: ["SOOP", "치지직", "유튜브", "인스타그램"], th: 1 },
+  { n: "별이", p: 3, fan: "", intro: "그림 그리는 방송을 해요.", tags: ["유튜브", "버추얼"] },
+  { n: "솜사탕", p: 0, fan: "솜솜이", sym: 0, intro: "맛있는 걸 같이 먹어요.", tags: ["치지직", "X"], th: 1 },
+  { n: "도담", p: 1, fan: "", intro: "", tags: ["유튜브", "인스타그램"] },
+  { n: "보리", p: 6, fan: "보리밭", sym: 1, intro: "여행 이야기를 들려 드려요.", tags: ["SOOP", "유튜브"], th: 1 },
+  { n: "라온", p: 7, fan: "", intro: "옛날 게임을 해요.", tags: ["치지직"] },
+  { n: "나무", p: 4, fan: "", intro: "같이 공부해요.", tags: ["유튜브"] },
+  { n: "시월", p: 6, fan: "시월이들", sym: 0, intro: "직접 연주해요.", tags: ["SOOP", "알플레이"], th: 1 },
+  { n: "구름", p: 1, fan: "", intro: "하루하루를 기록해요.", tags: ["유튜브", "인스타그램", "스레드"] },
+  { n: "달무리", p: 0, fan: "", intro: "집밥을 만들어요.", tags: ["치지직", "스레드"] }
+];
+var STATE = "all", TAG = "", Q = "", FOLLOWING = { 1: 1, 4: 1, 8: 1 }, OWN = 0;
+
+function esc(s) { return s.replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+function badge(b, cls) {
+  if (b.kind === "virtual") return VIRT;
+  if (b.kind === "app") return '<span class="' + cls + '" aria-hidden="true"><img src="' + b.src + '" alt="" width="24" height="24"></span>';
+  return '<span class="' + cls + ' glyph" style="background:' + b.bg + '" aria-hidden="true"><img src="' + b.src + '" alt="" width="12" height="12"></span>';
+}
+function chipHtml(t) {
+  var b = BRAND[t];
+  return '<span class="ctag" style="--f:' + b.f + ';--k:' + b.k + '">' + (b.kind === "virtual" ? VIRT : badge(b, "bd")) + '<span>' + t + '</span></span>';
+}
+var HEART_PLUS = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.479 19.374-.971.939a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5a5.2 5.2 0 0 1-.219 1.49"/><path d="M15 15h6"/><path d="M18 12v6"/></svg>';
+var HEART_OFF = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 4.893a5.5 5.5 0 0 1 1.091.931.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 1.872-1.002 3.356-2.187 4.655"/><path d="m16.967 16.967-3.459 3.346a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5a5.5 5.5 0 0 1 2.747-4.761"/><path d="m2 2 20 20"/></svg>';
+var GIFT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>';
+
+function cardHtml(c, i) {
+  var login = STATE === "fan" || STATE === "creator";
+  var acts;
+  if (STATE === "creator" && i === OWN) acts = '<span class="tag">내 페이지</span>';
+  else if (!login) acts = '<a class="cbtn main" href="#" aria-label="' + esc(c.n) + ' 팔로우 — 로그인 필요">' + HEART_PLUS + '<span>팔로우</span></a>';
+  else if (FOLLOWING[i]) acts = '<a class="cbtn main" href="#" aria-label="' + esc(c.n) + ' 선물 보내기">' + GIFT + '<span>선물 보내기</span></a><button class="cbtn sub" type="button" aria-label="' + esc(c.n) + ' 팔로우 취소" title="팔로우 취소">' + HEART_OFF + '</button>';
+  else acts = '<button class="cbtn main" type="button" aria-label="' + esc(c.n) + ' 팔로우">' + HEART_PLUS + '<span>팔로우</span></button>';
+  var fan = c.fan ? '<span class="fb">' + (c.sym ? '<span class="mk" aria-hidden="true"><img src="' + PAW + '" alt="" width="14" height="14"></span>' : '') + '<span class="fbt">' + esc(c.fan) + '</span></span>' : '';
+  return '<li class="card' + (c.th ? ' ringed' : '') + '" style="--personal:' + P[c.p] + '" data-i="' + i + '">' +
+    '<div class="head-c"><div class="cover" aria-hidden="true"><img src="../../../../public/images/logo-mark-clear.png" alt=""></div>' +
+    '<div class="who"><img class="photo" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true" width="240" height="240"><div class="id"><p class="name"><a href="#" title="' + esc(c.n) + '">' + esc(c.n) + '</a></p><p class="badgeRow">' + fan + '</p></div></div></div>' +
+    '<p class="line">' + esc(c.intro) + '</p>' +
+    '<div class="foot-c"><p class="tags">' + c.tags.map(chipHtml).join("") + '</p></div>' +
+    '<div class="acts' + (STATE === "creator" && i === OWN ? ' mine' : '') + '">' + acts + '</div></li>';
+}
+
+/* 카드 칩 줄 — 넘치는 칩은 「+N」(실제 구현과 같은 규칙) */
+function fitTags() {
+  document.querySelectorAll(".tags").forEach(function (box) {
+    box.querySelectorAll("[data-plain]").forEach(function (x) { x.remove(); });
+    var kids = Array.prototype.slice.call(box.children);
+    kids.forEach(function (k) { k.hidden = false; });
+    if (box.scrollWidth <= box.clientWidth + 0.5) return;
+    var w = box.clientWidth, used = 0, keep = 0;
+    var plusW = 30;
+    for (var j = 0; j < kids.length; j++) {
+      var kw = kids[j].getBoundingClientRect().width + (j ? 6 : 0);
+      var more = kids.length - j - 1;
+      if (used + kw + (more > 0 ? plusW + 6 : 0) <= w) { used += kw; keep = j + 1; } else break;
+    }
+    if (keep === 0) keep = 1;
+    for (var m = keep; m < kids.length; m++) kids[m].hidden = true;
+    var plus = document.createElement("span");
+    plus.className = "ctag"; plus.setAttribute("data-plain", ""); plus.style.cssText = "--f:#F2F2F3;--k:#343039";
+    plus.textContent = "+" + (kids.length - keep);
+    box.appendChild(plus);
+  });
+}
+
+function list() { return STATE === "empty" ? [] : CREATORS; }
+function usedChips() {
+  var have = {}; list().forEach(function (c) { c.tags.forEach(function (t) { have[t] = 1; }); });
+  return CHIP_ORDER.filter(function (t) { return have[t]; });
+}
+function render() {
+  var all = list();
+  var chips = ["" ].concat(usedChips());
+  document.getElementById("chips").innerHTML = chips.map(function (t) {
+    var b = t ? BRAND[t] : null;
+    var inner = t === "" ? "전체" : (b.kind === "virtual" ? '<span class="pb virtual">' + VIRT + '</span>' : badge(b, "pb")) + '<span>' + t + '</span>' + (TAG === t && b.kind !== "virtual" ? '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' : "");
+    return '<button class="chip" type="button" aria-pressed="' + (TAG === t) + '" data-icon="' + (t !== "") + '" data-tag="' + t + '">' + inner + '</button>';
+  }).join("");
+  var q = Q.trim();
+  var shown = all.map(function (c, i) { return { c: c, i: i }; }).filter(function (x) {
+    return (!q || x.c.n.indexOf(q) >= 0 || x.c.tags.indexOf(q) >= 0) && (!TAG || x.c.tags.indexOf(TAG) >= 0);
+  });
+  document.getElementById("grid").innerHTML = shown.map(function (x) { return cardHtml(x.c, x.i); }).join("");
+  document.getElementById("grid").hidden = shown.length === 0;
+  document.getElementById("empty").hidden = shown.length !== 0;
+  document.getElementById("count").textContent = (q || TAG) ? "검색 결과 " + shown.length + "명" : "전체 " + all.length + "명";
+  document.getElementById("hint").hidden = !(STATE === "fan" || STATE === "creator");
+  document.getElementById("banner").hidden = STATE !== "banner";
+  document.getElementById("hauth").innerHTML = (STATE === "fan" || STATE === "creator") ? '<a class="strong" href="#">내 정보</a>' : '<a href="#">로그인</a><span class="sep" aria-hidden="true"></span><a class="strong" href="#">회원가입</a>';
+  document.getElementById("q").value = Q;
+  fitTags();
+}
+function setState(s) {
+  STATE = s; TAG = ""; Q = "";
+  if (s === "chip") TAG = "유튜브";
+  if (s === "query") Q = "달";
+  if (s === "none") Q = "가나다라마";
+  document.body.setAttribute("data-state", s);
+  document.querySelectorAll(".tool [data-set]").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-set") === s); });
+  render();
+}
+document.querySelectorAll(".tool [data-set]").forEach(function (b) { b.addEventListener("click", function () { location.hash = b.getAttribute("data-set"); setState(b.getAttribute("data-set")); }); });
+document.getElementById("chips").addEventListener("click", function (e) { var b = e.target.closest("[data-tag]"); if (!b) return; TAG = b.getAttribute("data-tag"); render(); });
+document.getElementById("q").addEventListener("input", function (e) { Q = e.target.value; var pos = e.target.selectionStart; render(); var el = document.getElementById("q"); el.focus(); el.setSelectionRange(pos, pos); });
+var h = location.hash.replace("#", "");
+setState(["all", "chip", "query", "none", "empty", "banner", "fan", "creator"].indexOf(h) >= 0 ? h : "all");
+window.addEventListener("hashchange", function () { var x = location.hash.replace("#", ""); if (x && x !== STATE) setState(x); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTags);
+window.addEventListener("resize", fitTags);
+window.addEventListener("load", fitTags);
+</script>
+<script>
+/* 시안 도구 전용 — 로그인 후 틀 폭, 휴대폰 배너 비율 전환 */
+(function () {
+  var main = document.getElementById("main");
+  function sync() { var s = document.body.getAttribute("data-state"); main.setAttribute("data-login", (s === "fan" || s === "creator") ? "true" : "false"); }
+  document.querySelectorAll(".tool [data-set]").forEach(function (b) { b.addEventListener("click", sync); });
+  window.addEventListener("hashchange", sync); sync();
+  function setCover(v) { document.body.setAttribute("data-cover", v); document.querySelectorAll(".tool [data-cover]").forEach(function (x) { x.setAttribute("aria-pressed", x.getAttribute("data-cover") === v); }); }
+  document.querySelectorAll(".tool [data-cover]").forEach(function (b) { b.addEventListener("click", function () { setCover(b.getAttribute("data-cover")); }); });
+  var m = location.search.match(/cover=(\d)/); if (m) setCover(m[1]);
+})();
+</script>
+</body>
+</html>

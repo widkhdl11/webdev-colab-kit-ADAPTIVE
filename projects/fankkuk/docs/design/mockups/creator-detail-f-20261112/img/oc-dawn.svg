@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><!-- 화면 예시: 다른 크리에이터 배경 사진 대용(새벽 바다) -->
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6C8C4"/><stop offset=".55" stop-color="#FBE3CF"/><stop offset="1" stop-color="#FFF2DE"/></linearGradient>
+<linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9DB6D8"/><stop offset="1" stop-color="#6E8DBA"/></linearGradient></defs>
+<rect width="1200" height="600" fill="url(#g)"/><circle cx="600" cy="360" r="70" fill="#FFF7E6" opacity=".9"/>
+<rect y="360" width="1200" height="240" fill="url(#s)"/>
+<g stroke="#FFFFFF" stroke-opacity=".55" stroke-width="4" stroke-linecap="round"><path d="M520 400h160M480 440h240M540 480h120"/></g></svg>
