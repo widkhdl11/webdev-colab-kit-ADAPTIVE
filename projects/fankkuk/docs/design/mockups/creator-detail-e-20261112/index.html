@@ -307,17 +307,18 @@ details[open] .chev { transform: rotate(180deg); }
 @container (min-width: 678px) { .cgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 /* 다른 크리에이터 — 운영 값(creator-profile.module.css .otherGrid·.other·.otherFace·.otherWho) */
 /* 2026-11-12 사용자 「다른 크리에이터 → 추천 크리에이터 둘러보기, 양쪽에 화살표가 있는 자동 슬라이드」.
-   한 번에 3장(휴대폰 2장), 양 끝 화살표 44(카드 배경 사진 부분의 세로 가운데 — 프로필 동그라미를 가리지 않게. PC 는 카드 가장자리에 반 걸침, 휴대폰은 카드 안쪽 4), 5초마다 한 장, 끝에서 처음으로.
+   한 번에 3장(휴대폰 2장), 양 끝 화살표 44(카드 바깥 양옆, 카드 높이 가운데 — 2026-11-12 사용자 「화살표 높이가 이상하고 레이아웃 폭을 넓혀도 된다」), 5초마다 한 장, 끝에서 처음으로.
    10-4: 멈춤 버튼 + 마우스를 올리거나 초점이 들어오면 멈춤 / 12-3: 「움직임 줄이기」면 자동 넘김 없음(12-3 「손대지 않아도 움직이는 것 금지」와는 사용자 지시로 어긋남) */
-.ocar { position: relative; }
+/* 화살표는 카드 위에 겹치지 않고 트랙 바깥 양옆(카드 높이 가운데). 구역만 본문보다 양쪽 60(화살표 44 + 간격 16)씩 넓혀 카드 줄은 본문 폭 1080 그대로 둔다.
+   화면이 1200 보다 좁아 바깥 자리가 없으면 본문 안에서 카드 줄을 좁히고, 휴대폰(767 이하)은 화살표 없이 손으로 넘기며 다음 카드 끝을 화면 끝에 살짝 보인다(2-3) */
+.ocar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; column-gap: var(--space-4); align-items: center; margin-inline: calc(-1 * (44px + var(--space-4))); }
+@media (max-width: 1199px) { .ocar { margin-inline: 0; } }
 .ogrid { display: flex; gap: var(--space-4); margin: -4px; padding: 4px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 4px; scrollbar-width: none; overscroll-behavior-x: contain; } /* 4: 그림자가 잘리지 않게 */
 .ogrid::-webkit-scrollbar { display: none; }
 .ogrid > li { flex: 0 0 calc((100% - 2 * var(--space-4)) / 3); min-width: 0; scroll-snap-align: start; }
-.oarrow { position: absolute; top: calc((100cqw - 2 * var(--space-4)) / 12); z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; margin-top: -22px; border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); cursor: pointer; }
+.oarrow { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); cursor: pointer; }
 .oarrow svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 @media (hover: hover) { .oarrow:hover { background: var(--surface-hover); } }
-.oarrow.prev { left: -22px; }
-.oarrow.next { right: -22px; }
 .opause { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair), var(--btn-ghost-shadow); color: var(--ink); cursor: pointer; }
 .opause svg { width: 20px; height: 20px; fill: currentColor; }
 .opause .i-play { display: none; }
@@ -336,7 +337,7 @@ details[open] .chev { transform: rotate(180deg); }
 .owho { display: grid; gap: var(--space-1); min-width: 0; padding-top: var(--space-2); }
 .owho b { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; overflow-wrap: anywhere; }
 .otags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-@media (max-width: 767px) { .ogrid { gap: var(--space-3); } .ogrid > li { flex-basis: calc((100% - var(--space-3)) / 2); } .oarrow { top: calc((100cqw - var(--space-3)) / 8); } .oarrow.prev { left: var(--space-1); } .oarrow.next { right: var(--space-1); } .orow { flex-direction: column; gap: 0; padding: 0 var(--space-3) var(--space-3); } .oface { width: 48px; height: 48px; margin-top: -24px; } }
+@media (max-width: 767px) { .ogrid { gap: var(--space-3); } .ogrid > li { flex-basis: calc((100% - var(--space-3)) / 2); } .ocar { display: block; } .oarrow { display: none; } .ogrid { margin-right: calc(-4px - var(--gutter)); padding-right: calc(4px + var(--gutter)); scroll-padding-inline: 4px calc(4px + var(--gutter)); } .orow { flex-direction: column; gap: 0; padding: 0 var(--space-3) var(--space-3); } .oface { width: 48px; height: 48px; margin-top: -24px; } }
 .ccard { --personal-line: color-mix(in srgb, var(--personal) 78%, var(--gray-900) 22%); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--card-pad); border-radius: var(--r-card); background: var(--card-fx); cursor: pointer; box-shadow: var(--card-shadow); transition: transform .25s var(--ease-micro), box-shadow .25s var(--ease-micro); }
 .ccard::before { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--gray-200); pointer-events: none; transition: box-shadow .15s; }
 .ccard:hover::before, .ccard:focus-within::before { box-shadow: inset 0 0 0 1px var(--gray-500); }
