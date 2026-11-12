@@ -1,5 +1,6 @@
 /* 관리자 첫 화면 숫자 칸 — 시안 docs/design/mockups/site/v4/admin/index.html 의 .kpis·.kpi (design-rules 8절).
    글자 크기·간격은 시안 값(34·15·13, 14·2)이 아니라 design-rules 의 단계(32·16·14, 12·4)로 맞췄다. 초점 표시는 전역 규칙(base.css)을 그대로 받는다. */
+.countsH { font-size: var(--fs-title); } /* 낭독기 전용 제목 — 예전 h2 기본 크기 그대로 */
 .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .kpi { display: grid; align-content: start; gap: 4px; min-width: 0; padding: 12px 16px; border-radius: var(--r-card); background: var(--surface); color: var(--ink); text-decoration: none; }
 .kpi:hover { background: var(--surface-hover); }

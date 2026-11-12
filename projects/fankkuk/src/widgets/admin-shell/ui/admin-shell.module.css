@@ -26,7 +26,8 @@
 
 .content { padding: 24px 24px 64px; max-width: 1560px; }
 
-/* 좁은 화면 — 1024px 미만은 안내만 */
+/* 좁은 화면 — 1024px 미만은 안내만. 넓은 화면에서 숨어 있는 동안의 제목 크기는 예전 h1 기본값(48) 그대로 */
+.pcOnly h1 { font-size: var(--fs-hero); }
 .pcOnly { display: none; }
 @media (max-width: 1279px) {
   .root { --side-w: 200px; }

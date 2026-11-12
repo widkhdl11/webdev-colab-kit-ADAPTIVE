@@ -47,7 +47,7 @@
 
 /* ③ 소개 띠 — 주요 구역이라 낮은 농도 그라데이션, 위아래 하늘 선 */
 .band { margin-top: var(--section-gap); padding-block: var(--section-gap); background: linear-gradient(180deg, var(--primary-50), var(--tint)); box-shadow: inset 0 1px 0 var(--tint-line), inset 0 -1px 0 var(--tint-line); }
-.bandTitle { margin: 0; }
+.bandTitle { margin: 0; font-size: var(--fs-title); }
 .accent { padding-inline: 2px; background: var(--grad-title) no-repeat 0 90% / 100% 0.4em; }
 .lede { margin: var(--space-2) 0 0; color: var(--gray-600); }
 
@@ -85,6 +85,7 @@
 
 /* 끝 검색 띠 */
 .end { margin-top: var(--section-gap); padding-block: var(--space-16); background: var(--tint); box-shadow: inset 0 1px 0 var(--tint-line); }
+.end h2 { font-size: var(--fs-title); }
 .end .search { margin-top: var(--space-6); }
 
 @media (max-width: 879.98px) {

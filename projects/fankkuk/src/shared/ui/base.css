@@ -35,10 +35,18 @@ b, strong, th, dt { font-weight: var(--fw-bold); }
    .t-card  카드 제목      20        800  줄간격 1.4
    .t-lead  리드           18        400  줄간격 1.6
    .t-body  본문·버튼·네비·보조 16     400  줄간격 1.6   (.t-meta = 같은 크기, 색만 --sub)
-   h1 = .t-hero, h2 = .t-title, h3 = .t-card 가 기본값이다 (페이지 제목이 h1 이면 .t-title 을 같이 단다). */
-.t-hero, h1 { font-size: var(--fs-hero); line-height: 1.2; letter-spacing: var(--ls-title); }
-.t-title, h2 { font-size: var(--fs-title); line-height: 1.3; letter-spacing: var(--ls-title); }
-.t-card, h3 { font-size: var(--fs-card); line-height: 1.4; letter-spacing: 0; }
+   제목 요소의 기본 크기(2026-11-12 정리): h1 32(휴대폰 24) · h2 24(휴대폰 20) · h3 16 — 화면들이 가장 많이 쓰는 값.
+   이보다 큰 제목(첫 화면 48·구간 32)은 그 화면 CSS 나 .t-hero·.t-title 로 직접 정한다. 줄간격·자간은 예전 묶음 그대로. */
+.t-hero, h1 { line-height: 1.2; letter-spacing: var(--ls-title); }
+.t-title, h2 { line-height: 1.3; letter-spacing: var(--ls-title); }
+.t-card, h3 { line-height: 1.4; letter-spacing: 0; }
+.t-hero { font-size: var(--fs-hero); }
+.t-title { font-size: var(--fs-title); }
+.t-card { font-size: var(--fs-card); }
+h1 { font-size: var(--fs-title); }
+h2 { font-size: var(--fs-page); }
+h3 { font-size: var(--fs-body); }
+@media (max-width: 767px) { h2 { font-size: var(--fs-card); } }
 /* 제목만 티머니 둥근바람(400·800 두 굵기 — 없는 굵기를 가짜로 만들지 않는다) */
 :is(h1, h2, h3, .t-hero, .t-title, .t-card, .hero-title):where(:not(.admin-area *)) { font-family: var(--font-round); font-weight: var(--fw-title); font-synthesis: none; }
 .t-lead { font-size: var(--fs-lead); line-height: 1.6; font-weight: 400; }
