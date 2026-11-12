@@ -7,7 +7,7 @@
 <!--
   e판 사용자 지시(배치만 바꿈, 요소 모양은 d판 그대로): 1 배경 사진 전체 폭 / 2 상단 묶음 = 윗줄 프로필 | 팔로우·선물 보내기(아래 아무것도 없음), 아랫줄 「진행 중인 선물함」 | 요금·승인 시간 + 받기 어려운 선물(선물함과 같은 높이에서 시작)
   / 3 상세 내용(열고 닫는 영역) = 3-1 2열(왼쪽 전달 과정 → 받고 싶은 선물, 오른쪽 보내기 전 안내, 같은 높이 시작) + 3-2 나에게 온 감사 카드(2열 뒤 독립 줄, 슬라이더 본문 전체 폭) / 4 다른 크리에이터 전체 폭.
-  처음엔 열림(가정). 닫으면 상단 묶음과 다른 크리에이터가 빈 공간 없이 이어지게. 여닫는 버튼 문구·위치는 제안. 시안 도구에 「상세 내용 닫힘」. 휴대폰 한 열: 프로필 → 버튼 → 진행 중인 선물함 → 요금·승인 시간·받기 어려운 선물 → 상세 내용(전달 과정 → 받고 싶은 선물 → 보내기 전 안내 → 나에게 온 감사 카드) → 다른 크리에이터. 값은 tokens.md, 줄 사이 ≥ 줄 안 × 2(2-2). 바뀐 표는 NOTES.md 맨 위 「d판 → e판」.
+  처음엔 닫힘(2026-11-12 사용자 확정 「기본은 접힌 상태로」 — 이 판으로 승인). 닫으면 상단 묶음과 다른 크리에이터가 빈 공간 없이 이어지게. 여닫는 버튼 문구·위치는 제안. 시안 도구에 「상세 내용 닫힘」. 휴대폰 한 열: 프로필 → 버튼 → 진행 중인 선물함 → 요금·승인 시간·받기 어려운 선물 → 상세 내용(전달 과정 → 받고 싶은 선물 → 보내기 전 안내 → 나에게 온 감사 카드) → 다른 크리에이터. 값은 tokens.md, 줄 사이 ≥ 줄 안 × 2(2-2). 바뀐 표는 NOTES.md 맨 위 「d판 → e판」.
   d판 사용자 지시 원문(요약 없이): 「로그인한 유저별로 나와의 감사인사카드가 슬라이드로 나오는 부분이 있으면 좋겠네. 그리고 선물함 카드가 폭이 너무 길다. 내가 원하는 카드 모양은 대략 어떤 선물함인지 파악만 가능한 내용에 작고 아기자기한 카드로 선물함 목록이 뜨고, 그걸 눌러서 어떤 선물함인지 자세히 보고, 내가 원하는게 맞으면 신청하기로 신청을 하는걸 원하는거야 저렇게 큰게 필요가 없어. 그리고 선물함은 상단 카드 안에 한 요소처럼 디자인 됐으면 좋겠어. 지금은 상단 카드아래에 별개의 섹션 같잖나」
   d판에서 바꾼 것: (A) 선물함 = 프로필 글 묶음 안(감사 문장 아래)의 작은 타일 줄 + 누르면 상세 창(dialog) / (B) 둘째 줄 왼쪽 맨 위에 「나에게 온 감사 카드」 가로 슬라이드(보는 팬 본인 것만). 나머지는 c판 그대로. 자세한 표는 NOTES.md 맨 위 「c판 → d판」.
   c판 사용자 지시 원문(요약 없이): 「크리에이터 상세 시안을 아래대로 고쳐 줘. 각 요소의 모양(전체 폭 배경 사진, 선물함 카드, 다른 크리에이터 3열 카드, 버튼 아래 요금·승인 시간 한 줄)은 그대로 둔다.
@@ -394,7 +394,7 @@ details[open] .chev { transform: rotate(180deg); }
     <button type="button" id="coverToggle" aria-pressed="false">배경: 기둥 폭 2:1</button>
     <button type="button" id="wishToggle" aria-pressed="false">받고 싶은 선물 없을 때</button>
     <button type="button" id="replyToggle" aria-pressed="false">나에게 온 감사 카드 없을 때</button>
-    <button type="button" id="detailToggle" aria-pressed="false">상세 내용 닫힘</button>
+    <button type="button" id="detailToggle" aria-pressed="true">상세 내용 닫힘</button>
     <p class="cap" id="cap" aria-live="polite"></p>
   </div>
 </div>
@@ -488,12 +488,12 @@ details[open] .chev { transform: rotate(180deg); }
 
   </div>
 
-  <!-- 상세 내용: 여닫는 줄 + 3-1 2열 + 3-2 감사 카드. 처음엔 열림(가정) -->
+  <!-- 상세 내용: 여닫는 줄 + 3-1 2열 + 3-2 감사 카드. 처음엔 닫힘(사용자 확정) -->
   <div class="detail" data-show="needs_follow open self hidden unsigned fail_follow fail_unfollow">
     <div class="dtoggle-row">
-      <button type="button" class="dtoggle" id="dToggle" aria-expanded="true" aria-controls="dBody"><span class="dtlabel">상세 정보 접기</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <button type="button" class="dtoggle" id="dToggle" aria-expanded="false" aria-controls="dBody"><span class="dtlabel">상세 정보 펼치기</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
     </div>
-    <div class="dbody" id="dBody">
+    <div class="dbody" id="dBody" hidden>
   <!-- 3-1 2열: 왼쪽(전달 과정 · 받고 싶은 선물) 2 : 오른쪽(보내기 전 안내) 1, 같은 높이에서 시작 -->
   <div class="body">
 
