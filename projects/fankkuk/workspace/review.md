@@ -1,11 +1,41 @@
 ---
 project: fankkuk
 status: passed
-basis: 940309391a6a
-reviewers: [ux-reviewer, ui-reviewer, code-reviewer, security-reviewer]
+basis: d8a8c494bb56
+reviewers: [ui-reviewer, code-reviewer, security-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-11-11, 선물함 카드 묶음 + 크리에이터 가입 「채널 만들기」)
+# 리뷰 사인오프 — fankkuk (2026-11-12, base.css 층 이동 + 본문 폭 토큰)
+
+지난 사인오프(11-11, 아래 1·2절) 이후 main 에 들어온 코드는 이 두 묶음뿐이다(`git log e987f81d..9b19a0ff -- src supabase` 0건).
+
+## 3. base.css 층 이동 (merge 3fee6f4e, 브랜치 커밋 176c70d8 … 9d1b9eb8)
+
+- 범위: base.css 를 `@layer base` 로 옮기고 제목 기본 크기를 h1 32/24 · h2 24/20 · h3 16 으로 정리했다. 화면 모양은 그대로 두는 것이 목표였다. 화면 값에 맞춘 모듈 선언 31곳은 `workspace/base-layer-held-values.md` 에 있다.
+- ui-reviewer·code-reviewer: 다른 세션에서 돌리고 반영까지 마쳤다(9d1b9eb8: 체크박스 크기·위험 버튼 누름 색을 예전 값으로). 낮음 5건과 「제목 기본값과 토큰 표의 차이」는 BACKLOG 에 있다.
+- security-reviewer: 지적 0. tsx 세 곳은 className 만 바뀌었다. sr-only 제목에 붙은 클래스는 글자 크기만 바꾼다. `[hidden]`·`.print-only`(배송 주소)는 층 이동 뒤에도 가려진다.
+- 뺀 리뷰어: ux-reviewer — 상태·노출이 바뀌지 않았다.
+
+## 4. 본문 폭 토큰 (3825509e · cb269568)
+
+- 범위: 숫자로 적힌 본문 폭 880·720·1200·1040 을 `--col-list`·`--col-form`·`--col-wide`·새 `--col-flow` 로 바꿨다. 대상은 `.page-pane` 세 클래스와 모듈 CSS 4개다. tokens.md 3절도 바로잡았다(`--col-profile` 1080, `--maxw`·`--hero-max` 추가).
+- ui-reviewer: 높음 0. 중간 2, 낮음 1.
+  - 반영: `--col-flow` 설명을 「단계 흐름·상세의 가운데 넓은 기둥」으로 고쳤다(중간). `--hero-max` 설명을 넓혔다(낮음).
+  - BACKLOG: design-rules 폭 체계에 1040 이 없다(중간, 승인 문서라 사용자 결정).
+- 뺀 리뷰어: code-reviewer — 로직이 바뀌지 않았다. ux-reviewer — 상태·노출이 바뀌지 않았다.
+
+## 실행 근거 (3·4절 공통, 합친 코드 cb269568 기준)
+
+- `npx tsc --noEmit` 오류 0.
+- `npx next build` 종료 0.
+- 본문 폭 실측: 9개 화면 × 1440·900·390 = 27건이 수정 전(main 9b19a0ff)과 모두 같다.
+  - 화면: /me, /gifts/new, /gifts/FC-7K3M9, /creator/revgifts, /creator/profile, /creator/settings, /creator/settings/signature, /creator/revgift-boxes, /creator/revgift-boxes/new
+  - 화면에서 못 잰 곳: 답례 보내기(쓰는 주소 없음), 선물함 신청(로컬에 선물함 없음). 이 둘은 「토큰을 값으로 되돌리면 옛 줄과 같다」는 비교로만 확인했다(10줄 같음, 값을 틀리게 심으면 4줄 다름).
+- 단위 시험: 바뀐 화면의 시험 11파일 중 145 통과, 1 실패. 실패한 `tests/banners-ui.test.tsx` INV-Y7 은 main 에서도 실패하는 기존 실패다.
+- 통합 시험: `node scripts/related-tests.mjs --base main --head HEAD` 가 고른 2파일(together-routes, gift-reply-card-route)을 개발 서버를 켜고 돌렸다 → 27/27 통과.
+- **전체 통합 시험은 돌리지 않았다** — 사용자 결정(11-12): CSS 표기와 문서만 바뀌었고 화면 측정으로 모양이 같음을 확인했으니 빌드·타입 검사만 한다. review-signoff.md 「사인오프의 전체 실행은 건너뛰지 않는다」의 예외다.
+
+# 이전 사인오프 — 2026-11-11, 선물함 카드 묶음 + 크리에이터 가입 「채널 만들기」
 
 ## 1. 선물함 카드 묶음 (이미 운영에 올라간 것 — 사후 리뷰)
 
