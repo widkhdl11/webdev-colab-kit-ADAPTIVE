@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>받은 선물 (/me/revgifts) — 둘러보기형 시안 · 2026-11-12</title>
+<!--
+  시안: 받은 선물 `/me/revgifts` · 둘러보기형(design-prompt 6-4) · 2026-11-12
+  근거: design-prompt 6-4·6-5·8-14·2-23 · design-rules 「본문 틀」 목록형 880(--col-list, 지금 구현 width="list") · tokens.css.
+  참고 시안: creators-r2-20261112(필터를 하늘 판 하나로 묶기). 사이드바 셸은 gifts-new-r2-20261112 에서 가져옴(받은 선물 메뉴가 현재 위치).
+  지금 구현(my-revgifts-panel.tsx)의 상태·문구·동작 그대로: 탭 「받는 중」「완료」, 수락 대기 선물만 남은 날 + 「확인하기」, 나머지는 카드 전체가 선물 상세 링크,
+  완료 탭 아래 안내 한 문단, 탭별 빈 문구, 전체 빈 상태(고양이 그림). 새 문구 없음. 데이터는 가짜 값(실존 인물 없음).
+  바뀐 것: 한 줄 목록 → 카드 격자(확인하는 대상 8-14), 제목·탭을 하늘 판 하나로 묶음.
+  값: tokens.css 변수만. 폭 숫자를 CSS 에 적지 않음, 100vw 없음, html/body 에 clip·hidden 없음.
+  열기: http://localhost:4322/docs/design/mockups/revgifts-received-20261112/index.html  (#list #past #empty #ongoing0 #past0)
+-->
+<link rel="stylesheet" href="../../../../src/shared/ui/tokens.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../public/fonts/TmoneyRoundWindRegular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Medium.subset.woff") format("woff"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-SemiBold.subset.woff") format("woff"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Bold.subset.woff") format("woff"); font-weight: 700; font-display: swap; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--background); color: var(--ink); font-family: var(--font); font-size: var(--fs-body); font-weight: 400; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; -webkit-text-size-adjust: 100%; }
+h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+h1, h2, h3 { font-family: var(--font-round); font-weight: var(--fw-title); letter-spacing: var(--ls-title); font-synthesis: none; }
+img, svg { display: block; max-width: 100%; }
+svg { flex-shrink: 0; }
+a { color: inherit; }
+button { font-family: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- 시안 도구(페이지 바깥) ---------- */
+.tool { background: var(--ink); color: var(--white); font-size: var(--fs-small); }
+.tool-in { padding: var(--space-3) var(--gutter); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.tool b { font-weight: var(--fw-bold); margin-right: var(--space-2); }
+.tool .sep { width: 1px; align-self: stretch; margin: 0 var(--space-2); background: rgb(255 255 255 / .4); }
+.tool button { min-height: 44px; padding: 0 var(--space-4); border: 1px solid rgb(255 255 255 / .55); border-radius: var(--r-btn); background: transparent; color: var(--white); font: var(--fw-btn) var(--fs-small)/1.2 var(--font); cursor: pointer; }
+.tool button[aria-pressed="true"] { background: var(--white); color: var(--ink); border-color: var(--white); }
+.tool button:focus-visible { outline-color: var(--white); }
+.tool .cap { flex: 1 0 100%; color: var(--gray-300); }
+
+/* ---------- 앱 틀: 왼쪽 사이드바 240 · 768 이하 위 막대 — 맥락용(시안 대상 아님) ---------- */
+.app { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); align-items: start; }
+.sb { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: var(--space-4) var(--space-2); background: var(--tint); box-shadow: inset -1px 0 var(--tint-line); }
+.sb .logo { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-3); text-decoration: none; font-family: var(--font-logo); font-weight: var(--fw-title); font-size: var(--fs-card); }
+.sb .logo img, .mbar .logo img { width: 28px; height: 28px; border-radius: var(--r-logo); }
+.sb nav { display: grid; gap: 2px; margin-top: var(--space-4); }
+.sb nav a { display: flex; align-items: center; gap: var(--nav-gap-in); min-height: var(--nav-item-h); padding: 0 var(--space-3); border-radius: var(--r-nav); text-decoration: none; font-size: var(--fs-navitem); font-weight: var(--fw-nav); color: var(--sub); }
+.sb nav a[aria-current="page"] { background: var(--surface-selected); color: var(--ink); font-weight: var(--fw-btn); }
+.ico { width: var(--nav-icon); height: var(--nav-icon); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.sb .me { margin-top: auto; display: flex; align-items: center; gap: var(--space-3); min-height: var(--prof-h); padding: 0 var(--space-3); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.sb .me i { display: grid; place-items: center; width: var(--avatar-sb); height: var(--avatar-sb); border-radius: var(--r-pill); background: var(--primary-50); font-style: normal; }
+.mbar { display: none; }
+@media (max-width: 768px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .sb { display: none; }
+  .mbar { display: flex; align-items: center; justify-content: space-between; min-height: var(--topbar-h); padding: 0 var(--space-2) 0 var(--gutter); background: var(--tint); box-shadow: inset 0 -1px var(--tint-line); }
+  .mbar .logo { display: flex; align-items: center; min-height: 44px; gap: var(--space-2); font-family: var(--font-logo); font-weight: var(--fw-title); font-size: var(--fs-card); text-decoration: none; }
+  .mbar button { width: 44px; height: 44px; border: 0; border-radius: var(--r-btn); background: transparent; display: grid; place-items: center; color: var(--ink); }
+  .mbar .ico { width: 24px; height: 24px; }
+}
+
+
+/* ---------- 공용 부품(base.css 값 그대로) ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: var(--btn-h); padding: 12px var(--space-6); border: 0; border-radius: var(--r-btn); background: var(--btn-fill-fx); box-shadow: var(--btn-fill-shadow); color: var(--on-brand); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; text-decoration: none; cursor: pointer; transition: background-color var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out); }
+.btn:hover { background: var(--brand-hover); box-shadow: var(--btn-fill-shadow-hover); }
+.btn--sm { min-height: var(--btn-h-sm); padding: 0 var(--space-6); }
+.tag { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 32px; padding: 4px 12px 4px 8px; border-radius: var(--r-pill); background: var(--surface); color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1.5; }
+.tag::before { content: ""; width: 8px; height: 8px; border-radius: var(--r-pill); background: currentColor; }
+.tag--success { background: var(--success-soft); color: var(--success); }
+.tag--warn { background: var(--warn-soft); color: var(--warn-ink); }
+.tag--danger { background: var(--danger-soft); color: var(--danger); }
+.tag--info { background: var(--info-soft); color: var(--info); }
+.tag--plain { background: var(--gray-100); color: var(--gray-700); }
+.face { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: var(--r-pill); background: var(--f, var(--face-default)); box-shadow: var(--face-ring); font-weight: var(--fw-bold); font-size: var(--fs-card); line-height: 1; }
+
+/* ---------- 페이지 틀: 목록형 --col-list ---------- */
+main.page { container: pane / inline-size; min-width: 0; padding: 40px var(--gutter) var(--space-24); }
+.col { max-width: var(--col-list); margin-inline: auto; min-width: 0; }
+
+/* ① 필터 판 = 제목·설명 + 탭을 하늘 면 한 장에(creators-r2 방식). 그림자 없음(누르는 칸이 아닌 묶음, 4-6) */
+.find { padding: var(--panel-pad); border-radius: var(--r-panel); background: var(--tint); box-shadow: inset 0 0 0 1px var(--tint-line); }
+.find-in { display: flex; flex-direction: column; gap: var(--space-4); }
+.head h1 { font-size: var(--fs-page); line-height: 1.3; }
+.head .ph-desc { margin-top: var(--space-2); color: var(--gray-600); }
+.tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tab { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); padding: 0 var(--space-4); border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-500); color: var(--gray-900); font: inherit; font-size: var(--fs-body); cursor: pointer; white-space: nowrap; }
+.tab:hover { background: var(--gray-50); }
+.tab[aria-selected="true"] { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); color: var(--brand-ink); font-weight: var(--fw-btn); }
+.tab:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+@container pane (min-width: 640px) { /* 제목 묶음 왼쪽 · 탭 오른쪽, 세로 가운데(2-10) */
+  .find-in { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-8); }
+}
+
+/* ② 카드 격자 — 칸 폭 680 이상 2열, 그 아래 1열. 카드 높이는 한 줄에서 같게(8-8) */
+.results { margin-top: var(--space-8); min-width: 0; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+@container pane (min-width: 680px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: var(--space-6); } }
+.rcard { position: relative; display: flex; flex-direction: column; gap: var(--space-4); height: 100%; min-width: 0; padding: var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--white); box-shadow: var(--card-shadow); transition: box-shadow var(--dur-hover) var(--ease-out); }
+.rcard.wait { border-color: var(--tint-line); background: var(--tint); box-shadow: none; } /* 받을지 정해야 하는 카드만 하늘 면(지금 구현 .feat, design-rules 21절) */
+@media (hover: hover) { .rcard:hover { box-shadow: var(--card-shadow-hover); } .rcard.wait:hover { box-shadow: none; } }
+.rcard:has(.stretch:focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
+.who { display: flex; align-items: flex-start; gap: var(--space-4); min-width: 0; }
+.who > div { min-width: 0; }
+.who strong { display: block; font-size: var(--fs-body); line-height: 1.6; overflow-wrap: anywhere; }
+.who .meta { display: block; font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
+.who .tag { margin-top: var(--space-2); }
+.stretch { color: inherit; text-decoration: none; outline: 0; }
+.stretch::after { content: ""; position: absolute; inset: 0; border-radius: var(--r-card); }
+.foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-top: auto; min-height: 72px; padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
+.rcard.wait .foot { border-top-color: var(--tint-line); }
+.note { font-size: var(--fs-small); color: var(--sub); min-width: 0; }
+.chev { width: 20px; height: 20px; flex: none; fill: none; stroke: var(--gray-600); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.days { line-height: 1.2; min-width: 0; }
+.days b { font-family: var(--font-round); font-size: var(--fs-title); font-weight: var(--fw-title); letter-spacing: var(--ls-title); }
+.days b small { margin-left: 2px; font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); letter-spacing: 0; }
+.days .lab { display: block; margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
+.rcard .btn { position: relative; z-index: 1; flex: none; min-width: 96px; }
+.past-note { margin-top: var(--space-6); font-size: var(--fs-small); line-height: 1.5; color: var(--gray-600); max-width: var(--prose-max); }
+
+/* 빈 상태 — 메시지 하나, 가운데 정렬(2-17) */
+.status { margin-top: var(--space-8); padding: var(--space-12) var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--card-fx); box-shadow: var(--card-shadow); text-align: center; }
+.status img { width: 128px; height: 128px; margin: 0 auto var(--space-4); object-fit: contain; }
+.status.small { margin-top: 0; padding: var(--space-10) var(--space-6); }
+
+@media (max-width: 767px) {
+  main.page { padding-top: var(--space-6); }
+  .results, .status { margin-top: var(--space-6); }
+  .status.small { margin-top: 0; }
+  .rcard { padding: var(--space-4); }
+  .foot { min-height: 64px; }
+  .status img { width: 96px; height: 96px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+/* 2026-11-12 기본 프로필 사진 = 고양이 얼굴(public/img/default-face/cat.webp) — 사용자 지시 */
+.face, .sb-avatar, .oface, .dwho .av, .sb .me i { overflow: hidden; }
+.pf { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pfb { border-radius: 50%; overflow: hidden; }
+</style>
+</head>
+<body>
+
+<div class="tool"><div class="tool-in" id="tools">
+  <b>상태</b>
+  <button type="button" data-s="list">받는 중 여러 건</button>
+  <button type="button" data-s="past">완료 여러 건</button>
+  <button type="button" data-s="empty">받은 선물 없음</button>
+  <button type="button" data-s="ongoing0">받는 중 없음</button>
+  <button type="button" data-s="past0">완료 없음</button>
+</div></div>
+
+<div class="mbar"><a class="logo" href="#"><img src="../../../../public/images/logo-mark.png" alt="" width="28" height="28">팬꾹</a><button type="button" aria-label="메뉴 열기"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg></button></div>
+<div class="app">
+<aside class="sb" aria-label="사이드바">
+  <a class="logo" href="#"><img src="../../../../public/images/logo-mark.png" alt="" width="28" height="28">팬꾹</a>
+  <nav aria-label="주 메뉴">
+    <a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>홈</a>
+    <a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>지금 할 일</a>
+    <a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>크리에이터 찾기</a>
+    <a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v14"/><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"/><rect x="3" y="7" width="18" height="4" rx="1"/></svg>선물 보내기</a>
+    <a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>보낸 선물</a>
+    <a href="#" aria-current="page"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg>받은 선물</a>
+    <a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>물품 보관소</a>
+    <a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>팔로우한 크리에이터</a>
+    <a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>문의</a>
+  </nav>
+  <div class="me"><i aria-hidden="true"><img class="pf" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true"></i>별빛팬</div>
+</aside>
+
+<main id="main" class="page">
+<div class="col">
+  <section class="find" aria-labelledby="h1">
+    <div class="find-in">
+      <header class="head">
+        <h1 id="h1">받은 선물</h1>
+        <p class="ph-desc">팔로우한 크리에이터가 내게 보낸 선물입니다.</p>
+      </header>
+      <div class="tabs" role="tablist" aria-label="받은 선물 분류" id="tabs"></div>
+    </div>
+  </section>
+  <div class="results" id="results" role="tabpanel" aria-labelledby="tab-ongoing"></div>
+  <div class="status" id="empty" hidden><img src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true" width="128" height="128"><p>받은 선물이 없습니다.<br>크리에이터가 보낸 선물은 이곳에 표시됩니다.</p></div>
+</div>
+</main>
+</div>
+
+<script>
+/* 시안 도구용 최소 스크립트 — 상태 바꾸기 · 탭 바꾸기. 서버 로직 없음 */
+const CHEV = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+const ONGOING = [
+  { n: "달빛정원", f: "--face-1", t: "소형", no: "FC-7K3M9", st: "wait", d: 3, until: "11월 15일" },
+  { n: "소담", f: "--face-2", t: "중형", no: "FC-4D8Q2", st: "wait", d: 1, until: "11월 13일" },
+  { n: "하늘다람", f: "--face-3", t: "대형", no: "FC-2P6X1", st: "accepted", tag: "수락 완료", tone: "success", note: "상자 준비 후 발송" },
+  { n: "윤슬", f: "--face-5", t: "소형", no: "FC-9R1T5", st: "shipped", tag: "출고 완료", tone: "info", note: "택배사 인계 후 배송 진행" },
+];
+const PAST = [
+  { n: "모카", f: "--face-4", t: "중형", no: "FC-6B2N8", tag: "받지 않음", tone: "danger", note: "선물 수령을 거절했습니다" },
+  { n: "새벽라디오", f: "--face-6", t: "소형", no: "FC-3H7V4", tag: "기한 만료", tone: "danger", note: "수락 기한(7일)이 지났습니다" },
+  { n: "달빛정원", f: "--face-1", t: "대형", no: "FC-8A5C6", tag: "반송 완료", tone: "danger", note: "크리에이터에게 반송했습니다" },
+  { n: "소담", f: "--face-2", t: "소형", no: "FC-1Z9L3", tag: "처분 완료", tone: "danger", note: "상자 처분이 완료되었습니다" },
+  { n: "윤슬", f: "--face-5", t: "중형", no: "FC-5M4W7", tag: "취소", tone: "plain", note: "취소된 선물입니다" },
+];
+const SETS = { full: [ONGOING, PAST], onlyPast: [[], PAST], onlyOngoing: [ONGOING, []], none: [[], []] };
+const STATES = { list: ["full", 0], past: ["full", 1], empty: ["none", 0], ongoing0: ["onlyPast", 0], past0: ["onlyOngoing", 1] };
+const NOTE = '<p class="past-note">수락하지 않은 선물은 크리에이터에게 반송됩니다. 수락하지 않은 이유는 크리에이터에게 공개하지 않습니다.</p>';
+const $ = (id) => document.getElementById(id);
+let ds = "full", tab = 0;
+
+const who = (c, strong) => `<div class="who"><span class="face" aria-hidden="true"><img class="pf" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true"></span><div>${strong}<span class="meta">${c.t} 상자 · 주문번호 ${c.no}</span><span class="tag tag--${c.st === "wait" ? "warn" : c.tone}">${c.st === "wait" ? "수락 대기" : c.tag}</span></div></div>`;
+function card(c) {
+  const name = `${c.n}님이 보낸 선물`;
+  if (c.st === "wait") {
+    return `<li><article class="rcard wait" aria-labelledby="r-${c.no}">${who(c, `<strong id="r-${c.no}">${name}</strong>`)}
+      <div class="foot"><p class="days"><b>${c.d}일<small>남음</small></b><span class="lab">${c.until}까지</span></p><a class="btn btn--sm" href="#" aria-label="${name} 받기 — 확인하기">확인하기</a></div></article></li>`;
+  }
+  return `<li><article class="rcard">${who(c, `<strong><a class="stretch" href="#">${name}</a></strong>`)}
+    <div class="foot"><p class="note">${c.note}</p>${CHEV}</div></article></li>`;
+}
+function render() {
+  const [on, pa] = SETS[ds], none = ds === "none";
+  $("tabs").hidden = none; $("empty").hidden = !none; $("results").hidden = none;
+  $("tabs").innerHTML = [["ongoing", "받는 중", on.length], ["past", "완료", pa.length]].map(([id, l, n], i) =>
+    `<button class="tab" role="tab" type="button" id="tab-${id}" data-tab="${i}" aria-selected="${i === tab}" aria-controls="results" tabindex="${i === tab ? 0 : -1}">${l} ${n}</button>`).join("");
+  const rows = tab === 0 ? on : pa;
+  $("results").setAttribute("aria-labelledby", tab === 0 ? "tab-ongoing" : "tab-past");
+  $("results").innerHTML = (rows.length
+    ? `<ul class="grid">${rows.map(card).join("")}</ul>`
+    : `<div class="status small"><p>${tab === 0 ? "받는 중인 선물이 없습니다." : "완료된 선물이 없습니다."}</p></div>`) + (tab === 1 ? NOTE : "");
+  const key = Object.keys(STATES).find((k) => STATES[k][0] === ds && STATES[k][1] === tab);
+  document.querySelectorAll("#tools button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.s === key)));
+  if (key) history.replaceState(null, "", "#" + key);
+}
+function setState(k) { [ds, tab] = STATES[k]; render(); }
+document.addEventListener("click", (e) => {
+  const s = e.target.closest("[data-s]"); if (s) { setState(s.dataset.s); return; }
+  const t = e.target.closest("[data-tab]"); if (t) { tab = Number(t.dataset.tab); render(); $("tab-" + (tab ? "past" : "ongoing")).focus(); }
+});
+$("tabs").addEventListener("keydown", (e) => {
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  e.preventDefault(); tab = 1 - tab; render(); $("tab-" + (tab ? "past" : "ongoing")).focus();
+});
+window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (STATES[h]) setState(h); });
+const h0 = location.hash.slice(1); if (STATES[h0]) [ds, tab] = STATES[h0];
+render();
+</script>
+</body>
+</html>

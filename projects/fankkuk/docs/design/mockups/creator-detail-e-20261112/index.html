@@ -43,7 +43,7 @@
 
 :root {
   /* 크리에이터가 고른 테마 색(데이터 — 파스텔 8색 중 하나, design-rules 17절). 디자인 토큰이 아니다 */
-  --personal: #DCEBFF;
+  --personal: var(--primary-50);
 }
 
 * { box-sizing: border-box; }
@@ -91,10 +91,10 @@ a { color: inherit; }
 /* 배경 사진 면 — 높이 280(휴대폰 176)·반경 24(휴대폰 16)는 지금 운영 화면 그대로. 사진이 없으면 테마 색 면 + 흐린 고양이(design-rules 17절) */
 /* 2026-11-12 사용자 「배경 사진이 최대한 많이 나오게, 넓게 — 시원한 느낌」: 화면 양 끝까지(모서리 없음, 상단 바에 붙임), 높이 = 화면 폭의 절반(등록 권장 2:1)·최대 520.
    390 은 195(사진 전체), 1440 은 520(2:1 사진 높이의 약 72%). 지금 운영 1080×280 은 약 47% */
-html { overflow-x: clip; }
-.cover { position: relative; overflow: hidden; width: 100vw; height: min(50vw, 520px); margin: calc(-1 * var(--space-6)) calc(50% - 50vw) 0; border-radius: 0; background: var(--personal); }
+/* 전체 폭 배경: main 밖(body 바로 아래)에 두어 100vw 없이 화면 폭을 채운다 — 스크롤 막대 폭만큼 넘치지 않는다. 아래 -24 는 .page 위 여백을 상쇄해 첫 줄이 배경 바로 아래에서 시작하게 한다 */
+.cover { position: relative; overflow: hidden; width: 100%; aspect-ratio: 2 / 1; max-height: 520px; margin: 0 0 calc(-1 * var(--space-6)); border-radius: 0; background: var(--personal); }
 /* 비교안(시안 도구 「배경: 기둥 폭 2:1」): 기둥 1080 안에서 2:1 그대로(1080×540, 사진 전체) */
-.covercol .cover { width: auto; height: auto; aspect-ratio: 2 / 1; margin: 0; border-radius: var(--r-panel); }
+.covercol .cover { width: auto; height: auto; max-height: none; aspect-ratio: 2 / 1; margin: 0; border-radius: var(--r-panel); }
 .cover .cover-cat { position: absolute; right: 6%; bottom: -8%; width: auto; height: 80%; opacity: .22; display: none; }
 .cover .cover-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; } /* 화면 예시 사진 — 크리에이터 배경사진 자리 */
 .nophoto .cover .cover-photo { display: none; }
@@ -216,7 +216,7 @@ body[data-state="verifying"] .head { row-gap: 0; } /* 채널 확인 중: 아랫�
 .gtile .gstate { align-self: flex-start; margin: calc(-1 * var(--space-1)) var(--space-3) var(--space-3); } /* 내 신청 상태는 이름 바로 아래(그림 위에 얹으면 상자를 가린다) */
 
 /* 선물함 상세 창(8-7 제목 → 본문 → 버튼, 2-19 안쪽 왼쪽 정렬, 2-21 6) 짧은 확인 창 = 버튼 폭 전체). 가운데 창 폭 440 + 휴대폰 아래 시트: 둘 다 사이트의 기존 창(unfollow-dialog·bottom-sheet) 값 */
-.gdlg { width: min(440px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 32px); padding: 0; border: 0; border-radius: var(--r-panel); background: var(--white); box-shadow: var(--float); color: var(--ink); }
+.gdlg { width: min(440px, calc(100% - 32px)); max-width: none; max-height: calc(100dvh - 32px); padding: 0; border: 0; border-radius: var(--r-panel); background: var(--white); box-shadow: var(--float); color: var(--ink); }
 .gdlg::backdrop { background: var(--scrim); }
 html:has(dialog[open]) { overflow: hidden; }
 .dbox { display: grid; gap: var(--space-4); padding: var(--space-6); }
@@ -337,7 +337,7 @@ details[open] .chev { transform: rotate(180deg); }
 .owho { display: grid; gap: var(--space-1); min-width: 0; padding-top: var(--space-2); }
 .owho b { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; overflow-wrap: anywhere; }
 .otags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-@media (max-width: 767px) { .ogrid { gap: var(--space-3); } .ogrid > li { flex-basis: calc((100% - var(--space-3)) / 2); } .ocar { display: block; } .oarrow { display: none; } .ogrid { margin-right: calc(-4px - var(--gutter)); padding-right: calc(4px + var(--gutter)); scroll-padding-inline: 4px calc(4px + var(--gutter)); } .orow { flex-direction: column; gap: 0; padding: 0 var(--space-3) var(--space-3); } .oface { width: 48px; height: 48px; margin-top: -24px; } }
+@media (max-width: 767px) { .ogrid { gap: var(--space-3); } .ogrid > li { flex-basis: calc((100% - var(--space-3)) / 2); } .ocar { display: block; } .oarrow { display: none; } .ogrid { margin-right: calc(-1 * var(--gutter)); padding-right: var(--gutter); scroll-padding-inline: 4px var(--gutter); } .orow { flex-direction: column; gap: 0; padding: 0 var(--space-3) var(--space-3); } .oface { width: 48px; height: 48px; margin-top: -24px; } }
 .ccard { --personal-line: color-mix(in srgb, var(--personal) 78%, var(--gray-900) 22%); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--card-pad); border-radius: var(--r-card); background: var(--card-fx); cursor: pointer; box-shadow: var(--card-shadow); transition: transform .25s var(--ease-micro), box-shadow .25s var(--ease-micro); }
 .ccard::before { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--gray-200); pointer-events: none; transition: box-shadow .15s; }
 .ccard:hover::before, .ccard:focus-within::before { box-shadow: inset 0 0 0 1px var(--gray-500); }
@@ -392,6 +392,11 @@ details[open] .chev { transform: rotate(180deg); }
 }
 @media (max-width: 767px) { .sec-h { font-size: var(--fs-card); } .sec-h-sm { font-size: var(--fs-body); } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } .btn:active { transform: none; } }
+
+/* 2026-11-12 기본 프로필 사진 = 고양이 얼굴(public/img/default-face/cat.webp) — 사용자 지시 */
+.face, .sb-avatar, .oface, .dwho .av, .sb .me i { overflow: hidden; }
+.pf { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pfb { border-radius: 50%; overflow: hidden; }
 </style>
 </head>
 <body data-state="open">
@@ -429,18 +434,18 @@ details[open] .chev { transform: rotate(180deg); }
   </div>
 </header>
 
+<!-- 배경 사진 면(꾸밈이라 읽지 않는다) -->
+<div class="cover" aria-hidden="true"><img class="cover-photo" src="img/cover-sample.svg" alt="" width="1200" height="600"><img class="cover-cat" src="img/mascot-cat.webp" alt="" width="320" height="285"></div>
 <main id="main" class="page">
 <div class="col">
 <div class="rows">
 
-  <!-- 배경 사진 면(꾸밈이라 읽지 않는다) -->
-  <div class="cover" aria-hidden="true"><img class="cover-photo" src="img/cover-sample.svg" alt="" width="1200" height="600"><img class="cover-cat" src="img/mascot-cat.webp" alt="" width="320" height="285"></div>
 
   <!-- 첫째 줄: 프로필(왼쪽 2) · 보내기 영역(오른쪽 1) + 그 아래 선물함(전체 폭). 테두리·면 없이 간격만으로 묶는다 -->
   <div class="top">
   <section class="head" aria-labelledby="creator-name">
     <div class="id">
-      <div class="avatar" aria-hidden="true"><img src="img/profile-default.png" alt="" width="172" height="172"></div>
+      <div class="avatar" aria-hidden="true"><img class="pf pfb" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true"></div>
       <div class="idtext">
         <div class="nameline">
           <h1 class="name" id="creator-name">별빛이</h1>
@@ -583,22 +588,22 @@ details[open] .chev { transform: rotate(180deg); }
       </div>
       <ul class="rtrack" id="rTrack" tabindex="0" aria-label="감사 카드 목록, 가로로 넘기기">
         <li class="rcard" aria-label="별빛이님이 남긴 감사 답장 — 잘 받았어요, 고마워요">
-          <div class="rwho"><img class="rphoto" src="img/profile-default.png" alt="" width="40" height="40"><p><b>별빛이님이 남긴</b>감사 답장</p></div>
+          <div class="rwho"><img class="pf pfb rphoto" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true"><p><b>별빛이님이 남긴</b>감사 답장</p></div>
           <div class="rpanel"><p>잘 받았어요, 고마워요</p></div>
           <div class="rfoot"><span>11월 9일</span><span class="rlogo"><img src="img/logo-mark.png" alt="" width="16" height="16">팬꾹</span></div>
         </li>
         <li class="rcard" aria-label="별빛이님이 남긴 감사 답장 — 너무 마음에 들어요">
-          <div class="rwho"><img class="rphoto" src="img/profile-default.png" alt="" width="40" height="40"><p><b>별빛이님이 남긴</b>감사 답장</p></div>
+          <div class="rwho"><img class="pf pfb rphoto" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true"><p><b>별빛이님이 남긴</b>감사 답장</p></div>
           <div class="rpanel"><p>너무 마음에 들어요</p></div>
           <div class="rfoot"><span>11월 2일</span><span class="rlogo"><img src="img/logo-mark.png" alt="" width="16" height="16">팬꾹</span></div>
         </li>
         <li class="rcard" aria-label="별빛이님이 남긴 감사 답장 — 잘 쓸게요">
-          <div class="rwho"><img class="rphoto" src="img/profile-default.png" alt="" width="40" height="40"><p><b>별빛이님이 남긴</b>감사 답장</p></div>
+          <div class="rwho"><img class="pf pfb rphoto" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true"><p><b>별빛이님이 남긴</b>감사 답장</p></div>
           <div class="rpanel"><p>잘 쓸게요</p></div>
           <div class="rfoot"><span>10월 19일</span><span class="rlogo"><img src="img/logo-mark.png" alt="" width="16" height="16">팬꾹</span></div>
         </li>
         <li class="rcard" aria-label="별빛이님이 남긴 감사 답장 — 덕분에 힘이 났어요">
-          <div class="rwho"><img class="rphoto" src="img/profile-default.png" alt="" width="40" height="40"><p><b>별빛이님이 남긴</b>감사 답장</p></div>
+          <div class="rwho"><img class="pf pfb rphoto" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true"><p><b>별빛이님이 남긴</b>감사 답장</p></div>
           <div class="rpanel"><p>덕분에 힘이 났어요</p></div>
           <div class="rfoot"><span>10월 5일</span><span class="rlogo"><img src="img/logo-mark.png" alt="" width="16" height="16">팬꾹</span></div>
         </li>
@@ -619,12 +624,12 @@ details[open] .chev { transform: rotate(180deg); }
     <div class="ocar">
       <button type="button" class="oarrow prev" id="oPrev" aria-label="이전 크리에이터" aria-controls="oTrack"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
       <ul class="ogrid" id="oTrack" aria-live="off">
-<li><a class="other" href="#" style="--personal:#FDE2E4" aria-label="달무리님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img src="img/oc-dawn.svg" alt="" width="1200" height="600"></span><span class="orow"><span class="oface" style="background:var(--face-1)" aria-hidden="true">달</span><span class="owho"><b>달무리</b><span class="otags"><span class="cchip">유튜브</span><span class="cchip">음악</span></span></span></span></a></li>
-      <li><a class="other" href="#" style="--personal:#D3F0EC" aria-label="하루님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img src="img/oc-forest.svg" alt="" width="1200" height="600"></span><span class="orow"><span class="oface" style="background:var(--face-5)" aria-hidden="true">하</span><span class="owho"><b>하루</b><span class="otags"><span class="cchip">치지직</span><span class="cchip">게임</span></span></span></span></a></li>
-      <li><a class="other" href="#" style="--personal:#FFF1B8" aria-label="모카라떼님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img class="ocat" src="img/mascot-cat.webp" alt="" width="320" height="285"></span><span class="orow"><span class="oface" style="background:var(--face-6)" aria-hidden="true">모</span><span class="owho"><b>모카라떼</b><span class="otags"><span class="cchip">숲</span><span class="cchip">토크</span></span></span></span></a></li>
-      <li><a class="other" href="#" style="--personal:#E4DCFF" aria-label="소나기님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img src="img/oc-dawn.svg" alt="" width="1200" height="600"></span><span class="orow"><span class="oface" style="background:var(--face-2)" aria-hidden="true">소</span><span class="owho"><b>소나기</b><span class="otags"><span class="cchip">유튜브</span><span class="cchip">노래</span></span></span></span></a></li>
-      <li><a class="other" href="#" style="--personal:#FFE4CC" aria-label="루미님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img src="img/oc-forest.svg" alt="" width="1200" height="600"></span><span class="orow"><span class="oface" style="background:var(--face-4)" aria-hidden="true">루</span><span class="owho"><b>루미</b><span class="otags"><span class="cchip">치지직</span><span class="cchip">그림</span></span></span></span></a></li>
-      <li><a class="other" href="#" style="--personal:#DCF5D9" aria-label="파도소리님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img class="ocat" src="img/mascot-cat.webp" alt="" width="320" height="285"></span><span class="orow"><span class="oface" style="background:var(--face-3)" aria-hidden="true">파</span><span class="owho"><b>파도소리</b><span class="otags"><span class="cchip">숲</span><span class="cchip">ASMR</span></span></span></span></a></li>
+<li><a class="other" href="#" aria-label="달무리님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img src="img/oc-dawn.svg" alt="" width="1200" height="600"></span><span class="orow"><span class="oface" aria-hidden="true"><img class="pf" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true"></span><span class="owho"><b>달무리</b><span class="otags"><span class="cchip">유튜브</span><span class="cchip">음악</span></span></span></span></a></li>
+      <li><a class="other" href="#" aria-label="하루님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img src="img/oc-forest.svg" alt="" width="1200" height="600"></span><span class="orow"><span class="oface" aria-hidden="true"><img class="pf" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true"></span><span class="owho"><b>하루</b><span class="otags"><span class="cchip">치지직</span><span class="cchip">게임</span></span></span></span></a></li>
+      <li><a class="other" href="#" aria-label="모카라떼님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img class="ocat" src="img/mascot-cat.webp" alt="" width="320" height="285"></span><span class="orow"><span class="oface" aria-hidden="true"><img class="pf" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true"></span><span class="owho"><b>모카라떼</b><span class="otags"><span class="cchip">숲</span><span class="cchip">토크</span></span></span></span></a></li>
+      <li><a class="other" href="#" aria-label="소나기님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img src="img/oc-dawn.svg" alt="" width="1200" height="600"></span><span class="orow"><span class="oface" aria-hidden="true"><img class="pf" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true"></span><span class="owho"><b>소나기</b><span class="otags"><span class="cchip">유튜브</span><span class="cchip">노래</span></span></span></span></a></li>
+      <li><a class="other" href="#" aria-label="루미님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img src="img/oc-forest.svg" alt="" width="1200" height="600"></span><span class="orow"><span class="oface" aria-hidden="true"><img class="pf" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true"></span><span class="owho"><b>루미</b><span class="otags"><span class="cchip">치지직</span><span class="cchip">그림</span></span></span></span></a></li>
+      <li><a class="other" href="#" aria-label="파도소리님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img class="ocat" src="img/mascot-cat.webp" alt="" width="320" height="285"></span><span class="orow"><span class="oface" aria-hidden="true"><img class="pf" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true"></span><span class="owho"><b>파도소리</b><span class="otags"><span class="cchip">숲</span><span class="cchip">ASMR</span></span></span></span></a></li>
       </ul>
       <button type="button" class="oarrow next" id="oNext" aria-label="다음 크리에이터" aria-controls="oTrack"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
     </div>
@@ -678,7 +683,7 @@ details[open] .chev { transform: rotate(180deg); }
 </dialog>
 
 <script>
-  (function () { var c = document.getElementById("coverToggle"); c.addEventListener("click", function () { var on = document.documentElement.classList.toggle("covercol"); c.setAttribute("aria-pressed", on ? "true" : "false"); }); })();
+  (function () { var c = document.getElementById("coverToggle"); c.addEventListener("click", function () { var on = document.documentElement.classList.toggle("covercol"); var cv = document.querySelector(".cover"); if (on) document.querySelector(".rows").prepend(cv); else document.getElementById("main").before(cv); c.setAttribute("aria-pressed", on ? "true" : "false"); }); })();
   (function () { var w = document.getElementById("wishToggle"); w.addEventListener("click", function () { var on = document.documentElement.classList.toggle("nowish"); w.setAttribute("aria-pressed", on ? "true" : "false"); }); })();
   (function () { var t = document.getElementById("photoToggle"); t.addEventListener("click", function () { var on = document.documentElement.classList.toggle("nophoto"); t.setAttribute("aria-pressed", on ? "true" : "false"); }); })();
   (function () { var w = document.getElementById("replyToggle"); w.addEventListener("click", function () { var on = document.documentElement.classList.toggle("noreply"); w.setAttribute("aria-pressed", on ? "true" : "false"); }); })();

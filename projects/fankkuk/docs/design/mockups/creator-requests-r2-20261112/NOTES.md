@@ -1,3 +1,5 @@
+2026-11-12 기본 프로필 사진 = 고양이 얼굴(public/img/default-face/cat.webp)·기본 배경(--primary-50) 한 가지로 — 사용자 지시
+
 # 크리에이터 승인 내역 (/creator/requests) — 배치 시안 2판 (2026-11-12)
 
 시안: `index.html` (같은 폴더). 미리보기 `http://localhost:4322/docs/design/mockups/creator-requests-r2-20261112/index.html#<상태>`.

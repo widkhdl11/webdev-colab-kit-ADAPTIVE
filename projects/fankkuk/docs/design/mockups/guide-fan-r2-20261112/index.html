@@ -313,6 +313,11 @@ strong { font-weight: var(--fw-btn); color: var(--brand-ink); }
 .inlink { text-decoration: underline; text-decoration-color: var(--gray-500); text-underline-offset: 4px; }
 .inlink:hover { text-decoration-color: var(--ink); }
 .todo { padding: 0 var(--space-2); border-radius: var(--r-tag); background: var(--warn-soft); color: var(--warn-ink); }
+
+/* 2026-11-12 기본 프로필 사진 = 고양이 얼굴(public/img/default-face/cat.webp) — 사용자 지시 */
+.face, .sb-avatar, .oface, .dwho .av, .sb .me i { overflow: hidden; }
+.pf { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pfb { border-radius: 50%; overflow: hidden; }
 </style>
 </head>
 <body data-state="out">
@@ -354,7 +359,7 @@ strong { font-weight: var(--fw-btn); color: var(--brand-ink); }
       <li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span>문의</span></a></li>
     </ul>
   </nav>
-  <div class="sb-bottom"><div class="sb-acc"><span class="sb-avatar" aria-hidden="true">하</span><span>하루님</span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></div></div>
+  <div class="sb-bottom"><div class="sb-acc"><span class="sb-avatar" aria-hidden="true"><img class="pf" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true"></span><span>하루님</span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></div></div>
 </aside>
 <div class="mtop"><a class="logo" href="#"><img src="img/logo-mark.png" alt="" width="28" height="28">팬꾹</a>
   <button class="burger" type="button" aria-label="메뉴 열기"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg></button></div>

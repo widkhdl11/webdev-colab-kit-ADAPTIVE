@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬에게 보내기 (/creator/revgift-boxes) — 선물함 만들기 모달 시안 · 2026-11-12</title>
+<!--
+  시안(다시 그림): 크리에이터 「팬에게 보내기」 선물함 목록 + 만들기 모달 · 2026-11-12
+  앞 판(같은 폴더의 이전 index.html)이 「선물함 만들기」를 페이지(단계 판 1040 + 입력 판 + 옆 칸)로 그리고 마감 뒤 단계까지 섞은 것은 틀렸다.
+  기준: 2026-11-09 사용자 「선물함 만들기는 페이지 이동을 하면 몰입이 깨지니까, 모달 내에서 점진적으로 진행되는 UX」 — 명세 creator-revgifts-new.md
+  「2026-11-09 바꿀 것 — 설명 다시 쓰기 · 만들기를 모달로」(approved). 위쪽 1~4페이지 표(마감 뒤 신청 관리)는 이 시안에 넣지 않는다.
+  모달 형식·단계(1/3 이름 → 2/3 받을 인원 → 3/3 공개 범위 → 만들었습니다)·문구·글자 크기는 지금 구현 그대로(box-create-form · step-dialog · box-list-page · box-explain).
+  바꾼 것은 배치·시각 기준뿐: design-prompt 2-23(폭 토큰 --col-flow) · 6-4(둘러보기형) · 8-14(카드) · 6-5 배치 진단 · 14-7.
+  값: tokens.css 변수만. 넘침을 가리는 규칙 없음, 설명 문구 덧붙이기 없음. 닉네임·금액·날짜·링크는 모두 화면 예시.
+  상태(#주소해시): list(모달 닫힘) · zero(선물함 0개) · m1 · m2 · m3 · err · done · discard (해시가 없으면 m1)
+  shell.css = 크리에이터 사이드바·위 막대(creator-requests-r2-20261112 의 복사본, 본문 배치와 무관)
+-->
+<link rel="stylesheet" href="../../../../src/shared/ui/tokens.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<link rel="stylesheet" href="shell.css">
+<style>
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../public/fonts/TmoneyRoundWindRegular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Medium.subset.woff") format("woff"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-SemiBold.subset.woff") format("woff"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Bold.subset.woff") format("woff"); font-weight: 700; font-display: swap; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--background); color: var(--ink); font-family: var(--font); font-size: var(--fs-body); line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; -webkit-text-size-adjust: 100%; }
+h1, h2, h3, p, ul, ol, dl, dd, figure, table, fieldset { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+h1, h2, h3 { font-family: var(--font-round); font-weight: var(--fw-title); letter-spacing: var(--ls-title); font-synthesis: none; }
+img, svg { display: block; max-width: 100%; }
+svg { flex-shrink: 0; }
+a { color: inherit; }
+button, select, input { font-family: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+/* ---------- 시안 도구 줄(페이지 바깥) ---------- */
+.tool { position: relative; z-index: 70; margin-bottom: var(--space-6); border-radius: var(--r-btn); background: var(--ink); color: var(--white); font-size: var(--fs-small); }
+.tool-in { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); }
+.tool b { margin-right: var(--space-1); font-weight: var(--fw-bold); }
+.tool .sep { width: 1px; align-self: stretch; margin: 0 var(--space-1); background: rgb(255 255 255 / .4); }
+.tool button { min-height: 44px; min-width: 44px; padding: 0 var(--space-3); border: 1px solid rgb(255 255 255 / .55); border-radius: var(--r-btn); background: transparent; color: var(--white); font: var(--fw-btn) var(--fs-small)/1.2 var(--font); cursor: pointer; }
+.tool button[aria-pressed="true"] { background: var(--white); color: var(--ink); border-color: var(--white); }
+.tool button:focus-visible { outline-color: var(--white); }
+
+/* ---------- 부품(base.css 값 그대로, 페이지 뿌리 .v34 안의 모양) ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: var(--btn-h); padding: 0 var(--space-4); border: 0; border-radius: var(--r-btn); background: var(--btn-fill-fx); box-shadow: var(--btn-fill-shadow); color: var(--on-brand); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; text-decoration: none; cursor: pointer; transition: background-color var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out); }
+.btn:hover { background: var(--brand-hover); box-shadow: var(--btn-fill-shadow-hover); }
+.btn--line { background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-400); color: var(--ink); }
+.btn--line:hover { background: var(--btn-ghost-hover); box-shadow: inset 0 0 0 1px var(--gray-400); }
+.tag { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 28px; padding: 2px var(--space-2); border-radius: var(--r-pill); background: var(--info-soft); color: var(--info); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1.4; white-space: nowrap; box-shadow: var(--tag-sheen); }
+.tag::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: var(--r-pill); background: currentColor; }
+.tag--warn { background: var(--warn-soft); color: var(--warn-ink); }
+.tag--success { background: var(--success-soft); color: var(--success); }
+.tag--plain { background: var(--gray-100); color: var(--gray-900); }
+.tag--line { background: var(--white); color: var(--gray-600); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.tag--line::before { display: none; }
+.hint { margin-top: var(--space-2); color: var(--sub); font-size: var(--fs-body); }
+.ico { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- 페이지 틀: 흐름형 --col-flow ---------- */
+main.page { container: rev / inline-size; min-width: 0; padding: var(--space-10) var(--space-10) var(--space-24); }
+.col { width: 100%; max-width: var(--col-flow); margin-inline: auto; min-width: 0; display: grid; gap: var(--space-12); }
+.col > div[data-g] { display: grid; gap: var(--space-12); min-width: 0; }
+.phead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.phead--hero { align-items: flex-start; }
+.ph-title { font-size: var(--fs-page); line-height: 1.3; letter-spacing: var(--ls-title); }
+.heroT { min-width: 0; max-width: 680px; }
+.def { margin-top: var(--space-2); color: var(--sub); }
+.sec { display: grid; gap: var(--space-6); align-content: start; min-width: 0; }
+.secH { font-family: var(--font-round); font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; letter-spacing: 0; }
+.endrow { display: flex; justify-content: flex-end; }
+
+/* 선물함 카드 — 240 고정 폭 칸 자동 배치, 카드 전체가 누르는 칸(design-rules 43절) */
+.boxes { display: grid; grid-template-columns: repeat(auto-fill, 240px); gap: var(--space-6) var(--space-4); }
+.bcard { position: relative; display: flex; flex-direction: column; min-width: 0; padding-top: var(--space-6); }
+.bLid { position: relative; height: 40px; margin: 0 -4px; border-radius: var(--r-card) var(--r-card) 4px 4px; background: var(--primary-50); box-shadow: inset 0 -1px 0 var(--primary); }
+.bLid::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 14px; transform: translateX(-50%); background: var(--primary); }
+.bBow { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); fill: var(--primary); }
+.bKnot { fill: var(--primary-700); }
+.bBody { display: flex; flex: 1; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--space-4) var(--space-6); border: 1px solid var(--border); border-top: 0; border-radius: 0 0 var(--r-card) var(--r-card); background: var(--white); box-shadow: var(--card-shadow); transition: box-shadow var(--dur-hover) var(--ease-out); }
+.bcard:hover .bBody { box-shadow: var(--card-shadow-hover); }
+.bWho { display: grid; gap: var(--space-1); min-width: 0; }
+.bN { min-width: 0; font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; letter-spacing: 0; }
+.bDesc { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; color: var(--sub); font-size: var(--fs-small); line-height: 1.5; }
+.bA { display: block; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; line-height: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+.bNm { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
+.bA::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.bA:focus-visible { outline: none; }
+.bA:focus-visible::after { outline: 2px solid var(--focus); outline-offset: 2px; }
+.bTg { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.bCnt { display: grid; gap: var(--space-2); margin-top: var(--space-2); }
+.bNum { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); color: var(--sub); font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
+.bNum b { color: var(--ink); font-size: var(--fs-body); }
+.bBar { height: 6px; border-radius: var(--r-bar); background: var(--track); }
+.bBar i { display: block; height: 100%; border-radius: var(--r-bar); background: var(--primary); }
+.bM { margin: auto 0 0; padding-top: var(--space-1); color: var(--sub); font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
+
+/* 큰 흐름 그림 — 칸 폭 900 이상 가로, 아래는 세로(캡션은 그림 아래 12) */
+.storyBox { container-type: inline-size; }
+.story { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "a" "ca" "ab" "b" "cb" "fv" "c" "cc"; padding: var(--panel-pad); border-radius: var(--r-panel); background: var(--surface-brand); box-shadow: inset 0 0 0 1px var(--tint-line); color: var(--gray-600); }
+.sA { grid-area: a; } .sB { grid-area: b; } .sC { grid-area: c; } .arrAb { grid-area: ab; } .capA { grid-area: ca; } .capB { grid-area: cb; } .capC { grid-area: cc; }
+.fanV { grid-area: fv; display: block; width: 100%; height: 96px; }
+.fanH { display: none; grid-area: fh; }
+.sPic { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--space-2); height: 160px; padding-top: var(--space-6); border-radius: var(--r-icon); background: var(--white); box-shadow: inset 0 0 0 1px var(--tint-line); }
+.sB { padding-top: 0; }
+.sPic img { width: auto; height: auto; max-width: 45%; max-height: 96px; object-fit: contain; }
+.sB img { max-width: 70%; max-height: 112px; }
+.chipA { position: absolute; top: var(--space-2); left: var(--space-2); display: inline-flex; align-items: center; padding: var(--space-2) var(--space-4); border-radius: var(--r-pill); background: var(--primary-50); color: var(--gray-900); font-weight: var(--fw-btn); line-height: 1; }
+.arr { display: grid; place-items: center; color: var(--gray-600); }
+.arr svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.arrAb { height: 48px; }
+.arrAb svg { transform: rotate(90deg); }
+.fans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); align-self: center; }
+.fan { display: grid; justify-items: center; align-content: center; gap: var(--space-1); min-height: 88px; padding: var(--space-2); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--tint-line); color: var(--ink); font-size: var(--fs-small); font-weight: var(--fw-bold); }
+.fan img { width: auto; height: 32px; }
+.sCap { margin-top: var(--space-3); color: var(--ink); }
+.sCap h3 { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
+.sCap p { margin-top: var(--space-2); color: var(--sub); }
+@container (min-width: 900px) {
+  .story { grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr) 96px minmax(0, 1fr); grid-template-rows: 192px auto; align-items: center; grid-template-areas: "a ab b fh c" "ca . cb . cc"; }
+  .arrAb { height: auto; }
+  .arrAb svg { transform: none; }
+  .fanV { display: none; }
+  .fanH { display: block; }
+  .fans { grid-template-columns: 1fr; gap: var(--space-3); }
+  .fan { grid-template-columns: auto 1fr; justify-items: start; align-items: center; gap: var(--space-3); min-height: 52px; padding: 0 var(--space-3); }
+  .sCap { align-self: start; }
+}
+
+/* 단계 글 목록 + 비용 — 흰 카드 한 장 */
+.detail { display: grid; gap: var(--space-8); padding: var(--card-pad); border: 1px solid var(--border); border-radius: var(--r-card); background: var(--white); box-shadow: var(--card-shadow); container-type: inline-size; }
+.dsteps { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
+@container (min-width: 640px) { .dsteps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-6) var(--space-8); } }
+.who { display: flex; align-items: center; gap: var(--space-2); color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1.5; }
+.num { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: var(--r-pill); background: var(--primary-50); color: var(--ink); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1; }
+.stH { margin-top: var(--space-2); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.5; }
+.stP { margin-top: var(--space-1); color: var(--sub); font-size: var(--fs-small); line-height: 1.5; }
+.cost { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); align-items: start; padding-top: var(--space-8); border-top: 1px solid var(--gray-200); }
+@container (min-width: 820px) { .cost { grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: var(--space-8); } }
+.costL { display: grid; gap: var(--space-4); }
+.costL dt { font-weight: var(--fw-bold); }
+.costL dd { color: var(--sub); }
+.costT { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.costT caption { padding-bottom: var(--space-2); font-size: var(--fs-small); font-weight: var(--fw-bold); text-align: left; }
+.costT th, .costT td { padding: var(--space-2) 0; border-top: 1px solid var(--gray-200); font-size: var(--fs-small); text-align: left; }
+.costT th { color: var(--ink); font-weight: var(--fw-bold); }
+.costT th small { margin-left: var(--space-1); color: var(--sub); font-size: var(--fs-small); font-weight: 400; }
+.costT td { font-weight: var(--fw-bold); text-align: right; }
+
+/* ---------- 만들기 모달(step-dialog · box-manage 모듈 기준, 2026-11-12 다시 그림) ---------- */
+.ov { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: var(--scrim); }
+.ov2 { z-index: 61; }
+.dlg { min-height: 0; display: flex; flex-direction: column; width: 520px; max-width: calc(100% - var(--space-12)); max-height: calc(100dvh - var(--space-12)); padding: var(--panel-pad); border-radius: var(--r-panel); background: var(--white); color: var(--ink); box-shadow: var(--float); }
+/* 머리: 제목 · 닫기 한 줄. 닫기 칸은 44 를 지키되 X 글자의 오른쪽 끝이 본문 오른쪽 끝과 맞게 오른쪽으로 16 내민다(2-8 보정: 24 그림 안 X 는 가장자리에서 6 안쪽, 칸은 10 안쪽) */
+.head { flex: none; display: flex; align-items: center; gap: var(--space-2); }
+.head > .title { flex: 1 1 0; min-width: 0; }
+.title { font-family: var(--font-round); font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; letter-spacing: 0; }
+.x { display: grid; place-items: center; flex: none; width: 44px; height: 44px; margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-4)) calc(-1 * var(--space-2)) 0; padding: 0; border: 0; border-radius: var(--r-pill); background: none; color: var(--ink); cursor: pointer; }
+.x:hover { background: var(--gray-100); }
+.x svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+/* 진행: 「1/3 이름 · 다음: …」 글자가 막대 위. 머리와 16, 본문과 24 */
+.prog { flex: none; margin-top: var(--space-4); }
+.progT { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 var(--space-4); margin-bottom: var(--space-2); color: var(--sub); font-size: var(--fs-small); line-height: 1.5; }
+.progT b { color: var(--ink); font-weight: var(--fw-bold); }
+.bar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--space-1); }
+.bar i { height: 6px; border-radius: var(--r-bar); background: var(--track); }
+.bar i.on { background: var(--gray-900); }
+.body { flex: 0 1 auto; display: grid; gap: var(--space-6); align-content: start; margin-top: var(--space-6); overflow-y: auto; }
+.body:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.foot { flex: none; display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-8); }
+.foot .btn { min-width: 96px; }
+.foot > .back { margin-right: auto; }
+.stepForm { display: grid; gap: var(--space-6); }
+
+/* 입력칸: 사이트의 다른 입력칸과 같은 모양(base.css .field — 흰 바탕 · 경계 1px --field-line · 반경 12 · 높이 48 · 초점은 안쪽 1.5px --field-focus · 오류는 --danger-line) */
+.fld { min-width: 0; }
+.lrow { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-2); }
+.lrow > label, .fld > label.lab { font-weight: var(--fw-btn); }
+.cnt { flex: none; color: var(--sub); font-size: var(--fs-small); font-variant-numeric: tabular-nums; line-height: 1.5; }
+.cnt.near { color: var(--ink); font-weight: var(--fw-bold); }
+.fx { display: flex; align-items: center; width: 100%; min-width: 0; min-height: var(--btn-h); padding: 0 var(--space-4); border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); color: var(--ink); font: inherit; font-size: var(--fs-body); line-height: 1.4; transition: box-shadow var(--dur-hover) var(--ease-out); }
+input.fx { display: block; text-overflow: ellipsis; caret-color: var(--field-focus); }
+.fx:focus, .fx:focus-within { outline: 2px solid transparent; box-shadow: inset 0 0 0 var(--field-ring) var(--field-focus); }
+.fx.err, .fx.err:focus, .fx.err:focus-within { box-shadow: inset 0 0 0 var(--field-ring) var(--danger-line); }
+.cin { flex: 1 1 auto; min-width: 0; height: var(--btn-h); margin: 0; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-variant-numeric: tabular-nums; caret-color: var(--field-focus); appearance: textfield; }
+.cin:focus { outline: 2px solid transparent; }
+.cin::-webkit-inner-spin-button, .cin::-webkit-outer-spin-button { margin: 0; appearance: none; }
+.unit { flex: none; margin-left: var(--space-2); color: var(--sub); }
+.dlg .hint { margin-top: var(--space-2); color: var(--sub); font-size: var(--fs-small); line-height: 1.5; }
+.ferr { display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-2); color: var(--danger); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; }
+.ferr .ico { flex: none; width: 16px; height: 16px; margin-top: 2px; }
+.ferrBox { align-items: flex-start; margin-top: 0; padding: var(--space-4); border-radius: var(--r-btn); background: var(--danger-soft); font-size: var(--fs-body); }
+.ferrBox .ico { width: 20px; height: 20px; margin-top: 2px; }
+
+/* 3/3: 입력 요약(왼쪽 한 축 — 항목 이름 96 칸 + 값) · 공개 범위 두 칸 */
+.sum { display: grid; gap: var(--space-2); padding: var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.sum > div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 0 var(--space-4); font-size: var(--fs-small); line-height: 1.5; }
+.sum dt { color: var(--sub); }
+.sum dd { min-width: 0; margin: 0; color: var(--ink); font-weight: var(--fw-btn); }
+.scope { display: grid; gap: var(--space-2); min-width: 0; border: 0; }
+.scope legend { float: left; width: 100%; margin-bottom: 0; padding: 0; font-weight: var(--fw-btn); }
+.scope legend + * { clear: both; }
+.scopeOpt { display: flex; align-items: center; gap: var(--space-3); min-height: 64px; padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-300); cursor: pointer; transition: background-color var(--dur-hover) var(--ease-out); }
+.scopeOpt input { flex: none; width: var(--icon-xs); height: var(--icon-xs); margin: 0; accent-color: var(--brand-line); }
+.scopeOpt > span { display: grid; min-width: 0; line-height: 1.5; }
+.scopeOpt b { font-weight: var(--fw-btn); }
+.scopeOpt small { color: var(--sub); font-size: var(--fs-small); }
+@media (hover: hover) { .scopeOpt:hover { background: var(--surface-hover); } }
+.scopeOpt:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 var(--field-ring) var(--brand-line); }
+.scopeOpt:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: -2px; }
+
+/* 만들었습니다 */
+.doneTitle { display: flex; align-items: center; gap: var(--space-2); }
+.doneTitle svg { width: 24px; height: 24px; color: var(--success); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.made { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.madeName { min-width: 0; font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; }
+.lkLabel { margin-bottom: var(--space-2); font-weight: var(--fw-btn); }
+.lkRow { display: flex; align-items: stretch; gap: var(--space-2); }
+.lk { flex: 1; display: flex; align-items: center; min-width: 0; min-height: var(--btn-h); padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--surface); box-shadow: var(--hair); color: var(--ink); font-size: var(--fs-small); line-height: 1.5; }
+.lkRow > .btn { flex: none; min-height: var(--btn-h); }
+.cpmsg { margin-top: var(--space-2); color: var(--sub); font-size: var(--fs-small); line-height: 1.5; }
+.cpmsg:empty { display: none; }
+
+/* 지우기 확인: 입력칸 없는 짧은 확인 대화 상자 — 버튼은 폭 전체를 반씩, primary 오른쪽(2-21 6)) */
+.small { width: 400px; max-width: calc(100% - var(--space-8)); padding: var(--panel-pad); border-radius: var(--r-panel); background: var(--white); color: var(--ink); box-shadow: var(--float); }
+.small .title { display: block; }
+.desc { margin-top: var(--space-2); color: var(--sub); overflow-wrap: anywhere; }
+.smallFoot { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-6); }
+
+@media (max-width: 768px) {
+  .phead { flex-direction: column; align-items: stretch; }
+  .phead .btn, .endrow .btn { width: 100%; }
+  .boxes { grid-template-columns: minmax(0, 1fr); }
+  /* 휴대폰 시트: 머리 + 진행은 위에 고정, 버튼 줄은 아래에 고정(안전 영역), 본문만 스크롤 */
+  .dlg { width: 100%; height: 100%; max-width: none; max-height: none; padding: 0; border-radius: 0; box-shadow: none; }
+  .head { min-height: 60px; padding: max(var(--space-2), env(safe-area-inset-top)) 0 var(--space-2) var(--space-4); }
+  .x { margin: 0; }
+  .prog { margin: 0; padding: 0 var(--space-4) var(--space-4); }
+  .head:has(+ .body), .prog { border-bottom: 1px solid var(--gray-200); }
+  .body, .head + .body { flex: 1 1 auto; min-height: 0; margin: 0; padding: var(--space-6) var(--space-4); }
+  .foot { flex-direction: column-reverse; align-items: stretch; margin: 0; padding: var(--space-4) var(--space-4) max(var(--space-4), env(safe-area-inset-bottom)); border-top: 1px solid var(--gray-200); }
+  .foot .btn { width: 100%; }
+  .foot > .back { margin-right: 0; min-height: var(--btn-h-sm); background: none; box-shadow: none; }
+  .foot > .back:hover { background: var(--gray-100); box-shadow: none; }
+  .small { padding: var(--space-6); }
+  .ov { top: var(--tool-h, 0px); }
+  .lkRow { flex-direction: column; }
+}
+@media (max-width: 767px) {
+  main.page { padding: var(--space-4) var(--gutter) var(--space-16); }
+  .tool-in { flex-wrap: nowrap; overflow-x: auto; padding: var(--space-3); }
+  .tool button { flex: none; white-space: nowrap; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+/* 2026-11-12 기본 프로필 사진 = 고양이 얼굴(public/img/default-face/cat.webp) — 사용자 지시 */
+.face, .sb-avatar, .oface, .dwho .av, .sb .me i { overflow: hidden; }
+.pf { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pfb { border-radius: 50%; overflow: hidden; }
+</style>
+</head>
+<body>
+<header class="topbar"><a class="logo" aria-label="팬꾹 홈" href="#"><img src="../../../../public/images/logo-mark.png" alt="" aria-hidden="true" width="28" height="28" style="border-radius:var(--r-logo);display:block;flex:none">팬꾹</a><button class="icon-btn" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="app-sidebar"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path></svg></button></header>
+<aside class="sidebar sidebar-c" id="app-sidebar" aria-label="크리에이터 메뉴"><div class="sb-top"><button class="sb-mark" type="button" aria-label="사이드바 펼치기" aria-controls="app-sidebar" aria-expanded="true"><span class="m-txt" aria-hidden="true"><img src="../../../../public/images/logo-mark.png" alt="" aria-hidden="true" width="28" height="28" style="border-radius:var(--r-logo);display:block;flex:none"></span><svg class="ico m-ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path><path d="m14 9 3 3-3 3"></path></svg></button><a class="logo" aria-label="팬꾹 홈" href="#"><img src="../../../../public/images/logo-mark.png" alt="" aria-hidden="true" width="28" height="28" style="border-radius:var(--r-logo);display:block;flex:none">팬꾹</a><button class="sb-btn sb-fold" type="button" aria-label="사이드바 접기" aria-controls="app-sidebar"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path><path d="m16 15-3-3 3-3"></path></svg></button><button class="sb-btn sb-close" type="button" aria-label="메뉴 닫기"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div><nav class="sb-nav" aria-label="크리에이터 메뉴"><div><p class="sb-group" id="sb-g0"><span class="sb-group-t">기본</span></p><ul aria-labelledby="sb-g0"><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg><span class="sb-label">홈</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg><span class="sb-label">선물 현황</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path></svg><span class="sb-label">지금 할 일</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg><span class="sb-label">크리에이터 찾기</span></a></li></ul></div><div><p class="sb-group" id="sb-g1"><span class="sb-group-t">받기</span></p><ul aria-labelledby="sb-g1"><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"></path><path d="m3 7 2 2 4-4"></path><path d="M13 6h8"></path><path d="M13 12h8"></path><path d="M13 18h8"></path></svg><span class="sb-label">승인 내역</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><path d="m7.5 4.27 9 5.15"></path></svg><span class="sb-label">받은 선물</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg><span class="sb-label">열람 기록</span></a></li></ul></div><div><p class="sb-group" id="sb-g2"><span class="sb-group-t">보내기</span></p><ul aria-labelledby="sb-g2"><li><a aria-current="page" href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 16h6"></path><path d="M19 13v6"></path><path d="M21 14V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"></path><path d="m7.5 4.27 9 5.15"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" x2="12" y1="22" y2="12"></line></svg><span class="sb-label">팬에게 보내기</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v14"></path><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"></path><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"></path><rect x="3" y="7" width="18" height="4" rx="1"></rect></svg><span class="sb-label">다른 크리에이터에게 선물</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"></path></svg><span class="sb-label">팔로우한 크리에이터</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg><span class="sb-label">보낸 내역</span></a></li></ul></div><div><p class="sb-group" id="sb-g3"><span class="sb-group-t">내 팬꾹</span></p><ul aria-labelledby="sb-g3"><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"></path><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle></svg><span class="sb-label">꾸미기</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 0 0-16 0"></path></svg><span class="sb-label">프로필 수정</span></a></li><li><a href="#"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"></path><circle cx="12" cy="12" r="3"></circle></svg><span class="sb-label">상세 설정</span></a></li></ul></div></nav><div class="sb-bottom"><details class="sb-menu"><summary aria-label="하루님 계정 메뉴"><span class="sb-avatar" aria-hidden="true"><img class="pf" src="../../../../public/img/default-face/cat.webp" alt="" aria-hidden="true"></span><span class="sb-name">하루<!-- -->님</span><svg class="ico sb-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 15 5 5 5-5"></path><path d="m7 9 5-5 5 5"></path></svg></summary><div class="sb-menu-list"><a href="#">계정 설정</a><button class="menu-action" type="button" aria-disabled="false">로그아웃</button></div></details></div></aside>
+<div class="sb-scrim" id="scrim"></div>
+
+<main id="main" class="page v34">
+<div class="tool"><div class="tool-in" id="tools" role="group" aria-label="시안 상태">
+  <b>상태</b>
+  <button type="button" data-s="list">목록(모달 닫힘)</button>
+  <button type="button" data-s="zero">선물함 0개</button>
+  <span class="sep" aria-hidden="true"></span>
+  <button type="button" data-s="m1">1/3 이름</button>
+  <button type="button" data-s="m1" data-v="empty">1/3 빈 칸</button>
+  <button type="button" data-s="m1" data-v="focus">1/3 입력 중(초점)</button>
+  <button type="button" data-s="m1" data-v="limit">1/3 한도 근처</button>
+  <button type="button" data-s="m1" data-v="error">1/3 값 오류</button>
+  <button type="button" data-s="m2">2/3 받을 인원</button>
+  <button type="button" data-s="m2" data-v="error">2/3 값 오류</button>
+  <button type="button" data-s="m3">3/3 공개 범위</button>
+  <button type="button" data-s="err">만들기 실패</button>
+  <button type="button" data-s="done">만들었습니다</button>
+  <button type="button" data-s="discard">지우기 확인</button>
+</div></div>
+
+<div class="col" id="col">
+
+  <!-- 선물함 0개 — 설명 전체 -->
+  <div data-g="zero">
+    <header class="phead phead--hero">
+      <div class="heroT">
+        <h1 class="ph-title">팬에게 보내기란?</h1>
+        <p class="def">여러 팬에게 줄 선물을 큰 상자 하나에 담아 팬꾹으로 보내면, 팬꾹이 열어 팬마다 나눠 보냅니다.</p>
+      </div>
+      <button class="btn" type="button" data-open>선물함 만들기</button>
+    </header>
+    <div id="ex-zero"></div>
+  </div>
+
+  <!-- 선물함 1개 이상 — 목록이 먼저, 설명은 아래 -->
+  <div data-g="list m1 m2 m3 err done discard">
+    <header class="phead">
+      <h1 class="ph-title">팬에게 보내기</h1>
+      <button class="btn" type="button" data-open>선물함 만들기</button>
+    </header>
+    <section class="sec" aria-labelledby="mine-h">
+      <h2 class="secH" id="mine-h">내 선물함</h2>
+      <ul class="boxes" id="boxes"></ul>
+    </section>
+    <section class="sec" aria-labelledby="what-h">
+      <div class="heroT">
+        <h2 class="secH" id="what-h">팬에게 보내기란?</h2>
+        <p class="def">여러 팬에게 줄 선물을 큰 상자 하나에 담아 팬꾹으로 보내면, 팬꾹이 열어 팬마다 나눠 보냅니다.</p>
+      </div>
+      <div id="ex-list"></div>
+    </section>
+  </div>
+
+  <div class="endrow"><button class="btn" type="button" data-open>선물함 만들기</button></div>
+</div>
+
+<!-- ===== 만들기 모달 ===== -->
+<div class="ov" id="ov" data-g="m1 m2 m3 err done discard">
+
+  <!-- 1/3 이름 (+ 간단한 설명, 선택) — 글자 수는 라벨 줄 오른쪽 -->
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="t1" data-g="m1 discard">
+    <div class="head"><h2 class="title" id="t1">선물함 만들기</h2><button class="x" type="button" aria-label="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="prog"><p class="progT"><b>1/3 이름</b><span>다음: 받을 인원</span></p><div class="bar" role="progressbar" aria-label="선물함 만들기 진행" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1" aria-valuetext="3단계 중 1단계, 이름"><i class="on"></i><i></i><i></i></div></div>
+    <div class="body"><form class="stepForm" id="f1" novalidate>
+      <div class="fld"><div class="lrow"><label for="bc-name">선물함 이름</label><span class="cnt" id="cnt-bc-name" aria-hidden="true"></span></div>
+        <input class="fx" id="bc-name" type="text" autocomplete="off" maxlength="14" value="11월 팬미팅 선물" aria-describedby="bc-name-e">
+        <p class="ferr" id="bc-name-e" role="alert" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg><span>선물함 이름을 입력해 주세요.</span></p></div>
+      <div class="fld"><div class="lrow"><label for="bc-desc">간단한 설명 (선택)</label><span class="cnt" id="cnt-bc-desc" aria-hidden="true"></span></div>
+        <input class="fx" id="bc-desc" type="text" autocomplete="off" maxlength="30" value="팬미팅 오신 분들께 드리는 감사 선물"></div>
+    </form></div>
+    <div class="foot"><button class="btn" type="button" data-go="m2">다음</button></div>
+  </div>
+
+  <!-- 2/3 받을 인원 -->
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="t2" data-g="m2">
+    <div class="head"><h2 class="title" id="t2">선물함 만들기</h2><button class="x" type="button" aria-label="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="prog"><p class="progT"><b>2/3 받을 인원</b><span>다음: 공개 범위</span></p><div class="bar" role="progressbar" aria-label="선물함 만들기 진행" aria-valuemin="1" aria-valuemax="3" aria-valuenow="2" aria-valuetext="3단계 중 2단계, 받을 인원"><i class="on"></i><i class="on"></i><i></i></div></div>
+    <div class="body"><form class="stepForm" novalidate>
+      <div class="fld"><div class="lrow"><label for="bc-count">받을 인원</label></div>
+        <label for="bc-count" class="fx" id="fx-count"><input class="cin" id="bc-count" type="number" inputmode="numeric" min="1" max="100" step="1" value="30" aria-describedby="bc-count-hint bc-count-e"><span class="unit" aria-hidden="true">명</span></label>
+        <p class="hint" id="bc-count-hint">1~100명</p>
+        <p class="ferr" id="bc-count-e" role="alert" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg><span>받을 인원을 1~100명으로 입력해 주세요.</span></p></div>
+    </form></div>
+    <div class="foot"><button class="btn btn--line back" type="button" data-go="m1">이전</button><button class="btn" type="button" data-go="m3">다음</button></div>
+  </div>
+
+  <!-- 3/3 공개 범위 (+ 저장 실패) -->
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="t3" data-g="m3 err">
+    <div class="head"><h2 class="title" id="t3">선물함 만들기</h2><button class="x" type="button" aria-label="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="prog"><p class="progT"><b>3/3 공개 범위</b><span>다음: 신청 링크 받기</span></p><div class="bar" role="progressbar" aria-label="선물함 만들기 진행" aria-valuemin="1" aria-valuemax="3" aria-valuenow="3" aria-valuetext="3단계 중 3단계, 공개 범위"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div class="body"><form class="stepForm" novalidate>
+      <dl class="sum">
+        <div><dt>선물함 이름</dt><dd>11월 팬미팅 선물</dd></div>
+        <div><dt>간단한 설명</dt><dd>팬미팅 오신 분들께 드리는 감사 선물</dd></div>
+        <div><dt>받을 인원</dt><dd>30명</dd></div>
+      </dl>
+      <fieldset class="scope">
+        <legend>공개 범위</legend>
+        <label class="scopeOpt"><input type="radio" name="bc-scope" checked><span><b>공개</b><small>내 크리에이터 페이지에서 신청</small></span></label>
+        <label class="scopeOpt"><input type="radio" name="bc-scope"><span><b>비공개</b><small>신청 링크로만 신청</small></span></label>
+      </fieldset>
+      <p class="ferr ferrBox" role="alert" data-g="err"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg><span>선물함을 만들지 못했습니다. 입력한 내용은 그대로 있습니다.</span></p>
+    </form></div>
+    <div class="foot"><button class="btn btn--line back" type="button" data-go="m2">이전</button><button class="btn" type="button" data-go="done"><span data-g="m3">선물함 만들기</span><span data-g="err">다시 만들기</span></button></div>
+  </div>
+
+  <!-- 만들었습니다 -->
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="t4" data-g="done">
+    <div class="head"><h2 class="title" id="t4"><span class="doneTitle"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16 10"/></svg><span>선물함을 만들었습니다</span></span></h2><button class="x" type="button" aria-label="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="body">
+      <div class="made"><p class="madeName">11월 팬미팅 선물</p><span class="tag">신청 받는 중</span></div>
+      <div><p class="lkLabel" id="bc-link-l">신청 링크</p>
+        <div class="lkRow"><p class="lk" aria-labelledby="bc-link-l">https://fankkuk.com/gift-boxes/9f3a27c1</p><button class="btn btn--line" type="button" id="copy">링크 복사</button></div>
+        <p class="cpmsg" role="status" id="copy-msg"></p>
+      </div>
+    </div>
+    <div class="foot"><button class="btn" type="button" data-go="list">완료</button></div>
+  </div>
+
+  <!-- 입력한 내용을 지울까요? — 1/3 창 위에 겹쳐 뜬다 -->
+  <div class="ov ov2" data-g="discard">
+    <div class="small" role="alertdialog" aria-labelledby="t5" aria-describedby="d5">
+      <h2 class="title" id="t5">입력한 내용을 지울까요?</h2>
+      <p class="desc" id="d5">선물함 이름 · 11월 팬미팅 선물</p>
+      <div class="smallFoot"><button class="btn btn--line" type="button" data-go="list">지우기</button><button class="btn" type="button" data-go="m1">계속 만들기</button></div>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const root = document.documentElement;
+const META = { list: 1, zero: 1, m1: 1, m2: 1, m3: 1, err: 1, done: 1, discard: 1 };
+const $ = (id) => document.getElementById(id);
+let state = "m1";
+
+/* 선물함 카드(예시) — 지금 구현 BoxCardTags 와 같은 뱃지 규칙 */
+const BOXES = [
+  { n: "연말 감사 선물", d: "한 해 동안 응원해 주신 팬분들께", tags: [["", "신청 받는 중"], ["line", "인원 마감"]], a: 20, c: 20, m: "공개 · 11월 5일" },
+  { n: "10월 생일 선물", d: "", tags: [["plain", "마감"], ["warn", "팬꾹으로 배송하기"]], a: 12, c: 15, m: "공개 · 10월 20일" },
+  { n: "9월 응원 답례", d: "추석 응원 메시지에 보내는 답례", tags: [["plain", "마감"], ["success", "발송 중"]], a: 8, c: 10, m: "비공개 · 9월 14일" },
+];
+const NEWBOX = { n: "11월 팬미팅 선물", d: "팬미팅 오신 분들께 드리는 감사 선물", tags: [["", "신청 받는 중"]], a: 0, c: 30, m: "공개 · 11월 12일", isNew: true };
+const BOW = '<svg class="bBow" viewBox="0 0 48 24" width="72" height="36" focusable="false"><path d="M24 13 C18 3, 6 1, 3 7 C1 12, 6 17, 24 14 Z"/><path d="M24 13 C30 3, 42 1, 45 7 C47 12, 42 17, 24 14 Z"/><rect class="bKnot" x="19" y="8" width="10" height="9" rx="3"/></svg>';
+const card = (b) => `<li class="bcard"${b.isNew ? ' data-g="done"' : ""}><div class="bLid" aria-hidden="true">${BOW}</div><div class="bBody"><div class="bTg">${b.tags.map((t) => `<span class="tag${t[0] ? " tag--" + t[0] : ""}">${t[1]}</span>`).join("")}</div><div class="bWho"><h3 class="bN"><button type="button" class="bA" title="${b.n}"><span class="bNm">${b.n}</span></button></h3>${b.d ? `<p class="bDesc">${b.d}</p>` : ""}</div><div class="bCnt"><p class="bNum"><span>신청 인원</span><span><b>${b.a}</b> / ${b.c}명</span></p><div class="bBar" role="progressbar" aria-label="신청 ${b.a}명 / ${b.c}명" aria-valuemin="0" aria-valuemax="${b.c}" aria-valuenow="${b.a}"><i style="width:${Math.round((b.a / b.c) * 100)}%"></i></div></div><p class="bM">${b.m}</p></div></li>`;
+$("boxes").innerHTML = card(NEWBOX) + BOXES.map(card).join("");
+
+/* 설명(box-explain 과 같은 내용) — 0개 상태와 목록 아래에 같은 것을 둔다 */
+const STEPS = [
+  ["크리에이터", "선물함 만들기", "이름 · 받을 인원(1~100명) · 공개 범위를 정합니다."],
+  ["팬", "신청", "나를 팔로우한 팬이 받을 주소를 입력해 신청합니다."],
+  ["크리에이터", "마감하고 상자 크기 고르기", "팬마다 상자 크기를 고르면 예상 금액을 확인합니다."],
+  ["크리에이터", "큰 상자로 팬꾹에 보내기", "번호 라벨을 붙여 팬꾹 주소(선물함 번호 6자리)로 보냅니다."],
+  ["팬꾹 → 크리에이터", "실측 뒤 명세서 · 결제", "72시간 안에 결제합니다. 168시간까지 결제가 없으면 착불로 돌려보냅니다."],
+  ["팬꾹 → 팬", "팬마다 발송", "크리에이터와 팬이 배송 단계를 봅니다."],
+];
+const PRICE = [["극소형", "80cm · 2kg", "3,000원"], ["소형", "100cm · 5kg", "3,500원"], ["중형", "120cm · 10kg", "4,400원"], ["대형", "140cm · 15kg", "5,500원"]];
+const arrow = (id) => `<defs><marker id="${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.5 8.5 5 1 8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>`;
+const explain = (u) => `
+<div class="storyBox"><div class="story">
+  <div class="sPic sA"><span class="chipA">택배 접수 1번</span><img src="../../../../public/images/home/revgift-pack.png" alt="" width="112" height="112"></div>
+  <span class="arr arrAb" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M1 8h13M9 3l5 5-5 5"/></svg></span>
+  <div class="sPic sB"><img src="../../../../public/images/home/icon-inspect.webp" alt="" width="112" height="112"></div>
+  <svg class="fanH" viewBox="0 0 96 192" width="96" height="192" aria-hidden="true">${arrow("h" + u)}<g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"><line x1="16" y1="96" x2="80" y2="32" marker-end="url(#h${u})"/><line x1="16" y1="96" x2="80" y2="96" marker-end="url(#h${u})"/><line x1="16" y1="96" x2="80" y2="160" marker-end="url(#h${u})"/></g></svg>
+  <svg class="fanV" width="100%" height="96" aria-hidden="true">${arrow("v" + u)}<g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"><line x1="50%" y1="16" x2="16.67%" y2="80" marker-end="url(#v${u})"/><line x1="50%" y1="16" x2="50%" y2="80" marker-end="url(#v${u})"/><line x1="50%" y1="16" x2="83.33%" y2="80" marker-end="url(#v${u})"/></g></svg>
+  <ul class="fans sC" aria-label="팬 여러 명 예시">${["별빛", "하늘", "보라"].map((f) => `<li class="fan"><img src="../../../../public/images/home/gift-box-small.png" alt="" width="32" height="32"><span>${f}</span></li>`).join("")}</ul>
+  <div class="sCap capA"><h3>큰 상자 하나, 택배 접수 한 번</h3><p>선물마다 닉네임을 적거나 번호 라벨을 붙여 큰 상자에 함께 담아 팬꾹으로 보냅니다.</p></div>
+  <div class="sCap capB"><h3>팬꾹이 열어 실제 크기를 잽니다</h3><p>도착한 선물을 하나씩 재서 명세서를 만들고, 그 금액을 한 번 결제합니다. 미리 결제하지 않습니다.</p></div>
+  <div class="sCap capC"><h3>팬마다 따로 발송합니다</h3><p>팬이 신청할 때 받을 주소를 팬꾹에 입력합니다. 크리에이터에게는 닉네임만 보입니다.</p></div>
+</div></div>
+<section class="detail" aria-label="진행 단계와 비용">
+  <ol class="dsteps">${STEPS.map((s, i) => `<li><p class="who"><span class="num" aria-hidden="true">${i + 1}</span>${s[0]}</p><h3 class="stH">${s[1]}</h3><p class="stP">${s[2]}</p></li>`).join("")}</ol>
+  <div class="cost">
+    <dl class="costL"><div><dt>팬마다</dt><dd>상자 크기별 택배비 + 서비스료</dd></div><div><dt>큰 상자를 팬꾹으로 보낼 때</dt><dd>택배비는 크리에이터가 부담합니다(착불 가능).</dd></div><div><dt>대형을 넘는 선물</dt><dd>우체국 실비로 개인접수합니다.</dd></div></dl>
+    <table class="costT"><caption>상자 크기별 택배비</caption><tbody>${PRICE.map((p) => `<tr><th scope="row">${p[0]} <small>${p[1]}</small></th><td>${p[2]}</td></tr>`).join("")}<tr><th scope="row">서비스료 <small>팬마다</small></th><td>700원</td></tr></tbody></table>
+  </div>
+</section>`;
+$("ex-zero").innerHTML = explain("z");
+$("ex-list").innerHTML = explain("l");
+
+let variant = "";
+const $v = (id, v) => { $(id).value = v; };
+const cnt = (id) => { const el = $("cnt-" + id), inp = $(id), n = [...inp.value].length, max = Number(inp.maxLength); el.textContent = n + "/" + max; el.classList.toggle("near", n >= max - 2); };
+const setErr = (id, on) => { const inp = $(id); const box = inp.closest(".fx") || inp; box.classList.toggle("err", on); on ? inp.setAttribute("aria-invalid", "true") : inp.removeAttribute("aria-invalid"); };
+/* 1/3 · 2/3 의 입력 모습: 기본(입력함) · empty(빈 칸) · focus(입력 중) · limit(한도) · error(값 오류) */
+function applyVariant() {
+  const empty = variant === "empty" || variant === "error";
+  $v("bc-name", empty ? "" : variant === "limit" ? "11월 팬미팅 선물 모음전" : variant === "focus" ? "11월 팬미팅" : "11월 팬미팅 선물");
+  $v("bc-desc", empty && variant === "empty" ? "" : variant === "limit" ? "팬미팅에 오신 분들께 드리는 감사 선물과 손편지 모음집" : variant === "focus" ? "" : variant === "error" ? "" : "팬미팅 오신 분들께 드리는 감사 선물");
+  $v("bc-count", state === "m2" && variant === "error" ? "" : "30");
+  cnt("bc-name"); cnt("bc-desc");
+  const e1 = state === "m1" && variant === "error", e2 = state === "m2" && variant === "error";
+  setErr("bc-name", e1); $("bc-name-e").hidden = !e1;
+  setErr("bc-count", e2); $("bc-count-e").hidden = !e2;
+  if (state === "m1" && variant === "focus") $("bc-name").focus();
+}
+function render() {
+  document.querySelectorAll("[data-g]").forEach((el) => { el.hidden = !el.dataset.g.split(" ").includes(state); });
+  document.querySelectorAll("#tools button[data-s]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.s === state && (b.dataset.v || "") === variant)));
+  history.replaceState(null, "", "#" + state + (variant ? "-" + variant : ""));
+  applyVariant();
+  const bare = location.search.includes("bare"); document.querySelector(".tool").hidden = bare;
+  root.style.setProperty("--tool-h", "0px");
+  if (!bare && /^(m1|m2|m3|err|done|discard)$/.test(state)) { window.scrollTo(0, 0); root.style.setProperty("--tool-h", Math.round(document.querySelector(".tool").getBoundingClientRect().bottom) + "px"); }
+}
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("#tools button[data-s]");
+  if (t) { state = t.dataset.s; variant = t.dataset.v || ""; render(); return; }
+  const g = e.target.closest("[data-go]"); if (g) { state = g.dataset.go; variant = ""; render(); window.scrollTo({ top: 0 }); return; }
+  if (e.target.closest("[data-open]")) { state = "m1"; variant = ""; render(); return; }
+  if (e.target.closest(".x")) { state = state === "done" ? "list" : "discard"; variant = ""; render(); return; }
+  if (e.target.closest("#copy")) { $("copy-msg").textContent = "링크를 복사했습니다."; }
+});
+document.addEventListener("input", (e) => {
+  if (e.target.id === "bc-name" || e.target.id === "bc-desc") cnt(e.target.id);
+});
+/* 사이드바 접기·서랍 (shell.css 동작용) */
+document.querySelectorAll(".sb-fold, .sb-mark").forEach((b) => b.addEventListener("click", () => { if (root.dataset.collapsed === "1") delete root.dataset.collapsed; else root.dataset.collapsed = "1"; }));
+document.querySelector(".topbar .icon-btn").addEventListener("click", () => (root.dataset.open = "1"));
+document.querySelectorAll(".sb-close, #scrim").forEach((b) => b.addEventListener("click", () => delete root.dataset.open));
+
+function fromHash() { const [h, v] = location.hash.slice(1).split("-"); state = META[h] ? h : "m1"; variant = META[h] && v ? v : ""; render(); }
+window.addEventListener("hashchange", fromHash);
+fromHash();
+</script>
+</body>
+</html>

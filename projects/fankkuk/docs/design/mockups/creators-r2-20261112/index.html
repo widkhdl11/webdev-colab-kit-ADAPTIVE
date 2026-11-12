@@ -127,7 +127,7 @@ a { color: inherit; }
 @media (max-width: 359.98px) { .go .lbl { display: none; } }
 
 /* ---------- 크리에이터 카드 — creator-card-head.module.css 값 그대로(PC). 휴대폰만 배너 4:1(제안) ---------- */
-.card { --personal: #DCEBFF; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--card-pad); border-radius: var(--r-card); background: var(--card-fx); cursor: pointer; box-shadow: var(--card-shadow); transition: transform .25s var(--ease-micro), box-shadow .25s var(--ease-micro); }
+.card { --personal: var(--primary-50); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--card-pad); border-radius: var(--r-card); background: var(--card-fx); cursor: pointer; box-shadow: var(--card-shadow); transition: transform .25s var(--ease-micro), box-shadow .25s var(--ease-micro); }
 .card::before { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--gray-200); pointer-events: none; transition: box-shadow .15s; }
 .card:hover::before, .card:focus-within::before { box-shadow: inset 0 0 0 1px var(--gray-500); }
 .card:hover { transform: translateY(-2px); box-shadow: var(--card-shadow-hover); }
@@ -278,7 +278,8 @@ var BRAND = {
 };
 var CHIP_ORDER = ["SOOP", "치지직", "유튜브", "알플레이", "인스타그램", "X", "스레드", "버추얼"];
 var VIRT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5C3 8.4 3.9 7.5 5 7.5h14c1.1 0 2 .9 2 2v5c0 1.1-.9 2-2 2h-3.2c-.7 0-1.3-.4-1.7-1l-.7-1.2c-.5-.8-1.7-.8-2.2 0l-.7 1.2c-.4.6-1 1-1.7 1H5c-1.1 0-2-.9-2-2z"/></svg>';
-var P = ["#FDE2E4", "#FFE5CC", "#FFF1B8", "#DFF5D8", "#D3F0EC", "#DCEBFF", "#E6E0FF", "#F6DFF0"];
+/* 2026-11-12 사용자: 카드 배경을 크리에이터마다 다른 파스텔 대신 기본 한 색으로 */
+var P = ["var(--primary-50)", "var(--primary-50)", "var(--primary-50)", "var(--primary-50)", "var(--primary-50)", "var(--primary-50)", "var(--primary-50)", "var(--primary-50)"];
 var PAW = "../../../../public/img/default-face/paw.webp";
 var CREATORS = [
   { n: "하루", p: 4, fan: "하루네", sym: 1, intro: "매일 저녁 게임하며 수다 떠는 방송이에요.", tags: ["치지직", "버추얼"], th: 1 },

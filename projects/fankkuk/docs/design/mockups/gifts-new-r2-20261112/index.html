@@ -137,26 +137,34 @@ main.page { container: gift-send / inline-size; min-width: 0; padding: 40px var(
 .actions .next { margin-left: auto; min-width: 160px; }
 .actions .prev { min-width: 160px; }
 
-/* ── 1 크리에이터 — 카드 2열 ── */
+/* ── 1 크리에이터 — 프로필 사진 + 닉네임만 있는 작은 카드 (2026-11-12 사용자 지시). 4열, 판 584 미만 3열 ── */
 .pick-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2) var(--space-4); margin-top: var(--space-6); }
 .pick-head p { font-size: var(--fs-small); color: var(--sub); }
-.pick-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: var(--card-gap); margin-top: var(--space-3); }
-.pick { position: relative; display: grid; grid-template-columns: 48px minmax(0, 1fr) 24px; gap: var(--space-3); align-items: start; height: 100%; padding: var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--white); cursor: pointer; transition: background-color var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out); }
+.pick-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-3); } /* 2026-11-12 사용자: 가로로 긴 작은 직사각형 카드 — 넓은 판 3열, 좁은 판(584 미만) 2열 */
+.pick { position: relative; display: flex; align-items: center; gap: var(--space-3); height: 100%; min-height: 64px; padding: var(--space-3); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--white); cursor: pointer; text-align: left; transition: background-color var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out); }
+.pick .pf { --pf: 40px; }
+.pick-txt { display: grid; flex: 1; min-width: 0; }
 .pick:hover { background: var(--tint); }
 .pick:has(input:checked) { border-color: var(--brand-line); background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
 .pick:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
 .pick.stop { background: var(--surface-muted); cursor: not-allowed; }
 .pick.stop:hover { background: var(--surface-muted); }
-.pick.stop .face { opacity: .7; }
-.face { display: grid; place-items: center; width: 48px; height: 48px; border-radius: var(--r-pill); background: var(--f, var(--face-default)); box-shadow: var(--face-ring); font-weight: var(--fw-bold); font-size: var(--fs-card); }
-.pick-text { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
-.pick-text strong { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.pick-tags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-.ctag { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--gray-100); color: var(--sub); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1.5; white-space: nowrap; }
-.pick-meta { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; font-size: var(--fs-small); color: var(--sub); }
-.pick-ok { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--gray-500); border-radius: var(--r-pill); background: var(--white); color: transparent; }
+.pick.stop .pf { opacity: .7; }
+/* 기본 프로필 사진 = 고양이 얼굴(public/img/default-face/cat.webp) */
+.pf { position: relative; display: block; flex: none; width: var(--pf, 56px); height: var(--pf, 56px); overflow: hidden; border-radius: var(--r-pill); background: var(--gray-100); box-shadow: var(--face-ring); }
+.pf img { display: block; width: 100%; height: 100%; }
+.pf img { object-fit: cover; }
+.pick strong { display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.pick-rest { font-size: var(--fs-badge); color: var(--sub); line-height: 1.5; }
+.pick-ok { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--gray-500); border-radius: var(--r-pill); background: var(--white); color: transparent; }
 .pick:has(input:checked) .pick-ok { border-color: var(--primary); background: var(--primary); color: var(--on-brand); }
 .pick.stop .pick-ok { visibility: hidden; }
+@container gift-panel (max-width: 583px) { .pick-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container gift-panel (max-width: 439px) { .pick-list { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); } } /* 휴대폰: 두 열이면 카드 149 라 닉네임이 잘린다 — 한 열 */
+.who { display: inline-flex; align-items: center; justify-content: flex-end; gap: var(--space-2); max-width: 100%; min-width: 0; }
+.who .pf { --pf: 24px; }
+.sum-row .who { --pf: 32px; justify-content: flex-start; }
+.who span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .more-row { display: flex; justify-content: center; margin-top: var(--space-6); }
 .more-left { color: var(--sub); font-weight: 400; }
 
@@ -302,7 +310,6 @@ body[data-pay="white"] .tag-line .tag { background: var(--surface-selected); box
   .fsteps { margin-top: var(--space-3); }
   .grid { margin-top: var(--space-4); }
   .panel { padding: var(--space-6) var(--space-4) var(--space-8); }
-  .pick-list { grid-template-columns: minmax(0, 1fr); grid-auto-rows: auto; gap: var(--space-3); }
   .sums { grid-template-columns: minmax(0, 1fr); }
   .actions { flex-direction: column-reverse; align-items: stretch; margin-top: var(--space-8); }
   .actions .btn { width: 100%; }
@@ -331,7 +338,7 @@ body[data-pay="white"] .tag-line .tag { background: var(--surface-selected); box
   <button type="button" data-s="rest">쉬는 중(미리 고름)</button>
   <span class="sep" aria-hidden="true"></span>
   <b>답 대기 중</b>
-  <button type="button" data-opt="six" aria-pressed="true">1단계 6명 보임</button>
+  <button type="button" data-opt="six" aria-pressed="true">1단계 12명 보임(끄면 11명)</button>
   <button type="button" data-opt="pay" aria-pressed="false">4단계 결제 칸 흰색(제안)</button>
   <span class="cap" id="cap"></span>
 </div></div>
@@ -397,7 +404,7 @@ body[data-pay="white"] .tag-line .tag { background: var(--surface-selected); box
           <legend class="sr-only">받는 크리에이터</legend>
           <label class="sr-only" for="pick-q">크리에이터 검색</label>
           <input class="field" id="pick-q" type="search" placeholder="이름 검색" autocomplete="off">
-          <div class="pick-head"><strong>팔로우한 크리에이터</strong><p role="status">전체 8명</p></div>
+          <div class="pick-head"><strong>팔로우한 크리에이터</strong><p role="status">전체 14명</p></div>
           <ul class="pick-list" id="picks"></ul>
           <div class="more-row"><button class="btn btn--line btn--sm" type="button" id="more"></button></div>
         </fieldset>
@@ -463,7 +470,7 @@ body[data-pay="white"] .tag-line .tag { background: var(--surface-selected); box
 
         <section data-show="s4" aria-label="확인 및 결제">
           <dl class="sums">
-            <div class="sum-row"><dt>받는 크리에이터</dt><dd class="js-creator">달빛정원님</dd><button class="fix" type="button" data-go="s1" aria-label="받는 크리에이터 수정">수정</button></div>
+            <div class="sum-row"><dt>받는 크리에이터</dt><dd class="js-creator"></dd><button class="fix" type="button" data-go="s1" aria-label="받는 크리에이터 수정">수정</button></div>
             <div class="sum-row"><dt>선물 종류</dt><dd>인형·쿠션</dd><button class="fix" type="button" data-go="s2" aria-label="선물 종류 수정">수정</button></div>
             <div class="sum-row"><dt>전자기기·금속 제품</dt><dd>미포함</dd><button class="fix" type="button" data-go="s2" aria-label="전자기기·금속 제품 수정">수정</button></div>
             <div class="sum-row"><dt>상자</dt><dd class="js-boxes">소형 1개 · 중형 2개</dd><button class="fix" type="button" data-go="s3" aria-label="상자 수정">수정</button></div>
@@ -509,7 +516,7 @@ body[data-pay="white"] .tag-line .tag { background: var(--surface-selected); box
     <aside class="card" aria-labelledby="gift-sum-h">
       <h2 id="gift-sum-h">보낼 선물</h2>
       <dl class="kv">
-        <div><dt>받는 크리에이터</dt><dd id="k-creator">달빛정원님</dd></div>
+        <div><dt>받는 크리에이터</dt><dd id="k-creator"></dd></div>
         <div><dt>선물 종류</dt><dd id="k-kind">—</dd></div>
       </dl>
       <hr class="rule">
@@ -535,25 +542,28 @@ const won = (n) => n.toLocaleString("ko-KR") + "원";
 const $ = (id) => document.getElementById(id);
 const CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+const FACE = "../../../../public/img/default-face/cat.webp";
+
 const CREATORS = [
-  { n: "달빛정원", f: "--face-1", tags: ["게임", "일상"], meta: "유튜브 · 평균 승인 소요 시간 약 2시간" },
-  { n: "소담", f: "--face-2", tags: ["음악"], meta: "치지직 · 평균 승인 소요 시간 약 5시간" },
-  { n: "하늘다람", f: "--face-3", tags: ["먹방", "여행"], meta: "유튜브 · 승인 기록 없음" },
-  { n: "모카", f: "--face-4", tags: ["토크"], meta: "선물 받기 일시 중단 · 11월 20일부터 재개", stop: true },
-  { n: "윤슬", f: "--face-5", tags: ["공부", "일상"], meta: "유튜브 · 평균 승인 소요 시간 약 1일" },
-  { n: "새벽라디오", f: "--face-6", tags: ["라디오"], meta: "채널 변경 확인 중 · 선물 받기 중단", stop: true },
+  { n: "달빛정원", photo: true }, { n: "소담" }, { n: "하늘다람" },
+  { n: "모카", stop: "쉬는 중" }, { n: "윤슬", photo: true }, { n: "새벽라디오", stop: "쉬는 중" },
+  { n: "보라돌이" }, { n: "코코넛", photo: true }, { n: "한여름밤" },
+  { n: "별똥별" }, { n: "도토리", photo: true }, { n: "햇살가득한하루" },
+  { n: "라떼" }, { n: "우주먼지" },
 ];
+const pf = (c) => `<span class="pf" aria-hidden="true"><img src="${FACE}" alt="" width="56" height="56"></span>`;
+const who = (name) => { const c = CREATORS.find((x) => x.n === name) || {}; return `<span class="who">${pf(c)}<span>${name}님</span></span>`; };
 function renderPicks() {
-  const shown = six ? CREATORS : CREATORS.slice(0, 5);
+  const shown = six ? CREATORS.slice(0, 12) : CREATORS.slice(0, 11);
   $("picks").innerHTML = shown.map((c) => `
     <li><label class="pick${c.stop ? " stop" : ""}">
       <input class="sr-only" type="radio" name="creator" value="${c.n}"${c.stop ? " disabled" : ""}${c.n === creator ? " checked" : ""}>
-      <span class="face" style="--f:var(${c.f})" aria-hidden="true">${c.n[0]}</span>
-      <span class="pick-text"><strong title="${c.n}">${c.n}</strong><span class="pick-tags">${c.tags.map((t) => `<span class="ctag">${t}</span>`).join("")}</span><span class="pick-meta">${c.meta}</span></span>
+      ${pf(c)}
+      <span class="pick-txt"><strong title="${c.n}">${c.n}</strong>${c.stop ? `<span class="pick-rest">${c.stop}</span>` : ""}</span>
       <span class="pick-ok" aria-hidden="true">${CHECK}</span>
     </label></li>`).join("");
-  const left = 8 - shown.length;
-  $("more").innerHTML = `${left}명 더 보기 <span class="more-left">(남은 ${left}명)</span>`;
+  const left = CREATORS.length - shown.length;
+  $("more").innerHTML = `${left}명 더 보기`;
 }
 $("picks").addEventListener("change", (e) => { creator = e.target.value; render(); });
 
@@ -610,7 +620,7 @@ function render() {
     $("next").dataset.to = step < 4 ? "s" + (step + 1) : "";
   }
   renderPicks();
-  $("k-creator").textContent = creator + "님"; $("k-kind").textContent = step >= 2 ? "인형·쿠션" : "—";
+  $("k-creator").innerHTML = who(creator); $("k-kind").textContent = step >= 2 ? "인형·쿠션" : "—";
   const lines = step >= 3 && n > 0;
   $("sl").innerHTML = lines ? used.map((t) => `<li><span>${NAME[t]} 상자 ${counts[t]}개<small>${won(PRICE[t])} × ${counts[t]}</small></span><span class="krw">${won(PRICE[t] * counts[t])}</span></li>`).join("") : "";
   $("stot").classList.toggle("only", !lines);
@@ -624,7 +634,7 @@ function render() {
   $("bar-n").textContent = `상자 ${n}개`; $("bar-t").textContent = used.map((t) => `${NAME[t]} ${counts[t]}`).join(" · "); $("bar-r").innerHTML = `${total.toLocaleString("ko-KR")}<small>원</small>`;
   document.querySelectorAll(".js-total").forEach((el) => (el.textContent = won(total)));
   document.querySelectorAll(".js-boxes").forEach((el) => (el.textContent = used.map((t) => `${NAME[t]} ${counts[t]}개`).join(" · ")));
-  document.querySelectorAll(".js-creator").forEach((el) => (el.textContent = creator + "님"));
+  document.querySelectorAll(".js-creator").forEach((el) => (el.innerHTML = who(creator)));
   $("paylines").innerHTML = used.map((t) => `<div class="ln"><span>${NAME[t]} 상자 ${counts[t]}개 <small>${won(PRICE[t])} × ${counts[t]}</small></span><span>${won(PRICE[t] * counts[t])}</span></div>`).join("") + `<div class="tot"><span class="tot-label">합계</span><b>${total.toLocaleString("ko-KR")}<small>원</small></b></div>`;
   history.replaceState(null, "", "#" + state);
 }
