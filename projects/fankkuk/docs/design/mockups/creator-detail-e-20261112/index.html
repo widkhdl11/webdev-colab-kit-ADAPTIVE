@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>크리에이터 상세 (/[handle]) — 시안 e판 · 2026-11-12</title>
+<!--
+  e판 사용자 지시(배치만 바꿈, 요소 모양은 d판 그대로): 1 배경 사진 전체 폭 / 2 상단 묶음 = 윗줄 프로필 | 팔로우·선물 보내기(아래 아무것도 없음), 아랫줄 「진행 중인 선물함」 | 요금·승인 시간 + 받기 어려운 선물(선물함과 같은 높이에서 시작)
+  / 3 상세 내용(열고 닫는 영역) = 3-1 2열(왼쪽 전달 과정 → 받고 싶은 선물, 오른쪽 보내기 전 안내, 같은 높이 시작) + 3-2 나에게 온 감사 카드(2열 뒤 독립 줄, 슬라이더 본문 전체 폭) / 4 다른 크리에이터 전체 폭.
+  처음엔 열림(가정). 닫으면 상단 묶음과 다른 크리에이터가 빈 공간 없이 이어지게. 여닫는 버튼 문구·위치는 제안. 시안 도구에 「상세 내용 닫힘」. 휴대폰 한 열: 프로필 → 버튼 → 진행 중인 선물함 → 요금·승인 시간·받기 어려운 선물 → 상세 내용(전달 과정 → 받고 싶은 선물 → 보내기 전 안내 → 나에게 온 감사 카드) → 다른 크리에이터. 값은 tokens.md, 줄 사이 ≥ 줄 안 × 2(2-2). 바뀐 표는 NOTES.md 맨 위 「d판 → e판」.
+  d판 사용자 지시 원문(요약 없이): 「로그인한 유저별로 나와의 감사인사카드가 슬라이드로 나오는 부분이 있으면 좋겠네. 그리고 선물함 카드가 폭이 너무 길다. 내가 원하는 카드 모양은 대략 어떤 선물함인지 파악만 가능한 내용에 작고 아기자기한 카드로 선물함 목록이 뜨고, 그걸 눌러서 어떤 선물함인지 자세히 보고, 내가 원하는게 맞으면 신청하기로 신청을 하는걸 원하는거야 저렇게 큰게 필요가 없어. 그리고 선물함은 상단 카드 안에 한 요소처럼 디자인 됐으면 좋겠어. 지금은 상단 카드아래에 별개의 섹션 같잖나」
+  d판에서 바꾼 것: (A) 선물함 = 프로필 글 묶음 안(감사 문장 아래)의 작은 타일 줄 + 누르면 상세 창(dialog) / (B) 둘째 줄 왼쪽 맨 위에 「나에게 온 감사 카드」 가로 슬라이드(보는 팬 본인 것만). 나머지는 c판 그대로. 자세한 표는 NOTES.md 맨 위 「c판 → d판」.
+  c판 사용자 지시 원문(요약 없이): 「크리에이터 상세 시안을 아래대로 고쳐 줘. 각 요소의 모양(전체 폭 배경 사진, 선물함 카드, 다른 크리에이터 3열 카드, 버튼 아래 요금·승인 시간 한 줄)은 그대로 둔다.
+   1. 배치: 위에서 아래로 세 줄. 첫째 줄 상단 묶음(본문 전체 폭 사각형 영역 하나) = 위쪽 왼쪽 프로필(이름, 팬 수·기념일, 소개) / 위쪽 오른쪽 보내기 영역(팔로우·선물 보내기 버튼, 요금·승인 시간, 받기 어려운 선물) / 그 아래 선물함(카드는 첫째 줄 전체 폭). 「선물함」 제목은 구역 제목보다 한 단계 낮춘다. 프로필과 선물함 사이는 묶음 안 간격. 지금은 선물함이 아래쪽 2열의 왼쪽 열에 들어 있어 프로필과 분리돼 보인다. 이걸 고치는 것이 목적이다.
+      둘째 줄 2열: 첫째 줄이 끝난 뒤 시작, 두 열은 같은 높이에서 시작. 왼쪽 = 전달 과정, 받고 싶은 선물 / 오른쪽 = 보내기 전 안내. 셋째 줄 = 다른 크리에이터, 본문 전체 폭. 줄 사이 간격은 줄 안 간격의 두 배 이상(2-2). 첫째 줄에 테두리나 배경 면은 넣지 않고 간격만으로 묶는다.
+   2. 내용: 「감사 답장 모음」 영역은 이 시안에서 뺀다(답장은 받은 팬의 마이꾹 「받은 감사 카드」에서만). 2-1 전달 과정: 이 크리에이터에게 보낸 선물이 어떤 순서로 전달되는지 가로 단계 그림(5-2). 단계 이름·순서는 「보낸 선물」 화면의 상태 이름과 실제 흐름 문서에서(지어내지 않는다), 결제 시점도 문서대로. 단계가 많으면 팬에게 의미 있는 4~5개로 묶고 묶음을 결과에 적는다. 단계마다 그림 하나와 한 줄 설명(소개 페이지 문구 먼저). 크리에이터 승인과 검수가 있다는 점이 그림만 봐도 드러나야 한다. 평균 승인 시간은 여기에 다시 넣지 않는다(9-4).
+      2-2 받고 싶은 선물: 크리에이터가 적은 짧은 글이나 태그 몇 개. 아직 없는 입력 항목이라 예시 값 + 「화면 예시」 표시, 결과의 「확인 필요」에 「크리에이터 입력 항목 신설」(5-5). 비워 두면 영역을 표시하지 않는다 → 시안 도구에 「받고 싶은 선물 없을 때」 추가. 모양은 8-14, 「받기 어려운 선물」 상자와 똑같이 만들지 않는다.
+   3. 새 제목 문구는 제안으로 적는다. 둘째 줄 두 열 길이 차이가 크면 채우지 말고 차이와 방법을 적는다. 휴대폰 한 열 순서: 프로필 → 보내기 영역 → 선물함 → 전달 과정 → 받고 싶은 선물 → 보내기 전 안내 → 다른 크리에이터. 값은 tokens.md 에서만.」
+  c판에서 바꾼 것은 NOTES.md 맨 위 「b판 → c판」 표. 아래는 앞 판 기록(그대로 둔다).
+  시안: 크리에이터 상세 페이지 `/[handle]` · 2026-11-12 · 3판 (20261111 판을 복사해 고침)
+  3판 사용자 지시 원문(요약 없이): 「크리에이터 상세 시안을 고쳐 줘. 1. 선물함: 줄 목록이 아니라 카드로 그린다. 카드마다 위쪽 그림 영역(크리에이터 대표색을 옅게 쓴 면과 선물 상자 그림), 제목, 설명, 상태 뱃지(대기 2번), 행동 버튼을 둔다. 두 개를 나란히 둔다.
+   2. 감사 답장: 전부 구분선 줄 목록으로 두지 않는다. 답장 글이 주인공으로 보이는 모양으로 바꾸고, 한 번에 보이는 개수를 줄인 뒤 「더 보기」를 둔다.
+   3. 다른 크리에이터: 두 열 아래로 내려 화면 전체 폭의 카드 그리드로 둔다. 4. 받기 어려운 선물: 오른쪽 열의 「보내기 전 안내」 위로 옮긴다.
+   5. 기념일은 보내기 버튼 아래가 아니라 이름 쪽으로 옮긴다. 요금과 승인 시간은 버튼 아래에 작은 글자 한 줄로 둔다. 6. 제목 글꼴이 실제로 Tmoney 로 적용됐는지 확인하고, 적용된 글꼴 이름을 결과에 적는다.」
+  무엇을 어떻게 바꿨는지는 NOTES.md 맨 위 표. 2판 기록(아래)은 그대로 둔다.
+  (2판) 시안: 크리에이터 상세 페이지 `/[handle]` · 2판(design-prompt 개정 반영)
+  사용자 지시 원문: 「크리에이터 상세 페이지 시안을 design-prompt.md 대로 다시 만들어 줘. 배경 사진이 화면 위쪽을 크게 차지하는 구성은 유지해.」
+  2판 지시: design-prompt.md 개정(적용 규칙 5·8, 6-5 3, 14-6, 14-7, 검토 31~33)에 맞춰 다시 그림. 바뀐 점은 NOTES.md 맨 위.
+  명세: docs/ux/pages/handle.md (approved) · 상태 8개는 위쪽 「시안 도구」 줄에서 전환(주소 끝 #open 등으로 바로 열기). withdrawn·not_found 는 공통 화면이라 안 그림.
+  값: 글꼴 파일과 tokens.css 는 레포의 실제 파일을 상대 경로로 불러온다(14-6). 색·간격·글자·반경은 tokens.css 변수만 쓴다.
+       ※ 상대 경로가 레포 뿌리를 향하므로 `node scripts/preview.mjs --dir projects/fankkuk 4322` 로 띄우거나 파일로 직접 연다(4321 은 mockups 밖을 못 읽는다).
+  요소·문구: 지금 구현(creator-profile-page.tsx · profile-follow-actions.tsx)에 있는 것만. 새 설명 문장 없음. 데이터는 모두 가짜 값.
+-->
+<link rel="stylesheet" href="../../../../src/shared/ui/tokens.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+/* 글꼴 — 레포의 실제 파일(base.css 와 같은 이름·굵기). 본문 Pretendard 는 사이트처럼 jsDelivr 가변 글꼴이 400 까지 주고, 오프라인이면 레포 subset(500~700)으로 받친다 */
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../public/fonts/TmoneyRoundWindRegular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Medium.subset.woff") format("woff"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-SemiBold.subset.woff") format("woff"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Bold.subset.woff") format("woff"); font-weight: 700; font-display: swap; }
+
+:root {
+  /* 크리에이터가 고른 테마 색(데이터 — 파스텔 8색 중 하나, design-rules 17절). 디자인 토큰이 아니다 */
+  --personal: #DCEBFF;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--background); color: var(--ink); font-family: var(--font); font-size: var(--fs-body); font-weight: 400; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; -webkit-text-size-adjust: 100%; }
+h1, h2, h3, p, ul, ol, dl, dd, figure, blockquote { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+h1, h2, h3 { font-family: var(--font-round); font-weight: var(--fw-title); letter-spacing: var(--ls-title); font-synthesis: none; }
+img, svg { display: block; max-width: 100%; }
+svg { flex-shrink: 0; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- 시안 도구(페이지 바깥) ---------- */
+.tool { background: var(--ink); color: var(--white); font-size: var(--fs-small); }
+.tool-in { max-width: calc(var(--col-profile) + 2 * var(--gutter)); margin: 0 auto; padding: var(--space-3) var(--gutter); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.tool b { font-weight: var(--fw-bold); margin-right: var(--space-2); }
+.tool button { min-height: 44px; padding: 0 var(--space-4); border: 1px solid rgb(255 255 255 / .55); border-radius: var(--r-btn); background: transparent; color: var(--white); font: var(--fw-btn) var(--fs-small)/1.2 var(--font); cursor: pointer; }
+.tool button[aria-pressed="true"] { background: var(--white); color: var(--ink); border-color: var(--white); }
+.tool button:focus-visible { outline-color: var(--white); }
+.tool .cap { flex: 1 0 100%; color: var(--gray-300); }
+
+/* ---------- 상단 바 · 바닥글(지금 사이트 모양, 간단히) ---------- */
+.topbar { background: var(--white); box-shadow: inset 0 -1px 0 var(--border); }
+.topbar-in { max-width: calc(var(--col-profile) + 2 * var(--gutter)); margin: 0 auto; padding: 0 var(--gutter); min-height: var(--header-h); display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.brand { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; text-decoration: none; font-family: var(--font-logo); font-weight: var(--fw-title); font-size: var(--fs-card); letter-spacing: var(--ls-title); }
+.brand img { width: 32px; height: 32px; border-radius: var(--r-logo); }
+.nav { display: flex; align-items: center; gap: var(--space-2); }
+.nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--space-4); border-radius: var(--r-btn); text-decoration: none; font-weight: var(--fw-nav); color: var(--sub); }
+.nav a:hover { background: var(--surface-hover); color: var(--ink); }
+@media (max-width: 719px) { .nav .hide-sm { display: none; } .nav a { padding: 0 var(--space-3); } }
+.foot { margin-top: var(--section-gap); background: var(--surface); }
+.foot-in { max-width: calc(var(--col-profile) + 2 * var(--gutter)); margin: 0 auto; padding: var(--space-6) var(--gutter); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-6); color: var(--sub); font-size: var(--fs-small); }
+.foot nav { display: flex; flex-wrap: wrap; gap: 0 var(--space-4); }
+.foot a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; }
+.foot a:hover { color: var(--ink); text-decoration: underline; }
+
+/* ---------- 본문 틀 ---------- */
+.page { max-width: calc(var(--col-profile) + 2 * var(--gutter)); margin: 0 auto; padding: var(--space-6) var(--gutter) 0; }
+.col { container-type: inline-size; min-width: 0; }
+/* c판 세 줄 배치(2-2): 줄 안 간격 --inner, 줄 사이 --row (2배 이상). PC 32/64, 한 열(칸 879 이하·휴대폰) 24/48 */
+.rows { --inner: var(--space-8); --row: var(--space-16); }
+
+/* 배경 사진 면 — 높이 280(휴대폰 176)·반경 24(휴대폰 16)는 지금 운영 화면 그대로. 사진이 없으면 테마 색 면 + 흐린 고양이(design-rules 17절) */
+/* 2026-11-12 사용자 「배경 사진이 최대한 많이 나오게, 넓게 — 시원한 느낌」: 화면 양 끝까지(모서리 없음, 상단 바에 붙임), 높이 = 화면 폭의 절반(등록 권장 2:1)·최대 520.
+   390 은 195(사진 전체), 1440 은 520(2:1 사진 높이의 약 72%). 지금 운영 1080×280 은 약 47% */
+html { overflow-x: clip; }
+.cover { position: relative; overflow: hidden; width: 100vw; height: min(50vw, 520px); margin: calc(-1 * var(--space-6)) calc(50% - 50vw) 0; border-radius: 0; background: var(--personal); }
+/* 비교안(시안 도구 「배경: 기둥 폭 2:1」): 기둥 1080 안에서 2:1 그대로(1080×540, 사진 전체) */
+.covercol .cover { width: auto; height: auto; aspect-ratio: 2 / 1; margin: 0; border-radius: var(--r-panel); }
+.cover .cover-cat { position: absolute; right: 6%; bottom: -8%; width: auto; height: 80%; opacity: .22; display: none; }
+.cover .cover-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; } /* 화면 예시 사진 — 크리에이터 배경사진 자리 */
+.nophoto .cover .cover-photo { display: none; }
+.nophoto .cover .cover-cat { display: block; }
+
+/* ---------- 머리: 사진·이름·소개 / 행동 — 본문과 같은 2:1 선 ---------- */
+/* e판 상단 묶음: 윗줄 프로필 | 버튼, 아랫줄 진행 중인 선물함 | 요금·승인 시간 + 받기 어려운 선물. 아랫줄 두 칸은 같은 높이에서 시작(같은 격자 줄). 줄 안 간격 --inner */
+.head { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); grid-template-areas: "id act" "boxes meta"; column-gap: var(--space-8); row-gap: var(--inner); align-items: start; }
+.head > .id { grid-area: id; }
+.head > .actions { grid-area: act; }
+.head > .boxes { grid-area: boxes; }
+.head > .sendmeta { grid-area: meta; min-width: 0; }
+body[data-state="verifying"] .head { row-gap: 0; } /* 채널 확인 중: 아랫줄 요소가 모두 없다 */
+.id { display: grid; grid-template-columns: 184px minmax(0, 1fr); column-gap: var(--space-6); }
+/* 사진 겉지름 184(운영 화면 값) · 흰 테두리 6 · 테마 색 안쪽 선 3 · 위로 반(92) 걸침. 왼쪽 24 = 배경 모서리 반경과 맞춤(2-8) */
+.avatar { position: relative; box-sizing: border-box; width: 184px; height: 184px; margin: -92px 0 0 var(--space-6); border: 6px solid var(--white); border-radius: 50%; background: var(--face-3); outline: 3px solid var(--personal); outline-offset: -9px; }
+.avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.idtext { min-width: 0; padding-top: var(--space-4); }
+.nameline { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.name { min-width: 0; font-size: var(--fs-title); line-height: 1.35; overflow-wrap: anywhere; }
+/* 팬덤 뱃지(medium): 높이 28 · 글자 14 · 마크 20 · 테마 색 면 + 글자 --badge-ink */
+.fb { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 var(--space-3) 0 var(--space-1); border-radius: var(--r-pill); background: var(--personal); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--personal) 78%, var(--gray-900) 22%); color: var(--badge-ink); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1; white-space: nowrap; }
+.fb img { width: 20px; height: 20px; border-radius: var(--r-mark); object-fit: cover; }
+/* 채널 아이콘: 보이는 20, 누르는 칸 44(바깥 여백 -6 으로 줄 높이는 그대로) */
+.chlink { display: inline-grid; place-items: center; width: 44px; height: 44px; margin: -6px; border-radius: var(--r-btn-sm); }
+.chlink:hover { background: var(--gray-100); }
+.chlink svg { width: 20px; height: 20px; }
+/* 팬 수: 이름 바로 아래(6-5 3 — 팬 수는 이름 가까이) */
+.fans { display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-1); color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.6; }
+.fans svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tags { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-3); }
+.verified { display: inline-flex; align-items: center; gap: 6px; color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.6; }
+.verified svg { color: var(--success); }
+/* 칩 14/600. 누르지 않는 표시라 테두리 없이 옅은 면만(4-6) */
+.chip { display: inline-flex; align-items: center; min-height: 32px; padding: var(--space-1) var(--space-3); border-radius: var(--r-tag); background: var(--gray-100); color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; }
+.intro { margin-top: var(--space-4); font-size: var(--fs-card); line-height: 1.6; overflow-wrap: anywhere; }
+.thanks { margin-top: var(--space-1); color: var(--sub); }
+
+/* ---------- 행동 칸: 버튼 → 요금·승인 시간 → 기념일 (보낼 때 알아야 할 것을 버튼 가까이) ---------- */
+.actions { padding-top: var(--space-4); min-width: 0; }
+.btnrow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+/* 두 버튼이 나란할 때는 둘 중 넓은 쪽에 너비를 맞춘다(14-7 ③). 버튼 하나는 글자 폭 그대로 */
+.btnrow:has(.btn-gift:not([hidden])) { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+/* 버튼: shared/ui/base.css .btn — 높이 48 이상 · 안쪽 12/24 · 글자 16/600 · 반경 12. 한 줄 두 버튼은 같은 너비·같은 아이콘 유무 */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 48px; padding: 12px 24px; border: 0; border-radius: var(--r-btn); font: var(--fw-btn) var(--fs-body)/1.5 var(--font); text-align: center; text-decoration: none; white-space: nowrap; cursor: pointer; transition: box-shadow var(--dur-hover) var(--ease-micro), background-color var(--dur-hover) var(--ease-micro), color var(--dur-hover); }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.btn-fill { background: var(--brand); color: var(--on-brand); box-shadow: inset 0 0 0 1px var(--primary-700), var(--btn-fill-shadow); }
+.btn-line { background: var(--white); color: var(--ink); box-shadow: var(--hair); }
+.btn:active { transform: scale(.98); }
+.ico { display: inline-flex; transition: transform var(--dur-hover) var(--ease-micro); }
+.swap { position: relative; display: inline-flex; width: 20px; height: 20px; }
+.swap svg { position: absolute; inset: 0; transition: opacity var(--dur-hover), transform var(--dur-hover) var(--ease-micro); }
+.swap svg + svg { opacity: 0; transform: rotate(-90deg) scale(.6); }
+@media (hover: hover) {
+  .btn-fill:hover { background: var(--primary-700); box-shadow: inset 0 0 0 1px var(--primary-700), var(--btn-fill-shadow-hover); }
+  .btn-line:hover { background: var(--surface-hover); }
+  .btn-gift:hover .ico { transform: translateX(2px); }
+  .btn-follow:hover .ico { transform: rotate(90deg); }
+  .btn-following:hover { color: var(--danger); }
+  .btn-following:hover .swap svg:first-child { opacity: 0; transform: rotate(90deg) scale(.6); }
+  .btn-following:hover .swap svg + svg { opacity: 1; transform: none; }
+}
+.pill { display: inline-flex; align-items: center; min-height: 32px; padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; }
+.pill-gray { background: var(--gray-100); color: var(--gray-600); white-space: nowrap; }
+.pill-warn { background: var(--warn-soft); color: var(--warn-ink); }
+.pill-sky { background: var(--primary-50); color: var(--tag-state-ink); white-space: nowrap; } /* 내 신청 상태(대기 N번) — 「확인 전」 뱃지와 같은 값, 7.2:1 */
+.fail { margin-top: var(--space-2); color: var(--danger); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; }
+.verifying { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 48px; padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); background: var(--notice-sky); box-shadow: inset 0 0 0 1px var(--notice-sky-line); font-weight: var(--fw-btn); }
+.verifying svg { width: 20px; height: 20px; }
+
+/* 요금 · 평균 승인 소요 시간: 버튼 바로 아래 작은 글자(14) 한 줄 */
+.sendinfo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--space-3); color: var(--sub); font-size: var(--fs-small); line-height: 1.6; }
+.sendinfo b { color: var(--ink); font-weight: var(--fw-btn); }
+.sendinfo span + span::before { content: "·"; margin-right: var(--space-3); }
+/* 기념일: 이름 쪽(팬 수 줄 바로 아래) — 같은 14/600 보조 글자 + 같은 16 아이콘 */
+.annivline { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-1); color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.6; }
+.annivline svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.dday { display: inline-flex; align-items: center; margin-left: var(--space-1); padding: 0 var(--space-2); border-radius: var(--r-icon); background: var(--gray-100); color: var(--ink); font-size: var(--fs-small); white-space: nowrap; }
+
+/* ---------- 본문: 주 영역(2) + 보조 열(1). 두 열 길이를 비슷하게 맞춘다 ---------- */
+/* 둘째 줄: 왼쪽(전달 과정 · 받고 싶은 선물) 2 : 오른쪽(보내기 전 안내) 1. 두 열 모두 줄 맨 위에서 시작(align-items: start) */
+/* e판 상세 내용: 여닫는 줄(상단 묶음 바로 아래, 줄 안 간격) → 2열 → 감사 카드 줄. 닫으면 여닫는 줄만 남고 다음 줄(다른 크리에이터)까지 보통 줄 간격 --row */
+.detail { margin-top: var(--inner); }
+.dtoggle-row { display: flex; align-items: center; gap: var(--space-4); }
+.dtoggle-row::before, .dtoggle-row::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.dtoggle { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-4); border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair); color: var(--ink); font: var(--fw-btn) var(--fs-small)/1.5 var(--font); cursor: pointer; }
+@media (hover: hover) { .dtoggle:hover { background: var(--surface-hover); } }
+.dtoggle .chev { transform: rotate(180deg); }
+.dtoggle[aria-expanded="false"] .chev { transform: none; }
+.dbody { margin-top: var(--inner); }
+.body { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); column-gap: var(--space-8); align-items: start; }
+.dbody > .replysec { margin-top: var(--row); } /* 3-2: 2열이 끝난 뒤 독립 줄, 본문 전체 폭 */
+.mainc, .sidec { display: grid; gap: var(--inner); min-width: 0; }
+.sec-h { margin-bottom: var(--space-4); font-size: var(--fs-page); line-height: 1.3; }
+.sec-h-sm { font-size: var(--fs-card); line-height: 1.4; } /* 첫째 줄 안 「선물함」: 구역 제목(24)보다 한 단계 낮춤(20). 휴대폰은 구역 제목이 20 이라 16 */
+.more { display: inline-flex; align-items: center; min-height: 44px; font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 3px; }
+
+/* 흰 카드(1px 테두리 + 옅은 그림자, 4-6) — 누르는 행동이 든 묶음(선물함 카드·크리에이터 카드)에만 */
+.card { background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); border-radius: var(--r-card); }
+
+/* 받기 어려운 선물 — 보조 열 맨 위(보내기 전 안내 위). 누르지 않으므로 옅은 면만 */
+.sendmeta .alert { margin-top: var(--space-4); }
+.alert { padding: var(--space-4) var(--space-6); border-radius: var(--r-btn); background: var(--surface-brand); }
+.alert h2 { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); letter-spacing: 0; line-height: 1.6; }
+.alert p { color: var(--sub); }
+
+/* d판 선물함: 프로필 글 묶음 안의 한 요소(감사 문장 아래). 작은 타일 줄 — 위 그림 칸(대표색 옅은 면 + 선물 상자) / 아래 이름. 설명·버튼은 타일에 없고, 타일을 누르면 상세 창이 열린다(8-8 그림 → 제목, 8-14 고르는 대상 = 카드) */
+.boxes { min-width: 0; }
+.boxes-h { margin-bottom: var(--space-2); font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); letter-spacing: 0; line-height: 1.5; color: var(--ink); } /* 14/600 작은 소제목 — 구역 제목이 아니라 묶음 안 라벨 */
+.gtiles { display: flex; gap: var(--space-3); margin: 0 0 -16px -4px; padding: 4px 4px 16px; overflow-x: auto; scroll-snap-type: x proximity; scroll-padding-inline: 4px; scrollbar-width: thin; } /* 위·아래·왼쪽 여백은 그림자가 잘리지 않게(왼쪽 -4 로 글 왼쪽 선에 맞춤) */
+.gtiles li { flex: none; display: flex; scroll-snap-align: start; } /* 타일 높이는 줄에서 가장 긴 것에 맞춘다 */
+.gtile { display: flex; flex: 1; flex-direction: column; width: 128px; padding: 0; overflow: hidden; border: 0; border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); font: inherit; text-align: left; cursor: pointer; transition: transform .25s var(--ease-micro), box-shadow .25s var(--ease-micro); } /* (가정) 폭 128 — 14px 이름이 두 줄에 들어가고 3개가 글 묶음(491) 안에 들어감 */
+.gtile:hover { box-shadow: var(--hair), var(--card-shadow-hover); }
+@media (hover: hover) { .gtile:hover { transform: translateY(-2px); } }
+.gtpic { position: relative; display: grid; place-items: center; height: 72px; background: color-mix(in srgb, var(--personal) 55%, var(--white)); } /* 그림 칸 높이 고정 72 — 내용이 달라도 이름 위치 같음(8-8) */
+.gtpic img { height: 52px; width: auto; max-width: 64px; object-fit: contain; }
+.gtname { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; padding: var(--space-2) var(--space-3) var(--space-3); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; overflow-wrap: anywhere; }
+.gstate { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--primary-50); color: var(--tag-state-ink); font-size: var(--fs-small); font-weight: var(--fw-btn); white-space: nowrap; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary-50) 70%, var(--tag-state-ink)); } /* 내 신청 상태(대기 N번) — 「확인 전」 뱃지와 같은 색 */
+.gtile .gstate { align-self: flex-start; margin: calc(-1 * var(--space-1)) var(--space-3) var(--space-3); } /* 내 신청 상태는 이름 바로 아래(그림 위에 얹으면 상자를 가린다) */
+
+/* 선물함 상세 창(8-7 제목 → 본문 → 버튼, 2-19 안쪽 왼쪽 정렬, 2-21 6) 짧은 확인 창 = 버튼 폭 전체). 가운데 창 폭 440 + 휴대폰 아래 시트: 둘 다 사이트의 기존 창(unfollow-dialog·bottom-sheet) 값 */
+.gdlg { width: min(440px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 32px); padding: 0; border: 0; border-radius: var(--r-panel); background: var(--white); box-shadow: var(--float); color: var(--ink); }
+.gdlg::backdrop { background: var(--scrim); }
+html:has(dialog[open]) { overflow: hidden; }
+.dbox { display: grid; gap: var(--space-4); padding: var(--space-6); }
+.dgrip { display: none; width: 40px; height: 4px; margin: 0 auto calc(-1 * var(--space-2)); border-radius: var(--r-pill); background: var(--grip); }
+.dhead { display: flex; align-items: flex-start; gap: var(--space-4); }
+.dpic { flex: none; display: grid; place-items: center; width: 72px; height: 72px; border-radius: var(--r-btn); background: color-mix(in srgb, var(--personal) 55%, var(--white)); } /* 안쪽 반경 12 → 창 반경 24(8-8) */
+.dpic img { height: 52px; width: auto; max-width: 64px; object-fit: contain; }
+.dwho { flex: 1; display: grid; gap: var(--space-2); justify-items: start; min-width: 0; padding-top: var(--space-1); }
+.dwho h2 { font-size: var(--fs-card); line-height: 1.4; overflow-wrap: anywhere; }
+.dx { flex: none; display: grid; place-items: center; width: 44px; height: 44px; margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2)) 0 0; border: 0; border-radius: var(--r-pill); background: none; color: var(--ink); cursor: pointer; }
+.dx:hover { background: var(--gray-100); }
+.dx svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.ddesc { color: var(--sub); }
+.dact { display: flex; }
+.dact .btn { flex: 1; }
+@media (max-width: 767px) {
+  .gdlg { width: 100%; max-width: 560px; margin: auto auto 0; border-radius: var(--r-panel) var(--r-panel) 0 0; } /* 휴대폰: 아래에서 올라오는 시트 — 엄지가 닿는 자리에 버튼이 오고 사이트의 다른 확인 창(bottom-sheet)과 같은 모양 */
+  .dgrip { display: block; }
+  .dbox { padding: var(--space-3) var(--space-4) var(--space-6); }
+}
+
+/* d판 나에게 온 감사 카드: 보는 팬 본인이 받은 답장만. 가로 슬라이드(scroll-snap), 자동으로 넘기지 않는다(10-4·12-3). 카드 = 공유 카드(reply-share-card)를 작게 */
+.replysec { min-width: 0; }
+.rhead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-4); }
+.rhead .sec-h { margin: 0; }
+.rnav { display: flex; gap: var(--space-2); }
+.rbtn { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair), var(--btn-ghost-shadow); color: var(--ink); cursor: pointer; }
+.rbtn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (hover: hover) { .rbtn:hover:not(:disabled) { background: var(--surface-hover); } }
+.rbtn:disabled { color: var(--gray-500); cursor: default; } /* 끝에서는 누를 일이 없다 */
+.rbtn:disabled svg { opacity: .6; }
+.rtrack { display: flex; gap: var(--space-4); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; border-radius: var(--r-card); }
+.rtrack:focus-visible { outline-offset: 4px; }
+.rcard { flex: none; scroll-snap-align: start; display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-2); width: 288px; height: 184px; padding: var(--space-4); border-radius: var(--r-card); background: var(--surface-brand); }
+.rwho { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.rphoto { flex: none; width: 40px; height: 40px; border-radius: 50%; box-shadow: 0 0 0 3px var(--white); object-fit: cover; }
+.rwho p { min-width: 0; font-size: var(--fs-small); line-height: 1.4; color: var(--sub); }
+.rwho b { display: block; color: var(--ink); font-weight: var(--fw-btn); }
+.rpanel { flex: 1; display: flex; align-items: center; padding: 0 var(--space-4); border-radius: var(--r-btn); background: var(--white); } /* 글이 주인공(8-14): 흰 면 안에 답장 문구 하나 — 반경 12, 카드 16 */
+.rpanel p { font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.35; }
+.rfoot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); font-size: var(--fs-small); color: var(--sub); line-height: 1.4; }
+.rlogo { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--ink); font-family: var(--font-logo); font-weight: var(--fw-title); letter-spacing: var(--ls-title); }
+.rlogo img { width: 16px; height: 16px; border-radius: var(--r-logo); }
+.noreply .replysec { display: none; }
+
+/* 전달 과정(5-2): 가로 단계 그림. 단계마다 그림 칸(72, 높이 같음) + 이름 + 한 줄 설명. 카드 테두리·그림자 없음(누르지 않는 그림)
+   검수·크리에이터 승인(.gate)은 그림 칸을 옅은 하늘 면(--primary-50)으로 달리해 「확인하는 단계」임이 그림만 봐도 드러나게 한다. 이름·설명 글자에도 적혀 있어 색만으로 전하지 않는다(4-2) */
+.flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); column-gap: var(--space-4); }
+.fstep { position: relative; min-width: 0; }
+.ftile { display: grid; place-items: center; width: 72px; height: 72px; border-radius: var(--r-card); background: var(--gray-100); }
+.ftile img { width: 56px; height: 56px; }
+.fstep.gate .ftile { background: var(--primary-50); }
+.fstep h3 { margin-top: var(--space-3); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); letter-spacing: 0; line-height: 1.5; } /* 그림↔캡션 12(2-1) */
+.fstep p { margin-top: var(--space-1); color: var(--sub); font-size: var(--fs-small); line-height: 1.5; }
+/* 화살표: 그림 칸 세로 중심(36), 양쪽 그림 칸 사이의 한가운데. 그림은 칸 왼쪽 정렬이라 이웃 그림 사이 거리 = (칸 폭 - 72 + 열 간격) */
+.farrow { position: absolute; top: calc(36px - 8px); left: calc(-1 * (100% - 72px + var(--space-4)) / 2 - 8px); width: 16px; height: 16px; fill: none; stroke: var(--gray-500); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* 받고 싶은 선물(8-14 태그): 크리에이터가 적은 짧은 낱말. 누르지 않는 표시라 테두리 없이 면만. 「받기 어려운 선물」(옅은 하늘 면 한 장 + 제목 + 글)과 달리 낱말마다 알약 하나 */
+.sec-head.sec-head-l { justify-content: flex-start; flex-wrap: wrap; }
+.ex { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; white-space: nowrap; } /* 시안 표시(5-5) — 실제 화면에는 없다 */
+.wtags { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.wtags li { display: inline-flex; align-items: center; min-height: 40px; padding: 0 var(--space-4); border-radius: var(--r-pill); background: color-mix(in srgb, var(--personal) 55%, var(--white)); color: var(--badge-ink); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; } /* (가정) 높이 40 — 면 색은 선물함 그림 칸과 같은 대표색 55:45 */
+.nowish .wish { display: none; }
+
+/* 보내기 전 안내 — 접는 줄 둘. 줄 사이 선만(카드로 감싸지 않는다: 같은 모양 3곳 반복 방지, 6-5 6) */
+.gbox { box-shadow: inset 0 1px 0 var(--border), inset 0 -1px 0 var(--border); }
+.gbox summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 56px; font-weight: var(--fw-btn); cursor: pointer; list-style: none; }
+.gbox summary::-webkit-details-marker { display: none; }
+.gbox summary:focus-visible { outline-offset: 2px; border-radius: var(--r-btn); }
+.gbox details + details { box-shadow: inset 0 1px 0 var(--border); }
+.chev { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
+details[open] .chev { transform: rotate(180deg); }
+.ans { padding-bottom: var(--space-4); }
+.prohibited li { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-2) 0; color: var(--sub); font-size: var(--fs-small); line-height: 1.6; }
+.prohibited li + li { box-shadow: inset 0 1px 0 var(--gray-100); }
+.prohibited svg { width: 16px; height: 16px; margin-top: 4px; fill: none; stroke: var(--danger); stroke-width: 1.8; stroke-linecap: round; }
+.prohibited b { color: var(--ink); font-weight: var(--fw-btn); }
+.promise { display: grid; gap: var(--space-3); color: var(--sub); }
+
+/* 다른 크리에이터: 두 열 아래, 전체 폭 카드 그리드 — 사이트 공용 크리에이터 카드(creator-card-head.module.css · design-rules 17절)와 같은 값.
+   카드 안쪽 24 · 줄 사이 8 · 반경 16 · 배너 2:1(가장자리까지) · 사진 64(배너에 32 걸침) · 이름 16/600 · 팬덤 뱃지 22/12 · 소개 14 두 줄 · 칩 22/12 · 아래 흰 띠 + 크리에이터 색 주 버튼 44 */
+.similar { margin-top: var(--row); } /* 셋째 줄 */
+.sec-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-4); }
+.sec-head .sec-h { margin-bottom: 0; }
+.simcol { container-type: inline-size; }
+.cgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+@container (min-width: 444px) { .cgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); } }
+@container (min-width: 678px) { .cgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* 다른 크리에이터 — 운영 값(creator-profile.module.css .otherGrid·.other·.otherFace·.otherWho) */
+.ogrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
+.other { position: relative; display: flex; flex-direction: column; height: 100%; overflow: hidden; border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); text-decoration: none; transition: transform .25s var(--ease-micro), box-shadow .25s var(--ease-micro); } /* 2026-11-12 사용자 「다른 크리에이터 카드 조금 더 꾸며줘. 배경 사진도 나오게」 — 위 배경 띠 64 + 사진 걸침 */
+.other:hover, .other:focus-visible { box-shadow: var(--hair), var(--card-shadow-hover); }
+@media (hover: hover) { .other:hover { transform: translateY(-2px); } }
+@media (prefers-reduced-motion: reduce) { .other { transition: none; } .other:hover { transform: none; } }
+.oface { position: relative; z-index: 1; flex: none; display: grid; place-items: center; width: 56px; height: 56px; margin-top: -28px; border: 3px solid var(--white); border-radius: 50%; box-shadow: var(--face-ring); font-weight: var(--fw-btn); } /* 띠에 절반 걸침, 흰 테두리 3(상세 머리 사진과 같은 방식, 크기만 작게) */
+.oband { position: relative; display: block; aspect-ratio: 2 / 1; overflow: hidden; background: var(--personal); } /* 그 크리에이터의 배경사진(없으면 테마 색 면 + 흐린 고양이 — 지금 카드·머리와 같은 대체) */
+.oband img { width: 100%; height: 100%; object-fit: cover; }
+.oband .ocat { position: absolute; right: 6%; bottom: -8%; width: auto; height: 80%; opacity: .22; } /* 머리 배경 대체와 같은 비율 */
+.orow { display: flex; align-items: flex-start; gap: var(--space-3); padding: 0 var(--space-4) var(--space-4); }
+.owho { display: grid; gap: var(--space-1); min-width: 0; padding-top: var(--space-2); }
+.owho b { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; overflow-wrap: anywhere; }
+.otags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+@media (max-width: 767px) { .ogrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); } .orow { flex-direction: column; gap: 0; padding: 0 var(--space-3) var(--space-3); } .oface { width: 48px; height: 48px; margin-top: -24px; } }
+.ccard { --personal-line: color-mix(in srgb, var(--personal) 78%, var(--gray-900) 22%); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--card-pad); border-radius: var(--r-card); background: var(--card-fx); cursor: pointer; box-shadow: var(--card-shadow); transition: transform .25s var(--ease-micro), box-shadow .25s var(--ease-micro); }
+.ccard::before { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--gray-200); pointer-events: none; transition: box-shadow .15s; }
+.ccard:hover::before, .ccard:focus-within::before { box-shadow: inset 0 0 0 1px var(--gray-500); }
+@media (hover: hover) { .ccard:hover { transform: translateY(-2px); box-shadow: var(--card-shadow-hover); } }
+.ccard:has(a.cname-a:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ccover { position: relative; overflow: hidden; aspect-ratio: 2 / 1; margin: calc(var(--card-pad) * -1) calc(var(--card-pad) * -1) 0; background: var(--personal); }
+.ccover img { position: absolute; right: 6%; bottom: -8%; width: auto; height: 80%; opacity: .22; }
+.cwho { display: flex; align-items: flex-start; gap: var(--space-2); min-width: 0; }
+.cphoto { position: relative; flex: none; display: grid; place-items: center; width: 64px; height: 64px; margin-top: -32px; border-radius: 50%; color: var(--ink); font-weight: var(--fw-bold); line-height: 1; box-shadow: 0 0 0 3px var(--personal), 0 0 0 6px var(--white); }
+.cid { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; min-width: 0; }
+.cname { height: 24px; overflow: hidden; font-size: var(--fs-body); font-weight: var(--fw-h3); line-height: 24px; text-overflow: ellipsis; white-space: nowrap; }
+.cname a { color: inherit; text-decoration: none; }
+.cname a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.cname a:focus-visible { outline: none; }
+.cname a::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+.cbadge { display: flex; align-items: center; height: 22px; min-width: 0; }
+.cfb { display: inline-flex; align-items: center; gap: var(--space-1); max-width: 100%; height: 22px; padding: 0 var(--space-2) 0 3px; border-radius: var(--r-pill); background: var(--personal); box-shadow: inset 0 0 0 1px var(--personal-line); color: var(--badge-ink); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1; white-space: nowrap; }
+.cfb img { width: 14px; height: 14px; border-radius: var(--r-mark); background: var(--white); object-fit: cover; }
+.cline { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; height: calc(var(--fs-small) * var(--lh-caption) * 2); overflow: hidden; color: var(--gray-600); font-size: var(--fs-small); line-height: var(--lh-caption); overflow-wrap: anywhere; }
+.cfoot { display: flex; align-items: center; gap: 6px; min-height: 22px; margin-top: var(--space-1); }
+.cchip { flex: none; display: inline-flex; align-items: center; height: 22px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair); color: var(--ink); font-size: var(--fs-badge); line-height: 1; white-space: nowrap; }
+.cacts { position: relative; z-index: 2; display: flex; align-items: center; gap: var(--space-2); min-height: calc(44px + var(--space-3) * 2); margin: var(--space-2) calc(var(--card-pad) * -1) calc(var(--card-pad) * -1); padding: var(--space-3) var(--card-pad); background: var(--white); }
+.cbtn { flex: 1 1 0; display: flex; align-items: center; justify-content: center; gap: var(--space-2); min-width: 0; height: 44px; border-radius: var(--r-btn); background: var(--personal); box-shadow: inset 0 0 0 1px var(--personal-line); color: var(--badge-ink); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.25; text-decoration: none; white-space: nowrap; }
+.cbtn svg { width: 16px; height: 16px; }
+.cbtn:hover { background: color-mix(in srgb, var(--personal) 88%, var(--gray-900)); }
+
+/* ---------- 칸 폭이 좁아질 때 (사이드바 안·태블릿·휴대폰) ---------- */
+@container (max-width: 879px) {
+  .head { grid-template-columns: minmax(0, 1fr); grid-template-areas: "id" "act" "boxes" "meta"; }
+  .actions, .boxes, .sendmeta { padding-left: calc(184px + 2 * var(--space-6)); }   /* 글 묶음(이름 줄) 왼쪽 선에 맞춘다(2-20) */
+  .actions { padding-top: 0; }
+  .rows { --inner: var(--space-6); --row: var(--space-12); }
+  .body { grid-template-columns: minmax(0, 1fr); row-gap: var(--inner); }
+  /* 한 열이면 두 가로 줄이 화면 오른쪽 끝까지 이어지게 둔다(2-3: 첫 항목은 가장자리 여백 선, 뒤 항목은 밖으로 이어짐) */
+  .gtiles { margin-right: calc(-1 * var(--gutter)); padding-right: var(--gutter); }
+  .rtrack { margin-right: calc(-1 * var(--gutter)); padding-right: var(--gutter); border-radius: 0; }
+}
+@container (max-width: 719px) {
+  .covercol .cover { border-radius: var(--r-card); }
+  .id { grid-template-columns: minmax(0, 1fr); }
+  .avatar { width: 128px; height: 128px; margin: -60px 0 0 var(--space-4); outline-offset: -8px; }
+  .actions, .boxes, .sendmeta { padding-left: 0; }
+  .btn { padding-inline: var(--space-4); }
+  .btnrow, .btnrow:has(.btn-gift:not([hidden])) { display: flex; }
+  .btnrow > .btn { flex: 1 1 0; }
+  .alert { padding: var(--space-4); }
+  .flow { grid-template-columns: minmax(0, 1fr); }
+  .fstep + .fstep { margin-top: var(--space-10); }
+  .ftile { width: 64px; height: 64px; }
+  .ftile img { width: 48px; height: 48px; }
+  .farrow { top: calc(-1 * var(--space-10) / 2 - 8px); left: calc(32px - 8px); transform: rotate(90deg); }
+}
+@media (max-width: 767px) { .sec-h { font-size: var(--fs-card); } .sec-h-sm { font-size: var(--fs-body); } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } .btn:active { transform: none; } }
+</style>
+</head>
+<body data-state="open">
+
+<!-- ===== 시안 도구: 페이지 바깥. 상태를 바꿔 본다 ===== -->
+<div class="tool" role="region" aria-label="시안 도구 — 상태 전환">
+  <div class="tool-in">
+    <b>시안 도구 · 상태 전환</b>
+    <button type="button" data-set="needs_follow">needs_follow</button>
+    <button type="button" data-set="open">open (대표)</button>
+    <button type="button" data-set="self">self</button>
+    <button type="button" data-set="hidden">hidden</button>
+    <button type="button" data-set="unsigned">unsigned</button>
+    <button type="button" data-set="verifying">verifying</button>
+    <button type="button" data-set="fail_follow">저장 실패 · 팔로우</button>
+    <button type="button" data-set="fail_unfollow">저장 실패 · 팔로우 취소</button>
+    <button type="button" id="photoToggle" aria-pressed="false">배경 사진 없을 때</button>
+    <button type="button" id="coverToggle" aria-pressed="false">배경: 기둥 폭 2:1</button>
+    <button type="button" id="wishToggle" aria-pressed="false">받고 싶은 선물 없을 때</button>
+    <button type="button" id="replyToggle" aria-pressed="false">나에게 온 감사 카드 없을 때</button>
+    <button type="button" id="detailToggle" aria-pressed="false">상세 내용 닫힘</button>
+    <p class="cap" id="cap" aria-live="polite"></p>
+  </div>
+</div>
+
+<!-- ===== 상단 바 ===== -->
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#"><img src="img/logo-mark.png" alt="" width="32" height="32">팬꾹</a>
+    <nav class="nav" aria-label="주 메뉴">
+      <a class="hide-sm" href="#">크리에이터 찾기</a>
+      <a class="hide-sm" href="#">팬꾹의 소개</a>
+      <a href="#">로그인</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="page">
+<div class="col">
+<div class="rows">
+
+  <!-- 배경 사진 면(꾸밈이라 읽지 않는다) -->
+  <div class="cover" aria-hidden="true"><img class="cover-photo" src="img/cover-sample.svg" alt="" width="1200" height="600"><img class="cover-cat" src="img/mascot-cat.webp" alt="" width="320" height="285"></div>
+
+  <!-- 첫째 줄: 프로필(왼쪽 2) · 보내기 영역(오른쪽 1) + 그 아래 선물함(전체 폭). 테두리·면 없이 간격만으로 묶는다 -->
+  <div class="top">
+  <section class="head" aria-labelledby="creator-name">
+    <div class="id">
+      <div class="avatar" aria-hidden="true"><img src="img/profile-default.png" alt="" width="172" height="172"></div>
+      <div class="idtext">
+        <div class="nameline">
+          <h1 class="name" id="creator-name">별빛이</h1>
+          <span class="fb" data-show="needs_follow open self hidden unsigned fail_follow fail_unfollow"><img src="img/logo-mark.png" alt="" width="20" height="20">별빛단</span>
+          <a class="chlink" data-show="needs_follow open self hidden unsigned fail_follow fail_unfollow" href="#" target="_blank" rel="noopener noreferrer" aria-label="별빛이 채널 열기 — @starlight_nights · 11월 2일 확인" title="@starlight_nights · 11월 2일 확인">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="4"/><path d="m10.5 9.5 4 2.5-4 2.5z" fill="currentColor"/></svg>
+          </a>
+        </div>
+        <p class="fans" data-show="needs_follow open self hidden unsigned fail_follow fail_unfollow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg>이번 달 선물한 팬 38명</p>
+        <!-- 기념일: 이름 쪽(팬 수 줄 아래) -->
+        <p class="annivline" data-show="needs_follow open self hidden unsigned fail_follow fail_unfollow"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>기념일 방송 1주년 (12월 3일)<span class="dday"><span aria-hidden="true">D-22</span><span class="sr-only">22일 남음</span></span></p>
+        <div class="tags" data-show="needs_follow open self hidden unsigned fail_follow fail_unfollow">
+          <span class="verified"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>채널 소유자 확인</span>
+          <span class="chip">치지직</span><span class="chip">게임</span><span class="chip">토크</span>
+        </div>
+        <p class="intro">밤마다 수다 떠는 게임 방송 별빛이예요</p>
+        <p class="thanks" data-show="needs_follow open self hidden unsigned fail_follow fail_unfollow">별빛단 여러분의 마음 늘 감사해요</p>
+      </div>
+    </div>
+
+    <!-- 행동 칸(명세 상태표) — 상태마다 한 가지 -->
+    <div class="actions">
+      <div class="btnrow">
+        <a class="btn btn-fill btn-follow" href="#" data-show="needs_follow fail_follow" aria-label="별빛이님 팔로우"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>팔로우</a>
+        <button type="button" class="btn btn-line btn-following" data-show="open unsigned fail_unfollow" aria-label="별빛이님 팔로우 중">
+          <span class="swap" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5l11 11m0-11-11 11"/></svg>
+          </span>팔로우 중
+        </button>
+        <a class="btn btn-fill btn-gift" href="#" data-show="open fail_unfollow" aria-label="별빛이님 선물 보내기">선물 보내기<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></span></a>
+        <span class="pill pill-gray" data-show="unsigned">승인 수단 등록 전</span>
+        <span class="pill pill-gray" data-show="self">내 페이지</span>
+        <p class="pill pill-warn" data-show="hidden">선물 받기 일시 중단 · 11월 20일부터 재개</p>
+        <p class="verifying" data-show="verifying"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>채널 확인이 끝나면 선물을 보낼 수 있어요</p>
+      </div>
+      <!-- 저장 실패 한 줄(버튼 묶음 바로 아래, 읽기 프로그램도 읽는다) — 실제는 늘 있는 role=status 칸에 글자만 들어간다 -->
+      <p class="fail" role="status" data-show="fail_follow">팔로우를 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.</p>
+      <p class="fail" role="status" data-show="fail_unfollow">팔로우 취소를 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.</p>
+    </div>
+
+    <!-- 진행 중인 선물함: 상단 묶음 아랫줄 왼쪽. 작은 타일(그림 + 이름)만 두고 설명·버튼은 누르면 열리는 상세 창에 있다 -->
+    <section class="boxes" aria-labelledby="boxes-h" data-show="needs_follow open self hidden unsigned fail_follow fail_unfollow">
+      <h2 class="boxes-h" id="boxes-h">진행 중인 선물함</h2>
+      <ul class="gtiles">
+        <li><button type="button" class="gtile" data-open="gd1" aria-haspopup="dialog"><span class="gtpic"><img src="img/gift-box-small-clear.png" alt="" width="428" height="339"></span><span class="gtname">1주년 기념 선물함</span></button></li>
+        <li><button type="button" class="gtile" data-open="gd2" aria-haspopup="dialog"><span class="gtpic"><img src="img/gift-box-medium-clear.png" alt="" width="487" height="499"></span><span class="gtname">연말 선물함</span><span class="gstate" data-show="open hidden unsigned fail_unfollow">대기 2번</span></button></li>
+        <li><button type="button" class="gtile" data-open="gd3" aria-haspopup="dialog"><span class="gtpic"><img src="img/gift-box-small-clear.png" alt="" width="428" height="339"></span><span class="gtname">겨울 손난로 선물함</span></button></li>
+      </ul>
+    </section>
+
+    <!-- 아랫줄 오른쪽: 요금·승인 시간 + 받기 어려운 선물 — 선물함과 같은 높이에서 시작 -->
+    <div class="sendmeta" data-show="needs_follow open self hidden unsigned fail_follow fail_unfollow">
+      <!-- 요금 · 평균 승인 소요 시간: 버튼 바로 아래 작은 글자 한 줄 -->
+      <p class="sendinfo" data-show="needs_follow open self hidden unsigned fail_follow fail_unfollow"><span>요금 <b>3,000원부터</b></span><span>평균 승인 소요 시간 <b>약 2시간</b></span></p>
+      <!-- 받기 어려운 선물: 요금 줄 바로 아래 한 묶음(쉬는 중에는 숨김 — INV-B2) -->
+      <aside class="alert" aria-labelledby="hard-h" data-show="needs_follow open self unsigned fail_follow fail_unfollow">
+        <h2 id="hard-h">받기 어려운 선물</h2>
+        <p>현재 받기 어려운 선물: 인형·쿠션, 향수·화장품<br>보관 공간 부족</p>
+      </aside>
+    </div>
+  </section>
+
+  </div>
+
+  <!-- 상세 내용: 여닫는 줄 + 3-1 2열 + 3-2 감사 카드. 처음엔 열림(가정) -->
+  <div class="detail" data-show="needs_follow open self hidden unsigned fail_follow fail_unfollow">
+    <div class="dtoggle-row">
+      <button type="button" class="dtoggle" id="dToggle" aria-expanded="true" aria-controls="dBody"><span class="dtlabel">상세 정보 접기</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    </div>
+    <div class="dbody" id="dBody">
+  <!-- 3-1 2열: 왼쪽(전달 과정 · 받고 싶은 선물) 2 : 오른쪽(보내기 전 안내) 1, 같은 높이에서 시작 -->
+  <div class="body">
+
+    <div class="mainc">
+
+      <!-- 전달 과정: 「보낸 선물」 화면의 여섯 단계(등록·입고·검수·출고·배송 중·수령)와 크리에이터 승인을 다섯으로 묶었다. 근거는 NOTES.md -->
+      <section class="flowsec" aria-labelledby="flow-h">
+        <h2 class="sec-h" id="flow-h">전달 과정</h2>
+        <ol class="flow">
+          <li class="fstep"><div class="ftile" aria-hidden="true"><img src="../../../../public/images/home/icon-fee.webp" alt="" width="192" height="192"></div><h3>등록·결제</h3><p>선물을 등록하면서 결제합니다.</p></li>
+          <li class="fstep"><svg class="farrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg><div class="ftile" aria-hidden="true"><img src="../../../../public/images/home/icon-gift.webp" alt="" width="192" height="192"></div><h3>입고</h3><p>팬꾹 주소로 보낸 상자가 도착합니다.</p></li>
+          <li class="fstep gate"><svg class="farrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg><div class="ftile" aria-hidden="true"><img src="../../../../public/images/home/icon-inspect.webp" alt="" width="192" height="192"></div><h3>검수</h3><p>팬이 보낸 모든 상자를 탐지기로 검사합니다.</p></li>
+          <li class="fstep gate"><svg class="farrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg><div class="ftile" aria-hidden="true"><img src="../../../../public/images/home/promise-message.webp" alt="" width="192" height="192"></div><h3>크리에이터 승인</h3><p>크리에이터가 선물마다 카카오톡 인증으로 승인합니다.</p></li>
+          <li class="fstep"><svg class="farrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg><div class="ftile" aria-hidden="true"><img src="../../../../public/images/home/icon-truck.webp" alt="" width="192" height="192"></div><h3>출고·배송</h3><p>승인과 검수가 완료된 선물을 출고합니다.</p></li>
+        </ol>
+      </section>
+
+      <!-- 받고 싶은 선물: 크리에이터가 적은 항목(아직 없는 입력 항목 — 화면 예시). 비워 두면 구역째 표시하지 않는다(시안 도구 「받고 싶은 선물 없을 때」) -->
+      <section class="wish" aria-labelledby="wish-h">
+        <div class="sec-head sec-head-l"><h2 class="sec-h" id="wish-h">받고 싶은 선물</h2><span class="ex">화면 예시</span></div>
+        <ul class="wtags">
+          <li>손편지</li><li>간식·과자</li><li>게임 굿즈</li><li>키캡</li><li>따뜻한 차</li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="sidec">
+
+      <!-- 보내기 전 안내 -->
+      <section class="guide" aria-labelledby="guide-h">
+        <h2 class="sec-h" id="guide-h">보내기 전 안내</h2>
+        <div class="gbox">
+          <details open>
+            <summary>보낼 수 없는 물품<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+            <div class="ans">
+              <ul class="prohibited">
+                <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg><span><b>살아 있는 동물·동물 사체와 식물</b></span></li>
+                <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg><span><b>폭발·인화성 물질 등 위험물</b> (화약류·인화물질처럼 운송 중 위험한 물건은 보낼 수 없어요.)</span></li>
+                <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg><span><b>현금·카드·상품권·유가증권</b> (수표·어음처럼 현금으로 바꿀 수 있는 물건은 보낼 수 없어요.)</span></li>
+                <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg><span><b>위법한 물건</b> (밀수품·군수품처럼 허가받지 않았거나 법에 어긋나는 물건은 보낼 수 없어요.)</span></li>
+                <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg><span><b>다시 만들 수 없는 서류</b> (계약서·원고처럼 잃어버리면 되돌릴 수 없는 서류는 보낼 수 없어요.)</span></li>
+                <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg><span><b>가액이 300만 원을 넘는 물건</b> (한 상자에 든 물건 값이 300만 원을 넘으면 보낼 수 없어요.)</span></li>
+              </ul>
+            </div>
+          </details>
+          <details>
+            <summary>검수·주소 보호 안내<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+            <div class="ans">
+              <ul class="promise">
+                <li>팬이 보낸 선물은 팬꾹에서 검수 후 배송합니다.</li>
+                <li>탐지기에 반응한 상자는 개봉해 확인합니다.</li>
+                <li>주소는 암호화해 보관하며, 승인 후 배송에 필요한 경우에만 확인합니다. 크리에이터의 주소는 팬에게 공개되지 않습니다.</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+      </section>
+    </div>
+  </div>
+
+    <!-- 3-2 나에게 온 감사 카드(2열 뒤 독립 줄, 슬라이더 본문 전체 폭): 보는 팬 본인의 선물에 이 크리에이터가 남긴 답장만(공개 동의와 상관없이 본인에게만). 로그인해 팔로우한 팬 상태에서만, 받은 답장이 0개면 숨김(시안 도구 「나에게 온 감사 카드 없을 때」) -->
+    <section class="replysec" aria-labelledby="reply-h" data-show="open fail_unfollow hidden unsigned">
+      <div class="rhead">
+        <h2 class="sec-h" id="reply-h">나에게 온 감사 카드</h2>
+        <div class="rnav">
+          <button type="button" class="rbtn" id="rPrev" aria-label="이전 감사 카드" aria-controls="rTrack"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+          <button type="button" class="rbtn" id="rNext" aria-label="다음 감사 카드" aria-controls="rTrack"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+        </div>
+      </div>
+      <ul class="rtrack" id="rTrack" tabindex="0" aria-label="감사 카드 목록, 가로로 넘기기">
+        <li class="rcard" aria-label="별빛이님이 남긴 감사 답장 — 잘 받았어요, 고마워요">
+          <div class="rwho"><img class="rphoto" src="img/profile-default.png" alt="" width="40" height="40"><p><b>별빛이님이 남긴</b>감사 답장</p></div>
+          <div class="rpanel"><p>잘 받았어요, 고마워요</p></div>
+          <div class="rfoot"><span>11월 9일</span><span class="rlogo"><img src="img/logo-mark.png" alt="" width="16" height="16">팬꾹</span></div>
+        </li>
+        <li class="rcard" aria-label="별빛이님이 남긴 감사 답장 — 너무 마음에 들어요">
+          <div class="rwho"><img class="rphoto" src="img/profile-default.png" alt="" width="40" height="40"><p><b>별빛이님이 남긴</b>감사 답장</p></div>
+          <div class="rpanel"><p>너무 마음에 들어요</p></div>
+          <div class="rfoot"><span>11월 2일</span><span class="rlogo"><img src="img/logo-mark.png" alt="" width="16" height="16">팬꾹</span></div>
+        </li>
+        <li class="rcard" aria-label="별빛이님이 남긴 감사 답장 — 잘 쓸게요">
+          <div class="rwho"><img class="rphoto" src="img/profile-default.png" alt="" width="40" height="40"><p><b>별빛이님이 남긴</b>감사 답장</p></div>
+          <div class="rpanel"><p>잘 쓸게요</p></div>
+          <div class="rfoot"><span>10월 19일</span><span class="rlogo"><img src="img/logo-mark.png" alt="" width="16" height="16">팬꾹</span></div>
+        </li>
+        <li class="rcard" aria-label="별빛이님이 남긴 감사 답장 — 덕분에 힘이 났어요">
+          <div class="rwho"><img class="rphoto" src="img/profile-default.png" alt="" width="40" height="40"><p><b>별빛이님이 남긴</b>감사 답장</p></div>
+          <div class="rpanel"><p>덕분에 힘이 났어요</p></div>
+          <div class="rfoot"><span>10월 5일</span><span class="rlogo"><img src="img/logo-mark.png" alt="" width="16" height="16">팬꾹</span></div>
+        </li>
+      </ul>
+    </section>
+    </div>
+  </div>
+
+  <!-- 다른 크리에이터: 두 열 아래, 전체 폭 카드 그리드(공용 크리에이터 카드와 같은 값) -->
+  <section class="similar simcol" aria-labelledby="similar-h" data-show="needs_follow open self hidden unsigned fail_follow fail_unfollow">
+    <div class="sec-head">
+      <h2 class="sec-h" id="similar-h">다른 크리에이터</h2>
+      <a class="more" href="#">전체 보기</a>
+    </div>
+    <!-- 2026-11-12 사용자 「다른 크리에이터 카드도 너무 크다」 → 운영 화면의 작은 링크 카드 그대로(creator-profile.module.css .other — 적용 규칙 8).
+         찾기 화면용 큰 공용 카드(배너·소개·팔로우)는 쓰지 않는다. 카드 전체가 그 크리에이터 페이지 링크 -->
+    <ul class="ogrid">
+      <li><a class="other" href="#" style="--personal:#FDE2E4" aria-label="달무리님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img src="img/oc-dawn.svg" alt="" width="1200" height="600"></span><span class="orow"><span class="oface" style="background:var(--face-1)" aria-hidden="true">달</span><span class="owho"><b>달무리</b><span class="otags"><span class="cchip">유튜브</span><span class="cchip">음악</span></span></span></span></a></li>
+      <li><a class="other" href="#" style="--personal:#D3F0EC" aria-label="하루님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img src="img/oc-forest.svg" alt="" width="1200" height="600"></span><span class="orow"><span class="oface" style="background:var(--face-5)" aria-hidden="true">하</span><span class="owho"><b>하루</b><span class="otags"><span class="cchip">치지직</span><span class="cchip">게임</span></span></span></span></a></li>
+      <li><a class="other" href="#" style="--personal:#FFF1B8" aria-label="모카라떼님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img class="ocat" src="img/mascot-cat.webp" alt="" width="320" height="285"></span><span class="orow"><span class="oface" style="background:var(--face-6)" aria-hidden="true">모</span><span class="owho"><b>모카라떼</b><span class="otags"><span class="cchip">숲</span><span class="cchip">토크</span></span></span></span></a></li>
+    </ul>
+  </section>
+</div>
+</div>
+</main>
+
+<footer class="foot">
+  <div class="foot-in">
+    <nav aria-label="바닥글 링크"><a href="#">이용약관</a><a href="#">개인정보 처리방침</a><a href="#">고객센터</a></nav>
+    <span>© 팬꾹</span>
+  </div>
+</footer>
+
+<!-- 선물함 상세 창(타일을 누르면 열림). 버튼은 상태 표(handle.md 선물함 칸)대로: 신청하기 / 신청 보기 / 신청 관리. 실제로는 /gift-boxes/[id] 로 간다 -->
+<dialog class="gdlg" id="gd1" aria-labelledby="gd1-h">
+  <div class="dbox">
+    <span class="dgrip" aria-hidden="true"></span>
+    <div class="dhead">
+      <div class="dpic" aria-hidden="true"><img src="img/gift-box-small-clear.png" alt="" width="428" height="339"></div>
+      <div class="dwho"><h2 id="gd1-h">1주년 기념 선물함</h2></div>
+      <button type="button" class="dx" data-close aria-label="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11m0-11-11 11"/></svg></button>
+    </div>
+    <p class="ddesc">편지와 작은 선물을 한 상자에 모아 받아요</p>
+    <div class="dact"><a class="btn btn-fill" href="#" data-show="needs_follow open hidden unsigned fail_follow fail_unfollow" aria-label="1주년 기념 선물함 신청하기">신청하기</a><a class="btn btn-fill" href="#" data-show="self" aria-label="1주년 기념 선물함 신청 관리">신청 관리</a></div>
+  </div>
+</dialog>
+<dialog class="gdlg" id="gd2" aria-labelledby="gd2-h">
+  <div class="dbox">
+    <span class="dgrip" aria-hidden="true"></span>
+    <div class="dhead">
+      <div class="dpic" aria-hidden="true"><img src="img/gift-box-medium-clear.png" alt="" width="487" height="499"></div>
+      <div class="dwho"><h2 id="gd2-h">연말 선물함</h2><span class="gstate" data-show="open hidden unsigned fail_unfollow">대기 2번</span></div>
+      <button type="button" class="dx" data-close aria-label="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11m0-11-11 11"/></svg></button>
+    </div>
+    <div class="dact"><a class="btn btn-fill" href="#" data-show="open hidden unsigned fail_unfollow" aria-label="연말 선물함 내 신청 보기">신청 보기</a><a class="btn btn-fill" href="#" data-show="needs_follow fail_follow" aria-label="연말 선물함 신청하기">신청하기</a><a class="btn btn-fill" href="#" data-show="self" aria-label="연말 선물함 신청 관리">신청 관리</a></div>
+  </div>
+</dialog>
+<dialog class="gdlg" id="gd3" aria-labelledby="gd3-h">
+  <div class="dbox">
+    <span class="dgrip" aria-hidden="true"></span>
+    <div class="dhead">
+      <div class="dpic" aria-hidden="true"><img src="img/gift-box-small-clear.png" alt="" width="428" height="339"></div>
+      <div class="dwho"><h2 id="gd3-h">겨울 손난로 선물함</h2></div>
+      <button type="button" class="dx" data-close aria-label="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11m0-11-11 11"/></svg></button>
+    </div>
+    <p class="ddesc">겨울 방송에 쓸 손난로와 간식을 받아요</p>
+        <div class="dact"><a class="btn btn-fill" href="#" data-show="needs_follow open hidden unsigned fail_follow fail_unfollow" aria-label="겨울 손난로 선물함 신청하기">신청하기</a><a class="btn btn-fill" href="#" data-show="self" aria-label="겨울 손난로 선물함 신청 관리">신청 관리</a></div>
+  </div>
+</dialog>
+
+<script>
+  (function () { var c = document.getElementById("coverToggle"); c.addEventListener("click", function () { var on = document.documentElement.classList.toggle("covercol"); c.setAttribute("aria-pressed", on ? "true" : "false"); }); })();
+  (function () { var w = document.getElementById("wishToggle"); w.addEventListener("click", function () { var on = document.documentElement.classList.toggle("nowish"); w.setAttribute("aria-pressed", on ? "true" : "false"); }); })();
+  (function () { var t = document.getElementById("photoToggle"); t.addEventListener("click", function () { var on = document.documentElement.classList.toggle("nophoto"); t.setAttribute("aria-pressed", on ? "true" : "false"); }); })();
+  (function () { var w = document.getElementById("replyToggle"); w.addEventListener("click", function () { var on = document.documentElement.classList.toggle("noreply"); w.setAttribute("aria-pressed", on ? "true" : "false"); }); })();
+  /* 선물함 상세 창: 타일 → 열기, 닫기 버튼·Esc(기본 동작)·바깥 누르기 → 닫기. 신청 링크는 시안이라 이동하지 않는다 */
+  (function () {
+    document.querySelectorAll("[data-open]").forEach(function (t) { t.addEventListener("click", function () { document.getElementById(t.getAttribute("data-open")).showModal(); }); });
+    document.querySelectorAll(".gdlg").forEach(function (d) {
+      d.addEventListener("click", function (e) { if (e.target === d || e.target.closest("[data-close]")) d.close(); });
+      d.querySelectorAll('a[href="#"]').forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); }); });
+    });
+  })();
+  /* 상세 내용 여닫기 — 화면 단추와 시안 도구 단추가 같은 상태를 쓴다 */
+  (function () {
+    var b = document.getElementById("dToggle"), body = document.getElementById("dBody"), t = document.getElementById("detailToggle"), l = b.querySelector(".dtlabel");
+    function setOpen(open) { body.hidden = !open; b.setAttribute("aria-expanded", open ? "true" : "false"); l.textContent = open ? "상세 정보 접기" : "상세 정보 펼치기"; t.setAttribute("aria-pressed", open ? "false" : "true"); window.dispatchEvent(new Event("resize")); }
+    b.addEventListener("click", function () { setOpen(body.hidden); });
+    t.addEventListener("click", function () { setOpen(body.hidden); });
+    window.setDetailOpen = setOpen;
+  })();
+  /* 감사 카드 슬라이드: 이전·다음은 카드 한 장(폭 + 간격)만큼. 자동으로 넘어가지 않는다 */
+  (function () {
+    var tr = document.getElementById("rTrack"), pv = document.getElementById("rPrev"), nx = document.getElementById("rNext");
+    var calm = window.matchMedia("(prefers-reduced-motion: reduce)");
+    function step() { var c = tr.querySelector(".rcard"); return c.offsetWidth + 16; }
+    function sync() { pv.disabled = tr.scrollLeft < 2; nx.disabled = tr.scrollLeft + tr.clientWidth >= tr.scrollWidth - 2; }
+    pv.addEventListener("click", function () { tr.scrollBy({ left: -step(), behavior: calm.matches ? "auto" : "smooth" }); });
+    nx.addEventListener("click", function () { tr.scrollBy({ left: step(), behavior: calm.matches ? "auto" : "smooth" }); });
+    tr.addEventListener("scroll", sync, { passive: true });
+    window.addEventListener("resize", sync);
+    sync(); setTimeout(sync, 300);
+  })();
+/* 시안 도구 전용 — 상태 이름에 맞는 요소만 보이게 한다. 비즈니스 로직 아님 */
+(function () {
+  var CAP = {
+    needs_follow: 'needs_follow — 로그인 전·팔로우 전. 「팔로우」 하나(로그인 전은 누르면 로그인 화면)',
+    open: 'open — 팔로우 중. 「선물 보내기」(채움) + 「팔로우 중」(테두리) · 대표 상태',
+    self: 'self — 크리에이터 본인. 꼬리표 「내 페이지」',
+    hidden: 'hidden — 쉬는 중. 버튼 자리에 쉬는 기간 한 줄, 받기 어려운 선물 알림 숨김',
+    unsigned: 'unsigned — 승인 서명 연결 전. 「선물 보내기」 자리에 누를 수 없는 배지',
+    verifying: 'verifying — 채널 확인 중. 프로필(이름·사진·소개) + 안내 한 줄만, 나머지 요소는 없음',
+    fail_follow: '저장 실패 — 팔로우 저장에 실패. 버튼은 그대로, 묶음 아래 한 줄',
+    fail_unfollow: '저장 실패 — 팔로우 취소 저장에 실패. 버튼은 그대로, 묶음 아래 한 줄'
+  };
+  function set(state) {
+    if (!CAP[state]) state = 'open';
+    document.body.setAttribute('data-state', state);
+    document.querySelectorAll('[data-show]').forEach(function (el) {
+      el.hidden = el.getAttribute('data-show').split(' ').indexOf(state) === -1;
+    });
+    document.querySelectorAll('[data-set]').forEach(function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-set') === state ? 'true' : 'false');
+    });
+    document.getElementById('cap').textContent = CAP[state];
+    if (location.hash !== '#' + state) history.replaceState(null, '', '#' + state);
+    window.dispatchEvent(new Event('resize'));
+  }
+  document.querySelectorAll('[data-set]').forEach(function (b) {
+    b.addEventListener('click', function () { set(b.getAttribute('data-set')); });
+  });
+  set(location.hash.replace('#', '') || 'open');
+})();
+</script>
+</body>
+</html>
