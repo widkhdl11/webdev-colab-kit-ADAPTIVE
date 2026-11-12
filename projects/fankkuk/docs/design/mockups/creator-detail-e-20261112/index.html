@@ -306,7 +306,24 @@ details[open] .chev { transform: rotate(180deg); }
 @container (min-width: 444px) { .cgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); } }
 @container (min-width: 678px) { .cgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 /* 다른 크리에이터 — 운영 값(creator-profile.module.css .otherGrid·.other·.otherFace·.otherWho) */
-.ogrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
+/* 2026-11-12 사용자 「다른 크리에이터 → 추천 크리에이터 둘러보기, 양쪽에 화살표가 있는 자동 슬라이드」.
+   한 번에 3장(휴대폰 2장), 양 끝 화살표 44(카드 배경 사진 부분의 세로 가운데 — 프로필 동그라미를 가리지 않게. PC 는 카드 가장자리에 반 걸침, 휴대폰은 카드 안쪽 4), 5초마다 한 장, 끝에서 처음으로.
+   10-4: 멈춤 버튼 + 마우스를 올리거나 초점이 들어오면 멈춤 / 12-3: 「움직임 줄이기」면 자동 넘김 없음(12-3 「손대지 않아도 움직이는 것 금지」와는 사용자 지시로 어긋남) */
+.ocar { position: relative; }
+.ogrid { display: flex; gap: var(--space-4); margin: -4px; padding: 4px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 4px; scrollbar-width: none; overscroll-behavior-x: contain; } /* 4: 그림자가 잘리지 않게 */
+.ogrid::-webkit-scrollbar { display: none; }
+.ogrid > li { flex: 0 0 calc((100% - 2 * var(--space-4)) / 3); min-width: 0; scroll-snap-align: start; }
+.oarrow { position: absolute; top: calc((100cqw - 2 * var(--space-4)) / 12); z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; margin-top: -22px; border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); cursor: pointer; }
+.oarrow svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (hover: hover) { .oarrow:hover { background: var(--surface-hover); } }
+.oarrow.prev { left: -22px; }
+.oarrow.next { right: -22px; }
+.opause { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair), var(--btn-ghost-shadow); color: var(--ink); cursor: pointer; }
+.opause svg { width: 20px; height: 20px; fill: currentColor; }
+.opause .i-play { display: none; }
+.opause[aria-pressed="true"] .i-play { display: block; }
+.opause[aria-pressed="true"] .i-pause { display: none; }
+.sec-tools { flex: none; display: flex; align-items: center; gap: var(--space-3); }
 .other { position: relative; display: flex; flex-direction: column; height: 100%; overflow: hidden; border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); text-decoration: none; transition: transform .25s var(--ease-micro), box-shadow .25s var(--ease-micro); } /* 2026-11-12 사용자 「다른 크리에이터 카드 조금 더 꾸며줘. 배경 사진도 나오게」 — 위 배경 띠 64 + 사진 걸침 */
 .other:hover, .other:focus-visible { box-shadow: var(--hair), var(--card-shadow-hover); }
 @media (hover: hover) { .other:hover { transform: translateY(-2px); } }
@@ -319,7 +336,7 @@ details[open] .chev { transform: rotate(180deg); }
 .owho { display: grid; gap: var(--space-1); min-width: 0; padding-top: var(--space-2); }
 .owho b { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; overflow-wrap: anywhere; }
 .otags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-@media (max-width: 767px) { .ogrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); } .orow { flex-direction: column; gap: 0; padding: 0 var(--space-3) var(--space-3); } .oface { width: 48px; height: 48px; margin-top: -24px; } }
+@media (max-width: 767px) { .ogrid { gap: var(--space-3); } .ogrid > li { flex-basis: calc((100% - var(--space-3)) / 2); } .oarrow { top: calc((100cqw - var(--space-3)) / 8); } .oarrow.prev { left: var(--space-1); } .oarrow.next { right: var(--space-1); } .orow { flex-direction: column; gap: 0; padding: 0 var(--space-3) var(--space-3); } .oface { width: 48px; height: 48px; margin-top: -24px; } }
 .ccard { --personal-line: color-mix(in srgb, var(--personal) 78%, var(--gray-900) 22%); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--card-pad); border-radius: var(--r-card); background: var(--card-fx); cursor: pointer; box-shadow: var(--card-shadow); transition: transform .25s var(--ease-micro), box-shadow .25s var(--ease-micro); }
 .ccard::before { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--gray-200); pointer-events: none; transition: box-shadow .15s; }
 .ccard:hover::before, .ccard:focus-within::before { box-shadow: inset 0 0 0 1px var(--gray-500); }
@@ -589,19 +606,27 @@ details[open] .chev { transform: rotate(180deg); }
     </div>
   </div>
 
-  <!-- 다른 크리에이터: 두 열 아래, 전체 폭 카드 그리드(공용 크리에이터 카드와 같은 값) -->
-  <section class="similar simcol" aria-labelledby="similar-h" data-show="needs_follow open self hidden unsigned fail_follow fail_unfollow">
+  <!-- 추천 크리에이터 둘러보기: 양쪽 화살표 + 자동 슬라이드(5초, 멈춤 가능). 카드는 운영의 작은 링크 카드 그대로 -->
+  <section class="similar simcol" aria-labelledby="similar-h" aria-roledescription="carousel" data-show="needs_follow open self hidden unsigned fail_follow fail_unfollow">
     <div class="sec-head">
-      <h2 class="sec-h" id="similar-h">다른 크리에이터</h2>
-      <a class="more" href="#">전체 보기</a>
+      <h2 class="sec-h" id="similar-h">추천 크리에이터 둘러보기</h2>
+      <div class="sec-tools">
+        <button type="button" class="opause" id="oPause" aria-pressed="false" aria-label="자동 넘김 멈추기"><svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"/></svg></button>
+        <a class="more" href="#">전체 보기</a>
+      </div>
     </div>
-    <!-- 2026-11-12 사용자 「다른 크리에이터 카드도 너무 크다」 → 운영 화면의 작은 링크 카드 그대로(creator-profile.module.css .other — 적용 규칙 8).
-         찾기 화면용 큰 공용 카드(배너·소개·팔로우)는 쓰지 않는다. 카드 전체가 그 크리에이터 페이지 링크 -->
-    <ul class="ogrid">
-      <li><a class="other" href="#" style="--personal:#FDE2E4" aria-label="달무리님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img src="img/oc-dawn.svg" alt="" width="1200" height="600"></span><span class="orow"><span class="oface" style="background:var(--face-1)" aria-hidden="true">달</span><span class="owho"><b>달무리</b><span class="otags"><span class="cchip">유튜브</span><span class="cchip">음악</span></span></span></span></a></li>
+    <div class="ocar">
+      <button type="button" class="oarrow prev" id="oPrev" aria-label="이전 크리에이터" aria-controls="oTrack"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+      <ul class="ogrid" id="oTrack" aria-live="off">
+<li><a class="other" href="#" style="--personal:#FDE2E4" aria-label="달무리님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img src="img/oc-dawn.svg" alt="" width="1200" height="600"></span><span class="orow"><span class="oface" style="background:var(--face-1)" aria-hidden="true">달</span><span class="owho"><b>달무리</b><span class="otags"><span class="cchip">유튜브</span><span class="cchip">음악</span></span></span></span></a></li>
       <li><a class="other" href="#" style="--personal:#D3F0EC" aria-label="하루님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img src="img/oc-forest.svg" alt="" width="1200" height="600"></span><span class="orow"><span class="oface" style="background:var(--face-5)" aria-hidden="true">하</span><span class="owho"><b>하루</b><span class="otags"><span class="cchip">치지직</span><span class="cchip">게임</span></span></span></span></a></li>
       <li><a class="other" href="#" style="--personal:#FFF1B8" aria-label="모카라떼님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img class="ocat" src="img/mascot-cat.webp" alt="" width="320" height="285"></span><span class="orow"><span class="oface" style="background:var(--face-6)" aria-hidden="true">모</span><span class="owho"><b>모카라떼</b><span class="otags"><span class="cchip">숲</span><span class="cchip">토크</span></span></span></span></a></li>
-    </ul>
+      <li><a class="other" href="#" style="--personal:#E4DCFF" aria-label="소나기님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img src="img/oc-dawn.svg" alt="" width="1200" height="600"></span><span class="orow"><span class="oface" style="background:var(--face-2)" aria-hidden="true">소</span><span class="owho"><b>소나기</b><span class="otags"><span class="cchip">유튜브</span><span class="cchip">노래</span></span></span></span></a></li>
+      <li><a class="other" href="#" style="--personal:#FFE4CC" aria-label="루미님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img src="img/oc-forest.svg" alt="" width="1200" height="600"></span><span class="orow"><span class="oface" style="background:var(--face-4)" aria-hidden="true">루</span><span class="owho"><b>루미</b><span class="otags"><span class="cchip">치지직</span><span class="cchip">그림</span></span></span></span></a></li>
+      <li><a class="other" href="#" style="--personal:#DCF5D9" aria-label="파도소리님의 선물 링크 페이지"><span class="oband" aria-hidden="true"><img class="ocat" src="img/mascot-cat.webp" alt="" width="320" height="285"></span><span class="orow"><span class="oface" style="background:var(--face-3)" aria-hidden="true">파</span><span class="owho"><b>파도소리</b><span class="otags"><span class="cchip">숲</span><span class="cchip">ASMR</span></span></span></span></a></li>
+      </ul>
+      <button type="button" class="oarrow next" id="oNext" aria-label="다음 크리에이터" aria-controls="oTrack"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+    </div>
   </section>
 </div>
 </div>
@@ -671,6 +696,33 @@ details[open] .chev { transform: rotate(180deg); }
     b.addEventListener("click", function () { setOpen(body.hidden); });
     t.addEventListener("click", function () { setOpen(body.hidden); });
     window.setDetailOpen = setOpen;
+  })();
+  /* 추천 크리에이터 슬라이드: 화살표는 한 장씩(끝에서 처음으로 돌아감), 5초마다 자동으로 한 장.
+     멈춤: 멈춤 버튼 · 마우스를 올린 동안 · 초점이 안에 있는 동안 · 손으로 넘기는 동안 · 탭이 안 보일 때. 「움직임 줄이기」면 자동 넘김 없이 멈춤 상태로 시작 */
+  (function () {
+    var tr = document.getElementById("oTrack"), pv = document.getElementById("oPrev"), nx = document.getElementById("oNext"), pz = document.getElementById("oPause"), car = tr.closest(".similar");
+    var calm = window.matchMedia("(prefers-reduced-motion: reduce)"), timer = null, hold = false;
+    function step() { var c = tr.querySelector("li"); return c.offsetWidth + parseFloat(getComputedStyle(tr).columnGap || 16); }
+    function go(dir) {
+      var end = tr.scrollLeft + tr.clientWidth >= tr.scrollWidth - 2, start = tr.scrollLeft < 2, b = calm.matches ? "auto" : "smooth";
+      if (dir > 0 && end) tr.scrollTo({ left: 0, behavior: b });
+      else if (dir < 0 && start) tr.scrollTo({ left: tr.scrollWidth, behavior: b });
+      else tr.scrollBy({ left: dir * step(), behavior: b });
+    }
+    function paused() { return pz.getAttribute("aria-pressed") === "true"; }
+    function run() { clearInterval(timer); timer = null; if (!paused() && !hold && !document.hidden) timer = setInterval(function () { go(1); }, 5000); }
+    function setPaused(p) { pz.setAttribute("aria-pressed", p ? "true" : "false"); pz.setAttribute("aria-label", p ? "자동 넘김 다시 시작" : "자동 넘김 멈추기"); run(); }
+    pv.addEventListener("click", function () { go(-1); run(); });
+    nx.addEventListener("click", function () { go(1); run(); });
+    pz.addEventListener("click", function () { setPaused(!paused()); });
+    car.addEventListener("mouseenter", function () { hold = true; run(); });
+    car.addEventListener("mouseleave", function () { hold = false; run(); });
+    car.addEventListener("focusin", function () { hold = true; run(); });
+    car.addEventListener("focusout", function (e) { if (!car.contains(e.relatedTarget)) { hold = false; run(); } });
+    tr.addEventListener("pointerdown", function () { hold = true; run(); });
+    document.addEventListener("visibilitychange", run);
+    window.oCarousel = { go: go, setPaused: setPaused };
+    setPaused(calm.matches);
   })();
   /* 감사 카드 슬라이드: 이전·다음은 카드 한 장(폭 + 간격)만큼. 자동으로 넘어가지 않는다 */
   (function () {
