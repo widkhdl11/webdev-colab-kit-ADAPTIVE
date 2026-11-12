@@ -36,7 +36,7 @@ export function DashboardPanel({ tiles, today }: { tiles: DashboardTile[]; today
         </div>
       </div>
       <section aria-labelledby="dashboard-counts">
-        <h2 id="dashboard-counts" className="sr-only">
+        <h2 id="dashboard-counts" className={`sr-only ${s.countsH}`}>
           처리할 일 건수
         </h2>
         <div className={s.kpis}>

@@ -89,6 +89,7 @@
 /* 구간 공통 — 왼쪽 정렬 머리(제목 32 + 설명) */
 .block, .slot { margin-top: var(--section-gap); }
 .head { margin-bottom: var(--space-12); }
+.head h2 { font-size: var(--fs-title); } /* 구간 제목 32(휴대폰 24) — 예전에는 h2 기본값이 이 크기였다 */
 .head :global(.t-lead) { margin-top: var(--space-2); }
 /* 구간 제목 강조 낱말 — 글자는 짙은 회색 그대로, 아래쪽에 하늘 그라데이션 띠(글자색으로 쓰면 대비 1.7:1) */
 .head h2 :global(.accent) { padding-inline: 2px; background: var(--grad-title) no-repeat 0 90% / 100% 0.4em; }
@@ -99,7 +100,7 @@
 
 /* ③-2·④·⑦ 구역 머리 — 제목 32 왼쪽 + 「모두 보기」 오른쪽, 아래 24 */
 .slotHead { margin-bottom: var(--space-6); }
-.slotHead h2 { margin: 0; }
+.slotHead h2 { margin: 0; font-size: var(--fs-title); }
 .slotMeta { margin-left: var(--space-2); font-family: var(--font); font-size: var(--fs-body); font-weight: 400; color: var(--gray-600); }
 
 /* 상태 흐름 줄 — 4단계 아래 32, 위 1px 선 */

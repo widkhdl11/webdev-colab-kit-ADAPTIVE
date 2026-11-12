@@ -1,7 +1,9 @@
 /* 전역 스타일은 토큰과 공통 기본 스타일 두 개뿐이다. 화면별 스타일은 각 위젯의 CSS 모듈에 있다.
    Tailwind 기본 초기화(preflight)는 쓰지 않는다 — v4 시안이 브라우저 기본값 위에서 실측됐다. */
 @import "../shared/ui/tokens.css";
-@import "../shared/ui/base.css";
+/* 공통 기본 스타일은 층(base) 안에 둔다 — 층 밖에 있는 화면 CSS 모듈이 선택자 점수와 상관없이 이긴다.
+   예전에는 base.css 의 점수 높은 선택자가 모듈 선언을 눌러 모듈 값이 화면에 안 나오는 곳이 있었다(2026-11-12 조사). */
+@import "../shared/ui/base.css" layer(base);
 /* 헤더·푸터는 모든 화면에 붙어 사실상 전역이다. 전역 CSS 는 app 안에서 불러오는 것이 Next.js 권장이라 여기서 불러온다. */
 @import "../widgets/site-header/ui/site-header.css";
 @import "../widgets/site-footer/ui/site-footer.css";

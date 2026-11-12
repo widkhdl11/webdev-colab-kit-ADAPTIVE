@@ -4,7 +4,7 @@
 /* 로그인 전 — 상단 바와 같은 880 선 안에서 위 32(시안 4 .cr-banner), 바닥글까지 96(휴대폰 위 16·아래 64) */
 .pub { padding-block: var(--space-8) var(--section-gap); }
 
-.verify { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); color: var(--gray-600); font-size: var(--fs-navitem); }
+.verify { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); color: var(--gray-600); } /* 글자 크기는 공용 .page-head 설명 줄(16) */
 .verify svg { flex: none; width: var(--icon-xs); height: var(--icon-xs); color: var(--brand-ink); }
 
 /* 2026-11-01 시안 4 기준(design-rules 35절, 시안 part5-v4-20261101): 제목 32(휴대폰 24 — --fs-title 토큰), 머리 아래 검색창까지 24 */
@@ -31,10 +31,13 @@ h1.title { font-size: var(--fs-title); line-height: 1.3; }
 .page [data-banner-card] [data-banner-go] { margin-top: var(--space-3); }
 
 /* 태그 칩 — 흰 면 + 회색 경계 알약(36), 고른 칩은 옅은 빨강 면 + 빨강 경계 */
+.chipsH { font-size: var(--fs-title); } /* 낭독기 전용 제목 — 예전 h2 기본 크기 그대로 */
 .chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
 /* 휴대폰은 한 줄 가로 넘김 — 세 줄로 접혀 카드가 늦게 나오던 것(시안 .fchips). 오른쪽은 화면 끝까지, 위아래·왼쪽 8 은 초점 테두리(3 + 띄움 2) 자리 */
 @media (max-width: 767px) {
   .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: var(--space-2) calc(-1 * var(--gutter)) calc(-1 * var(--space-2)) calc(-1 * var(--space-2)); padding: var(--space-2) var(--gutter) var(--space-2) var(--space-2); }
+  /* 로그인 후 틀 안에서는 지금까지 공용 .page-pane 규칙이 양옆을 가운데 정렬로 덮어 화면 끝까지 닿지 않았다 — 그 모양을 그대로 둔다 */
+  :global(.page-pane) > .chips { margin-inline: auto; }
   .chips::-webkit-scrollbar { display: none; }
   .chip { flex: none; white-space: nowrap; }
 }

@@ -1,0 +1,149 @@
+[
+ {
+  "role": "팬",
+  "url": "/home",
+  "el": "section.heroBand.hero",
+  "maxWidth": "none",
+  "width": 1200
+ },
+ {
+  "role": "팬",
+  "url": "/me",
+  "el": "div.wrap",
+  "maxWidth": "880px",
+  "width": 880
+ },
+ {
+  "role": "팬",
+  "url": "/me/profile",
+  "el": "div.wrap",
+  "maxWidth": "880px",
+  "width": 880
+ },
+ {
+  "role": "팬",
+  "url": "/me/following",
+  "el": "div.wrap",
+  "maxWidth": "880px",
+  "width": 880
+ },
+ {
+  "role": "팬",
+  "url": "/me/actions",
+  "el": "header.page-head",
+  "maxWidth": "880px",
+  "width": 880
+ },
+ {
+  "role": "팬",
+  "url": "/me/revgifts",
+  "el": "div.",
+  "maxWidth": "880px",
+  "width": 880
+ },
+ {
+  "role": "팬",
+  "url": "/gifts",
+  "el": "header.page-head.v34",
+  "maxWidth": "880px",
+  "width": 880
+ },
+ {
+  "role": "팬",
+  "url": "/gifts/new",
+  "el": "div.col.wide",
+  "maxWidth": "1040px",
+  "width": 1040
+ },
+ {
+  "role": "크리에이터",
+  "url": "/creator",
+  "el": "div.col",
+  "maxWidth": "928px",
+  "width": 928
+ },
+ {
+  "role": "크리에이터",
+  "url": "/creator/actions",
+  "el": "div.v34.root",
+  "maxWidth": "880px",
+  "width": 880
+ },
+ {
+  "role": "크리에이터",
+  "url": "/creator/requests",
+  "el": "div.",
+  "maxWidth": "880px",
+  "width": 880
+ },
+ {
+  "role": "크리에이터",
+  "url": "/creator/progress",
+  "el": "div.v34.root",
+  "maxWidth": "880px",
+  "width": 880
+ },
+ {
+  "role": "크리에이터",
+  "url": "/creator/boxes",
+  "el": "div.v34",
+  "maxWidth": "880px",
+  "width": 880
+ },
+ {
+  "role": "크리에이터",
+  "url": "/creator/revgifts",
+  "el": "div.page",
+  "maxWidth": "1200px",
+  "width": 1120
+ },
+ {
+  "role": "크리에이터",
+  "url": "/creator/revgift-boxes",
+  "el": "div.col.listCol",
+  "maxWidth": "1040px",
+  "width": 1040
+ },
+ {
+  "role": "크리에이터",
+  "url": "/creator/profile",
+  "el": "div.stack.col",
+  "maxWidth": "1200px",
+  "width": 1120
+ },
+ {
+  "role": "크리에이터",
+  "url": "/creator/customize",
+  "el": "div.root",
+  "maxWidth": "880px",
+  "width": 880
+ },
+ {
+  "role": "크리에이터",
+  "url": "/creator/settings",
+  "el": "div.root",
+  "maxWidth": "1200px",
+  "width": 1120
+ },
+ {
+  "role": "크리에이터",
+  "url": "/creator/account",
+  "el": "div.wrap",
+  "maxWidth": "880px",
+  "width": 880
+ },
+ {
+  "role": "크리에이터",
+  "url": "/creator/log",
+  "el": "div.v34.root",
+  "maxWidth": "880px",
+  "width": 880
+ },
+ {
+  "role": "크리에이터",
+  "url": "/me/following",
+  "el": "div.wrap",
+  "maxWidth": "880px",
+  "width": 880
+ }
+]

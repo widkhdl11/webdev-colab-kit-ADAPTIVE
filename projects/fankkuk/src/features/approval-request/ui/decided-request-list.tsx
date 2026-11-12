@@ -54,7 +54,7 @@ export function DecidedRequestList({
   const base = months[0]?.key ?? "";
   let n = 0;
   return (
-    <section id="done" className={`v34 ${a.sec} ${q.root}`} aria-labelledby="done-h">
+    <section id="done" className="v34" aria-labelledby="done-h">
       <div className={q.top}>
         <div className={`card ${q.tot}`}>
           <img className={q.peek} src="/images/home/icon-inspect.webp" alt="" width={96} height={96} />

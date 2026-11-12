@@ -1,6 +1,5 @@
 /* 승인 내역 — 시안 v37-part2/requests.html (v37.css .qtop·.qtot·.qgrid·.qmonth·.drow·.qfold, design-rules 23-3절).
    흰 카드는 공통 .card, 큰 숫자는 공통 .num-big, 촘촘한 줄은 공통 .lrow — 면 효과·움직임(23-1·23-2절)은 그 공통 부품이 준다. */
-.root { scroll-margin-top: var(--space-6); }
 
 /* 맨 위 — 처리 수 판 + 오른쪽 288 결과별 숫자 칸 넷 */
 .top { display: grid; grid-template-columns: minmax(0, 1fr) 288px; gap: var(--space-4); align-items: stretch; margin-top: var(--space-12); }

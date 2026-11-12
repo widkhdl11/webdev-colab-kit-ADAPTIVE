@@ -8,6 +8,8 @@
 .stack > * { min-width: 0; }
 .sectionH { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 8px; }
 .sectionH h2 { font-size: 17px; line-height: 1.5; font-weight: 800; letter-spacing: -.3px; }
+/* 작업 화면(선물함 입고·실측·출고)은 h2 자체에 .sectionH 를 달아 위 17 이 걸리지 않고 h2 기본값 32(휴대폰 24)를 받아 왔다 — 그 크기를 그대로 둔다 */
+h2.sectionH { font-size: var(--fs-title); }
 .sectionH span { font-size: 13px; color: var(--sub); }
 .hint { font-size: 13px; color: var(--sub); }
 /* 표 위 지표 설명 — 이름(굵게)과 설명을 한 줄씩. 행 머리에는 이름만 둔다 */

@@ -154,7 +154,7 @@ export function CreatorSearchPage({
         </button>
       </form>
       {/* 칩 줄 제목 — 칩이 검색창 바로 아래 한 줄로 와서 눈에는 보이지 않게 두고 문서 개요에만 남긴다 */}
-      <h2 className="sr-only">태그</h2>
+      <h2 className={`sr-only ${s.chipsH}`}>태그</h2>
       <div className={s.chips} role="group" aria-label="태그별 보기">
         {["", ...chips].map((t) => (
           <button

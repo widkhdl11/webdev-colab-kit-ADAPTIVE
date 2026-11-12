@@ -1,6 +1,6 @@
 /* 상세 설정 · 팬덤 — 시안 docs/design/mockups/site/pilot-2026-10-22/settings.html, 값의 정본은 같은 폴더 pilot.css 「상세 설정」(.st-* · .fd-b · .cc).
    폭은 틀(MyShell broad 1200)이 정하고, 안에서 입력 + 미리보기 300(--grid-gap). 판은 흰 카드, 판 안 구분선만 낮은 대비 1px(--line-on-white, 41절). */
-.sec { display: grid; gap: var(--space-6); scroll-margin-top: var(--space-6); }
+.sec { display: grid; gap: var(--space-6); }
 .secT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
 /* 미리보기 칸은 카드 폭(300 — 찾기 화면 카드와 같은 크기)에 맞추고 남는 폭은 입력 판이 쓴다. 7+5 로 나누면 카드 오른쪽에 146 이 비었다(2026-10-22 사용자 「미리보기 카드랑 내용 크기가 안맞는다」) */
 .grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; column-gap: var(--grid-gap); align-items: start; }
@@ -29,7 +29,6 @@
 .swNone { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--space-4); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-500); font-size: var(--fs-small); font-weight: 400; cursor: pointer; }
 .swNone:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--gray-900); }
 .swNone:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
-.chk input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .chk { display: flex; gap: var(--space-3); align-items: center; min-height: 44px; font-size: var(--fs-small); cursor: pointer; } /* 라벨 줄 전체가 누름 칸 44 */
 .chk input { flex: none; margin: 0; } /* 칸 모양은 base.css 18) 체크박스 */
 

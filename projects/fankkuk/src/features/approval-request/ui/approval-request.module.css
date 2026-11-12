@@ -6,8 +6,8 @@
 /* 시안 .signing — 서명 대기 한 줄 */
 .signing { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: var(--r-btn); background: var(--primary-50); color: var(--brand-ink); } /* v18-app.css .signing */
 
-/* 승인 대기(#wait)·처리한 요청(#done) — 사이드바 「승인 내역」이 #done 으로 온다. 구간 머리는 20(v18 작은 제목) */
-.sec { scroll-margin-top: var(--space-6); }
+/* 승인 대기(#wait)·처리한 요청(#done) — 사이드바 「승인 내역」이 #done 으로 온다. 구간 머리는 20(v18 작은 제목).
+   #done 으로 왔을 때 위 여유는 공용 「main 안 [id]」 값(상단 바 + 24)을 쓴다 */
 .sec > h2 { font-size: var(--fs-card); line-height: 1.4; }
 .result { font-weight: var(--fw-bold); }
 
