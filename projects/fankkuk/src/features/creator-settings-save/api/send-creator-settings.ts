@@ -1,7 +1,6 @@
 import type { NotifyInput, ProfileInput } from "../model/creator-settings-input";
 import type { DaysInput, ReceivingInput } from "../model/receiving-input";
 import type { HardItemsInput } from "../model/hard-items-input";
-import type { ReplySettingsInput } from "../model/reply-settings-input";
 import type { PreviewPickInput } from "../model/preview-pick-input";
 
 // 브라우저에서 크리에이터 설정을 저장한다(/api/creator/profile · /api/creator/notify). 서버가 준 문구를 그대로 보여 준다.
@@ -42,11 +41,6 @@ export function sendCreatorDays(input: DaysInput): Promise<SendSettingsOutcome> 
 
 export function sendCreatorHardItems(input: HardItemsInput): Promise<SendSettingsOutcome> {
   return post("/api/creator/hard-items", input);
-}
-
-// gift-reply: 답장 모음 보이기 · X 계정 · 태그 허용
-export function sendCreatorReplySettings(input: ReplySettingsInput): Promise<SendSettingsOutcome> {
-  return post("/api/creator/reply-settings", input);
 }
 
 // creator-link: 링크 미리보기 이미지 고르기(프로필 사진·팬덤 심볼)

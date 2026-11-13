@@ -223,17 +223,3 @@ export async function readReplyWall(client: Pick<SupabaseClient, "rpc">, creator
     .parse(data)
     .map((r) => ({ phrase: r.phrase, line: r.line, repliedOn: r.replied_on, fanNickname: r.fan_nickname }));
 }
-
-// ── 크리에이터 설정: 모음 보이기 · X 계정 · 태그 허용 ──────────────────
-
-export type ReplySettings = { wallVisible: boolean; xHandle: string | null; xTagAllowed: boolean };
-
-const settingsRow = z.object({ wall_visible: z.boolean(), x_handle: z.string().nullable(), x_tag_allowed: z.boolean() }).strict();
-
-/** 로그인한 크리에이터 본인의 답장 설정. 크리에이터 줄이 없으면 null. */
-export async function readMyReplySettings(client: Pick<SupabaseClient, "rpc">): Promise<ReplySettings | null> {
-  const { data, error } = await client.rpc("my_reply_settings");
-  if (error) fail("답장 설정", error.code);
-  const [r] = z.array(settingsRow).max(1).parse(data);
-  return r ? { wallVisible: r.wall_visible, xHandle: r.x_handle, xTagAllowed: r.x_tag_allowed } : null;
-}

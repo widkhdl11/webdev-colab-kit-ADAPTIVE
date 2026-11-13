@@ -83,24 +83,15 @@ export const ANONYMOUS_FAN = "익명의 팬";
 
 // ── 공유 (INV-G9) ──────────────────────────────────
 
-/** X 계정 꼴 — 영문·숫자·밑줄 1~15자(X 의 아이디 규칙, 업계 표준). DB 와 같다. */
-export const X_HANDLE_PATTERN = /^[A-Za-z0-9_]{1,15}$/;
-
-/** 입력한 X 계정 — 앞뒤 공백과 맨 앞 「@」 하나를 뗀다. 비면 null(등록 안 함). 꼴 검사는 따로. */
-export function normalizeXHandle(input: string): string | null {
-  const t = input.trim().replace(/^@/, "");
-  return t === "" ? null : t;
-}
-
 /** 공유 글에 늘 붙는 문구. */
 export const SHARE_HASHTAG = "#팬꾹";
 
 /**
- * X 글쓰기 창에 채울 글. 「#팬꾹」, 그리고 크리에이터가 X 계정을 등록하고 태그를 허용한 경우만 「@계정」(INV-G9).
- * xTag 는 DB 가 두 조건을 모두 만족할 때만 주는 값이다 — 꼴이 아니면 붙이지 않는다.
+ * X 글쓰기 창에 채울 글 — 늘 「#팬꾹」만(INV-G9). 2026-11-14 크리에이터 「X 공유 설정」(X 계정·태그 허용)을 없앴다 —
+ * 예전에 저장한 X 계정이 DB 에 남아 있어도 붙이지 않는다(끌 화면이 없으니).
  */
-export function shareTextOf(xTag: string | null): string {
-  return xTag && X_HANDLE_PATTERN.test(xTag) ? `${SHARE_HASHTAG} @${xTag}` : SHARE_HASHTAG;
+export function shareTextOf(): string {
+  return SHARE_HASHTAG;
 }
 
 /** X 글쓰기 창 주소 — 글만 채운다(이미지는 팬이 내려받아 붙인다). */

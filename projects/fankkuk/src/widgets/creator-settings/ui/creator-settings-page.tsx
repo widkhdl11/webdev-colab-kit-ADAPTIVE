@@ -18,15 +18,13 @@ import { sendUnblock } from "@/features/creator-unblock/api/send-unblock";
 import { isResting, type CalendarDate, type MyCreatorReceiving } from "@/entities/creator/model/receiving";
 import { ReceivingSection } from "./receiving-section";
 import { HardItemsSection } from "./hard-items-section";
-import { ReplySettingsSection } from "./reply-settings-section";
-import type { ReplySettings } from "@/entities/gift-reply/api/gift-reply-reads";
 import type { MyHardItems } from "@/entities/gift-item/model/hard-items";
 import s from "./creator-settings.module.css";
 
 // 2026-11-13 같은 날 사용자 지시: 이 화면 이름을 「계정 설정」으로 바꾸고(주소 /creator/settings 그대로) 선물 받기 설정들 뒤에 「보안」(비밀번호 · 휴대폰 번호)과
 // 「회원 탈퇴」를 같은 접힌 칸 모양으로 둔다(#security · #leave). 두 칸의 안쪽은 앱 레이어가 넘긴다(widgets/creator-account 의 부품 — 위젯끼리 import 하지 않는다).
 // 2026-11-13 재분류(UX 명세 creator-profile, DECISIONS 같은 날): 팬덤 구역(팬덤 이름·팬마크·테마 색)과 선물 링크 주소는 프로필 수정 「채널」 탭으로 옮겼다 —
-// 이 화면에는 주소와 설정(승인 서명·받는 주소·받기 설정·차단한 팬·감사 답장)만 남는다. 아래는 옮기기 전 설명이다.
+// 이 화면에는 주소와 설정(승인 서명·받는 주소·받기 설정·차단한 팬)만 남는다(감사 답장 칸 = X 공유 설정은 2026-11-14 없앰). 아래는 옮기기 전 설명이다.
 // 크리에이터 상세 설정 (design-rules 12절 · 27절, 시안 docs/design/mockups/site/pilot-2026-10-22/settings.html). 틀 폭 1200 — 「팬덤」(입력 + 미리보기)과 「주소와 설정」이 같은 폭 · 같은 왼쪽 선(41절).
 // 위에서 아래: 팬덤(팬덤 이름·팬마크·테마 색·미리보기 — fandom-section) → 주소와 설정(접힌 칸: 받는 주소·받기 설정·차단한 팬·선물 링크·감사 답장)
 // 본인 확인·알림·계정 보안은 크리에이터 계정 설정(/creator/account, widgets/creator-account)으로 옮겼다(2026-10-16).
@@ -89,7 +87,6 @@ export function CreatorSettingsPage({
   receiving,
   hardItems,
   today,
-  replySettings,
   signatureLink,
   security,
   leave,
@@ -100,8 +97,6 @@ export function CreatorSettingsPage({
   leave: ReactNode;
   /** 승인 서명 연결 여부와 연결한 때(approval-signature INV-S16) — 등록한 이름·생년월일·번호는 오지 않는다 */
   signatureLink: MySignatureLink;
-  /** X 계정·태그 허용(답장 모음 보이기 칸은 저장값만 돌려보낸다 — 2026-11-13 모음 없앰) — 로그인한 크리에이터 본인 것(gift-reply INV-G8) */
-  replySettings: ReplySettings;
   /** 받는 상태·팬당 한도·생일·기념일 — 로그인한 크리에이터 본인 것(creator-receiving) */
   receiving: MyCreatorReceiving;
   /** 살아 있는 받기 어려운 품목 — 로그인한 크리에이터 본인 것(hard-items). 없거나 끝났으면 null */
@@ -150,8 +145,8 @@ export function CreatorSettingsPage({
         <h1 className="ph-title" id="settings-h">
           계정 설정
         </h1>
-        {/* 화면에 나오는 순서대로 — 카카오톡 인증 알림 줄 → 받는 주소 → 받기 설정(선물 받기) → 차단한 팬 → 감사 답장 → 보안 → 회원 탈퇴 */}
-        <p className="ph-desc">카카오톡 인증 알림·받는 주소·선물 받기·차단한 팬·감사 답장·보안·회원 탈퇴를 관리합니다.</p>
+        {/* 화면에 나오는 순서대로 — 카카오톡 인증 알림 줄 → 받는 주소 → 받기 설정(선물 받기) → 차단한 팬 → 보안 → 회원 탈퇴 */}
+        <p className="ph-desc">카카오톡 인증 알림·받는 주소·선물 받기·차단한 팬·보안·회원 탈퇴를 관리합니다.</p>
       </header>
 
       <div className={`stack ${s.page}`}>
@@ -244,9 +239,6 @@ export function CreatorSettingsPage({
             <p className="t-meta">차단을 해제해도 주소는 공개되지 않습니다. 새 선물은 건별로 카카오톡 서명을 거쳐 승인해야 배송됩니다.</p>
           </Fold>
 
-          <Fold id="thanks" title="감사 답장">
-            <ReplySettingsSection initial={replySettings} />
-          </Fold>
 
           {/* 선물 받기 설정들 뒤 — 보안 · 회원 탈퇴(2026-11-13 프로필 수정 「계정」 탭에서 옮김). 같은 접힌 칸 모양, 펼치면 옛 줄 그대로 */}
           <Fold id="security" title="보안">

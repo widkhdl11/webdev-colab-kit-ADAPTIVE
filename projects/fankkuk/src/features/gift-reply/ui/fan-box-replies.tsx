@@ -12,7 +12,7 @@ import s from "./gift-reply.module.css";
 // 「함께한 시간」 화면(together)이 생기기 전까지는 선물 상세에 둔다 — 같은 읽기 함수(my_gift_replies)를 쓴다.
 // 상자 상태는 받았어요 기록이나 배송 수령 중 하나라도 있으면 「받았어요」, 날짜만 보이고 시각은 없다(INV-G6 — 읽기 함수가 날짜만 준다).
 // 공개 동의 두 칸(「답장 공개 허용」·「닉네임 공개」)은 2026-11-13 뺐다 — 공개 답장 모음이 없어져(사용자 「스위치도 없애」) 아무 일도 하지 않는 칸이 됐다. 공유 카드는 보낸 사람 본인만 만들 수 있다 — 이미지 주소가 로그인 세션으로 주인을 확인한다(INV-G9).
-// 「#팬꾹」·「@계정」은 이미지가 아니라 X 글쓰기 창의 글에 채운다(shareTextOf).
+// 「#팬꾹」은 이미지가 아니라 X 글쓰기 창의 글에 채운다(shareTextOf).
 
 const SIZE_LABEL: Record<CardSize, string> = { square: "정사각형", wide: "X 용 가로" };
 
@@ -31,7 +31,7 @@ function SharePanel({ row, id }: { row: FanBoxReply; id: string }) {
   const [withName, setWithName] = useState(false);
   const query = `size=${size}${withName ? "&name=1" : ""}`;
   const src = `/api/gifts/reply-card/${row.boxId}?${query}`;
-  const text = shareTextOf(row.xTag);
+  const text = shareTextOf();
   const { width, height } = CARD_SIZES[size];
   return (
     <div className={s.share} id={id}>

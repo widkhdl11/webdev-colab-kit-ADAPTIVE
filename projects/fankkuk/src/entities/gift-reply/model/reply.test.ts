@@ -7,7 +7,6 @@ import {
   dotDate,
   normalizeReplyLine,
   monthDayText,
-  normalizeXHandle,
   RECEIVED_BOXES_MAX,
   receivedListCapped,
   REPLY_INPUT_MESSAGE,
@@ -18,7 +17,6 @@ import {
   replyLineMessage,
   replyLineProblem,
   shareTextOf,
-  X_HANDLE_PATTERN,
   xIntentUrl,
 } from "./reply";
 
@@ -48,26 +46,14 @@ describe("INV-G3: 정해진 문구 다섯 + 한 줄 80자", () => {
   });
 });
 
-describe("INV-G9: 공유 글·X 계정", () => {
-  it("INV-G9 S9b: 태그가 없으면 「#팬꾹」만, 있으면 「@계정」이 붙는다", () => {
-    expect(shareTextOf(null)).toBe("#팬꾹");
-    expect(shareTextOf("haru_tv")).toBe("#팬꾹 @haru_tv");
-  });
-
-  it("INV-G9 (실패경로): 꼴이 아닌 태그 값은 붙이지 않는다 — 글에 다른 말이 섞일 자리가 없다", () => {
-    expect(shareTextOf("haru tv https://evil.example")).toBe("#팬꾹");
-    expect(shareTextOf("a".repeat(16))).toBe("#팬꾹");
+describe("INV-G9: 공유 글", () => {
+  it("INV-G9 S9b: 공유 글은 늘 「#팬꾹」만 — 크리에이터 X 계정 태그는 붙지 않는다(2026-11-14 X 공유 설정 없앰)", () => {
+    expect(shareTextOf()).toBe("#팬꾹");
+    expect(shareTextOf()).not.toContain("@");
   });
 
   it("INV-G9: X 글쓰기 창 주소는 글만 담는다", () => {
     expect(xIntentUrl("#팬꾹 @haru_tv")).toBe("https://x.com/intent/post?text=%23%ED%8C%AC%EA%BE%B9%20%40haru_tv");
-  });
-
-  it("INV-G8: X 계정 입력 — 앞뒤 공백과 맨 앞 @ 하나를 떼고, 영문·숫자·밑줄 1~15자만 꼴에 맞는다", () => {
-    expect(normalizeXHandle("  @Haru_TV ")).toBe("Haru_TV");
-    expect(normalizeXHandle("   ")).toBeNull();
-    for (const ok of ["a", "Haru_TV_15chars", "x_1"]) expect(X_HANDLE_PATTERN.test(ok)).toBe(true);
-    for (const bad of ["a".repeat(16), "하루", "ha-ru", "ha ru", "@@haru"]) expect(X_HANDLE_PATTERN.test(normalizeXHandle(bad) ?? "")).toBe(false);
   });
 });
 
