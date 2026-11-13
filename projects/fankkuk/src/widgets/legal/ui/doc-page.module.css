@@ -1,5 +1,6 @@
 /* 문서형 페이지 공통 — 약관 셋(14절, 시안 v26-terms) · 안내 글(28절, 시안 part7-2026-10-22) · 자주 묻는 질문의 요약·검색·칩.
-   로그인 전 880 선(pub-inner) 안, 글 기둥 680. 왼쪽 따라오는 목차는 없앴다 — 모든 폭에서 화면 위에 붙는 목차 줄(D1 ②, 높이 44).
+   로그인 전 880 선(pub-inner) 안, 글 기둥 680. 목차는 화면 위에 붙는 목차 줄(D1 ②, 높이 44) — 안내 글 다섯 · 자주 묻는 질문은
+   넓은 화면에서 본문 밖 오른쪽 옆 목차(.withSide, 28절 2026-11-12).
    상단 바 아래 40, 머리와 본문 사이 48, 바닥글까지 96 */
 
 /* 목차 줄이 붙는 높이 — 로그인 전 상단 바 64, 로그인 후 PC 는 위 막대가 없어 0, 768 이하 로그인 후는 위 막대 56 */
@@ -8,6 +9,8 @@
 @media (max-width: 768px) { :global(body:has(.sidebar)) .page { --doc-top: var(--topbar-h); } }
 
 .head :global(.pub-inner) { display: flex; flex-direction: column; gap: var(--space-6); }
+/* 배치는 화면 폭이 아니라 글 기둥 칸 폭으로 바꾼다 — 로그인 후 사이드바가 붙으면 같은 화면 폭에서도 칸이 240 좁다(design-prompt 14-8, 시안 guide-fan-r2) */
+.page :global(.pub-inner) { container: doc / inline-size; }
 
 /* 탭 · 분류 칩 — 높이 44, 고른 것은 하늘 면 + 짙은 테두리 + 굵게(36절 · 35절 찾기 칩과 같은 모양 — 경계 대비 3:1 이라 시안의 하늘 선 대신 짙은 선) */
 .tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); }
@@ -35,6 +38,34 @@
 .summaryGo { flex: none; width: 20px; height: 20px; color: var(--brand-ink); }
 a.summaryRow:hover { background: rgb(255 255 255 / 0.7); }
 a.summaryRow:focus-visible { outline: 3px solid var(--focus); outline-offset: 0; }
+
+/* 요약 가로 세 칸(시안 guide-fan-r2 .sum · faq-20261112 .sum) — 칸 전체가 누르는 칸(원칙 ④), 흰 카드 + 하늘 선(누르는 칸이라 테두리·그림자, 4-6).
+   안내 글(번호 있음)은 순서라 칸 사이 직선 화살표(2-12). 칸 폭 719 이하는 세로 */
+.summary:has(.tiles) { gap: var(--space-4); }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+.tilesFlow { gap: var(--space-8); }
+.tiles li { position: relative; }
+.tile { display: flex; flex-direction: column; gap: var(--space-3); height: 100%; min-height: 44px; padding: var(--space-4); border-radius: var(--r-card); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--notice-sky-line), var(--card-shadow); color: var(--gray-900); font-weight: var(--fw-btn); text-decoration: none; }
+/* 링크가 아닌 칸(요약에 갈 조가 없는 글) — 누르는 칸처럼 보이지 않게 테두리·그림자 없이 흰 면만(4-6) */
+span.tile { background: var(--white); box-shadow: none; }
+a.tile { transition: box-shadow var(--dur-hover) var(--ease-micro), transform var(--dur-hover) var(--ease-micro); }
+a.tile:hover { box-shadow: inset 0 0 0 1px var(--notice-sky-line), var(--card-shadow-hover); }
+@media (hover: hover) { a.tile:hover { transform: translateY(-2px); } }
+a.tile:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.tileNo { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1; }
+.tileText { min-width: 0; overflow-wrap: anywhere; }
+.tileGo { flex: none; align-self: flex-end; width: 20px; height: 20px; margin-top: auto; color: var(--brand-ink); }
+/* 칸 사이 화살표 — 간격 32 가운데 선 16 + 촉 */
+.tilesFlow li:not(:last-child)::after { content: ""; position: absolute; top: 50%; left: calc(100% + var(--space-2)); width: var(--space-4); height: 2px; margin-top: -1px; border-radius: 1px; background: var(--gray-500); }
+.tilesFlow li:not(:last-child)::before { content: ""; position: absolute; top: 50%; left: calc(100% + var(--space-2) + var(--space-4) - 6px); width: 8px; height: 8px; margin-top: -4px; border-top: 2px solid var(--gray-500); border-right: 2px solid var(--gray-500); transform: rotate(45deg); }
+@container doc (max-width: 719px) {
+  .tiles, .tilesFlow { grid-template-columns: minmax(0, 1fr); }
+  .tilesFlow { gap: var(--space-6); }
+  .tile { flex-direction: row; align-items: center; }
+  .tileGo { align-self: center; margin: 0 0 0 auto; }
+  .tilesFlow li:not(:last-child)::after { top: calc(100% + var(--space-1)); left: 50%; width: 2px; height: var(--space-4); margin: 0 0 0 -1px; }
+  .tilesFlow li:not(:last-child)::before { top: calc(100% + var(--space-4) - 2px); left: 50%; margin: 0 0 0 -4px; transform: rotate(135deg); }
+}
 
 /* 본문 */
 .body { margin-top: var(--space-12); }
@@ -87,6 +118,26 @@ a.summaryRow:focus-visible { outline: 3px solid var(--focus); outline-offset: 0;
 /* 지금 조 줄도 하늘 면이라 「주요」 알약이 묻힌다 — 그 줄 위에서는 흰 알약 + 테두리 */
 .tocLink[aria-current] .badge { background: var(--white); box-shadow: inset 0 0 0 1px var(--tint-line); }
 .tocLink:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+/* 옆 목차(28절 2026-11-12, 시안 guide-fan-r2 · faq-20261112) — 본문 880 밖 오른쪽 여백(2-9), 폭 200 · 간격 32, 스크롤을 따라온다.
+   폭 200 은 맞는 토큰이 없어 (가정) 이 화면 값. 로그인 전은 본문을 가운데 그대로 두고 화면 1376 이상,
+   로그인 후는 본문+목차 묶음을 사이드바 오른쪽 영역 가운데에 두고 1400 이상. 보일 때는 위에 붙는 목차 줄을 숨긴다(그보다 좁으면 반대) */
+.withSide { --toc-w: 200px; --toc-gap: var(--space-8); }
+.side { display: none; }
+.sideIn { position: sticky; top: calc(var(--doc-top) + var(--space-6)); display: flex; flex-direction: column; gap: 2px; max-height: calc(100dvh - var(--doc-top) - var(--space-12)); overflow-y: auto; overscroll-behavior: contain; }
+.sideH { margin: 0 0 var(--space-2); padding: 0 var(--space-3); color: var(--gray-600); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+@media (min-width: 1376px) {
+  :global(body:not(:has(.sidebar))) .withSide .side { display: block; position: absolute; top: 0; bottom: 0; left: calc(100% + var(--toc-gap)); width: var(--toc-w); }
+  :global(body:not(:has(.sidebar))) .withSide .bar { display: none; }
+  /* 목차 줄이 빠진 자리 — 줄(44) + 아래 32 대신 위 32 */
+  :global(body:not(:has(.sidebar))) .withSide .flow { padding-top: var(--space-8); }
+}
+@media (min-width: 1400px) {
+  :global(body:has(.sidebar)) .withSide :global(.pub-inner) { max-width: calc(var(--pub-max) + var(--toc-gap) + var(--toc-w)); padding-right: calc(var(--gutter) + var(--toc-gap) + var(--toc-w)); }
+  :global(body:has(.sidebar)) .withSide .side { display: block; position: absolute; top: 0; bottom: 0; left: calc(100% + var(--toc-gap)); width: var(--toc-w); }
+  :global(body:has(.sidebar)) .withSide .bar { display: none; }
+  :global(body:has(.sidebar)) .withSide .flow { padding-top: var(--space-8); }
+}
+
 /* 칩으로 가린 조 — 흐리게(누르면 「전체」로 돌아가 그 조로 간다). 흐린 글자는 gray-500 아래로 내리지 않는다(4.5:1) */
 .tocLink.dim:not([aria-current]) { color: var(--gray-500); }
 /* 흐린 줄에 마우스를 올리면 바탕이 짙어져 대비가 4.4:1 로 떨어진다 — 그동안은 글자를 한 단계 짙게 */
@@ -97,6 +148,18 @@ a.summaryRow:focus-visible { outline: 3px solid var(--focus); outline-offset: 0;
 .main .art { display: flex; flex-direction: column; gap: var(--space-4); padding: 40px 0; border-top: 1px solid var(--gray-200); scroll-margin-top: calc(var(--doc-top) + var(--bar-h) + 24px); }
 .main .art[hidden] { display: none; }
 .main > .art:first-child { padding-top: 0; border-top: 0; }
+/* 안내 글 다섯(.wide) — 글은 680 · 그림과 카드 묶음은 880(6-4 글은 좁게, 묶음은 넓게). 조 사이 48(휴대폰 40), 조 안 16(2-2) */
+.wide .main { max-width: none; }
+.wide .main .art { padding-block: var(--space-12); }
+.wide .main > .art:first-child { padding-top: 0; }
+.wide .main .art.closing { padding: var(--space-8); }
+.wide .prose { gap: var(--space-4); }
+.wide .prose > p, .wide .prose > .dots, .wide .prose > .steps, .wide .prose > .timeline, .wide .prose > .rules, .wide .prose > .banned, .wide .prose > .warn { max-width: var(--prose-max); }
+/* 조 번호 01·02… — 제목 위 한 줄, 조용하게(7-1). 7-2 의 #7F97AC 는 흰 바탕 3:1 이라 14 글자 4.5:1 에 못 미쳐 gray-500(4.83:1) */
+.artTop { display: flex; flex-direction: column; gap: var(--space-1); }
+.secNo { color: var(--gray-500); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.4; font-variant-numeric: tabular-nums; }
+/* 끝 판(하늘 그러데이션, 가장 짙은 곳 #e0f2fe) 위에서 gray-500 은 4.2:1 — 한 단계 짙게(4.5:1 이상) */
+.closing .secNo { color: var(--gray-600); }
 /* 끝 판(28절) — 문의 판과 같은 하늘 면. 앞 조와는 선 대신 면으로 나뉜다 */
 .main .art.closing { gap: var(--space-3); margin-top: var(--space-4); padding: var(--space-8); border-top: 0; border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: inset 0 0 0 1px var(--tint-line), var(--surface-accent-shadow); }
 .inLink { color: var(--gray-900); text-decoration: underline; text-decoration-color: var(--gray-500); text-underline-offset: 4px; }
@@ -138,6 +201,114 @@ a.summaryRow:focus-visible { outline: 3px solid var(--focus); outline-offset: 0;
 .stageChips li { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
 .stageChips li:not(:last-child)::after { content: "›" / ""; color: var(--gray-500); }
 .stageChip { padding: 2px var(--space-3); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
+
+/* 본문 강조 낱말(3-8) — 진한 강조 글자. 주의 판 안에서는 판 글자색 그대로 */
+.em { color: var(--brand-ink); font-weight: var(--fw-btn); }
+.warn .em { color: inherit; }
+.icon { flex: none; width: 24px; height: 24px; }
+
+/* ── 문서형 대표 시안의 글 모양(guide-fan-r2 · faq-20261112) ── */
+/* 이어지는 세로 단계 — 번호 원 28 + 직선(5-2) */
+.timeline { margin: 0; padding: 0; list-style: none; counter-reset: tl; }
+.timeline li { position: relative; min-height: 28px; padding: 0 0 var(--space-4) 48px; counter-increment: tl; }
+.timeline li:last-child { padding-bottom: 0; }
+.timeline li::before { content: counter(tl); position: absolute; top: 0; left: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--tint-line); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1; }
+.timeline li:not(:last-child)::after { content: ""; position: absolute; top: 32px; bottom: 4px; left: 13px; width: 2px; background: var(--gray-200); }
+
+/* 크기 카드 셋 — 고르는 대상이라 카드(8-14), 눌리지 않아 면만(4-6). 그림 칸 높이·이름·기준·요금 위치 고정(8-8) */
+.tiers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin: 0; padding: 0; list-style: none; line-height: 1.5; }
+.tier { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
+.tierPic { display: grid; grid-template-rows: 96px auto 1fr auto; gap: var(--space-3); padding-bottom: var(--space-6); }
+.tierImg { display: grid; place-items: center; border-radius: var(--r-btn); background: var(--white); }
+/* 그림 높이 — 작은·중간·큰 상자 차례로(시안 값, 원본 비율 그대로 5-3) */
+.tierImg img { width: auto; max-width: 100%; height: 50px; }
+.tier:nth-child(2) .tierImg img { height: 70px; }
+.tier:nth-child(3) .tierImg img { height: 90px; }
+.tier h3 { margin: 0; color: var(--gray-900); font-size: var(--fs-card); line-height: 1.4; }
+.tierRule { margin: 0; color: var(--gray-600); font-size: var(--fs-small); line-height: 1.6; }
+.tierPrice { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); margin: auto 0 0; padding-top: var(--space-3); border-top: 1px solid var(--gray-200); color: var(--gray-600); font-size: var(--fs-small); }
+.tierPrice b { color: var(--gray-900); font-family: var(--font-round); font-size: var(--fs-card); font-weight: var(--fw-title); font-variant-numeric: tabular-nums; white-space: nowrap; }
+@container doc (max-width: 639px) {
+  .tiers { grid-template-columns: minmax(0, 1fr); }
+  .tierPic { grid-template-columns: 80px minmax(0, 1fr); grid-template-rows: auto auto auto; column-gap: var(--space-4); row-gap: var(--space-2); padding: var(--space-4); }
+  .tierPic .tierImg { grid-row: 1 / 4; height: 80px; align-self: center; }
+  .tierPic .tierImg img { max-height: 64px; }
+  .tierPic .tierPrice { padding-top: var(--space-2); }
+}
+
+/* 보낼 수 없는 것 — × 원(글자와 함께, 4-2) */
+.banned { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.banned li { display: flex; align-items: flex-start; gap: var(--space-3); }
+.bannedX { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--danger-soft); color: var(--danger); }
+.bannedX .icon { width: 16px; height: 16px; }
+/* 한도 한 칸 · 주의 판 */
+.limit { display: flex; align-items: center; gap: var(--space-3); margin: 0; padding: var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); box-shadow: var(--muted-shadow); font-weight: var(--fw-btn); }
+.limit .icon { color: var(--gray-600); }
+.warn { display: flex; align-items: flex-start; gap: var(--space-3); margin: 0; padding: var(--space-4); border-radius: var(--r-btn); background: var(--warn-soft); color: var(--warn-ink); }
+.warn .icon { margin-top: 2px; }
+
+/* 가로 단계 — 번호 점 32 + 직선. 칸 폭 719 이하는 세로(2-12) */
+.progress { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; counter-reset: pg; }
+.progress li { position: relative; display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-12) var(--space-2) 0 0; counter-increment: pg; }
+.progress li::before { content: counter(pg); position: absolute; top: 0; left: 0; z-index: 1; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--primary); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1; }
+.progress li:not(:last-child)::after { content: ""; position: absolute; top: 15px; right: 0; left: 32px; height: 2px; background: var(--gray-300); }
+.progress b { font-weight: var(--fw-btn); line-height: 1.4; }
+.progress span { color: var(--gray-600); font-size: var(--fs-small); line-height: 1.5; }
+@container doc (max-width: 719px) {
+  .progress { grid-template-columns: minmax(0, 1fr); }
+  .progress li { min-height: 56px; padding: 0 0 var(--space-4) 48px; }
+  .progress li:last-child { padding-bottom: 0; }
+  .progress li:not(:last-child)::after { top: 36px; right: auto; bottom: 4px; left: 15px; width: 2px; height: auto; }
+}
+
+/* 규칙 줄 목록 — 조용한 번호 01·02…(8-14 규칙·안내 = 줄 목록) */
+.rules { margin: 0; padding: 0; list-style: none; counter-reset: rl; }
+.rules li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: var(--space-2); padding: var(--space-4) 0; border-top: 1px solid var(--gray-200); counter-increment: rl; }
+.rules li:first-child { padding-top: 0; border-top: 0; }
+.rules li:last-child { padding-bottom: 0; }
+.rules li::before { content: counter(rl, decimal-leading-zero); color: var(--gray-500); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.75; font-variant-numeric: tabular-nums; }
+.rules .pill { justify-self: start; }
+
+/* 약속 한 줄 판 — 그림 + 제목 글꼴 20 */
+.promise { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
+.promise img { flex: none; width: 64px; height: 64px; }
+.promise p { margin: 0; font-family: var(--font-round); font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; }
+@container doc (max-width: 479px) { .promise { flex-direction: column; align-items: flex-start; } }
+
+/* 두 칸 흐름 — 1 → 2(5-2). 칸 사이 직선 화살표, 칸 폭 639 이하는 위아래 */
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) var(--space-6) minmax(0, 1fr); }
+.pairBox { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
+.pairBox p { margin: 0; }
+.pairNo { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--tint-line); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1; }
+.pairAr { position: relative; align-self: center; justify-self: center; width: var(--space-4); height: 2px; background: var(--gray-500); }
+.pairAr::after { content: ""; position: absolute; top: -3px; right: 0; width: 8px; height: 8px; border-top: 2px solid var(--gray-500); border-right: 2px solid var(--gray-500); transform: rotate(45deg); }
+@container doc (max-width: 639px) {
+  .pair { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto var(--space-6) auto; }
+  .pairAr { width: 2px; height: var(--space-4); }
+  .pairAr::after { top: auto; right: -3px; bottom: 0; transform: rotate(135deg); }
+}
+
+/* 송장 두 장 그림(시안 guide-fan-r2 02조) — 회색 면 안 흰 송장, 안쪽 흰 칸에만 1px 선(4-7). 칸 폭 639 이하는 한 장씩 */
+.slipFig { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
+.eg { align-self: flex-start; display: inline-flex; padding: 2px var(--space-3); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-300); color: var(--gray-600); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1.5; }
+.slips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.slip { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-300); line-height: 1.5; }
+.slipT { margin: 0; color: var(--gray-600); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.slip dl { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; }
+.slip dt { color: var(--gray-600); font-size: var(--fs-small); }
+.slip dd { margin: 2px 0 0; font-weight: var(--fw-btn); }
+.slip dd.six { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
+.six i { display: grid; place-items: center; width: 32px; height: 40px; border-radius: var(--r-icon); background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); font-family: var(--font-round); font-size: var(--fs-card); font-style: normal; font-weight: var(--fw-title); line-height: 1; font-variant-numeric: tabular-nums; }
+@container doc (max-width: 639px) { .slips { grid-template-columns: minmax(0, 1fr); } }
+
+/* 경우 | 결과 줄 — 짧은 이름 | 뜻 한 줄, 칸이 좁으면 위아래 */
+.cases { margin: 0; }
+.cases > div { display: grid; grid-template-columns: minmax(0, 200px) minmax(0, 1fr); gap: var(--space-4); padding: var(--space-4) 0; border-top: 1px solid var(--gray-200); }
+.cases > div:first-child { padding-top: 0; border-top: 0; }
+.cases > div:last-child { padding-bottom: 0; }
+.cases dt { color: var(--gray-900); font-weight: var(--fw-btn); }
+.cases dd { margin: 0; }
+@container doc (max-width: 639px) { .cases > div { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
 
 /* 환불 금액 꼬리표 — 전액 초록 · 없음 빨강 */
 .pill { display: inline-block; padding: 0 var(--space-2); border-radius: var(--r-tag); font-weight: var(--fw-btn); }
@@ -185,6 +356,10 @@ a.summaryRow:focus-visible { outline: 3px solid var(--focus); outline-offset: 0;
 .faqItem[hidden] { display: none; }
 .faqItem :global(summary .q) { padding-right: 44px; }
 .faqItem .badge { margin-top: var(--space-1); }
+/* 질문 줄 사이 16(시안 faq-20261112) · 답 글 680, 요금 카드·경우 줄은 줄 안쪽 폭 그대로 */
+.faqList > .faqItem + .faqItem { margin-top: var(--space-4); }
+.faqAns { line-height: 1.75; }
+.faqAns > p, .faqAns > .warn { max-width: var(--prose-max); margin: 0; }
 .faqCopy { position: absolute; top: 14px; right: 56px; }
 .faqCopy .copied { position: absolute; top: 100%; right: 0; padding: 2px var(--space-2); border-radius: var(--r-btn); background: var(--white); }
 .faqCopy .copied:empty { padding: 0; }
@@ -197,7 +372,9 @@ a.summaryRow:focus-visible { outline: 3px solid var(--focus); outline-offset: 0;
   .page { padding: var(--space-6) 0 64px; }
   .summary, .ask { padding: var(--space-6) var(--space-4); }
   .summaryRow { align-items: flex-start; padding-block: var(--space-2); }
-  .main .art.closing { padding: var(--space-6) var(--space-4); }
+  .main .art.closing, .wide .main .art.closing { padding: var(--space-6) var(--space-4); }
+  .wide .main .art { padding-block: var(--space-10); }
+  .wide .main > .art:first-child { padding-top: 0; }
   .artT { font-size: var(--fs-card); line-height: 1.4; }
   .kv > div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   .defRow, .caseRow { padding: var(--space-4); }
@@ -210,5 +387,6 @@ a.summaryRow:focus-visible { outline: 3px solid var(--focus); outline-offset: 0;
   .faqCopy { right: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .barBtn .chev, .copyBtn { transition: none; }
+  .barBtn .chev, .copyBtn, a.tile { transition: none; }
+  a.tile:hover { transform: none; }
 }

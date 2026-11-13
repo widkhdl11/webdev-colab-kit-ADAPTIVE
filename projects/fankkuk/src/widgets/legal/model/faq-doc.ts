@@ -4,16 +4,23 @@ import { INTAKE_LIMIT_TEXT, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/si
 import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { PROMISE } from "@/shared/config/site-copy";
 import { orBlank, SITE_INFO } from "@/shared/config/site-info";
-import { toCheck } from "./legal-doc";
+import { blocksText } from "./doc-nav";
+import { toCheck, type LegalBlock } from "./legal-doc";
 
 // 자주 묻는 질문(/faq). 답의 사실은 terms-doc·privacy-doc 과 같은 근거(specs payment·decline-block·reverse-gift·inbound-address-code)를 따른다.
 // 요금 숫자는 page 가 읽어 넘긴 공개 요금표. 설계 문서에 없는 기간은 toCheck 로 둔다.
+// 답의 모양(요금 카드 · 경우 | 결과 줄 · 주의 판)은 시안 faq-20261112(2026-11-12 사용자 「지금 판」)대로 — 글자는 그대로 두고 모양만 나눴다.
 
 export type FaqItem = {
   /** 질문 고정 주소(#id, 원칙 ⑤) — 질문 문장이 바뀌어도 주소가 그대로이게 문장에서 만들지 않고 직접 적는다 */
   id: string;
   q: string;
+  /** 답 글자 — 검색이 읽는다. blocks 가 있는 답은 blocks 에서 만든다(둘이 갈라지지 않게) */
   a: string;
+  /** 모양이 있는 답(요금 카드 · 경우 줄 · 주의 판). 없으면 a 를 줄마다 문단으로 */
+  blocks?: readonly LegalBlock[];
+  /** 굵게 강조할 말(design-prompt 3-8) */
+  strong?: readonly string[];
   /** 분류 칩 이름(원칙 ②) */
   tags?: readonly string[];
   /** 「주요」 배지(원칙 ③) */
@@ -33,8 +40,10 @@ export type FaqDoc = {
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
+/** 모양이 있는 답 — 검색 글자(a)는 blocks 에서 만든다 */
+const shaped = (blocks: readonly LegalBlock[]) => ({ a: blocksText(blocks), blocks });
+
 export function faqDoc(prices: PublicPriceTable): FaqDoc {
-  const giftFees = PRICED_TIERS.map((t) => `• ${PARCEL_TIER_GUIDE[t].name}: ${won(prices[t].priceKrw)} · ${PARCEL_TIER_GUIDE[t].rule}`).join("\n");
   const revgiftFees = PRICED_TIERS.map((t) => `${PARCEL_TIER_GUIDE[t].name} ${won(prices[t].revgiftPriceKrw)}`).join(", ");
   return {
     summary: [
@@ -42,11 +51,20 @@ export function faqDoc(prices: PublicPriceTable): FaqDoc {
       PROMISE.approval,
       "더 궁금한 점이 있다면 고객센터에 1:1 문의를 남겨 주세요.",
     ],
+    // 요약 → 요금 · 받지 않으면 · 문의(시안 faq-20261112)
+    summaryLinks: ["fee", "decline", "contact"],
     items: [
       {
         id: "fee",
         q: "요금은 얼마인가요?",
-        a: `상자별 요금 · 크리에이터에게 보내는 배송비·검수비·서비스료 포함\n${giftFees}\n크기·무게 중 더 높은 요금 구간을 적용합니다. 접수 한도는 ${INTAKE_LIMIT_TEXT}입니다.`,
+        ...shaped([
+          { kind: "text", text: "상자별 요금 · 크리에이터에게 보내는 배송비·검수비·서비스료 포함" },
+          {
+            kind: "tiers",
+            items: PRICED_TIERS.map((t) => ({ name: PARCEL_TIER_GUIDE[t].name, rule: PARCEL_TIER_GUIDE[t].rule, price: won(prices[t].priceKrw) })),
+          },
+          { kind: "text", text: `크기·무게 중 더 높은 요금 구간을 적용합니다. 접수 한도는 ${INTAKE_LIMIT_TEXT}입니다.` },
+        ]),
       },
       {
         id: "delivery-time",
@@ -56,7 +74,21 @@ export function faqDoc(prices: PublicPriceTable): FaqDoc {
       {
         id: "decline",
         q: "크리에이터가 받지 않으면 어떻게 되나요?",
-        a: `크리에이터가 거절하거나 결제 후 ${APPROVAL_DEADLINE_DAYS}일 이내에 승인하지 않으면 선물은 배송하지 않습니다. 거절 사유는 공개하지 않습니다.\n• 입고 전·팬꾹 주소 미표시: 전액 환불\n• 입고 전·팬꾹 주소 표시: 반송 택배비를 제외한 금액 우선 환불. 결제 후 30일 이내 도착하면 반송하며 추가 환불은 없음. 30일이 지나도 도착하지 않으면 보류한 택배비까지 환불\n• 입고 후: 확인한 반송 주소로 보내고, 상자별 결제 금액에서 반송 택배비를 제외해 환불\n• 검수 불합격 상자: 환불 금액 없음`,
+        ...shaped([
+          {
+            kind: "text",
+            text: `크리에이터가 거절하거나 결제 후 ${APPROVAL_DEADLINE_DAYS}일 이내에 승인하지 않으면 선물은 배송하지 않습니다. 거절 사유는 공개하지 않습니다.`,
+          },
+          {
+            kind: "cases",
+            items: [
+              ["입고 전·팬꾹 주소 미표시", "전액 환불", "full"],
+              ["입고 전·팬꾹 주소 표시", "반송 택배비를 제외한 금액 우선 환불. 결제 후 30일 이내 도착하면 반송하며 추가 환불은 없음. 30일이 지나도 도착하지 않으면 보류한 택배비까지 환불"],
+              ["입고 후", "확인한 반송 주소로 보내고, 상자별 결제 금액에서 반송 택배비를 제외해 환불"],
+              ["검수 불합격 상자", "환불 금액 없음", "none"],
+            ],
+          },
+        ]),
       },
       {
         id: "creator-waybill",
@@ -71,7 +103,19 @@ export function faqDoc(prices: PublicPriceTable): FaqDoc {
       {
         id: "sent-without-address",
         q: "팬꾹 주소 끝 6자리를 빠뜨렸어요. 어떻게 하나요?",
-        a: "송장에 팬꾹 닉네임을 적었는지에 따라 확인 방법이 다릅니다.\n• 닉네임 있음: 선물 상세의 ‘주소 끝 6자리 없이 보낸 상자 찾기’에 택배사와 송장번호 입력\n• 닉네임 없음: ‘물품 보관소 > 내 물품 확인’에서 송장번호와 택배사로 확인 요청. 팬꾹에서 확인 후 해당 선물에 연결\n• 송장번호를 모름: 1:1 문의로 보낸 사람의 이름·주소·전화번호와 내용물 전달. 팬꾹에서 전화번호 뒤 4자리로 상자를 찾고 원래 송장과 대조한 뒤 연결\n입고 후 30일 이내에 선물과 연결되지 않은 상자는 원래 송장의 보낸 사람 주소로 착불 반송합니다.",
+        strong: ["착불 반송"],
+        ...shaped([
+          { kind: "text", text: "송장에 팬꾹 닉네임을 적었는지에 따라 확인 방법이 다릅니다." },
+          {
+            kind: "cases",
+            items: [
+              ["닉네임 있음", "선물 상세의 ‘주소 끝 6자리 없이 보낸 상자 찾기’에 택배사와 송장번호 입력"],
+              ["닉네임 없음", "‘물품 보관소 > 내 물품 확인’에서 송장번호와 택배사로 확인 요청. 팬꾹에서 확인 후 해당 선물에 연결"],
+              ["송장번호를 모름", "1:1 문의로 보낸 사람의 이름·주소·전화번호와 내용물 전달. 팬꾹에서 전화번호 뒤 4자리로 상자를 찾고 원래 송장과 대조한 뒤 연결"],
+            ],
+          },
+          { kind: "warn", text: "입고 후 30일 이내에 선물과 연결되지 않은 상자는 원래 송장의 보낸 사람 주소로 착불 반송합니다." },
+        ]),
       },
       {
         id: "creator-approve",

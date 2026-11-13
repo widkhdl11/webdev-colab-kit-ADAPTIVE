@@ -5,7 +5,7 @@ import type { TocGroup } from "../model/doc-nav";
 import { DocChips, FrequentBadge } from "./doc-parts";
 import s from "./doc-page.module.css";
 
-// 화면 위에 붙는 목차 줄(D1 ② — 왼쪽 따라오는 목차 대신, 모든 폭에서 같은 모양). 높이 44.
+// 화면 위에 붙는 목차 줄(D1 ②). 높이 44. 옆 목차(DocSideToc, 아래)를 쓰는 화면은 그게 보이는 넓은 폭에서 이 줄을 숨긴다.
 // 「지금 읽는 조 이름」 + 「목차 열기」. 펼치면 전체 조 · 지금 조 강조(aria-current) · 「주요」 · 약관의 주제 묶음 제목.
 // 칩으로 가린 조는 흐리게 남고, 누르면 「전체」로 돌아가 그 조를 보인다. Esc · 바깥 누름으로 닫히고 초점은 「목차 열기」로.
 // 글 가운데서도 수단이 둘 이상이게(원칙 ①) 「찾기」 단추(검색칸으로 옮겨 초점) · 펼친 목록 맨 위 분류 칩을 둔다 — 줄 높이 44 는 그대로.
@@ -119,5 +119,58 @@ export function DocTocBar({ groups, current, hidden, frequent, onGo, onFind, chi
         ))}
       </nav>
     </div>
+  );
+}
+
+// 옆 목차(design-rules 28절, 2026-11-12 사용자 승인 — 시안 guide-fan-r2 · faq-20261112). 본문 880 밖 오른쪽 여백에 폭 200, 스크롤을 따라온다.
+// 보이는 폭은 CSS 가 정한다: 로그인 전 화면 1376 이상, 로그인 후 1400 이상. 그때는 위에 붙는 목차 줄을 숨기고, 더 좁으면 이 목차가 숨는다.
+// 목차 줄의 펼친 목록과 같은 줄 모양 — 지금 조 하늘 면(aria-current) · 「주요」 · 칩으로 가린 조는 흐리게 · 약관식 묶음 제목.
+
+type SideProps = Omit<Props, "onFind" | "chips">;
+
+export function DocSideToc({ groups, current, hidden, frequent, onGo }: SideProps) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const items = groups.flatMap((g) => g.items);
+  const now = items.find((i) => i.id === current) ?? items[0];
+
+  // 목차가 화면보다 길면 칸 안에서 스크롤된다 — 지금 조 줄이 보이게 칸만 움직인다(페이지는 그대로)
+  useEffect(() => {
+    const list = listRef.current;
+    const link = list?.querySelector<HTMLElement>("[aria-current]");
+    if (!list || !link || list.clientHeight === 0) return;
+    const top = link.offsetTop - list.offsetTop;
+    if (top < list.scrollTop || top + link.offsetHeight > list.scrollTop + list.clientHeight) {
+      list.scrollTop = Math.max(0, top - list.clientHeight / 2);
+    }
+  }, [current]);
+
+  if (!now) return null;
+
+  return (
+    <nav className={s.side} aria-label="목차 (옆)">
+      <div ref={listRef} className={s.sideIn}>
+        <p className={s.sideH}>목차</p>
+        {groups.map((g, gi) => (
+          <div key={g.title ?? `rest-${gi}`} className={s.tocGroup}>
+            {g.title ? <p className={s.tocGroupT}>{g.title}</p> : null}
+            {g.items.map((item) => (
+              <a
+                key={item.id}
+                className={`${s.tocLink}${hidden.has(item.id) ? ` ${s.dim}` : ""}`}
+                href={`#${item.id}`}
+                aria-current={item.id === now.id ? "true" : undefined}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onGo(item.id);
+                }}
+              >
+                <span className={s.tocLabel}>{item.label}</span>
+                {frequent.has(item.id) ? <FrequentBadge /> : null}
+              </a>
+            ))}
+          </div>
+        ))}
+      </div>
+    </nav>
   );
 }

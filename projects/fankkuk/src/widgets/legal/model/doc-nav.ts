@@ -33,6 +33,23 @@ export function blockTexts(block: LegalBlock): string[] {
       return [...block.columns, ...block.rows.flatMap((r) => [r.name, r.rule, ...r.amounts])];
     case "stages":
       return [block.title, ...block.items, block.note];
+    case "timeline":
+    case "banned":
+    case "rules":
+    case "pair":
+      return [...block.items];
+    case "tiers":
+      return block.items.flatMap((t) => [t.name, t.rule, t.price]);
+    case "limit":
+    case "warn":
+    case "promise":
+      return [block.text];
+    case "progress":
+    case "cases":
+      return block.items.flatMap(([k, v]) => [k, v]);
+    case "slips":
+      // 낭독기가 읽지 않는 장식 그림 — 찾은 낱말이 그림 속에 걸리지 않게 검색에서도 뺀다
+      return [];
   }
 }
 
@@ -133,6 +150,11 @@ export function tocGroupsOf(doc: Pick<LegalDoc, "sections" | "tocGroups">): TocG
     })),
     ...(rest.length > 0 ? [{ title: null, items: rest }] : []),
   ];
+}
+
+/** 글 모양 여럿의 글자를 한 덩어리로 — 자주 묻는 질문의 답(검색이 읽는 글자) */
+export function blocksText(blocks: readonly LegalBlock[]): string {
+  return blocks.flatMap(blockTexts).join(" ");
 }
 
 /** 「2026-10-23」 → 「2026.10.23」. 날짜 형식이 아니면 받은 글자 그대로 */

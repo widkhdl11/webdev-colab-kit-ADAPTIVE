@@ -455,3 +455,131 @@ describe("자주 묻는 질문(C4 · C5 · C8)", () => {
     expect(qa('button[aria-label$="주소 복사"]').length).toBe(2);
   });
 });
+
+describe("안내 글 다섯의 틀(시안 guide-fan-r2, 28절 옆 목차)", () => {
+  const guide: LegalDoc = {
+    ...base,
+    summaryLinks: ["fee", "intro", "words"],
+    summaryOrdered: true,
+    sections: [
+      {
+        id: "intro",
+        title: "보내는 순서",
+        frequent: true,
+        blocks: [
+          { kind: "slips", note: "화면 예시", sender: ["보내는 분", "팬꾹 닉네임"], receiver: ["받는 사람 주소", "팬꾹 사무실 주소"], boxes: [{ title: "상자 1", code: "482917" }] },
+          { kind: "timeline", items: ["고르기", "결제하기"] },
+        ],
+      },
+      {
+        id: "refund",
+        title: "거절과 환불",
+        strong: ["전액을 환불"],
+        blocks: [{ kind: "rules", items: ["주소 공개 전이면 전액을 환불합니다.", "출고 뒤에는 환불 금액이 없습니다."], alert: "출고 뒤에는 환불 금액이 없습니다." }],
+      },
+      { id: "words", title: "요금", blocks: [{ kind: "tiers", items: [{ name: "소형", rule: "100cm 이하", price: "6,111원" }] }] },
+      { id: "fee", title: "차액", blocks: [{ kind: "cases", items: [["입고 전", "전액 환불", "full"]] }] },
+    ],
+  };
+
+  it("탭이 있는 안내 글은 옆 목차 · 조 번호 · 요약 가로 칸, 탭이 없으면(요금 안내) 셋 다 없다", () => {
+    render(<LegalPage doc={guide} icon="" tab="guide-fan" />);
+    const side = q('nav[aria-label="목차 (옆)"]')!;
+    expect(Array.from(side.querySelectorAll("a")).map((a) => a.getAttribute("href"))).toEqual(["#intro", "#refund", "#words", "#fee"]);
+    expect(side.querySelectorAll("[aria-current]").length).toBe(1);
+    expect(Array.from(side.querySelectorAll("a")).filter((a) => a.textContent?.includes("주요")).map((a) => a.getAttribute("href"))).toEqual(["#intro"]);
+    expect(qa('article [aria-hidden="true"]').map((n) => n.textContent).filter((t) => /^\d{2}$/.test(t ?? ""))).toEqual(["01", "02", "03", "04"]);
+    expect(qa("ol li a").filter((a) => a.textContent?.includes("요약")).map((a) => a.getAttribute("href"))).toEqual(["#fee", "#intro", "#words"]);
+    // 위에 붙는 목차 줄도 그대로 있다(좁은 폭용 — 어느 쪽이 보일지는 CSS)
+    expect(q('nav[aria-label="목차"]')).not.toBeNull();
+    act(() => root.render(<LegalPage doc={guide} icon="" />));
+    expect(q('nav[aria-label="목차 (옆)"]')).toBeNull();
+    expect(qa("article").map((a) => a.textContent).some((t) => /^0\d/.test(t ?? ""))).toBe(false);
+  });
+
+  it("요약이 차례가 아닌 글(summaryOrdered 없음)은 번호·화살표 없는 칸, 갈 조가 없는 칸은 링크가 아니다", () => {
+    render(<LegalPage doc={{ ...guide, summaryOrdered: undefined, summaryLinks: undefined }} icon="" tab="guide-creator" />);
+    const lis = qa("ul li").filter((li) => li.textContent?.includes("요약"));
+    expect(lis.map((li) => li.textContent)).toEqual(["요약 하나", "요약 둘", "요약 셋"]);
+    expect(lis.map((li) => li.querySelector("a"))).toEqual([null, null, null]);
+    expect(qa("ol li").filter((li) => li.textContent?.includes("요약"))).toEqual([]);
+  });
+
+  it("옆 목차는 읽는 차례가 본문 뒤다", () => {
+    render(<LegalPage doc={guide} icon="" tab="guide-fan" />);
+    const side = q('nav[aria-label="목차 (옆)"]')!;
+    expect(side.previousElementSibling?.querySelector("#fee")).not.toBeNull();
+  });
+
+  it("송장 그림은 낭독기가 건너뛰고(aria-hidden) 검색에도 걸리지 않는다 — 예시 6자리는 칸마다 한 글자", () => {
+    render(<LegalPage doc={guide} icon="" tab="guide-fan" />);
+    const fig = qa("#intro [aria-hidden='true']").find((n) => n.textContent?.includes("화면 예시"))!;
+    expect(Array.from(fig.querySelectorAll("i")).map((i) => i.textContent).join("")).toBe("482917");
+    expect(fig.textContent).toContain("팬꾹 사무실 주소");
+    type(q<HTMLInputElement>('input[type="search"]')!, "482917");
+    expect(q('[aria-live="polite"]')?.textContent).toBe("검색 결과가 없습니다.");
+  });
+
+  it("옆 목차에서 고르면 그 조로 가고 초점이 조 제목에", () => {
+    render(<LegalPage doc={guide} icon="" tab="guide-fan" />);
+    click(q('nav[aria-label="목차 (옆)"] a[href="#words"]'));
+    expect(window.location.hash).toBe("#words");
+    expect(document.activeElement).toBe(q("#words-h"));
+    expect(q('nav[aria-label="목차 (옆)"] [aria-current]')?.getAttribute("href")).toBe("#words");
+  });
+
+  it("새 글 모양 — 규칙 줄의 alert 줄만 빨간 꼬리표, strong 낱말은 굵게, 크기 카드·경우 줄 글자도 검색된다", () => {
+    render(<LegalPage doc={guide} icon="" tab="guide-fan" />);
+    const pills = qa("#refund li span[class*='pillNone']").map((p) => p.textContent);
+    expect(pills).toEqual(["출고 뒤에는 환불 금액이 없습니다."]);
+    expect(qa("#refund strong").map((st) => st.textContent)).toEqual(["전액을 환불"]);
+    expect(q("#refund li")?.textContent).toBe("주소 공개 전이면 전액을 환불합니다.");
+    type(q<HTMLInputElement>('input[type="search"]')!, "6,111원");
+    expect(qa("#words mark").map((m) => m.textContent)).toEqual(["6,111원"]);
+    type(q<HTMLInputElement>('input[type="search"]')!, "전액 환불");
+    expect(q('[aria-live="polite"]')?.textContent).toBe("2개 항목에서 검색됨");
+  });
+});
+
+describe("자주 묻는 질문 — 시안 faq-20261112", () => {
+  const faq: FaqDoc = {
+    summary: ["요약 하나", "요약 둘", "요약 셋"],
+    summaryLinks: ["fee", "decline", "fee"],
+    items: [
+      { id: "fee", q: "요금은 얼마인가요?", a: "상자마다 받아요.\n둘째 줄입니다." },
+      {
+        id: "decline",
+        q: "거절되면요?",
+        a: "입고 전 전액 환불 착불 반송",
+        strong: ["착불 반송"],
+        blocks: [
+          { kind: "cases", items: [["입고 전", "전액 환불", "full"]] },
+          { kind: "warn", text: "연결되지 않으면 착불 반송합니다." },
+        ],
+      },
+    ],
+  };
+
+  it("주소 없이 들어오면 첫 질문만 펼쳐져 있다(28절)", () => {
+    window.history.replaceState(null, "", "/faq");
+    render(<FaqPage {...faq} />);
+    expect([q<HTMLDetailsElement>("#fee details")?.open, q<HTMLDetailsElement>("#decline details")?.open]).toEqual([true, false]);
+  });
+
+  it("요약은 번호 없는 가로 칸 — 줄마다 그 질문으로, 옆 목차도 있다", () => {
+    window.history.replaceState(null, "", "/faq");
+    render(<FaqPage {...faq} />);
+    expect(qa("ul li a").filter((a) => a.textContent?.startsWith("요약")).map((a) => a.getAttribute("href"))).toEqual(["#fee", "#decline", "#fee"]);
+    expect(qa('[aria-hidden="true"]').some((n) => n.textContent === "1")).toBe(false);
+    expect(qa('nav[aria-label="목차 (옆)"] a').map((a) => a.getAttribute("href"))).toEqual(["#fee", "#decline"]);
+  });
+
+  it("모양이 있는 답은 경우 줄 · 주의 판으로, 없는 답은 줄마다 문단으로", () => {
+    window.history.replaceState(null, "", "/faq");
+    render(<FaqPage {...faq} />);
+    expect(qa("#fee .ans p").map((p) => p.textContent)).toEqual(["상자마다 받아요.", "둘째 줄입니다."]);
+    expect(qa("#decline dl dt").map((d) => d.textContent)).toEqual(["입고 전"]);
+    expect(q('#decline [role="note"]')?.textContent).toBe("연결되지 않으면 착불 반송합니다.");
+    expect(qa("#decline strong").map((st) => st.textContent)).toEqual(["착불 반송"]);
+  });
+});

@@ -45,18 +45,73 @@ export function FrequentBadge() {
   return <span className={s.badge}>주요</span>;
 }
 
-/** 쉬운 말 요약 판 — 줄마다 갈 조가 있으면 그 조로 가는 링크(원칙 ④). 문장은 그대로 */
+/** 요약 줄 오른쪽 화살표 */
+function GoArrow({ className }: { className: string }) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" aria-hidden="true">
+      <path d="m7.5 4 6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/**
+ * 쉬운 말 요약 판 — 줄마다 갈 조가 있으면 그 조로 가는 링크(원칙 ④). 문장은 그대로.
+ * tiles: 판 안 가로 세 칸(칸 전체가 누르는 칸, 문서형 대표 시안 guide-fan-r2 · faq-20261112). 칸이 좁으면 세로.
+ *   numbered — 순서가 있는 세 줄(안내 글): 번호 원 + 칸 사이 직선 화살표. 아니면 번호·화살표 없이(자주 묻는 질문).
+ * 없으면 세로 번호 줄(약관 세 글, 14절).
+ */
 export function DocSummary({
   heading,
   lines,
   targets,
   onGo,
+  tiles,
 }: {
   heading: string;
   lines: readonly string[];
   targets: readonly (string | null)[];
   onGo: (id: string) => void;
+  tiles?: { numbered: boolean };
 }) {
+  const go = (id: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    onGo(id);
+  };
+  if (tiles) {
+    const List = tiles.numbered ? "ol" : "ul";
+    return (
+      <div className={s.summary}>
+        <h2 className={s.summaryT}>{heading}</h2>
+        <List className={tiles.numbered ? `${s.tiles} ${s.tilesFlow}` : s.tiles}>
+          {lines.map((line, i) => {
+            const id = targets[i] ?? null;
+            const inner = (
+              <>
+                {tiles.numbered ? (
+                  <span className={s.tileNo} aria-hidden="true">
+                    {i + 1}
+                  </span>
+                ) : null}
+                <span className={s.tileText}>{line}</span>
+                {id ? <GoArrow className={s.tileGo} /> : null}
+              </>
+            );
+            return (
+              <li key={line}>
+                {id ? (
+                  <a className={s.tile} href={`#${id}`} onClick={go(id)}>
+                    {inner}
+                  </a>
+                ) : (
+                  <span className={s.tile}>{inner}</span>
+                )}
+              </li>
+            );
+          })}
+        </List>
+      </div>
+    );
+  }
   return (
     <div className={s.summary}>
       <h2 className={s.summaryT}>{heading}</h2>
@@ -67,18 +122,9 @@ export function DocSummary({
             <li key={line}>
               {/* 줄 전체가 누르는 칸(44) + 오른쪽 화살표 — 갈 조가 없는 줄은 같은 모양의 글자만(36절) */}
               {id ? (
-                <a
-                  className={s.summaryRow}
-                  href={`#${id}`}
-                  onClick={(e: MouseEvent<HTMLAnchorElement>) => {
-                    e.preventDefault();
-                    onGo(id);
-                  }}
-                >
+                <a className={s.summaryRow} href={`#${id}`} onClick={go(id)}>
                   <span className={s.summaryText}>{line}</span>
-                  <svg className={s.summaryGo} viewBox="0 0 20 20" aria-hidden="true">
-                    <path d="m7.5 4 6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <GoArrow className={s.summaryGo} />
                 </a>
               ) : (
                 <span className={s.summaryRow}>

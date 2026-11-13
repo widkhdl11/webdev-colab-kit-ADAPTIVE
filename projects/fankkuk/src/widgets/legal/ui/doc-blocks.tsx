@@ -27,10 +27,12 @@ type Links = readonly (readonly [string, string])[];
 /** 한 줄 상자로 그릴 값의 최대 글자 수 — 390 폭 오른쪽 칸(약 200)에 두 줄 안쪽으로 들어가는 길이 */
 const ONE_LINE_MAX = 24;
 
-/** 문장 속 낱말을 링크로 — 낱말마다 처음 나오는 자리 하나만, 앞에서부터. 링크 안 글자도 찾은 낱말 표시를 받는다 */
-function Linked({ text, words, links }: { text: string; words: readonly string[]; links: Links }) {
-  const spots = links
-    .map(([word, href]) => ({ at: text.indexOf(word), word, href }))
+/** 문장 속 낱말을 링크·굵게로 — 낱말마다 처음 나오는 자리 하나만, 앞에서부터. 안 글자도 찾은 낱말 표시를 받는다 */
+function Linked({ text, words, links, strong = [] }: { text: string; words: readonly string[]; links: Links; strong?: readonly string[] }) {
+  const spots = [
+    ...links.map(([word, href]) => ({ at: text.indexOf(word), word, href: href as string | null })),
+    ...strong.map((word) => ({ at: text.indexOf(word), word, href: null })),
+  ]
     .filter((x) => x.at >= 0)
     .sort((a, b) => a.at - b.at);
   const parts: ReactNode[] = [];
@@ -39,9 +41,15 @@ function Linked({ text, words, links }: { text: string; words: readonly string[]
     if (at < last) continue;
     if (at > last) parts.push(<Marked key={`t${last}`} text={text.slice(last, at)} words={words} />);
     parts.push(
-      <Link key={`l${at}`} className={s.inLink} href={href}>
-        <Marked text={word} words={words} />
-      </Link>,
+      href ? (
+        <Link key={`l${at}`} className={s.inLink} href={href}>
+          <Marked text={word} words={words} />
+        </Link>
+      ) : (
+        <strong key={`s${at}`} className={s.em}>
+          <Marked text={word} words={words} />
+        </strong>
+      ),
     );
     last = at + word.length;
   }
@@ -58,10 +66,33 @@ type Props = {
   plain?: boolean;
   /** 글 속 링크(조의 links) */
   links?: Links;
+  /** 굵게 강조할 말(조의 strong) */
+  strong?: readonly string[];
 };
 
-export function DocBlock({ block, words, tag = null, plain = false, links = [] }: Props) {
-  const m = (text: string) => (links.length > 0 ? <Linked text={text} words={words} links={links} /> : <Marked text={text} words={words} />);
+/** 그림 아이콘 — 선 그림(24 칸). 모양 뜻은 옆 글자가 전한다(4-2) */
+function Icon({ d }: { d: readonly string[] }) {
+  return (
+    <svg className={s.icon} viewBox="0 0 24 24" aria-hidden="true">
+      {d.map((p) => (
+        <path key={p} d={p} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      ))}
+    </svg>
+  );
+}
+const ICON_X = ["M18 6 6 18", "m6 6 12 12"];
+const ICON_RULER = [
+  "M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z",
+  "m14.5 12.5 2-2",
+  "m11.5 9.5 2-2",
+  "m8.5 6.5 2-2",
+  "m17.5 15.5 2-2",
+];
+const ICON_WARN = ["M12 3 2.5 20h19z", "M12 10v4.5", "M12 17.5h.01"];
+
+export function DocBlock({ block, words, tag = null, plain = false, links = [], strong = [] }: Props) {
+  const m = (text: string) =>
+    links.length > 0 || strong.length > 0 ? <Linked text={text} words={words} links={links} strong={strong} /> : <Marked text={text} words={words} />;
   if (plain && (block.kind === "list" || block.kind === "steps")) {
     return (
       <>
@@ -147,6 +178,146 @@ export function DocBlock({ block, words, tag = null, plain = false, links = [] }
           </ol>
           <p className={s.stagesNote}>{m(block.note)}</p>
         </div>
+      );
+    case "timeline":
+      return (
+        <ol className={s.timeline}>
+          {block.items.map((item) => (
+            <li key={item}>{m(item)}</li>
+          ))}
+        </ol>
+      );
+    case "tiers":
+      return (
+        <ul className={s.tiers} aria-label="상자 크기별 요금">
+          {block.items.map((t) => (
+            <li key={t.name} className={t.pic ? `${s.tier} ${s.tierPic}` : s.tier}>
+              {t.pic ? (
+                <span className={s.tierImg} aria-hidden="true">
+                  <img src={t.pic} alt="" />
+                </span>
+              ) : null}
+              <h3>{m(t.name)}</h3>
+              <p className={s.tierRule}>{m(t.rule)}</p>
+              <p className={s.tierPrice}>
+                요금 <b>{m(t.price)}</b>
+              </p>
+            </li>
+          ))}
+        </ul>
+      );
+    case "banned":
+      return (
+        <ul className={s.banned}>
+          {block.items.map((item) => (
+            <li key={item}>
+              <span className={s.bannedX}>
+                <Icon d={ICON_X} />
+              </span>
+              <span>{m(item)}</span>
+            </li>
+          ))}
+        </ul>
+      );
+    case "limit":
+      return (
+        <p className={s.limit}>
+          <Icon d={ICON_RULER} />
+          <span>{m(block.text)}</span>
+        </p>
+      );
+    case "warn":
+      return (
+        <p className={s.warn} role="note">
+          <Icon d={ICON_WARN} />
+          <span>{m(block.text)}</span>
+        </p>
+      );
+    case "progress":
+      return (
+        <ol className={s.progress}>
+          {block.items.map(([name, desc]) => (
+            <li key={name}>
+              <b>{m(name)}</b>
+              <span>{m(desc)}</span>
+            </li>
+          ))}
+        </ol>
+      );
+    case "rules":
+      return (
+        <ol className={s.rules}>
+          {block.items.map((item) => (
+            <li key={item}>{item === block.alert ? <span className={`${s.pill} ${s.pillNone}`}>{m(item)}</span> : m(item)}</li>
+          ))}
+        </ol>
+      );
+    case "promise":
+      return (
+        <div className={s.promise}>
+          <img src={block.pic} alt="" width={64} height={64} />
+          <p>{m(block.text)}</p>
+        </div>
+      );
+    case "pair":
+      return (
+        <div className={s.pair}>
+          <div className={s.pairBox}>
+            <span className={s.pairNo} aria-hidden="true">
+              1
+            </span>
+            <p>{m(block.items[0])}</p>
+          </div>
+          <span className={s.pairAr} aria-hidden="true" />
+          <div className={s.pairBox}>
+            <span className={s.pairNo} aria-hidden="true">
+              2
+            </span>
+            <p>{m(block.items[1])}</p>
+          </div>
+        </div>
+      );
+    case "slips":
+      // 장식 그림 — 같은 내용이 바로 아래 문장에 있어 낭독기는 건너뛴다
+      return (
+        <div className={s.slipFig} aria-hidden="true">
+          <span className={s.eg}>{block.note}</span>
+          <div className={s.slips}>
+            {block.boxes.map((box) => (
+              <div key={box.title} className={s.slip}>
+                <p className={s.slipT}>{box.title}</p>
+                <dl>
+                  <div>
+                    <dt>{block.sender[0]}</dt>
+                    <dd>{block.sender[1]}</dd>
+                  </div>
+                  <div>
+                    <dt>{block.receiver[0]}</dt>
+                    <dd>{block.receiver[1]}</dd>
+                    <dd className={s.six}>
+                      {[...box.code].map((c, i) => (
+                        <i key={i}>{c}</i>
+                      ))}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    case "cases":
+      return (
+        <dl className={s.cases}>
+          {block.items.map(([label, value, tone]) => (
+            <div key={label}>
+              <dt>{m(label)}</dt>
+              <dd>
+                <RefundValue value={value} tone={tone} words={words} />
+              </dd>
+            </div>
+          ))}
+        </dl>
       );
     case "rows": {
       const rows = block.rows.filter((r) => rowShown(r, tag));

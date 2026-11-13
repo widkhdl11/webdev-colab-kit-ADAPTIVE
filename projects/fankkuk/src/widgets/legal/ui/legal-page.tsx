@@ -33,6 +33,7 @@ export function LegalPage({ doc, tab, flow, flowLabel }: Props) {
     <DocPage
       doc={doc}
       variant="guide"
+      guideFive={tab !== undefined}
       tabs={tab ? { label: "이용 안내", current: tab, items: GUIDE_TABS } : undefined}
       figure={
         flow ? (

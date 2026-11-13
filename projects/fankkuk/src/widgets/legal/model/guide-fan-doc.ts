@@ -8,6 +8,10 @@ import { toCheck, type LegalDoc } from "./legal-doc";
 
 // 팬 이용 안내(/guide/fan). 사실의 근거는 terms-doc·privacy-doc 과 specs(inbound-address-code·office-workflow·payment·decline-block).
 // 화면 이름은 선물 상세(gift-status)·받는 주소 칸(box-waybill)에 실제로 있는 글자만 쓴다. 요금 숫자는 page 가 읽어 넘긴 공개 요금표.
+// 조마다 글 모양은 문서형 대표 시안 2판(docs/design/mockups/guide-fan-r2-20261112, 2026-11-12 사용자 고름)대로 — 글자는 그대로 두고 모양만 나눴다.
+
+/** 크기 카드 그림 — 시안 guide-fan-r2 의 그림 그대로(대형 전용 그림이 없어 중형 그림을 크게) */
+const TIER_PIC = { small: "/images/home/gift-box-small-clear.png", medium: "/images/home/gift-box-medium-clear.png", large: "/images/home/gift-box-medium-clear.png" } as const;
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 const DAYS = `${APPROVAL_DEADLINE_DAYS}일`;
@@ -21,6 +25,8 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
       "상자별 주소를 끝 6자리까지 모두 입력해 팬꾹으로 보내 주세요.",
       "팬꾹 검수·크리에이터 승인 완료 후 배송",
     ],
+    // 요약 세 줄은 결제 → 보내기 → 배송의 차례(번호 · 칸 사이 화살표)
+    summaryOrdered: true,
     // 찾기 데이터(사용자 확정 2026-10-23, 카드 d119 B) — 칩 없음. 요약 → 받는 주소 · 보내는 순서 · 진행 단계
     summaryLinks: ["receiving-address", "how-to-send", "stages"],
     facts: [["운영", OPERATOR_NAME]],
@@ -31,7 +37,7 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
         frequent: true,
         blocks: [
           {
-            kind: "steps",
+            kind: "timeline",
             items: [
               "선물을 보낼 크리에이터를 고르고, 크리에이터 페이지에서 「선물 보내기」를 눌러 주세요.",
               "선물 종류를 고르고, 전자기기나 금속 제품이 들어 있는지 알려 주세요.",
@@ -51,9 +57,21 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
         id: "receiving-address",
         title: "상자별 팬꾹 주소",
         frequent: true,
+        strong: ["끝 6자리까지 모두"],
         blocks: [
+          // 송장 두 장 그림(시안 guide-fan-r2 02조) — 상자마다 끝 6자리가 다르다는 것을 보여 주는 예시 값
           {
-            kind: "steps",
+            kind: "slips",
+            note: "화면 예시",
+            sender: ["보내는 분", "팬꾹 닉네임"],
+            receiver: ["받는 사람 주소", "팬꾹 사무실 주소"],
+            boxes: [
+              { title: "상자 1", code: "482917" },
+              { title: "상자 2", code: "731504" },
+            ],
+          },
+          {
+            kind: "list",
             items: [
               "팬꾹 주소는 팬꾹 사무실 주소 끝에 상자마다 다른 6자리가 붙은 주소입니다.",
               "사무실에서는 이 6자리로 어느 선물의 어느 상자인지 확인합니다.",
@@ -71,7 +89,7 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
         title: "요금",
         blocks: [
           {
-            kind: "steps",
+            kind: "list",
             items: [
               "상자별 요금 적용 · 크리에이터에게 보내는 배송비·검수비·서비스료 포함",
               "크기·무게 중 더 높은 요금 구간 적용",
@@ -80,13 +98,12 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
             ],
           },
           {
-            kind: "rows",
-            rows: PRICED_TIERS.map((t) => ({
-              title: PARCEL_TIER_GUIDE[t].name,
-              fields: [
-                ["기준", PARCEL_TIER_GUIDE[t].rule],
-                ["요금", won(prices[t].priceKrw)],
-              ],
+            kind: "tiers",
+            items: PRICED_TIERS.map((t) => ({
+              name: PARCEL_TIER_GUIDE[t].name,
+              rule: PARCEL_TIER_GUIDE[t].rule,
+              price: won(prices[t].priceKrw),
+              pic: TIER_PIC[t],
             })),
           },
         ],
@@ -94,16 +111,20 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
       {
         id: "not-allowed",
         title: "보낼 수 없는 물품과 크기",
+        strong: ["환불 금액이 없습니다"],
         blocks: [
           {
-            kind: "steps",
+            kind: "banned",
             items: [
               "추적 장치는 보낼 수 없습니다.",
               "선물 보내기 화면과 크리에이터 페이지의 「보낼 수 없는 물품」 목록에 있는 물품도 보낼 수 없습니다. 이 목록은 바뀔 수 있습니다.",
-              `접수 한도: ${INTAKE_LIMIT_TEXT}`,
-              "크리에이터가 받기 어려운 선물로 정해 둔 종류는 선물 보내기 화면에서 미리 안내합니다.",
-              `보낼 수 없는 물품이 발견된 상자는 검수 기준에 맞지 않는 상자로 처리해 돌려보냅니다. 이때는 검수비·서비스료·반송 택배비를 모두 빼므로 환불 금액이 없습니다. 다만 추적 장치가 확인된 상자는 사무실에 보관한 뒤 신고 여부에 따라 경찰에 넘기거나 돌려보내며, 어느 경우에도 환불 금액은 없습니다.`,
             ],
+          },
+          { kind: "limit", text: `접수 한도: ${INTAKE_LIMIT_TEXT}` },
+          { kind: "list", items: ["크리에이터가 받기 어려운 선물로 정해 둔 종류는 선물 보내기 화면에서 미리 안내합니다."] },
+          {
+            kind: "warn",
+            text: `보낼 수 없는 물품이 발견된 상자는 검수 기준에 맞지 않는 상자로 처리해 돌려보냅니다. 이때는 검수비·서비스료·반송 택배비를 모두 빼므로 환불 금액이 없습니다. 다만 추적 장치가 확인된 상자는 사무실에 보관한 뒤 신고 여부에 따라 경찰에 넘기거나 돌려보내며, 어느 경우에도 환불 금액은 없습니다.`,
           },
         ],
       },
@@ -113,18 +134,18 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
         blocks: [
           { kind: "text", text: "선물 상세에는 아래 여섯 단계가 차례로 표시됩니다." },
           {
-            kind: "rows",
-            rows: [
-              { title: "등록", fields: [["뜻", "선물 등록·결제 완료"]] },
-              { title: "입고", fields: [["뜻", "상자가 팬꾹에 도착"]] },
-              { title: "검수", fields: [["뜻", "상자 검수 진행"]] },
-              { title: "출고", fields: [["뜻", "팬꾹에서 출고 처리"]] },
-              { title: "배송 중", fields: [["뜻", "택배사 배송 진행"]] },
-              { title: "수령", fields: [["뜻", "배송 완료"]] },
+            kind: "progress",
+            items: [
+              ["등록", "선물 등록·결제 완료"],
+              ["입고", "상자가 팬꾹에 도착"],
+              ["검수", "상자 검수 진행"],
+              ["출고", "팬꾹에서 출고 처리"],
+              ["배송 중", "택배사 배송 진행"],
+              ["수령", "배송 완료"],
             ],
           },
           {
-            kind: "steps",
+            kind: "list",
             items: [
               "크리에이터의 승인 여부는 검수와 출고 사이에 따로 표시됩니다.",
               "승인과 검수가 모두 끝난 상자만 출고합니다.",
@@ -140,9 +161,11 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
         id: "declined-returned",
         title: "선물 거절·반송·환불",
         frequent: true,
+        strong: ["전액을 환불"],
         blocks: [
           {
-            kind: "steps",
+            kind: "rules",
+            alert: "출고한 뒤에는 환불 금액이 없습니다.",
             items: [
               "크리에이터가 받지 않기로 하거나 기한 안에 승인하지 않은 선물은 크리에이터에게 배송하지 않습니다.",
               "거절한 이유는 팬에게 알리지 않습니다.",
@@ -166,10 +189,10 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
         id: "tracking-number",
         title: "크리에이터 배송 송장번호 비공개 안내",
         blocks: [
+          { kind: "promise", text: PROMISE.addressFan, pic: "/img/icon-address-lock.png" },
           {
-            kind: "steps",
+            kind: "list",
             items: [
-              PROMISE.addressFan,
               "크리에이터에게 가는 상자의 송장번호로 배송을 조회하면 받는 곳의 일부가 보일 수 있습니다.",
               "주소를 지키기 위해 크리에이터에게 가는 송장번호는 공개하지 않습니다.",
               "진행 상황은 선물 상세에서 확인할 수 있습니다.",
@@ -181,9 +204,10 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
       {
         id: "sent-without-address",
         title: "팬꾹 주소 끝 6자리 누락 시 확인 방법",
+        strong: ["송장의 보내는 분 칸에 팬꾹 닉네임을 썼다면,", "송장의 보낸 사람 칸에 닉네임을 적지 않았다면", "착불"],
         blocks: [
           {
-            kind: "steps",
+            kind: "list",
             items: [
               "주소 끝 6자리가 없으면 어느 선물의 상자인지 바로 확인하기 어렵습니다.",
               "송장의 보내는 분 칸에 팬꾹 닉네임을 썼다면, 선물 상세의 「주소 끝 6자리 없이 보낸 상자 찾기」에서 상자를 고르고 택배사와 송장번호를 넣어 주세요.",
@@ -192,8 +216,11 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
               // 닉네임 없는 상자 — 문구 수정본 추가 수정(2026-10-24, 물품 보관소 기준). 「연결해 드려요」만 용어집 표기 「그 선물의 상자로 받아요」로
               "송장의 보낸 사람 칸에 닉네임을 적지 않았다면 「물품 보관소」의 「내 물품 확인」에서 송장번호와 택배사를 입력해 확인을 요청해 주세요. 팬꾹에서 확인한 뒤 해당 선물에 상자를 연결합니다. 송장번호를 모르면 1:1 문의로 보낸 사람의 이름·주소·전화번호와 내용물을 알려 주세요. 팬꾹에서 전화번호 뒤 4자리로 상자를 찾고 원래 송장과 대조한 뒤 해당 선물에 연결합니다.",
               "물품 보관소에는 팬꾹 주소의 6자리와 닉네임이 모두 없는 상자만 표시됩니다. 도착일·택배사·구간·포장 모양을 볼 수 있습니다.",
-              "사무실에 도착한 때부터 30일 안에 선물과 연결되지 않은 상자는 원래 송장의 보낸 사람 주소로 반송합니다. 이때 반송 택배비는 받는 사람이 부담합니다(착불).",
             ],
+          },
+          {
+            kind: "warn",
+            text: "사무실에 도착한 때부터 30일 안에 선물과 연결되지 않은 상자는 원래 송장의 보낸 사람 주소로 반송합니다. 이때 반송 택배비는 받는 사람이 부담합니다(착불).",
           },
         ],
       },
@@ -202,10 +229,15 @@ export function guideFanDoc(prices: PublicPriceTable): LegalDoc {
         title: "차액 결제",
         blocks: [
           {
-            kind: "steps",
+            kind: "pair",
             items: [
               "사무실에서 측정한 상자의 요금 구간이 등록한 구간보다 높으면 차액 결제를 요청합니다.",
               "선물 상세의 ‘지금 할 일 > 추가 결제’에서 결제 버튼을 눌러 주세요.",
+            ],
+          },
+          {
+            kind: "list",
+            items: [
               "차액을 결제하기 전에는 그 선물을 출고하지 않습니다.",
               `검수가 끝난 때부터 ${DIFFERENCE_DEADLINE_DAYS}일 안에 차액을 결제하지 않으면 상자를 반송합니다. 이때는 검수 기준에 맞지 않는 상자와 마찬가지로 환불 금액이 없습니다.`,
               "실제 측정한 요금 구간이 등록한 구간보다 낮더라도 차액은 환불하지 않습니다.",

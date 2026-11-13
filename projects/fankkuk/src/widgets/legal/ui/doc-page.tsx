@@ -6,13 +6,15 @@ import { chipTags, formatUpdated, sectionItems, summaryTargets, tocGroupsOf } fr
 import type { LegalDoc } from "../model/legal-doc";
 import { DocBlock } from "./doc-blocks";
 import { CopyAnchor, DocChips, DocSearch, DocSummary, DocTabRow, FrequentBadge, Marked, focusSearch, type DocTabs } from "./doc-parts";
-import { DocTocBar } from "./doc-toc-bar";
+import { DocSideToc, DocTocBar } from "./doc-toc-bar";
 import { useDocNav } from "./use-doc-nav";
 import s from "./doc-page.module.css";
 
 // 문서형 페이지 공통 틀(C12) — 약관 셋(policy-page)과 안내 글(legal-page)이 조립만 한다.
 // 탭 → 제목·설명 → 최종 수정일 / 사실 한 줄 → (지난 버전 알림) → 요약 판 → (그림) → 검색 · 분류 칩 → 위에 붙는 목차 줄 → 조 → (버전 기록) → (고객센터 판).
 // 기준: docs/ux/document-pages.md, 차이 목록 _diff-document-pages.md(D1 ② · C1~C10), 모양 design-rules 14절 · 28절.
+// 안내 글 다섯(guideFive)은 문서형 대표 시안 2판(mockups/guide-fan-r2-20261112, 2026-11-12 사용자 고름)의 틀:
+// 요약은 가로 세 칸 흐름 · 조 제목 위 조용한 번호(01…) · 글 680 / 그림·카드 880 · 넓은 화면은 옆 목차(28절).
 
 type Props = {
   doc: LegalDoc;
@@ -29,6 +31,8 @@ type Props = {
   after?: ReactNode;
   /** 맨 아래 「OO에서 이해가 안 되는 부분이 있나요?」 판 */
   ask?: boolean;
+  /** 안내 글 다섯의 틀(위 머리 주석) — 탭이 있는 안내 글만 */
+  guideFive?: boolean;
 };
 
 /** 「제7조 이용요금과 결제」 → 꼬리표 「제7조」 + 제목 「이용요금과 결제」. 조 번호가 없는 제목은 그대로 */
@@ -37,7 +41,10 @@ function splitArticle(title: string): { no: string | null; name: string } {
   return m ? { no: m[1]!, name: m[2]! } : { no: null, name: title };
 }
 
-export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask = false }: Props) {
+/** 조 번호 01·02… — 보조 요소라 낭독기는 읽지 않는다(design-prompt 7-5) */
+const secNo = (i: number) => String(i + 1).padStart(2, "0");
+
+export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask = false, guideFive = false }: Props) {
   const items = useMemo(() => sectionItems(doc.sections), [doc.sections]);
   const nav = useDocNav(items);
   const groups = useMemo(() => tocGroupsOf(doc), [doc]);
@@ -52,7 +59,7 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
   const searchRef = useRef<HTMLInputElement>(null);
 
   return (
-    <main id="main" className={s.page}>
+    <main id="main" className={guideFive ? `${s.page} ${s.withSide} ${s.wide}` : s.page}>
       <section className={s.head} aria-labelledby="page-title">
         <div className="pub-inner">
           {tabs ? <DocTabRow tabs={tabs} /> : null}
@@ -74,6 +81,7 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
             lines={doc.summary}
             targets={targets}
             onGo={(id) => nav.goTo(id, { focus: true, push: true, showAll: true })}
+            tiles={guideFive ? { numbered: doc.summaryOrdered === true } : undefined}
           />
           {figure}
         </div>
@@ -96,8 +104,17 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
               chips={{ tags, active: nav.tag, onPick: nav.setTag }}
             />
             <div className={s.main}>
-              {doc.sections.map((sec) => {
+              {doc.sections.map((sec, i) => {
                 const { no, name } = splitArticle(sec.title);
+                const head = (
+                  <div className={s.artHead}>
+                    <h2 className={s.artT} id={`${sec.id}-h`} tabIndex={-1} data-doc-heading="">
+                      <Marked text={name} words={nav.words} />
+                    </h2>
+                    {sec.frequent ? <FrequentBadge /> : null}
+                    <CopyAnchor id={sec.id} title={sec.title} />
+                  </div>
+                );
                 return (
                   <article
                     key={sec.id}
@@ -107,16 +124,19 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
                     hidden={nav.hidden.has(sec.id)}
                   >
                     {no ? <span className={s.no}>{no}</span> : null}
-                    <div className={s.artHead}>
-                      <h2 className={s.artT} id={`${sec.id}-h`} tabIndex={-1} data-doc-heading="">
-                        <Marked text={name} words={nav.words} />
-                      </h2>
-                      {sec.frequent ? <FrequentBadge /> : null}
-                      <CopyAnchor id={sec.id} title={sec.title} />
-                    </div>
+                    {guideFive ? (
+                      <div className={s.artTop}>
+                        <span className={s.secNo} aria-hidden="true">
+                          {secNo(i)}
+                        </span>
+                        {head}
+                      </div>
+                    ) : (
+                      head
+                    )}
                     <div className={s.prose}>
-                      {sec.blocks.map((b, i) => (
-                        <DocBlock key={i} block={b} words={nav.words} tag={nav.tag} plain={sec.closing === true} links={sec.links} />
+                      {sec.blocks.map((b, bi) => (
+                        <DocBlock key={bi} block={b} words={nav.words} tag={nav.tag} plain={sec.closing === true} links={sec.links} strong={sec.strong} />
                       ))}
                     </div>
                   </article>
@@ -135,6 +155,10 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
                 </div>
               ) : null}
             </div>
+            {/* 옆 목차 — 화면에서는 본문 오른쪽 위(절대 위치), 읽는 차례는 본문 뒤 */}
+            {guideFive ? (
+              <DocSideToc groups={groups} current={nav.current} hidden={nav.hidden} frequent={frequent} onGo={(id) => nav.goTo(id, { focus: true, push: true })} />
+            ) : null}
           </div>
         </div>
       </section>

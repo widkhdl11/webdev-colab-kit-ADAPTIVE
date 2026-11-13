@@ -31,7 +31,39 @@ export type LegalBlock =
   /** 상자 구간별 요금 — 구간 이름·기준 한 칸 + 금액 칸(columns 순서) */
   | { kind: "prices"; columns: readonly string[]; rows: readonly LegalPriceRow[] }
   /** 단계 칩 한 줄 — 이름표 + 단계 이름(차례대로) + 아래 덧붙임 한 줄 */
-  | { kind: "stages"; title: string; items: readonly string[]; note: string };
+  | { kind: "stages"; title: string; items: readonly string[]; note: string }
+  // ── 아래는 문서형 대표 시안(guide-fan-r2 · faq-20261112, 2026-11-12 사용자 고름)의 모양. 글은 그대로, 모양만 고른다 ──
+  /** 이어지는 세로 단계 — 번호 원 + 직선(차례가 있는 긴 절차) */
+  | { kind: "timeline"; items: readonly string[] }
+  /** 상자 크기 카드 셋 — 이름 · 기준 · 요금. pic 이 있으면 카드 위 그림 칸 */
+  | { kind: "tiers"; items: readonly LegalTier[] }
+  /** 보낼 수 없는 것 — × 표시 줄(글자와 같이) */
+  | { kind: "banned"; items: readonly string[] }
+  /** 한도 한 칸 — 회색 면 + 자 그림 */
+  | { kind: "limit"; text: string }
+  /** 주의 판 — 결과를 알리는 한 문단(노란 면 + 경고 그림) */
+  | { kind: "warn"; text: string }
+  /** 가로 단계 — [이름, 뜻] 차례대로. 칸이 좁으면 세로 */
+  | { kind: "progress"; items: readonly (readonly [string, string])[] }
+  /** 규칙 줄 목록 — 조용한 번호(01·02…) + 줄 사이 선. alert 와 같은 줄은 빨간 꼬리표 */
+  | { kind: "rules"; items: readonly string[]; alert?: string }
+  /** 약속 한 줄 판 — 그림 + 큰 글자 한 문장 */
+  | { kind: "promise"; text: string; pic: string }
+  /** 두 칸 흐름 — 1 → 2 */
+  | { kind: "pair"; items: readonly [string, string] }
+  /** 송장 그림 — 상자마다 보내는 분 · 받는 사람 주소 + 끝 6자리 칸. 바로 아래 문장을 그림으로 다시 보여 주는 장식이라 낭독기·검색은 읽지 않는다.
+   *  note 는 「화면 예시」 표시(5-5), sender·receiver 는 [칸 이름, 칸 값] */
+  | {
+      kind: "slips";
+      note: string;
+      sender: readonly [string, string];
+      receiver: readonly [string, string];
+      boxes: readonly { title: string; code: string }[];
+    }
+  /** 경우 | 결과 줄 — 결과에 tone 이 있으면 꼬리표(전액 초록 · 없음 빨강) */
+  | { kind: "cases"; items: readonly (readonly [string, string, RefundTone?])[] };
+
+export type LegalTier = { name: string; rule: string; price: string; pic?: string };
 
 export type LegalPriceRow = { name: string; rule: string; amounts: readonly string[] };
 
@@ -47,6 +79,8 @@ export type LegalSection = {
   closing?: true;
   /** 글 속 링크 — [낱말, 주소]. 문장마다 그 낱말이 처음 나오는 자리만 링크로 감싼다(문장은 그대로) */
   links?: readonly (readonly [string, string])[];
+  /** 굵게 강조할 말(design-prompt 3-8, 조마다 2~3개) — 문장마다 처음 나오는 자리만. 글자는 그대로 */
+  strong?: readonly string[];
 };
 
 /** 목차 묶음 — 조가 많은 글만. ids 는 sections 의 id */
@@ -60,6 +94,8 @@ export type LegalDoc = {
   facts: readonly (readonly [string, string])[];
   sections: readonly LegalSection[];
   tocGroups?: readonly LegalTocGroup[];
+  /** 요약 세 줄이 차례(1 → 2 → 3)인 글 — 안내 글 요약 칸에 번호와 칸 사이 화살표를 붙인다(design-prompt 5-2). 차례가 아닌 요약에는 두지 않는다 */
+  summaryOrdered?: true;
   /** 요약 줄마다 이어지는 조 id(원칙 ④) — summary 와 같은 길이. 길이가 다르면 화면은 링크 없이 그린다 */
   summaryLinks?: readonly string[];
   /** 분류 칩 순서 — 없으면 조에 처음 나온 차례 */
@@ -79,6 +115,11 @@ export function openItems(doc: LegalDoc): string[] {
       else if (b.kind === "defs") for (const [k, v] of b.items) texts.push(`${k}: ${v}`);
       else if (b.kind === "prices") for (const r of b.rows) texts.push(`${r.name} — ${r.rule}: ${r.amounts.join(" · ")}`);
       else if (b.kind === "stages") texts.push(b.title, ...b.items, b.note);
+      else if (b.kind === "tiers") for (const t of b.items) texts.push(`${t.name} — ${t.rule}: ${t.price}`);
+      else if (b.kind === "limit" || b.kind === "warn" || b.kind === "promise") texts.push(b.text);
+      else if (b.kind === "progress") for (const [k, v] of b.items) texts.push(`${k}: ${v}`);
+      else if (b.kind === "cases") for (const [k, v] of b.items) texts.push(`${k}: ${v}`);
+      else if (b.kind === "slips") continue;
       else texts.push(...b.items);
     }
   }
