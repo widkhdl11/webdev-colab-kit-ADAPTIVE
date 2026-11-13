@@ -304,7 +304,6 @@ export function CreatorCardsSlot({
   const cards = creators.slice(0, scroll ? SCROLL_ROW_MAX : CARD_ROW_MAX).map((c) => (
     <li key={c.id} className={creatorCardClass}>
       <CreatorCardHead
-        creatorId={c.id}
         name={c.name}
         href={creatorPagePath(c)}
         look={looks[c.id] ?? NO_CARD_LOOK}
@@ -315,7 +314,7 @@ export function CreatorCardsSlot({
       <CreatorCardFoot tags={c.tags} />
       {/* 팔로우 버튼을 주는 화면(로그인한 홈)만 버튼 줄 — 한 줄의 카드가 모두 같은 화면이라 높이가 같다 */}
       {action ? (
-        <CreatorCardActions creatorId={c.id} colors={c.colors}>
+        <CreatorCardActions>
           {action(c)}
         </CreatorCardActions>
       ) : null}

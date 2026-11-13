@@ -3,8 +3,7 @@ import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NO_CARD_LOOK } from "../model/card-look";
-import { badgeBorderOf, type ThemeColor } from "../model/creator-color";
-import { coverPastel } from "../lib/cover-pastel";
+import { type ThemeColor } from "../model/creator-color";
 import { CreatorCardActions, CreatorCardFoot, CreatorCardHead, CreatorCardLine, CreatorCardMineRow } from "./creator-card-head";
 import { CreatorCardTags, fitChipCount } from "./creator-card-tags";
 
@@ -39,14 +38,13 @@ describe("칩 줄에 들어가는 칩 수", () => {
 });
 
 describe("크리에이터 카드 v28 — 사진 왼쪽 + 이름 줄·뱃지 줄, 하단 줄 (design-rules 17절)", () => {
-  const head = (fanName: string | null, personal: string | null = null, href: string | null = "/c/dawn") =>
+  const head = (fanName: string | null, personal: string | null = null, href: string | null = "/c/dawn", backgroundUrl: string | null = null) =>
     dom(
       renderToStaticMarkup(
         <CreatorCardHead
-          creatorId="00000000-0000-4000-b000-000000000001"
           name="새벽달빛라디오하루별이야하루별이달빛방송"
           href={href}
-          look={{ ...NO_CARD_LOOK, fanName }}
+          look={{ ...NO_CARD_LOOK, fanName, backgroundUrl }}
           colors={{ personal: personal as ThemeColor | null }}
           faceTone="#dcd3f6"
         />,
@@ -86,11 +84,24 @@ describe("크리에이터 카드 v28 — 사진 왼쪽 + 이름 줄·뱃지 줄,
     expect(host.querySelector<HTMLElement>("[data-fandom-badge]")?.style.getPropertyValue("--personal")).toBe("#DCEBFF");
   });
 
-  it("INV-E13 S12c (실패경로): 8색 밖 값(옛 #1E3A8A)은 배너·뱃지 어디에도 그리지 않는다 — 크리에이터 ID 파스텔로", () => {
+  it("INV-E13 S12c (실패경로): 8색 밖 값(옛 #1E3A8A)은 배너·뱃지 어디에도 그리지 않는다 — 기본 회색 면(배너에 색 변수 없음)", () => {
     const host = head("달빛지기", "#1E3A8A");
     expect(host.innerHTML).not.toContain("#1E3A8A");
     expect(host.querySelector<HTMLElement>("[data-card-head]")?.style.getPropertyValue("--personal")).toBe("");
-    expect(host.querySelector<HTMLElement>("[data-card-cover]")?.style.getPropertyValue("--pastel")).toMatch(/^#[0-9A-F]{6}$/);
+    expect(host.querySelector("[data-card-cover]")?.hasAttribute("style")).toBe(false);
+  });
+
+  it("INV-E13: 테마 색이 없는 카드 배너는 크리에이터마다 다른 색을 받지 않는다 — 기본 회색 면(2026-11-13)", () => {
+    const host = head("달빛지기");
+    expect(host.querySelector("[data-card-head]")?.hasAttribute("style")).toBe(false);
+    expect(host.querySelector("[data-card-cover]")?.hasAttribute("style")).toBe(false);
+  });
+
+  it("배너 사진이 없으면 배너는 비어 있다(고양이 그림 없음) · 사진이 있으면 그 사진 하나", () => {
+    expect(head(null).querySelector("[data-card-cover]")?.childElementCount).toBe(0);
+    const withPhoto = head(null, null, "/c/dawn", "https://example.test/cover.webp").querySelector("[data-card-cover]");
+    expect(withPhoto?.childElementCount).toBe(1);
+    expect(withPhoto?.querySelector("img")?.getAttribute("src")).toBe("https://example.test/cover.webp");
   });
 
   it("칩 줄은 혼자 한 줄 — 버튼을 품지 않고 카드 폭을 다 쓴다. 평균 승인 시간은 카드에 없다", () => {
@@ -102,14 +113,10 @@ describe("크리에이터 카드 v28 — 사진 왼쪽 + 이름 줄·뱃지 줄,
     expect(row.textContent).not.toContain("승인");
   });
 
-  const ID = "00000000-0000-4000-b000-000000000001";
-  const actions = (personal: string | null) =>
+  const actions = () =>
     dom(
       renderToStaticMarkup(
-        <CreatorCardActions
-          creatorId={ID}
-          colors={{ personal: personal as ThemeColor | null }}
-        >
+        <CreatorCardActions>
           <a href="/gifts/new" data-card-btn="main">
             선물 보내기
           </a>
@@ -120,28 +127,21 @@ describe("크리에이터 카드 v28 — 사진 왼쪽 + 이름 줄·뱃지 줄,
       ),
     ).querySelector<HTMLElement>("[data-card-actions]")!;
 
-  it("아래 띠 — 받은 버튼을 순서대로 담는다", () => {
-    const row = actions(null);
+  it("아래 버튼 줄 — 받은 버튼을 순서대로 담는다", () => {
+    const row = actions();
     expect(row.hasAttribute("data-card-band")).toBe(true);
     expect(Array.from(row.children).map((el) => el.textContent)).toEqual(["선물 보내기", "팔로우 취소"]);
   });
 
-  it("INV-E13: 아래 띠 바탕은 배너와 같은 색 — 테마 색이 있으면 그 색, 없으면 크리에이터 ID 파스텔 · 팔로우 테두리는 그 색 + #1F2937 22%", () => {
-    expect(actions("#DCEBFF").style.getPropertyValue("--act-bg")).toBe("#DCEBFF");
-    expect(actions("#DCEBFF").style.getPropertyValue("--act-line")).toBe(badgeBorderOf("#DCEBFF"));
-    expect(actions(null).style.getPropertyValue("--act-bg")).toBe(coverPastel(ID));
-    expect(actions(null).style.getPropertyValue("--act-line")).toBe(badgeBorderOf(coverPastel(ID)));
-    // 8색 밖 값은 그리지 않고 ID 파스텔로(배너와 같은 규칙)
-    const odd = actions("#1E3A8A");
-    expect(odd.outerHTML).not.toContain("#1E3A8A");
-    expect(odd.style.getPropertyValue("--act-bg")).toBe(coverPastel(ID));
+  it("INV-E13: 아래 버튼 줄에는 색 변수가 없다 — 테마 색·크리에이터별 색을 버튼에 쓰지 않는다(2026-11-13)", () => {
+    expect(actions().hasAttribute("style")).toBe(false);
   });
 
-  it("본인 카드 — 아래 띠는 그대로(배너 색), 버튼 둘 대신 「내 페이지」 태그 하나", () => {
-    const row = dom(renderToStaticMarkup(<CreatorCardMineRow creatorId={ID} />)).querySelector("[data-card-actions]")!;
+  it("본인 카드 — 아래 줄은 그대로(색 없음), 버튼 둘 대신 「내 페이지」 태그 하나", () => {
+    const row = dom(renderToStaticMarkup(<CreatorCardMineRow />)).querySelector("[data-card-actions]")!;
     expect(row.childElementCount).toBe(1);
     expect(row.textContent).toBe("내 페이지");
-    expect((row as HTMLElement).style.getPropertyValue("--act-bg")).toBe(coverPastel(ID));
+    expect(row.hasAttribute("style")).toBe(false);
     expect(row.querySelector("a, button")).toBeNull();
   });
 

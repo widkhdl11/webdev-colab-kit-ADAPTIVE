@@ -7,7 +7,6 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: 
 import { badgeBorderOf, THEME_COLORS, type ThemeColor } from "@/entities/creator/model/creator-color";
 import badgeStyles from "@/entities/creator/ui/creator-head.module.css";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
-import { coverPastel } from "@/entities/creator/lib/cover-pastel";
 import { FandomSection, type FandomSectionProps } from "./fandom-section";
 
 // 상세 설정 · 팬덤 (creator-link INV-E12·E13·E14, design-rules 12절). 서버로 보내는 길(fetch)만 가짜로 두고 화면이 무엇을 막고 무엇을 보내는지 본다.
@@ -165,17 +164,19 @@ describe("카드 미리보기 — 찾기 화면 카드 그대로(design-rules 17
     // 처음 보는 팬에게 보이는 모양 — 「팔로우」 하나(하트 더하기 아이콘)
     expect(Array.from(acts?.children ?? []).map((el) => el.textContent)).toEqual(["팔로우"]);
     expect(acts?.querySelector("svg[data-icon='heart-plus']")).not.toBeNull();
-    expect(acts?.style.getPropertyValue("--act-bg")).toBe(coverPastel(ID));
+    expect(acts?.hasAttribute("style")).toBe(false);
     expect(card.textContent).not.toContain(approvalTimeText(180));
     expect(card.querySelector("a, button")).toBeNull();
   });
 
-  it("INV-E13: 테마 색이 없으면 실제 카드처럼 크리에이터 ID 파스텔, 고르면 그 색", async () => {
+  it("INV-E13: 테마 색이 없으면 실제 카드처럼 기본 회색(색 변수 없음), 고르면 머리에 그 색 — 버튼 줄에는 쓰지 않는다", async () => {
     await render();
     const cover = () => host.querySelector<HTMLElement>("[data-card-preview] [data-card-cover]")!;
-    expect(cover().style.getPropertyValue("--pastel")).toBe(coverPastel(ID));
+    expect(cover().hasAttribute("style")).toBe(false);
     await act(async () => swatch("#D3F0EC").click());
     expect(host.querySelector<HTMLElement>("[data-card-preview] [data-card-head]")?.style.getPropertyValue("--personal")).toBe("#D3F0EC");
+    const acts = host.querySelector<HTMLElement>("[data-card-preview] [data-card-actions]")!;
+    expect(acts.outerHTML).not.toContain("#D3F0EC");
   });
 });
 

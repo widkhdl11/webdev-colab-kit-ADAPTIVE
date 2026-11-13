@@ -178,14 +178,14 @@ export function CreatorSearchPage({
           <p className={s.hint}>{FOLLOW_NICKNAME_NOTICE}</p>
         ) : null}
         {/* 걸러진 카드는 지우지 않고 숨긴다 — 지우면 팔로우 버튼이 사라지며 누른 상태·저장 중 표시를 잃는다 */}
-        <ul className={s.grid} hidden={shown.size === 0}>
+        {/* data-card-stack: 칸이 좁아 한 열로 쌓이면 카드가 사진 없는 배너를 낮춘다(creator-card-head.module.css) */}
+        <ul className={s.grid} hidden={shown.size === 0} data-card-stack="">
           {creators.map((c) => {
             const own = c.id === ownCreatorId;
             const look = looks[c.id] ?? NO_CARD_LOOK;
             return (
               <li key={c.id} className={creatorCardClass} hidden={!shown.has(c.id)}>
                 <CreatorCardHead
-                  creatorId={c.id}
                   name={c.name}
                   href={creatorPagePath(c)}
                   look={look}
@@ -196,9 +196,9 @@ export function CreatorSearchPage({
                 <CreatorCardFoot tags={c.tags} />
                 {/* 본인은 버튼 줄 자리에 「내 페이지」 태그, 운영자(hidden)는 줄 없음 — 운영자 화면은 모든 카드에 줄이 없어 높이가 같다 */}
                 {own ? (
-                  <CreatorCardMineRow creatorId={c.id} colors={c.colors} />
+                  <CreatorCardMineRow />
                 ) : followMode === "hidden" ? null : (
-                  <CreatorCardActions creatorId={c.id} colors={c.colors}>
+                  <CreatorCardActions>
                     <FollowButton
                       creatorId={c.id}
                       creatorName={c.name}

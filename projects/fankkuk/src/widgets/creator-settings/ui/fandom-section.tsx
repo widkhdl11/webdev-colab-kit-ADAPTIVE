@@ -202,7 +202,6 @@ export function FandomSection(p: FandomSectionProps) {
           </h3>
             <div className={creatorCardClass} role="group" aria-label="크리에이터 카드 미리보기" data-card-preview="">
               <CreatorCardHead
-                creatorId={p.card.creatorId}
                 name={p.publicName}
                 href={null}
                 look={{ photoUrl: p.photoUrl, backgroundUrl: p.backgroundUrl, symbolUrl, fanName: name || null }}
@@ -212,7 +211,7 @@ export function FandomSection(p: FandomSectionProps) {
               <CreatorCardLine intro={p.card.intro} />
               <CreatorCardFoot tags={p.card.tags} />
               {/* 처음 보는 팬에게 보이는 모양 — 「팔로우」 하나(누를 수 없는 모양) */}
-              <CreatorCardActions creatorId={p.card.creatorId} colors={{ personal: theme }}>
+              <CreatorCardActions>
                 <span className="btn btn--sm btn--line" aria-hidden="true" data-card-btn="main">
                   <CardButtonLabel icon="heart-plus">팔로우</CardButtonLabel>
                 </span>
