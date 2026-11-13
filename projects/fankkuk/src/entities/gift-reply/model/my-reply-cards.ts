@@ -1,4 +1,3 @@
-import type { ViewerRole } from "@/entities/session/model/viewer";
 import type { ReplyPhrase } from "./reply";
 
 // 크리에이터 상세 「나에게 온 감사 카드」(docs/specs/my-reply-cards.md). 팬 본인 답장 읽기(my_gift_replies)가 돌려준 행에서 카드를 고른다.
@@ -37,6 +36,6 @@ export function myReplyCardsOf(rows: readonly ReplyRow[]): MyReplyCard[] {
 }
 
 /** INV-RC2: 로그인한 팬이 이 크리에이터를 팔로우하고 있을 때만 읽는다(크리에이터·운영자·로그인 전·팔로우 전은 읽지 않는다) */
-export function canSeeMyReplyCards(viewer: { role: ViewerRole } | null, following: boolean): boolean {
+export function canSeeMyReplyCards(viewer: { role: "fan" | "creator" | "operator" } | null, following: boolean): boolean {
   return viewer?.role === "fan" && following;
 }
