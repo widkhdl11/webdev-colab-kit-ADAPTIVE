@@ -1,11 +1,16 @@
 ---
 project: fankkuk
 status: passed
-basis: 2057b24d6794
+basis: 
 reviewers: [ux-reviewer, ui-reviewer, security-reviewer]
 ---
 
 # 리뷰 사인오프 — fankkuk (2026-11-13 크리에이터 상세 e판 · 카드 차분한 판 · 아래는 2026-11-12 이전 기록)
+
+## 7. 나에게 온 감사 카드 (a7a067cb, 2026-11-13 — 스펙 my-reply-cards INV-RC1~RC5)
+
+security-reviewer: 중간 1(상자 ID 가 목록 이름표로 페이지 데이터에 실림 — INV-RC4) → 카드 칸에서 상자 ID·사진 경로 뺌, 시험에 상자 ID 없음 단언 추가. ui-reviewer: 중간 2(휴대폰 이전·다음 숨김, 꺼진 버튼 hover) → 고침, 낮음 3(버튼 그림자·이름 굵기·요일) → 시안 값으로. ux-reviewer 는 보이는 조건이 스펙 INV-RC2 로 정해지고 시험(호출 0번·영역 없음)이 붙들어 뺐다.
+- 실행 근거: `npx vitest run` 410 파일 3638 통과 · 통합 my-reply-cards-db 3 통과 · 변이 8개(라우트 캐시 허용·팔로우 조건·읽기 전 판단·20장 상한·지운 답장 거르기·크리에이터 거르개·0장 영역 숨김·요일 날짜) 모두 실패로 잡힘 · 화면(별빛 로그인, 하루 페이지) 카드 3장, 시각·주문번호·상자 ID 없음, 390 에서 펼친 뒤 「다음」 켜짐·한 장 304 씩 넘김.
 
 ## 6. 크리에이터 상세 e판 (338f96f2, 2026-11-13)
 
