@@ -60,42 +60,44 @@ async function clickSave() {
   return fetchMock.mock.calls.map(([url, init]) => [url, JSON.parse(String((init as RequestInit).body))]);
 }
 
-describe("프로필 수정 — 세 탭 (2026-11-13 재분류, UX 명세 creator-profile)", () => {
-  it("탭 줄은 프로필 · 채널 · 계정, 주소에 탭을 싣고 지금 탭만 aria-current", async () => {
+describe("프로필 수정 — 두 탭 (2026-11-13 재분류 · 같은 날 「계정」 탭을 없앰, UX 명세 creator-profile)", () => {
+  it("탭 줄은 프로필 · 채널 둘뿐 — 「계정」 탭이 없다. 주소에 탭을 싣고 지금 탭만 aria-current", async () => {
     await render({ tab: "channel" });
     const tabs = [...host.querySelectorAll<HTMLAnchorElement>("nav.tabs a")];
     expect(tabs.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
       ["프로필", "/creator/profile"],
       ["채널", "/creator/profile?tab=channel"],
-      ["계정", "/creator/profile?tab=account"],
     ]);
-    expect(tabs.map((a) => a.getAttribute("aria-current"))).toEqual([null, "page", null]);
+    expect(tabs.map((a) => a.getAttribute("aria-current"))).toEqual([null, "page"]);
+    expect(host.querySelector("a[href*='tab=account']")).toBeNull();
   });
 
-  it("탭이 없으면 프로필 탭 — 닉네임·한 줄 소개·미리보기만, 채널·계정 칸은 없다", async () => {
-    await render({ channelSections: <p data-x="channel">채널 구역</p>, accountSections: <p data-x="account">계정 구역</p> });
-    for (const id of ["pe-name", "pe-bio"]) expect(host.querySelector(`#${id}`)).not.toBeNull();
+  it("탭이 없으면 프로필 탭 — 프로필 사진 · 닉네임 · 한 줄 소개 · 미리보기, 채널 칸은 없다", async () => {
+    await render({ channelSections: <p data-x="channel">채널 구역</p> });
+    for (const id of ["pe-photo", "pe-name", "pe-bio"]) expect(host.querySelector(`#${id}`)).not.toBeNull();
+    expect(host.textContent).toContain("프로필 사진 변경");
     expect(host.querySelectorAll("aside [data-creator-head]")).toHaveLength(1);
-    for (const id of ["pe-bg", "pe-find", "pe-photo"]) expect(host.querySelector(`#${id}`)).toBeNull();
+    for (const id of ["pe-bg", "pe-find"]) expect(host.querySelector(`#${id}`)).toBeNull();
     expect(host.textContent).not.toContain("태그");
     expect(host.querySelector("[data-x]")).toBeNull();
   });
 
+  it("프로필 탭 판 순서는 프로필 사진 → 소개(닉네임·한 줄 소개·저장)", async () => {
+    await render();
+    const panels = [...host.querySelectorAll<HTMLElement>("[data-pe-tab] > div > :is(section, form)")];
+    expect(panels.map((el) => el.querySelector("h2")?.textContent?.trim())).toEqual(["프로필 사진", "소개"]);
+    expect(panels[0].querySelector("#pe-photo")).not.toBeNull();
+    expect(panels[1].tagName).toBe("FORM");
+    // 사진은 고르는 즉시 저장 — 「저장」 form 밖
+    expect(panels[1].querySelector("#pe-photo")).toBeNull();
+  });
+
   it("채널 탭 — 배경 사진·태그·찾기 노출과 넘겨받은 채널 구역만, 닉네임·소개·프로필 사진은 없다", async () => {
-    await render({ tab: "channel", channelSections: <p data-x="channel">채널 구역</p>, accountSections: <p data-x="account">계정 구역</p> });
+    await render({ tab: "channel", channelSections: <p data-x="channel">채널 구역</p> });
     for (const id of ["pe-bg", "pe-find"]) expect(host.querySelector(`#${id}`)).not.toBeNull();
     expect(host.querySelector("form")?.textContent).toContain("노래");
     for (const id of ["pe-name", "pe-bio", "pe-photo"]) expect(host.querySelector(`#${id}`)).toBeNull();
     expect([...host.querySelectorAll("[data-x]")].map((el) => el.getAttribute("data-x"))).toEqual(["channel"]);
-  });
-
-  it("계정 탭 — 프로필 사진과 넘겨받은 계정 구역만, 미리보기·닉네임·배경 사진·태그는 없다", async () => {
-    await render({ tab: "account", channelSections: <p data-x="channel">채널 구역</p>, accountSections: <p data-x="account">계정 구역</p> });
-    expect(host.querySelector("#pe-photo")).not.toBeNull();
-    expect(host.textContent).toContain("프로필 사진 변경");
-    for (const id of ["pe-name", "pe-bio", "pe-bg", "pe-find"]) expect(host.querySelector(`#${id}`)).toBeNull();
-    expect(host.querySelector("aside")).toBeNull();
-    expect([...host.querySelectorAll("[data-x]")].map((el) => el.getAttribute("data-x"))).toEqual(["account"]);
   });
 });
 
@@ -110,12 +112,10 @@ describe("프로필 수정 — 미리보기는 탭마다 하나, 오른쪽 열 (
     expect(main.nextElementSibling).toBe(host.querySelector("aside"));
   });
 
-  it("프로필 탭 미리보기는 프로필 머리 하나, 계정 탭은 미리보기가 없다", async () => {
+  it("프로필 탭 미리보기는 프로필 머리 하나", async () => {
     await render({ channelPreview: <aside data-x="card-preview">카드</aside> });
     expect(host.querySelectorAll("aside")).toHaveLength(1);
     expect(host.querySelectorAll("aside [data-creator-head]")).toHaveLength(1);
-    await render({ tab: "account", channelPreview: <aside data-x="card-preview">카드</aside> });
-    expect(host.querySelector("aside")).toBeNull();
   });
 
   it("사진 없는 크리에이터의 머리 미리보기는 첫 글자가 아니라 기본 얼굴(2026-11-12 결정)", async () => {
@@ -125,9 +125,9 @@ describe("프로필 수정 — 미리보기는 탭마다 하나, 오른쪽 열 (
     expect(av.querySelector("img")?.getAttribute("src")).toBe("/img/default-face/cat.webp");
   });
 
-  it("세 탭의 판은 모두 같은 판 모양 · 판마다 h2 제목 하나", async () => {
+  it("두 탭의 판은 모두 같은 판 모양 · 판마다 h2 제목 하나", async () => {
     const classes = new Set<string>();
-    for (const [tab, titles] of [["profile", ["소개"]], ["channel", ["배경 사진", "태그"]], ["account", ["프로필 사진"]]] as const) {
+    for (const [tab, titles] of [["profile", ["프로필 사진", "소개"]], ["channel", ["배경 사진", "태그"]]] as const) {
       await render({ tab });
       const panels = [...host.querySelectorAll<HTMLElement>("[data-pe-tab] > div > :is(section, form)")];
       expect(panels.map((el) => el.querySelector("h2")?.textContent?.trim())).toEqual(titles);
@@ -205,13 +205,11 @@ describe("프로필 수정 — 배치 (design-rules 27절 「4파트 나머지�
     expect(calls[0]?.[1]).toEqual({ searchable: true });
   });
 
-  it("머리 설명 — 미리보기가 있는 프로필·채널 탭은 두 문장, 계정 탭은 앞 문장만", async () => {
+  it("머리 설명 — 두 탭 모두 미리보기가 있어 두 문장", async () => {
     for (const tab of ["profile", "channel"] as const) {
       await render({ tab });
       expect(host.querySelector("header p")?.textContent).toBe("팬에게 공개되는 프로필입니다. 변경할 내용을 미리보기에서 확인해 주세요.");
     }
-    await render({ tab: "account" });
-    expect(host.querySelector("header p")?.textContent).toBe("팬에게 공개되는 프로필입니다.");
   });
 
   it("머리 설명은 그대로, 미리보기는 입력하는 대로 바뀐다", async () => {

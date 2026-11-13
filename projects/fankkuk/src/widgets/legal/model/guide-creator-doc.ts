@@ -82,8 +82,8 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
           {
             kind: "steps",
             items: [
-              "사이드바 「내 팬꾹」의 「프로필 수정」에서 프로필 사진·배경 사진·닉네임·한 줄 소개를 설정해 주세요.",
-              "사이드바 「내 팬꾹」의 「프로필 수정」에서 「채널」 탭을 열고, 「팬꾹 링크」 칸을 펼쳐 주세요.",
+              "사이드바 「내 팬꾹」의 「프로필 수정」에서 프로필 사진·닉네임·한 줄 소개를, 「채널」 탭에서 배경 사진을 설정해 주세요.",
+              "사이드바 「내 팬꾹」의 「프로필 수정」에서 「채널」 탭을 열고, 「선물 링크」 칸을 찾아 주세요.",
               `「링크 주소」에 영문·숫자·밑줄(_)로 ${HANDLE_MIN}~${HANDLE_MAX}자를 입력해 주세요. 로그인 아이디와 다른 값으로 정해 주세요.`,
               "「링크 주소 등록」을 누르고, 철자를 다시 확인한 뒤 「등록」을 눌러 주세요.",
               "「복사」를 눌러 링크 주소를 복사하고 방송이나 SNS에 붙여 주세요.",
@@ -124,7 +124,7 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
           {
             kind: "steps",
             items: [
-              "「상세 설정」의 「주소와 설정」에서 「받는 주소」 칸을 펼쳐 주세요.",
+              "「계정 설정」에서 「받는 주소」 칸을 펼쳐 주세요.",
               "‘주소 등록’을 눌러 주세요. 등록된 주소가 있다면 ‘주소 변경’을 눌러 주세요.",
               "주소를 등록하거나 바꿀 때마다 카카오톡 인증서로 서명합니다. 로그인만으로는 바꿀 수 없습니다.",
               "주소는 입력한 브라우저에서 암호화한 뒤 전송하고, 암호화된 상태로 보관합니다. 등록한 뒤에는 이 화면에서도 주소를 볼 수 없습니다.",
@@ -193,7 +193,7 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
           {
             kind: "steps",
             items: [
-              "「상세 설정」의 「주소와 설정」에서 「차단한 팬」 칸을 펼쳐 주세요.",
+              "「계정 설정」에서 「차단한 팬」 칸을 펼쳐 주세요.",
               "팬의 닉네임 아래 「차단 해제」를 누르고, 창에서 「차단 해제」를 한 번 더 눌러 주세요.",
               "차단을 풀면 해당 팬이 다시 선물을 보낼 수 있습니다. 이미 거절한 선물은 복구되지 않습니다.",
             ],
@@ -230,7 +230,7 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
         id: "receiving",
         title: "선물 받기 일시 중단·월간 한도",
         blocks: [
-          { kind: "text", text: "「상세 설정」의 「주소와 설정」에서 「받기 설정」 칸을 펼치면 「선물 받기」가 있습니다." },
+          { kind: "text", text: "「계정 설정」에서 「받기 설정」 칸을 펼치면 「선물 받기」가 있습니다." },
           {
             kind: "steps",
             items: [
@@ -268,7 +268,7 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
           {
             kind: "steps",
             items: [
-              "「상세 설정」의 「받기 설정」 칸 아래쪽에서 받기 어려운 선물 종류를 하나 이상 선택해 주세요.",
+              "「계정 설정」의 「받기 설정」 칸 아래쪽에서 받기 어려운 선물 종류를 하나 이상 선택해 주세요.",
               `「이유」를 선택해 주세요. ${quoteList(HARD_REASONS.map((r) => HARD_REASON_OPTION_LABEL[r]))} 가운데 하나입니다.`,
               `「기간」을 선택해 주세요. ${quoteList(HARD_PERIODS.map((p) => HARD_PERIOD_LABEL[p]))} 가운데 하나입니다.`,
               `「팬이 이 품목을 고르면」에서 「${HARD_ACTION_LABEL.notice}」나 「${HARD_ACTION_LABEL.block}」을 선택해 주세요.`,

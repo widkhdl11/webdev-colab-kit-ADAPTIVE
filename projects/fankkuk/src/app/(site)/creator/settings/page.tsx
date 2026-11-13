@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { readMyBlockedSenders } from "@/entities/creator/api/blocked-senders";
 import { readMyAddressStatus } from "@/entities/address/api/my-address-status";
+import { readMyCreatorSettings } from "@/entities/creator/api/my-creator-settings";
 import { readMyCreatorReceiving } from "@/entities/creator/api/receiving-reads";
 import { readMySignatureLink } from "@/entities/creator/api/signature-link-reads";
 import { kstToday } from "@/entities/creator/model/receiving";
@@ -8,6 +9,7 @@ import { readMyHardItems } from "@/entities/gift-item/api/hard-items-reads";
 import { readMyReplySettings } from "@/entities/gift-reply/api/gift-reply-reads";
 import { CREATOR_SETTINGS, FAN_HOME } from "@/entities/session/model/home-path";
 import { readSealingPublicKeyPem } from "@/shared/lib/envelope/sealing-key-config";
+import { CreatorLeaveBody, CreatorSecurityRows } from "@/widgets/creator-account/ui/creator-account-page";
 import { CreatorSettingsPage } from "@/widgets/creator-settings/ui/creator-settings-page";
 import { MyShell } from "@/widgets/my-nav/ui/my-shell";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
@@ -16,6 +18,7 @@ import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
 export const dynamic = "force-dynamic";
 
+// 2026-11-13 같은 날 사용자 지시: 이 화면은 「계정 설정」 — 보안(비밀번호·휴대폰 번호)·회원 탈퇴가 여기로 왔다. 휴대폰 번호(가린 값)를 my_creator_settings 에서 읽는다(연락처가 담겨 요청마다 그린다).
 // 2026-11-13 재분류: 팬덤(팬덤 이름·테마 색·카드 미리보기)과 선물 링크 주소는 프로필 수정 「채널」 탭으로 옮겼고, 그 칸에 쓰던 읽기(my_creator_settings·my_creator_link·my_creator_look·creator_by_id·채널 본인 확인)도 그 화면(app/(site)/creator/profile/page.tsx)으로 옮겼다.
 // 아래는 옮기기 전 설명이다.
 // 크리에이터 상세 설정 (design-rules 12절 · 27절, 틀 폭 1200 — 「팬덤」 입력 + 미리보기 두 단). 모두 로그인한 크리에이터 본인 것만 읽는다:
@@ -27,7 +30,7 @@ export default async function Page() {
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
   if (viewer?.role !== "creator") redirect(`/login?next=${CREATOR_SETTINGS}`);
-  const [header, blockedFans, address, receiving, hardItems, replySettings, signatureLink] = await Promise.all([
+  const [header, blockedFans, address, receiving, hardItems, replySettings, signatureLink, settings] = await Promise.all([
     readSiteHeader(supabase, viewer, "/creator/settings"),
     readMyBlockedSenders(supabase),
     readMyAddressStatus(supabase),
@@ -35,9 +38,10 @@ export default async function Page() {
     readMyHardItems(supabase),
     readMyReplySettings(supabase),
     readMySignatureLink(supabase),
+    readMyCreatorSettings(supabase),
   ]);
   // 크리에이터 역할인데 크리에이터 줄이 없으면 이 화면을 그릴 수 없다 — 숨기지 않고 오류로 드러낸다
-  if (!address || !receiving || !replySettings) throw new Error("크리에이터 줄을 찾지 못했다");
+  if (!address || !receiving || !replySettings || !settings) throw new Error("크리에이터 줄을 찾지 못했다");
   return (
     <>
       <SiteHeader {...header} />
@@ -51,6 +55,8 @@ export default async function Page() {
           today={kstToday(new Date())}
           replySettings={replySettings}
           signatureLink={signatureLink}
+          security={<CreatorSecurityRows phoneMasked={settings.phoneMasked} />}
+          leave={<CreatorLeaveBody />}
         />
       </MyShell>
       <SiteFooter />

@@ -29,7 +29,7 @@ export default async function Page() {
       <SiteHeader {...header} />
       <MyShell width="form">
         <header className="page-head">
-          <h1 className="ph-title">상세 설정</h1>
+          <h1 className="ph-title">계정 설정</h1>
         </header>
         <SignatureLinkPanel
           creatorId={creatorId}

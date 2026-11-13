@@ -7,7 +7,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: 
 import { CreatorSettingsPage } from "./creator-settings-page";
 
 // 상세 설정 /creator/settings — 2026-11-13 재분류(UX 명세 creator-profile 「바뀌는 것」): 팬덤 구역(팬덤 이름·팬마크·테마 색)과
-// 선물 링크 주소는 프로필 수정 「채널」 탭으로 옮겼다. 이 화면에는 승인 서명·받는 주소·받기 설정·차단한 팬·감사 답장만 남는다.
+// 선물 링크 주소는 프로필 수정 「채널」 탭으로 옮겼다. 같은 날 이 화면 이름을 「계정 설정」으로 바꾸고 보안·회원 탈퇴를 선물 받기 설정들 뒤에 두었다.
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -37,6 +37,8 @@ function render() {
         today={{ year: 2026, month: 11, day: 13 }}
         replySettings={{ wallVisible: false, xHandle: null, xTagAllowed: false }}
         signatureLink={{ linked: false, linkedAt: null }}
+        security={<div data-x="security">보안 줄</div>}
+        leave={<div data-x="leave">탈퇴 문의</div>}
       />,
     ),
   );
@@ -62,16 +64,32 @@ describe("상세 설정 — 팬덤·선물 링크 구역이 빠진다 (2026-11-1
     expect(foldTitles()).not.toContain("선물 링크");
   });
 
-  it("묶음 이름 「주소와 설정」은 낭독용(sr-only)만 — h1 아래 보이는 제목을 한 번 더 두지 않는다(2026-11-13 ui 리뷰)", () => {
+  it("묶음은 화면 전체 — 따로 제목(h2)을 두지 않고 h1 「계정 설정」으로 이름을 읽는다(2026-11-13 ux 리뷰)", () => {
     render();
-    const h2s = [...host.querySelectorAll("h2")].filter((h) => !h.closest("dialog"));
-    expect(h2s.map((h) => [h.textContent?.trim(), h.className])).toEqual([["주소와 설정", "sr-only"]]);
-    expect(document.getElementById(host.querySelector("#more")!.getAttribute("aria-labelledby")!)).toBe(h2s[0]);
+    expect([...host.querySelectorAll("h2")].filter((h) => !h.closest("dialog"))).toHaveLength(0);
+    expect(document.getElementById(host.querySelector("#more")!.getAttribute("aria-labelledby")!)).toBe(host.querySelector("h1"));
   });
 
-  it("남는 접힌 칸은 받는 주소 → 받기 설정 → 차단한 팬 → 감사 답장", () => {
+  it("머리 설명 목록은 화면에 나오는 순서 — 맨 위 카카오톡 인증 알림 줄부터 회원 탈퇴까지", () => {
     render();
-    expect(foldTitles()).toEqual(["받는 주소", "받기 설정", "차단한 팬", "감사 답장"]);
-    expect(host.querySelector("h1")?.textContent).toBe("상세 설정");
+    expect(host.querySelector("header p")?.textContent).toBe("카카오톡 인증 알림·받는 주소·선물 받기·차단한 팬·감사 답장·보안·회원 탈퇴를 관리합니다.");
+    // 설명의 첫 항목이 실제로 화면 맨 위 줄이다
+    expect(host.querySelector("#more [data-signature-link]")?.textContent).toContain("카카오톡 인증 알림");
+  });
+
+  it("제목은 「계정 설정」(옛 상세 설정 — 2026-11-13 이름 바꿈)", () => {
+    render();
+    expect(host.querySelector("h1")?.textContent).toBe("계정 설정");
+  });
+
+  it("접힌 칸은 받는 주소 → 받기 설정 → 차단한 팬 → 감사 답장 → 보안 → 회원 탈퇴 — 보안·탈퇴는 선물 받기 설정들 뒤, 같은 접힌 칸 모양", () => {
+    render();
+    expect(foldTitles()).toEqual(["받는 주소", "받기 설정", "차단한 팬", "감사 답장", "보안", "회원 탈퇴"]);
+    const security = host.querySelector<HTMLDetailsElement>("details#security")!;
+    const leave = host.querySelector<HTMLDetailsElement>("details#leave")!;
+    expect(security.className).toBe(host.querySelector("details#thanks")!.className);
+    expect(leave.className).toBe(security.className);
+    expect(security.querySelector("[data-x='security']")).not.toBeNull();
+    expect(leave.querySelector("[data-x='leave']")).not.toBeNull();
   });
 });

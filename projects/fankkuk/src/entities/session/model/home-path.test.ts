@@ -19,3 +19,14 @@ describe("로그인한 사람의 첫 화면", () => {
     expect(homePathOf(undefined)).toBeNull();
   });
 });
+
+describe("프로필 수정 탭 주소 (2026-11-13 — 「계정」 탭을 없앰)", () => {
+  it("탭은 프로필 · 채널 둘, 없거나 모르는 값(옛 ?tab=account 포함)은 프로필", async () => {
+    const { CREATOR_PROFILE_TABS, parseCreatorProfileTab, creatorProfileTabHref } = await import("./home-path");
+    expect([...CREATOR_PROFILE_TABS]).toEqual(["profile", "channel"]);
+    expect(parseCreatorProfileTab("channel")).toBe("channel");
+    for (const raw of [undefined, "", "account", ["channel"], "CHANNEL"]) expect(parseCreatorProfileTab(raw)).toBe("profile");
+    expect(creatorProfileTabHref("profile")).toBe("/creator/profile");
+    expect(creatorProfileTabHref("channel")).toBe("/creator/profile?tab=channel");
+  });
+});

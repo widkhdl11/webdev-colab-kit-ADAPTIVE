@@ -18,14 +18,14 @@ describe("크리에이터 메뉴 — 묶음", () => {
         ? ["팬에게 보내기", "다른 크리에이터에게 선물", "팔로우한 크리에이터", "보낸 내역"]
         : ["팬에게 보내기", "팔로우한 크리에이터", "보낸 내역"],
     );
-    expect(labels("내 팬꾹")).toEqual(["꾸미기", "프로필 수정", "상세 설정"]);
+    expect(labels("내 팬꾹")).toEqual(["꾸미기", "프로필 수정", "계정 설정"]);
   });
 
-  it("내 팬꾹 (design-rules 12절): 꾸미기·프로필 수정·상세 설정 주소 — 주소 관리 줄은 없고 받는 주소는 상세 설정 안", () => {
+  it("내 팬꾹 (design-rules 12절): 꾸미기·프로필 수정·계정 설정(옛 상세 설정, 2026-11-13 이름 바꿈) 주소 — 주소 관리 줄은 없고 받는 주소는 계정 설정 안", () => {
     expect(group("내 팬꾹").items.map((i) => [i.label, i.href, i.icon])).toEqual([
       ["꾸미기", "/creator/customize", "palette"],
       ["프로필 수정", "/creator/profile", "user-round"],
-      ["상세 설정", "/creator/settings", "settings"],
+      ["계정 설정", "/creator/settings", "settings"],
     ]);
     const all = CREATOR_APP_MENU.flatMap((g) => g.items);
     expect(all.some((i) => i.label === "주소 관리" || i.href.includes("#address"))).toBe(false);
@@ -45,9 +45,9 @@ describe("크리에이터 메뉴 — 묶음", () => {
     expect(currentMenuItem(CREATOR_APP_MENU, "/me/following")?.label).toBe("팔로우한 크리에이터");
   });
 
-  it("프로필 수정·상세 설정 화면에서 그 칸이 켜진다", () => {
+  it("프로필 수정·계정 설정 화면에서 그 칸이 켜진다", () => {
     expect(currentMenuItem(CREATOR_APP_MENU, "/creator/profile")?.label).toBe("프로필 수정");
-    expect(currentMenuItem(CREATOR_APP_MENU, "/creator/settings")?.label).toBe("상세 설정");
+    expect(currentMenuItem(CREATOR_APP_MENU, "/creator/settings")?.label).toBe("계정 설정");
   });
 
   it("꾸미기는 /creator/customize 한 칸뿐", () => {

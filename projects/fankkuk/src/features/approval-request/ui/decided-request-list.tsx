@@ -124,7 +124,7 @@ export function DecidedRequestList({
           <p>
             차단한 팬은 새 선물을 등록할 수 없습니다. 차단 해제는{" "}
             <Link className={a["link-in"]} href="/creator/settings#blocked">
-              상세 설정 &gt; 주소와 설정 &gt; 차단한 팬
+              계정 설정 &gt; 차단한 팬
             </Link>
             에서 할 수 있습니다.
           </p>

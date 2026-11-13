@@ -6,7 +6,7 @@ import { CREATOR_ACCOUNT, CREATOR_HOME, CREATOR_PROFILE_EDIT, CREATOR_SETTINGS, 
 
 // 로그인 후 왼쪽 앱 사이드바 메뉴(design-rules 00절, 시안 docs/design/mockups/site/v18/home-fan.html·home-creator.html).
 // 크리에이터 메뉴의 묶음·하위 줄은 design-rules 11절(시안 docs/design/mockups/site/v19-sidebar/creator-a.html),
-// 팬 메뉴는 묶음 없이 한 줄(action-center 「팬 메뉴 재구성」 — 「지금 할 일」 숫자 뱃지, 0 이면 없음 — INV-J2). 「내 팬꾹」 묶음은 12절(꾸미기·프로필 수정·상세 설정 — 주소 관리는 상세 설정 안, 계정 설정은 아래 이름 메뉴. 시안 v21-addendum3/cre-*.html).
+// 팬 메뉴는 묶음 없이 한 줄(action-center 「팬 메뉴 재구성」 — 「지금 할 일」 숫자 뱃지, 0 이면 없음 — INV-J2). 「내 팬꾹」 묶음은 12절(꾸미기·프로필 수정·계정 설정(옛 상세 설정) — 주소 관리는 계정 설정 안, 알림 설정은 아래 이름 메뉴. 시안 v21-addendum3/cre-*.html).
 // 아이콘 이름은 lucide 선 아이콘 이름 — 그림은 ui/app-icons.tsx 에 있다.
 
 export type AppIcon =
@@ -130,7 +130,8 @@ export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
     items: [
       { href: CREATOR_CUSTOMIZE_HREF, label: "꾸미기", icon: "palette" },
       { href: CREATOR_PROFILE_EDIT, label: "프로필 수정", icon: "user-round" },
-      { href: CREATOR_SETTINGS, label: "상세 설정", icon: "settings" },
+      // 옛 「상세 설정」 — 2026-11-13 「계정 설정」으로 이름을 바꿈(주소 그대로, 보안·회원 탈퇴가 여기로 옴)
+      { href: CREATOR_SETTINGS, label: "계정 설정", icon: "settings" },
     ],
   },
 ];

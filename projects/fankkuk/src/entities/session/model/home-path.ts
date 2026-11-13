@@ -17,19 +17,19 @@ export function homePathOf(role: ViewerRole | null | undefined): string | null {
 export const FAN_ACCOUNT_SETTINGS = "/me";
 export const FAN_PROFILE_EDIT = "/me/profile";
 
-/** 크리에이터 프로필 수정·상세 설정 화면(design-rules 12절 「내 팬꾹」 묶음). 사이드바와 크리에이터 홈 프로필 구간이 같은 값을 쓴다. */
+/** 크리에이터 프로필 수정·계정 설정(옛 상세 설정, 2026-11-13 이름 바꿈 — 주소 그대로) 화면(design-rules 12절 「내 팬꾹」 묶음). 사이드바와 크리에이터 홈 프로필 구간이 같은 값을 쓴다. */
 export const CREATOR_PROFILE_EDIT = "/creator/profile";
 export const CREATOR_SETTINGS = "/creator/settings";
-/** 크리에이터 승인 서명 연결하기(approval-signature INV-S16) — 상세 설정의 「승인 서명」 줄이 여는 화면(장애 대비 길로 가입한 크리에이터의 첫 연결·다시 연결, signup INV-U20). */
+/** 크리에이터 승인 서명 연결하기(approval-signature INV-S16) — 계정 설정(옛 상세 설정)의 「승인 서명」 줄이 여는 화면(장애 대비 길로 가입한 크리에이터의 첫 연결·다시 연결, signup INV-U20). */
 export const CREATOR_SIGNATURE_LINK = CREATOR_SIGNATURE_LINK_PATH;
-/** 크리에이터 알림 설정(옛 계정 설정 — 주소는 그대로). 2026-11-13 재분류로 보안·채널 소유자 확인·탈퇴는 프로필 수정 탭으로 옮기고 알림만 남았다. */
+/** 크리에이터 알림 설정(옛 계정 설정 — 주소는 그대로). 2026-11-13 재분류로 알림만 남았다 — 보안·회원 탈퇴는 계정 설정(/creator/settings), 채널 소유자 확인은 프로필 수정 채널 탭. */
 export const CREATOR_ACCOUNT = "/creator/account";
 
 /**
- * 크리에이터 프로필 수정의 세 탭(2026-11-13 재분류 — UX 명세 creator-profile). 탭은 주소의 ?tab= 로 싣는다 — 없거나 모르는 값이면 프로필 탭.
- * 다른 화면의 안내 링크(꾸미기의 팬마크·링크 주소 등)가 원하는 탭을 바로 연다.
+ * 크리에이터 프로필 수정의 두 탭(2026-11-13 재분류 — UX 명세 creator-profile, 같은 날 「계정」 탭을 없앰). 탭은 주소의 ?tab= 로 싣는다 —
+ * 없거나 모르는 값(옛 ?tab=account 포함)이면 프로필 탭. 다른 화면의 안내 링크(꾸미기의 팬마크·링크 주소 등)가 원하는 탭을 바로 연다.
  */
-export const CREATOR_PROFILE_TABS = ["profile", "channel", "account"] as const;
+export const CREATOR_PROFILE_TABS = ["profile", "channel"] as const;
 export type CreatorProfileTab = (typeof CREATOR_PROFILE_TABS)[number];
 
 export function parseCreatorProfileTab(raw: unknown): CreatorProfileTab {

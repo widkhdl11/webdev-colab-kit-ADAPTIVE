@@ -21,14 +21,14 @@ import panel from "@/shared/ui/settings-panel.module.css";
 import s from "./creator-profile-edit.module.css";
 
 // 크리에이터 프로필 수정 (design-rules 27절 「4파트 나머지」, 시안 docs/design/mockups/site/pilot-2026-10-22/creator-profile.html, 틀 1200).
-// 2026-11-13 재분류(UX 명세 creator-profile 「바뀌는 것」, DECISIONS 같은 날) — 세 탭(?tab=profile|channel|account, 주소에 싣는다. 없으면 프로필):
-// - 프로필: 닉네임 · 한 줄 소개 · 「저장」 · 미리보기
+// 2026-11-13 재분류(UX 명세 creator-profile 「바뀌는 것」, DECISIONS 같은 날) — 두 탭(?tab=profile|channel, 주소에 싣는다. 없으면 프로필).
+// 같은 날 사용자 지시로 「계정」 탭을 없앴다 — 프로필 사진은 프로필 탭으로, 보안·회원 탈퇴는 계정 설정(/creator/settings)으로.
+// - 프로필: 프로필 사진(고르는 즉시 저장) · 닉네임 · 한 줄 소개 · 「저장」 · 미리보기
 // - 채널: 배경 사진 · 태그 · 크리에이터 찾기에 보이기(「저장」) · 미리보기, 그 아래 앱 레이어가 넘긴 구역(채널 주소 · 팬덤 · 채널 소유자 확인)
-// - 계정: 프로필 사진, 그 아래 앱 레이어가 넘긴 구역(비밀번호 · 휴대폰 번호 · 회원 탈퇴)
 // 다른 위젯의 구역은 이 위젯이 import 하지 않고 ReactNode 로 받는다(FSD — 같은 레이어 슬라이스끼리 import 하지 않는다).
-// 배치(2026-11-13 본체 지적 「탭 안 모양이 제각각」을 고침): 세 탭이 같은 두 열 — 왼쪽 기둥(--col-form) · 오른쪽 미리보기 열(나머지, 따라옴).
+// 배치(2026-11-13 본체 지적 「탭 안 모양이 제각각」을 고침): 두 탭이 같은 두 열 — 왼쪽 기둥(--col-form) · 오른쪽 미리보기 열(나머지, 따라옴).
 // 왼쪽 기둥의 모든 구역은 공용 settings-panel 판(같은 판 모양 · 제목 h2 하나). 미리보기는 탭마다 하나 — 프로필 탭은 프로필 머리,
-// 채널 탭은 앱 레이어가 넘긴 팬덤 카드 미리보기(channelPreview), 계정 탭은 없다(오른쪽 열이 빈다).
+// 채널 탭은 앱 레이어가 넘긴 팬덤 카드 미리보기(channelPreview).
 // 저장 경로는 그대로다 — 새 저장 규칙은 없다:
 // - 사진·배경사진은 고르는 즉시 서버로 보낸다(creator-link INV-E9 — 서버가 열어 보고 사진 정보를 지운 뒤 다시 굽는다).
 // - 프로필 탭 「저장」은 닉네임(= 크리에이터 이름, creator-display-name INV-CN2)·한 줄 소개만 /api/creator/profile 에,
@@ -42,8 +42,6 @@ export type CreatorProfileEditProps = {
   channelSections?: ReactNode;
   /** 채널 탭 오른쪽 열의 미리보기 하나(팬덤 카드 미리보기) */
   channelPreview?: ReactNode;
-  /** 계정 탭 아래에 놓을 구역(비밀번호 · 휴대폰 번호 · 회원 탈퇴) */
-  accountSections?: ReactNode;
   name: string;
   intro: string;
   fanName: string;
@@ -60,7 +58,7 @@ export type CreatorProfileEditProps = {
   photoBase: string;
 };
 
-const TAB_LABEL: Readonly<Record<CreatorProfileTab, string>> = { profile: "프로필", channel: "채널", account: "계정" };
+const TAB_LABEL: Readonly<Record<CreatorProfileTab, string>> = { profile: "프로필", channel: "채널" };
 
 /** 탭 줄 — 화면 주소를 바꾸는 링크라 「보낸 내역」 탭(site-header SentTabs)과 같은 줄 탭(base.css .tabs--line)·aria-current */
 function ProfileTabs({ current }: { current: CreatorProfileTab }) {
@@ -75,7 +73,7 @@ function ProfileTabs({ current }: { current: CreatorProfileTab }) {
   );
 }
 
-export function CreatorProfileEditPage({ tab = "profile", channelSections, channelPreview, accountSections, ...p }: CreatorProfileEditProps) {
+export function CreatorProfileEditPage({ tab = "profile", channelSections, channelPreview, ...p }: CreatorProfileEditProps) {
   const router = useRouter();
   const [name, setName] = useState(p.name);
   const [intro, setIntro] = useState(p.intro);
@@ -170,8 +168,7 @@ export function CreatorProfileEditPage({ tab = "profile", channelSections, chann
     <div className={`stack ${s.col}`}>
       <header className="page-head">
         <h1 className="ph-title">프로필 수정</h1>
-        {/* 미리보기가 있는 탭(프로필 · 채널)에서만 미리보기 안내 문장을 잇는다 — 계정 탭은 앞 문장만 */}
-        <p className="ph-desc">{tab === "account" ? "팬에게 공개되는 프로필입니다." : "팬에게 공개되는 프로필입니다. 변경할 내용을 미리보기에서 확인해 주세요."}</p>
+        <p className="ph-desc">팬에게 공개되는 프로필입니다. 변경할 내용을 미리보기에서 확인해 주세요.</p>
       </header>
 
       <ProfileTabs current={tab} />
@@ -179,6 +176,28 @@ export function CreatorProfileEditPage({ tab = "profile", channelSections, chann
       <div className={s.grid} data-pe-tab={tab}>
         <div className={s.main}>
           {tab === "profile" ? (
+            <>
+            {/* 프로필 사진 판 — 고르는 즉시 저장(creator-link INV-E9) */}
+            <section className={panel.panel} aria-labelledby="pe-ph">
+              <h2 className={panel.title} id="pe-ph">
+                프로필 사진
+              </h2>
+              <div className={`${s.sub} ${s.last}`}>
+                <ImageField
+                  id="pe-photo"
+                  labelledBy="pe-ph"
+                  hasImage={photoPath !== null}
+                  pickLabel="프로필 사진 변경"
+                  removeLabel="사진 삭제"
+                  upload={async (f) => photoOut(await sendCreatorPhoto(f))}
+                  remove={async () => photoOut(await deleteCreatorPhoto())}
+                  onSaved={setPhotoPath}
+                  onLogin={toLogin}
+                  savedText="프로필 사진이 변경되었습니다."
+                  removedText="프로필 사진이 삭제되었습니다."
+                />
+              </div>
+            </section>
             <form
               className={panel.panel}
               aria-labelledby="pe-in"
@@ -231,6 +250,7 @@ export function CreatorProfileEditPage({ tab = "profile", channelSections, chann
               </div>
               {formEnd}
             </form>
+            </>
           ) : null}
 
           {tab === "channel" ? (
@@ -308,36 +328,10 @@ export function CreatorProfileEditPage({ tab = "profile", channelSections, chann
             </>
           ) : null}
 
-          {tab === "account" ? (
-            <>
-              {/* 프로필 사진 판 — 고르는 즉시 저장(creator-link INV-E9) */}
-              <section className={panel.panel} aria-labelledby="pe-ph">
-                <h2 className={panel.title} id="pe-ph">
-                  프로필 사진
-                </h2>
-                <div className={`${s.sub} ${s.last}`}>
-                  <ImageField
-                    id="pe-photo"
-                    labelledBy="pe-ph"
-                    hasImage={photoPath !== null}
-                    pickLabel="프로필 사진 변경"
-                    removeLabel="사진 삭제"
-                    upload={async (f) => photoOut(await sendCreatorPhoto(f))}
-                    remove={async () => photoOut(await deleteCreatorPhoto())}
-                    onSaved={setPhotoPath}
-                    onLogin={toLogin}
-                    savedText="프로필 사진이 변경되었습니다."
-                    removedText="프로필 사진이 삭제되었습니다."
-                  />
-                </div>
-              </section>
-              {accountSections}
-            </>
-          ) : null}
         </div>
 
-        {/* 오른쪽 열 — 탭마다 미리보기 하나(계정 탭은 없음) */}
-        {tab === "profile" ? headPreview : tab === "channel" ? channelPreview : null}
+        {/* 오른쪽 열 — 탭마다 미리보기 하나 */}
+        {tab === "profile" ? headPreview : channelPreview}
       </div>
     </div>
   );

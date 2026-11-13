@@ -1,5 +1,5 @@
-/* 상세 설정 화면 — 시안 pilot-2026-10-22/settings.html(pilot.css 「상세 설정」 .st-jump · .st-more) · v21-addendum3(.fold). 접힌 칸 안의 설정 상자는 옛 v18 카드 그대로.
-   폭: 틀은 1200(MyShell broad) — 「팬덤」과 「주소와 설정」이 같은 폭 · 같은 왼쪽 선 + 위 구분선(design-rules 41절이 27절 「주소와 설정 880」을 바꿈).
+/* 계정 설정 화면(2026-11-13 「상세 설정」에서 이름 바꿈) — 시안 pilot-2026-10-22/settings.html(pilot.css 「상세 설정」 .st-jump · .st-more) · v21-addendum3(.fold). 접힌 칸 안의 설정 상자는 옛 v18 카드 그대로.
+   폭: 틀은 1200(MyShell broad) — 「팬덤」과 「주소와 설정」이 같은 폭이던 배치(design-rules 41절). 2026-11-13 팬덤은 프로필 수정 「채널」 탭으로 옮겨 이 화면은 접힌 칸 한 묶음.
    41절(시안 part4-v4-20261101): 판·접힌 칸 흰 카드(--hair + --card-shadow) · 안쪽 32(휴대폰 24) · 선 버튼 짙은 선 · 스위치 52×32 · 칩·라디오 칸 짙은 선 · 접힌 칸 상태 점 + 글자 뱃지 · 칸 폭은 값 길이.
    공통 부품(.card·.card--soft·.grid·.opt·.sw-row·.tags·.chip·.field·.hint·.err)은 base.css 가 그린다 — 여기는 이 화면에만 있는 것 */
 
@@ -46,7 +46,7 @@
 /* 받는 주소 — 자물쇠 그림 */
 .addr-ico { width: 72px; height: 72px; margin-bottom: 12px; }
 
-/* 차단한 팬 · 계정 보안 — 칸 안 이름 줄 */
+/* 차단한 팬 · 보안 — 칸 안 이름 줄 */
 .who { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .who > div { min-width: 0; }
 
@@ -95,7 +95,6 @@ label.txt { cursor: pointer; }
 .handle-host { flex-shrink: 0; font-weight: var(--fw-btn); white-space: nowrap; }
 .handle-row :global(.field) { flex: 1; }
 .link-text { overflow-wrap: anywhere; }
-/* 글 안의 누를 글자 링크(「프로필 수정」) — 누름 칸 높이 44 */
 
 @media (max-width: 767px) {
   /* 고르기 칸 4열은 휴대폰에서 2열(시안 v18-cre.css .opt-grid) — 공통 격자는 1열로 접는다 */

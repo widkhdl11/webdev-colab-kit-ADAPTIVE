@@ -8,10 +8,11 @@ vi.mock("@/features/creator-settings-save/api/send-creator-settings", () => ({ s
 
 import type { MyVerificationState } from "@/entities/creator/model/creator-verification";
 import { CREATOR_SETTINGS } from "@/entities/session/model/home-path";
-import { CreatorAccountPage, CreatorChannelOwnerRow, CreatorLeaveRow, CreatorSecurityGroup } from "@/widgets/creator-account/ui/creator-account-page";
+import { CreatorAccountPage, CreatorChannelOwnerRow, CreatorLeaveBody, CreatorSecurityRows } from "@/widgets/creator-account/ui/creator-account-page";
 
-// 2026-11-13 재분류(UX 명세 creator-profile): /creator/account 는 「알림 설정」 — 알림 묶음 + 상세 설정 안내 줄만.
-// 보안(비밀번호·휴대폰)·회원 탈퇴는 프로필 수정 「계정」 탭, 채널 소유자 확인은 「채널」 탭으로 옮긴 구역 부품이다 — 구역 안 동작은 그대로라 같은 시험을 부품에 건다.
+// 2026-11-13 재분류(UX 명세 creator-profile): /creator/account 는 「알림 설정」 — 알림 묶음만.
+// 보안(비밀번호·휴대폰)·회원 탈퇴는 계정 설정(/creator/settings, 같은 날 「계정」 탭을 없애며 옮김)의 접힌 칸 안, 채널 소유자 확인은 프로필 수정 「채널」 탭에
+// 끼우는 구역 부품이다 — 구역 안 동작은 그대로라 같은 시험을 부품에 건다. 접힌 칸 배치는 creator-settings-page.test 가 본다.
 // (옛 설명) 계정 설정(크리에이터) /creator/account — 정돈 4파트(design-rules 27절, 카드 d115, 시안 pilot-2026-10-22/creator-account.html).
 // 카드 셋 대신 묶음 둘: 보안 → 알림 → 상세 설정 안내 줄 → 회원 탈퇴(맨 끝). 동작(펼치는 칸·즉시 저장·실패 시 되돌림)은 그대로.
 
@@ -55,13 +56,13 @@ function render() {
   });
 }
 
-/** 프로필 수정 「계정」 탭에 끼우는 구역 — 보안 묶음 + 회원 탈퇴 */
-function renderAccountTab() {
+/** 계정 설정의 「보안」·「회원 탈퇴」 접힌 칸 안에 끼우는 부품 */
+function renderSettingsParts() {
   act(() => {
     root.render(
       <div>
-        <CreatorSecurityGroup phoneMasked="010-****-9999" />
-        <CreatorLeaveRow />
+        <CreatorSecurityRows phoneMasked="010-****-9999" />
+        <CreatorLeaveBody />
       </div>,
     );
   });
@@ -100,60 +101,41 @@ describe("알림 설정(옛 계정 설정) — 알림만 남는다 (2026-11-13 �
   });
 });
 
-describe("프로필 수정 「계정」 탭 구역 — 보안 · 회원 탈퇴", () => {
-  it("보안 묶음 줄은 비밀번호 → 휴대폰 번호 둘뿐(채널 소유자 확인은 채널 탭)", () => {
-    renderAccountTab();
-    // 판 둘 — 보안 · 회원 탈퇴(줄 이름이 판 제목). 같은 판 모양(공용 settings-panel)
-    expect(sectionTitles()).toEqual(["보안", "회원 탈퇴"]);
-    const security = host.querySelectorAll("section")[0];
-    // 줄 묶음의 직접 자식(줄)을 하나씩 — 사이에 다른 줄이 끼면 길이·순서가 깨진다
-    const rows = [...security.querySelector("h2")!.nextElementSibling!.children] as HTMLElement[];
+describe("계정 설정 「보안」·「회원 탈퇴」 칸 안쪽 (2026-11-13 프로필 수정 「계정」 탭에서 옮김)", () => {
+  it("보안 줄은 비밀번호 → 휴대폰 번호 둘뿐(채널 소유자 확인은 채널 탭) — 제목·판은 계정 설정의 접힌 칸이 그린다", () => {
+    renderSettingsParts();
+    const security = host.querySelector("[data-ca-group='security']")!;
+    const rows = [...security.children] as HTMLElement[];
     const keys = ["비밀번호", "휴대폰 번호"];
     expect(rows).toHaveLength(keys.length);
     rows.forEach((row, i) => expect(row.textContent!.startsWith(keys[i])).toBe(true));
     expect(rows[1].textContent).toContain("010-****-9999");
+    expect(security.querySelector("h2, section")).toBeNull();
     expect(host.querySelector("#verify")).toBeNull();
   });
 
   it("비밀번호 「변경」을 누르면 그 줄 아래에 칸이 펼쳐진다", () => {
-    renderAccountTab();
-    const btn = host.querySelectorAll("section button")[0] as HTMLButtonElement;
+    renderSettingsParts();
+    const btn = host.querySelector<HTMLButtonElement>("[data-ca-group='security'] button")!;
     expect(btn.textContent?.trim()).toBe("변경");
     act(() => btn.click());
     expect(btn.getAttribute("aria-expanded")).toBe("true");
     expect(document.getElementById(btn.getAttribute("aria-controls")!)).not.toBeNull();
   });
 
-  it("회원 탈퇴는 보안 판 뒤(맨 끝) 따로 된 판 — 보안 판 안에 있지 않다", () => {
-    renderAccountTab();
-    const wrap = host.firstElementChild as HTMLElement;
-    const last = wrap.lastElementChild as HTMLElement;
-    expect(last.tagName).toBe("SECTION");
-    expect(last.querySelector("h2")?.textContent?.trim()).toBe("회원 탈퇴");
-    expect(last.querySelector("button")?.textContent?.trim()).toBe("탈퇴 안내");
-    expect(host.querySelectorAll("section")[0].textContent).not.toContain("탈퇴 안내");
+  it("회원 탈퇴 칸 안쪽은 탈퇴 문의 링크 하나(접힌 칸을 펼치는 것이 옛 「탈퇴 안내」 버튼을 대신한다)", () => {
+    renderSettingsParts();
+    const leave = host.querySelector("[data-ca-group='leave']")!;
+    expect([...leave.querySelectorAll("a")].map((a) => [a.textContent?.trim(), a.getAttribute("href")])).toEqual([["탈퇴 문의", "/support"]]);
+    expect(leave.querySelector("button")).toBeNull();
   });
 
-  it("세 판(보안 · 회원 탈퇴 · 채널 소유자 확인)은 같은 판 모양이고 제목은 h2 하나씩", () => {
-    renderAccountTab();
-    const [security, leave] = [...host.querySelectorAll("section")];
+  it("채널 소유자 확인 판은 공용 판 모양이고 제목은 h2 하나", () => {
     act(() => root.render(<CreatorChannelOwnerRow verification={{ state: unverified, rows: [], apiPlatforms: [], loginId: "qa_c1029a" }} />));
     const channel = host.querySelector("section")!;
-    expect(channel.className).toBe(security.className);
-    expect(leave.className).toBe(security.className);
     // 닫힌 확인 창(dialog) 안의 제목은 판 제목이 아니다
     expect([...channel.querySelectorAll("h2")].filter((h) => !h.closest("dialog"))).toHaveLength(1);
     expect(channel.querySelector("h2")?.textContent?.trim()).toBe("채널 소유자 확인");
-  });
-
-  it("탈퇴 안내를 누르면 그 줄 아래 탈퇴 문의 링크가 펼쳐진다", () => {
-    renderAccountTab();
-    const leave = buttonByText("탈퇴 안내")!;
-    act(() => leave.click());
-    expect(leave.getAttribute("aria-expanded")).toBe("true");
-    const panel = document.getElementById(leave.getAttribute("aria-controls")!)!;
-    expect(panel.querySelector('a[href="/support"]')?.textContent?.trim()).toBe("탈퇴 문의");
-    expect((host.firstElementChild as HTMLElement).lastElementChild!.contains(panel)).toBe(true);
   });
 });
 

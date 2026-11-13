@@ -23,6 +23,8 @@ import type { ReplySettings } from "@/entities/gift-reply/api/gift-reply-reads";
 import type { MyHardItems } from "@/entities/gift-item/model/hard-items";
 import s from "./creator-settings.module.css";
 
+// 2026-11-13 같은 날 사용자 지시: 이 화면 이름을 「계정 설정」으로 바꾸고(주소 /creator/settings 그대로) 선물 받기 설정들 뒤에 「보안」(비밀번호 · 휴대폰 번호)과
+// 「회원 탈퇴」를 같은 접힌 칸 모양으로 둔다(#security · #leave). 두 칸의 안쪽은 앱 레이어가 넘긴다(widgets/creator-account 의 부품 — 위젯끼리 import 하지 않는다).
 // 2026-11-13 재분류(UX 명세 creator-profile, DECISIONS 같은 날): 팬덤 구역(팬덤 이름·팬마크·테마 색)과 선물 링크 주소는 프로필 수정 「채널」 탭으로 옮겼다 —
 // 이 화면에는 주소와 설정(승인 서명·받는 주소·받기 설정·차단한 팬·감사 답장)만 남는다. 아래는 옮기기 전 설명이다.
 // 크리에이터 상세 설정 (design-rules 12절 · 27절, 시안 docs/design/mockups/site/pilot-2026-10-22/settings.html). 틀 폭 1200 — 「팬덤」(입력 + 미리보기)과 「주소와 설정」이 같은 폭 · 같은 왼쪽 선(41절).
@@ -89,7 +91,13 @@ export function CreatorSettingsPage({
   today,
   replySettings,
   signatureLink,
+  security,
+  leave,
 }: {
+  /** 「보안」 접힌 칸 안쪽 — 비밀번호 · 휴대폰 번호 줄(앱 레이어가 넘긴다) */
+  security: ReactNode;
+  /** 「회원 탈퇴」 접힌 칸 안쪽 — 탈퇴 문의 링크 */
+  leave: ReactNode;
   /** 승인 서명 연결 여부와 연결한 때(approval-signature INV-S16) — 등록한 이름·생년월일·번호는 오지 않는다 */
   signatureLink: MySignatureLink;
   /** X 계정·태그 허용(답장 모음 보이기 칸은 저장값만 돌려보낸다 — 2026-11-13 모음 없앰) — 로그인한 크리에이터 본인 것(gift-reply INV-G8) */
@@ -139,16 +147,16 @@ export function CreatorSettingsPage({
   return (
     <div className={s.root}>
       <header className="page-head">
-        <h1 className="ph-title">상세 설정</h1>
-        <p className="ph-desc">받는 주소·선물 받기·차단한 팬·감사 답장을 관리합니다.</p>
+        <h1 className="ph-title" id="settings-h">
+          계정 설정
+        </h1>
+        {/* 화면에 나오는 순서대로 — 카카오톡 인증 알림 줄 → 받는 주소 → 받기 설정(선물 받기) → 차단한 팬 → 감사 답장 → 보안 → 회원 탈퇴 */}
+        <p className="ph-desc">카카오톡 인증 알림·받는 주소·선물 받기·차단한 팬·감사 답장·보안·회원 탈퇴를 관리합니다.</p>
       </header>
 
       <div className={`stack ${s.page}`}>
-        <section id="more" className={s.group} aria-labelledby="more-h">
-          {/* 팬덤이 빠져 이 묶음이 화면의 유일한 묶음이다 — h1 아래 보이는 제목을 한 번 더 두지 않고 낭독용 이름만(2026-11-13 ui 리뷰) */}
-          <h2 className="sr-only" id="more-h">
-            주소와 설정
-          </h2>
+        {/* 이 묶음이 화면 전체다(팬덤이 빠지고 보안·회원 탈퇴가 들어옴) — 따로 제목을 두지 않고 h1 「계정 설정」으로 이름을 읽는다(2026-11-13 ux 리뷰) */}
+        <section id="more" className={s.group} aria-labelledby="settings-h">
           {/* 승인 서명 줄(UX 명세 signup.md 「크리에이터 설정 — 승인 서명 줄」, 시안 v43-signup/creator-settings-signature) — 묶음 맨 위.
               연결 전: 누르면 승인 서명 연결 카드로(장애 대비 길로 가입한 크리에이터, signup INV-U20). 연결됨: 연결한 날과 「다시 연결」. 등록한 값은 다시 보이지 않는다(INV-S16) */}
           {signatureLink.linked ? (
@@ -238,6 +246,14 @@ export function CreatorSettingsPage({
 
           <Fold id="thanks" title="감사 답장">
             <ReplySettingsSection initial={replySettings} />
+          </Fold>
+
+          {/* 선물 받기 설정들 뒤 — 보안 · 회원 탈퇴(2026-11-13 프로필 수정 「계정」 탭에서 옮김). 같은 접힌 칸 모양, 펼치면 옛 줄 그대로 */}
+          <Fold id="security" title="보안">
+            {security}
+          </Fold>
+          <Fold id="leave" title="회원 탈퇴">
+            {leave}
           </Fold>
         </section>
 

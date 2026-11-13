@@ -137,7 +137,7 @@ export function LinkSection({
         {msg?.text}
       </p>
 
-      {/* 사진 안내 줄은 두지 않는다 — 배경 사진은 같은 채널 탭 위 판, 프로필 사진은 「계정」 탭(탭 이름이 보인다). 2026-11-13 리뷰: 명세에 없는 설명 줄 */}
+      {/* 사진 안내 줄은 두지 않는다 — 배경 사진은 같은 채널 탭 위 판, 프로필 사진은 프로필 탭. 2026-11-13 리뷰: 명세에 없는 설명 줄 */}
       </div>
 
       <BottomSheet open={confirming} title={`${linkText(normalizeHandle(draft) || "…")} 로 정할까요?`} onClose={() => setConfirming(false)}>

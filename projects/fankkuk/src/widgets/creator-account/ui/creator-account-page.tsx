@@ -11,7 +11,7 @@ import { MustDeliverNotice } from "@/entities/notification/ui/must-deliver-notic
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import {
   CREATOR_ACCOUNT,
-  creatorProfileTabHref,
+  CREATOR_SETTINGS,
 } from "@/entities/session/model/home-path";
 import { sendCreatorNotify } from "@/features/creator-settings-save/api/send-creator-settings";
 import { VerificationPanel } from "@/features/creator-verify/ui/verification-panel";
@@ -22,9 +22,9 @@ import panel from "@/shared/ui/settings-panel.module.css";
 import s from "./creator-account.module.css";
 
 // 2026-11-13 재분류(UX 명세 creator-profile, DECISIONS 같은 날): 이 화면은 「알림 설정」으로 이름을 바꿔 알림만 남는다(주소 /creator/account 그대로).
-// 보안(비밀번호·휴대폰 번호)·회원 탈퇴는 프로필 수정 「계정」 탭, 채널 소유자 확인은 「채널」 탭으로 옮겼다 — 아래 구역 부품을 그대로 내보내
-// 앱 레이어(app/(site)/creator/profile/page.tsx)가 탭에 끼운다. 구역 안의 동작·문구는 그대로다.
-// 세 구역의 겉모양은 공용 settings-panel 판(탭 안 다른 구역과 같은 판·같은 제목 단계 h2) — 4+8 제목 줄·판 밖 줄 모양은 알림 설정에만 남는다.
+// 보안(비밀번호·휴대폰 번호)·회원 탈퇴는 계정 설정(옛 상세 설정, /creator/settings)의 접힌 칸으로, 채널 소유자 확인은 프로필 수정 「채널」 탭으로 옮겼다
+// (같은 날 사용자 지시로 프로필 수정 「계정」 탭을 없앰). 아래 구역 부품을 내보내 앱 레이어가 그 화면에 끼운다. 구역 안의 동작·문구는 그대로다.
+// 채널 소유자 확인의 겉모양은 공용 settings-panel 판, 보안·회원 탈퇴의 겉모양은 계정 설정의 접힌 칸이 그린다.
 // (아래는 옮기기 전 설명)
 // 크리에이터 계정 설정(design-rules 27절 「4파트 나머지 다섯 화면」, 2026-10-22 카드 d115 · 시안 docs/design/mockups/site/pilot-2026-10-22/creator-account.html).
 // 2026-10-16 사용자 「만들어봐」 — 상세 설정 아래 접힌 「계정」 칸(본인 확인·알림·계정 보안)을 이 화면으로 옮겼다.
@@ -79,72 +79,62 @@ function Switch({
   );
 }
 
-/** 로그인이 끊겼을 때 돌아올 곳 — 구역이 놓인 프로필 수정 탭 */
-function useToLogin(back: string) {
-  const router = useRouter();
-  return () => router.push(`/login?next=${encodeURIComponent(back)}`);
-}
-
-/** 보안 묶음 — 비밀번호 · 휴대폰 번호(버튼을 눌러야 그 줄 아래에 칸이 펼쳐진다). 프로필 수정 「계정」 탭 */
-export function CreatorSecurityGroup({ phoneMasked }: { phoneMasked: string | null }) {
+/** 보안 줄 둘 — 비밀번호 · 휴대폰 번호(버튼을 눌러야 그 줄 아래에 칸이 펼쳐진다). 계정 설정(/creator/settings)의 「보안」 접힌 칸 안.
+ *  겉모양(접힌 칸 · 제목 「보안」)은 계정 설정 화면이 그린다 — 여기는 줄만. 로그인이 끊기면 계정 설정으로 돌아온다 */
+export function CreatorSecurityRows({ phoneMasked }: { phoneMasked: string | null }) {
   const id = useId();
   const f = (name: string) => `${id}-${name}`;
   const router = useRouter();
-  const toLogin = useToLogin(creatorProfileTabHref("account"));
+  const toLogin = () => router.push(`/login?next=${encodeURIComponent(CREATOR_SETTINGS)}`);
   const [open, setOpen] = useState<Open>(null);
   const toggle = (which: Exclude<Open, null>) =>
     setOpen((cur) => (cur === which ? null : which));
   return (
-    <section className={`${s.wrap} ${panel.panel}`} aria-labelledby={f("sec1")} data-ca-group="security">
-      <h2 className={panel.title} id={f("sec1")}>
-        보안
-      </h2>
-      <div className={`${s.rows} ${s.inPanel}`}>
-        <div className={s.item}>
-          <div className={s.row}>
-            <p className={s.txt}>
-              <span className={s.k}>비밀번호</span>
-            </p>
-            <button
-              className="btn btn--line btn--sm"
-              type="button"
-              aria-expanded={open === "password"}
-              aria-controls={f("pw-panel")}
-              onClick={() => toggle("password")}
-            >
-              변경
-            </button>
-          </div>
-          {open === "password" && (
-            <div className={s.panel}>
-              <PasswordChangePanel id={f("pw-panel")} onLoginExpired={toLogin} />
-            </div>
-          )}
+    <div className={`${s.wrap} ${s.rows}`} data-ca-group="security">
+      <div className={s.item}>
+        <div className={s.row}>
+          <p className={s.txt}>
+            <span className={s.k}>비밀번호</span>
+          </p>
+          <button
+            className="btn btn--line btn--sm"
+            type="button"
+            aria-expanded={open === "password"}
+            aria-controls={f("pw-panel")}
+            onClick={() => toggle("password")}
+          >
+            변경
+          </button>
         </div>
-        <div className={s.item}>
-          <div className={s.row}>
-            <p className={s.txt}>
-              <span className={s.k}>휴대폰 번호</span>
-              <span className={s.v}>{phoneMasked ?? "등록된 번호가 없어요"}</span>
-            </p>
-            <button
-              className="btn btn--line btn--sm"
-              type="button"
-              aria-expanded={open === "phone"}
-              aria-controls={f("tel-panel")}
-              onClick={() => toggle("phone")}
-            >
-              변경
-            </button>
+        {open === "password" && (
+          <div className={s.panel}>
+            <PasswordChangePanel id={f("pw-panel")} onLoginExpired={toLogin} />
           </div>
-          {open === "phone" && (
-            <div className={s.panel}>
-              <PhoneChangePanel id={f("tel-panel")} onLoginExpired={toLogin} onChanged={() => router.refresh()} />
-            </div>
-          )}
-        </div>
+        )}
       </div>
-    </section>
+      <div className={s.item}>
+        <div className={s.row}>
+          <p className={s.txt}>
+            <span className={s.k}>휴대폰 번호</span>
+            <span className={s.v}>{phoneMasked ?? "등록된 번호가 없어요"}</span>
+          </p>
+          <button
+            className="btn btn--line btn--sm"
+            type="button"
+            aria-expanded={open === "phone"}
+            aria-controls={f("tel-panel")}
+            onClick={() => toggle("phone")}
+          >
+            변경
+          </button>
+        </div>
+        {open === "phone" && (
+          <div className={s.panel}>
+            <PhoneChangePanel id={f("tel-panel")} onLoginExpired={toLogin} onChanged={() => router.refresh()} />
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -194,40 +184,14 @@ export function CreatorChannelOwnerRow({ verification }: { verification: Creator
   );
 }
 
-/** 회원 탈퇴 — 펼치면 고객센터 문의 링크만(탈퇴 기능이 아직 없다). 프로필 수정 「계정」 탭 맨 끝 */
-export function CreatorLeaveRow() {
-  const id = useId();
-  const [open, setOpen] = useState(false);
+/** 회원 탈퇴 — 고객센터 문의 링크만(탈퇴 기능이 아직 없다). 계정 설정의 「회원 탈퇴」 접힌 칸 안 — 접힌 칸을 펼치는 것이 옛 「탈퇴 안내」 버튼을 대신한다 */
+export function CreatorLeaveBody() {
   return (
-    <section className={`${s.wrap} ${panel.panel}`} aria-labelledby={`${id}-leave-h`} data-ca-group="leave">
-      <div className={`${s.inPanel}`}>
-      <div className={s.row}>
-        <div className={s.txt}>
-          {/* 줄 이름이 곧 판 제목(h2) */}
-          <h2 className={panel.titleText} id={`${id}-leave-h`}>
-            회원 탈퇴
-          </h2>
-          <span className={s.sub}>탈퇴 문의 및 절차 안내</span>
-        </div>
-        <button
-          className={`btn btn--sm ${s.danger}`}
-          type="button"
-          aria-expanded={open}
-          aria-controls={`${id}-leave-panel`}
-          onClick={() => setOpen((v) => !v)}
-        >
-          탈퇴 안내
-        </button>
-      </div>
-      {open && (
-        <div className={s.panel} id={`${id}-leave-panel`}>
-          <Link className="btn btn--line btn--sm" href="/support">
-            탈퇴 문의
-          </Link>
-        </div>
-      )}
-      </div>
-    </section>
+    <div className={s.wrap} data-ca-group="leave">
+      <Link className="btn btn--line btn--sm" href="/support">
+        탈퇴 문의
+      </Link>
+    </div>
   );
 }
 
