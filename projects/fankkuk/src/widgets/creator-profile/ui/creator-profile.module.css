@@ -138,7 +138,7 @@
 .oarrow { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); cursor: pointer; }
 .oarrow svg, .opause svg { flex: none; }
 .oarrow svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-@media (hover: hover) { .oarrow:hover, .opause:hover { background: var(--surface-hover); } }
+@media (hover: hover) { .oarrow:hover:not(:disabled), .opause:hover { background: var(--surface-hover); } }
 .ogrid { display: flex; gap: var(--space-4); margin: -4px; padding: 4px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 4px; scrollbar-width: none; overscroll-behavior-x: contain; list-style: none; } /* 4: 그림자가 잘리지 않게 */
 .ogrid::-webkit-scrollbar { display: none; }
 .ogrid > li { flex: 0 0 calc((100% - 2 * var(--space-4)) / 3); min-width: 0; scroll-snap-align: start; }
@@ -201,3 +201,26 @@
   .chevron, .dchev, .other, .gtile { transition: none; }
   .other:hover, .gtile:hover { transform: none; }
 }
+
+/* 나에게 온 감사 카드(docs/specs/my-reply-cards.md · 시안 e판 .rcard) — 상세 정보 안, 2열 뒤 줄 사이 64 의 독립 줄. 누르지 않는 카드라 테두리·그림자 없이 옅은 하늘 면.
+   시안 카드는 288×184 고정이었는데 한 줄(최대 80자) 칸이 있어 높이는 최소 184 로 둔다(ui-layers 「글자가 든 상자에 고정 height 금지」) */
+.replies { margin-top: var(--space-16); }
+.replies .oarrow { box-shadow: var(--hair), var(--btn-ghost-shadow); } /* 시안 .rbtn */
+.secTools .oarrow:disabled { color: var(--gray-500); cursor: default; }
+.rwho b { color: var(--ink); font-weight: var(--fw-btn); }
+.secTools .oarrow:disabled svg { opacity: 0.6; }
+.rtrack { display: flex; gap: var(--space-4); margin: 0; padding: 0; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; border-radius: var(--r-card); list-style: none; }
+.rtrack:focus-visible { outline-offset: 4px; }
+.rcard { flex: none; scroll-snap-align: start; display: flex; flex-direction: column; gap: var(--space-2); width: 288px; min-height: 184px; padding: var(--space-4); border-radius: var(--r-card); background: var(--surface-brand); }
+.rwho { display: flex; align-items: center; gap: var(--space-3); min-width: 0; margin: 0; font-size: var(--fs-small); line-height: 1.4; color: var(--sub); }
+.rface:global(.face) { flex: none; width: 40px; height: 40px; box-shadow: 0 0 0 3px var(--white); }
+.rbody { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: var(--space-1); padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--white); } /* 글이 주인공(design-prompt 8-14) — 반경 12, 카드 16 */
+.rphrase { margin: 0; font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.35; color: var(--ink); }
+.rline { margin: 0; font-size: var(--fs-small); line-height: 1.5; color: var(--sub); overflow-wrap: anywhere; }
+.rdate { margin: 0; font-size: var(--fs-small); line-height: 1.4; color: var(--sub); }
+@container page (max-width: 767px) {
+  .replies { margin-top: var(--space-12); }
+  .replies .oarrow { display: grid; } /* 추천 줄의 휴대폰 화살표 숨김을 감사 카드에는 쓰지 않는다(시안 .rbtn 은 휴대폰에서도 보인다) */
+  .rtrack { margin-right: calc(-1 * var(--gutter)); padding-right: var(--gutter); border-radius: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .rtrack { scroll-behavior: auto; } }

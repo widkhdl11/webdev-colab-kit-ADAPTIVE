@@ -9,6 +9,11 @@ import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { CreatorProfilePage, type CreatorProfilePageProps } from "@/widgets/creator-profile/ui/creator-profile-page";
 import { VerifyingCreatorPage } from "@/widgets/creator-profile/ui/verifying-creator-page";
 
+// 라우트 모듈(INV-RC5 시험이 dynamic 설정을 읽는다)이 서버 전용 표시(server-only)를 단 연결 모듈을 불러온다 — 시험 환경에 그 표시가 없어 그 모듈을 통째로 바꾼다
+vi.mock("@/shared/api/supabase/detached", () => ({ createDetachedAuth: vi.fn(), createPublicReadSupabase: vi.fn(), readPublicStorageBase: vi.fn() }));
+vi.mock("@/shared/api/supabase/server", () => ({ createRequestSupabase: vi.fn(), createDeferredRequestSupabase: vi.fn() }));
+vi.mock("@/shared/api/supabase/admin", () => ({ createAdminSupabase: vi.fn() }));
+
 // 크리에이터 상세 시안 e판(docs/design/mockups/creator-detail-e-20261112) — 상세 내용 여닫기(처음 닫힘) · 진행 중인 선물함 타일과 상세 창 ·
 // 추천 크리에이터 자동 슬라이드(멈춤 버튼) · 배경 기본 면 · verifying 은 상세 내용·선물함·추천이 없다.
 
@@ -178,5 +183,46 @@ describe("verifying — 채널 확인 중", () => {
     expect(byText("상세 정보 펼치기")).toBeUndefined();
     expect(host.querySelector("#boxes-h")).toBeNull();
     expect(host.querySelector("#similar-title")).toBeNull();
+  });
+});
+
+describe("나에게 온 감사 카드 (docs/specs/my-reply-cards.md)", () => {
+  const cards = [
+    { creatorName: "하루", phrase: "thanks" as const, line: "또 보내 줘서 고마워요", repliedOn: "2026-11-02" },
+    { creatorName: "하루", phrase: "cheered" as const, line: null, repliedOn: "2026-10-20" },
+  ];
+
+  it("INV-RC2: 카드가 있으면 상세 정보 안에 「나에게 온 감사 카드」와 카드가 보인다", () => {
+    render({ myReplyCards: cards });
+    act(() => byText("상세 정보 펼치기")!.click());
+    const sec = host.querySelector<HTMLElement>('[aria-labelledby="my-replies-h"]');
+    expect(sec?.querySelector("#my-replies-h")?.textContent).toBe("나에게 온 감사 카드");
+    expect(sec?.querySelectorAll("li")).toHaveLength(2);
+    expect(sec?.textContent).toContain("잘 받았어요, 고마워요");
+    expect(sec?.textContent).toContain("또 보내 줘서 고마워요");
+  });
+
+  it("INV-RC2 (실패경로): 카드가 0장이면 영역(제목 포함)이 없다", () => {
+    render({ myReplyCards: [] });
+    expect(host.querySelector("#my-replies-h")).toBeNull();
+    expect(host.textContent).not.toContain("나에게 온 감사 카드");
+  });
+
+  it("INV-RC4: 카드에는 날짜만 있고 시각·주문번호가 없다", () => {
+    render({ myReplyCards: cards });
+    const html = host.querySelector('[aria-labelledby="my-replies-h"]')?.innerHTML ?? "";
+    expect(html).toContain("11월 2일");
+    expect(html).not.toMatch(/\([일월화수목금토]\)/); // 날짜만, 요일 없이(시안)
+    expect(html).not.toMatch(/\d{1,2}:\d{2}/);
+    expect(html).not.toContain("FC-");
+  });
+});
+
+describe("INV-RC5: 상세 페이지는 요청마다 새로 만든다(사람 사이에 다시 쓰지 않음)", () => {
+  it("INV-RC5: 두 라우트 모두 dynamic = force-dynamic", async () => {
+    const handle = await import("@/app/(site)/[handle]/page");
+    const byId = await import("@/app/(site)/creators/[id]/page");
+    expect(handle.dynamic).toBe("force-dynamic");
+    expect(byId.dynamic).toBe("force-dynamic");
   });
 });

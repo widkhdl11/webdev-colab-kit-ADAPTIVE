@@ -15,12 +15,14 @@ import { giftSendOpenFor } from "@/features/creator-follow/model/creator-gift-op
 import { followModeOf } from "@/features/creator-follow/model/follow-mode";
 import { sendAvailabilityOf, sendOnLinkPage } from "@/features/gift-register/model/sender-rule";
 import type { CreatorProfilePageProps } from "../ui/creator-profile-page";
+import { readMyReplyCardsFor } from "./my-reply-cards";
 
 // 선물 링크 페이지 한 장의 읽기 (creator-link INV-E5·E7·E8). 링크 주소(/{아이디})와 옛 페이지 주소(/creators/{id})가 같이 쓴다 — 같은 페이지다.
 // 읽는 것은 모두 공개 읽기 함수다: 크리에이터 한 명(creator_by_id — 공개 이름·아이디·사진 경로·소개·태그·승인 시간),
 // 아래 줄의 다른 크리에이터 몇 명(list_other_creators — 목록 전체를 읽지 않는다), 받는 상태(쉬는 날·생일·기념일),
 // 받기 어려운 품목 문구, 이번 달 팬 수(숫자 하나), 공개 요금표, 보낼 수 없는 것. 로그인했으면 팔로우 목록을 한 번 읽어 양쪽에 붙인다.
 // 추천 크리에이터 카드의 배경사진은 찾기 화면과 같은 공개 꾸밈 읽기(find_creators_look — 로그인 전에도 공개)로 붙인다. 읽지 못하면 기본 배경.
+// 「나에게 온 감사 카드」는 팔로우한 팬일 때만 팬 본인 답장 읽기(my_gift_replies)를 이 크리에이터로 걸러 읽는다(docs/specs/my-reply-cards.md INV-RC1·RC2).
 // 공개 감사 답장 모음은 읽지 않는다(2026-11-12 시안 c판 사용자 지시 「답장은 받은 팬의 마이꾹에서만」 — e판 구현에서 뺐다).
 // 선물함 입구의 내 신청 상태는 보는 사람이 팬일 때만, 선물함 화면과 같은 팬용 읽기(revgift_box_for_fan — 본인 신청 한 행만)로 선물함마다 읽는다.
 // 팬덤 이름과 확인된 채널(플랫폼·채널 키·주소·확인 날짜, 추가분 4-1·4-3), 배경사진·팬덤 심볼·미리보기 고르기(「내 팬꾹 꾸미기」)도
@@ -48,7 +50,7 @@ export async function loadCreatorLinkPage(input: {
   // 크리에이터가 자기 페이지를 보면 선물 보내기를 숨긴다(INV-L8). 팔로우하지 않았으면 「팔로우하고 선물 보내기」(INV-L9)
   const asCreator = viewer?.role === "creator";
   const followedIds = viewer ? await readMyFollowIds(client) : [];
-  const [others, ownCreatorId, prices, prohibited, receiving, hardItems, monthFans, extras, linked, openBoxes, otherLooks] = await Promise.all([
+  const [others, ownCreatorId, prices, prohibited, receiving, hardItems, monthFans, extras, linked, openBoxes, otherLooks, myReplyCards] = await Promise.all([
     readOtherCreatorCards(client, { excludeId: creatorId, limit: OTHERS_SHOWN, followedIds }),
     asCreator ? readOwnCreatorId(client) : Promise.resolve(null),
     readPublicPrices(client),
@@ -65,6 +67,7 @@ export async function loadCreatorLinkPage(input: {
       .then((boxes) => withMyBoxState(client, viewer, boxes))
       .catch(() => []),
     readCreatorSearchLooks(client).catch(() => ({}) as Awaited<ReturnType<typeof readCreatorSearchLooks>>),
+    readMyReplyCardsFor(client, viewer, creatorId, followedIds.includes(creatorId)),
   ]);
   const creator = { ...base, following: followedIds.includes(creatorId) };
   const today = kstToday(new Date());
@@ -94,6 +97,7 @@ export async function loadCreatorLinkPage(input: {
       backgroundUrl: creatorBackgroundUrl(photoBase, extras.look.bgPath),
       symbolUrl: creatorSymbolUrl(photoBase, extras.look.symbolPath),
       openBoxes,
+      myReplyCards,
     },
   };
 }

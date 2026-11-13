@@ -26,6 +26,8 @@ import type { FollowMode } from "@/features/creator-follow/model/follow-mode";
 import type { LinkPageSend } from "@/features/gift-register/model/sender-rule";
 import { BoxTiles } from "./box-tiles";
 import { DetailToggle } from "./detail-toggle";
+import { MyReplyCards } from "./my-reply-cards";
+import type { MyReplyCard } from "@/entities/gift-reply/model/my-reply-cards";
 import { ProfileCover } from "./profile-cover";
 import { SimilarCarousel } from "./similar-carousel";
 import s from "./creator-profile.module.css";
@@ -81,6 +83,8 @@ export type CreatorProfilePageProps = {
   symbolUrl?: string | null;
   /** 공개·신청 받는 중인 선물함(revgift-box INV-GB4 — 크리에이터 상세의 입구). 비면 칸을 그리지 않는다 */
   openBoxes?: readonly OpenBoxView[];
+  /** 「나에게 온 감사 카드」 — 팔로우한 팬 본인 답장(docs/specs/my-reply-cards.md). 0장이면 영역을 그리지 않는다(INV-RC2) */
+  myReplyCards?: readonly MyReplyCard[];
 };
 
 function Chevron() {
@@ -158,6 +162,7 @@ export function CreatorProfilePage({
   backgroundUrl = null,
   symbolUrl = null,
   openBoxes = [],
+  myReplyCards = [],
 }: CreatorProfilePageProps) {
   // INV-B2: 쉬는 중이면 버튼 자리에 쉬는 기간 한 줄, 받기 어려운 선물 알림을 숨긴다. 버튼을 비울지는 send 가 이미 정해 왔다.
   const restingText = restingNotice(receiving?.resumeOn ?? null, today);
@@ -341,6 +346,8 @@ export function CreatorProfilePage({
               </div>
             </section>
           </div>
+          {/* 시안 e판: 2열 뒤 독립 줄, 본문 전체 폭 — 상세 정보가 닫혀 있으면 함께 닫혀 있다 */}
+          {myReplyCards.length > 0 ? <MyReplyCards cards={myReplyCards} creatorName={creator.name} photoUrl={creator.photoUrl} faceTone={creator.faceTone} /> : null}
         </DetailToggle>
 
         {others.length > 0 ? (
