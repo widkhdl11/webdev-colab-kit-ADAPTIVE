@@ -59,7 +59,7 @@ export async function saveCreatorProfile(deps: SaveCreatorSettingsDeps, body: un
   if (intro !== undefined) args.p_intro = intro;
   if (searchable !== undefined) args.p_searchable = searchable;
   if (fanName !== undefined) args.p_fan_name = fanName;
-  // creator-link INV-E13: 테마 색 — 8색인지 위에서 봤고 대문자로 바꿨다. 팬컬러·글자색은 받지도 넘기지도 않는다(INV-E13·E14)
+  // creator-link INV-E13: 테마 색 — 꼴(#RRGGBB)을 위에서 봤고 대문자로 바꿨다. 팬컬러·글자색은 받지도 넘기지도 않는다(INV-E13·E14)
   if (personalColor !== undefined) args.p_personal_color = personalColor;
   return call(
     deps,

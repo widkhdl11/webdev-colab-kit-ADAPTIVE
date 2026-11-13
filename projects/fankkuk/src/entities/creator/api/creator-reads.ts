@@ -22,7 +22,7 @@ const rowSchema = z.object({
   // creator-link: 링크용 아이디·사진 경로(아이디나 사진이 없으면 null)
   handle: z.string().nullable(),
   photo_path: z.string().nullable(),
-  // creator-link INV-E13: 테마 색(저장 칸 퍼스널 컬러, 공개 값). 아래에서 8색인지 거른다 — 아니면 기본 모양
+  // creator-link INV-E13: 테마 색(저장 칸 퍼스널 컬러, 공개 값). 아래에서 꼴(#RRGGBB 대문자)을 거른다 — 아니면 기본 모양
   personal_color: z.string().nullable().optional(),
 });
 
@@ -49,7 +49,7 @@ function rowsToCards(
     faceTone: r.face_tone,
     handle: r.handle,
     photoPath: r.photo_path,
-    // creator-link INV-E13: 테마 색 — 8색 밖 값은 없는 것(기본 모양)으로. 팬컬러는 읽지 않는다(그리지 않는다)
+    // creator-link INV-E13: 테마 색 — 꼴이 틀린 값은 없는 것(기본 모양)으로. 팬컬러는 읽지 않는다(그리지 않는다)
     colors: { personal: creatorColorOrNull(r.personal_color) },
   }));
   const minutes = Object.fromEntries(

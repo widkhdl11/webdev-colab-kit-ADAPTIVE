@@ -20,7 +20,7 @@
 .sw input, .swNone input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .sw span:nth-of-type(1) { position: absolute; inset: 4px; border-radius: var(--r-pill); background: var(--sw); box-shadow: inset 0 0 0 1px var(--gray-500); pointer-events: none; }
 .sw input:checked + span { box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--gray-900); }
-.sw input:checked + span::after { content: ""; position: absolute; left: 12px; top: 8px; width: 8px; height: 14px; border: solid var(--gray-900); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.sw input:checked + span::after { content: ""; position: absolute; left: 12px; top: 8px; width: 8px; height: 14px; border: solid var(--sw-ink, var(--gray-900)); border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .sw input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 4px; }
 .swNone { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--space-4); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-500); font-size: var(--fs-small); font-weight: 400; cursor: pointer; }
 .swNone:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--gray-900); }
@@ -61,3 +61,20 @@
   .end { position: sticky; bottom: 0; z-index: 4; padding: var(--space-3) var(--space-6); border-top: 1px solid var(--line-on-white); border-radius: 0 0 var(--r-card) var(--r-card); background: var(--white); }
   .btns :global(.btn) { flex: 1; }
 }
+
+/* 직접 고르기(2026-11-13, 시안 settings-profile-20261113 #c-pick) — 견본 끝의 무지개 원, 고르면 그 색으로 채워지고 체크는 그 색 위에서 보이는 검정·흰색(--sw-ink).
+   펼친 판: 고르개 200(react-colorful — 색 면 + 색상 막대 24) · 오른쪽에 색 코드 칸 · 「옅게 맞추기」 · 적용 색. 휴대폰은 위아래로 */
+.swCustom span:nth-of-type(1) { background: var(--swatch-rainbow); }
+.swCustom span[data-on]:nth-of-type(1) { background: var(--sw, var(--swatch-rainbow)); }
+.picker { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: var(--space-6); align-items: start; margin-top: var(--space-3); padding: var(--space-4); border-radius: var(--r-btn); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line-on-white); }
+.picker :global(.react-colorful) { width: 200px; height: 184px; }
+.picker :global(.react-colorful__saturation) { border-bottom: 0; border-radius: var(--r-btn) var(--r-btn) 0 0; }
+.picker :global(.react-colorful__hue) { height: 24px; border-radius: 0 0 var(--r-btn) var(--r-btn); }
+/* 손잡이 초점 — 진한 색 위에서도 보이게 흰 링 + 진한 링(견본 체크와 같은 방식) */
+.picker :global(.react-colorful__interactive:focus-visible .react-colorful__pointer) { box-shadow: 0 0 0 2px var(--white), 0 0 0 5px var(--focus); }
+.pickSide { display: grid; gap: var(--space-3); align-content: start; min-width: 0; }
+.pickLab { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; cursor: pointer; }
+.hex { max-width: 160px; font-variant-numeric: tabular-nums; text-transform: uppercase; }
+.fitLine { display: flex; align-items: center; gap: var(--space-2); margin: 0; color: var(--sub); font-size: var(--fs-small); line-height: var(--lh-caption); }
+.fitLine i { flex: none; width: 20px; height: 20px; border-radius: var(--r-pill); background: var(--sw); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gray-900) 22%, transparent); }
+@media (width < 560px) { .picker { grid-template-columns: 1fr; } }

@@ -86,11 +86,11 @@ describe("크리에이터 페이지 — 테마 색이 쓰이는 자리 (INV-E13)
     }
   });
 
-  it("INV-E13 S12c (실패경로): 8색 밖 값(옛 진한 색·스타일 문장)은 스타일에 들어가지 않는다 — 기본 모양", () => {
-    for (const bad of ["#1E3A8A", "#DCEBFF; background:url(x)"]) {
+  it("INV-E13 (실패경로): 꼴이 틀린 값(소문자·스타일 문장)은 스타일에 들어가지 않는다 — 기본 모양", () => {
+    for (const bad of ["#dcebff", "#DCEBFF; background:url(x)"]) {
       renderPage({ personal: bad as ThemeColor });
       expect(host.innerHTML, bad).not.toContain("url(x)");
-      expect(host.innerHTML, bad).not.toContain("#1E3A8A");
+      expect(host.innerHTML, bad).not.toContain("#dcebff");
       expect(head()?.style.getPropertyValue("--personal"), bad).toBe("");
       expect(badge()?.classList.contains(badgeStyles.fbTheme), bad).toBe(false);
     }
@@ -105,12 +105,13 @@ describe("크리에이터 페이지 — 테마 색이 쓰이는 자리 (INV-E13)
 });
 
 describe("크리에이터 페이지 — 뱃지는 테마 색 면 · 테두리 22% 섞은 색 (INV-E14)", () => {
-  it("INV-E14 S13: 8색 각각 테마 모양(.fbTheme)·면 그 색·테두리 변수 — 글자색 변수는 없다", () => {
-    for (const c of THEME_COLORS) {
+  it("INV-E14 S13: 8색과 진한 색 각각 테마 모양(.fbTheme)·면 그 색·테두리 변수·글자 변수(검정·흰색 중 대비가 큰 쪽)", () => {
+    for (const c of [...THEME_COLORS, "#2B4C9B"] as const) {
       renderPage({ personal: c });
       expect(badge()?.classList.contains(badgeStyles.fbTheme), c).toBe(true);
       expect(badge()?.style.getPropertyValue("--personal"), c).toBe(c);
       expect(badge()?.style.getPropertyValue("--personal-line"), c).toBe(badgeBorderOf(c));
+      expect(badge()?.style.getPropertyValue("--personal-ink"), c).toBe(c === "#2B4C9B" ? "#FFFFFF" : "#000000");
       expect(badge()?.style.getPropertyValue("color"), c).toBe("");
     }
   });

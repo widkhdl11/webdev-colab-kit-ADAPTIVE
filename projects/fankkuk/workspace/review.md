@@ -1,11 +1,20 @@
 ---
 project: fankkuk
 status: passed
-basis: 8f511463391f
-reviewers: [ux-reviewer, ui-reviewer, security-reviewer]
+basis: 930db8d4a02f
+reviewers: [ux-reviewer, ui-reviewer, security-reviewer, code-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-11-13 크리에이터 설정 재분류 · 팬 이용 안내 2판·자주 묻는 질문·선물 보내기 2판 · 크리에이터 상세 e판 · 카드 차분한 판 · 아래는 2026-11-12 이전 기록)
+# 리뷰 사인오프 — fankkuk (2026-11-13 테마 색 직접 고르기 · 크리에이터 설정 재분류 · 팬 이용 안내 2판·자주 묻는 질문·선물 보내기 2판 · 크리에이터 상세 e판 · 카드 차분한 판 · 아래는 2026-11-12 이전 기록)
+
+## 10. 테마 색 직접 고르기 (2026-11-13 — 스펙 creator-link INV-E13·E14 개정, 명세 creator-profile `theme_custom`·`theme_fit`)
+
+닿은 표면: 저장 입력 검사(앱 서버·DB 함수·DB 제약 — 8색 목록 → #RRGGBB 꼴) · 색 계산 로직(뱃지 글자 검정/흰색, 옅게 맞추기) · 화면 상태 둘 · 새 의존성 react-colorful 5.8.1. 리뷰어 넷: ux → ui, security, code.
+- security: 높음·중간 0. 낮음 1(쓰지 않는 p_fan_color 인자 — BACKLOG).
+- code: 중간 2 반영(「가장 진한 색」 시험을 비율 훑기로 다시 씀 — 변이 `hi + 0.01` 로 빨간불 2 확인, 무지개 색을 토큰 --swatch-rainbow 로), 낮음 일부 반영(색 코드 칸 규칙 toThemeColorLoose 를 entities 로·maxLength 9·WHITE 상수), 빠진 경로 시험 3 추가.
+- ux: 중간 1 반영(라디오의 aria-expanded·aria-controls 빼고 판에 role=group·이름), 낮음 「적용 색」 aria-live 반영, 색 코드 오류 표시는 명세 먼저(BACKLOG).
+- ui: 중간 1 반영(고르개 손잡이 초점 흰 링 + 진한 링 — 화면에서 box-shadow 확인), 낮음 간격 12·판 위 12·원 테두리 반영. 「옅게 맞추기」 글자 14(시안 16)·견본 원 36(시안 44)은 재디자인 시안 결정 때 함께(design-rules 17절에 적음).
+- 실행 근거: `npm test` → 412 파일 3686 통과(리뷰 반영 전) · 관련 단위 294 통과(반영 뒤) · `vitest --config vitest.integration.config.mts tests/integration/creator-settings-db.integration.test.ts` → 35 통과 · 변이 넷(글자색 늘 검정 7 실패·꼴 끝 고정 뺌 8·옅게 맞추기 안 함 2·서버 꼴 검사 뺌 1) · `supabase migration up --local` 적용 · 화면: 색 코드 e8467c 로 저장 → DB `#E8467C` 확인 뒤 원래 값(없음)으로 되돌림, 뱃지 흰 글자/맞춤 뒤 검정 글자 실측.
 
 ## 9. 크리에이터 설정 재분류 (f1ee2270, 2026-11-13 — 명세 creator-profile)
 

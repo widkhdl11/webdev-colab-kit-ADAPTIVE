@@ -10,7 +10,7 @@ import s from "./creator-head.module.css";
 // 테마 색(INV-E13, 저장 칸 퍼스널 컬러)은 띠·사진 테두리·팬덤 뱃지에만. 배경 사진이 있으면 띠 자리에 사진이 보인다.
 // 띠는 공개 프로필 머리와 같은 2.5:1(시안 v24-creator-card, DECISIONS d102)이고, 사진이 없으면 테마 색 면(그대로) + 흐린 고양이.
 // 테마 색이 없을 때의 파스텔은 크리에이터 ID 로 정하는데 이 머리를 쓰는 본인 화면들은 ID 를 받지 않아 옅은 하늘 면이다.
-// 색은 creatorColorVars 가 8색인지 한 번 더 본 뒤에만 스타일 변수로 들어가고(그리기 직전 확인은 그 한 곳), 없으면 사이트 기본 모양이다.
+// 색은 creatorColorVars 가 꼴을 한 번 더 본 뒤에만 스타일 변수로 들어가고(그리기 직전 확인은 그 한 곳), 없으면 사이트 기본 모양이다.
 
 export type CreatorHeadProps = {
   name: string;

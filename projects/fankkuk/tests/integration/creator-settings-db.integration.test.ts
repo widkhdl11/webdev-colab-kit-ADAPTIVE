@@ -375,7 +375,7 @@ describe("INV-A11: 크리에이터 알림은 카카오·이메일 두 칸 (manua
   });
 });
 
-describe("INV-E13·E14: 테마 색(저장 칸 퍼스널 컬러) — 파스텔 8색만, 팬컬러는 바꾸지 않는다 (creator-link)", () => {
+describe("INV-E13·E14: 테마 색(저장 칸 퍼스널 컬러) — #RRGGBB 꼴이면 아무 색, 팬컬러는 바꾸지 않는다 (creator-link)", () => {
   const MIGRATION = new URL("../../supabase/migrations/20261018000003_theme_color.sql", import.meta.url);
 
   function colors(creatorId: string): string {
@@ -401,12 +401,15 @@ describe("INV-E13·E14: 테마 색(저장 칸 퍼스널 컬러) — 파스텔 8�
   const LATEST = new URL("../../supabase/migrations/20261110000040_creator_signup_kakao_sign.sql", import.meta.url);
   // 030 의 저장 함수·이름 트리거를 고친 것(잠금 순서·트리거 조건, 2026-11-11)도 다시 얹는다
   const LOCK_ORDER = new URL("../../supabase/migrations/20261111000010_creator_profile_lock_order.sql", import.meta.url);
+  // 2026-11-13 테마 색 직접 고르기 — 8색 제약을 꼴 제약으로 넓히고 저장 함수의 색 검사를 꼴 검사로(이것이 지금 정의다)
+  const THEME_FREE = new URL("../../supabase/migrations/20261113000010_theme_color_free.sql", import.meta.url);
   function runMigration(): void {
     psql("drop function if exists public.update_my_creator_profile(text, text, boolean, text, text, text)");
     psql(readFileSync(MIGRATION, "utf8"));
     psql(readFileSync(LATER, "utf8"));
     psql(readFileSync(LATEST, "utf8"));
     psql(readFileSync(LOCK_ORDER, "utf8"));
+    psql(readFileSync(THEME_FREE, "utf8"));
   }
 
   it("INV-E13 S12: 하루로 #dcebff 저장 → #DCEBFF, 팬덤 이름만 보내면 색은 그대로, 빈 값이면 기본(null)으로", async () => {
@@ -420,8 +423,8 @@ describe("INV-E13·E14: 테마 색(저장 칸 퍼스널 컬러) — 파스텔 8�
     expect(colors(ME.creatorId)).toBe("-|-");
   });
 
-  it("INV-E13 S12: DB 함수를 직접 불러도 8색은 모두 받고, 소문자로 보내도 대문자로 저장된다", async () => {
-    for (const c of ["#FDE2E4", "#FFE5CC", "#FFF1B8", "#DFF5D8", "#D3F0EC", "#DCEBFF", "#E6E0FF", "#F6DFF0"]) {
+  it("INV-E13 S12: DB 함수를 직접 불러도 8색과 진한 색(#2B4C9B·#000000·#FFFFFF)을 모두 받고, 소문자로 보내도 대문자로 저장된다", async () => {
+    for (const c of ["#FDE2E4", "#FFE5CC", "#FFF1B8", "#DFF5D8", "#D3F0EC", "#DCEBFF", "#E6E0FF", "#F6DFF0", "#2B4C9B", "#000000", "#FFFFFF"]) {
       expect((await save(ME.login, { p_personal_color: c.toLowerCase() })).error, c).toBeNull();
       expect(colors(ME.creatorId), c).toBe(`${c}|-`);
     }
@@ -436,10 +439,10 @@ describe("INV-E13·E14: 테마 색(저장 칸 퍼스널 컬러) — 파스텔 8�
     expect(other.data).toEqual([expect.objectContaining({ personal_color: null })]);
   });
 
-  it("INV-E13 S12b (실패경로): DB 함수를 직접 불러 8색 밖 값(#1E3A8A 등)·형식 밖 값 → 22023, 같이 보낸 칸도 아무것도 안 바뀐다", async () => {
+  it("INV-E13 S12b (실패경로): DB 함수를 직접 불러 꼴이 틀린 값 → 22023, 같이 보낸 칸도 아무것도 안 바뀐다", async () => {
     expect((await save(ME.login, { p_personal_color: "#FFF1B8" })).error).toBeNull();
     const before = creatorRow(ME.creatorId);
-    for (const bad of ["#1E3A8A", "#FFFFFF", "#DCEBFE", "red", "#12345", "#DCEBFF; background:url(x)", "DCEBFF", " #DCEBFF", "#GGGGGG"]) {
+    for (const bad of ["red", "#12345", "#DCEBFF; background:url(x)", "DCEBFF", " #DCEBFF", "#DCEBFF ", "#GGGGGG", "#DCEBFF0"]) {
       const r = await save(ME.login, { p_nickname: "바뀌면안됨", p_fan_name: "바뀌면안됨", p_personal_color: bad });
       expect(r.error?.code, bad).toBe("22023");
     }
@@ -459,16 +462,17 @@ describe("INV-E13·E14: 테마 색(저장 칸 퍼스널 컬러) — 파스텔 8�
     expect(colors(ME.creatorId)).toBe("-|-");
   });
 
-  it("INV-E13 S12b (실패경로): DB 제약 — 표에 직접 넣어도 8색 밖의 값(진한 색·소문자·형식 밖)은 들어가지 않는다", () => {
-    for (const bad of ["#1E3A8A", "#FFFFFF", "#dcebff", "red", "#12345", "#DCEBFF; x"]) {
+  it("INV-E13 S12b (실패경로): DB 제약 — 표에 직접 넣어도 꼴이 틀린 값(소문자·형식 밖)은 들어가지 않는다, 진한 색은 들어간다", () => {
+    for (const bad of ["#dcebff", "red", "#12345", "#DCEBFF; x", "#GGGGGG"]) {
       expect(psqlError(`update public.creators set personal_color = '${bad}' where id = '${ME.creatorId}'`), bad).not.toBeNull();
     }
+    expect(psqlError(`update public.creators set personal_color = '#1E3A8A' where id = '${ME.creatorId}'`)).toBeNull();
     expect(psqlError(`update public.creators set personal_color = '#DCEBFF' where id = '${ME.creatorId}'`)).toBeNull();
-    expect(psql(`select count(*) from pg_constraint where conname = 'creators_personal_color_palette'`)).toBe("1");
-    expect(psql(`select count(*) from pg_constraint where conname = 'creators_personal_color_shape'`)).toBe("0");
+    expect(psql(`select count(*) from pg_constraint where conname = 'creators_personal_color_palette'`)).toBe("0");
+    expect(psql(`select count(*) from pg_constraint where conname = 'creators_personal_color_shape'`)).toBe("1");
   });
 
-  it("INV-E13 S12c: 규칙 전 퍼스널 컬러 #1E3A8A·팬컬러 #FFF59D → 마이그레이션 뒤 퍼스널 컬러는 비고 팬컬러는 남는다 · 8색 값은 그대로 · 다시 돌려도 같다", () => {
+  it("INV-E13 S12c: 10-18 규칙 전 퍼스널 컬러 #1E3A8A·팬컬러 #FFF59D → 그때 마이그레이션 뒤 퍼스널 컬러는 비고 팬컬러는 남는다 · 8색 값은 그대로 · 다시 돌려도 같다(11-13 마이그레이션은 비운 값을 되살리지 않는다)", () => {
     try {
       seedLegacy([
         { id: ME.creatorId, personal: "#1E3A8A", fan: "#FFF59D" },

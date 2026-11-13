@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CreatorHead, type CreatorHeadProps } from "./creator-head";
 import { FandomBadge } from "./fandom-badge";
 import s from "./creator-head.module.css";
-import { badgeBorderOf, THEME_COLORS, type ThemeColor } from "../model/creator-color";
+import { badgeBorderOf, badgeInkOf, THEME_COLORS, type ThemeColor } from "../model/creator-color";
 
 // 크리에이터 머리·팬덤 뱃지가 테마 색을 어디에 쓰는가 (creator-link INV-E13·E14, design-rules 17절).
 
@@ -46,11 +46,11 @@ describe("크리에이터 머리 — 테마 색은 띠·사진 테두리·팬덤
     expect(host.querySelector("h1")?.textContent).toBe("하루");
   });
 
-  it("INV-E13 S12c (실패경로): 8색 밖 값(옛 진한 색·스타일 문장)은 스타일에 들어가지 않는다 — 기본 모양으로 그린다", () => {
-    for (const bad of ["#1E3A8A", "#DCEBFF; background:url(x)"]) {
+  it("INV-E13 (실패경로): 꼴이 틀린 값(소문자·스타일 문장)은 스타일에 들어가지 않는다 — 기본 모양으로 그린다", () => {
+    for (const bad of ["#dcebff", "#DCEBFF; background:url(x)"]) {
       const html = renderToStaticMarkup(<CreatorHead {...base} colors={{ personal: bad as ThemeColor }} />);
       expect(html, bad).not.toContain("url(x)");
-      expect(html, bad).not.toContain("#1E3A8A");
+      expect(html, bad).not.toContain("#dcebff");
       const host = dom(html);
       expect(host.querySelector<HTMLElement>("[data-creator-head]")?.classList.contains(s.tinted), bad).toBe(false);
       expect(host.querySelector<HTMLElement>("[data-fandom-badge]")?.classList.contains(s.fbTheme), bad).toBe(false);
@@ -63,19 +63,22 @@ describe("크리에이터 머리 — 테마 색은 띠·사진 테두리·팬덤
   });
 });
 
-describe("팬덤 뱃지 — 면 테마 색 · 테두리 #1F2937 22% · 글자 #111827 (INV-E14)", () => {
-  it("INV-E14 S13: 8색 각각 테마 모양(.fbTheme)에 면 = 그 색, 테두리 = 그 색 + #1F2937 22% — 글자색 변수는 없다(CSS 고정)", () => {
-    for (const c of THEME_COLORS) {
+describe("팬덤 뱃지 — 면 테마 색 · 테두리 #1F2937 22% · 글자 검정·흰색 중 대비가 큰 쪽 (INV-E14)", () => {
+  it("INV-E14 S13: 8색과 진한 색 각각 테마 모양(.fbTheme)에 면 = 그 색, 테두리 = 그 색 + #1F2937 22%, 글자 변수 = 검정·흰색 중 대비가 큰 쪽", () => {
+    for (const c of [...THEME_COLORS, "#2B4C9B"] as const) {
       const badge = dom(renderToStaticMarkup(<FandomBadge name="달빛지기" symbolUrl={null} themeColor={c} />)).querySelector<HTMLElement>("[data-fandom-badge]");
       expect(badge?.classList.contains(s.fbTheme), c).toBe(true);
       expect(badge?.style.getPropertyValue("--personal"), c).toBe(c);
       expect(badge?.style.getPropertyValue("--personal-line"), c).toBe(badgeBorderOf(c));
+      expect(badge?.style.getPropertyValue("--personal-ink"), c).toBe(badgeInkOf(c));
       expect(badge?.style.getPropertyValue("color"), c).toBe("");
     }
+    const dark = dom(renderToStaticMarkup(<FandomBadge name="달빛지기" symbolUrl={null} themeColor="#2B4C9B" />)).querySelector<HTMLElement>("[data-fandom-badge]");
+    expect(dark?.style.getPropertyValue("--personal-ink")).toBe("#FFFFFF");
   });
 
-  it("INV-E14 (실패경로): 테마 색이 없거나 8색 밖이면 테마 모양이 붙지 않는다 — 사이트 기본 뱃지", () => {
-    for (const c of [null, "#1E3A8A", "#FFF59D", "red"]) {
+  it("INV-E14 (실패경로): 테마 색이 없거나 꼴이 틀리면 테마 모양이 붙지 않는다 — 사이트 기본 뱃지", () => {
+    for (const c of [null, "#dcebff", "#12345", "red"]) {
       const badge = dom(renderToStaticMarkup(<FandomBadge name="달빛지기" symbolUrl={null} themeColor={c as ThemeColor | null} />)).querySelector<HTMLElement>("[data-fandom-badge]");
       expect(badge?.classList.contains(s.fbTheme), String(c)).toBe(false);
       expect(badge?.getAttribute("style") ?? "", String(c)).toBe("");

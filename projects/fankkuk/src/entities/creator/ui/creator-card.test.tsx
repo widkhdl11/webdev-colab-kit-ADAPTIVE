@@ -84,9 +84,9 @@ describe("크리에이터 카드 v28 — 사진 왼쪽 + 이름 줄·뱃지 줄,
     expect(host.querySelector<HTMLElement>("[data-fandom-badge]")?.style.getPropertyValue("--personal")).toBe("#DCEBFF");
   });
 
-  it("INV-E13 S12c (실패경로): 8색 밖 값(옛 #1E3A8A)은 배너·뱃지 어디에도 그리지 않는다 — 기본 회색 면(배너에 색 변수 없음)", () => {
-    const host = head("달빛지기", "#1E3A8A");
-    expect(host.innerHTML).not.toContain("#1E3A8A");
+  it("INV-E13 (실패경로): 꼴이 틀린 값(소문자 #dcebff)은 배너·뱃지 어디에도 그리지 않는다 — 기본 회색 면(배너에 색 변수 없음)", () => {
+    const host = head("달빛지기", "#dcebff");
+    expect(host.innerHTML).not.toContain("#dcebff");
     expect(host.querySelector<HTMLElement>("[data-card-head]")?.style.getPropertyValue("--personal")).toBe("");
     expect(host.querySelector("[data-card-cover]")?.hasAttribute("style")).toBe(false);
   });

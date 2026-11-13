@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useState, type CSSProperties, type ReactNode } from "react";
-import { THEME_COLORS, type CreatorColors, type ThemeColor } from "@/entities/creator/model/creator-color";
+import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { HexColorPicker } from "react-colorful";
+import { badgeInkOf, creatorColorOrNull, fitLight, THEME_COLORS, toThemeColor, toThemeColorLoose, type CreatorColors, type ThemeColor } from "@/entities/creator/model/creator-color";
 import { creatorSymbolUrl } from "@/entities/creator/model/link-images";
 import { CardButtonLabel, CreatorCardActions, CreatorCardFoot, CreatorCardHead, CreatorCardLine, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
 import { deleteCreatorImage, sendCreatorImage } from "@/features/creator-photo/api/send-creator-image";
@@ -20,13 +21,14 @@ import s from "./fandom-section.module.css";
 // 둘은 FandomDraftProvider 의 입력 중 값(팬덤 이름 · 테마 색 · 팬마크)을 같이 본다 — 입력하는 대로 카드가 바뀌는 동작은 옮기기 전과 같다.
 // 판 겉모양은 공용 settings-panel(채널 탭의 다른 구역과 같은 판). 입력 칸·저장 방식·문구는 그대로다.
 // - 팬덤 이름·테마 색은 「저장」으로 한 번에 보낸다(/api/creator/profile — my-account INV-A9 경로, 크리에이터 ID 는 보내지 않는다).
-//   테마 색은 파스텔 8색 원형 견본 가운데 하나 또는 「선택 안 함」(기본 모양)뿐이다(creator-link INV-E13 — 서버·DB 가 같은 8색으로 다시 본다).
+//   테마 색은 파스텔 8색 원형 견본 · 「직접 고르기」(react-colorful 고르개 + 색 코드 칸 + 「옅게 맞추기」) · 「선택 안 함」(기본 모양)
+//   (creator-link INV-E13, 2026-11-13 — 서버·DB 는 #RRGGBB 꼴만 다시 본다. 「옅게 맞추기」는 보내기 전에 화면이 색을 바꾸는 기능이고 체크 상태는 저장하지 않는다).
 //   팬컬러는 고르지 않는다 — 보내지도 않는다(INV-E13).
 // - 팬마크 = 팬덤 심볼(INV-E9·E12). 권리 확인 체크를 해야 고를 수 있고 체크는 요청에도 실린다 — 시안에는 체크가 없지만 스펙(INV-E12)대로 둔다.
-// - 팬덤 뱃지는 테마 색으로 그린다: 면 = 테마 색, 테두리 = 테마 색 + #1F2937 22%, 글자 #111827 고정(INV-E14).
+// - 팬덤 뱃지는 테마 색으로 그린다: 면 = 테마 색, 테두리 = 테마 색 + #1F2937 22%, 글자 = #000000·#FFFFFF 중 대비가 큰 쪽(INV-E14).
 
 /** 견본 이름(화면 낭독기용) — THEME_COLORS 순서 그대로 */
-const THEME_NAMES: Readonly<Record<ThemeColor, string>> = {
+const THEME_NAMES: Readonly<Record<(typeof THEME_COLORS)[number], string>> = {
   "#FDE2E4": "분홍",
   "#FFE5CC": "살구",
   "#FFF1B8": "노랑",
@@ -61,7 +63,8 @@ function useFandomDraft(): FandomDraft {
 /** 저장된 값으로 입력 중 값을 연다. 입력 판(FandomForm)과 카드 미리보기(FandomPreview)를 이 안에 둔다 — 어느 열에 놓이든 같은 값을 본다 */
 export function FandomDraftProvider({ fanName: savedName, colors, symbolUrl: savedSymbol, children }: { fanName: string; colors: CreatorColors; symbolUrl: string | null; children: ReactNode }) {
   const [fanName, setFanName] = useState(savedName);
-  const [theme, setTheme] = useState<ThemeColor | null>(colors.personal);
+  // 읽는 쪽이 이미 걸렀지만 꼴이 틀린 값이 넘어와도 고른 것 없음(기본 모양)으로 연다(INV-E13 그리기 직전 확인)
+  const [theme, setTheme] = useState<ThemeColor | null>(creatorColorOrNull(colors.personal));
   const [symbolUrl, setSymbolUrl] = useState(savedSymbol);
   return <FandomDraftContext.Provider value={{ fanName, setFanName, theme, setTheme, symbolUrl, setSymbolUrl }}>{children}</FandomDraftContext.Provider>;
 }
@@ -82,8 +85,41 @@ export type FandomPreviewProps = {
   card: { creatorId: string; channelTitle: string; intro: string; tags: readonly string[]; approvalMinutes: number | null; faceTone: string };
 };
 
-/** 테마 색 고르기 — 원형 견본 8개 + 「선택 안 함」(시안 pilot-2026-10-22 settings.html .st-sw). 한 무리의 라디오라 화살표로 옮겨 다닌다. */
+const PRESETS: ReadonlySet<string> = new Set(THEME_COLORS);
+/** 「직접 고르기」를 처음 열 때 고르개가 놓이는 색 — 지금 테마 색이 없을 때만(견본 「하늘」).
+ *  그대로 저장하면 견본과 같은 색이라 다시 열 때 「하늘」 견본이 골라진 채로 열린다 — 같은 값이라 그대로 둔다 */
+const PICK_START: ThemeColor = THEME_COLORS[5];
+
+/**
+ * 테마 색 고르기 — 원형 견본 8개 + 「직접 고르기」 + 「선택 안 함」(시안 settings-profile-20261113 #c-pick·#c-pick-raw·#c-pick-fit).
+ * 한 무리의 라디오라 화살표로 옮겨 다닌다. 「직접 고르기」를 고르면 아래에 고르개·색 코드 칸·「옅게 맞추기」가 펼쳐진다.
+ * 저장될 색(value) = 「옅게 맞추기」가 켜졌으면 fitLight(고른 색), 아니면 고른 색 그대로.
+ * 「되돌리기」는 부르는 쪽이 key 를 바꿔 이 칸을 새로 연다 — 안쪽 상태(고른 색·체크)를 저장된 값에서 다시 시작한다.
+ */
 function ThemeField({ value, onChange }: { value: ThemeColor | null; onChange: (v: ThemeColor | null) => void }) {
+  const [custom, setCustom] = useState(value !== null && !PRESETS.has(value));
+  const [picked, setPicked] = useState<ThemeColor>(value ?? PICK_START);
+  const [code, setCode] = useState<string>(value ?? PICK_START);
+  const [fit, setFit] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  // react-colorful 의 두 막대는 영어 이름(Color·Hue)과 영어 값을 단다 — 화면 낭독기가 읽는 이름을 한국어로, 값은 지금 색 코드로 바꿔 단다
+  useEffect(() => {
+    const sliders = pickerRef.current?.querySelectorAll<HTMLElement>('[role="slider"]') ?? [];
+    const names = ["채도와 밝기", "색상"];
+    sliders.forEach((el, i) => {
+      el.setAttribute("aria-label", names[i] ?? "색");
+      el.setAttribute("aria-valuetext", picked);
+    });
+  }, [custom, picked]);
+
+  const apply = (p: ThemeColor, f: boolean) => onChange(f ? fitLight(p) : p);
+  const pick = (p: ThemeColor) => {
+    setPicked(p);
+    apply(p, fit);
+  };
+  const fitted = fitLight(picked);
+
   return (
     <div className={s.sub}>
       <h3 className={s.subT}>
@@ -95,16 +131,106 @@ function ThemeField({ value, onChange }: { value: ThemeColor | null; onChange: (
       <div className={s.sws} role="radiogroup" aria-labelledby="fd-theme-l" aria-describedby="fd-theme-h">
         {THEME_COLORS.map((c) => (
           <label key={c} className={s.sw}>
-            <input type="radio" name="fd-theme" value={c} checked={value === c} onChange={() => onChange(c)} />
+            <input
+              type="radio"
+              name="fd-theme"
+              value={c}
+              checked={!custom && value === c}
+              onChange={() => {
+                setCustom(false);
+                onChange(c);
+              }}
+            />
             <span style={{ "--sw": c } as CSSProperties} aria-hidden="true" />
             <span className="sr-only">테마 색 {THEME_NAMES[c]}</span>
           </label>
         ))}
+        <label className={`${s.sw} ${s.swCustom}`}>
+          <input
+            type="radio"
+            name="fd-theme"
+            value="custom"
+            checked={custom}
+            onChange={() => {
+              setCustom(true);
+              apply(picked, fit);
+            }}
+          />
+          <span style={(custom && value ? { "--sw": value, "--sw-ink": badgeInkOf(value) } : {}) as CSSProperties} data-on={custom ? "" : undefined} aria-hidden="true" />
+          <span className="sr-only">직접 고르기</span>
+        </label>
         <label className={s.swNone}>
-          <input type="radio" name="fd-theme" value="" checked={value === null} onChange={() => onChange(null)} />
+          <input
+            type="radio"
+            name="fd-theme"
+            value=""
+            checked={!custom && value === null}
+            onChange={() => {
+              setCustom(false);
+              onChange(null);
+            }}
+          />
           <span>선택 안 함</span>
         </label>
       </div>
+      {custom ? (
+        <div className={s.picker} id="fd-picker" ref={pickerRef} role="group" aria-label="테마 색 직접 고르기">
+          <HexColorPicker
+            color={picked}
+            onChange={(c) => {
+              const t = toThemeColor(c);
+              if (!t) return;
+              setCode(t);
+              pick(t);
+            }}
+          />
+          <div className={s.pickSide}>
+            <label className={s.pickLab} htmlFor="fd-hex">
+              색 코드
+            </label>
+            <input
+              className={`field ${s.hex}`}
+              id="fd-hex"
+              type="text"
+              value={code}
+              maxLength={9}
+              autoComplete="off"
+              spellCheck={false}
+              onChange={(e) => {
+                const v = e.currentTarget.value;
+                setCode(v);
+                const t = toThemeColorLoose(v);
+                if (t) pick(t);
+              }}
+              onBlur={() => setCode(picked)}
+            />
+            <label className={s.chk} htmlFor="fd-fit">
+              <input
+                type="checkbox"
+                id="fd-fit"
+                checked={fit}
+                onChange={(e) => {
+                  const f = e.currentTarget.checked;
+                  setFit(f);
+                  apply(picked, f);
+                }}
+              />
+              <span>옅게 맞추기</span>
+            </label>
+            {/* 낭독 알림 칸은 늘 두고 안의 줄만 바꾼다 — 체크를 켜면 저장될 색이 바뀐 것을 화면 낭독기도 알린다 */}
+            <div aria-live="polite">
+              {fit && fitted !== picked ? (
+                <p className={s.fitLine}>
+                  <i style={{ "--sw": fitted } as CSSProperties} aria-hidden="true" />
+                  <span>
+                    적용 색 <b>{fitted}</b>
+                  </span>
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -112,7 +238,7 @@ function ThemeField({ value, onChange }: { value: ThemeColor | null; onChange: (
 export function FandomForm(p: FandomFormProps) {
   const router = useRouter();
   const { fanName, setFanName, theme, setTheme, setSymbolUrl, symbolUrl } = useFandomDraft();
-  const [saved, setSaved] = useState<{ fanName: string; theme: ThemeColor | null }>({ fanName: p.fanName, theme: p.colors.personal });
+  const [saved, setSaved] = useState<{ fanName: string; theme: ThemeColor | null }>({ fanName: p.fanName, theme: creatorColorOrNull(p.colors.personal) });
   const [rights, setRights] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -134,9 +260,12 @@ export function FandomForm(p: FandomFormProps) {
     router.refresh();
   };
 
+  // 「되돌리기」마다 테마 색 칸을 새로 연다 — 칸 안의 고른 색·「옅게 맞추기」를 저장된 값에서 다시 시작한다
+  const [themeKey, setThemeKey] = useState(0);
   const revert = () => {
     setFanName(saved.fanName);
     setTheme(saved.theme);
+    setThemeKey((k) => k + 1);
     setMsg(null);
   };
 
@@ -206,7 +335,7 @@ export function FandomForm(p: FandomFormProps) {
             </label>
           </div>
 
-          <ThemeField value={theme} onChange={setTheme} />
+          <ThemeField key={themeKey} value={theme} onChange={setTheme} />
 
           {/* 판 끝 — 결과 상자(완료 ✓ · 오류 !)는 비면 높이 0 이라 저장 줄 위 간격이 16(41절), 결과가 뜨면 그 높이만큼 버튼이 내려간다. 휴대폰에서는 화면 아래에 붙는다 */}
           <div className={s.end}>

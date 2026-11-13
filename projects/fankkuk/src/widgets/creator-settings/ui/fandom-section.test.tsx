@@ -72,6 +72,14 @@ const symbolFile = () => host.querySelector<HTMLInputElement>("#fd-sym")!;
 const rights = () => host.querySelector<HTMLInputElement>("#fd-rights")!;
 const swatches = () => [...host.querySelectorAll<HTMLInputElement>("input[name='fd-theme']")];
 const swatch = (value: string) => swatches().find((i) => i.value === value)!;
+/** 글자 칸에 값을 넣는다 — React 가 듣는 input 사건까지 */
+function typeInto(input: HTMLInputElement, value: string) {
+  const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+  act(() => {
+    setValue.call(input, value);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+}
 const saveBtn = () => [...host.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent === "저장")!;
 
 describe("INV-E12: 팬마크(팬덤 심볼)는 권리 확인 체크 뒤에만 — 시안에 체크가 없어도 둔다", () => {
@@ -98,15 +106,16 @@ describe("INV-E12: 팬마크(팬덤 심볼)는 권리 확인 체크 뒤에만 �
   });
 });
 
-describe("INV-E13: 테마 색은 8색 견본 + 「선택 안 함」, 저장은 팬덤 이름·테마 색만(크리에이터 ID·팬컬러 없이)", () => {
-  it("INV-E13 S12: 견본은 8색(정본 순서) + 「선택 안 함」 한 무리 라디오 — 직접 입력 칸·팬컬러 칸은 없다", async () => {
+describe("INV-E13: 테마 색은 8색 견본 + 「직접 고르기」 + 「선택 안 함」, 저장은 팬덤 이름·테마 색만(크리에이터 ID·팬컬러 없이)", () => {
+  it("INV-E13 S12: 견본은 8색(정본 순서) + 「직접 고르기」 + 「선택 안 함」 한 무리 라디오 — 고르개는 접혀 있고 팬컬러 칸은 없다", async () => {
     await render();
-    expect(swatches().map((i) => i.value)).toEqual([...THEME_COLORS, ""]);
+    expect(swatches().map((i) => i.value)).toEqual([...THEME_COLORS, "custom", ""]);
     expect(host.querySelector("[role='radiogroup']")?.getAttribute("aria-labelledby")).toBe("fd-theme-l");
     expect(host.querySelector("#fd-theme-l")?.textContent).toBe("테마 색");
     expect(swatch("").checked).toBe(true);
     expect(host.querySelector("input[type='color']")).toBeNull();
-    expect(host.querySelector("input[type='text'][maxlength='7']")).toBeNull();
+    expect(host.querySelector("#fd-picker")).toBeNull();
+    expect(host.querySelector("#fd-hex")).toBeNull();
     expect(host.textContent).not.toContain("팬컬러");
     expect(host.textContent).not.toContain("퍼스널 컬러");
   });
@@ -132,11 +141,101 @@ describe("INV-E13: 테마 색은 8색 견본 + 「선택 안 함」, 저장은 �
     expect(JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1].body))).toEqual({ fanName: "달빛지기", personalColor: "" });
   });
 
-  it("INV-E13 S12c (실패경로): 8색 밖 값(옛 #1E3A8A)이 들어와도 견본은 하나도 고르지 않고 미리보기에도 그리지 않는다", async () => {
-    await render({ colors: { personal: "#1E3A8A" as ThemeColor } });
+  it("INV-E13 (실패경로): 꼴이 틀린 값(소문자 #dcebff)이 들어와도 견본은 하나도 고르지 않고 미리보기에도 그리지 않는다", async () => {
+    await render({ colors: { personal: "#dcebff" as ThemeColor } });
     expect(swatches().some((i) => i.checked && i.value !== "")).toBe(false);
-    expect(host.innerHTML).not.toContain("#1E3A8A");
+    expect(host.innerHTML).not.toContain("#dcebff");
     expect(host.querySelector<HTMLElement>("[data-card-head]")?.style.getPropertyValue("--personal")).toBe("");
+  });
+
+  it("INV-E13 S12: 저장된 색이 8색 밖(#2B4C9B)이면 「직접 고르기」가 골라져 펼쳐 있고 색 코드 칸에 그 색 · 미리보기 뱃지는 흰 글자(INV-E14)", async () => {
+    await render({ colors: { personal: "#2B4C9B" } });
+    expect(swatch("custom").checked).toBe(true);
+    expect(host.querySelector<HTMLInputElement>("#fd-hex")?.value).toBe("#2B4C9B");
+    expect(host.querySelector<HTMLInputElement>("#fd-fit")?.checked).toBe(false);
+    const badge = host.querySelector<HTMLElement>("aside [data-fandom-badge]");
+    expect(badge?.style.getPropertyValue("--personal")).toBe("#2B4C9B");
+    expect(badge?.style.getPropertyValue("--personal-ink")).toBe("#FFFFFF");
+    // 고르개 막대 이름은 한국어로 바꿔 단다
+    expect([...host.querySelectorAll("#fd-picker [role='slider']")].map((el) => el.getAttribute("aria-label"))).toEqual(["채도와 밝기", "색상"]);
+  });
+
+  it("INV-E13 S12: 「직접 고르기」에서 색 코드를 넣으면(소문자·# 없이도) 그 색 그대로 저장된다", async () => {
+    await render();
+    await act(async () => swatch("custom").click());
+    const hex = host.querySelector<HTMLInputElement>("#fd-hex")!;
+    typeInto(hex, "e8467c");
+    expect(host.querySelector<HTMLElement>("aside [data-fandom-badge]")?.style.getPropertyValue("--personal")).toBe("#E8467C");
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    await act(async () => saveBtn().click());
+    expect(JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1].body))).toEqual({ fanName: "달빛지기", personalColor: "#E8467C" });
+  });
+
+  it("INV-E13 (실패경로): 색 코드 칸에 꼴이 틀린 값(#12·스타일 문장)을 넣으면 저장될 색은 그대로다", async () => {
+    await render({ colors: { personal: "#2B4C9B" } });
+    const hex = host.querySelector<HTMLInputElement>("#fd-hex")!;
+    for (const bad of ["#12", "#2B4C9B; x", "#GGGGGG"]) {
+      typeInto(hex, bad);
+      expect(host.querySelector<HTMLElement>("aside [data-fandom-badge]")?.style.getPropertyValue("--personal"), bad).toBe("#2B4C9B");
+    }
+  });
+
+  it("INV-E13: 「옅게 맞추기」를 켜면 맞춘 색(#D4DAEA)이 미리보기·「적용 색」·저장 본문에, 끄면 고른 색 그대로", async () => {
+    await render({ colors: { personal: "#2B4C9B" } });
+    const fit = host.querySelector<HTMLInputElement>("#fd-fit")!;
+    await act(async () => fit.click());
+    const badge = () => host.querySelector<HTMLElement>("aside [data-fandom-badge]");
+    expect(badge()?.style.getPropertyValue("--personal")).toBe("#D4DAEA");
+    expect(badge()?.style.getPropertyValue("--personal-ink")).toBe("#000000");
+    expect(host.querySelector("#fd-picker")?.textContent).toContain("적용 색 #D4DAEA");
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    await act(async () => saveBtn().click());
+    expect(JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1].body))).toEqual({ fanName: "달빛지기", personalColor: "#D4DAEA" });
+    await act(async () => fit.click());
+    expect(badge()?.style.getPropertyValue("--personal")).toBe("#2B4C9B");
+    expect(host.querySelector("#fd-picker")?.textContent).not.toContain("적용 색");
+  });
+
+  it("INV-E13: 저장 값이 없을 때 「직접 고르기」를 누르면 견본 「하늘」에서 시작하고, 펼친 판은 이름 있는 묶음이다", async () => {
+    await render();
+    await act(async () => swatch("custom").click());
+    expect(host.querySelector<HTMLInputElement>("#fd-hex")?.value).toBe("#DCEBFF");
+    const pk = host.querySelector("#fd-picker");
+    expect([pk?.getAttribute("role"), pk?.getAttribute("aria-label")]).toEqual(["group", "테마 색 직접 고르기"]);
+    expect(swatch("custom").hasAttribute("aria-expanded")).toBe(false);
+    expect(pk?.querySelector("[aria-live='polite']")).not.toBeNull();
+  });
+
+  it("INV-E13: 색 코드 칸을 떠나면 칸은 마지막으로 받아들인 색으로 돌아간다", async () => {
+    await render({ colors: { personal: "#2B4C9B" } });
+    const hex = host.querySelector<HTMLInputElement>("#fd-hex")!;
+    typeInto(hex, "#12");
+    act(() => {
+      hex.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+    });
+    expect(hex.value).toBe("#2B4C9B");
+  });
+
+  it("INV-E13: 체크를 켠 채 견본으로 갔다가 「직접 고르기」로 돌아오면 다시 맞춘 색이 저장될 색", async () => {
+    await render({ colors: { personal: "#2B4C9B" } });
+    await act(async () => host.querySelector<HTMLInputElement>("#fd-fit")!.click());
+    await act(async () => swatch("#DCEBFF").click());
+    await act(async () => swatch("custom").click());
+    expect(host.querySelector<HTMLElement>("aside [data-fandom-badge]")?.style.getPropertyValue("--personal")).toBe("#D4DAEA");
+  });
+
+  it("INV-E13: 이미 밝은 색은 「옅게 맞추기」를 켜도 그대로이고 「적용 색」 줄도 없다", async () => {
+    await render({ colors: { personal: "#FFD6A5" } });
+    await act(async () => host.querySelector<HTMLInputElement>("#fd-fit")!.click());
+    expect(host.querySelector<HTMLElement>("aside [data-fandom-badge]")?.style.getPropertyValue("--personal")).toBe("#FFD6A5");
+    expect(host.querySelector("#fd-picker")?.textContent).not.toContain("적용 색");
+  });
+
+  it("INV-E13: 「직접 고르기」에서 견본으로 돌아가면 고르개가 접히고 견본 색이 저장될 색", async () => {
+    await render({ colors: { personal: "#2B4C9B" } });
+    await act(async () => swatch("#DCEBFF").click());
+    expect(host.querySelector("#fd-picker")).toBeNull();
+    expect(host.querySelector<HTMLElement>("aside [data-fandom-badge]")?.style.getPropertyValue("--personal")).toBe("#DCEBFF");
   });
 
   it("INV-E13: 「되돌리기」는 저장된 색으로 돌아간다", async () => {
@@ -144,6 +243,16 @@ describe("INV-E13: 테마 색은 8색 견본 + 「선택 안 함」, 저장은 �
     await act(async () => swatch("#E6E0FF").click());
     await act(async () => [...host.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent === "되돌리기")!.click());
     expect(swatch("#FFF1B8").checked).toBe(true);
+  });
+
+  it("INV-E13: 「되돌리기」는 직접 고른 색·「옅게 맞추기」도 저장된 값으로 돌린다", async () => {
+    await render({ colors: { personal: "#2B4C9B" } });
+    await act(async () => host.querySelector<HTMLInputElement>("#fd-fit")!.click());
+    await act(async () => swatch("#E6E0FF").click());
+    await act(async () => [...host.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent === "되돌리기")!.click());
+    expect(swatch("custom").checked).toBe(true);
+    expect(host.querySelector<HTMLInputElement>("#fd-fit")?.checked).toBe(false);
+    expect(host.querySelector<HTMLElement>("aside [data-fandom-badge]")?.style.getPropertyValue("--personal")).toBe("#2B4C9B");
   });
 });
 

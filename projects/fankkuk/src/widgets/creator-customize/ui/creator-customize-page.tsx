@@ -24,7 +24,7 @@ import s from "./creator-customize.module.css";
 // 팬을 부르는 이름·팬덤 심볼(팬마크)은 「프로필 수정」 채널 탭(/creator/profile?tab=channel#fandom, 2026-11-13 상세 설정에서 다시 옮김)으로 옮겼다 — 같은 칸이 두 곳에 있지 않게. 미리보기는 저장된 값을 그린다.
 // - 미리보기 이미지 고르기는 누르는 즉시 저장한다. 저장하는 동안에는 다시 고를 수 없다(응답 순서가 뒤바뀌어 엉뚱한 값으로 되돌리지 않게).
 //   심볼이 없으면 고를 수 없다(DB 도 거부한다).
-// - 테마 색·무늬·글꼴 고르기는 없다(디자인 기준 10절). 크리에이터 테마 색(파스텔 8색)은 상세 설정에 있다(creator-link INV-E13).
+// - 테마 색·무늬·글꼴 고르기는 없다(디자인 기준 10절). 크리에이터 테마 색(견본 8색 + 직접 고르기)은 프로필 수정 「채널」 탭에 있다(creator-link INV-E13).
 
 export type CreatorCustomizeProps = {
   creatorId: string;

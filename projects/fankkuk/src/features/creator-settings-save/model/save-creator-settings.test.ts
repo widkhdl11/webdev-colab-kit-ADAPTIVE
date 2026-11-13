@@ -203,8 +203,8 @@ describe("테마 색 저장 (creator-link INV-E13·E14, my-account INV-A9)", () 
     expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_personal_color: "#DCEBFF" } }]);
   });
 
-  it("INV-E13 S12: 8색 모두 통과 · 빈 값은 기본 모양으로 되돌리기(빈 문자열) · 보내지 않으면 넘기지 않는다(팬덤 이름만 저장)", async () => {
-    for (const c of THEME_COLORS) {
+  it("INV-E13 S12: 8색과 진한 색(#2B4C9B·#000000·#FFFFFF) 모두 통과 · 빈 값은 기본 모양으로 되돌리기(빈 문자열) · 보내지 않으면 넘기지 않는다(팬덤 이름만 저장)", async () => {
+    for (const c of [...THEME_COLORS, "#2B4C9B", "#000000", "#FFFFFF"]) {
       const f = fakeClient();
       expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { personalColor: c }), c).toEqual({ ok: true });
       expect(f.calls, c).toEqual([{ fn: "update_my_creator_profile", args: { p_personal_color: c } }]);
@@ -218,8 +218,8 @@ describe("테마 색 저장 (creator-link INV-E13·E14, my-account INV-A9)", () 
     ]);
   });
 
-  it("INV-E13 S12b (실패경로): 8색 밖(#1E3A8A·#FFFFFF)·red·#12345·스타일 문장·# 없는 값·숫자 → 400, DB 를 부르지 않는다(같이 보낸 다른 칸도 안 바뀐다)", async () => {
-    for (const bad of ["#1E3A8A", "#FFFFFF", "#DCEBFE", "red", "#12345", "#DCEBFF; background:url(x)", "DCEBFF", "#DCEBFF0", 0xdcebff, null]) {
+  it("INV-E13 S12b (실패경로): 꼴이 틀린 값(red·#12345·스타일 문장·# 없는 값·7자리·#GGGGGG·숫자) → 400, DB 를 부르지 않는다(같이 보낸 다른 칸도 안 바뀐다)", async () => {
+    for (const bad of ["red", "#12345", "#DCEBFF; background:url(x)", "DCEBFF", "#DCEBFF0", "#GGGGGG", 0xdcebff, null]) {
       const f = fakeClient();
       const r = await saveCreatorProfile({ client: f.client, viewer: HARU }, { fanName: "달빛지기", personalColor: bad });
       expect(r, String(bad)).toMatchObject({ ok: false, status: 400 });

@@ -44,7 +44,7 @@ export async function readMyCreatorSettings(client: Pick<SupabaseClient, "rpc">)
     tagIds: s.tag_ids,
     customTag: s.custom_tag ?? "",
     fanName: s.fan_name ?? "",
-    // creator-link INV-E13: 8색 밖 값은 없는 것(기본 모양)으로. 팬컬러는 읽지 않는다(고르지도 그리지도 않는다)
+    // creator-link INV-E13: 꼴이 틀린 값은 없는 것(기본 모양)으로. 팬컬러는 읽지 않는다(고르지도 그리지도 않는다)
     colors: { personal: creatorColorOrNull(s.personal_color) },
     notify: { kakao: a.notify_kakao, email: a.notify_email, instant: instantOn },
     phoneMasked: a.phone_masked,

@@ -64,8 +64,13 @@ describe("크리에이터 색 읽기 (creator-link INV-E13·E7)", () => {
     expect(card?.colors).toEqual({ personal: "#DCEBFF" });
   });
 
-  it("INV-E13 S12c (실패경로): 8색 밖 값(옛 진한 색·스타일 문장·소문자)은 없는 것(기본 모양)으로 — 칸이 없거나 null 이어도 기본", async () => {
-    for (const bad of ["#1E3A8A", "#DCEBFF; background:url(x)", "#dcebff"]) {
+  it("INV-E13 S12: 8색 밖의 진한 색(#2B4C9B)도 그대로 싣는다", async () => {
+    const [card] = await readCreatorCards(clientWith({ ...ROW, personal_color: "#2B4C9B", fan_color: null }), { signedIn: false, onlyId: ROW.id });
+    expect(card?.colors).toEqual({ personal: "#2B4C9B" });
+  });
+
+  it("INV-E13 (실패경로): 꼴이 틀린 값(이름 색·스타일 문장·소문자)은 없는 것(기본 모양)으로 — 칸이 없거나 null 이어도 기본", async () => {
+    for (const bad of ["red", "#DCEBFF; background:url(x)", "#dcebff"]) {
       const [card] = await readCreatorCards(clientWith({ ...ROW, personal_color: bad, fan_color: "#FFF59D" }), { signedIn: false, onlyId: ROW.id });
       expect(card?.colors, bad).toEqual({ personal: null });
     }

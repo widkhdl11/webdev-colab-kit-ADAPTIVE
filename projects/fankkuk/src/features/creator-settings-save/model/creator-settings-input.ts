@@ -6,14 +6,14 @@ import { isThemeColor } from "@/entities/creator/model/creator-color";
 import { nicknameSchema } from "@/entities/session/model/nickname-rule";
 
 /**
- * 테마 색(저장 칸 이름은 퍼스널 컬러, creator-link INV-E13) — 빈 문자열이면 기본 모양으로 되돌리기, 아니면 파스텔 8색 가운데 하나(대소문자 무관)를 대문자로.
- * 8색 밖의 값(남색 같은 진한 색·이름 색·짧은 값·스타일 문장)은 거부한다. DB 함수와 DB 제약이 같은 8색 목록으로 다시 검사한다.
+ * 테마 색(저장 칸 이름은 퍼스널 컬러, creator-link INV-E13) — 빈 문자열이면 기본 모양으로 되돌리기, 아니면 #RRGGBB(대소문자 무관)를 대문자로.
+ * 꼴이 틀린 값(이름 색·짧은 값·# 없는 값·스타일 문장)은 거부한다. 진한 색도 받는다(2026-11-13). DB 함수와 DB 제약이 같은 꼴로 다시 검사한다.
  */
 const themeColorInput = z
   .string()
   .trim()
   .transform((s) => s.toUpperCase())
-  .refine((s) => s === "" || isThemeColor(s), "제공된 테마 색 8개 중 하나를 선택해 주세요.");
+  .refine((s) => s === "" || isThemeColor(s), "테마 색을 다시 선택해 주세요.");
 
 // 크리에이터 설정 입력 경계 — 앱 서버가 먼저 검사한다(my-account INV-A9·A11). DB 함수가 같은 규칙으로 다시 검사한다.
 // 본문에서 정해진 칸만 꺼낸다. 크리에이터 ID·채널·본인 확인·계정 ID 칸은 있어도 읽지 않는다.
