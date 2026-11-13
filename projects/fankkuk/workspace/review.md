@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: passed
-basis: 
+basis: 8f511463391f
 reviewers: [ux-reviewer, ui-reviewer, security-reviewer]
 ---
 
