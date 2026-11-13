@@ -8,13 +8,13 @@ import { sendCreatorReplySettings } from "@/features/creator-settings-save/api/s
 import { SaveMessage, type SaveMsg } from "./receiving-section";
 import s from "./creator-settings.module.css";
 
-// 크리에이터 — 감사 답장 설정 (gift-reply INV-G7·G8·G9). 「답장 모음 보이기」 · X 계정(영문·숫자·밑줄 1~15자) · 「태그 허용」.
-// 저장은 로그인 세션으로만(크리에이터 ID 를 보내지 않는다). 모음은 팬도 공개를 허락한 답장만, 받았어요 3일 뒤부터 보인다.
+// 크리에이터 — 감사 답장 설정 (gift-reply INV-G8·G9). X 계정(영문·숫자·밑줄 1~15자) · 「태그 허용」.
+// 「답장 모음 보이기」 스위치는 2026-11-13 뺐다 — 공개 답장 모음이 없어졌다(사용자 「스위치도 없애」). 저장 함수는 그 칸을 아직 받으므로 저장된 값을 그대로 돌려보낸다.
+// 저장은 로그인 세션으로만(크리에이터 ID 를 보내지 않는다).
 // X 계정을 비우면 태그 허용도 꺼진다(DB 도 같다). 팬이 카드를 공유할 때 글쓰기 창에 채워질 글을 미리 보여 준다.
 
 export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
   const router = useRouter();
-  const [wallVisible, setWallVisible] = useState(initial.wallVisible);
   const [xHandle, setXHandle] = useState(initial.xHandle ?? "");
   const [xTagAllowed, setXTagAllowed] = useState(initial.xTagAllowed);
   const [saving, setSaving] = useState(false);
@@ -36,7 +36,7 @@ export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
     }
     setSaving(true);
     const r = await sendCreatorReplySettings({
-      wallVisible,
+      wallVisible: initial.wallVisible,
       xHandle,
       xTagAllowed,
     });
@@ -60,13 +60,6 @@ export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
         <h3 className="t-card" id="reply-set-h">
           감사 답장
         </h3>
-      </div>
-      <div className="sw-row">
-        <label className={s.txt} htmlFor="reply-wall">
-          <strong className="t-strong">답장 모음 공개</strong>
-          <span className="t-meta">팬이 공개에 동의한 답장을 내 수령 확인일 3일 후부터 선물 링크 페이지에 표시</span>
-        </label>
-        <input className={s.switch} type="checkbox" role="switch" id="reply-wall" checked={wallVisible} onChange={(e) => setWallVisible(e.currentTarget.checked)} />
       </div>
       <div>
         <label className="label" htmlFor="reply-x">

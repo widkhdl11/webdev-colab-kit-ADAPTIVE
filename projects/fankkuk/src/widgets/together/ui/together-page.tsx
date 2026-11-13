@@ -84,7 +84,7 @@ function Tile({ card, props }: { card: TogetherCard; props: TogetherPageProps })
           </p>
           {replied.length > 0 ? (
             <div className={s.replies}>
-              <FanBoxReplies rows={replied} photoBase={photoBase} returnPath={path} />
+              <FanBoxReplies rows={replied} photoBase={photoBase} />
             </div>
           ) : null}
         </div>

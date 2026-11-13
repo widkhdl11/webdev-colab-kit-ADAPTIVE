@@ -484,7 +484,7 @@ export function GiftStatusPage({
             </h2>
             <p className={s.desc}>크리에이터의 수령 확인일과 답장을 볼 수 있습니다. 답장의 공개 여부를 선택하거나 이미지 카드로 공유해 주세요.</p>
             <div className={s.inner}>
-              <FanBoxReplies rows={replies} photoBase={photoBase} returnPath={`/gifts/${view.orderNo}`} />
+              <FanBoxReplies rows={replies} photoBase={photoBase} />
             </div>
           </section>
         ) : null}

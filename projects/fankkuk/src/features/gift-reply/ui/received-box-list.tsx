@@ -123,7 +123,7 @@ function ReplyForm({ box, mode, onDone }: { box: ReceivedBox; mode: FormMode; on
       <details className={s.fold}>
         <summary>답장 공개 범위</summary>
         <p className="t-meta" id={hintId}>
-          답장은 {box.senderNickname}님께 전달됩니다. 팬이 공개에 동의하고 크리에이터가 ‘답장 모음 보이기’를 켠 경우, ‘받았어요’로 수령을 확인한 날부터 3일 뒤에 크리에이터 페이지에도 공개됩니다.<br />전화번호·이메일·인터넷 주소는 입력할 수 없습니다.
+          답장은 {box.senderNickname}님께 전달됩니다.<br />전화번호·이메일·인터넷 주소는 입력할 수 없습니다.
         </p>
       </details>
       {error ? (
@@ -194,7 +194,7 @@ function ReceivedRow({
 
   const remove = async () => {
     if (busy) return;
-    if (!window.confirm("답장을 삭제할까요? 팬의 기록과 공개 답장 모음에서도 삭제되며, 이 상자에는 다시 답장할 수 없습니다.")) return;
+    if (!window.confirm("답장을 삭제할까요? 팬의 기록에서도 삭제되며, 이 상자에는 다시 답장할 수 없습니다.")) return;
     setBusy(true);
     setError(null);
     const r = await sendDeleteGiftReply(box.boxId);

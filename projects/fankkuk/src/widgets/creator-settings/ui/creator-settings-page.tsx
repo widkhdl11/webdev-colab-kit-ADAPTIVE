@@ -102,7 +102,7 @@ export function CreatorSettingsPage({
   signatureLink: MySignatureLink;
   /** 팬덤 구간 — 팬덤 이름·테마 색·카드 미리보기에 쓰는 사진 주소(로그인한 크리에이터 본인 것) */
   fandom: FandomSectionProps;
-  /** 답장 모음 보이기·X 계정·태그 허용 — 로그인한 크리에이터 본인 것(gift-reply INV-G8) */
+  /** X 계정·태그 허용(답장 모음 보이기 칸은 저장값만 돌려보낸다 — 2026-11-13 모음 없앰) — 로그인한 크리에이터 본인 것(gift-reply INV-G8) */
   replySettings: ReplySettings;
   /** 링크용 아이디·남은 잠금 날·사진 경로 — 로그인한 크리에이터 본인 것(creator-link) */
   link: MyCreatorLink;

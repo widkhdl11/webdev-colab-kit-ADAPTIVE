@@ -6,6 +6,7 @@
 - 하네스 개선은 여기가 아니라 docs/references/harness-backlog.md.
 
 ## 미결
+- [ ] **크리에이터 설정 화면 콘솔 하이드레이션 경고** (2026-11-13) — 로컬 개발 서버 `/creator/settings` 를 열면 「A tree hydrated but some attributes of the server rendered HTML didn't match」 1건. 답장 모음 스위치를 뺀 날 처음 봤지만 그 변경과 관계있는지는 확인하지 못했다. 바꾸기 전 커밋에서 같은 경고가 나는지부터.
 - [ ] **상세 페이지 선물함 상태 읽기를 한 번에** (2026-11-13 보안 리뷰 낮음) — `widgets/creator-profile/api/load-creator-link.ts` 가 팬일 때 공개 선물함마다 `revgift_box_for_fan` 을 따로 부른다. 선물함 수 상한이 스펙·SQL 에 없다(크리에이터 본인만 늘릴 수 있어 외부 남용은 아님). 상한을 두거나 여러 선물함을 한 번에 읽는 함수로.
 - [ ] **크리에이터 상세 머리 배경도 회색으로 맞출지** (2026-11-13) — 카드는 테마 색 없으면 모든 카드가 같은 옅은 하늘 그라데이션(DECISIONS 11-13)인데, 상세 머리(`widgets/creator-profile` · `verifying-creator-page`)는 아직 `coverPastelVar` 로 크리에이터 ID 파스텔이라 같은 크리에이터가 카드는 회색·상세는 색이 다르다. 11-12 결정은 상세 배너도 한 색으로 정했다. 추천: 카드와 같은 기본 면, 흐린 고양이는 상세 시안 e판 기준으로 판단.
 - [ ] **시안 검사가 html overflow-x:clip 에 가려진 넘침을 0 으로 본다** (2026-11-12) — 상세 f판 배경 100vw 가 PC 에서 8px 넘쳤는데 시안 담당 검사가 0 을 냈다(본 세션이 clip 을 끄고 잡음). 2판부터 지시에 「clip 끄고 잰다」를 넣음 · 시안 검사 스크립트를 공용으로 둘 때 기본값으로
