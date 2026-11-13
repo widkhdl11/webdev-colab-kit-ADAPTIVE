@@ -1,88 +1,116 @@
-/* 크리에이터 상세 화면 전용 — 2026-10-25 재디자인(design-rules 31절). 값의 정본: docs/design/mockups/site/profile-codex-2026-10-25/profile.css
-   2026-11-01 시안 4 기준 정돈(design-rules 35절, 시안 part5-v4-20261101): 틀은 그대로, 주 버튼 테두리·숫자 띠·안내·다른 크리에이터를 흰 경계 카드(23-1절)로, 구간 제목 32. 로그인 후는 사이드바 껍데기 안이라 화면 폭이 아니라 칸 폭(컨테이너 쿼리)으로 나눈다 — 1080 은 최대 폭 */
-.pub { padding-top: var(--space-8); padding-bottom: var(--section-gap); }
-.app { padding-bottom: var(--section-gap); }
-.app:global(.page-centered) { max-width: calc(var(--col-profile) + 2 * var(--gutter)); }
-.pub .col { max-width: calc(var(--col-profile) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
-.col { container-type: inline-size; min-width: 0; }
+/* 크리에이터 상세 화면 전용 — 2026-11-13 시안 e판 구현(docs/design/mockups/creator-detail-e-20261112/index.html 가 값의 정본).
+   design-prompt 2-2: 줄 안 간격 --inner(32) / 줄 사이 --row(64), 한 열(칸 879 이하) 24/48. 로그인 후는 사이드바 껍데기 안이라 화면 폭이 아니라
+   칸 폭(컨테이너 쿼리)으로 나눈다 — main 이 page 컨테이너(배경·추천 줄 바깥 화살표), .col 이 본문 기둥 컨테이너(1080 이 최대 폭). */
+.pub, .app { --inner: var(--space-8); --row: var(--space-16); container: page / inline-size; width: 100%; min-width: 0; padding-bottom: var(--section-gap); }
+.col { container-type: inline-size; min-width: 0; max-width: calc(var(--col-profile) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
 /* 이 화면에서만 로그인 전 상단 바·바닥글 폭도 본문 기둥(1080 + 양옆 여백)에 맞춘다 — 전역 --pub-max 값은 그대로. 지역 클래스(.pub)를 넣어야 CSS 모듈이 받는다 */
 :global(body):has(main[data-wide-pub].pub) { --pub-max: calc(var(--col-profile) + 2 * var(--gutter)); }
 
-/* ---------- 머리: 배경 사진 면 · 큰 원형 사진(왼쪽 아래 걸침) · 글 ---------- */
-.pf { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: var(--space-12); padding-bottom: var(--space-10); }
-/* 배경 사진 칸 — 사진이 없으면 테마 색(--personal, creator-link INV-E13) 면 그대로, 그것도 없으면 크리에이터마다 정해진 파스텔 + 흐린 고양이 */
-.cover { grid-column: 1 / -1; position: relative; overflow: hidden; height: 280px; border-radius: var(--r-panel); background: var(--pastel, var(--primary-50)); }
+/* ---------- 배경 사진 면: 칸 폭 전체 · 2:1(올리는 칸 권장 1200×600) · 최대 520 ---------- */
+/* 사진이 없으면 테마 색(--personal, creator-link INV-E13) 면, 그것도 없으면 크리에이터 카드와 같은 옅은 하늘 세로 그라데이션(2026-11-13) */
+.cover { position: relative; overflow: hidden; width: 100%; aspect-ratio: 2 / 1; max-height: 520px; background: linear-gradient(180deg, var(--primary-50) 0%, var(--tint) 100%); }
 .ringed .cover { background: var(--personal); }
-/* 사진: 겉지름 184 안쪽에 흰 테두리 6(시안 .avatar) — 테마 색이 있으면 그 안쪽에 테마 색 테두리 3 */
-.photo:global(.face) { position: relative; grid-column: 1; box-sizing: border-box; width: 184px; height: 184px; margin: -84px 0 0 var(--space-2); border: 6px solid var(--white); font-size: var(--fs-title); font-weight: var(--fw-title); font-family: var(--font-round); object-fit: cover; }
+.cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+
+/* ---------- 상단 묶음 2×2: 윗줄 프로필 | 버튼, 아랫줄 진행 중인 선물함 | 요금·승인 시간 + 받기 어려운 선물 ---------- */
+.head { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); grid-template-areas: "id act" "boxes meta"; column-gap: var(--space-8); row-gap: var(--inner); align-items: start; }
+.headOnly { grid-template-areas: "id act"; }
+.id { grid-area: id; display: grid; grid-template-columns: 184px minmax(0, 1fr); column-gap: var(--space-6); min-width: 0; }
+/* 사진 겉지름 184 · 흰 테두리 6 · 테마 색 안쪽 선 3 · 위로 반(92) 걸침. 왼쪽 24 */
+.photo:global(.face) { position: relative; box-sizing: border-box; width: 184px; height: 184px; margin: -92px 0 0 var(--space-6); border: 6px solid var(--white); font-size: var(--fs-title); font-weight: var(--fw-title); font-family: var(--font-round); object-fit: cover; }
 .ringed .photo:global(.face) { outline: 3px solid var(--personal); outline-offset: -9px; }
-.pfMain { grid-column: 2; min-width: 0; padding-top: var(--space-4); }
+.idText { min-width: 0; padding-top: var(--space-4); }
 .nameLine { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .name { min-width: 0; font-size: var(--fs-title); line-height: 1.35; overflow-wrap: anywhere; }
 .channel { margin: 0; }
+/* 팬 수·기념일: 이름 바로 아래 14/600 보조 글자 + 16 아이콘 */
+.metaLine { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-1); margin-top: var(--space-1); color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.6; }
+.metaLine svg { flex: none; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.countdown { display: inline-flex; align-items: center; margin-left: var(--space-1); padding: 0 var(--space-2); border-radius: var(--r-icon); background: var(--gray-100); color: var(--ink); white-space: nowrap; }
 .tags { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-3); }
 .verified { display: inline-flex; align-items: center; gap: 6px; color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.6; }
 .intro { margin-top: var(--space-4); font-size: var(--fs-card); font-weight: 400; line-height: 1.6; overflow-wrap: anywhere; }
 .symbol { display: block; width: 56px; height: 56px; margin-top: var(--space-4); border-radius: var(--r-btn); object-fit: cover; }
 .thanks { margin-top: var(--space-1); color: var(--sub); font-weight: 400; }
-/* 버튼 — 글자 폭, 높이 48(누름 칸 44 이상). 채운 버튼은 하나뿐 */
-.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-6); }
-.actions :global(.btn) { white-space: nowrap; }
-.actions :global(.btn svg) { width: 20px; height: 20px; }
-/* 채움 버튼(팔로우·선물 보내기)은 시안 4처럼 같은 하늘의 짙은 선 1px — 「팔로우 중」(테두리 버튼)·누를 수 없는 상태는 그대로 */
-.actions :global(.btn):not(:global(.btn--line), [aria-disabled="true"], :disabled) { box-shadow: inset 0 0 0 1px var(--primary-700), var(--btn-fill-shadow); }
+
+/* 버튼 칸 — 윗줄 오른쪽, 이름 줄 높이에서 시작. 버튼 높이 48, 채운 버튼은 하나뿐 */
+.actions { grid-area: act; min-width: 0; padding-top: var(--space-4); }
+.btnrow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.btnrow :global(.btn) { white-space: nowrap; }
+.btnrow :global(.btn svg) { width: 20px; height: 20px; }
+/* 채움 버튼(팔로우·선물 보내기)은 같은 하늘의 짙은 선 1px — 「팔로우 중」(테두리 버튼)·누를 수 없는 상태는 그대로 */
+.btnrow :global(.btn):not(:global(.btn--line), [aria-disabled="true"], :disabled) { box-shadow: inset 0 0 0 1px var(--primary-700), var(--btn-fill-shadow); }
 @media (hover: hover) {
-  .actions :global(.btn):not(:global(.btn--line), [aria-disabled="true"], :disabled):hover { box-shadow: inset 0 0 0 1px var(--primary-700), var(--btn-fill-shadow-hover); }
+  .btnrow :global(.btn):not(:global(.btn--line), [aria-disabled="true"], :disabled):hover { box-shadow: inset 0 0 0 1px var(--primary-700), var(--btn-fill-shadow-hover); }
 }
 .selfTag:global(.tag) { font-weight: var(--fw-btn); }
-.restLine { margin-top: var(--space-6); color: var(--sub); font-weight: 400; }
+/* 쉬는 중 한 줄(INV-B2) — 시안 .pill-warn */
+.restLine { display: inline-flex; align-items: center; min-height: 32px; padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--warn-soft); color: var(--warn-ink); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; }
 /* 승인 서명 연결 전 배지(운영자 화면 — 팔로우 묶음이 없을 때). 팔로우 묶음 안의 같은 배지는 follow-button.module.css .noSend */
-.noSend { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 12px; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font-weight: var(--fw-btn); white-space: nowrap; }
-/* 버튼 칸 — 넓은 칸에서는 머리 오른쪽, 글 묶음의 세로 가운데(「채널 소유 확인」 줄 ~ 소개 줄 높이 — 2026-10-25 사용자) */
-.side { grid-column: 3; align-self: center; min-width: 0; max-width: 320px; margin-right: var(--space-8); } /* 머리 오른쪽 끝에서 32 안쪽(2026-10-25 사용자 「오른쪽에서 살짝 왼쪽으로」) */
-.side .actions { justify-content: flex-end; margin-top: 0; text-align: right; }
-.side .restLine { margin-top: 0; text-align: right; }
+.noSend { display: inline-flex; align-items: center; min-height: 32px; padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font-weight: var(--fw-btn); white-space: nowrap; }
+/* 「채널 확인 중」 안내 상자(INV-V22, design-rules 42절) — 하늘 면 + 1px 선 + 시계 아이콘 한 줄 */
+.verifying { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 48px; margin: 0; padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); background: var(--notice-sky); box-shadow: inset 0 0 0 1px var(--notice-sky-line); color: var(--ink); font-weight: var(--fw-btn); }
+.verifying svg { flex: none; }
 
-/* ---------- 받기 어려운 품목 한 줄 알림 ---------- */
-.alert { display: flex; align-items: baseline; gap: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-btn); background: var(--surface); }
-.alert h2 { flex: none; font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.6; letter-spacing: 0; white-space: nowrap; }
-.alert p { min-width: 0; color: var(--sub); font-weight: 400; overflow-wrap: anywhere; }
-.boxLinks { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); min-width: 0; margin: 0; padding: 0; list-style: none; }
-.boxLinks li { min-width: 0; }
-/* 간단한 설명 — 링크 바로 아래 한 줄, 보조 글자색(.alert p). 최대 100자라 길면 줄바꿈 */
-.boxLinks .boxDesc { margin: 0 0 var(--space-2); }
-.boxLinks a { display: inline-flex; align-items: center; min-height: 44px; font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+/* 아랫줄 왼쪽: 진행 중인 선물함 — 14/600 라벨 + 작은 타일 줄 */
+.boxes { grid-area: boxes; min-width: 0; }
+.boxesTitle { margin-bottom: var(--space-2); font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); letter-spacing: 0; line-height: 1.5; }
+.gtiles { display: flex; gap: var(--space-3); margin: 0 0 -16px -4px; padding: 4px 4px 16px; overflow-x: auto; scroll-snap-type: x proximity; scroll-padding-inline: 4px; scrollbar-width: thin; list-style: none; } /* 여백 4·16 은 그림자가 잘리지 않게(왼쪽 -4 로 글 왼쪽 선에 맞춤) */
+.gtiles li { flex: none; display: flex; scroll-snap-align: start; } /* 타일 높이는 줄에서 가장 긴 것에 맞춘다 */
+.gtile { display: flex; flex: 1; flex-direction: column; width: 128px; padding: 0; overflow: hidden; border: 0; border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); font: inherit; text-align: left; cursor: pointer; transition: transform 0.25s var(--ease-micro), box-shadow 0.25s var(--ease-micro); }
+.gtile:hover { box-shadow: var(--hair), var(--card-shadow-hover); }
+@media (hover: hover) { .gtile:hover { transform: translateY(-2px); } }
+.gtpic { display: grid; place-items: center; height: 72px; background: color-mix(in srgb, var(--personal, var(--primary-50)) 55%, var(--white)); } /* 그림 칸 높이 고정 72(8-8) — 대표색 55:45 */
+.gtpic img, .dpic img { height: 52px; width: auto; max-width: 64px; object-fit: contain; }
+.gtname { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; padding: var(--space-2) var(--space-3) var(--space-3); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; overflow-wrap: anywhere; }
+/* 내 신청 상태(신청함·대기 N번) — 「확인 전」 뱃지와 같은 색(7.2:1) */
+.gstate { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--primary-50); color: var(--tag-state-ink); font-size: var(--fs-small); font-weight: var(--fw-btn); white-space: nowrap; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary-50) 70%, var(--tag-state-ink)); }
+.gtile .gstate { align-self: flex-start; margin: calc(-1 * var(--space-1)) var(--space-3) var(--space-3); }
+/* 상세 창(공용 BottomSheet 안) — 그림 72 + 이름 / 설명 / 버튼 하나(폭 전체) */
+.dlgTitle { display: flex; align-items: center; gap: var(--space-4); min-width: 0; }
+.dpic { flex: none; display: grid; place-items: center; width: 72px; height: 72px; border-radius: var(--r-btn); background: color-mix(in srgb, var(--personal, var(--primary-50)) 55%, var(--white)); }
+.dname { min-width: 0; overflow-wrap: anywhere; }
+.dlgBody { display: grid; gap: var(--space-4); margin-top: var(--space-2); }
+.ddesc { color: var(--sub); overflow-wrap: anywhere; }
+.dlgAct:global(.btn) { width: 100%; }
 
-/* ---------- 숫자 띠: 값 크게 · 단위 작게 ---------- */
-.stats { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); margin-top: var(--space-12); border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); }
-/* 칸 사이는 세로 선 하나(시안 .stats) — 기념일이 없으면 칸 둘 */
-.stat { min-width: 0; padding: var(--space-6) var(--space-8); }
-.stat + .stat { box-shadow: inset 1px 0 0 var(--border); }
-.stats:has(> .stat:nth-child(3)) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr); }
-.stat dt { margin-bottom: var(--space-1); color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-btn); }
-.stat dd { margin: 0; font-size: var(--fs-title); font-weight: var(--fw-btn); line-height: 1.35; }
-.unit { margin-left: 2px; font-size: var(--fs-body); }
-.anniversary.anniversary { font-size: var(--fs-card); overflow-wrap: anywhere; }
-.date { color: var(--sub); font-size: var(--fs-body); white-space: nowrap; }
-.countdown { display: inline-flex; align-items: center; margin-left: var(--space-2); padding: var(--space-1) var(--space-2); border-radius: var(--r-icon); background: var(--gray-100); font-size: var(--fs-small); white-space: nowrap; }
-.fanLine { display: flex; align-items: center; gap: var(--space-3); padding-top: var(--space-8); }
-.fanLine svg { flex: none; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+/* 아랫줄 오른쪽: 요금 · 평균 승인 소요 시간 한 줄(14) + 받기 어려운 선물 */
+.sendMeta { grid-area: meta; min-width: 0; }
+.sendInfo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--space-3); margin: 0; color: var(--sub); font-size: var(--fs-small); line-height: 1.6; }
+.sendInfo > div { display: flex; gap: var(--space-1); }
+.sendInfo > div + div::before { content: "·"; margin-right: var(--space-2); }
+.sendInfo dd { margin: 0; color: var(--ink); font-weight: var(--fw-btn); }
+.alert { margin-top: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-btn); background: var(--surface-brand); }
+.alert h2 { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); letter-spacing: 0; line-height: 1.6; }
+.alert p { color: var(--sub); font-weight: 400; overflow-wrap: anywhere; }
 
-/* ---------- 구간 ---------- */
-.sec { margin-top: var(--space-16); }
-/* 구간 바로 앞이 구간이면 48 — 공용 「section + section」 간격이 지금까지 이 자리를 정해 왔다(64 와 48 중 무엇으로 할지는 새 시안 구현 때 정한다) */
-section + .sec { margin-top: var(--space-12); }
-.secTitle { margin-bottom: var(--space-6); font-size: var(--fs-title); line-height: 1.3; }
+/* ---------- 상세 내용 여닫기: 가로 선 가운데 알약 버튼, 상단 묶음 바로 아래(줄 안 간격) ---------- */
+.detail { margin-top: var(--inner); }
+.dtoggleRow { display: flex; align-items: center; gap: var(--space-4); }
+.dtoggleRow::before, .dtoggleRow::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.dtoggle { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-4); border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair); color: var(--ink); font: var(--fw-btn) var(--fs-small) / 1.5 var(--font); cursor: pointer; }
+@media (hover: hover) { .dtoggle:hover { background: var(--surface-hover); } }
+.dchev { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.15s; }
+.dtoggle[aria-expanded="true"] .dchev { transform: rotate(180deg); }
+.dbody { margin-top: var(--inner); }
+/* 2열: 전달 과정(2) | 보내기 전 안내(1), 같은 높이에서 시작 */
+.body { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); column-gap: var(--space-8); row-gap: var(--inner); align-items: start; }
+.body > section { min-width: 0; margin: 0; } /* 공용 「section + section」 위 여백을 지운다 — 두 열이 같은 높이에서 시작 */
+.secTitle { margin-bottom: var(--space-4); font-size: var(--fs-page); line-height: 1.3; }
 
-/* 감사 답장 3열 */
-.replies { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-6); list-style: none; padding: 0; }
-.reply { display: flex; flex-direction: column; min-height: 184px; padding: var(--space-6); border-radius: var(--r-card); background: var(--surface); }
-.reply blockquote { margin: 0; font-size: var(--fs-card); font-weight: 400; line-height: 1.6; overflow-wrap: anywhere; }
-.by { margin-top: auto; padding-top: var(--space-6); color: var(--sub); font-size: var(--fs-small); font-weight: 400; }
+/* 전달 과정(5-2): 단계마다 그림 칸 72 + 이름 + 한 줄 설명. 검수·승인(.gate)은 그림 칸을 옅은 하늘 면으로 — 이름·설명에도 적혀 있어 색만으로 전하지 않는다(4-2) */
+.flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); column-gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+.fstep { position: relative; min-width: 0; }
+.ftile { display: grid; place-items: center; width: 72px; height: 72px; border-radius: var(--r-card); background: var(--gray-100); }
+.ftile img { width: 56px; height: 56px; }
+.gate .ftile { background: var(--primary-50); }
+.fstep h3 { margin-top: var(--space-3); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); letter-spacing: 0; line-height: 1.5; }
+.fstep p { margin-top: var(--space-1); color: var(--sub); font-size: var(--fs-small); line-height: 1.5; }
+/* 화살표: 그림 칸 세로 중심(36), 이웃 그림 칸 사이 한가운데 */
+.farrow { position: absolute; top: calc(36px - 8px); left: calc(-1 * (100% - 72px + var(--space-4)) / 2 - 8px); width: 16px; height: 16px; fill: none; stroke: var(--gray-500); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-/* 보내기 전 안내 — 접는 줄 둘 */
-.guide { overflow: hidden; border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); }
-.guide details { padding: 0 var(--space-6); }
+/* 보내기 전 안내 — 접는 줄 둘. 줄 사이 선만(카드로 감싸지 않는다: 같은 모양 3곳 반복 방지, 6-5 6) */
+.guide { box-shadow: inset 0 1px 0 var(--border), inset 0 -1px 0 var(--border); }
 .guide details + details { box-shadow: inset 0 1px 0 var(--border); }
 .guide summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 56px; font-weight: var(--fw-btn); cursor: pointer; list-style: none; }
 .guide summary:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; border-radius: var(--r-btn); }
@@ -90,79 +118,86 @@ section + .sec { margin-top: var(--space-12); }
 .chevron { flex: none; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.15s; }
 .guide details[open] .chevron { transform: rotate(180deg); }
 .answer { padding-bottom: var(--space-4); }
-/* 한 줄에 한 항목, 사이 옅은 선(시안 .acc .ab) */
 .prohibited { display: grid; grid-template-columns: minmax(0, 1fr); list-style: none; margin: 0; padding: 0; }
 .prohibited li { display: flex; align-items: flex-start; gap: var(--space-3); min-width: 0; padding: var(--space-2) 0; color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: 1.6; }
 .prohibited li + li { box-shadow: inset 0 1px 0 var(--gray-100); }
 .prohibited li > span { min-width: 0; overflow-wrap: anywhere; }
 .prohibited svg { flex: none; width: 16px; height: 16px; margin-top: var(--space-1); fill: none; stroke: var(--danger); stroke-width: 1.8; stroke-linecap: round; }
 .desc { color: var(--sub); }
-.inspection { display: grid; gap: var(--space-3); max-width: var(--prose-max); list-style: none; padding: 0; color: var(--sub); font-weight: 400; }
+.inspection { display: grid; gap: var(--space-3); list-style: none; margin: 0; padding: 0; color: var(--sub); font-weight: 400; }
 
-/* 다른 크리에이터 — 3열 2줄(칸 좁으면 2열) · 간격 16 · 흰 경계 카드(시안 .mini) */
-.similarHead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6); }
-.similarHead .secTitle { margin-bottom: 0; }
-.otherGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); list-style: none; padding: 0; }
-.other { display: flex; align-items: center; gap: var(--space-4); height: 100%; min-height: 88px; padding: var(--space-4); border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); text-decoration: none; transition: transform 0.25s var(--ease-micro), box-shadow 0.25s var(--ease-micro); }
+/* ---------- 추천 크리에이터 둘러보기: 한 번에 3장, 화살표는 카드 줄 바깥 양옆(카드 높이 가운데) ---------- */
+.similar { margin-top: var(--row); }
+.secHead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-4); }
+.secHead .secTitle { margin-bottom: 0; }
+.secTools { flex: none; display: flex; align-items: center; gap: var(--space-3); }
+.opause { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair), var(--btn-ghost-shadow); color: var(--ink); cursor: pointer; }
+.opause svg { width: 20px; height: 20px; fill: currentColor; }
+/* 구역만 본문보다 양쪽 60(화살표 44 + 간격 16)씩 넓혀 카드 줄은 본문 폭 그대로. 칸이 1200 보다 좁으면 바깥 자리가 없어 본문 안에서 카드 줄을 좁힌다 */
+.ocar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; column-gap: var(--space-4); align-items: center; margin-inline: calc(-1 * (44px + var(--space-4))); }
+.oarrow { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); cursor: pointer; }
+.oarrow svg, .opause svg { flex: none; }
+.oarrow svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (hover: hover) { .oarrow:hover, .opause:hover { background: var(--surface-hover); } }
+.ogrid { display: flex; gap: var(--space-4); margin: -4px; padding: 4px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 4px; scrollbar-width: none; overscroll-behavior-x: contain; list-style: none; } /* 4: 그림자가 잘리지 않게 */
+.ogrid::-webkit-scrollbar { display: none; }
+.ogrid > li { flex: 0 0 calc((100% - 2 * var(--space-4)) / 3); min-width: 0; scroll-snap-align: start; }
+/* 카드 — 지금 운영의 작은 링크 카드(사진 56 + 이름 + 태그) 그대로 */
+/* 추천 크리에이터 카드(시안 e판) — 위 배경 2:1(배경사진 · 없으면 크리에이터 카드와 같은 옅은 하늘 그라데이션) → 사진 56(배경에 28 걸침) 오른쪽에 이름 · 아래 태그.
+   배경은 올리는 칸 권장 1200×600 과 같은 2:1 이라 권장대로 올린 사진은 잘리지 않는다(design-prompt 8-15) */
+.other { position: relative; display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: var(--space-3); align-content: start; height: 100%; padding: 0 var(--space-4) var(--space-4); overflow: hidden; border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); text-decoration: none; transition: transform 0.25s var(--ease-micro), box-shadow 0.25s var(--ease-micro); }
+@media (hover: hover) { .other:hover { transform: translateY(-2px); } } /* 시안 e판 값 그대로(UI 리뷰 11-13) */
 .other:hover, .other:focus-visible { box-shadow: var(--hair), var(--card-shadow-hover); }
-@media (hover: hover) { .other:hover { transform: translateY(-2px); } }
-.otherFace:global(.face) { width: 56px; height: 56px; font-weight: var(--fw-btn); }
-.otherWho { display: grid; gap: var(--space-2); min-width: 0; }
+.otherCover { grid-column: 1 / -1; display: block; aspect-ratio: 2 / 1; margin: 0 calc(var(--space-4) * -1); overflow: hidden; background: linear-gradient(180deg, var(--primary-50) 0%, var(--tint) 100%); }
+.otherCover > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.otherFace:global(.face) { position: relative; z-index: 1; flex: none; width: 56px; height: 56px; margin-top: -28px; border: 3px solid var(--white); box-shadow: var(--face-ring); font-weight: var(--fw-btn); } /* 흰 테두리 3 + 바깥 고리(시안 .oface) */
+.otherWho { display: grid; gap: var(--space-1); min-width: 0; padding-top: var(--space-2); }
 .otherWho b { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; overflow-wrap: anywhere; }
 .otherTags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-.moreBottom:global(.more-link) { display: none; }
 
-/* 칸 폭이 좁아지면(사이드바 안·태블릿) */
-@container (max-width: 1000px) {
-  .stat dd { font-size: var(--fs-page); }
-  .anniversary.anniversary { font-size: var(--fs-body); }
-  .replies { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@container page (max-width: 1199px) {
+  .ocar { margin-inline: 0; }
+}
+/* 휴대폰 폭: 화살표 없이 손으로 넘기고, 다음 카드 끝이 화면 오른쪽 끝까지 이어진다(2-3) */
+@container page (max-width: 767px) {
+  .ocar { display: block; }
+  .oarrow { display: none; }
+  .ogrid { gap: var(--space-3); margin-right: calc(-1 * var(--gutter)); padding-right: var(--gutter); scroll-padding-inline: 4px var(--gutter); }
+  .ogrid > li { flex-basis: calc((100% - var(--space-3)) / 2); }
+  /* 휴대폰 — 사진 위, 이름·태그 아래 한 열(시안 .orow 767 이하). 배경은 카드 위 가장자리에 붙는다 */
+  .other { grid-template-columns: minmax(0, 1fr); padding: 0 var(--space-3) var(--space-3); }
+  .otherCover { margin-inline: calc(var(--space-3) * -1); }
+  .otherFace:global(.face) { width: 48px; height: 48px; margin-top: -24px; }
+  .secTitle { font-size: var(--fs-card); }
 }
 
-/* 휴대폰 폭(칸 폭 720 미만) — 사진이 위, 글이 아래 */
-/* 버튼 칸은 사진 열보다 먼저(칸 879 이하) 소개 아래로 — 오른쪽 칸이 버튼 둘(약 270)을 차지하면 이름 칸이 130~180 으로 좁아져 20자 이름이 서너 줄로 접힌다(ui 재리뷰) */
+/* ---------- 칸 폭이 좁아질 때(사이드바 안·태블릿·휴대폰) ---------- */
 @container (max-width: 879px) {
-  .side { grid-column: 2; align-self: start; max-width: none; margin-right: 0; }
-  .side .actions { justify-content: flex-start; margin-top: var(--space-6); text-align: left; }
-  .side .restLine { margin-top: var(--space-6); text-align: left; }
+  .head { grid-template-columns: minmax(0, 1fr); grid-template-areas: "id" "act" "boxes" "meta"; row-gap: var(--space-6); }
+  .headOnly { grid-template-areas: "id" "act"; }
+  .actions, .boxes, .sendMeta { padding-left: calc(184px + 2 * var(--space-6)); } /* 글 묶음(이름 줄) 왼쪽 선에 맞춘다(2-20) */
+  .actions { padding-top: 0; }
+  .detail, .dbody { margin-top: var(--space-6); }
+  .similar { margin-top: var(--space-12); }
+  .body { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-6); }
+  /* 한 열이면 타일 줄이 화면 오른쪽 끝까지 이어진다(2-3) */
+  .gtiles { margin-right: calc(-1 * var(--gutter)); padding-right: var(--gutter); }
 }
 @container (max-width: 719px) {
-  .side { grid-column: 1; }
-  .pf { grid-template-columns: minmax(0, 1fr); padding-bottom: var(--space-8); }
-  .cover { height: 176px; border-radius: var(--r-card); }
-  .photo:global(.face) { width: 128px; height: 128px; margin-top: -60px; }
-  .pfMain { grid-column: 1; }
-  .alert { display: block; padding: var(--space-4); }
-  .alert p { margin-top: var(--space-1); }
-  .stats, .stats:has(> .stat:nth-child(3)) { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: var(--space-8); }
-  .stat { padding: var(--space-4); }
-  .stat:nth-child(3) { grid-column: 1 / -1; box-shadow: inset 0 1px 0 var(--border); }
-  .anniversary.anniversary { font-size: var(--fs-card); }
-  .date { font-size: var(--fs-small); }
-  .fanLine { align-items: flex-start; gap: var(--space-2); padding-top: var(--space-6); }
-  .fanLine svg { width: 20px; height: 20px; margin-top: 2px; }
-  .sec { margin-top: var(--space-12); }
-  .replies { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
-  .reply { min-height: 0; padding: var(--space-6); }
-  .by { padding-top: var(--space-4); }
-  .guide details { padding: 0 var(--space-4); }
-  .otherGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
-  .other { flex-direction: column; align-items: flex-start; gap: var(--space-2); padding: var(--space-4); }
-  .otherFace:global(.face) { width: 48px; height: 48px; }
-  /* 버튼은 폭 전체(시안 .pf-follow .btn) — 둘이면 반씩 */
-  .side .actions > :global(.btn) { flex: 1 1 0; }
-  .moreTop:global(.more-link) { display: none; }
-  .moreBottom:global(.more-link) { display: flex; width: fit-content; margin: var(--space-4) 0 0 auto; }
+  .id { grid-template-columns: minmax(0, 1fr); }
+  .photo:global(.face) { width: 128px; height: 128px; margin: -60px 0 0 var(--space-4); }
+  .ringed .photo:global(.face) { outline-offset: -8px; }
+  .actions, .boxes, .sendMeta { padding-left: 0; }
+  .btnrow > :global(.btn) { flex: 1 1 0; padding-inline: var(--space-4); }
+  .alert { padding: var(--space-4); }
+  .flow { grid-template-columns: minmax(0, 1fr); }
+  .fstep + .fstep { margin-top: var(--space-10); }
+  .ftile { width: 64px; height: 64px; }
+  .ftile img { width: 48px; height: 48px; }
+  .farrow { top: calc(-1 * var(--space-10) / 2 - 8px); left: calc(32px - 8px); transform: rotate(90deg); }
 }
 
-@media (max-width: 767px) {
-  .pub { padding-top: var(--space-4); }
-}
 @media (prefers-reduced-motion: reduce) {
-  .chevron, .other { transition: none; }
-  .other:hover { transform: none; }
+  .chevron, .dchev, .other, .gtile { transition: none; }
+  .other:hover, .gtile:hover { transform: none; }
 }
-
-/* 「채널 확인 중」 페이지 안내 상자(INV-V22, design-rules 42절 · 시안 .f5 .pf-wait) — 하늘 면 + 1px 선 + 시계 아이콘 한 줄. 선물 버튼 자리는 비운다 */
-.verifying { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 48px; margin: var(--space-6) 0 0; padding: var(--space-2) 20px; border-radius: var(--r-btn); background: var(--notice-sky); border: 1px solid var(--notice-sky-line); color: var(--ink); font-weight: var(--fw-btn); }
-.verifying svg { flex: none; }

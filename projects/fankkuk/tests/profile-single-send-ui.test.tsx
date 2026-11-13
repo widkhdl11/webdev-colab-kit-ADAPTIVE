@@ -280,13 +280,14 @@ describe("크리에이터 상세 — 버튼 자리 상태표 (UX 명세 2026-10-
     expect(host.textContent).not.toContain("받기 어려운 선물");
   });
 
-  it("받는 중이면 받는 상태 칸이 없고, 받기 어려운 선물은 머리 아래 한 줄 알림", () => {
+  it("받는 중이면 받는 상태 칸이 없고, 받기 어려운 선물은 상단 묶음 안(요금 줄 아래) 알림 — 시안 e판", () => {
     renderProfile("open", "save", { hardItems });
     expect(host.textContent).not.toContain("받는 상태");
     expect(host.textContent).not.toContain("지금 선물을 받고 있어요");
     const alert = host.querySelector("aside");
     expect(alert?.querySelector("h2")?.textContent).toBe("받기 어려운 선물");
-    expect(alert?.previousElementSibling?.querySelector("#creator-name")).not.toBeNull();
+    expect(alert?.closest("section")?.querySelector("#creator-name")).not.toBeNull();
+    expect(alert?.previousElementSibling?.querySelector("dt")?.textContent).toBe("요금");
   });
 
   it("(실패경로) 받기 어려운 선물이 없으면 알림 줄이 없다", () => {
@@ -296,19 +297,20 @@ describe("크리에이터 상세 — 버튼 자리 상태표 (UX 명세 2026-10-
 });
 
 describe("크리에이터 상세 — 없앤 것·남긴 것 (design-rules 31절)", () => {
-  it("링크 주소 줄·맨 아래 선물 판·감사 답장 설명 문장이 없다", () => {
+  it("링크 주소 줄·맨 아래 선물 판·공개 감사 답장 모음이 없다(시안 c판 사용자 「답장은 받은 팬의 마이꾹에서만」)", () => {
     for (const mode of ["login", "save"] as const) {
-      renderProfile("open", mode, { replies: [{ phrase: "thanks", line: null, repliedOn: "2026-10-01", fanNickname: null }] });
+      renderProfile("open", mode);
       expect(host.textContent, mode).not.toContain("fankkuk.com/haru");
       expect(host.querySelector("#send-h"), mode).toBeNull();
       expect(host.textContent, mode).not.toContain("팬이 공개를 허락한 것만");
-      expect(host.querySelector("#replies-h")?.textContent, mode).toBe("감사 답장 모음");
+      expect(host.querySelector("#replies-h"), mode).toBeNull();
+      expect(host.textContent, mode).not.toContain("감사 답장 모음");
     }
   });
 
-  it("숫자 띠 이름은 「평균 승인 소요 시간」·「요금」(·기념일은 30일 안일 때만)", () => {
+  it("버튼 아래 한 줄은 「요금」·「평균 승인 소요 시간」 순서(시안 e판, 기념일은 이름 아래)", () => {
     renderProfile("open", "save");
-    expect([...host.querySelectorAll("dt")].map((d) => d.textContent)).toEqual(["평균 승인 소요 시간", "요금"]);
+    expect([...host.querySelectorAll("dt")].map((d) => d.textContent)).toEqual(["요금", "평균 승인 소요 시간"]);
     expect(host.querySelector("dl")?.textContent).toContain("6,900원부터");
   });
 
