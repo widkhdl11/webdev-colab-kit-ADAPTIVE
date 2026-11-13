@@ -1,11 +1,21 @@
 ---
 project: fankkuk
 status: passed
-basis: d8a8c494bb56
-reviewers: [ui-reviewer, code-reviewer, security-reviewer]
+basis: 73530db6de53
+reviewers: [ui-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-11-12, base.css 층 이동 + 본문 폭 토큰)
+# 리뷰 사인오프 — fankkuk (2026-11-13 크리에이터 카드 차분한 판 · 아래는 2026-11-12 이전 기록)
+
+## 5. 크리에이터 카드 차분한 판 (694c1c09 · 0e0f932f, 2026-11-13)
+
+닿은 표면은 시각(카드 배너·버튼 색·배너 비율) 하나다. ui-reviewer 를 돌렸고(694c1c09 직전 코드), ux-reviewer 는 상태·노출 조건이 바뀌지 않아, code-reviewer 는 도메인 로직 변경이 색 변수를 넘기던 인자 제거뿐이라, security-reviewer 는 인증·권한·입력에 닿지 않아 뺐다.
+- ui-reviewer: 높음 0 · 중간 1 · 낮음 4. 중간(휴대폰 규칙을 화면 폭으로 걸어 476~767 의 2열에서 줄이 어긋남) → 찾기 격자 표시 `data-card-stack` + 칸 폭 `@container (max-width: 443.98px)` 로 고침. 낮음: 「팔로우 취소」 마우스 올림 테두리 · 설정 미리보기 누름 막기 선택자 · 주석 두 곳 → 고침. 버튼 높이 `44px` 를 `--btn-h-sm` 로 바꾸라는 지적은 이번 변경 전부터 있던 값이라 그대로 둠.
+- 0e0f932f(기본 배너 하늘 그라데이션 · 5:2)는 리뷰어를 다시 돌리지 않고 아래 실측으로 확인했다.
+
+### 실행 근거
+- `npx vitest run` → 406 파일 · 3606 통과(0e0f932f 직전). 0e0f932f 뒤 관련 시험 `creator-card` · `fandom-section` 등 4 파일 39 통과. `tsc --noEmit` src 오류 0.
+- 화면(localhost:3000 /creators · /, Playwright): 1440 카드 12장 높이 308 동일 · 배너 277×111 그라데이션 · 버튼 흰 바탕 높이 44 · 가로 넘침 0. 600(2열) 첫 카드에 사진을 넣어도 두 배너 높이·이름 줄 높이 같음. 390(한 열) 사진 343×171 · 기본 343×86, 빈 뱃지 줄 접힘. 로그인 전 홈 카드 줄에서 소개를 지운 카드는 칩 줄이 29 위로(승인 시안과 같은 동작).
 
 지난 사인오프(11-11, 아래 1·2절) 이후 main 에 들어온 코드는 이 두 묶음뿐이다(`git log e987f81d..9b19a0ff -- src supabase` 0건).
 
