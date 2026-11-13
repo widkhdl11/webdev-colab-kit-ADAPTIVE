@@ -166,8 +166,13 @@ describe("d113 D-2: 지금 보낼 수 없는 크리에이터(이사 중·쉬는 
     expect(radio(LIMIT)?.disabled).toBe(true);
     expect(radio(NARU)?.disabled).toBe(true);
     expect(radio(MOVE)?.disabled).toBe(true);
-    expect(card(MOVE)?.textContent).toContain("치지직 · 채널 변경 확인 중 · 선물 받기 중단"); // INV-CN4: 채널 이름 대신 플랫폼
+    // 2026-11-12 작은 가로 카드(시안 gifts-new-r2): 닉네임 아래 한 줄만 — 플랫폼·승인 시간 없음, 채널 이름도 없음(INV-CN4)
+    expect(card(MOVE)?.textContent).toContain("채널 변경 확인 중 · 선물 받기 중단");
     expect(card(MOVE)?.textContent).not.toContain("모아의 방");
+    expect(card(MOVE)?.textContent).not.toContain("치지직");
+    // 쉬는 중은 「쉬는 중」 한 단어 — 재개 날짜는 카드에 없다
+    expect(card(NARU)?.textContent).toBe("나루쉬는 중");
+    expect(card(MOMO)?.textContent).toBe("모모");
     expect(card(MOVE)?.className).not.toBe(card(MOMO)?.className);
     expect(card(LIMIT)?.className).toBe(card(MOVE)?.className);
     expect(card(NARU)?.className).toBe(card(MOVE)?.className);

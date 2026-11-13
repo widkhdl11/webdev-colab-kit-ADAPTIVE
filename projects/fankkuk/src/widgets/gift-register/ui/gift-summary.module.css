@@ -1,7 +1,8 @@
 /* 「보낼 선물」 칸 · 휴대폰 아래 합계 줄 — 시안 docs/design/mockups/site/v41-user-fixes/v41.css (.sumcard · .sumbar), design-rules 33절.
    흰 카드(하늘 면은 단계 판 하나 — 21절 강조 하나). 본문 칸(gift-send, 위젯 main) 880 이상에서만 칸, 그보다 좁으면 3단계 아래 줄. */
 
-.card { position: sticky; top: var(--space-8); margin-top: var(--space-8); padding: var(--space-6); min-width: 0; border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--card-fx); box-shadow: var(--card-shadow); }
+/* 단계 판 아래에서 입력 판과 같은 높이로 시작한다(시안 gifts-new-r2) — 위 여백은 두 단 묶음이 준다 */
+.card { position: sticky; top: var(--space-8); padding: var(--space-6); min-width: 0; border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--card-fx); box-shadow: var(--card-shadow); }
 .h.h { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; color: var(--ink); }
 .kv { margin: var(--space-3) 0 0; font-size: var(--fs-small); }
 .kv div { display: flex; justify-content: space-between; gap: var(--space-4); }
@@ -9,6 +10,10 @@
 .kv dt { flex: none; color: var(--sub); }
 /* 크리에이터 이름(최대 길이)은 줄을 바꿔 다 보인다 */
 .kv dd { min-width: 0; margin: 0; font-weight: var(--fw-btn); text-align: right; overflow-wrap: anywhere; }
+/* 받는 크리에이터 — 프로필 사진 24 + 「OO님」, 오른쪽 맞춤 */
+.who { display: inline-flex; align-items: center; justify-content: flex-end; gap: var(--space-2); max-width: 100%; min-width: 0; }
+.who-face.who-face { width: 24px; height: 24px; flex: none; }
+.who > span { min-width: 0; }
 .rule { margin: var(--space-4) 0; border: 0; border-top: 1px solid var(--gray-200); }
 .lines { margin: 0; padding: 0; list-style: none; }
 .ln { display: flex; justify-content: space-between; gap: var(--space-4); padding: var(--space-1) 0; font-size: var(--fs-small); }
@@ -26,13 +31,17 @@
 /* 휴대폰 아래 합계 줄 — 넓은 화면에서는 없다 */
 .bar { display: none; }
 
-@container gift-send (max-width: 879px) {
+@container gift-send (width < 880px) {
   .card { display: none; }
   /* 입력 기둥 맨 끝에 붙어 따라온다 — 흐름 안의 sticky 라 끝까지 내리면 제자리(버튼 아래)로 돌아가 결제 칸·버튼을 가리지 않는다 */
-  .bar { position: sticky; bottom: 0; z-index: 3; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-2) var(--space-4); margin: var(--space-6) calc(var(--gutter) * -1) 0; padding: var(--space-3) var(--gutter) var(--space-4); border-top: 1px solid var(--tint-line); background: var(--white); box-shadow: var(--card-shadow); }
+  /* 판 폭의 둥근 줄(시안 gifts-new-r2 .bar) — 휴대폰(767 이하)만 화면 가장자리까지(아래) */
+  .bar { position: sticky; bottom: 0; z-index: 3; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-2) var(--space-4); margin-top: var(--space-6); padding: var(--space-3) var(--space-4) max(var(--space-4), env(safe-area-inset-bottom)); border: 1px solid var(--tint-line); border-radius: var(--r-card); background: var(--white); box-shadow: var(--card-shadow); }
   .bar-l { min-width: 0; }
   .bar-l b { display: block; font-size: var(--fs-small); font-weight: var(--fw-bold); color: var(--ink); }
   .bar-l span { display: block; font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
   .bar-r { font-family: var(--font-round); font-size: var(--fs-page); font-weight: var(--fw-title); line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .bar-r small { margin-left: 2px; font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+}
+@media (max-width: 767px) {
+  .bar { margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter); border-width: 1px 0 0; border-radius: 0; }
 }

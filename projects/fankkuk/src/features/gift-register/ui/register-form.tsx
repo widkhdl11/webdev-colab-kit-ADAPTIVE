@@ -4,17 +4,15 @@ import { DIFFERENCE_DEADLINE_DAYS } from "@/entities/payment/config/difference-d
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
-import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
-import { CreatorTag } from "@/entities/creator/ui/creator-tag";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { INTAKE_LIMIT_TEXT, OVER_LIMIT_INTAKE_TEXT, PARCEL_TIER_GUIDE, personalIntakeNotice } from "@/entities/parcel/model/size-tier";
 import { tierCountText } from "@/entities/parcel/model/box-rows";
 import { PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { formatDuration } from "@/shared/lib/format/datetime";
-import { CreatorFace } from "@/entities/creator/ui/creator-face";
+import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { anniversaryInWeek, limitReachedMessage, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
 import { hardItemOverlap, type HardItems } from "@/entities/gift-item/model/hard-items";
 import { forcesMetalReport, isItemCategory, ITEM_CATEGORIES, ITEM_CATEGORY_LABEL, ITEM_OTHER_MAX, type ItemCategory } from "@/entities/gift-item/model/item-category";
@@ -23,7 +21,7 @@ import { MEMO_BODY_MAX, MEMO_TITLE_MAX } from "@/entities/order/model/gift-memo"
 import { PAYMENT_CONSENT_MISSING, PaymentConsent } from "@/entities/payment/ui/payment-consent";
 import { PHOTO_ACCEPT } from "@/shared/lib/image/photo-limits";
 import { photoPickProblem } from "@/shared/lib/image/photo-pick";
-import { creatorBlockNotice, restingStopText, stopReason } from "../model/receiving-notice";
+import { creatorBlockNotice, stopReason } from "../model/receiving-notice";
 import { SENDER_REFUSAL_MESSAGE } from "../model/sender-rule";
 import { summarizeBoxes, type BoxSummary } from "../model/box-summary";
 import { movingNotice } from "../model/sender-rule";
@@ -57,9 +55,10 @@ const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 const COUNT_FIELD = { small: "smallCount", medium: "mediumCount", large: "largeCount" } as const;
 
 /** 1단계 목록에서 처음에 보이는 사람 수. 나머지는 「N명 더 보기」(PICKS_STEP 명씩)나 검색으로
- * (2026-10-07 사용자 「12명이 나오니까 너무 길다」 · 「팔로우 중인 사람이 30명이면」 → 카드 d41). */
-const VISIBLE_PICKS = 5;
-const PICKS_STEP = 10;
+ * (2026-10-07 사용자 「팔로우 중인 사람이 30명이면」 → 카드 d41). 2026-11-12 작은 가로 카드로 바꾸며 12명 —
+ * 3열 4줄 · 2열 6줄 · 1열 12줄이 꽉 찬다(시안 gifts-new-r2-20261112 NOTES). 더 보기도 같은 수씩 */
+const VISIBLE_PICKS = 12;
+const PICKS_STEP = 12;
 
 type StepNo = 1 | 2 | 3 | 4;
 const STEP_NOS: readonly StepNo[] = [1, 2, 3, 4];
@@ -107,6 +106,8 @@ export function RegisterForm({
   onDraftChange,
   today,
   returnAddress = null,
+  aside = null,
+  belowPanel = null,
 }: {
   creators: readonly CreatorOption[];
   /** 지금 공개 요금표(받는 값만) — 서버 page 가 DB 공개 읽기 함수로 읽어 넘긴다. */
@@ -127,6 +128,10 @@ export function RegisterForm({
   today: CalendarDate;
   /** payment INV-M25: 팬이면 결제 단계에 반송 주소 칸을 둔다. null 이면(크리에이터) 칸이 없다 */
   returnAddress?: ReturnAddressInput | null;
+  /** 입력 판 오른쪽 칸(위젯의 「보낼 선물」). 넘기면 단계 판 아래가 입력 판 + 이 칸 두 단이 된다(시안 gifts-new-r2 — 단계 판은 두 단 전체 폭) */
+  aside?: ReactNode;
+  /** 입력 판 바로 아래(같은 기둥 끝)에 붙일 것 — 위젯의 휴대폰 합계 줄 */
+  belowPanel?: ReactNode;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<StepNo>(1);
@@ -430,20 +435,20 @@ tierCountText(summary.counts) || "없음";
     </button>
   );
 
-  // 이전·다음(결제하기) 버튼 묶음 — 흰 입력 판 맨 아래 오른쪽(시안 v39 gifts-new-b .actions2)
+  // 이전·다음(결제하기) 버튼 묶음 — 흰 입력 판 맨 아래, 이전 왼쪽 끝 · 다음 오른쪽 끝(시안 gifts-new-r2 .actions, 디자인 프롬프트 2-21 3)
   const actions = (
     <div className={f.actions}>
       {step > 1 ? (
-        <button className="btn btn--line" type="button" onClick={() => go((step - 1) as StepNo)}>
+        <button className={`btn btn--line ${f.prev}`} type="button" onClick={() => go((step - 1) as StepNo)}>
           이전
         </button>
       ) : null}
       {step < 4 ? (
-        <button key="next" className="btn" type="button" onClick={() => void next()}>
+        <button key="next" className={`btn ${f.next}`} type="button" onClick={() => void next()}>
           다음
         </button>
       ) : (
-        <button key="pay" className="btn" type="submit" aria-disabled={submitting} aria-busy={submitting || undefined}>
+        <button key="pay" className={`btn ${f.next}`} type="submit" aria-disabled={submitting} aria-busy={submitting || undefined}>
           {summary.totalKrw !== null ? `${won(summary.totalKrw)} 결제하기` : "결제하기"}
         </button>
       )}
@@ -486,7 +491,8 @@ tierCountText(summary.counts) || "없음";
 
   return (
     <div className={f.root}>
-      {/* 맨 위 하늘 단계 판 — 단계 숫자(48) / 4 단계 · 이번 단계 제목 · 네 칸 진행 막대 (design-rules 25절, 시안 v39 .fhero) */}
+      {/* 맨 위 하늘 단계 판 — 단계 숫자(48) / 4 단계 · 이번 단계 제목 · 네 칸 진행 막대 (design-rules 25절).
+          시안 gifts-new-r2: 판은 아래 두 단(입력 판 + 오른쪽 칸) 전체 폭이고, 입력 판과 칸은 판 아래 같은 높이에서 시작한다 */}
       <section className={f.hero} aria-labelledby={`h-${step}`} ref={stepsWrap}>
         <img className={f.peek} src="/images/home/icon-gift.webp" alt="" aria-hidden="true" width={96} height={96} />
         <div className={f["hero-row"]}>
@@ -522,6 +528,8 @@ tierCountText(summary.counts) || "없음";
         </nav>
       </section>
 
+      <div className={`${f.grid} ${aside ? f.split : ""}`}>
+      <div className={f.main}>
       <form className={f.panel} onSubmit={onSubmit} noValidate aria-label="선물 보내기 입력">
         {paymentNotice}
         {/* 1 크리에이터 */}
@@ -549,22 +557,23 @@ tierCountText(summary.counts) || "없음";
               {query.trim() ? `검색 결과 ${matches.length}명` : `전체 ${creators.length}명`}
             </p>
           </div>
-          {/* 걸러진 줄은 지우지 않고 숨긴다 — 고른 값이 그대로 남게. 한 줄에 한 사람(시안 .plist.one) */}
+          {/* 걸러진 줄은 지우지 않고 숨긴다 — 고른 값이 그대로 남게.
+              가로가 긴 작은 카드: 프로필 사진 40 · 닉네임 한 줄 · 고름 동그라미 24. 태그·승인 시간은 없다(2026-11-12 사용자, 시안 gifts-new-r2-20261112) */}
           <ul className={f["pick-list"]}>
             {creators.map((c) => {
-              // 지금 보낼 수 없는 크리에이터(이사 중·쉬는 중·이번 달 한도)는 회색 카드 + 이유 한 줄, 고를 수 없다(design-rules 25절 — 2026-10-22 d113 D-2).
+              // 지금 보낼 수 없는 크리에이터(이사 중·쉬는 중·이번 달 한도)는 회색 카드, 고를 수 없다(design-rules 25절 — 2026-10-22 d113 D-2).
               // 판정은 model 의 stopReason 하나 — 「다음」·결제 직전 판정(creatorBlockNotice)과 같은 순서다. 등록은 DB 가 다시 막는다
               const reason = stopReason(c, today);
               const stopped = reason !== null;
-              // 이번 달 한도에 닿은 크리에이터는 둘째 줄 전체가 한도 안내다(시안 ux-pilot-2026-10-22 send-2-after)
-              const second =
-                reason === "moving"
-                  ? "채널 변경 확인 중 · 선물 받기 중단"
-                  : reason === "resting"
-                    ? restingStopText(c.receiving?.resumeOn ?? null, today)
-                    : approvalTimeText(c.approvalMinutes);
-              // 채널 이름 대신 플랫폼(creator-display-name INV-CN4)
-              const meta = reason === "limit" ? limitReachedMessage(today) : [c.platform, second].filter(Boolean).join(" · ");
+              // 닉네임 아래 한 줄 — 쉬는 중은 「쉬는 중」 한 단어(이유·날짜 뺌, 시안 2판). 이사 중·한도는 시안에 없어 지금 안내 문구를 한 줄로(넘치면 말줄임, 전체는 title)
+              const stopLine =
+                reason === "resting"
+                  ? "쉬는 중"
+                  : reason === "moving"
+                    ? "채널 변경 확인 중 · 선물 받기 중단"
+                    : reason === "limit"
+                      ? limitReachedMessage(today)
+                      : null;
               return (
                 <li key={c.id} hidden={!visible.includes(c)}>
                   <label className={`${f.pick} ${stopped ? f.stop : ""}`}>
@@ -575,20 +584,14 @@ tierCountText(summary.counts) || "없음";
                       value={c.id}
                       {...register("creatorId", { onChange: (e: { target: { value: string } }) => onCreatorChange?.(e.target.value) })}
                     />
-                    <CreatorFace tone={c.faceTone ?? "var(--face-1)"} className={f["pick-face"]} />
+                    <FaceAvatar className={`face ${f["pick-face"]}`} />
                     <span className={f["pick-text"]}>
                       <strong title={c.name}>{c.name}</strong>
-                      {/* 태그는 다른 화면과 같은 태그 부품(아이콘·플랫폼 색, design-rules 5절) */}
-                      {(c.tags ?? []).length > 0 ? (
-                        <span className={f["pick-tags"]}>
-                          {(c.tags ?? []).map((t) => (
-                            <CreatorTag key={t} name={t} />
-                          ))}
+                      {stopLine ? (
+                        <span className={f["pick-rest"]} title={stopLine}>
+                          {stopLine}
                         </span>
                       ) : null}
-                      <span className={f["pick-meta"]} title={meta}>
-                        {meta}
-                      </span>
                     </span>
                     {/* 고른 카드의 오른쪽 체크 — 모양만, 고른 상태는 라디오가 알린다 */}
                     <span className={f["pick-ok"]} aria-hidden="true">
@@ -605,7 +608,8 @@ tierCountText(summary.counts) || "없음";
             <div className={f["more-row"]}>
               {hiddenCount > 0 ? (
                 <button className="btn btn--line btn--sm" type="button" onClick={() => setPickLimit((n) => n + PICKS_STEP)}>
-                  {Math.min(PICKS_STEP, hiddenCount)}명 더 보기 <span className={f["more-left"]}>(남은 {hiddenCount}명)</span>
+                  {/* 「남은 N명」 괄호는 뺐다(시안 2판 — 위 「전체 N명」과 같은 정보) */}
+                  {Math.min(PICKS_STEP, hiddenCount)}명 더 보기
                 </button>
               ) : (
                 <button className="btn btn--line btn--sm" type="button" onClick={() => setPickLimit(VISIBLE_PICKS)}>
@@ -920,7 +924,17 @@ tierCountText(summary.counts) || "없음";
           <dl className={f.sums}>
             <div className={f["sum-row"]}>
               <dt>받는 크리에이터</dt>
-              <dd>{picked ? `${picked.name}님` : "미선택"}</dd>
+              <dd>
+                {picked ? (
+                  // 프로필 사진 32 + 「OO님」(시안 2판 .sum-row .who)
+                  <span className={f.who}>
+                    <FaceAvatar className={`face ${f["who-face"]}`} />
+                    <span>{`${picked.name}님`}</span>
+                  </span>
+                ) : (
+                  "미선택"
+                )}
+              </dd>
               {fix(1, "받는 크리에이터")}
             </div>
             <div className={f["sum-row"]}>
@@ -1100,6 +1114,10 @@ tierCountText(summary.counts) || "없음";
         {alerts}
         {actions}
       </form>
+      {belowPanel}
+      </div>
+      {aside}
+      </div>
     </div>
   );
 }

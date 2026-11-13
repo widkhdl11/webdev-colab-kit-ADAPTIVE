@@ -23,7 +23,7 @@ import {
 import { GiftSumBar, GiftSummaryCard } from "./gift-summary";
 import s from "./gift-register-page.module.css";
 
-// 선물 보내기 본문(팬·크리에이터). 시안: docs/design/mockups/site/v39-part3/gifts-new-b.html (design-rules 25절 B안 — 맨 위 하늘 단계 판 + 흰 입력 판 한 기둥 720). 로그인 전·팔로우 없음·쉬는 중은 흰 상태 카드
+// 선물 보내기 본문(팬·크리에이터). 시안: docs/design/mockups/gifts-new-r2-20261112/ (작업형 2판 — 하늘 단계 판이 흐름 폭 1040 전체, 아래 흰 입력 판 + 「보낼 선물」 칸). 로그인 전·팔로우 없음·쉬는 중은 흰 상태 카드
 // 4단계에서 「결제하기」를 누르면 서버에 등록되고(결제 대기), 같은 자리에 결제창이 뜬다.
 // 헤더·푸터는 라우트(app)가 붙인다 — 위젯끼리 import 하지 않게.
 // 선물 사진(선택)을 골랐으면 등록 직후 그 주문에 올린 뒤 결제창을 연다(together INV-F2 — 서버가 열어 보고 사진 정보를 지워 저장한다).
@@ -204,24 +204,21 @@ export function GiftRegisterPage({
             </div>
           </div>
         ) : (
-          <div className={s.grid}>
-            <div className={s.main}>
-              <RegisterForm
-                creators={creators}
-                prices={prices}
-                initialCreatorId={pickOther ? "" : initialCreatorId}
-                notice={notice}
-                resumeHref={resumeHref}
-                onRegistered={onRegistered}
-                onCreatorChange={setPickedId}
-                onDraftChange={setDraft}
-                today={today}
-                returnAddress={returnAddress}
-              />
-              {draft?.step === 3 ? <GiftSumBar draft={draft} /> : null}
-            </div>
-            <GiftSummaryCard draft={draft} />
-          </div>
+          // 단계 판(폼 안)이 두 단 전체 폭을 쓰고, 그 아래 입력 판 + 「보낼 선물」 칸 — 두 단 배치는 폼이 그리고 칸·합계 줄은 여기서 넘긴다(시안 gifts-new-r2-20261112)
+          <RegisterForm
+            creators={creators}
+            prices={prices}
+            initialCreatorId={pickOther ? "" : initialCreatorId}
+            notice={notice}
+            resumeHref={resumeHref}
+            onRegistered={onRegistered}
+            onCreatorChange={setPickedId}
+            onDraftChange={setDraft}
+            today={today}
+            returnAddress={returnAddress}
+            aside={<GiftSummaryCard draft={draft} />}
+            belowPanel={draft?.step === 3 ? <GiftSumBar draft={draft} /> : null}
+          />
         )}
       </div>
     </main>

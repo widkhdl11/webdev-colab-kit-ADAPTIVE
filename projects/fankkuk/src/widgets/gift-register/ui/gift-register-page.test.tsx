@@ -185,8 +185,13 @@ describe("33절: 「보낼 선물」 합계 칸", () => {
     // 휴대폰 아래 합계 줄 — 입력 기둥(폼과 같은 칸) 맨 끝, 버튼 없음
     const bar = sumbar();
     expect(bar).not.toBeNull();
-    expect(bar?.previousElementSibling?.querySelector("form")).not.toBeNull();
+    expect(bar?.previousElementSibling?.tagName).toBe("FORM");
     expect(bar?.parentElement?.nextElementSibling).toBe(aside());
+    // 시안 gifts-new-r2: 하늘 단계 판은 두 단(입력 판 기둥 + 오른쪽 칸) 바깥 바로 위 — 칸이 판 아래에서 입력 판과 같은 높이로 시작한다
+    const twoCols = aside()?.parentElement;
+    const hero = host.querySelector('nav[aria-label="선물 보내기 단계"]')?.closest("section");
+    expect(twoCols?.previousElementSibling).toBe(hero);
+    expect(twoCols?.contains(hero!)).toBe(false);
     expect(bar?.querySelector("b")?.textContent).toBe("상자 2개");
     expect(bar?.querySelector("span")?.textContent).toBe("중형 2");
     expect(bar?.querySelector("[aria-live]")?.textContent).toBe("24,000원");

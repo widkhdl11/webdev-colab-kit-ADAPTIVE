@@ -1,6 +1,7 @@
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { tierCountText } from "@/entities/parcel/model/box-rows";
 import { formatWon } from "@/shared/lib/format/won";
+import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { MAX_BOX_COUNT } from "@/features/gift-register/model/register-input";
 import type { RegisterDraft } from "@/features/gift-register/ui/register-form";
 import s from "./gift-summary.module.css";
@@ -39,7 +40,17 @@ export function GiftSummaryCard({ draft }: { draft: RegisterDraft | null }) {
       <dl className={s.kv}>
         <div>
           <dt>받는 크리에이터</dt>
-          <dd>{draft?.creatorName ? `${draft.creatorName}님` : DASH}</dd>
+          <dd>
+            {draft?.creatorName ? (
+              // 프로필 사진 24 + 「OO님」(시안 gifts-new-r2 .who)
+              <span className={s.who}>
+                <FaceAvatar className={`face ${s["who-face"]}`} />
+                <span>{`${draft.creatorName}님`}</span>
+              </span>
+            ) : (
+              DASH
+            )}
+          </dd>
         </div>
         <div>
           <dt>선물 종류</dt>
