@@ -2,10 +2,18 @@
 project: fankkuk
 status: passed
 basis: 8f511463391f
-reviewers: [ux-reviewer, ui-reviewer, security-reviewer]
+reviewers: [ux-reviewer, ui-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-11-13 크리에이터 상세 e판 · 카드 차분한 판 · 아래는 2026-11-12 이전 기록)
+# 리뷰 사인오프 — fankkuk (2026-11-13 팬 이용 안내 2판·자주 묻는 질문·선물 보내기 2판 · 크리에이터 상세 e판 · 카드 차분한 판 · 아래는 2026-11-12 이전 기록)
+
+## 8. 팬 이용 안내 2판 · 자주 묻는 질문 · 선물 보내기 2판 (790eb89a · 970e594f, 2026-11-13)
+
+닿은 표면: 시각 배치(사용자가 고른 시안 guide-fan-r2 · faq-20261112 · gifts-new-r2) · 선물 보내기 1단계 카드 구성. 인증·인가·결제 코드는 손대지 않아 security-reviewer 는 뺐고, 바뀐 것이 화면 배치와 글 모양 나누기라 code-reviewer 도 뺐다.
+- ux-reviewer(선물 보내기): 높음 1·낮음 1 — 한도·이사 중 카드 표시가 상태 문서와 다름. 커밋된 이전 코드도 같은 동작이라 이번 diff 밖 → BACKLOG. 상태 8개·follow_first·12명씩 더 보기 위반 없음.
+- ui-reviewer(선물 보내기): 중간 1(쉬는 중 줄 12px) · 낮음 3(전환 숫자·수정 버튼 최소 폭·880 경계 소수 폭 겹침) → 모두 고침.
+- ui-reviewer(안내 글·FAQ): 중간 2(링크 아닌 요약 칸의 테두리·그림자와 순서 아닌 요약의 번호·화살표, 02조 송장 그림 빠짐) → 고침 · 낮음: 옆 목차 DOM 순서·문장 자간 → 고침, 끝 판 「10」 대비 실측 4.2:1 → gray-600, 탭 테두리 gray-200 → BACKLOG.
+- 실행 근거: vitest legal 99 · gift-register 141 통과 · tsc 오류 0(.next 생성 파일 제외) · copy:lint 0건 · 구조 시험을 옛 화면 코드에 대면 190행에서 실패 · 화면(로컬 개발 서버, 하루·별빛 로그인) 1440 옆 목차 x1188 폭200 따라옴·지금 조 바뀜, 1399 위 줄, 390 넘침 0, FAQ #contact 펼침, /terms·/pricing 680·옆 목차 없음, 선물 보내기 1440 3열·390 1열 309·2단계 이동·오른쪽 칸 「하루님」.
 
 ## 7. 나에게 온 감사 카드 (a7a067cb, 2026-11-13 — 스펙 my-reply-cards INV-RC1~RC5)
 
