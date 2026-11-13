@@ -6,7 +6,7 @@
 - 하네스 개선은 여기가 아니라 docs/references/harness-backlog.md.
 
 ## 미결
-- [ ] **크리에이터 상세 머리 배경도 회색으로 맞출지** (2026-11-13) — 카드는 테마 색 없으면 `--gray-100`(DECISIONS 11-13)인데, 상세 머리(`widgets/creator-profile` · `verifying-creator-page`)는 아직 `coverPastelVar` 로 크리에이터 ID 파스텔이라 같은 크리에이터가 카드는 회색·상세는 색이 다르다. 11-12 결정은 상세 배너도 한 색으로 정했다. 추천: 카드와 같이 회색, 흐린 고양이는 상세 시안 e판 기준으로 판단.
+- [ ] **크리에이터 상세 머리 배경도 회색으로 맞출지** (2026-11-13) — 카드는 테마 색 없으면 모든 카드가 같은 옅은 하늘 그라데이션(DECISIONS 11-13)인데, 상세 머리(`widgets/creator-profile` · `verifying-creator-page`)는 아직 `coverPastelVar` 로 크리에이터 ID 파스텔이라 같은 크리에이터가 카드는 회색·상세는 색이 다르다. 11-12 결정은 상세 배너도 한 색으로 정했다. 추천: 카드와 같은 기본 면, 흐린 고양이는 상세 시안 e판 기준으로 판단.
 - [ ] **시안 검사가 html overflow-x:clip 에 가려진 넘침을 0 으로 본다** (2026-11-12) — 상세 f판 배경 100vw 가 PC 에서 8px 넘쳤는데 시안 담당 검사가 0 을 냈다(본 세션이 clip 을 끄고 잡음). 2판부터 지시에 「clip 끄고 잰다」를 넣음 · 시안 검사 스크립트를 공용으로 둘 때 기본값으로
 - [ ] **크리에이터 찾기 PC 칩 줄바꿈 — 「버추얼」 하나만 둘째 줄** (2026-11-12) — 2판 하늘 찾기 판 승인 여부를 기다림 · 승인되면 칩 줄 폭·간격으로 한 줄 또는 고르게 두 줄
 - [x] **base.css 층 이동 브랜치 합치기 마무리** (2026-11-12 · 11-12 완료: merge 3fee6f4e, 사인오프 review.md 3절 — 전체 통합 시험은 사용자 결정으로 생략) — 브랜치 `fix/base-css-layer`(작업 폴더 `C:\Users\PC\Desktop\dev\fankkuk-base-layer`, 커밋 6개·마지막 9d1b9eb8)는 ui·code 리뷰 반영까지 끝났고 사인오프용 통합 시험만 못 돌았다(Docker Desktop 이 꺼져 로컬 Supabase 가 없음 · 작업 폴더에는 `.env.local` 이 없어 main 폴더에서 돌려야 한다) · 남은 순서: Docker 켜기 → main 폴더에서 `node scripts/integration-baseline.mjs --run` → 리뷰 사인오프 기록(ui-reviewer, code-reviewer) → `git merge --ff-only fix/base-css-layer` → 작업 폴더 정리 → Astryx 실험 작업 폴더(`fankkuk-astryx-exp`)의 결과 글(RESULT.md)과 비교 캡처 2장(compare-1440·390)을 과정 기록 폴더의 astryx-experiment-20261112 로 옮긴 뒤 그 작업 폴더 삭제

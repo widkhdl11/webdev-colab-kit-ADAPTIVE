@@ -18,10 +18,12 @@
 
 .head { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
 
-/* 배너 2:1 · cover — 배경 사진 올리기 안내 「권장 크기 1200×600px」과 같은 비율이라 권장대로 올린 사진은 잘리지 않는다(design-prompt 8-15).
-   사진이 없으면 테마 색 면 그대로(파스텔 8색, 섞지 않는다), 그것도 없으면 기본 회색 면(2026-11-13 — 크리에이터마다 다른 파스텔을 쓰지 않는다).
-   PC 는 사진 없는 배너도 2:1 — 같은 줄 카드의 이름 줄 높이가 같다(시안 creators-calm-20261113 B안). 휴대폰은 아래 미디어 쿼리 */
-.cover { position: relative; overflow: hidden; aspect-ratio: 2 / 1; margin: calc(var(--card-pad) * -1) calc(var(--card-pad) * -1) 0; background: var(--gray-100); }
+/* 배너 5:2 · cover — 같은 줄 카드의 이름 줄 높이를 맞추려고 사진이 있든 없든 같은 비율이다. 5:2 는 방송 배너 표준 1200×480 과 같고,
+   올리는 칸 권장 1200×600(2:1)으로 올린 사진은 위아래가 10% 씩 잘린다(design-prompt 8-15 — 커버를 낮추라는 2026-11-13 지시로 비율을 조금 양보).
+   사진이 없으면 테마 색 면 그대로(파스텔 8색, 섞지 않는다), 그것도 없으면 모든 카드가 같은 옅은 하늘 → 더 옅은 하늘 세로 그라데이션
+   (2026-11-13 사용자 「아주 옅은 하늘색 … 흰색으로 부드럽게 밝아지는 미세한 그라데이션」 — 끝을 순백까지 내리지 않아 흰 몸통과 경계가 남는다).
+   찾기 격자가 한 열일 때의 높이는 아래 @container */
+.cover { position: relative; overflow: hidden; aspect-ratio: 5 / 2; margin: calc(var(--card-pad) * -1) calc(var(--card-pad) * -1) 0; background: linear-gradient(180deg, var(--primary-50) 0%, var(--tint) 100%); }
 .ringed .cover { background: var(--personal); }
 
 /* 사진 64(배너에 32 걸침, 왼쪽 — 카드 안쪽 여백 24 선) + 오른쪽에 이름 한 줄 · 그 아래 뱃지 한 줄(2026-10-18 「A로」 — 한 줄에 두면 긴 이름이 뱃지를 밀어낸다) */
@@ -96,6 +98,7 @@
    팬덤 뱃지가 없으면 그 줄 자리를 접는다(시안 creators-calm-20261113). 화면 폭이 아니라 격자 칸 폭 기준이다 — 격자는 칸 444 이상이면
    2열이라(creator-search.module.css) 그 아래에서만 한 열이다. 홈 카드 줄은 444 아래에서 옆으로 넘기는 한 줄이라 표시(data-card-stack)가 없어 걸리지 않는다 */
 @container (max-width: 443.98px) {
+  :global([data-card-stack]) .cover:has(img) { aspect-ratio: 2 / 1; } /* 한 열은 맞출 옆 카드가 없어 사진은 권장 비율 그대로 */
   :global([data-card-stack]) .cover:not(:has(img)) { aspect-ratio: 4 / 1; }
   :global([data-card-stack]) .badgeRow:empty { display: none; }
   :global([data-card-stack]) .who:has(.badgeRow:empty) .id { padding-top: var(--space-1); }

@@ -11,9 +11,9 @@ import s from "./creator-card-head.module.css";
 
 // 크리에이터 카드 — 크리에이터 찾기·팔로우한 크리에이터·홈 새 크리에이터가 같이 쓴다(design-rules 17절 「크리에이터 카드 v28」,
 // 시안 docs/design/mockups/site/v28-card-redesign/index.html, DECISIONS 2026-10-18).
-// 2026-11-13 차분한 판(시안 creators-calm-20261113 B안, DECISIONS 같은 날): 테마 색 없는 배너는 기본 회색 면(크리에이터 ID 파스텔 안 씀)·고양이 없음,
+// 2026-11-13 차분한 판(시안 creators-calm-20261113 B안, DECISIONS 같은 날): 테마 색 없는 배너는 모든 카드가 같은 옅은 하늘 그라데이션(크리에이터 ID 파스텔 안 씀)·고양이 없음,
 // 아래 버튼은 흰 바탕 테두리(테마 색 안 씀 — INV-E13), 소개는 내용만큼(최대 두 줄) · 버튼 줄은 카드 맨 아래.
-// 위에서 아래로(줄 사이 8): 배너 2:1(배경사진, 없으면 테마 색 면 그대로 또는 기본 회색 면 — 휴대폰은 사진 없는 배너만 4:1)
+// 위에서 아래로(줄 사이 8): 배너 5:2(배경사진, 없으면 테마 색 면 그대로 또는 기본 면 — 찾기 격자가 한 열이면 사진 2:1 · 기본 4:1)
 // → 사진 64(배너에 32 걸침, 왼쪽) + 오른쪽에 이름(600·한 줄 말줄임) 한 줄, 그 아래 팬덤 뱃지 한 줄(CreatorCardHead)
 //   — 한 줄에 나란히 두면 긴 이름이 뱃지를 「하..」까지 밀어내서 두 줄로 나눴다(2026-10-18 사용자 「A로」)
 // → 「소개」 최대 두 줄(CreatorCardLine) — 채널 이름은 보이지 않는다(2026-11-10 이름 통일, creator-display-name INV-CN4, 시안 name-merge-20261105)
@@ -48,7 +48,7 @@ export function CreatorCardHead({
   return (
     <div className={`${s.head} ${ringed ? s.ringed : ""}`} style={vars as CSSProperties} data-card-head="">
       {/* 배너 — 꾸밈이라 읽지 않는다 */}
-      {/* 사진이 없으면 비운 면(테마 색 또는 기본 회색) — 공개 프로필 머리와 달리 흐린 고양이를 두지 않는다(2026-11-13) */}
+      {/* 사진이 없으면 비운 면(테마 색 또는 기본 하늘 그라데이션) — 공개 프로필 머리와 달리 흐린 고양이를 두지 않는다(2026-11-13) */}
       <div className={s.cover} aria-hidden="true" data-card-cover="">
         {look.backgroundUrl ? <CreatorCoverArt imageUrl={look.backgroundUrl} /> : null}
       </div>
