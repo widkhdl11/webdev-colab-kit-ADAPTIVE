@@ -1,11 +1,24 @@
 ---
 project: fankkuk
 status: passed
-basis: 73530db6de53
-reviewers: [ui-reviewer]
+basis: 2057b24d6794
+reviewers: [ux-reviewer, ui-reviewer, security-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-11-13 크리에이터 카드 차분한 판 · 아래는 2026-11-12 이전 기록)
+# 리뷰 사인오프 — fankkuk (2026-11-13 크리에이터 상세 e판 · 카드 차분한 판 · 아래는 2026-11-12 이전 기록)
+
+## 6. 크리에이터 상세 e판 (338f96f2, 2026-11-13)
+
+닿은 표면: 새 화면 상태(상세 정보 여닫기·선물함 상세 창·자동 넘김) · 시각 배치 · 인가(팬 본인 선물함 신청 상태 읽기 추가). ux-reviewer → ui-reviewer 순서, security-reviewer 따로. code-reviewer 는 판정 로직이 선물함 뱃지·버튼 고르기(`entities/revgift-box/model/box-entry.ts`, 단위 시험 있음) 하나라 뺐다.
+- security-reviewer: 높음·중간 0, 낮음 1(선물함마다 읽기 호출 — 백로그). 다른 팬 상태 섞임 없음(본인 행만), 두 라우트 force-dynamic, find_creators_look 은 이미 공개된 값만.
+- ux-reviewer: 중간 1(보는 도중 「움직임 줄이기」를 켜도 자동 넘김 계속) → 고침. 낮음: 손으로 넘기면 멈춤 버튼 상태와 어긋남 → 고침 · verifying 고정 문장 role=status → 뺌 · 본인 꼬리표·선물함 상태 두 줄 → handle.md 고침.
+- ui-reviewer: 높음 1(휴대폰 추천 카드 위 흰 띠·사진 배치) → 시안 값으로 고침 · 중간 2(없는 클래스 s.more, 사진 바깥 고리) → 고침 · 낮음: 카드 면·이름 간격·떠오름 → 시안 값으로. 720~879 들여쓰기 24 어긋남은 시안도 같은 값이라 그대로.
+
+### 실행 근거
+- `npx vitest run` → 408 파일 · 3624 통과. `tsc --noEmit` src 오류 0. 통합 `creator-link-db`·`creator-look-db`·`link-extras-db` → 3 파일 67 통과.
+- `npm run copy:lint` → 0건(금지 문장 「절대 유출되지 않습니다」를 심으면 1건 잡히는 것 확인 뒤 지움).
+- 새 시험 변이: 추천 카드 배경 그리는 줄을 지우면 「추천 카드 배경」 시험 실패 → 되돌려 11 통과.
+- 화면(localhost:3000 /creators/{하루}, Playwright): 1440 닫힘·열림 가로 넘침 0, 추천 카드 배경 349×175, 두 열 제목 같은 높이. 390 선물함 시트 열림(이름·설명·「신청」), 추천 카드 배경 위 간격 0 · 사진 48 이 24 걸침 · 이름이 사진 아래.
 
 ## 5. 크리에이터 카드 차분한 판 (694c1c09 · 0e0f932f, 2026-11-13)
 
