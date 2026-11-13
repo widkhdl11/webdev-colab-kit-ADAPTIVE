@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { readApiCheckPlatforms, readMyVerifications, readMyVerificationState } from "@/entities/creator/api/creator-verification-reads";
 import { readMyCreatorSettings } from "@/entities/creator/api/my-creator-settings";
 import { CREATOR_ACCOUNT, FAN_HOME } from "@/entities/session/model/home-path";
 import { CreatorAccountPage } from "@/widgets/creator-account/ui/creator-account-page";
@@ -10,6 +9,9 @@ import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
 export const dynamic = "force-dynamic";
 
+// 크리에이터 알림 설정(2026-11-13 재분류로 이름을 바꿈 — 주소는 그대로). 보안(비밀번호·휴대폰)·채널 소유자 확인·회원 탈퇴와 그 읽기(휴대폰 번호·채널 본인 확인)는
+// 프로필 수정 「계정」·「채널」 탭(app/(site)/creator/profile/page.tsx)으로 옮겼다. 여기는 알림 두 칸 + 바로 받기(my_creator_settings — my-account INV-A11)만 읽는다.
+// 아래는 옮기기 전 설명이다.
 // 크리에이터 계정 설정(목록형 880 — 2026-10-22 정돈 4 + 8 묶음, design-rules 27절. 처음은 2026-10-16 상세 설정의 「계정」 칸을 옮김). 모두 로그인한 크리에이터 본인 것만 읽는다:
 // 휴대폰 번호(가린 값)·알림 두 칸(my_creator_settings — my-account INV-A11), 채널 본인 확인(creator-verification INV-V11).
 // 연락처가 담긴 화면이라 요청마다 그린다(force-dynamic — 운영 모드에서 Cache-Control: private, no-store).
@@ -17,20 +19,14 @@ export default async function Page() {
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
   if (viewer?.role !== "creator") redirect(`/login?next=${CREATOR_ACCOUNT}`);
-  const [header, settings, state, rows, apiPlatforms] = await Promise.all([
-    readSiteHeader(supabase, viewer, CREATOR_ACCOUNT),
-    readMyCreatorSettings(supabase),
-    readMyVerificationState(supabase),
-    readMyVerifications(supabase),
-    readApiCheckPlatforms(supabase),
-  ]);
+  const [header, settings] = await Promise.all([readSiteHeader(supabase, viewer, CREATOR_ACCOUNT), readMyCreatorSettings(supabase)]);
   // 크리에이터 역할인데 크리에이터 줄이 없으면 이 화면을 그릴 수 없다 — 숨기지 않고 오류로 드러낸다
-  if (!settings || !state) throw new Error("크리에이터 줄을 찾지 못했다");
+  if (!settings) throw new Error("크리에이터 줄을 찾지 못했다");
   return (
     <>
       <SiteHeader {...header} />
       <MyShell width="list">
-        <CreatorAccountPage phoneMasked={settings.phoneMasked} notify={settings.notify} verification={{ state, rows, apiPlatforms: [...apiPlatforms], loginId: viewer.loginId ?? null }} />
+        <CreatorAccountPage notify={settings.notify} />
       </MyShell>
       <SiteFooter />
     </>

@@ -21,9 +21,11 @@ type Props = {
   onCustomChange: (next: string) => void;
   /** 틀린 칸 표시 — 부르는 쪽의 오류 줄 id 를 넘기면 그 줄을 읽어 준다 */
   invalid?: { describedBy: string } | null;
+  /** 바깥에 「태그」 제목이 이미 보이면 그 제목의 id — 이름을 두 번 그리지 않고 그 제목으로 읽힌다(설정 판 제목) */
+  labelledBy?: string;
 };
 
-export function TagPicker({ idBase, options, picked, custom, onPickedChange, onCustomChange, invalid = null }: Props) {
+export function TagPicker({ idBase, options, picked, custom, onPickedChange, onCustomChange, invalid = null, labelledBy }: Props) {
   const count = countTagSelection(options, picked, custom);
   const full = count >= TAG_TOTAL_MAX;
   const hintId = `${idBase}-hint`;
@@ -34,10 +36,12 @@ export function TagPicker({ idBase, options, picked, custom, onPickedChange, onC
   };
 
   return (
-    <div className="field" role="group" aria-labelledby={`${idBase}-label`} aria-describedby={hintId}>
-      <p className="label" id={`${idBase}-label`}>
-        태그
-      </p>
+    <div className="field" role="group" aria-labelledby={labelledBy ?? `${idBase}-label`} aria-describedby={hintId}>
+      {labelledBy ? null : (
+        <p className="label" id={`${idBase}-label`}>
+          태그
+        </p>
+      )}
       <div className={s.chips}>
         {options.map((o) => {
           const on = picked.includes(o.id);

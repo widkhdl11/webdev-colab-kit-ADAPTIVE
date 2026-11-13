@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { creatorColorVars, hasThemeVars, type CreatorColors } from "../model/creator-color";
 import { CreatorCoverArt } from "./creator-cover-art";
 import { FandomBadge } from "./fandom-badge";
@@ -16,9 +17,8 @@ export type CreatorHeadProps = {
   /** 홈에서는 h1(공개 이름이 페이지 제목), 미리보기에서는 글자만 */
   nameAs?: "h1" | "span";
   intro?: string;
+  /** 없으면 사이트 기본 얼굴(고양이 얼굴 한 장 — 2026-11-12 결정, 첫 글자 동그라미를 쓰지 않는다) */
   photoUrl: string | null;
-  /** 사진이 없을 때 동그라미 안 글자 */
-  initial: string;
   backgroundUrl: string | null;
   colors: CreatorColors;
   fanName: string;
@@ -41,7 +41,7 @@ export function CreatorHead(p: CreatorHeadProps) {
       </div>
       <div className={`${s.body} ${p.actions ? s.withAct : ""}`}>
         <span className={s.av} aria-hidden="true" data-avatar="">
-          {p.photoUrl ? <img src={p.photoUrl} alt="" width={512} height={512} /> : p.initial}
+          {p.photoUrl ? <img src={p.photoUrl} alt="" width={512} height={512} /> : <FaceAvatar className="" />}
         </span>
         <div className={s.id}>
           <div className={s.line}>

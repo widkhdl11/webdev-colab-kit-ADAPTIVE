@@ -1,0 +1,22 @@
+/* 설정 판 — 설정 화면의 구역 겉모양 한 가지(흰 카드 · 제목 h2 · 안쪽 여백). 구역마다 자기 겉모양(카드 · 제목 줄 · 판 밖 줄)을 따로 들고 다니면
+   한 화면에 모아 놓았을 때 모양이 제각각이 된다 — 겉모양은 여기 한 곳에서 정하고 구역은 안쪽만 그린다.
+   값: 흰 카드(--hair + --card-shadow) · 반경 --r-card · 안쪽 32(휴대폰 24) · 제목 --fs-card. */
+.panel { min-width: 0; margin: 0; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
+
+/* 판 제목(h2) — 판 맨 위. 제목 바로 다음 칸은 위 여백을 16 으로 줄인다(옮기기 전 「제목 아래 8 + 칸 사이 8」과 같은 16) */
+/* 굵기는 두 제목 모두 --fw-title 로 적는다 — 판 제목(.title)은 base.css 의 h2 규칙과 같은 값이지만, 줄 안 제목(.titleText)은
+   inherit 로 두었다가 줄 글자 굵기(400)를 물려받은 적이 있다(2026-11-13 ui 리뷰). 두 값이 같아야 판 제목 굵기가 하나로 보인다 */
+.title { margin: 0; padding: var(--space-8) var(--space-8) 0; font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; }
+.panel > .title + * { padding-top: var(--space-4); }
+
+/* 줄 안에 놓이는 판 제목(채널 소유자 확인 · 회원 탈퇴 — 줄 이름이 곧 판 이름이라 제목을 두 번 두지 않는다). 글자 모양만 .title 과 같다 */
+.titleText { margin: 0; font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; }
+
+/* 판 안쪽 — 제목 없는 판은 위 32, 제목 있는 판은 위 16(위 규칙) */
+.body { display: grid; gap: var(--space-6); min-width: 0; padding: var(--space-8); }
+.body > * { min-width: 0; }
+
+@media (max-width: 767px) {
+  .title { padding: var(--space-6) var(--space-6) 0; }
+  .body { padding: var(--space-6); }
+}

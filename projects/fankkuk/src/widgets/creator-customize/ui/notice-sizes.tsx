@@ -1,5 +1,5 @@
 import { NOTICE_SIZES, noticeImagePath, type NoticeSize } from "@/entities/creator/model/link-images";
-import { CREATOR_SETTINGS } from "@/entities/session/model/home-path";
+import { creatorProfileTabHref } from "@/entities/session/model/home-path";
 import { CopyButton } from "@/shared/ui/copy-button";
 import s from "./creator-customize.module.css";
 
@@ -13,8 +13,8 @@ const ROWS: readonly { size: NoticeSize; title: string }[] = [
   { size: "wide", title: "가로" },
 ];
 
-/** 상세 설정에서 링크 주소를 정하는 칸 — 접힌 「선물 링크」 안이고, 상세 설정이 주소 끝 #link 를 보고 펼친다 */
-const LINK_SETTING = `${CREATOR_SETTINGS}#link`;
+/** 링크 주소를 정하는 칸 — 프로필 수정 「채널」 탭의 「선물 링크」(id=link, 2026-11-13 상세 설정에서 옮김) */
+const LINK_SETTING = `${creatorProfileTabHref("channel")}#link`;
 
 /** 썸네일 칸(48) 안에 비율대로 그린 작은 판 */
 function Thumb({ size }: { size: NoticeSize }) {
@@ -31,7 +31,7 @@ export function NoticeSizes({ creatorId, ready, siteOrigin }: { creatorId: strin
   if (!ready)
     return (
       <p className={s.lock}>
-        채널 소유자 확인 후 ‘<a href={LINK_SETTING}>상세 설정 &gt; 선물 링크</a>’에서 링크 주소를 등록하면 다운로드할 수 있습니다.
+        채널 소유자 확인 후 ‘<a href={LINK_SETTING}>프로필 수정 &gt; 채널</a>’에서 링크 주소를 등록하면 다운로드할 수 있습니다.
       </p>
     );
   return (

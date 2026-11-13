@@ -11,15 +11,21 @@ import { MustDeliverNotice } from "@/entities/notification/ui/must-deliver-notic
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import {
   CREATOR_ACCOUNT,
-  CREATOR_SETTINGS,
+  creatorProfileTabHref,
 } from "@/entities/session/model/home-path";
 import { sendCreatorNotify } from "@/features/creator-settings-save/api/send-creator-settings";
 import { VerificationPanel } from "@/features/creator-verify/ui/verification-panel";
 import { PasswordChangePanel } from "@/features/password-change/ui/password-change-panel";
 import { PhoneChangePanel } from "@/features/phone-change/ui/phone-change-panel";
 import { CREATOR_CHANNEL_CREATE_PATH } from "@/shared/config/creator-paths";
+import panel from "@/shared/ui/settings-panel.module.css";
 import s from "./creator-account.module.css";
 
+// 2026-11-13 재분류(UX 명세 creator-profile, DECISIONS 같은 날): 이 화면은 「알림 설정」으로 이름을 바꿔 알림만 남는다(주소 /creator/account 그대로).
+// 보안(비밀번호·휴대폰 번호)·회원 탈퇴는 프로필 수정 「계정」 탭, 채널 소유자 확인은 「채널」 탭으로 옮겼다 — 아래 구역 부품을 그대로 내보내
+// 앱 레이어(app/(site)/creator/profile/page.tsx)가 탭에 끼운다. 구역 안의 동작·문구는 그대로다.
+// 세 구역의 겉모양은 공용 settings-panel 판(탭 안 다른 구역과 같은 판·같은 제목 단계 h2) — 4+8 제목 줄·판 밖 줄 모양은 알림 설정에만 남는다.
+// (아래는 옮기기 전 설명)
 // 크리에이터 계정 설정(design-rules 27절 「4파트 나머지 다섯 화면」, 2026-10-22 카드 d115 · 시안 docs/design/mockups/site/pilot-2026-10-22/creator-account.html).
 // 2026-10-16 사용자 「만들어봐」 — 상세 설정 아래 접힌 「계정」 칸(본인 확인·알림·계정 보안)을 이 화면으로 옮겼다.
 // 배치는 계정 설정(팬)과 같다: 카드 없이 880 기둥 안 12열 4 + 8 묶음 둘 — 보안(비밀번호·휴대폰 번호·채널 본인 확인) → 알림
@@ -29,7 +35,7 @@ import s from "./creator-account.module.css";
 //   승인 요청처럼 꼭 가는 알림은 끄는 스위치 없이 「끌 수 없는 알림」으로 알린다(notifications INV-N6). 스위치는 누르는 즉시 저장하고, 실패하면 되돌린다.
 // - 회원 탈퇴는 팬 화면과 같이 펼치면 고객센터 문의 링크만(탈퇴 기능이 아직 없다).
 
-type Open = "password" | "phone" | "leave" | null;
+type Open = "password" | "phone" | null;
 type Msg = { ok: boolean; text: string } | null;
 
 // 줄 전체가 누르는 칸(높이 64) — 이름·설명·막대가 한 스위치 버튼 안에 있다(계정 설정(팬) my-info-page 의 Switch 와 같은 모양)
@@ -73,32 +79,171 @@ function Switch({
   );
 }
 
+/** 로그인이 끊겼을 때 돌아올 곳 — 구역이 놓인 프로필 수정 탭 */
+function useToLogin(back: string) {
+  const router = useRouter();
+  return () => router.push(`/login?next=${encodeURIComponent(back)}`);
+}
+
+/** 보안 묶음 — 비밀번호 · 휴대폰 번호(버튼을 눌러야 그 줄 아래에 칸이 펼쳐진다). 프로필 수정 「계정」 탭 */
+export function CreatorSecurityGroup({ phoneMasked }: { phoneMasked: string | null }) {
+  const id = useId();
+  const f = (name: string) => `${id}-${name}`;
+  const router = useRouter();
+  const toLogin = useToLogin(creatorProfileTabHref("account"));
+  const [open, setOpen] = useState<Open>(null);
+  const toggle = (which: Exclude<Open, null>) =>
+    setOpen((cur) => (cur === which ? null : which));
+  return (
+    <section className={`${s.wrap} ${panel.panel}`} aria-labelledby={f("sec1")} data-ca-group="security">
+      <h2 className={panel.title} id={f("sec1")}>
+        보안
+      </h2>
+      <div className={`${s.rows} ${s.inPanel}`}>
+        <div className={s.item}>
+          <div className={s.row}>
+            <p className={s.txt}>
+              <span className={s.k}>비밀번호</span>
+            </p>
+            <button
+              className="btn btn--line btn--sm"
+              type="button"
+              aria-expanded={open === "password"}
+              aria-controls={f("pw-panel")}
+              onClick={() => toggle("password")}
+            >
+              변경
+            </button>
+          </div>
+          {open === "password" && (
+            <div className={s.panel}>
+              <PasswordChangePanel id={f("pw-panel")} onLoginExpired={toLogin} />
+            </div>
+          )}
+        </div>
+        <div className={s.item}>
+          <div className={s.row}>
+            <p className={s.txt}>
+              <span className={s.k}>휴대폰 번호</span>
+              <span className={s.v}>{phoneMasked ?? "등록된 번호가 없어요"}</span>
+            </p>
+            <button
+              className="btn btn--line btn--sm"
+              type="button"
+              aria-expanded={open === "phone"}
+              aria-controls={f("tel-panel")}
+              onClick={() => toggle("phone")}
+            >
+              변경
+            </button>
+          </div>
+          {open === "phone" && (
+            <div className={s.panel}>
+              <PhoneChangePanel id={f("tel-panel")} onLoginExpired={toLogin} onChanged={() => router.refresh()} />
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export type CreatorVerificationProps = {
+  state: MyVerificationState;
+  rows: readonly MyVerification[];
+  apiPlatforms: readonly string[];
+  /** 로그인 아이디 — 팬꾹 링크 미리 확인용(signup INV-U14) */
+  loginId?: string | null;
+};
+
+/** 채널 소유자 확인 한 줄 — 줄과 펼친 본문을 부품이 함께 그린다. 프로필 수정 「채널」 탭 */
+export function CreatorChannelOwnerRow({ verification }: { verification: CreatorVerificationProps }) {
+  const id = useId();
+  return (
+    // 이름(h2)은 채널 유무에 따라 이 줄 또는 VerificationPanel 이 그린다 — 어느 쪽이든 같은 id 라 판이 그 제목으로 이름을 읽는다
+    <section className={`${s.wrap} ${panel.panel}`} aria-labelledby={`${id}-h`} data-ca-group="channel">
+      {/* 채널 소유자 확인 — 줄과 펼친 본문을 부품이 함께 그린다(시안 channel-link-verify-20261102 #acct-verified·#acct-recheck, design-rules 42절) */}
+      {/* 줄 이름 「채널 소유자 확인」이 곧 판 제목(h2) — 제목을 두 번 두지 않는다 */}
+      <div className={`${s.item} ${s.inPanel}`} id="verify">
+        {verification.state.name === null ? (
+          // signup INV-U21: 채널이 없으면 ①②(팬꾹 링크·채널 주소)를 보이지 않고 채널 만들기로 보낸다(UX 명세 「가입 밖에서 바뀌는 것」)
+          <div className={s.row}>
+            <div className={s.txt}>
+              <h2 className={panel.titleText} id={`${id}-h`}>
+                채널 소유자 확인
+              </h2>
+              <span className={s.v}>채널 없음</span>
+            </div>
+            <Link className="btn btn--line btn--sm" href={CREATOR_CHANNEL_CREATE_PATH}>
+              채널 만들기
+            </Link>
+          </div>
+        ) : (
+          <VerificationPanel
+            variant="account"
+            state={verification.state}
+            rows={verification.rows}
+            loginId={verification.loginId ?? null}
+            titleAs="h2"
+            titleClassName={panel.titleText}
+            titleId={`${id}-h`}
+          />
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** 회원 탈퇴 — 펼치면 고객센터 문의 링크만(탈퇴 기능이 아직 없다). 프로필 수정 「계정」 탭 맨 끝 */
+export function CreatorLeaveRow() {
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  return (
+    <section className={`${s.wrap} ${panel.panel}`} aria-labelledby={`${id}-leave-h`} data-ca-group="leave">
+      <div className={`${s.inPanel}`}>
+      <div className={s.row}>
+        <div className={s.txt}>
+          {/* 줄 이름이 곧 판 제목(h2) */}
+          <h2 className={panel.titleText} id={`${id}-leave-h`}>
+            회원 탈퇴
+          </h2>
+          <span className={s.sub}>탈퇴 문의 및 절차 안내</span>
+        </div>
+        <button
+          className={`btn btn--sm ${s.danger}`}
+          type="button"
+          aria-expanded={open}
+          aria-controls={`${id}-leave-panel`}
+          onClick={() => setOpen((v) => !v)}
+        >
+          탈퇴 안내
+        </button>
+      </div>
+      {open && (
+        <div className={s.panel} id={`${id}-leave-panel`}>
+          <Link className="btn btn--line btn--sm" href="/support">
+            탈퇴 문의
+          </Link>
+        </div>
+      )}
+      </div>
+    </section>
+  );
+}
+
+/** 알림 설정(/creator/account) — 알림 묶음 하나(2026-11-13 리뷰: 상세 설정 안내 줄은 명세에 없어 뺐다) */
 export function CreatorAccountPage({
-  phoneMasked,
   notify,
-  verification,
 }: {
-  phoneMasked: string | null;
   notify: { kakao: boolean; email: boolean; instant: boolean };
-  verification: {
-    state: MyVerificationState;
-    rows: readonly MyVerification[];
-    apiPlatforms: readonly string[];
-    /** 로그인 아이디 — 팬꾹 링크 미리 확인용(signup INV-U14) */
-    loginId?: string | null;
-  };
 }) {
   const id = useId();
   const f = (name: string) => `${id}-${name}`;
   const router = useRouter();
-  const [open, setOpen] = useState<Open>(null);
-  const toggle = (which: Exclude<Open, null>) =>
-    setOpen((cur) => (cur === which ? null : which));
   const toLogin = () => router.push(`/login?next=${CREATOR_ACCOUNT}`);
   const [alarm, setAlarm] = useState(notify);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
-
   // 스위치는 누르는 즉시 저장한다. 실패하면 화면 값을 저장된 값으로 되돌린다.
   const toggleNotify = async (key: "kakao" | "email" | "instant", value: boolean) => {
     if (saving) return;
@@ -125,78 +270,10 @@ export function CreatorAccountPage({
     <div className={s.wrap}>
       <header className="page-head">
         <div className="ph-row">
-          <h1 className="ph-title">계정 설정</h1>
+          <h1 className="ph-title">알림 설정</h1>
         </div>
-        <p className="ph-desc">보안·채널 소유자 확인·알림을 관리합니다.</p>
+        <p className="ph-desc">알림을 관리합니다.</p>
       </header>
-
-      <section className={s.grp} aria-labelledby={f("sec1")} data-ca-group="security">
-        <h2 className={`${s.nm} ${s.nmRow}`} id={f("sec1")}>
-          보안
-        </h2>
-        <div className={s.rows}>
-          <div className={s.item}>
-            <div className={s.row}>
-              <p className={s.txt}>
-                <span className={s.k}>비밀번호</span>
-              </p>
-              <button
-                className="btn btn--line btn--sm"
-                type="button"
-                aria-expanded={open === "password"}
-                aria-controls={f("pw-panel")}
-                onClick={() => toggle("password")}
-              >
-                변경
-              </button>
-            </div>
-            {open === "password" && (
-              <div className={s.panel}>
-                <PasswordChangePanel id={f("pw-panel")} onLoginExpired={toLogin} />
-              </div>
-            )}
-          </div>
-          <div className={s.item}>
-            <div className={s.row}>
-              <p className={s.txt}>
-                <span className={s.k}>휴대폰 번호</span>
-                <span className={s.v}>{phoneMasked ?? "등록된 번호가 없어요"}</span>
-              </p>
-              <button
-                className="btn btn--line btn--sm"
-                type="button"
-                aria-expanded={open === "phone"}
-                aria-controls={f("tel-panel")}
-                onClick={() => toggle("phone")}
-              >
-                변경
-              </button>
-            </div>
-            {open === "phone" && (
-              <div className={s.panel}>
-                <PhoneChangePanel id={f("tel-panel")} onLoginExpired={toLogin} onChanged={() => router.refresh()} />
-              </div>
-            )}
-          </div>
-          {/* 채널 소유자 확인 — 줄과 펼친 본문을 부품이 함께 그린다(시안 channel-link-verify-20261102 #acct-verified·#acct-recheck, design-rules 42절) */}
-          <div className={s.item} id="verify">
-            {verification.state.name === null ? (
-              // signup INV-U21: 채널이 없으면 ①②(팬꾹 링크·채널 주소)를 보이지 않고 채널 만들기로 보낸다(UX 명세 「가입 밖에서 바뀌는 것」)
-              <div className={s.row}>
-                <p className={s.txt}>
-                  <span className={s.k}>채널 소유자 확인</span>
-                  <span className={s.v}>채널 없음</span>
-                </p>
-                <Link className="btn btn--line btn--sm" href={CREATOR_CHANNEL_CREATE_PATH}>
-                  채널 만들기
-                </Link>
-              </div>
-            ) : (
-              <VerificationPanel variant="account" state={verification.state} rows={verification.rows} loginId={verification.loginId ?? null} />
-            )}
-          </div>
-        </div>
-      </section>
 
       <section className={s.grp} aria-labelledby={f("sec2")} data-ca-group="notify">
         <h2 className={`${s.nm} ${s.nmSw}`} id={f("sec2")}>
@@ -253,38 +330,6 @@ export function CreatorAccountPage({
         </div>
       </section>
 
-      <p className={s.more} role="note">
-        받는 주소·차단한 팬·선물 받기는 ‘
-        <Link className={s.moreLink} href={`${CREATOR_SETTINGS}#more`}>
-          상세 설정
-        </Link>
-        ’에서 관리해 주세요.
-      </p>
-
-      <div className={s.quit} data-ca-group="leave">
-        <div className={s.row}>
-          <p className={s.txt}>
-            <span className={s.k}>회원 탈퇴</span>
-            <span className={s.sub}>탈퇴 문의 및 절차 안내</span>
-          </p>
-          <button
-            className={`btn btn--sm ${s.danger}`}
-            type="button"
-            aria-expanded={open === "leave"}
-            aria-controls={f("leave-panel")}
-            onClick={() => toggle("leave")}
-          >
-            탈퇴 안내
-          </button>
-        </div>
-        {open === "leave" && (
-          <div className={s.panel} id={f("leave-panel")}>
-            <Link className="btn btn--line btn--sm" href="/support">
-              탈퇴 문의
-            </Link>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

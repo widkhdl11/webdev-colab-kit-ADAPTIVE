@@ -53,7 +53,7 @@ describe("INV-E10: 링크 미리보기 이미지 고르기", () => {
     expect(symbol.disabled).toBe(true);
     expect(host.querySelector(`#${symbol.getAttribute("aria-describedby")}`)?.textContent).toBe("팬마크 등록 후 선택 가능");
     // 심볼을 올리는 곳(상세 설정 · 팬덤)으로 가는 링크가 그 문장에 걸려 있다
-    expect(host.querySelector("a[href='/creator/settings#fandom']")?.textContent).toBe("팬마크 등록");
+    expect(host.querySelector("a[href='/creator/profile?tab=channel#fandom']")?.textContent).toBe("팬마크 등록");
   });
 
   it("INV-E10: 심볼이 있으면 고를 수 있고 고르는 즉시 저장한다", async () => {
@@ -139,9 +139,9 @@ describe("배치 (design-rules 27절 「4파트 나머지 다섯 화면」 다�
 
   it("2026-10-22: 공지 이미지를 받을 수 없으면 안내 속 「설정」이 상세 설정의 선물 링크 칸으로 가는 링크", async () => {
     await render({ handle: null });
-    const a = [...host.querySelectorAll<HTMLAnchorElement>("a")].find((x) => x.textContent === "상세 설정 > 선물 링크");
-    expect(a?.getAttribute("href")).toBe("/creator/settings#link");
-    expect(a?.closest("p")?.textContent).toBe("채널 소유자 확인 후 ‘상세 설정 > 선물 링크’에서 링크 주소를 등록하면 다운로드할 수 있습니다.");
+    const a = [...host.querySelectorAll<HTMLAnchorElement>("a")].find((x) => x.textContent === "프로필 수정 > 채널");
+    expect(a?.getAttribute("href")).toBe("/creator/profile?tab=channel#link");
+    expect(a?.closest("p")?.textContent).toBe("채널 소유자 확인 후 ‘프로필 수정 > 채널’에서 링크 주소를 등록하면 다운로드할 수 있습니다.");
   });
 
   it("2026-10-22: 받을 수 있으면 세 크기 줄 — 이름·크기·내려받기·링크 복사", async () => {

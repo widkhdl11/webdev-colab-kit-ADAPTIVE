@@ -145,7 +145,7 @@ export function ChannelCreateForm({ tagOptions }: { tagOptions: readonly TagOpti
             팬덤 이름 <span className={`t-meta ${s.opt}`}>(선택)</span>
           </label>
           <p className={`hint ${s["hint-top"]}`} id={f("fan-t")}>
-            {"팬을 부르는 이름입니다. 가입 후 ‘상세 설정 > 팬덤’에서 변경할 수 있습니다."}
+            {"팬을 부르는 이름입니다. 가입 후 ‘프로필 수정 > 채널’에서 변경할 수 있습니다."}
           </p>
           <input
             className="field"

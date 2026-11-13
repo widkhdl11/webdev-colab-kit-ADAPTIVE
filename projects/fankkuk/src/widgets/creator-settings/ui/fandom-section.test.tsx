@@ -7,9 +7,10 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: 
 import { badgeBorderOf, THEME_COLORS, type ThemeColor } from "@/entities/creator/model/creator-color";
 import badgeStyles from "@/entities/creator/ui/creator-head.module.css";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
-import { FandomSection, type FandomSectionProps } from "./fandom-section";
+import { FandomDraftProvider, FandomForm, FandomPreview, type FandomFormProps, type FandomPreviewProps } from "./fandom-section";
 
-// 상세 설정 · 팬덤 (creator-link INV-E12·E13·E14, design-rules 12절). 서버로 보내는 길(fetch)만 가짜로 두고 화면이 무엇을 막고 무엇을 보내는지 본다.
+// 팬덤 구역 (creator-link INV-E12·E13·E14, design-rules 12절) — 2026-11-13 프로필 수정 「채널」 탭으로 옮기며 입력 판(FandomForm)과 카드 미리보기(FandomPreview)로 나눴다.
+// 둘은 FandomDraftProvider 의 입력 중 값을 같이 본다 — 시험은 채널 탭처럼 셋을 함께 그린다. 서버로 보내는 길(fetch)만 가짜로 두고 화면이 무엇을 막고 무엇을 보내는지 본다.
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -32,11 +33,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const base: FandomSectionProps = {
+type Props = FandomFormProps & FandomPreviewProps & { symbolUrl: string | null };
+const base: Props = {
   fanName: "달빛지기",
   colors: { personal: null },
   publicName: "하루",
-  initial: "하",
   photoUrl: null,
   backgroundUrl: null,
   symbolUrl: null,
@@ -44,8 +45,18 @@ const base: FandomSectionProps = {
   card: { creatorId: ID, channelTitle: "하루의 놀이터", intro: "게임 방송을 해요.", tags: ["치지직"], approvalMinutes: 180, faceTone: "" },
 };
 
-async function render(patch: Partial<FandomSectionProps> = {}) {
-  act(() => root.render(<FandomSection {...base} {...patch} />));
+async function render(patch: Partial<Props> = {}) {
+  const p = { ...base, ...patch };
+  act(() =>
+    root.render(
+      <FandomDraftProvider fanName={p.fanName} colors={p.colors} symbolUrl={p.symbolUrl}>
+        <div data-col="main">
+          <FandomForm fanName={p.fanName} colors={p.colors} photoBase={p.photoBase} />
+        </div>
+        <FandomPreview publicName={p.publicName} photoUrl={p.photoUrl} backgroundUrl={p.backgroundUrl} card={p.card} />
+      </FandomDraftProvider>,
+    ),
+  );
   await act(async () => await new Promise((r) => setTimeout(r, 0)));
 }
 
@@ -199,17 +210,29 @@ describe("INV-E14: 팬덤 뱃지는 테마 색 — 글자는 #111827 고정(CSS)
   });
 });
 
-describe("입력 한 판 + 미리보기 두 단(design-rules 27절)", () => {
-  it("입력 칸 셋은 번호 없이 소제목만, 미리보기는 입력 판 옆(aside)에 있다", async () => {
+describe("입력 한 판 + 따로 놓는 카드 미리보기(2026-11-13 채널 탭)", () => {
+  it("입력 판은 제목 「팬덤」(h2) 하나 아래 소제목 셋(번호 없음), 미리보기는 판 밖 aside — 판 안에 미리보기가 없다", async () => {
     await render();
-    const titles = [...host.querySelectorAll("h3")].map((h) => h.textContent);
-    expect(titles).toEqual(["팬덤 이름4/10", "팬마크", "테마 색", "미리보기"]);
+    const formPanel = host.querySelector("#fandom")!;
+    expect(formPanel.querySelector("h2")?.textContent?.trim()).toBe("팬덤");
+    expect([...formPanel.querySelectorAll("h3")].map((h) => h.textContent)).toEqual(["팬덤 이름4/10", "팬마크", "테마 색"]);
     expect([...host.querySelectorAll("i")].some((i) => /^\d$/.test(i.textContent ?? ""))).toBe(false);
-    const panel = host.querySelector("#fd-name")!.parentElement!.parentElement;
     const aside = host.querySelector("aside[aria-labelledby='pv-t']");
     expect(aside).not.toBeNull();
-    expect(panel?.nextElementSibling).toBe(aside);
+    expect(formPanel.contains(aside)).toBe(false);
+    expect(formPanel.querySelector("[data-card-preview]")).toBeNull();
     expect(aside?.contains(host.querySelector("[data-card-preview]"))).toBe(true);
+  });
+
+  it("입력 판에서 팬덤 이름을 바꾸면 따로 놓인 카드 미리보기 뱃지가 따라 바뀐다(같은 입력 중 값을 본다)", async () => {
+    await render();
+    const input = host.querySelector<HTMLInputElement>("#fd-name")!;
+    const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+    act(() => {
+      setValue.call(input, "별빛");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(host.querySelector("aside [data-fandom-badge]")?.textContent).toContain("별빛");
   });
 
   it("저장 결과 안내(role=status)는 입력 판 끝, 되돌리기·저장 바로 위에 있고 저장하면 그 자리에 뜬다", async () => {
@@ -220,7 +243,7 @@ describe("입력 한 판 + 미리보기 두 단(design-rules 27절)", () => {
     // 입력 판 안이다 — 미리보기(aside) 밖
     expect(status.closest("aside")).toBeNull();
     // 입력 칸과 같은 판의 마지막 칸
-    const panel = host.querySelector("#fd-name")!.parentElement!.parentElement!;
+    const panel = host.querySelector("#fandom")!;
     expect(status.parentElement?.parentElement).toBe(panel);
     expect(panel.lastElementChild).toBe(status.parentElement);
     expect(status.textContent).toBe("");

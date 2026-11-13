@@ -4,12 +4,13 @@
 .col { display: grid; gap: var(--space-6); min-width: 0; }
 .col > * { min-width: 0; }
 
-/* 미리보기 칸은 고정 폭 400 — 머리(블록)가 칸을 꽉 채운다. 남는 폭은 입력 판이 쓴다(상세 설정은 카드 폭 300 이라 300, 머리는 사진 104 옆에 이름·뱃지가 놓여 300 이면 이름 칸이 108 로 좁아진다) */
-.grid { display: grid; grid-template-columns: minmax(0, 1fr) 400px; column-gap: var(--grid-gap); align-items: start; }
+/* 세 탭(프로필 · 채널 · 계정)이 같은 두 열 — 왼쪽 기둥은 입력·설정형 폭 --col-form(720), 오른쪽 미리보기 열은 남는 폭(틀 1200 에서 약 456).
+   탭을 바꿔도 기둥 폭과 미리보기 열 폭이 같다. 계정 탭은 미리보기가 없어 오른쪽 열이 빈다(왼쪽 기둥 폭은 같다).
+   프로필 머리는 열을 꽉 채우고(옛 400 보다 넓다 — 사진 104 옆 이름 칸이 넓어진다), 팬덤 카드는 찾기 화면 카드 폭 300 그대로 */
+.grid { display: grid; grid-template-columns: minmax(0, var(--col-form)) minmax(0, 1fr); column-gap: var(--grid-gap); align-items: start; }
 .main { display: grid; gap: var(--space-6); min-width: 0; }
 
-/* 판 — 흰 카드(--hair + --card-shadow) · 안쪽 32(휴대폰 24), 소제목 칸을 가는 줄로 나눈다(상세 설정과 같은 모양, design-rules 41절) */
-.form { min-width: 0; margin: 0; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
+/* 판 겉모양은 공용 settings-panel — 여기는 판 안 소제목 칸(가는 줄로 나눈다, design-rules 41절) */
 .sub { display: grid; gap: var(--space-2); min-width: 0; padding: var(--space-8); border-bottom: 1px solid var(--line-on-white); }
 /* 칸 폭은 값 길이에 맞춘다 — 공개 이름 · 태그 직접 입력 20자 칸 360(41절). 휴대폰은 칸이 폭을 채운다 */
 .w360 { max-width: 360px; }
@@ -29,7 +30,6 @@
 .col :global(.okmsg:not(:empty))::before { content: "✓" / ""; }
 .col :global(:is(.err, .okmsg):not(:empty))::before { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; box-shadow: inset 0 0 0 2px currentColor; font-weight: var(--fw-bold); line-height: 1; }
 .last { border-bottom: 0; }
-.secT { margin: 0 0 var(--space-2); font-size: var(--fs-card); line-height: 1.4; }
 .subT { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; }
 .subT label, label.subT { cursor: pointer; }
 .count { color: var(--sub); font-size: var(--fs-small); font-weight: 400; font-variant-numeric: tabular-nums; }

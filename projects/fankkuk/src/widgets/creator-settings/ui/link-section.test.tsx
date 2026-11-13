@@ -76,11 +76,12 @@ describe("INV-E4: 아이디 잠금 남은 날", () => {
 });
 
 describe("「프로필 수정」·「내 팬꾹 꾸미기」로 옮긴 칸", () => {
-  it("INV-E10: 선물 링크 칸에는 사진·공지 이미지 칸이 없고 사진을 바꾸는 프로필 수정 화면으로 가는 링크만 있다", async () => {
+  it("INV-E10: 선물 링크 칸에는 사진·공지 이미지 칸도, 사진 안내 줄도 없다(2026-11-13 — 사진은 채널 탭 위 판·계정 탭)", async () => {
     await render({ initial: { handle: "haru", lockedDays: 0, photoPath: null }, verified: true });
     expect(host.querySelector("input[type='file']")).toBeNull();
     expect(host.querySelector("a[href*='notice']")).toBeNull();
-    expect(host.querySelector("a[href='/creator/profile']")?.textContent).toBe("프로필 수정");
+    expect(host.querySelector("a[href^='/creator/profile']")).toBeNull();
+    expect(host.textContent).not.toContain("사진");
     expect(host.querySelector("a[href='/creator/customize']")).toBeNull();
   });
 });

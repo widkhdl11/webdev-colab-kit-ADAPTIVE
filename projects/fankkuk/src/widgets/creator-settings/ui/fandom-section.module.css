@@ -1,12 +1,8 @@
-/* 상세 설정 · 팬덤 — 시안 docs/design/mockups/site/pilot-2026-10-22/settings.html, 값의 정본은 같은 폴더 pilot.css 「상세 설정」(.st-* · .fd-b · .cc).
+/* 프로필 수정 채널 탭 · 팬덤(2026-11-13 상세 설정에서 옮김, 판 겉모양은 공용 settings-panel) — 시안 docs/design/mockups/site/pilot-2026-10-22/settings.html, 값의 정본은 같은 폴더 pilot.css 「상세 설정」(.st-* · .fd-b · .cc).
    폭은 틀(MyShell broad 1200)이 정하고, 안에서 입력 + 미리보기 300(--grid-gap). 판은 흰 카드, 판 안 구분선만 낮은 대비 1px(--line-on-white, 41절). */
-.sec { display: grid; gap: var(--space-6); }
-.secT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
-/* 미리보기 칸은 카드 폭(300 — 찾기 화면 카드와 같은 크기)에 맞추고 남는 폭은 입력 판이 쓴다. 7+5 로 나누면 카드 오른쪽에 146 이 비었다(2026-10-22 사용자 「미리보기 카드랑 내용 크기가 안맞는다」) */
-.grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; column-gap: var(--grid-gap); align-items: start; }
+/* 두 열 배치(입력 기둥 · 미리보기 열)는 놓이는 화면(프로필 수정 creator-profile-edit.module.css .grid)이 정한다 — 2026-11-13 입력 판과 미리보기를 나눔 */
 
-/* 왼쪽 입력 한 판 — 흰 카드(--hair + --card-shadow) · 안쪽 32(휴대폰 24), 소제목 칸 셋을 가는 줄로 나눈다(design-rules 41절) */
-.form { min-width: 0; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
+/* 입력 한 판 — 겉모양(흰 카드·반경·그림자)은 공용 settings-panel, 여기는 판 안 소제목 칸 셋을 가는 줄로 나눈다(design-rules 41절). .form 은 아래 선 버튼 규칙의 범위 표시로만 쓴다 */
 .sub { display: grid; gap: var(--space-2); min-width: 0; padding: var(--space-8); border-bottom: 1px solid var(--line-on-white); }
 /* 팬덤 이름 — 칸 폭은 값 길이(10자)에 맞춘 240, 글자 수 세기는 칸 오른쪽 끝(41절). 휴대폰은 칸이 폭을 채운다 */
 .short > .subT, .short > :global(.field) { width: 100%; max-width: 240px; }
@@ -47,7 +43,6 @@
 
 /* 1100 이하 — 미리보기가 입력 위로(따라오지 않음) */
 @media (max-width: 1100px) {
-  .grid { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-4); }
   .pv { position: static; order: -1; }
 }
 

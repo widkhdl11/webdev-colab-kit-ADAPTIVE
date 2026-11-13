@@ -9,17 +9,11 @@
 /* 받기 설정 · 선물 링크 · 감사 답장 판 — 안쪽 32(휴대폰은 아래 24 16, 41절) */
 .set:global(.card) { padding: 32px; }
 .set :global(.fs) > :global(.label) { margin-bottom: 12px; }
-/* 구간 바로가기 — 시안 .jump(글자 링크 한 줄) */
-.jump { display: flex; flex-wrap: wrap; gap: 0 var(--space-4); margin-top: var(--space-4); font-size: var(--fs-small); }
-.jump a { display: inline-flex; align-items: center; min-height: 44px; /* 누름 칸 44 */ color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
-.page { display: grid; margin-top: var(--space-6); min-width: 0; }
+/* 머리 아래 간격은 머리(.page-head)가 정한 48 그대로 — 위에 바로가기 줄이 있던 때의 24 를 거뒀다(2026-11-13 팬덤·바로가기 줄을 뺌) */
+.page { display: grid; margin-top: 0; min-width: 0; }
 .page > * { min-width: 0; }
 .page > section + section { margin-top: 0; }
 .group { display: grid; gap: var(--space-4); }
-/* 「주소와 설정」 — 팬덤과 같은 폭 · 같은 왼쪽 선, 위 구분선으로 구간이 바뀐 것을 보인다(41절) */
-.more { width: 100%; margin: var(--space-24) 0 0; padding-top: var(--space-12); border-top: 1px solid var(--line-on-white); }
-.page > .more.more { margin-top: var(--space-24); } /* 위 .page > section + section(0)보다 무겁게 — 팬덤 판과 구분선 사이 96(시안) */
-.groupT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
 
 /* 접힌 칸 — 흰 카드(--hair + --card-shadow, 41절) · 제목 줄 56 · 오른쪽 짧은 상태 · 화살표 20 */
 .fold { border-radius: var(--r-btn); background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
@@ -102,7 +96,6 @@ label.txt { cursor: pointer; }
 .handle-row :global(.field) { flex: 1; }
 .link-text { overflow-wrap: anywhere; }
 /* 글 안의 누를 글자 링크(「프로필 수정」) — 누름 칸 높이 44 */
-.text-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; }
 
 @media (max-width: 767px) {
   /* 고르기 칸 4열은 휴대폰에서 2열(시안 v18-cre.css .opt-grid) — 공통 격자는 1열로 접는다 */
@@ -115,7 +108,6 @@ label.txt { cursor: pointer; }
   .inner { padding: 24px 16px; }
   .set :global(.sw-row) { gap: 12px; padding: 16px; }
   .addr-ico { width: 56px; height: 56px; }
-  .more, .page > .more.more { margin-top: var(--space-12); padding-top: var(--space-6); }
   .ann-row { grid-template-columns: minmax(0, 1fr) auto; justify-content: stretch; }
   .ann-row > .md-row { grid-column: 1 / -1; grid-row: 2; }
 }

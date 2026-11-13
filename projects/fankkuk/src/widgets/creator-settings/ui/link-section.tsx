@@ -4,13 +4,14 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { MyCreatorLink } from "@/entities/creator/api/creator-link-reads";
 import { HANDLE_LOCK_DAYS, HANDLE_MAX, HANDLE_RETIRE_DAYS, isSameHandle, LINK_HOST, linkText, normalizeHandle } from "@/entities/creator/model/creator-handle";
-import { CREATOR_PROFILE_EDIT } from "@/entities/session/model/home-path";
+import { creatorProfileTabHref } from "@/entities/session/model/home-path";
 import { saveLinkHandle } from "@/entities/creator/api/link-handle-client";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { CopyButton } from "@/shared/ui/copy-button";
+import panel from "@/shared/ui/settings-panel.module.css";
 import s from "./creator-settings.module.css";
 
-// 선물 링크 (creator-link INV-E2~E4). 「주소와 설정」 프로필 카드 다음 — 같은 카드 언어(제목 줄·필드·저장 버튼·상태 문구).
+// 선물 링크 (creator-link INV-E2~E4) — 2026-11-13 상세 설정에서 프로필 수정 「채널」 탭(채널 주소)으로 옮김(구역 그대로). 「주소와 설정」 프로필 카드 다음 — 같은 카드 언어(제목 줄·필드·저장 버튼·상태 문구).
 // 프로필 사진·공지 이미지는 「내 팬꾹 꾸미기」(/creator/customize)로 옮겼다(디자인 기준 10절) — 여기는 그 화면으로 가는 링크만.
 // 링크용 아이디는 저장 전에 「정하면 30일 동안 바꿀 수 없어요」를 확인 창으로 보인다(스펙 「스스로 정한 것」). 저장 검사는 DB 가 다시 한다.
 
@@ -47,7 +48,7 @@ export function LinkSection({
     setSaving(false);
     setConfirming(false);
     if (r.kind === "login") {
-      router.push("/login?next=/creator/settings");
+      router.push(`/login?next=${encodeURIComponent(creatorProfileTabHref("channel"))}`);
       return;
     }
     if (r.kind === "failed") {
@@ -65,12 +66,12 @@ export function LinkSection({
   };
 
   return (
-    <section id="link" className={`card ${s.set}`} aria-labelledby="link-h">
-      <div className={s["set-head"]}>
-        <h3 className="t-card" id="link-h">
-          선물 링크
-        </h3>
-      </div>
+    // 판 겉모양은 공용 settings-panel — 채널 탭의 다른 구역과 같은 판·같은 제목 단계(h2)
+    <section id="link" className={panel.panel} aria-labelledby="link-h">
+      <h2 className={panel.title} id="link-h">
+        선물 링크
+      </h2>
+      <div className={`${panel.body} ${s.set}`}>
 
       <div>
         <label className="label" htmlFor="link-handle">
@@ -136,13 +137,8 @@ export function LinkSection({
         {msg?.text}
       </p>
 
-      <p className="t-meta">
-        프로필 사진·배경 사진은 ‘
-        <a className={s["text-link"]} href={CREATOR_PROFILE_EDIT}>
-          프로필 수정
-        </a>
-        ’에서 변경해 주세요.
-      </p>
+      {/* 사진 안내 줄은 두지 않는다 — 배경 사진은 같은 채널 탭 위 판, 프로필 사진은 「계정」 탭(탭 이름이 보인다). 2026-11-13 리뷰: 명세에 없는 설명 줄 */}
+      </div>
 
       <BottomSheet open={confirming} title={`${linkText(normalizeHandle(draft) || "…")} 로 정할까요?`} onClose={() => setConfirming(false)}>
         <p>설정 후 {HANDLE_LOCK_DAYS}일 동안 변경할 수 없습니다.</p>

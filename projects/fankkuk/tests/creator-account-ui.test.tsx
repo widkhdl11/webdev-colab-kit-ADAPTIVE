@@ -8,9 +8,11 @@ vi.mock("@/features/creator-settings-save/api/send-creator-settings", () => ({ s
 
 import type { MyVerificationState } from "@/entities/creator/model/creator-verification";
 import { CREATOR_SETTINGS } from "@/entities/session/model/home-path";
-import { CreatorAccountPage } from "@/widgets/creator-account/ui/creator-account-page";
+import { CreatorAccountPage, CreatorChannelOwnerRow, CreatorLeaveRow, CreatorSecurityGroup } from "@/widgets/creator-account/ui/creator-account-page";
 
-// 계정 설정(크리에이터) /creator/account — 정돈 4파트(design-rules 27절, 카드 d115, 시안 pilot-2026-10-22/creator-account.html).
+// 2026-11-13 재분류(UX 명세 creator-profile): /creator/account 는 「알림 설정」 — 알림 묶음 + 상세 설정 안내 줄만.
+// 보안(비밀번호·휴대폰)·회원 탈퇴는 프로필 수정 「계정」 탭, 채널 소유자 확인은 「채널」 탭으로 옮긴 구역 부품이다 — 구역 안 동작은 그대로라 같은 시험을 부품에 건다.
+// (옛 설명) 계정 설정(크리에이터) /creator/account — 정돈 4파트(design-rules 27절, 카드 d115, 시안 pilot-2026-10-22/creator-account.html).
 // 카드 셋 대신 묶음 둘: 보안 → 알림 → 상세 설정 안내 줄 → 회원 탈퇴(맨 끝). 동작(펼치는 칸·즉시 저장·실패 시 되돌림)은 그대로.
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -46,15 +48,29 @@ afterEach(() => {
   host.remove();
 });
 
-function render(state: MyVerificationState = unverified) {
+/** 알림 설정 화면(/creator/account) */
+function render() {
+  act(() => {
+    root.render(<CreatorAccountPage notify={{ kakao: true, email: false, instant: false }} />);
+  });
+}
+
+/** 프로필 수정 「계정」 탭에 끼우는 구역 — 보안 묶음 + 회원 탈퇴 */
+function renderAccountTab() {
   act(() => {
     root.render(
-      <CreatorAccountPage
-        phoneMasked="010-****-9999"
-        notify={{ kakao: true, email: false, instant: false }}
-        verification={{ state, rows: [], apiPlatforms: [], loginId: "qa_c1029a" }}
-      />,
+      <div>
+        <CreatorSecurityGroup phoneMasked="010-****-9999" />
+        <CreatorLeaveRow />
+      </div>,
     );
+  });
+}
+
+/** 프로필 수정 「채널」 탭에 끼우는 채널 소유자 확인 줄 */
+function renderChannel(state: MyVerificationState = unverified) {
+  act(() => {
+    root.render(<CreatorChannelOwnerRow verification={{ state, rows: [], apiPlatforms: [], loginId: "qa_c1029a" }} />);
   });
 }
 
@@ -64,62 +80,98 @@ const buttonByText = (text: string) => [...host.querySelectorAll("button")].find
 const switches = () => [...host.querySelectorAll<HTMLButtonElement>('[role="switch"]')];
 const flush = () => act(async () => { await Promise.resolve(); });
 
-describe("계정 설정(크리에이터) — 묶음 순서", () => {
-  it("묶음은 보안 → 알림 둘뿐이고 「개인정보」 묶음은 없다", () => {
+describe("알림 설정(옛 계정 설정) — 알림만 남는다 (2026-11-13 재분류)", () => {
+  it("제목은 「알림 설정」, 묶음은 알림 하나 — 보안(비밀번호·휴대폰 번호)·채널 소유자 확인·회원 탈퇴가 없다", () => {
     render();
-    expect(sectionTitles()).toEqual(["보안", "알림"]);
+    expect(host.querySelector("h1")?.textContent).toBe("알림 설정");
+    expect(sectionTitles()).toEqual(["알림"]);
+    const text = page().textContent ?? "";
+    for (const gone of ["비밀번호", "휴대폰 번호", "채널 소유자 확인", "회원 탈퇴", "탈퇴 안내"]) expect(text).not.toContain(gone);
+    expect(host.querySelector("#verify")).toBeNull();
   });
 
-  it("보안 묶음 줄은 비밀번호 → 휴대폰 번호 → 채널 소유자 확인", () => {
+  it("페이지 자식은 머리 → 알림 둘뿐 — 상세 설정 안내 줄을 두지 않는다(알림 설정은 알림만)", () => {
     render();
+    const kids = [...page().children] as HTMLElement[];
+    expect(kids).toHaveLength(2);
+    expect(kids[0].tagName).toBe("HEADER");
+    expect(kids[1].querySelector("h2")?.textContent?.trim()).toBe("알림");
+    expect(host.querySelector(`a[href^="${CREATOR_SETTINGS}"]`)).toBeNull();
+  });
+});
+
+describe("프로필 수정 「계정」 탭 구역 — 보안 · 회원 탈퇴", () => {
+  it("보안 묶음 줄은 비밀번호 → 휴대폰 번호 둘뿐(채널 소유자 확인은 채널 탭)", () => {
+    renderAccountTab();
+    // 판 둘 — 보안 · 회원 탈퇴(줄 이름이 판 제목). 같은 판 모양(공용 settings-panel)
+    expect(sectionTitles()).toEqual(["보안", "회원 탈퇴"]);
     const security = host.querySelectorAll("section")[0];
     // 줄 묶음의 직접 자식(줄)을 하나씩 — 사이에 다른 줄이 끼면 길이·순서가 깨진다
     const rows = [...security.querySelector("h2")!.nextElementSibling!.children] as HTMLElement[];
-    const keys = ["비밀번호", "휴대폰 번호", "채널 소유자 확인"];
+    const keys = ["비밀번호", "휴대폰 번호"];
     expect(rows).toHaveLength(keys.length);
     rows.forEach((row, i) => expect(row.textContent!.startsWith(keys[i])).toBe(true));
     expect(rows[1].textContent).toContain("010-****-9999");
+    expect(host.querySelector("#verify")).toBeNull();
   });
 
-  it("페이지 자식 순서: 머리 → 보안 → 알림 → 상세 설정 안내 줄 → 회원 탈퇴(맨 끝)", () => {
-    render();
-    const kids = [...page().children] as HTMLElement[];
-    expect(kids).toHaveLength(5);
-    expect(kids[0].tagName).toBe("HEADER");
-    expect(kids[1].querySelector("h2")?.textContent?.trim()).toBe("보안");
-    expect(kids[2].querySelector("h2")?.textContent?.trim()).toBe("알림");
-    expect(kids[3].textContent).toBe("받는 주소·차단한 팬·선물 받기는 ‘상세 설정’에서 관리해 주세요.");
-    expect(kids[3].querySelector("a")?.getAttribute("href")).toBe(`${CREATOR_SETTINGS}#more`);
-    expect(kids[4].textContent).toContain("회원 탈퇴");
-    expect(kids[4].querySelector("button")?.textContent?.trim()).toBe("탈퇴 안내");
-    expect(page().lastElementChild).toBe(kids[4]);
-    for (const sec of host.querySelectorAll("section")) expect(sec.textContent).not.toContain("탈퇴 안내");
+  it("비밀번호 「변경」을 누르면 그 줄 아래에 칸이 펼쳐진다", () => {
+    renderAccountTab();
+    const btn = host.querySelectorAll("section button")[0] as HTMLButtonElement;
+    expect(btn.textContent?.trim()).toBe("변경");
+    act(() => btn.click());
+    expect(btn.getAttribute("aria-expanded")).toBe("true");
+    expect(document.getElementById(btn.getAttribute("aria-controls")!)).not.toBeNull();
+  });
+
+  it("회원 탈퇴는 보안 판 뒤(맨 끝) 따로 된 판 — 보안 판 안에 있지 않다", () => {
+    renderAccountTab();
+    const wrap = host.firstElementChild as HTMLElement;
+    const last = wrap.lastElementChild as HTMLElement;
+    expect(last.tagName).toBe("SECTION");
+    expect(last.querySelector("h2")?.textContent?.trim()).toBe("회원 탈퇴");
+    expect(last.querySelector("button")?.textContent?.trim()).toBe("탈퇴 안내");
+    expect(host.querySelectorAll("section")[0].textContent).not.toContain("탈퇴 안내");
+  });
+
+  it("세 판(보안 · 회원 탈퇴 · 채널 소유자 확인)은 같은 판 모양이고 제목은 h2 하나씩", () => {
+    renderAccountTab();
+    const [security, leave] = [...host.querySelectorAll("section")];
+    act(() => root.render(<CreatorChannelOwnerRow verification={{ state: unverified, rows: [], apiPlatforms: [], loginId: "qa_c1029a" }} />));
+    const channel = host.querySelector("section")!;
+    expect(channel.className).toBe(security.className);
+    expect(leave.className).toBe(security.className);
+    // 닫힌 확인 창(dialog) 안의 제목은 판 제목이 아니다
+    expect([...channel.querySelectorAll("h2")].filter((h) => !h.closest("dialog"))).toHaveLength(1);
+    expect(channel.querySelector("h2")?.textContent?.trim()).toBe("채널 소유자 확인");
   });
 
   it("탈퇴 안내를 누르면 그 줄 아래 탈퇴 문의 링크가 펼쳐진다", () => {
-    render();
+    renderAccountTab();
     const leave = buttonByText("탈퇴 안내")!;
     act(() => leave.click());
     expect(leave.getAttribute("aria-expanded")).toBe("true");
     const panel = document.getElementById(leave.getAttribute("aria-controls")!)!;
     expect(panel.querySelector('a[href="/support"]')?.textContent?.trim()).toBe("탈퇴 문의");
-    expect(page().lastElementChild!.contains(panel)).toBe(true);
+    expect((host.firstElementChild as HTMLElement).lastElementChild!.contains(panel)).toBe(true);
   });
+});
 
+describe("프로필 수정 「채널」 탭 구역 — 채널 소유자 확인", () => {
   it("INV-V17: 채널 소유자 확인 — 확인 전이면 「확인 전」 뱃지, 그 줄 아래에 ① 팬꾹 링크 만들기가 늘 펼쳐져 있고 ②·요청은 링크를 만든 뒤에", () => {
-    render();
+    renderChannel();
     const verify = host.querySelector("#verify")!;
     expect(verify.textContent).toContain("확인 전");
     expect(verify.textContent).toContain("팬꾹 링크를 만들어 주세요");
     expect(verify.textContent).not.toContain("채널 주소를 입력해 주세요");
     expect(buttonByText("채널 확인 요청")).toBeUndefined();
-    render({ ...baseState, handle: "haru" });
+    renderChannel({ ...baseState, handle: "haru" });
     expect(host.querySelector("#verify")!.textContent).toContain("활동 중인 채널에 팬꾹 링크를 올려 주세요");
     expect(buttonByText("채널 확인 요청")?.getAttribute("aria-disabled")).toBe("true");
   });
 
   it("INV-V20: 확인됐으면 「채널 인증이 완료되었습니다」·다음 재확인 날, 「채널 변경」을 누르면 같은 ①② 칸이 펼쳐진다", () => {
-    render({
+    renderChannel({
       ...baseState,
       handle: "haru",
       verified: true,
@@ -144,7 +196,7 @@ describe("계정 설정(크리에이터) — 묶음 순서", () => {
     const fetchSpy = vi.fn(async () => new Response(JSON.stringify({ result: "available" })));
     vi.stubGlobal("fetch", fetchSpy);
     try {
-      render();
+      renderChannel();
       const input = host.querySelector<HTMLInputElement>("#verify input[placeholder='haru']")!;
       const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
       act(() => {
@@ -180,7 +232,7 @@ describe("계정 설정(크리에이터) — 묶음 순서", () => {
   });
 
   it("INV-V20: 유예 중이면 「링크 확인 필요」·유예 끝 날·「채널 확인 재요청」 — 남은 요청 횟수는 없다(INV-V15)", () => {
-    render({ ...baseState, handle: "haru", verified: true, graceUntil: "2026-11-16T03:00:00Z" });
+    renderChannel({ ...baseState, handle: "haru", verified: true, graceUntil: "2026-11-16T03:00:00Z" });
     const verify = host.querySelector("#verify")!;
     expect(verify.textContent).toContain("링크 확인 필요");
     expect(verify.textContent).toContain("활동 중인 채널에서 팬꾹 링크를 찾지 못했어요. 11월 16일까지 다시 올려 주세요");
@@ -189,7 +241,7 @@ describe("계정 설정(크리에이터) — 묶음 순서", () => {
   });
 });
 
-describe("계정 설정(크리에이터) — 알림", () => {
+describe("알림 설정(크리에이터) — 알림", () => {
   it("스위치는 줄 전체가 버튼이다 — 이름·설명·막대가 버튼 안에 있다", () => {
     render();
     const [kakao, mail] = switches();
@@ -222,7 +274,7 @@ describe("계정 설정(크리에이터) — 알림", () => {
     expect(kakao.getAttribute("aria-checked")).toBe("false");
     await flush();
     expect(kakao.getAttribute("aria-checked")).toBe("true");
-    const notify = host.querySelectorAll("section")[1];
+    const notify = host.querySelectorAll("section")[0];
     const alert = notify.querySelector('[role="alert"]')!;
     expect(alert.textContent).toBe("저장하지 못했어요.");
   });
@@ -265,7 +317,7 @@ describe("계정 설정(크리에이터) — 알림", () => {
 
   it("필수 알림 안내는 알림 묶음 안에 제목 줄과 목록으로 늘 보이고, 결과 안내 자리는 묶음 끝에 있다", () => {
     render();
-    const notify = host.querySelectorAll("section")[1];
+    const notify = host.querySelectorAll("section")[0];
     const must = notify.querySelector("strong")!;
     expect(must.textContent).toContain("필수 알림:");
     expect(must.closest("details")).toBeNull();
@@ -278,9 +330,23 @@ describe("계정 설정(크리에이터) — 알림", () => {
   });
 });
 
+describe("채널 소유자 확인 판 — 판 이름은 안쪽 h2 (2026-11-13 ui 리뷰)", () => {
+  it("채널이 있든 없든 판(section)이 aria-labelledby 로 안쪽 h2 「채널 소유자 확인」을 가리키고, h2 는 p·span 이 아닌 div 안에 있다", () => {
+    for (const state of [unverified, { ...baseState, handle: "haru", verified: true }, { ...baseState, name: null }]) {
+      renderChannel(state);
+      const sec = host.querySelector("section")!;
+      const h = document.getElementById(sec.getAttribute("aria-labelledby") ?? "");
+      expect(h?.tagName).toBe("H2");
+      expect(h?.textContent?.trim()).toBe("채널 소유자 확인");
+      expect(sec.contains(h)).toBe(true);
+      expect(h!.closest("p, span")).toBeNull();
+    }
+  });
+});
+
 describe("채널 없는 크리에이터 (signup INV-U21 · UX 명세 「가입 밖에서 바뀌는 것」)", () => {
   it("INV-U21: 채널이 없으면 채널 소유자 확인 줄에 ①②(팬꾹 링크·채널 주소) 대신 「채널 만들기」 링크 하나", () => {
-    render({ ...baseState, name: null });
+    renderChannel({ ...baseState, name: null });
     const row = host.querySelector("#verify")!;
     expect(row.textContent).toContain("채널 소유자 확인");
     expect(row.textContent).toContain("채널 없음");
@@ -289,7 +355,7 @@ describe("채널 없는 크리에이터 (signup INV-U21 · UX 명세 「가입 �
   });
 
   it("INV-U21 (실패경로): 채널이 있으면 지금 채널 확인 그대로 — 「채널 만들기」 링크가 없다", () => {
-    render();
+    renderChannel();
     expect(host.querySelector("#verify")?.textContent).not.toContain("채널 없음");
     expect([...host.querySelectorAll("#verify a")].map((a) => a.textContent)).not.toContain("채널 만들기");
   });

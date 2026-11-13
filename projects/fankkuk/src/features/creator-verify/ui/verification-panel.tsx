@@ -45,6 +45,11 @@ type Props = {
   rows: readonly MyVerification[];
   /** 로그인 아이디 — 팬꾹 링크가 이것과 같으면 서버에 묻지 않고 「로그인 아이디와 다르게」(signup INV-U14 S14e). 모르면 null(저장 때 DB 가 거부한다) */
   loginId: string | null;
+  /** account 줄의 이름(「채널 소유자 확인」)을 판 제목으로 쓸 때 — 그 판의 제목 단계(h2)와 글자 모양. 없으면 지금처럼 줄 안 글자 */
+  titleAs?: "h2";
+  titleClassName?: string;
+  /** 판 제목 h2 의 id — 바깥 판(section)이 aria-labelledby 로 이름을 읽는다 */
+  titleId?: string;
 };
 
 const TAG_CLASS: Record<PanelTagTone, string> = {
@@ -110,7 +115,7 @@ function CopyLink({ handle }: { handle: string }) {
   );
 }
 
-export function VerificationPanel({ variant, state, rows, loginId }: Props) {
+export function VerificationPanel({ variant, state, rows, loginId, titleAs, titleClassName, titleId }: Props) {
   const router = useRouter();
   const ids = useId();
   const panel = myVerificationPanel(state, rows);
@@ -329,16 +334,26 @@ export function VerificationPanel({ variant, state, rows, loginId }: Props) {
 
   // 계정 설정 — 보안 묶음의 한 줄(시안 #acct-verified·#acct-recheck). 확인 전 상태는 줄 아래에 같은 ① ② 본문이 늘 펼쳐져 있다
   const verified = panel.stage === "verified";
+  // 이름이 판 제목(h2)이면 감싸는 칸은 p·span 이 될 수 없다 — div. 아니면 옮기기 전 그대로(p · span)
+  const Txt = titleAs === "h2" ? "div" : "p";
+  const Kl = titleAs === "h2" ? "div" : "span";
   return (
     <div className={s.acct}>
       <div className={s.row}>
-        <p className={s.txt}>
-          <span className={s.kl}>
-            <span className={s.k16} id={`${ids}-h`}>
-              채널 소유자 확인
-            </span>
+        {/* 이름이 판 제목(h2)이면 감싸는 칸은 p 가 될 수 없다 — div */}
+        <Txt className={s.txt}>
+          <Kl className={s.kl}>
+            {titleAs === "h2" ? (
+              <h2 className={titleClassName} id={titleId ?? `${ids}-h`}>
+                채널 소유자 확인
+              </h2>
+            ) : (
+              <span className={s.k16} id={`${ids}-h`}>
+                채널 소유자 확인
+              </span>
+            )}
             <StageTag panel={panel} dot />
-          </span>
+          </Kl>
           {verified ? (
             <>
               <span className={`${s.v} ${s.strong}`}>
@@ -352,7 +367,7 @@ export function VerificationPanel({ variant, state, rows, loginId }: Props) {
               {state.nextRecheckAt ? <span className={s.small}>다음 재확인 {formatDotDate(state.nextRecheckAt)}</span> : null}
             </>
           ) : null}
-        </p>
+        </Txt>
         {verified ? (
           <div className={s.act}>
             <button className="btn btn--line btn--sm" type="button" aria-expanded={moving} aria-controls={`${ids}-move`} onClick={() => setMoving((m) => !m)}>

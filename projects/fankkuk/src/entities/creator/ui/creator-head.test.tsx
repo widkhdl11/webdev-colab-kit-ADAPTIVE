@@ -16,13 +16,22 @@ const base: CreatorHeadProps = {
   nameAs: "h1",
   intro: "느긋한 방송",
   photoUrl: null,
-  initial: "하",
   backgroundUrl: null,
   colors: { personal: null },
   fanName: "달빛지기",
   symbolUrl: null,
   label: "내 프로필",
 };
+
+describe("크리에이터 머리 — 사진이 없으면 기본 얼굴(2026-11-12 결정)", () => {
+  it("사진이 없으면 첫 글자 대신 고양이 얼굴 그림, 사진이 있으면 그 사진", () => {
+    const none = dom(renderToStaticMarkup(<CreatorHead {...base} />)).querySelector("[data-avatar]")!;
+    expect(none.querySelector("img")?.getAttribute("src")).toBe("/img/default-face/cat.webp");
+    expect(none.textContent).toBe("");
+    const withPhoto = dom(renderToStaticMarkup(<CreatorHead {...base} photoUrl="http://photo.test/a.webp" />)).querySelector("[data-avatar]")!;
+    expect(withPhoto.querySelector("img")?.getAttribute("src")).toBe("http://photo.test/a.webp");
+  });
+});
 
 describe("크리에이터 머리 — 테마 색은 띠·사진 테두리·팬덤 뱃지 (INV-E13)", () => {
   it("INV-E13 S12: 테마 색 #DCEBFF 는 머리(띠·테두리가 읽는 변수)와 뱃지 면에 같이 쓰인다", () => {

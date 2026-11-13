@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import type { BlockedFan } from "@/entities/creator/api/blocked-senders";
-import type { CreatorSettingsView } from "@/entities/creator/model/creator-settings";
 import { formatDate } from "@/shared/lib/format/datetime";
 import { statusTagClass } from "@/shared/ui/status-tone";
 import type { MySignatureLink } from "@/entities/creator/api/signature-link-reads";
@@ -14,20 +13,18 @@ import { FaceAvatar } from "@/shared/ui/face-avatar";
 import type { MyAddressStatus } from "@/entities/address/api/my-address-status";
 import { addressOnFileText } from "@/entities/address/ui/address-on-file-text";
 import { ADDRESS_KEY_MISSING_TEXT } from "@/features/creator-address/ui/address-copy";
-import type { MyVerification, MyVerificationState } from "@/entities/creator/model/creator-verification";
 import { AddressChangeForm } from "@/features/creator-address/ui/address-change-form";
 import { sendUnblock } from "@/features/creator-unblock/api/send-unblock";
 import { isResting, type CalendarDate, type MyCreatorReceiving } from "@/entities/creator/model/receiving";
 import { ReceivingSection } from "./receiving-section";
 import { HardItemsSection } from "./hard-items-section";
-import { LinkSection } from "./link-section";
 import { ReplySettingsSection } from "./reply-settings-section";
-import { FandomSection, type FandomSectionProps } from "./fandom-section";
 import type { ReplySettings } from "@/entities/gift-reply/api/gift-reply-reads";
-import type { MyCreatorLink } from "@/entities/creator/api/creator-link-reads";
 import type { MyHardItems } from "@/entities/gift-item/model/hard-items";
 import s from "./creator-settings.module.css";
 
+// 2026-11-13 재분류(UX 명세 creator-profile, DECISIONS 같은 날): 팬덤 구역(팬덤 이름·팬마크·테마 색)과 선물 링크 주소는 프로필 수정 「채널」 탭으로 옮겼다 —
+// 이 화면에는 주소와 설정(승인 서명·받는 주소·받기 설정·차단한 팬·감사 답장)만 남는다. 아래는 옮기기 전 설명이다.
 // 크리에이터 상세 설정 (design-rules 12절 · 27절, 시안 docs/design/mockups/site/pilot-2026-10-22/settings.html). 틀 폭 1200 — 「팬덤」(입력 + 미리보기)과 「주소와 설정」이 같은 폭 · 같은 왼쪽 선(41절).
 // 위에서 아래: 팬덤(팬덤 이름·팬마크·테마 색·미리보기 — fandom-section) → 주소와 설정(접힌 칸: 받는 주소·받기 설정·차단한 팬·선물 링크·감사 답장)
 // 본인 확인·알림·계정 보안은 크리에이터 계정 설정(/creator/account, widgets/creator-account)으로 옮겼다(2026-10-16).
@@ -84,28 +81,19 @@ function useOpenFoldForHash(): void {
 }
 
 export function CreatorSettingsPage({
-  settings,
-  fandom,
   address,
   sealingKeyPem,
   blockedFans,
-  verification,
   receiving,
   hardItems,
   today,
-  link,
   replySettings,
   signatureLink,
 }: {
-  settings: CreatorSettingsView;
   /** 승인 서명 연결 여부와 연결한 때(approval-signature INV-S16) — 등록한 이름·생년월일·번호는 오지 않는다 */
   signatureLink: MySignatureLink;
-  /** 팬덤 구간 — 팬덤 이름·테마 색·카드 미리보기에 쓰는 사진 주소(로그인한 크리에이터 본인 것) */
-  fandom: FandomSectionProps;
   /** X 계정·태그 허용(답장 모음 보이기 칸은 저장값만 돌려보낸다 — 2026-11-13 모음 없앰) — 로그인한 크리에이터 본인 것(gift-reply INV-G8) */
   replySettings: ReplySettings;
-  /** 링크용 아이디·남은 잠금 날·사진 경로 — 로그인한 크리에이터 본인 것(creator-link) */
-  link: MyCreatorLink;
   /** 받는 상태·팬당 한도·생일·기념일 — 로그인한 크리에이터 본인 것(creator-receiving) */
   receiving: MyCreatorReceiving;
   /** 살아 있는 받기 어려운 품목 — 로그인한 크리에이터 본인 것(hard-items). 없거나 끝났으면 null */
@@ -116,7 +104,6 @@ export function CreatorSettingsPage({
   /** 주소 봉인 공개키(PEM). 없으면 주소 입력 대신 안내만 보인다. */
   sealingKeyPem: string | null;
   blockedFans: readonly BlockedFan[];
-  verification: { state: MyVerificationState; rows: readonly MyVerification[]; apiPlatforms: readonly string[] };
 }) {
   const router = useRouter();
   useOpenFoldForHash();
@@ -153,19 +140,13 @@ export function CreatorSettingsPage({
     <div className={s.root}>
       <header className="page-head">
         <h1 className="ph-title">상세 설정</h1>
-        <p className="ph-desc">팬덤·받는 주소·선물 받기·차단한 팬·선물 링크·감사 답장을 관리합니다.</p>
+        <p className="ph-desc">받는 주소·선물 받기·차단한 팬·감사 답장을 관리합니다.</p>
       </header>
 
-      <nav className={s.jump} aria-label="상세 설정 구간">
-        <a href="#fandom">팬덤</a>
-        <a href="#more">받는 주소·받기 설정·차단한 팬</a>
-      </nav>
-
       <div className={`stack ${s.page}`}>
-        <FandomSection {...fandom} />
-
-        <section id="more" className={`${s.group} ${s.more}`} aria-labelledby="more-h">
-          <h2 className={s.groupT} id="more-h">
+        <section id="more" className={s.group} aria-labelledby="more-h">
+          {/* 팬덤이 빠져 이 묶음이 화면의 유일한 묶음이다 — h1 아래 보이는 제목을 한 번 더 두지 않고 낭독용 이름만(2026-11-13 ui 리뷰) */}
+          <h2 className="sr-only" id="more-h">
             주소와 설정
           </h2>
           {/* 승인 서명 줄(UX 명세 signup.md 「크리에이터 설정 — 승인 서명 줄」, 시안 v43-signup/creator-settings-signature) — 묶음 맨 위.
@@ -253,10 +234,6 @@ export function CreatorSettingsPage({
               </ul>
             )}
             <p className="t-meta">차단을 해제해도 주소는 공개되지 않습니다. 새 선물은 건별로 카카오톡 서명을 거쳐 승인해야 배송됩니다.</p>
-          </Fold>
-
-          <Fold id="gift-link" title="선물 링크">
-            <LinkSection initial={link} verified={verification.state.verified} />
           </Fold>
 
           <Fold id="thanks" title="감사 답장">
