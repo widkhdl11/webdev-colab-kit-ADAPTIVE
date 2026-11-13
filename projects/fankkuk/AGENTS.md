@@ -11,3 +11,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## 화면 문구 규칙
 
 사용자에게 보이는 문구를 만들거나 고치기 전에 같은 폴더의 `CLAUDE.md`(화면 문구 규칙)를 읽고 따른다. 규칙은 거기에만 있다.
+
+## 화면 디자인 기준
+
+화면을 설계·구현·수정하기 전에 `docs/design/design-prompt.md`를 읽고 따른다. 값은 `docs/design/tokens.md`와 `docs/design/design-rules.md`가 우선이다. 외부 스킬을 쓰는 규칙도 `design-prompt.md`의 「적용 규칙」에만 있다.
