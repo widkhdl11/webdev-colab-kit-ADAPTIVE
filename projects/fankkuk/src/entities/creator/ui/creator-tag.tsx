@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { NEUTRAL, tagBrandOf, type TagIcon } from "../model/tag-brand";
+import { tagBrandOf, type TagIcon } from "../model/tag-brand";
 import s from "./creator-tag.module.css";
 
 // 크리에이터 태그의 아이콘 배지·태그·칩 안쪽 (design-rules 5절 「크리에이터 태그 아이콘·플랫폼 색」, 시안 v9-pages/tags-b.html).
@@ -88,32 +88,48 @@ function CtagLogo({ icon }: { icon: TagIcon }) {
   );
 }
 
+/** 활동 유형 태그인가(버추얼처럼 플랫폼이 아닌 것) — 로고·테두리 없는 연한 회색 태그로 그린다. */
+function isActivityTag(name: string): boolean {
+  return tagBrandOf(name)?.icon.kind === "virtual";
+}
+
+/** 화면에 놓을 순서 — 플랫폼 뱃지를 먼저, 활동 유형 태그를 뒤에(원래 순서는 각 묶음 안에서 지킨다). */
+export function platformFirst(tags: readonly string[]): string[] {
+  return [...tags.filter((t) => !isActivityTag(t)), ...tags.filter(isActivityTag)];
+}
+
 /**
- * 카드·목록·페이지의 태그 하나 = 플랫폼 뱃지 E3(design-rules 00절 — 시안 v18 my-following .ptag: 옅은 플랫폼 면 알약 + 같은 색 테두리, 높이 26·로고 18).
- * 자리·한 줄 규칙은 공통 클래스 .ctag, E3 모양은 creator-tag.module.css 의 .e3. --f 옅은 면 · --k 글자·테두리 색. 표에 없는 이름은 로고 없이 중립 뱃지.
+ * 카드·목록·페이지의 태그 하나(2026-11-14 사용자 지시 「차분하고 일관된 플랫폼 뱃지」).
+ * 플랫폼 = 아주 옅은 회색 면 + 얇은 연회색 테두리 + 짙은 회색 글자, 플랫폼 색은 로고에만.
+ * 활동 유형(버추얼) = 로고·테두리 없는 연한 회색 태그. 표에 없는 이름은 로고 없는 플랫폼 모양.
+ * 자리·한 줄 규칙은 공통 클래스 .ctag, 모양은 creator-tag.module.css 의 .e3 · .activity.
  */
 export function CreatorTag({ name }: { name: string }) {
   const brand = tagBrandOf(name);
+  if (brand?.icon.kind === "virtual")
+    return (
+      <span className={`ctag ${s.e3} ${s.activity}`} data-plain="" data-kind="activity">
+        <span className={s.label}>{name}</span>
+      </span>
+    );
   if (!brand)
     return (
       <span className={`ctag ${s.e3} ${s.plain}`} data-plain="">
         <span className={s.label}>{name}</span>
       </span>
     );
-  const vars: Record<string, string> = { "--f": brand.fill, "--k": brand.ink };
   return (
-    <span className={`ctag ${s.e3}`} style={vars as CSSProperties}>
+    <span className={`ctag ${s.e3}`}>
       <CtagLogo icon={brand.icon} />
       <span className={s.label}>{name}</span>
     </span>
   );
 }
 
-/** 칩 줄에 다 못 들어간 칩 수 「+N」 — 중립 플랫폼 색 알약(시안 v25-card-align C안 .ctag.more). */
+/** 칩 줄에 다 못 들어간 칩 수 「+N」 — 로고 없는 플랫폼 모양. */
 export function CreatorTagMore({ count }: { count: number }) {
-  const vars: Record<string, string> = { "--f": NEUTRAL.fill, "--k": NEUTRAL.ink };
   return (
-    <span className={`ctag ${s.e3} ${s.plain}`} style={vars as CSSProperties} data-plain="">
+    <span className={`ctag ${s.e3} ${s.plain}`} data-plain="">
       +{count}
     </span>
   );

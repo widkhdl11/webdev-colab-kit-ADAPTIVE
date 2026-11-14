@@ -8,7 +8,7 @@ import { hardItemsNotice, type HardItems } from "@/entities/gift-item/model/hard
 import { HardItemsLine } from "@/entities/gift-item/ui/hard-items-line";
 import { approvalDurationText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorPhoto } from "@/entities/creator/ui/creator-photo";
-import { CreatorTag } from "@/entities/creator/ui/creator-tag";
+import { CreatorTag, platformFirst } from "@/entities/creator/ui/creator-tag";
 import { ChannelLinkIcon } from "@/entities/creator/ui/channel-badge-icon";
 import { CheckIcon } from "@/entities/creator/ui/check-icon";
 import { channelBadgeTitle, type ChannelBadge } from "@/entities/creator/model/channel-badge";
@@ -227,7 +227,7 @@ export function CreatorProfilePage({
                   채널 소유자 확인
                 </span>
                 {/* 태그 — 숨기지 않은 선택지 뒤에 필터를 통과한 직접 입력(creator-tags INV-T4) */}
-                {creator.tags.map((t) => (
+                {platformFirst(creator.tags).map((t) => (
                   <CreatorTag key={t} name={t} />
                 ))}
               </div>
@@ -363,7 +363,7 @@ export function CreatorProfilePage({
                     <b>{o.name}</b>
                     {o.tags.length > 0 ? (
                       <span className={s.otherTags}>
-                        {o.tags.map((t) => (
+                        {platformFirst(o.tags).map((t) => (
                           <CreatorTag key={t} name={t} />
                         ))}
                       </span>

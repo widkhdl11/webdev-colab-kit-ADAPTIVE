@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
-import { CreatorTag, CreatorTagMore } from "./creator-tag";
+import { CreatorTag, CreatorTagMore, platformFirst } from "./creator-tag";
 import s from "./creator-card-head.module.css";
 
 // 크리에이터 카드의 플랫폼 칩 한 줄 — 넘치는 칩은 「+N」 하나로 바꾼다(시안 v28-card-redesign, design-rules 17절).
@@ -39,7 +39,8 @@ function columnGapOf(el: Element): number {
   return Number.isFinite(gap) ? gap : 0;
 }
 
-export function CreatorCardTags({ tags }: { tags: readonly string[] }) {
+export function CreatorCardTags({ tags: given }: { tags: readonly string[] }) {
+  const tags = platformFirst(given);
   const rowRef = useRef<HTMLParagraphElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
   const [fit, setFit] = useState<ChipFit>({ count: tags.length, squeeze: false });
@@ -50,7 +51,8 @@ export function CreatorCardTags({ tags }: { tags: readonly string[] }) {
     const measure = measureRef.current;
     if (!row || !measure) return;
     const measureNow = () => {
-      const chips = Array.from(measure.children).map((el) => el.getBoundingClientRect().width);
+      // 칩 앞 여백(활동 유형 태그 앞의 간격)까지 칩 폭으로 센다
+      const chips = Array.from(measure.children).map((el) => el.getBoundingClientRect().width + (Number.parseFloat(getComputedStyle(el).marginInlineStart) || 0));
       const more = chips.pop() ?? 0;
       if (row.clientWidth === 0) return;
       const next = fitChipCount(chips, more, row.clientWidth, columnGapOf(row));
