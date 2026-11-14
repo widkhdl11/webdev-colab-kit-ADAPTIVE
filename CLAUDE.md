@@ -165,6 +165,7 @@ Phase별·파일별로 정리한 보고서는 **내가 한 일의 구조**지 �
 
 ## 필요할 때만 읽는 문서 (라우팅)
 
+- **변경 작업을 시작할 때(구현·시안·스펙의 범위를 정하기 전)**: `.claude/rules/change-scope.md` — 범위는 시안·파일 목록이 아니라 지시한 변경으로 정하고, 그 변경이 사이트 전체에서 참이 되려면 같이 바뀌어야 하는 곳(들어가는 길·이름·옛 주소·역할별 화면·문서와 시험)을 찾아 「같이 바꾸는 곳」·「제안」으로 먼저 보여 준다
 - UI/페이지 작업 시작 전: projects/<이름>/docs/design/design-rules.md (checkpoint로 승인된 기준)
 - 새 화면·흐름·상태 변경 시작 전: `.claude/rules/ux-spec.md` — 브리프·명세 먼저(page-brief 스킬이 진입점). 기준 문서는 `projects/<이름>/docs/ux/`.
 - 새 시각 방향(첫 화면·새 레이아웃) 시작 전: .claude/rules/design-drafting.md — 시안 먼저 절차(design-interview 스킬이 진입점).

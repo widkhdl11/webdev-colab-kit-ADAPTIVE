@@ -9,6 +9,8 @@ argument-hint: [기능명]
 프로젝트에 _TEMPLATE.md 가 없으면 정본을 projects/<이름>/docs/specs/_TEMPLATE.md 로 복사한 뒤 시작한다.
 
 ## 절차
+0. 범위부터 정한다 — `.claude/rules/change-scope.md`. 이 기능이 바꾸는 것이 사이트 전체에서 참이 되려면 같이 바뀌어야 하는
+   곳(다른 화면의 같은 값·역할별 화면·옛 주소·문서와 시험)을 찾아, 그 자리의 규칙도 이 스펙의 불변식에 넣을지 정한다.
 1. 기능의 "어기면 사고"를 사용자와 함께 나열 → 각각을 불변식 문장으로.
    **데이터 모델 기능(kickoff에서 시변·파생 등으로 플래그된 것)이면
    docs/references/modeling-checklist.md를 깊게 훑어** 필드 단위로 불변식을 도출한다 —
