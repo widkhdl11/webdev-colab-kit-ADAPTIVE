@@ -1,7 +1,7 @@
 "use client";
 
 import { countTagSelection, TAG_CUSTOM_MAX, TAG_TOTAL_MAX, type TagOption } from "@/entities/creator/model/creator-tags";
-import { hasTagIcon, TagChipBody, tagStyle } from "@/entities/creator/ui/creator-tag";
+import { hasTagIcon, TagChipBody } from "@/entities/creator/ui/creator-tag";
 import { charCount } from "@/shared/lib/validation/char-count";
 import s from "./tag-picker.module.css";
 
@@ -53,7 +53,6 @@ export function TagPicker({ idBase, options, picked, custom, onPickedChange, onC
               aria-pressed={on}
               aria-disabled={!on && full}
               data-icon={hasTagIcon(o.name)}
-              style={tagStyle(o.name)}
               onClick={() => toggle(o.id)}
             >
               <TagChipBody name={o.name} pressed={on} />

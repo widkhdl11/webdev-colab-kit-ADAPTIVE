@@ -14,12 +14,8 @@
 
 /* 선 버튼 짙은 선 --gray-500(이 화면 범위에서만 — 공용 .btn--line 은 그대로, 41절) */
 .col.col :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
-/* 태그 칩 — 짙은 선 44, 고른 칩은 하늘 면 + 짙은 선 2px + 체크(41절) */
-.tags.tags :global(.chip) { background: var(--white); color: var(--ink); box-shadow: inset 0 0 0 1px var(--gray-500); font-weight: var(--fw-nav); }
-.tags.tags :global(.chip):hover { background: var(--gray-50); }
-.tags.tags :global(.chip)[aria-pressed="true"] { background: var(--primary-50); color: var(--ink); box-shadow: inset 0 0 0 2px var(--gray-900); font-weight: var(--fw-bold); }
-/* 아이콘 없는 선택지(운영자가 새로 넣은 것)는 칩 몸통이 체크를 그리지 않는다 — 고른 표시를 같게 하려고 여기서 체크를 붙인다 */
-.tags.tags :global(.chip)[aria-pressed="true"][data-icon="false"]::after { content: ""; flex: none; width: 6px; height: 12px; margin: -4px 2px 0 2px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+/* 태그 칩 — 2026-11-14 「관련된 뱃지도 전부」로 이 화면 전용 모양(짙은 선 44 · 고른 칩 2px · 따로 붙이던 체크, 41절)을 없앴다.
+   모양·체크는 태그 고르기 부품(features/creator-tags-edit tag-picker.module.css)이 정하고, 체크는 모든 고른 칩에 붙는다 */
 .bio { height: auto; resize: vertical; line-height: 1.6; }
 
 /* 사진 칸 — 프로필 사진 원 80(휴대폰 64), 배경 사진 2:1(240 칸). 사진이 없으면 기본 얼굴 · 옅은 하늘 면(44절 대신 지시한 --primary-50 한 면). 테두리 1px --tint-line(41절) */

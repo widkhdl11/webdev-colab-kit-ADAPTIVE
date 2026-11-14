@@ -1,11 +1,13 @@
 /* 태그 고르기 — 시안 docs/design/mockups/site/v9-pages/tags-b.html 1절 (카드 d46). 칩이 많아 가로로 넘치지 않고 줄을 바꾼다. */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chips :global(.chip) { gap: 8px; min-height: 44px; padding-inline: 16px; border: 0; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
-.chips :global(.chip)[data-icon="true"] { padding-inline: 10px 16px; }
-.chips :global(.chip):hover { background: var(--surface-hover); }
-/* 고른 칩 = 그 플랫폼 색 2px 테두리 + 옅은 면 + 체크. 아이콘 없는 선택지(운영자가 새로 넣은 것)는 차콜 면 */
-.chips :global(.chip)[aria-pressed="true"] { background: var(--pf, var(--ink)); box-shadow: inset 0 0 0 2px var(--pc, transparent); color: var(--pk, var(--white)); }
+/* 2026-11-14 「차분하고 일관된 스타일」 — 플랫폼 색은 로고에만. 보이는 높이 36, 누르는 칸은 위아래 4씩 넓혀 44(design-prompt 8-12) */
+.chips :global(.chip) { position: relative; gap: 6px; min-height: 36px; padding: 0 var(--space-3); border: 0; background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-300); color: var(--gray-900); font: inherit; font-size: var(--fs-small); cursor: pointer; }
+.chips :global(.chip)::before { content: ""; position: absolute; inset: calc(-1 * var(--space-1)) 0; }
+.chips :global(.chip)[data-icon="true"] { padding: 0 var(--space-3) 0 6px; }
+.chips :global(.chip):hover { background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-500); }
+/* 고른 칩 = 옅은 하늘 면 + 짙은 선 1px + 체크(선물 보내기 고르기 칩과 같은 모양) — 플랫폼마다 같다 */
+.chips :global(.chip)[aria-pressed="true"] { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); color: var(--brand-ink); font-weight: var(--fw-btn); }
 /* 다 고른 뒤 남은 칩 — 흐리게(선물 개수 버튼과 같은 방식). 포커스는 남기고 aria-disabled 로 읽어 준다 */
 .chips :global(.chip)[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
-.chips :global(.chip)[aria-disabled="true"]:hover { background: var(--surface); }
+.chips :global(.chip)[aria-disabled="true"]:hover { background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-300); }
 .custom { margin-top: 16px; }

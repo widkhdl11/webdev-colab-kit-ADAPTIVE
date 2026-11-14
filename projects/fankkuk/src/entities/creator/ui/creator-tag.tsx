@@ -1,19 +1,10 @@
-import type { CSSProperties } from "react";
 import { tagBrandOf, type TagIcon } from "../model/tag-brand";
 import s from "./creator-tag.module.css";
 
 // 크리에이터 태그의 아이콘 배지·태그·칩 안쪽 (design-rules 5절 「크리에이터 태그 아이콘·플랫폼 색」, 시안 v9-pages/tags-b.html).
 // 아이콘·색은 tagBrandOf 표에서만 읽는다. 표에 없는 이름은 아이콘 없이 기본 모양.
-// 색은 CSS 변수로 넘긴다 — --pc 테두리(고른 칩) · --pf 옅은 면 · --pt 면 위 글자 · --pk 고른 칩 글자.
-// 칩의 「골랐을 때」 모양은 칩 모양이 화면마다 달라 각 화면 CSS 가 이 변수로 그린다(변수가 없으면 그 화면의 기본 선택 모양).
-
-/** 이 태그의 색 변수. 표에 없으면 빈 값 — 화면의 기본 칩·태그 모양이 그대로 쓰인다. */
-export function tagStyle(name: string): CSSProperties | undefined {
-  const brand = tagBrandOf(name);
-  if (!brand) return undefined;
-  const vars: Record<string, string> = { "--pc": brand.ring, "--pf": brand.fill, "--pt": brand.ink, "--pk": "var(--ink)" };
-  return vars as CSSProperties;
-}
+// 2026-11-14 사용자 지시 「차분하고 일관된 스타일」: 플랫폼 색은 로고에만 쓴다 — 칩·뱃지의 면·글자·테두리는 플랫폼마다 같다.
+// 활동 유형(버추얼)은 플랫폼이 아니라 로고를 그리지 않는다.
 
 function VirtualGlyph() {
   return (
@@ -59,14 +50,14 @@ function CheckMark() {
   );
 }
 
-/** 칩(버튼) 안쪽 — 아이콘 + 이름, 고른 칩은 체크(표에 있는 태그만 — 기본 칩은 면 색으로 고른 것을 보인다). */
+/** 칩(버튼) 안쪽 — 로고 + 이름, 고른 칩은 체크(색만으로 고른 것을 알리지 않는다). 활동 유형은 로고 없이 이름만. */
 export function TagChipBody({ name, pressed = false, check = true }: { name: string; pressed?: boolean; check?: boolean }) {
   const brand = tagBrandOf(name);
   return (
     <>
-      {brand ? <Badge icon={brand.icon} /> : null}
+      {brand && brand.icon.kind !== "virtual" ? <Badge icon={brand.icon} /> : null}
       <span>{name}</span>
-      {brand && pressed && check ? <CheckMark /> : null}
+      {pressed && check ? <CheckMark /> : null}
     </>
   );
 }
@@ -137,5 +128,6 @@ export function CreatorTagMore({ count }: { count: number }) {
 
 /** 아이콘이 붙는 태그인지 — 칩에 data-icon 으로 달아 화면 CSS 가 왼쪽 여백을 줄인다(시안 padding 0 16 0 10). */
 export function hasTagIcon(name: string): boolean {
-  return tagBrandOf(name) !== null;
+  const brand = tagBrandOf(name);
+  return brand !== null && brand.icon.kind !== "virtual";
 }

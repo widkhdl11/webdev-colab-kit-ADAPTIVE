@@ -28,7 +28,9 @@
 .metaLine svg { flex: none; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .countdown { display: inline-flex; align-items: center; margin-left: var(--space-1); padding: 0 var(--space-2); border-radius: var(--r-icon); background: var(--gray-100); color: var(--ink); white-space: nowrap; }
 .tags { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-3); }
-.verified { display: inline-flex; align-items: center; gap: 6px; color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.6; }
+/* 플랫폼 뱃지와 같은 줄 — 뱃지 글자와 같은 크기·굵기(2026-11-14 「관련된 뱃지도 전부」) */
+.verified { display: inline-flex; align-items: center; gap: 4px; color: var(--gray-600); font-size: var(--fs-badge); font-weight: var(--fw-sub); line-height: 1.4; }
+.verified svg { width: 14px; height: 14px; }
 .intro { margin-top: var(--space-4); font-size: var(--fs-card); font-weight: 400; line-height: 1.6; overflow-wrap: anywhere; }
 .symbol { display: block; width: 56px; height: 56px; margin-top: var(--space-4); border-radius: var(--r-btn); object-fit: cover; }
 .thanks { margin-top: var(--space-1); color: var(--sub); font-weight: 400; }
