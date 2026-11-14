@@ -1,10 +1,15 @@
 ---
 project: fankkuk
 status: deployed
-basis: 120f356de230
+basis: 957feb900abb
 ---
 
 # 배포 기록 — fankkuk
+
+## 2026-11-14 — 11-13~14 묶음(테마 색 직접 고르기 · 설정 재분류·재디자인 · X 공유 설정·팬당 한도 없앰 · 꾸미기 없앰 등)
+
+- 운영 DB 먼저: 사용자가 `npx supabase db push --remote --yes` 로 20261113000010(테마 색)·20261114000001(팬당 한도 끔) 적용 → `migration list --remote` 195/195 일치. 새 manual SQL 없음.
+- 그다음 main ..109fc02c push → 반영. 배포 전 단위 3693 통과 · tsc 0 · copy:lint 0 · 리뷰 사인오프 11~13절. 배포 후 fankkuk.com/creator/customize 응답에 `NEXT_REDIRECT …/creator/profile?tab=channel#preview-image` — 새 코드가 올라간 것 확인. 로그인 뒤 화면은 운영에서 보지 않았다(사용자 확인 대기).
 
 ## 2026-10-26 — 운영 테스트 키 막음 삭제 · 문구 2 교체 (basis 는 그대로 — d136 커밋 셋이 push 전이라 다음 배포가 갱신)
 
