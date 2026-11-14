@@ -45,3 +45,11 @@
 @media (max-width: 767px) {
   .bar { margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter); border-width: 1px 0 0; border-radius: 0; }
 }
+
+/* 2026-11-14 선물 보내기 4단계 시안 추천안(사용자 「전부 추천안으로 진행」): 이름·선물 종류는 항목 이름 아래 왼쪽 정렬(읽기 쉽게), 금액 줄은 그대로 오른쪽 정렬(자릿수 비교).
+   흰 면 · 그림자 없음 — 보조 칸이 본문보다 앞에 나서지 않게(1-2·2-7) */
+.card.card { background: var(--white); box-shadow: none; }
+.kv.kv { display: grid; gap: var(--space-4); margin-top: var(--space-4); }
+.kv.kv div { display: block; }
+.kv.kv div + div { margin-top: 0; }
+.kv.kv dd { margin-top: var(--space-2); text-align: left; }
