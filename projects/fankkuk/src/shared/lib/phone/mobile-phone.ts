@@ -65,3 +65,14 @@ export function applyPhoneEdit(
   const kept = phoneDigits(digits).length;
   return { value, caret: caretAfterDigits(value, Math.min(before, kept)) };
 }
+
+/** 휴대폰 칸 입력 이벤트 처리 — 요소 값과 커서를 먼저 맞추고 새 값을 돌려준다(상태와 같은 값이 되므로 다시 그릴 때 React 가 커서를 끝으로 옮기지 않는다).
+ *  회원가입·주소 입력 칸이 같이 쓴다. */
+export function phoneInputChanged(prev: string, el: HTMLInputElement, native: Event): string {
+  const type = typeof InputEvent !== "undefined" && native instanceof InputEvent ? native.inputType : "";
+  const deleting = type === "deleteContentBackward" ? "backward" : type === "deleteContentForward" ? "forward" : null;
+  const next = applyPhoneEdit(prev, el.value, el.selectionStart ?? el.value.length, deleting);
+  el.value = next.value;
+  el.setSelectionRange(next.caret, next.caret);
+  return next.value;
+}

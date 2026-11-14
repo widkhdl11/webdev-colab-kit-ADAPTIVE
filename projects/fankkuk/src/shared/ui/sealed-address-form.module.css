@@ -13,12 +13,13 @@
 
 @media (max-width: 768px) {
   .two { grid-template-columns: 1fr; }
-  .zip-row > :first-child { flex: 1 1 160px; }
   .form-grid[role="group"] > .sheet-btns > :global(.btn) { width: 100%; }
 }
 /* 우편번호 칸 옆 「주소 검색」 — 버튼은 칸 아래 줄에 맞춘다. 칸이 좁아지면 버튼이 아래로 내려간다 */
 .zip-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
-.zip-row > :first-child { flex: 0 1 160px; min-width: 0; } /* 우편번호 5자 — 160(design-prompt 8-2) */
+.zip-row > :first-child { flex: 0 1 160px; min-width: 0; } /* 우편번호 5자 — 160. 휴대폰에서도 옆 「주소 검색」 버튼과 한 줄이라 160 그대로(design-prompt 8-2) */
 .zip-search { flex: 0 0 auto; }
 /* 우편번호 서비스 검색 화면 — 「주소 검색」 모달 창 안 칸(그 서비스가 이 칸 안에 끼워 넣는다). 휴대폰에서는 창 최대 높이(80dvh) 안에 들도록 줄인다 */
+.postcode-loading { padding: var(--space-6); text-align: center; }
+.postcode[hidden] { display: none; }
 .postcode { height: min(480px, calc(80dvh - 120px)); overflow: hidden; border-radius: var(--r-card); box-shadow: var(--hair); }

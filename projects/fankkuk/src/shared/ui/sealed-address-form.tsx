@@ -21,7 +21,7 @@ import {
   loadPostcode,
   type PostcodeResult,
 } from "@/shared/lib/postcode/load-postcode";
-import { applyPhoneEdit } from "@/shared/lib/phone/mobile-phone";
+import { phoneInputChanged } from "@/shared/lib/phone/mobile-phone";
 import { BottomSheet } from "./bottom-sheet";
 import s from "./sealed-address-form.module.css";
 
@@ -166,6 +166,8 @@ export function useSealedAddressEntry<C>({
   >({});
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState(false);
+  /** 검색 화면을 창 안에 끼워 넣었는가 — 그 전에는 「불러오는 중」 줄을 보인다 */
+  const [searchReady, setSearchReady] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
   /** 창이 주소를 골라서 닫혔는가 — 그때는 연 버튼이 아니라 상세 주소 칸으로 초점을 보낸다 */
   const pickedRef = useRef(false);
@@ -196,6 +198,7 @@ export function useSealedAddressEntry<C>({
           width: "100%",
           height: "100%",
         }).embed(box, { autoClose: true });
+        setSearchReady(true);
       },
       () => {
         if (cancelled) return;
@@ -211,6 +214,7 @@ export function useSealedAddressEntry<C>({
 
   const search = () => {
     setSearchError(false);
+    setSearchReady(false);
     pickedRef.current = false;
     setSearching(true);
   };
@@ -231,15 +235,7 @@ export function useSealedAddressEntry<C>({
 
   // 휴대폰 번호 — 회원가입 칸과 같이 칠 때 「-」를 자동으로 넣고 커서를 맞춘다(2026-11-14 사용자 「회원가입할 때처럼」)
   const onPhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const el = e.currentTarget;
-    const native = e.nativeEvent;
-    const type = native instanceof InputEvent ? native.inputType : "";
-    const deleting = type === "deleteContentBackward" ? "backward" : type === "deleteContentForward" ? "forward" : null;
-    const next = applyPhoneEdit(values.phone, el.value, el.selectionStart ?? el.value.length, deleting);
-    // 요소 값과 커서를 먼저 맞춘다 — 상태와 같은 값이 되므로 다시 그릴 때 React 가 커서를 끝으로 옮기지 않는다
-    el.value = next.value;
-    el.setSelectionRange(next.caret, next.caret);
-    set("phone", next.value);
+    set("phone", phoneInputChanged(values.phone, e.currentTarget, e.nativeEvent));
   };
 
   const normalized = (): AddressFieldValues => ({
@@ -361,7 +357,13 @@ export function useSealedAddressEntry<C>({
         </button>
       </div>
       <BottomSheet open={searching} title="주소 검색" onClose={searchClosed}>
-        <div ref={searchBoxRef} className={s.postcode} />
+        {/* 스크립트를 받는 동안 빈 창이 되지 않게(2026-11-14 ux 리뷰). 검색 화면 칸(searchBoxRef)은 그 서비스가 채우므로 React 가 그린 것을 넣지 않는다 */}
+        {searchReady ? null : (
+          <p className={`hint ${s["postcode-loading"]}`} role="status">
+            주소 검색을 불러오는 중입니다.
+          </p>
+        )}
+        <div ref={searchBoxRef} className={s.postcode} hidden={!searchReady} />
       </BottomSheet>
       {searchError ? (
         <p className={s.error} role="alert">
@@ -397,7 +399,6 @@ export function useSealedAddressEntry<C>({
         type: "tel",
         inputMode: "tel",
         autoComplete: "tel",
-        maxLength: 13,
         placeholder: "010-0000-0000",
         onChange: onPhoneChange,
         required: true,

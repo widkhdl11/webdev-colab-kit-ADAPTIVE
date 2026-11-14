@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { BottomSheet } from "./bottom-sheet";
-import { StepDialog } from "./step-dialog";
+import { ConfirmDialog, StepDialog } from "./step-dialog";
 
 // 단계형 모달 틀 — 열려 있는 동안 뒤 페이지 스크롤을 막고, 닫히면(겹친 창이 모두 닫히면) 원래 값으로 돌린다. 스크롤 위치는 건드리지 않는다.
 
@@ -92,5 +92,27 @@ describe("단계형 모달 — 겹쳐 연 창의 Esc", () => {
     });
     expect(cancel.defaultPrevented).toBe(false);
     expect(requests).toEqual([]);
+  });
+});
+
+describe("확인 창 — 겹쳐 연 창의 Esc", () => {
+  it("확인 창 안에 연 창의 Esc 는 막지 않고, 확인 창의 onCancel 도 부르지 않는다", () => {
+    const calls: string[] = [];
+    act(() =>
+      root.render(
+        <ConfirmDialog open title="지울까요?" onCancel={() => calls.push("confirm")}>
+          <BottomSheet open title="안쪽" onClose={() => {}}>
+            <p>안</p>
+          </BottomSheet>
+        </ConfirmDialog>,
+      ),
+    );
+    const innerDlg = host.querySelectorAll("dialog")[1];
+    const cancel = new Event("cancel", { cancelable: true });
+    act(() => {
+      innerDlg.dispatchEvent(cancel);
+    });
+    expect(cancel.defaultPrevented).toBe(false);
+    expect(calls).toEqual([]);
   });
 });

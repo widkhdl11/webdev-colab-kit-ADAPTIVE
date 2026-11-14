@@ -108,11 +108,11 @@ describe("BottomSheet 포커스 복귀", () => {
 // 창 안에 다른 창을 겹쳐 열 때(주소 입력 창 안의 「주소 검색」 창) — 안쪽 창이 닫혀도 바깥 창은 열린 채여야 한다(2026-11-14).
 // React 는 안쪽 <dialog> 의 close·cancel 이벤트를 바깥 <dialog> 의 처리기에도 올려 보낸다 — 처리기가 자기 창 이벤트만 받는지 본다.
 describe("겹쳐 연 창", () => {
-  function Nested({ log }: { log: string[] }) {
+  function Nested({ log, outerBusy = false }: { log: string[]; outerBusy?: boolean }) {
     const [outer, setOuter] = useState(true);
     const [inner, setInner] = useState(true);
     return (
-      <BottomSheet open={outer} title="바깥" onClose={() => { log.push("outer"); setOuter(false); }}>
+      <BottomSheet open={outer} title="바깥" busy={outerBusy} onClose={() => { log.push("outer"); setOuter(false); }}>
         <BottomSheet open={inner} title="안쪽" onClose={() => { log.push("inner"); setInner(false); }}>
           <p>검색</p>
         </BottomSheet>
@@ -129,9 +129,10 @@ describe("겹쳐 연 창", () => {
     expect(outerDlg.hasAttribute("open")).toBe(true);
   });
 
-  it("안쪽 창의 Esc(cancel)는 바깥 창의 처리기가 막지 않는다", () => {
+  // 바깥 창이 처리 중(busy)이면 자기 Esc 를 막는다 — 그 막음이 안쪽 창의 Esc 에까지 번지지 않는지 본다(2026-11-14 code 리뷰: busy 없이 그리면 가드를 지워도 통과했다)
+  it("바깥 창이 처리 중이어도 안쪽 창의 Esc(cancel)는 막지 않는다", () => {
     const log: string[] = [];
-    act(() => root.render(<Nested log={log} />));
+    act(() => root.render(<Nested log={log} outerBusy />));
     const innerDlg = host.querySelectorAll("dialog")[1];
     const cancel = new Event("cancel", { cancelable: true });
     act(() => {

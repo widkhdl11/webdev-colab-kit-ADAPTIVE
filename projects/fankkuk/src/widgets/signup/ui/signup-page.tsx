@@ -8,10 +8,10 @@ import { PHONE_CODE_EXPIRED_MESSAGE, PHONE_CODE_SENT_MESSAGE, PHONE_CODE_TTL_SEC
 import { HEARD_FROM, HEARD_FROM_LABEL, isHeardFrom, type HeardFrom } from "@/entities/metrics/model/signup-source";
 import { completeSignup } from "@/features/signup/api/complete-signup";
 import { checkPhoneCode, requestPhoneCode } from "@/features/signup/api/signup-client";
+import { phoneInputChanged } from "@/shared/lib/phone/mobile-phone";
 import { availabilityBlock, availabilityLine, type AvailabilityTone } from "@/features/signup/model/name-availability";
 import { useNameAvailability } from "@/features/signup/model/use-name-availability";
 import {
-  applyPhoneEdit,
   EMAIL_CUSTOM,
   EMAIL_DOMAINS,
   emailLocalTyped,
@@ -444,15 +444,7 @@ export function SignupPage({ sealingKeyPem = null }: { sealingKeyPem?: string | 
   };
 
   const onPhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const el = e.currentTarget;
-    const native = e.nativeEvent;
-    const type = native instanceof InputEvent ? native.inputType : "";
-    const deleting = type === "deleteContentBackward" ? "backward" : type === "deleteContentForward" ? "forward" : null;
-    const next = applyPhoneEdit(phone, el.value, el.selectionStart ?? el.value.length, deleting);
-    // 요소 값과 커서를 먼저 맞춘다 — 상태와 같은 값이 되므로 다시 그릴 때 React 가 커서를 끝으로 옮기지 않는다
-    el.value = next.value;
-    el.setSelectionRange(next.caret, next.caret);
-    setPhone(next.value);
+    setPhone(phoneInputChanged(phone, e.currentTarget, e.nativeEvent));
     // 받은 뒤 번호를 고치면 받기 전으로(UX 명세 step 3 sent) — 맞힌 뒤에는 칸이 읽기 전용이다
     resetPhone(null);
   };
