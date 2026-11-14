@@ -43,7 +43,7 @@ describe("옮겨진 칸의 옛 주소 — 지금 자리로 (2026-11-13 재분류
     expect(movedCreatorSectionHref("/creator/account", "verify")).toBe("/creator/profile?tab=channel#verify");
   });
   it("지금 그 화면에 있는 칸·없앤 칸·빈 값은 그대로(null) — 다른 화면의 같은 이름과 섞이지 않는다", () => {
-    for (const id of ["address", "blocked", "recv", "hard", "more", "security", "leave", "thanks", "reply", ""]) {
+    for (const id of ["constructor", "toString", "__proto__", "address", "blocked", "recv", "hard", "more", "security", "leave", "thanks", "reply", ""]) {
       expect(movedCreatorSectionHref("/creator/settings", id)).toBeNull();
     }
     expect(movedCreatorSectionHref("/creator/account", "fandom")).toBeNull();

@@ -1,5 +1,6 @@
 "use client";
 
+import { currentHashId } from "@/shared/lib/navigation/hash-id";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -79,7 +80,7 @@ function Fold({ id, icon, title, meta, children }: { id?: string; icon: Settings
 function useOpenFoldForHash(): void {
   useEffect(() => {
     const open = () => {
-      const id = decodeURIComponent(window.location.hash.slice(1));
+      const id = currentHashId();
       if (!id) return;
       const moved = movedCreatorSectionHref(CREATOR_SETTINGS, id);
       if (moved) {

@@ -6,6 +6,7 @@
 - 하네스 개선은 여기가 아니라 docs/references/harness-backlog.md.
 
 ## 미결
+- [ ] **주소 끝 #칸이 같은 화면에서 바뀔 때도 따라가기** (2026-11-14 code 리뷰 낮음) — 알림 설정(`creator-account-page`)의 옛 #verify 넘김과 프로필 수정의 #칸 스크롤은 처음 그릴 때 한 번만 본다. 계정 설정은 hashchange 를 듣는다. 프로필 탭 링크로 화면이 그대로 남은 채 `?tab=channel#link` 로 바뀌면 안 내려갈 수 있다(확인 안 함). 바깥에서 들어오는 옛 링크·안내 링크는 화면에서 확인했다(11-14).
 - [ ] **안 쓰는 팬당 한도 칸·함수 지우기** (2026-11-14) — 한도를 없앴고(DECISIONS 11-14) 칸은 제약으로 늘 비어 있다. `creators.monthly_fan_limit`, `my_gift_limit_reached`, `receiving_counted_orders`, 등록 함수의 한도 검사·FKR02, `update_my_creator_receiving` 의 `p_monthly_limit` 인자, 화면의 SenderRefusal `limit` 문구가 남아 있다. 지우려면 등록 함수를 다시 만드는 마이그레이션(운영 적용 포함)이 필요하다. X 계정 칸 정리와 같이 하면 한 번에 끝난다. 낮음.
 - [ ] **안 쓰는 X 계정·태그 허용 DB 칸 지우기** (2026-11-14) — 「X 공유 설정」을 화면에서 없앴고(DECISIONS 11-14) `creators` 의 X 계정·태그 허용 칸, `update_my_reply_settings`·`my_reply_settings` 함수, 카드 읽기 함수의 `x_tag` 출력은 남아 있다. 지우려면 마이그레이션(운영 적용 포함)이 필요하다. 공개 답장 모음 함수(11-13 거둠)와 같이 정리하면 한 번에 끝난다. 낮음. 보안 리뷰(11-14): 그 사이 `update_my_reply_settings` 는 `authenticated` 실행 권한이 그대로라 크리에이터가 본인 행의 두 칸을 RPC 로 계속 쓸 수 있고, 카드 읽기 함수가 x_tag 를 아직 응답에 싣는다(앱은 안 씀) — 지울 때 권한 회수·읽기 함수 정리를 같이.
 - [ ] **설정 두 화면의 저장 줄 모양 하나로** (2026-11-14 ui 리뷰 낮음) — 계정 설정은 회색 둥근 상자 + 결과 안내 아래 + 휴대폰에서 버튼 세로, 프로필 수정은 `--surface` 띠 + 결과 안내 왼쪽 + 휴대폰에서 화면 아래에 붙음. 두 승인 시안끼리 다르다. 41절은 버튼 높이만 정해서 위반은 아니다.

@@ -1,5 +1,6 @@
 "use client";
 
+import { currentHashId } from "@/shared/lib/navigation/hash-id";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
@@ -208,7 +209,7 @@ export function CreatorAccountPage({
   const toLogin = () => router.push(`/login?next=${CREATOR_ACCOUNT}`);
   // 옛 링크 /creator/account#verify — 채널 소유자 확인은 2026-11-13 프로필 수정 채널 탭으로 옮겼다
   useEffect(() => {
-    const moved = movedCreatorSectionHref(CREATOR_ACCOUNT, decodeURIComponent(window.location.hash.slice(1)));
+    const moved = movedCreatorSectionHref(CREATOR_ACCOUNT, currentHashId());
     if (moved) window.location.replace(moved);
   }, []);
   const [alarm, setAlarm] = useState(notify);

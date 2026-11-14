@@ -1,5 +1,6 @@
 "use client";
 
+import { currentHashId } from "@/shared/lib/navigation/hash-id";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   chipTags,
@@ -73,7 +74,7 @@ export function FaqPage({
   const firstRef = useRef<HTMLDetailsElement>(null);
   const firstId = items[0]?.id;
   useEffect(() => {
-    const id = decodeURIComponent(window.location.hash.slice(1));
+    const id = currentHashId();
     if (firstRef.current && id !== "" && id !== firstId && items.some((f) => f.id === id)) firstRef.current.open = false;
     // 들어온 때 한 번만 — 질문 목록(서버가 준 값)이 그대로인 동안 다시 돌지 않는다
   }, [firstId, items]);

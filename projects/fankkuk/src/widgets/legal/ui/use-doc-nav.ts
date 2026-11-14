@@ -1,5 +1,6 @@
 "use client";
 
+import { currentHashId } from "@/shared/lib/navigation/hash-id";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { findIds, hitsUnder, queryWords, type NavItem } from "../model/doc-nav";
 
@@ -91,7 +92,7 @@ export function useDocNav(items: readonly NavItem[], reveal?: (el: HTMLElement) 
   useEffect(() => {
     const ids = new Set(idKey.split(" "));
     const onHash = () => {
-      const id = decodeURIComponent(window.location.hash.slice(1));
+      const id = currentHashId();
       if (ids.has(id)) goTo(id);
     };
     onHash();
