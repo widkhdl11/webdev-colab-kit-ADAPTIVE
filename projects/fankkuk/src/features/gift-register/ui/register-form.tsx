@@ -231,7 +231,7 @@ export function RegisterForm({
 
   /**
    * 고른 크리에이터에게 지금 보낼 수 없으면 그 안내(아니면 null). 1단계 「다음」과 결제 직전이 같이 쓴다.
-   * INV-V12 채널 이사 중 → creator-receiving INV-B2·B6 쉬는 중·내 한도 순. 등록은 DB 가 다시 막는다.
+   * INV-V12 채널 이사 중 → creator-receiving INV-B2 쉬는 중 순(팬당 한도는 2026-11-14 없앰). 등록은 DB 가 다시 막는다.
    */
   const creatorBlock = (): string | null => {
     return creatorBlockNotice(creators.find((x) => x.id === getValues("creatorId")), today);

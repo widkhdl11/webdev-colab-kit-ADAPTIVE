@@ -1,12 +1,8 @@
 /* 계정 설정 화면(2026-11-13 「상세 설정」에서 이름 바꿈) — 2026-11-14 재디자인: 시안 docs/design/mockups/settings-account-20261113(구역마다 저장 · 칸 앞 동그라미 아이콘 = 사용자 추천안).
    폭 --col-form 720(설정형, design-prompt 2-23) — 틀은 1200(MyShell broad)이고 안쪽만 720 으로 왼쪽에 붙인다(프로필 수정과 같은 왼쪽 시작선).
    덩어리 셋: 카카오톡 인증 알림 상태 줄 / 선물 받는 설정 셋(흰 카드 한 장, 칸 사이 가는 줄) / 보안·회원 탈퇴(카드 한 장), 덩어리 사이 32(design-prompt 2-1·2-2·6-5 1).
-   41절 값: 흰 카드(--hair + --card-shadow) · 점 + 글자 뱃지 · 선 버튼 짙은 선 · 고르는 칸 짙은 선 44, 고른 칸 하늘 면 + 2px + 체크.
-   아래 .set · .save-end · .md-row · .ann-* · .handle-* · .link-* · .set-msg · .w* · .sheet-* 는 프로필 수정 탭의 구역(days·link)이 아직 쓴다 — 지우지 않는다. */
+   41절 값: 흰 카드(--hair + --card-shadow) · 점 + 글자 뱃지 · 선 버튼 짙은 선 · 고르는 칸 짙은 선 44, 고른 칸 하늘 면 + 2px + 체크. */
 
-.set { display: grid; gap: 24px; }
-.set:global(.card) { padding: 32px; }
-.set :global(.fs) > :global(.label) { margin-bottom: 12px; }
 
 .root { min-width: 0; }
 .root > header, .root > .page { max-width: var(--col-form); }
@@ -30,7 +26,7 @@
 .fold > summary { display: flex; align-items: center; gap: var(--space-3); min-height: 72px; padding: 0 var(--space-6); list-style: none; cursor: pointer; transition: background-color var(--dur-hover) var(--ease-out); }
 .fold > summary::-webkit-details-marker { display: none; }
 .fold > summary:hover { background: var(--gray-50); }
-.fold > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
+.fold > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
 .fold[open] > summary .foldChev { transform: rotate(180deg); }
 .fold[open] > summary .rowIco { background: var(--primary); }
 /* 펼친 부분은 옅은 면 — 다음 줄과 경계 */
@@ -40,7 +36,7 @@
 /* 카카오톡 인증 알림 줄 — 접는 칸이 아니라 상태 줄 한 장(흰 카드 80). 연결 전은 줄 전체가 링크 */
 .linkRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); min-height: 80px; padding: var(--space-3) var(--space-6); border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); text-decoration: none; }
 .linkRowGo:hover { background: var(--gray-50); }
-.linkRowGo:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.linkRowGo:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 /* 접힌 칸 · 승인 서명 줄 오른쪽 상태 — 점 + 글자 뱃지(공용 .tag.tag--dot). 색: 등록됨·받는 중·연결됨 초록, 쉬는 중 노랑, 등록 전·연결 전 회색(41절).
    공용 .tag--success 등은 이 화면 범위에서 하늘·회색 갈래라 색은 여기서 준다 */
@@ -70,7 +66,6 @@
 .actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
 /* 저장 버튼과 결과 줄을 한 덩어리로 — 비어 있는 결과 줄이 간격을 차지하지 않게 */
 .msg:not(:empty) { margin-top: 12px; }
-.save-end { display: grid; justify-items: end; } /* 프로필 탭 「생일과 기념일」 판 — 저장 버튼·결과 줄을 오른쪽으로 */
 
 /* 고르는 칸(받는 상태 · 받기 어려운 선물) — 칩은 글자 폭, 짙은 선 44 · 고른 칸 하늘 면 + 짙은 선 2px + 체크(색만으로 알리지 않음, 41절) */
 .opts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
@@ -89,17 +84,6 @@
 .fanWho { flex: 1; min-width: 0; }
 .fanName { overflow-wrap: anywhere; }
 
-/* 스위치 — 입력은 체크박스(role=switch) 그대로, 모양은 계정 설정 스위치와 같은 52×32 · 테두리 --sub · 짙은 손잡이 24(41절 「스위치 한 모양」).
-   투명 테두리 6 으로 누름 칸 64×44, 보이는 선은 안쪽 그림자 1px(투명 테두리 안쪽에 그려진다) */
-.txt { display: grid; gap: 4px; }
-label.txt { cursor: pointer; }
-.switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 52px; height: 32px; box-sizing: content-box; margin: -6px; border: 6px solid transparent; background-clip: padding-box; border-radius: var(--r-pill); background-color: var(--gray-200); box-shadow: inset 0 0 0 1px var(--sub); cursor: pointer; transition: background .15s; }
-.switch::after { content: ""; position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); transition: transform .15s; }
-.switch:checked { background-color: var(--brand); } /* background 축약은 background-clip 을 되돌려 투명 테두리까지 칠한다 — 색만 바꾼다 */
-.switch:checked::after { transform: translateX(20px); }
-.switch:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.switch:disabled { cursor: not-allowed; opacity: .5; }
-@media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
 
 /* 선 버튼 짙은 선 --gray-500(이 화면 범위에서만 — 공용 .btn--line 은 그대로, 41절) */
 .root.root :global(:is(.btn--line, .btn--soft)) { box-shadow: inset 0 0 0 1px var(--gray-500); }
@@ -109,10 +93,11 @@ label.txt { cursor: pointer; }
 .root :global(.err:not(:empty))::before { content: "!" / ""; }
 .root :global(.okmsg:not(:empty))::before { content: "✓" / ""; }
 
-/* 칸 폭은 들어갈 값 길이에 맞춘다(41절 표): 다시 받는 날 200 · 월 한도·X 계정 240 · 링크 주소 280. 휴대폰은 칸이 폭을 채운다 */
+/* 칸 폭은 들어갈 값 길이에 맞춘다(41절 표): 다시 받는 날 200. 휴대폰은 칸이 폭을 채운다 */
 .w200 { max-width: 200px; }
-.w240 { max-width: 240px; }
-.w280 { max-width: 280px; }
+
+
+
 
 
 /* 확인 창(바텀시트) */
@@ -120,22 +105,8 @@ label.txt { cursor: pointer; }
 .sheet-err { margin-top: 16px; }
 .sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
 
-/* 생일과 기념일 — 월·일 두 칸, 기념일 줄(이름 · 월 · 일 · 빼기) */
-/* 월 120 · 일 100(41절) — 생일 월의 「정하지 않음」이 잘리지 않게 그 값이 들어갈 만큼은 늘어난다 */
-.md-row { display: grid; grid-template-columns: minmax(120px, max-content) minmax(100px, max-content); justify-content: start; gap: 8px; }
-.ann-list { display: grid; gap: 12px; margin-bottom: 12px; }
-.ann-row { display: grid; grid-template-columns: minmax(0, 240px) auto auto; justify-content: start; gap: 8px; align-items: center; } /* 이름 240 · 월 · 일 · 삭제 한 줄 */
-
-/* 선물 링크 — 주소 앞부분(fankkuk.com/, @)은 칸 왼쪽에 붙인 글자 */
-.handle-row { display: flex; align-items: center; gap: 8px; }
-.handle-host { flex-shrink: 0; font-weight: var(--fw-btn); white-space: nowrap; }
-.handle-row :global(.field) { flex: 1; }
-.link-text { overflow-wrap: anywhere; }
-
 @media (max-width: 767px) {
-  .set:global(.card) { padding: 24px 16px; }
-  .w200, .w240, .w280 { max-width: none; }
-  .md-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .w200 { max-width: none; }
   /* 시안 768 이하: 줄 안쪽 16 · 펼친 칸 8 16 24 · 저장 줄은 폭 전체 + 저장이 위(design-prompt 2-21 2) */
   .group { gap: var(--space-6); }
   .fold > summary, .linkRow { padding-inline: var(--space-4); }
@@ -144,15 +115,7 @@ label.txt { cursor: pointer; }
   .bar { flex-direction: column-reverse; align-items: stretch; padding: var(--space-3) var(--space-4); }
   .actions { flex-direction: column-reverse; }
   .actions :global(.btn) { width: 100%; }
-  .set :global(.sw-row) { gap: 12px; padding: 16px; }
-  .ann-row { grid-template-columns: minmax(0, 1fr) auto; justify-content: stretch; }
-  .ann-row > .md-row { grid-column: 1 / -1; grid-row: 2; }
 }
-/* 버튼과 묶이지 않은 결과 줄(알림 받기)이 비어 있을 때 카드 안 간격만큼 끝이 떠 보이지 않게 — 알림 줄(role=status)은 화면에 남겨 둔다 */
-.set > .msg:empty { margin-top: -24px; }
-/* 선물 링크 — 지금 주소 두 줄, 복사·바꾸기 버튼 줄. 복사 버튼의 결과 줄(role=status)은 버튼 아래 한 줄로 */
-.link-now { margin-top: 8px; }
-.link-btns > :global(.hint) { order: 1; flex-basis: 100%; margin-top: 0; }
-.link-btns > :global(.hint:empty) { margin-top: -12px; }
-/* 링크 주소 결과 줄은 버튼 줄과 따로 있다 — 비었을 때 카드 안 간격을 지운다 */
-.set-msg:empty { margin-top: -24px; }
+
+/* 회색 저장 줄 위의 「저장」(바꾼 값 없음·저장 중) — 줄 바탕(gray-100)에 묻히지 않게 시안 값 gray-200 면 · gray-600 글자 */
+.bar :global(.btn:not(.btn--line)[aria-disabled="true"]), .bar :global(.btn:not(.btn--line)[aria-disabled="true"]:hover) { background: var(--gray-200); box-shadow: none; color: var(--gray-600); }

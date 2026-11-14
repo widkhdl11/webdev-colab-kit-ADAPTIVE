@@ -248,7 +248,7 @@ export function FandomForm(p: FandomFormProps) {
   const dirty = name !== saved.fanName || theme !== saved.theme;
 
   const save = async () => {
-    if (saving) return;
+    if (saving || !dirty) return;
     setMsg(null);
     setSaving(true);
     const r = await sendCreatorProfile({ fanName: name, personalColor: theme ?? "" });
@@ -348,7 +348,7 @@ export function FandomForm(p: FandomFormProps) {
               <button className="btn btn--line" type="button" onClick={revert}>
                 되돌리기
               </button>
-              <button className={`btn ${dirty || saving ? "" : panel.idle}`} type="button" aria-disabled={saving} aria-describedby="fd-msg" onClick={() => void save()}>
+              <button className={`btn ${dirty || saving ? "" : panel.idle}`} type="button" aria-disabled={saving || !dirty} aria-describedby="fd-msg" onClick={() => void save()}>
                 {saving ? "저장 중…" : "저장"}
               </button>
             </div>

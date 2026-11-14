@@ -63,7 +63,7 @@ status: approved
 ## 스펙 참조
 
 - `docs/specs/payment.md` INV-M1(결제 금액은 서버 계산) — 화면 합계는 안내.
-- `docs/specs/creator-receiving.md` INV-B2·B6 — 미리 고른 크리에이터가 쉬는 중·한도일 때는 폼 대신 상태 카드(이때 「보낼 선물」 칸 없음).
+- `docs/specs/creator-receiving.md` INV-B2 — 미리 고른 크리에이터가 쉬는 중일 때는 폼 대신 상태 카드(이때 「보낼 선물」 칸 없음).
 - 요약 칸 자체는 「스펙 없음」(표시만, 규칙 없음).
 
 ## 바뀌는 것

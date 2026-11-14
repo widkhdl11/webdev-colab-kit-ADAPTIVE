@@ -133,7 +133,7 @@ export function CreatorProfileEditPage({ tab = "profile", profileSections, chann
     router.refresh();
   };
 
-  // 바뀐 값이 있는가 — 「저장」 모양만 가른다(누르면 지금처럼 보낸다)
+  // 바뀐 값이 있는가 — 없으면 「저장」은 회색이고 누를 수 없다(엔터로 제출해도 보내지 않는다)
   const sameTags = tagIds.length === p.tagIds.length && tagIds.every((x) => p.tagIds.includes(x));
   const dirty = tab === "profile" ? name !== p.name || intro !== p.intro : visible !== p.visibleInSearch || customTag !== p.customTag || !sameTags;
 
@@ -147,7 +147,7 @@ export function CreatorProfileEditPage({ tab = "profile", profileSections, chann
         <Link className="btn btn--line" href={CREATOR_HOME}>
           취소
         </Link>
-        <button className={`btn ${dirty || saving ? "" : panel.idle}`} type="submit" aria-disabled={saving} aria-busy={saving}>
+        <button className={`btn ${dirty || saving ? "" : panel.idle}`} type="submit" aria-disabled={saving || !dirty} aria-busy={saving}>
           {saving ? "저장 중…" : "저장"}
         </button>
       </div>
@@ -212,7 +212,7 @@ export function CreatorProfileEditPage({ tab = "profile", profileSections, chann
               noValidate
               onSubmit={(e) => {
                 e.preventDefault();
-                void saveProfile();
+                if (dirty) void saveProfile();
               }}
             >
               <h2 className={panel.title} id="pe-in">
@@ -299,7 +299,7 @@ export function CreatorProfileEditPage({ tab = "profile", profileSections, chann
                 noValidate
                 onSubmit={(e) => {
                   e.preventDefault();
-                  void saveChannel();
+                  if (dirty) void saveChannel();
                 }}
               >
                 <h2 className={panel.title} id="pe-tags-t">

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ANNIVERSARY_MAX, ANNIVERSARY_NAME_MAX, daysInMonth, type CalendarDate, type MyCreatorReceiving } from "@/entities/creator/model/receiving";
 import { sendCreatorDays } from "@/features/creator-settings-save/api/send-creator-settings";
 import { clipChars } from "@/features/creator-settings-save/model/creator-settings-input";
+import { useSaveBaseline } from "@/shared/lib/form-draft/use-save-baseline";
 import panel from "@/shared/ui/settings-panel.module.css";
 import s from "./profile-sections.module.css";
 
@@ -83,13 +84,12 @@ export function DaysSection({ initial, today }: { initial: Pick<MyCreatorReceivi
   const [nextKey, setNextKey] = useState(initial.anniversaries.length);
   const [daysSaving, setDaysSaving] = useState(false);
   const [daysMsg, setDaysMsg] = useState<SaveMsg>(null);
-  // 바뀐 값이 있는가 — 「저장」 모양만 가른다(누르면 지금처럼 보낸다). 저장하면 그 값이 새 기준
+  // 바뀐 값이 없으면 「저장」은 회색이고 누를 수 없다(useSaveBaseline). 저장하면 그 값이 새 기준
   const snapshot = JSON.stringify([bMonth, bDay, anniversaries.map(({ name, month, day }) => [name.trim(), month, day])]);
-  const [savedSnapshot, setSavedSnapshot] = useState(snapshot);
-  const dirty = snapshot !== savedSnapshot;
+  const { dirty, markSaved } = useSaveBaseline(snapshot);
 
   const saveDays = async () => {
-    if (daysSaving) return;
+    if (daysSaving || !dirty) return;
     setDaysMsg(null);
     setDaysSaving(true);
     const r = await sendCreatorDays({
@@ -109,7 +109,7 @@ export function DaysSection({ initial, today }: { initial: Pick<MyCreatorReceivi
       setDaysMsg({ ok: false, text: r.message });
       return;
     }
-    setSavedSnapshot(snapshot);
+    markSaved(snapshot);
     setDaysMsg({ ok: true, text: "생일과 기념일이 저장되었습니다." });
     router.refresh();
   };
@@ -222,7 +222,7 @@ export function DaysSection({ initial, today }: { initial: Pick<MyCreatorReceivi
           ) : null}
         </div>
         <div className={panel.barBtns}>
-          <button className={`btn ${dirty || daysSaving ? "" : panel.idle}`} type="button" aria-disabled={daysSaving} onClick={() => void saveDays()}>
+          <button className={`btn ${dirty || daysSaving ? "" : panel.idle}`} type="button" aria-disabled={daysSaving || !dirty} onClick={() => void saveDays()}>
             {daysSaving ? "저장 중…" : "생일·기념일 저장"}
           </button>
         </div>

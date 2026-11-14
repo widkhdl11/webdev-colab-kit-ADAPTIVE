@@ -356,6 +356,9 @@ describe("입력 한 판 + 따로 놓는 카드 미리보기(2026-11-13 채널 �
     expect(status.parentElement?.parentElement).toBe(panel);
     expect(panel.lastElementChild).toBe(status.parentElement);
     expect(status.textContent).toBe("");
+    expect(saveBtn().getAttribute("aria-disabled")).toBe("true");
+    typeInto(host.querySelector<HTMLInputElement>("#fd-name")!, "하루단");
+    expect(saveBtn().getAttribute("aria-disabled")).toBe("false");
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
     await act(async () => saveBtn().click());
     expect(status.textContent).toBe("저장되었습니다.");

@@ -154,18 +154,34 @@ describe("프로필 수정 — 미리보기는 탭마다 하나, 오른쪽 열 (
 describe("프로필 수정 — 탭마다 「저장」이 보내는 칸 (INV-A9 — 서버는 보낸 칸만 바꾼다)", () => {
   it("INV-A9·INV-CN2: 프로필 탭 「저장」은 닉네임·한 줄 소개만 /api/creator/profile 로 — 찾기 노출·태그·팬덤은 보내지 않는다", async () => {
     await render();
+    const input = host.querySelector<HTMLInputElement>("#pe-name")!;
+    const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+    act(() => {
+      setValue.call(input, "하루하루");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
     const calls = await clickSave();
-    expect(calls).toEqual([["/api/creator/profile", { nickname: "하루", intro: "느긋한 방송" }]]);
+    expect(calls).toEqual([["/api/creator/profile", { nickname: "하루하루", intro: "느긋한 방송" }]]);
     expect(host.querySelector("#pe-msg")?.textContent).toBe("저장되었습니다.");
   });
 
   it("INV-A9·INV-T3: 채널 탭 「저장」은 찾기 노출만 /api/creator/profile 로, 이어서 태그 — 닉네임·소개는 보내지 않는다", async () => {
     await render({ tab: "channel" });
+    act(() => host.querySelector<HTMLInputElement>("#pe-find")!.click());
     const calls = await clickSave();
-    expect(calls[0]).toEqual(["/api/creator/profile", { searchable: false }]);
+    expect(calls[0]).toEqual(["/api/creator/profile", { searchable: true }]);
     expect(calls[1]).toEqual(["/api/creator/tags", { tagIds: [TAG], customTag: "" }]);
     expect(calls).toHaveLength(2);
     expect(host.querySelector("#pe-msg")?.textContent).toBe("저장되었습니다.");
+  });
+
+  it("저장 버튼 — 바꾼 값이 없으면 회색·누를 수 없고, 눌러도(엔터 제출도) 보내지 않는다", async () => {
+    await render();
+    expect(saveButton().getAttribute("aria-disabled")).toBe("true");
+    const calls = await clickSave();
+    expect(calls).toEqual([]);
+    await act(async () => saveButton().closest("form")!.requestSubmit());
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("INV-E13: 미리보기 머리에 테마 색(띠·테두리)과 팬덤 뱃지(테마 색 면)가 보인다", async () => {

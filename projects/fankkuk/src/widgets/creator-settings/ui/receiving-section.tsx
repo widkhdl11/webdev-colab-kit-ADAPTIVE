@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { resumeRange, type CalendarDate, type MyCreatorReceiving } from "@/entities/creator/model/receiving";
 import { sendCreatorReceiving } from "@/features/creator-settings-save/api/send-creator-settings";
+import { useSaveBaseline } from "@/shared/lib/form-draft/use-save-baseline";
 import panel from "@/shared/ui/settings-panel.module.css";
 import s from "./creator-settings.module.css";
 
@@ -41,13 +42,11 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
   const [recvMsg, setRecvMsg] = useState<Msg>(null);
   const resumeRef = useRef<HTMLInputElement>(null);
   const resumeInvalid = recvMsg?.field === "resumeOn";
-  // 바뀐 값이 있는가 — 「저장」 모양만 가른다(누르면 지금처럼 보낸다, days-section 과 같음). 저장하면 그 값이 새 기준
-  const snapshot = JSON.stringify([resting, resumeOn]);
-  const [savedSnapshot, setSavedSnapshot] = useState(snapshot);
-  const dirty = snapshot !== savedSnapshot;
+  // 바뀐 값이 없으면 「저장」은 회색이고 누를 수 없다(useSaveBaseline)
+  const { dirty, markSaved } = useSaveBaseline(JSON.stringify([resting, resumeOn]));
 
   const saveReceiving = async () => {
-    if (recvSaving) return;
+    if (recvSaving || !dirty) return;
     setRecvMsg(null);
     if (resting && resumeOn === "") {
       setRecvMsg({
@@ -73,7 +72,7 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
       return;
     }
     if (!resting) setResumeOn("");
-    setSavedSnapshot(JSON.stringify([resting, resting ? resumeOn : ""]));
+    markSaved(JSON.stringify([resting, resting ? resumeOn : ""]));
     setRecvMsg({ ok: true, text: "선물 받기 설정이 저장되었습니다." });
     router.refresh();
   };
@@ -123,7 +122,7 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
       ) : null}
       <div>
         <div className={s.bar}>
-          <button className={`btn ${dirty || recvSaving ? "" : panel.idle}`} type="button" aria-disabled={recvSaving} onClick={() => void saveReceiving()}>
+          <button className={`btn ${dirty || recvSaving ? "" : panel.idle}`} type="button" aria-disabled={recvSaving || !dirty} onClick={() => void saveReceiving()}>
             {recvSaving ? "저장 중…" : "선물 받기 설정 저장"}
           </button>
         </div>

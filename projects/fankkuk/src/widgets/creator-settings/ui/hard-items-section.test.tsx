@@ -45,6 +45,19 @@ describe("INV-H4: 받기 어려운 품목 설정 칸", () => {
     expect(host.querySelector("[role=alert]")?.textContent).toContain("받기 어려운 선물을 하나 이상 선택해 주세요.");
   });
 
+  it("저장 버튼 — 저장된 값 그대로면 회색·누를 수 없고 보내지 않는다 → 고르면 보낸다 → 저장 뒤 다시 회색", async () => {
+    act(() => root.render(<HardItemsSection initial={{ categories: ["flower"], reason: "many", period: "week1", action: "notice", endsOn: null }} today={today} />));
+    const save = () => button("받기 어려운 선물 저장")!;
+    expect(save().getAttribute("aria-disabled")).toBe("true");
+    await click(save());
+    expect(fetchMock).not.toHaveBeenCalled();
+    await click([...host.querySelectorAll("label")].find((l) => l.textContent?.trim() === "의류")?.querySelector("input"));
+    expect(save().getAttribute("aria-disabled")).toBe("false");
+    await click(save());
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(save().getAttribute("aria-disabled")).toBe("true");
+  });
+
   it("INV-H4: 품목을 고르면 고른 값 넷만 보내고 「저장했어요」", async () => {
     act(() => root.render(<HardItemsSection initial={null} today={today} />));
     await click([...host.querySelectorAll("label")].find((l) => l.textContent?.trim() === "꽃")?.querySelector("input"));

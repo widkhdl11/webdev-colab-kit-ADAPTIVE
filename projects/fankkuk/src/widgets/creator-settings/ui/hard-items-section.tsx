@@ -21,6 +21,7 @@ import { ITEM_CATEGORIES, ITEM_CATEGORY_LABEL, sortCategories, type ItemCategory
 import type { CalendarDate } from "@/entities/creator/model/receiving";
 import { sendCreatorHardItems } from "@/features/creator-settings-save/api/send-creator-settings";
 import { SaveMessage, type SaveMsg } from "./receiving-section";
+import { useSaveBaseline } from "@/shared/lib/form-draft/use-save-baseline";
 import panel from "@/shared/ui/settings-panel.module.css";
 import s from "./creator-settings.module.css";
 
@@ -36,22 +37,22 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
   const [action, setAction] = useState<HardAction>(initial?.action ?? "notice");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<SaveMsg>(null);
-  // 바뀐 값이 있는가 — 「저장」 모양만 가른다(누르면 지금처럼 보낸다, days-section 과 같음). 저장하면 그 값이 새 기준
-  const snapshot = JSON.stringify([categories, reason, period, action]);
-  const [savedSnapshot, setSavedSnapshot] = useState(snapshot);
-  const dirty = snapshot !== savedSnapshot;
+  // 바뀐 값이 없으면 「저장」은 회색이고 누를 수 없다(useSaveBaseline). 「해제」는 따로 늘 누를 수 있다
+  const { dirty, markSaved } = useSaveBaseline(JSON.stringify([categories, reason, period, action]));
 
   const preview = hardItemsPreview({ categories, reason });
   const toggle = (c: ItemCategory, on: boolean) => setCategories((list) => sortCategories(on ? [...list, c] : list.filter((x) => x !== c)));
 
   const save = async (clear: boolean) => {
     if (saving) return;
-    setMsg(null);
-    // 저장된 설정이 없는데 아무것도 고르지 않고 저장하면 지울 것도 없다 — 「해제했어요」 대신 고르라고 안내한다
+    // 저장된 설정이 없는데 아무것도 고르지 않고 저장하면 지울 것도 없다 — 「해제했어요」 대신 고르라고 안내한다(INV-H4).
+    // 회색(바뀐 값 없음) 버튼을 눌러도 이 안내는 뜬다 — 왜 저장되지 않는지 알려 준다
     if (!clear && !initial && categories.length === 0) {
       setMsg({ ok: false, text: "받기 어려운 선물을 하나 이상 선택해 주세요." });
       return;
     }
+    if (!clear && !dirty) return;
+    setMsg(null);
     setSaving(true);
     const r = await sendCreatorHardItems({
       categories: clear ? [] : categories,
@@ -69,7 +70,7 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
       return;
     }
     if (clear) setCategories([]);
-    setSavedSnapshot(JSON.stringify([clear ? [] : categories, reason, period, action]));
+    markSaved(JSON.stringify([clear ? [] : categories, reason, period, action]));
     setMsg({
       ok: true,
       text: clear || categories.length === 0 ? "받기 어려운 선물 설정이 해제되었습니다." : "받기 어려운 선물이 설정되었습니다.",
@@ -178,7 +179,7 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
               해제
             </button>
           ) : null}
-          <button className={`btn ${dirty || saving ? "" : panel.idle}`} type="button" aria-disabled={saving} onClick={() => void save(false)}>
+          <button className={`btn ${dirty || saving ? "" : panel.idle}`} type="button" aria-disabled={saving || !dirty} onClick={() => void save(false)}>
             {saving ? "저장 중…" : "받기 어려운 선물 저장"}
           </button>
         </div>
