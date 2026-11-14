@@ -40,3 +40,23 @@ export function parseCreatorProfileTab(raw: unknown): CreatorProfileTab {
 export function creatorProfileTabHref(tab: CreatorProfileTab): string {
   return tab === "profile" ? CREATOR_PROFILE_EDIT : `${CREATOR_PROFILE_EDIT}?tab=${tab}`;
 }
+
+/**
+ * 다른 화면으로 옮겨진 칸의 옛 주소(화면 + #칸) → 지금 주소. 옮겨지지 않은 칸·없앤 칸(X 공유 설정 #thanks·#reply)은 null — 그 화면에 그대로 둔다.
+ * 북마크·예전 안내 링크가 빈 자리로 열리지 않게 한다. 옮긴 날: 팬덤·선물 링크·채널 소유자 확인 2026-11-13 재분류, 생일과 기념일 2026-11-14.
+ */
+const MOVED_SECTIONS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  [CREATOR_SETTINGS]: {
+    fandom: `${creatorProfileTabHref("channel")}#fandom`,
+    link: `${creatorProfileTabHref("channel")}#link`,
+    "gift-link": `${creatorProfileTabHref("channel")}#link`,
+    days: `${creatorProfileTabHref("profile")}#days`,
+  },
+  [CREATOR_ACCOUNT]: {
+    verify: `${creatorProfileTabHref("channel")}#verify`,
+  },
+};
+
+export function movedCreatorSectionHref(path: string, sectionId: string): string | null {
+  return Object.hasOwn(MOVED_SECTIONS, path) && Object.hasOwn(MOVED_SECTIONS[path], sectionId) ? MOVED_SECTIONS[path][sectionId] : null;
+}

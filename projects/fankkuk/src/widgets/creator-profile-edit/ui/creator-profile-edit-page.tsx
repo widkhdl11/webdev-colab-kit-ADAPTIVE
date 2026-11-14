@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { CreatorColors } from "@/entities/creator/model/creator-color";
 import { resolveTagSelection, type TagOption } from "@/entities/creator/model/creator-tags";
 import { creatorBackgroundUrl, creatorPhotoUrl } from "@/entities/creator/model/link-images";
@@ -80,6 +80,14 @@ function ProfileTabs({ current }: { current: CreatorProfileTab }) {
 
 export function CreatorProfileEditPage({ tab = "profile", profileSections, channelSections, channelPreview, ...p }: CreatorProfileEditProps) {
   const router = useRouter();
+  // 주소 끝 #칸(#fandom · #link · #days · #verify — 꾸미기의 안내 링크, 옮겨진 옛 주소)이면 그려진 뒤 그 칸으로 내려간다.
+  // 브라우저가 먼저 내려가도 이어서 그려지는 구역 때문에 맨 위로 돌아오는 일이 있었다(2026-11-14 화면 확인)
+  useEffect(() => {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (!id) return;
+    const frame = requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: "start" }));
+    return () => cancelAnimationFrame(frame);
+  }, []);
   const [name, setName] = useState(p.name);
   const [intro, setIntro] = useState(p.intro);
   const [photoPath, setPhotoPath] = useState(p.photoPath);

@@ -144,7 +144,7 @@ export const ACCOUNT_HREF = { fan: FAN_ACCOUNT_SETTINGS, creator: CREATOR_ACCOUN
 /** 팬 프로필 수정 화면(my-account INV-A12, design-rules 12절) — 사이드바 위 메뉴 칸이 아니라 이름 메뉴와 홈 프로필 구간에서 간다(시안 v21-addendum3). */
 export const FAN_PROFILE_EDIT_HREF = FAN_PROFILE_EDIT;
 
-/** 아래 이름 메뉴의 링크(로그아웃 위). 팬은 시안대로 「프로필 수정」·「계정 설정」, 크리에이터는 「알림 설정」 하나(2026-11-13 재분류 — 옛 계정 설정 화면, 주소 그대로. 보안·채널 확인·탈퇴는 프로필 수정 탭으로). */
+/** 아래 이름 메뉴의 링크(로그아웃 위). 팬은 시안대로 「프로필 수정」·「계정 설정」, 크리에이터는 「알림 설정」 하나(2026-11-13 재분류 — 옛 계정 설정 화면, 주소 그대로. 보안·회원 탈퇴는 「계정 설정」, 채널 소유자 확인은 프로필 수정 채널 탭으로). */
 export const ACCOUNT_MENU: Record<"fan" | "creator", readonly { label: string; href: string }[]> = {
   fan: [
     { label: "프로필 수정", href: FAN_PROFILE_EDIT_HREF },

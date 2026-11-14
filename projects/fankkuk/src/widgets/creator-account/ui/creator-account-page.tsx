@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import type {
   MyVerification,
   MyVerificationState,
@@ -12,6 +12,7 @@ import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadlin
 import {
   CREATOR_ACCOUNT,
   CREATOR_SETTINGS,
+  movedCreatorSectionHref,
 } from "@/entities/session/model/home-path";
 import { sendCreatorNotify } from "@/features/creator-settings-save/api/send-creator-settings";
 import { VerificationPanel } from "@/features/creator-verify/ui/verification-panel";
@@ -205,6 +206,11 @@ export function CreatorAccountPage({
   const f = (name: string) => `${id}-${name}`;
   const router = useRouter();
   const toLogin = () => router.push(`/login?next=${CREATOR_ACCOUNT}`);
+  // 옛 링크 /creator/account#verify — 채널 소유자 확인은 2026-11-13 프로필 수정 채널 탭으로 옮겼다
+  useEffect(() => {
+    const moved = movedCreatorSectionHref(CREATOR_ACCOUNT, decodeURIComponent(window.location.hash.slice(1)));
+    if (moved) window.location.replace(moved);
+  }, []);
   const [alarm, setAlarm] = useState(notify);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);

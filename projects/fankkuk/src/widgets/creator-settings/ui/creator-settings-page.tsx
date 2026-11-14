@@ -7,7 +7,7 @@ import type { BlockedFan } from "@/entities/creator/api/blocked-senders";
 import { formatDate } from "@/shared/lib/format/datetime";
 import { statusTagClass } from "@/shared/ui/status-tone";
 import type { MySignatureLink } from "@/entities/creator/api/signature-link-reads";
-import { CREATOR_SIGNATURE_LINK } from "@/entities/session/model/home-path";
+import { CREATOR_SETTINGS, CREATOR_SIGNATURE_LINK, movedCreatorSectionHref } from "@/entities/session/model/home-path";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import type { MyAddressStatus } from "@/entities/address/api/my-address-status";
@@ -74,12 +74,18 @@ function Fold({ id, icon, title, meta, children }: { id?: string; icon: Settings
   );
 }
 
-/** 주소 끝 #이름이 접힌 칸 안(또는 접힌 칸 자체)을 가리키면 그 칸을 펼치고 그 자리로 간다 — 옛 링크(#address · #blocked …)를 위해. */
+/** 주소 끝 #이름이 접힌 칸 안(또는 접힌 칸 자체)을 가리키면 그 칸을 펼치고 그 자리로 간다 — 옛 링크(#address · #blocked …)를 위해.
+ *  다른 화면으로 옮겨진 칸(#fandom · #link · #days)이면 지금 자리로 보낸다(movedCreatorSectionHref). */
 function useOpenFoldForHash(): void {
   useEffect(() => {
     const open = () => {
       const id = decodeURIComponent(window.location.hash.slice(1));
       if (!id) return;
+      const moved = movedCreatorSectionHref(CREATOR_SETTINGS, id);
+      if (moved) {
+        window.location.replace(moved);
+        return;
+      }
       const target = document.getElementById(id);
       const fold = target?.closest("details");
       if (!target || !fold) return;
