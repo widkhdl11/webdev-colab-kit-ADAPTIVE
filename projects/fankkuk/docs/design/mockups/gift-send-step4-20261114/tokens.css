@@ -1,0 +1,304 @@
+/* 디자인 토큰 — 글자·간격·폭·카드·반경 값의 정본은 docs/design/tokens.md(2026-10-17 승인, 카드 d96 · 시안 docs/design/mockups/site/v23-tokens/).
+   그 밖의 값은 design-rules.md 00절(2026-10-14 v18 승인, 카드 d77)과 시안 docs/design/mockups/site/v18/tokens.css.
+   색만 v20 하늘색으로 바꿨다(2026-10-15 승인, 카드 d86 · 시안 docs/design/mockups/site/v20-rebrand/*-c.html). 배치·간격·글꼴 값은 v18 그대로다.
+   화면이 쓰는 옛 이름(--brand·--ink·--sub·--faint·--surface…)은 맨 위 묶음의 값을 가리킨다.
+   하늘색은 면(버튼 바탕·선택 면)에만 쓴다. 흰 바탕 대비 1.7:1 이라 글자·초점·선택 테두리에는 짙은 회색을 쓴다. */
+:root {
+  /* v20 — 하늘색 한 색 + 회색 단계. 진한 파랑·남색은 브랜드 색으로 쓰지 않는다(로고 안 --logo-ink 만 예외) */
+  --primary: #89cff0; /* 주 버튼·켜진 칩·스위치 면. 위 글자는 --on-brand(짙은 회색 8.8:1) */
+  --primary-50: #e0f2fe; /* 선택 면·뱃지·아이콘 원 (C안 primary-soft) */
+  --primary-700: #6bbfe6; /* 하늘색 면의 마우스 올림·누름. 글자에 쓰지 않는다 */
+  --tint: #f0f8ff; /* 사이드바·약속 구간처럼 넓은 옅은 하늘 면 */
+  --swatch-rainbow: conic-gradient(#f87171, #fbbf24, #a3e635, #34d399, #38bdf8, #818cf8, #e879f9, #f87171); /* 테마 색 「직접 고르기」 견본 원 — 색을 고르기 전 모양(2026-11-13, design-rules 17절) */
+  --tint-line: #bfe3f7; /* 강조 하늘 면(--tint)의 테두리 — 한 화면에 강조 하나(design-rules 21절, 시안 v33b.css·v34.css) */
+  --accent-peach: #ffd6a5; /* 긍정 알림에만, 화면 넓이 5% 이하 */
+  /* 그라데이션 — 이 세 곳에만. 버튼에는 쓰지 않는다 */
+  --grad-hero: linear-gradient(135deg, #d6eefc 0%, #eef0ff 100%); /* 랜딩 첫 화면 판 */
+  --grad-glow: radial-gradient(ellipse at top left, #f0f8ff 0%, transparent 60%); /* 사이드바 위쪽 빛 */
+  --grad-title: linear-gradient(90deg, #7dd3fc, #a5e1fa); /* 구간 제목 강조 낱말 아래 띠. 글자색으로 쓰지 않는다 */
+  --glass: rgb(255 255 255 / 0.7); /* 그라데이션 판 위 카드 */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db; /* 장식 전용 — 흰 카드 위에서 보이는 회색 칸(보낸 내역 「받지 않음」, design-rules 25절) */
+  --gray-400: #9ca3af; /* 글자에 쓰지 않는다(대비 미달). 장식 전용 */
+  --gray-500: #6b7280; /* 흐린 글자 — 흰 바탕 4.83:1. 이보다 옅게 쓰지 않는다 */
+  --gray-600: #4b5563;
+  --gray-900: #1f2937; /* 본문 글자(ink). 흰 바탕 14.7:1 */
+  --badge-ink: #111827; /* 테마 색 팬덤 뱃지 글자(creator-link INV-E14 — 8색 모두 12:1 이상, design-rules 17절) */
+  --shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  --shadow-float: 0 1px 3px rgb(0 0 0 / 0.15); /* 사진 위에 뜬 작은 버튼(크리에이터 카드 배너 모서리 「팔로우」, 시안 v25-card-align C안) */
+  /* 글꼴: 본문·버튼·메뉴 Pretendard, 제목(h1·h2·h3·페이지 머리 제목)만 티머니 둥근바람(400·800 두 굵기뿐) */
+  --font: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Segoe UI", "Malgun Gothic", sans-serif;
+  --font-round: "Tmoney Round Wind", var(--font);
+  --fw-bold: 700; /* 본문 쪽 굵은 글자(라벨·강조·태그) */
+  --fw-h3: 600; /* 작은 제목(판 머리 — 시안 v20 tokens --fw-h3) */
+  --fw-btn: 600; /* 버튼·메뉴 */
+  --fw-title: 800; /* 티머니 둥근바람 제목 — 이 글꼴에는 400·800 만 있다 */
+
+  /* 로고 원색 — 로고 그림 안에서만(2026-10-15 사용자 제공 로고). 남색은 로고 밖에 쓰지 않는다 */
+  --logo-sky: #62b9fc;
+  --logo-cream: #fefdf9;
+  --logo-ink: #192b4f;
+  --r-logo: 22%; /* 로고 그림(연한 하늘색 정사각형) 모서리 — 크기에 비례 */
+
+  /* 색 */
+  --brand: var(--primary); /* 주 버튼 면. 글자로 쓰지 않는다 — 강조 글자는 --brand-ink */
+  --brand-hover: var(--primary-700);
+  --brand-active: var(--primary-700);
+  --brand-soft: var(--primary-50); /* 하늘 태그 면 (= 선택 면) */
+  --brand-ink: var(--gray-900); /* 강조 글자·링크 글자·선 아이콘 — 하늘색 글자는 쓰지 않는다 */
+  --brand-line: var(--gray-900); /* 선택된 칸 테두리·왼쪽 띠 (WCAG 1.4.11 3:1) */
+  --focus: var(--gray-900); /* 키보드 초점 테두리 — 버튼·고르기 칸 */
+  --field-focus: #2e9bd6; /* 글자 입력칸·검색창 초점 테두리 — 대표 하늘색 계열에서 흰 바탕 3:1 을 넘는 가장 옅은 값(3.10:1, 2026-11-05 사용자 「대표색과 유사한 색」) */
+  --field-ring: 1.5px; /* 입력칸 초점·오류 테두리 두께(2026-11-05 사용자 「너무 두껍다」, 이전 2px) */
+  --avatar-soft: var(--primary-50); /* 이름 첫 글자 동그라미 면 */
+  --ink: var(--gray-900); /* 본문 */
+  --sub: var(--gray-600); /* 보조 글 */
+  --faint: var(--gray-500); /* 흐린 글 — 이보다 옅게 쓰지 않는다 */
+  --background: #ffffff; /* 페이지 바탕 — 흰색 (2026-10-07 사용자 「배경을 하얗게」, 아이보리 #FFFAF7 에서) */
+  --surface: var(--gray-50); /* 옅은 중립 면 — 아이콘 칸·비선택 탭·빈 목록·푸터 같은 일반 칸 (시안 v8) */
+  --surface-hover: var(--gray-100); /* 일반 칸 마우스 올림 */
+  --surface-muted: #f7f7f8; /* 덜 중요한 카드 바탕(선물 상세 주문 정보·함께한 시간 안내 줄) — 시안 v35 푸터 회색, 위 --sub 글자 7.1:1 (design-rules 22절) */
+  --surface-brand: var(--tint); /* 옅은 하늘 면 — 주소 보호·개인정보 안내, 금액·업무 요약에만 */
+  --surface-selected: var(--primary-50); /* 선택된 탭·메뉴·항목 */
+  --white: #ffffff; /* 카드·입력창·헤더 */
+  --print-ink: #000000; /* 종이에 찍는 글자 — 송장 라벨처럼 스캐너·사람이 읽는 인쇄물은 순검정 */
+  --on-brand: var(--gray-900); /* 하늘색 면 위 글자 — 흰 글자는 1.8:1 이라 쓰지 않는다 */
+  --disabled: var(--gray-100);
+  --disabled-ink: var(--gray-600); /* 비활성 면 위 */
+  --warn-soft: #fff5db;
+  --warn-ink: #805b16; /* 5.6:1 */
+  /* 크리에이터 처리할 일 — 블루투스 발견 줄·늦음 강조(design-rules 13절, 시안 cre-action-center-d.html) */
+  --alert-50: #fffbeb;
+  --alert-100: #fef3c7;
+  --alert-200: #fde68a;
+  --alert-600: #d97706;
+  --alert-800: #92400e; /* #fffbeb 위 6.8:1 */
+  --alert-900: #78350f;
+  --success: #15803d; /* 2026-11-05 사용자 「조금 더 가벼운 초록색」(이전 #276749) — 흰 5.02 · 면 4.79 */
+  --success-soft: #f0fdf4; /* 글자 4.5:1 을 지키려고 면도 옅게(이전 #eaf5ee) */
+  --danger: #d12c2c; /* 2026-11-05 사용자 「빨간 문구 색도 변경」(이전 #b42318) — 흰 5.11 · 면 4.67 */
+  --danger-soft: #fef2f2; /* 글자 4.5:1 을 지키려고 면도 옅게(이전 #feece9) */
+  --danger-line: #f04452; /* 오류 입력칸 테두리 — 흰 바탕 3.71:1. 글자는 --danger 그대로(4.5:1 필요) (2026-11-05 사용자 「빨간색 색감이 안좋다」) */
+  --info: #315e86;
+  --info-soft: #edf4fa;
+  --kakao: #fee500;
+  --kakao-ink: #191919;
+  --kakao-hover: #f3d900;
+  --kakao-active: #e6cd00; /* 카카오 버튼 누름 (v11) */
+  /* 이름 첫 글자·얼굴 동그라미 바탕 — 사람마다 돌려 쓴다(시안 v4). 글자는 --ink */
+  --face-1: #fbe3a8;
+  --face-2: #dcd3f6;
+  --face-3: #cfe3fa;
+  --face-4: #fad2ba;
+  --face-5: #c9ecdd;
+  --face-6: #f7c8d4;
+  --face-default: var(--primary-50); /* 얼굴 동그라미에 사람 색(--f)을 안 줬을 때 (v11 .face) */
+  --ctag-face: var(--gray-100); /* 플랫폼 뱃지 — 플랫폼 색(--f)이 없을 때의 옅은 면·로고 바탕 (v11 13절) */
+  --divider: rgb(17 24 39 / 0.08); /* 줄 사이 */
+  --divider-mid: rgb(17 24 39 / 0.16); /* 표 머리 */
+  --divider-strong: rgb(17 24 39 / 0.2);
+  --line-button: var(--gray-200); /* 흰 보조 버튼 테두리 */
+  --field-line: var(--gray-500); /* 입력창 경계 — 흰 바탕 4.8:1. 시안은 gray-200(1.2:1)이지만 입력창 경계 3:1(WCAG 1.4.11) 기준을 지킨다 */
+  --track: var(--gray-200); /* 진행 막대 빈 칸 */
+  --grip: var(--gray-200);
+
+  /* 그림자 */
+  --border: var(--gray-200); /* 카드·구분 경계 */
+  --hair: inset 0 0 0 1px var(--border); /* 테두리 대신. 아이보리 바탕 위 흰 카드 가장자리가 보이게 불투명 */
+  --field: inset 0 0 0 1px var(--field-line);
+  --lift: none; /* v18 버튼은 떠 있는 그림자가 없다 */
+  --float: 0 10px 28px rgb(17 24 39 / 0.12); /* 말풍선·메뉴·바텀시트 */
+  --scrim: rgb(17 24 39 / 0.48);
+
+  /* 반경 — 바깥은 둥글게, 안쪽은 덜 둥글게(tokens.md 5절) */
+  --r-panel: 24px; /* 큰 판(첫 화면 판·약속 구간·프로필 머리) */
+  --r-panel-sm: 24px; /* 좁은 화면의 큰 판 */
+  --r-tile: var(--r-panel); /* 옛 이름 — 28 을 뺐다(반경 단계 밖) */
+  --r-card: 16px; /* 모든 카드·카드 모양 상자 */
+  --r-box: 16px; /* 안내 상자·드롭다운 */
+  --r-btn: 12px; /* 버튼·입력창·카드 안 줄 */
+  --r-btn-sm: var(--r-btn); /* 옛 이름 — 10 을 뺐다 */
+  --r-tag: var(--r-pill); /* 상태 태그·칩·작은 표시 — 알약 모양. 반경 셈(한 화면 큰 판 24·카드 16·버튼 12 세 단계)에서 알약·원은 뺀다(DECISIONS 2026-10-18 재진단) */
+  --r-icon: 8px; /* 작은 아이콘 그림(채널 아이콘 20·팬마크) 모서리 — 그림 모양이라 반경 셈에서 뺀다 */
+  --r-bar: 3px; /* 진행 막대 칸(높이 6)의 둥근 끝 — design-rules 13절 선물 현황 */
+  --r-mark: 3px; /* 작은 팬덤 뱃지(높이 22) 안 팬마크 14 의 모서리 — 시안 v25-card-align */
+  --r-pill: 9999px;
+  /* 체크박스 B 젤리 네모(design-rules 29절 체크박스 줄, 카드 d130, 시안 part6-2026-10-25/checkbox-options.html B) — 작은 표시 모양이라 반경 셈에서 뺀다 */
+  --check-size: 26px;
+  --r-check: 10px;
+  --check-line: var(--gray-500); /* 꺼진 칸 테두리 — 흰 바탕 4.8:1 */
+  --check-shadow: inset 0 -2px 0 color-mix(in srgb, var(--gray-900) 6%, transparent);
+  --check-shadow-on: inset 0 -3px 0 color-mix(in srgb, var(--gray-900) 18%, transparent);
+  --ease-pop: cubic-bezier(0.3, 1.6, 0.5, 1); /* 체크가 튀어 나타나는 곡선 */
+  --dur-check: 180ms;
+
+  /* 간격 — 4px 기준 10단계(tokens.md 1절). 20 은 뺐다: 16·20·24 가 함께 있으면 구분이 안 된다.
+     한 묶음 안의 간격은 그 묶음과 바깥 사이 간격의 절반 이하 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: var(--space-6); /* 옛 이름 — 20 을 뺐다. 새로 쓰지 않는다(크리에이터 찾기 전용 CSS 가 아직 쓴다) */
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+
+  /* 폭(tokens.md 3절) */
+  --maxw: 880px; /* 로그인 전 글 폭 — .pub-inner(--pub-max 928 − 양옆 24×2)와 같은 선. 2026-10-18 1152 → 880(design-rules 16절, 사용자 「3안」) */
+  --prose-max: 680px; /* 약관·안내·자주 묻는 질문 본문, 페이지 머리 설명 한 줄(16px 기준 약 42자) */
+  --col-profile: 1080px; /* 크리에이터 상세 한 기둥 — 최대 폭(design-rules 31절, 2026-10-25 재디자인 880 → 1080) */
+  --col-list: 880px; /* 로그인 후 목록형·홈 */
+  --col-form: 720px; /* 로그인 후 입력·설정형, 가입 */
+  --col-wide: 1200px; /* 표·편집+미리보기 */
+  --col-flow: 1040px; /* 로그인 후 단계 흐름·상세의 가운데 넓은 기둥(옆 칸이 붙을 때도 이 폭) — 선물 등록(넓은 단계)·선물함 목록·새로 만들기·선물 상세·답례 보내기 */
+  --col-auth: 480px; /* 로그인·비밀번호 찾기 카드 */
+  --gutter: 24px;
+  --header-h: 64px; /* v18 상단 바 64 */
+
+  /* 글자 — 6단계 48·32·24·20·16·14(tokens.md 2절, 휴대폰 32·24·24·20·16·14). 이 밖의 크기는 쓰지 않는다.
+     바로 위아래 단계는 한 단계 이상 띄우고, 같은 크기로 위계를 줄 때는 굵기와 색으로만 준다 */
+  --fs-hero: 48px; /* 랜딩 첫 화면 제목 하나 · 줄 높이 1.2 */
+  --fs-title: 32px; /* 랜딩·소개 구간 제목, 크리에이터 이름 · 1.25 */
+  --fs-page: 24px; /* 페이지 머리 제목, 프로필 아래 구간 제목 · 1.3 */
+  --fs-card: 20px; /* 카드 제목, 로그인 후 구간 제목, 강조 값(숫자·상태) · 1.4 */
+  --fs-body: 16px; /* 본문·버튼·상단 메뉴·리드 문장 · 1.6 */
+  --fs-small: 14px; /* 보조 글 — 캡션·날짜·개수·라벨·뱃지·사이드바 메뉴·푸터 · 1.5 */
+  --fs-badge: 12px; /* 6단계 밖 예외 — 팬덤 뱃지·카드 안 플랫폼 칩 전용(DECISIONS 2026-10-17 카드 d103) */
+  --fs-lead: var(--fs-body); /* 옛 이름 — 리드 18 → 16(통계 값처럼 강조 값은 --fs-card) */
+  /* v18 앱 사이드바(로그인 후)·상단 바(로그인 전) — 시안 v18/tokens.css 6~8단계 값 */
+  --sidebar-w: 240px;
+  --rail-w: 64px;
+  --topbar-h: 56px; /* 768 이하 로그인 후 위 막대 */
+  --nav-item-h: 36px;
+  --nav-icon: 18px;
+  --nav-gap-in: 12px;
+  --group-h: 32px;
+  --prof-h: 56px;
+  --mark: 28px;
+  --avatar-sb: 28px;
+  --r-nav: 8px;
+  --menu-w: 192px;
+  --fs-nav: var(--fs-body); /* 상단 바 메뉴 15 → 16 */
+  --fs-navitem: var(--fs-small); /* 사이드바 메뉴 */
+  --fs-caption: var(--fs-small); /* 캡션·태그·날짜·개수 13 → 14 */
+  --fs-group: var(--fs-small); /* 사이드바 묶음 이름·숫자 뱃지 11 → 14 */
+  --fw-nav: 500;
+  --nav-px: calc((var(--rail-w) - 2 * 8px - var(--nav-icon)) / 2); /* 접힘 64 에서 아이콘이 가운데 오는 안쪽 여백 */
+  --prof-px: calc((var(--rail-w) - 2 * 8px - var(--avatar-sb)) / 2);
+  --dur-w: 200ms;
+  --dur-fade: 150ms;
+  --dur-fade-out: 100ms;
+  --delay-fade: 100ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* 마우스 올림·누름 반응 */
+  --dur-hover: 150ms;
+  --dur-press: 100ms;
+  --lift-hover: 0 8px 24px rgb(0 0 0 / 0.08); /* 누를 수 있는 카드에 마우스를 올렸을 때만 */
+  --pub-max: calc(var(--col-list) + 2 * var(--gutter)); /* 로그인 전 상단 바·본문·푸터 글의 바깥 폭(양옆 여백 → 글 880 = 로그인 후 목록형 폭) */
+  --nav-gap: 32px;
+  /* 로고 글자 「팬꾹」 전용 — 티머니 둥근바람은 라이선스상 로고(BI/CI)에 쓸 수 없다 */
+  --font-logo: "Pretendard Variable", Pretendard, sans-serif;
+  --ls-title: -0.02em; /* 음수 자간은 제목(첫 화면·구간·페이지 제목)에만, 이 값 하나 */
+  /* v18 구간 사이 96(휴대폰 64) — 시안 tokens.css --section-gap. 옛 이름 --sec-pad 도 이 값을 가리킨다(v11 의 88~144 를 대신한다) */
+  --section-gap: 96px;
+  --sec-pad: var(--section-gap);
+  /* v18 전역 클래스(base.css 16절)가 쓰는 시안 값 */
+  /* 카드(tokens.md 4절) */
+  --card-pad: 24px; /* 목록·통계·설정 카드 안쪽(휴대폰도 24) */
+  --panel-pad: 32px; /* 큰 판 안쪽(휴대폰 24) */
+  --card-gap: 24px; /* 카드 격자 간격(휴대폰 16) */
+
+  /* 정돈 시범(tokens.md 0-4-1, 2026-10-22 승인) — 구간 띠·띠 위 낮은 대비 테두리·12열 격자. 띠 위 흐린 글자는 --sub 만(--gray-500 은 띠 끝에서 4.2:1 로 미달) */
+  --band-white: linear-gradient(180deg, #ffffff 0%, #eff1f3 100%); /* 흰 구간 바탕 — 위→아래 밝기 4.0% */
+  --band-cream: linear-gradient(180deg, #fffaf7 0%, #f6ede4 100%); /* 크림 구간 바탕 — 페이지 바탕이 아니라 구간을 바꿀 때만 */
+  --line-on-white: #dcdee0; /* 흰 구간 위 테두리 — 흰색과 10% */
+  --line-on-cream: #e4d8cb; /* 크림 구간 위 테두리 */
+  --grid-cols: 12; /* 카드 폭은 3·4·6·8·12 열만 */
+  --grid-gap: 24px;
+  --group-gap: 16px; /* 묶음 안 간격 상한 — 묶음 사이의 절반 이하 */
+  --btn-h: 48px;
+  --btn-h-sm: 44px; /* 2026-10-18 재진단 36 → 44(누름 칸 44) */
+  --touch: 48px;
+  --hero-pad-top: 64px; /* 첫 화면 판 안쪽 위 여백 96 → 64 (v23 감사표 1절) */
+  --hero-max: 680px; /* 첫 화면 글·검색창 폭 */
+  --search-h: 56px;
+  --search-btn: 44px;
+  --art: 64px; /* 바로가기 그림 */
+  --art-step: 56px; /* 단계 카드 그림 */
+  --art-empty: 160px; /* 빈 상태 그림 (휴대폰 128) */
+  --icon-xs: 20px;
+  --fw-sub: 500; /* 시안 --fw-subtitle. 리드·설명 글은 2026-10-25 부터 400(design-rules 28·30절) — 남은 쓰임은 BACKLOG 「입력 칸 라벨이 굵기 700」 */
+  --lh-caption: 1.5;
+
+  /* 23절 카드 면 효과·마이크로 디테일(2026-10-21 승인, design-rules 23-1·23-2 · 시안 docs/design/mockups/site/v37-part2/v37.css 맨 아래 세 블록 값 그대로).
+     높낮이: 강조 면(하늘) > 흰 카드 > 회색 보조 카드. 입력창·표·사이드바·창·운영자 화면에는 쓰지 않는다 */
+  --ease-micro: cubic-bezier(0.2, 0.8, 0.2, 1); /* 마이크로 디테일 곡선 — 0.15~0.6초, 움직임 2px 이하 */
+  /* 강조 면(하늘 판): 오른쪽 위 흰 빛 + 왼쪽 아래 하늘빛 번짐 + #f0f8ff→#e0f2fe 비스듬한 그러데이션. 테두리 --tint-line 그대로 */
+  --surface-accent-fx:
+    radial-gradient(120% 140% at 100% 0%, rgb(255 255 255 / 0.9) 0%, rgb(255 255 255 / 0) 45%),
+    radial-gradient(80% 120% at 0% 100%, rgb(137 207 240 / 0.28) 0%, rgb(137 207 240 / 0) 60%),
+    linear-gradient(135deg, #f0f8ff 0%, #e0f2fe 100%);
+  --surface-accent-sheen: inset 0 1px 0 rgb(255 255 255 / 0.8); /* 위 가장자리 흰 1px 반사선 */
+  --surface-accent-lift: 0 8px 24px rgb(137 207 240 / 0.18); /* 하늘빛 바깥 그림자 */
+  --surface-accent-shadow: var(--surface-accent-sheen), var(--surface-accent-lift);
+  /* 흰 카드: 오른쪽 위 아주 옅은 하늘빛(7%) + #fff→#fbfcfe 위→아래, 위 반사선, 옅은 두 겹 그림자. 마우스를 올리면 조금 더 뜬다 */
+  --card-fx:
+    radial-gradient(90% 120% at 100% 0%, rgb(137 207 240 / 0.07) 0%, rgb(137 207 240 / 0) 55%),
+    linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  --card-shadow: inset 0 1px 0 #ffffff, 0 1px 2px rgb(31 41 55 / 0.04), 0 4px 12px rgb(31 41 55 / 0.04);
+  --card-shadow-hover: inset 0 1px 0 #ffffff, 0 2px 4px rgb(31 41 55 / 0.05), 0 8px 24px rgb(31 41 55 / 0.08);
+  /* 회색 보조 카드: 그림자 없이 #f9f9fa→#f4f5f7 위→아래 + 위 반사선만 */
+  --muted-fx: linear-gradient(180deg, #f9f9fa 0%, #f4f5f7 100%);
+  --muted-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9);
+  /* 버튼: 주 버튼은 위→아래로 아주 옅게 짙어지는 면 + 위 반사선, 마우스를 올리면 하늘빛 그림자. 보조(흰) 버튼은 옅은 그림자 */
+  --btn-fill-fx: linear-gradient(180deg, #95d4f2 0%, #89cff0 100%);
+  --btn-fill-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45), 0 1px 2px rgb(31 41 55 / 0.06);
+  --btn-fill-shadow-hover: inset 0 1px 0 rgb(255 255 255 / 0.45), 0 4px 12px rgb(137 207 240 / 0.45);
+  --btn-ghost-shadow: 0 1px 2px rgb(31 41 55 / 0.04);
+  --btn-ghost-line-hover: var(--gray-500); /* 보조 버튼 마우스 올림 테두리 */
+  --btn-ghost-hover: #fafbfc;
+  --bar-fill-fx: linear-gradient(180deg, #9ad6f3 0%, #7cc6ea 100%); /* 진행 막대 채운 칸 */
+  --tag-sheen: inset 0 1px 0 rgb(255 255 255 / 0.6); /* 태그 위 반사선 */
+  --face-ring: inset 0 0 0 1px rgb(31 41 55 / 0.06); /* 얼굴 안쪽 옅은 윤곽 */
+  --selection: var(--tint-line); /* 글자 선택 색 #bfe3f7 */
+  /* 채널 확인(design-rules 42절, 시안 channel-link-verify-20261102) */
+  --tag-state-ink: #075985; /* 「확인 전」 뱃지 글자 — --primary-50 면 위 7.2:1 */
+  --notice-sky: #eef7fd; /* 확인 중 공개 페이지 안내 상자 면(시안 part5 --sky-50) */
+  --notice-sky-line: #cfe2ee; /* 같은 상자 1px 선(시안 part5 --panel-line) */
+}
+@media (max-width: 1023px) {
+  :root { --nav-gap: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-w: 0s; --dur-fade: 0s; --dur-fade-out: 0s; --delay-fade: 0s; --dur-hover: 0s; --dur-press: 0s; --dur-check: 0s; }
+}
+@media (max-width: 767px) {
+  :root {
+    --gutter: 16px;
+    --fs-hero: 32px;
+    --fs-title: 24px;
+    --section-gap: 48px; /* 2026-10-18 재진단 64 → 48 */
+    --card-pad: 24px;
+    --panel-pad: 24px;
+    --card-gap: 16px;
+    --hero-pad-top: 64px;
+    --art-empty: 128px;
+  }
+}
+/* 운영자 화면은 이번 토큰 정리 대상이 아니다(design-rules 8절) — 옛 값을 그대로 물려준다 */
+.admin-area {
+  --space-5: 20px;
+  --r-tag: 6px;
+  --r-panel: 16px;
+  --r-panel-sm: 16px;
+  --fs-lead: 18px;
+  --fs-nav: 15px;
+  --fs-caption: 13px;
+  --fs-group: 11px;
+  --card-pad: 32px;
+  --maxw: 1200px;
+}

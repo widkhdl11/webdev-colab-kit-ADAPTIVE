@@ -1,0 +1,967 @@
+{
+  "results": [
+    {
+      "file": "checkout-standard.html",
+      "width": 1440,
+      "height": 938,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 0
+    },
+    {
+      "file": "checkout-standard.html",
+      "width": 390,
+      "height": 900,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 0
+    },
+    {
+      "file": "checkout-surcharge.html",
+      "width": 1440,
+      "height": 938,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 0
+    },
+    {
+      "file": "checkout-surcharge.html",
+      "width": 390,
+      "height": 900,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 0
+    },
+    {
+      "file": "current-address-error.html",
+      "width": 1440,
+      "height": 2119,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "current-address-error.html",
+      "width": 390,
+      "height": 2720,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "current-busy.html",
+      "width": 1440,
+      "height": 1598,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "current-busy.html",
+      "width": 390,
+      "height": 2080,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "current-consent-error.html",
+      "width": 1440,
+      "height": 1660,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "current-consent-error.html",
+      "width": 390,
+      "height": 2160,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "current-creator.html",
+      "width": 1440,
+      "height": 1475,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "current-creator.html",
+      "width": 390,
+      "height": 1956,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "current-empty.html",
+      "width": 1440,
+      "height": 2027,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "current-empty.html",
+      "width": 390,
+      "height": 2606,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "current-key-error.html",
+      "width": 1440,
+      "height": 1586,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "current-key-error.html",
+      "width": 390,
+      "height": 2086,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "current-modal.html",
+      "width": 1440,
+      "height": 2027,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "current-modal.html",
+      "width": 390,
+      "height": 2606,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "current-optional.html",
+      "width": 1440,
+      "height": 2099,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "current-optional.html",
+      "width": 390,
+      "height": 2750,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "current-saved.html",
+      "width": 1440,
+      "height": 1598,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "current-saved.html",
+      "width": 390,
+      "height": 2080,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "current-search-error.html",
+      "width": 1440,
+      "height": 2081,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "current-search-error.html",
+      "width": 390,
+      "height": 2682,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "current-submit-error.html",
+      "width": 1440,
+      "height": 1660,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "current-submit-error.html",
+      "width": 390,
+      "height": 2160,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "current.html",
+      "width": 1440,
+      "height": 2027,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "current.html",
+      "width": 390,
+      "height": 2606,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended-address-error.html",
+      "width": 1440,
+      "height": 2399,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "recommended-address-error.html",
+      "width": 390,
+      "height": 2727,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended-busy.html",
+      "width": 1440,
+      "height": 1810,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "recommended-busy.html",
+      "width": 390,
+      "height": 2138,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended-consent-error.html",
+      "width": 1440,
+      "height": 1872,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "recommended-consent-error.html",
+      "width": 390,
+      "height": 2219,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended-creator.html",
+      "width": 1440,
+      "height": 1674,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "recommended-creator.html",
+      "width": 390,
+      "height": 2002,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended-empty.html",
+      "width": 1440,
+      "height": 2284,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "recommended-empty.html",
+      "width": 390,
+      "height": 2612,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended-key-error.html",
+      "width": 1440,
+      "height": 1798,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "recommended-key-error.html",
+      "width": 390,
+      "height": 2145,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended-modal.html",
+      "width": 1440,
+      "height": 2284,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "recommended-modal.html",
+      "width": 390,
+      "height": 2612,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended-optional.html",
+      "width": 1440,
+      "height": 2356,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "recommended-optional.html",
+      "width": 390,
+      "height": 2695,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended-saved.html",
+      "width": 1440,
+      "height": 1810,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "recommended-saved.html",
+      "width": 390,
+      "height": 2138,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended-search-error.html",
+      "width": 1440,
+      "height": 2330,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "recommended-search-error.html",
+      "width": 390,
+      "height": 2681,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended-submit-error.html",
+      "width": 1440,
+      "height": 1872,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "recommended-submit-error.html",
+      "width": 390,
+      "height": 2219,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended.html",
+      "width": 1440,
+      "height": 2284,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    },
+    {
+      "file": "recommended.html",
+      "width": 390,
+      "height": 2612,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended.html",
+      "width": 320,
+      "height": 3002,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended.html",
+      "width": 767,
+      "height": 2387,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended.html",
+      "width": 768,
+      "height": 2475,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended.html",
+      "width": 769,
+      "height": 2611,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended.html",
+      "width": 1183,
+      "height": 2451,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "file": "recommended.html",
+      "width": 1184,
+      "height": 2374,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    }
+  ],
+  "detectorProof": {
+    "overflowCaught": true,
+    "smallTargetCaught": true
+  },
+  "renderedFonts": {
+    "h1": [
+      {
+        "familyName": "OTS derived font",
+        "postScriptName": "TmoneyRoundWind-ExtraBoldA1",
+        "isCustomFont": true,
+        "glyphCount": 6
+      }
+    ],
+    ".lead": [
+      {
+        "familyName": "Pretendard Medium",
+        "postScriptName": "Pretendard-Medium",
+        "isCustomFont": true,
+        "glyphCount": 44
+      }
+    ],
+    ".input": [
+      {
+        "familyName": "Pretendard Medium",
+        "postScriptName": "Pretendard-Medium",
+        "isCustomFont": true,
+        "glyphCount": 5
+      }
+    ],
+    ".summary .tot b": [
+      {
+        "familyName": "OTS derived font",
+        "postScriptName": "TmoneyRoundWind-ExtraBoldA1",
+        "isCustomFont": true,
+        "glyphCount": 6
+      },
+      {
+        "familyName": "Pretendard SemiBold",
+        "postScriptName": "Pretendard-SemiBold",
+        "isCustomFont": true,
+        "glyphCount": 1
+      }
+    ]
+  },
+  "invalidFocus": {
+    "outline": "none",
+    "shadow": "rgb(240, 68, 82) 0px 0px 0px 1.5px inset"
+  },
+  "longNames": [
+    {
+      "width": 320,
+      "height": 3091,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "width": 390,
+      "height": 2684,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": false,
+      "totals": 1
+    },
+    {
+      "width": 1440,
+      "height": 2296,
+      "overflow": false,
+      "small": [],
+      "fonts": [
+        "Pretendard 500",
+        "Pretendard 600",
+        "Pretendard 700",
+        "Tmoney Round Wind 800"
+      ],
+      "summary": true,
+      "totals": 1
+    }
+  ],
+  "problems": []
+}

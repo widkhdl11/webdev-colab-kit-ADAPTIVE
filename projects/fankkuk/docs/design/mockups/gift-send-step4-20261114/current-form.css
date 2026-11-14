@@ -1,0 +1,266 @@
+/* 선물 보내기 4단계 — 시안 docs/design/mockups/site/v39-part3/gifts-new-b.html · v39.css 「선물 보내기 B」(design-rules 25절, 22·23절).
+   맨 위 하늘 단계 판(.hero: 단계 숫자 48 / 4 단계 · 이번 단계 제목 · 네 칸 막대) → 아래 두 단(흰 입력 판 + 위젯이 넘긴 오른쪽 칸).
+   2026-11-12 시안 gifts-new-r2-20261112: 단계 판은 두 단 전체 폭이고, 입력 판과 칸은 판 아래 같은 높이에서 시작한다. 전체 폭(--col-flow·--col-form)은 바깥 위젯이 정한다(widgets/gift-register).
+   면 높낮이(23-1): 하늘 판·결제 칸 = 강조 면 > 입력 판·고르기 카드 = 흰 카드 > 메모·안내 = 회색 보조 판 */
+
+.root { min-width: 0; }
+
+/* ── 하늘 단계 판 (시안 .fhero) ── */
+.hero { position: relative; margin-top: var(--space-8); padding: var(--space-8) var(--space-10) var(--space-6); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
+.peek { position: absolute; top: -48px; right: var(--space-10); width: 96px; height: 96px; object-fit: contain; pointer-events: none; }
+.hero-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-6); align-items: end; padding-right: 80px; }
+.count.count { margin: 0; white-space: nowrap; }
+.hero-text { min-width: 0; }
+.h.h { font-family: var(--font); font-size: var(--fs-page); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; overflow-wrap: anywhere; }
+.h:focus { outline: none; }
+.h:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+.lead { margin-top: var(--space-1); color: var(--sub); }
+
+/* 네 칸 진행 막대 — v35 상세 막대와 같은 높이 8. 하늘 판 위에서는 안 지나온 칸이 흰색, 지나온 칸 하늘, 지금 칸 본문색 (시안 .fsteps) */
+.fsteps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-1); margin: var(--space-6) 0 0; padding: 0; list-style: none; }
+.fsteps button { display: block; width: 100%; min-height: 44px; padding: 0 0 var(--space-2); border: 0; background: none; color: var(--sub); font-size: var(--fs-small); text-align: left; overflow-wrap: anywhere; cursor: pointer; }
+.fsteps button::before { content: ""; display: block; height: 8px; margin-bottom: var(--space-2); border-radius: var(--r-pill); background: var(--white); }
+.fsteps button:disabled { cursor: default; }
+.fsteps button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: var(--r-nav); }
+.fsteps .done button { color: var(--ink); }
+/* 지나온 칸은 옅은 면으로 왼쪽부터 차오른다(23-2) */
+.fsteps .done button::before { background: var(--bar-fill-fx); transform-origin: left center; animation: bar-fill 0.5s var(--ease-micro) both; }
+.fsteps .on button { color: var(--ink); font-weight: var(--fw-bold); }
+.fsteps .on button::before { background: var(--gray-900); }
+.n { margin-right: var(--space-1); }
+/* 칸마다 0.05초씩 늦게(23-2) */
+.fsteps .done:nth-child(2) button::before { animation-delay: 0.05s; }
+.fsteps .done:nth-child(3) button::before { animation-delay: 0.1s; }
+.fsteps .done:nth-child(4) button::before { animation-delay: 0.15s; }
+@keyframes bar-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* ── 흰 입력 판 (시안 .fpanel) ── */
+/* 단계 판 아래 두 단 — 입력 판(남는 폭) + 오른쪽 칸 288, 사이 32. 칸을 띄울지는 본문 칸(gift-send, 위젯 main) 폭 880 기준 — 지금 구현과 같은 경계.
+   288 은 폭 토큰이 없어 지금 구현 값 그대로(가정, design-rules 「두 단」 칸 280~288) */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-8); align-items: start; margin-top: var(--space-6); }
+.grid.split { grid-template-columns: minmax(0, 1fr) 288px; }
+.main { min-width: 0; }
+@container gift-send (width < 880px) {
+  .grid.split { grid-template-columns: minmax(0, 1fr); }
+}
+.panel { padding: var(--space-8) var(--space-10) var(--space-10); border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--card-fx); box-shadow: var(--card-shadow); }
+fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
+/* 단계 칸은 한 번에 하나만 보인다 — 공용 「구획 뒤 구획 위 여백」(base.css section:not(.section) + section:not(.section), 명시도 0,2,2)이 숨은 3단계 뒤의 4단계에 붙어 판 위가 48 비던 것을 막는다.
+   예전 section.step.step(0,2,1)은 공용 규칙보다 약해 지지 않았다 — 클래스 셋(0,3,0)으로 이긴다 (design-rules 39절) */
+.panel > .step.step { margin-top: 0; }
+/* 선 버튼(이전·N명 더 보기·사진 선택·사진 빼기)은 짙은 선 — 이 화면 안에서만, 공용 .btn--line 은 그대로 (design-rules 37·39절) */
+.root.root .btn--line { box-shadow: inset 0 0 0 1px var(--gray-500); }
+/* 이전 왼쪽 끝 · 다음(결제하기) 오른쪽 끝 — 1단계는 다음만 오른쪽 (시안 gifts-new-r2 .actions, 디자인 프롬프트 2-21 3) */
+.actions { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-10); }
+.actions .btn { min-width: 160px; }
+.actions .next { margin-left: auto; }
+
+/* 공통 칸 — 라벨 600·아래 12, 안내 14 회색, 묶음 사이 32 (시안 .lb2·.hint2·.fblock) */
+.block { margin-top: var(--space-8); }
+.lb { display: block; margin-bottom: var(--space-3); font-weight: var(--fw-btn); }
+.hint { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+.photo-opt { color: var(--sub); font-weight: 500; }
+/* 라벨과 글자 수를 한 줄에(시안 .fhead·.fcount) */
+.field-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-2); }
+.field-head .label { min-width: 0; margin-bottom: 0; }
+.char-count { font-size: var(--fs-small); color: var(--sub); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.char-count[data-over] { color: var(--danger); font-weight: var(--fw-bold); }
+
+/* 오류 — 옅은 빨강 면 + 테두리 원 안 「!」 + 굵은 글자, 색 하나로만 알리지 않는다 (시안 .errline) */
+.error { display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--danger-soft); color: var(--danger); font-size: var(--fs-small); font-weight: var(--fw-bold); overflow-wrap: anywhere; }
+.error::before { content: "!"; flex: none; display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: var(--r-pill); box-shadow: inset 0 0 0 2px var(--danger); font-size: var(--fs-badge); line-height: 1; }
+.error:focus { outline: none; }
+.error:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.error a { color: inherit; text-decoration: underline; }
+
+/* ── 1 크리에이터 — 가로가 긴 작은 카드: 사진 40 · 닉네임 한 줄(쉬는 중이면 아래 한 줄) · 고름 동그라미 24 (2026-11-12 사용자, 시안 gifts-new-r2 .pick).
+   격자는 입력 판 폭으로 — 584 이상 3열 · 584 미만 2열 · 440 미만 1열(두 열이면 카드 149 라 닉네임이 잘린다), 아래 gift-panel 컨테이너 쿼리 ── */
+.pick-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2) var(--space-4); margin-top: var(--space-6); }
+.pick-head p { font-size: var(--fs-small); color: var(--sub); }
+.pick-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+.pick-list > li[hidden] { display: none; }
+.pick { position: relative; display: flex; align-items: center; gap: var(--space-3); height: 100%; min-height: 64px; padding: var(--space-3); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--white); cursor: pointer; transition: background-color var(--dur-hover) var(--ease-out); }
+.pick:hover { background: var(--tint); }
+/* 고른 카드 = 하늘 테두리 + 안쪽 선 + 하늘 면 + 체크(디자인 프롬프트 12-2 — 색 말고 테두리·체크도) */
+.pick:has(input:checked) { border-color: var(--brand-line); background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
+.pick:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
+/* 이사 중·쉬는 중·이번 달 한도 — 회색 면으로 낮추고 고를 수 없다, 체크 동그라미 없음(25절, d113 D-2) */
+.pick.stop { background: var(--surface-muted); cursor: not-allowed; }
+.pick.stop:hover, .pick.stop:has(input:checked) { background: var(--surface-muted); }
+.pick.stop .pick-face { opacity: 0.7; }
+.pick.stop .pick-ok { visibility: hidden; }
+.pick-face.pick-face { width: 40px; height: 40px; flex: none; }
+.pick-text { display: grid; flex: 1; min-width: 0; }
+/* 닉네임(최대 길이)은 한 줄 말줄임, 전체는 title */
+.pick-text strong { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.pick-rest { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--fs-small); color: var(--sub); line-height: 1.5; }
+.pick-ok { display: grid; flex: none; place-items: center; width: 24px; height: 24px; border: 1px solid var(--gray-500); border-radius: var(--r-pill); background: var(--white); color: transparent; }
+.pick:has(input:checked) .pick-ok { border-color: var(--primary); background: var(--primary); color: var(--on-brand); }
+.more-row { display: flex; justify-content: center; margin-top: var(--space-6); }
+.empty-mini { margin-top: var(--space-4); padding: var(--space-6) 0; font-size: var(--fs-small); color: var(--sub); text-align: center; }
+
+/* ── 2 선물 — 고르기 칸은 알약(라디오는 칸 전체를 덮고, 포커스는 칸 바깥 3px) (시안 .fopt) ── */
+.opts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+/* 보이는 칩은 높이 36(2026-11-14 사용자 「뱃지들이 너무 뚱뚱하고 커 보인다」) — 누르는 칸은 라디오를 위아래 4씩 넓혀 44 그대로(design-prompt 8-12), 칩 안쪽 12(2-1) */
+.opt { position: relative; display: inline-flex; align-items: center; min-height: 36px; padding: 0 var(--space-3); border: 1px solid var(--gray-300); border-radius: var(--r-pill); background: var(--white); font-size: var(--fs-small); line-height: 1.4; cursor: pointer; }
+.opt:hover { border-color: var(--gray-500); }
+.opt input { position: absolute; top: 50%; left: 0; width: 100%; height: 44px; margin: 0; opacity: 0; transform: translateY(-50%); cursor: pointer; }
+/* 고른 칩 = --primary-50 면 + 짙은 선 1px (시안 .opt.on, 35·39절) */
+.opt:has(input:checked) { border-color: var(--brand-line); background: var(--primary-50); font-weight: var(--fw-btn); }
+.opt:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
+.opt:has(input:disabled) { border-color: var(--gray-200); background: var(--surface-muted); color: var(--sub); cursor: not-allowed; }
+.opt:has(input:disabled) input { cursor: not-allowed; }
+/* 받기 어려운 품목 안내(안내만) — 회색 보조 판 (시안 .hardnote) */
+.hardnote { margin-top: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.hardnote strong { display: block; overflow-wrap: anywhere; }
+.hardnote p { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
+.hardnote:focus { outline: none; }
+.hardnote:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+/* 기념일 표시 체크 (시안 .check2) */
+.check { display: flex; align-items: flex-start; gap: var(--space-3); min-height: 44px; padding: var(--space-2) 0; cursor: pointer; }
+.check input { flex: none; margin: 0; } /* 칸 모양은 base.css 18) 체크박스 */
+/* 선물 사진(선택) — 파일 칸은 sr-only 로 숨기고 라벨을 버튼 모양으로. 키보드 포커스는 라벨에 그린다 */
+.photo-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.photo-file:focus-visible + .photo-pick { outline: 3px solid var(--focus); outline-offset: 3px; }
+.photo-row .photo-pick { display: inline-flex; margin-bottom: 0; cursor: pointer; }
+.photo-name { overflow-wrap: anywhere; }
+/* 나만 보는 메모(together INV-F7) — 회색 보조 판, 머리에 자물쇠, 칸은 흰 바탕 (시안 .memo) */
+.memo { display: grid; gap: var(--space-6); margin-top: var(--space-8); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.memo .field { background: var(--white); }
+.memo-h.memo-h { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; }
+.memo-lock { width: var(--icon-xs); height: var(--icon-xs); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── 3 상자 — 상자 칸 셋 (시안 .qtiles · .qtile) ── */
+.qtiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
+.qtile { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); min-width: 0; padding: var(--space-6) var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--white); text-align: center; }
+.qtile-text { min-width: 0; }
+.qtile-img { display: block; width: 88px; height: 88px; object-fit: contain; flex: none; }
+.qn { font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; }
+.qm { font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
+/* 상자 설명은 「세 변의 합 …이하·」 / 「무게 …이하」 두 줄 — 숫자 앞에서 우연히 끊기지 않게 줄마다 끊지 않는다 (시안 .qm span, 39절) */
+.qm-line { display: block; white-space: nowrap; }
+.qty { display: inline-flex; flex: none; align-items: center; gap: var(--space-2); }
+.qty-btn { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--gray-500); border-radius: var(--r-btn); background: var(--white); color: var(--ink); font-size: var(--fs-page); line-height: 1; cursor: pointer; }
+.qty-btn:hover { background: var(--btn-ghost-hover); }
+/* 끝에 닿으면 흐리게만 — disabled 를 쓰지 않아 키보드 포커스가 남는다 */
+.qty-btn[aria-disabled="true"] { border-color: var(--gray-200); background: var(--surface-muted); color: var(--sub); cursor: not-allowed; }
+.qty output { min-width: 48px; font-family: var(--font-round); font-size: var(--fs-title); font-weight: var(--fw-title); text-align: center; font-variant-numeric: tabular-nums; }
+.zero .qty output { color: var(--sub); }
+
+/* 회색 안내 판 — 3단계 상자 크기 안내 · 4단계 돌려보내는 경우와 승인 시간 (시안 .gnote) */
+.gnote { margin-top: var(--space-6); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.gnote-first { margin-top: var(--space-8); }
+.gnote h3 { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; color: var(--ink); overflow-wrap: anywhere; }
+.gnote p, .gnote li { font-size: var(--fs-small); color: var(--sub); }
+.gnote h3 + p, .gnote p + p { margin-top: var(--space-2); }
+.gnote ul { margin: var(--space-2) 0 0; padding-left: 20px; list-style: disc; }
+.gnote li + li { margin-top: var(--space-1); }
+.gnote hr { margin: var(--space-4) 0; border: 0; border-top: 1px solid var(--gray-200); }
+
+/* ── 4 확인 — 줄 목록 2×2: 이름(회색 14) 위 · 값(굵게) 아래 · 오른쪽 「수정」 (시안 gifts-new-r2 .sums, 휴대폰은 한 열) ── */
+.sums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-8); margin: 0; }
+.sum-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-3); align-items: center; min-height: 72px; padding: var(--space-2) 0; border-top: 1px solid var(--gray-200); }
+.sum-row dt { grid-column: 1; font-size: var(--fs-small); color: var(--sub); }
+.sum-row dd { grid-column: 1; min-width: 0; margin: 0; font-weight: var(--fw-btn); overflow-wrap: anywhere; }
+.sum-row .fix { grid-column: 2; grid-row: 1 / span 2; }
+/* 받는 크리에이터 — 프로필 사진 32 + 「OO님」 */
+.who { display: inline-flex; align-items: center; gap: var(--space-2); max-width: 100%; min-width: 0; }
+.who-face.who-face { width: 32px; height: 32px; flex: none; }
+.who > span { min-width: 0; overflow-wrap: anywhere; }
+.fix { min-width: 44px; min-height: 44px; padding: 0 var(--space-1); border: 0; background: none; color: var(--ink); font-size: var(--fs-small); font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.fix:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+/* 하늘 결제 칸 — 줄마다 금액, 합계 32 (시안 .paybox · .lines2) */
+.paybox { margin-top: var(--space-6); padding: var(--space-6) var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
+.lines { margin-top: var(--space-6); }
+.ln { display: flex; justify-content: space-between; gap: var(--space-4); padding: var(--space-2) 0; }
+.ln > span:first-child { min-width: 0; }
+.ln > span:last-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ln small { margin-left: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+.tot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--space-4); margin-top: var(--space-2); padding-top: var(--space-4); border-top: 1px solid var(--tint-line); }
+.tot-label { font-weight: var(--fw-bold); }
+.tot b { font-family: var(--font-round); font-size: var(--fs-title); font-weight: var(--fw-title); letter-spacing: var(--ls-title); line-height: 1.2; font-variant-numeric: tabular-nums; }
+.tot b small { margin-left: 2px; font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); letter-spacing: 0; }
+.tag-line { margin-top: var(--space-3); }
+.tag-line .tag { background: var(--white); }
+.tag-line svg { margin-right: var(--space-1); vertical-align: -3px; }
+.pay-note { margin-top: var(--space-3); font-size: var(--fs-small); color: var(--sub); }
+/* 결제 전 동의 — 체크 26(--check-size) + 사이 12, 규정 링크는 체크 글자 줄에 맞춰 38 들임 (시안 .consent2) */
+.consent { margin-top: var(--space-6); }
+.consent .check { align-items: flex-start; gap: var(--space-3); min-height: 44px; padding: var(--space-2) 0; }
+.consent .hint { margin-top: 0; padding-left: 38px; font-size: var(--fs-small); }
+.consent .hint a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; }
+
+/* ── 휴대폰 (시안 v39.css 767 이하) ── */
+@media (max-width: 767px) {
+  /* 단계 판은 숫자와 제목 한 줄(시안 gifts-new-r2, 디자인 프롬프트 1-5) — 「/ 4 단계」·막대 번호는 숨기고 제목 20 · 설명 14 */
+  .hero { margin-top: var(--space-4); padding: var(--space-4) var(--space-4) var(--space-2); }
+  .peek { top: var(--space-3); right: var(--space-4); width: 56px; height: 56px; }
+  .hero-row { align-items: center; gap: var(--space-3); padding-right: 64px; }
+  .count small, .n { display: none; }
+  .h.h { font-size: var(--fs-card); }
+  .lead { font-size: var(--fs-small); }
+  .fsteps { margin-top: var(--space-3); }
+  .grid { margin-top: var(--space-4); }
+  .panel { padding: var(--space-6) var(--space-4) var(--space-8); }
+  /* 다음 폭 전체 · 이전은 그 아래 글자 버튼(2-21 2) */
+  .actions { flex-direction: column-reverse; align-items: stretch; margin-top: var(--space-8); }
+  .actions .btn { width: 100%; }
+  .actions .next { margin-left: 0; }
+  .root.root .prev { background: none; box-shadow: none; }
+  .root.root .prev:hover { background: var(--surface-hover); }
+  .sums { grid-template-columns: minmax(0, 1fr); }
+  .memo { padding: var(--space-4); }
+  .qtiles { grid-template-columns: minmax(0, 1fr); }
+  .qtile { flex-direction: row; justify-content: space-between; padding: var(--space-4); text-align: left; }
+  .qtile-text { flex: 1; }
+  .qtile-img { width: 56px; height: 56px; }
+  .paybox { padding: var(--space-4); }
+}
+
+/* 입력 판이 좁아지면(사이드바 옆 + 오른쪽 칸) 상자 칸 셋을 한 줄씩 — 칸 하나에 −/+ 묶음(152)+안쪽 여백 32 = 184 가 필요해 셋이면 584. 그보다 좁으면 옆 칸에 겹친다. 화면 폭이 아니라 판 폭으로 본다 */
+.panel { container: gift-panel / inline-size; }
+@container gift-panel (max-width: 583px) { .pick-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container gift-panel (max-width: 439px) { .pick-list { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); } }
+@container gift-panel (max-width: 583px) {
+  .qtiles { grid-template-columns: minmax(0, 1fr); }
+  .qtile { flex-direction: row; justify-content: space-between; padding: var(--space-4); text-align: left; }
+  .qtile-text { flex: 1; }
+  .qtile-img { width: 56px; height: 56px; }
+  /* 설명 두 줄은 줄 안에서 끊지 않으므로, 칸이 그보다 좁으면(360 폭 등) −/+ 묶음이 글자 위에 겹치지 않고 아래 줄로 내려간다 */
+  .qtile { flex-wrap: wrap; row-gap: var(--space-3); }
+  .qtile-text { flex: 1 1 auto; min-width: auto; }
+}
+
+/* 움직임 줄이기 — 막대 차오름·카드 면 바뀜을 끈다 */
+@media (prefers-reduced-motion: reduce) {
+  .fsteps .done button::before { animation: none; }
+  .pick { transition: none; }
+}
+/* 2단계 선택 칸 접기(2026-10-22 d113 D-1, 시안 ux-pilot-2026-10-22 send-1-after .fold.optfold) — 필수 칸 아래 가는 선 + 글자 한 줄, 「+」가 45도 돌아 닫기 표시(design-rules 23-2) */
+.optfold { margin-top: var(--space-8); border-top: 1px solid var(--gray-200); }
+.optfold > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 48px; font-weight: var(--fw-btn); cursor: pointer; list-style: none; }
+.optfold > summary::-webkit-details-marker { display: none; }
+.optfold > summary::after { content: "+"; flex: none; font-size: var(--fs-card); color: var(--sub); transition: transform 0.25s var(--ease-micro); }
+.optfold[open] > summary::after { transform: rotate(45deg); }
+.optfold > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.optfold[open] > :not(summary) { animation: fold-in 0.25s var(--ease-micro) both; }
+.optfold > .block:first-of-type { margin-top: var(--space-2); }
+/* 결제창에서 돌아온 안내 — 폼 맨 위, 오류 줄 + 바로 아래 「결제하기 ›」(d113 D-3, 시안 send-3-after .errline·.resume) */
+.notice { margin-bottom: var(--space-6); }
+.notice > .error { margin-top: 0; }
+.notice > p + p { margin-top: var(--space-1); }
+/* 바깥 「보낼 선물」 칸이 보이는 폭(위젯 본문 칸 gift-send 880 이상)이면 4단계 결제 칸에는 검수 포함·안내·동의만(design-rules 33절, 시안 v41 .gn3[data-step="4"]).
+   바깥 칸이 없는 화면(gift-send 컨테이너 없음)에서는 이 조건이 맞지 않아 금액 줄이 그대로 보인다 */
+@container gift-send (width >= 880px) {
+  .lines[data-side-covered] { display: none; }
+  .lines[data-side-covered] + .tag-line { margin-top: 0; }
+}
+
+/* ── 4 결제 — 반송 주소 칸(payment INV-M25, 팬만). 확인 줄 아래, 반송·환불 안내 위 ── */
+.returnaddr { margin-top: var(--space-6); }
+.returnaddr-title { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); line-height: 1.6; color: var(--ink); margin-bottom: var(--space-3); }
+.returnaddr-title:focus { outline: none; }
+.returnaddr-title:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.returnaddr-done { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); min-height: 56px; padding: var(--space-2) 0; border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); }
+.returnaddr-done p { min-width: 0; font-weight: var(--fw-btn); }
