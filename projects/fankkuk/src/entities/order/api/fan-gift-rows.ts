@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { OFFICE_ADDRESS } from "../config/office-address";
+import { readOfficeAddress } from "./read-office-address";
 import { toFanView, type FanGiftView, type FanOrderRecord } from "../model/fan-view";
 
 // 팬의 선물을 DB 읽기 함수(my_gifts)로 읽는다. 함수가 로그인한 팬의 것만, 팬이 봐도 되는 칸만 돌려준다.
@@ -58,16 +58,20 @@ function toRecord(r: z.infer<typeof rowSchema>): FanOrderRecord {
   };
 }
 
-export function parseFanGiftRows(rows: unknown, officeAddress: string): FanGiftView[] {
+export function parseFanGiftRows(rows: unknown, officeAddress: string | null): FanGiftView[] {
   return z
     .array(rowSchema)
     .parse(rows)
     .map((r) => ({ ...toFanView(toRecord(r), officeAddress), memoTitle: r.memo_title ?? null }));
 }
 
-/** 로그인한 팬의 선물, 최신 등록 순. 로그인하지 않았으면 함수가 거부한다 — 부르는 쪽이 먼저 로그인을 확인한다. */
-export async function readMyGiftViews(client: Pick<SupabaseClient, "rpc">): Promise<FanGiftView[]> {
-  const { data, error } = await client.rpc("my_gifts");
+/** 로그인한 팬의 선물, 최신 등록 순. 로그인하지 않았으면 함수가 거부한다 — 부르는 쪽이 먼저 로그인을 확인한다.
+ *  withOfficeAddress: 받는 주소 칸을 그리는 선물 상세만 켠다(admin-console INV-K19) — 목록 화면은 주소를 쓰지 않아 DB 를 한 번 덜 부른다. */
+export async function readMyGiftViews(client: Pick<SupabaseClient, "rpc">, opts: { withOfficeAddress?: boolean } = {}): Promise<FanGiftView[]> {
+  const [{ data, error }, officeAddress] = await Promise.all([
+    client.rpc("my_gifts"),
+    opts.withOfficeAddress ? readOfficeAddress(client) : Promise.resolve(null),
+  ]);
   if (error) throw new Error(`선물 목록을 읽지 못했다: ${error.code}`);
-  return parseFanGiftRows(data, OFFICE_ADDRESS);
+  return parseFanGiftRows(data, officeAddress);
 }

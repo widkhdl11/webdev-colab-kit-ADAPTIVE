@@ -59,7 +59,8 @@ function outcomeOf(r: FanOrderRecord): FanGiftView["outcome"] {
   return "in_progress";
 }
 
-export function toFanView(r: FanOrderRecord, officeAddress: string): FanGiftView {
+/** officeAddress = DB 가 준 팬꾹 주소(admin-console INV-K19). 6자리를 받은 적 없는 사람이면 null 이고, 그때는 주소 칸이 없다. */
+export function toFanView(r: FanOrderRecord, officeAddress: string | null): FanGiftView {
   const outcome = outcomeOf(r);
   const approved = r.approvedAt !== null && outcome !== "declined" && outcome !== "expired" && outcome !== "canceled";
 

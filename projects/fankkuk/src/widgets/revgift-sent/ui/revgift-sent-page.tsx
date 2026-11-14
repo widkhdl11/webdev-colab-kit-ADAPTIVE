@@ -227,7 +227,8 @@ export function RevgiftSentPage({
   rows: readonly SentRevgift[];
   boxes: readonly ShareBox[];
   paid: boolean;
-  officeAddress: string;
+  /** DB 가 준 팬꾹 주소(admin-console INV-K19). 6자리를 받은 적 없으면 null — 그때는 주소 칸이 없다 */
+  officeAddress: string | null;
   /** 페이지 머리 바로 아래에 둘 화면 간 탭(design-rules 11절). 머리는 늘 본문 맨 앞이다(00절) */
   tabs?: ReactNode;
 }) {

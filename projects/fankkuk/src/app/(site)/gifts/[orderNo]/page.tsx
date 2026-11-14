@@ -82,7 +82,7 @@ async function readDetailTodo(supabase: SupabaseClient, viewer: Viewer, orderNo:
 
 /** 보낸 선물 — 보낸 사람(팬·크리에이터) 본인만. 목록 읽기가 로그인한 사람이 보낸 주문만 돌려주므로 남의 주문번호는 없는 주소와 같다 */
 async function giftDetail({ supabase, viewer }: Session, orderNo: string, differenceParam: string | string[] | undefined, paid: boolean) {
-  const gifts = await readMyGiftViews(supabase);
+  const gifts = await readMyGiftViews(supabase, { withOfficeAddress: true });
   const view = gifts.find((g) => g.orderNo === orderNo);
   if (!view) return unpaidDetail({ supabase, viewer }, orderNo, gifts);
   const fan = viewer.role === "fan";

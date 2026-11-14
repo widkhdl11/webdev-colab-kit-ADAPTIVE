@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { viewerHasChannel } from "@/entities/session/model/viewer";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import { readOfficeAddress } from "@/entities/order/api/read-office-address";
 import { readBoxCards, readMyBox, readPriceTable } from "@/entities/revgift-box/api/box-reads";
 import { readDeliveryStatusSource } from "@/features/delivery-tracking/api/read-delivery-source";
 import { FAN_HOME } from "@/entities/session/model/home-path";
@@ -46,9 +47,12 @@ export default async function Page({ params, searchParams }: { params: Promise<{
     );
   }
   // 2페이지 예상 금액용 요금(마감 때만) · 확인 필요 카드(확인 필요 때만) — 표시용이라 실패해도 화면은 그린다
-  const [price, cards] = await Promise.all([
+  // 팬꾹 주소(admin-console INV-K19)는 상자를 보내는 단계에서만 쓴다
+  const sending = box.status === "awaiting_box" || box.status === "arrived" || box.status === "held";
+  const [price, cards, officeAddress] = await Promise.all([
     box.status === "closed" ? readPriceTable(supabase).catch(() => null) : Promise.resolve(null),
     box.status === "held" ? readBoxCards(supabase).catch(() => []) : Promise.resolve([]),
+    sending ? readOfficeAddress(supabase) : Promise.resolve(null),
   ]);
   return (
     <>
@@ -57,6 +61,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         box={box} price={price} cards={cards} clientKey={process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? ""} notice={notice}
         now={new Date().toISOString()}
         deliverySource={deliverySource}
+        officeAddress={officeAddress}
       />
       <SiteFooter />
     </>

@@ -9,7 +9,7 @@ export type SentBatch = { sentAt: string; shares: SentRevgift[]; officeAddress: 
 export type BatchStateCounts = Record<SentRevgift["state"], number>;
 
 /** 보낸 시각이 같은 몫끼리 묶는다. 최근 묶음이 먼저, 묶음 안은 받은 순서 그대로. */
-export function toSentBatches(rows: readonly SentRevgift[], officeAddress: string): SentBatch[] {
+export function toSentBatches(rows: readonly SentRevgift[], officeAddress: string | null): SentBatch[] {
   const map = new Map<string, SentRevgift[]>();
   for (const r of rows) {
     const list = map.get(r.sentAt);

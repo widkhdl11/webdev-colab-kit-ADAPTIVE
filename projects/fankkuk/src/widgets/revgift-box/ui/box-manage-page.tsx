@@ -20,8 +20,11 @@ export function BoxManagePage({
   notice,
   now,
   deliverySource,
+  officeAddress,
 }: {
   box: MyBox;
+  /** DB 가 준 팬꾹 주소(admin-console INV-K19). 6자리를 받은 적 없으면 null */
+  officeAddress: string | null;
   price: PriceTable | null;
   cards: readonly BoxCard[];
   clientKey: string;
@@ -56,7 +59,7 @@ export function BoxManagePage({
         ) : box.status === "closed" && price ? (
           <BoxTierPanel box={box} price={price} />
         ) : box.status === "awaiting_box" || box.status === "arrived" || box.status === "held" ? (
-          <BoxSendSection box={box} cards={cards} />
+          <BoxSendSection box={box} cards={cards} officeAddress={officeAddress} />
         ) : (box.status === "returning" || box.status === "returned") && !box.invoice ? (
           // 모든 신청이 도착 안 함 — 명세서 없이 착불 반송(revgift-box INV-GB11 · Q12)
           <section className={s.stack} aria-label="착불 반송">

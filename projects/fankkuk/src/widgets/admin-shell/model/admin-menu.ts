@@ -41,6 +41,8 @@ export const ADMIN_MENU: readonly AdminMenuGroup[] = [
       // banners INV-Y1: 운영자만 올리고 고치고 내린다
       { href: "/admin/banners", label: "광고 배너" },
       { href: "/admin/prohibited", label: "보낼 수 없는 물품" },
+      // admin-console INV-K19: 대표만 바꾸고, 바꾼 기록이 남는다
+      { href: "/admin/office-address", label: "팬꾹 주소" },
       // address-protection INV-P7(D12): 거부된 시도·대표·직원 구분은 운영자만 보는 내부 기록
       { href: "/admin/access-log", label: "주소 열람 기록" },
       // metrics INV-Q1: 집계는 운영자 틀 안에서만
