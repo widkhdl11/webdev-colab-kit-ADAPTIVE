@@ -12,7 +12,7 @@ import panel from "@/shared/ui/settings-panel.module.css";
 import s from "./profile-sections.module.css";
 
 // 선물 링크 (creator-link INV-E2~E4) — 2026-11-13 상세 설정에서 프로필 수정 「채널」 탭(채널 주소)으로 옮김(구역 그대로). 「주소와 설정」 프로필 카드 다음 — 같은 카드 언어(제목 줄·필드·저장 버튼·상태 문구).
-// 프로필 사진·공지 이미지는 「내 팬꾹 꾸미기」(/creator/customize)로 옮겼다(디자인 기준 10절) — 여기는 그 화면으로 가는 링크만.
+// 공지 이미지·링크 미리보기 이미지는 같은 채널 탭의 다른 구역이다(2026-11-14 꾸미기 메뉴를 없애고 옮김). 여기는 링크 주소만.
 // 링크용 아이디는 저장 전에 「정하면 30일 동안 바꿀 수 없어요」를 확인 창으로 보인다(스펙 「스스로 정한 것」). 저장 검사는 DB 가 다시 한다.
 
 export function LinkSection({

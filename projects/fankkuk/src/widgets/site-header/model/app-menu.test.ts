@@ -1,6 +1,6 @@
 import { CREATOR_TO_CREATOR_GIFT_OPEN } from "@/features/creator-follow/model/creator-gift-open";
 import { describe, expect, it } from "vitest";
-import { ACCOUNT_MENU, BADGE_SPEECH, CREATOR_APP_MENU, CREATOR_CUSTOMIZE_HREF, CREATOR_SENT_HREFS, currentMenuItem, FAN_APP_MENU, FAN_PROFILE_EDIT_HREF } from "./app-menu";
+import { ACCOUNT_MENU, BADGE_SPEECH, CREATOR_APP_MENU, CREATOR_SENT_HREFS, currentMenuItem, FAN_APP_MENU, FAN_PROFILE_EDIT_HREF } from "./app-menu";
 
 // 크리에이터 앱 메뉴 구성 (디자인 기준 11절, 시안 docs/design/mockups/site/v19-sidebar/creator-a.html).
 
@@ -18,12 +18,11 @@ describe("크리에이터 메뉴 — 묶음", () => {
         ? ["팬에게 보내기", "다른 크리에이터에게 선물", "팔로우한 크리에이터", "보낸 내역"]
         : ["팬에게 보내기", "팔로우한 크리에이터", "보낸 내역"],
     );
-    expect(labels("내 팬꾹")).toEqual(["꾸미기", "프로필 수정", "계정 설정"]);
+    expect(labels("내 팬꾹")).toEqual(["프로필 수정", "계정 설정"]);
   });
 
-  it("내 팬꾹 (design-rules 12절): 꾸미기·프로필 수정·계정 설정(옛 상세 설정, 2026-11-13 이름 바꿈) 주소 — 주소 관리 줄은 없고 받는 주소는 계정 설정 안", () => {
+  it("내 팬꾹 (design-rules 12절): 프로필 수정·계정 설정(옛 상세 설정, 2026-11-13 이름 바꿈) 둘 — 꾸미기는 2026-11-14 없앰. 주소 — 주소 관리 줄은 없고 받는 주소는 계정 설정 안", () => {
     expect(group("내 팬꾹").items.map((i) => [i.label, i.href, i.icon])).toEqual([
-      ["꾸미기", "/creator/customize", "palette"],
       ["프로필 수정", "/creator/profile", "user-round"],
       ["계정 설정", "/creator/settings", "settings"],
     ]);
@@ -50,9 +49,9 @@ describe("크리에이터 메뉴 — 묶음", () => {
     expect(currentMenuItem(CREATOR_APP_MENU, "/creator/settings")?.label).toBe("계정 설정");
   });
 
-  it("꾸미기는 /creator/customize 한 칸뿐", () => {
-    const all = CREATOR_APP_MENU.flatMap((g) => g.items).filter((i) => i.href === CREATOR_CUSTOMIZE_HREF);
-    expect(all.map((i) => i.label)).toEqual(["꾸미기"]);
+  it("꾸미기 칸은 없다(2026-11-14 — 두 구역은 프로필 수정 채널 탭으로)", () => {
+    const all = CREATOR_APP_MENU.flatMap((g) => g.items);
+    expect(all.filter((i) => i.label === "꾸미기" || i.href === "/creator/customize")).toEqual([]);
   });
 });
 

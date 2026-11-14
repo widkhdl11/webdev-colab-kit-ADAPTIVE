@@ -6,7 +6,7 @@ import { CREATOR_ACCOUNT, CREATOR_HOME, CREATOR_PROFILE_EDIT, CREATOR_SETTINGS, 
 
 // 로그인 후 왼쪽 앱 사이드바 메뉴(design-rules 00절, 시안 docs/design/mockups/site/v18/home-fan.html·home-creator.html).
 // 크리에이터 메뉴의 묶음·하위 줄은 design-rules 11절(시안 docs/design/mockups/site/v19-sidebar/creator-a.html),
-// 팬 메뉴는 묶음 없이 한 줄(action-center 「팬 메뉴 재구성」 — 「지금 할 일」 숫자 뱃지, 0 이면 없음 — INV-J2). 「내 팬꾹」 묶음은 12절(꾸미기·프로필 수정·계정 설정(옛 상세 설정) — 주소 관리는 계정 설정 안, 알림 설정은 아래 이름 메뉴. 시안 v21-addendum3/cre-*.html).
+// 팬 메뉴는 묶음 없이 한 줄(action-center 「팬 메뉴 재구성」 — 「지금 할 일」 숫자 뱃지, 0 이면 없음 — INV-J2). 「내 팬꾹」 묶음은 12절(프로필 수정·계정 설정(옛 상세 설정) — 꾸미기는 2026-11-14 없앰 — 주소 관리는 계정 설정 안, 알림 설정은 아래 이름 메뉴. 시안 v21-addendum3/cre-*.html).
 // 아이콘 이름은 lucide 선 아이콘 이름 — 그림은 ui/app-icons.tsx 에 있다.
 
 export type AppIcon =
@@ -83,9 +83,6 @@ export const FAN_APP_MENU: readonly AppMenuGroup[] = [
 // 「받은 선물」은 시안대로 승인 화면과 나뉜 화면이다(creator-boxes.html → /creator/boxes).
 export const CREATOR_BOXES_HREF = "/creator/boxes";
 
-/** 「내 팬꾹 꾸미기」 화면 — 링크 미리보기 이미지·공지 이미지 받기. */
-export const CREATOR_CUSTOMIZE_HREF = "/creator/customize";
-
 /** 「팬에게 보내기」 — 내 선물함 목록(revgift-box INV-GB22) */
 export const CREATOR_GIFT_BOXES_HREF = "/creator/revgift-boxes";
 
@@ -128,7 +125,7 @@ export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
   {
     label: "내 팬꾹",
     items: [
-      { href: CREATOR_CUSTOMIZE_HREF, label: "꾸미기", icon: "palette" },
+      // 「꾸미기」는 2026-11-14 없앰 — 링크 미리보기 이미지·공지 이미지 다운로드는 프로필 수정 「채널」 탭(옛 주소 /creator/customize 는 그리로 넘긴다)
       { href: CREATOR_PROFILE_EDIT, label: "프로필 수정", icon: "user-round" },
       // 옛 「상세 설정」 — 2026-11-13 「계정 설정」으로 이름을 바꿈(주소 그대로, 보안·회원 탈퇴가 여기로 옴)
       { href: CREATOR_SETTINGS, label: "계정 설정", icon: "settings" },

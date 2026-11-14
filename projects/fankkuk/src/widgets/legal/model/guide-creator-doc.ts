@@ -101,9 +101,9 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
       },
       {
         id: "customize",
-        title: "내 팬꾹 꾸미기와 공지 이미지",
+        title: "링크 미리보기 이미지와 공지 이미지",
         blocks: [
-          { kind: "text", text: "사이드바 「내 팬꾹」의 「꾸미기」를 누르면 「내 팬꾹 꾸미기」 화면이 열립니다. 바꾸는 즉시 미리보기에서 확인할 수 있습니다." },
+          { kind: "text", text: "사이드바 「내 팬꾹」의 「프로필 수정」에서 「채널」 탭을 누르면 아래쪽에 「링크 미리보기 이미지」와 「공지 이미지 다운로드」가 있습니다." },
           {
             kind: "steps",
             items: [

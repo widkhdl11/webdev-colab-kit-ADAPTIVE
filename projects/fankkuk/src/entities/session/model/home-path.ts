@@ -27,7 +27,7 @@ export const CREATOR_ACCOUNT = "/creator/account";
 
 /**
  * 크리에이터 프로필 수정의 두 탭(2026-11-13 재분류 — UX 명세 creator-profile, 같은 날 「계정」 탭을 없앰). 탭은 주소의 ?tab= 로 싣는다 —
- * 없거나 모르는 값(옛 ?tab=account 포함)이면 프로필 탭. 다른 화면의 안내 링크(꾸미기의 팬마크·링크 주소 등)가 원하는 탭을 바로 연다.
+ * 없거나 모르는 값(옛 ?tab=account 포함)이면 프로필 탭. 다른 화면의 안내 링크(팬마크·링크 주소 등)가 원하는 탭을 바로 연다.
  */
 export const CREATOR_PROFILE_TABS = ["profile", "channel"] as const;
 export type CreatorProfileTab = (typeof CREATOR_PROFILE_TABS)[number];

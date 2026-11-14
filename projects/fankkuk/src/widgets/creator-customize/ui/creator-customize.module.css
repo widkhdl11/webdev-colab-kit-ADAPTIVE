@@ -1,18 +1,14 @@
-/* 내 팬꾹 꾸미기 — 시안 docs/design/mockups/site/pilot-2026-10-22/customize.html, 값의 정본은 같은 폴더 pilot.css 「계정 설정(팬)」(.me-*)·「꾸미기」(.cz-*).
-   폭은 틀(MyShell list 880)이 정하고, 안에서 카드 없이 12열 4 + 8 묶음(my-info.module.css 와 같은 언어). 묶음 사이는 낮은 대비 1px 실선(--line-on-white).
+/* 판 칸(.sec)이 묶음 사이 8 을 주므로 여기서는 바깥 여백을 더하지 않는다(2026-11-14 ui 리뷰). 결과 줄은 공용 panel.msg.
+   링크 미리보기 이미지 · 공지 이미지 다운로드 — 2026-11-14 꾸미기 화면을 없애고 프로필 수정 「채널」 탭으로 옮김(customize-sections.tsx).
+   판 겉모양(흰 카드 · 제목 · 칸)은 공용 settings-panel, 여기는 판 안쪽만. 값은 옛 시안 pilot-2026-10-22/customize.html(.cz-*) 그대로.
    공통 부품(.btn·.err)은 base.css */
 .root { min-width: 0; }
 
-/* 묶음 — 왼쪽 구간 이름(20 / 800) 4열, 오른쪽 내용 8열. 묶음 사이 구분선 + 위아래 48 */
-.grp { display: grid; grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr)); column-gap: var(--grid-gap); align-items: start; }
-.grp + .grp { margin-top: var(--space-12); padding-top: var(--space-12); border-top: 1px solid var(--line-on-white); }
-.nm { grid-column: span 4; min-width: 0; margin: 0; font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; }
-.rows { grid-column: span 8; min-width: 0; padding-top: var(--space-1); } /* 시안 .cz-body — 설명 첫 줄을 구간 이름 글줄에 맞춤 */
 .k { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; }
 .sub { margin: 0; color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: var(--lh-caption); overflow-wrap: anywhere; }
 
 /* 미리보기 이미지 고르기 — 라디오 둘(시안 .cz-opts·.cz-opt). 짙은 선, 고른 칸은 하늘 면 + 짙은 선 2px(37절 유형 선택과 같음, design-rules 41절) */
-.picks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
+.picks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
 .pickOpt { display: flex; gap: var(--space-3); align-items: center; min-height: 56px; padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-500); font-weight: var(--fw-btn); cursor: pointer; }
 .pickOpt:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 2px var(--gray-900); }
 .pickOpt:has(input:disabled) { background: var(--gray-50); color: var(--gray-600); box-shadow: inset 0 0 0 1px var(--gray-300); cursor: not-allowed; }
@@ -20,13 +16,9 @@
 .pickOpt input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--brand-line); }
 .pickHint { display: block; font-size: var(--fs-small); font-weight: 400; color: var(--gray-600); }
 
-/* 결과 줄 — 비면 공용 :is(.err, .okmsg):empty 가 흐름에서 빼 높이 0(다른 설정 화면과 같음, 낭독용 칸 role=status 는 남는다) */
-.msg { overflow-wrap: anywhere; }
-.msg:not(:empty) { margin: var(--space-2) 0 0; }
-
 /* 링크 공유 카드 — 라디오 바로 아래, 폭 최대 360(시안 .cz-cap·.cz-share) */
-.share { margin-top: var(--space-4); }
-.cap { margin: 0 0 var(--space-2); color: var(--sub); font-size: var(--fs-small); line-height: 1.5; }
+.share { margin-top: var(--space-2); } /* 판 칸 간격 8 + 8 = 결과 줄·라디오와 16 떨어진다 */
+.cap { margin: 0 0 var(--space-2); color: var(--sub); font-size: var(--fs-small); line-height: var(--lh-caption); }
 .shCard { max-width: 360px; overflow: hidden; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--hair), var(--card-shadow); } /* 흰 카드(41절) */
 .shImg { display: grid; place-items: center; height: 120px; background: var(--primary-50); }
 .shAvatar { display: grid; place-items: center; overflow: hidden; width: 72px; height: 72px; border-radius: var(--r-pill); background: var(--white); box-shadow: 0 0 0 8px var(--white); color: var(--brand-ink); font-size: var(--fs-card); font-weight: var(--fw-btn); }
@@ -35,11 +27,11 @@
 .shTitle { margin: 0; padding: var(--space-3) var(--space-4); font-size: var(--fs-small); font-weight: var(--fw-btn); overflow-wrap: anywhere; }
 
 /* 공지 이미지 받기 — 못 받을 때 안내 한 줄(시안 .cz-lock), 「설정」은 글 속 링크 · 누를 높이 44 */
-.lock { margin: var(--space-3) 0 0; color: var(--sub); font-size: var(--fs-small); line-height: 1.6; }
+.lock { margin: 0; color: var(--sub); font-size: var(--fs-small); line-height: var(--lh-caption); }
 .lock a, .pickHint a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; }
 
 /* 세 크기 줄 — 썸네일 · 이름과 크기 · 버튼 줄 오른쪽 끝(시안 .cz-sizes) */
-.sizes { margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+.sizes { margin: 0; padding: 0; list-style: none; }
 .sizes li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); min-height: 72px; padding: var(--space-2) 0; }
 .sizes li + li { border-top: 1px solid var(--line-on-white); }
 .szThumb { display: grid; flex: none; place-items: center; width: 48px; height: 48px; }
@@ -49,17 +41,9 @@
 
 /* 선 버튼 짙은 선 --gray-500(이 화면 범위에서만 — 공용 .btn--line 은 그대로, 41절) */
 .root.root :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
-/* 저장 결과 상자 — 완료는 .okmsg + 「✓」, 오류는 .err + 「!」 원(계정 설정과 같은 값, 색만으로 알리지 않게 — 37·41절) */
-.msg:global(.err):not(:empty), .msg:global(.okmsg):not(:empty) { display: flex; gap: var(--space-3); align-items: flex-start; }
-.msg:global(.err):not(:empty)::before { content: "!" / ""; }
-.msg:global(.okmsg):not(:empty)::before { content: "✓" / ""; }
-.msg:global(.err):not(:empty)::before, .msg:global(.okmsg):not(:empty)::before { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; box-shadow: inset 0 0 0 2px currentColor; font-weight: var(--fw-bold); line-height: 1; }
 
-/* 휴대폰 — 한 기둥, 라디오 한 줄에 하나, 공유 카드 그림 72, 버튼은 줄 아래 꽉 차게 */
+/* 휴대폰 — 라디오 한 줄에 하나, 공유 카드 그림 72, 버튼은 줄 아래 꽉 차게 */
 @media (max-width: 767px) {
-  .grp { display: block; }
-  .grp + .grp { padding-top: var(--space-8); } /* 위 간격은 공용 구간 간격 48 그대로 */
-  .rows { margin-top: var(--space-4); }
   .picks { grid-template-columns: minmax(0, 1fr); }
   .shImg { height: 72px; }
   .shAvatar, .shAvatar img, .shSym { width: 48px; height: 48px; }

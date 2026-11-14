@@ -6,7 +6,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: 
 
 import { LinkSection } from "./link-section";
 
-// 설정의 선물 링크 칸 (creator-link INV-E4). 잠금 남은 날이 보이는지, 읽어 주는 연결이 맞는지 본다. 사진은 프로필 수정 화면 시험(creator-profile-edit-page.test)이, 공지 이미지는 꾸미기 화면 시험(creator-customize-page.test)이 본다.
+// 설정의 선물 링크 칸 (creator-link INV-E4). 잠금 남은 날이 보이는지, 읽어 주는 연결이 맞는지 본다. 사진은 프로필 수정 화면 시험(creator-profile-edit-page.test)이, 공지 이미지는 채널 탭 구역 시험(creator-customize/ui/customize-sections.test)이 본다.
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -75,7 +75,7 @@ describe("INV-E4: 아이디 잠금 남은 날", () => {
   });
 });
 
-describe("「프로필 수정」·「내 팬꾹 꾸미기」로 옮긴 칸", () => {
+describe("다른 구역으로 옮긴 칸", () => {
   it("INV-E10: 선물 링크 칸에는 사진·공지 이미지 칸도, 사진 안내 줄도 없다(2026-11-13 — 사진은 채널 탭 위 판·계정 탭)", async () => {
     await render({ initial: { handle: "haru", lockedDays: 0, photoPath: null }, verified: true });
     expect(host.querySelector("input[type='file']")).toBeNull();

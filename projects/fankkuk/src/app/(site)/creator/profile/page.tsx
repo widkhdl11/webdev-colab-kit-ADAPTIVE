@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { readMyCreatorLink, readMyCreatorLook } from "@/entities/creator/api/creator-link-reads";
 import { readCreatorCards } from "@/entities/creator/api/creator-reads";
@@ -11,6 +12,8 @@ import { creatorBackgroundUrl, creatorPhotoUrl, creatorSymbolUrl } from "@/entit
 import { CREATOR_PROFILE_EDIT, creatorProfileTabHref, FAN_HOME, parseCreatorProfileTab } from "@/entities/session/model/home-path";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
 import { CreatorChannelOwnerRow } from "@/widgets/creator-account/ui/creator-account-page";
+import { NoticeSection, PreviewPickSection } from "@/widgets/creator-customize/ui/customize-sections";
+import { requestOrigin } from "@/widgets/creator-profile/model/link-metadata";
 import { showsLinkSection } from "@/widgets/creator-profile-edit/model/channel-tab";
 import { CreatorProfileEditPage } from "@/widgets/creator-profile-edit/ui/creator-profile-edit-page";
 import { DaysSection } from "@/widgets/creator-settings/ui/days-section";
@@ -30,6 +33,7 @@ export const dynamic = "force-dynamic";
 // - 프로필 탭만: 생일과 기념일(my_creator_receiving — 2026-11-14 계정 설정 「받기 설정」에서 옮김, creator-receiving INV-B1·B7).
 // - 채널 탭만(옛 상세 설정·계정 설정에서 옮김): 채널 본인 확인(creator-verification INV-V11 — 링크 칸이 확인 여부를 쓰고 채널 소유자 확인 줄이 그린다),
 //   팬덤 카드 미리보기의 공개 카드 값(creator_by_id — 본인 확인 전이라 공개 카드가 없으면 설정 값으로 채운다).
+//   링크 미리보기 이미지 · 공지 이미지 다운로드(2026-11-14 「꾸미기」 메뉴를 없애고 옮김 — 미리보기 고르기는 my_creator_look, 공지 이미지는 크리에이터 ID·링크 아이디·본인 확인 여부).
 // 채널 탭 미리보기는 팬덤 카드 하나(오른쪽 열) — 팬덤 입력 판과 카드가 입력 중 값을 같이 보도록 FandomDraftProvider 로 감싼다.
 // 요청마다 그린다(force-dynamic).
 export default async function Page({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
@@ -62,13 +66,18 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
     if (!state) throw new Error("크리에이터 줄을 찾지 못했다");
     // 카드 미리보기 — 찾기 화면과 같은 카드 값(채널 이름·태그·평균 승인 시간)
     const [ownCard] = await readCreatorCards(supabase, { signedIn: false, followedIds: [], onlyId: state.creatorId });
+    const linkShown = showsLinkSection(state, rows);
+    const siteOrigin = requestOrigin(await headers());
     channel = {
       sections: (
         <>
           {/* 확인 판이 ① 팬꾹 링크 만들기를 그리는 동안에는 링크 칸이 둘이 되지 않게 빼 둔다 */}
-          {showsLinkSection(state, rows) ? <LinkSection initial={link} verified={state.verified} /> : null}
+          {linkShown ? <LinkSection initial={link} verified={state.verified} /> : null}
           <FandomForm fanName={settings.fanName} colors={settings.colors} photoBase={photoBase} />
+          <PreviewPickSection name={settings.publicName} photoPath={link.photoPath} look={look} photoBase={photoBase} />
           <CreatorChannelOwnerRow verification={{ state, rows, apiPlatforms: [...apiPlatforms], loginId: viewer.loginId ?? null }} />
+          {/* 공지 이미지는 채널 소유자 확인 뒤에 받을 수 있어 그 아래 */}
+          <NoticeSection creatorId={state.creatorId} verified={state.verified} handle={link.handle} siteOrigin={siteOrigin} linkPlace={linkShown ? "link" : "verify"} />
         </>
       ),
       preview: (

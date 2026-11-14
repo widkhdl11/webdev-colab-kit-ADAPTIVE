@@ -5,9 +5,9 @@ import { NO_LOOK } from "@/entities/creator/model/link-images";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
 
-import { CreatorCustomizePage, type CreatorCustomizeProps } from "./creator-customize-page";
+import { NoticeSection, PreviewPickSection, type NoticeSectionProps, type PreviewPickSectionProps } from "./customize-sections";
 
-// 「내 팬꾹 꾸미기」 화면 (creator-link INV-E10, 디자인 기준 10절). 팬덤 심볼(INV-E12)은 상세 설정(widgets/creator-settings/ui/fandom-section.test.tsx)으로 옮겼다. 서버로 보내는 길(fetch)만 가짜로 두고 화면이 무엇을 막고 무엇을 보내는지 본다.
+// 링크 미리보기 이미지 · 공지 이미지 다운로드 (creator-link INV-E10). 2026-11-14 꾸미기 화면을 없애고 프로필 수정 「채널」 탭 구역으로 옮겼다 — 채널 탭의 순서와 옛 주소 넘김은 서버 화면(app/(site)/creator/profile·customize page.tsx)이 정하고, 단위 시험은 없다 — 화면 확인으로 본다(review.md). 팬덤 심볼(INV-E12)은 fandom-section.test.tsx. 서버로 보내는 길(fetch)만 가짜로 두고 화면이 무엇을 막고 무엇을 보내는지 본다.
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -30,7 +30,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const base: CreatorCustomizeProps = {
+type Props = PreviewPickSectionProps & NoticeSectionProps;
+const base: Props = {
   creatorId: ID,
   verified: true,
   handle: "haru",
@@ -39,10 +40,19 @@ const base: CreatorCustomizeProps = {
   look: NO_LOOK,
   photoBase: "http://photo.test",
   siteOrigin: "http://app.test",
+  linkPlace: "link",
 };
 
-async function render(patch: Partial<CreatorCustomizeProps> = {}) {
-  act(() => root.render(<CreatorCustomizePage {...base} {...patch} />));
+async function render(patch: Partial<Props> = {}) {
+  const p = { ...base, ...patch };
+  act(() =>
+    root.render(
+      <>
+        <PreviewPickSection name={p.name} photoPath={p.photoPath} look={p.look} photoBase={p.photoBase} />
+        <NoticeSection creatorId={p.creatorId} verified={p.verified} handle={p.handle} siteOrigin={p.siteOrigin} linkPlace={p.linkPlace} />
+      </>,
+    ),
+  );
   await act(async () => await new Promise((r) => setTimeout(r, 0)));
 }
 
@@ -52,8 +62,8 @@ describe("INV-E10: 링크 미리보기 이미지 고르기", () => {
     const symbol = host.querySelector<HTMLInputElement>("input[name='cz-og'][value='symbol']")!;
     expect(symbol.disabled).toBe(true);
     expect(host.querySelector(`#${symbol.getAttribute("aria-describedby")}`)?.textContent).toBe("팬마크 등록 후 선택 가능");
-    // 심볼을 올리는 곳(상세 설정 · 팬덤)으로 가는 링크가 그 문장에 걸려 있다
-    expect(host.querySelector("a[href='/creator/profile?tab=channel#fandom']")?.textContent).toBe("팬마크 등록");
+    // 심볼을 올리는 곳(같은 채널 탭의 팬덤 구역)으로 가는 링크가 그 문장에 걸려 있다
+    expect(host.querySelector("a[href='#fandom']")?.textContent).toBe("팬마크 등록");
   });
 
   it("INV-E10: 심볼이 있으면 고를 수 있고 고르는 즉시 저장한다", async () => {
@@ -103,7 +113,16 @@ describe("INV-E10: 공지 이미지 다운로드", () => {
   });
 });
 
-describe("배치 (design-rules 27절 「4파트 나머지 다섯 화면」 다섯째, 시안 pilot-2026-10-22/customize.html)", () => {
+describe("배치 (시안 pilot-2026-10-22/customize.html 안쪽 그대로 · 2026-11-14 채널 탭 판으로)", () => {
+  it("2026-11-14: 두 구역은 채널 탭의 다른 구역과 같은 판 — 옛 주소가 넘어올 자리 id 가 있다", async () => {
+    await render();
+    expect([...host.querySelectorAll("section")].map((x) => [x.id, x.querySelector("h2")?.textContent])).toEqual([
+      ["preview-image", "링크 미리보기 이미지"],
+      ["notice", "공지 이미지 다운로드"],
+    ]);
+    expect(host.querySelector("h1")).toBeNull();
+  });
+
   it("2026-10-22: 프로필 카드 미리보기·접기 버튼이 없다 — 이 화면에서 바꿀 입력이 없어서 뺐다", async () => {
     await render({ look: { bgPath: `${ID}/bg-1.webp`, symbolPath: `${ID}/sym-1.webp`, previewPick: "photo" } });
     expect(host.querySelector("aside")).toBeNull();
@@ -132,16 +151,19 @@ describe("배치 (design-rules 27절 「4파트 나머지 다섯 화면」 다�
     expect(img.getAttribute("src")).toContain("sym-1");
   });
 
-  it("2026-10-22: 머리 설명은 한 문장 — 「바꾸는 즉시 미리보기에서…」는 없다", async () => {
-    await render();
-    expect(host.querySelector(".ph-desc")?.textContent).toBe("선물 링크의 공유 이미지와 공지 이미지를 설정합니다.");
+  it("공지 이미지를 받을 수 없으면 안내 속 「선물 링크」가 같은 채널 탭의 선물 링크 구역으로 가는 링크(2026-11-14)", async () => {
+    await render({ handle: null });
+    const a = [...host.querySelectorAll<HTMLAnchorElement>("a")].find((x) => x.textContent === "선물 링크");
+    expect(a?.getAttribute("href")).toBe("#link");
+    expect(a?.closest("p")?.textContent).toBe("채널 소유자 확인 후 ‘선물 링크’에서 링크 주소를 등록하면 다운로드할 수 있습니다.");
   });
 
-  it("2026-10-22: 공지 이미지를 받을 수 없으면 안내 속 「설정」이 상세 설정의 선물 링크 칸으로 가는 링크", async () => {
-    await render({ handle: null });
-    const a = [...host.querySelectorAll<HTMLAnchorElement>("a")].find((x) => x.textContent === "프로필 수정 > 채널");
-    expect(a?.getAttribute("href")).toBe("/creator/profile?tab=channel#link");
-    expect(a?.closest("p")?.textContent).toBe("채널 소유자 확인 후 ‘프로필 수정 > 채널’에서 링크 주소를 등록하면 다운로드할 수 있습니다.");
+  it("(실패경로) 선물 링크 판이 빠진 단계(링크용 아이디 없음)에는 안내가 채널 소유자 확인 판으로 간다 — 없는 #link 로 보내지 않는다", async () => {
+    await render({ handle: null, linkPlace: "verify" });
+    expect(host.querySelector("a[href='#link']")).toBeNull();
+    const a = [...host.querySelectorAll<HTMLAnchorElement>("a")].find((x) => x.textContent === "채널 소유자 확인");
+    expect(a?.getAttribute("href")).toBe("#verify");
+    expect(a?.closest("p")?.textContent).toBe("‘채널 소유자 확인’에서 팬꾹 링크를 만들고 확인을 마치면 다운로드할 수 있습니다.");
   });
 
   it("2026-10-22: 받을 수 있으면 세 크기 줄 — 이름·크기·내려받기·링크 복사", async () => {
@@ -152,7 +174,7 @@ describe("배치 (design-rules 27절 「4파트 나머지 다섯 화면」 다�
     for (const r of rows) expect([...r.querySelectorAll("a, button")].map((x) => x.textContent)).toEqual(["다운로드", "링크 복사"]);
   });
 
-  it("2026-10-16 옮김: 이 화면에는 사진·이름·소개·팬덤 이름·심볼 편집 칸이 없다(프로필 수정·상세 설정으로)", async () => {
+  it("2026-10-16 옮김: 두 구역에는 사진·이름·소개·팬덤 이름·심볼 편집 칸이 없다(같은 탭의 다른 구역)", async () => {
     await render();
     expect(host.querySelector("input[type='file']")).toBeNull();
     expect(host.querySelector("input[type='text'], textarea")).toBeNull();

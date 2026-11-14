@@ -81,7 +81,7 @@ function ProfileTabs({ current }: { current: CreatorProfileTab }) {
 
 export function CreatorProfileEditPage({ tab = "profile", profileSections, channelSections, channelPreview, ...p }: CreatorProfileEditProps) {
   const router = useRouter();
-  // 주소 끝 #칸(#fandom · #link · #days · #verify — 꾸미기의 안내 링크, 옮겨진 옛 주소)이면 그려진 뒤 그 칸으로 내려간다.
+  // 주소 끝 #칸(#fandom · #link · #days · #verify · #preview-image — 안내 링크, 옮겨진 옛 주소)이면 그려진 뒤 그 칸으로 내려간다.
   // 브라우저가 먼저 내려가도 이어서 그려지는 구역 때문에 맨 위로 돌아오는 일이 있었다(2026-11-14 화면 확인)
   useEffect(() => {
     const id = currentHashId();
