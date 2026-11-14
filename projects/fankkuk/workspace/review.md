@@ -1,11 +1,17 @@
 ---
 project: fankkuk
 status: passed
-basis: 630fb35da572
+basis: a8d8dde7
 reviewers: [ux-reviewer, ui-reviewer, security-reviewer, code-reviewer]
 ---
 
 # 리뷰 사인오프 — fankkuk (2026-11-14 X 공유 설정·팬당 한도 없앰 · 「주소 설정」 · 생일과 기념일 이동 · 설정 세 화면 재디자인 · 2026-11-13 테마 색 직접 고르기 · 크리에이터 설정 재분류 · 팬 이용 안내 2판·자주 묻는 질문·선물 보내기 2판 · 크리에이터 상세 e판 · 카드 차분한 판 · 아래는 2026-11-12 이전 기록)
+
+## 12. 옮겨진 설정 칸의 옛 주소 (7eb16f4a · a8d8dde7, 2026-11-14)
+
+닿은 표면: 길 안내 로직 하나(옛 주소 #fandom·#link·#gift-link·#days·#verify → 지금 주소, 넘길 곳은 코드 안 표에서만 나온다 — 사용자 입력이 주소로 그대로 가지 않는다) · 프로필 수정의 #칸 스크롤 · 방침 문구 한 줄. 리뷰어: code 하나. 상태·노출 조건이 그대로라 ux 는 뺐다. 새 시각 요소가 없어 ui 도 뺐다. 입력·인가·시크릿에 닿지 않아 security 도 뺐다.
+- code: 중간 1 반영(깨진 % 인코딩 해시 `#%E0` 이면 decodeURIComponent 가 던져 세 화면이 오류로 넘어감 → `shared/lib/navigation/hash-id.ts` 의 hashIdOf 로 다섯 곳을 모음) · 낮음 2(같은 줄 복붙, 위와 같이 풀림)·5(시험에 constructor·toString·__proto__) 반영 · 낮음 3·4(같은 화면에서 #만 바뀔 때)는 BACKLOG.
+- 실행 근거: `npx vitest run` → 414 파일 3692 통과 · tsc 오류 0 · copy:lint 0 · 변이 둘 각각 빨간불(hashIdOf 의 try 지움 → 1 실패 · `Object.hasOwn` → `in` → 1 실패) · 화면(개발 서버 next dev, 로컬 DB, 크리에이터 로그인): /creator/settings#fandom → /creator/profile?tab=channel#fandom · #days → /creator/profile#days · /creator/account#verify → 채널 탭 #verify · #%E0 을 붙인 세 화면 모두 정상으로 그려지고 콘솔 오류 0.
 
 ## 11. X 공유 설정 없앰 · 팬당 월 한도 없앰 · 「주소 설정」 · 생일과 기념일 프로필 탭으로 · 설정 세 화면 재디자인 (2ede450f · bac890a8 · 1d5700dd · 630fb35d, 2026-11-14)
 
