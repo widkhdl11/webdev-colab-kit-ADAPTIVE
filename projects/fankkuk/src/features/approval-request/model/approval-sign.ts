@@ -39,7 +39,7 @@ const NOT_SENT = { ok: false, status: 503, message: "카카오톡 인증 요청�
 const ALREADY = { ok: false, status: 409, message: "이미 처리된 요청입니다. 새로고침해 결과를 확인해 주세요." } as const;
 const NOT_APPROVABLE = { ok: false, status: 409, message: "현재 승인할 수 없는 선물입니다. 새로고침해 주세요." } as const;
 const EXPIRED = { ok: false, status: 409, message: APPROVAL_EXPIRED_MESSAGE } as const;
-const NO_ADDRESS = { ok: false, status: 409, message: "받는 주소를 먼저 등록해 주세요.", code: "no_address" } as const;
+const NO_ADDRESS = { ok: false, status: 409, message: "주소를 먼저 등록해 주세요.", code: "no_address" } as const;
 const NOT_LINKED = { ok: false, status: 409, message: "승인 서명을 먼저 연결해 주세요. 크리에이터 설정에서 연결할 수 있습니다." } as const;
 const TOO_MANY = { ok: false, status: 429, message: "오늘 이 선물에 보낼 수 있는 인증 요청 횟수를 모두 사용했습니다. 내일 다시 요청해 주세요.", code: "too_many" } as const;
 

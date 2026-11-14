@@ -353,7 +353,7 @@ describe("승인 창의 주소 단계 (INV-S13·P16)", () => {
   });
 
   it("INV-S13 (실패경로): 서버가 「주소 없음」으로 거부하면 초점이 「배송지 등록」로 간다", async () => {
-    startSign.mockResolvedValue({ kind: "refused", message: "받는 주소를 먼저 등록해 주세요.", code: "no_address" });
+    startSign.mockResolvedValue({ kind: "refused", message: "주소를 먼저 등록해 주세요.", code: "no_address" });
     render(HOME);
     const d = openApprove();
     await act(async () => button(d, "승인 요청 보내기")?.click());
@@ -433,7 +433,7 @@ describe("승인 창의 주소 단계 (INV-S13·P16)", () => {
   });
 
   it("INV-S13 (실패경로): 서버가 「주소 없음」으로 거부하면 창은 열린 채 입력 폼으로 돌아간다", async () => {
-    startSign.mockResolvedValue({ kind: "refused", message: "받는 주소를 먼저 등록해 주세요.", code: "no_address" });
+    startSign.mockResolvedValue({ kind: "refused", message: "주소를 먼저 등록해 주세요.", code: "no_address" });
     render(HOME);
     const d = openApprove();
     await act(async () => button(d, "승인 요청 보내기")?.click());

@@ -145,12 +145,10 @@ describe("결제 직전에 다시 본다 — 4단계까지 간 뒤 크리에이�
   });
 });
 
-describe("d113 D-2: 지금 보낼 수 없는 크리에이터(이사 중·쉬는 중·이번 달 한도)는 회색 카드 + 이유 한 줄, 고를 수 없다", () => {
-  const LIMIT = "00000000-0000-4000-b000-000000000004";
+describe("d113 D-2: 지금 보낼 수 없는 크리에이터(이사 중·쉬는 중)는 회색 카드 + 이유 한 줄, 고를 수 없다", () => {
   const MOVE = "00000000-0000-4000-b000-000000000005";
   const list: CreatorOption[] = [
     { id: MOMO, name: "모모", platform: "치지직", approvalMinutes: 60 },
-    { id: LIMIT, name: "하루", platform: "SOOP", channelTitle: "하루 일기장", approvalMinutes: 120, limitReached: true },
     { id: NARU, name: "나루", platform: "치지직", approvalMinutes: 60, receiving: { resumeOn: "2026-10-20", birthday: null, anniversaries: [] } },
     { id: MOVE, name: "모아", platform: "치지직", channelTitle: "모아의 방", approvalMinutes: 60, moving: true },
   ];
@@ -160,10 +158,9 @@ describe("d113 D-2: 지금 보낼 수 없는 크리에이터(이사 중·쉬는 
     await settle();
   }
 
-  it("D-2: 한도에 닿은 크리에이터 — 둘째 줄이 한도 안내(다음 달 1일), 라디오가 비활성, 이사 중·쉬는 중과 같은 회색 카드", async () => {
+  it("D-2: 쉬는 중·이사 중 크리에이터 — 둘째 줄이 이유, 라디오가 비활성, 같은 회색 카드(팬당 한도는 2026-11-14 없앰 — 한도 안내 줄은 없다)", async () => {
     await show();
-    expect(card(LIMIT)?.textContent).toContain("이번 달 선물 한도에 도달했습니다. 11월 1일부터 다시 보낼 수 있습니다.");
-    expect(radio(LIMIT)?.disabled).toBe(true);
+    expect(host.textContent).not.toContain("선물 한도");
     expect(radio(NARU)?.disabled).toBe(true);
     expect(radio(MOVE)?.disabled).toBe(true);
     // 2026-11-12 작은 가로 카드(시안 gifts-new-r2): 닉네임 아래 한 줄만 — 플랫폼·승인 시간 없음, 채널 이름도 없음(INV-CN4)
@@ -174,7 +171,6 @@ describe("d113 D-2: 지금 보낼 수 없는 크리에이터(이사 중·쉬는 
     expect(card(NARU)?.textContent).toBe("나루쉬는 중");
     expect(card(MOMO)?.textContent).toBe("모모");
     expect(card(MOVE)?.className).not.toBe(card(MOMO)?.className);
-    expect(card(LIMIT)?.className).toBe(card(MOVE)?.className);
     expect(card(NARU)?.className).toBe(card(MOVE)?.className);
   });
 
@@ -184,8 +180,8 @@ describe("d113 D-2: 지금 보낼 수 없는 크리에이터(이사 중·쉬는 
     expect(card(MOMO)?.className).not.toBe(card(MOVE)?.className);
     await click(radio(MOMO));
     expect(radio(MOMO)?.checked).toBe(true);
-    await click(radio(LIMIT));
-    expect(radio(LIMIT)?.checked).toBe(false);
+    await click(radio(NARU));
+    expect(radio(NARU)?.checked).toBe(false);
     expect(radio(MOMO)?.checked).toBe(true);
   });
 

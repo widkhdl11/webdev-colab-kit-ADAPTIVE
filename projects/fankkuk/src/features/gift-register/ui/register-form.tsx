@@ -13,7 +13,7 @@ import { tierCountText } from "@/entities/parcel/model/box-rows";
 import { PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { formatDuration } from "@/shared/lib/format/datetime";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
-import { anniversaryInWeek, limitReachedMessage, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
+import { anniversaryInWeek, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
 import { hardItemOverlap, type HardItems } from "@/entities/gift-item/model/hard-items";
 import { forcesMetalReport, isItemCategory, ITEM_CATEGORIES, ITEM_CATEGORY_LABEL, ITEM_OTHER_MAX, type ItemCategory } from "@/entities/gift-item/model/item-category";
 import { charCount } from "@/shared/lib/validation/char-count";
@@ -43,10 +43,8 @@ export type CreatorOption = Pick<CreatorCard, "id" | "name" | "platform" | "appr
   Partial<Pick<CreatorCard, "tags" | "channelTitle" | "alias" | "faceTone" | "following" | "handle">> & {
     /** 채널 이사 중(creator-verification INV-V12) — 찾기에는 나오지만 지금은 선물을 받지 않는다 */
     moving?: boolean;
-    /** 공개 받는 상태 — 쉬는 중 날짜·생일·기념일(creator-receiving). 한도 칸은 없다(INV-B6) */
+    /** 공개 받는 상태 — 쉬는 중 날짜·생일·기념일(creator-receiving) */
     receiving?: CreatorReceiving;
-    /** 로그인한 내가 이번 달 이 크리에이터의 한도에 닿았는가 — 내 등록 화면에만 쓴다(INV-B6) */
-    limitReached?: boolean;
     /** 살아 있는 받기 어려운 품목(hard-items) — 고른 종류가 겹치면 결제 전에 안내한다(INV-H8) */
     hardItems?: HardItems;
   };
@@ -561,19 +559,17 @@ tierCountText(summary.counts) || "없음";
               가로가 긴 작은 카드: 프로필 사진 40 · 닉네임 한 줄 · 고름 동그라미 24. 태그·승인 시간은 없다(2026-11-12 사용자, 시안 gifts-new-r2-20261112) */}
           <ul className={f["pick-list"]}>
             {creators.map((c) => {
-              // 지금 보낼 수 없는 크리에이터(이사 중·쉬는 중·이번 달 한도)는 회색 카드, 고를 수 없다(design-rules 25절 — 2026-10-22 d113 D-2).
+              // 지금 보낼 수 없는 크리에이터(이사 중·쉬는 중)는 회색 카드, 고를 수 없다(design-rules 25절 — 2026-10-22 d113 D-2).
               // 판정은 model 의 stopReason 하나 — 「다음」·결제 직전 판정(creatorBlockNotice)과 같은 순서다. 등록은 DB 가 다시 막는다
               const reason = stopReason(c, today);
               const stopped = reason !== null;
-              // 닉네임 아래 한 줄 — 쉬는 중은 「쉬는 중」 한 단어(이유·날짜 뺌, 시안 2판). 이사 중·한도는 시안에 없어 지금 안내 문구를 한 줄로(넘치면 말줄임, 전체는 title)
+              // 닉네임 아래 한 줄 — 쉬는 중은 「쉬는 중」 한 단어(이유·날짜 뺌, 시안 2판). 이사 중은 시안에 없어 지금 안내 문구를 한 줄로(넘치면 말줄임, 전체는 title)
               const stopLine =
                 reason === "resting"
                   ? "쉬는 중"
                   : reason === "moving"
                     ? "채널 변경 확인 중 · 선물 받기 중단"
-                    : reason === "limit"
-                      ? limitReachedMessage(today)
-                      : null;
+                    : null;
               return (
                 <li key={c.id} hidden={!visible.includes(c)}>
                   <label className={`${f.pick} ${stopped ? f.stop : ""}`}>

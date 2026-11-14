@@ -97,7 +97,7 @@ export function CreatorSettingsPage({
   leave: ReactNode;
   /** 승인 서명 연결 여부와 연결한 때(approval-signature INV-S16) — 등록한 이름·생년월일·번호는 오지 않는다 */
   signatureLink: MySignatureLink;
-  /** 받는 상태·팬당 한도·생일·기념일 — 로그인한 크리에이터 본인 것(creator-receiving) */
+  /** 받는 상태 — 로그인한 크리에이터 본인 것(creator-receiving). 팬당 한도는 2026-11-14 없앰, 생일·기념일은 같은 날 프로필 탭으로 */
   receiving: MyCreatorReceiving;
   /** 살아 있는 받기 어려운 품목 — 로그인한 크리에이터 본인 것(hard-items). 없거나 끝났으면 null */
   hardItems: MyHardItems | null;
@@ -146,7 +146,7 @@ export function CreatorSettingsPage({
           계정 설정
         </h1>
         {/* 화면에 나오는 순서대로 — 카카오톡 인증 알림 줄 → 받는 주소 → 받기 설정(선물 받기) → 차단한 팬 → 보안 → 회원 탈퇴 */}
-        <p className="ph-desc">카카오톡 인증 알림·받는 주소·선물 받기·차단한 팬·보안·회원 탈퇴를 관리합니다.</p>
+        <p className="ph-desc">카카오톡 인증 알림·주소 설정·선물 받기·차단한 팬·보안·회원 탈퇴를 관리합니다.</p>
       </header>
 
       <div className={`stack ${s.page}`}>
@@ -172,7 +172,7 @@ export function CreatorSettingsPage({
               </svg>
             </Link>
           )}
-          <Fold id="address" title="받는 주소" meta={addressRegistered ? <StateBadge tone="success" text="등록됨" /> : <StateBadge tone="plain" text="등록 전" />}>
+          <Fold id="address" title="주소 설정" meta={addressRegistered ? <StateBadge tone="success" text="등록됨" /> : <StateBadge tone="plain" text="등록 전" />}>
             <div className={`card card--soft ${s.inner}`}>
               <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={72} height={72} />
               <p className="t-strong">{addressRegistered ? "주소 등록 완료" : "등록된 주소 없음"}</p>

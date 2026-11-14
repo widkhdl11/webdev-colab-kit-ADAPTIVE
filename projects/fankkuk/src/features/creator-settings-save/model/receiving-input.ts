@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { ANNIVERSARY_MAX, ANNIVERSARY_NAME_MAX, MONTHLY_LIMIT_MAX, parseIsoDate } from "@/entities/creator/model/receiving";
+import { ANNIVERSARY_MAX, ANNIVERSARY_NAME_MAX, parseIsoDate } from "@/entities/creator/model/receiving";
 import { charCount } from "@/shared/lib/validation/char-count";
 
-// 크리에이터 받는 양 조절 입력 경계 (creator-receiving INV-B3·B5·B7). 앱 서버가 먼저 꼴을 보고, DB 함수가 같은 규칙으로 다시 검사한다
+// 크리에이터 받는 양 조절 입력 경계 (creator-receiving INV-B3·B7 — 팬당 한도 칸은 2026-11-14 없앰). 앱 서버가 먼저 꼴을 보고, DB 함수가 같은 규칙으로 다시 검사한다
 // (다시 받는 날의 범위·달력에 있는 날·이름 필터는 DB 가 한국 시간 오늘로 판정한다).
 // 본문에서 정해진 칸만 꺼낸다. 크리에이터 ID·계정 ID 칸은 있어도 읽지 않는다(INV-B1).
 
@@ -14,7 +14,6 @@ export const receivingInputSchema = z
       .string()
       .refine((s) => parseIsoDate(s) !== null, "다시 받는 날을 선택해 주세요.")
       .nullable(),
-    monthlyLimit: z.number().int().min(1).max(MONTHLY_LIMIT_MAX).nullable(),
   })
   .refine((v) => !v.resting || v.resumeOn !== null, { message: "쉬는 동안에는 다시 받는 날을 꼭 선택해 주세요.", path: ["resumeOn"] });
 

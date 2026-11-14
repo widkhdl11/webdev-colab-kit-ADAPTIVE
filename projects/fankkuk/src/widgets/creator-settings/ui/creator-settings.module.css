@@ -41,6 +41,7 @@
 .foldBody > section + section { margin-top: 0; }
 /* 저장 버튼과 결과 줄을 한 덩어리로 — 비어 있는 결과 줄이 카드 안 간격(24)을 차지하지 않게 */
 .msg:not(:empty) { margin-top: 12px; }
+.save-end { display: grid; justify-items: end; } /* 프로필 탭 「생일과 기념일」 판 — 저장 버튼·결과 줄을 오른쪽으로 */
 .body-gap { margin-top: 4px; }
 
 /* 받는 주소 — 자물쇠 그림 */

@@ -6,6 +6,7 @@
 - 하네스 개선은 여기가 아니라 docs/references/harness-backlog.md.
 
 ## 미결
+- [ ] **안 쓰는 팬당 한도 칸·함수 지우기** (2026-11-14) — 한도를 없앴고(DECISIONS 11-14) 칸은 제약으로 늘 비어 있다. `creators.monthly_fan_limit`, `my_gift_limit_reached`, `receiving_counted_orders`, 등록 함수의 한도 검사·FKR02, `update_my_creator_receiving` 의 `p_monthly_limit` 인자, 화면의 SenderRefusal `limit` 문구가 남아 있다. 지우려면 등록 함수를 다시 만드는 마이그레이션(운영 적용 포함)이 필요하다. X 계정 칸 정리와 같이 하면 한 번에 끝난다. 낮음.
 - [ ] **안 쓰는 X 계정·태그 허용 DB 칸 지우기** (2026-11-14) — 「X 공유 설정」을 화면에서 없앴고(DECISIONS 11-14) `creators` 의 X 계정·태그 허용 칸, `update_my_reply_settings`·`my_reply_settings` 함수, 카드 읽기 함수의 `x_tag` 출력은 남아 있다. 지우려면 마이그레이션(운영 적용 포함)이 필요하다. 공개 답장 모음 함수(11-13 거둠)와 같이 정리하면 한 번에 끝난다. 낮음.
 - [ ] **크리에이터 설정 화면 콘솔 하이드레이션 경고** (2026-11-13) — 로컬 개발 서버 `/creator/settings` 를 열면 「A tree hydrated but some attributes of the server rendered HTML didn't match」 1건. 답장 모음 스위치를 뺀 날 처음 봤지만 그 변경과 관계있는지는 확인하지 못했다. 바꾸기 전 커밋에서 같은 경고가 나는지부터.
 - [ ] **상세 페이지 선물함 상태 읽기를 한 번에** (2026-11-13 보안 리뷰 낮음) — `widgets/creator-profile/api/load-creator-link.ts` 가 팬일 때 공개 선물함마다 `revgift_box_for_fan` 을 따로 부른다. 선물함 수 상한이 스펙·SQL 에 없다(크리에이터 본인만 늘릴 수 있어 외부 남용은 아님). 상한을 두거나 여러 선물함을 한 번에 읽는 함수로.

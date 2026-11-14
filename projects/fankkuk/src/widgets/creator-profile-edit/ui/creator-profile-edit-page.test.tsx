@@ -99,6 +99,17 @@ describe("프로필 수정 — 두 탭 (2026-11-13 재분류 · 같은 날 「�
     for (const id of ["pe-name", "pe-bio", "pe-photo"]) expect(host.querySelector(`#${id}`)).toBeNull();
     expect([...host.querySelectorAll("[data-x]")].map((el) => el.getAttribute("data-x"))).toEqual(["channel"]);
   });
+
+  it("프로필 탭 구역(생일과 기념일 — 2026-11-14 계정 설정에서 옮김)은 프로필 탭에만, 소개 판 뒤에 — 채널 탭에는 없다", async () => {
+    const sections = { profileSections: <p data-x="profile">생일과 기념일</p>, channelSections: <p data-x="channel">채널 구역</p> };
+    await render(sections);
+    const days = host.querySelector("[data-x='profile']")!;
+    expect(days).not.toBeNull();
+    expect(host.querySelector("#pe-bio")!.compareDocumentPosition(days) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect([...host.querySelectorAll("[data-x]")].map((el) => el.getAttribute("data-x"))).toEqual(["profile"]);
+    await render({ tab: "channel", ...sections });
+    expect([...host.querySelectorAll("[data-x]")].map((el) => el.getAttribute("data-x"))).toEqual(["channel"]);
+  });
 });
 
 describe("프로필 수정 — 미리보기는 탭마다 하나, 오른쪽 열 (2026-11-13 본체 지적)", () => {

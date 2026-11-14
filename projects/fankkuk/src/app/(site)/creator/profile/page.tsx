@@ -5,12 +5,15 @@ import { readCreatorCards } from "@/entities/creator/api/creator-reads";
 import { readTagOptions } from "@/entities/creator/api/creator-tag-reads";
 import { readApiCheckPlatforms, readMyVerifications, readMyVerificationState } from "@/entities/creator/api/creator-verification-reads";
 import { readMyCreatorSettings } from "@/entities/creator/api/my-creator-settings";
+import { readMyCreatorReceiving } from "@/entities/creator/api/receiving-reads";
+import { kstToday } from "@/entities/creator/model/receiving";
 import { creatorBackgroundUrl, creatorPhotoUrl, creatorSymbolUrl } from "@/entities/creator/model/link-images";
 import { CREATOR_PROFILE_EDIT, creatorProfileTabHref, FAN_HOME, parseCreatorProfileTab } from "@/entities/session/model/home-path";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
 import { CreatorChannelOwnerRow } from "@/widgets/creator-account/ui/creator-account-page";
 import { showsLinkSection } from "@/widgets/creator-profile-edit/model/channel-tab";
 import { CreatorProfileEditPage } from "@/widgets/creator-profile-edit/ui/creator-profile-edit-page";
+import { DaysSection } from "@/widgets/creator-settings/ui/days-section";
 import { FandomDraftProvider, FandomForm, FandomPreview } from "@/widgets/creator-settings/ui/fandom-section";
 import { LinkSection } from "@/widgets/creator-settings/ui/link-section";
 import { MyShell } from "@/widgets/my-nav/ui/my-shell";
@@ -24,6 +27,7 @@ export const dynamic = "force-dynamic";
 // 로그인·역할 확인은 옮기기 전과 같은 함수(loadSession)와 같은 갈래다. 모두 로그인한 크리에이터 본인 것만 읽는다:
 // - 모든 탭: 공개 이름·소개·찾기 노출·태그·팬덤 이름·두 색(my_creator_settings — 같은 읽기에 실려 오는 가린 휴대폰 번호는 이 화면에서 쓰지 않는다. 보안은 계정 설정), 프로필 사진·링크용 아이디(my_creator_link), 배경사진·심볼(my_creator_look).
 //   태그 선택지는 고를 수 있는 것(숨기지 않은 것)만 — creator-tags INV-T3.
+// - 프로필 탭만: 생일과 기념일(my_creator_receiving — 2026-11-14 계정 설정 「받기 설정」에서 옮김, creator-receiving INV-B1·B7).
 // - 채널 탭만(옛 상세 설정·계정 설정에서 옮김): 채널 본인 확인(creator-verification INV-V11 — 링크 칸이 확인 여부를 쓰고 채널 소유자 확인 줄이 그린다),
 //   팬덤 카드 미리보기의 공개 카드 값(creator_by_id — 본인 확인 전이라 공개 카드가 없으면 설정 값으로 채운다).
 // 채널 탭 미리보기는 팬덤 카드 하나(오른쪽 열) — 팬덤 입력 판과 카드가 입력 중 값을 같이 보도록 FandomDraftProvider 로 감싼다.
@@ -44,6 +48,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   // 크리에이터 역할인데 크리에이터 줄이 없으면 이 화면을 그릴 수 없다 — 숨기지 않고 오류로 드러낸다
   if (!settings || !link || !look) throw new Error("크리에이터 줄을 찾지 못했다");
   const photoBase = readPublicStorageBase();
+
+  let profileSections: ReactNode = null;
+  if (tab === "profile") {
+    const receiving = await readMyCreatorReceiving(supabase);
+    if (!receiving) throw new Error("크리에이터 줄을 찾지 못했다");
+    profileSections = <DaysSection initial={receiving} today={kstToday(new Date())} />;
+  }
 
   let channel: { sections: ReactNode; preview: ReactNode } | null = null;
   if (tab === "channel") {
@@ -87,6 +98,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
           // 탭마다 입력 상태를 새로 — 다른 탭에서 저장한 값을 서버에서 다시 받는다
           key={tab}
           tab={tab}
+          profileSections={profileSections}
           channelSections={channel?.sections}
           channelPreview={channel?.preview}
           name={settings.publicName}

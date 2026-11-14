@@ -6,7 +6,6 @@ import { computeCharge } from "@/entities/payment/model/charge";
 import { z } from "zod";
 import { quotedTotalSchema, type PriceTable } from "@/entities/payment/model/price-table";
 import type { Viewer } from "@/entities/session/model/viewer";
-import { kstToday, limitReachedMessage } from "@/entities/creator/model/receiving";
 import type { CreatorRelationReader } from "../api/creator-relation";
 import { GIFT_PRICE_CHANGED_MESSAGE, parseRegisterInput, type RegisterFormValues } from "./register-input";
 import { decideSender, refusalStatus, SENDER_REFUSAL_MESSAGE, senderRoleAllowed } from "./sender-rule";
@@ -110,13 +109,12 @@ export async function registerGift(
       }
       if (e instanceof SenderRefusedError) {
         // 본인 확인 전·차단(unknown_creator)과 채널 이사 중(INV-V12)은 DB 가 처음 판정하는 정상 경로다. 나머지는 서버 판정이 빠졌다는 뜻이다
-        // 쉬는 중·한도(creator-receiving INV-B2·B4)도 DB 만 판정하는 정상 경로다
+        // 쉬는 중(creator-receiving INV-B2)도 DB 만 판정하는 정상 경로다. 한도(limit)는 2026-11-14 없애 DB 가 내지 않는다 — 오면 기록한다
         // 받기 어려운 품목 등록 막기(hard-items INV-H7)도 DB 만 판정한다
         const dbOnly =
-          e.reason === "unknown_creator" || e.reason === "moving" || e.reason === "resting" || e.reason === "limit" || e.reason === "hard_item";
+          e.reason === "unknown_creator" || e.reason === "moving" || e.reason === "resting" || e.reason === "hard_item";
         if (!dbOnly) console.error(`선물 등록: 서버 판정을 지나 DB 가 받지 않았다 (${e.reason})`);
-        // INV-B6: 한도 문구는 하나 — 다음 달 1일만 넣고 한도 숫자·남은 개수는 넣지 않는다
-        const message = e.reason === "limit" ? limitReachedMessage(kstToday((deps.now ?? (() => new Date()))())) : SENDER_REFUSAL_MESSAGE[e.reason];
+        const message = SENDER_REFUSAL_MESSAGE[e.reason];
         // hard-items INV-H7: 화면이 이유를 알아야 2단계로 돌아가 안내를 다시 보인다(요금 변경 409 와 가르기)
         return { ok: false, status: refusalStatus(e.reason), message, ...(e.reason === "hard_item" ? { reason: "hard_item" as const } : {}) };
       }

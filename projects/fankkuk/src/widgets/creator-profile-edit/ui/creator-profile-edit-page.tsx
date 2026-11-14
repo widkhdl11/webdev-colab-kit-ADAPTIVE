@@ -38,6 +38,8 @@ import s from "./creator-profile-edit.module.css";
 export type CreatorProfileEditProps = {
   /** 지금 탭(주소 ?tab=) — 없으면 프로필 */
   tab?: CreatorProfileTab;
+  /** 프로필 탭 아래에 놓을 구역(생일과 기념일 — 2026-11-14 계정 설정에서 옮김) — 앱 레이어가 다른 위젯 구역을 넘긴다 */
+  profileSections?: ReactNode;
   /** 채널 탭 아래에 놓을 구역(채널 주소 · 팬덤 · 채널 소유자 확인) — 앱 레이어가 다른 위젯 구역을 넘긴다 */
   channelSections?: ReactNode;
   /** 채널 탭 오른쪽 열의 미리보기 하나(팬덤 카드 미리보기) */
@@ -73,7 +75,7 @@ function ProfileTabs({ current }: { current: CreatorProfileTab }) {
   );
 }
 
-export function CreatorProfileEditPage({ tab = "profile", channelSections, channelPreview, ...p }: CreatorProfileEditProps) {
+export function CreatorProfileEditPage({ tab = "profile", profileSections, channelSections, channelPreview, ...p }: CreatorProfileEditProps) {
   const router = useRouter();
   const [name, setName] = useState(p.name);
   const [intro, setIntro] = useState(p.intro);
@@ -250,6 +252,7 @@ export function CreatorProfileEditPage({ tab = "profile", channelSections, chann
               </div>
               {formEnd}
             </form>
+            {profileSections}
             </>
           ) : null}
 

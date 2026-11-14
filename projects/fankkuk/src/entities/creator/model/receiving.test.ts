@@ -5,8 +5,6 @@ import {
   ddayLabel,
   isResting,
   kstToday,
-  limitReachedMessage,
-  nextMonthFirst,
   restingMessage,
   restingNotice,
   upcomingDday,
@@ -106,19 +104,6 @@ describe("INV-B2: 쉬는 중 안내 하나 — 크리에이터 페이지·등록
     expect(restingNotice("2026-10-10", today)).toBeNull();
     expect(restingNotice("2026-10-01", today)).toBeNull();
     expect(restingNotice(null, today)).toBeNull();
-  });
-});
-
-describe("INV-B6: 한도에 닿은 팬에게 보이는 문구 하나", () => {
-  it("INV-B6 S6b: 다음 달 1일 — 10월 10일이면 11월 1일, 12월 31일이면 다음 해 1월 1일", () => {
-    expect(nextMonthFirst(d(2026, 10, 10))).toEqual(d(2026, 11, 1));
-    expect(nextMonthFirst(d(2026, 12, 31))).toEqual(d(2027, 1, 1));
-  });
-
-  it("INV-B6 S6b: 문구는 「이번 달 선물 한도에 도달했습니다. 11월 1일부터 다시 보낼 수 있습니다.」 — 숫자(한도·남은 개수)가 없다", () => {
-    const text = limitReachedMessage(d(2026, 10, 10));
-    expect(text).toBe("이번 달 선물 한도에 도달했습니다. 11월 1일부터 다시 보낼 수 있습니다.");
-    expect(limitReachedMessage(d(2026, 12, 3))).toBe("이번 달 선물 한도에 도달했습니다. 1월 1일부터 다시 보낼 수 있습니다.");
   });
 });
 

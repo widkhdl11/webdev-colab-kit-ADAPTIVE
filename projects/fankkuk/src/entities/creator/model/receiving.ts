@@ -9,7 +9,7 @@ export type MonthDay = { month: number; day: number };
 export type Anniversary = { name: string; month: number; day: number };
 export type Dday = { kind: "birthday" | "anniversary"; name: string; daysLeft: number };
 
-/** 크리에이터의 공개 받는 상태 — 한도는 없다(INV-B6). resumeOn 은 쉬는 중일 때만(YYYY-MM-DD). */
+/** 크리에이터의 공개 받는 상태. resumeOn 은 쉬는 중일 때만(YYYY-MM-DD). */
 export type CreatorReceiving = {
   resumeOn: string | null;
   birthday: MonthDay | null;
@@ -108,17 +108,6 @@ export function restingNotice(resumeOn: string | null, today: CalendarDate): str
   return resumeOn !== null && isResting(resumeOn, today) ? restingMessage(resumeOn) : null;
 }
 
-/** 다음 달 1일. */
-export function nextMonthFirst(today: CalendarDate): CalendarDate {
-  return today.month === 12 ? { year: today.year + 1, month: 1, day: 1 } : { year: today.year, month: today.month + 1, day: 1 };
-}
-
-/** INV-B6: 한도에 닿은 팬에게 보이는 문구 하나 — 한도 숫자·남은 개수를 넣지 않는다. */
-export function limitReachedMessage(today: CalendarDate): string {
-  const n = nextMonthFirst(today);
-  return `이번 달 선물 한도에 도달했습니다. ${n.month}월 ${n.day}일부터 다시 보낼 수 있습니다.`;
-}
-
 /** 날짜에 n 일을 더한다. */
 export function addDays(d: CalendarDate, n: number): CalendarDate {
   const t = new Date(Date.UTC(d.year, d.month - 1, d.day) + n * DAY_MS);
@@ -136,16 +125,13 @@ export function resumeRange(today: CalendarDate): { min: string; max: string } {
   return { min: toIsoDate(addDays(today, 1)), max: toIsoDate(addDays(today, RESUME_MAX_DAYS)) };
 }
 
-/** INV-B5: 팬당 한 달 한도 — 꺼짐(null) 또는 1~10. */
-export const MONTHLY_LIMIT_MAX = 10;
 /** INV-B7: 기념일 최대 개수와 이름 길이. */
 export const ANNIVERSARY_MAX = 3;
 export const ANNIVERSARY_NAME_MAX = 12;
 
-/** 크리에이터 본인 설정 화면의 값 — 한도는 본인에게만 보인다(INV-B6). */
+/** 크리에이터 본인 설정 화면의 값. 팬당 한도는 2026-11-14 없앴다(INV-B4~B6). */
 export type MyCreatorReceiving = {
   resumeOn: string | null;
-  monthlyLimit: number | null;
   birthday: MonthDay | null;
   anniversaries: readonly Anniversary[];
 };

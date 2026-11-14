@@ -283,16 +283,10 @@ describe("받는 양 조절 (creator-receiving INV-B2·B4·B6·B9)", () => {
     expect(r).toEqual({ ok: false, status: 409, message: "현재 선물 받기를 중단한 크리에이터입니다." });
   });
 
-  it("INV-B6 S6b (실패경로): DB 가 한도로 거부하면 409 와 문구 하나 — 다음 달 1일, 숫자 없음", async () => {
+  it("팬당 한도(2026-11-14 없앰): DB 가 옛 한도 거부를 내더라도 409 와 고정 문구 하나 — 날짜를 계산하지 않는다", async () => {
     const { deps } = setup();
     const r = await registerGift({ ...deps, store: refusingStore("limit"), viewer: FAN, now: () => new Date("2026-10-10T03:00:00Z") }, form);
-    expect(r).toEqual({ ok: false, status: 409, message: "이번 달 선물 한도에 도달했습니다. 11월 1일부터 다시 보낼 수 있습니다." });
-  });
-
-  it("INV-B6 S6b: 다음 달 1일은 한국 시간으로 정한다 — UTC 10월 31일 16시(한국 11월 1일 1시)면 「12월 1일」", async () => {
-    const { deps } = setup();
-    const r = await registerGift({ ...deps, store: refusingStore("limit"), viewer: FAN, now: () => new Date("2026-10-31T16:00:00Z") }, form);
-    expect(r).toEqual({ ok: false, status: 409, message: "이번 달 선물 한도에 도달했습니다. 12월 1일부터 다시 보낼 수 있습니다." });
+    expect(r).toEqual({ ok: false, status: 409, message: "이번 달 선물 한도에 도달했습니다. 다음 달 1일부터 다시 보낼 수 있습니다." });
   });
 
   it("INV-H7 S7 (실패경로): DB 가 받기 어려운 품목으로 거부하면 409 와 이유(hard_item) — 화면이 요금 변경과 가른다", async () => {

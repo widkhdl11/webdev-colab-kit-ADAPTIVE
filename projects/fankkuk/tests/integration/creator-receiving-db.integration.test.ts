@@ -4,7 +4,7 @@ import { createSupabasePaymentStore } from "@/entities/payment/api/supabase-paym
 import { SenderRefusedError } from "@/entities/payment/api/payment-store";
 import { readTierPrices } from "@/entities/payment/api/read-tier-prices";
 import { computeCharge } from "@/entities/payment/model/charge";
-import { adminClient, anonClient, followForTest, holdRowLock, payTestOrder, psql, SEED, signedInClient } from "./helpers";
+import { adminClient, anonClient, followForTest, holdRowLock, payTestOrder, psql, psqlError, SEED, signedInClient } from "./helpers";
 import { approveRpc } from "./helpers";
 import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verification-helpers";
 
@@ -196,12 +196,12 @@ describe("INV-B1: 받는 상태·한도·생일·기념일은 그 크리에이�
   });
 
   it("INV-B1: 본인은 자기 설정을 다시 읽는다(my_creator_receiving) — 다른 크리에이터 것은 오지 않는다", async () => {
-    expect((await saveReceiving(A.login, { p_resting: false, p_resume_on: null, p_monthly_limit: 2 })).error).toBeNull();
+    expect((await saveReceiving(A.login, { p_resting: false, p_resume_on: null, p_monthly_limit: null })).error).toBeNull();
     expect((await saveDays(A.login, { p_birthday_month: 3, p_birthday_day: 10, p_anniversaries: [{ name: "데뷔일", month: 5, day: 1 }] })).error).toBeNull();
     const mine = await (await client(A.login)).rpc("my_creator_receiving");
     expect(mine.error).toBeNull();
     expect(mine.data).toEqual([
-      { resume_on: null, monthly_limit: 2, birthday_month: 3, birthday_day: 10, anniversaries: [{ name: "데뷔일", month: 5, day: 1 }] },
+      { resume_on: null, monthly_limit: null, birthday_month: 3, birthday_day: 10, anniversaries: [{ name: "데뷔일", month: 5, day: 1 }] },
     ]);
     const other = await (await client(B.login)).rpc("my_creator_receiving");
     expect((other.data as { monthly_limit: number | null }[])[0]?.monthly_limit ?? null).toBeNull();
@@ -272,143 +272,33 @@ describe("INV-B3: 다시 받는 날은 꼭 정하고, 내일부터 365일 안", 
   });
 });
 
-describe("INV-B4: 한도에 닿은 팬은 이번 달 새 주문을 만들 수 없다", () => {
-  async function setLimit(n: number | null) {
-    const r = await saveReceiving(A.login, { p_resting: false, p_resume_on: null, p_monthly_limit: n });
-    if (r.error) throw new Error(`한도 저장 실패: ${r.error.code} ${r.error.message}`);
-  }
-
-  it("INV-B4 S4 (실패경로): 한도 2, 이번 달 결제 완료 1·결제 대기 1 이면 세 번째 등록이 「이번 달 한도」(FKR02)로 거부된다", async () => {
-    await setLimit(2);
-    const paid = await registerOk(FAN_X.id, A.creatorId);
-    await payTestOrder(paid);
-    await registerOk(FAN_X.id, A.creatorId); // 결제 대기
-    const r = await register(FAN_X.id, A.creatorId);
-    expect(r.error?.code).toBe("FKR02");
-    expect(ordersOf(FAN_X.id, A.creatorId)).toBe(2);
-  });
-
-  it("INV-B4 S4b: 이번 달 주문 2개 중 1개가 거절이면 등록된다", async () => {
-    await setLimit(2);
-    await registerOk(FAN_X.id, A.creatorId);
-    const declined = await registerOk(FAN_X.id, A.creatorId);
-    expect(await decline(A.login, await payTestOrder(declined))).toBe("declined");
-    expect((await register(FAN_X.id, A.creatorId)).error).toBeNull();
-    expect(ordersOf(FAN_X.id, A.creatorId)).toBe(3);
-  });
-
-  it("INV-B4 S4b: 결제가 실패로 닫힌 주문과 지난달 주문은 세지 않는다", async () => {
-    await setLimit(1);
-    const failed = await registerOk(FAN_X.id, A.creatorId);
-    const s = await adminClient().rpc("settle_payment", {
-      p_toss_order_id: failed.tossOrderId,
-      p_status: "failed",
-      p_payment_key: null,
-      p_request_id: null,
-      p_payload: null,
-      p_requested_at: null,
-    });
-    expect(s.error).toBeNull();
-    const old = await registerOk(FAN_X.id, A.creatorId);
-    psql(
-      `begin; set local session_replication_role = replica; update public.orders set created_at = (date_trunc('month', now() at time zone 'Asia/Seoul') - interval '12 hours') at time zone 'Asia/Seoul' where id = '${old.orderId}'; commit;`,
-    );
-    expect((await register(FAN_X.id, A.creatorId)).error).toBeNull();
-    // 이번 달에 센 것이 하나가 됐으니 다음은 막힌다 — 위 두 줄을 안 센 것이지 한도가 꺼진 것이 아니다
-    expect((await register(FAN_X.id, A.creatorId)).error?.code).toBe("FKR02");
-  });
-
-  /** 그 주문의 상태·만든 시각을 시험이 정한다(트리거 없이). */
-  function setOrder(orderId: string, set: string): void {
-    psql(`begin; set local session_replication_role = replica; update public.orders set ${set} where id = '${orderId}'; commit;`);
-  }
-
-  it("INV-B4 S4b: 반려(7일 자동, expired)로 끝난 주문은 세지 않는다", async () => {
-    await setLimit(1);
-    const o = await registerOk(FAN_X.id, A.creatorId);
-    setOrder(o.orderId, "status = 'expired', registered_at = now()");
-    expect((await register(FAN_X.id, A.creatorId)).error).toBeNull();
-    expect((await register(FAN_X.id, A.creatorId)).error?.code).toBe("FKR02");
-  });
-
-  it("INV-B4 S4b: 취소(canceled)로 끝난 주문은 세지 않는다", async () => {
-    await setLimit(1);
-    const o = await registerOk(FAN_X.id, A.creatorId);
-    setOrder(o.orderId, "status = 'canceled', registered_at = now()");
-    expect((await register(FAN_X.id, A.creatorId)).error).toBeNull();
-    expect((await register(FAN_X.id, A.creatorId)).error?.code).toBe("FKR02");
-  });
-
-  const kstMonthStart = "(date_trunc('month', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul')";
-
-  it("INV-B4: 이번 달은 한국 시간 1일 0시부터 — 그 1분 뒤 주문은 센다", async () => {
-    await setLimit(1);
-    const o = await registerOk(FAN_X.id, A.creatorId);
-    setOrder(o.orderId, `created_at = ${kstMonthStart} + interval '1 minute'`);
-    expect((await register(FAN_X.id, A.creatorId)).error?.code).toBe("FKR02");
-  });
-
-  it("INV-B4 (실패경로): 한국 시간 1일 0시 1분 전 주문은 지난달이라 세지 않는다", async () => {
-    await setLimit(1);
-    const o = await registerOk(FAN_X.id, A.creatorId);
-    setOrder(o.orderId, `created_at = ${kstMonthStart} - interval '1 minute'`);
-    expect((await register(FAN_X.id, A.creatorId)).error).toBeNull();
-  });
-
-  it("INV-B4 S4c (동시): 한도 1, 이번 달 주문 0 에서 같은 팬이 동시에 두 번 등록하면 하나만 만들어진다", async () => {
-    await setLimit(1);
-    followForTest(FAN_X.id, A.creatorId);
-    // 크리에이터 줄을 잠가 두 등록을 그 뒤에 줄 세운다 — 풀리는 순간 둘이 확실히 겹친다
-    const hold = await holdRowLock(`select 1 from public.creators where id = '${A.creatorId}' for update`, 2);
-    const results = await Promise.all([register(FAN_X.id, A.creatorId), register(FAN_X.id, A.creatorId)]);
-    await hold.released;
-    expect(results.map((r) => r.error?.code ?? "ok").sort()).toEqual(["FKR02", "ok"]);
-    expect(ordersOf(FAN_X.id, A.creatorId)).toBe(1);
-  });
-
-  it("INV-B4 S4d: 한도 1 에 팬 X 가 1개 보냈어도 다른 팬 Y 는 등록된다(한도는 팬마다)", async () => {
-    await setLimit(1);
-    await registerOk(FAN_X.id, A.creatorId);
-    expect((await register(FAN_Y.id, A.creatorId)).error).toBeNull();
-    expect((await register(FAN_X.id, A.creatorId)).error?.code).toBe("FKR02");
-  });
-
-  it("INV-B4: 한도는 크리에이터마다 — A 에 닿은 팬도 B 에게는 보낸다", async () => {
-    await setLimit(1);
-    await registerOk(FAN_X.id, A.creatorId);
-    expect((await register(FAN_X.id, B.creatorId)).error).toBeNull();
-  });
-});
-
-describe("INV-B5: 한도는 꺼짐 또는 1~10, 바꾸면 다음 등록부터", () => {
-  it("INV-B5 S5 (실패경로): 0·11·-1 은 22023 으로 거부되고 한도 그대로", async () => {
-    for (const n of [0, 11, -1]) {
-      expect([n, (await saveReceiving(A.login, { p_resting: false, p_resume_on: null, p_monthly_limit: n })).error?.code]).toEqual([n, "22023"]);
+describe("팬당 한 달 한도 없앰 (2026-11-14, creator-receiving INV-B4~B6 거둠 — 마이그레이션 20261114000001)", () => {
+  it("INV-B5 S5 (실패경로): 저장 함수로 한도를 켜려 하면(1·2·10) 거부되고 한도는 비어 있다 — 범위 밖(11)도 거부", async () => {
+    for (const n of [1, 2, 10, 11]) {
+      const r = await saveReceiving(A.login, { p_resting: false, p_resume_on: null, p_monthly_limit: n });
+      expect([n, r.error?.code === "23514" || r.error?.code === "22023"]).toEqual([n, true]);
     }
     expect(receivingOf(A.creatorId)).toBe("|||");
+    expect((await saveReceiving(A.login, { p_resting: false, p_resume_on: null, p_monthly_limit: null })).error).toBeNull();
   });
 
-  it("INV-B5 S5: 1·10·꺼짐은 저장된다", async () => {
-    for (const [n, want] of [[1, "1"], [10, "10"], [null, ""]] as const) {
-      expect((await saveReceiving(A.login, { p_resting: false, p_resume_on: null, p_monthly_limit: n })).error).toBeNull();
-      expect(receivingOf(A.creatorId)).toBe(`|${want}||`);
-    }
+  it("INV-B5 S5 (실패경로): DB 제약 — 관리자 권한으로 표에 직접 넣어도 한도 값은 들어가지 않는다", () => {
+    expect(psql(`select count(*) from pg_constraint where conname = 'creators_monthly_fan_limit_off'`)).toBe("1");
+    expect(psqlError(`update public.creators set monthly_fan_limit = 1 where id = '${A.creatorId}'`)).not.toBeNull();
+    expect(psql(`select count(*) from public.creators where monthly_fan_limit is not null`)).toBe("0");
   });
 
-  it("INV-B5 S5b: 한도 3 에 이번 달 주문 3개, 한도를 1로 바꾸면 3개는 그대로 있고 다음 등록이 거부된다", async () => {
-    expect((await saveReceiving(A.login, { p_resting: false, p_resume_on: null, p_monthly_limit: 3 })).error).toBeNull();
-    const orders = [await registerOk(FAN_X.id, A.creatorId), await registerOk(FAN_X.id, A.creatorId), await registerOk(FAN_X.id, A.creatorId)];
-    await payTestOrder(orders[0]);
-    expect((await saveReceiving(A.login, { p_resting: false, p_resume_on: null, p_monthly_limit: 1 })).error).toBeNull();
-    const statuses = psql(`select string_agg(status::text, ',' order by created_at) from public.orders where id in (${orders.map((o) => `'${o.orderId}'`).join(", ")})`);
-    expect(statuses).toBe("registered,pending_payment,pending_payment");
-    expect((await register(FAN_X.id, A.creatorId)).error?.code).toBe("FKR02");
+  it("INV-B4 S4: 같은 팬이 한 크리에이터에게 이번 달 여러 번(결제 완료·대기 섞어 4개) 보내도 막히지 않는다 · 한도 판정 함수는 빈 목록", async () => {
+    const paid = await registerOk(FAN_X.id, A.creatorId);
+    await payTestOrder(paid);
+    for (let i = 0; i < 3; i += 1) await registerOk(FAN_X.id, A.creatorId);
+    expect(ordersOf(FAN_X.id, A.creatorId)).toBe(4);
+    const x = await (await client(FAN_X.login)).rpc("my_gift_limit_reached", { p_creator_ids: [A.creatorId, B.creatorId] });
+    expect(x.error).toBeNull();
+    expect(x.data).toEqual([]);
   });
-});
 
-describe("INV-B6: 한도는 그 팬 본인에게만 보인다", () => {
-  it("INV-B6 S6: 한도 켜진 크리에이터의 공개 응답(크리에이터 페이지·찾기·목록·받는 상태)에 한도 칸이 없다 — 로그인 안 한 사람·다른 팬 모두", async () => {
-    expect((await saveReceiving(A.login, { p_resting: false, p_resume_on: null, p_monthly_limit: 2 })).error).toBeNull();
+  it("INV-B6 S6: 공개 응답(크리에이터 페이지·찾기·목록·받는 상태)에 한도 칸이 없다 — 로그인 안 한 사람·다른 팬 모두", async () => {
     const viewers: SupabaseClient[] = [anonClient(), await client(FAN_Y.login)];
     for (const v of viewers) {
       const calls: [string, Record<string, unknown>][] = [
@@ -423,31 +313,8 @@ describe("INV-B6: 한도는 그 팬 본인에게만 보인다", () => {
         const row = (r.data as Record<string, unknown>[]).find((x) => x.id === A.creatorId);
         expect([fn, row !== undefined]).toEqual([fn, true]);
         expect([fn, Object.keys(row ?? {}).filter((k) => /limit|quota|remain|count/i.test(k))]).toEqual([fn, []]);
-        expect([fn, JSON.stringify(row).includes('":2')]).toEqual([fn, false]);
       }
     }
-  });
-
-  it("INV-B6 S6b: 한도 판정 함수는 로그인한 팬 본인의 것만 — 닿은 팬 X 는 그 크리에이터가 오고, 다른 팬 Y 는 오지 않는다", async () => {
-    expect((await saveReceiving(A.login, { p_resting: false, p_resume_on: null, p_monthly_limit: 1 })).error).toBeNull();
-    await registerOk(FAN_X.id, A.creatorId);
-    const x = await (await client(FAN_X.login)).rpc("my_gift_limit_reached", { p_creator_ids: [A.creatorId, B.creatorId] });
-    expect(x.error).toBeNull();
-    expect(x.data).toEqual([A.creatorId]);
-    const y = await (await client(FAN_Y.login)).rpc("my_gift_limit_reached", { p_creator_ids: [A.creatorId, B.creatorId] });
-    expect(y.error).toBeNull();
-    expect(y.data).toEqual([]);
-  });
-
-  it("INV-B6 (실패경로): 한도 판정 함수에 다른 팬 ID 를 넣을 칸이 없고, 로그인 안 하면 부를 수 없다", async () => {
-    expect((await saveReceiving(A.login, { p_resting: false, p_resume_on: null, p_monthly_limit: 1 })).error).toBeNull();
-    await registerOk(FAN_X.id, A.creatorId);
-    const args = psql(`select pg_get_function_identity_arguments('public.my_gift_limit_reached'::regproc)`);
-    expect(args).toBe("p_creator_ids uuid[]");
-    const forged = await (await client(FAN_Y.login)).rpc("my_gift_limit_reached", { p_creator_ids: [A.creatorId], p_fan_id: FAN_X.id });
-    expect(forged.error).not.toBeNull();
-    const anon = await anonClient().rpc("my_gift_limit_reached", { p_creator_ids: [A.creatorId] });
-    expect(anon.error !== null || (anon.data as unknown[]).length === 0).toBe(true);
   });
 });
 
@@ -635,9 +502,8 @@ describe("DB 거부를 앱 오류 종류로 — 실제 저장소로 등록 (INV-
     await expect(storeCreate(A.creatorId)).rejects.toSatisfy((e) => e instanceof SenderRefusedError && e.reason === "resting");
   });
 
-  it("INV-B6 (실패경로): 한도에 닿았으면 SenderRefusedError(limit)", async () => {
-    expect((await saveReceiving(A.login, { p_resting: false, p_resume_on: null, p_monthly_limit: 1 })).error).toBeNull();
+  it("INV-B4: 팬당 한도 없앰(2026-11-14) — 이번 달 이미 보낸 팬도 결제 저장소로 다시 만들 수 있다", async () => {
     await registerOk(FAN_X.id, A.creatorId);
-    await expect(storeCreate(A.creatorId)).rejects.toSatisfy((e) => e instanceof SenderRefusedError && e.reason === "limit");
+    await expect(storeCreate(A.creatorId)).resolves.toBeDefined();
   });
 });

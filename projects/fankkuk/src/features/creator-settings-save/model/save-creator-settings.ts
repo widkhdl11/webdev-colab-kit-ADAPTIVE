@@ -106,18 +106,18 @@ export async function saveCreatorNotify(deps: SaveCreatorSettingsDeps, body: unk
   return call(deps, "set_notification_instant", { p_instant: parsed.data.instant });
 }
 
-// creator-receiving INV-B1·B3·B5: 받는 상태·다시 받는 날·팬당 한도. 크리에이터 ID 는 넘기지 않는다 — DB 가 로그인 토큰으로 정한다.
+// creator-receiving INV-B1·B3: 받는 상태·다시 받는 날. 팬당 한도는 2026-11-14 없앴다 — 늘 null 을 넘긴다(DB 제약도 null 만 받는다). 크리에이터 ID 는 넘기지 않는다 — DB 가 로그인 토큰으로 정한다.
 export async function saveCreatorReceiving(deps: SaveCreatorSettingsDeps, body: unknown): Promise<SaveCreatorSettingsResult> {
   const denied = gate(deps.viewer);
   if (denied) return denied;
   const parsed = receivingInputSchema.safeParse(body);
   if (!parsed.success) return { ok: false, status: 400, message: parsed.error.issues[0]?.message ?? "입력한 정보를 확인해 주세요." };
-  const { resting, resumeOn, monthlyLimit } = parsed.data;
+  const { resting, resumeOn } = parsed.data;
   return call(
     deps,
     "update_my_creator_receiving",
-    { p_resting: resting, p_resume_on: resting ? resumeOn : null, p_monthly_limit: monthlyLimit },
-    { "22023": "다시 받는 날은 내일부터 1년 안으로, 한도는 1~10개로 선택해 주세요." },
+    { p_resting: resting, p_resume_on: resting ? resumeOn : null, p_monthly_limit: null },
+    { "22023": "다시 받는 날은 내일부터 1년 안으로 선택해 주세요." },
   );
 }
 

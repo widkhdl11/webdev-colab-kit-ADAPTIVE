@@ -3,7 +3,7 @@ import { unpaidResumeHref } from "@/entities/action-item/model/action-items";
 import { readCreatorCards, readMyFollowIds, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
 import { readMyRecentRecipientIds } from "@/entities/order/api/recent-recipients";
 import { readMovingCreatorIds } from "@/entities/creator/api/creator-verification-reads";
-import { readCreatorReceiving, readMyLimitReached } from "@/entities/creator/api/receiving-reads";
+import { readCreatorReceiving } from "@/entities/creator/api/receiving-reads";
 import { kstToday } from "@/entities/creator/model/receiving";
 import { readCreatorHardItems } from "@/entities/gift-item/api/hard-items-reads";
 import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
@@ -32,7 +32,7 @@ const PAYMENT_NOTICE: Record<string, string> = {
 // 순서: ?creator=<id> 로 미리 고른 사람 → 최근에 선물한 사람 → 최근에 팔로우한 사람(pickOrder).
 // 미리 고른 사람을 팔로우하지 않았으면 목록에 넣지 않고 「팔로우하고 선물 보내기」를 따로 보여 준다.
 // 채널 이사 중(creator-verification INV-V12)인 크리에이터에는 표시를 붙인다(moving_creator_ids).
-// 쉬는 중·기념일(creator_receiving)과 내 한도 판정(my_gift_limit_reached, 로그인한 나만)도 붙인다 — creator-receiving INV-B2·B6·B9.
+// 쉬는 중·기념일(creator_receiving)도 붙인다 — creator-receiving INV-B2·B9.
 // 로그인하지 않았어도 화면은 보인다 — 팔로우한 사람이 없으니 로그인 안내가 나온다(INV-L3).
 // 결제창에서 실패하고 돌아오면(?payment=failed&order=주문번호) 오류 줄 아래 「결제하기 ›」(2026-10-22 d113 D-3). 쿼리의 주문번호는 믿지 않는다 —
 // 로그인한 사람의 지금 할 일 읽기(action-center INV-J3, 내가 보낸 주문만)에 그 주문의 결제 미완료 줄이 있을 때만 링크를 그린다. 남의 주문번호면 아무것도 보이지 않는다.
@@ -55,20 +55,14 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   // INV-V12: 채널 이사 중인 크리에이터는 목록에 그대로 두고 표시만 붙인다 — 고르면 안내하고 넘어가지 않는다(등록은 DB 가 막는다)
   const moving = new Set(movingIds);
   const sendable = pickOrder(sendList(cards, ownCreatorId), { pinnedId: preselectedId, recentRecipientIds, followIds });
-  // creator-receiving: 공개 받는 상태(쉬는 중·기념일)와, 로그인한 나만의 한도 판정(INV-B6 — 내 세션으로만 읽힌다)
+  // creator-receiving: 공개 받는 상태(쉬는 중·기념일)
   const ids = sendable.map((c) => c.id);
   // hard-items: 살아 있는 받기 어려운 품목 — 고른 종류가 겹치면 결제 전에 안내한다(INV-H8). 등록은 DB 가 다시 판정한다(INV-H7)
-  const [receiving, reachedIds, hardItems] = await Promise.all([
-    readCreatorReceiving(supabase, ids),
-    signedIn ? readMyLimitReached(supabase, ids) : Promise.resolve<string[]>([]),
-    readCreatorHardItems(supabase, ids),
-  ]);
-  const reached = new Set(reachedIds);
+  const [receiving, hardItems] = await Promise.all([readCreatorReceiving(supabase, ids), readCreatorHardItems(supabase, ids)]);
   const ordered = sendable.map((c) => ({
     ...c,
     moving: moving.has(c.id),
     receiving: receiving.get(c.id),
-    limitReached: reached.has(c.id),
     hardItems: hardItems.get(c.id),
   }));
   const initialCreatorId = preselectedId && ordered.some((c) => c.id === preselectedId) ? preselectedId : "";

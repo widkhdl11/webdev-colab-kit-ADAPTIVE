@@ -1,6 +1,6 @@
 import { HANDLE_LOCK_DAYS, HANDLE_MAX, HANDLE_MIN, HANDLE_RETIRE_DAYS } from "@/entities/creator/model/creator-handle";
 import { LINK_GRACE_DAYS, RECHECK_DAYS, VERIFICATION_TRIES } from "@/entities/creator/model/creator-verification";
-import { ANNIVERSARY_MARK_DAYS, DDAY_WINDOW_DAYS, MONTHLY_LIMIT_MAX } from "@/entities/creator/model/receiving";
+import { ANNIVERSARY_MARK_DAYS, DDAY_WINDOW_DAYS } from "@/entities/creator/model/receiving";
 import { REPLY_LINE_MAX, REPLY_PHRASE_TEXT, REPLY_PHRASES } from "@/entities/gift-reply/model/reply";
 import { HARD_ACTION_LABEL, HARD_PERIOD_LABEL, HARD_PERIODS, HARD_REASON_OPTION_LABEL, HARD_REASONS } from "@/entities/gift-item/model/hard-items";
 import { MAX_DECRYPTS_PER_BOX } from "@/entities/address/model/access-log";
@@ -124,7 +124,7 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
           {
             kind: "steps",
             items: [
-              "「계정 설정」에서 「받는 주소」 칸을 펼쳐 주세요.",
+              "「계정 설정」에서 「주소 설정」 칸을 펼쳐 주세요.",
               "‘주소 등록’을 눌러 주세요. 등록된 주소가 있다면 ‘주소 변경’을 눌러 주세요.",
               "주소를 등록하거나 바꿀 때마다 카카오톡 인증서로 서명합니다. 로그인만으로는 바꿀 수 없습니다.",
               "주소는 입력한 브라우저에서 암호화한 뒤 전송하고, 암호화된 상태로 보관합니다. 등록한 뒤에는 이 화면에서도 주소를 볼 수 없습니다.",
@@ -228,14 +228,13 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
       },
       {
         id: "receiving",
-        title: "선물 받기 일시 중단·월간 한도",
+        title: "선물 받기 일시 중단",
         blocks: [
           { kind: "text", text: "「계정 설정」에서 「받기 설정」 칸을 펼치면 「선물 받기」가 있습니다." },
           {
             kind: "steps",
             items: [
               "「받는 상태」에서 「쉬는 중」을 고르면 「다시 받는 날」을 꼭 골라야 합니다. 내일부터 1년 안에서 고를 수 있습니다.",
-              "「팬 한 명이 한 달에 보낼 수 있는 선물」에서 개수를 고르거나 「정하지 않음」을 선택해 주세요.",
               "「선물 받기 설정 저장」을 눌러 주세요.",
             ],
           },
@@ -245,12 +244,9 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
               "쉬는 동안에는 새 선물을 받지 않습니다. 크리에이터 페이지에는 쉬는 중이라는 안내가 표시됩니다.",
               "다시 받는 날 0시부터는 자동으로 선물을 다시 받습니다.",
               "쉬는 동안에도 이미 등록된 선물은 승인하거나 받지 않기를 선택할 수 있습니다.",
-              `한 달 한도는 1개부터 ${MONTHLY_LIMIT_MAX}개까지 정할 수 있습니다. 변경한 한도는 다음 선물부터 적용됩니다.`,
-              "이번 달에 한도만큼 보낸 팬은 다음 달 1일부터 다시 보낼 수 있습니다.",
-              "설정한 한도는 크리에이터 페이지에 표시되지 않습니다. 한도에 도달한 팬 본인에게만 안내가 표시됩니다.",
             ],
           },
-          { kind: "text", text: "같은 항목 아래에서 「생일과 기념일」도 등록할 수 있습니다." },
+          { kind: "text", text: "「프로필 수정」의 「프로필」 탭에서 「생일과 기념일」을 등록할 수 있습니다." },
           {
             kind: "list",
             items: [

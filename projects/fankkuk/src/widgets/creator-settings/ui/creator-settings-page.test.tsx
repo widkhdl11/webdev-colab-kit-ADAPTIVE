@@ -32,7 +32,7 @@ function render() {
         address={{ creatorId: "00000000-0000-4000-a000-000000000009", registered: false, label: null, updatedAt: null }}
         sealingKeyPem={null}
         blockedFans={[]}
-        receiving={{ resumeOn: null, monthlyLimit: null, birthday: null, anniversaries: [] }}
+        receiving={{ resumeOn: null, birthday: null, anniversaries: [] }}
         hardItems={null}
         today={{ year: 2026, month: 11, day: 13 }}
         signatureLink={{ linked: false, linkedAt: null }}
@@ -71,7 +71,7 @@ describe("상세 설정 — 팬덤·선물 링크 구역이 빠진다 (2026-11-1
 
   it("머리 설명 목록은 화면에 나오는 순서 — 맨 위 카카오톡 인증 알림 줄부터 회원 탈퇴까지", () => {
     render();
-    expect(host.querySelector("header p")?.textContent).toBe("카카오톡 인증 알림·받는 주소·선물 받기·차단한 팬·보안·회원 탈퇴를 관리합니다.");
+    expect(host.querySelector("header p")?.textContent).toBe("카카오톡 인증 알림·주소 설정·선물 받기·차단한 팬·보안·회원 탈퇴를 관리합니다.");
     // 설명의 첫 항목이 실제로 화면 맨 위 줄이다
     expect(host.querySelector("#more [data-signature-link]")?.textContent).toContain("카카오톡 인증 알림");
   });
@@ -81,14 +81,24 @@ describe("상세 설정 — 팬덤·선물 링크 구역이 빠진다 (2026-11-1
     expect(host.querySelector("h1")?.textContent).toBe("계정 설정");
   });
 
-  it("접힌 칸은 받는 주소 → 받기 설정 → 차단한 팬 → 보안 → 회원 탈퇴(X 공유 설정 칸은 없다) — 보안·탈퇴는 선물 받기 설정들 뒤, 같은 접힌 칸 모양", () => {
+  it("접힌 칸은 주소 설정 → 받기 설정 → 차단한 팬 → 보안 → 회원 탈퇴(X 공유 설정 칸은 없다) — 보안·탈퇴는 선물 받기 설정들 뒤, 같은 접힌 칸 모양", () => {
     render();
-    expect(foldTitles()).toEqual(["받는 주소", "받기 설정", "차단한 팬", "보안", "회원 탈퇴"]);
+    expect(foldTitles()).toEqual(["주소 설정", "받기 설정", "차단한 팬", "보안", "회원 탈퇴"]);
     const security = host.querySelector<HTMLDetailsElement>("details#security")!;
     const leave = host.querySelector<HTMLDetailsElement>("details#leave")!;
     expect(security.className).toBe(host.querySelector("details#blocked")!.className);
     expect(leave.className).toBe(security.className);
     expect(security.querySelector("[data-x='security']")).not.toBeNull();
     expect(leave.querySelector("[data-x='leave']")).not.toBeNull();
+  });
+
+  it("받기 설정 칸에는 선물 받기 · 받기 어려운 선물만 — 생일·기념일(2026-11-14 프로필 탭으로)과 팬당 월 선물 한도(같은 날 없앰)는 없다", () => {
+    render();
+    const recv = host.querySelector<HTMLDetailsElement>("details#receiving")!;
+    expect(recv.querySelector("#recv")).not.toBeNull();
+    expect(recv.querySelector("#days")).toBeNull();
+    expect(host.textContent).not.toContain("생일");
+    expect(host.textContent).not.toContain("선물 한도");
+    expect(host.querySelector("#recv-limit")).toBeNull();
   });
 });
