@@ -75,9 +75,9 @@ svg { width: var(--space-6); height: var(--space-6); fill: none; stroke: current
 .recommended .zip-row { gap: var(--space-2); }
 .recommended .zip-row>.field { flex: 0 1 calc(var(--space-24) + var(--space-16)); }
 /* 2026-11-14 사용자 「이름이랑 전화번호 칸은 길이를 적당하게」 — design-prompt 8-2 「입력칸 폭은 값의 길이에 맞춘다」: 769 이상에서 이름 240 · 휴대폰 번호 200(13자 + 여백). 768 이하는 폭 전체 */
+/* 같은 날 「배치는 원래대로 — 이름 옆에 전번 칸」: 769 이상에서 두 칸을 한 줄에 나란히(이름 240 · 휴대폰 200, 사이 16) */
 @media (min-width:769px) {
-  .recommended .two .field:has(#recipient) { max-width: 240px; }
-  .recommended .two .field:has(#phone) { max-width: 200px; }
+  .recommended .two { grid-template-columns: 240px 200px; column-gap: var(--space-4); }
 }
 .recommended .sheet-btns { display: flex; gap: var(--space-2); margin-top: 0; }
 .recommended .sheet-btns .btn { min-width: calc(var(--space-24) + var(--space-16)); }
