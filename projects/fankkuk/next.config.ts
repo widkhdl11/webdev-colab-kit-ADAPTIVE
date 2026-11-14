@@ -5,7 +5,8 @@ import { PHOTO_BODY_LIMIT } from "./src/shared/lib/image/photo-limits";
 // 결제 창(토스)·글꼴(jsdelivr)·프로필 사진(Supabase 저장소)이 깨지지 않는 것을 운영에서 확인한 뒤 막는 모드로 바꾼다(BACKLOG).
 // 기준: Next 문서의 「Without Nonces」 예시 + 이 사이트가 실제로 부르는 바깥 출처.
 // 우편번호 서비스(address-protection INV-P20 ①): 스크립트 주소 하나(「주소 검색」을 누를 때만 불러온다)와 그 스크립트가 폼 안에 띄우는 검색 화면 주소 하나만 더한다.
-const POSTCODE_SCRIPT_ORIGIN = "https://t1.daumcdn.net";
+// 2026-11-14 카카오 공지(t1.daumcdn.net 은 2026-11-30 종료)로 t1.kakaocdn.net 으로 옮겼다
+const POSTCODE_SCRIPT_ORIGIN = "https://t1.kakaocdn.net";
 const POSTCODE_FRAME_ORIGIN = "https://postcode.map.kakao.com";
 const isDev = process.env.NODE_ENV === "development";
 const storageOrigin = (() => {

@@ -2,7 +2,8 @@
 // 평문 주소가 있는 화면에 바깥 스크립트가 들어오는 유일한 자리라, 「주소 검색」을 누를 때만 부른다 — 화면을 열기만 해서는 부르지 않는다.
 // 한 번 부르면 그 뒤로는 다시 내려받지 않는다. 보안 헤더의 스크립트 허용 목록(next.config.ts)에 이 주소, 프레임 허용 목록에 검색 화면 주소가 있다.
 
-export const POSTCODE_SCRIPT_SRC = "https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+// 2026-11-14 카카오 공지(옛 주소 t1.daumcdn.net 은 2026-11-30 종료)로 옮겼다 — 보안 헤더(next.config.ts)의 허용 주소와 같이 바꾼다
+export const POSTCODE_SCRIPT_SRC = "https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
 
 /** 검색이 끝났을 때 서비스가 주는 값 중 이 사이트가 쓰는 칸 */
 export type PostcodeResult = {
