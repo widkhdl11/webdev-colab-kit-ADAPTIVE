@@ -3,13 +3,13 @@
    폭은 틀(MyShell list 880)이 정하고, 안에서 카드 없이 12열 4 + 8 묶음(--grid-gap). 줄·묶음 사이는 낮은 대비 1px 실선(--line-on-white). */
 .wrap { min-width: 0; }
 
-/* 묶음 — 왼쪽 구간 이름(20 / 800) 4열, 오른쪽 줄 8열. 묶음 사이 구분선 + 위아래 48 (my-info .grp) */
-.grp { display: grid; grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr)); column-gap: var(--grid-gap); align-items: start; }
-.grp + .grp { margin-top: var(--space-12); padding-top: var(--space-12); border-top: 1px solid var(--line-on-white); }
-.nm { grid-column: span 4; min-width: 0; margin: 0; font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; }
-/* 구간 이름 글줄 가운데를 첫 줄 글자 가운데에 맞춘다(design-rules 41절) — 한 줄 줄(높이 64, 글 24)은 18, 스위치 줄(이름 + 설명 두 줄)은 첫 줄에 맞춰 6 */
-.nmSw { padding-top: 6px; }
-.rows { grid-column: span 8; min-width: 0; }
+/* 알림 설정 화면(2026-11-14 재디자인, 시안 settings-account-20261113 #notify) — 폭 --col-form 720(틀 1200 안 왼쪽), 묶음 사이 32.
+   제목 「알림」 20 → 흰 카드 한 장 안 스위치 줄 80 + 저장 결과 → 하늘 상자(끌 수 없는 알림) */
+.notifyPage > * { max-width: var(--col-form); }
+.notifyStack { display: grid; gap: var(--space-4); min-width: 0; }
+.secH { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
+.swCard { overflow: hidden; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
+.swCard + .must { margin-top: var(--space-4); } /* 카드와 하늘 상자 사이 32(묶음 간격 16 + 16) */
 
 /* 줄 — 최소 높이 64, 버튼은 줄 오른쪽. 줄 사이 1px. 펼쳐지는 칸은 그 줄 아래(.panel) (my-info .item·.row) */
 .item { min-width: 0; }
@@ -19,25 +19,31 @@
 .k { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; }
 .v { margin: 0; font-size: var(--fs-body); font-weight: 400; line-height: 1.5; }
 .sub { margin: 0; color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: var(--lh-caption); overflow-wrap: anywhere; }
-.panel { min-width: 0; padding-bottom: var(--space-4); }
-
-/* 알림 스위치 — 줄 전체가 누르는 칸(64). 막대는 시안 pilot .me-trk 값 (my-info .swBtn·.trk) */
-.swBtn { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); width: 100%; min-height: 64px; padding: var(--space-2) 0; border: 0; border-radius: var(--r-btn); background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
-.swBtn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.panel { min-width: 0; margin-bottom: var(--space-4); padding: var(--space-6); border-radius: var(--r-btn); background: var(--white); } /* 계정 설정 「보안」 칸 안 — 펼친 칸 옅은 면 위 흰 상자(시안 .panel) */
+/* 알림 스위치 — 줄 전체가 누르는 칸(80, 시안 .sw), 줄 사이 가는 줄. 막대 52×32 — 꺼짐은 흰 손잡이 + 회색 테, 켜짐은 하늘 면 + 짙은 손잡이(41절) */
+.swItem + .swItem { border-top: 0; box-shadow: inset 0 1px 0 var(--divider); }
+.swBtn { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); width: 100%; min-height: 80px; padding: var(--space-4) var(--space-6); border: 0; border-radius: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; transition: background-color var(--dur-hover) var(--ease-out); }
+.swBtn:hover { background: var(--gray-50); }
+.swBtn .k { font-weight: var(--fw-bold); }
+.swBtn:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
 .swBtn[aria-disabled="true"] { cursor: progress; } /* 저장하는 동안 — 누름은 막고(onClick) 모양은 그대로 */
 .trk { position: relative; flex: none; width: 52px; height: 32px; border: 1px solid var(--sub); border-radius: var(--r-pill); background: var(--gray-200); transition: background .15s; }
-.trk::after { content: ""; position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); transition: transform .15s; } /* 3 = 테두리 안 30 에서 24 를 가운데로(보정) */
+.trk::after { content: ""; position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--white); box-shadow: 0 0 0 1px var(--gray-500); transition: transform .15s; } /* 3 = 테두리 안 30 에서 24 를 가운데로(보정) */
 .swBtn[aria-checked="true"] .trk { background: var(--primary); }
-.swBtn[aria-checked="true"] .trk::after { transform: translateX(20px); }
-@media (prefers-reduced-motion: reduce) { .trk::after { transition: none; } }
+.swBtn[aria-checked="true"] .trk::after { transform: translateX(20px); background: var(--ink); box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .trk::after, .swBtn { transition: none; } }
 
-/* 끌 수 없는 알림 — 접지 않고 늘 보인다(my-account INV-A11). 제목 줄 14 / 600 + 목록 문장 14 / 400 (my-info .must) */
-.must { margin: 0; padding-top: var(--space-4); border-top: 1px solid var(--line-on-white); }
-.mustT { display: block; color: var(--ink); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; }
+/* 끌 수 없는 알림 — 접지 않고 늘 보인다(my-account INV-A11). 카드 밖 하늘 상자 + ⓘ 원 32(시안 .must). 제목 줄 16 / 400 + 목록 문장 14 */
+.must { display: flex; gap: var(--space-4); padding: var(--space-6); border-radius: var(--r-btn); background: var(--tint); }
+.mustIco { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--r-pill); background: var(--white); color: var(--ink); }
+.mustIco svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mustP { min-width: 0; margin: 0; }
+.mustT { display: block; color: var(--ink); font-weight: 400; line-height: 1.6; }
 .mustL { display: block; margin-top: var(--space-1); color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: 1.6; }
 
-/* 저장 결과 — 알림 묶음 끝(pilot .ca-msg 위 8). 늘 두고 글자가 있을 때만 판이 보인다(공통 .err:empty·.okmsg:empty) */
-.msgs { padding-top: var(--space-2); }
+/* 저장 결과 — 스위치 카드 안 아래 한 줄(시안 .sw-msg). 늘 두고 글자가 있을 때만 판이 보인다(공통 .err:empty·.okmsg:empty) */
+.msgs { padding: 0 var(--space-6); }
+.msgs:has(:not(:empty)) { padding-block: var(--space-4) var(--space-6); box-shadow: inset 0 1px 0 var(--divider); }
 .msg { max-width: 100%; margin: 0; overflow-wrap: anywhere; }
 
 /* 선 버튼 짙은 선 --gray-500(이 화면 범위에서만 — 공용 .btn--line 은 그대로, 41절) */
@@ -48,12 +54,12 @@
 .msg:global(.err):not(:empty)::before { content: "!" / ""; }
 .msg:global(.okmsg):not(:empty)::before { content: "✓" / ""; }
 
-/* 휴대폰 — 한 기둥 */
+/* 휴대폰 — 줄 안쪽 16(시안 768 이하) */
 @media (max-width: 767px) {
-  .grp { display: block; }
-  .grp + .grp { padding-top: var(--space-8); } /* 위 간격은 공용 구간 간격 48 그대로 */
-  .rows { margin-top: var(--space-4); }
-  .nmSw { padding-top: 0; }
+  .swBtn { padding-inline: var(--space-4); }
+  .msgs { padding-inline: var(--space-4); }
+  .must { padding: var(--space-4); }
+  .panel { padding: var(--space-4); }
 }
 
 /* 프로필 수정 채널 탭의 채널 소유자 확인 판 안(공용 settings-panel) — 줄 묶음은 판 안쪽 좌우 32(휴대폰 24). 줄 높이·줄 사이 선은 위 .row·.item 그대로.

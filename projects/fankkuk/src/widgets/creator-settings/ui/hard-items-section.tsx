@@ -21,6 +21,7 @@ import { ITEM_CATEGORIES, ITEM_CATEGORY_LABEL, sortCategories, type ItemCategory
 import type { CalendarDate } from "@/entities/creator/model/receiving";
 import { sendCreatorHardItems } from "@/features/creator-settings-save/api/send-creator-settings";
 import { SaveMessage, type SaveMsg } from "./receiving-section";
+import panel from "@/shared/ui/settings-panel.module.css";
 import s from "./creator-settings.module.css";
 
 // 크리에이터 — 받기 어려운 품목 (hard-items INV-H3~H6). 품목·이유·기간·동작을 고르기만 한다 — 문장을 쓰는 칸은 없다(추가분 불변식 21).
@@ -35,6 +36,10 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
   const [action, setAction] = useState<HardAction>(initial?.action ?? "notice");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<SaveMsg>(null);
+  // 바뀐 값이 있는가 — 「저장」 모양만 가른다(누르면 지금처럼 보낸다, days-section 과 같음). 저장하면 그 값이 새 기준
+  const snapshot = JSON.stringify([categories, reason, period, action]);
+  const [savedSnapshot, setSavedSnapshot] = useState(snapshot);
+  const dirty = snapshot !== savedSnapshot;
 
   const preview = hardItemsPreview({ categories, reason });
   const toggle = (c: ItemCategory, on: boolean) => setCategories((list) => sortCategories(on ? [...list, c] : list.filter((x) => x !== c)));
@@ -64,6 +69,7 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
       return;
     }
     if (clear) setCategories([]);
+    setSavedSnapshot(JSON.stringify([clear ? [] : categories, reason, period, action]));
     setMsg({
       ok: true,
       text: clear || categories.length === 0 ? "받기 어려운 선물 설정이 해제되었습니다." : "받기 어려운 선물이 설정되었습니다.",
@@ -72,15 +78,14 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
   };
 
   return (
-    <section id="hard" className={`card ${s.set}`} aria-labelledby="hard-h">
-      <div className={s["set-head"]}>
-        <h3 className="t-card" id="hard-h">
-          받기 어려운 선물
-        </h3>
-      </div>
+    // 시안 settings-account-20261113 #hard: 구역 제목 + 가는 줄(위 「선물 받기」와 나눔). 저장은 이 구역만(sendCreatorHardItems — 선물 받기와 따로)
+    <section id="hard" className={s.sec} aria-labelledby="hard-h">
+      <h3 className={s.secT} id="hard-h">
+        받기 어려운 선물
+      </h3>
       <p>선택한 선물 종류와 이유가 크리에이터 페이지에 안내 문구로 표시됩니다. 문구는 직접 입력할 수 없습니다.</p>
       {initial ? (
-        <div className={`card card--soft ${s.inner}`}>
+        <div className={s.tintBox}>
           <p className="t-meta">현재 안내 문구</p>
           <p className="t-strong">{hardItemsNotice(initial)}</p>
           <p className={`t-meta ${s["body-gap"]}`}>
@@ -89,9 +94,9 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
         </div>
       ) : null}
 
-      <fieldset className="fs">
+      <fieldset className={`fs ${s.grpF}`}>
         <legend className="label">선물 종류 (복수 선택)</legend>
-        <div className="grid cols-4">
+        <div className={s.opts}>
           {ITEM_CATEGORIES.map((c) => (
             <label key={c} className="opt">
               <input type="checkbox" checked={categories.includes(c)} onChange={(e) => toggle(c, e.currentTarget.checked)} />
@@ -101,9 +106,9 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
         </div>
       </fieldset>
 
-      <fieldset className="fs">
+      <fieldset className={`fs ${s.grpF}`}>
         <legend className="label">이유</legend>
-        <div className="grid cols-4">
+        <div className={s.opts}>
           {HARD_REASONS.map((r) => (
             <label key={r} className="opt">
               <input type="radio" name="hard-reason" checked={reason === r} onChange={() => setReason(r)} />
@@ -113,9 +118,9 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
         </div>
       </fieldset>
 
-      <fieldset className="fs" aria-describedby="hard-period-hint">
+      <fieldset className={`fs ${s.grpF}`} aria-describedby="hard-period-hint">
         <legend className="label">기간</legend>
-        <div className="grid cols-4">
+        <div className={s.opts}>
           {HARD_PERIODS.map((p) => (
             <label key={p} className="opt">
               <input type="radio" name="hard-period" checked={period === p} onChange={() => setPeriod(p)} />
@@ -128,9 +133,9 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
         </p>
       </fieldset>
 
-      <fieldset className="fs" aria-describedby="hard-action-hint">
+      <fieldset className={`fs ${s.grpF}`} aria-describedby="hard-action-hint">
         <legend className="label">해당 선물 선택 시</legend>
-        <div className="grid cols-2">
+        <div className={s.opts}>
           {HARD_ACTIONS.map((a) => (
             <label key={a} className="opt">
               <input type="radio" name="hard-action" checked={action === a} onChange={() => setAction(a)} />
@@ -147,7 +152,7 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
         </p>
       </fieldset>
 
-      <div className={`card ${s.inner}`}>
+      <div className={s.preview}>
         <p className="t-meta">미리보기</p>
         {/* 고를 때마다 바뀌는 미리보기라 알림(role=status)으로 읽히게 하지 않는다 — 알리는 것은 저장 결과 줄뿐이다 */}
         {preview ? (
@@ -166,15 +171,16 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
       </div>
 
       <div>
-        <div className="btn-stack">
-          <button className="btn" type="button" aria-disabled={saving} onClick={() => void save(false)}>
-            {saving ? "저장 중…" : "받기 어려운 선물 저장"}
-          </button>
+        {/* 저장 줄 — 오른쪽 끝, 「보조 → 저장」 순서(design-prompt 2-21 4·2-22). 휴대폰은 폭 전체 + 저장이 위 */}
+        <div className={s.bar}>
           {initial ? (
             <button className="btn btn--line" type="button" aria-disabled={saving} onClick={() => void save(true)}>
               해제
             </button>
           ) : null}
+          <button className={`btn ${dirty || saving ? "" : panel.idle}`} type="button" aria-disabled={saving} onClick={() => void save(false)}>
+            {saving ? "저장 중…" : "받기 어려운 선물 저장"}
+          </button>
         </div>
         <SaveMessage id="hard-msg" msg={msg} />
       </div>

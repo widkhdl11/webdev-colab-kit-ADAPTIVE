@@ -6,12 +6,13 @@ import { ANNIVERSARY_MAX, ANNIVERSARY_NAME_MAX, daysInMonth, type CalendarDate, 
 import { sendCreatorDays } from "@/features/creator-settings-save/api/send-creator-settings";
 import { clipChars } from "@/features/creator-settings-save/model/creator-settings-input";
 import panel from "@/shared/ui/settings-panel.module.css";
-import s from "./creator-settings.module.css";
-import { SaveMessage, type SaveMsg } from "./receiving-section";
+import s from "./profile-sections.module.css";
+
+type SaveMsg = { ok: boolean; text: string } | null;
 
 // 크리에이터 — 생일과 기념일 (creator-receiving INV-B1·B7·B8). 2026-11-14 계정 설정 「받기 설정」에서 프로필 수정 「프로필」 탭으로 옮겼다
 // (사용자 「받기 설정에 기념일과 생일이 있어야하는게 아니라, 프로필이나 채널 설정에 있어야하는거아닐까?」). 저장 주소·검사는 그대로다.
-// 판 모양은 프로필 탭의 다른 판(settings-panel)과 같다. 저장은 로그인 세션으로만 — 크리에이터 ID 를 보내지 않는다.
+// 판 모양은 프로필 탭의 다른 판(settings-panel)과 같다 — 칸마다 가는 줄로 나누고, 맨 아래 회색 저장 줄(2026-11-14 시안 settings-profile-20261113). 저장은 로그인 세션으로만 — 크리에이터 ID 를 보내지 않는다.
 
 type AnniversaryDraft = {
   key: number;
@@ -39,7 +40,7 @@ function MonthDaySelect({
   onChange: (month: number | null, day: number | null) => void;
 }) {
   return (
-    <div className={s["md-row"]} role="group" aria-label={label}>
+    <div className={s.mdRow} role="group" aria-label={label}>
       <label className="sr-only" htmlFor={`${idBase}-m`}>
         {label} 월
       </label>
@@ -82,6 +83,10 @@ export function DaysSection({ initial, today }: { initial: Pick<MyCreatorReceivi
   const [nextKey, setNextKey] = useState(initial.anniversaries.length);
   const [daysSaving, setDaysSaving] = useState(false);
   const [daysMsg, setDaysMsg] = useState<SaveMsg>(null);
+  // 바뀐 값이 있는가 — 「저장」 모양만 가른다(누르면 지금처럼 보낸다). 저장하면 그 값이 새 기준
+  const snapshot = JSON.stringify([bMonth, bDay, anniversaries.map(({ name, month, day }) => [name.trim(), month, day])]);
+  const [savedSnapshot, setSavedSnapshot] = useState(snapshot);
+  const dirty = snapshot !== savedSnapshot;
 
   const saveDays = async () => {
     if (daysSaving) return;
@@ -104,6 +109,7 @@ export function DaysSection({ initial, today }: { initial: Pick<MyCreatorReceivi
       setDaysMsg({ ok: false, text: r.message });
       return;
     }
+    setSavedSnapshot(snapshot);
     setDaysMsg({ ok: true, text: "생일과 기념일이 저장되었습니다." });
     router.refresh();
   };
@@ -115,30 +121,32 @@ export function DaysSection({ initial, today }: { initial: Pick<MyCreatorReceivi
       <h2 className={panel.title} id="days-h">
         생일과 기념일
       </h2>
-      <div className={`${panel.body} ${s.set}`}>
-        <p>크리에이터 페이지에 30일 전부터 D-day 표시 · 월·일만 입력</p>
-        <div>
-          <span className="label" id="bday-label">
-            생일
-          </span>
-          <MonthDaySelect
-            idBase="bday"
-            label="생일"
-            month={bMonth}
-            day={bDay}
-            allowEmpty
-            onChange={(m, d) => {
-              setBMonth(m);
-              setBDay(d);
-            }}
-          />
-        </div>
-        <div>
-          <span className="label">기념일 ({ANNIVERSARY_MAX}개까지)</span>
-          {anniversaries.length === 0 ? <p className="t-meta">등록된 기념일이 없습니다.</p> : null}
-          <ul className={s["ann-list"]}>
+      <div className={panel.sec}>
+        <p className={panel.hint}>크리에이터 페이지에 30일 전부터 D-day 표시 · 월·일만 입력</p>
+      </div>
+      <div className={panel.sec}>
+        <span className={panel.lab} id="bday-label">
+          생일
+        </span>
+        <MonthDaySelect
+          idBase="bday"
+          label="생일"
+          month={bMonth}
+          day={bDay}
+          allowEmpty
+          onChange={(m, d) => {
+            setBMonth(m);
+            setBDay(d);
+          }}
+        />
+      </div>
+      <div className={panel.sec}>
+        <span className={panel.lab}>기념일 ({ANNIVERSARY_MAX}개까지)</span>
+        {anniversaries.length === 0 ? <p className={panel.hint}>등록된 기념일이 없습니다.</p> : null}
+        {anniversaries.length > 0 ? (
+          <ul className={s.annList}>
             {anniversaries.map((a, i) => (
-              <li key={a.key} className={s["ann-row"]}>
+              <li key={a.key} className={s.annRow}>
                 <label className="sr-only" htmlFor={`ann-${a.key}-name`}>
                   기념일 {i + 1} 이름
                 </label>
@@ -172,7 +180,9 @@ export function DaysSection({ initial, today }: { initial: Pick<MyCreatorReceivi
               </li>
             ))}
           </ul>
-          {anniversaries.length < ANNIVERSARY_MAX ? (
+        ) : null}
+        {anniversaries.length < ANNIVERSARY_MAX ? (
+          <div>
             <button
               className="btn btn--line btn--sm"
               type="button"
@@ -191,19 +201,30 @@ export function DaysSection({ initial, today }: { initial: Pick<MyCreatorReceivi
             >
               기념일 추가
             </button>
-          ) : null}
-          <p className="t-meta hint">
-            기념일 이름: 최대 {ANNIVERSARY_NAME_MAX}자
-            <br />
-            기념일 7일 전부터 팬이 ‘기념일 선물’ 표시를 선택할 수 있습니다.
+          </div>
+        ) : null}
+        <p className={panel.hint}>
+          기념일 이름: 최대 {ANNIVERSARY_NAME_MAX}자
+          <br />
+          기념일 7일 전부터 팬이 ‘기념일 선물’ 표시를 선택할 수 있습니다.
+        </p>
+      </div>
+      {/* 저장 줄 — 판 맨 아래 회색 띠, 같은 탭 「소개」 판과 같은 자리(design-prompt 2-21). 결과 안내는 띠 왼쪽 */}
+      <div className={panel.bar}>
+        <div className={s.barMsgs}>
+          <p className={`${panel.msg} ${panel.ok}`} role="status" id="days-msg">
+            {daysMsg?.ok ? daysMsg.text : null}
           </p>
+          {daysMsg && !daysMsg.ok ? (
+            <p className={`${panel.msg} ${panel.bad}`} role="alert" id="days-msg-err">
+              {daysMsg.text}
+            </p>
+          ) : null}
         </div>
-        {/* 저장은 판 아래 오른쪽 — 같은 탭 「소개」 판의 저장 줄과 같은 자리(design-prompt 2-21) */}
-        <div className={s["save-end"]}>
-          <button className="btn" type="button" aria-disabled={daysSaving} onClick={() => void saveDays()}>
+        <div className={panel.barBtns}>
+          <button className={`btn ${dirty || daysSaving ? "" : panel.idle}`} type="button" aria-disabled={daysSaving} onClick={() => void saveDays()}>
             {daysSaving ? "저장 중…" : "생일·기념일 저장"}
           </button>
-          <SaveMessage id="days-msg" msg={daysMsg} />
         </div>
       </div>
     </section>

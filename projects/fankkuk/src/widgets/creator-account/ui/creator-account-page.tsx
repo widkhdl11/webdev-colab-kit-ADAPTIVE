@@ -57,7 +57,7 @@ function Switch({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <div className={s.item}>
+    <div className={`${s.item} ${s.swItem}`}>
       <button
         className={s.swBtn}
         type="button"
@@ -231,7 +231,9 @@ export function CreatorAccountPage({
   };
 
   return (
-    <div className={s.wrap}>
+    // 2026-11-14 재디자인(시안 settings-account-20261113 #notify · #notify-fail): 폭 --col-form 720, 스위치 셋은 흰 카드 한 장 안 줄 80(줄 전체가 누르는 칸),
+    // 저장 결과는 그 카드 안 아래 한 줄, 끌 수 없는 알림은 카드 밖 하늘 상자 + ⓘ 아이콘. 동작·문구는 그대로
+    <div className={`${s.wrap} ${s.notifyPage}`}>
       <header className="page-head">
         <div className="ph-row">
           <h1 className="ph-title">알림 설정</h1>
@@ -239,11 +241,11 @@ export function CreatorAccountPage({
         <p className="ph-desc">알림을 관리합니다.</p>
       </header>
 
-      <section className={s.grp} aria-labelledby={f("sec2")} data-ca-group="notify">
-        <h2 className={`${s.nm} ${s.nmSw}`} id={f("sec2")}>
+      <section className={s.notifyStack} aria-labelledby={f("sec2")} data-ca-group="notify">
+        <h2 className={s.secH} id={f("sec2")}>
           알림
         </h2>
-        <div className={s.rows}>
+        <div className={s.swCard}>
           {/* 스위치 이름은 팬 계정 설정과 같다(design-rules 12절 「계정 설정」) */}
           <Switch
             id={f("n1")}
@@ -272,17 +274,8 @@ export function CreatorAccountPage({
             busy={saving}
             onChange={(v) => void toggleNotify("instant", v)}
           />
-          {/* 꼭 가는 알림(승인 요청·돌려보내는 선물 등)은 두 칸을 꺼도 간다(notifications INV-N6 표, 2026-10-12 문제집 D7) — 접지 않고 늘 보인다(my-account INV-A11) */}
-          <MustDeliverNotice
-            audience="creator"
-            id={f("must")}
-            className={s.must}
-            titleClassName={s.mustT}
-            bodyClassName={s.mustL}
-            extra={`승인 요청은 ${APPROVAL_DEADLINE_DAYS}일 동안 응답하지 않으면 자동 반려됩니다.`}
-          />
-          {/* 저장 결과 — 바뀐 스위치 가까이, 알림 묶음 끝. 실패는 alert, 성공은 status 두 줄(팬 계정 설정과 같다).
-              늘 두고 글자만 바꾼다(빈 칸은 공통 .err:empty·.okmsg:empty) */}
+          {/* 저장 결과 — 바뀐 스위치 가까이, 스위치 카드 안 아래 한 줄. 실패는 alert, 성공은 status 두 줄(팬 계정 설정과 같다).
+              늘 두고 글자만 바꾼다(빈 칸은 공통 .err:empty·.okmsg:empty, 둘 다 비면 줄 자체가 자리를 비운다) */}
           <div className={s.msgs} data-ca-msg="">
             <p className={`err ${s.msg}`} role="alert">
               {msg && !msg.ok ? msg.text : ""}
@@ -292,8 +285,25 @@ export function CreatorAccountPage({
             </p>
           </div>
         </div>
+        {/* 꼭 가는 알림(승인 요청·돌려보내는 선물 등)은 두 칸을 꺼도 간다(notifications INV-N6 표, 2026-10-12 문제집 D7) — 접지 않고 늘 보인다(my-account INV-A11) */}
+        <div className={s.must}>
+          <span className={s.mustIco} aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
+            </svg>
+          </span>
+          <MustDeliverNotice
+            audience="creator"
+            id={f("must")}
+            className={s.mustP}
+            titleClassName={s.mustT}
+            bodyClassName={s.mustL}
+            extra={`승인 요청은 ${APPROVAL_DEADLINE_DAYS}일 동안 응답하지 않으면 자동 반려됩니다.`}
+          />
+        </div>
       </section>
-
     </div>
   );
 }

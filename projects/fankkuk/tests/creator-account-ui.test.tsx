@@ -297,7 +297,7 @@ describe("알림 설정(크리에이터) — 알림", () => {
     expect(instant.getAttribute("aria-checked")).toBe("true");
   });
 
-  it("필수 알림 안내는 알림 묶음 안에 제목 줄과 목록으로 늘 보이고, 결과 안내 자리는 묶음 끝에 있다", () => {
+  it("필수 알림 안내는 알림 묶음 안에 제목 줄과 목록으로 늘 보이고, 결과 안내 자리는 스위치 카드 끝에 있다(2026-11-14 재디자인 — 안내는 카드 밖 아래)", () => {
     render();
     const notify = host.querySelectorAll("section")[0];
     const must = notify.querySelector("strong")!;
@@ -308,7 +308,10 @@ describe("알림 설정(크리에이터) — 알림", () => {
     const last = rows.lastElementChild as HTMLElement;
     expect(last.querySelector('[role="status"]')).not.toBeNull();
     expect(last.querySelector('[role="alert"]')).not.toBeNull();
-    expect(last.previousElementSibling?.contains(must)).toBe(true);
+    // 결과 줄 바로 앞은 마지막 스위치, 필수 알림 안내는 스위치 카드 다음(같은 알림 묶음 안)
+    expect(last.previousElementSibling?.querySelector('[role="switch"]')).not.toBeNull();
+    expect(rows.contains(must)).toBe(false);
+    expect(rows.nextElementSibling?.contains(must)).toBe(true);
   });
 });
 

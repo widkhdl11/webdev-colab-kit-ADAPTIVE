@@ -24,6 +24,7 @@ export function ImageField({
   removeLabel,
   hint,
   sizeHint,
+  layout = "row",
   blocked = null,
   upload,
   remove,
@@ -38,20 +39,23 @@ export function ImageField({
   view?: ReactNode;
   hasImage: boolean;
   pickLabel: string;
-  removeLabel: string;
+  /** 지우기 버튼 글자 — 지우기(remove)를 넘긴 칸에만 있다(프로필 사진·배경 사진은 2026-11-13 시안에서 지우기를 뺐다) */
+  removeLabel?: string;
   /** 칸 아래 안내 — 시안에 없으면 넘기지 않는다 */
   hint?: ReactNode;
   /** 안내 아래 권장 크기 한 줄(배경 사진 「권장 크기 1200×480」 — 시안 v24-creator-card cprofile) */
   sizeHint?: string;
+  /** 배치 — row: 사진 옆 버튼(가운데 맞춤) · top: 사진 옆 버튼(사진 윗선에 맞춤) · side: 왼쪽 사진, 오른쪽에 버튼·안내(배경 사진) */
+  layout?: "row" | "top" | "side";
   /** 고를 수 없는 까닭의 설명 요소 id — 있으면 파일 칸을 끈다 */
   blocked?: string | null;
   upload: (file: File) => Promise<ImageSendResult>;
-  remove: () => Promise<ImageSendResult>;
+  remove?: () => Promise<ImageSendResult>;
   /** 저장된 새 경로(지웠으면 null) */
   onSaved: (path: string | null) => void;
   onLogin: () => void;
   savedText: string;
-  removedText: string;
+  removedText?: string;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -80,56 +84,76 @@ export function ImageField({
   };
 
   const removeNow = async () => {
-    if (busy) return;
+    if (busy || !remove) return;
     setBusy(true);
     setMsg(null);
-    finish(await remove(), removedText);
+    finish(await remove(), removedText ?? "");
   };
 
   const off = busy || blocked !== null;
+  const buttons = (
+    <div className={s.btns}>
+      <input
+        className={`sr-only ${s.file}`}
+        id={id}
+        ref={fileRef}
+        type="file"
+        accept={PHOTO_ACCEPT}
+        disabled={off}
+        aria-describedby={[blocked, hint ? `${id}-hint` : null, sizeHint ? `${id}-size` : null, `${id}-msg`].filter(Boolean).join(" ")}
+        onChange={(e) => void picked(e.currentTarget.files?.[0])}
+      />
+      <label className={`btn btn--line ${s.pick}`} htmlFor={id} aria-disabled={off}>
+        {busy ? "저장 중…" : pickLabel}
+      </label>
+      {hasImage && remove ? (
+        <button className="btn btn--line" type="button" aria-disabled={busy} onClick={() => void removeNow()}>
+          {removeLabel}
+        </button>
+      ) : null}
+    </div>
+  );
+  const notes = (
+    <>
+      {hint ? (
+        <p className={s.hint} id={`${id}-hint`}>
+          {hint}
+        </p>
+      ) : null}
+      {sizeHint ? (
+        <p className={s.hint} id={`${id}-size`}>
+          {sizeHint}
+        </p>
+      ) : null}
+      <p className={`${s.msg} ${msg && !msg.ok ? "err" : s.hint}`} role="status" id={`${id}-msg`}>
+        {msg?.text}
+      </p>
+    </>
+  );
   return (
-    <div className={s.fld} role="group" aria-labelledby={labelledBy ?? `${id}-t`}>
+    <div className={`${s.fld} ${layout === "side" ? s.side : ""}`} role="group" aria-labelledby={labelledBy ?? `${id}-t`}>
       {labelledBy ? null : (
         <p className={s.lbl} id={`${id}-t`}>
           {label}
         </p>
       )}
-      <div className={s.imgRow}>
-        {view ?? null}
-        <div className="btn-stack">
-          <input
-            className={`sr-only ${s.file}`}
-            id={id}
-            ref={fileRef}
-            type="file"
-            accept={PHOTO_ACCEPT}
-            disabled={off}
-            aria-describedby={[blocked, hint ? `${id}-hint` : null, sizeHint ? `${id}-size` : null, `${id}-msg`].filter(Boolean).join(" ")}
-            onChange={(e) => void picked(e.currentTarget.files?.[0])}
-          />
-          <label className={`btn btn--line btn--sm ${s.pick}`} htmlFor={id} aria-disabled={off}>
-            {busy ? "저장 중…" : pickLabel}
-          </label>
-          {hasImage ? (
-            <button className="btn btn--line btn--sm" type="button" aria-disabled={busy} onClick={() => void removeNow()}>
-              {removeLabel}
-            </button>
-          ) : null}
-        </div>
-      </div>
-      {hint ? (
-        <p className="t-meta" id={`${id}-hint`}>
-          {hint}
-        </p>
-      ) : null}
-      {sizeHint ? (
-        <p className={s.size} id={`${id}-size`}>
-          {sizeHint}
-        </p>
-      ) : null}
-      <p className={`${s.msg} ${msg && !msg.ok ? "err" : "t-meta"}`} role="status" id={`${id}-msg`}>
-        {msg?.text}
-      </p>
+      {layout === "side" ? (
+        <>
+          {view ?? null}
+          <div className={s.sideMain}>
+            {buttons}
+            {notes}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className={`${s.imgRow} ${layout === "top" ? s.top : ""}`}>
+            {view ?? null}
+            {buttons}
+          </div>
+          {notes}
+        </>
+      )}
     </div>
   );
 }

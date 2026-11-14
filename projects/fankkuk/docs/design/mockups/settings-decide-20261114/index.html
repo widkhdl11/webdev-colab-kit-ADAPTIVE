@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>계정 설정 — 정할 것 두 가지</title>
+<!--
+  2026-11-14 비교용. 계정 설정 재디자인 시안(settings-account-20261113)을 두 보기로 나란히 띄운다.
+  ?save=one — 받기 설정 칸의 저장 버튼을 하나로 / ?ico=none — 칸 앞 아이콘 없음. 휴대폰 폭(390)으로 띄운다.
+-->
+<link rel="stylesheet" href="../../../../src/shared/ui/tokens.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--gray-100); color: var(--gray-900); font-family: "Pretendard Variable", Pretendard, sans-serif; font-size: 16px; line-height: 1.6; }
+main { max-width: 900px; margin: 0 auto; padding: 40px 16px 80px; }
+h1 { font-size: 24px; margin: 0 0 40px; }
+section { margin-bottom: 64px; }
+h2 { font-size: 20px; margin: 0 0 8px; }
+.q { margin: 0 0 24px; color: var(--gray-700); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(390px, 1fr)); gap: 24px; }
+.opt { background: var(--white); border: 1px solid var(--line-on-white); border-radius: 16px; overflow: hidden; }
+.opt.rec { border: 2px solid var(--primary); }
+.head { padding: 16px 20px; }
+.head b { font-size: 18px; }
+.tag { display: inline-block; margin-left: 8px; padding: 0 10px; border-radius: 999px; background: var(--primary); color: var(--white); font-size: 13px; font-weight: 700; vertical-align: 2px; }
+.head p { margin: 4px 0 0; font-size: 14px; color: var(--gray-700); }
+iframe { display: block; width: 100%; height: 720px; border: 0; border-top: 1px solid var(--line-on-white); }
+.big { display: block; padding: 12px 20px; font-size: 14px; color: var(--gray-700); border-top: 1px solid var(--line-on-white); }
+@media (max-width: 440px) { .pair { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>계정 설정 — 정할 것 두 가지</h1>
+
+  <section>
+    <h2>1. 받기 설정의 저장 버튼</h2>
+    <p class="q">받기 설정 칸 안에는 선물 받기 · 받기 어려운 선물, 두 구역이 있습니다.</p>
+    <div class="pair">
+      <div class="opt rec">
+        <div class="head"><b>A. 구역마다 저장</b><span class="tag">추천</span>
+          <p>구역 끝마다 저장 버튼이 있습니다. 고친 구역의 버튼만 채워져서 무엇을 저장할지 보입니다.</p></div>
+        <iframe data-fit="#receiving" src="../settings-account-20261113/index.html?bare=1#recv" title="A 구역마다 저장"></iframe>
+        <a class="big" href="../settings-account-20261113/index.html#recv" target="_blank">PC 폭으로 크게 보기</a>
+      </div>
+      <div class="opt">
+        <div class="head"><b>B. 맨 아래 버튼 하나</b>
+          <p>두 구역을 다 고친 뒤 칸 맨 아래 「받기 설정 저장」으로 한 번에 저장합니다. 위쪽만 고치고 저장하지 않은 채 나가기 쉽습니다.</p></div>
+        <iframe data-fit="#receiving" src="../settings-account-20261113/index.html?save=one&bare=1#recv" title="B 맨 아래 버튼 하나"></iframe>
+        <a class="big" href="../settings-account-20261113/index.html?save=one#recv" target="_blank">PC 폭으로 크게 보기</a>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. 칸 이름 앞 아이콘</h2>
+    <p class="q">계정 설정의 접힌 칸(주소 설정 · 받기 설정 · 차단한 팬 · 보안 · 회원 탈퇴) 이름 앞에 동그라미 아이콘을 둘지입니다.</p>
+    <div class="pair">
+      <div class="opt rec">
+        <div class="head"><b>A. 아이콘 넣기</b><span class="tag">추천</span>
+          <p>칸이 많아도 모양으로 먼저 찾을 수 있습니다. 펼친 칸은 동그라미가 하늘색으로 채워집니다.</p></div>
+        <iframe data-fit=".card.acc" src="../settings-account-20261113/index.html?bare=1#closed" title="A 아이콘 넣기"></iframe>
+        <a class="big" href="../settings-account-20261113/index.html#closed" target="_blank">PC 폭으로 크게 보기</a>
+      </div>
+      <div class="opt">
+        <div class="head"><b>B. 아이콘 없음</b>
+          <p>글자만 남아 더 단순합니다. 칸을 이름으로만 찾습니다.</p></div>
+        <iframe data-fit=".card.acc" src="../settings-account-20261113/index.html?ico=none&bare=1#closed" title="B 아이콘 없음"></iframe>
+        <a class="big" href="../settings-account-20261113/index.html?ico=none#closed" target="_blank">PC 폭으로 크게 보기</a>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+// 각 틀을 비교할 칸 끝까지 늘린다 — 안에서 스크롤하지 않고 한눈에
+document.querySelectorAll("iframe[data-fit]").forEach(function (f) {
+  f.addEventListener("load", function () {
+    var d = f.contentDocument, w = f.contentWindow;
+    w.scrollTo(0, 0);
+    var all = d.querySelectorAll(f.dataset.fit), el = all[all.length - 1];
+    if (el) f.style.height = Math.ceil(el.getBoundingClientRect().bottom + w.scrollY + 24) + "px";
+  });
+});
+</script>
+</body>
+</html>

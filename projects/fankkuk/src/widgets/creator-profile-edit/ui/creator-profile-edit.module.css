@@ -1,75 +1,65 @@
-/* 크리에이터 프로필 수정 — 시안 docs/design/mockups/site/pilot-2026-10-22/creator-profile.html, 값의 정본은 같은 폴더 pilot.css 「상세 설정」(.st-*)·「프로필 수정(크리에이터)」(.cp-*).
-   틀(MyShell broad 1200) 안에서 상세 설정 「팬덤」(widgets/creator-settings/ui/fandom-section.module.css)과 같은 입력 + 미리보기.
-   머리 미리보기는 entities/creator/ui/creator-head 가 그린다 — 여기는 바깥 배치만. */
+/* 크리에이터 프로필 수정 — 2026-11-14 재디자인, 시안 docs/design/mockups/settings-profile-20261113/index.html(NOTES 「2026-11-13 고침」).
+   판 겉모양·판 안 칸(.sec)·칸 이름·도움말·저장 줄은 공용 settings-panel — 여기는 이 화면의 바깥 배치 · 사진 칸 · 태그 칩 · 스위치 · 미리보기.
+   머리 미리보기는 entities/creator/ui/creator-head 가 그린다 — 여기는 바깥 배치와 머리가 열어 둔 값(--av · --pf-pad · data-band)만. */
 .col { display: grid; gap: var(--space-6); min-width: 0; }
 .col > * { min-width: 0; }
 
-/* 두 탭(프로필 · 채널)이 같은 두 열 — 왼쪽 기둥은 입력·설정형 폭 --col-form(720), 오른쪽 미리보기 열은 남는 폭(틀 1200 에서 약 456).
-   탭을 바꿔도 기둥 폭과 미리보기 열 폭이 같다.
-   프로필 머리는 열을 꽉 채우고(옛 400 보다 넓다 — 사진 104 옆 이름 칸이 넓어진다), 팬덤 카드는 찾기 화면 카드 폭 300 그대로 */
-.grid { display: grid; grid-template-columns: minmax(0, var(--col-form)) minmax(0, 1fr); column-gap: var(--grid-gap); align-items: start; }
+/* 두 탭(프로필 · 채널)이 같은 두 열 — 왼쪽 기둥 --col-form(720), 오른쪽 미리보기 열은 남는 폭(따라옴). 탭 줄 아래 32 */
+.grid { display: grid; grid-template-columns: minmax(0, var(--col-form)) minmax(0, 1fr); column-gap: var(--grid-gap); align-items: start; margin-top: var(--space-2); }
 .main { display: grid; gap: var(--space-6); min-width: 0; }
 
-/* 판 겉모양은 공용 settings-panel — 여기는 판 안 소제목 칸(가는 줄로 나눈다, design-rules 41절) */
-.sub { display: grid; gap: var(--space-2); min-width: 0; padding: var(--space-8); border-bottom: 1px solid var(--line-on-white); }
-/* 칸 폭은 값 길이에 맞춘다 — 공개 이름 · 태그 직접 입력 20자 칸 360(41절). 휴대폰은 칸이 폭을 채운다 */
-.w360 { max-width: 360px; }
+/* 칸 폭은 값 길이에 맞춘다 — 닉네임 12자 240 · 태그 직접 입력 20자 360(41절). 휴대폰은 칸이 폭을 채운다 */
+.w240 { max-width: 240px; }
 .tags :global(input.input) { max-width: 360px; }
 
 /* 선 버튼 짙은 선 --gray-500(이 화면 범위에서만 — 공용 .btn--line 은 그대로, 41절) */
 .col.col :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
-/* 태그 칩 — 짙은 선 44, 고른 칩은 플랫폼 색 윤곽 대신 공통 고른 칩(하늘 면 + 짙은 선 2px + 체크, 35·37절과 같음, 41절) */
+/* 태그 칩 — 짙은 선 44, 고른 칩은 하늘 면 + 짙은 선 2px + 체크(41절) */
 .tags.tags :global(.chip) { background: var(--white); color: var(--ink); box-shadow: inset 0 0 0 1px var(--gray-500); font-weight: var(--fw-nav); }
 .tags.tags :global(.chip):hover { background: var(--gray-50); }
 .tags.tags :global(.chip)[aria-pressed="true"] { background: var(--primary-50); color: var(--ink); box-shadow: inset 0 0 0 2px var(--gray-900); font-weight: var(--fw-bold); }
 /* 아이콘 없는 선택지(운영자가 새로 넣은 것)는 칩 몸통이 체크를 그리지 않는다 — 고른 표시를 같게 하려고 여기서 체크를 붙인다 */
 .tags.tags :global(.chip)[aria-pressed="true"][data-icon="false"]::after { content: ""; flex: none; width: 6px; height: 12px; margin: -4px 2px 0 2px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
-/* 저장 결과 상자 — 완료는 .okmsg + 「✓」, 오류는 .err + 「!」 원(계정 설정과 같은 값, 색만으로 알리지 않게 — 37·41절) */
-.col :global(:is(.err, .okmsg):not(:empty)) { display: flex; gap: var(--space-3); align-items: flex-start; }
-.col :global(.err:not(:empty))::before { content: "!" / ""; }
-.col :global(.okmsg:not(:empty))::before { content: "✓" / ""; }
-.col :global(:is(.err, .okmsg):not(:empty))::before { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; box-shadow: inset 0 0 0 2px currentColor; font-weight: var(--fw-bold); line-height: 1; }
-.last { border-bottom: 0; }
-.subT { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; }
-.subT label, label.subT { cursor: pointer; }
-.count { color: var(--sub); font-size: var(--fs-small); font-weight: 400; font-variant-numeric: tabular-nums; }
-.hint { margin: 0; color: var(--sub); font-size: var(--fs-caption); line-height: var(--lh-caption); }
-.bio { height: auto; resize: vertical; line-height: 1.6; } /* 최소 높이·안쪽 여백은 공용 입력칸 값(48 · 16) — 88 로 할지는 따로 정한다 */
+.bio { height: auto; resize: vertical; line-height: 1.6; }
 
-/* 찾기 노출 — 줄 전체가 누르는 칸(라벨이 스위치를 감싼다, 높이 64 — 계정 설정 줄과 같다) */
+/* 사진 칸 — 프로필 사진 원 80(휴대폰 64), 배경 사진 2:1(240 칸). 사진이 없으면 기본 얼굴 · 옅은 하늘 면(44절 대신 지시한 --primary-50 한 면). 테두리 1px --tint-line(41절) */
+.face { flex: none; display: block; width: 80px; height: 80px; border-radius: 50%; overflow: hidden; background: var(--primary-50); box-shadow: 0 0 0 1px var(--tint-line); }
+.face img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.bgThumb { display: block; aspect-ratio: 2 / 1; border-radius: var(--r-icon); overflow: hidden; background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--tint-line); }
+.bgThumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* 찾기 노출 — 줄 전체가 누르는 칸(라벨이 스위치를 감싼다, 높이 64) */
 .swRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 64px; cursor: pointer; }
-/* 스위치 — 계정 설정(widgets/my-info .trk)과 같은 모양 52×32 · 테두리 --sub · 짙은 동그라미(옅은 하늘 막대 + 흰 동그라미는 1.75:1 이라 켜짐이 안 보였다, ui 리뷰 2026-10-22). 폼 체크박스라 input 그대로 */
+/* 스위치 52×32 · 테두리 --sub · 짙은 동그라미(41절 「스위치 한 모양」) */
 .switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 52px; height: 32px; margin: 0; border: 1px solid var(--sub); border-radius: var(--r-pill); background-color: var(--gray-200); cursor: pointer; transition: background .15s; }
 .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); transition: transform .15s; } /* 3 = 테두리 안 30 에서 24 를 가운데로(보정) */
 .switch:checked { background-color: var(--primary); }
 .switch:checked::after { transform: translateX(20px); }
 .switch:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .switch, .switch::after { transition: none; } }
 
-/* 판 끝 — 저장 결과 안내(role=status) + 취소·저장. 결과가 없을 때 저장 줄 위 간격은 16(41절 — 빈 한 줄 자리 때문에 저장 줄이 떠 보였다) */
-.end { display: grid; gap: var(--space-2); padding: var(--space-4) var(--space-8) var(--space-8); }
-.msg { margin: 0; }
-/* 빈 결과 줄은 공용 :is(.err, .okmsg):empty 가 흐름에서 빼 높이 0(알림 자리는 남는다) */
-.btns { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
-
-/* 오른쪽 미리보기 — 판·상자 없이 제목 아래 머리 하나, 스크롤하면 따라온다 */
-.pv { position: sticky; top: var(--space-6); display: grid; align-content: start; gap: var(--space-4); min-width: 0; }
+/* 오른쪽 미리보기 — 「미리보기」 제목 아래 카드 하나, 스크롤하면 따라온다. 무대 상자·회색 면 없이 카드에 안쪽 16, 띠는 카드 안 둥근 칸(2026-11-13 고침) */
+.pv { position: sticky; top: var(--space-6); display: grid; align-content: start; gap: var(--space-3); min-width: 0; }
 .pvT { margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; }
+.pv > [data-creator-head] { --av: 80px; --av-ring: 4px; --pf-pad: 8px; padding: var(--space-4); border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
+.pv > [data-creator-head] [data-band] { aspect-ratio: 3 / 1; border-radius: var(--r-btn); }
+/* 머리 안 — 사진 · 이름 · 소개를 한 줄씩 위아래로(시안 .hc-body) */
+.pv > [data-creator-head] [data-band] + div { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-2); padding: 0 var(--space-2) var(--space-2); }
+.pv > [data-creator-head] [data-avatar] { grid-row: auto; border-color: var(--white); box-shadow: 0 0 0 1px var(--tint-line); }
+.pv > [data-creator-head] [data-avatar] + div { grid-column: 1; padding-top: 0; }
 
-/* 1100 이하 — 미리보기가 입력 위로(따라오지 않음) */
+/* 1100 이하 — 미리보기가 입력 위로(따라오지 않음), 기둥은 720 그대로 */
 @media (max-width: 1100px) {
-  .grid { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-4); }
+  .grid { grid-template-columns: minmax(0, var(--col-form)); row-gap: var(--space-6); }
   .pv { position: static; order: -1; }
 }
 
-/* 휴대폰 — 미리보기 머리를 작게(띠 72 · 사진 56, 시안 .cp-cover · .cp-av), 저장 줄은 화면 아래에 붙는다.
-   머리 안 값은 머리가 열어 둔 변수(--av · --pf-pad)와 data-band 로만 바꾼다 */
+/* 휴대폰 — 미리보기는 입력 판 아래(2026-11-13 고침), 머리는 띠 72 · 사진 56. 칸은 폭을 채운다 */
 @media (max-width: 767px) {
-  .pv { gap: var(--space-2); }
-  .pv > section[data-creator-head] { --av: 56px; --pf-pad: 16px; }
-  .pv > section[data-creator-head] [data-band] { aspect-ratio: auto; height: 72px; }
-  .sub { padding: var(--space-6); }
-  .w360, .tags :global(input.input) { max-width: none; }
-  .end { position: sticky; bottom: 0; z-index: 4; padding: var(--space-3) var(--space-6); border-top: 1px solid var(--line-on-white); border-radius: 0 0 var(--r-card) var(--r-card); background: var(--white); }
-  .btns :global(.btn) { flex: 1; }
+  .grid { margin-top: 0; }
+  .pv { order: 2; }
+  .pv > [data-creator-head] { --av: 56px; }
+  .pv > [data-creator-head] [data-band] { aspect-ratio: auto; height: 72px; }
+  .face { width: 64px; height: 64px; }
+  .w240, .tags :global(input.input) { max-width: none; }
 }

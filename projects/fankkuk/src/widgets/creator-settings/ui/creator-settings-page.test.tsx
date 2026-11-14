@@ -43,7 +43,8 @@ function render() {
   );
 }
 
-const foldTitles = () => [...host.querySelectorAll("details > summary > span:first-child")].map((el) => el.textContent?.trim());
+// 2026-11-14 재디자인: 칸 이름 앞에 동그라미 아이콘이 붙어 이름 칸은 [data-fold-name] 로 찾는다
+const foldTitles = () => [...host.querySelectorAll("details > summary > [data-fold-name]")].map((el) => el.textContent?.trim());
 
 describe("상세 설정 — 팬덤·선물 링크 구역이 빠진다 (2026-11-13 재분류)", () => {
   it("팬덤 구역(팬덤 이름·팬마크·테마 색)이 없다", () => {

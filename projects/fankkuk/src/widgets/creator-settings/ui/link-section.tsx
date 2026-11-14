@@ -9,7 +9,7 @@ import { saveLinkHandle } from "@/entities/creator/api/link-handle-client";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { CopyButton } from "@/shared/ui/copy-button";
 import panel from "@/shared/ui/settings-panel.module.css";
-import s from "./creator-settings.module.css";
+import s from "./profile-sections.module.css";
 
 // 선물 링크 (creator-link INV-E2~E4) — 2026-11-13 상세 설정에서 프로필 수정 「채널」 탭(채널 주소)으로 옮김(구역 그대로). 「주소와 설정」 프로필 카드 다음 — 같은 카드 언어(제목 줄·필드·저장 버튼·상태 문구).
 // 프로필 사진·공지 이미지는 「내 팬꾹 꾸미기」(/creator/customize)로 옮겼다(디자인 기준 10절) — 여기는 그 화면으로 가는 링크만.
@@ -71,30 +71,33 @@ export function LinkSection({
       <h2 className={panel.title} id="link-h">
         선물 링크
       </h2>
-      <div className={`${panel.body} ${s.set}`}>
-
-      <div>
-        <label className="label" htmlFor="link-handle">
+      {/* 2026-11-14 시안 settings-profile-20261113 — 앞부분 「fankkuk.com/」이 안에 붙은 주소 칸 + 옆 선 버튼(누르면 확인 창), 아래 지금 주소 줄 + 복사 */}
+      <div className={panel.sec}>
+        <label className={panel.lab} htmlFor="link-handle">
           링크 주소
         </label>
-        <div className={s["handle-row"]}>
-          <span className={s["handle-host"]} aria-hidden="true">
-            {LINK_HOST}/
-          </span>
-          <input
-            className={`field ${s.w280}`}
-            id="link-handle"
-            value={draft}
-            maxLength={HANDLE_MAX + 4}
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            disabled={locked}
-            onChange={(e) => setDraft(e.target.value)}
-            aria-describedby="link-handle-hint link-msg"
-          />
+        <div className={s.hrow}>
+          <div className={s.handle}>
+            <span aria-hidden="true">{LINK_HOST}/</span>
+            <input
+              id="link-handle"
+              value={draft}
+              maxLength={HANDLE_MAX + 4}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              disabled={locked}
+              onChange={(e) => setDraft(e.target.value)}
+              aria-describedby="link-handle-hint link-msg"
+            />
+          </div>
+          {!locked ? (
+            <button className="btn btn--line" type="button" aria-disabled={saving} onClick={askSave}>
+              {handle ? "링크 주소 변경" : "링크 주소 등록"}
+            </button>
+          ) : null}
         </div>
-        <p className="t-meta hint" id="link-handle-hint">
+        <p className={panel.hint} id="link-handle-hint">
           {locked ? (
             `링크 주소 변경까지 ${lockedDays}일 남았습니다.`
           ) : (
@@ -107,16 +110,15 @@ export function LinkSection({
             </>
           )}
         </p>
+        <p className={`${panel.msg} ${msg && !msg.ok ? panel.bad : panel.ok}`} role="status" id="link-msg">
+          {msg?.text}
+        </p>
         {handle ? (
-          <div className={s["link-now"]}>
-            <p className={`t-strong ${s["link-text"]}`}>{linkText(handle)}</p>
-            <p className="t-meta">{verified ? "이 주소로 내 페이지에 접속할 수 있습니다." : "채널 소유자 확인 후 이 주소로 내 페이지에 접속할 수 있습니다."}</p>
-          </div>
-        ) : null}
-      </div>
-      {handle || !locked ? (
-        <div className={`btn-stack ${s["link-btns"]}`}>
-          {handle ? (
+          <div className={s.linkNow}>
+            <p className={s.linkText}>
+              <span className={s.u}>{linkText(handle)}</span>
+              <span className={s.m}>{verified ? "이 주소로 내 페이지에 접속할 수 있습니다." : "채널 소유자 확인 후 이 주소로 내 페이지에 접속할 수 있습니다."}</span>
+            </p>
             <CopyButton
               className="btn btn--line btn--sm"
               text={`https://${linkText(handle)}`}
@@ -125,27 +127,17 @@ export function LinkSection({
               copiedMessage="링크 주소가 복사되었습니다."
               failedMessage="주소를 복사하지 못했습니다. 주소를 선택해 직접 복사해 주세요."
             />
-          ) : null}
-          {!locked ? (
-            <button className="btn btn--sm" type="button" aria-disabled={saving} onClick={askSave}>
-              {handle ? "링크 주소 변경" : "링크 주소 등록"}
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-      <p className={`${s["set-msg"]} ${msg && !msg.ok ? "err" : "okmsg"}`} role="status" id="link-msg">
-        {msg?.text}
-      </p>
-
-      {/* 사진 안내 줄은 두지 않는다 — 배경 사진은 같은 채널 탭 위 판, 프로필 사진은 프로필 탭. 2026-11-13 리뷰: 명세에 없는 설명 줄 */}
+          </div>
+        ) : null}
+        {/* 사진 안내 줄은 두지 않는다 — 배경 사진은 같은 채널 탭 위 판, 프로필 사진은 프로필 탭. 2026-11-13 리뷰: 명세에 없는 설명 줄 */}
       </div>
 
       <BottomSheet open={confirming} title={`${linkText(normalizeHandle(draft) || "…")} 로 정할까요?`} onClose={() => setConfirming(false)}>
         <p>설정 후 {HANDLE_LOCK_DAYS}일 동안 변경할 수 없습니다.</p>
-        <p className={`t-meta ${s["sheet-sub"]}`}>
+        <p className={`t-meta ${s.sheetSub}`}>
           {handle ? `기존 주소(${linkText(handle)})로 접속하면 ${HANDLE_RETIRE_DAYS}일 동안 새 주소로 자동 연결됩니다.` : "공유하기 전 주소의 철자를 확인해 주세요."}
         </p>
-        <div className={s["sheet-btns"]}>
+        <div className={s.sheetBtns}>
           <button className="btn btn--line" type="button" onClick={() => setConfirming(false)}>
             취소
           </button>

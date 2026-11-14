@@ -1,10 +1,22 @@
-/* 사진 한 칸 — 옛 「내 팬꾹 꾸미기」 칸 모양 그대로(widgets/creator-customize 에서 옮김). 공통 부품(.btn·.t-meta·.err)은 base.css */
-.fld { display: grid; gap: var(--space-2); }
+/* 사진 한 칸 — 프로필 사진 · 배경 사진 · 팬마크(시안 settings-profile-20261113 .pic · .bgpic · .markrow). 공통 부품(.btn·.err)은 base.css */
+.fld { display: grid; gap: var(--space-2); min-width: 0; }
 .lbl { font-weight: var(--fw-btn); }
 .msg:empty { display: none; }
-/* 권장 크기 한 줄 — 시안 v24-creator-card cprofile/proposal.css .v24-size */
-.size { margin-top: var(--space-1); font-size: var(--fs-small); line-height: var(--lh-caption); color: var(--gray-600); }
+/* 안내 · 권장 크기 — 14 / --sub(칸 아래 도움말과 같은 값) */
+.hint { margin: 0; color: var(--sub); font-size: var(--fs-small); line-height: var(--lh-caption); }
+/* 사진 옆 버튼 한 줄 — 버튼은 짙은 선 48(41절) */
 .imgRow { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+/* 버튼 윗선을 사진 윗선에 맞춘다(2026-11-13 고침) */
+.top { align-items: flex-start; gap: var(--space-6); }
+.btns { display: flex; flex-wrap: wrap; gap: var(--space-2); min-width: 0; }
+/* 배경 사진 — 왼쪽 사진 240(2:1), 오른쪽에 버튼 · 안내. 휴대폰은 위아래 */
+.side { grid-template-columns: 240px minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+.sideMain { display: grid; gap: var(--space-3); align-content: start; min-width: 0; }
+.sideMain > .hint + .hint { margin-top: calc(-1 * var(--space-1)); }
 .file:focus-visible + .pick { outline: 3px solid var(--focus); outline-offset: 2px; }
 .pick { cursor: pointer; }
 .pick[aria-disabled="true"] { background: var(--gray-100); color: var(--gray-600); cursor: not-allowed; }
+@media (max-width: 767px) {
+  .side { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+  .top { gap: var(--space-4); }
+}

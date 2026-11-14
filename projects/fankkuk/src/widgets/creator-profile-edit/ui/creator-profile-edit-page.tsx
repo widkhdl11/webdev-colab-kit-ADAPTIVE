@@ -9,14 +9,15 @@ import { creatorBackgroundUrl, creatorPhotoUrl } from "@/entities/creator/model/
 import { CreatorHead } from "@/entities/creator/ui/creator-head";
 import { CREATOR_HOME, CREATOR_PROFILE_TABS, creatorProfileTabHref, type CreatorProfileTab } from "@/entities/session/model/home-path";
 import { NICKNAME_MAX } from "@/entities/session/model/nickname-rule";
-import { deleteCreatorImage, sendCreatorImage } from "@/features/creator-photo/api/send-creator-image";
-import { deleteCreatorPhoto, sendCreatorPhoto } from "@/features/creator-photo/api/send-creator-photo";
+import { sendCreatorImage } from "@/features/creator-photo/api/send-creator-image";
+import { sendCreatorPhoto } from "@/features/creator-photo/api/send-creator-photo";
 import { ImageField, type ImageSendResult } from "@/features/creator-photo/ui/image-field";
 import { sendCreatorProfile } from "@/features/creator-settings-save/api/send-creator-settings";
 import { clipChars, INTRO_MAX, oneLine } from "@/features/creator-settings-save/model/creator-settings-input";
 import { sendCreatorTags } from "@/features/creator-tags-edit/api/send-creator-tags";
 import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { charCount } from "@/shared/lib/validation/char-count";
+import { FaceAvatar } from "@/shared/ui/face-avatar";
 import panel from "@/shared/ui/settings-panel.module.css";
 import s from "./creator-profile-edit.module.css";
 
@@ -29,6 +30,8 @@ import s from "./creator-profile-edit.module.css";
 // 배치(2026-11-13 본체 지적 「탭 안 모양이 제각각」을 고침): 두 탭이 같은 두 열 — 왼쪽 기둥(--col-form) · 오른쪽 미리보기 열(나머지, 따라옴).
 // 왼쪽 기둥의 모든 구역은 공용 settings-panel 판(같은 판 모양 · 제목 h2 하나). 미리보기는 탭마다 하나 — 프로필 탭은 프로필 머리,
 // 채널 탭은 앱 레이어가 넘긴 팬덤 카드 미리보기(channelPreview).
+// 모양(2026-11-14, 시안 docs/design/mockups/settings-profile-20261113 · NOTES 「2026-11-13 고침」): 글 칸 판만 맨 아래 회색 「저장 줄」(결과 안내 왼쪽 · 버튼 오른쪽),
+// 사진 판(고르는 즉시 저장)에는 저장 줄이 없다. 「저장」은 바뀐 값이 없으면 비활성 모양(누르면 지금처럼 보낸다). 사진·배경 사진 지우기 버튼은 뺐다.
 // 저장 경로는 그대로다 — 새 저장 규칙은 없다:
 // - 사진·배경사진은 고르는 즉시 서버로 보낸다(creator-link INV-E9 — 서버가 열어 보고 사진 정보를 지운 뒤 다시 굽는다).
 // - 프로필 탭 「저장」은 닉네임(= 크리에이터 이름, creator-display-name INV-CN2)·한 줄 소개만 /api/creator/profile 에,
@@ -130,17 +133,21 @@ export function CreatorProfileEditPage({ tab = "profile", profileSections, chann
     router.refresh();
   };
 
-  // 판 끝 — 결과 상자(완료 ✓ · 오류 !)는 비면 높이 0 이라 저장 줄 위 간격이 16(41절). 휴대폰에서는 화면 아래에 붙는다
+  // 바뀐 값이 있는가 — 「저장」 모양만 가른다(누르면 지금처럼 보낸다)
+  const sameTags = tagIds.length === p.tagIds.length && tagIds.every((x) => p.tagIds.includes(x));
+  const dirty = tab === "profile" ? name !== p.name || intro !== p.intro : visible !== p.visibleInSearch || customTag !== p.customTag || !sameTags;
+
+  // 저장 줄 — 판 맨 아래 회색 띠. 결과 안내(완료 ✓ · 오류 !)는 띠 왼쪽, [취소][저장]은 오른쪽(보조 → 주). 휴대폰에서는 판 아래 끝에 붙는다
   const formEnd = (
-    <div className={s.end}>
-      <p className={`${s.msg} ${msg && !msg.ok ? "err" : "okmsg"}`} role="status" id="pe-msg">
+    <div className={panel.bar}>
+      <p className={`${panel.msg} ${msg && !msg.ok ? panel.bad : panel.ok}`} role="status" id="pe-msg">
         {msg?.text}
       </p>
-      <div className={s.btns}>
+      <div className={panel.barBtns}>
         <Link className="btn btn--line" href={CREATOR_HOME}>
           취소
         </Link>
-        <button className="btn" type="submit" aria-disabled={saving} aria-busy={saving}>
+        <button className={`btn ${dirty || saving ? "" : panel.idle}`} type="submit" aria-disabled={saving} aria-busy={saving}>
           {saving ? "저장 중…" : "저장"}
         </button>
       </div>
@@ -184,19 +191,18 @@ export function CreatorProfileEditPage({ tab = "profile", profileSections, chann
               <h2 className={panel.title} id="pe-ph">
                 프로필 사진
               </h2>
-              <div className={`${s.sub} ${s.last}`}>
+              <div className={panel.sec}>
                 <ImageField
                   id="pe-photo"
                   labelledBy="pe-ph"
+                  layout="top"
+                  view={<span className={s.face}>{photoUrl ? <img src={photoUrl} alt="" width={512} height={512} /> : <FaceAvatar className="" />}</span>}
                   hasImage={photoPath !== null}
                   pickLabel="프로필 사진 변경"
-                  removeLabel="사진 삭제"
                   upload={async (f) => photoOut(await sendCreatorPhoto(f))}
-                  remove={async () => photoOut(await deleteCreatorPhoto())}
                   onSaved={setPhotoPath}
                   onLogin={toLogin}
                   savedText="프로필 사진이 변경되었습니다."
-                  removedText="프로필 사진이 삭제되었습니다."
                 />
               </div>
             </section>
@@ -212,12 +218,12 @@ export function CreatorProfileEditPage({ tab = "profile", profileSections, chann
               <h2 className={panel.title} id="pe-in">
                 소개
               </h2>
-              <div className={s.sub}>
-                <label className={s.subT} htmlFor="pe-name">
+              <div className={panel.sec}>
+                <label className={panel.lab} htmlFor="pe-name">
                   닉네임
                 </label>
                 <input
-                  className={`field ${s.w360}`}
+                  className={`field ${s.w240}`}
                   id="pe-name"
                   type="text"
                   value={name}
@@ -227,16 +233,16 @@ export function CreatorProfileEditPage({ tab = "profile", profileSections, chann
                   onChange={(e) => setName(clipChars(e.currentTarget.value, NICKNAME_MAX))}
                   aria-describedby="pe-name-h"
                 />
-                <p className={s.hint} id="pe-name-h">
+                <p className={panel.hint} id="pe-name-h">
                   {`팬에게 표시되는 이름 · 최대 ${NICKNAME_MAX}자`}
                 </p>
               </div>
-              <div className={`${s.sub} ${s.last}`}>
-                <div className={s.subT}>
+              <div className={panel.sec}>
+                <div className={panel.lab}>
                   <label htmlFor="pe-bio">
-                    한 줄 소개 <span className={s.count}>({INTRO_MAX}자까지)</span>
+                    한 줄 소개 <span className={panel.count}>({INTRO_MAX}자까지)</span>
                   </label>
-                  <span className={s.count} id="pe-bio-c" aria-live="polite">
+                  <span className={panel.count} id="pe-bio-c" aria-live="polite">
                     {charCount(intro.trim())}/{INTRO_MAX}
                   </span>
                 </div>
@@ -263,13 +269,14 @@ export function CreatorProfileEditPage({ tab = "profile", profileSections, chann
                 <h2 className={panel.title} id="pe-bg-t">
                   배경 사진
                 </h2>
-                <div className={`${s.sub} ${s.last}`}>
+                <div className={panel.sec}>
                   <ImageField
                     id="pe-bg"
                     labelledBy="pe-bg-t"
+                    layout="side"
+                    view={<span className={s.bgThumb}>{bgUrl ? <img src={bgUrl} alt="" width={1200} height={600} /> : null}</span>}
                     hasImage={bgPath !== null}
                     pickLabel="배경 사진 변경"
-                    removeLabel="배경 사진 삭제"
                     hint={
                       <>
                         JPG·PNG·WebP · 가로형 사진 권장
@@ -279,11 +286,9 @@ export function CreatorProfileEditPage({ tab = "profile", profileSections, chann
                     }
                     sizeHint="권장 크기 1200×600px"
                     upload={(f) => sendCreatorImage("background", f, { rightsChecked: false })}
-                    remove={() => deleteCreatorImage("background")}
                     onSaved={setBgPath}
                     onLogin={toLogin}
                     savedText="배경 사진이 변경되었습니다."
-                    removedText="배경에 테마 색이 적용되었습니다."
                   />
                 </div>
               </section>
@@ -300,7 +305,7 @@ export function CreatorProfileEditPage({ tab = "profile", profileSections, chann
                 <h2 className={panel.title} id="pe-tags-t">
                   태그
                 </h2>
-                <div className={`${s.sub} ${s.tags}`}>
+                <div className={`${panel.sec} ${s.tags}`}>
                   <TagPicker
                     idBase="pe-tags"
                     labelledBy="pe-tags-t"
@@ -318,7 +323,7 @@ export function CreatorProfileEditPage({ tab = "profile", profileSections, chann
                     invalid={tagsBad ? { describedBy: "pe-msg" } : null}
                   />
                 </div>
-                <div className={`${s.sub} ${s.last}`}>
+                <div className={panel.sec}>
                   {/* 줄 전체가 누르는 칸(라벨이 스위치를 감싼다) — 스위치만 누르던 26 을 44 넘게 */}
                   <label className={s.swRow} htmlFor="pe-find">
                     <strong className="t-strong">크리에이터 찾기에 보이기</strong>

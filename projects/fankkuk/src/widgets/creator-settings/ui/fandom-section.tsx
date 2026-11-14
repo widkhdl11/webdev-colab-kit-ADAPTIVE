@@ -121,11 +121,11 @@ function ThemeField({ value, onChange }: { value: ThemeColor | null; onChange: (
   const fitted = fitLight(picked);
 
   return (
-    <div className={s.sub}>
-      <h3 className={s.subT}>
+    <div className={panel.sec}>
+      <h3 className={panel.lab}>
         <span id="fd-theme-l">테마 색</span>
       </h3>
-      <p className={s.hint} id="fd-theme-h">
+      <p className={panel.hint} id="fd-theme-h">
         배경 사진이 없을 때 카드 배경과 팬덤 배지에 적용됩니다. 사이트 버튼과 글자에는 적용되지 않습니다.
       </p>
       <div className={s.sws} role="radiogroup" aria-labelledby="fd-theme-l" aria-describedby="fd-theme-h">
@@ -244,6 +244,8 @@ export function FandomForm(p: FandomFormProps) {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const name = fanName.trim();
+  // 바뀐 값이 있는가 — 「저장」 모양만 가른다(누르면 지금처럼 보낸다)
+  const dirty = name !== saved.fanName || theme !== saved.theme;
 
   const save = async () => {
     if (saving) return;
@@ -276,10 +278,10 @@ export function FandomForm(p: FandomFormProps) {
       </h2>
       {/* 입력 한 판 — 소제목 셋(순서가 없는 설정이라 번호는 없다) 끝에 저장 결과 안내와 되돌리기·저장 */}
           {/* 칸 폭은 값 길이(10자)에 맞춘 240 — 글자 수 세기가 칸 오른쪽 끝에 붙게 제목 줄도 같은 폭(s.short) */}
-          <div className={`${s.sub} ${s.short}`}>
-            <h3 className={s.subT}>
+          <div className={`${panel.sec} ${s.short}`}>
+            <h3 className={panel.lab}>
               <label htmlFor="fd-name">팬덤 이름</label>
-              <span className={s.count} aria-hidden="true">
+              <span className={panel.count} aria-hidden="true">
                 {charCount(name)}/{FAN_NAME_MAX}
               </span>
             </h3>
@@ -292,15 +294,15 @@ export function FandomForm(p: FandomFormProps) {
               aria-describedby="fd-name-h"
               onChange={(e) => setFanName(clipChars(oneLine(e.currentTarget.value), FAN_NAME_MAX))}
             />
-            <p className={s.hint} id="fd-name-h">
+            <p className={panel.hint} id="fd-name-h">
               팬 배지에 표시되는 이름 · 최대 {FAN_NAME_MAX}자
               <br />
               사용할 수 없는 표현은 저장되지 않습니다.
             </p>
           </div>
 
-          <div className={s.sub}>
-            <h3 className={s.subT} id="fd-sym-h">
+          <div className={panel.sec}>
+            <h3 className={panel.lab} id="fd-sym-h">
               <span>팬마크</span>
             </h3>
             <ImageField
@@ -337,16 +339,16 @@ export function FandomForm(p: FandomFormProps) {
 
           <ThemeField key={themeKey} value={theme} onChange={setTheme} />
 
-          {/* 판 끝 — 결과 상자(완료 ✓ · 오류 !)는 비면 높이 0 이라 저장 줄 위 간격이 16(41절), 결과가 뜨면 그 높이만큼 버튼이 내려간다. 휴대폰에서는 화면 아래에 붙는다 */}
-          <div className={s.end}>
-            <p className={`${s.msg} ${msg && !msg.ok ? "err" : "okmsg"}`} role="status" id="fd-msg">
+          {/* 저장 줄 — 판 맨 아래 회색 띠(공용 settings-panel). 결과 안내는 띠 왼쪽, [되돌리기][저장]은 오른쪽. 휴대폰에서는 판 아래 끝에 붙는다 */}
+          <div className={panel.bar}>
+            <p className={`${panel.msg} ${msg && !msg.ok ? panel.bad : panel.ok}`} role="status" id="fd-msg">
               {msg?.text}
             </p>
-            <div className={s.btns}>
+            <div className={panel.barBtns}>
               <button className="btn btn--line" type="button" onClick={revert}>
                 되돌리기
               </button>
-              <button className="btn" type="button" aria-disabled={saving} aria-describedby="fd-msg" onClick={() => void save()}>
+              <button className={`btn ${dirty || saving ? "" : panel.idle}`} type="button" aria-disabled={saving} aria-describedby="fd-msg" onClick={() => void save()}>
                 {saving ? "저장 중…" : "저장"}
               </button>
             </div>

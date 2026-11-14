@@ -1,55 +1,93 @@
-/* 계정 설정 화면(2026-11-13 「상세 설정」에서 이름 바꿈) — 시안 pilot-2026-10-22/settings.html(pilot.css 「상세 설정」 .st-jump · .st-more) · v21-addendum3(.fold). 접힌 칸 안의 설정 상자는 옛 v18 카드 그대로.
-   폭: 틀은 1200(MyShell broad) — 「팬덤」과 「주소와 설정」이 같은 폭이던 배치(design-rules 41절). 2026-11-13 팬덤은 프로필 수정 「채널」 탭으로 옮겨 이 화면은 접힌 칸 한 묶음.
-   41절(시안 part4-v4-20261101): 판·접힌 칸 흰 카드(--hair + --card-shadow) · 안쪽 32(휴대폰 24) · 선 버튼 짙은 선 · 스위치 52×32 · 칩·라디오 칸 짙은 선 · 접힌 칸 상태 점 + 글자 뱃지 · 칸 폭은 값 길이.
-   공통 부품(.card·.card--soft·.grid·.opt·.sw-row·.tags·.chip·.field·.hint·.err)은 base.css 가 그린다 — 여기는 이 화면에만 있는 것 */
+/* 계정 설정 화면(2026-11-13 「상세 설정」에서 이름 바꿈) — 2026-11-14 재디자인: 시안 docs/design/mockups/settings-account-20261113(구역마다 저장 · 칸 앞 동그라미 아이콘 = 사용자 추천안).
+   폭 --col-form 720(설정형, design-prompt 2-23) — 틀은 1200(MyShell broad)이고 안쪽만 720 으로 왼쪽에 붙인다(프로필 수정과 같은 왼쪽 시작선).
+   덩어리 셋: 카카오톡 인증 알림 상태 줄 / 선물 받는 설정 셋(흰 카드 한 장, 칸 사이 가는 줄) / 보안·회원 탈퇴(카드 한 장), 덩어리 사이 32(design-prompt 2-1·2-2·6-5 1).
+   41절 값: 흰 카드(--hair + --card-shadow) · 점 + 글자 뱃지 · 선 버튼 짙은 선 · 고르는 칸 짙은 선 44, 고른 칸 하늘 면 + 2px + 체크.
+   아래 .set · .save-end · .md-row · .ann-* · .handle-* · .link-* · .set-msg · .w* · .sheet-* 는 프로필 수정 탭의 구역(days·link)이 아직 쓴다 — 지우지 않는다. */
 
 .set { display: grid; gap: 24px; }
-.set-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.inner { padding: 32px; }
-/* 받기 설정 · 선물 링크 · 감사 답장 판 — 안쪽 32(휴대폰은 아래 24 16, 41절) */
 .set:global(.card) { padding: 32px; }
 .set :global(.fs) > :global(.label) { margin-bottom: 12px; }
-/* 머리 아래 간격은 머리(.page-head)가 정한 48 그대로 — 위에 바로가기 줄이 있던 때의 24 를 거뒀다(2026-11-13 팬덤·바로가기 줄을 뺌) */
-.page { display: grid; margin-top: 0; min-width: 0; }
-.page > * { min-width: 0; }
-.page > section + section { margin-top: 0; }
-.group { display: grid; gap: var(--space-4); }
 
-/* 접힌 칸 — 흰 카드(--hair + --card-shadow, 41절) · 제목 줄 56 · 오른쪽 짧은 상태 · 화살표 20 */
-.fold { border-radius: var(--r-btn); background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
-.fold > summary { display: flex; align-items: center; gap: var(--space-4); min-height: 56px; padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); font-weight: var(--fw-btn); list-style: none; cursor: pointer; }
+.root { min-width: 0; }
+.root > header, .root > .page { max-width: var(--col-form); }
+.page { display: grid; min-width: 0; }
+.page > * { min-width: 0; }
+.group { display: grid; gap: var(--space-8); min-width: 0; }
+
+/* 칸 앞 하늘 동그라미 아이콘 40(시안 .row-ico) — 접힌 칸이 펼쳐지면 하늘색 채움 */
+.rowIco { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--r-pill); background: var(--primary-50); color: var(--ink); transition: background-color var(--dur-hover) var(--ease-out); }
+.rowIcoSvg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.foldName { flex: 1 1 auto; min-width: 0; font-size: var(--fs-body); font-weight: var(--fw-bold); line-height: 1.6; overflow-wrap: anywhere; }
+.foldMeta { color: var(--sub); font-size: var(--fs-small); font-weight: 500; }
+.foldChev { flex: none; width: 20px; height: 20px; fill: none; stroke: var(--gray-600); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform var(--dur-hover) var(--ease-out); }
+
+/* 흰 카드 한 장 = 접힌 칸 묶음(칸 사이는 가는 줄) */
+.acc { overflow: hidden; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
+.acc > * + * { box-shadow: inset 0 1px 0 var(--divider); }
+
+/* 접힌 칸 — 제목 줄 72 · 아이콘 · 이름 · 오른쪽 짧은 상태 · 화살표 20 */
+.fold { min-width: 0; }
+.fold > summary { display: flex; align-items: center; gap: var(--space-3); min-height: 72px; padding: 0 var(--space-6); list-style: none; cursor: pointer; transition: background-color var(--dur-hover) var(--ease-out); }
 .fold > summary::-webkit-details-marker { display: none; }
 .fold > summary:hover { background: var(--gray-50); }
-.fold > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.fold > summary > span:first-child { flex: 1; min-width: 0; }
-.foldMeta { color: var(--sub); font-size: var(--fs-caption); font-weight: 400; }
-/* 승인 서명 줄(시안 v43-signup/creator-settings-signature .v-link-row) — 접힌 칸과 같은 높이·흰 카드. 연결 전은 줄 전체가 링크 */
-.linkRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); min-height: 56px; padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); font-weight: var(--fw-btn); text-decoration: none; }
+.fold > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
+.fold[open] > summary .foldChev { transform: rotate(180deg); }
+.fold[open] > summary .rowIco { background: var(--primary); }
+/* 펼친 부분은 옅은 면 — 다음 줄과 경계 */
+.foldBody { display: grid; gap: var(--space-6); min-width: 0; padding: var(--space-6) var(--space-6) var(--space-8); background: var(--surface); box-shadow: inset 0 1px 0 var(--divider); }
+.foldBody > * { min-width: 0; }
+
+/* 카카오톡 인증 알림 줄 — 접는 칸이 아니라 상태 줄 한 장(흰 카드 80). 연결 전은 줄 전체가 링크 */
+.linkRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); min-height: 80px; padding: var(--space-3) var(--space-6); border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); text-decoration: none; }
+.linkRowGo:hover { background: var(--gray-50); }
+.linkRowGo:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
 /* 접힌 칸 · 승인 서명 줄 오른쪽 상태 — 점 + 글자 뱃지(공용 .tag.tag--dot). 색: 등록됨·받는 중·연결됨 초록, 쉬는 중 노랑, 등록 전·연결 전 회색(41절).
    공용 .tag--success 등은 이 화면 범위에서 하늘·회색 갈래라 색은 여기서 준다 */
-.badge.badge { flex: none; white-space: nowrap; background: var(--gray-100); color: var(--sub); }
+.badge.badge { flex: none; white-space: nowrap; background: var(--gray-100); color: var(--gray-600); }
 .badge.badge:global(.tag--success) { background: var(--success-soft); color: var(--success); }
 .badge.badge:global(.tag--warn) { background: var(--warn-soft); color: var(--warn-ink); }
-.linkRow > span:first-child { flex: 1; min-width: 0; }
-.linkRowGo:hover { background: var(--gray-50); }
-.linkRowGo:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.linkRowGo svg { width: 20px; height: 20px; fill: none; stroke: var(--sub); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.foldChev { flex: none; width: 20px; height: 20px; fill: none; stroke: var(--sub); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform var(--dur-fade, 0.15s) ease; }
-.fold[open] > summary .foldChev { transform: rotate(180deg); }
-.foldBody { display: grid; gap: var(--space-4); min-width: 0; padding: var(--space-4); border-top: 1px solid var(--line-on-white); }
-.foldBody > * { min-width: 0; }
-.foldBody > section + section { margin-top: 0; }
-/* 저장 버튼과 결과 줄을 한 덩어리로 — 비어 있는 결과 줄이 카드 안 간격(24)을 차지하지 않게 */
+
+/* 펼친 칸 안 — 구역(받기 설정의 선물 받기 · 받기 어려운 선물)은 카드 없이 제목 + 가는 줄 + 32 */
+.sec { display: grid; gap: var(--space-6); min-width: 0; }
+.sec > * { min-width: 0; }
+.sec + .sec { margin-top: var(--space-2); padding-top: var(--space-8); box-shadow: 0 -1px 0 var(--divider); }
+.secT { margin: 0; font-size: var(--fs-body); line-height: 1.6; } /* 안쪽 구역 제목은 바깥 줄 제목(16)보다 크지 않게 — 글꼴로 구분 */
+.grpF { display: grid; gap: var(--space-2); min-width: 0; }
+.root .grpF > :global(.label) { margin-bottom: 0; }
+.root .grpF > :global(.hint) { margin-top: 0; }
+/* 주소 설정 — 자물쇠 그림 + 글 묶음(하늘 면) */
+.note { display: flex; gap: var(--space-4); align-items: center; padding: var(--space-6); border-radius: var(--r-btn); background: var(--tint); }
+.noteText { min-width: 0; }
+.addr-ico { flex: none; width: 56px; height: 56px; }
+.body-gap { margin-top: 4px; }
+/* 받기 어려운 선물 — 현재 안내 문구(하늘 면) · 미리보기(흰 면) */
+.tintBox { padding: var(--space-4) var(--space-6); border-radius: var(--r-btn); background: var(--tint); }
+.preview { padding: var(--space-4) var(--space-6); border-radius: var(--r-btn); background: var(--white); }
+
+/* 저장 줄 — 오른쪽 끝, 「보조 → 저장」(design-prompt 2-21 4·2-22). 회색 면 둥근 상자 */
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); padding: var(--space-4) var(--space-6); border-radius: var(--r-btn); background: var(--gray-100); }
+.actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
+/* 저장 버튼과 결과 줄을 한 덩어리로 — 비어 있는 결과 줄이 간격을 차지하지 않게 */
 .msg:not(:empty) { margin-top: 12px; }
 .save-end { display: grid; justify-items: end; } /* 프로필 탭 「생일과 기념일」 판 — 저장 버튼·결과 줄을 오른쪽으로 */
-.body-gap { margin-top: 4px; }
 
-/* 받는 주소 — 자물쇠 그림 */
-.addr-ico { width: 72px; height: 72px; margin-bottom: 12px; }
+/* 고르는 칸(받는 상태 · 받기 어려운 선물) — 칩은 글자 폭, 짙은 선 44 · 고른 칸 하늘 면 + 짙은 선 2px + 체크(색만으로 알리지 않음, 41절) */
+.opts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.root .opts :global(.opt) { position: relative; display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: var(--space-2) var(--space-4); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-500); cursor: pointer; }
+.root .opts :global(.opt) input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.root .opts :global(.opt):hover { background: var(--gray-50); }
+.root .opts :global(.opt:has(input:checked)) { background: var(--primary-50); box-shadow: inset 0 0 0 2px var(--brand-line); font-weight: var(--fw-btn); }
+.root .opts :global(.opt:has(input:checked))::after { content: ""; flex: none; width: 6px; height: 12px; margin: -4px 2px 0 2px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.root .opts :global(.opt:has(input:focus-visible)) { outline: 3px solid var(--focus); outline-offset: 3px; }
 
-/* 차단한 팬 · 보안 — 칸 안 이름 줄 */
-.who { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.who > div { min-width: 0; }
+/* 차단한 팬 — 줄 목록(design-prompt 8-14): 얼굴 44 · 이름·날짜 · 차단 해제 */
+.fans { display: grid; margin: 0; padding: 0; list-style: none; }
+.fans > li { display: flex; align-items: center; gap: var(--space-3); min-height: 72px; padding: var(--space-3) 0; }
+.fans > li + li { box-shadow: 0 -1px 0 var(--divider); }
+.face { flex: none; width: 44px; height: 44px; border-radius: var(--r-pill); background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--tint-line); }
+.fanWho { flex: 1; min-width: 0; }
+.fanName { overflow-wrap: anywhere; }
 
 /* 스위치 — 입력은 체크박스(role=switch) 그대로, 모양은 계정 설정 스위치와 같은 52×32 · 테두리 --sub · 짙은 손잡이 24(41절 「스위치 한 모양」).
    투명 테두리 6 으로 누름 칸 64×44, 보이는 선은 안쪽 그림자 1px(투명 테두리 안쪽에 그려진다) */
@@ -65,9 +103,6 @@ label.txt { cursor: pointer; }
 
 /* 선 버튼 짙은 선 --gray-500(이 화면 범위에서만 — 공용 .btn--line 은 그대로, 41절) */
 .root.root :global(:is(.btn--line, .btn--soft)) { box-shadow: inset 0 0 0 1px var(--gray-500); }
-/* 고르기 칸(받는 상태 · 받기 어려운 선물) — 짙은 선, 고른 칸은 하늘 면 + 짙은 선 2px(37절 유형 선택과 같음, 41절) */
-.root.root :global(.opt) { box-shadow: inset 0 0 0 1px var(--gray-500); }
-.root.root :global(.opt:has(input:checked)) { background: var(--primary-50); box-shadow: inset 0 0 0 2px var(--gray-900); font-weight: var(--fw-btn); }
 /* 저장 결과 상자 — 완료는 .okmsg 상자 + 「✓」, 오류는 .err 상자 + 「!」 원(계정 설정과 같은 값, 색만으로 알리지 않게 — 37·41절). 빈 상자는 공용 :empty 가 자리를 비운다 */
 .root :global(:is(.err, .okmsg):not(:empty)) { display: flex; gap: var(--space-3); align-items: flex-start; }
 .root :global(:is(.err, .okmsg):not(:empty))::before { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; box-shadow: inset 0 0 0 2px currentColor; font-weight: var(--fw-bold); line-height: 1; }
@@ -98,16 +133,18 @@ label.txt { cursor: pointer; }
 .link-text { overflow-wrap: anywhere; }
 
 @media (max-width: 767px) {
-  /* 고르기 칸 4열은 휴대폰에서 2열(시안 v18-cre.css .opt-grid) — 공통 격자는 1열로 접는다 */
-  .root :global(.grid.cols-4) { --cols: 2; }
   .set:global(.card) { padding: 24px 16px; }
   .w200, .w240, .w280 { max-width: none; }
   .md-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .fold > summary { padding: 0 var(--space-4); }
-  .foldBody { padding: var(--space-4); }
-  .inner { padding: 24px 16px; }
+  /* 시안 768 이하: 줄 안쪽 16 · 펼친 칸 8 16 24 · 저장 줄은 폭 전체 + 저장이 위(design-prompt 2-21 2) */
+  .group { gap: var(--space-6); }
+  .fold > summary, .linkRow { padding-inline: var(--space-4); }
+  .foldBody { padding: var(--space-2) var(--space-4) var(--space-6); }
+  .note { padding: var(--space-4); }
+  .bar { flex-direction: column-reverse; align-items: stretch; padding: var(--space-3) var(--space-4); }
+  .actions { flex-direction: column-reverse; }
+  .actions :global(.btn) { width: 100%; }
   .set :global(.sw-row) { gap: 12px; padding: 16px; }
-  .addr-ico { width: 56px; height: 56px; }
   .ann-row { grid-template-columns: minmax(0, 1fr) auto; justify-content: stretch; }
   .ann-row > .md-row { grid-column: 1 / -1; grid-row: 2; }
 }

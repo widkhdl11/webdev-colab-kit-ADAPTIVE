@@ -16,7 +16,42 @@
 .body { display: grid; gap: var(--space-6); min-width: 0; padding: var(--space-8); }
 .body > * { min-width: 0; }
 
+/* 판 안 칸(2026-11-14 프로필 수정 재디자인 시안 settings-profile-20261113 .sec) — 칸 사이는 가는 줄, 안쪽 위아래 24 · 좌우 32.
+   제목 바로 다음 칸은 위 16(위 .title + * 규칙), 판 맨 끝 칸은 아래 32. 칸 안 묶음 간격 8(design-prompt 2-1·2-2) */
+.sec { display: grid; gap: var(--space-2); min-width: 0; padding: var(--space-6) var(--space-8); }
+.sec > * { min-width: 0; }
+.sec + .sec { border-top: 1px solid var(--line-on-white); }
+.panel > .sec:last-child { padding-bottom: var(--space-8); }
+/* 칸 이름 줄(이름 16/600 · 오른쪽 글자 수) · 도움말 14 · 글자 수 14 */
+.lab { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; }
+.lab label, label.lab { cursor: pointer; }
+.hint { margin: 0; color: var(--sub); font-size: var(--fs-small); line-height: var(--lh-caption); }
+.count { color: var(--sub); font-size: var(--fs-small); font-weight: 400; font-variant-numeric: tabular-nums; }
+
+/* 저장 줄 — 글 칸 판(「저장」으로 보내는 판)의 맨 아래에만 있는 회색 띠. 고르는 즉시 저장하는 판(사진)에는 없다.
+   결과 안내는 띠 왼쪽(버튼이 오르내리지 않는다), 버튼은 오른쪽 「보조 → 주」(design-prompt 1-4·2-21·2-22) */
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3) var(--space-4); padding: var(--space-4) var(--space-8); border-top: 1px solid var(--line-on-white); border-radius: 0 0 var(--r-card) var(--r-card); background: var(--surface); }
+.barBtns { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-left: auto; }
+/* 결과 안내 — 완료 ✓ · 오류 ! 원(색만으로 알리지 않는다, 41절). 비었을 때는 흐름에서 빠지고 알림 자리(role=status)는 남는다 */
+.msg { margin: 0; font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; overflow-wrap: anywhere; }
+.msg:empty { position: absolute; }
+.msg:not(:empty) { display: flex; align-items: flex-start; gap: var(--space-3); }
+.msg:not(:empty)::before { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; box-shadow: inset 0 0 0 2px currentColor; font-weight: var(--fw-bold); line-height: 1; }
+.ok { color: var(--success); }
+.ok:not(:empty)::before { content: "✓" / ""; }
+.bad { color: var(--danger); }
+.bad:not(:empty)::before { content: "!" / ""; }
+/* 바뀐 값이 없을 때의 「저장」 — 비활성 모양만(누르면 지금처럼 보낸다. 동작은 그대로 두고 모양만 시안대로) */
+.idle:global(.btn), .idle:global(.btn):hover, .idle:global(.btn):active { background: var(--disabled); box-shadow: none; color: var(--disabled-ink); }
+
 @media (max-width: 767px) {
   .title { padding: var(--space-6) var(--space-6) 0; }
   .body { padding: var(--space-6); }
+  .sec { padding: var(--space-6); }
+  .panel > .sec:last-child { padding-bottom: var(--space-6); }
+  /* 휴대폰 저장 줄은 판 아래 끝에 붙어 따라온다(sticky) — 결과 안내 한 줄 · 버튼 한 줄(버튼은 폭을 나눠 갖는다) */
+  .bar { position: sticky; bottom: 0; z-index: 4; padding: var(--space-3) var(--space-6); }
+  .bar > .msg { flex: 1 0 100%; }
+  .barBtns { flex: 1 0 100%; margin-left: 0; }
+  .barBtns > :global(.btn) { flex: 1; }
 }

@@ -1,0 +1,43 @@
+/* 프로필 수정 화면에 놓이는 구역 — 선물 링크(채널 탭) · 생일과 기념일(프로필 탭). 2026-11-14 시안 docs/design/mockups/settings-profile-20261113.
+   판 겉모양·판 안 칸(.sec)·칸 이름·도움말·저장 줄은 공용 settings-panel — 여기는 이 두 구역에만 있는 것.
+   (계정 설정 화면의 creator-settings.module.css 에서 쓰던 값을 옮겨 왔다 — 그 파일과 따로 고친다) */
+
+/* 선물 링크 — 앞부분 「fankkuk.com/」이 칸 안에 붙은 한 칸(380) + 옆 선 버튼. 휴대폰은 칸·버튼이 폭을 채운다 */
+.hrow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.handle { display: flex; align-items: center; flex: 1 1 240px; min-width: 0; max-width: 380px; min-height: var(--btn-h); border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); }
+.handle > span { padding-left: var(--space-4); color: var(--sub); white-space: nowrap; }
+.handle input { flex: 1; min-width: 0; min-height: calc(var(--btn-h) - 2px); padding: 0 var(--space-4) 0 var(--space-1); border: 0; background: none; font: inherit; color: var(--ink); outline: 0; }
+.handle:focus-within { box-shadow: inset 0 0 0 var(--field-ring) var(--field-focus), 0 0 0 1px var(--field-focus); }
+.handle:has(input:disabled) { background: var(--disabled); }
+.handle input:disabled { color: var(--disabled-ink); }
+/* 지금 주소 줄 — 위 가는 줄, 주소(굵게) · 안내 14 | 복사. 복사 결과 줄(role=status)은 아래 한 줄 */
+.linkNow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-2) var(--space-4); margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--line-on-white); }
+.linkText { display: grid; margin: 0; min-width: 0; }
+.u { font-weight: var(--fw-bold); overflow-wrap: anywhere; }
+.m { color: var(--sub); font-size: var(--fs-small); line-height: var(--lh-caption); }
+.linkNow > :global(.hint) { grid-column: 1 / -1; margin: 0; font-size: var(--fs-small); text-align: right; }
+.linkNow > :global(.hint:empty) { display: none; }
+
+/* 확인 창(바텀시트) */
+.sheetSub { margin-top: var(--space-2); }
+.sheetBtns { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-6); }
+
+/* 생일과 기념일 — 월 132 · 일 104(생일 월의 「정하지 않음」이 잘리지 않게 그 값만큼은 늘어난다), 기념일 줄(이름 240 · 월 · 일 · 삭제) */
+.mdRow { display: grid; grid-template-columns: minmax(132px, max-content) minmax(104px, max-content); justify-content: start; gap: var(--space-2); }
+.annList { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.annRow { display: grid; grid-template-columns: minmax(0, 240px) auto auto; justify-content: start; gap: var(--space-2); align-items: center; }
+.annRow .mdRow { grid-template-columns: repeat(2, minmax(104px, max-content)); }
+/* 저장 줄 왼쪽 결과 안내 묶음 — 비었으면 흐름에서 빠진다(알림 자리는 남는다) */
+.barMsgs { display: grid; gap: var(--space-2); min-width: 0; }
+.barMsgs:not(:has(:not(:empty))) { position: absolute; }
+
+@media (max-width: 767px) {
+  .handle { max-width: none; flex-basis: 100%; }
+  .hrow > :global(.btn) { width: 100%; }
+  .linkNow { grid-template-columns: minmax(0, 1fr); }
+  .linkNow > :global(.btn) { width: 100%; }
+  .mdRow, .annRow .mdRow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .annRow { grid-template-columns: minmax(0, 1fr) auto; justify-content: stretch; }
+  .annRow > .mdRow { grid-column: 1 / -1; grid-row: 2; }
+  .barMsgs { flex: 1 0 100%; }
+}

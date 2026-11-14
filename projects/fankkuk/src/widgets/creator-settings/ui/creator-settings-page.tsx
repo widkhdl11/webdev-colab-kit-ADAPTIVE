@@ -19,6 +19,7 @@ import { isResting, type CalendarDate, type MyCreatorReceiving } from "@/entitie
 import { ReceivingSection } from "./receiving-section";
 import { HardItemsSection } from "./hard-items-section";
 import type { MyHardItems } from "@/entities/gift-item/model/hard-items";
+import { SettingsIconSvg, type SettingsIcon } from "./settings-icons";
 import s from "./creator-settings.module.css";
 
 // 2026-11-13 같은 날 사용자 지시: 이 화면 이름을 「계정 설정」으로 바꾸고(주소 /creator/settings 그대로) 선물 받기 설정들 뒤에 「보안」(비밀번호 · 휴대폰 번호)과
@@ -46,18 +47,31 @@ function StateBadge({ tone, text }: { tone: "success" | "warn" | "plain"; text: 
   return <span className={statusTagClass(tone, `tag--dot ${s.badge}`)}>{text}</span>;
 }
 
-/** 접힌 칸 하나 — 시안 .fold(제목 · 오른쪽 짧은 상태 · 화살표). 상태가 글자면 흐린 글자, 뱃지면 그대로 */
-function Fold({ id, title, meta, children }: { id?: string; title: string; meta?: ReactNode; children: ReactNode }) {
+/** 칸 앞 하늘 동그라미 아이콘(40) — 접힌 칸이 펼쳐지면 하늘색 채움(시안 settings-account-20261113 .row-ico, 2026-11-14 사용자 「아이콘 넣기」) */
+function RowIcon({ name }: { name: SettingsIcon }) {
+  return (
+    <span className={s.rowIco} aria-hidden="true">
+      <SettingsIconSvg name={name} className={s.rowIcoSvg} />
+    </span>
+  );
+}
+
+/** 접힌 칸 하나 — 시안 .fold(아이콘 · 제목 · 오른쪽 짧은 상태 · 화살표). 상태가 글자면 흐린 글자, 뱃지면 그대로.
+ *  칸들은 흰 카드 한 장(.acc) 안에 가는 줄로 이어 붙는다 — 칸마다 카드를 두지 않는다(design-prompt 6-5 1) */
+function Fold({ id, icon, title, meta, children }: { id?: string; icon: SettingsIcon; title: string; meta?: ReactNode; children: ReactNode }) {
   return (
     <details className={s.fold} id={id}>
       <summary>
-        <span>{title}</span>
+        <RowIcon name={icon} />
+        <span className={s.foldName} data-fold-name="">
+          {title}
+        </span>
         {typeof meta === "string" ? <span className={s.foldMeta}>{meta}</span> : (meta ?? null)}
         <svg className={s.foldChev} viewBox="0 0 24 24" aria-hidden="true">
           <path d="m6 9 6 6 6-6" />
         </svg>
       </summary>
-      <div className={`stack ${s.foldBody}`}>{children}</div>
+      <div className={s.foldBody}>{children}</div>
     </details>
   );
 }
@@ -149,14 +163,16 @@ export function CreatorSettingsPage({
         <p className="ph-desc">카카오톡 인증 알림·주소 설정·선물 받기·차단한 팬·보안·회원 탈퇴를 관리합니다.</p>
       </header>
 
-      <div className={`stack ${s.page}`}>
-        {/* 이 묶음이 화면 전체다(팬덤이 빠지고 보안·회원 탈퇴가 들어옴) — 따로 제목을 두지 않고 h1 「계정 설정」으로 이름을 읽는다(2026-11-13 ux 리뷰) */}
+      <div className={s.page}>
+        {/* 이 묶음이 화면 전체다(팬덤이 빠지고 보안·회원 탈퇴가 들어옴) — 따로 제목을 두지 않고 h1 「계정 설정」으로 이름을 읽는다(2026-11-13 ux 리뷰).
+            시안 settings-account-20261113: 카카오톡 인증 알림 상태 줄 한 장 → 선물 받는 설정 셋(흰 카드 한 장, 가는 줄) → 보안·회원 탈퇴(카드 한 장), 덩어리 사이 32 */}
         <section id="more" className={s.group} aria-labelledby="settings-h">
-          {/* 승인 서명 줄(UX 명세 signup.md 「크리에이터 설정 — 승인 서명 줄」, 시안 v43-signup/creator-settings-signature) — 묶음 맨 위.
+          {/* 승인 서명 줄(UX 명세 signup.md 「크리에이터 설정 — 승인 서명 줄」, 시안 v43-signup/creator-settings-signature) — 묶음 맨 위, 접는 칸이 아니라 상태 줄 하나.
               연결 전: 누르면 승인 서명 연결 카드로(장애 대비 길로 가입한 크리에이터, signup INV-U20). 연결됨: 연결한 날과 「다시 연결」. 등록한 값은 다시 보이지 않는다(INV-S16) */}
           {signatureLink.linked ? (
             <div className={s.linkRow} data-signature-link="linked">
-              <span>카카오톡 인증 알림</span>
+              <RowIcon name="chat" />
+              <span className={s.foldName}>카카오톡 인증 알림</span>
               <StateBadge tone="success" text="연결됨" />
               {signatureLink.linkedAt ? <span className={s.foldMeta}>{formatDate(signatureLink.linkedAt)}</span> : null}
               <Link className="btn btn--line btn--sm" href={CREATOR_SIGNATURE_LINK}>
@@ -165,63 +181,69 @@ export function CreatorSettingsPage({
             </div>
           ) : (
             <Link className={`${s.linkRow} ${s.linkRowGo}`} href={CREATOR_SIGNATURE_LINK} data-signature-link="unlinked">
-              <span>카카오톡 인증 알림 연결</span>
+              <RowIcon name="chat" />
+              <span className={s.foldName}>카카오톡 인증 알림 연결</span>
               <StateBadge tone="plain" text="연결 전" />
-              <svg viewBox="0 0 24 24" aria-hidden="true">
+              <svg className={s.foldChev} viewBox="0 0 24 24" aria-hidden="true">
                 <path d="m9 6 6 6-6 6" />
               </svg>
             </Link>
           )}
-          <Fold id="address" title="주소 설정" meta={addressRegistered ? <StateBadge tone="success" text="등록됨" /> : <StateBadge tone="plain" text="등록 전" />}>
-            <div className={`card card--soft ${s.inner}`}>
-              <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={72} height={72} />
-              <p className="t-strong">{addressRegistered ? "주소 등록 완료" : "등록된 주소 없음"}</p>
-              {addressRegistered ? <p data-address-on-file="">{addressOnFileText(addressOnFile)}</p> : null}
-              <p className={s["body-gap"]}>{addressRegistered
-                  ? "주소는 암호화해 보관합니다. 선물 승인 후 배송에 필요한 경우에만 확인합니다."
-                  : "등록한 주소는 암호화해 보관합니다. 선물 승인 후 배송에 필요한 경우에만 확인합니다."}</p>
-            </div>
-            <p className="t-meta">{addressRegistered ? "송장 출력 전인 선물부터 변경된 주소로 배송됩니다." : "송장 출력 전인 선물부터 등록한 주소로 배송됩니다."}</p>
-            <p className="t-meta">팬꾹은 채팅·이메일·전화로 주소를 요청하지 않습니다. 주소 재입력을 요구하는 연락에 응답하지 마세요.</p>
-            <div>
-              <button
-                className="btn btn--line"
-                type="button"
-                onClick={() => {
-                  setAddressMsg(null);
-                  setSheet({ kind: "address" });
-                }}
-              >
-                {addressRegistered ? "주소 변경" : "주소 등록"}
-              </button>
-              <p className={`okmsg ${s.msg}`} role="status">
-                {addressMsg ?? ""}
-              </p>
-            </div>
-          </Fold>
 
-          <Fold id="receiving" title="받기 설정" meta={isResting(receiving.resumeOn, today) ? <StateBadge tone="warn" text="쉬는 중" /> : <StateBadge tone="success" text="받는 중" />}>
-            <ReceivingSection initial={receiving} today={today} />
-            <HardItemsSection initial={hardItems} today={today} />
-          </Fold>
+          <div className={s.acc}>
+            <Fold id="address" icon="pin" title="주소 설정" meta={addressRegistered ? <StateBadge tone="success" text="등록됨" /> : <StateBadge tone="plain" text="등록 전" />}>
+              <div className={s.note}>
+                <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={56} height={56} />
+                <div className={s.noteText}>
+                  <p className="t-strong">{addressRegistered ? "주소 등록 완료" : "등록된 주소 없음"}</p>
+                  {addressRegistered ? <p data-address-on-file="">{addressOnFileText(addressOnFile)}</p> : null}
+                  <p className={`t-meta ${s["body-gap"]}`}>{addressRegistered
+                      ? "주소는 암호화해 보관합니다. 선물 승인 후 배송에 필요한 경우에만 확인합니다."
+                      : "등록한 주소는 암호화해 보관합니다. 선물 승인 후 배송에 필요한 경우에만 확인합니다."}</p>
+                </div>
+              </div>
+              <div className={s.grpF}>
+                <p className="t-meta">{addressRegistered ? "송장 출력 전인 선물부터 변경된 주소로 배송됩니다." : "송장 출력 전인 선물부터 등록한 주소로 배송됩니다."}</p>
+                <p className="t-meta">팬꾹은 채팅·이메일·전화로 주소를 요청하지 않습니다. 주소 재입력을 요구하는 연락에 응답하지 마세요.</p>
+              </div>
+              <div>
+                <div className={s.actions}>
+                  <button
+                    className="btn btn--line"
+                    type="button"
+                    onClick={() => {
+                      setAddressMsg(null);
+                      setSheet({ kind: "address" });
+                    }}
+                  >
+                    {addressRegistered ? "주소 변경" : "주소 등록"}
+                  </button>
+                </div>
+                <p className={`okmsg ${s.msg}`} role="status">
+                  {addressMsg ?? ""}
+                </p>
+              </div>
+            </Fold>
 
-          <Fold id="blocked" title="차단한 팬" meta={`${blocked.length}명`}>
-            {blocked.length === 0 ? (
-              <p className="t-meta">차단한 팬이 없습니다.</p>
-            ) : (
-              <ul className="grid cols-2">
-                {blocked.map((f, i) => (
-                  <li key={f.blockId} className="card card--soft card-col">
-                    <div className={s.who}>
-                      <FaceAvatar index={i} />
-                      <div>
-                        <p className="t-strong">{f.fanNickname}</p>
+            <Fold id="receiving" icon="gift" title="받기 설정" meta={isResting(receiving.resumeOn, today) ? <StateBadge tone="warn" text="쉬는 중" /> : <StateBadge tone="success" text="받는 중" />}>
+              <ReceivingSection initial={receiving} today={today} />
+              <HardItemsSection initial={hardItems} today={today} />
+            </Fold>
+
+            <Fold id="blocked" icon="ban" title="차단한 팬" meta={`${blocked.length}명`}>
+              {blocked.length === 0 ? (
+                <p className="t-meta">차단한 팬이 없습니다.</p>
+              ) : (
+                <ul className={s.fans}>
+                  {blocked.map((f, i) => (
+                    <li key={f.blockId}>
+                      <FaceAvatar index={i} className={s.face} />
+                      <div className={s.fanWho}>
+                        <p className={`t-strong ${s.fanName}`}>{f.fanNickname}</p>
                         <p className="t-meta">{formatDate(f.blockedAt)} 차단</p>
                       </div>
-                    </div>
-                    <div className="push">
                       <button
-                        className="btn btn--line btn--sm btn--block"
+                        className="btn btn--line btn--sm"
                         type="button"
                         aria-label={`${f.fanNickname}님 차단 해제`}
                         onClick={() => {
@@ -231,24 +253,24 @@ export function CreatorSettingsPage({
                       >
                         차단 해제
                       </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="t-meta">차단을 해제해도 주소는 공개되지 않습니다. 새 선물은 건별로 카카오톡 서명을 거쳐 승인해야 배송됩니다.</p>
-          </Fold>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="t-meta">차단을 해제해도 주소는 공개되지 않습니다. 새 선물은 건별로 카카오톡 서명을 거쳐 승인해야 배송됩니다.</p>
+            </Fold>
+          </div>
 
-
-          {/* 선물 받기 설정들 뒤 — 보안 · 회원 탈퇴(2026-11-13 프로필 수정 「계정」 탭에서 옮김). 같은 접힌 칸 모양, 펼치면 옛 줄 그대로 */}
-          <Fold id="security" title="보안">
-            {security}
-          </Fold>
-          <Fold id="leave" title="회원 탈퇴">
-            {leave}
-          </Fold>
+          {/* 선물 받기 설정들 뒤 — 보안 · 회원 탈퇴(2026-11-13 프로필 수정 「계정」 탭에서 옮김). 같은 접힌 칸 모양, 선물 설정과 다른 카드 한 장(여백 32로 나눔) */}
+          <div className={s.acc}>
+            <Fold id="security" icon="shield" title="보안">
+              {security}
+            </Fold>
+            <Fold id="leave" icon="out" title="회원 탈퇴">
+              {leave}
+            </Fold>
+          </div>
         </section>
-
       </div>
 
       <BottomSheet

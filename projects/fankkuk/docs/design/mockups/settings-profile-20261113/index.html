@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>프로필 수정 (/creator/profile) — 재디자인 시안 · 2026-11-13</title>
+<!--
+  시안: 크리에이터 「프로필 수정」 재디자인 · 2026-11-13 · 관리형(design-prompt 6-4) · 로그인 후 크리에이터 화면
+  지시: 사용자 「구조는 됐다. 이제 재 디자인을 해라」 — 무엇이 어느 탭에 있는지(UX 명세 creator-profile, approved)는 그대로, 모양만 다시.
+  값: 글꼴 파일과 tokens.css 는 레포 실제 파일을 상대 경로로 불러온다(14-6). 색·간격·글자·반경은 tokens.css 변수만 쓴다.
+       ※ node scripts/preview.mjs fankkuk 로 띄운다. 열기: /docs/design/mockups/settings-profile-20261113/index.html  (#p #p-ok #p-err #p-none #c #c-new1 #c-new2 #c-none)
+  문구: 지금 코드(creator-profile-edit-page.tsx · fandom-section.tsx · link-section.tsx · verification-panel.tsx)의 문구 그대로. 새 안내 문장 없음.
+        예외 하나: 「오류」 상태의 서버 문구 한 줄(「사용할 수 없는 닉네임입니다.」)은 서버가 주는 문구의 화면 예시다. 데이터는 모두 가짜 값. 사진은 화면 예시.
+  바꾼 것 요약(자세히는 NOTES.md):
+   ① 저장 방식 차이를 구조로 드러냄 — 「저장 줄(회색 띠)」은 글 칸 판의 맨 아래에만 있고, 사진 판(즉시 저장)에는 띠가 없다. 결과 안내는 띠 왼쪽(버튼 위로 밀려 오르내리지 않음).
+   ② 사진 판은 실제 사진 칸 + 버튼 한 줄(고르는 즉시 저장이라 저장 버튼 없음). 선물 링크는 칸 옆 버튼(확인 창).
+   ③ 미리보기를 연한 하늘 무대(오른쪽 열, 따라옴) 안에 두고 탭마다 하나만(프로필 머리 / 찾기 카드, 실제 크기).
+   ④ 채널 탭의 판 모양을 내용에 맞게 달리함 — 사진 칸 · 칩 · 주소 칸 · 팬덤 · 한 줄 판(소유자 확인).
+-->
+<link rel="stylesheet" href="../../../../src/shared/ui/tokens.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../public/fonts/TmoneyRoundWindRegular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Medium.subset.woff") format("woff"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-SemiBold.subset.woff") format("woff"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Bold.subset.woff") format("woff"); font-weight: 700; font-display: swap; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--background); color: var(--ink); font-family: var(--font); font-size: var(--fs-body); font-weight: 400; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; -webkit-text-size-adjust: 100%; --personal: var(--primary-50); }
+body[data-photo="has"] { --personal: #E6E0FF; } /* 테마 색 「보라」를 고른 크리에이터(화면 예시) — 사진 없는 크리에이터는 선택 안 함 = 기본 면 */
+h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+h1, h2, h3 { font-family: var(--font-round); font-weight: var(--fw-title); letter-spacing: var(--ls-title); font-synthesis: none; }
+img, svg { display: block; max-width: 100%; }
+svg { flex-shrink: 0; }
+a { color: inherit; }
+button { font-family: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- 시안 도구(페이지 바깥) ---------- */
+.tool { background: var(--ink); color: var(--white); font-size: var(--fs-small); }
+.tool-in { padding: var(--space-3) var(--gutter); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.tool b { font-weight: var(--fw-bold); margin-right: var(--space-2); }
+.tool .sep { width: 1px; align-self: stretch; margin: 0 var(--space-2); background: rgb(255 255 255 / .4); }
+.tool button { min-height: 44px; padding: 0 var(--space-4); border: 1px solid rgb(255 255 255 / .55); border-radius: var(--r-btn); background: transparent; color: var(--white); font: var(--fw-btn) var(--fs-small)/1.2 var(--font); cursor: pointer; }
+.tool button[aria-pressed="true"] { background: var(--white); color: var(--ink); border-color: var(--white); }
+.tool button:focus-visible { outline-color: var(--white); }
+
+/* ---------- 앱 틀: 왼쪽 사이드바 240 · 768 이하 위 막대 (creator 메뉴, 맥락용) ---------- */
+.app { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); align-items: start; background: linear-gradient(90deg, var(--tint) 0 calc(var(--sidebar-w) - 1px), var(--tint-line) 0 var(--sidebar-w), var(--background) 0); }
+.sb { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: var(--space-4) var(--space-2); overflow: hidden; }
+.sb .logo, .mbar .logo { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-3); text-decoration: none; font-family: var(--font-logo); font-weight: var(--fw-title); font-size: var(--fs-card); }
+.sb .logo img, .mbar .logo img { width: 28px; height: 28px; border-radius: var(--r-logo); }
+.sb nav { display: grid; gap: 2px; margin-top: var(--space-2); }
+.sb .grp { margin: var(--space-3) 0 0; padding: 0 var(--space-3); font-size: var(--fs-small); line-height: 1.5; color: var(--sub); }
+.sb nav a { display: flex; align-items: center; gap: var(--nav-gap-in); min-height: var(--nav-item-h); padding: 0 var(--space-3); border-radius: var(--r-nav); text-decoration: none; font-size: var(--fs-navitem); font-weight: var(--fw-nav); color: var(--sub); }
+.sb nav a[aria-current="page"] { background: var(--surface-selected); color: var(--ink); font-weight: var(--fw-btn); }
+.ico { width: var(--nav-icon); height: var(--nav-icon); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.sb .me { margin-top: auto; display: flex; align-items: center; gap: var(--space-3); min-height: var(--prof-h, 48px); padding: 0 var(--space-3); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.sb .me img { width: var(--avatar-sb); height: var(--avatar-sb); border-radius: var(--r-pill); background: var(--primary-50); }
+.mbar { display: none; }
+@media (max-width: 768px) {
+  .app { grid-template-columns: minmax(0, 1fr); background: var(--background); }
+  .sb { display: none; }
+  .mbar { display: flex; align-items: center; justify-content: space-between; min-height: var(--topbar-h); padding: 0 var(--space-2) 0 var(--gutter); background: var(--tint); box-shadow: inset 0 -1px var(--tint-line); }
+  .mbar .logo { padding: 0; }
+  .mbar button { width: 44px; height: 44px; border: 0; border-radius: var(--r-btn); background: transparent; display: grid; place-items: center; color: var(--ink); }
+  .mbar .ico { width: 24px; height: 24px; }
+}
+
+/* ---------- 공용 부품(base.css 값) ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: var(--btn-h); padding: 12px var(--space-6); border: 0; border-radius: var(--r-btn); background: var(--btn-fill-fx); box-shadow: var(--btn-fill-shadow); color: var(--on-brand); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; text-decoration: none; cursor: pointer; }
+.btn:hover { background: var(--brand-hover); box-shadow: var(--btn-fill-shadow-hover); }
+.btn[aria-disabled="true"] { background: var(--disabled); box-shadow: none; color: var(--disabled-ink); cursor: not-allowed; }
+.btn[aria-disabled="true"]:hover { background: var(--disabled); box-shadow: none; }
+.btn--line { background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-500); } /* 41절 짙은 선 */
+.btn--line:hover { background: var(--gray-50); box-shadow: inset 0 0 0 1px var(--gray-500); }
+.btn--sm { min-height: var(--btn-h-sm); padding: 0 18px; }
+.field { display: block; width: 100%; min-width: 0; min-height: var(--btn-h); padding: 0 var(--space-4); border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font: inherit; font-size: var(--fs-body); color: var(--ink); }
+textarea.field { padding: var(--space-3) var(--space-4); line-height: 1.6; resize: vertical; }
+.field::placeholder { color: var(--gray-500); }
+.field:focus, .handle:focus-within { outline: none; box-shadow: inset 0 0 0 var(--field-ring) var(--field-focus), 0 0 0 1px var(--field-focus); }
+.field[aria-invalid="true"] { box-shadow: inset 0 0 0 var(--field-ring) var(--danger-line); }
+.w240 { max-width: 240px; }
+.w360 { max-width: 360px; }
+.lab { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0 0 var(--space-2); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; }
+.lab label { cursor: pointer; }
+.lab .opt { color: var(--sub); font-weight: 400; font-size: var(--fs-small); }
+.cnt { color: var(--sub); font-size: var(--fs-small); font-weight: 400; font-variant-numeric: tabular-nums; }
+.hint { margin: var(--space-2) 0 0; font-size: var(--fs-small); line-height: var(--lh-caption); color: var(--sub); }
+
+/* ---------- 본문 틀: 로그인 후 편집+미리보기 폭 --col-wide ---------- */
+main.page { min-width: 0; padding: var(--space-10) var(--gutter) var(--space-24); }
+.frame { max-width: var(--col-wide); margin-inline: auto; min-width: 0; }
+.head h1 { font-size: var(--fs-page); line-height: 1.3; letter-spacing: 0; }
+.head p { margin-top: var(--space-2); max-width: var(--prose-max); color: var(--sub); }
+.tabs { display: flex; gap: var(--space-2); margin: var(--space-6) 0 0; box-shadow: inset 0 -1px 0 var(--gray-200); }
+.tabs a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--space-4); color: var(--gray-600); font-weight: var(--fw-nav); text-decoration: none; box-shadow: inset 0 -2px 0 transparent; }
+.tabs a:hover { color: var(--ink); }
+.tabs a[aria-current="page"] { background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-bold); box-shadow: inset 0 -2px 0 var(--brand-line); }
+.tabs a:focus-visible { outline-offset: -2px; }
+
+/* 두 열: 왼쪽 기둥 --col-form(720) · 오른쪽 따라오는 미리보기(남는 폭). 두 탭이 같은 폭 */
+.grid { display: grid; grid-template-columns: minmax(0, var(--col-form)) minmax(0, 1fr); column-gap: var(--grid-gap); align-items: start; margin-top: var(--space-8); }
+.main { display: grid; gap: var(--space-6); min-width: 0; }
+
+/* ---------- 판 ---------- */
+.panel { min-width: 0; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
+.p-title { margin: 0; padding: var(--space-8) var(--space-8) 0; font-size: var(--fs-card); line-height: 1.4; }
+.sec { min-width: 0; padding: var(--space-6) var(--space-8); }
+.p-title + .sec { padding-top: var(--space-4); }
+.panel > .sec:last-child { padding-bottom: var(--space-8); }
+.sec + .sec { border-top: 1px solid var(--line-on-white); }
+
+/* 저장 줄 — 글 칸 판의 맨 아래에만 있는 회색 띠. 결과 안내는 띠 왼쪽, 버튼은 오른쪽(보조 → 주). 사진 판(즉시 저장)에는 띠가 없다 */
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3) var(--space-4); padding: var(--space-4) var(--space-8); border-top: 1px solid var(--line-on-white); border-radius: 0 0 var(--r-card) var(--r-card); background: var(--surface); }
+.bar .btns { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-left: auto; }
+.msg { margin: 0; font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; }
+.msg:not(:empty) { display: flex; align-items: flex-start; gap: var(--space-3); }
+.msg::before { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; box-shadow: inset 0 0 0 2px currentColor; font-weight: var(--fw-bold); line-height: 1; }
+.okmsg { color: var(--success); } .okmsg::before { content: "✓" / ""; }
+.hint.msg.err { align-items: center; }
+.err { color: var(--danger); } .err::before { content: "!" / ""; }
+
+/* 사진 칸 — 고르는 즉시 저장 */
+.pic { display: flex; align-items: flex-start; gap: var(--space-6); }
+.pic .btns { display: flex; flex-wrap: wrap; gap: var(--space-2); min-width: 0; }
+.face { flex: none; width: 80px; height: 80px; border-radius: 50%; object-fit: cover; background: var(--primary-50); box-shadow: 0 0 0 1px var(--tint-line); }
+.bgpic { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+.bgthumb { aspect-ratio: 2 / 1; border-radius: var(--r-icon); background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--tint-line); }
+body[data-photo="has"] .bgthumb { background: linear-gradient(160deg, #f9d6c4 0%, #c9c3ef 55%, #9ec5ee 100%); }
+.bgpic .btns { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.bgpic .hint { margin-top: var(--space-3); }
+
+/* 태그 칩 — 짙은 선 44, 고른 칩은 하늘 면 + 짙은 선 2px + 체크(41절) */
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tchip { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-width: 44px; min-height: 44px; padding: 0 var(--space-4); border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-500); color: var(--ink); font: var(--fw-nav) var(--fs-body)/1.2 var(--font); cursor: pointer; }
+.tchip:hover { background: var(--gray-50); }
+.tchip[aria-pressed="true"] { background: var(--primary-50); box-shadow: inset 0 0 0 2px var(--gray-900); font-weight: var(--fw-bold); }
+.tchip[aria-pressed="true"]::after { content: ""; flex: none; width: 6px; height: 12px; margin: -4px 2px 0 2px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.tagcustom { margin-top: var(--space-6); }
+
+/* 스위치 52×32 */
+.swrow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 64px; cursor: pointer; font-weight: var(--fw-bold); }
+.switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 52px; height: 32px; margin: 0; border: 1px solid var(--sub); border-radius: var(--r-pill); background-color: var(--gray-200); cursor: pointer; transition: background .15s; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); transition: transform .15s; }
+.switch:checked { background-color: var(--primary); }
+.switch:checked::after { transform: translateX(20px); }
+.switch:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* 주소 칸 — 앞부분 「fankkuk.com/」이 칸 안에 붙은 한 칸 */
+.handle { display: flex; align-items: center; width: 100%; max-width: 380px; min-height: var(--btn-h); border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); }
+.handle span { padding-left: var(--space-4); color: var(--sub); white-space: nowrap; }
+.handle input { flex: 1; min-width: 0; min-height: calc(var(--btn-h) - 2px); padding: 0 var(--space-4) 0 var(--space-1); border: 0; background: none; font: inherit; color: var(--ink); outline: 0; }
+.hrow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.linknow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-top: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--line-on-white); }
+.linknow p { margin: 0; min-width: 0; }
+.linknow .u { font-weight: var(--fw-bold); }
+.linknow .m { font-size: var(--fs-small); color: var(--sub); line-height: var(--lh-caption); }
+
+/* 팬마크 칸 · 테마 색 */
+.markrow { display: flex; align-items: center; gap: var(--space-4); }
+.markbox { flex: none; width: 64px; height: 64px; border-radius: var(--r-icon); background: var(--surface); box-shadow: inset 0 0 0 1px var(--tint-line); overflow: hidden; }
+.markbox img { width: 100%; height: 100%; object-fit: cover; }
+.check { display: flex; align-items: center; gap: var(--space-3); min-height: 44px; margin-top: var(--space-2); cursor: pointer; }
+.check input { flex: none; width: var(--check-size, 24px); height: var(--check-size, 24px); margin: 0; accent-color: var(--gray-900); }
+.themes { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-top: var(--space-4); padding: var(--space-1); }
+.sw { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgb(31 41 55 / .22); color: var(--ink); cursor: pointer; }
+.sw svg { width: 20px; height: 20px; opacity: 0; }
+.sw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--gray-900); }
+.sw[aria-pressed="true"] svg { opacity: 1; }
+.sw-none { width: auto; padding: 0 var(--space-4); border-radius: var(--r-pill); background: var(--white); font: var(--fw-nav) var(--fs-small)/1.2 var(--font); box-shadow: inset 0 0 0 1px var(--gray-500); }
+.sw-none[aria-pressed="true"] { background: var(--primary-50); box-shadow: inset 0 0 0 2px var(--gray-900); font-weight: var(--fw-bold); }
+/* 직접 고르기 — 견본 끝의 무지개 원(고르면 그 색으로 채워진다) + 아래에 펼쳐지는 고르개(react-colorful 기본 꼴: 채도·명도 면 + 색상 막대) */
+.sw-custom { background: conic-gradient(#f87171, #fbbf24, #a3e635, #34d399, #38bdf8, #818cf8, #e879f9, #f87171); }
+.sw-custom[data-on="true"] { background: var(--c); }
+.picker { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: var(--space-6); align-items: start; margin-top: var(--space-4); padding: var(--space-4); border-radius: var(--r-btn); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.pk-area { position: relative; width: 200px; height: 160px; border-radius: var(--r-btn) var(--r-btn) 0 0; background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(var(--hue) 100% 50%)); }
+.pk-hue { position: relative; width: 200px; height: 24px; border-radius: 0 0 var(--r-btn) var(--r-btn); background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); }
+.pk-dot { position: absolute; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; background: var(--pick); box-shadow: 0 0 0 3px var(--white), 0 2px 4px rgb(0 0 0 / .2); }
+.pk-hue .pk-dot { top: 50%; background: hsl(var(--hue) 100% 50%); }
+.pk-side { display: grid; gap: var(--space-3); min-width: 0; }
+.pk-side .field { max-width: 160px; font-variant-numeric: tabular-nums; text-transform: uppercase; }
+.pk-fit { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: var(--fs-small); line-height: var(--lh-caption); color: var(--sub); }
+.pk-fit i { flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgb(31 41 55 / .22); }
+@media (width < 560px) { .picker { grid-template-columns: 1fr; } }
+
+/* 채널 소유자 확인 — 한 줄 판(확인 완료) · 단계 흐름(확인 전) */
+.vrow { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-6); padding: var(--space-8); }
+.vrow .vmain { display: grid; gap: var(--space-1); min-width: 0; }
+.vrow .vh, .vhead { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.vhead { padding: var(--space-8) var(--space-8) 0; }
+.vrow h2, .vhead h2 { font-size: var(--fs-card); line-height: 1.4; }
+.stage { display: inline-flex; align-items: center; gap: var(--space-2); height: 28px; padding: 0 var(--space-3); border-radius: var(--r-pill); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1; }
+.stage i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.stage.ok { background: var(--success-soft); color: var(--success); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--success) 25%, var(--success-soft)); }
+.stage.wait { background: var(--primary-50); color: var(--tag-state-ink); box-shadow: inset 0 0 0 1px var(--tint-line); }
+.vrow .strong { font-weight: var(--fw-bold); margin-top: var(--space-1); }
+.vrow a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); text-underline-offset: 3px; }
+.vrow .small { font-size: var(--fs-small); color: var(--sub); }
+.lead { margin: var(--space-2) 0 0; padding: 0 var(--space-8); color: var(--sub); }
+.steps { display: grid; gap: var(--space-8); padding: var(--space-6) var(--space-8) var(--space-8); }
+.step { position: relative; display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: var(--space-4); min-width: 0; }
+.step:not(:last-child)::before { content: ""; position: absolute; left: 15px; top: 40px; bottom: calc(-1 * var(--space-6)); width: 1px; background: var(--tint-line); }
+.no { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--tint-line); font-weight: var(--fw-bold); font-size: var(--fs-small); line-height: 1; }
+.step h3 { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); letter-spacing: 0; line-height: 32px; }
+.step .sb-body { grid-column: 2; margin-top: var(--space-2); min-width: 0; }
+.step .desc { margin: 0 0 var(--space-3); font-size: var(--fs-small); color: var(--sub); line-height: var(--lh-caption); }
+.linkbox { display: grid; gap: var(--space-3); }
+.linkbox .lrow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.linkbox .u { font-weight: var(--fw-bold); min-width: 0; }
+.ex { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--line-on-white); font-size: var(--fs-small); line-height: var(--lh-caption); }
+.ex .k { display: inline-flex; align-items: center; height: 22px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-500); font-size: var(--fs-badge); font-weight: var(--fw-bold); }
+.examples { display: grid; gap: var(--space-1); margin-top: var(--space-3); font-size: var(--fs-small); color: var(--sub); line-height: var(--lh-caption); }
+.examples li { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: var(--space-2); }
+.examples b { font-weight: var(--fw-btn); color: var(--ink); }
+.step .go { margin-top: 0; }
+
+/* ---------- 오른쪽 미리보기 — 연한 하늘 무대 안에 하나, 스크롤하면 따라온다 ---------- */
+.pv { position: sticky; top: var(--space-6); min-width: 0; }
+.pv h2 { margin: 0 0 var(--space-3); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); letter-spacing: 0; line-height: 1.4; }
+.stagebox { min-width: 0; }
+.card { padding: var(--space-4); border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--card-shadow); }
+.band { position: relative; aspect-ratio: 3 / 1; border-radius: var(--r-btn); background: var(--personal); }
+body[data-photo="has"] .band.ph, body[data-photo="has"] .cover.ph { background: linear-gradient(160deg, #f9d6c4 0%, #c9c3ef 55%, #9ec5ee 100%); }
+.av { position: relative; flex: none; width: 80px; height: 80px; margin-top: -40px; border-radius: 50%; object-fit: cover; background: var(--primary-50); box-shadow: 0 0 0 4px var(--white), 0 0 0 5px var(--tint-line); }
+.hc-body { padding: 0 var(--space-2) var(--space-2); display: grid; gap: var(--space-2); }
+.hc-name { font-size: var(--fs-page); line-height: 1.3; letter-spacing: 0; margin-top: var(--space-2); }
+.intro { margin: 0; color: var(--sub); font-size: var(--fs-small); line-height: var(--lh-caption); }
+.fb { display: inline-flex; align-items: center; gap: var(--space-1); justify-self: start; max-width: 100%; height: 22px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--personal); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--personal) 78%, #1F2937); color: var(--badge-ink); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1; white-space: nowrap; }
+.fb img { width: 14px; height: 14px; border-radius: var(--r-mark); background: var(--white); object-fit: cover; }
+.fb:has(img) { padding-left: 3px; }
+/* 찾기 카드 — 격자 안 실제 크기 300, 무대 가운데 */
+.cc { width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: var(--space-2); }
+.cover { aspect-ratio: 2 / 1; border-radius: var(--r-btn); background: var(--personal); }
+.cc .who { display: flex; align-items: flex-start; gap: var(--space-2); }
+.cc .photo { flex: none; width: 64px; height: 64px; margin-top: -32px; border-radius: 50%; object-fit: cover; background: var(--primary-50); box-shadow: 0 0 0 3px var(--white); position: relative; }
+.cc .id { display: grid; gap: var(--space-1); min-width: 0; }
+.cc .nm { font-weight: var(--fw-h3); line-height: 24px; }
+.ctags { display: flex; flex-wrap: wrap; gap: 6px; }
+.ctag { display: inline-flex; align-items: center; height: 22px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--gray-100); color: var(--ink); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1; box-shadow: inset 0 0 0 1px var(--gray-200); }
+.cacts { margin-top: var(--space-2); }
+.cacts .btn { width: 100%; min-height: 44px; font-size: var(--fs-small); }
+
+/* ---------- 1100 이하: 미리보기가 입력 위로(따라오지 않음). 기둥은 720 그대로 ---------- */
+@media (max-width: 1100px) {
+  .grid { grid-template-columns: minmax(0, var(--col-form)); row-gap: var(--space-6); }
+  .pv { position: static; order: -1; }
+}
+/* ---------- 휴대폰 ---------- */
+@media (max-width: 767px) {
+  main.page { padding: var(--space-4) var(--gutter) var(--space-16); }
+  .grid { margin-top: var(--space-6); }
+  .tabs a { flex: 1; justify-content: center; }
+  .p-title, .vhead { padding: var(--space-6) var(--space-6) 0; }
+  .sec { padding: var(--space-6); }
+  .panel > .sec:last-child { padding-bottom: var(--space-6); }
+  .lead { padding: 0 var(--space-6); }
+  .steps { padding: var(--space-6); }
+  .vrow { padding: var(--space-6); flex-direction: column; gap: var(--space-4); }
+  .bar { position: sticky; bottom: 0; z-index: 4; padding: var(--space-3) var(--space-6); }
+  .bar .msg { flex: 1 0 100%; }
+  .bar .btns { flex: 1 0 100%; margin-left: 0; }
+  .bar .btns .btn { flex: 1; }
+  .w240, .w360, .handle { max-width: none; }
+  .hrow .btn { width: 100%; }
+  .bgpic { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+  .pv { order: 2; }
+  .band { aspect-ratio: auto; height: 72px; }
+  .cc .cover { aspect-ratio: 3 / 1; }
+  .av { width: 56px; height: 56px; margin-top: -28px; }
+  .hc-body { padding: 0 var(--space-2) var(--space-2); }
+  .hc-name { font-size: var(--fs-card); }
+  .pic { gap: var(--space-4); }
+  .face { width: 64px; height: 64px; }
+  .linknow { flex-direction: column; align-items: stretch; }
+  .linknow .btn, .linkbox .btn { width: 100%; }
+  .linkbox .lrow { flex-direction: column; align-items: stretch; }
+  .step .go { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .switch, .switch::after { transition: none; } }
+</style>
+</head>
+<body data-state="p" data-photo="has" data-msg="none">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
+  <symbol id="i-todo" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></symbol>
+  <symbol id="i-checks" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-gift" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"/><rect x="3" y="7" width="18" height="4" rx="1"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<div class="tool" role="region" aria-label="시안 도구 — 상태 전환">
+  <div class="tool-in">
+    <b>시안 도구</b>
+    <button type="button" data-set="p" aria-pressed="true">프로필 기본</button>
+    <button type="button" data-set="p-ok" aria-pressed="false">프로필 저장 완료</button>
+    <button type="button" data-set="p-err" aria-pressed="false">프로필 저장 오류</button>
+    <button type="button" data-set="p-none" aria-pressed="false">프로필 사진 없음</button>
+    <span class="sep" aria-hidden="true"></span>
+    <button type="button" data-set="c" aria-pressed="false">채널 기본(확인 완료)</button>
+    <button type="button" data-set="c-new1" aria-pressed="false">채널 확인 전 ① 링크 만들기</button>
+    <button type="button" data-set="c-new2" aria-pressed="false">채널 확인 전 ② 채널 주소 입력</button>
+    <button type="button" data-set="c-none" aria-pressed="false">채널 사진 없음</button>
+    <button type="button" data-set="c-pick" aria-pressed="false">테마 색 직접 고르기</button>
+    <button type="button" data-set="c-pick-raw" aria-pressed="false">직접 고르기 · 진한 색 그대로</button>
+    <button type="button" data-set="c-pick-fit" aria-pressed="false">직접 고르기 · 옅게 맞추기</button>
+  </div>
+</div>
+
+<div class="app">
+<aside class="sb" aria-label="사이드바">
+  <a class="logo" href="#home"><img src="../../../../public/images/logo-mark.png" alt="" width="28" height="28">팬꾹</a>
+  <nav aria-label="주 메뉴">
+    <p class="grp">기본</p>
+    <a href="#home"><svg class="ico" aria-hidden="true"><use href="#i-home"/></svg>홈</a>
+    <a href="#home"><svg class="ico" aria-hidden="true"><use href="#i-truck"/></svg>선물 현황</a>
+    <a href="#home"><svg class="ico" aria-hidden="true"><use href="#i-todo"/></svg>지금 할 일</a>
+    <a href="#home"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg>크리에이터 찾기</a>
+    <p class="grp">받기</p>
+    <a href="#home"><svg class="ico" aria-hidden="true"><use href="#i-checks"/></svg>승인 내역</a>
+    <a href="#home"><svg class="ico" aria-hidden="true"><use href="#i-box"/></svg>받은 선물</a>
+    <a href="#home"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg>열람 기록</a>
+    <p class="grp">보내기</p>
+    <a href="#home"><svg class="ico" aria-hidden="true"><use href="#i-gift"/></svg>팬에게 보내기</a>
+    <a href="#home"><svg class="ico" aria-hidden="true"><use href="#i-heart"/></svg>팔로우한 크리에이터</a>
+    <a href="#home"><svg class="ico" aria-hidden="true"><use href="#i-history"/></svg>보낸 내역</a>
+    <p class="grp">내 팬꾹</p>
+    <a href="#home"><svg class="ico" aria-hidden="true"><use href="#i-palette"/></svg>꾸미기</a>
+    <a href="#p" aria-current="page"><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg>프로필 수정</a>
+    <a href="#home"><svg class="ico" aria-hidden="true"><use href="#i-gear"/></svg>계정 설정</a>
+  </nav>
+  <div class="me"><img src="../../../../public/img/default-face/cat.webp" alt="" width="28" height="28">하루님</div>
+</aside>
+
+<div style="min-width:0">
+<div class="mbar"><a class="logo" href="#home"><img src="../../../../public/images/logo-mark.png" alt="" width="28" height="28">팬꾹</a><button type="button" aria-label="메뉴 열기"><svg class="ico" aria-hidden="true"><use href="#i-menu"/></svg></button></div>
+
+<main id="main" class="page">
+<div class="frame">
+  <header class="head">
+    <h1>프로필 수정</h1>
+    <p>팬에게 공개되는 프로필입니다. 변경할 내용을 미리보기에서 확인해 주세요.</p>
+  </header>
+
+  <nav class="tabs" aria-label="프로필 수정">
+    <a href="#p" id="tab-p">프로필</a>
+    <a href="#c" id="tab-c">채널</a>
+  </nav>
+
+  <div class="grid">
+    <div class="main">
+
+      <!-- ================= 프로필 탭 ================= -->
+      <!-- 프로필 사진 판 — 고르는 즉시 저장: 저장 줄 없음 -->
+      <section class="panel" data-tab="profile" aria-labelledby="pe-ph">
+        <h2 class="p-title" id="pe-ph">프로필 사진</h2>
+        <div class="sec">
+          <div class="pic">
+            <img class="face" data-photo="has" src="../../../../public/images/mascot-gift.png" alt="" width="80" height="80">
+            <img class="face" data-photo="none" src="../../../../public/img/default-face/cat.webp" alt="" width="80" height="80">
+            <div class="btns">
+              <button class="btn btn--line" type="button">프로필 사진 변경</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 소개 판 — 「저장」 -->
+      <form class="panel" data-tab="profile" aria-labelledby="pe-in" novalidate onsubmit="return false">
+        <h2 class="p-title" id="pe-in">소개</h2>
+        <div class="sec">
+          <p class="lab"><label for="pe-name">닉네임</label></p>
+          <input class="field w240" id="pe-name" type="text" value="하루" autocomplete="off" aria-describedby="pe-name-h">
+          <p class="hint" id="pe-name-h" data-msg="none ok">팬에게 표시되는 이름 · 최대 12자</p>
+          <p class="hint msg err" id="pe-name-e" data-msg="err">사용할 수 없는 닉네임입니다.</p>
+        </div>
+        <div class="sec">
+          <p class="lab"><label for="pe-bio">한 줄 소개 <span class="opt">(40자까지)</span></label><span class="cnt" id="pe-bio-c" aria-live="polite">12/40</span></p>
+          <textarea class="field" id="pe-bio" rows="2" aria-describedby="pe-bio-c">게임 방송하는 하루입니다</textarea>
+        </div>
+        <div class="bar">
+          <p class="msg okmsg" role="status" data-msg="ok">저장되었습니다.</p>
+          <div class="btns">
+            <a class="btn btn--line" href="#home">취소</a>
+            <button class="btn save" type="submit" aria-disabled="true">저장</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- 생일과 기념일 — 2026-11-14 계정 설정 「받기 설정」에서 옮김(사용자 지시). 문구·칸은 코드 그대로 -->
+      <form class="panel" data-tab="profile" aria-labelledby="pe-days" novalidate onsubmit="return false">
+        <h2 class="p-title" id="pe-days">생일과 기념일</h2>
+        <div class="sec">
+          <p class="hint" style="margin:0">크리에이터 페이지에 30일 전부터 D-day 표시 · 월·일만 입력</p>
+        </div>
+        <div class="sec">
+          <p class="lab"><span id="bday-l">생일</span></p>
+          <div class="md" role="group" aria-labelledby="bday-l" style="display:flex;gap:var(--space-2)">
+            <select class="field" style="width:132px" aria-label="생일 월"><option>정하지 않음</option><option selected>5월</option></select>
+            <select class="field" style="width:104px" aria-label="생일 일"><option selected>17일</option></select>
+          </div>
+        </div>
+        <div class="sec">
+          <p class="lab"><span>기념일 (3개까지)</span></p>
+          <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
+            <label class="sr-only" for="ann1">기념일 1 이름</label>
+            <input class="field" id="ann1" style="width:240px" value="활동 시작일" placeholder="예: 활동 시작일">
+            <select class="field" style="width:104px" aria-label="기념일 1 월"><option selected>3월</option></select>
+            <select class="field" style="width:104px" aria-label="기념일 1 일"><option selected>14일</option></select>
+            <button class="btn btn--line btn--sm" type="button" aria-label="기념일 1 삭제">삭제</button>
+          </div>
+          <div style="margin-top:var(--space-3)"><button class="btn btn--line btn--sm" type="button">기념일 추가</button></div>
+          <p class="hint">기념일 이름: 최대 12자<br>기념일 7일 전부터 팬이 ‘기념일 선물’ 표시를 선택할 수 있습니다.</p>
+        </div>
+        <div class="bar">
+          <div class="btns">
+            <button class="btn save" type="submit" aria-disabled="true">생일·기념일 저장</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- ================= 채널 탭 ================= -->
+      <!-- 배경 사진 판 — 고르는 즉시 저장: 저장 줄 없음 -->
+      <section class="panel" data-tab="channel" aria-labelledby="pe-bg-t">
+        <h2 class="p-title" id="pe-bg-t">배경 사진</h2>
+        <div class="sec">
+          <div class="bgpic">
+            <div class="bgthumb" role="img" aria-label="배경 사진 화면 예시"></div>
+            <div>
+              <div class="btns">
+                <button class="btn btn--line" type="button">배경 사진 변경</button>
+              </div>
+              <p class="hint">JPG·PNG·WebP · 가로형 사진 권장<br>업로드 시 위치 정보 등 사진에 포함된 부가 정보는 삭제됩니다. 사진 미등록 시 테마 색이 표시됩니다.</p>
+              <p class="hint" style="margin-top:var(--space-2)">권장 크기 1200×600px</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 태그 · 찾기 노출 판 — 「저장」 -->
+      <form class="panel" data-tab="channel" aria-labelledby="pe-tags-t" novalidate onsubmit="return false">
+        <h2 class="p-title" id="pe-tags-t">태그</h2>
+        <div class="sec">
+          <div class="chips" role="group" aria-labelledby="pe-tags-t">
+            <button class="tchip" type="button" aria-pressed="false">SOOP</button>
+            <button class="tchip" type="button" aria-pressed="true">치지직</button>
+            <button class="tchip" type="button" aria-pressed="false">유튜브</button>
+            <button class="tchip" type="button" aria-pressed="false">알플레이</button>
+            <button class="tchip" type="button" aria-pressed="false">인스타그램</button>
+            <button class="tchip" type="button" aria-pressed="false">X</button>
+            <button class="tchip" type="button" aria-pressed="false">스레드</button>
+            <button class="tchip" type="button" aria-pressed="false">틱톡</button>
+            <button class="tchip" type="button" aria-pressed="true">버추얼</button>
+          </div>
+          <div class="tagcustom">
+            <p class="lab"><label for="pe-tag-c">태그 직접 입력 <span class="opt">(최대 1개)</span></label></p>
+            <input class="field w360" id="pe-tag-c" type="text" placeholder="예: 팝콘TV" autocomplete="off" aria-describedby="pe-tag-h">
+            <p class="hint" id="pe-tag-h">활동 플랫폼과 방송 분야를 선택해 주세요.<br>선택·직접 입력 합계: 1~5개 · 현재 2개<br>직접 입력: 최대 20자<br>직접 입력한 태그는 선택한 태그 뒤에 표시됩니다. 욕설·연락처·주소는 입력할 수 없습니다.</p>
+          </div>
+        </div>
+        <div class="sec">
+          <label class="swrow" for="pe-find"><span>크리에이터 찾기에 보이기</span><input class="switch" type="checkbox" role="switch" id="pe-find" checked></label>
+        </div>
+        <div class="bar">
+          <p class="msg" role="status"></p>
+          <div class="btns">
+            <a class="btn btn--line" href="#home">취소</a>
+            <button class="btn save" type="submit" aria-disabled="true">저장</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- 선물 링크 판(확인 완료 · 링크 있음) — 주소 칸 옆 버튼, 누르면 확인 창. 채널 확인 전에는 판이 없다 -->
+      <section class="panel" data-tab="channel" data-ver="done" aria-labelledby="link-h">
+        <h2 class="p-title" id="link-h">선물 링크</h2>
+        <div class="sec">
+          <p class="lab"><label for="link-handle">링크 주소</label></p>
+          <div class="hrow">
+            <div class="handle"><span aria-hidden="true">fankkuk.com/</span><input id="link-handle" value="haru_game" maxlength="24" autocapitalize="none" spellcheck="false" aria-describedby="link-handle-hint"></div>
+            <button class="btn btn--line" type="button">링크 주소 변경</button>
+          </div>
+          <p class="hint" id="link-handle-hint">선물 링크 주소: fankkuk.com/입력한주소<br>영문·숫자·밑줄(_) 3~20자 · 로그인 아이디와 다르게 설정<br>방송·SNS에 공개되는 주소입니다.</p>
+          <div class="linknow">
+            <p><span class="u">fankkuk.com/haru_game</span><br><span class="m">이 주소로 내 페이지에 접속할 수 있습니다.</span></p>
+            <button class="btn btn--line btn--sm" type="button" aria-label="링크 주소 복사">복사</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 팬덤 판 — 「되돌리기」·「저장」 -->
+      <form class="panel" data-tab="channel" aria-labelledby="fd-t" novalidate onsubmit="return false">
+        <h2 class="p-title" id="fd-t">팬덤</h2>
+        <div class="sec">
+          <p class="lab w240"><label for="fd-name">팬덤 이름</label><span class="cnt" aria-hidden="true">3/10</span></p>
+          <input class="field w240" id="fd-name" type="text" value="하루단" autocomplete="off" aria-describedby="fd-name-h">
+          <p class="hint" id="fd-name-h">팬 배지에 표시되는 이름 · 최대 10자<br>사용할 수 없는 표현은 저장되지 않습니다.</p>
+        </div>
+        <div class="sec">
+          <p class="lab" id="fd-sym-h"><span>팬마크</span></p>
+          <div class="markrow">
+            <span class="markbox" aria-hidden="true"><img data-photo="has" src="../../../../public/images/mascot-basic.png" alt="" width="64" height="64"></span>
+            <button class="btn btn--line" type="button">팬마크 업로드</button>
+            <button class="btn btn--line" type="button" data-photo="has">삭제</button>
+          </div>
+          <p class="hint">JPG·PNG · 정사각형 이미지 권장<br>팬 배지에는 축소해서 표시됩니다.</p>
+          <label class="check" for="fd-rights"><input type="checkbox" id="fd-rights" checked><span>직접 제작했거나 사용 권한이 있는 이미지입니다</span></label>
+        </div>
+        <div class="sec">
+          <p class="lab" id="fd-theme-l"><span>테마 색</span></p>
+          <p class="hint" style="margin-top:0">배경 사진이 없을 때 카드 배경과 팬덤 배지에 적용됩니다. 사이트 버튼과 글자에는 적용되지 않습니다.</p>
+          <div class="themes" role="group" aria-labelledby="fd-theme-l">
+            <button class="sw" type="button" style="--c:#FDE2E4" aria-pressed="false" aria-label="분홍" data-n="분홍"><svg aria-hidden="true"><use href="#i-check"/></svg></button>
+            <button class="sw" type="button" style="--c:#FFE5CC" aria-pressed="false" aria-label="살구" data-n="살구"><svg aria-hidden="true"><use href="#i-check"/></svg></button>
+            <button class="sw" type="button" style="--c:#FFF1B8" aria-pressed="false" aria-label="노랑" data-n="노랑"><svg aria-hidden="true"><use href="#i-check"/></svg></button>
+            <button class="sw" type="button" style="--c:#DFF5D8" aria-pressed="false" aria-label="연두" data-n="연두"><svg aria-hidden="true"><use href="#i-check"/></svg></button>
+            <button class="sw" type="button" style="--c:#D3F0EC" aria-pressed="false" aria-label="민트" data-n="민트"><svg aria-hidden="true"><use href="#i-check"/></svg></button>
+            <button class="sw" type="button" style="--c:#DCEBFF" aria-pressed="false" aria-label="하늘" data-n="하늘"><svg aria-hidden="true"><use href="#i-check"/></svg></button>
+            <button class="sw" type="button" style="--c:#E6E0FF" aria-pressed="true" aria-label="보라" data-n="보라"><svg aria-hidden="true"><use href="#i-check"/></svg></button>
+            <button class="sw" type="button" style="--c:#F6DFF0" aria-pressed="false" aria-label="연분홍" data-n="연분홍"><svg aria-hidden="true"><use href="#i-check"/></svg></button>
+            <button class="sw sw-custom" type="button" aria-pressed="false" aria-expanded="false" aria-controls="fd-picker" aria-label="직접 고르기" data-n="직접 고르기"><svg aria-hidden="true"><use href="#i-check"/></svg></button>
+            <button class="sw sw-none" type="button" aria-pressed="false" data-n="선택 안 함">선택 안 함</button>
+          </div>
+          <div class="picker" id="fd-picker" data-pick="open raw fit">
+            <div>
+              <div class="pk-area" role="slider" tabindex="0" aria-label="채도와 밝기" aria-valuetext=""><span class="pk-dot"></span></div>
+              <div class="pk-hue" role="slider" tabindex="0" aria-label="색상" aria-valuemin="0" aria-valuemax="360" aria-valuenow="0"><span class="pk-dot"></span></div>
+            </div>
+            <div class="pk-side">
+              <label class="lab" for="fd-hex"><span>색 코드</span></label>
+              <input class="field" id="fd-hex" type="text" inputmode="text" maxlength="7" autocomplete="off" spellcheck="false">
+              <label class="check" for="fd-fit"><input type="checkbox" id="fd-fit"><span>옅게 맞추기</span></label>
+              <p class="pk-fit" data-pick="fit"><i aria-hidden="true"></i><span>적용 색 <b class="pk-out"></b></span></p>
+            </div>
+          </div>
+        </div>
+        <div class="bar">
+          <p class="msg" role="status"></p>
+          <div class="btns">
+            <button class="btn btn--line" type="button">되돌리기</button>
+            <button class="btn save" type="submit" aria-disabled="true">저장</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- 채널 소유자 확인 — 확인 완료: 한 줄 판 -->
+      <section class="panel" data-tab="channel" data-ver="done" aria-labelledby="v-h">
+        <div class="vrow">
+          <div class="vmain">
+            <div class="vh"><h2 id="v-h">채널 소유자 확인</h2><span class="stage ok"><i aria-hidden="true"></i>확인 완료</span></div>
+            <p class="strong">채널 인증이 완료되었습니다 · 2026.11.12</p>
+            <a href="#home">https://chzzk.naver.com/417dc8350e35364743dfa51e34471396</a>
+            <p class="small">다음 재확인 2027.02.11</p>
+          </div>
+          <button class="btn btn--line btn--sm" type="button" aria-expanded="false">채널 변경</button>
+        </div>
+      </section>
+
+      <!-- 채널 소유자 확인 — 확인 전 ①: 팬꾹 링크를 아직 안 만든 상태(링크 판 없음) -->
+      <section class="panel" data-tab="channel" data-ver="new1" aria-labelledby="v1-h">
+        <div class="vhead"><h2 id="v1-h">채널 소유자 확인</h2><span class="stage wait"><i aria-hidden="true"></i>확인 전</span></div>
+        <p class="lead">다른 사람이 내 채널로 가입하지 못하도록, 채널 소유자를 확인해 주세요.</p>
+        <div class="steps">
+          <div class="step">
+            <span class="no" aria-hidden="true">1</span>
+            <h3><label for="v1-link">팬꾹 링크를 만들어 주세요</label></h3>
+            <div class="sb-body">
+              <p class="desc">외부에서 크리에이터님의 팬꾹으로 안내할 때 사용할 주소입니다.</p>
+              <div class="hrow">
+                <div class="handle"><span aria-hidden="true">fankkuk.com/</span><input id="v1-link" placeholder="haru" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="v1-hint"></div>
+                <button class="btn" type="button">만들기</button>
+              </div>
+              <p class="hint" id="v1-hint">로그인 아이디와 다르게 정해 주세요. 만든 뒤 30일 동안은 변경할 수 없습니다.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 채널 소유자 확인 — 확인 전 ②: 링크를 만든 뒤 ① 링크 올리기 ② 채널 주소 입력 → 요청 -->
+      <section class="panel" data-tab="channel" data-ver="new2" aria-labelledby="v2-h">
+        <div class="vhead"><h2 id="v2-h">채널 소유자 확인</h2><span class="stage wait"><i aria-hidden="true"></i>확인 전</span></div>
+        <p class="lead">다른 사람이 내 채널로 가입하지 못하도록, 채널 소유자를 확인해 주세요.</p>
+        <div class="steps">
+          <div class="step">
+            <span class="no" aria-hidden="true">1</span>
+            <h3>활동 중인 채널에 팬꾹 링크를 올려 주세요</h3>
+            <div class="sb-body">
+              <div class="linkbox">
+                <div class="lrow"><span class="u">fankkuk.com/haru_game</span><button class="btn btn--line btn--sm" type="button" aria-label="팬꾹 링크 복사">복사</button></div>
+                <div class="ex"><span class="k">예시</span><p style="margin:0">게임 방송하는 하루입니다. 선물은 여기로 보내 주세요<br><b>fankkuk.com/haru</b></p></div>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <span class="no" aria-hidden="true">2</span>
+            <h3><label for="v2-url">팬꾹 링크를 올린 채널 주소를 입력해 주세요</label></h3>
+            <div class="sb-body">
+              <input class="field" id="v2-url" inputmode="url" autocomplete="url" placeholder="https://www.youtube.com/@핸들" aria-describedby="v2-ex">
+              <ul class="examples" id="v2-ex">
+                <li><b>유튜브</b><span>https://www.youtube.com/@핸들</span></li>
+                <li><b>치지직</b><span>https://chzzk.naver.com/채널ID</span></li>
+                <li><b>SOOP</b><span>https://www.sooplive.com/station/아이디</span></li>
+                <li><b>인스타그램</b><span>https://www.instagram.com/사용자이름</span></li>
+              </ul>
+            </div>
+          </div>
+          <div class="step">
+            <span class="no" aria-hidden="true" style="visibility:hidden">3</span>
+            <div class="sb-body" style="margin-top:0"><button class="btn go" type="button">채널 확인 요청</button></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ================= 오른쪽 열: 미리보기 하나 ================= -->
+    <aside class="pv" aria-labelledby="pe-pv">
+      <h2 id="pe-pv">미리보기</h2>
+      <div class="stagebox">
+        <!-- 프로필 탭: 프로필 머리 -->
+        <section class="card" data-tab="profile" aria-label="프로필 머리 미리보기">
+          <div class="band ph"></div>
+          <div class="hc-body">
+            <img class="av" data-photo="has" src="../../../../public/images/mascot-gift.png" alt="" width="80" height="80">
+            <img class="av" data-photo="none" src="../../../../public/img/default-face/cat.webp" alt="" width="80" height="80">
+            <h3 class="hc-name" id="pv-name">하루</h3>
+            <p class="intro">게임 방송하는 하루입니다</p>
+            <span class="fb"><img data-photo="has" src="../../../../public/images/mascot-basic.png" alt="" width="14" height="14">하루단</span>
+          </div>
+        </section>
+        <!-- 채널 탭: 찾기 카드 하나 -->
+        <section class="card cc" data-tab="channel" role="group" aria-label="크리에이터 카드 미리보기">
+          <div class="cover ph"></div>
+          <div class="who">
+            <img class="photo" data-photo="has" src="../../../../public/images/mascot-gift.png" alt="" width="64" height="64">
+            <img class="photo" data-photo="none" src="../../../../public/img/default-face/cat.webp" alt="" width="64" height="64">
+            <div class="id">
+              <span class="nm">하루</span>
+              <span class="fb"><img data-photo="has" src="../../../../public/images/mascot-basic.png" alt="" width="14" height="14">하루단</span>
+            </div>
+          </div>
+          <p class="intro">게임 방송하는 하루입니다</p>
+          <div class="ctags"><span class="ctag">치지직</span><span class="ctag">버추얼</span></div>
+          <div class="cacts"><span class="btn btn--line" aria-hidden="true">팔로우</span></div>
+        </section>
+      </div>
+    </aside>
+  </div>
+</div>
+</main>
+</div>
+</div>
+
+<script>
+/* 시안 도구 — 상태 전환만(비즈니스 로직 없음) */
+var S = {
+  "p":      { tab: "profile", photo: "has",  ver: "done", msg: "none" },
+  "p-ok":   { tab: "profile", photo: "has",  ver: "done", msg: "ok" },
+  "p-err":  { tab: "profile", photo: "has",  ver: "done", msg: "err" },
+  "p-none": { tab: "profile", photo: "none", ver: "done", msg: "none" },
+  "c":      { tab: "channel", photo: "has",  ver: "done", msg: "none" },
+  "c-new1": { tab: "channel", photo: "has",  ver: "new1", msg: "none" },
+  "c-new2": { tab: "channel", photo: "has",  ver: "new2", msg: "none" },
+  "c-none": { tab: "channel", photo: "none", ver: "done", msg: "none" },
+  /* 직접 고르기: 고른 색(pc)·저장될 색(out)·뱃지 글자(ink: 검정·흰색 중 대비가 큰 쪽)·고르개 점 위치(hue, sx=채도%, vy=100-명도%)
+     「옅게 맞추기」는 흰색을 섞어 밝기 0.70 에 닿는 가장 진한 색 — 값은 미리 계산해 둔 것 */
+  "c-pick":     { tab: "channel", photo: "has", ver: "done", msg: "none", pick: "open", pc: "#FFD6A5", out: "#FFD6A5", ink: "#000000", hue: 33,  sx: 35, vy: 0 },
+  "c-pick-raw": { tab: "channel", photo: "has", ver: "done", msg: "none", pick: "raw",  pc: "#2B4C9B", out: "#2B4C9B", ink: "#FFFFFF", hue: 222, sx: 72, vy: 39 },
+  "c-pick-fit": { tab: "channel", photo: "has", ver: "done", msg: "none", pick: "fit",  pc: "#2B4C9B", out: "#D4DAEA", ink: "#000000", hue: 222, sx: 72, vy: 39 }
+};
+function apply(key) {
+  if (!S[key]) key = "p";
+  var s = S[key], b = document.body;
+  s.pick = s.pick || "off";
+  b.dataset.state = key; b.dataset.photo = s.photo; b.dataset.msg = s.msg;
+  document.querySelectorAll("body *[data-tab], body *[data-photo], body *[data-ver], body *[data-msg], body *[data-pick]").forEach(function (el) {
+    var off = ["tab", "photo", "ver", "msg", "pick"].some(function (k) { return el.dataset[k] && el.dataset[k].split(" ").indexOf(s[k]) < 0; });
+    el.hidden = off;
+  });
+  var custom = document.querySelector(".sw-custom"), pk = document.getElementById("fd-picker");
+  if (s.pick !== "off") {
+    b.style.setProperty("--personal", s.out); b.style.setProperty("--badge-ink", s.ink);
+    document.getElementById("fd-fit").checked = s.pick === "fit";
+    custom.style.setProperty("--c", s.out); custom.style.color = s.ink; custom.dataset.on = "true"; custom.setAttribute("aria-expanded", "true");
+    pk.style.setProperty("--hue", s.hue); pk.style.setProperty("--pick", s.pc); pk.style.setProperty("--c", s.out);
+    pk.querySelector(".pk-area .pk-dot").style.cssText = "left:" + s.sx + "%;top:" + s.vy + "%";
+    pk.querySelector(".pk-hue .pk-dot").style.left = (s.hue / 360 * 100) + "%";
+    pk.querySelector(".pk-area").setAttribute("aria-valuetext", s.pc);
+    pk.querySelector(".pk-hue").setAttribute("aria-valuenow", s.hue);
+    document.getElementById("fd-hex").value = s.pc;
+    pk.querySelector(".pk-out").textContent = s.out;
+  } else {
+    b.style.removeProperty("--personal"); b.style.removeProperty("--badge-ink");
+    custom.dataset.on = "false"; custom.setAttribute("aria-expanded", "false");
+  }
+  document.querySelectorAll(".tool [data-set]").forEach(function (x) { x.setAttribute("aria-pressed", String(x.dataset.set === key)); });
+  document.getElementById("tab-p").toggleAttribute("aria-current", s.tab === "profile");
+  document.getElementById("tab-c").toggleAttribute("aria-current", s.tab === "channel");
+  document.getElementById("tab-p").setAttribute("aria-current", s.tab === "profile" ? "page" : "false");
+  document.getElementById("tab-c").setAttribute("aria-current", s.tab === "channel" ? "page" : "false");
+  var nick = document.getElementById("pe-name");
+  nick.value = key === "p-err" ? "관리자" : "하루";
+  if (key === "p-err") { nick.setAttribute("aria-invalid", "true"); nick.setAttribute("aria-describedby", "pe-name-e"); } else { nick.removeAttribute("aria-invalid"); nick.setAttribute("aria-describedby", "pe-name-h"); }
+  var picked = s.pick !== "off" ? "직접 고르기" : (s.photo === "has" ? "보라" : "선택 안 함");
+  document.querySelectorAll(".sw").forEach(function (x) { x.setAttribute("aria-pressed", String(x.dataset.n === picked)); });
+  document.querySelectorAll(".save").forEach(function (x) { x.setAttribute("aria-disabled", String(key !== "p-err")); });
+  document.getElementById("fd-rights").checked = s.photo === "has";
+  document.querySelector(".bgthumb").setAttribute("aria-label", s.photo === "has" ? "배경 사진 화면 예시" : "기본 배경");
+}
+document.querySelectorAll(".tool [data-set]").forEach(function (x) { x.addEventListener("click", function () { location.hash = x.dataset.set; }); });
+window.addEventListener("hashchange", function () { apply(location.hash.slice(1)); });
+apply(location.hash.slice(1));
+</script>
+</body>
+</html>

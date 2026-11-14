@@ -43,6 +43,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
+      {/* 틀 1200 안 왼쪽 720(--col-form, 위젯 CSS) — 프로필 수정과 같은 왼쪽 시작선(2026-11-14 재디자인 시안 settings-account-20261113) */}
       <MyShell width="broad">
         <CreatorSettingsPage
           address={address}
