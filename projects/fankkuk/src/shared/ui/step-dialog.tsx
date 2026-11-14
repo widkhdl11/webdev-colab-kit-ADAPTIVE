@@ -132,6 +132,7 @@ export function StepDialog({
       className={tall ? `${m.dlg} ${m.tall}` : m.dlg}
       aria-labelledby={titleId}
       onCancel={(e) => {
+        if (e.target !== e.currentTarget) return; // 안에 겹쳐 연 창(주소 검색 등)의 Esc 는 그 창의 일이다 — React 가 여기로 올려 보낸다(2026-11-14)
         e.preventDefault(); // Esc 는 닫지 않고 닫기 요청으로 바꾼다
         request();
       }}
@@ -214,6 +215,7 @@ export function ConfirmDialog({
       aria-labelledby={titleId}
       aria-describedby={description ? descId : undefined}
       onCancel={(e) => {
+        if (e.target !== e.currentTarget) return; // 안에 겹쳐 연 창의 Esc 는 그 창의 일이다
         e.preventDefault();
         onCancel();
       }}

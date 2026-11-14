@@ -104,3 +104,40 @@ describe("BottomSheet 포커스 복귀", () => {
     expect(button("닫기")!.disabled).toBe(true);
   });
 });
+
+// 창 안에 다른 창을 겹쳐 열 때(주소 입력 창 안의 「주소 검색」 창) — 안쪽 창이 닫혀도 바깥 창은 열린 채여야 한다(2026-11-14).
+// React 는 안쪽 <dialog> 의 close·cancel 이벤트를 바깥 <dialog> 의 처리기에도 올려 보낸다 — 처리기가 자기 창 이벤트만 받는지 본다.
+describe("겹쳐 연 창", () => {
+  function Nested({ log }: { log: string[] }) {
+    const [outer, setOuter] = useState(true);
+    const [inner, setInner] = useState(true);
+    return (
+      <BottomSheet open={outer} title="바깥" onClose={() => { log.push("outer"); setOuter(false); }}>
+        <BottomSheet open={inner} title="안쪽" onClose={() => { log.push("inner"); setInner(false); }}>
+          <p>검색</p>
+        </BottomSheet>
+      </BottomSheet>
+    );
+  }
+
+  it("안쪽 창이 닫히면 안쪽 onClose 만 불리고 바깥 창은 열려 있다", () => {
+    const log: string[] = [];
+    act(() => root.render(<Nested log={log} />));
+    const [outerDlg, innerDlg] = Array.from(host.querySelectorAll("dialog"));
+    act(() => innerDlg.close());
+    expect(log).toEqual(["inner"]);
+    expect(outerDlg.hasAttribute("open")).toBe(true);
+  });
+
+  it("안쪽 창의 Esc(cancel)는 바깥 창의 처리기가 막지 않는다", () => {
+    const log: string[] = [];
+    act(() => root.render(<Nested log={log} />));
+    const innerDlg = host.querySelectorAll("dialog")[1];
+    const cancel = new Event("cancel", { cancelable: true });
+    act(() => {
+      innerDlg.dispatchEvent(cancel);
+    });
+    expect(cancel.defaultPrevented).toBe(false);
+    expect(log).toEqual([]);
+  });
+});

@@ -1,8 +1,10 @@
 "use client";
 
 import {
+  useEffect,
   useRef,
   useState,
+  type ChangeEvent,
   type FormEvent,
   type InputHTMLAttributes,
   type KeyboardEvent,
@@ -19,6 +21,8 @@ import {
   loadPostcode,
   type PostcodeResult,
 } from "@/shared/lib/postcode/load-postcode";
+import { applyPhoneEdit } from "@/shared/lib/phone/mobile-phone";
+import { BottomSheet } from "./bottom-sheet";
 import s from "./sealed-address-form.module.css";
 
 // 봉인 주소 입력 칸 (address-protection INV-P1·P16·P17). 크리에이터 받는 주소(features/creator-address)와 팬이 그때마다 입력하는 주소
@@ -26,7 +30,7 @@ import s from "./sealed-address-form.module.css";
 // 보내는 곳·버튼만 부르는 쪽이 정한다. 이름표 고르기는 등록해 두는 주소(크리에이터)에만 있다 — 팬 주소는 등록하지 않아 이름표가 없다(2026-11-08).
 // 바깥 폼 안에 들어가는 자리(선물 등록 결제 단계)는 group 모드로 그린다 — form 안에 form 을 둘 수 없어서, 버튼과 Enter 가 바깥 폼을 제출하지 않고 이 칸만 봉인한다.
 // 주소는 이 브라우저에서 봉인한 뒤 봉인된 값만 보낸다 — 평문 주소는 서버로 가지 않고, 저장되면 화면 상태에도 남기지 않는다.
-// 「주소 검색」은 카카오(다음) 우편번호 서비스를 누를 때만 불러와 이 폼 안에 검색 화면을 띄우고, 고른 우편번호·기본 주소를 칸에 채운다(INV-P20 ①).
+// 「주소 검색」은 카카오(다음) 우편번호 서비스를 누를 때만 불러와 모달 창(BottomSheet)에 검색 화면을 띄우고(2026-11-14 사용자 「주소검색은 모달로」), 고른 우편번호·기본 주소를 칸에 채운다(INV-P20 ①).
 // 칸은 직접 고칠 수도 있다. 우편번호는 봉인 속에만 들어가고, 서버로는 부르는 쪽이 우편번호로 정한 값(classify)만 따로 보낸다(INV-P20 ②).
 // 이름표는 고르기만 한다 — 주소는 본인에게도 다시 보이지 않아서, 확인 창은 이 이름표와 바꾼 날로 확인한다(INV-P16).
 
@@ -163,8 +167,10 @@ export function useSealedAddressEntry<C>({
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
+  /** 창이 주소를 골라서 닫혔는가 — 그때는 연 버튼이 아니라 상세 주소 칸으로 초점을 보낸다 */
+  const pickedRef = useRef(false);
 
-  // 검색 결과로 우편번호·기본 주소를 채우고 상세 주소로 넘어간다
+  // 검색 결과로 우편번호·기본 주소를 채우고 창을 닫는다(초점은 창이 닫힌 뒤 상세 주소로 — searchClosed)
   const picked = (r: PostcodeResult) => {
     setValues((v) => ({
       ...v,
@@ -172,34 +178,68 @@ export function useSealedAddressEntry<C>({
       address1: basicAddressOf(r),
     }));
     setErrors((e) => e.filter((x) => x !== "zipCode" && x !== "address1"));
+    pickedRef.current = true;
     setSearching(false);
-    fieldRefs.current.address2?.focus();
   };
 
-  const search = () => {
-    setSearchError(false);
-    setSearching(true);
+  // 창이 열리면(누른 뒤에만 — INV-P20 ①) 스크립트를 불러와 창 안 칸에 검색 화면을 끼워 넣는다
+  useEffect(() => {
+    if (!searching) return;
+    let cancelled = false;
     loadPostcode().then(
       (Postcode) => {
         const box = searchBoxRef.current;
-        if (!box) return;
+        if (cancelled || !box) return;
         box.replaceChildren();
         new Postcode({
-          oncomplete: picked,
+          oncomplete: picked, // 상태 설정 함수와 ref 만 써서 처음 잡힌 함수로도 맞다
           width: "100%",
           height: "100%",
         }).embed(box, { autoClose: true });
       },
       () => {
+        if (cancelled) return;
         setSearching(false);
         setSearchError(true);
       },
     );
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- picked 는 상태 설정 함수·ref 만 쓴다(렌더마다 새로 만들어도 하는 일이 같다)
+  }, [searching]);
+
+  const search = () => {
+    setSearchError(false);
+    pickedRef.current = false;
+    setSearching(true);
+  };
+
+  // 창이 닫혔을 때(고름·닫기·Esc·바깥 누름) — 골랐으면 상세 주소 칸으로, 아니면 창이 연 버튼으로 돌려 둔 초점 그대로
+  const searchClosed = () => {
+    setSearching(false);
+    if (pickedRef.current) {
+      pickedRef.current = false;
+      fieldRefs.current.address2?.focus();
+    }
   };
 
   const set = (name: AddressFieldName, value: string) => {
     setValues((v) => ({ ...v, [name]: value }));
     if (errors.includes(name)) setErrors((e) => e.filter((x) => x !== name));
+  };
+
+  // 휴대폰 번호 — 회원가입 칸과 같이 칠 때 「-」를 자동으로 넣고 커서를 맞춘다(2026-11-14 사용자 「회원가입할 때처럼」)
+  const onPhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const el = e.currentTarget;
+    const native = e.nativeEvent;
+    const type = native instanceof InputEvent ? native.inputType : "";
+    const deleting = type === "deleteContentBackward" ? "backward" : type === "deleteContentForward" ? "forward" : null;
+    const next = applyPhoneEdit(values.phone, el.value, el.selectionStart ?? el.value.length, deleting);
+    // 요소 값과 커서를 먼저 맞춘다 — 상태와 같은 값이 되므로 다시 그릴 때 React 가 커서를 끝으로 옮기지 않는다
+    el.value = next.value;
+    el.setSelectionRange(next.caret, next.caret);
+    set("phone", next.value);
   };
 
   const normalized = (): AddressFieldValues => ({
@@ -315,12 +355,14 @@ export function useSealedAddressEntry<C>({
           className={`btn btn--soft ${s["zip-search"]}`}
           type="button"
           onClick={search}
-          aria-expanded={searching}
+          aria-haspopup="dialog"
         >
           주소 검색
         </button>
       </div>
-      <div ref={searchBoxRef} className={s.postcode} hidden={!searching} />
+      <BottomSheet open={searching} title="주소 검색" onClose={searchClosed}>
+        <div ref={searchBoxRef} className={s.postcode} />
+      </BottomSheet>
       {searchError ? (
         <p className={s.error} role="alert">
           주소 검색을 불러오지 못했습니다. 우편번호와 주소를 직접 입력해 주세요.
@@ -357,6 +399,7 @@ export function useSealedAddressEntry<C>({
         autoComplete: "tel",
         maxLength: 13,
         placeholder: "010-0000-0000",
+        onChange: onPhoneChange,
         required: true,
       })}
     </div>

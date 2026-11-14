@@ -59,11 +59,14 @@ export function BottomSheet({
       ref={ref}
       className={b.sheet}
       aria-labelledby={titleId}
-      onClose={() => {
+      onClose={(e) => {
+        // 창 안에 겹쳐 연 다른 창(주소 검색 등)이 닫힐 때의 이벤트도 React 가 여기로 올려 보낸다 — 이 창 자신이 닫힐 때만 처리한다(2026-11-14)
+        if (e.target !== e.currentTarget) return;
         restoreFocus(openerRef);
         onClose();
       }}
       onCancel={(e) => {
+        if (e.target !== e.currentTarget) return; // 안에 겹쳐 연 창의 Esc 는 그 창의 일이다
         if (busy) e.preventDefault(); // 처리 중 Esc 는 닫지 않는다
       }}
       onClick={(e) => {

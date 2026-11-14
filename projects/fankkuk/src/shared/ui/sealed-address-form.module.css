@@ -14,6 +14,5 @@
 .zip-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
 .zip-row > :first-child { flex: 1 1 160px; min-width: 0; }
 .zip-search { flex: 0 0 auto; }
-/* 우편번호 서비스 검색 화면(그 서비스가 이 칸 안에 끼워 넣는다) */
-.postcode { height: 440px; overflow: hidden; border-radius: var(--r-card); box-shadow: var(--hair); }
-.postcode[hidden] { display: none; }
+/* 우편번호 서비스 검색 화면 — 「주소 검색」 모달 창 안 칸(그 서비스가 이 칸 안에 끼워 넣는다). 휴대폰에서는 창 최대 높이(80dvh) 안에 들도록 줄인다 */
+.postcode { height: min(480px, calc(80dvh - 120px)); overflow: hidden; border-radius: var(--r-card); box-shadow: var(--hair); }
