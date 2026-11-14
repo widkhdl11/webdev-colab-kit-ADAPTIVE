@@ -101,8 +101,10 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 
 /* ── 2 선물 — 고르기 칸은 알약(라디오는 칸 전체를 덮고, 포커스는 칸 바깥 3px) (시안 .fopt) ── */
 .opts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.opt { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: var(--space-2) var(--space-4); border: 1px solid var(--gray-500); border-radius: var(--r-pill); background: var(--white); cursor: pointer; }
-.opt input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+/* 보이는 칩은 높이 36(2026-11-14 사용자 「뱃지들이 너무 뚱뚱하고 커 보인다」) — 누르는 칸은 라디오를 위아래 4씩 넓혀 44 그대로(design-prompt 8-12), 칩 안쪽 12(2-1) */
+.opt { position: relative; display: inline-flex; align-items: center; min-height: 36px; padding: 0 var(--space-3); border: 1px solid var(--gray-300); border-radius: var(--r-pill); background: var(--white); font-size: var(--fs-small); line-height: 1.4; cursor: pointer; }
+.opt:hover { border-color: var(--gray-500); }
+.opt input { position: absolute; top: 50%; left: 0; width: 100%; height: 44px; margin: 0; opacity: 0; transform: translateY(-50%); cursor: pointer; }
 /* 고른 칩 = --primary-50 면 + 짙은 선 1px (시안 .opt.on, 35·39절) */
 .opt:has(input:checked) { border-color: var(--brand-line); background: var(--primary-50); font-weight: var(--fw-btn); }
 .opt:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
