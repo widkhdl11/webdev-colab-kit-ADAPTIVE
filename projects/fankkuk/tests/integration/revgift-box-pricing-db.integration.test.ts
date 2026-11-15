@@ -162,7 +162,8 @@ describe("선물함 표의 꼴 (INV-GB3)", () => {
   it("INV-GB3: 이름은 1~최대 글자 — 빈 이름·공백만·최대+1 은 거부", () => {
     expect(insertBox("", 30, true, null)).toMatch(/check/i);
     expect(insertBox("   ", 30, true, null)).toMatch(/check/i);
-    expect(insertBox("가".repeat(rules.name_max + 1), 30, true, null)).toMatch(/check/i);
+    // 최대 글자(14자, 9f7fd966)는 표 check(40자)보다 좁아 트리거가 먼저 거부한다
+    expect(insertBox("가".repeat(rules.name_max + 1), 30, true, null)).toMatch(/선물함 이름 꼴이 틀리다/);
     expect(insertBox("가".repeat(rules.name_max), 30, true, null)).toBeNull();
   });
 

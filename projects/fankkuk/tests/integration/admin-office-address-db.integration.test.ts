@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { adminClient, anonClient, deleteTestOrders, psql, psqlError, SEED, signedInClient } from "./helpers";
 import { paidGift, paidShare } from "./office-helpers";
-import { deleteTestRevgifts } from "./revgift-helpers";
+import { deleteTestRevgifts, PROFILE } from "./revgift-helpers";
 
 // 팬꾹 주소를 DB 설정으로 — 대표만 바꾸고, 기록이 남고, 6자리를 받은 사람과 운영자만 읽는다 (admin-console INV-K19).
 // 시드: fankkuk_admin = 대표, fankkuk_staff = 직원, byeolbit_fan = 시험 주문의 팬, daltokki_fan = 다른 팬, haru_creator = 크리에이터.
@@ -133,6 +133,20 @@ describe("팬꾹 주소는 6자리를 받은 사람과 운영자만 읽는다 (I
     await paidShare();
     const creator = await signedInClient("haru_creator");
     expect((await creator.rpc("office_address")).data).toBe(original);
+  });
+
+  it("INV-K19 (S19d): 6자리가 붙은 선물함의 주인은 값을 읽는다 — 붙기 전에는 빈 값", async () => {
+    const momo = await signedInClient("momo_creator");
+    expect((await momo.rpc("office_address")).data).toBeNull();
+    const boxId = psql(
+      `insert into public.revgift_boxes (owner_id, creator_id, name, capacity, is_public, status, inbound_code)
+       select '${PROFILE.momo}', c.id, '주소 시험 선물함', 10, true, 'awaiting_box', public.inbound_code_draw() from public.creators c where c.profile_id = '${PROFILE.momo}' returning id`,
+    ).split("\n")[0]!;
+    try {
+      expect((await momo.rpc("office_address")).data).toBe(original);
+    } finally {
+      psql(`delete from public.revgift_boxes where id = '${boxId}'`);
+    }
   });
 
   it("INV-K19 (S19d): 운영자(직원 포함)는 값을 읽는다", async () => {

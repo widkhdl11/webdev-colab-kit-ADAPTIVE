@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
-import { boxServiceFeesProblem, type BoxServiceFees } from "@/entities/payment/model/box-service-fees";
+import { BOX_SERVICE_FEE_MAX_KRW, boxServiceFeesProblem, type BoxServiceFees } from "@/entities/payment/model/box-service-fees";
 import a from "@/shared/ui/admin.module.css";
 import { postBoxServiceFees } from "../api/post-box-service-fees-client";
 import { raisesBoxServiceFees } from "../model/price-raise";
@@ -43,6 +43,8 @@ export function BoxServiceFeeForm({ fees, editable }: Props) {
   else if (problem === "early_above_regular") saveLabel = "초기 크리에이터 값이 기본보다 커요";
   else if (problem) saveLabel = "금액을 확인해 주세요";
   else if (!changed) saveLabel = "바뀐 곳이 없어요";
+  // 입력칸에 이어 읽히는 문제 문구 — 버튼 글자로만 알리지 않는다
+  const problemText = problem === "early_above_regular" ? "초기 크리에이터 값은 기본보다 크지 않게 넣어 주세요." : problem ? `0원 이상 ${formatWon(BOX_SERVICE_FEE_MAX_KRW)}원 이하로 넣어 주세요.` : null;
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -105,6 +107,8 @@ export function BoxServiceFeeForm({ fees, editable }: Props) {
                             style={{ width: 104 }}
                             inputMode="numeric"
                             autoComplete="off"
+                            aria-invalid={problem !== null}
+                            aria-describedby={problemText ? "box-fee-problem" : undefined}
                             value={draft[f.key]}
                             onChange={(e) => {
                               const v = e.target.value;
@@ -131,11 +135,15 @@ export function BoxServiceFeeForm({ fees, editable }: Props) {
       {editable && (
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", alignItems: "end", gap: 20, marginTop: 12 }}>
           <div>
-            {message && (
-              <p role="status" style={{ fontSize: 14, fontWeight: 700, color: message.ok ? "var(--brand-ink)" : "var(--ink)" }}>
-                {message.text}
+            {problemText ? (
+              <p className={a.errorLine} id="box-fee-problem">
+                {problemText}
               </p>
-            )}
+            ) : null}
+            {/* 알림 칸은 늘 두고 글자만 바꾼다 — 새로 붙은 알림 칸은 화면 낭독기가 읽지 않을 수 있다 */}
+            <p role="status" style={{ fontSize: 14, fontWeight: 700, color: message?.ok ? "var(--brand-ink)" : "var(--ink)" }}>
+              {message?.text ?? ""}
+            </p>
           </div>
           <div className={a.btnRow}>
             <button

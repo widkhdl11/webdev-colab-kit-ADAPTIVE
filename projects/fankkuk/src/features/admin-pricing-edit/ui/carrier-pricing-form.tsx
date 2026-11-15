@@ -387,11 +387,10 @@ export function CarrierPricingForm({ pricing, table, editable }: Props) {
 
           <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", alignItems: "end", gap: 20 }}>
             <div>
-              {message && (
-                <p role="status" style={{ fontSize: 14, fontWeight: 700, color: message.ok ? "var(--brand-ink)" : "var(--ink)" }}>
-                  {message.text}
-                </p>
-              )}
+              {/* 알림 칸은 늘 두고 글자만 바꾼다 — 새로 붙은 알림 칸은 화면 낭독기가 읽지 않을 수 있다 */}
+              <p role="status" style={{ fontSize: 14, fontWeight: 700, color: message?.ok ? "var(--brand-ink)" : "var(--ink)" }}>
+                {message?.text ?? ""}
+              </p>
             </div>
             <div className={a.btnRow}>
               <button type="button" className={`${a.btn} ${a.btnLine}`} onClick={reset}>

@@ -215,6 +215,31 @@ describe("요금 관련 표는 대표도 직접 고칠 수 없다 (INV-K2·K4·K
     expect(psql("select id || '|' || before_krw || '|' || after_krw from public.tier_price_changes")).toBe(before);
   });
 
+  it("INV-K5 (실패경로): 요금 변경 기록 두 표는 TRUNCATE 로도 비울 수 없다", async () => {
+    await saveAsOwner({ small: { price_krw: 7400 } });
+    const before = psql("select count(*) from public.tier_price_changes");
+    expect(psqlError("truncate public.tier_price_changes")).toMatch(/고치거나 지울 수 없다/);
+    expect(psqlError("truncate public.pricing_setting_changes")).toMatch(/고치거나 지울 수 없다/);
+    expect(psql("select count(*) from public.tier_price_changes")).toBe(before);
+  });
+
+  it("INV-K2·K5 (실패경로): 앱 서버 관리자 키도 요금 관련 표를 직접 고치지 못한다 — 바꾸는 길은 기록이 남는 대표 함수뿐", async () => {
+    // 실패해도 데이터가 바뀌지 않는 시도만 한다 — 권한을 통째로 회수했으면 읽기부터 거부되고, 쓰기는 같은 값을 다시 넣는 것으로 본다
+    const admin = adminClient();
+    const tables = [
+      "tier_prices", "tier_price_changes", "pricing_settings", "pricing_setting_changes", "carrier_route_costs", "fan_send_fees", "surcharge_fees",
+      "owner_setting", "early_creators", "early_creator_counter",
+    ];
+    for (const t of tables) {
+      expect((await admin.from(t).select("*").limit(1)).error?.code, `${t} 읽기`).toBe("42501");
+      // 빈 줄 넣기 — 권한이 남아 있어도 필수 칸·기본 키 겹침에 걸려 데이터는 바뀌지 않는다. 권한이 없으면 그보다 먼저 42501
+      expect((await admin.from(t).insert({})).error?.code, `${t} 넣기`).toBe("42501");
+    }
+    expect(psql("select owner_user_id from public.owner_setting")).toBe(OWNER_ID);
+    expect((await admin.from("tier_prices").update({ price_krw: Number(psql("select price_krw from public.tier_prices where tier = 'small'")) }).eq("tier", "small")).error?.code).toBe("42501");
+    expect(pricesNow()).toBe(FIRST_TEXT);
+  });
+
   it("INV-K2 (실패경로): 대표가 대표 설정 표를 직접 update/insert/delete → 42501, 대표 그대로", async () => {
     const owner = await signedInClient("fankkuk_admin");
     expect((await owner.from("owner_setting").update({ owner_user_id: SEED.fanId }).eq("id", true)).error?.code).toBe("42501");

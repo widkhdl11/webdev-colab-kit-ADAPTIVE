@@ -149,6 +149,8 @@ export function PricingForm({ table, editable }: { table: PriceTable; editable: 
                             style={{ width: 116 }}
                             inputMode="numeric"
                             autoComplete="off"
+                            aria-invalid={!checked.ok}
+                            aria-describedby="price-checks"
                             value={draft[tier][f.key]}
                             onChange={(e) => edit(tier, f.key, e.target.value)}
                             onBlur={() => tidy(tier, f.key)}
@@ -179,7 +181,7 @@ export function PricingForm({ table, editable }: { table: PriceTable; editable: 
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", alignItems: "end", gap: 20, marginTop: 12 }}>
           <div>
             <p style={{ fontSize: 13, fontWeight: 700, color: "var(--sub)", marginBottom: 6 }}>저장 전 검사</p>
-            <ul className={a.checks} aria-live="polite">
+            <ul className={a.checks} id="price-checks" aria-live="polite">
               {PRICE_RULES.map((r) => {
                 // 검사는 첫 번째로 어긴 조건만 알려 준다. 그 조건 말고는 통과했는지 모르므로 ✓ 를 붙이지 않는다.
                 const state = checked.ok ? "pass" : r.rule === badRule ? "bad" : "unchecked";
@@ -195,11 +197,10 @@ export function PricingForm({ table, editable }: { table: PriceTable; editable: 
                 );
               })}
             </ul>
-            {message && (
-              <p role="status" style={{ marginTop: 8, fontSize: 14, fontWeight: 700, color: message.ok ? "var(--brand-ink)" : "var(--ink)" }}>
-                {message.text}
-              </p>
-            )}
+            {/* 알림 칸은 늘 두고 글자만 바꾼다 — 새로 붙은 알림 칸은 화면 낭독기가 읽지 않을 수 있다 */}
+            <p role="status" style={{ marginTop: message ? 8 : 0, fontSize: 14, fontWeight: 700, color: message?.ok ? "var(--brand-ink)" : "var(--ink)" }}>
+              {message?.text ?? ""}
+            </p>
           </div>
           <div className={a.btnRow}>
             <button
