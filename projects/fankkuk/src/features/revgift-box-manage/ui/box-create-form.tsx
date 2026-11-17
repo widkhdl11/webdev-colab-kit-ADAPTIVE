@@ -192,7 +192,10 @@ export function BoxCreateDialog({
       <form id="bc-form" className={s.stepForm} onSubmit={next} noValidate>
         {step === 1 ? (
           <div className="field">
-            <label htmlFor="bc-name">선물함 이름</label>
+            <div className={s.fieldHead}>
+              <label htmlFor="bc-name">선물함 이름</label>
+              <CharCount id="bc-name-count" value={name} max={BOX_NAME_MAX} />
+            </div>
             <div className={fieldError ? `${s.ulField} ${s.ulErr}` : s.ulField}>
               <span className={s.ulMirror} aria-hidden="true">
                 {name}
@@ -206,7 +209,7 @@ export function BoxCreateDialog({
                 maxLength={BOX_NAME_MAX}
                 value={name}
                 aria-invalid={fieldError ? true : undefined}
-                aria-describedby={fieldError ? "bc-err" : undefined}
+                aria-describedby={fieldError ? "bc-err bc-name-count" : "bc-name-count"}
                 onChange={(e) => {
                   setName(e.target.value);
                   setFieldError(null);
@@ -218,7 +221,10 @@ export function BoxCreateDialog({
         ) : null}
         {step === 1 ? (
           <div className="field">
-            <label htmlFor="bc-desc">간단한 설명 (선택)</label>
+            <div className={s.fieldHead}>
+              <label htmlFor="bc-desc">간단한 설명 (선택)</label>
+              <CharCount id="bc-desc-count" value={description} max={BOX_DESCRIPTION_MAX} />
+            </div>
             <div className={descError ? `${s.ulField} ${s.ulErr}` : s.ulField}>
               <span className={s.ulMirror} aria-hidden="true">
                 {description}
@@ -232,7 +238,7 @@ export function BoxCreateDialog({
                 maxLength={BOX_DESCRIPTION_MAX}
                 value={description}
                 aria-invalid={descError ? true : undefined}
-                aria-describedby={descError ? "bc-desc-err" : undefined}
+                aria-describedby={descError ? "bc-desc-err bc-desc-count" : "bc-desc-count"}
                 onChange={(e) => {
                   setDescription(e.target.value);
                   setDescError(null);
@@ -378,6 +384,20 @@ export function BoxCreateDialog({
         </button>
       </ConfirmDialog>
     </>
+  );
+}
+
+/**
+ * 입력칸 글자 수 「n / 최대자」 — 한도에서 입력이 멈출 때 왜 멈췄는지 보이게(백로그 2026-11-11, 사용자 2026-11-18 「응」).
+ * 선물 보내기 입력칸(gift-register .char-count)과 같은 모양 · 자리(라벨 줄 오른쪽). 낭독기는 입력칸 설명(aria-describedby)으로 칸에 들어갈 때 한 번 읽는다 —
+ * 글자마다 읽히지 않게 aria-live 는 두지 않는다.
+ */
+function CharCount({ id, value, max }: { id: string; value: string; max: number }) {
+  const n = charCount(value);
+  return (
+    <span className={s.count} id={id} data-full={n >= max ? "" : undefined}>
+      {n} / {max}자
+    </span>
   );
 }
 

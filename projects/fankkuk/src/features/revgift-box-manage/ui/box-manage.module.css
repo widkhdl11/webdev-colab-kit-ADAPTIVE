@@ -50,6 +50,11 @@
 
 /* ── 만들기 모달 단계 칸 (design-rules 43절 · 시안 .field·.suffix·.scope·.opt·.sum·.made·.linkbox) ── */
 .stepForm { display: grid; gap: var(--space-6); }
+/* 라벨 줄 — 라벨 왼쪽 · 글자 수 오른쪽(선물 보내기 .field-head · .char-count 와 같은 모양). 한도에 닿으면 글자 수를 진하게 */
+.fieldHead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-2); }
+.fieldHead label { min-width: 0; margin-bottom: 0; font-weight: var(--fw-bold); } /* 공용 .field > label 이 한 겹 안이라 닿지 않는다 — 굵기만 같게 */
+.count { font-size: var(--fs-small); color: var(--sub); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.count[data-full] { color: var(--ink); font-weight: var(--fw-bold); }
 /* 만들기 모달 입력칸 — 테두리 없는 회색 칸 + 입력한 글자 폭만큼만 밑줄(시안 box-name-input-20261110, 2026-11-11 사용자 「적용해줘」).
    밑줄은 입력값을 그대로 담은 보이지 않는 복사본(.ulMirror)의 아래 선이다 — field-sizing 은 일부 브라우저가 몰라 쓰지 않는다.
    초점 표시는 하늘색 커서와 밑줄이 맡는다(칸 바깥 고리를 두면 결국 테두리로 보인다). 회색 면은 흰 모달과 3:1 이 안 돼
