@@ -49,6 +49,7 @@ const CREATOR_REFS = [
   "public.creator_verification_events",
   "public.office_hold_alerts",
   "public.follows",
+  "pii.creator_address_sign_requests",
 ] as const;
 const PROFILE_REFS = [
   ["public.creator_channel_claims", "account_id"],

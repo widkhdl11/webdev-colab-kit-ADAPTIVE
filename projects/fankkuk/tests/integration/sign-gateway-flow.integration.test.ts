@@ -7,7 +7,7 @@ import { creatorAddressPlaintext } from "@/entities/address/model/creator-addres
 import { createGatewayLabelPrinters } from "@/features/invoice-print/api/gateway-client";
 import { TEST_SITE_ORIGINS } from "@/shared/lib/env/test-site";
 import { sealEnvelope } from "@/shared/lib/envelope/envelope";
-import { adminClient, creatorActorOf, deleteTestOrders, psql, recordSignTx, settleArgs, signedInClient, startSignRpc } from "./helpers";
+import { adminClient, creatorActorOf, deleteTestOrders, psql, recordSignTx, seedCreatorAddress, settleArgs, signedInClient, startSignRpc } from "./helpers";
 import { ADDRESS_CREATOR_ID, decryptorDbKey, LABEL, logRows, OWNER_ID, testKeyPair, type TestKeys } from "./invoice-helpers";
 import { FAN_PASS, fanSetsWaybill, inspect, paidGift, parcelState, receiveAndLabel, waybill } from "./office-helpers";
 import { createTestCreator, removeTestCreator, TEST_CREATOR } from "./test-creator";
@@ -119,8 +119,8 @@ async function tokenOf(loginId: string): Promise<string> {
 async function registerAddress(): Promise<void> {
   psql(`delete from pii.creator_addresses where creator_id = '${ADDRESS_CREATOR_ID}'`);
   const envelope = await sealEnvelope(creatorAddressPlaintext({ creatorId: ADDRESS_CREATOR_ID, ...LABEL }), keys.publicKey);
-  const r = await adminClient().rpc("set_creator_address", { p_actor_id: TEST_CREATOR.profileId, p_envelope: envelope, p_label: "home", p_region: "none", p_method: "fake" });
-  if (r.error) throw new Error(`set_creator_address 실패: ${r.error.message}`);
+  // 주소 저장 서명 흐름은 creator-address-sign-db 가 본다 — 여기서는 서명을 마친 것처럼 칸에 쓴다(manual/0040 뒤)
+  seedCreatorAddress(ADDRESS_CREATOR_ID, TEST_CREATOR.profileId, envelope);
 }
 
 /**

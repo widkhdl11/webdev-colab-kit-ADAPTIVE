@@ -3,8 +3,10 @@ import { adminClient, anonClient, psql, psqlError, signedInClient } from "./help
 import { PROFILE, sampleEnvelope } from "./revgift-helpers";
 import { createTestCreator, removeTestCreator, TEST_CREATOR } from "./test-creator";
 
-// 크리에이터 주소 등록·변경 — 개인정보 구역(pii)에 저장되는 부분. supabase/manual/0007_creator_address.sql 과 0017_creator_address_label.sql 을 적용해야 돈다.
-// 스펙: docs/specs/address-protection.md (INV-P1·P9·P13·P16)
+// 크리에이터 주소 등록·변경 — 개인정보 구역(pii)에 저장되는 부분. supabase/manual/0007·0017·0030·0040 을 적용해야 돈다(manual/0040 뒤).
+// 스펙: docs/specs/address-protection.md (INV-P1·P9·P13·P16·P22)
+// 2026-11-17(INV-P22): 서비스 키로 바로 저장하는 함수가 없어졌다 — 저장은 서명 요청 → 거래 ID → 서명 결과(signed) 세 함수를 거친다.
+// 아래 setAddress 가 그 길을 그대로 밟는다(가짜 서명 창구가 돌려주는 것처럼 저장 원문을 그대로 서명된 원문으로 낸다). 서명 흐름의 갈래는 creator-address-sign-db 가 본다.
 //
 // 시드 크리에이터(하루)의 주소 칸은 사람이 화면에서 등록해 둔 진짜 봉투라 건드리지 않는다.
 // 시험은 시험 전용 크리에이터(test-creator.ts)의 칸만 쓰고, 끝나면 그 크리에이터를 주소·기록째 지운다.
@@ -27,8 +29,22 @@ function newEvents(): { event: string; method: string; actor: string }[] {
     .map(([event, method, actor]) => ({ event: event!, method: method!, actor: actor! }));
 }
 
-function setAddress(actorId: string, envelope: unknown, method = "fake", label: string | null = "home") {
-  return adminClient().rpc("set_creator_address", { p_actor_id: actorId, p_envelope: envelope, p_label: label, p_region: "none", p_method: method });
+type StartRow = { result: string; request_id: string | null; payload: string | null };
+
+/** 서명 요청 → 거래 ID → 서명 결과(signed). 요청이 만들어지지 않으면 요청 함수의 답(not_creator·method_refused 등)을, 형식 오류면 그 오류를 돌려준다 */
+async function setAddress(actorId: string, envelope: unknown, method = "fake", label: string | null = "home"): Promise<{ data: string | null; error: { code?: string } | null }> {
+  const admin = adminClient();
+  // 한도(1시간 5번)는 creator-address-sign-db 가 본다 — 여기서는 앞 요청 줄을 지워 한도에 걸리지 않게
+  psql(`delete from pii.creator_address_sign_requests where creator_id = '${CREATOR_ID}'`);
+  const st = await admin.rpc("start_creator_address_sign", { p_actor_id: actorId, p_envelope: envelope, p_label: label, p_region: "none", p_method: method, p_resend: false });
+  if (st.error) return { data: null, error: st.error };
+  const row = (st.data as StartRow[])[0]!;
+  if (row.result !== "started") return { data: row.result, error: null };
+  const tx = await admin.rpc("record_creator_address_sign_tx", { p_actor_id: actorId, p_request_id: row.request_id, p_tx_id: `fake-${row.request_id}` });
+  if (tx.data !== "recorded") throw new Error(`거래 ID 를 적지 못했다: ${JSON.stringify(tx)}`);
+  const se = await admin.rpc("settle_creator_address_sign", { p_actor_id: actorId, p_request_id: row.request_id, p_outcome: "signed", p_signed_content: row.payload, p_method: method });
+  if (se.error) return { data: null, error: se.error };
+  return { data: (se.data as { result: string }[])[0]!.result, error: null };
 }
 
 const storedLabel = () => psql(`select coalesce(label, '-') from pii.creator_addresses where creator_id = '${CREATOR_ID}'`);
@@ -96,11 +112,13 @@ describe("INV-P13: 크리에이터 주소는 로그인한 크리에이터 본인
     expect(psql(`select count(*) from pii.creator_address_events where actor_id in ('${PROFILE.byeolbit}', '${OPERATOR}')`)).toBe("0");
   });
 
-  it("INV-P13 S13c (실패경로): 로그인 키·익명 키로는 저장 함수를 부를 수 없다", async () => {
+  it("INV-P13·P22 S13c (실패경로): 로그인 키·익명 키로는 서명 요청·결과 적기 함수를 부를 수 없다", async () => {
     clearAddress();
     const creator = await signedInClient(TEST_CREATOR.loginId);
-    expect((await creator.rpc("set_creator_address", { p_actor_id: CREATOR_PROFILE, p_envelope: sampleEnvelope(), p_label: "home", p_region: "none", p_method: "fake" })).error).not.toBeNull();
-    expect((await anonClient().rpc("set_creator_address", { p_actor_id: CREATOR_PROFILE, p_envelope: sampleEnvelope(), p_label: "home", p_region: "none", p_method: "fake" })).error).not.toBeNull();
+    for (const client of [creator, anonClient()]) {
+      expect((await client.rpc("start_creator_address_sign", { p_actor_id: CREATOR_PROFILE, p_envelope: sampleEnvelope(), p_label: "home", p_region: "none", p_method: "fake", p_resend: false })).error).not.toBeNull();
+      expect((await client.rpc("settle_creator_address_sign", { p_actor_id: CREATOR_PROFILE, p_request_id: "00000000-0000-4000-a000-000000000000", p_outcome: "signed", p_signed_content: "x", p_method: "fake" })).error).not.toBeNull();
+    }
     expect(addressRows()).toBe(0);
   });
 
@@ -121,7 +139,7 @@ describe("INV-P13: 크리에이터 주소는 로그인한 크리에이터 본인
   it("INV-P13 S13d (실패경로): 가짜 서명 허용 줄이 없는 DB(운영)에서는 방식 fake 를 거부한다", () => {
     clearAddress();
     const out = psql(
-      `begin; delete from public.local_dev_flags; select public.set_creator_address('${CREATOR_PROFILE}'::uuid, '${JSON.stringify(sampleEnvelope())}'::jsonb, 'home', 'none', 'fake'); rollback;`,
+      `begin; delete from public.local_dev_flags; select result from public.start_creator_address_sign('${CREATOR_PROFILE}'::uuid, '${JSON.stringify(sampleEnvelope())}'::jsonb, 'home', 'none', 'fake', false); rollback;`,
     );
     expect(out.split("\n")).toContain("method_refused");
     expect(addressRows()).toBe(0);
@@ -157,7 +175,7 @@ describe("INV-P13: 크리에이터 한 명에 주소 하나 — 바꾸면 덮어
     const cols = psql(
       `select string_agg(column_name, ',' order by column_name) from information_schema.columns where table_schema = 'pii' and table_name = 'creator_address_events'`,
     );
-    expect(cols).toBe("actor_id,at,creator_id,event,id,method");
+    expect(cols).toBe("actor_id,at,creator_id,event,id,method,sign_request_id");
   });
 });
 

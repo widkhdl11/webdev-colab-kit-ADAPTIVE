@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { adminClient, deleteTestOrders, psql, psqlError, registerTestOrder, signedInClient } from "./helpers";
+import { adminClient, deleteTestOrders, psql, psqlError, registerTestOrder, seedCreatorAddress, signedInClient } from "./helpers";
 import { sampleEnvelope } from "./revgift-helpers";
 import { createTestCreator, removeTestCreator, TEST_CREATOR } from "./test-creator";
 
@@ -12,8 +12,13 @@ const smallPrice = () => Number(psql("select price_krw from public.tier_prices w
 const smallCarrier = () => Number(psql("select carrier_cost_krw from public.tier_prices where tier = 'small'"));
 const setup = (sql: string) => psql(`begin; set local session_replication_role = replica; ${sql}; commit;`);
 
-function setCreatorAddress(region: string | null, label = "home") {
-  return adminClient().rpc("set_creator_address", { p_actor_id: TEST_CREATOR.profileId, p_envelope: sampleEnvelope(), p_label: label, p_region: region, p_method: "fake" });
+// 주소 칸 준비 — 서명을 마친 것처럼 내부 함수로 쓴다(manual/0040 뒤 — 서비스 키로 바로 저장하는 함수는 없다, address-protection INV-P22)
+async function setCreatorAddress(region: string, label = "home") {
+  seedCreatorAddress(TEST_CREATOR.creatorId, TEST_CREATOR.profileId, sampleEnvelope(), label, region);
+}
+// 브라우저가 보낸 구분을 처음 받는 곳은 서명 요청 함수다(INV-P22 ①) — 목록 밖 구분은 거기서 22023
+function requestAddressSign(region: string | null) {
+  return adminClient().rpc("start_creator_address_sign", { p_actor_id: TEST_CREATOR.profileId, p_envelope: sampleEnvelope(), p_label: "home", p_region: region, p_method: "fake", p_resend: false });
 }
 const storedRegion = () => psql(`select coalesce(surcharge_region, '-') from pii.creator_addresses where creator_id = '${TEST_CREATOR.creatorId}'`);
 const clearAddress = () => psql(`delete from pii.creator_addresses where creator_id = '${TEST_CREATOR.creatorId}'`);
@@ -38,9 +43,7 @@ afterAll(() => {
 describe("INV-P20 ②: 주소 줄에는 암호문과 구분만 — 우편번호 칸이 없다 (manual/0030 뒤)", () => {
   it("INV-P20 S20: 구분 「제주」로 저장하면 주소 줄에 그 구분이 저장된다 — 주소 줄에 우편번호 칸이 없다", async () => {
     clearAddress();
-    const { data, error } = await setCreatorAddress("jeju");
-    expect(error).toBeNull();
-    expect(data).toBe("saved");
+    await setCreatorAddress("jeju");
     expect(storedRegion()).toBe("jeju");
     const columns = psql("select string_agg(column_name, ',' order by column_name) from information_schema.columns where table_schema = 'pii' and table_name in ('creator_addresses', 'order_return_addresses', 'revgift_box_addresses')");
     expect(columns).not.toMatch(/zip|postal|postcode/);
@@ -50,13 +53,13 @@ describe("INV-P20 ②: 주소 줄에는 암호문과 구분만 — 우편번호 
     clearAddress();
     await setCreatorAddress("none");
     const before = psql(`select envelope::text from pii.creator_addresses where creator_id = '${TEST_CREATOR.creatorId}'`);
-    for (const bad of [null, "", "63309", "JEJU"]) expect((await setCreatorAddress(bad)).error?.code).toBe("22023");
+    for (const bad of [null, "", "63309", "JEJU"]) expect((await requestAddressSign(bad)).error?.code).toBe("22023");
     expect(storedRegion()).toBe("none");
     expect(psql(`select envelope::text from pii.creator_addresses where creator_id = '${TEST_CREATOR.creatorId}'`)).toBe(before);
   });
 
-  it("INV-P20 (실패경로): 구분 없이 저장하던 옛 함수(네 인자)는 없다", () => {
-    expect(psql("select count(*) from pg_proc where proname = 'set_creator_address' and pronargs = 4")).toBe("0");
+  it("INV-P20·P22 (실패경로): 구분 없이 저장하던 옛 함수와 서명 없이 바로 저장하던 함수는 없다 (manual/0040 뒤)", () => {
+    expect(psql("select count(*) from pg_proc where proname = 'set_creator_address'")).toBe("0");
     expect(psql("select count(*) from pg_proc where proname = 'set_my_fan_address' and pronargs = 2")).toBe("0");
   });
 });
@@ -126,7 +129,7 @@ describe("INV-M24: 결제 대기를 만드는 순간의 주소 구분으로 상�
 
   it("INV-M24 ⑤: 등록 함수 밖에서 pii 주소 줄의 구분 칸을 읽는 공개 함수는 구분 읽기 함수·재판정 함수 둘뿐이다(+ 선물함 명세서 생성 하나)", () => {
     const readers = psql(
-      "select string_agg(p.proname, ',' order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prosrc like '%surcharge_region%' and p.prosrc like '%pii.%' and p.proname not in ('set_creator_address', 'set_my_fan_address', 'save_my_order_return_address')",
+      "select string_agg(p.proname, ',' order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prosrc like '%surcharge_region%' and p.prosrc like '%pii.%' and p.proname not in ('start_creator_address_sign', 'settle_creator_address_sign', 'set_my_fan_address', 'save_my_order_return_address')",
     );
     // revgift_box_try_invoice: 선물함 명세서 생성이 신청 사본의 구분을 읽어 줄에 적는다(revgift-box INV-GB17 — 「명세서 생성 함수(공개 구역)가 pii 의 구분 읽기 함수를 부름」).
     // 아무 권한에도 열려 있지 않다(입고·실측·팬 고르기가 안에서 부른다)

@@ -42,9 +42,10 @@ export type AddressFieldName =
   "zipCode" | "address1" | "address2" | "recipientName" | "phone";
 export type AddressFieldValues = Record<AddressFieldName, string>;
 
-/** 저장 결과 — 서버가 거부하면 그 문구를 그대로 보인다 */
+/** 저장 결과 — 서버가 거부하면 그 문구를 그대로 보인다. handled = 보낸 쪽이 이어서 맡는다(폼은 아무것도 하지 않는다 — 예: 서명 기다림 화면으로 바뀜) */
 export type SealedAddressSendOutcome =
   | { kind: "ok" }
+  | { kind: "handled" }
   | { kind: "login" }
   | { kind: "refused"; message: string }
   | { kind: "failed" };
@@ -481,6 +482,7 @@ export function SealedAddressForm<L extends string, C>(
         else props.onSaved();
         return;
       }
+      if (outcome.kind === "handled") return;
       if (outcome.kind === "login") {
         onLoginExpired();
         return;

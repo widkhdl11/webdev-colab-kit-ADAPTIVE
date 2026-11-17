@@ -13,7 +13,7 @@ apply() {
   docker exec -i supabase_db_fankkuk psql -U postgres -d postgres -v ON_ERROR_STOP=1 -q < "$1" > /dev/null
 }
 
-for f in $(ls "$here"/*.sql | grep -v -e local-seed -e check-applied -e purge-keep-review-account -e 0029_ -e 0030_ -e 0031_ -e 0032_ -e 0033_ -e 0034_ -e 0035_ | sort); do
+for f in $(ls "$here"/*.sql | grep -v -e local-seed -e check-applied -e purge-keep-review-account -e 0029_ -e 0030_ -e 0031_ -e 0032_ -e 0033_ -e 0034_ -e 0035_ -e 0040_ | sort); do
   apply "$f"
   if [[ "$(basename "$f")" == 0002_account_contacts.sql ]]; then
     apply "$here/0002_account_contacts.local-seed.sql"
@@ -34,4 +34,5 @@ apply "$here/0036_revgift_box_waitlist.sql"
 apply "$here/0037_signup_kakao_sign.sql"
 apply "$here/0038_signup_down_carry.sql"
 apply "$here/0039_creator_signup_no_nickname.sql"
+apply "$here/0040_creator_address_sign.sql"
 echo "수동 SQL 모두 적용됨 — 에이전트에게 「적용했어」라고 알려 주면 통합 시험을 돌린다."

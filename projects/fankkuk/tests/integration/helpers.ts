@@ -321,6 +321,15 @@ export function linkTestSignature(creatorId: string): void {
   );
 }
 
+/**
+ * 시험 준비용 — 서명 검증을 마친 것처럼 크리에이터 주소 칸에 바로 쓴다(manual/0040 의 내부 함수 pii.write_creator_address — 서비스 키로는 못 부르고
+ * 슈퍼유저 psql 로만 부른다). 기록 줄은 방식 fake·임의 요청 ID 로 남는다. 저장 흐름 자체(서명 요청 → 결과 → 저장)는 creator-address-sign-db 가 본다.
+ */
+export function seedCreatorAddress(creatorId: string, actorId: string, envelope: unknown, label = "home", region = "none"): void {
+  const env = JSON.stringify(envelope).replace(/'/g, "''");
+  psql(`select pii.write_creator_address('${creatorId}'::uuid, '${actorId}'::uuid, '${env}'::jsonb, '${label}', '${region}', 'fake', gen_random_uuid())`);
+}
+
 /** linkTestSignature 의 줄을 지운다 — 크리에이터 줄을 트리거를 끈 채 지우는 시험은 연쇄 삭제가 돌지 않아 먼저 지운다. */
 export function unlinkTestSignature(creatorId: string): void {
   psql(

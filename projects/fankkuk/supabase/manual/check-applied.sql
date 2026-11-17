@@ -71,6 +71,8 @@ from (values
   ('0038', to_regprocedure('pii.signup_sign_down_window()') is not null,
            '장애 기록 시간 기준 함수 · 장애 기록 넘기기'),
   ('0039', coalesce((select prosrc like '%크리에이터 가입은 닉네임을 받지 않는다%' from pg_proc where oid = to_regprocedure('public.create_account(uuid,text,text,text,text,uuid,jsonb,text)')), false),
-           '크리에이터 가입은 닉네임 없이(채널 만들기로)')
+           '크리에이터 가입은 닉네임 없이(채널 만들기로)'),
+  ('0040', to_regclass('pii.creator_address_sign_requests') is not null,
+           '크리에이터 주소 저장 서명 요청 표')
 ) as v(file, applied, marker)
 order by file;

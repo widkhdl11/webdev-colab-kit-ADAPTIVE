@@ -1,0 +1,16 @@
+/* 주소 저장 서명 기다림 (address-protection INV-P22). 승인 서명 연결 카드의 기다림(features/signature-link/ui/signature-link-panel.module.css
+   .kakao · .again · .textBtn — 시안 v43-signup/signup-5-signature 승인)과 같은 값이다. 기능끼리는 서로 import 하지 않아(FSD) 같은 값을 여기에 둔다
+   (가입 3단계 signup.module.css 의 .kakao-list 와 같은 처리). 새 색·크기는 없다 — 토큰만.
+   버튼 줄은 공용 봉인 폼과 같은 모양(sealed-address-form.module.css .sheet-btns)을 그 모듈에서 가져다 쓴다. */
+
+.wait { display: grid; gap: 16px; }
+
+/* 기다리는 중 — 번호 동그라미 두 줄 */
+.kakao { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; counter-reset: k; }
+.kakao li { position: relative; min-height: 28px; padding-left: 40px; counter-increment: k; overflow-wrap: anywhere; }
+.kakao li::before { content: counter(k); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
+.time { margin: 0; }
+.time [role="timer"] { font-weight: var(--fw-btn); font-variant-numeric: tabular-nums; }
+.again { margin: 0; }
+.textBtn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--brand-ink); font: inherit; font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.textBtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
