@@ -13,6 +13,7 @@ import s from "./box-address-code.module.css";
 // - 「전체 주소 복사」는 가려져 있어도 6자리를 포함한 전체 주소를 복사한다.
 // - 부르는 쪽이 DB 가 준 6자리가 있을 때만 그린다(6자리 빠진 기본 사무실 주소는 그리지 않는다).
 // 받은 역조공 쪽(revgift-sent)은 ReceivingAddress 를 그대로 쓴다.
+// 보내는 분·받는 분은 이름 없는 일반 칸(div) — 상자가 여럿이면 이름 붙은 영역이 상자 이름 없이 겹친다(ui 리뷰 2026-11-17). 묶음 이름은 바깥 그룹 하나.
 
 type Props = {
   /** 사무실 주소(6자리 앞부분) — 운영자가 정한 한 줄(admin-console INV-K19) */
@@ -55,8 +56,8 @@ export function BoxAddressCode({ officeAddress, code, boxName }: Props) {
       <div className={s.paper}>
         <p className={s.paperHead}>택배 접수 · 작성 예시</p>
         <div className={s.grid}>
-          <section className={s.from} aria-labelledby={`${id}-from`}>
-            <p className={s.partH} id={`${id}-from`}>
+          <div className={s.from}>
+            <p className={s.partH}>
               보내는 분 <span className={s.ex}>예시</span>
             </p>
             <dl className={s.rows}>
@@ -73,9 +74,9 @@ export function BoxAddressCode({ officeAddress, code, boxName }: Props) {
                 <dd>보내는 분의 연락처</dd>
               </div>
             </dl>
-          </section>
-          <section className={s.to} aria-labelledby={`${id}-to`}>
-            <p className={s.toHead} id={`${id}-to`}>
+          </div>
+          <div className={s.to}>
+            <p className={s.toHead}>
               받는 분
             </p>
             <dl className={s.rows}>
@@ -100,7 +101,7 @@ export function BoxAddressCode({ officeAddress, code, boxName }: Props) {
                 </dd>
               </div>
             </dl>
-          </section>
+          </div>
         </div>
       </div>
       <div className={s.bar}>
@@ -109,6 +110,7 @@ export function BoxAddressCode({ officeAddress, code, boxName }: Props) {
           <span className={s.barCode} aria-hidden="true">
             {shown ? code : MASK}
           </span>
+          <span className="sr-only">{shown ? code : "끝 6자리 가려짐"}</span>
         </p>
         <div className={s.barActs}>
           <button type="button" className={s.ghost} aria-label={`${boxName} 팬꾹 주소 끝 6자리 ${shown ? "가리기" : "보기"}`} onClick={() => setShown((v) => !v)}>

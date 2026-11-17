@@ -270,9 +270,11 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .gnote.gnote:not(.gnote-first) { margin-top: var(--space-8); background: var(--surface-muted); box-shadow: inset 0 0 0 1px var(--gray-200); }
 /* 반송·환불 안내 세 층(2026-11-17 「구조화·위계·계층화」) — ① 묶음 제목 14 굵게 + 언제(작은 회색) ② 흰 칸 안 줄마다 「조건 | 결과」,
    결과는 굵게 오른쪽(값처럼 훑어 읽는다) ③ 줄 아래 자세한 설명 작은 회색. 묶음 사이 24, 줄 사이 선 1px. 화면 600 미만에서는 결과가 조건 아래로 */
+/* 이 판만 제목 20 — 묶음 제목(16)보다 위 */
+.gnote:has(> .refund-sec) > h3 { font-size: var(--fs-card); line-height: 1.4; }
 .refund-sec + .refund-sec { margin-top: var(--space-6); }
 .gnote h3 + .refund-sec { margin-top: var(--space-4); }
-.refund-sec h4 { font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1.5; color: var(--ink); }
+.refund-sec h4 { font-size: var(--fs-body); font-weight: var(--fw-bold); line-height: 1.5; color: var(--ink); } /* 16 — 결과(14 굵게)보다 한 단계 위(ui 리뷰 2026-11-17) */
 .gnote .refund-when { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
 .refund-rows { margin: var(--space-3) 0 0; padding: 0 var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); font-size: var(--fs-small); }
 .refund-rows > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-4); row-gap: var(--space-1); padding: var(--space-3) 0; }

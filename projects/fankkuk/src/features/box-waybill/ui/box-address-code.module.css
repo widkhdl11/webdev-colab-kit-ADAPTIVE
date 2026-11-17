@@ -11,8 +11,8 @@
 .from { grid-column: 1 / span 7; padding: var(--space-4); border-radius: var(--r-btn); box-shadow: inset 0 0 0 1px var(--kraft-line); }
 .to { grid-column: 4 / -1; overflow: hidden; border-radius: var(--r-btn); box-shadow: inset 0 0 0 1px var(--kraft-line); }
 .partH { display: flex; align-items: center; gap: var(--space-2); font-weight: var(--fw-bold); }
-.ex { padding: 2px var(--space-2); border-radius: var(--r-pill); background: var(--kraft-field); font-size: var(--fs-badge); font-weight: var(--fw-btn); }
-.toHead { padding: var(--space-2) var(--space-4); background: var(--kraft-field); font-weight: var(--fw-bold); }
+.ex { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--kraft-field); font-size: var(--fs-badge); font-weight: var(--fw-btn); }
+.toHead { padding: var(--space-2) var(--space-4); background: var(--kraft); /* 시안처럼 진한 크라프트 띠 — 글자 8.1:1 */ font-weight: var(--fw-bold); }
 .to .rows { padding: var(--space-4); }
 
 .rows { display: grid; gap: var(--space-2); margin: var(--space-3) 0 0; font-size: var(--fs-small); }
@@ -34,7 +34,10 @@
 .barText { min-width: 0; font-weight: var(--fw-bold); overflow-wrap: anywhere; }
 .barLab::after { content: ":"; }
 .barCode { letter-spacing: 1px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.barActs { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.barActs { display: flex; flex-wrap: wrap; column-gap: var(--space-2); row-gap: 0; }
+/* 복사 버튼이 함께 그리는 알림 줄(role=status) — 버튼 아래 한 줄, 비어 있으면 자리를 차지하지 않는다(ui 리뷰 2026-11-17) */
+.barActs > p { flex-basis: 100%; margin: var(--space-2) 0 0; }
+.barActs > p:empty { margin: 0; }
 .ghost, .copy { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: var(--btn-h-sm); padding: 0 var(--space-4); border: 0; border-radius: var(--r-btn); font: inherit; font-size: var(--fs-small); font-weight: var(--fw-btn); white-space: nowrap; cursor: pointer; }
 .ghost::before, .copy::before { content: ""; position: absolute; inset: calc((var(--hit) - var(--btn-h-sm)) / -2) 0; } /* 누르는 칸 44(design-prompt 8-12) */
 .ghost { background: var(--white); color: var(--kraft-ink); box-shadow: inset 0 0 0 1px var(--kraft-ink); }
@@ -55,6 +58,7 @@
   .kraft { padding: var(--space-4); }
   .bar { flex-direction: column; align-items: stretch; }
   /* 휴대폰은 버튼 둘을 위아래로, 폭 전체 — 나란히 두면 「전체 주소 복사」가 칸에 꽉 찬다 */
-  .barActs { flex-direction: column; gap: var(--space-2); }
+  .barActs { flex-direction: column; }
+  .barActs .copy { margin-top: var(--space-2); }
   .barActs > *, .barActs .copy, .barActs .ghost { width: 100%; }
 }
