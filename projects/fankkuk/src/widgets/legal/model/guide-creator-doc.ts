@@ -124,7 +124,7 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
           {
             kind: "steps",
             items: [
-              "「계정 설정」에서 「주소 설정」 칸을 펼쳐 주세요.",
+              "배송지는 가입 4단계에서 등록합니다. 등록한 주소를 바꾸려면 「계정 설정」에서 「주소 설정」 칸을 펼쳐 주세요.",
               "‘주소 등록’을 눌러 주세요. 등록된 주소가 있다면 ‘주소 변경’을 눌러 주세요.",
               "주소를 등록하거나 바꿀 때마다 카카오톡 인증서로 서명합니다. 로그인만으로는 바꿀 수 없습니다.",
               "주소는 입력한 브라우저에서 암호화한 뒤 전송하고, 암호화된 상태로 보관합니다. 등록한 뒤에는 이 화면에서도 주소를 볼 수 없습니다.",
@@ -136,7 +136,7 @@ export function guideCreatorDoc(prices: PublicPriceTable): LegalDoc {
               PROMISE.address,
               PROMISE.addressFan,
               "주소를 바꾸면 아직 송장을 출력하지 않은 선물부터 새 주소로 보냅니다.",
-              "주소를 미리 등록하지 않았다면 첫 선물을 승인할 때 입력할 수 있습니다.",
+              "가입 중에 등록하지 못했다면 「지금 할 일」의 「배송지 등록」에서 등록할 수 있고, 첫 선물을 승인할 때도 입력할 수 있습니다.",
               NO_ADDRESS_ASK,
             ],
           },

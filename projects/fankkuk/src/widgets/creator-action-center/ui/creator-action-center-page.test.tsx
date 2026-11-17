@@ -416,3 +416,20 @@ describe("채널 만들기 줄 (signup INV-U21)", () => {
     expect(host.textContent).not.toContain("채널 만들기");
   });
 });
+
+describe("배송지 등록 줄 (signup INV-U22)", () => {
+  it("INV-U22 (S22b): 「계정 설정」 묶음 맨 위(읽기가 준 순서 그대로) — 「등록」이 주소 설정 칸으로 간다", () => {
+    render([{ kind: "address_register" }, { kind: "channel_create" }, { kind: "signature_link" }, BT_OPEN]);
+    const rows = [...host.querySelectorAll("[data-row]")];
+    expect(rows.slice(0, 3).map((r) => r.querySelector("[data-title]")?.textContent)).toEqual(["배송지 등록", "채널 만들기", "카카오톡 인증 알림 연결"]);
+    const go = [...rows[0]!.querySelectorAll("a")].find((a) => a.textContent === "등록");
+    expect(go?.getAttribute("href")).toBe("/creator/settings#address");
+    expect(host.querySelector("#ca-account")?.textContent).toBe("계정 설정 3건");
+    expect(host.querySelector("#ca-in")?.textContent).toBe("받은 선물 1건");
+  });
+
+  it("INV-U22 (실패경로): 주소가 있는 크리에이터(줄 없음)에게는 배송지 등록 줄이 보이지 않는다", () => {
+    render([{ kind: "signature_link" }]);
+    expect(host.textContent).not.toContain("배송지 등록");
+  });
+});

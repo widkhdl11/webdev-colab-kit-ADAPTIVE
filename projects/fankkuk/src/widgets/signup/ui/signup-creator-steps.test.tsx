@@ -23,11 +23,11 @@ afterEach(() => {
 });
 
 describe("kakao_done (signup INV-U19)", () => {
-  it("INV-U19 ①: 완료 상자 · 단계 줄 1~3 체크(3 이 지금 단계) · 「다음」 하나가 4단계로 — 「이전」 없음", () => {
+  it("INV-U19 ①·INV-U22: 완료 상자 · 단계 줄 다섯 칸 중 1~3 체크(3 이 지금 단계) · 「다음」 하나가 4단계로 — 「이전」 없음", () => {
     act(() => root.render(<SignupCreatorSteps view="kakao-done" />));
     expect(host.textContent).toContain("카카오톡 인증 알림 연결이 완료되었습니다.");
     const steps = [...host.querySelectorAll("nav li")];
-    expect(steps.map((li) => (li.querySelector("svg") ? "체크" : li.textContent?.slice(0, 1)))).toEqual(["체크", "체크", "체크", "4"]);
+    expect(steps.map((li) => (li.querySelector("svg") ? "체크" : li.textContent?.slice(0, 1)))).toEqual(["체크", "체크", "체크", "4", "5"]);
     expect(steps[2]?.querySelector("[aria-current=step]")).not.toBeNull();
     const actions = [...host.querySelectorAll(".card a, .card button")].map((a) => [a.textContent, a.getAttribute("href")]);
     expect(actions).toEqual([["다음", "/signup/creator"]]);
@@ -59,7 +59,7 @@ const PANEL_TITLE = "채널 소유자 확인";
 describe("channel_new / channel_made (signup INV-U21)", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("INV-U21 (channel_new): 채널이 없으면 제목 「채널 만들기」 · 닉네임 · 팬덤 이름 · 태그 · 「채널 만들기」 버튼 — 채널 소유자 확인은 그리지 않는다. 단계 줄 4는 「채널 만들기」", () => {
+  it("INV-U21 (channel_new): 채널이 없으면 제목 「채널 만들기」 · 닉네임 · 팬덤 이름 · 태그 · 「채널 만들기」 버튼 — 채널 소유자 확인은 그리지 않는다. 단계 줄 5는 「채널 만들기」", () => {
     act(() => root.render(<SignupCreatorSteps verification={verification(null)} channel={{ kind: "none", tagOptions: TAGS }} />));
     expect(host.querySelector(".card h2")?.textContent).toBe("채널 만들기");
     const labels = [...host.querySelectorAll(".card label")].map((l) => l.textContent?.trim());
@@ -125,5 +125,30 @@ describe("channel_new / channel_made (signup INV-U21)", () => {
     expect(nick.getAttribute("aria-invalid")).toBe("true");
     expect(host.querySelector("[role=alert]")?.textContent).toBe("이미 사용 중인 닉네임입니다.");
     expect(host.textContent).not.toContain(PANEL_TITLE);
+  });
+});
+
+// 4단계 배송지 등록 (signup INV-U22 · UX 명세 「2026-11-17 크리에이터 4단계 배송지 등록」)
+const CREATOR_ID = "11111111-2222-4333-8444-555555555555";
+const PEM = "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE\n-----END PUBLIC KEY-----";
+
+describe("address_new (signup INV-U22)", () => {
+  it("INV-U22 (S22): 주소가 없으면 4단계 「배송지 등록」 — 주소 입력 칸과 저장 버튼, 「다음」·「나중에 하기」·「이전」 없음, 단계 줄 다섯 칸", () => {
+    act(() => root.render(<SignupCreatorSteps view="address" creatorId={CREATOR_ID} sealingKeyPem={PEM} />));
+    expect(host.querySelector(".card h2")?.textContent).toBe("배송지 등록");
+    const steps = [...host.querySelectorAll("nav li")];
+    expect(steps.map((li) => li.textContent?.replace(/^\d/, ""))).toEqual(["유형 선택", "정보 입력", "카카오톡 연결", "배송지 등록", "채널 만들기"]);
+    expect(host.querySelector("nav [aria-current=step]")?.textContent).toContain("배송지 등록");
+    const texts = [...host.querySelectorAll(".card a, .card button")].map((b) => b.textContent ?? "");
+    expect(texts.some((t) => t.includes("카카오톡 서명"))).toBe(true);
+    for (const banned of ["다음", "나중에 하기", "이전", "취소"]) expect(texts).not.toContain(banned);
+    expect(host.querySelector("form")).not.toBeNull();
+  });
+
+  it("INV-U22 (실패경로): 봉인 공개키가 없으면 입력 칸 대신 안내와 「나중에 하기」(크리에이터 홈) — 막힌 화면에 갇히지 않는다", () => {
+    act(() => root.render(<SignupCreatorSteps view="address" creatorId={CREATOR_ID} sealingKeyPem={null} />));
+    expect(host.querySelector("form")).toBeNull();
+    const later = [...host.querySelectorAll(".card a")].find((a) => a.textContent === "나중에 하기");
+    expect(later?.getAttribute("href")).toBe("/creator");
   });
 });

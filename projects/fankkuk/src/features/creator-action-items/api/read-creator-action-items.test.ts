@@ -16,8 +16,11 @@ const ROW = {
 };
 const TWO_ROWS = [{ ...ROW, order_no: "RG-1" }, { ...ROW, order_no: "RG-2", share_id: "s2" }];
 
-/** profile: 본인 계정 칸(my_profile) — 기본은 채널을 만든 크리에이터(닉네임 있음) */
-function client(link: Reply, items: Reply = { data: TWO_ROWS, error: null }, profile: Reply = { data: [{ role: "creator", nickname: "별빛크리", login_id: "starlight" }], error: null }) {
+const ADDRESS_ON: Reply = { data: [{ creator_id: "11111111-2222-4333-8444-555555555555", registered: true, label: "home", updated_at: "2026-11-01T00:00:00Z" }], error: null };
+const ADDRESS_OFF: Reply = { data: [{ creator_id: "11111111-2222-4333-8444-555555555555", registered: false, label: null, updated_at: null }], error: null };
+
+/** profile: 본인 계정 칸(my_profile) — 기본은 채널을 만든 크리에이터(닉네임 있음) · address: 주소 상태 — 기본은 등록됨 */
+function client(link: Reply, items: Reply = { data: TWO_ROWS, error: null }, profile: Reply = { data: [{ role: "creator", nickname: "별빛크리", login_id: "starlight" }], error: null }, address: Reply = ADDRESS_ON) {
   const calls: string[] = [];
   return {
     calls,
@@ -26,6 +29,7 @@ function client(link: Reply, items: Reply = { data: TWO_ROWS, error: null }, pro
       if (fn === "my_creator_action_items") return items;
       if (fn === "my_signature_link") return link;
       if (fn === "my_profile") return profile;
+      if (fn === "my_creator_address_status") return address;
       throw new Error(fn);
     },
   };
@@ -36,7 +40,7 @@ describe("INV-U20·S16: 승인 서명 연결 줄", () => {
   it("INV-U20 (S20): 연결 전이면 [연결 줄, 원래 줄 둘 그대로] — 줄 수(숫자)에 들어가고 원래 줄의 순서는 바뀌지 않는다", async () => {
     const c = client({ data: [{ linked: false, linked_at: null }], error: null });
     expect(orderNos(await readCreatorActionItems(c as never))).toEqual(["signature_link", "RG-1", "RG-2"]);
-    expect(c.calls.sort()).toEqual(["my_creator_action_items", "my_profile", "my_signature_link"]);
+    expect(c.calls.sort()).toEqual(["my_creator_action_items", "my_creator_address_status", "my_profile", "my_signature_link"]);
   });
 
   it("INV-S16: 연결 뒤에는 원래 줄 둘 그대로 — 연결 줄이 없다", async () => {
@@ -87,5 +91,27 @@ describe("INV-U21: 채널 만들기 줄", () => {
   it("INV-U21: 채널 만들기 줄을 누르면 가입 4단계 화면(/signup/creator)으로 간다", () => {
     expect(creatorActionHref({ kind: "channel_create" })).toBe(CREATOR_CHANNEL_CREATE_PATH);
     expect(CREATOR_CHANNEL_CREATE_PATH).toBe("/signup/creator");
+  });
+});
+
+describe("INV-U22: 배송지 등록 줄", () => {
+  const LINKED: Reply = { data: [{ linked: true, linked_at: "2026-11-10T01:00:00Z" }], error: null };
+
+  it("INV-U22 (S22b): 주소 없는 크리에이터에게는 맨 위에 배송지 등록 줄 — 원래 줄 순서는 그대로", async () => {
+    const c = client(LINKED, undefined, undefined, ADDRESS_OFF);
+    expect(orderNos(await readCreatorActionItems(c as never))).toEqual(["address_register", "RG-1", "RG-2"]);
+  });
+
+  it("INV-U22 (S22b): 채널도 연결도 없으면 배송지 등록 · 채널 만들기 · 연결 순서(가입 4단계가 5단계보다 먼저)", async () => {
+    const c = client({ data: [{ linked: false, linked_at: null }], error: null }, undefined, { data: [{ role: "creator", nickname: null, login_id: "honeypot" }], error: null }, ADDRESS_OFF);
+    expect(orderNos(await readCreatorActionItems(c as never))).toEqual(["address_register", "channel_create", "signature_link", "RG-1", "RG-2"]);
+  });
+
+  it("INV-J6 (실패경로): 주소 상태를 못 읽거나 크리에이터 줄이 없으면 줄을 지어내지 않는다 — 목록 전체가 실패", async () => {
+    const failed = client(LINKED, undefined, undefined, { data: null, error: { code: "PGRST202" } });
+    await expect(readCreatorActionItems(failed as never)).rejects.toThrow();
+    expect(await readCreatorActionItemsOrNull(failed as never)).toBeNull();
+    const none = client(LINKED, undefined, undefined, { data: [], error: null });
+    await expect(readCreatorActionItems(none as never)).rejects.toThrow();
   });
 });

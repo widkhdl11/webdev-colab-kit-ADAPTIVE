@@ -22,7 +22,8 @@ export type AddressChangeFormProps = {
   /** 폼이 나타날 때 첫 칸에 포커스 — 누른 버튼이 사라지는 자리에서 쓴다 */
   autoFocusFirst?: boolean;
   onSaved: (label: AddressLabel) => void;
-  onCancel: () => void;
+  /** 없으면 취소 버튼을 그리지 않는다(가입 4단계 — 건너뛰기가 없는 단계, signup INV-U22) */
+  onCancel?: () => void;
   onLoginExpired: () => void;
   /** 승인 안내 뒷문장을 붙일지 — 반송 주소 확인 창에서는 승인과 관계가 없어 뺀다 */
   approvalHint?: boolean;

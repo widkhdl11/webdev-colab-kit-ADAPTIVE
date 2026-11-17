@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { parseCreatorActionItems, sentGiftTodoOf, splitBoards, withChannelCreateItem, withSignatureLinkItem, type CreatorActionItem } from "./creator-action-items";
+import { CREATOR_ADDRESS_REGISTER_PATH } from "@/shared/config/creator-paths";
+import { creatorActionHref, parseCreatorActionItems, sentGiftTodoOf, splitBoards, withAddressRegisterItem, withChannelCreateItem, withSignatureLinkItem, type CreatorActionItem } from "./creator-action-items";
 
 // 크리에이터 처리할 일 줄 꼴 (action-center INV-J5·J6·J7). DB 읽기 함수 한 번의 결과가 그대로 숫자·목록이 된다 —
 // 꼴이 다른 줄을 일부만 버리면 사이드바 숫자와 목록이 다른 수를 말하므로 하나라도 틀리면 전체를 거부한다.
@@ -242,5 +243,18 @@ describe("INV-U21: 채널 만들기 줄", () => {
   });
   it("INV-U21: 채널 만들기 줄은 받은 선물 판(계정 줄과 같은 판)에 들어간다", () => {
     expect(splitBoards([{ kind: "channel_create" }]).received.map((i) => i.kind)).toEqual(["channel_create"]);
+  });
+});
+
+describe("INV-U22: 배송지 등록 줄", () => {
+  it("INV-U22 (S22b): 주소가 없으면 한 줄, 있으면 그대로 — 순서는 배송지 등록 · 채널 만들기 · 카카오톡 인증 알림 연결(가입 순서)", () => {
+    const base = withSignatureLinkItem([], false);
+    expect(withAddressRegisterItem(withChannelCreateItem(base, false), false).map((i) => i.kind)).toEqual(["address_register", "channel_create", "signature_link"]);
+    expect(withAddressRegisterItem(base, true).map((i) => i.kind)).toEqual(["signature_link"]);
+  });
+  it("INV-U22: 배송지 등록 줄은 계정 줄과 같은 판에 들어가고, 누르면 주소 설정 칸으로 간다", () => {
+    expect(splitBoards([{ kind: "address_register" }]).received.map((i) => i.kind)).toEqual(["address_register"]);
+    expect(creatorActionHref({ kind: "address_register" })).toBe(CREATOR_ADDRESS_REGISTER_PATH);
+    expect(CREATOR_ADDRESS_REGISTER_PATH).toBe("/creator/settings#address");
   });
 });

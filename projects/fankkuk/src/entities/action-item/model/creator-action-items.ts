@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CREATOR_CHANNEL_CREATE_PATH, CREATOR_SIGNATURE_LINK_PATH } from "@/shared/config/creator-paths";
+import { CREATOR_ADDRESS_REGISTER_PATH, CREATOR_CHANNEL_CREATE_PATH, CREATOR_SIGNATURE_LINK_PATH } from "@/shared/config/creator-paths";
 import { seoulDaysUntil } from "@/shared/lib/format/datetime";
 import type { ActionItem } from "./action-items";
 
@@ -94,24 +94,41 @@ export type SignatureLinkItem = { kind: "signature_link" };
  */
 export type ChannelCreateItem = { kind: "channel_create" };
 
-/** 선물이 아닌 계정 줄 — 처리할 일 화면의 「계정 설정」 묶음 */
-export type AccountItem = ChannelCreateItem | SignatureLinkItem;
+/**
+ * 배송지 등록(signup INV-U22) — 주소가 없는 크리에이터에게 하나. 가입 4단계에서 나갔거나 그 단계가 생기기 전에 가입한 크리에이터.
+ * 주소를 등록하면 다음 읽기에서 없다.
+ */
+export type AddressRegisterItem = { kind: "address_register" };
 
-export type CreatorActionItem = ChannelCreateItem | SignatureLinkItem | TrackerItem | BluetoothItem | ApprovalItem | UnconfirmedItem | SentGiftItem | ReturnAddressItem;
+/** 선물이 아닌 계정 줄 — 처리할 일 화면의 「계정 설정」 묶음 */
+export type AccountItem = ChannelCreateItem | AddressRegisterItem | SignatureLinkItem;
+
+/** 계정 줄인지 — 주문과 상관없는 줄(키·묶음 나누기에 쓴다) */
+export function isAccountItem(item: CreatorActionItem): item is AccountItem {
+  return item.kind === "channel_create" || item.kind === "address_register" || item.kind === "signature_link";
+}
+
+export type CreatorActionItem = ChannelCreateItem | AddressRegisterItem | SignatureLinkItem | TrackerItem | BluetoothItem | ApprovalItem | UnconfirmedItem | SentGiftItem | ReturnAddressItem;
 
 /** 승인 서명 연결 여부로 줄 목록을 마저 채운다 — 연결 전이면 맨 앞에 연결 줄 하나(받은 선물 판의 맨 위). 줄 수가 곧 숫자다(INV-J6) */
 export function withSignatureLinkItem(items: readonly CreatorActionItem[], linked: boolean): CreatorActionItem[] {
   return linked ? [...items] : [{ kind: "signature_link" }, ...items];
 }
 
-/** 채널이 있는지로 줄 목록을 마저 채운다 — 채널이 없으면 맨 앞에 채널 만들기 줄 하나(승인 서명 연결 줄보다 위). 줄 수가 곧 숫자다(INV-J6) */
+/** 채널이 있는지로 줄 목록을 마저 채운다 — 채널이 없으면 맨 앞에 채널 만들기 줄 하나(승인 서명 연결 줄보다 위, 배송지 등록 줄보다 아래). 줄 수가 곧 숫자다(INV-J6) */
 export function withChannelCreateItem(items: readonly CreatorActionItem[], hasChannel: boolean): CreatorActionItem[] {
   return hasChannel ? [...items] : [{ kind: "channel_create" }, ...items];
 }
 
-/** 줄을 누르면 갈 곳 — 채널 만들기 줄은 가입 4단계, 승인 서명 연결 줄은 연결 화면, 나머지는 처리할 일 화면 */
+/** 주소 등록 여부로 줄 목록을 마저 채운다 — 주소가 없으면 맨 앞에 배송지 등록 줄 하나(채널 만들기 줄보다도 위 — 가입 4단계가 5단계보다 먼저, signup INV-U22). 줄 수가 곧 숫자다(INV-J6) */
+export function withAddressRegisterItem(items: readonly CreatorActionItem[], registered: boolean): CreatorActionItem[] {
+  return registered ? [...items] : [{ kind: "address_register" }, ...items];
+}
+
+/** 줄을 누르면 갈 곳 — 채널 만들기 줄은 가입 단계 화면, 배송지 등록 줄은 설정의 주소 칸, 승인 서명 연결 줄은 연결 화면, 나머지는 처리할 일 화면 */
 export function creatorActionHref(item: CreatorActionItem): string {
   if (item.kind === "channel_create") return CREATOR_CHANNEL_CREATE_PATH;
+  if (item.kind === "address_register") return CREATOR_ADDRESS_REGISTER_PATH;
   return item.kind === "signature_link" ? CREATOR_SIGNATURE_LINK_HREF : CREATOR_ACTION_CENTER_HREF;
 }
 
@@ -240,7 +257,7 @@ export function parseCreatorActionItems(data: unknown): CreatorActionItem[] {
     });
 }
 
-/** 받은 선물 판(채널 만들기 · 승인 서명 연결 · 추적 장치 발견 · 블루투스 발견 · 승인 요청)과 보낸 선물 판(미확인 상자 · 보낸 팬 선물 · 반송 주소) — 읽기가 정한 순서 그대로 나눈다(INV-J5) */
+/** 받은 선물 판(배송지 등록 · 채널 만들기 · 승인 서명 연결 · 추적 장치 발견 · 블루투스 발견 · 승인 요청)과 보낸 선물 판(미확인 상자 · 보낸 팬 선물 · 반송 주소) — 읽기가 정한 순서 그대로 나눈다(INV-J5) */
 export function splitBoards(items: readonly CreatorActionItem[]): {
   received: (AccountItem | TrackerItem | BluetoothItem | ApprovalItem)[];
   sent: (UnconfirmedItem | SentGiftItem | ReturnAddressItem)[];
@@ -248,7 +265,7 @@ export function splitBoards(items: readonly CreatorActionItem[]): {
   const received: (AccountItem | TrackerItem | BluetoothItem | ApprovalItem)[] = [];
   const sent: (UnconfirmedItem | SentGiftItem | ReturnAddressItem)[] = [];
   for (const it of items) {
-    if (it.kind === "channel_create" || it.kind === "signature_link" || it.kind === "tracker" || it.kind === "bluetooth" || it.kind === "approval") received.push(it);
+    if (isAccountItem(it) || it.kind === "tracker" || it.kind === "bluetooth" || it.kind === "approval") received.push(it);
     else sent.push(it);
   }
   return { received, sent };

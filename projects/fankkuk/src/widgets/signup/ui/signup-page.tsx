@@ -32,22 +32,22 @@ import { SignupKakaoStep, type KakaoSignupOutcome } from "./signup-kakao-step";
 import s from "./signup.module.css";
 
 // 회원가입 단계 화면. 시안: docs/design/mockups/site/v43-signup/signup-1-role·2-info·3-phone (UX 명세 signup.md 「2026-10-29 단계 화면」) · 스펙: docs/specs/signup.md
-// 팬은 세 단계(유형 선택 → 정보 입력 → 휴대폰 확인), 크리에이터는 네 단계(유형 선택 → 정보 입력 → 카카오톡 연결 → 채널 만들기, 2026-11-11)다. 한 번에 지금 단계의 카드 한 장만 보인다.
+// 팬은 세 단계(유형 선택 → 정보 입력 → 휴대폰 확인), 크리에이터는 다섯 단계(유형 선택 → 정보 입력 → 카카오톡 연결 → 배송지 등록 → 채널 만들기, 2026-11-17 signup INV-U22)다. 한 번에 지금 단계의 카드 한 장만 보인다.
 // 팬 3단계: 「인증번호 받기」 → 문자로 받은 6자리 입력 → 「확인」 → 「가입 완료」. 계정은 여기서 만들어진다.
 // 크리에이터 3단계: 카카오 서명 한 번으로 휴대폰 확인과 승인 서명 연결(signup INV-U19, 시안 creator-signup-kakao-20261110 — SignupKakaoStep).
 //   서버가 카카오 서명 창구의 장애를 확인했을 때만(INV-U20) 같은 3단계가 6자리 화면으로 바뀐다(위 장애 안내 상자 + 지금 번호 칸 미리 채움, 「다음」).
 // 브라우저는 번호표(쿠키)와 입력한 6자리만 다룬다 — 맞혔는지는 서버가 판정한다(INV-U1·U15). 남은 시간 표시는 화면 편의일 뿐 만료 판정은 DB 가 한다.
 // 입력칸에 name 을 두지 않는다 — 폼 기본 제출이 일어나도 값이 주소창에 실리지 않게.
 // 2단계 칸은 입력하거나 칸을 떠난 뒤부터 바로 아래에 안내를 띄운다(맞으면 짧은 확인, 틀리면 무엇이 틀렸는지 — 판정은 checkField).
-// 크리에이터는 2단계에서 닉네임·팬덤 이름·태그를 받지 않는다 — 4단계 채널 만들기에서 받는다(signup INV-U21, UX 명세 「2026-11-11 크리에이터 4단계 채널 만들기」).
+// 크리에이터는 2단계에서 닉네임·팬덤 이름·태그를 받지 않는다 — 5단계 채널 만들기에서 받는다(signup INV-U21, UX 명세 「2026-11-11 크리에이터 4단계 채널 만들기」).
 // 아이디·닉네임은 형식이 맞으면 입력을 멈춘 뒤 0.4초에 서버에 미리 묻는다(INV-U14) — 문구는 name-availability.ts.
 // 입력이 바뀌면 이전 답은 버린다. 최종 판정은 가입 때 서버가 한다(INV-U13).
 // 줄바꿈(29절): 칸 안내는 문장마다 줄(<Sentences>), 붙여 쓰는 말은  , 가운뎃점 덩어리는 ⁠ 으로 붙인다.
 
 const FORM_STEPS = ["유형 선택", "정보 입력", "휴대폰 확인"] as const;
-// 크리에이터 단계 이름 — 3단계는 「카카오톡 연결」(장애 대비 길에서도 같다). 4단계는 계정을 만든 뒤라 로그인한 화면(/signup/creator, widgets/signup/ui/signup-creator-steps)이 맡는다
+// 크리에이터 단계 이름 — 3단계는 「카카오톡 연결」(장애 대비 길에서도 같다). 4·5단계는 계정을 만든 뒤라 로그인한 화면(/signup/creator, widgets/signup/ui/signup-creator-steps)이 맡는다
 const CREATOR_FORM_STEPS = ["유형 선택", "정보 입력", "카카오톡 연결"] as const;
-const CREATOR_STEPS = ["채널 만들기"] as const;
+const CREATOR_STEPS = ["배송지 등록", "채널 만들기"] as const;
 const CREATOR_STEP_PATH = "/signup/creator";
 /** 장애 대비 길 안내(UX 명세 2026-11-10 kakao_down) — 두 번째 문장은 선물을 받으려면 남은 일이 있다는 결과라 뺄 수 없다 */
 const KAKAO_DOWN_TEXT = "카카오톡 인증을 지금 사용할 수 없습니다. 인증번호로 가입해 주세요. 카카오톡 인증 알림 연결은 가입 후 크리에이터 홈에서 할 수 있습니다.";
@@ -360,7 +360,7 @@ export function SignupPage({ sealingKeyPem = null }: { sealingKeyPem?: string | 
       heardFrom,
     });
     if (r.ok) {
-      // 팬: 「/」 가 역할별 첫 화면으로 나눈다. 크리에이터(장애 대비 길): 4단계(채널 만들기)로
+      // 팬: 「/」 가 역할별 첫 화면으로 나눈다. 크리에이터(장애 대비 길): 가입 단계 화면(주소가 없으면 4단계 배송지 등록)으로
       if (role === "creator" && r.loggedIn) {
         router.push(CREATOR_STEP_PATH);
       } else {

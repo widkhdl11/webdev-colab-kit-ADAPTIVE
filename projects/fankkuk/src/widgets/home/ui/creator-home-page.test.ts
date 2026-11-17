@@ -16,3 +16,10 @@ describe("INV-U20: 홈 지금 할 일 — 승인 서명 연결 줄", () => {
     expect(rows).toHaveLength(1);
   });
 });
+
+describe("INV-U22: 홈 지금 할 일 — 배송지 등록 줄", () => {
+  it("INV-U22 (S22b): 「배송지 등록」 · 등록 전 뱃지 · 주소 설정 칸으로", () => {
+    const [row] = creatorActionRows([{ kind: "address_register" }]);
+    expect(row).toMatchObject({ title: "배송지 등록", description: "선물을 받으려면 주소가 필요합니다", status: "등록 전", href: "/creator/settings#address" });
+  });
+});

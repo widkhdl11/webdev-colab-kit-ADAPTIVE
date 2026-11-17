@@ -10,6 +10,7 @@ import {
   creatorActionHref,
   type AccountItem,
   daysLeftOf,
+  isAccountItem,
   splitBoards,
   type ApprovalItem,
   type BluetoothItem,
@@ -94,7 +95,7 @@ type Open =
   | { kind: "missing_box"; item: Extract<SentGiftItem, { kind: "missing_box" }> }
   | null;
 
-const keyOf = (it: CreatorActionItem) => (it.kind === "signature_link" || it.kind === "channel_create" ? it.kind : `${it.kind}:${it.orderNo}:${"boxSeq" in it ? it.boxSeq : "-"}`);
+const keyOf = (it: CreatorActionItem) => (isAccountItem(it) ? it.kind : `${it.kind}:${it.orderNo}:${"boxSeq" in it ? it.boxSeq : "-"}`);
 
 /** 처음 열 창 — 알림톡 링크의 주문번호가 이 크리에이터의 승인 요청 줄일 때만(notifications INV-N9) */
 function initialOpen(items: readonly CreatorActionItem[], orderNo: string | null | undefined): Open {
@@ -108,8 +109,8 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
   const close = () => setOpen(null);
   const { received, sent } = splitBoards(items);
 
-  // 채널 만들기 줄(signup INV-U21)·승인 서명 연결 줄(signup INV-U20)은 선물이 아니다 — 「받은 선물」 묶음 밖 맨 위 「계정 설정」 묶음에 두고 그 묶음 숫자에만 센다(전체·사이드바 숫자에는 들어간다)
-  const account = received.filter((it): it is AccountItem => it.kind === "channel_create" || it.kind === "signature_link");
+  // 채널 만들기 줄(signup INV-U21)·배송지 등록 줄(INV-U22)·승인 서명 연결 줄(signup INV-U20)은 선물이 아니다 — 「받은 선물」 묶음 밖 맨 위 「계정 설정」 묶음에 두고 그 묶음 숫자에만 센다(전체·사이드바 숫자에는 들어간다)
+  const account = received.filter(isAccountItem);
   const checks = received.filter((it): it is TrackerItem | BluetoothItem => it.kind === "tracker" || it.kind === "bluetooth");
   const approvals = received.filter((it): it is ApprovalItem => it.kind === "approval");
   // 첫 승인 요청 하나만 하늘 판(design-rules 23-3 A안), 나머지는 카드. 순서는 읽기가 준다(INV-J5 — 결제 뒤 24시간 안인 새 요청을 최근 순으로 먼저, 나머지는 오래된 순, 2026-10-30)
@@ -125,6 +126,20 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
           action={
             <Link className="btn btn--sm btn--line" href={creatorActionHref(it)}>
               만들기
+            </Link>
+          }
+        />
+      );
+    }
+    if (it.kind === "address_register") {
+      return (
+        <Row
+          key={keyOf(it)}
+          title="배송지 등록"
+          meta="등록 전 · 선물을 받으려면 주소가 필요합니다"
+          action={
+            <Link className="btn btn--sm btn--line" href={creatorActionHref(it)}>
+              등록
             </Link>
           }
         />

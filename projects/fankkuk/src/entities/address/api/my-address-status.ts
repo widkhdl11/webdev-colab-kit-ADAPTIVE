@@ -24,3 +24,10 @@ export async function readMyAddressStatus(client: Pick<SupabaseClient, "rpc">): 
   const row = z.array(rowSchema).max(1).parse(data)[0];
   return row ? { creatorId: row.creator_id, registered: row.registered, label: row.label ?? null, updatedAt: row.updated_at ?? null } : null;
 }
+
+/** 주소를 등록했는지(signup INV-U22 「배송지 등록」 줄). 읽지 못하거나 크리에이터 줄이 없으면 던진다 — 줄을 지어내지도 빼지도 않게(action-center INV-J6) */
+export async function readMyAddressRegisteredOrThrow(client: Pick<SupabaseClient, "rpc">): Promise<boolean> {
+  const status = await readMyAddressStatus(client);
+  if (!status) throw new Error("주소 상태에 크리에이터 줄이 없다");
+  return status.registered;
+}
