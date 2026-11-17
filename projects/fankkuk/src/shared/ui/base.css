@@ -129,7 +129,7 @@ h3 { font-size: var(--fs-body); }
 .hero .t-lead { margin-bottom: 16px; }
 .hero-line { margin-top: 24px; font-size: var(--fs-card); line-height: 1.4; font-weight: var(--fw-bold); color: var(--brand-ink); }
 .hero-desc { max-width: 640px; margin: 24px auto 0; }
-.search { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 640px; height: var(--search-h); margin: clamp(32px, 4vw, 48px) auto 0; padding: 0 8px 0 24px; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--field); }
+.search { /* token-exempt: 운영자 화면 값(검색창 60) — 운영자 밖은 아래 :where(:not(.admin-area *)) 규칙이 --search-h 로 덮는다 */ display: flex; align-items: center; gap: 12px; width: 100%; max-width: 640px; height: 60px; margin: clamp(32px, 4vw, 48px) auto 0; padding: 0 8px 0 24px; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--field); }
 .search:focus-within { box-shadow: 0 0 0 3px var(--ink); }
 .search input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; font-size: var(--fs-lead); color: var(--ink); }
 .search input::placeholder { color: var(--faint); opacity: 1; }

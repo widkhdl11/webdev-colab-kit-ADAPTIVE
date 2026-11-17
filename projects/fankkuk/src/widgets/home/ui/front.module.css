@@ -74,7 +74,7 @@
 /* 머리말 → 제목 8 (v23 감사표 1절). 머리말은 16/600 짙은 회색 */
 .heroText > :global(.t-lead) { margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; color: var(--gray-900); }
 .heroText > :global(.t-lead) + :global(.t-hero) { margin-top: var(--space-2); }
-/* 첫 화면 버튼 높이 48 — 바로 위 검색창(56)과 어울리게 */
+/* 첫 화면 버튼 높이 — 공용 버튼 높이(--btn-h, design-rules 19절) */
 .hero :global(.hero-actions .btn) { min-height: var(--btn-h); height: var(--btn-h); }
 .tiles { display: grid; grid-template-columns: repeat(var(--cols-4), minmax(0, 1fr)); gap: var(--space-6); margin: var(--space-16) 0 0; }
 .tile:global(.card) { background: var(--glass); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
