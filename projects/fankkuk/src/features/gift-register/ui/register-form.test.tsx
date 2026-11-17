@@ -1,3 +1,4 @@
+import { openEnvelope, type Envelope } from "@/shared/lib/envelope/envelope";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -78,6 +79,8 @@ async function toStep2(category: string) {
   await click(radio(category));
   await click(radio("no"));
 }
+
+const fromB64 = (b: string) => Uint8Array.from(atob(b), (c) => c.charCodeAt(0));
 
 describe("INV-H8: 「등록 막기」 품목이면 2단계에서 넘어가지 않는다", () => {
   it("INV-H8 S8b (실패경로): 막기 + 꽃이면 「다음」을 눌러도 2단계에 머물고, 포커스는 안내 줄로 간다", async () => {
@@ -401,6 +404,7 @@ describe("결제 전 동의 — 이용약관·개인정보처리방침·취소·
 describe("payment INV-M25: 결제 단계의 반송 주소 칸(팬)", () => {
   const ACCOUNT = "00000000-0000-4000-a000-000000000001";
   let pem = "";
+  let privateKey: CryptoKey | null = null;
 
   async function renderFan() {
     if (!pem) {
@@ -409,12 +413,13 @@ describe("payment INV-M25: 결제 단계의 반송 주소 칸(팬)", () => {
         true,
         ["encrypt", "decrypt"],
       );
+      privateKey = pair.privateKey;
       const spki = new Uint8Array(await crypto.subtle.exportKey("spki", pair.publicKey));
       pem = `-----BEGIN PUBLIC KEY-----\n${btoa(String.fromCharCode(...spki))}\n-----END PUBLIC KEY-----`;
     }
     act(() =>
       root.render(
-        <RegisterForm creators={creators("block")} prices={prices} initialCreatorId={MOMO} onRegistered={() => {}} today={today} returnAddress={{ accountId: ACCOUNT, sealingKeyPem: pem }} />,
+        <RegisterForm creators={creators("block")} prices={prices} initialCreatorId={MOMO} onRegistered={() => {}} today={today} returnAddress={{ accountId: ACCOUNT, sealingKeyPem: pem, recipientName: "별빛닉" }} />,
       ),
     );
     await settle();
@@ -438,7 +443,6 @@ describe("payment INV-M25: 결제 단계의 반송 주소 칸(팬)", () => {
     type("ra-zipCode", "63100");
     type("ra-address1", "제주특별자치도 제주시 첨단로 242");
     type("ra-address2", "101호");
-    type("ra-recipientName", "김별빛");
     type("ra-phone", "010-1234-5678");
     await click(button("입력 완료"));
     // 봉인(Web Crypto)이 끝날 때까지
@@ -456,7 +460,19 @@ describe("payment INV-M25: 결제 단계의 반송 주소 칸(팬)", () => {
     const sent = JSON.parse(raw) as { returnAddress?: Record<string, unknown>; returnRegion?: string };
     expect(Object.keys(sent.returnAddress ?? {}).sort()).toEqual(["alg", "ciphertext", "iv", "v", "wrappedKey"]);
     expect(sent.returnRegion).toBe("jeju");
-    for (const plain of ["63100", "첨단로", "101호", "김별빛", "01012345678", "010-1234-5678"]) expect(raw).not.toContain(plain);
+    for (const plain of ["63100", "첨단로", "101호", "별빛닉", "01012345678", "010-1234-5678"]) expect(raw).not.toContain(plain);
+  });
+
+  it("INV-M25 (2026-11-17 「2번 — 일의 간소화」): 반송 주소에는 이름 칸이 없고, 봉인 속 받는 분 이름은 팬 닉네임이다", async () => {
+    await renderFan();
+    expect(host.querySelector("#ra-recipientName")).toBeNull();
+    expect(host.querySelector("#ra-phone")).not.toBeNull();
+    await fillAddress();
+    await agreeAndPay();
+    const sent = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as { returnAddress: Envelope };
+    const dek = new Uint8Array(await crypto.subtle.decrypt({ name: "RSA-OAEP" }, privateKey!, fromB64(sent.returnAddress.wrappedKey)));
+    const plain = JSON.parse(await openEnvelope(sent.returnAddress, dek)) as { recipientName?: string };
+    expect(plain.recipientName).toBe("별빛닉");
   });
 
   it("INV-M25 S25b (실패경로): 반송 주소를 입력하지 않고 결제하기를 누르면 보내지 않고 안내가 보인다", async () => {
@@ -471,9 +487,8 @@ describe("payment INV-M25: 결제 단계의 반송 주소 칸(팬)", () => {
     await renderFan();
     type("ra-zipCode", "63100");
     type("ra-address1", "제주특별자치도 제주시 첨단로 242");
-    type("ra-recipientName", "김별빛");
     type("ra-phone", "01012345678");
-    const name = host.querySelector<HTMLInputElement>("#ra-recipientName")!;
+    const name = host.querySelector<HTMLInputElement>("#ra-phone")!;
     const enter = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
     await act(async () => name.dispatchEvent(enter));
     for (let i = 0; i < 20 && !host.textContent?.includes("반송 주소를 입력했습니다."); i += 1) await settle();

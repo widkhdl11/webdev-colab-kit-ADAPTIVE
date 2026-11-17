@@ -12,7 +12,8 @@ import { ADDRESS_KEY_MISSING_TEXT } from "@/shared/ui/sealed-address-form";
 // 확인이 끝나면 같은 상세를 ?address=confirmed 로 다시 읽는다 — 상세 맨 위에 「돌려받을 주소를 확인했어요.」(2026-10-22 d113 진단 C-3, features/return-address ReturnConfirmedNotice).
 
 /** 팬의 주소 입력에 필요한 것 — 라우트가 넘긴다. 봉인 공개키가 없으면 sealingKeyPem null */
-export type FanReturnAddress = { accountId: string; sealingKeyPem: string | null };
+/** recipientName: 반송 송장의 받는 분 — 팬 닉네임으로 자동(이름 칸 없음, 2026-11-17) */
+export type FanReturnAddress = { accountId: string; sealingKeyPem: string | null; recipientName: string };
 
 /** focusAfterIds: 확인이 끝나 칸이 사라지면 포커스를 옮길, 새로 읽어도 남는 요소(tabIndex -1)의 id 후보 — 앞에서부터 그려져 있는 첫 요소로 */
 export function ReturnAddressButton({ target, meta, address, focusAfterIds = [] }: { target: ReturnTarget; meta: string; address: FanReturnAddress; focusAfterIds?: readonly string[] }) {
@@ -20,7 +21,7 @@ export function ReturnAddressButton({ target, meta, address, focusAfterIds = [] 
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
-  const { accountId, sealingKeyPem } = address;
+  const { accountId, sealingKeyPem, recipientName } = address;
   // 확인이 끝나면 창이 닫힌 뒤에 포커스를 옮긴다. 창이 열린 동안은 바깥이 비활성이라 focus() 가 먹지 않고,
   // 창은 닫힐 때 포커스를 「확인하기」로 돌려놓는데 그 버튼은 새로 읽으면 사라진다 — 이 effect 는 창의 정리보다 늦게 돈다(ui 재리뷰 2026-10-22)
   useEffect(() => {
@@ -52,6 +53,7 @@ export function ReturnAddressButton({ target, meta, address, focusAfterIds = [] 
                 <FanAddressFields
                   idPrefix="ret"
                   accountId={accountId}
+                  recipientName={recipientName}
                   sealingKeyPem={sealingKeyPem}
                   send={(envelope) => p.send(envelope)}
                   onSaved={p.onDone}

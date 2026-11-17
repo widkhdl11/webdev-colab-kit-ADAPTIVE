@@ -127,6 +127,8 @@ export type SealedAddressFormProps<L extends string, C> = (
   /** group: 바깥 폼 안에 넣는다(form 대신 묶음, 버튼·Enter 가 바깥 폼을 제출하지 않는다). groupLabel 이 묶음의 이름이다 */
   mode?: "form" | "group";
   groupLabel?: string;
+  /** 받는 분 이름을 칸으로 받지 않고 이 값으로 봉인한다(useSealedAddressEntry 와 같다) */
+  fixedRecipientName?: string;
 };
 
 /** 칸 묶음 — place 받을 곳(우편번호·기본·상세 주소) · person 받는 분(이름·휴대폰 번호). 단계형 창이 묶음마다 한 단계로 나눈다 */
@@ -152,12 +154,15 @@ export function useSealedAddressEntry<C>({
   toPlaintext,
   classify,
   autoFocusFirst = false,
+  fixedRecipientName,
 }: {
   idPrefix: string;
   sealingKeyPem: string;
   toPlaintext: (fields: AddressFieldValues) => string;
   classify: (zipCode: string) => C | null;
   autoFocusFirst?: boolean;
+  /** 받는 분 이름을 칸으로 받지 않고 이 값으로 봉인한다 — 있으면 이름 칸을 그리지 않는다 */
+  fixedRecipientName?: string;
 }) {
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState<AddressFieldName[]>([]);
@@ -240,6 +245,7 @@ export function useSealedAddressEntry<C>({
 
   const normalized = (): AddressFieldValues => ({
     ...values,
+    recipientName: fixedRecipientName ?? values.recipientName,
     zipCode: values.zipCode.trim(),
     phone: values.phone.replace(/[^0-9]/g, ""),
   });
@@ -386,7 +392,17 @@ export function useSealedAddressEntry<C>({
     </>
   );
 
-  const personFields = (
+  const phoneField = field("phone", "휴대폰 번호", {
+    type: "tel",
+    inputMode: "tel",
+    autoComplete: "tel",
+    placeholder: "010-0000-0000",
+    onChange: onPhoneChange,
+    required: true,
+  });
+  const personFields = fixedRecipientName !== undefined ? (
+    <div className={s.one}>{phoneField}</div>
+  ) : (
     <div className={s.two}>
       {field("recipientName", "받는 사람 이름", {
         type: "text",
@@ -395,19 +411,12 @@ export function useSealedAddressEntry<C>({
         placeholder: "송장에 표시할 이름",
         required: true,
       })}
-      {field("phone", "휴대폰 번호", {
-        type: "tel",
-        inputMode: "tel",
-        autoComplete: "tel",
-        placeholder: "010-0000-0000",
-        onChange: onPhoneChange,
-        required: true,
-      })}
+      {phoneField}
     </div>
   );
 
   const focusFirst = (group: AddressFieldGroup) =>
-    fieldRefs.current[GROUP_FIELDS[group][0]]?.focus();
+    fieldRefs.current[GROUP_FIELDS[group].find((f) => f !== "recipientName" || fixedRecipientName === undefined) ?? "phone"]?.focus();
 
   return { values, placeFields, personFields, check, seal, clear, focusFirst };
 }
@@ -428,6 +437,7 @@ export function SealedAddressForm<L extends string, C>(
     onLoginExpired,
     mode = "form",
     groupLabel,
+    fixedRecipientName,
   } = props;
   const entry = useSealedAddressEntry({
     idPrefix,
@@ -435,6 +445,7 @@ export function SealedAddressForm<L extends string, C>(
     toPlaintext,
     classify,
     autoFocusFirst,
+    fixedRecipientName,
   });
   const [label, setLabel] = useState<L | null>(props.initialLabel ?? null);
   const [labelMissing, setLabelMissing] = useState(false);

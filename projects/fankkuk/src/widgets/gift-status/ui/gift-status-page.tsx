@@ -91,6 +91,7 @@ export function GiftStatusPage({
   todoBoxIds = [],
   dueKrw = 0,
   paid = false,
+  senderName,
 }: {
   view: FanGiftView;
   /** 화면을 그리는 서버의 지금 시각 — 승인 기한이 지났는데 자동 처리 전인 주문을 「기한 지남」으로 보이는 데 쓴다(INV-S6 S6c). 라우트가 넘긴다, 없으면 기한을 보지 않는다 */
@@ -115,6 +116,8 @@ export function GiftStatusPage({
   dueKrw?: number;
   /** 결제를 마치고 돌아온 직후(`?paid=1`) — 상태 판 위 안내 줄(UX 시범 B-1). 라우트가 주소의 물음표 값으로 넘긴다 */
   paid?: boolean;
+  /** 크라프트 「택배 접수 작성 예시」 보내는 분 이름에 넣을 내 닉네임(2026-11-17) — 없으면 「팬꾹 닉네임」 자리 표시만 */
+  senderName?: string;
 }) {
   // 기한이 지났는데 자동 처리 전인 승인 전 주문은 자동 반려와 같게(INV-S6 S6c) — 아래 판정은 모두 이 view 로
   const deadlineView = now ? withApprovalDeadline(readView, now) : readView;
@@ -318,7 +321,7 @@ export function GiftStatusPage({
                         </p>
                       ) : null}
                       {officeAddress && addressCode ? (
-                        <BoxAddressCode officeAddress={officeAddress} code={addressCode} boxName={boxName} />
+                        <BoxAddressCode officeAddress={officeAddress} code={addressCode} boxName={boxName} senderName={senderName} />
                       ) : null}
                       {isWaybillEditable(b.state) && inProgress && !b.sendAckNeeded ? (
                         // 송장번호 입력은 접어 둔다(시안 v35 .fold) — 배송 조회를 보고 싶을 때만 넣는 선택 칸(INV-C7).

@@ -4,6 +4,8 @@
 .label-opts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 /* 받는 사람 이름 + 휴대폰 번호 — 769 이상은 한 줄에 이름 240 · 휴대폰 200(design-prompt 8-2 「입력칸 폭은 값의 길이에 맞춘다」, 2026-11-14) */
 .two { display: grid; grid-template-columns: minmax(0, 240px) minmax(0, 200px); gap: 16px; }
+/* 이름을 받지 않는 폼(반송 주소 — 닉네임 자동) — 휴대폰 번호 한 칸, 폭은 값 길이(design-prompt 8-2) */
+.one { display: grid; grid-template-columns: minmax(0, 200px); }
 .error { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; color: var(--ink); font-weight: var(--fw-bold); }
 .error::before { content: "!" / ""; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: var(--fs-body); font-weight: var(--fw-bold); line-height: 1; }
 .sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }

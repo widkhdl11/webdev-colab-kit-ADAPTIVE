@@ -34,7 +34,8 @@ import { ADDRESS_KEY_MISSING_TEXT } from "@/shared/ui/sealed-address-form";
 import f from "./register-form.module.css";
 
 /** payment INV-M25: 결제 화면의 반송 주소 칸 — 팬이 보낼 때만 넘긴다(크리에이터는 등록 주소로 반송, address-protection INV-P13). 봉인 공개키가 없으면 sealingKeyPem null */
-export type ReturnAddressInput = { accountId: string; sealingKeyPem: string | null };
+/** recipientName: 반송 송장의 받는 분 — 팬 닉네임으로 자동(이름 칸 없음, 2026-11-17) */
+export type ReturnAddressInput = { accountId: string; sealingKeyPem: string | null; recipientName: string };
 
 const RETURN_ADDRESS_MISSING = "반송 주소를 입력해 주세요.";
 
@@ -981,6 +982,7 @@ tierCountText(summary.counts) || "없음";
                   mode="group"
                   groupLabel="반송 주소"
                   accountId={returnAddress.accountId}
+                  recipientName={returnAddress.recipientName}
                   sealingKeyPem={returnAddress.sealingKeyPem}
                   send={async (envelope, region) => {
                     setSealedReturn({ envelope, region });

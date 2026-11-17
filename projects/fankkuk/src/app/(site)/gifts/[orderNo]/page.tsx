@@ -1,3 +1,4 @@
+import { viewerOwnName } from "@/entities/session/model/viewer";
 import { notFound, redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { readActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
@@ -104,6 +105,7 @@ async function giftDetail({ supabase, viewer }: Session, orderNo: string, differ
       <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts", actions.header)} />
       <GiftStatusPage
         view={view}
+        senderName={viewerOwnName(viewer)}
         // 승인 기한이 지났는데 자동 처리 전인 주문을 「기한 지남」으로(approval-signature INV-S6 S6c)
         now={new Date().toISOString()}
         deliverySource={deliverySource}
@@ -124,7 +126,7 @@ async function giftDetail({ supabase, viewer }: Session, orderNo: string, differ
               items={todoItems}
               clientKey={clientKey}
               now={new Date().toISOString()}
-              address={{ accountId: viewer.userId, sealingKeyPem: readSealingPublicKeyPem(process.env) }}
+              address={{ accountId: viewer.userId, sealingKeyPem: readSealingPublicKeyPem(process.env), recipientName: viewerOwnName(viewer) }}
             />
           ) : null
         }
@@ -155,7 +157,7 @@ async function unpaidDetail({ supabase, viewer }: Session, orderNo: string, gift
           orderNo={orderNo}
           clientKey={process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? ""}
           now={new Date().toISOString()}
-          address={{ accountId: viewer.userId, sealingKeyPem: readSealingPublicKeyPem(process.env) }}
+          address={{ accountId: viewer.userId, sealingKeyPem: readSealingPublicKeyPem(process.env), recipientName: viewerOwnName(viewer) }}
         />
       </MyShell>
       <SiteFooter />

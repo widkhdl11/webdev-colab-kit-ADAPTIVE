@@ -22,6 +22,8 @@ type Props = {
   code: string;
   /** 화면 낭독기용 상자 이름(예: 상자 1) */
   boxName: string;
+  /** 보내는 분 이름 예시에 넣을 내 닉네임 — 시안처럼 「별빛 (팬꾹 닉네임)」. 없으면 「팬꾹 닉네임」 */
+  senderName?: string;
 };
 
 const MASK = "••••••";
@@ -36,7 +38,7 @@ export function splitOfficeAddress(officeAddress: string): { base: string; detai
   return { base: officeAddress.slice(0, i).trim(), detail: officeAddress.slice(i + 1).trim() };
 }
 
-export function BoxAddressCode({ officeAddress, code, boxName }: Props) {
+export function BoxAddressCode({ officeAddress, code, boxName, senderName }: Props) {
   const id = useId();
   const [shown, setShown] = useState(false);
   const full = receivingAddressText(officeAddress, code);
@@ -63,7 +65,7 @@ export function BoxAddressCode({ officeAddress, code, boxName }: Props) {
             <dl className={s.rows}>
               <div>
                 <dt>이름</dt>
-                <dd>팬꾹 닉네임</dd>
+                <dd>{senderName ? `${senderName} (팬꾹 닉네임)` : "팬꾹 닉네임"}</dd>
               </div>
               <div>
                 <dt>주소</dt>

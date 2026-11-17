@@ -1,3 +1,4 @@
+import { viewerOwnName } from "@/entities/session/model/viewer";
 import { readActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
 import { unpaidResumeHref } from "@/entities/action-item/model/action-items";
 import { readCreatorCards, readMyFollowIds, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
@@ -91,7 +92,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
         followFirst={followFirst}
         today={kstToday(new Date())}
         // payment INV-M25: 팬이 보낼 때만 결제 단계에 반송 주소 칸 — 크리에이터는 등록 주소로 반송한다
-        returnAddress={viewer?.role === "fan" ? { accountId: viewer.userId, sealingKeyPem: readSealingPublicKeyPem(process.env) } : null}
+        returnAddress={viewer?.role === "fan" ? { accountId: viewer.userId, sealingKeyPem: readSealingPublicKeyPem(process.env), recipientName: viewerOwnName(viewer) } : null}
       />
       <SiteFooter />
     </>

@@ -26,6 +26,8 @@ export type FanAddressFieldsProps = {
   /** 바깥 폼 안에 넣을 때 group, 묶음 이름은 groupLabel */
   mode?: "form" | "group";
   groupLabel?: string;
+  /** 반송 주소처럼 받는 분이 팬 본인인 자리 — 이름 칸 없이 이 값(닉네임)으로 봉인한다(payment INV-M25 · office-workflow INV-W15, 2026-11-17 사용자 「2번으로 — 일의 간소화」) */
+  recipientName?: string;
 };
 
 export function FanAddressFields({ accountId, submitClassName = "btn", ...p }: FanAddressFieldsProps) {
@@ -44,6 +46,7 @@ export function FanAddressFields({ accountId, submitClassName = "btn", ...p }: F
       autoFocusFirst={p.autoFocusFirst}
       mode={p.mode}
       groupLabel={p.groupLabel}
+      fixedRecipientName={p.recipientName}
     />
   );
 }
