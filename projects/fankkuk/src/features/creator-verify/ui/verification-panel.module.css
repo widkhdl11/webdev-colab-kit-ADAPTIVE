@@ -46,11 +46,11 @@
 .copy :global(.hint:empty) { display: none; }
 
 /* 입력 칸 — 높이 48, 짙은 선(입력창 경계 3:1) */
-.field { display: block; width: 100%; min-width: 0; height: 48px; padding: 0 var(--space-4); border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--field-line); color: var(--ink); font: inherit; font-weight: 400; }
+.field { display: block; width: 100%; min-width: 0; height: var(--field-h); padding: 0 var(--space-4); border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--field-line); color: var(--ink); font: inherit; font-weight: 400; }
 .field::placeholder, .handle input::placeholder { color: var(--gray-500); opacity: 1; }
 .field[aria-invalid="true"] { box-shadow: inset 0 0 0 var(--field-ring) var(--danger-line); }
 .vrow { display: flex; gap: var(--space-2); align-items: stretch; }
-.handle { flex: 1 1 0; min-width: 0; display: flex; align-items: center; height: 48px; padding: 0 var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--field-line); }
+.handle { flex: 1 1 0; min-width: 0; display: flex; align-items: center; height: var(--field-h); padding: 0 var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--field-line); }
 .handle:focus-within { outline: 2px solid transparent; box-shadow: inset 0 0 0 var(--field-ring) var(--field-focus); }
 .handle:has(input[aria-invalid="true"]) { box-shadow: inset 0 0 0 var(--field-ring) var(--danger-line); }
 .pre { flex: none; color: var(--sub); }

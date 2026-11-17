@@ -40,8 +40,8 @@
 .st.st-static:hover .lbl { text-decoration: none; }
 .st:is(a) { text-decoration: none; }
 @media (max-width: 767px) {
-  .st { gap: 6px; font-size: 14px; }
-  .dot { width: 24px; height: 24px; font-size: 14px; }
+  .st { gap: 6px; font-size: var(--fs-small); }
+  .dot { width: 24px; height: 24px; font-size: var(--fs-small); }
 }
 
 /* 단계 카드 — 입력과 「이전」「다음」이 한 카드 안 */
@@ -89,7 +89,7 @@
 
 /* 2단계 — 정보 입력. 묶음은 하늘 판 대신 구분선 + 소제목 16/600, 묶음 사이 위아래 32 */
 .grp + .grp { margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--gray-200); }
-.grp-title { margin: 0 0 24px; font-family: var(--font); font-size: 16px; line-height: 1.5; font-weight: var(--fw-h3); }
+.grp-title { margin: 0 0 24px; font-family: var(--font); font-size: var(--fs-body); line-height: 1.5; font-weight: var(--fw-h3); }
 .opt { font-weight: 400; }
 /* 라벨 바로 아래·입력칸 위 설명(이름 통일 시안 name-merge-20261105) */
 .hint-top { margin: 0 0 8px; }
@@ -125,7 +125,7 @@
 .step > .error { margin-top: 24px; }
 
 /* 4단계 채널 확인(크리에이터) — 채널 확인 부품은 상세 설정과 같이 쓰므로 가입 카드(.chan) 안에서만 덮어쓴다(37절) */
-.chan :global(.input) { min-height: 48px; } /* 채널 주소 칸 48 — 1~3단계 칸과 같게(공용 .input 52 는 그대로) */
+.chan :global(.input) { min-height: var(--field-h); } /* 채널 주소 칸 — 1~3단계 칸과 같게 */
 
 /* 크리에이터 3단계 카카오톡 인증 알림 연결(시안 creator-signup-kakao-20261110, 2026-11-10 승인) — 칸·버튼 줄은 1~3단계와 같다(.step-actions, 카카오 노랑은 요청 버튼에만).
    기다리는 중 번호 원 두 줄·다시 보내기·완료 상자는 승인 서명 연결 카드(signature-link-panel)와 같은 값. 실패·기한 지남은 3단계 오류 상자 그대로(.err — 하늘 면, design-rules 37절) */

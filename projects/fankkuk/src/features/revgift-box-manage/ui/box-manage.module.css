@@ -46,7 +46,7 @@
 .cardTitle { font-weight: var(--fw-bold); }
 .cardMeta { color: var(--sub); font-size: var(--fs-small); overflow-wrap: anywhere; }
 .cardPick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
-.cardPick select { min-width: 160px; max-width: 100%; min-height: 44px; }
+.cardPick select { min-width: 160px; max-width: 100%; min-height: var(--field-h); }
 
 /* ── 만들기 모달 단계 칸 (design-rules 43절 · 시안 .field·.suffix·.scope·.opt·.sum·.made·.linkbox) ── */
 .stepForm { display: grid; gap: var(--space-6); }

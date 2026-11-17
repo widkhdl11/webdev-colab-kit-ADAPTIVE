@@ -21,7 +21,7 @@
 .fs { margin: 0; padding: 0; border: 0; min-width: 0; }
 .fs legend { margin-bottom: var(--space-2); font-weight: var(--fw-btn); }
 .fans { display: grid; gap: var(--space-2); }
-.opt { display: flex; align-items: center; gap: var(--space-3); min-height: 48px; padding: 0 var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-btn); cursor: pointer; }
+.opt { display: flex; align-items: center; gap: var(--space-3); min-height: var(--field-h); padding: 0 var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-btn); cursor: pointer; }
 .opt:has(input:checked) { border-color: var(--ink); background: var(--gray-50); }
 .opt input { width: 20px; height: 20px; accent-color: var(--ink); }
 .error { display: flex; align-items: flex-start; gap: var(--space-2); color: var(--ink); font-weight: var(--fw-bold); }

@@ -28,7 +28,7 @@
 /* 상자 크기 세 칸 (시안 .sizes · .sz) — 라디오가 칸 전체를 덮고, 고른 칸은 하늘 면 */
 .sizeSet { margin-top: var(--space-3); }
 .sizes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); }
-.sz { position: relative; display: block; min-width: 0; min-height: 44px; padding: var(--space-2) var(--space-1); border: 1px solid var(--gray-500); border-radius: var(--r-btn); background: var(--white); color: var(--ink); text-align: center; font-size: var(--fs-small); line-height: 1.3; cursor: pointer; }
+.sz { position: relative; display: block; min-width: 0; min-height: var(--field-h); padding: var(--space-2) var(--space-1); border: 1px solid var(--gray-500); border-radius: var(--r-btn); background: var(--white); color: var(--ink); text-align: center; font-size: var(--fs-small); line-height: 1.3; cursor: pointer; }
 .sz input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .sz b { display: block; font-weight: var(--fw-btn); }
 .sz span { display: block; color: var(--sub); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }

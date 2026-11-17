@@ -57,7 +57,7 @@
 .form { padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
 .form h3 { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; }
 /* 답장 고르기 칩 — 짙은 선 44, 고른 칩은 하늘 면 + 짙은 선 + 굵게(35·37·40절) */
-.form :global(.opt) { min-height: 44px; box-shadow: inset 0 0 0 1px var(--gray-500); }
+.form :global(.opt) { min-height: var(--field-h); box-shadow: inset 0 0 0 1px var(--gray-500); }
 .form :global(.opt):has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--ink); font-weight: var(--fw-bold); }
 .form fieldset { min-width: 0; margin: var(--space-3) 0 0; padding: 0; border: 0; }
 .form legend { padding: 0; }

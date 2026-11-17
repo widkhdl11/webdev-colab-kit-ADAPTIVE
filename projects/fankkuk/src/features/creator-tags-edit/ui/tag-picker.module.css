@@ -1,7 +1,7 @@
 /* 태그 고르기 — 시안 docs/design/mockups/site/v9-pages/tags-b.html 1절 (카드 d46). 칩이 많아 가로로 넘치지 않고 줄을 바꾼다. */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 /* 2026-11-14 「차분하고 일관된 스타일」 — 플랫폼 색은 로고에만. 보이는 높이 36, 누르는 칸은 위아래 4씩 넓혀 44(design-prompt 8-12) */
-.chips :global(.chip) { position: relative; gap: 6px; min-height: 36px; padding: 0 var(--space-3); border: 0; background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-300); color: var(--gray-900); font: inherit; font-size: var(--fs-small); cursor: pointer; }
+.chips :global(.chip) { position: relative; gap: 6px; min-height: var(--btn-h-sm); padding: 0 var(--space-3); border: 0; background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-300); color: var(--gray-900); font: inherit; font-size: var(--fs-small); cursor: pointer; }
 .chips :global(.chip)::before { content: ""; position: absolute; inset: calc(-1 * var(--space-1)) 0; }
 .chips :global(.chip)[data-icon="true"] { padding: 0 var(--space-3) 0 6px; }
 .chips :global(.chip):hover { background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-500); }

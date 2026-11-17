@@ -14,7 +14,7 @@
 .msg { display: block; min-width: 0; }
 /* 「인증번호 다시 받기」 글자 버튼 — 가운데, 누를 칸 44 */
 .again { display: flex; justify-content: center; }
-.again :global(.btn) { min-height: 44px; }
+.again :global(.btn) { min-height: var(--btn-h); }
 .sub { margin: 0; color: var(--sub); text-align: center; }
 .link { color: var(--brand-ink); font-weight: var(--fw-btn); text-underline-offset: 4px; overflow-wrap: anywhere; }
 .done { display: grid; gap: var(--space-2); }
