@@ -1016,7 +1016,7 @@ tierCountText(summary.counts) || "없음";
               <dl className={f["refund-conditions"]}>
                 <div>
                   <dt>상자가 도착했을 때</dt>
-                  <dd>입력한 반송 주소로 상자를 돌려보내고, 반송 택배비를 뺀 금액을 환불합니다.</dd>
+                  <dd>확인한 반송 주소로 상자를 돌려보내고, 반송 택배비를 뺀 금액을 환불합니다.</dd>
                 </div>
                 <div>
                   <dt>상자가 도착하지 않았을 때</dt>
