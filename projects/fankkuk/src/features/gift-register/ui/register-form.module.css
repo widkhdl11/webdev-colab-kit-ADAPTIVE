@@ -268,11 +268,15 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 /* ── 4 결제 — 2026-11-14 시안 추천안(docs/design/mockups/gift-send-step4-20261114, 사용자 「전부 추천안으로 진행」) ──
    반송·환불 안내는 회색 면 + 1px 선(그림자 없음), 조건마다 제목·결과로 나눈다(문장은 그대로). 결제 칸은 옅은 하늘 면 그림자 없이, 동의는 선 아래로 묶는다 */
 .gnote.gnote:not(.gnote-first) { margin-top: var(--space-8); background: var(--surface-muted); box-shadow: inset 0 0 0 1px var(--gray-200); }
-.refund-conditions { display: grid; gap: var(--space-4); margin: var(--space-4) 0 0; font-size: var(--fs-small); }
-.refund-conditions dt { color: var(--ink); font-weight: var(--fw-bold); }
-.refund-conditions dd { margin: var(--space-2) 0 0; color: var(--sub); }
-.notice-exceptions { margin-top: var(--space-8); }
-.notice-exceptions p + p { margin-top: var(--space-4); }
+.refund-conditions { display: grid; gap: var(--space-3); margin: var(--space-3) 0 0; font-size: var(--fs-small); }
+.refund-conditions dt { color: var(--ink); font-weight: 400; } /* 소제목(굵게)보다 한 단계 아래 */
+.refund-conditions dd { margin: var(--space-1) 0 0; color: var(--sub); }
+/* 반송·환불 안내 소제목 셋(2026-11-17) — 소제목 14 굵게 짙은 글자 · 그 아래 설명 · 경우 목록. 묶음 사이 24, 묶음 안 8 */
+.refund-sec + .refund-sec { margin-top: var(--space-6); }
+.gnote h3 + .refund-sec { margin-top: var(--space-4); }
+.refund-sec h4 { font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1.5; color: var(--ink); }
+.refund-sec h4 + p { margin-top: var(--space-2); }
+.refund-conditions dd ul { margin: 0; }
 .gnote.gnote hr { margin-block: var(--space-8); }
 .paybox.paybox { margin-top: var(--space-8); padding: var(--space-6); background: var(--tint); box-shadow: none; }
 .consent.consent { padding-top: var(--space-4); border-top: 1px solid var(--tint-line); }
