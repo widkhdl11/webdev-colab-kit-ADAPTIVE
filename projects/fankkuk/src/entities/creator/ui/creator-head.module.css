@@ -32,7 +32,7 @@ span.name { font-weight: var(--fw-bold); }
 .fbMark img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .fbt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 /* 중간 뱃지(공개 프로필 머리·크리에이터 머리, 큰 이름 옆) — 이전 크기 그대로 28 · 마크 20 · 글자 14, 색 모양만 위와 같다 */
-.fbMd { --badge-h2: 28px; --mark-s: 20px; font-size: var(--fs-small); }
+.fbMd { --badge-h2: 24px; --mark-s: 16px; font-size: var(--fs-badge); } /* 2026-11-17 「뚱뚱한 뱃지 전부」 — 28·14·20 에서 뱃지 기준 24·12 로 */
 /* 큰 뱃지(상세 설정 미리보기) — 크기는 예전 그대로 40 · 마크 30 · 글자 16, 색 모양만 위와 같다 */
 .fbLg { --badge-h2: 40px; --mark-s: 30px; gap: var(--space-2); padding: 0 var(--space-4); font-size: var(--fs-body); }
 .fbLg:has(.fbMark) { padding-left: 4px; }

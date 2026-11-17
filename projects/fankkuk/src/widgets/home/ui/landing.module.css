@@ -80,7 +80,7 @@
 .stages > p { margin: 0; font-size: var(--fs-small); font-weight: var(--fw-btn); }
 .stages ol { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
 .stages li { display: flex; align-items: center; gap: var(--space-2); font-size: var(--fs-small); font-weight: var(--fw-btn); }
-.stages li span { padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--tint-line); }
+.stages li span { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--space-3); font-size: var(--fs-badge); line-height: 1.2; border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--tint-line); }
 .stages li + li::before { content: ""; width: 16px; height: 2px; background: var(--gray-500); }
 
 /* 끝 검색 띠 */

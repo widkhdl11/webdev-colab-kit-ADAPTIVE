@@ -47,9 +47,9 @@
 }
 .selfTag:global(.tag) { font-weight: var(--fw-btn); }
 /* 쉬는 중 한 줄(INV-B2) — 시안 .pill-warn */
-.restLine { display: inline-flex; align-items: center; min-height: 32px; padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--warn-soft); color: var(--warn-ink); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; }
+.restLine { display: inline-flex; align-items: center; min-height: 24px; padding: 2px var(--space-3); border-radius: var(--r-pill); background: var(--warn-soft); color: var(--warn-ink); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1.4; }
 /* 승인 서명 연결 전 배지(운영자 화면 — 팔로우 묶음이 없을 때). 팔로우 묶음 안의 같은 배지는 follow-button.module.css .noSend */
-.noSend { display: inline-flex; align-items: center; min-height: 32px; padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font-weight: var(--fw-btn); white-space: nowrap; }
+.noSend { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--space-3); font-size: var(--fs-badge); line-height: 1.2; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font-weight: var(--fw-btn); white-space: nowrap; }
 /* 「채널 확인 중」 안내 상자(INV-V22, design-rules 42절) — 하늘 면 + 1px 선 + 시계 아이콘 한 줄 */
 .verifying { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 48px; margin: 0; padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); background: var(--notice-sky); box-shadow: inset 0 0 0 1px var(--notice-sky-line); color: var(--ink); font-weight: var(--fw-btn); }
 .verifying svg { flex: none; }

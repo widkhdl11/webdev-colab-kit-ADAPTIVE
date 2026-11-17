@@ -14,7 +14,7 @@
 .versions { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
 .version { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
 .version a { color: var(--gray-900); font-weight: var(--fw-btn); }
-.nowTag { padding: 2px var(--space-3); border-radius: var(--r-tag); background: var(--primary-50); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.nowTag { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--space-3); font-size: var(--fs-badge); line-height: 1.2; border-radius: var(--r-tag); background: var(--primary-50); font-weight: var(--fw-btn); }
 .note { margin: 0; color: var(--gray-500); font-size: var(--fs-small); }
 
 @media (max-width: 767px) {

@@ -69,10 +69,11 @@
 
 /* 고르는 칸(받는 상태 · 받기 어려운 선물) — 칩은 글자 폭, 짙은 선 44 · 고른 칸 하늘 면 + 짙은 선 2px + 체크(색만으로 알리지 않음, 41절) */
 .opts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.root .opts :global(.opt) { position: relative; display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: var(--space-2) var(--space-4); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-500); cursor: pointer; }
-.root .opts :global(.opt) input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
-.root .opts :global(.opt):hover { background: var(--gray-50); }
-.root .opts :global(.opt:has(input:checked)) { background: var(--primary-50); box-shadow: inset 0 0 0 2px var(--brand-line); font-weight: var(--fw-btn); }
+/* 고르기 칩 — 보이는 높이 36 · 글자 14 · 흰 면 + 1px --gray-300(마우스 --gray-500), 누르는 칸은 input 을 위아래 4씩 넓혀 44 (design-rules 「버튼·탭·뱃지 크기」·플랫폼 뱃지 「관련 칩」) */
+.root .opts :global(.opt) { position: relative; display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--btn-h-sm); padding: 0 var(--space-3); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-300); font-size: var(--fs-small); line-height: 1.4; cursor: pointer; }
+.root .opts :global(.opt) input { position: absolute; inset: calc((var(--hit) - var(--btn-h-sm)) / -2) 0; width: 100%; height: auto; margin: 0; opacity: 0; cursor: pointer; }
+.root .opts :global(.opt):hover { box-shadow: inset 0 0 0 1px var(--gray-500); }
+.root .opts :global(.opt:has(input:checked)) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); font-weight: var(--fw-btn); }
 .root .opts :global(.opt:has(input:checked))::after { content: ""; flex: none; width: 6px; height: 12px; margin: -4px 2px 0 2px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .root .opts :global(.opt:has(input:focus-visible)) { outline: 3px solid var(--focus); outline-offset: 3px; }
 
