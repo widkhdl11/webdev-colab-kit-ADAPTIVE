@@ -6,6 +6,7 @@
 .sub { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--kraft-sub); }
 
 .paper { margin-top: var(--space-4); overflow: hidden; border-radius: var(--r-btn); background: var(--kraft-paper); box-shadow: inset 0 0 0 1px var(--kraft-line); }
+.compact .paper { margin-top: 0; } /* 제목·부제를 뺀 팬별 칸 — 종이 판이 맨 위 */
 .paperHead { padding: var(--space-2) var(--space-4); background: var(--kraft-field); font-size: var(--fs-small); font-weight: var(--fw-btn); }
 .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-4); padding: var(--space-4); }
 .from { grid-column: 1 / span 7; padding: var(--space-4); border-radius: var(--r-btn); box-shadow: inset 0 0 0 1px var(--kraft-line); }

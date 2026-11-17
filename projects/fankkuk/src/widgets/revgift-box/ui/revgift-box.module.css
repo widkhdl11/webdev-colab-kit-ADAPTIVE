@@ -4,6 +4,8 @@
 .col { width: 100%; max-width: var(--col-flow); margin-inline: auto; min-width: 0; }
 .narrow { width: 100%; max-width: var(--col-form); margin-inline: auto; min-width: 0; }
 .stack { display: grid; gap: var(--space-6); }
+/* 크라프트 주소 칸의 자체 위 여백(팬 선물 상세용)을 여기서는 지운다 — 간격은 .stack gap 하나로(ui 리뷰 2026-11-17) */
+.stack > [data-box-address] { margin-top: 0; }
 .head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .title { overflow-wrap: anywhere; }
 .headTags { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }

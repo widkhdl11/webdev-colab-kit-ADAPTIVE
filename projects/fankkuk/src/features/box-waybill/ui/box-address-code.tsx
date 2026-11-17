@@ -23,6 +23,8 @@ type Props = {
   boxName: string;
   /** 보내는 분 이름 예시에 넣을 내 닉네임 — 시안처럼 「별빛 (팬꾹 닉네임)」. 없으면 「팬꾹 닉네임」 */
   senderName?: string;
+  /** 한 화면에 같은 칸이 여럿(보낸 역조공 팬별 칸)일 때 — 제목·부제·안내 두 줄은 묶음 안내에 한 번만 두고 여기서는 뺀다(제목은 낭독기용으로만 남김, ui 리뷰 2026-11-17) */
+  compact?: boolean;
 };
 
 const MASK = "••••••";
@@ -42,7 +44,7 @@ export function splitOfficeAddress(officeAddress: string): { base: string; detai
   return { base: officeAddress.slice(0, i).trim(), detail: officeAddress.slice(i + 1).trim() };
 }
 
-export function BoxAddressCode({ officeAddress, code, boxName, senderName }: Props) {
+export function BoxAddressCode({ officeAddress, code, boxName, senderName, compact = false }: Props) {
   const id = useId();
   const [shown, setShown] = useState(false);
   const full = receivingAddressText(officeAddress, code);
@@ -54,11 +56,11 @@ export function BoxAddressCode({ officeAddress, code, boxName, senderName }: Pro
     </span>
   );
   return (
-    <div className={s.kraft} role="group" aria-labelledby={`${id}-t`} data-box-address="">
-      <p className={s.title} id={`${id}-t`}>
+    <div className={compact ? `${s.kraft} ${s.compact}` : s.kraft} role="group" aria-labelledby={`${id}-t`} data-box-address="">
+      <p className={compact ? "sr-only" : s.title} id={`${id}-t`}>
         택배를 보낼 때 이렇게 입력하세요<span className="sr-only"> · {boxName}</span>
       </p>
-      <p className={s.sub}>택배 접수 화면 예시</p>
+      {compact ? null : <p className={s.sub}>택배 접수 화면 예시</p>}
       <div className={s.paper}>
         <p className={s.paperHead}>택배 접수 · 작성 예시</p>
         <div className={s.grid}>
@@ -132,10 +134,12 @@ export function BoxAddressCode({ officeAddress, code, boxName, senderName }: Pro
           />
         </div>
       </div>
-      <ul className={s.notes}>
-        <li>보내는 분 이름에는 팬꾹 닉네임을 적어 주세요.</li>
-        <li>6자리는 상자를 확인하는 데 필요합니다. 빠짐없이 입력하고 다른 사람에게 공유하지 마세요.</li>
-      </ul>
+      {compact ? null : (
+        <ul className={s.notes}>
+          <li>보내는 분 이름에는 팬꾹 닉네임을 적어 주세요.</li>
+          <li>6자리는 상자를 확인하는 데 필요합니다. 빠짐없이 입력하고 다른 사람에게 공유하지 마세요.</li>
+        </ul>
+      )}
     </div>
   );
 }

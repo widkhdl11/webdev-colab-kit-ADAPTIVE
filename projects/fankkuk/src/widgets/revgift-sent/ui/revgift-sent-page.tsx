@@ -153,7 +153,7 @@ function AddressGuide({ headId }: { headId: string }) {
         팬별 팬꾹 주소
       </p>
       <p>
-        팬마다 상자를 따로 포장하고, 해당 팬의 팬꾹 주소를 끝 6자리까지 모두 입력해 보내 주세요. 팬의 수락 전에도 발송할 수 있습니다.<br />받지 않은 팬의 상자는 반송하며, 반송 택배비를 제외한 금액을 환불합니다. 입고 전 환불 시점은 아래 ‘반송·환불 안내’에서 확인해 주세요.
+        팬마다 상자를 따로 포장하고, 해당 팬의 팬꾹 주소를 끝 6자리까지 모두 입력해 보내 주세요. 송장의 보내는 분 이름에는 팬꾹 닉네임을 적고, 6자리는 다른 사람에게 공유하지 마세요. 팬의 수락 전에도 발송할 수 있습니다.<br />받지 않은 팬의 상자는 반송하며, 반송 택배비를 제외한 금액을 환불합니다. 입고 전 환불 시점은 아래 ‘반송·환불 안내’에서 확인해 주세요.
       </p>
     </div>
   );
@@ -204,7 +204,7 @@ function Batch({ b, bi, boxByOrder, senderName }: { b: SentBatch; bi: number; bo
                 </div>
                 {b.officeAddress && addressCode ? (
                   <div className={s.addr}>
-                    <BoxAddressCode officeAddress={b.officeAddress} code={addressCode} boxName={`${x.fanNickname}님 상자`} senderName={senderName} />
+                    <BoxAddressCode officeAddress={b.officeAddress} code={addressCode} boxName={`${x.fanNickname}님 상자`} senderName={senderName} compact />
                   </div>
                 ) : null}
               </li>

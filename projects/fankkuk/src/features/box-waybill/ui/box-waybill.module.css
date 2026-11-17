@@ -50,11 +50,6 @@
 }
 
 
-@media (max-width: 767px) {
-  .addr { padding: 24px; }
-  .addr dl div { grid-template-columns: minmax(0, 1fr); gap: 0; }
-}
-
 /* 「먼저 보내기」 안내 (approval-signature INV-S9) */
 .early { margin-top: 12px; padding: 16px 24px; border-radius: var(--r-box); background: var(--surface); }
 .early p:not(:global(.hint)) { color: var(--ink); }
@@ -62,7 +57,7 @@
 .early-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 
 /* 팬 선물 상세의 상자별 팬꾹 주소 — 6자리를 따로 큰 칸으로 (시안 v41-user-fixes/v41.css .addr3, design-rules 33절).
-   하늘 면은 위 .addr 과 같은 효과, 6자리는 한 글자씩 흰 칸(글자 32 · 휴대폰 24). 기본은 가림(INV-C2) */
+   하늘 면(--surface-accent-fx), 6자리는 한 글자씩 흰 칸(글자 32 · 휴대폰 24). 기본은 가림(INV-C2) */
 .addr3 { container: addr3 / inline-size; padding: var(--space-6); border-radius: var(--r-card); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-sheen); }
 .codebox { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-2) var(--space-4); }
 .code-lab { grid-column: 1 / -1; font-size: var(--fs-small); font-weight: var(--fw-bold); color: var(--ink); }

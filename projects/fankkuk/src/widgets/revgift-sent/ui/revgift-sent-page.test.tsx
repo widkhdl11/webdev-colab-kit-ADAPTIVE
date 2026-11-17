@@ -175,6 +175,14 @@ describe("보낸 역조공 화면 — 팬별 팬꾹 주소는 택배 접수 작�
     expect(card()!.querySelector("[data-code6] [aria-hidden=true]")?.textContent).toBe("••••••");
   });
 
+  it("ui 리뷰: 팬마다 같은 제목·안내를 되풀이하지 않는다 — 안내는 묶음 안내에 한 번, 제목은 낭독기용(팬 이름 포함)으로만", () => {
+    renderWith("하루");
+    expect(card()!.querySelector("ul")).toBeNull();
+    expect(card()!.textContent).not.toContain("택배 접수 화면 예시");
+    expect(card()!.querySelector("p.sr-only")?.textContent).toContain("모카님 상자");
+    expect(host.textContent).toContain("송장의 보내는 분 이름에는 팬꾹 닉네임을 적고, 6자리는 다른 사람에게 공유하지 마세요.");
+  });
+
   it("닉네임이 없으면 「팬꾹 닉네임」 — 다른 값(로그인 아이디 등)을 대신 넣지 않는다", () => {
     renderWith(undefined);
     const from = card()!.querySelector("dl dd")!.textContent;
