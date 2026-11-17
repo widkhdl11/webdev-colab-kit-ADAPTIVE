@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readCreatorCards } from "./creator-reads";
+import { readCreatorCards, readMyPublicPageHref } from "./creator-reads";
 
 const ROW = {
   id: "00000000-0000-4000-b000-000000000001",
@@ -76,5 +76,39 @@ describe("크리에이터 색 읽기 (creator-link INV-E13·E7)", () => {
     }
     const [none] = await readCreatorCards(clientWith({ ...ROW, personal_color: null, fan_color: null }), { signedIn: false, onlyId: ROW.id });
     expect(none?.colors).toEqual({ personal: null });
+  });
+});
+
+// 크리에이터 「내 페이지」 메뉴 칸(DECISIONS 2026-11-17 카드 d6 「메뉴에 한 칸」) — 공개로 열리는 본인 페이지 주소, 없으면 null.
+describe("내 페이지 주소 (creator-link INV-E5)", () => {
+  const OWN = "00000000-0000-4000-b000-000000000001";
+  function client(own: unknown, card: unknown, fail?: string) {
+    const calls: string[] = [];
+    return {
+      calls,
+      client: {
+        rpc: async (fn: string) => {
+          calls.push(fn);
+          if (fn === fail) return { data: null, error: { code: "XX000" } };
+          if (fn === "my_creator_id") return { data: own, error: null };
+          if (fn === "creator_by_id") return { data: card, error: null };
+          throw new Error(fn);
+        },
+      } as never,
+    };
+  }
+
+  it("INV-E5: 링크 아이디가 있으면 /아이디, 없으면 /creators/<id> — 공개 읽기(creator_by_id)에 나온 값으로", async () => {
+    expect(await readMyPublicPageHref(client([{ creator_id: OWN }], [{ ...ROW, handle: "haru" }]).client)).toBe("/haru");
+    expect(await readMyPublicPageHref(client([{ creator_id: OWN }], [ROW]).client)).toBe(`/creators/${OWN}`);
+  });
+
+  it("INV-E5 (실패경로): 본인 확인 전(공개 읽기에 없음)·크리에이터 줄 없음·읽기 실패면 null — 메뉴 칸이 없다", async () => {
+    expect(await readMyPublicPageHref(client([{ creator_id: OWN }], []).client)).toBeNull();
+    const none = client([], [ROW]);
+    expect(await readMyPublicPageHref(none.client)).toBeNull();
+    expect(none.calls).toEqual(["my_creator_id"]);
+    expect(await readMyPublicPageHref(client([{ creator_id: OWN }], [ROW], "creator_by_id").client)).toBeNull();
+    expect(await readMyPublicPageHref(client(null, [ROW], "my_creator_id").client)).toBeNull();
   });
 });

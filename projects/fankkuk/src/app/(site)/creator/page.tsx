@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 import { readPublicBannersOrNull } from "@/entities/banner/api/read-banners";
 import { readMyAccessLog } from "@/entities/address/api/access-log-rows";
-import { readMyCreatorLink, readMyCreatorLook, resolveCreatorHandle } from "@/entities/creator/api/creator-link-reads";
-import { creatorPagePath } from "@/entities/creator/model/creator-handle";
-import { readCreatorCards, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
+import { readMyCreatorLink, readMyCreatorLook } from "@/entities/creator/api/creator-link-reads";
+import { readMyPublicPageHref } from "@/entities/creator/api/creator-reads";
 import { readMyCreatorSettings } from "@/entities/creator/api/my-creator-settings";
 import { creatorBackgroundUrl, creatorPhotoUrl, creatorSymbolUrl, nameInitial } from "@/entities/creator/model/link-images";
 import { NO_COLORS } from "@/entities/creator/model/creator-color";
@@ -67,12 +66,8 @@ export default async function Page() {
   // h1 은 공개 이름(design-rules 12절 「홈」). 크리에이터 줄이 없거나 채널을 아직 만들지 않았으면(이름 빈 값, signup INV-U21)
   // 위쪽 메뉴와 같은 본인 이름 — 닉네임, 없으면 본인 로그인 아이디(본인만 보는 자리)
   const publicName = settings?.publicName || viewerOwnName(viewer);
-  // 공개로 열리는 아이디인지 기존 공개 읽기로 확인한다. 확인 전·조회 실패면 내 페이지 버튼만 없다.
-  const publicCreator = link?.handle ? await resolveCreatorHandle(supabase, link.handle).catch(() => null) : null;
-  // 링크 아이디는 선택 사항이다. 미설정 계정도 기존 ID 주소의 공개 페이지를 쓴다(INV-E5).
-  const ownCreatorId = publicCreator ? null : await readOwnCreatorId(supabase).catch(() => null);
-  const publicCard = ownCreatorId ? await readCreatorCards(supabase, { onlyId: ownCreatorId, signedIn: false }).then((rows) => rows[0] ?? null).catch(() => null) : null;
-  const publicHref = publicCreator ? creatorPagePath({ id: publicCreator.creatorId, handle: publicCreator.handle }) : publicCard ? creatorPagePath(publicCard) : null;
+  // 사이드바 「내 페이지」 칸(카드 d6) — 공개로 열리는 본인 페이지가 있을 때만. 홈 본문은 이 주소를 쓰지 않는다
+  const myPageHref = await readMyPublicPageHref(supabase);
   // 같은 읽기의 순서·기존 단계 표시를 그대로 쓰며 홈에는 앞 세 줄만 보인다.
   const progressRows: HomeProgressRow[] = progress ? [
     ...progress.received.slice(0, 3).map((row) => ({ id: row.orderNo, title: `${row.nickname}님이 보낸 선물`, description: row.itemKind, status: PROGRESS_STEP_LABEL[receivedStepOf(row).key], tone: PROGRESS_STEP_TONE[receivedStepOf(row).key] })),
@@ -84,7 +79,7 @@ export default async function Page() {
     .map(({ id, title, date }) => ({ id, title, date }));
   return (
     <>
-      <SiteHeader role="creator" current="/creator" nickname={viewerOwnName(viewer)} actionCount={actions?.length ?? 0} />
+      <SiteHeader role="creator" current="/creator" nickname={viewerOwnName(viewer)} actionCount={actions?.length ?? 0} myPageHref={myPageHref} />
       <CreatorHomePage
         profile={{
           name: publicName,
@@ -97,7 +92,6 @@ export default async function Page() {
           symbolUrl: creatorSymbolUrl(photoBase, look?.symbolPath ?? null),
         }}
         accountHref={ACCOUNT_HREF.creator}
-        publicHref={publicHref}
         actionCount={actions?.length ?? null}
         actions={actions}
         accessLog={accessLog}

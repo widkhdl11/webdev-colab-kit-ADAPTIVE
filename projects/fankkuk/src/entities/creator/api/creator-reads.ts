@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { toCreatorCards, type CreatorCard } from "../model/creator-card";
+import { creatorPagePath } from "../model/creator-handle";
 import type { CreatorProfile, CreatorSummary } from "../model/creator";
 import { creatorColorOrNull } from "../model/creator-color";
 import { backgroundPathOrNull, symbolPathOrNull } from "../model/link-images";
@@ -198,4 +199,20 @@ function looksOf(data: unknown): Record<string, CreatorLookPaths> {
         },
       ]),
   );
+}
+
+/**
+ * 로그인한 크리에이터의 「내 페이지」 주소 — 공개 읽기(creator_by_id)에 나오는 본인 페이지가 있을 때만(본인 확인 전에는 열리지 않는다, creator-link INV-E5).
+ * 사이드바 「내 팬꾹」 묶음의 「내 페이지」 칸(DECISIONS 2026-11-17 카드 d6)이 쓴다. 크리에이터 줄이 없거나 읽기가 실패하면 null — 메뉴 칸 하나 때문에 화면이 실패하지 않게.
+ */
+export async function readMyPublicPageHref(client: Pick<SupabaseClient, "rpc">): Promise<string | null> {
+  try {
+    const ownId = await readOwnCreatorId(client);
+    if (!ownId) return null;
+    const card = (await readCreatorCards(client, { signedIn: false, onlyId: ownId }))[0];
+    return card ? creatorPagePath(card) : null;
+  } catch (e) {
+    console.error(e instanceof Error ? e.message : "내 페이지 주소를 읽지 못했다");
+    return null;
+  }
 }

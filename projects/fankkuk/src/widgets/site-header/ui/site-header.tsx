@@ -7,7 +7,7 @@ import { CREATOR_HOME, FAN_HOME } from "@/entities/session/model/home-path";
 import { DRAFT_MAX_AGE_MS } from "@/entities/session/model/session-lifetime";
 import { DraftPurge } from "@/shared/lib/form-draft/use-form-draft";
 import { LogoMark } from "@/shared/ui/logo";
-import { CREATOR_APP_MENU, FAN_APP_MENU } from "../model/app-menu";
+import { creatorAppMenu, FAN_APP_MENU } from "../model/app-menu";
 import { useLastHeader, useRememberHeader } from "../model/header-memory";
 import { Icon } from "./app-icons";
 import { AppSidebar } from "./app-sidebar";
@@ -28,7 +28,7 @@ const SITE_NAV: NavItem[] = [
 export type SiteHeaderProps =
   | { role: "guest"; current?: string }
   | { role: "fan"; current?: string; nickname: string; actionCount: number; viewerId?: string }
-  | { role: "creator"; current?: string; nickname: string; actionCount: number; viewerId?: string };
+  | { role: "creator"; current?: string; nickname: string; actionCount: number; viewerId?: string; /** 「내 페이지」 칸 주소 — 공개 페이지가 없으면 null(칸 없음) */ myPageHref?: string | null };
 
 function GuestTopBar({ current }: { current?: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -155,7 +155,7 @@ function SiteHeaderView(props: SiteHeaderProps) {
   return (
     <AppSidebar
       role="creator"
-      groups={CREATOR_APP_MENU}
+      groups={creatorAppMenu(props.myPageHref ?? null)}
       current={props.current}
       homeHref={CREATOR_HOME}
       nickname={props.nickname}

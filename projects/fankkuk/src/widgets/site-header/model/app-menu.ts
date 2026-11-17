@@ -27,7 +27,8 @@ export type AppIcon =
   | "palette"
   | "user-round"
   | "clipboard-list"
-  | "truck";
+  | "truck"
+  | "link";
 
 /** 부모 칸 아래 들여 쓴 하위 줄. soon 은 아직 없는 기능 — 링크 없이 「준비 중」 태그만(design-rules 11절) */
 export type AppMenuSub = { label: string; href: string } | { label: string; soon: true };
@@ -132,6 +133,15 @@ export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
     ],
   },
 ];
+
+/**
+ * 크리에이터 메뉴 + 「내 페이지」 칸(DECISIONS 2026-11-17 카드 d6 「메뉴에 한 칸」) — 공개로 열리는 본인 페이지가 있으면 「내 팬꾹」 묶음 맨 앞에 한 칸.
+ * 없으면(본인 확인 전·읽기 실패) 칸이 없고 메뉴는 CREATOR_APP_MENU 그대로다.
+ */
+export function creatorAppMenu(myPageHref: string | null): readonly AppMenuGroup[] {
+  if (!myPageHref) return CREATOR_APP_MENU;
+  return CREATOR_APP_MENU.map((g) => (g.label === "내 팬꾹" ? { ...g, items: [{ href: myPageHref, label: "내 페이지", icon: "link" as const }, ...g.items] } : g));
+}
 
 /**
  * 아래 이름 메뉴 — 팬은 「계정 설정」 /me, 크리에이터는 「알림 설정」(옛 크리에이터 계정 설정 화면, 2026-11-13 알림만 남음. 처음엔 본인 확인·알림·계정 보안, 시안 v21-addendum3/cre-account-settings.html, 2026-10-16).

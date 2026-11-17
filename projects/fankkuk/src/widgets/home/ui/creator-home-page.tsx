@@ -31,7 +31,6 @@ export type HomeProgressRow = { id: string; title: string; description: string; 
 type Props = {
   profile: CreatorHomeProfile;
   accountHref: string;
-  publicHref?: string | null;
   actionCount: number | null;
   actions?: readonly CreatorActionItem[] | null;
   accessLog: readonly AddressAccessEntry[];

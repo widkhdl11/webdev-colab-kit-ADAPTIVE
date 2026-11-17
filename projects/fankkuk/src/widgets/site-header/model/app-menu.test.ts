@@ -1,6 +1,6 @@
 import { CREATOR_TO_CREATOR_GIFT_OPEN } from "@/features/creator-follow/model/creator-gift-open";
 import { describe, expect, it } from "vitest";
-import { ACCOUNT_MENU, BADGE_SPEECH, CREATOR_APP_MENU, CREATOR_SENT_HREFS, currentMenuItem, FAN_APP_MENU, FAN_PROFILE_EDIT_HREF } from "./app-menu";
+import { ACCOUNT_MENU, BADGE_SPEECH, CREATOR_APP_MENU, creatorAppMenu, CREATOR_SENT_HREFS, currentMenuItem, FAN_APP_MENU, FAN_PROFILE_EDIT_HREF } from "./app-menu";
 
 // 크리에이터 앱 메뉴 구성 (디자인 기준 11절, 시안 docs/design/mockups/site/v19-sidebar/creator-a.html).
 
@@ -121,5 +121,22 @@ describe("팬 메뉴 — 묶음 없이 한 줄 (action-center 「팬 메뉴 재�
   it("INV-J2: 뱃지 낭독은 수만 — 칸 이름과 이어 읽으면 「지금 할 일, 3건」(칸 이름을 두 번 읽지 않는다)", () => {
     expect(BADGE_SPEECH.actions(3)).toBe("3건");
     expect(BADGE_SPEECH.actions(3)).not.toContain("할 일");
+  });
+});
+
+describe("내 페이지 칸 (DECISIONS 2026-11-17 카드 d6 「메뉴에 한 칸」)", () => {
+  it("공개 페이지 주소가 있으면 「내 팬꾹」 묶음 맨 앞에 「내 페이지」 — 그 주소로 간다", () => {
+    const mine = creatorAppMenu("/haru").find((g) => g.label === "내 팬꾹")!;
+    expect(mine.items.map((i) => [i.label, i.href])).toEqual([
+      ["내 페이지", "/haru"],
+      ["프로필 수정", "/creator/profile"],
+      ["계정 설정", "/creator/settings"],
+    ]);
+    expect(currentMenuItem(creatorAppMenu("/haru"), "/haru")?.label).toBe("내 페이지");
+  });
+
+  it("(실패경로) 공개 페이지가 없으면(null) 칸이 없다 — 나머지 메뉴는 그대로", () => {
+    expect(creatorAppMenu(null)).toEqual(CREATOR_APP_MENU);
+    expect(creatorAppMenu(null).flatMap((g) => g.items).some((i) => i.label === "내 페이지")).toBe(false);
   });
 });

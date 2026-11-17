@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { readActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
+import { readMyPublicPageHref } from "@/entities/creator/api/creator-reads";
 import { readCreatorActionItemsOrNull } from "@/features/creator-action-items/api/read-creator-action-items";
 import { homePathOf } from "@/entities/session/model/home-path";
 import { readViewer, viewerOwnName, type Viewer } from "@/entities/session/model/viewer";
@@ -27,9 +28,10 @@ export async function readSiteHeader(
     return { role: "fan", current, nickname: viewerOwnName(viewer), actionCount: actionItems?.length ?? 0, viewerId: viewer.userId };
   }
   if (viewer?.role === "creator") {
-    const items = actions === undefined ? await readCreatorActionItemsOrNull(client) : actions;
+    const [items, myPageHref] = await Promise.all([actions === undefined ? readCreatorActionItemsOrNull(client) : Promise.resolve(actions), readMyPublicPageHref(client)]);
     // 채널을 만들기 전(닉네임 없음)이면 본인 로그인 아이디(signup INV-U21 — 본인만 보는 자리)
-    return { role: "creator", current, nickname: viewerOwnName(viewer), actionCount: items?.length ?? 0, viewerId: viewer.userId };
+    // 「내 페이지」 칸(카드 d6) — 공개로 열리는 본인 페이지가 있을 때만
+    return { role: "creator", current, nickname: viewerOwnName(viewer), actionCount: items?.length ?? 0, viewerId: viewer.userId, myPageHref };
   }
   return { role: "guest", current };
 }
