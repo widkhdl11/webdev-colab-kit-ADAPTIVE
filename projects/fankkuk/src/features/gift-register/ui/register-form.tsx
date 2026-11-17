@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } 
 import { useForm, useWatch } from "react-hook-form";
 import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
-import { INTAKE_LIMIT_TEXT, OVER_LIMIT_INTAKE_TEXT, PARCEL_TIER_GUIDE, personalIntakeNotice } from "@/entities/parcel/model/size-tier";
+import { INTAKE_LIMIT_TEXT, OVER_LIMIT_INTAKE_TEXT, OVERSIZE_CONDITION_TEXT, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { tierCountText } from "@/entities/parcel/model/box-rows";
 import { PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { formatDuration } from "@/shared/lib/format/datetime";
@@ -1003,44 +1003,53 @@ tierCountText(summary.counts) || "없음";
             <h3 id="return-notice-title">반송·환불 안내</h3>
             {/* payment INV-M8·M18: 도착한 상자는 반송 택배비(배송비 칸)를 뺀다. 안 온 상자는 팬이 팬꾹 주소를 본 적이 없으면 전액,
                 본 적이 있으면 배송비 칸을 뺀 금액을 먼저, 결제 완료부터 30일(720시간) 안에 안 오면 배송비 칸도 돌려준다 */}
-            {/* 2026-11-17 사용자 「조건 이름만 나와 반송·환불 안내 같지 않다 — 위계에 맞게」: 언제 반송·환불되는지를 소제목 셋으로 나누고,
-                취소 때의 환불은 「상자가 팬꾹에 도착했는지」 아래에 경우를 둔다. 정책 사실(INV-M8·M18·M23)은 그대로 */}
+            {/* 2026-11-17 사용자 「텍스트 구조화·위계 설정·계층화」: 세 층 — ① 언제(묶음 제목 + 한 줄 설명) ② 어떤 상자 → 결과(굵게, 오른쪽)
+                ③ 자세한 설명(작은 회색 한 줄). 결과만 훑어도 얼마를 돌려받는지 보이게. 정책 사실(payment INV-M8·M18·M23)은 그대로 */}
             <section className={f["refund-sec"]} aria-labelledby="refund-cancel-h">
               <h4 id="refund-cancel-h">선물 전달이 취소되면</h4>
-              <p>
-                크리에이터가 거절하거나 결제 후 {APPROVAL_DEADLINE_DAYS}일 이내에 승인하지 않으면 선물 전달이 취소됩니다. 환불 금액은 상자가 팬꾹에
-                도착했는지에 따라 다릅니다.
-              </p>
+              <p className={f["refund-when"]}>크리에이터가 거절하거나 결제 후 {APPROVAL_DEADLINE_DAYS}일 이내에 승인하지 않을 때</p>
               {/* payment INV-M8·M18: 도착한 상자는 반송 택배비(배송비 칸)를 뺀다. 안 온 상자는 팬이 팬꾹 주소를 본 적이 없으면 전액,
                   본 적이 있으면 배송비 칸을 뺀 금액을 먼저, 결제 완료부터 30일(720시간) 안에 안 오면 배송비 칸도 돌려준다 */}
-              <dl className={f["refund-conditions"]}>
+              <dl className={f["refund-rows"]}>
                 <div>
-                  <dt>상자가 도착했을 때</dt>
-                  <dd>확인한 반송 주소로 상자를 돌려보내고, 반송 택배비를 뺀 금액을 환불합니다.</dd>
+                  <dt>상자가 팬꾹에 도착한 뒤</dt>
+                  <dd className={f["refund-result"]}>반송 택배비 빼고 환불</dd>
+                  <dd className={f["refund-detail"]}>상자는 확인한 반송 주소로 돌려보냅니다.</dd>
                 </div>
                 <div>
-                  <dt>상자가 도착하지 않았을 때</dt>
-                  <dd>
-                    <ul>
-                      <li>팬꾹 주소가 표시되기 전: 전액 환불합니다.</li>
-                      <li>
-                        팬꾹 주소가 표시된 후: 반송 택배비를 뺀 금액을 먼저 환불합니다. 결제 완료 후 30일이 지나도 상자가 도착하지 않으면 뺀 금액도
-                        환불합니다.
-                      </li>
-                    </ul>
-                  </dd>
+                  <dt>도착 전 · 팬꾹 주소가 표시되기 전</dt>
+                  <dd className={f["refund-result"]}>전액 환불</dd>
+                </div>
+                <div>
+                  <dt>도착 전 · 팬꾹 주소가 표시된 뒤</dt>
+                  <dd className={f["refund-result"]}>반송 택배비 빼고 환불</dd>
+                  <dd className={f["refund-detail"]}>결제 완료 후 30일이 지나도 상자가 도착하지 않으면 뺀 금액도 환불합니다.</dd>
                 </div>
               </dl>
             </section>
             {/* payment INV-M8: 검수 불합격 반송은 상품 대금 칸만(지금은 0) — 검수비·반송 택배비를 뺀다 */}
             <section className={f["refund-sec"]} aria-labelledby="refund-banned-h">
-              <h4 id="refund-banned-h">금지 물품이 발견되면</h4>
-              <p>추적 장치 등 금지 물품이 발견되면 상자를 반송합니다. 검수비와 반송 택배비를 빼면 환불 금액은 없습니다.</p>
+              <h4 id="refund-banned-h">검수에서 반송되면</h4>
+              <dl className={f["refund-rows"]}>
+                <div>
+                  <dt>추적 장치 등 금지 물품 발견</dt>
+                  <dd className={f["refund-result"]}>환불 없음</dd>
+                  <dd className={f["refund-detail"]}>상자를 반송하고, 검수비와 반송 택배비를 뺍니다.</dd>
+                </div>
+              </dl>
             </section>
-            {/* payment INV-M23: 접수 한도 초과는 반송이 아니라 개인접수(우체국 실비 기준 차액, 7일 미납이면 반송). 문장은 선물 상태 화면과 같은 상수 */}
+            {/* payment INV-M23: 접수 한도 초과는 반송이 아니라 개인접수(우체국 실비 기준 차액, 기한 안 미납이면 반송) */}
             <section className={f["refund-sec"]} aria-labelledby="refund-size-h">
               <h4 id="refund-size-h">상자가 접수 기준을 넘으면</h4>
-              <p>{personalIntakeNotice(DIFFERENCE_DEADLINE_DAYS)}</p>
+              <dl className={f["refund-rows"]}>
+                <div>
+                  <dt>{OVERSIZE_CONDITION_TEXT}</dt>
+                  <dd className={f["refund-result"]}>차액 결제 요청</dd>
+                  <dd className={f["refund-detail"]}>
+                    개인접수로 바뀌어 우체국 실비 기준 차액을 요청합니다. {DIFFERENCE_DEADLINE_DAYS}일 안에 결제하지 않으면 반송됩니다.
+                  </dd>
+                </div>
+              </dl>
             </section>
             {picked ? (
               <>

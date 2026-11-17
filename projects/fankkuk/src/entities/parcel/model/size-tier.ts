@@ -43,6 +43,9 @@ export const OVERSIZE_RULE_FORMAL = `세 변의 합이 ${LARGE_MAX_SUM_CM}cm를 
 export const RETURN_ON_INSPECTION_NOTICE = `추적 장치 등 금지 물품이 발견되면 반송됩니다.\n이 경우 검수비와 반송 배송비가 차감되어 환불 금액이 없습니다.`;
 
 /** 접수 한도를 넘은 상자 안내(payment INV-M23) — 기준 숫자는 OVERSIZE_RULE 과 같은 상수. days 는 차액 기한(INV-M13, DIFFERENCE_DEADLINE_DAYS) */
+/** 접수 기준을 넘는 상자의 조건 — 선물 보내기 「반송·환불 안내」 줄 이름(2026-11-17 위계 정리). 숫자는 tierOf 와 같은 상수 */
+export const OVERSIZE_CONDITION_TEXT = `세 변의 합 ${LARGE_MAX_SUM_CM}cm 또는 무게 ${LARGE_MAX_WEIGHT_KG}kg 초과`;
+
 export function personalIntakeNotice(days: number): string {
   return `세 변의 합이 ${LARGE_MAX_SUM_CM}cm를 넘거나 무게가 ${LARGE_MAX_WEIGHT_KG}kg을 넘으면 개인접수로 바뀌어 우체국 실비 기준 차액을 결제 요청합니다. ${days}일 안에 결제하지 않으면 반송됩니다.`;
 }
