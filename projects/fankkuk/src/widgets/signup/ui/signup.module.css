@@ -106,11 +106,7 @@
 .step :global(.field[aria-invalid="true"]) { box-shadow: inset 0 0 0 var(--field-ring) var(--danger-line); }
 .live-ok svg { flex-shrink: 0; }
 .live-wait { color: var(--gray-600); font-size: var(--fs-caption); line-height: var(--lh-caption); } /* 미리 확인 중·잠시 뒤에 — 틀렸다는 표시가 아니다 */
-/* 태그 칩(크리에이터) — 높이는 태그 고르기 부품 그대로(보이는 36 · 누르는 칸 44, 2026-11-17 사용자 「가입 채널 고르기 칩이 그대로 뚱뚱하다」로 44 덮어쓰기를 지움) · 짙은 선 1px, 고르면 하늘 면 + 하늘 선 + 굵게(37절, 5파트 찾기 칩과 같음). 다 고른 뒤 흐린 칩은 공용 그대로 */
-.step :global(.chip:not([aria-disabled="true"])) { background: var(--white); box-shadow: inset 0 0 0 1px var(--su-line); color: var(--ink); }
-.step :global(.chip):hover { background: var(--gray-50); }
-.step :global(.chip[aria-pressed="true"]),
-.step :global(.chip[aria-pressed="true"]):hover { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); color: var(--brand-ink); font-weight: var(--fw-btn); }
+/* 태그 칩(크리에이터) — 모양·높이 모두 태그 고르기 부품(tag-picker) 그대로: 흰 면 + 1px --gray-300, 마우스 --gray-500, 보이는 36 · 누르는 칸 44(design-rules 2026-11-17 절 · 「관련 칩·표시도 같은 기준」). 가입 화면만 쓰던 짙은 선·44 덮어쓰기는 2026-11-17 지웠다 */
 /* 이메일 — 앞부분 @ 주소 고르기 한 줄, 「직접 입력」이면 아래에 주소 칸 */
 .email { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; }
 .at { font-weight: var(--fw-btn); color: var(--gray-600); }
