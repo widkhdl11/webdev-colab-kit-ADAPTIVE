@@ -2,7 +2,6 @@
 
 import { useId, useState } from "react";
 import { CopyButton } from "@/shared/ui/copy-button";
-import { receivingAddressText } from "./receiving-address";
 import s from "./box-address-code.module.css";
 
 // 팬 선물 상세의 상자별 팬꾹 주소 (inbound-address-code INV-C2·C3).
@@ -12,7 +11,7 @@ import s from "./box-address-code.module.css";
 // - 6자리는 기본으로 가려 두고 「6자리 보기」를 눌러야 보인다(INV-C2 — 어깨 너머·화면 공유로 새지 않게).
 // - 「전체 주소 복사」는 가려져 있어도 6자리를 포함한 전체 주소를 복사한다.
 // - 부르는 쪽이 DB 가 준 6자리가 있을 때만 그린다(6자리 빠진 기본 사무실 주소는 그리지 않는다).
-// 받은 역조공 쪽(revgift-sent)은 ReceivingAddress 를 그대로 쓴다.
+// 2026-11-17 크리에이터 쪽(보낸 역조공 팬별 칸 · 선물함 보내기)도 이 부품을 쓴다(사용자 「응」, 시안 mockups/creator-kraft-address-20261117). 옛 하늘 면 ReceivingAddress 는 지웠다.
 // 보내는 분·받는 분은 이름 없는 일반 칸(div) — 상자가 여럿이면 이름 붙은 영역이 상자 이름 없이 겹친다(ui 리뷰 2026-11-17). 묶음 이름은 바깥 그룹 하나.
 
 type Props = {
@@ -27,6 +26,11 @@ type Props = {
 };
 
 const MASK = "••••••";
+
+/** 받는 주소 전체 — 사무실 주소 상세 끝에 6자리 */
+export function receivingAddressText(officeAddress: string, code: string): string {
+  return `${officeAddress} ${code}`;
+}
 
 /**
  * 팬꾹 주소 한 줄을 택배 접수 화면의 「기본주소 · 상세주소」로 나눈다 — 첫 쉼표 앞이 도로명 주소, 뒤가 층·이름.

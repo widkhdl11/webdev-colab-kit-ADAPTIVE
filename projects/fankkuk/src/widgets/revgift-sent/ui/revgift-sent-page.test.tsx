@@ -152,3 +152,32 @@ describe("보낸 역조공 화면 — 「내 상자 찾기」는 선물 현황�
     expect(tags.map((t) => [...t.classList].find((c) => /^tag--(success|warn|danger)$/.test(c)))).toEqual(["tag--success", "tag--warn", "tag--danger"]);
   });
 });
+
+describe("보낸 역조공 화면 — 팬별 팬꾹 주소는 택배 접수 작성 예시(크라프트) 칸 (2026-11-17 사용자 「응」)", () => {
+  const renderWith = (senderName?: string) =>
+    act(() =>
+      root.render(
+        <RevgiftSentPage
+          rows={[row("RG-A0", "모카", "waiting")]}
+          boxes={[{ ...box("RG-A0", S1, "모카", "awaiting"), addressCode: "7K3M92" }]}
+          paid={false}
+          officeAddress="서울특별시 성동구 성수이로 00, 3층 팬꾹"
+          senderName={senderName}
+        />,
+      ),
+    );
+  const card = () => host.querySelector("[data-box-address]");
+
+  it("보내는 분 예시 이름은 크리에이터 닉네임 — 6자리는 가려 둔다(INV-C2)", () => {
+    renderWith("하루");
+    expect(card()).not.toBeNull();
+    expect(card()!.textContent).toContain("하루 (팬꾹 닉네임)");
+    expect(card()!.querySelector("[data-code6] [aria-hidden=true]")?.textContent).toBe("••••••");
+  });
+
+  it("닉네임이 없으면 「팬꾹 닉네임」 — 다른 값(로그인 아이디 등)을 대신 넣지 않는다", () => {
+    renderWith(undefined);
+    const from = card()!.querySelector("dl dd")!.textContent;
+    expect(from).toBe("팬꾹 닉네임");
+  });
+});

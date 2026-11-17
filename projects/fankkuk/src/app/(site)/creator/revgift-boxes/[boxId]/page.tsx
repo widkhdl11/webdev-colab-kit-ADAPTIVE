@@ -62,6 +62,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         now={new Date().toISOString()}
         deliverySource={deliverySource}
         officeAddress={officeAddress}
+        senderName={viewer.nickname || undefined}
       />
       <SiteFooter />
     </>

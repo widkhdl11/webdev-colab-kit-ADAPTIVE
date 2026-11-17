@@ -5,7 +5,7 @@ import type { SentRevgift } from "@/entities/revgift/model/revgift-rows";
 import { countBatchStates, summarizeSent, toSentBatches, type SentBatch, type SentSummary } from "@/entities/revgift/model/sent-batches";
 import { sentStateTag } from "@/entities/revgift/ui/received-status";
 import { shareAddressCode } from "@/features/box-waybill/model/box-targets";
-import { ReceivingAddress } from "@/features/box-waybill/ui/receiving-address";
+import { BoxAddressCode } from "@/features/box-waybill/ui/box-address-code";
 import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
@@ -159,7 +159,7 @@ function AddressGuide({ headId }: { headId: string }) {
   );
 }
 
-function Batch({ b, bi, boxByOrder }: { b: SentBatch; bi: number; boxByOrder: ReadonlyMap<string, ShareBox> }) {
+function Batch({ b, bi, boxByOrder, senderName }: { b: SentBatch; bi: number; boxByOrder: ReadonlyMap<string, ShareBox>; senderName?: string }) {
   const views = toShareViews(b.shares, boxByOrder, b.officeAddress);
   const when = formatDateTime(b.sentAt);
   return (
@@ -204,7 +204,7 @@ function Batch({ b, bi, boxByOrder }: { b: SentBatch; bi: number; boxByOrder: Re
                 </div>
                 {b.officeAddress && addressCode ? (
                   <div className={s.addr}>
-                    <ReceivingAddress officeAddress={b.officeAddress} code={addressCode} boxName={`${x.fanNickname}님 상자`} multiple={b.shares.length > 1} />
+                    <BoxAddressCode officeAddress={b.officeAddress} code={addressCode} boxName={`${x.fanNickname}님 상자`} senderName={senderName} />
                   </div>
                 ) : null}
               </li>
@@ -222,6 +222,7 @@ export function RevgiftSentPage({
   boxes,
   paid,
   officeAddress,
+  senderName,
   tabs,
 }: {
   rows: readonly SentRevgift[];
@@ -229,6 +230,8 @@ export function RevgiftSentPage({
   paid: boolean;
   /** DB 가 준 팬꾹 주소(admin-console INV-K19). 6자리를 받은 적 없으면 null — 그때는 주소 칸이 없다 */
   officeAddress: string | null;
+  /** 송장 예시의 보내는 분 이름 — 크리에이터 닉네임. 없으면 「팬꾹 닉네임」(로그인 아이디를 송장에 적게 하지 않는다) */
+  senderName?: string;
   /** 페이지 머리 바로 아래에 둘 화면 간 탭(design-rules 11절). 머리는 늘 본문 맨 앞이다(00절) */
   tabs?: ReactNode;
 }) {
@@ -267,7 +270,7 @@ export function RevgiftSentPage({
           <p>나를 팔로우한 팬을 선택해 선물을 보낼 수 있습니다.</p>
         </section>
       ) : (
-        batches.map((b, bi) => <Batch key={b.sentAt} b={b} bi={bi} boxByOrder={boxByOrder} />)
+        batches.map((b, bi) => <Batch key={b.sentAt} b={b} bi={bi} boxByOrder={boxByOrder} senderName={senderName} />)
       )}
       <details className={`${s.fold} ${s.knows}`}>
         <summary>반송·환불 안내</summary>

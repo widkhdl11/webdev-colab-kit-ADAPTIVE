@@ -32,7 +32,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
     <>
       <SiteHeader {...header} />
       <MyShell width="broad">
-        <RevgiftSentPage tabs={<SentTabs current="fans" />} rows={rows} boxes={boxes} paid={paid === "1"} officeAddress={officeAddress} />
+        <RevgiftSentPage tabs={<SentTabs current="fans" />} rows={rows} boxes={boxes} paid={paid === "1"} officeAddress={officeAddress} senderName={viewer.nickname || undefined} />
       </MyShell>
       <SiteFooter />
     </>
