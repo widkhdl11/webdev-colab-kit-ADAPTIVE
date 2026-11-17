@@ -1,6 +1,14 @@
 /* 보낸 선물 — 시안 docs/design/mockups/site/v35-part1/gifts.html (v35.css .ccard·.gcard·.pbar, design-rules 22절). 탭·태그·작은 진행 막대(.mini-steps)는 base.css 공통 부품,
    카드 면 효과·떠오름은 base.css 23절(.ccard)·tokens.css 23절 토큰 */
 
+/* 요약 — 상태별 수 셋(시안 gifts-list-20261112 .sum, 2026-11-17 승인). 눌리지 않는 표시라 테두리·그림자 없이 옅은 면 + 칸 사이 선(design-prompt 4-6).
+   세 칸 같은 너비·같은 숫자 20(6-5). 머리와의 간격은 머리 아래 여백 그대로, 아래 「크리에이터별로 보기」와는 .creators 위 40 */
+.sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-block: 0; /* 좌우 여백은 본문 기둥 규칙 그대로(가운데 정렬) */ border-radius: var(--r-card); background: var(--surface); }
+.sum > div { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-4) var(--space-6); }
+.sum > div + div { border-left: 1px solid var(--gray-200); }
+.sum dt { font-size: var(--fs-small); font-weight: 400; line-height: 1.5; color: var(--sub); }
+.sum dd { margin: 0; font-family: var(--font-round); font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; color: var(--ink); font-variant-numeric: tabular-nums; }
+
 /* 「크리에이터별로 보기」 — 머리 줄(제목 20 + 「N명」) 아래 16, 카드 3열 사이 16. 카드 전체가 함께한 시간으로 가는 링크 */
 .creators { margin-top: var(--space-10); }
 .secH { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-4); }
@@ -71,6 +79,12 @@
      좌우는 같은 값의 음수 바깥 여백으로 카드 왼쪽 정렬선을 그대로 두고, 카드가 멈추는 자리도 그 여백만큼 안쪽(scroll-padding) */
   .ccards { display: flex; gap: var(--space-3); margin: var(--space-1) calc(-1 * var(--space-2)) 0; padding: var(--space-2); overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--space-2); }
   .ccard { flex: 0 0 78%; padding: var(--space-4); scroll-snap-align: start; }
+}
+/* 기둥 600 미만이면 세 줄 — 이름 왼쪽, 숫자 오른쪽(design-prompt 2-18) */
+@container pane (max-width: 599px) {
+  .sum { grid-template-columns: minmax(0, 1fr); padding: var(--space-1) var(--space-4); }
+  .sum > div { flex-direction: row; align-items: center; justify-content: space-between; min-height: 48px; padding: var(--space-2) 0; }
+  .sum > div + div { border-left: 0; border-top: 1px solid var(--gray-200); }
 }
 @container pane (max-width: 699px) {
   .gcards { grid-template-columns: minmax(0, 1fr); }

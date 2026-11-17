@@ -267,6 +267,27 @@ function DonePanel({ gifts, ...rest }: PanelProps) {
   );
 }
 
+/** 상태별 수 세 칸 — 눌리지 않는 표시(시안 gifts-list-20261112 요약, 2026-11-17 사용자 승인). 수는 탭과 같은 거르기에서 나온다 — 새 계산 없음.
+ *  선물이 하나도 없으면 그리지 않는다(숫자가 0뿐인 칸을 만들지 않는다, design-prompt 6-6) */
+function GiftSummary({ ongoingN, endedN, notAcceptedN }: { ongoingN: number; endedN: number; notAcceptedN: number }) {
+  return (
+    <dl className={s.sum} data-gift-summary>
+      <div>
+        <dt>진행 중</dt>
+        <dd>{ongoingN}</dd>
+      </div>
+      <div>
+        <dt>완료된 선물</dt>
+        <dd>{endedN}</dd>
+      </div>
+      <div>
+        <dt>전달되지 않은 선물</dt>
+        <dd>{notAcceptedN}</dd>
+      </div>
+    </dl>
+  );
+}
+
 export function GiftListPage({
   creators,
   gifts,
@@ -309,6 +330,9 @@ export function GiftListPage({
         <p className="ph-desc">크리에이터별 선물 기록과 답장을 확인해 주세요.</p>
       </header>
       {tabs}
+      {all.length + unpaidN > 0 ? (
+        <GiftSummary ongoingN={ongoingN} endedN={all.filter(ended).length} notAcceptedN={all.filter(notAccepted).length} />
+      ) : null}
       {creators.length > 0 ? <Creators creators={creators} faceToneByName={faceToneByName} /> : null}
       <div className={s.giftTabs}>
         <GiftTabs
