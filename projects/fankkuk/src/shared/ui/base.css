@@ -83,28 +83,28 @@ h3 { font-size: var(--fs-body); }
 
 /* ---------- 7. 버튼 · 태그 · 입력창 · 카드 ---------- */
 /* 버튼: 주(코랄 면)·보조(.btn--line 흰 면+경계)·글자만(.btn--text). 높이 52, 작은 것(.btn--sm) 44 */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 24px; border: 0; border-radius: var(--r-btn); background: var(--brand); color: var(--on-brand); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; text-align: center; text-decoration: none; cursor: pointer; box-shadow: var(--lift); }
+.btn { /* token-exempt: 운영자 화면 값 — 운영자 밖은 아래 :where(:not(.admin-area *)) 규칙이 토큰으로 덮는다 */ display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 24px; border: 0; border-radius: var(--r-btn); background: var(--brand); color: var(--on-brand); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; text-align: center; text-decoration: none; cursor: pointer; box-shadow: var(--lift); }
 .btn:hover { background: var(--brand-hover); }
 .btn:active { background: var(--brand-active); }
 .btn--line { background: var(--white); color: var(--ink); box-shadow: var(--hair); }
 .btn--line:hover, .btn--line:active { background: var(--surface-hover); }
 .btn--text { background: none; color: var(--ink); box-shadow: none; padding-inline: 14px; }
 .btn--text:hover, .btn--text:active { background: var(--surface-hover); }
-.btn--sm { min-height: 44px; padding: 0 18px; border-radius: var(--r-btn-sm); box-shadow: none; }
+.btn--sm { /* token-exempt: 운영자 화면 값 — 운영자 밖은 아래 :where(:not(.admin-area *)) 규칙이 토큰으로 덮는다 */ min-height: 44px; padding: 0 18px; border-radius: var(--r-btn-sm); box-shadow: none; }
 .btn--wide { min-width: 360px; }
 .btn--block { width: 100%; }
 @media (max-width: 767px) { .btn--wide { min-width: 0; width: 100%; } }
 /* 태그: 상태 4색 + 코랄(상태가 아닌 강조에만) + 중립 */
-.tag { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 8px; border-radius: var(--r-tag); background: var(--surface); color: var(--sub); font-weight: var(--fw-bold); line-height: 1.5; }
+.tag { /* token-exempt: 운영자 화면 값 — 운영자 밖은 아래 :where(:not(.admin-area *)) 규칙이 토큰으로 덮는다 */ display: inline-flex; align-items: center; min-height: 32px; padding: 4px 8px; border-radius: var(--r-tag); background: var(--surface); color: var(--sub); font-weight: var(--fw-bold); line-height: 1.5; }
 .tag--brand { background: var(--surface-selected); color: var(--brand-ink); }
 .tag--success { background: var(--success-soft); color: var(--success); } /* 완료·승인 */
 .tag--warn { background: var(--warn-soft); color: var(--warn-ink); } /* 대기·검수 중·남은 기간 */
 .tag--danger { background: var(--danger-soft); color: var(--danger); } /* 거절·배송 문제 */
 .tag--info { background: var(--info-soft); color: var(--info); } /* 배송 중·진행 */
-.chip { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: var(--r-pill); background: var(--surface); color: var(--ink); }
+.chip { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); padding: 0 14px; border-radius: var(--r-pill); background: var(--surface); color: var(--ink); }
 /* 입력창: 흰 바탕 + 또렷한 경계, 안내 글자는 --faint.
    시안에서 .field 는 입력 요소 자체에 붙는다. 이전 화면은 같은 이름을 「라벨+입력」 감싸개 div 로 썼으므로 입력 요소에만 건다(감싸개는 맨 아래 이전 클래스) */
-:is(input, select, textarea).field { display: block; width: 100%; min-width: 0; min-height: 48px; padding: 0 16px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font-size: var(--fs-body); color: var(--ink); }
+:is(input, select, textarea).field { display: block; width: 100%; min-width: 0; min-height: var(--field-h); padding: 0 16px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font-size: var(--fs-body); color: var(--ink); }
 :is(input, textarea).field::placeholder { color: var(--faint); opacity: 1; }
 :is(input, select, textarea).field:focus { outline: 2px solid transparent; box-shadow: inset 0 0 0 var(--field-ring) var(--field-focus); } /* 테두리 색만 바꾼다 — 바깥 선을 더하지 않아 오류 테두리와 겹치지 않는다. 투명 외곽선은 고대비 모드용 */
 /* 오류 입력칸 — 초점이 있어도 빨간 테두리 하나만 */
@@ -129,7 +129,7 @@ h3 { font-size: var(--fs-body); }
 .hero .t-lead { margin-bottom: 16px; }
 .hero-line { margin-top: 24px; font-size: var(--fs-card); line-height: 1.4; font-weight: var(--fw-bold); color: var(--brand-ink); }
 .hero-desc { max-width: 640px; margin: 24px auto 0; }
-.search { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 640px; height: 60px; margin: clamp(32px, 4vw, 48px) auto 0; padding: 0 8px 0 24px; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--field); }
+.search { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 640px; height: var(--search-h); margin: clamp(32px, 4vw, 48px) auto 0; padding: 0 8px 0 24px; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--field); }
 .search:focus-within { box-shadow: 0 0 0 3px var(--ink); }
 .search input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; font-size: var(--fs-lead); color: var(--ink); }
 .search input::placeholder { color: var(--faint); opacity: 1; }
@@ -196,7 +196,7 @@ h3 { font-size: var(--fs-body); }
 .my-me b { display: block; line-height: 1.3; }
 .my-me div span { display: block; color: var(--sub); }
 .my-menu ul, ul.my-menu { display: grid; gap: 4px; }
-.my-menu a { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 12px; border-radius: var(--r-btn-sm); text-decoration: none; }
+.my-menu a { display: flex; align-items: center; gap: 12px; min-height: var(--touch); padding: 8px 12px; border-radius: var(--r-btn-sm); text-decoration: none; }
 .my-menu a:hover { background: var(--surface-hover); }
 .my-menu a[aria-current="page"] { background: var(--surface-selected); color: var(--brand-ink); font-weight: var(--fw-bold); }
 .my-menu a:focus-visible { outline-offset: 0; }
@@ -243,10 +243,10 @@ h3 { font-size: var(--fs-body); }
 .avatar-stack .face:first-child { margin-left: 0; }
 /* 탭·태그 묶음 */
 .tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 100%; margin: 0 0 32px; padding: 4px; }
-.tabs a, .tabs label, .tab { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 8px 16px; border: 0; border-radius: var(--r-pill); background: var(--surface); text-decoration: none; text-align: center; cursor: pointer; }
+.tabs a, .tabs label, .tab { /* token-exempt: 운영자 화면 값 — 운영자 밖은 아래 :where(:not(.admin-area *)) 규칙이 토큰으로 덮는다 */ display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 8px 16px; border: 0; border-radius: var(--r-pill); background: var(--surface); text-decoration: none; text-align: center; cursor: pointer; }
 .tabs a:hover, .tab:hover { background: var(--surface-hover); }
 .tabs a[aria-current="page"], .tab[aria-selected="true"] { background: var(--surface-selected); color: var(--brand-ink); font-weight: var(--fw-bold); }
-.tabs .n { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 8px; border-radius: var(--r-pill); background: var(--ink); color: var(--white); font-weight: var(--fw-bold); line-height: 1; }
+.tabs .n { /* token-exempt: 탭 안 숫자 원(24×24 이상) — 뱃지가 아니라 개수 표시 */ display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 8px; border-radius: var(--r-pill); background: var(--ink); color: var(--white); font-weight: var(--fw-bold); line-height: 1; }
 .tags { display: flex; flex-wrap: wrap; gap: 8px; }
 .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 32px; }
 .chips .chip { min-height: 44px; padding: 0 18px; border: 0; cursor: pointer; }
@@ -275,7 +275,7 @@ h3 { font-size: var(--fs-body); }
 .btn--kakao:active { background: var(--kakao-active); }
 .btn--kakao svg { width: 20px; height: 20px; }
 /* 고르기·폼 */
-.opt { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 12px 16px; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); cursor: pointer; line-height: 1.5; }
+.opt { /* token-exempt: 운영자 화면 값(고르기 칸 52) — 운영자 밖은 아래 :where 규칙이 --field-h 로 덮는다 */ display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 12px 16px; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); cursor: pointer; line-height: 1.5; }
 .opt input { flex-shrink: 0; width: 24px; height: 24px; margin: 0; accent-color: var(--brand-line); }
 .opt:has(input:checked) { background: var(--surface-selected); box-shadow: inset 0 0 0 2px var(--brand-line); }
 .opt:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 3px; }
@@ -449,7 +449,7 @@ a.card:hover, .ccard:focus-within { box-shadow: inset 0 0 0 2px var(--field-line
   .col { padding-block: 32px 56px; }
   .my { padding-block: 32px 56px; }
   .my-grid { padding-bottom: 56px; }
-  .my-menu a { min-height: 48px; padding-inline: 16px; }
+  .my-menu a { min-height: var(--touch); padding-inline: 16px; }
   .my-menu svg { width: 20px; height: 20px; }
   .tabs { gap: 8px; padding: 0; }
   .tabs a, .tabs label, .tab { padding-inline: 16px; }
@@ -484,7 +484,7 @@ a.card:hover, .ccard:focus-within { box-shadow: inset 0 0 0 2px var(--field-line
 
 /* ---------- 13. 플랫폼 뱃지 (2026-10-13 사용자 선택: 테두리 알약, 마우스를 올리면 연한 색 배경) ----------
    --f(옅은 면)·--k(글자색)는 플랫폼마다 화면이 넣는다(design-rules 5절). 어느 폭에서도 한 줄 */
-.ctag { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 4px 12px 4px 4px; border-radius: var(--r-pill); background: var(--white); color: var(--k, var(--ink)); font-weight: 400; line-height: 1.5; white-space: nowrap;
+.ctag { display: inline-flex; align-items: center; gap: 6px; min-height: var(--tag-h); padding: 4px 12px 4px 4px; border-radius: var(--r-pill); background: var(--white); color: var(--k, var(--ink)); font-weight: 400; line-height: 1.5; white-space: nowrap;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--k, var(--ink)) 30%, var(--white)); transition: background-color .15s ease; }
 .ctag:hover { background: var(--f, var(--ctag-face)); }
 .ctag .bd { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; overflow: hidden; }
@@ -640,13 +640,14 @@ img.asset { display: block; object-fit: contain; }
 :is(.link-line, .mini-links a):where(:not(.admin-area *)) { font-weight: var(--fw-btn); color: var(--brand-ink); }
 
 /* 태그 · 칩 — 알약(gray-100). 상태 색은 빨강+회색만: 강조·완료 = 옅은 빨강, 대기·진행·거절 = 회색 */
-.tag:where(:not(.admin-area *)) { gap: var(--space-2); min-height: 0; padding: var(--space-2) var(--space-4); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-size: var(--fs-caption); font-weight: var(--fw-btn); line-height: 1; }
+.tag:where(:not(.admin-area *)) { gap: var(--space-2); min-height: var(--tag-h); padding: var(--space-2) var(--space-4); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-size: var(--fs-caption); font-weight: var(--fw-btn); line-height: 1; }
 .tag svg:where(:not(.admin-area *)) { width: 16px; height: 16px; }
 :is(.tag--brand, .tag--success, .tag--accent):where(:not(.admin-area *)) { background: var(--primary-50); color: var(--brand-ink); }
 :is(.tag--warn, .tag--info, .tag--danger):where(:not(.admin-area *)) { background: var(--gray-100); color: var(--gray-900); }
 .tag--line:where(:not(.admin-area *)) { background: var(--white); color: var(--gray-600); box-shadow: inset 0 0 0 1px var(--gray-200); } /* 새 이름 — 흰 면 회색 경계(시안 크리에이터 묶음) */
 .tag--no:where(:not(.admin-area *)) { background: var(--white); color: var(--brand-ink); box-shadow: inset 0 0 0 1px var(--brand-line); } /* 새 이름 — 거절(시안 크리에이터 묶음) */
-.chip:where(:not(.admin-area *)) { min-height: 0; padding: var(--space-2) var(--space-4); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-weight: var(--fw-btn); line-height: 1; }
+/* 단독 .chip 은 누르지 않는 표시(메인 「선물 진행 단계」 등) — 뱃지 크기. 누르는 칩은 .chips 안(아래 줄)에서 36 */
+.chip:where(:not(.admin-area *)) { min-height: var(--tag-h); padding: 0 var(--space-3); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-weight: var(--fw-btn); line-height: 1; }
 .chips:where(:not(.admin-area *)) { justify-content: flex-start; margin-bottom: var(--space-6); }
 .chips .chip:where(:not(.admin-area *)) { min-height: var(--btn-h-sm); padding: 0 var(--space-4); }
 .chips .chip:where(:not(.admin-area *)):hover { background: var(--gray-200); }

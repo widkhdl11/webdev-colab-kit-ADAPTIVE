@@ -67,7 +67,7 @@ export function findTokenViolations(css: string): string[] {
       why.push(`버튼·입력창 높이 ${height} → var(--btn-h)·var(--btn-h-sm)·var(--field-h)·var(--hit)`);
     }
     // 입력칸
-    if (/\b(input|select|textarea)\b/.test(selector) && !pseudo && heightPx !== null && heightPx >= 32 && !why.length) {
+    if (/\b(input|select)\b/.test(selector) && !/textarea/.test(selector) && !pseudo && heightPx !== null && heightPx >= 32 && !why.length) {
       why.push(`입력칸 높이 ${height} → var(--field-h)`);
     }
     // 공용 부품 덮어쓰기
@@ -90,6 +90,34 @@ export function findTokenViolations(css: string): string[] {
     }
   }
   return out;
+}
+
+/**
+ * base.css 앞쪽의 「운영자 화면 값」 규칙(token-exempt 사유에 그 말이 있는 것)마다, 같은 부품 이름을 가진
+ * `:not(.admin-area` 규칙이 높이를 토큰으로 정하는지 본다. 없으면 그 부품은 사이트 화면에서도 옛 숫자 크기로 남는다.
+ */
+export function findUncoveredAdminValues(css: string): string[] {
+  const src = css.replace(/\/\*[\s\S]*?\*\//g, (c) => (c.includes("운영자 화면 값") ? "__ADMIN__" : ""));
+  const blocks = [...src.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({ sel: (m[1] ?? "").trim(), body: m[2] ?? "" }));
+  const missing: string[] = [];
+  // 선택자를 대상 목록으로: `:where(:not(.admin-area *))` 를 떼고, `:is(a, b)` 를 풀고, `.tag.tag` 같은 반복을 하나로.
+  // 그 부품 자체가 대상인 규칙만 맞는다 — `.opt input` 은 `.opt` 와 다른 대상이라 부품 높이를 덮은 것으로 치지 않는다
+  const targets = (sel: string) => {
+    const plain = sel.replaceAll(":where(:not(.admin-area *))", "").trim();
+    const list = /^:is\((.*)\)$/.exec(plain)?.[1] ?? plain;
+    return list.split(",").map((p) => p.trim().replace(/(\.[\w-]+)\1+/g, "$1"));
+  };
+  for (const b of blocks.filter((x) => x.body.includes("__ADMIN__"))) {
+    const covering = blocks.filter((o) => {
+      if (!o.sel.includes(":not(.admin-area")) return false;
+      const h = decl(o.body, "min-height") ?? decl(o.body, "height");
+      return !!h && TOKEN.test(h);
+    });
+    for (const t of targets(b.sel)) {
+      if (!covering.some((o) => targets(o.sel).includes(t))) missing.push(t);
+    }
+  }
+  return missing;
 }
 
 function moduleCssFiles(dir: string): string[] {
@@ -123,6 +151,23 @@ describe("부품 크기·글자·색·모서리는 토큰으로만", () => {
     none(".bar i { height: 8px; border-radius: var(--r-pill); }");
     none(".s { min-height: 48px; border-radius: var(--r-pill); /* token-exempt: 가입 단계 줄 */ }");
     none(".t { font-size: 11px; /* pill-size-exempt: 옛 이름도 받는다 */ }");
+  });
+
+  it("공용 부품 정의(base.css)에도 숫자·#값이 없다 — 운영자 화면 값은 사유를 단 줄만", () => {
+    const found = findTokenViolations(readFileSync(join(__dirname, "base.css"), "utf8"));
+    expect(found, `base.css 에서 토큰 대신 숫자로 적은 곳 ${found.length}개:\n${found.join("\n")}`).toEqual([]);
+  });
+
+  it("「운영자 화면 값」으로 뺀 base.css 규칙은 운영자 밖에서 토큰 규칙이 실제로 덮는다", () => {
+    const css = readFileSync(join(__dirname, "base.css"), "utf8");
+    const missing = findUncoveredAdminValues(css);
+    expect(missing, `운영자 밖을 덮는 규칙이 없는 부품:\n${missing.join("\n")}`).toEqual([]);
+  });
+
+  it("덮는 규칙 확인이 실제로 잡는다 — 덮는 규칙을 지운 경우", () => {
+    const exempt = ".btn { /* token-exempt: 운영자 화면 값 — x */ min-height: 48px; border-radius: var(--r-btn); }";
+    expect(findUncoveredAdminValues(exempt)).toEqual([".btn"]);
+    expect(findUncoveredAdminValues(`${exempt}\n.btn:where(:not(.admin-area *)) { min-height: var(--btn-h); }`)).toEqual([]);
   });
 
   it("화면 CSS 에 숫자·#값으로 적은 크기·글자·색·모서리가 없다", () => {
