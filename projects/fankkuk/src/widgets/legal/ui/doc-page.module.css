@@ -96,7 +96,7 @@ a.tile:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .mark { padding: 0; background: var(--tint-line); color: var(--gray-900); }
 
 /* 「주요」(원칙 ③) */
-.badge { flex: none; display: inline-flex; align-items: center; padding: 2px var(--space-2); border-radius: var(--r-pill); background: var(--primary-50); color: var(--gray-900); font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.4; white-space: nowrap; }
+.badge { flex: none; display: inline-flex; align-items: center; min-height: var(--tag-h); padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--primary-50); color: var(--gray-900); font-family: var(--font); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1.2; white-space: nowrap; }
 
 /* 위에 붙는 목차 줄 — 첫 화면에서는 제자리, 스크롤하면 상단 바 아래에 붙는다. 붙는 범위는 조가 든 칸(.flow) 안 */
 .flow { position: relative; }
@@ -168,7 +168,7 @@ a.tile:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .main .art.closing { gap: var(--space-3); margin-top: var(--space-4); padding: var(--space-8); border-top: 0; border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: inset 0 0 0 1px var(--tint-line), var(--surface-accent-shadow); }
 .inLink { color: var(--gray-900); text-decoration: underline; text-decoration-color: var(--gray-500); text-underline-offset: 4px; }
 .inLink:hover { text-decoration-color: var(--gray-900); }
-.no { align-self: flex-start; display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--space-3); font-size: var(--fs-badge); line-height: 1.2; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font-weight: var(--fw-btn); }
+.no { align-self: flex-start; display: inline-flex; align-items: center; min-height: var(--tag-h); padding: 0 var(--space-3); font-size: var(--fs-badge); line-height: 1.2; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font-weight: var(--fw-btn); }
 .artHead { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
 /* 조 제목 — 약관·안내 글 모두 24(휴대폰 20). 36절 */
 .artT { flex: 0 1 auto; min-width: 0; margin: 0; font-size: var(--fs-page); line-height: 1.3; overflow-wrap: anywhere; }
@@ -204,7 +204,7 @@ a.tile:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .stageChips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0; padding: 0; list-style: none; font-size: var(--fs-small); line-height: 1.5; }
 .stageChips li { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
 .stageChips li:not(:last-child)::after { content: "›" / ""; color: var(--gray-500); }
-.stageChip { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--space-3); font-size: var(--fs-badge); line-height: 1.2; border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.stageChip { display: inline-flex; align-items: center; min-height: var(--tag-h); padding: 0 var(--space-3); font-size: var(--fs-badge); line-height: 1.2; border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
 
 /* 본문 강조 낱말(3-8) — 진한 강조 글자. 주의 판 안에서는 판 글자색 그대로 */
 .em { color: var(--brand-ink); font-weight: var(--fw-btn); }
@@ -294,7 +294,7 @@ a.tile:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 /* 송장 두 장 그림(시안 guide-fan-r2 02조) — 회색 면 안 흰 송장, 안쪽 흰 칸에만 1px 선(4-7). 칸 폭 639 이하는 한 장씩 */
 .slipFig { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
-.eg { align-self: flex-start; display: inline-flex; padding: 2px var(--space-3); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-300); color: var(--gray-600); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1.5; }
+.eg { align-self: flex-start; display: inline-flex; align-items: center; min-height: var(--tag-h); padding: 0 var(--space-3); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-300); color: var(--gray-600); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1.5; }
 .slips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 .slip { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-300); line-height: 1.5; }
 .slipT { margin: 0; color: var(--gray-600); font-size: var(--fs-small); font-weight: var(--fw-btn); }
@@ -315,7 +315,7 @@ a.tile:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 @container doc (max-width: 639px) { .cases > div { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
 
 /* 환불 금액 꼬리표 — 전액 초록 · 없음 빨강 */
-.pill { display: inline-block; padding: 0 var(--space-2); border-radius: var(--r-tag); font-weight: var(--fw-btn); }
+.pill { display: inline-block; padding: 0 var(--space-2); border-radius: var(--r-tag); font-weight: var(--fw-btn); /* pill-size-exempt: 약관 본문 문장 속 글자 강조 — 뱃지가 아니라 본문 글자 크기를 따른다 */ }
 .pillFull { background: var(--success-soft); color: var(--success); }
 .pillNone { background: var(--danger-soft); color: var(--danger); }
 

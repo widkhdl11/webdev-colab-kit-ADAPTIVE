@@ -27,7 +27,7 @@
 .steps-wrap { margin-bottom: 24px; scroll-margin-top: calc(var(--header-h) + 24px); }
 .steps { display: flex; gap: 8px; }
 .steps li { flex: 1 1 0; min-width: 0; }
-.st { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; padding: 0 8px; border: 0; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font: 400 16px/1.2 var(--font); white-space: nowrap; cursor: default; }
+.st { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; padding: 0 8px; border: 0; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font: 400 16px/1.2 var(--font); white-space: nowrap; cursor: default; /* pill-size-exempt: 가입 단계 줄 — 뱃지가 아니라 단계 진행 표시(design-rules 가입 단계 절) */ }
 .dot { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--white); color: var(--gray-600); font-weight: var(--fw-btn); line-height: 1; }
 .st.is-done { background: var(--primary-50); color: var(--brand-ink); cursor: pointer; }
 .st.is-done .dot { color: var(--brand-ink); }

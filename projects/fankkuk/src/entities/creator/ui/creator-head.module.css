@@ -25,14 +25,14 @@ span.name { font-weight: var(--fw-bold); }
 
 /* 팬덤 뱃지 — 시안 v25-card-align C안 .fn2(DECISIONS 2026-10-17 카드 d103): 높이 22 · 글자 12(뱃지 전용 --fs-badge) · 굵기 600 · 마크 14.
    테마 색이 있으면(.fbTheme — design-rules 17절) 면 = 테마 색, 테두리 1px = 테마 색 + #1F2937 22%(--personal-line), 글자 #000000·#FFFFFF 중 대비가 큰 쪽(--personal-ink, INV-E14). 없으면 옅은 면 + 회색 테두리 */
-.fb { --badge-h2: 22px; --mark-s: 14px; display: inline-flex; align-items: center; gap: var(--space-1); min-width: 0; max-width: 100%; height: var(--badge-h2); padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--gray-900); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1; white-space: nowrap; }
+.fb { --badge-h2: var(--tag-h-sm); --mark-s: 14px; display: inline-flex; align-items: center; gap: var(--space-1); min-width: 0; max-width: 100%; height: var(--badge-h2); padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--gray-900); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1; white-space: nowrap; }
 .fbTheme { background: var(--personal); box-shadow: inset 0 0 0 1px var(--personal-line); color: var(--personal-ink); }
 .fb:has(.fbMark) { padding-left: 3px; }
 .fbMark { flex: none; display: grid; place-items: center; width: var(--mark-s); height: var(--mark-s); border-radius: var(--r-mark); background: var(--white); overflow: hidden; }
 .fbMark img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .fbt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 /* 중간 뱃지(공개 프로필 머리·크리에이터 머리, 큰 이름 옆) — 이전 크기 그대로 28 · 마크 20 · 글자 14, 색 모양만 위와 같다 */
-.fbMd { --badge-h2: 24px; --mark-s: 16px; font-size: var(--fs-badge); } /* 2026-11-17 「뚱뚱한 뱃지 전부」 — 28·14·20 에서 뱃지 기준 24·12 로 */
+.fbMd { --badge-h2: var(--tag-h); --mark-s: 16px; font-size: var(--fs-badge); } /* 2026-11-17 「뚱뚱한 뱃지 전부」 — 28·14·20 에서 뱃지 기준 24·12 로 */
 /* 큰 뱃지(상세 설정 미리보기) — 크기는 예전 그대로 40 · 마크 30 · 글자 16, 색 모양만 위와 같다 */
 .fbLg { --badge-h2: 40px; --mark-s: 30px; gap: var(--space-2); padding: 0 var(--space-4); font-size: var(--fs-body); }
 .fbLg:has(.fbMark) { padding-left: 4px; }

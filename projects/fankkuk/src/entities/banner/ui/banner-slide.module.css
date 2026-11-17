@@ -18,13 +18,15 @@
 .fullImage { display: block; width: 100%; max-width: 100%; height: auto; }
 .txt { min-width: 0; max-width: 60%; }
 .tag {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tag-h);
   margin-bottom: var(--space-2);
-  padding: 2px var(--space-2);
+  padding: 0 var(--space-2);
   border-radius: var(--r-tag);
   background: var(--white);
-  font-size: var(--fs-small);
-  line-height: 1.5;
+  font-size: var(--fs-badge);
+  line-height: 1.2;
   font-weight: var(--fw-btn);
   color: var(--sub);
 }
@@ -42,7 +44,8 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  min-height: 44px; /* 누름 칸 44(2026-10-18 재진단) */
+  position: relative;
+  min-height: var(--btn-h-sm); /* 보이는 높이 36, 누르는 칸 44 는 ::before 덧칸(2026-11-17 버튼·탭·뱃지 크기) */
   margin-top: var(--space-4);
   padding: 0 var(--space-4);
   border-radius: var(--r-pill);
@@ -52,6 +55,7 @@
   color: var(--ink);
   text-decoration: none;
 }
+.go::before { content: ""; position: absolute; inset: calc((var(--hit) - var(--btn-h-sm)) / -2) 0; }
 .go:hover { background: var(--gray-50); }
 .go:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .img { flex: none; width: 180px; height: 180px; max-width: 40%; object-fit: contain; }

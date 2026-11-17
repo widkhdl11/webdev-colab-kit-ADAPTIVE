@@ -12,7 +12,7 @@
 .row.row { border-bottom: 1px solid var(--gray-200); }
 .row.row + .row { border-top: 0; border-radius: 0; }
 .side :global(.btn) { min-width: 0; }
-.picked { display: inline-flex; align-items: center; padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); font-size: var(--fs-small); font-weight: var(--fw-btn); white-space: nowrap; }
+.picked { display: inline-flex; align-items: center; min-height: var(--tag-h); padding: 0 var(--space-3); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); font-size: var(--fs-badge); font-weight: var(--fw-btn); white-space: nowrap; }
 
 /* 가장 급한 승인 요청 — 하늘 판 하나(2:1), 오른쪽 위로 그림이 걸친다 (시안 .ahero) */
 .root.root > .hero { position: relative; margin-top: var(--space-12); display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-8); align-items: stretch; padding: var(--space-8); } /* 안쪽 32 — 줄 안쪽과 같은 정렬선(40절) */

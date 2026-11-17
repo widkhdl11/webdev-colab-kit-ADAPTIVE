@@ -1026,7 +1026,7 @@ input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):disabled:
 :is(.tabs a, .tabs label, .tab):where(:not(.admin-area *)) { min-height: var(--btn-h-sm); font-size: var(--fs-small); }
 .chips .chip:where(:not(.admin-area *)) { font-size: var(--fs-small); }
 /* 태그 — 같은 무게(0,2,0)의 앞 규칙(.v34 범위 태그·.tag--dot)을 이기도록 .tag 를 두 번 쓴다 */
-.tag.tag:where(:not(.admin-area *)) { gap: 6px; min-height: 24px; padding: 0 var(--space-3); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1.2; white-space: nowrap; }
+.tag.tag:where(:not(.admin-area *)) { gap: 6px; min-height: var(--tag-h); padding: 0 var(--space-3); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1.2; white-space: nowrap; }
 .tag.tag--dot:where(:not(.admin-area *)) { padding-left: var(--space-2); }
 .tag.tag--dot:where(:not(.admin-area *))::before { width: 6px; height: 6px; }
 .tag.tag:where(:not(.admin-area *)) svg { width: 14px; height: 14px; }

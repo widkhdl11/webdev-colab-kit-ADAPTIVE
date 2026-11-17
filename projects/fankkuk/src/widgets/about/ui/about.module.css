@@ -31,7 +31,7 @@
 .acts { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-8); }
 
 /* 그림 속 작은 표시 — 12 는 그림 속 표시 예외(34절 「보조 글자 12 허용」) */
-.badge { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0 var(--space-2); border-radius: var(--r-pill); font-size: var(--fs-badge); font-style: normal; font-weight: var(--fw-bold); line-height: 22px; white-space: nowrap; }
+.badge { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0 var(--space-2); border-radius: var(--r-pill); min-height: var(--tag-h-sm); font-size: var(--fs-badge); font-style: normal; font-weight: var(--fw-bold); line-height: 1.2; white-space: nowrap; }
 .badge svg { width: 12px; height: 12px; }
 .badgeGray { background: var(--gray-100); color: var(--gray-600); }
 .badgeBrand { background: var(--primary-50); color: var(--info); }
@@ -168,7 +168,7 @@
 .profileBody { position: relative; display: flex; align-items: flex-end; gap: var(--space-3); margin-top: -28px; padding: 0 var(--space-4) var(--space-4); }
 .avatar { width: var(--avatar); height: var(--avatar); border: 3px solid var(--white); border-radius: var(--r-pill); background: var(--primary-50); box-shadow: var(--face-ring); object-fit: contain; }
 .profileBody b { min-width: 0; font-size: var(--fs-body); line-height: 28px; }
-.fandom { display: inline-flex; align-items: center; gap: var(--space-1); margin-left: auto; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--theme); color: var(--badge-ink); font-size: var(--fs-badge); font-weight: var(--fw-bold); line-height: 24px; white-space: nowrap; transition: background-color var(--dur-w) var(--ease-micro); }
+.fandom { display: inline-flex; align-items: center; gap: var(--space-1); margin-left: auto; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--theme); color: var(--badge-ink); min-height: var(--tag-h); font-size: var(--fs-badge); font-weight: var(--fw-bold); line-height: 1.2; white-space: nowrap; transition: background-color var(--dur-w) var(--ease-micro); }
 .fandom img { width: 16px; height: 16px; object-fit: contain; }
 
 /* 6. 지키는 기준 — 누르는 칸이 아니라 여백으로만 나눈다 */

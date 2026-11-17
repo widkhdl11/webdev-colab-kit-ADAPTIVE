@@ -11,7 +11,7 @@
 .from { grid-column: 1 / span 7; padding: var(--space-4); border-radius: var(--r-btn); box-shadow: inset 0 0 0 1px var(--kraft-line); }
 .to { grid-column: 4 / -1; overflow: hidden; border-radius: var(--r-btn); box-shadow: inset 0 0 0 1px var(--kraft-line); }
 .partH { display: flex; align-items: center; gap: var(--space-2); font-weight: var(--fw-bold); }
-.ex { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--kraft-field); font-size: var(--fs-badge); font-weight: var(--fw-btn); }
+.ex { display: inline-flex; align-items: center; min-height: var(--tag-h); padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--kraft-field); font-size: var(--fs-badge); font-weight: var(--fw-btn); }
 .toHead { padding: var(--space-2) var(--space-4); background: var(--kraft); /* 시안처럼 진한 크라프트 띠 — 글자 8.1:1 */ font-weight: var(--fw-bold); }
 .to .rows { padding: var(--space-4); }
 
@@ -27,7 +27,7 @@
 .key dd { display: grid; gap: var(--space-2); padding: 0; background: none; }
 .detailBox { display: block; padding: var(--space-2) var(--space-3); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 2px var(--kraft-ink); font-weight: var(--fw-btn); line-height: 1.6; overflow-wrap: anywhere; }
 .hl { display: inline-block; padding: 0 var(--space-2); border-radius: var(--r-icon); background: var(--kraft-hl); font-weight: var(--fw-bold); letter-spacing: 1px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.callout { justify-self: start; padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--kraft-paper); box-shadow: inset 0 0 0 1px var(--kraft-line); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.callout { justify-self: start; display: inline-flex; align-items: center; min-height: var(--tag-h); padding: 0 var(--space-3); line-height: 1.4; border-radius: var(--r-pill); background: var(--kraft-paper); box-shadow: inset 0 0 0 1px var(--kraft-line); font-size: var(--fs-small); font-weight: var(--fw-btn); }
 
 /* 아래 띠 — 받는 곳 상세주소 한 줄 + 6자리 보기 · 전체 주소 복사 */
 .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3) var(--space-4); margin-top: var(--space-4); padding: var(--space-4); border-radius: var(--r-btn); background: var(--kraft-paper); }
