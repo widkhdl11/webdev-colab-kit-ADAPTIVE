@@ -273,6 +273,15 @@
   --tag-state-ink: #075985; /* 「확인 전」 뱃지 글자 — --primary-50 면 위 7.2:1 */
   --notice-sky: #eef7fd; /* 확인 중 공개 페이지 안내 상자 면(시안 part5 --sky-50) */
   --notice-sky-line: #cfe2ee; /* 같은 상자 1px 선(시안 part5 --panel-line) */
+  /* 택배 접수 작성 예시 — 크라프트 상자 느낌(시안 previews/shipping-label-20261114, 2026-11-17 사용자 「시안대로 고치라」). 이 판 하나만 쓴다 */
+  --kraft: #dcbb92; /* 바깥 크라프트 면 */
+  --kraft-paper: #fbf7f0; /* 안쪽 종이 면 */
+  --kraft-field: #efe5d7; /* 값 칸 · 판 머리 띠 */
+  --kraft-line: #d9c4a6; /* 종이 칸 테두리 */
+  --kraft-ink: #3a2314; /* 글자 · 진한 테두리 — 종이 면 13.8:1, 크라프트 면 8.1:1 */
+  --kraft-sub: #5c4330; /* 보조 글자 — 종이 면 8.6:1, 크라프트 면 5.0:1 */
+  --kraft-hl: #f2c879; /* 6자리 강조 면 — 진한 글자 9.3:1 */
+  --kraft-btn: #4a2614; /* 복사 버튼 면 — 흰 글자 13:1 */
 }
 @media (max-width: 1023px) {
   :root { --nav-gap: 16px; }

@@ -413,10 +413,13 @@ describe("v41: 두 코드 가르기 — 상자 이름에 주문번호가 없다"
     expect(host.querySelector("#g-title")?.previousElementSibling?.textContent).toBe("등록 10월 22일 (목)");
   });
 
-  it("INV-C2: 팬꾹 주소 6자리는 이름표 + 한 글자씩 칸, 처음엔 가려 두고 「6자리 보기」를 눌러야 보인다", () => {
+  it("INV-C2: 팬꾹 주소는 택배 접수 작성 예시(받는 분 상세주소 끝에 6자리), 처음엔 가려 두고 「6자리 보기」를 눌러야 보인다", () => {
     render();
     const addr = host.querySelector("main [data-box-address]");
-    expect(addr?.textContent).toContain("팬꾹 주소 6자리");
+    expect(addr?.textContent).toContain("택배를 보낼 때 이렇게 입력하세요");
+    // 6자리는 「받는 분」 칸의 상세주소 줄 끝에 있다(2026-11-17 시안 kraft-shipping-guide)
+    const detailRow = [...(addr?.querySelectorAll("dl > div") ?? [])].find((d) => d.querySelector("dt")?.textContent === "상세주소");
+    expect(detailRow?.querySelector("[data-code6]")).not.toBeNull();
     const cells = () => [...(addr?.querySelectorAll("[data-code6] > span[aria-hidden]") ?? [])].map((c) => c.textContent).join("");
     expect(cells()).toBe("••••••");
     expect(addr?.textContent).not.toContain("K7M3XA");
@@ -424,8 +427,8 @@ describe("v41: 두 코드 가르기 — 상자 이름에 주문번호가 없다"
     act(() => toggle.click());
     expect(cells()).toBe("K7M3XA");
     expect([...(addr?.querySelectorAll("ul > li") ?? [])].map((l) => l.textContent)).toEqual([
-      "주소 끝 6자리는 상자를 확인하는 데 필요합니다. 빠짐없이 입력하고 다른 사람에게 공유하지 마세요.",
-      "송장의 ‘보내는 분’에는 팬꾹 닉네임을 입력해 주세요.",
+      "보내는 분 이름에는 팬꾹 닉네임을 적어 주세요.",
+      "6자리는 상자를 확인하는 데 필요합니다. 빠짐없이 입력하고 다른 사람에게 공유하지 마세요.",
     ]);
   });
 });
