@@ -395,7 +395,7 @@ export function BoxCreateDialog({
 function CharCount({ id, value, max }: { id: string; value: string; max: number }) {
   const n = charCount(value);
   return (
-    <span className={s.count} id={id} data-full={n >= max ? "" : undefined}>
+    <span className={s.charCount} id={id} data-full={n >= max ? "" : undefined}>
       {n} / {max}자
     </span>
   );
