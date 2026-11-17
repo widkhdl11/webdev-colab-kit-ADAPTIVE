@@ -406,7 +406,7 @@ describe("payment INV-M25: 결제 단계의 반송 주소 칸(팬)", () => {
   let pem = "";
   let privateKey: CryptoKey | null = null;
 
-  async function renderFan() {
+  async function renderFan(nick = "별빛닉") {
     if (!pem) {
       const pair = await crypto.subtle.generateKey(
         { name: "RSA-OAEP", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
@@ -419,7 +419,7 @@ describe("payment INV-M25: 결제 단계의 반송 주소 칸(팬)", () => {
     }
     act(() =>
       root.render(
-        <RegisterForm creators={creators("block")} prices={prices} initialCreatorId={MOMO} onRegistered={() => {}} today={today} returnAddress={{ accountId: ACCOUNT, sealingKeyPem: pem, recipientName: "별빛닉" }} />,
+        <RegisterForm creators={creators("block")} prices={prices} initialCreatorId={MOMO} onRegistered={() => {}} today={today} returnAddress={{ accountId: ACCOUNT, sealingKeyPem: pem, recipientName: nick }} />,
       ),
     );
     await settle();
@@ -461,6 +461,13 @@ describe("payment INV-M25: 결제 단계의 반송 주소 칸(팬)", () => {
     expect(Object.keys(sent.returnAddress ?? {}).sort()).toEqual(["alg", "ciphertext", "iv", "v", "wrappedKey"]);
     expect(sent.returnRegion).toBe("jeju");
     for (const plain of ["63100", "첨단로", "101호", "별빛닉", "01012345678", "010-1234-5678"]) expect(raw).not.toContain(plain);
+  });
+
+  it("INV-M25 (실패경로): 닉네임이 공백뿐이면 조용히 멈추지 않고 문구가 보이며 보내지 않는다", async () => {
+    await renderFan("   ");
+    await fillAddress();
+    expect(host.textContent).toContain("주소를 다시 확인해 주세요.");
+    expect(host.textContent).not.toContain("반송 주소를 입력했습니다.");
   });
 
   it("INV-M25 (2026-11-17 「2번 — 일의 간소화」): 반송 주소에는 이름 칸이 없고, 봉인 속 받는 분 이름은 팬 닉네임이다", async () => {

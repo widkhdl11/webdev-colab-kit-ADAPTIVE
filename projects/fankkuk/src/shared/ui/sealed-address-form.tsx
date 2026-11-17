@@ -260,7 +260,8 @@ export function useSealedAddressEntry<C>({
       setErrors([]);
       return true;
     } catch (err) {
-      const bad = badFields(err).filter((f) => !only || only.has(f));
+      // 이름을 칸으로 받지 않으면(fixedRecipientName) 그 칸의 오류는 표시할 자리가 없다 — 봉인(seal)이 문구로 돌려준다
+      const bad = badFields(err).filter((f) => (!only || only.has(f)) && !(f === "recipientName" && fixedRecipientName !== undefined));
       setErrors(bad);
       if (bad[0]) {
         fieldRefs.current[bad[0]]?.focus();
@@ -277,7 +278,7 @@ export function useSealedAddressEntry<C>({
     try {
       plaintext = toPlaintext(normalized());
     } catch (err) {
-      const bad = badFields(err);
+      const bad = badFields(err).filter((f) => !(f === "recipientName" && fixedRecipientName !== undefined));
       setErrors(bad);
       if (bad[0]) {
         fieldRefs.current[bad[0]]?.focus();
