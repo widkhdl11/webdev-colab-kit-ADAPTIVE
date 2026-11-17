@@ -99,7 +99,7 @@
 .lkLabel { font-weight: var(--fw-btn); }
 .lkRow { display: flex; align-items: center; gap: var(--space-4); }
 .lk { flex: 1; min-width: 0; color: var(--sub); font-size: var(--fs-small); line-height: 1.5; overflow-wrap: anywhere; }
-.lkRow > :global(.btn) { flex: none; min-height: 44px; }
+.lkRow > :global(.btn) { flex: none; } /* 2026-11-17 공용 버튼 높이(40, 누르는 칸 44) 그대로 */
 
 /* ── 신청 관리 모달 (design-rules 43절 「신청 관리 칩」 · 시안 .mg-st·.psearch·.pgrid·.pchip·.pfix) ── */
 .ico { flex: none; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }

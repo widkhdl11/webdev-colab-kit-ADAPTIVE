@@ -25,13 +25,16 @@
 /* 버튼 — 찾기 카드와 같은 FollowButton(card). 「선물 보내기」 = 흰 선 버튼 14/600(아이콘 없이), 「팔로우 취소」 = 테두리 없는 아이콘 44×44.
    버튼 칸은 display: contents — 버튼·저장 실패 알림이 줄(flex-wrap)의 직접 항목이 되어, 알림(FollowButton 이 폭 100% 로 그린다)이 뜨면 줄 아래 한 줄을 차지한다 */
 .act { display: contents; }
-.act > [data-card-btn] { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; border-radius: var(--r-btn); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.4; white-space: nowrap; }
-.act > [data-card-btn="main"] { padding: var(--space-2) var(--space-4); background: var(--white); color: var(--ink); box-shadow: inset 0 0 0 1px var(--gray-500); } /* 짙은 선(41절 — 이 화면 안에서만) */
+/* 2026-11-17 얇은 버튼 — 보이는 36, 누르는 칸은 덧칸으로 44 */
+.act > [data-card-btn]::before { content: ""; position: absolute; inset: calc((var(--hit) - var(--btn-h-sm)) / -2) 0; }
+.act > [data-card-btn="sub"]::before { inset: calc((var(--hit) - var(--btn-h-sm)) / -2); }
+.act > [data-card-btn] { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: var(--btn-h-sm); border-radius: var(--r-btn); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.4; white-space: nowrap; }
+.act > [data-card-btn="main"] { padding: 0 var(--space-4); background: var(--white); color: var(--ink); box-shadow: inset 0 0 0 1px var(--gray-500); } /* 짙은 선(41절 — 이 화면 안에서만) */
 .act > [data-card-btn="main"] > svg { display: none; }
 .act > [data-card-btn="main"]:is(:hover, :active) { background: var(--surface-hover); }
 .act > [data-card-btn] { flex: none; }
 /* 두 버튼 사이 8 — 줄 사이 간격(16)에서 8 을 당긴다 */
-.act > [data-card-btn="sub"] { margin-left: calc(var(--space-2) * -1); width: 44px; height: 44px; padding: 0; background: none; color: var(--sub); box-shadow: none; }
+.act > [data-card-btn="sub"] { margin-left: calc(var(--space-2) * -1); width: var(--btn-h-sm); height: var(--btn-h-sm); padding: 0; background: none; color: var(--sub); box-shadow: none; }
 .act > [data-card-btn="sub"]:is(:hover, :active) { background: var(--surface-hover); }
 .act > [data-card-btn="sub"] > svg { width: 20px; height: 20px; }
 .act > [data-card-btn][aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }

@@ -4,7 +4,7 @@
 /* 본문 칸 폭 기준 열 바꿈(design-rules 38절 「중간 폭」) — 사진 칸은 화면 폭이 아니라 이 칸 폭으로 3열 → 2열 */
 .col { max-width: 880px; margin-inline: auto; container: together / inline-size; }
 
-.back { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); color: var(--sub); font-size: var(--fs-small); font-weight: 400; text-decoration: none; }
+.back { display: inline-flex; align-items: center; min-height: var(--hit); color: var(--sub); font-size: var(--fs-small); font-weight: 400; text-decoration: none; }
 .back:hover { color: var(--ink); }
 
 /* 머리 — 얼굴 64 · 제목 32(휴대폰 24 — --fs-title) · 처음 선물한 날 14, 오른쪽 숫자 둘 (시안 .mhead, design-rules 38절 — 제목 32 > 달 머리 24) */
@@ -54,7 +54,7 @@
 /* 선물 이름은 말줄임 없이 줄바꿈 — 값이 칸보다 길 때 잘라서 정보가 사라지지 않게(design-rules 38절) */
 .what.what { margin-top: var(--space-1); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; overflow-wrap: anywhere; }
 .row2 { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 var(--space-2); margin-top: auto; padding-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
-.detail { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); color: var(--ink); font-weight: var(--fw-btn); text-decoration: none; }
+.detail { display: inline-flex; align-items: center; min-height: var(--hit); color: var(--ink); font-weight: var(--fw-btn); text-decoration: none; }
 .detail:hover { text-decoration: underline; }
 .replies { display: grid; gap: var(--space-2); margin-top: var(--space-2); min-width: 0; }
 

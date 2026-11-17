@@ -214,12 +214,19 @@ describe("프로필 수정 「채널」 탭 구역 — 채널 소유자 확인",
   });
 
   it("INV-V20: 유예 중이면 「링크 확인 필요」·유예 끝 날·「채널 확인 재요청」 — 남은 요청 횟수는 없다(INV-V15)", () => {
-    renderChannel({ ...baseState, handle: "haru", verified: true, graceUntil: "2026-11-16T03:00:00Z" });
-    const verify = host.querySelector("#verify")!;
-    expect(verify.textContent).toContain("링크 확인 필요");
-    expect(verify.textContent).toContain("활동 중인 채널에서 팬꾹 링크를 찾지 못했어요. 11월 16일까지 다시 올려 주세요");
-    expect(buttonByText("채널 확인 재요청")).toBeDefined();
-    expect(verify.textContent).not.toMatch(/남은|[0-9]+ *(번|회)/);
+    // 시계를 유예 끝 날 앞으로 고정한다 — 고정하지 않으면 11-16 이 지난 날부터 「유예 끝남」 문구가 나와 실패한다(2026-11-17)
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-14T00:00:00Z"));
+    try {
+      renderChannel({ ...baseState, handle: "haru", verified: true, graceUntil: "2026-11-16T03:00:00Z" });
+      const verify = host.querySelector("#verify")!;
+      expect(verify.textContent).toContain("링크 확인 필요");
+      expect(verify.textContent).toContain("활동 중인 채널에서 팬꾹 링크를 찾지 못했어요. 11월 16일까지 다시 올려 주세요");
+      expect(buttonByText("채널 확인 재요청")).toBeDefined();
+      expect(verify.textContent).not.toMatch(/남은|[0-9]+ *(번|회)/);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

@@ -90,7 +90,8 @@
 .detail { margin-top: var(--inner); }
 .dtoggleRow { display: flex; align-items: center; gap: var(--space-4); }
 .dtoggleRow::before, .dtoggleRow::after { content: ""; flex: 1; height: 1px; background: var(--border); }
-.dtoggle { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-4); border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair); color: var(--ink); font: var(--fw-btn) var(--fs-small) / 1.5 var(--font); cursor: pointer; }
+.dtoggle::before { content: ""; position: absolute; inset: calc((var(--hit) - var(--btn-h-sm)) / -2) 0; } /* 2026-11-17 얇은 버튼 — 보이는 36, 누르는 칸 44 */
+.dtoggle { position: relative; display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--btn-h-sm); padding: 0 var(--space-4); border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair); color: var(--ink); font: var(--fw-btn) var(--fs-small) / 1.5 var(--font); cursor: pointer; }
 @media (hover: hover) { .dtoggle:hover { background: var(--surface-hover); } }
 .dchev { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.15s; }
 .dtoggle[aria-expanded="true"] .dchev { transform: rotate(180deg); }

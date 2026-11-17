@@ -9,7 +9,7 @@
 .col { max-width: var(--col-flow); margin-inline: auto; }
 
 /* 돌아가기 — 회색 14 (시안 .back) */
-.back { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); color: var(--sub); font-size: var(--fs-small); font-weight: 400; text-decoration: none; }
+.back { display: inline-flex; align-items: center; min-height: var(--hit); color: var(--sub); font-size: var(--fs-small); font-weight: 400; text-decoration: none; }
 .back:hover { color: var(--ink); }
 
 .top > :global(#todo) { margin-top: var(--space-6); }
@@ -137,7 +137,7 @@
 
 /* 맨 아래 「1:1 문의하기」 글자 링크(UX 시범 B-7, 시안 .bottomlink·.textlink) — 누름 칸 44, 회색 14 밑줄 */
 .bottomlink { margin-top: var(--space-8); }
-.textlink { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); font-size: var(--fs-small); color: var(--sub); text-decoration: underline; text-underline-offset: 4px; }
+.textlink { display: inline-flex; align-items: center; min-height: var(--hit); font-size: var(--fs-small); color: var(--sub); text-decoration: underline; text-underline-offset: 4px; }
 .textlink:hover { color: var(--ink); }
 .textlink:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 

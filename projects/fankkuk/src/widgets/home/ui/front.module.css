@@ -173,8 +173,8 @@
   position: absolute;
   top: 50%;
   z-index: 1;
-  width: min(var(--btn-h-sm), var(--edge));
-  height: var(--btn-h-sm);
+  width: min(var(--hit), var(--edge));
+  height: var(--hit);
   padding: 0;
   border: 0;
   background: none;
@@ -182,12 +182,12 @@
   cursor: pointer;
   transform: translateY(-50%);
 }
-.rowArrow::before { content: ""; position: absolute; top: calc((var(--btn-h-sm) - var(--dot)) / 2); width: var(--dot); height: var(--dot); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--field-line); }
+.rowArrow::before { content: ""; position: absolute; top: calc((var(--hit) - var(--dot)) / 2); width: var(--dot); height: var(--dot); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--field-line); }
 .rowArrow:hover::before { background: var(--gray-50); }
 .rowArrow:focus-visible { outline: none; }
 .rowArrow:focus-visible::before { outline: 3px solid var(--focus); outline-offset: -3px; } /* 색·굵기는 광고 배너 넘김 단추와 같게, 자리 40 에서는 안쪽 */
 .rowArrow[hidden] { display: none; }
-.rowArrow svg { position: absolute; top: calc((var(--btn-h-sm) - 18px) / 2); width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rowArrow svg { position: absolute; top: calc((var(--hit) - 18px) / 2); width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .rowPrev { left: calc(-1 * var(--edge)); }
 .rowNext { right: calc(-1 * var(--edge)); }
 .rowPrev::before { left: var(--dot-gap); }
@@ -195,10 +195,10 @@
 .rowPrev svg { left: calc(var(--dot-gap) + (var(--dot) - 18px) / 2); }
 .rowNext svg { right: calc(var(--dot-gap) + (var(--dot) - 18px) / 2); }
 @container pane (min-width: 928px) {
-  .rowArrow { --dot: var(--btn-h-sm); --dot-gap: 0px; }
+  .rowArrow { --dot: var(--hit); --dot-gap: 0px; }
   .rowArrow:focus-visible::before { outline-offset: 2px; }
-  .rowPrev { left: calc((var(--edge) + var(--btn-h-sm)) / -2); }
-  .rowNext { right: calc((var(--edge) + var(--btn-h-sm)) / -2); }
+  .rowPrev { left: calc((var(--edge) + var(--hit)) / -2); }
+  .rowNext { right: calc((var(--edge) + var(--hit)) / -2); }
 }
 /* 팬 홈은 768 이하에서 바깥 여백이 16 이라 넓힐 자리가 없다 — 그 폭부터 화살표 없이 손가락·막대로 넘긴다 */
 @media (max-width: 768px) {

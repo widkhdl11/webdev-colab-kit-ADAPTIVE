@@ -38,10 +38,10 @@ button { font-family: inherit; }
 
 /* ---------- 시안 도구(페이지 바깥) ---------- */
 .tool { background: var(--ink); color: var(--white); font-size: var(--fs-small); }
-.tool-in { padding: var(--space-3) var(--gutter); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.tool-in { padding: var(--space-2) var(--gutter); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .tool b { font-weight: var(--fw-bold); margin-right: var(--space-2); }
 .tool .sep { width: 1px; align-self: stretch; margin: 0 var(--space-2); background: rgb(255 255 255 / .4); }
-.tool button { min-height: 44px; padding: 0 var(--space-4); border: 1px solid rgb(255 255 255 / .55); border-radius: var(--r-btn); background: transparent; color: var(--white); font: var(--fw-btn) var(--fs-small)/1.2 var(--font); cursor: pointer; }
+.tool button { min-height: 32px; padding: 0 var(--space-3); border: 1px solid rgb(255 255 255 / .55); border-radius: var(--r-btn); background: transparent; color: var(--white); font: var(--fw-btn) var(--fs-small)/1.2 var(--font); cursor: pointer; }
 .tool button[aria-pressed="true"] { background: var(--white); color: var(--ink); border-color: var(--white); }
 .tool button:focus-visible { outline-color: var(--white); }
 .tool .cap { flex: 1 0 100%; color: var(--gray-300); }
@@ -71,9 +71,12 @@ button { font-family: inherit; }
 /* ---------- 공용 부품(base.css 값 그대로) ---------- */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: var(--btn-h); padding: 12px var(--space-6); border: 0; border-radius: var(--r-btn); background: var(--btn-fill-fx); box-shadow: var(--btn-fill-shadow); color: var(--on-brand); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; text-decoration: none; cursor: pointer; transition: background-color var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out); }
 .btn:hover { background: var(--brand-hover); box-shadow: var(--btn-fill-shadow-hover); }
-.btn--sm { min-height: var(--btn-h-sm); padding: 0 var(--space-6); }
-.tag { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 32px; padding: 4px 12px 4px 8px; border-radius: var(--r-pill); background: var(--surface); color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1.5; }
-.tag::before { content: ""; width: 8px; height: 8px; border-radius: var(--r-pill); background: currentColor; }
+/* 2026-11-17 사용자 「다른 버튼도 그렇게」 — 작은 버튼 보이는 높이 44 → 36 · 글자 14, 누르는 칸은 위아래 4씩 넓혀 44(8-12) */
+.btn--sm { position: relative; min-height: 36px; padding: 0 var(--space-4); font-size: 14px; line-height: 1; }
+.btn--sm::after { content: ""; position: absolute; inset: -4px 0; }
+/* 2026-11-17 사용자 「뱃지모양 버튼이 너무 뚱뚱하다」 — 태그 32 → 24, 글자 12(프롬프트 표 「칩 보조 글자 12」), 안쪽 4·12(2-1) */
+.tag { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px 0 8px; border-radius: var(--r-pill); background: var(--surface); color: var(--sub); font-size: 12px; font-weight: var(--fw-btn); line-height: 1; white-space: nowrap; }
+.tag::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: var(--r-pill); background: currentColor; }
 .tag--success { background: var(--success-soft); color: var(--success); }
 .tag--warn { background: var(--warn-soft); color: var(--warn-ink); }
 .tag--danger { background: var(--danger-soft); color: var(--danger); }
@@ -91,8 +94,10 @@ main.page { container: pane / inline-size; min-width: 0; padding: 40px var(--gut
 .head h1 { font-size: var(--fs-page); line-height: 1.3; }
 .head .ph-desc { margin-top: var(--space-2); color: var(--gray-600); }
 .tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.tab { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); padding: 0 var(--space-4); border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-500); color: var(--gray-900); font: inherit; font-size: var(--fs-body); cursor: pointer; white-space: nowrap; }
-.tab:hover { background: var(--gray-50); }
+/* 2026-11-17 같은 지적 — 보이는 높이 44 → 36 · 글자 14(design-rules 「관련 칩」 기준), 누르는 칸은 위아래 4씩 넓혀 44(8-12) */
+.tab { position: relative; display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-300); color: var(--gray-900); font: inherit; font-size: 14px; line-height: 1; cursor: pointer; white-space: nowrap; }
+.tab::after { content: ""; position: absolute; inset: -4px 0; }
+.tab:hover { background: var(--gray-50); box-shadow: inset 0 0 0 1px var(--gray-500); }
 .tab[aria-selected="true"] { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); color: var(--brand-ink); font-weight: var(--fw-btn); }
 .tab:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 @container pane (min-width: 640px) { /* 제목 묶음 왼쪽 · 탭 오른쪽, 세로 가운데(2-10) */
@@ -122,7 +127,7 @@ main.page { container: pane / inline-size; min-width: 0; padding: 40px var(--gut
 .days b { font-family: var(--font-round); font-size: var(--fs-title); font-weight: var(--fw-title); letter-spacing: var(--ls-title); }
 .days b small { margin-left: 2px; font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); letter-spacing: 0; }
 .days .lab { display: block; margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
-.rcard .btn { position: relative; z-index: 1; flex: none; min-width: 96px; }
+.rcard .btn { position: relative; z-index: 1; flex: none; min-width: 0; }
 .past-note { margin-top: var(--space-6); font-size: var(--fs-small); line-height: 1.5; color: var(--gray-600); max-width: var(--prose-max); }
 
 /* 빈 상태 — 메시지 하나, 가운데 정렬(2-17) */

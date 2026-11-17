@@ -4,9 +4,9 @@
 
 /* 선물 링크 — 앞부분 「fankkuk.com/」이 칸 안에 붙은 한 칸(380) + 옆 선 버튼. 휴대폰은 칸·버튼이 폭을 채운다 */
 .hrow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
-.handle { display: flex; align-items: center; flex: 1 1 240px; min-width: 0; max-width: 380px; min-height: var(--btn-h); border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); }
+.handle { display: flex; align-items: center; flex: 1 1 240px; min-width: 0; max-width: 380px; min-height: var(--field-h); border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); }
 .handle > span { padding-left: var(--space-4); color: var(--sub); white-space: nowrap; }
-.handle input { flex: 1; min-width: 0; min-height: calc(var(--btn-h) - 2px); padding: 0 var(--space-4) 0 var(--space-1); border: 0; background: none; font: inherit; color: var(--ink); outline: 0; }
+.handle input { flex: 1; min-width: 0; min-height: calc(var(--field-h) - 2px); padding: 0 var(--space-4) 0 var(--space-1); border: 0; background: none; font: inherit; color: var(--ink); outline: 0; }
 .handle:focus-within { box-shadow: inset 0 0 0 var(--field-ring) var(--field-focus), 0 0 0 1px var(--field-focus); }
 .handle:has(input:disabled) { background: var(--disabled); }
 .handle input:disabled { color: var(--disabled-ink); }

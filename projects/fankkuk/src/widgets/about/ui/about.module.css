@@ -138,7 +138,7 @@
 .todo { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--tint); box-shadow: inset 0 1px 0 var(--tint-line); }
 .todo small { display: block; font-size: var(--fs-badge); font-weight: var(--fw-bold); color: var(--info); }
 .todo b { font-size: var(--fs-body); }
-.fakeBtn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--space-4); border-radius: var(--r-btn); background: var(--btn-fill-fx); box-shadow: var(--btn-fill-shadow); color: var(--on-brand); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.fakeBtn { display: inline-flex; align-items: center; min-height: var(--btn-h); /* 그림 속 버튼 — 진짜 버튼과 같은 40(2026-11-17) */ padding: 0 var(--space-4); border-radius: var(--r-btn); background: var(--btn-fill-fx); box-shadow: var(--btn-fill-shadow); color: var(--on-brand); font-size: var(--fs-small); font-weight: var(--fw-btn); }
 /* 05 선물 → 답장 */
 .memory { flex: 1; display: grid; grid-template-rows: auto auto 1fr; gap: var(--space-3); }
 .mGift { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--r-card); background: var(--tint); }

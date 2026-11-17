@@ -664,13 +664,13 @@ img.asset { display: block; object-fit: contain; }
 
 /* 입력 · 고르기 — 입력창 경계는 gray-500 로 둔다(입력창 경계 3:1, DECISIONS 2026-10-14). 라벨 600, 안내 글은 캡션 */
 .label:where(:not(.admin-area *)), .field > :is(label, .label):where(:not(.admin-area *)) { margin-bottom: var(--space-2); font-weight: var(--fw-btn); }
-:is(:is(input, select, textarea).field, .input):where(:not(.admin-area *)) { min-height: var(--btn-h); }
+:is(:is(input, select, textarea).field, .input):where(:not(.admin-area *)) { min-height: var(--field-h); }
 :is(:is(input, select, textarea).field, .input):where(:not(.admin-area *))::placeholder { color: var(--gray-500); }
 textarea.field:where(:not(.admin-area *)) { padding-block: var(--space-4); }
 .hint:where(:not(.admin-area *)) { margin-top: var(--space-2); font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
 .form:where(:not(.admin-area *)) { gap: var(--space-6); }
 .check:where(:not(.admin-area *)) { min-height: var(--touch); gap: var(--space-2); }
-.opt:where(:not(.admin-area *)) { min-height: var(--btn-h); padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.opt:where(:not(.admin-area *)) { min-height: var(--field-h); padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
 .opt input:where(:not(.admin-area *)) { width: var(--icon-xs); height: var(--icon-xs); accent-color: var(--brand-line); }
 .opt:has(input:checked):where(:not(.admin-area *)) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
 .opt:has(input:focus-visible):where(:not(.admin-area *)) { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -783,7 +783,8 @@ section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.sta
   .sec-head:where(:not(.admin-area *)) { margin-bottom: var(--space-12); }
   :is(.page-head, .auth .head, .my-body > .sec-head):where(:not(.admin-area *)) { margin-bottom: var(--space-8); }
   .hero-actions:where(:not(.admin-area *)) { flex-direction: column; align-items: stretch; }
-  .tabs:where(:not(.admin-area *)) { flex-wrap: nowrap; overflow-x: auto; }
+  /* 가로로 넘기면 세로도 잘린다 — 탭 덧칸(위아래 4)이 잘리거나 세로 스크롤이 생기지 않게 위아래 4 를 띄우고 바깥 여백으로 되돌린다(2026-11-17) */
+  .tabs:where(:not(.admin-area *)) { flex-wrap: nowrap; overflow-x: auto; padding-block: var(--space-1); margin-top: calc(-1 * var(--space-1)); margin-bottom: calc(var(--space-6) - var(--space-1)); }
 }
 
 /* 제목 줄 오른쪽 「모두 보기」 링크 — 프로필·마이꾹 공통 모양(v23 감사표 2·3절). 목록 아래 버튼·가운데 버튼을 대신한다 */
@@ -1013,3 +1014,19 @@ input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):disabled:
 @media (max-width: 767px) {
   .auth-page { padding-top: var(--space-16); }
 }
+
+/* ---------- 2026-11-17 얇은 버튼·뱃지(사용자 「버튼과 뱃지는 모든 사이트에 그렇게 적용하고 시안 승인」 — design-rules 「버튼·탭·뱃지 크기」) ----------
+   보이는 크기: 버튼 40 · 작은 버튼·탭·칩 36 · 상태 태그 24. 글자: 버튼·탭·칩 14, 태그 12.
+   누르는 칸 44(design-prompt 8-12)는 보이지 않는 덧칸(::before)을 위아래로 넓혀 지킨다 — 칩이 쓰던 방식과 같다.
+   운영자 화면(.admin-area)은 따로 정한 크기라 건드리지 않는다. 이 블록은 파일 맨 끝에 있어야 같은 무게의 앞 규칙을 이긴다 */
+:where(.btn, .tab, .tabs a, .tabs label, .chips .chip):where(:not(.admin-area *)) { position: relative; }
+.btn:where(:not(.admin-area *)) { font-size: var(--fs-small); }
+.btn:where(:not(.admin-area *))::before { content: ""; position: absolute; inset: calc((var(--hit) - var(--btn-h)) / -2) 0; }
+:is(.btn--sm, .tab, .tabs a, .tabs label, .chips .chip):where(:not(.admin-area *))::before { content: ""; position: absolute; inset: calc((var(--hit) - var(--btn-h-sm)) / -2) 0; }
+:is(.tabs a, .tabs label, .tab):where(:not(.admin-area *)) { min-height: var(--btn-h-sm); font-size: var(--fs-small); }
+.chips .chip:where(:not(.admin-area *)) { font-size: var(--fs-small); }
+/* 태그 — 같은 무게(0,2,0)의 앞 규칙(.v34 범위 태그·.tag--dot)을 이기도록 .tag 를 두 번 쓴다 */
+.tag.tag:where(:not(.admin-area *)) { gap: 6px; min-height: 24px; padding: 0 var(--space-3); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1.2; white-space: nowrap; }
+.tag.tag--dot:where(:not(.admin-area *)) { padding-left: var(--space-2); }
+.tag.tag--dot:where(:not(.admin-area *))::before { width: 6px; height: 6px; }
+.tag.tag:where(:not(.admin-area *)) svg { width: 14px; height: 14px; }

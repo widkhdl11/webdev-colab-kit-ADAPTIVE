@@ -59,6 +59,9 @@
   text-decoration: none;
   transition: box-shadow var(--dur-hover) var(--ease-micro), transform var(--dur-press) var(--ease-micro);
 }
+/* 2026-11-17 얇은 버튼 — 보이는 40 · 글자 14, 누르는 칸은 덧칸으로 44 */
+.go { position: relative; font-size: var(--fs-small); }
+.go::before { content: ""; position: absolute; inset: calc((var(--hit) - var(--btn-h)) / -2) 0; }
 .go:hover { box-shadow: var(--btn-fill-shadow-hover); }
 .go:active { transform: scale(0.98); }
 
