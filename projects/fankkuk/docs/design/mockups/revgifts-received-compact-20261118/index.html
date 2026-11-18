@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>받은 선물 — 작은 배치 여섯 · 2026-11-18</title>
+<!--
+  2026-11-18 사용자: 「너무 크다. 좀 더 작은 배치」 · 「카드랑 긴 카드 아니면 생각이 안나. 다른 사이트 참고해서 다양한 디자인」
+  조건(같은 날 사용자): 선물 카드에서 현재 상태·남은 날이 먼저 눈에 띄고, 그다음 선물 정보.
+  다른 서비스 화면에서 흔히 쓰는 목록 배치의 「틀」만 가져왔다(로고·색·글꼴은 팬꾹 토큰 그대로). 데이터는 가짜 값.
+  정한 것: 제목 판 없음 · 밑줄 탭 · 수락 대기는 하늘 면(결정 fankkuk-20261118-1-d1). 여기서는 목록 부분만 비교한다.
+-->
+<link rel="stylesheet" href="../../../../src/shared/ui/tokens.css">
+<style>
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Medium.subset.woff") format("woff"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-SemiBold.subset.woff") format("woff"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Bold.subset.woff") format("woff"); font-weight: 700; font-display: swap; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--background); color: var(--ink); font-family: var(--font); font-size: var(--fs-body); line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }
+h1, h2, h3, p, ul { margin: 0; padding: 0; }
+ul { list-style: none; }
+a { color: inherit; text-decoration: none; }
+svg { display: block; flex-shrink: 0; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+.wrap { container: pane / inline-size; max-width: var(--col-list); margin: 0 auto; padding: 40px var(--gutter) 96px; }
+.intro h1 { font-family: var(--font-round); font-weight: var(--fw-title); font-size: var(--fs-page); letter-spacing: var(--ls-title); }
+.intro p { margin-top: var(--space-2); color: var(--sub); font-size: var(--fs-small); }
+.jump { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+.jump a { padding: 4px 12px; border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-300); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+
+/* 후보 하나 = 설명 머리 + 가짜 화면 틀 */
+.opt { margin-top: var(--space-16); scroll-margin-top: 16px; }
+.opt-h { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
+.opt-h b { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: var(--r-pill); background: var(--ink); color: var(--white); font-size: var(--fs-small); }
+.opt-h h2 { font-size: var(--fs-card); font-weight: var(--fw-bold); }
+.opt-h span { font-size: var(--fs-small); color: var(--sub); }
+.opt > p { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--gray-700); }
+.opt > p em { font-style: normal; color: var(--brand-ink); font-weight: var(--fw-btn); }
+.screen { margin-top: var(--space-4); padding: var(--space-6); border: 1px dashed var(--gray-300); border-radius: var(--r-card); background: var(--background); }
+.tabs { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); box-shadow: inset 0 -1px 0 var(--gray-200); }
+.tabs span { min-height: 40px; display: inline-flex; align-items: center; padding: 0 var(--space-4); color: var(--gray-600); font-size: var(--fs-small); }
+.tabs span.on { color: var(--gray-900); font-weight: var(--fw-btn); box-shadow: inset 0 -2px 0 var(--primary); }
+
+/* 공용 작은 부품 */
+.tag { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px 0 8px; border-radius: var(--r-pill); font-size: 12px; font-weight: var(--fw-btn); line-height: 1; white-space: nowrap; }
+.tag::before { content: ""; width: 6px; height: 6px; border-radius: var(--r-pill); background: currentColor; }
+.warn { background: var(--warn-soft); color: var(--warn-ink); }
+.success { background: var(--success-soft); color: var(--success); }
+.info { background: var(--info-soft); color: var(--info); }
+.btn { display: inline-flex; align-items: center; justify-content: center; position: relative; min-height: 36px; padding: 0 var(--space-4); border-radius: var(--r-btn); background: var(--btn-fill-fx); box-shadow: var(--btn-fill-shadow); color: var(--on-brand); font-size: 14px; font-weight: var(--fw-btn); line-height: 1; white-space: nowrap; }
+.btn::after { content: ""; position: absolute; inset: -4px 0; }
+.face { display: block; flex: none; width: 32px; height: 32px; border-radius: var(--r-pill); background: var(--face-default); box-shadow: var(--face-ring); overflow: hidden; }
+.face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.chev { width: 20px; height: 20px; fill: none; stroke: var(--gray-500); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.name { font-size: var(--fs-small); font-weight: var(--fw-btn); color: var(--ink); }
+.meta { font-size: 12px; color: var(--sub); }
+.d { font-weight: var(--fw-bold); color: var(--ink); white-space: nowrap; }
+.d.hot { color: var(--warn-ink); }
+.box { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--r-card); box-shadow: var(--card-shadow); overflow: hidden; }
+
+/* ① 주문 내역형 — 상태 한 줄(굵게) 아래 작은 선물 줄. 한 판 안에 구분선으로 */
+.o1 li { padding: var(--space-4) var(--space-5, 20px); }
+.o1 li + li { border-top: 1px solid var(--gray-200); }
+.o1 li.wait { background: var(--tint); }
+.o1 .st { display: flex; align-items: baseline; gap: var(--space-2); font-size: var(--fs-body); font-weight: var(--fw-bold); }
+.o1 .st .sub { font-size: var(--fs-small); font-weight: 500; color: var(--sub); }
+.o1 .row { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-2); }
+.o1 .row > div { flex: 1; min-width: 0; }
+.o1 .row .name, .o1 .row .meta { display: block; }
+
+/* ② 내역형(금액 자리에 상태) — 왼쪽 얼굴·이름, 오른쪽 끝에 상태·남은 날을 오른쪽 정렬로 */
+.o2 li { display: flex; align-items: center; gap: var(--space-3); min-height: 64px; padding: var(--space-3) var(--space-5, 20px); }
+.o2 li + li { border-top: 1px solid var(--gray-200); }
+.o2 li.wait { background: var(--tint); }
+.o2 .mid { flex: 1; min-width: 0; }
+.o2 .mid .name, .o2 .mid .meta { display: block; }
+.o2 .end { text-align: right; }
+.o2 .end .d { display: block; font-size: var(--fs-body); }
+.o2 .end .s { display: block; font-size: 12px; color: var(--sub); }
+
+/* ③ 상태 묶음형 — 상태 이름이 소제목, 그 아래 아주 작은 줄 */
+.o3 .grp + .grp { margin-top: var(--space-6); }
+.o3 .gh { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); font-size: var(--fs-small); font-weight: var(--fw-bold); }
+.o3 .gh small { font-weight: 500; color: var(--sub); }
+.o3 li { display: flex; align-items: center; gap: var(--space-3); min-height: 56px; padding: var(--space-2) var(--space-4); }
+.o3 li + li { border-top: 1px solid var(--gray-200); }
+.o3 .box.wait { background: var(--tint); border-color: var(--tint-line); box-shadow: none; }
+.o3 .box.wait li + li { border-top-color: var(--tint-line); }
+.o3 .d { min-width: 64px; font-size: var(--fs-body); }
+.o3 .mid { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+
+/* ④ 작은 타일 3열 — 위 상태·남은 날, 아래 이름 한 줄 */
+.o4 ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+.o4 li { position: relative; display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--r-card); box-shadow: var(--card-shadow); min-width: 0; }
+.o4 li.wait { background: var(--tint); border-color: var(--tint-line); box-shadow: none; }
+.o4 .top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.o4 .d { font-size: var(--fs-card); line-height: 1.3; }
+.o4 .d small { font-size: 12px; font-weight: 500; color: var(--sub); margin-left: 2px; }
+.o4 .now { font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1.5; }
+.o4 .who { display: flex; align-items: center; gap: var(--space-2); padding-top: var(--space-2); border-top: 1px solid var(--gray-200); min-width: 0; }
+.o4 li.wait .who { border-top-color: var(--tint-line); }
+.o4 .who .face { width: 24px; height: 24px; }
+.o4 .who .name { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o4 .btn { width: 100%; }
+@container pane (max-width: 559px) { .o4 ul { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ⑤ 진행 단계 칸반 — 상태가 칸 제목, 칸 안에 작은 카드 */
+.o5 .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+.o5 .col { padding: var(--space-3); border-radius: var(--r-card); background: var(--gray-100); min-width: 0; }
+.o5 .col.wait { background: var(--tint); }
+.o5 .ch { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-2); font-size: var(--fs-small); font-weight: var(--fw-bold); }
+.o5 .ch small { font-weight: 500; color: var(--sub); }
+.o5 li { display: flex; flex-direction: column; gap: 4px; padding: var(--space-3); background: var(--white); border-radius: var(--r-btn); box-shadow: var(--card-shadow); }
+.o5 li + li { margin-top: var(--space-2); }
+.o5 .d { font-size: var(--fs-body); }
+.o5 .row { display: flex; align-items: center; gap: var(--space-2); }
+.o5 .row .face { width: 20px; height: 20px; }
+.o5 .btn { margin-top: 4px; width: 100%; min-height: 32px; }
+.o5 .empty { padding: var(--space-3); font-size: 12px; color: var(--sub); }
+@container pane (max-width: 559px) { .o5 .cols { grid-template-columns: minmax(0, 1fr); } }
+
+/* ⑥ 위 요약 + 아래 촘촘한 줄 — 맨 위에 상태별 수(누르면 거름), 줄은 한 줄짜리 */
+.o6 .sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: var(--space-4); border-radius: var(--r-card); background: var(--white); border: 1px solid var(--gray-200); }
+.o6 .sum div { padding: var(--space-3) var(--space-4); }
+.o6 .sum div + div { border-left: 1px solid var(--gray-200); }
+.o6 .sum div.on { background: var(--tint); }
+.o6 .sum small { display: block; font-size: 12px; color: var(--sub); }
+.o6 .sum strong { font-size: var(--fs-card); }
+.o6 li { display: grid; grid-template-columns: 88px 64px minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); min-height: 52px; padding: var(--space-2) var(--space-4); }
+.o6 li + li { border-top: 1px solid var(--gray-200); }
+.o6 li.wait { background: var(--tint); }
+.o6 .d { font-size: var(--fs-small); }
+.o6 .mid { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-small); }
+.o6 .mid .meta { margin-left: var(--space-2); }
+@container pane (max-width: 559px) {
+  .o6 li { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .o6 li .d { grid-column: 2; grid-row: 1; }
+  .o6 li .mid { grid-column: 1 / -1; grid-row: 2; }
+}
+
+/* 휴대폰 공통 */
+@container pane (max-width: 559px) {
+  .screen { padding: var(--space-3); }
+  .o1 li, .o2 li { padding-inline: var(--space-4); }
+  .o2 .wait .btn { display: none; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="intro">
+    <h1>받은 선물 — 작은 배치 여섯</h1>
+    <p>모두 같은 선물 네 건(수락 대기 2 · 수락 완료 1 · 출고 완료 1). 상태와 남은 날이 먼저 보이고, 선물 정보는 그 아래·옆에 작게 둡니다. 휴대폰은 창을 좁혀 보세요.</p>
+    <nav class="jump" aria-label="후보로 가기"><a href="#o1">① 주문 내역형</a><a href="#o2">② 내역형</a><a href="#o3">③ 상태 묶음형</a><a href="#o4">④ 작은 타일</a><a href="#o5">⑤ 단계 칸반</a><a href="#o6">⑥ 요약 + 한 줄</a></nav>
+  </header>
+
+  <section class="opt" id="o1">
+    <div class="opt-h"><b>1</b><h2>주문 내역형</h2><span>쇼핑몰 「주문 목록」에서 흔한 틀 — 상태 문장이 줄 머리</span></div>
+    <p>줄마다 <em>「수락 대기 · 3일 남음」이 굵은 첫 줄</em>, 그 아래 얼굴 32 · 이름 · 상자·주문번호를 작게. 한 판 안에 구분선으로 쌓습니다. 한 건 약 88px.</p>
+    <div class="screen"><div class="tabs"><span class="on">받는 중 4</span><span>완료 5</span></div>
+      <ul class="box o1" data-list></ul></div>
+  </section>
+
+  <section class="opt" id="o2">
+    <div class="opt-h"><b>2</b><h2>내역형</h2><span>은행·결제 앱 「거래 내역」 틀 — 금액 자리에 남은 날</span></div>
+    <p>왼쪽 얼굴·이름, <em>오른쪽 끝에 「3일 남음」(굵게)과 상태</em>를 오른쪽 정렬. 눈이 오른쪽 세로줄만 훑으면 됩니다. 한 건 64px. 받기는 줄을 눌러 상세에서(버튼 없음).</p>
+    <div class="screen"><div class="tabs"><span class="on">받는 중 4</span><span>완료 5</span></div>
+      <ul class="box o2" data-list></ul></div>
+  </section>
+
+  <section class="opt" id="o3">
+    <div class="opt-h"><b>3</b><h2>상태 묶음형</h2><span>배송 조회·할 일 앱의 「상태별 묶음」 틀 — 상태가 소제목</span></div>
+    <p><em>「수락 대기 2」 같은 상태 이름이 묶음 제목</em>이고, 그 아래 줄은 남은 날 · 이름 · 버튼만 한 줄(56px). 같은 상태끼리 모여 상태를 줄마다 반복하지 않습니다.</p>
+    <div class="screen o3"><div class="tabs"><span class="on">받는 중 4</span><span>완료 5</span></div>
+      <div data-groups></div></div>
+  </section>
+
+  <section class="opt" id="o4">
+    <div class="opt-h"><b>4</b><h2>작은 타일</h2><span>거래·중고 앱 「내 거래」 타일 틀 — 3열(휴대폰 2열)</span></div>
+    <p>타일 위쪽에 <em>뱃지와 남은 날(20)</em>, 아래 한 줄에 얼굴 24 · 이름. 주문번호는 상세로 뺍니다. 한 화면에 많이 보입니다.</p>
+    <div class="screen o4"><div class="tabs"><span class="on">받는 중 4</span><span>완료 5</span></div>
+      <ul data-list></ul></div>
+  </section>
+
+  <section class="opt" id="o5">
+    <div class="opt-h"><b>5</b><h2>단계 칸반</h2><span>업무 관리 도구의 「단계별 칸」 틀 — 상태가 칸 제목</span></div>
+    <p><em>수락 대기 · 수락 완료 · 출고 완료가 세 칸</em>, 선물은 그 칸 안의 작은 카드. 어느 단계에 몇 개 있는지 한눈에. 휴대폰은 칸이 위아래로.</p>
+    <div class="screen o5"><div class="tabs"><span class="on">받는 중 4</span><span>완료 5</span></div>
+      <div class="cols" data-cols></div></div>
+  </section>
+
+  <section class="opt" id="o6">
+    <div class="opt-h"><b>6</b><h2>요약 + 한 줄 목록</h2><span>관리 화면·주문 현황판 틀 — 위에 상태별 수, 아래 한 줄짜리 줄</span></div>
+    <p>맨 위 <em>상태별 수 세 칸</em>(보낸 선물 화면 요약과 같은 모양), 아래 줄은 상태 · 남은 날 · 이름 · 버튼이 한 줄(52px). 가장 촘촘합니다.</p>
+    <div class="screen o6"><div class="tabs"><span class="on">받는 중 4</span><span>완료 5</span></div>
+      <div class="sum"><div class="on"><small>수락 대기</small><strong>2</strong></div><div><small>수락 완료</small><strong>1</strong></div><div><small>출고 완료</small><strong>1</strong></div></div>
+      <ul class="box" data-list></ul></div>
+  </section>
+</main>
+
+<script>
+const G = [
+  { n: "달빛정원", t: "소형", no: "FC-7K3M9", wait: true, d: 3, until: "11월 15일" },
+  { n: "소담", t: "중형", no: "FC-4D8Q2", wait: true, d: 1, until: "11월 13일" },
+  { n: "하늘다람", t: "대형", no: "FC-2P6X1", tag: "수락 완료", tone: "success", note: "상자 준비 후 발송" },
+  { n: "윤슬", t: "소형", no: "FC-9R1T5", tag: "출고 완료", tone: "info", note: "택배사 인계 후 배송 진행" },
+];
+const FACE = '<span class="face" aria-hidden="true"><img src="../../../../public/img/default-face/cat.webp" alt=""></span>';
+const CHEV = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+const tag = (g) => `<span class="tag ${g.wait ? "warn" : g.tone}">${g.wait ? "수락 대기" : g.tag}</span>`;
+const nm = (g) => `<span class="name">${g.n}님이 보낸 선물</span>`;
+const mt = (g) => `<span class="meta">${g.t} 상자 · 주문번호 ${g.no}</span>`;
+const btn = '<a class="btn" href="#">확인하기</a>';
+
+const R = {
+  o1: (g) => `<li class="${g.wait ? "wait" : ""}"><p class="st">${g.wait ? `수락 대기 · <span class="d hot">${g.d}일 남음</span><span class="sub">${g.until}까지</span>` : `${g.tag}<span class="sub">${g.note}</span>`}</p>
+      <div class="row">${FACE}<div>${nm(g)}${mt(g)}</div>${g.wait ? btn : CHEV}</div></li>`,
+  o2: (g) => `<li class="${g.wait ? "wait" : ""}">${FACE}<div class="mid">${nm(g)}${mt(g)}</div>
+      <div class="end">${g.wait ? `<span class="d hot">${g.d}일 남음</span><span class="s">수락 대기</span>` : `<span class="d">${g.tag}</span><span class="s">${g.note}</span>`}</div>${CHEV}</li>`,
+  o4: (g) => `<li class="${g.wait ? "wait" : ""}"><div class="top">${tag(g)}</div>
+      ${g.wait ? `<p class="d hot">${g.d}일<small>남음</small></p>` : `<p class="now">${g.note}</p>`}
+      <div class="who">${FACE}<span class="name">${g.n}님</span></div>${g.wait ? btn : ""}</li>`,
+  o6: (g) => `<li class="${g.wait ? "wait" : ""}">${tag(g)}<span class="d ${g.wait ? "hot" : ""}">${g.wait ? `${g.d}일 남음` : "—"}</span>
+      <span class="mid"><b class="name">${g.n}님이 보낸 선물</b><span class="meta">${g.t} · ${g.no}</span></span>${g.wait ? btn : CHEV}</li>`,
+};
+for (const id of ["o1", "o2", "o4", "o6"]) document.querySelector(`#${id} [data-list]`).innerHTML = G.map(R[id]).join("");
+
+// ③ 상태 묶음
+const groups = [["수락 대기", G.filter((g) => g.wait), true], ["수락 완료", G.filter((g) => g.tag === "수락 완료")], ["출고 완료", G.filter((g) => g.tag === "출고 완료")]];
+document.querySelector("[data-groups]").innerHTML = groups.map(([h, list, w]) => `<div class="grp"><p class="gh">${h} <small>${list.length}</small></p>
+  <ul class="box${w ? " wait" : ""}">${list.map((g) => `<li><span class="d ${g.wait ? "hot" : ""}">${g.wait ? `${g.d}일 남음` : g.note}</span>
+  <span class="mid">${nm(g)}${g.wait ? `<span class="meta">${g.until}까지</span>` : ""}</span>${g.wait ? btn : CHEV}</li>`).join("")}</ul></div>`).join("");
+// o3 의 진행 줄은 남은 날 대신 진행 문장이 들어가 폭이 넓다 — 진행 문장은 굵게만 두고 최소 폭은 수락 대기 줄에만
+document.querySelectorAll(".o3 .grp:not(:first-child) .d").forEach((el) => { el.style.minWidth = "auto"; el.style.fontSize = "var(--fs-small)"; });
+
+// ⑤ 칸반
+document.querySelector("[data-cols]").innerHTML = groups.map(([h, list, w]) => `<div class="col${w ? " wait" : ""}"><p class="ch">${h}<small>${list.length}</small></p>
+  <ul>${list.map((g) => `<li>${g.wait ? `<span class="d hot">${g.d}일 남음</span>` : `<span class="d" style="font-size:var(--fs-small)">${g.note}</span>`}
+  <div class="row">${FACE}<span class="name">${g.n}님</span></div>${g.wait ? btn : ""}</li>`).join("")}</ul></div>`).join("");
+</script>
+</body>
+</html>

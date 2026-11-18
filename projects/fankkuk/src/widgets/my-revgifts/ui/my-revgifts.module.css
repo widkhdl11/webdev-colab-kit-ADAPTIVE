@@ -1,9 +1,32 @@
-/* 받은 선물(팬) — 시안 docs/design/mockups/site/v34-part1/revgifts.html (v33b.css .rfeat·.epanel). 강조 칸·촘촘한 줄은 base.css 21절 공통(.feat·.lrows), 탭·태그는 전역 클래스 */
-.feat { margin-top: var(--space-12); }
-.feat + .feat { margin-top: var(--space-6); }
-.rows { margin-top: var(--space-6); }
+/* 받은 선물(팬) — 시안 docs/design/mockups/revgifts-received-compact-20261118 ④ 작은 타일(design-rules 45절). 탭·태그·버튼은 전역 클래스 */
 .tabEmpty { margin-top: var(--space-6); }
 .past-note { margin-top: var(--space-6); }
+
+/* 타일 격자 — 본문 칸 560 이상 3열, 그 아래 2열. 사이 12(같은 묶음 안 반복 간격, design-prompt 2-4) */
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin: var(--space-6) 0 0; padding: 0; list-style: none; }
+@container pane (max-width: 559px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* 타일 — 위: 상태 뱃지 → 남은 날(20 굵게, 타일에서 가장 큰 글자) 또는 지금 진행 한 줄 / 아래: 구분선 뒤 얼굴 24 · 이름 / 받을지 정하는 타일만 「확인하기」 */
+.tile { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); min-width: 0; padding: var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--card-shadow); transition: transform 0.25s var(--ease-micro), box-shadow 0.25s var(--ease-micro); }
+/* 마우스를 올리면 그림자가 조금 짙어지고 마우스 기기에서만 2px 떠오름 — 보낸 선물 .gcard 와 같은 규칙(design-rules 23-1·23-2) */
+.tile:hover { box-shadow: var(--card-shadow-hover); }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) { .tile:not(.wait):hover { transform: translateY(-2px); } }
+.tile:has(:global(.stretch):focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
+/* 받을지 정해야 하는 타일만 하늘 면(보낸 선물 「할 일 있는 카드만 하늘 면」과 같은 규칙, 결정 2026-11-18). 누르는 칸이 버튼뿐이라 그림자 없이 위 흰 반사선만(23-1) */
+.wait { border-color: var(--tint-line); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-sheen); }
+.wait:hover { box-shadow: var(--surface-accent-sheen); }
+/* 남은 날은 진한 글자 — 하늘 면 위 경고 글자색은 4.5:1 에 못 미친다(23-1). 급함은 바로 위 「수락 대기」 뱃지가 알린다 */
+.days { font-family: var(--font-round); font-size: var(--fs-card); font-weight: var(--fw-title); letter-spacing: var(--ls-title); line-height: 1.3; color: var(--ink); }
+.days small { margin-left: var(--space-1); font-family: var(--font); font-size: var(--fs-caption); font-weight: var(--fw-btn); letter-spacing: 0; color: var(--sub); }
+.now { font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1.5; color: var(--ink); overflow-wrap: anywhere; }
+/* 아래 묶음은 바닥에 붙여 한 줄 타일끼리 이름 위치를 맞춘다(design-prompt 8-8) */
+.who { display: flex; align-items: center; gap: var(--space-2); align-self: stretch; min-width: 0; margin-top: auto; padding-top: var(--space-2); border-top: 1px solid var(--gray-200); }
+.wait .who { border-top-color: var(--tint-line); }
+.face.face { flex: none; width: 24px; height: 24px; overflow: hidden; }
+/* 이름은 두 줄까지(최대 20자가 휴대폰 2열에서 4줄로 접혀 한 줄 타일끼리 구분선이 어긋나던 것). 전체 이름은 링크 이름(낭독기)과 선물 상세에 있다 */
+.name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; min-width: 0; font-size: var(--fs-caption); font-weight: var(--fw-btn); line-height: 1.5; color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
+.go { align-self: stretch; }
+
 /* 빈 상태 — 고양이 그림이 위로 걸친 하늘 면, 다른 하늘 판과 같은 1px --tint-line(design-rules 38절) */
 .epanel { position: relative; display: flex; align-items: center; gap: var(--space-8); margin-top: var(--space-24); padding: var(--space-12) var(--space-8) var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
 .epanel img { position: absolute; top: -64px; right: var(--space-12); width: 160px; height: 160px; object-fit: contain; pointer-events: none; }
@@ -12,15 +35,4 @@
   .epanel { flex-direction: column; align-items: flex-start; padding: var(--space-16) var(--space-6) var(--space-6); }
   .epanel img { top: -48px; right: var(--space-6); width: 128px; height: 128px; }
 }
-/* design-rules 38절 — 촘촘한 줄 안쪽 32(휴대폰 24)로 강조 칸 안쪽과 정렬선을 맞춘다 */
-.rows.rows :global(.lrow) { padding-inline: var(--space-8); }
-@media (max-width: 767px) {
-  .rows.rows :global(.lrow) { padding-inline: var(--space-6); }
-}
-/* 본문 칸 폭 699 이하(왼쪽 메뉴가 있는 중간 폭 포함) — 줄을 휴대폰 모양으로 접는다(base.css 767 이하 .lrow 와 같은 값) */
-@container pane (max-width: 699px) {
-  .rows.rows :global(.lrow) { flex-wrap: wrap; gap: var(--space-3) var(--space-4); }
-  .rows.rows :global(.lrow-txt) { white-space: normal; }
-  .rows.rows :global(.lrow-side) { order: 3; width: 100%; padding-left: var(--space-12); justify-content: flex-start; flex-wrap: wrap; }
-  .rows.rows :global(.lrow-chev) { order: 2; }
-}
+@media (prefers-reduced-motion: reduce) { .tile { transition: none; } }

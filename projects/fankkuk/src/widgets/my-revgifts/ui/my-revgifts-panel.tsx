@@ -1,6 +1,7 @@
 import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import { giftDetailHref } from "@/entities/action-item/model/action-items";
+import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import type { ReceivedRevgift } from "@/entities/revgift/model/revgift-rows";
 import { daysLeft, isOngoingStage, receivedStage, type ReceivedStage } from "@/entities/revgift/model/received-stage";
@@ -9,85 +10,62 @@ import { formatMonthDayKo } from "@/shared/lib/format/datetime";
 import { RevgiftTabs } from "./revgift-tabs";
 import s from "./my-revgifts.module.css";
 
-// 받은 선물 본문(팬 — 크리에이터가 보낸 역조공). 시안: docs/design/mockups/site/v34-part1/revgifts.html (design-rules 21절).
-// 탭 「받는 중」·「완료」 — 나눔은 그대로(받기 대기·수락·출고 / 나머지), 이름만 바뀌었다(2026-10-21 카드 d104).
-// 받을지 정해야 하는 줄만 강조 칸(남은 날·「확인하기」 → 그 선물 상세의 「지금 할 일」 칸), 나머지는 촘촘한 줄 → 선물 상세(action-center INV-J12).
-// 팬 본인에게는 거절과 기한 지남을 나눠 보여 준다.
+// 받은 선물 본문(팬 — 크리에이터가 보낸 역조공). 시안: docs/design/mockups/revgifts-received-compact-20261118 ④ 작은 타일 (design-rules 45절).
+// 2026-11-18 사용자: 상태·남은 날이 먼저 보이고 그다음 선물 정보 · 「팬꾹은 사진이 적어 줄 목록은 같은 모양만 반복돼 단조롭다 — 거래·중고 앱의 타일이 사진 없이도 자연스럽다」.
+// 탭 「받는 중」·「완료」 — 나눔은 그대로(받기 대기·수락·출고 / 나머지)(2026-10-21 카드 d104).
+// 받을지 정해야 하는 타일만 하늘 면 + 남은 날 + 「확인하기」(→ 그 선물 상세의 「지금 할 일」 칸), 나머지 타일은 전체가 선물 상세 링크(action-center INV-J12).
+// 팬 본인에게는 거절과 기한 지남을 나눠 보여 준다. 상자 크기·주문번호는 타일에서 빼고 링크 이름과 상세에 둔다.
 
 type Row = { item: ReceivedRevgift; stage: ReceivedStage; copy: ReturnType<typeof receivedStageCopy> };
 
 const tier = (item: ReceivedRevgift) => `${PARCEL_TIER_GUIDE[item.tier].name} 상자`;
+const giftName = (item: ReceivedRevgift) => `${item.creatorName}님이 보낸 선물`;
 
-function Featured({ row, nowMs }: { row: Row; nowMs: number }) {
-  const { item } = row;
-  const id = `rv-feat-${item.orderNo}`;
+function Tile({ row, nowMs }: { row: Row; nowMs: number }) {
+  const { item, stage, copy } = row;
+  const waiting = stage === "waiting";
   return (
-    <article className={`feat ${s.feat}`} data-revgift-row="" data-waiting="" aria-labelledby={id}>
-      <div className="feat-who">
-        <span className="face" aria-hidden="true">
-          {item.creatorName.slice(0, 1)}
-        </span>
-        <div>
-          <strong id={id}>{item.creatorName}님이 보낸 선물</strong>
-          <span className="meta">
-            {tier(item)} · 주문번호 {item.orderNo}
-          </span>
-          <span className={statusTagClass("warn", "tag--dot")}>{row.copy.tag}</span>
-        </div>
-      </div>
-      <div className="feat-days">
-        <p className="num-big">
+    <li className={waiting ? `${s.tile} ${s.wait}` : s.tile} data-revgift-row="" data-waiting={waiting ? "" : undefined}>
+      <span className={statusTagClass(copy.tone, "tag--dot")}>{copy.tag}</span>
+      {waiting ? (
+        <p className={s.days}>
           {daysLeft(item.deadline, nowMs)}일<small>남음</small>
+          <span className="sr-only"> · {formatMonthDayKo(item.deadline)}까지</span>
         </p>
-        <span className="lab">{formatMonthDayKo(item.deadline)}까지</span>
+      ) : (
+        <p className={s.now}>{copy.note}</p>
+      )}
+      <div className={s.who}>
+        <CreatorFace tone="var(--face-1)" className={`face ${s.face}`} />
+        {waiting ? (
+          <strong className={s.name}>
+            {item.creatorName}님
+          </strong>
+        ) : (
+          <Link className={`stretch ${s.name}`} href={giftDetailHref(item.orderNo)} aria-label={`${giftName(item)} · ${tier(item)} · 주문번호 ${item.orderNo}`}>
+            {item.creatorName}님
+          </Link>
+        )}
       </div>
-      <Link className="btn" href={giftDetailHref(item.orderNo, true)} aria-label={`${item.creatorName}님이 보낸 선물 받기 — 확인하기`}>
-        확인하기
-      </Link>
-    </article>
-  );
-}
-
-function RowList({ rows }: { rows: readonly Row[] }) {
-  if (rows.length === 0) return null;
-  return (
-    <ul className={`lrows ${s.rows}`}>
-      {rows.map(({ item, copy }) => (
-        <li key={item.orderNo} className="lrow" data-revgift-row="">
-          <span className="face" aria-hidden="true">
-            {item.creatorName.slice(0, 1)}
-          </span>
-          <p className="lrow-txt">
-            <Link className="stretch" href={giftDetailHref(item.orderNo)}>
-              <strong>{item.creatorName}님이 보낸 선물</strong>
-            </Link>
-            <span className="meta">
-              {tier(item)} · 주문번호 {item.orderNo} · {copy.note}
-            </span>
-          </p>
-          <div className="lrow-side">
-            <span className={statusTagClass(copy.tone, "tag--dot")}>{copy.tag}</span>
-          </div>
-          <svg className="lrow-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="m9 6 6 6-6 6" />
-          </svg>
-        </li>
-      ))}
-    </ul>
+      {waiting ? (
+        <Link className={`btn btn--sm ${s.go}`} href={giftDetailHref(item.orderNo, true)} aria-label={`${giftName(item)} · ${tier(item)} · 주문번호 ${item.orderNo} 받기 — 확인하기`}>
+          확인하기
+        </Link>
+      ) : null}
+    </li>
   );
 }
 
 function Panel({ rows, nowMs, empty }: { rows: readonly Row[]; nowMs: number; empty: string }) {
   if (rows.length === 0) return <p className={`empty ${s.tabEmpty}`}>{empty}</p>;
-  const waiting = rows.filter((r) => r.stage === "waiting");
-  const rest = rows.filter((r) => r.stage !== "waiting");
+  // 받을지 정해야 하는 것이 맨 앞
+  const ordered = [...rows.filter((r) => r.stage === "waiting"), ...rows.filter((r) => r.stage !== "waiting")];
   return (
-    <>
-      {waiting.map((r) => (
-        <Featured key={r.item.orderNo} row={r} nowMs={nowMs} />
+    <ul className={`${s.tiles} v34`}>
+      {ordered.map((r) => (
+        <Tile key={r.item.orderNo} row={r} nowMs={nowMs} />
       ))}
-      <RowList rows={rest} />
-    </>
+    </ul>
   );
 }
 
