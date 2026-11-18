@@ -170,14 +170,15 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .fix { min-width: 44px; min-height: 44px; padding: 0 var(--space-1); border: 0; background: none; color: var(--ink); font-size: var(--fs-small); font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .fix:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 
-/* 하늘 결제 칸 — 줄마다 금액, 합계 32 (시안 .paybox · .lines2) */
-.paybox { margin-top: var(--space-6); padding: var(--space-6) var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
+/* 결제 칸 — 줄마다 금액, 합계 32 (시안 .paybox · .lines2). 2026-11-18 사용자 승인으로 하늘 면 → 흰 면(시안 gifts-new-r2-20261112 #s4w):
+   4단계 맨 위 단계 판이 이미 하늘 면이라 강조가 둘이었다(design-prompt 1-2). 행동은 채움 결제 버튼이 이끈다 */
+.paybox { margin-top: var(--space-6); padding: var(--space-6) var(--space-8); border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--white); box-shadow: none; }
 .lines { margin-top: var(--space-6); }
 .ln { display: flex; justify-content: space-between; gap: var(--space-4); padding: var(--space-2) 0; }
 .ln > span:first-child { min-width: 0; }
 .ln > span:last-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ln small { margin-left: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
-.tot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--space-4); margin-top: var(--space-2); padding-top: var(--space-4); border-top: 1px solid var(--tint-line); }
+.tot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--space-4); margin-top: var(--space-2); padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
 .tot-label { font-weight: var(--fw-bold); }
 .tot b { font-family: var(--font-round); font-size: var(--fs-title); font-weight: var(--fw-title); letter-spacing: var(--ls-title); line-height: 1.2; font-variant-numeric: tabular-nums; }
 .tot b small { margin-left: 2px; font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); letter-spacing: 0; }
@@ -288,8 +289,8 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
   .refund-result { text-align: left; white-space: normal; }
 }
 .gnote.gnote hr { margin-block: var(--space-8); }
-.paybox.paybox { margin-top: var(--space-8); padding: var(--space-6); background: var(--tint); box-shadow: none; }
-.consent.consent { padding-top: var(--space-4); border-top: 1px solid var(--tint-line); }
+.paybox.paybox { margin-top: var(--space-8); padding: var(--space-6); background: var(--white); box-shadow: none; }
+.consent.consent { padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
 .actions.actions { margin-top: var(--space-6); }
 @media (max-width: 767px) {
   .gnote.gnote:not(.gnote-first) { padding: var(--space-4); }
