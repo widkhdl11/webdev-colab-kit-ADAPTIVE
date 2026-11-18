@@ -51,10 +51,12 @@
 
 
 /* 「먼저 보내기」 안내 (approval-signature INV-S9) */
-.early { margin-top: 12px; padding: 16px 24px; border-radius: var(--r-box); background: var(--surface); }
+/* 팬 선물 상세에서만 쓴다 — 보낸 선물 상세 섞은 시안(design-rules 47절, mockups/gift-detail-mix-20261118 .gate): 회색 면 · 모서리 12 · 안쪽 16, 점 줄은 본문 16 */
+.early { margin-top: var(--space-4); padding: var(--space-4); border-radius: var(--r-btn); background: var(--surface-muted); }
 .early p:not(:global(.hint)) { color: var(--ink); }
-.early p + p { margin-top: 8px; }
-.early-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.early p + p { margin-top: var(--space-2); }
+.early .pts { font-size: var(--fs-body); color: var(--gray-600); }
+.early-row { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
 
 /* 팬 선물 상세의 상자별 팬꾹 주소 — 6자리를 따로 큰 칸으로 (시안 v41-user-fixes/v41.css .addr3, design-rules 33절).
    하늘 면(--surface-accent-fx), 6자리는 한 글자씩 흰 칸(글자 32 · 휴대폰 24). 기본은 가림(INV-C2) */

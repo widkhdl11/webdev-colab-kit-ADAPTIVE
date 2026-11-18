@@ -295,10 +295,10 @@ describe("B-7: 맨 아래 「1:1 문의하기」", () => {
   );
 });
 
-describe("v41 배치: 오른쪽 열은 「선물 정보」 카드 하나(design-rules 33절)", () => {
+describe("섞은 시안 배치: 오른쪽 칸은 승인 → 선물 정보 → 결제(design-rules 47절)", () => {
   const info = () => host.querySelector("#info-title")?.closest("section") ?? null;
 
-  it("v41: 선물 정보 카드 첫 표는 받는 크리에이터·선물·상자·주문번호·등록 — 주문번호는 여기에만", () => {
+  it("선물 정보 칸 표는 받는 크리에이터·선물·상자·주문번호·등록 — 주문번호는 여기에만(승인은 위 승인 칸으로)", () => {
     render({ payment: PAYMENT });
     const firstDl = info()?.querySelector(":scope > dl");
     expect([...(firstDl?.querySelectorAll(":scope > div > dt") ?? [])].map((d) => d.textContent)).toEqual([
@@ -307,18 +307,17 @@ describe("v41 배치: 오른쪽 열은 「선물 정보」 카드 하나(design-
       "상자",
       "주문번호",
       "등록",
-      "크리에이터 승인",
     ]);
     const orderRow = [...(firstDl?.children ?? [])].find((d) => d.querySelector("dt")?.textContent === "주문번호");
     expect(orderRow?.querySelector("dd")?.textContent).toBe(ORDER);
     expect([...(firstDl?.children ?? [])].find((d) => d.querySelector("dt")?.textContent === "상자")?.querySelector("dd")?.textContent).toBe("소형 1개");
   });
 
-  it("배치: 상자 칸 옆 한 열에 선물 정보 카드 하나 — 결제는 그 안 묶음", () => {
+  it("배치: 상자 칸 옆 오른쪽 칸 — 승인 · 선물 정보 · 결제 순서, 결제는 선물 정보 밖 자기 칸", () => {
     render({ payment: PAYMENT });
     const side = host.querySelector("main [data-detail-side]");
-    expect([...(side?.children ?? [])].map((c) => c.querySelector("h2")?.textContent)).toEqual(["선물 정보"]);
-    expect(info()?.querySelector("#pay-title")?.textContent).toBe("결제");
+    expect([...(side?.children ?? [])].map((c) => c.querySelector("h2")?.textContent)).toEqual(["크리에이터 승인", "선물 정보", "결제"]);
+    expect(info()?.querySelector("#pay-title")).toBeNull();
     // 상자 칸은 그 열의 앞(같은 격자 안)
     expect(side?.previousElementSibling?.querySelector("#box-status-title")).not.toBeNull();
   });
@@ -327,7 +326,7 @@ describe("v41 배치: 오른쪽 열은 「선물 정보」 카드 하나(design-
 describe("v41 INV-S9: 승인 전 표시 — 상태 판 배지 · 출고 아래 「승인 필요」 · 선물 정보 노란 칸", () => {
   const badges = () => [...host.querySelectorAll("main [data-badges] > span")].map((b) => b.textContent);
   const shippedStep = () => [...host.querySelectorAll("main ol > li")].find((li) => li.firstChild?.textContent === "출고") ?? null;
-  const approvalBox = () => host.querySelector("#info-title")?.closest("section")?.querySelector("[data-approval-box]") ?? null;
+  const approvalBox = () => host.querySelector("main [data-detail-side] [data-approval-box]") ?? null;
   const BEFORE_SEND = { approved_at: null };
   const AFTER_SEND = { approved_at: null, fan_send_ack_at: "2026-10-22T02:00:00+00:00" };
 
@@ -370,24 +369,27 @@ describe("v41 INV-S9: 승인 전 표시 — 상태 판 배지 · 출고 아래 �
     expect(host.querySelector("main [data-approval-needed]")).toBeNull();
   });
 
-  it("INV-S9·S6: 승인 전이면 선물 정보 카드 안 노란 칸 — 지금 승인 대기 · 필요한 때 출고 전 · 기한(결제 완료 + 7일)", () => {
+  it("INV-S9·S6: 승인 전이면 오른쪽 맨 위 노란 칸 — 승인 대기 · 필요한 때 출고 전 · 기한(결제 완료 + 7일)", () => {
     render({ view: viewOf(AFTER_SEND), payment: PAYMENT });
     const b = approvalBox();
-    expect(b?.querySelector("h3")?.textContent).toBe("하루님의 승인 상태");
+    expect(b?.querySelector("h2")?.textContent).toBe("하루님의 승인 상태");
+    expect(b?.querySelector("strong")?.textContent).toBe("승인 대기");
+    expect(b?.textContent).toContain("필요한 때 · 출고 전");
     expect([...(b?.querySelectorAll("dl > div") ?? [])].map((d) => [d.querySelector("dt")?.textContent, d.querySelector("dd")?.textContent])).toEqual([
-      ["지금", "승인 대기"],
-      ["필요한 때", "출고 전"],
       ["기한", "10월 29일 (목)까지"],
     ]);
     expect(host.querySelector("main [data-approval-done]")).toBeNull();
-    // 노란 칸은 첫 표 다음, 결제 묶음 앞
-    expect(b?.nextElementSibling?.querySelector("#pay-title")).not.toBeNull();
+    // 승인 칸은 오른쪽 맨 위, 바로 다음이 선물 정보
+    expect(b?.previousElementSibling).toBeNull();
+    expect(b?.nextElementSibling?.querySelector("#info-title")).not.toBeNull();
   });
 
   it("INV-S9 (실패경로): 승인되면 노란 칸 대신 「승인됨 · 날짜」 한 줄", () => {
     render({ payment: PAYMENT });
     expect(approvalBox()).toBeNull();
-    expect(host.querySelector("main [data-approval-done] dd")?.textContent).toBe("승인됨 · 10월 22일 (목)");
+    const done = host.querySelector("main [data-approval-done]");
+    expect(done?.querySelector("strong")?.textContent).toBe("승인됨");
+    expect(done?.querySelector("p")?.textContent).toBe("10월 22일 (목)");
   });
 
   it.each([
@@ -405,12 +407,15 @@ describe("v41 INV-S9: 승인 전 표시 — 상태 판 배지 · 출고 아래 �
 });
 
 describe("v41: 두 코드 가르기 — 상자 이름에 주문번호가 없다", () => {
-  it("v41: 상자 이름은 「상자 N · 크기」, 상태 판 위 줄에도 주문번호가 없다", () => {
+  it("v41: 상자 이름은 「상자 N · 크기」, 상태 판 위 줄에도 주문번호가 없다 — 판에는 등록 날짜도 없다(오른쪽 선물 정보에만)", () => {
     render({ boxes: [box(), box({ boxId: B2, label: `${ORDER}-2`, tier: "medium" })] });
     const names = [...host.querySelectorAll("main h3")].filter((h) => h.textContent?.startsWith("상자")).map((h) => h.textContent);
     expect(names).toEqual(["상자 1 · 소형", "상자 2 · 중형"]);
     expect(names.some((n) => n?.includes(ORDER))).toBe(false);
-    expect(host.querySelector("#g-title")?.previousElementSibling?.textContent).toBe("등록 10월 22일 (목)");
+    const hero = host.querySelector("#g-title")?.closest("section");
+    expect(hero?.querySelector("p")?.textContent).toBe("하루님께 보내는 선물 · 인형·굿즈 · 상자 1개");
+    expect(hero?.textContent).not.toContain(ORDER);
+    expect(hero?.textContent).not.toMatch(/등록 d/);
   });
 
   it("INV-C2: 팬꾹 주소는 택배 접수 작성 예시(받는 분 상세주소 끝에 6자리), 처음엔 가려 두고 「6자리 보기」를 눌러야 보인다", () => {
@@ -476,7 +481,7 @@ describe("v41: 「주소 끝 6자리 없이 보낸 상자 찾기」 고르는 �
 });
 
 describe("결제 안내 문장 — 차액 안내는 진행 중에만", () => {
-  const note = () => host.querySelector("#pay-title")?.closest("[role=group]")?.textContent ?? "";
+  const note = () => host.querySelector("#pay-title")?.closest("section")?.textContent ?? "";
   it("진행 중이면 결제한 날 + 차액 안내", () => {
     render({ payment: PAYMENT });
     expect(note()).toContain("결제일: 10월 22일 (목)");

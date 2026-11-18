@@ -231,8 +231,9 @@ describe("INV-J12: 선물 상세 하나 — /gifts/{주문번호}", () => {
   });
 
   it("INV-J12 S12: 별빛이 보낸 FC-7K3M9 와 별빛이 받는 팬인 RG-4F8K2A 가 같은 상세 주소로 둘 다 열린다", async () => {
-    const fc = await draw(detail("FC-7K3M9"));
-    expect(fc.h1).toBe("하루님께 보내는 선물");
+    await draw(detail("FC-7K3M9"));
+    // 보낸 선물 상세는 판 맨 윗줄이 「OO님께 보내는 선물 · …」이고 제목(h1)은 지금 상태 안내다(design-rules 47절 섞은 시안)
+    expect(host.querySelector("main #g-title")?.closest("section")?.querySelector("p")?.textContent).toMatch(/^하루님께 보내는 선물 · /);
     const rg = await draw(detail("RG-4F8K2A"));
     expect(rg.h1).toBe("하루님이 보낸 선물");
     // 받은 역조공 상세의 칸은 지금 받기 화면이 주는 칸을 넘지 않는다 — 보낸 크리에이터의 다른 몫·주소는 없다

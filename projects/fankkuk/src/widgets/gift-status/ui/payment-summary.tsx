@@ -5,8 +5,8 @@ import { formatDate } from "@/shared/lib/format/datetime";
 import { statusTagClass } from "@/shared/ui/status-tone";
 import s from "./gift-status.module.css";
 
-// 결제 내역 — 선물 정보 카드 안 「결제」 묶음(시안 v41-user-fixes/s/detail-after.html .ginfo .grp, design-rules 33절):
-// 상자별 금액 줄 → 결제 금액(24) → 추가 결제 꼬리표 → 검수 포함 → 결제한 날 문장. 묶음 제목·취소하기는 부르는 쪽이 그린다.
+// 결제 내역 — 오른쪽 칸의 「결제」(섞은 시안 gift-detail-mix-20261118 .side .pay, design-rules 47절):
+// 결제 금액(24) → 상자별 금액 줄 → 추가 결제 꼬리표·검수 포함 → 결제한 날 문장. 칸 제목·취소하기는 부르는 쪽이 그린다.
 // 금액은 결제할 때 저장한 값만 보인다(payment INV-M14) — 지금 요금표로 다시 계산하지 않는다.
 // 차액은 상자별 차액 결제 줄(my_difference_payments)에서 결제를 마친 것만, 환불은 서버가 정한 금액과 상태 그대로.
 
@@ -26,6 +26,13 @@ export function PaymentSummary({ payment, differences, dueKrw = 0, inProgress = 
   const paidDifferences = differences.filter((d) => d.state === "paid");
   return (
     <>
+      <p className={s.paytot}>
+        <span>결제 금액</span>
+        <b>
+          {payment.paidKrw.toLocaleString("ko-KR")}
+          <small>원</small>
+        </b>
+      </p>
       <dl className={s.kv}>
         {lines.map((l) => (
           <div key={`${l.tier}-${l.unitKrw}-${l.missing}`}>
@@ -51,15 +58,8 @@ export function PaymentSummary({ payment, differences, dueKrw = 0, inProgress = 
           </div>
         ))}
       </dl>
-      <p className={s.paytot}>
-        <span>결제 금액</span>
-        <b>
-          {payment.paidKrw.toLocaleString("ko-KR")}
-          <small>원</small>
-        </b>
-      </p>
-      {dueKrw > 0 ? <span className={statusTagClass("warn", `tag--dot ${s.duetag}`)}>추가 결제 {won(dueKrw)}</span> : null}
-      <p className={s.ok}>
+      <p className={s.chips}>
+        {dueKrw > 0 ? <span className={statusTagClass("warn", "tag--dot")}>추가 결제 {won(dueKrw)}</span> : null}
         <span className="tag">
           <svg width={16} height={16} viewBox="0 0 24 24" aria-hidden="true">
             <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
