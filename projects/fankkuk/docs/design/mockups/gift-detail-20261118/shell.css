@@ -1,0 +1,58 @@
+/* 셸·사이드바·공용 부품 — revgifts-received-r2-20261118/index.html 26~44·55~92줄 그대로(2026-11-18 가져옴). 시안 도구 줄은 뺌 */
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../public/fonts/TmoneyRoundWindRegular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Medium.subset.woff") format("woff"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-SemiBold.subset.woff") format("woff"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("../../../../assets/fonts/Pretendard-Bold.subset.woff") format("woff"); font-weight: 700; font-display: swap; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--background); color: var(--ink); font-family: var(--font); font-size: var(--fs-body); font-weight: 400; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; -webkit-text-size-adjust: 100%; }
+h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+h1, h2, h3 { font-family: var(--font-round); font-weight: var(--fw-title); letter-spacing: var(--ls-title); font-synthesis: none; }
+img, svg { display: block; max-width: 100%; }
+svg { flex-shrink: 0; }
+a { color: inherit; }
+button { font-family: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- 앱 틀: 왼쪽 사이드바 240 · 768 이하 위 막대 — 맥락용(시안 대상 아님) ---------- */
+.app { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); align-items: start; }
+.sb { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: var(--space-4) var(--space-2); background: var(--tint); box-shadow: inset -1px 0 var(--tint-line); }
+.sb .logo { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-3); text-decoration: none; font-family: var(--font-logo); font-weight: var(--fw-title); font-size: var(--fs-card); }
+.sb .logo img, .mbar .logo img { width: 28px; height: 28px; border-radius: var(--r-logo); }
+.sb nav { display: grid; gap: 2px; margin-top: var(--space-4); }
+.sb nav a { display: flex; align-items: center; gap: var(--nav-gap-in); min-height: var(--nav-item-h); padding: 0 var(--space-3); border-radius: var(--r-nav); text-decoration: none; font-size: var(--fs-navitem); font-weight: var(--fw-nav); color: var(--sub); }
+.sb nav a[aria-current="page"] { background: var(--surface-selected); color: var(--ink); font-weight: var(--fw-btn); }
+.ico { width: var(--nav-icon); height: var(--nav-icon); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.sb .me { margin-top: auto; display: flex; align-items: center; gap: var(--space-3); min-height: var(--prof-h); padding: 0 var(--space-3); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.sb .me i { display: grid; place-items: center; width: var(--avatar-sb); height: var(--avatar-sb); border-radius: var(--r-pill); background: var(--primary-50); font-style: normal; }
+.mbar { display: none; }
+@media (max-width: 768px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .sb { display: none; }
+  .mbar { display: flex; align-items: center; justify-content: space-between; min-height: var(--topbar-h); padding: 0 var(--space-2) 0 var(--gutter); background: var(--tint); box-shadow: inset 0 -1px var(--tint-line); }
+  .mbar .logo { display: flex; align-items: center; min-height: 44px; gap: var(--space-2); font-family: var(--font-logo); font-weight: var(--fw-title); font-size: var(--fs-card); text-decoration: none; }
+  .mbar button { width: 44px; height: 44px; border: 0; border-radius: var(--r-btn); background: transparent; display: grid; place-items: center; color: var(--ink); }
+  .mbar .ico { width: 24px; height: 24px; }
+}
+
+
+/* ---------- 공용 부품(base.css 값 그대로) ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: var(--btn-h); padding: 12px var(--space-6); border: 0; border-radius: var(--r-btn); background: var(--btn-fill-fx); box-shadow: var(--btn-fill-shadow); color: var(--on-brand); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; text-decoration: none; cursor: pointer; transition: background-color var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out); }
+.btn:hover { background: var(--brand-hover); box-shadow: var(--btn-fill-shadow-hover); }
+/* 2026-11-17 사용자 「다른 버튼도 그렇게」 — 작은 버튼 보이는 높이 44 → 36 · 글자 14, 누르는 칸은 위아래 4씩 넓혀 44(8-12) */
+.btn--sm { position: relative; min-height: 36px; padding: 0 var(--space-4); font-size: 14px; line-height: 1; }
+.btn--sm::after { content: ""; position: absolute; inset: -4px 0; }
+/* 2026-11-17 사용자 「뱃지모양 버튼이 너무 뚱뚱하다」 — 태그 32 → 24, 글자 12(프롬프트 표 「칩 보조 글자 12」), 안쪽 4·12(2-1) */
+.tag { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px 0 8px; border-radius: var(--r-pill); background: var(--surface); color: var(--sub); font-size: 12px; font-weight: var(--fw-btn); line-height: 1; white-space: nowrap; }
+.tag::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: var(--r-pill); background: currentColor; }
+.tag--success { background: var(--success-soft); color: var(--success); }
+.tag--warn { background: var(--warn-soft); color: var(--warn-ink); }
+.tag--danger { background: var(--danger-soft); color: var(--danger); }
+.tag--info { background: var(--info-soft); color: var(--info); }
+.tag--plain { background: var(--gray-100); color: var(--gray-700); }
+.face { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: var(--r-pill); background: var(--f, var(--face-default)); box-shadow: var(--face-ring); font-weight: var(--fw-bold); font-size: var(--fs-card); line-height: 1; }
+

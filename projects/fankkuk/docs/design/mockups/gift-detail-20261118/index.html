@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보낸 선물 상세 다시 그리기 — 상태 7개 (2026-11-18)</title>
+<!-- 상태별 화면은 state-N.html 한 장씩이고, 이 장은 그것을 PC 1440(60%)·휴대폰 390(90%)으로 나란히 보여 주는 모음이다. 설명은 NOTES.md -->
+<link rel="stylesheet" href="../../../../src/shared/ui/tokens.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+*{box-sizing:border-box}body{margin:0;background:var(--background);color:var(--ink);font-family:var(--font);line-height:1.6}
+h1,h2,figure{margin:0}.wrap{max-width:1360px;margin:0 auto;padding:32px 24px 96px}
+h1{font-size:24px}.nav{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 32px}.nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:9999px;background:var(--white);box-shadow:inset 0 0 0 1px var(--gray-300);color:var(--ink);text-decoration:none;font-size:14px}
+.card{margin-top:40px}.card h2{display:flex;align-items:center;gap:12px;font-size:20px}.n{display:grid;place-items:center;width:32px;height:32px;border-radius:9999px;background:var(--primary-50);font-size:14px;font-weight:700;color:var(--brand-ink)}
+.row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;margin-top:16px}figcaption{font-size:14px;color:var(--sub);margin-bottom:8px}
+.fr{position:relative;overflow:hidden;border-radius:16px;box-shadow:var(--hair),var(--card-shadow);background:var(--white)}iframe{border:0;display:block;transform-origin:0 0}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px}a{color:var(--brand-ink)}
+</style></head><body><div class="wrap">
+<h1>보낸 선물 상세 (/gifts/[orderNo]) — 상태 7개</h1>
+<nav class="nav" aria-label="상태"><a href="#s1">1. 결제 끝</a><a href="#s2">2. 「먼저 보내기」 누름</a><a href="#s3">3. 승인됨</a><a href="#s4">4. 검수 뒤 차액 결제 필요</a><a href="#s5">5. 출고 뒤</a><a href="#s6">6. 도착</a><a href="#s7">7. 거절 (기한 지남도 같은 틀)</a></nav>
+
+<section class="card" id="s1">
+  <h2><span class="n">1</span>결제 끝 · 승인 대기 · 「먼저 보내기」 전</h2>
+  <div class="row">
+    <figure><figcaption>PC 1440 · <a href="state-1.html">크게 열기</a></figcaption><div class="fr pc" data-w="1440" data-s=".6"><iframe src="state-1.html" title="상태 1 PC" width="1440" height="1000" loading="lazy"></iframe></div></figure>
+    <figure><figcaption>휴대폰 390</figcaption><div class="fr ph" data-w="390" data-s=".9"><iframe src="state-1.html" title="상태 1 휴대폰" width="390" height="1000" loading="lazy"></iframe></div></figure>
+  </div>
+</section>
+<section class="card" id="s2">
+  <h2><span class="n">2</span>「먼저 보내기」 누름 · 팬꾹 주소 보임 · 승인 대기</h2>
+  <div class="row">
+    <figure><figcaption>PC 1440 · <a href="state-2.html">크게 열기</a></figcaption><div class="fr pc" data-w="1440" data-s=".6"><iframe src="state-2.html" title="상태 2 PC" width="1440" height="1000" loading="lazy"></iframe></div></figure>
+    <figure><figcaption>휴대폰 390</figcaption><div class="fr ph" data-w="390" data-s=".9"><iframe src="state-2.html" title="상태 2 휴대폰" width="390" height="1000" loading="lazy"></iframe></div></figure>
+  </div>
+</section>
+<section class="card" id="s3">
+  <h2><span class="n">3</span>승인됨 · 상자 입고 대기 (주소 보임 · 송장번호 접힘)</h2>
+  <div class="row">
+    <figure><figcaption>PC 1440 · <a href="state-3.html">크게 열기</a></figcaption><div class="fr pc" data-w="1440" data-s=".6"><iframe src="state-3.html" title="상태 3 PC" width="1440" height="1000" loading="lazy"></iframe></div></figure>
+    <figure><figcaption>휴대폰 390</figcaption><div class="fr ph" data-w="390" data-s=".9"><iframe src="state-3.html" title="상태 3 휴대폰" width="390" height="1000" loading="lazy"></iframe></div></figure>
+  </div>
+</section>
+<section class="card" id="s4">
+  <h2><span class="n">4</span>검수 뒤 차액 결제 필요 · 맨 위 「지금 할 일」 칸</h2>
+  <div class="row">
+    <figure><figcaption>PC 1440 · <a href="state-4.html">크게 열기</a></figcaption><div class="fr pc" data-w="1440" data-s=".6"><iframe src="state-4.html" title="상태 4 PC" width="1440" height="1000" loading="lazy"></iframe></div></figure>
+    <figure><figcaption>휴대폰 390</figcaption><div class="fr ph" data-w="390" data-s=".9"><iframe src="state-4.html" title="상태 4 휴대폰" width="390" height="1000" loading="lazy"></iframe></div></figure>
+  </div>
+</section>
+<section class="card" id="s5">
+  <h2><span class="n">5</span>출고 뒤 · 배송 중</h2>
+  <div class="row">
+    <figure><figcaption>PC 1440 · <a href="state-5.html">크게 열기</a></figcaption><div class="fr pc" data-w="1440" data-s=".6"><iframe src="state-5.html" title="상태 5 PC" width="1440" height="1000" loading="lazy"></iframe></div></figure>
+    <figure><figcaption>휴대폰 390</figcaption><div class="fr ph" data-w="390" data-s=".9"><iframe src="state-5.html" title="상태 5 휴대폰" width="390" height="1000" loading="lazy"></iframe></div></figure>
+  </div>
+</section>
+<section class="card" id="s6">
+  <h2><span class="n">6</span>도착 · 받았어요 · 답장 있음</h2>
+  <div class="row">
+    <figure><figcaption>PC 1440 · <a href="state-6.html">크게 열기</a></figcaption><div class="fr pc" data-w="1440" data-s=".6"><iframe src="state-6.html" title="상태 6 PC" width="1440" height="1000" loading="lazy"></iframe></div></figure>
+    <figure><figcaption>휴대폰 390</figcaption><div class="fr ph" data-w="390" data-s=".9"><iframe src="state-6.html" title="상태 6 휴대폰" width="390" height="1000" loading="lazy"></iframe></div></figure>
+  </div>
+</section>
+<section class="card" id="s7">
+  <h2><span class="n">7</span>거절 (기한 지남도 같은 틀)</h2>
+  <div class="row">
+    <figure><figcaption>PC 1440 · <a href="state-7.html">크게 열기</a></figcaption><div class="fr pc" data-w="1440" data-s=".6"><iframe src="state-7.html" title="상태 7 PC" width="1440" height="1000" loading="lazy"></iframe></div></figure>
+    <figure><figcaption>휴대폰 390</figcaption><div class="fr ph" data-w="390" data-s=".9"><iframe src="state-7.html" title="상태 7 휴대폰" width="390" height="1000" loading="lazy"></iframe></div></figure>
+  </div>
+</section>
+</div>
+<script>
+// 화면 배치 확인용 — 각 틀의 크기를 안쪽 화면 높이에 맞추고 비율만 줄인다(상태·로직 없음)
+document.querySelectorAll('.fr').forEach(function(fr){var f=fr.querySelector('iframe'),w=+fr.dataset.w,k=+fr.dataset.s;
+ function fit(){var h=f.contentDocument.documentElement.scrollHeight;f.style.height=h+'px';f.style.transform='scale('+k+')';fr.style.width=w*k+'px';fr.style.height=h*k+'px'}
+ fr.style.width=w*k+'px';fr.style.height=900*k+'px';f.style.transform='scale('+k+')';f.addEventListener('load',function(){try{fit()}catch(e){}});});
+</script></body></html>
