@@ -37,10 +37,10 @@
 .barLab::after { content: ":"; }
 .barCode { letter-spacing: 1px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .barActs { display: flex; flex-wrap: wrap; column-gap: var(--space-2); row-gap: 0; }
-/* 복사 버튼이 함께 그리는 알림 줄(role=status) — 버튼 아래 한 줄, 비어 있으면 자리를 차지하지 않는다(ui 리뷰 2026-11-17) */
-/* 복사 결과 문구는 버튼 묶음 폭을 넓히지 않는다 — 넓히면 .bar 가 줄을 바꿔 버튼이 아래로 내려갔다(2026-11-18 사용자 「전체 주소 복사를 누르면 배치가 바뀜」). 문구는 버튼 폭 안에서 줄을 바꾼다 */
-.barActs > p { flex-basis: 100%; margin: var(--space-2) 0 0; contain: inline-size; }
-.barActs > p:empty { margin: 0; }
+/* 복사 결과 문구(role=status) — 주소 띠 바로 아래, 띠 폭 전체. 비어 있으면 자리를 차지하지 않는다.
+   버튼 묶음 안에 두면 묶음 폭을 넓혀 띠가 줄을 바꿨다(2026-11-18 사용자 「전체 주소 복사를 누르면 배치가 바뀜」) */
+.copyMsg { margin: var(--space-2) 0 0; color: var(--kraft-ink); }
+.copyMsg:empty { margin: 0; }
 .ghost, .copy { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: var(--btn-h-sm); padding: 0 var(--space-4); border: 0; border-radius: var(--r-btn); font: inherit; font-size: var(--fs-small); font-weight: var(--fw-btn); white-space: nowrap; cursor: pointer; }
 .ghost::before, .copy::before { content: ""; position: absolute; inset: calc((var(--hit) - var(--btn-h-sm)) / -2) 0; } /* 누르는 칸 44(design-prompt 8-12) */
 .ghost { background: var(--white); color: var(--kraft-ink); box-shadow: inset 0 0 0 1px var(--kraft-ink); }

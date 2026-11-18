@@ -61,6 +61,8 @@ export function splitOfficeAddress(officeAddress: string): { base: string; detai
 export function BoxAddressCode({ officeAddress, code, boxName, senderName, compact = false }: Props) {
   const id = useId();
   const [shown, setShown] = useState(false);
+  // 복사 결과 문구는 주소 띠 아래에 띠 폭 전체로 — 버튼 묶음 안에 두면 묶음 폭을 넓혀 배치가 바뀌거나, 버튼 폭에 묶여 여러 줄로 접혔다(2026-11-18)
+  const [copyMessage, setCopyMessage] = useState("");
   const full = receivingAddressText(officeAddress, code);
   const { base, detail } = splitOfficeAddress(officeAddress);
   const codeMark = (
@@ -143,9 +145,13 @@ export function BoxAddressCode({ officeAddress, code, boxName, senderName, compa
             ariaLabel={`${boxName} 전체 주소 복사`}
             copiedMessage="끝 6자리를 포함한 전체 주소가 복사되었습니다."
             failedMessage="주소를 복사하지 못했습니다. ‘6자리 보기’를 누르고 전체 주소를 직접 입력해 주세요."
+            onMessage={setCopyMessage}
           />
         </div>
       </div>
+      <p className={`hint ${s.copyMsg}`} role="status">
+        {copyMessage}
+      </p>
       {compact ? null : (
         <ul className={s.notes}>
           <li>보내는 분 이름에는 팬꾹 닉네임을 적어 주세요.</li>

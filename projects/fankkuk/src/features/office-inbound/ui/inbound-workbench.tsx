@@ -144,7 +144,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
           kind: "rejected",
           title: "송장 바코드를 먼저 스캔해 주세요",
           message: "이 칸은 상자 겉면의 택배 송장 바코드(숫자 10~14자리)를 읽는 칸이에요.",
-          next: "상자의 송장 바코드를 먼저 읽으면, 다음 칸에서 팬꾹 주소 끝 6자리를 넣을 수 있어요.",
+          next: "① 상자의 송장 바코드 스캔 → ② 다음 칸에 팬꾹 주소 끝 6자리 입력",
         });
         return;
       }

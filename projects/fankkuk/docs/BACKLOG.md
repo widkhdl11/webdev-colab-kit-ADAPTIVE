@@ -576,3 +576,4 @@
 - [ ] **UX 기준 문서 둘이 없음 — `docs/ux/principles.md`·`docs/ux/list-pages.md`** (2026-11-18) — 받은 선물 명세(me-revgifts)를 쓰다 확인. ux-reviewer 가 목록형 화면을 판정할 기준이 없다 · 되살릴 조건: 목록형 화면 명세를 또 쓰거나 ux-reviewer 가 기준 없음으로 멈출 때
 - [ ] **받은 선물 「받을지 정하는 것 먼저」 정렬을 entities 로** (2026-11-18, ui-reviewer 낮음) — 지금 `src/widgets/my-revgifts/ui/my-revgifts-panel.tsx` Panel 안 · 되살릴 조건: 다른 화면(팬 홈 등)에서 같은 정렬이 필요할 때
 - [ ] **받은 선물 타일 — 로컬 DB 에 받은 역조공이 없어 실데이터 화면 미확인** (2026-11-18) — 가짜 데이터 7건을 잠시 넣어 1280·390 확인 후 되돌림 · 되살릴 조건: 로컬 또는 운영에 받은 역조공이 처음 생길 때 한 번 본다
+- [ ] **운영자 입고 화면 거절 카드를 낭독기가 모름** (2026-11-18, ui-reviewer 낮음 · 이전부터) — `src/features/office-inbound/ui/inbound-workbench.tsx` 거절 카드에 알림 속성이 없고 커서는 스캔 칸에 그대로라, 카드가 뜬 것을 낭독기 사용자가 알 수 없다(화면 위 sr-only 알림 줄이 거절 문구를 읽는지 확인 필요) · 되살릴 조건: 운영자 화면 접근성 정리 때

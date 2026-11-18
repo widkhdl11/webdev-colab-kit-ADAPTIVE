@@ -10,6 +10,7 @@ export function CopyButton({
   className,
   copiedMessage,
   failedMessage,
+  onMessage,
 }: {
   text: string;
   label: string;
@@ -18,8 +19,11 @@ export function CopyButton({
   className?: string;
   copiedMessage: string;
   failedMessage: string;
+  /** 알림 줄을 부르는 쪽이 다른 자리에 그릴 때 — 주면 버튼 옆 알림 줄을 그리지 않고 문구를 넘긴다 */
+  onMessage?: (message: string) => void;
 }) {
-  const [message, setMessage] = useState("");
+  const [ownMessage, setOwnMessage] = useState("");
+  const setMessage = onMessage ?? setOwnMessage;
   return (
     <>
       <button
@@ -41,9 +45,11 @@ export function CopyButton({
       >
         {label}
       </button>
-      <p className="hint" role="status">
-        {message}
-      </p>
+      {onMessage ? null : (
+        <p className="hint" role="status">
+          {ownMessage}
+        </p>
+      )}
     </>
   );
 }
