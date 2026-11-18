@@ -47,3 +47,12 @@ export function parseAddressCode(input: string): AddressCodeInput {
   if (addressCodeCheckChar(value.slice(0, 5)) !== value[5]) return { ok: false, reason: "check" };
   return { ok: true, value };
 }
+
+/**
+ * 스캔 칸에 들어온 값이 받는 주소 6자리처럼 보이는가 — 입고 화면에서 바코드보다 6자리를 먼저 넣었을 때 순서를 알려 주려고 쓴다.
+ * 확인 문자는 보지 않는다(틀린 6자리여도 「순서가 틀렸다」가 먼저다). 같은 6자리가 두 번 붙은 값(복사가 두 번 된 경우)도 6자리로 본다.
+ */
+export function looksLikeAddressCode(raw: string): boolean {
+  const value = raw.trim().toUpperCase();
+  return ADDRESS_CODE_PATTERN.test(value) || (value.length === 12 && value.slice(0, 6) === value.slice(6) && ADDRESS_CODE_PATTERN.test(value.slice(0, 6)));
+}

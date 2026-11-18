@@ -420,8 +420,10 @@ describe("v41: 두 코드 가르기 — 상자 이름에 주문번호가 없다"
     // 6자리는 「받는 분」 칸의 상세주소 줄 끝에 있다(2026-11-17 시안 kraft-shipping-guide)
     const detailRow = [...(addr?.querySelectorAll("dl > div") ?? [])].find((d) => d.querySelector("dt")?.textContent === "상세주소");
     expect(detailRow?.querySelector("[data-code6]")).not.toBeNull();
-    const cells = () => [...(addr?.querySelectorAll("[data-code6] > span[aria-hidden]") ?? [])].map((c) => c.textContent).join("");
+    // 6자리 자리의 글자 전체 — 화면 글자와 낭독기용 숨은 글자가 따로 있으면 끌어 선택해 복사할 때 두 번 붙는다(2026-11-18 사용자 「C9JDD4C9JDD4」)
+    const cells = () => addr?.querySelector("[data-code6]")?.textContent;
     expect(cells()).toBe("••••••");
+    expect(addr?.querySelector("[data-code6] [role=img]")?.getAttribute("aria-label")).toBe("끝 6자리 가려짐");
     expect(addr?.textContent).not.toContain("K7M3XA");
     const toggle = [...(addr?.querySelectorAll("button") ?? [])].find((b) => b.textContent === "6자리 보기") as HTMLButtonElement;
     act(() => toggle.click());

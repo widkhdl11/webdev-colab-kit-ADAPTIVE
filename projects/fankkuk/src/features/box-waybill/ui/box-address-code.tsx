@@ -29,6 +29,20 @@ type Props = {
 
 const MASK = "••••••";
 
+/**
+ * 6자리 글자 — 보일 때는 6자리 한 번만, 가렸을 때는 점 여섯 개에 낭독기 이름 「끝 6자리 가려짐」.
+ * 2026-11-18 사용자: 6자리를 끌어 선택해 복사하면 「C9JDD4C9JDD4」로 두 번 붙었다 — 화면 글자와 낭독기용 숨은 글자(sr-only)가
+ * 둘 다 있어서 선택 복사에 둘 다 들어갔다. 숨은 글자를 따로 두지 않고 글자 하나(가렸을 때는 role=img 이름)로 둔다.
+ */
+function CodeText({ shown, code }: { shown: boolean; code: string }) {
+  if (shown) return <>{code}</>;
+  return (
+    <span role="img" aria-label="끝 6자리 가려짐">
+      {MASK}
+    </span>
+  );
+}
+
 /** 받는 주소 전체 — 사무실 주소 상세 끝에 6자리 */
 export function receivingAddressText(officeAddress: string, code: string): string {
   return `${officeAddress} ${code}`;
@@ -51,8 +65,7 @@ export function BoxAddressCode({ officeAddress, code, boxName, senderName, compa
   const { base, detail } = splitOfficeAddress(officeAddress);
   const codeMark = (
     <span className={s.hl} data-code6="">
-      <span aria-hidden="true">{shown ? code : MASK}</span>
-      <span className="sr-only">{shown ? code : "끝 6자리 가려짐"}</span>
+      <CodeText shown={shown} code={code} />
     </span>
   );
   return (
@@ -115,10 +128,9 @@ export function BoxAddressCode({ officeAddress, code, boxName, senderName, compa
       <div className={s.bar}>
         <p className={s.barText}>
           <span className={s.barLab}>받는 곳 상세주소</span> {detail ? `${detail} ` : null}
-          <span className={s.barCode} aria-hidden="true">
-            {shown ? code : MASK}
+          <span className={s.barCode}>
+            <CodeText shown={shown} code={code} />
           </span>
-          <span className="sr-only">{shown ? code : "끝 6자리 가려짐"}</span>
         </p>
         <div className={s.barActs}>
           <button type="button" className={s.ghost} aria-label={`${boxName} 팬꾹 주소 끝 6자리 ${shown ? "가리기" : "보기"}`} onClick={() => setShown((v) => !v)}>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ADDRESS_CODE_ALPHABET, addressCodeCheckChar, parseAddressCode } from "./address-code";
+import { ADDRESS_CODE_ALPHABET, addressCodeCheckChar, looksLikeAddressCode, parseAddressCode } from "./address-code";
 
 function withCheck(body: string): string {
   return body + addressCodeCheckChar(body);
@@ -94,5 +94,21 @@ describe("INV-C1 받는 주소 6자리 — 글자와 확인 문자", () => {
   it("확인 문자 계산은 20자 안의 앞 5자리만 받는다", () => {
     expect(() => addressCodeCheckChar("K7M3")).toThrow();
     expect(() => addressCodeCheckChar("K7M3Q")).toThrow();
+  });
+});
+
+describe("입고 스캔 칸에 6자리를 먼저 넣었는지 (2026-11-18)", () => {
+  it("20자 안의 6글자는 6자리로 본다 — 소문자·앞뒤 공백 상관없음, 확인 문자는 보지 않는다", () => {
+    expect(looksLikeAddressCode("C9JDD4")).toBe(true);
+    expect(looksLikeAddressCode(" c9jdd4\n")).toBe(true);
+  });
+  it("같은 6자리가 두 번 붙은 값도 6자리로 본다(복사가 두 번 된 경우)", () => {
+    expect(looksLikeAddressCode("C9JDD4C9JDD4")).toBe(true);
+    expect(looksLikeAddressCode("C9JDD4C9JDD3")).toBe(false);
+  });
+  it("송장 바코드·라벨 QR·20자 밖 글자는 6자리가 아니다", () => {
+    expect(looksLikeAddressCode("6012345678901")).toBe(false);
+    expect(looksLikeAddressCode("Q-123456")).toBe(false);
+    expect(looksLikeAddressCode("K7M3XO")).toBe(false);
   });
 });

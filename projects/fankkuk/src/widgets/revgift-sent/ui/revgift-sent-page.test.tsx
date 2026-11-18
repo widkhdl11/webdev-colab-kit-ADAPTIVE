@@ -172,7 +172,7 @@ describe("보낸 역조공 화면 — 팬별 팬꾹 주소는 택배 접수 작�
     renderWith("하루");
     expect(card()).not.toBeNull();
     expect(card()!.textContent).toContain("하루 (팬꾹 닉네임)");
-    expect(card()!.querySelector("[data-code6] [aria-hidden=true]")?.textContent).toBe("••••••");
+    expect(card()!.querySelector("[data-code6]")?.textContent).toBe("••••••");
   });
 
   it("ui 리뷰: 팬마다 같은 제목·안내를 되풀이하지 않는다 — 안내는 묶음 안내에 한 번, 제목은 낭독기용(팬 이름 포함)으로만", () => {

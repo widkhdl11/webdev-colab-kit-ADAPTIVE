@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { looksLikeAddressCode } from "@/entities/parcel/model/address-code";
 import { CARRIER_LABEL, CARRIERS, isCarrier, type Carrier } from "@/entities/parcel/model/carrier";
 import { needsReload } from "@/entities/parcel/model/office-error";
 import { HOLD_REASON_LABEL, KIND_LABEL, TIER_LABEL } from "@/entities/parcel/model/office-labels";
@@ -35,7 +36,7 @@ type Card =
   | { kind: "hold_saved"; reason: HoldReason; shelf: string; nickname: string | null }
   | { kind: "hold_recorded" }
   // unknown: 서버는 반영했을 수 있는데 응답을 못 읽음 — 「반영되지 않았어요」라고 말하면 안 된다
-  | { kind: "rejected"; title: string; message: string; unknown?: true };
+  | { kind: "rejected"; title: string; message: string; unknown?: true; next?: string };
 
 /** 화면 읽기 프로그램이 읽는 한 줄 — 결과 카드의 제목만. 부착 대기 줄·양식은 따로 알리지 않는다. */
 function announceOf(card: Card | null): string {
@@ -137,6 +138,16 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
   async function onScan(raw: string) {
     const scanned = readScan(raw);
     if (scanned.kind === "invalid") {
+      // 바코드보다 6자리를 먼저 넣은 경우 — 순서를 알려 준다(2026-11-18 사용자: 6자리를 넣어도 아무것도 안 뜬다)
+      if (looksLikeAddressCode(raw)) {
+        setCard({
+          kind: "rejected",
+          title: "송장 바코드를 먼저 스캔해 주세요",
+          message: "이 칸은 상자 겉면의 택배 송장 바코드(숫자 10~14자리)를 읽는 칸이에요.",
+          next: "상자의 송장 바코드를 먼저 읽으면, 다음 칸에서 팬꾹 주소 끝 6자리를 넣을 수 있어요.",
+        });
+        return;
+      }
       reject("스캔한 값을 읽지 못했어요", "택배 송장 바코드(숫자 10~14자리)나 라벨 QR(Q-여섯 자리)을 다시 스캔해 주세요.");
       return;
     }
@@ -484,7 +495,9 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
             <div className={w.nextStep}>
               <h3>이렇게 하세요</h3>
               <p>
-                {pending
+                {card.next
+                  ? card.next
+                  : pending
                   ? "앞 상자에 라벨을 붙이고, 그 라벨의 QR 을 스캔하면 다음 상자를 받을 수 있어요. 한 상자에 스캔 한 번, 라벨 한 장씩 처리해요."
                   : "같은 송장을 두 번 읽었다면 그대로 두세요. 이 상자에 붙은 라벨이 없다면 대표에게 알려 주세요."}
               </p>
