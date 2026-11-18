@@ -2,7 +2,7 @@
    흰 카드는 공통 .card, 큰 숫자는 공통 .num-big, 촘촘한 줄은 공통 .lrow — 면 효과·움직임(23-1·23-2절)은 그 공통 부품이 준다. */
 
 /* 맨 위 — 처리 수 판 + 오른쪽 288 결과별 숫자 칸 넷 */
-.top { display: grid; grid-template-columns: minmax(0, 1fr) 288px; gap: var(--space-4); align-items: stretch; margin-top: var(--space-12); }
+.top { display: grid; grid-template-columns: minmax(0, 1fr) var(--col-aside); gap: var(--space-4); align-items: stretch; margin-top: var(--space-12); }
 .tot.tot { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: 208px; padding: var(--space-8); border-radius: var(--r-panel); }
 .peek { position: absolute; right: var(--space-8); top: 50%; width: 96px; height: 96px; object-fit: contain; pointer-events: none; transform: translateY(-50%); }
 /* 글자 쪽에 그림 자리(96 + 양옆 32)를 비워 둔다 — 카드가 좁아지는 폭(왼쪽 메뉴가 있는 1000~1100)에서 큰 숫자와 그림이 겹치지 않게. 휴대폰은 모서리 걸침이라 풀어 준다 */

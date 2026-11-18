@@ -36,9 +36,9 @@
 
 /* ── 흰 입력 판 (시안 .fpanel) ── */
 /* 단계 판 아래 두 단 — 입력 판(남는 폭) + 오른쪽 칸 288, 사이 32. 칸을 띄울지는 본문 칸(gift-send, 위젯 main) 폭 880 기준 — 지금 구현과 같은 경계.
-   288 은 폭 토큰이 없어 지금 구현 값 그대로(가정, design-rules 「두 단」 칸 280~288) */
+   칸 폭은 --col-aside(288, design-rules 「두 단」 칸 280~288) */
 .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-8); align-items: start; margin-top: var(--space-6); }
-.grid.split { grid-template-columns: minmax(0, 1fr) 288px; }
+.grid.split { grid-template-columns: minmax(0, 1fr) var(--col-aside); }
 .main { min-width: 0; }
 @container gift-send (width < 880px) {
   .grid.split { grid-template-columns: minmax(0, 1fr); }

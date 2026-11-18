@@ -4,7 +4,7 @@
 /* ── 크리에이터: 받은 선물 — 시안 v37-part2/boxes.html (v37.css .side2·.bside·.bmonth·.bcards·.bcard·.rform·.drow, design-rules 23-3절).
    흰 카드는 공통 .card, 큰 숫자는 공통 .num-big, 촘촘한 줄은 공통 .lrow, 답장 고르기(.opt)·입력(.field)은 base.css 공통 —
    면 효과·움직임(23-1·23-2절)은 그 공통 부품이 준다. 여기에는 배치와 코드에만 있는 것만 둔다 ── */
-.side2 { display: grid; grid-template-columns: minmax(0, 1fr) 288px; gap: var(--space-8); align-items: start; margin-top: var(--space-8); }
+.side2 { display: grid; grid-template-columns: minmax(0, 1fr) var(--col-aside); gap: var(--space-8); align-items: start; margin-top: var(--space-8); }
 .main { min-width: 0; }
 .who { overflow-wrap: anywhere; }
 .who:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; } /* 저장 뒤 포커스가 옮겨 오는 카드 제목 */
