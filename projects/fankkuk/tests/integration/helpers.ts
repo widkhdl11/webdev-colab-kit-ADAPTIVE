@@ -116,6 +116,26 @@ export function deleteTestFollows(): void {
   testFollows.clear();
 }
 
+/**
+ * 지금 대기 중인 요청(시드의 오래된 대기 요청 — 하루에게 간 FC-F6QW0 등)마다 승인 재알림 두 차례 줄을 25시간 전에 만든 것으로 넣어 둔다.
+ * 재알림은 크리에이터마다 24시간에 한 통이고 가장 빨리 반려될 건부터 뽑으므로(notification-batching INV-NB2, 2026-11-19),
+ * 이것 없이 시험 주문을 72시간 전으로 당기면 시드 건이 대신 뽑혀 시험 주문의 재알림이 생기지 않는다.
+ * 자동 처리로 만들지 않고 직접 넣는 이유: 시험이 막 연 승인 요청 창이 시드 건의 재알림 시각을 덮어 그때는 만들어지지 않고,
+ * 시험이 창을 72시간 전으로 당긴 뒤에야 뽑힌다. **시험 주문을 결제하기 전에** 부른다 — 그 뒤에 부르면 시험 주문 몫도 들어간다.
+ * 줄은 각 파일의 정리 단계가 지운다.
+ */
+export function settleSeedReminders(): void {
+  psql(`
+    insert into public.notification_outbox (kind, order_id, approval_request_id, round, account_id, channel, event_at, created_at)
+    select 'approval_reminder', o.id, r.id, k.round, c.profile_id, 'email', now() - interval '25 hours', now() - interval '25 hours'
+    from public.approval_requests r
+    join public.orders o on o.id = r.order_id
+    join public.creators c on c.id = o.creator_id
+    cross join (values (1::smallint), (2::smallint)) as k (round)
+    where public.approval_request_open(r.id) and c.profile_id is not null
+    on conflict do nothing;`);
+}
+
 export function deleteTestOrders(): void {
   deleteTestFollows();
   const kinds = TEST_ITEM_KINDS.map((k) => `'${k}'`).join(", ");

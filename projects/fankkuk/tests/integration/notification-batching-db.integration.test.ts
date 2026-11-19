@@ -278,6 +278,17 @@ describe("승인 재알림 3일째·6일째 (INV-NB2)", () => {
     psql(`update ${WINDOWS} set opened_at = now() - interval '${hoursAgo}', ends_at = now() - interval '${hoursAgo}' + interval '10 minutes' where account_id = '${MOMO.accountId}'`);
   }
   const reminders = (unit: Unit) => requestRows(unit).filter((r) => r.startsWith("approval_reminder|"));
+  /** 모모에게 만들어진 재알림 줄(이메일)의 「주문 id|차례」 */
+  const momoReminders = () => {
+    const out = psql(
+      `select r.order_id || '|' || o.round from ${OUTBOX} o join public.approval_requests r on r.id = o.approval_request_id where o.account_id = '${MOMO.accountId}' and o.kind = 'approval_reminder' and o.channel = 'email' order by o.created_at, r.order_id`,
+    );
+    return out === "" ? [] : out.split("\n");
+  };
+  /** 모모의 발송 줄이 그만큼 일찍 만들어진 것으로 — 만든 시각은 줄의 이름이라 지킴이가 막으므로, 이 시험에서만 지킴이를 끄고 옮긴다 */
+  function rowsMadeAgo(interval: string): void {
+    psql(`set session_replication_role = replica; update ${OUTBOX} set created_at = created_at - interval '${interval}' where account_id = '${MOMO.accountId}';`);
+  }
 
   it("INV-NB2 · INV-N8 (S2): 결제 완료 + 72시간 대기 → 재알림 1차 줄 하나, 두 번 돌려도 하나 — 144시간에 2차 하나", async () => {
     const a = await paidToMomo();
@@ -287,6 +298,8 @@ describe("승인 재알림 3일째·6일째 (INV-NB2)", () => {
     await enqueueDue();
     expect(reminders(a)).toEqual(["approval_reminder|1|email"]);
     age(a, "144 hours 1 minute");
+    // 1차가 간 지 72시간이 흘렀다 — 하루 한 통 제한에 걸리지 않는다
+    rowsMadeAgo("72 hours");
     await enqueueDue();
     await enqueueDue();
     expect(reminders(a)).toEqual(["approval_reminder|1|email", "approval_reminder|2|email"]);
@@ -313,7 +326,8 @@ describe("승인 재알림 3일째·6일째 (INV-NB2)", () => {
     psql(`update public.orders set registered_at = now() - interval '100 hours' where id = '${c.orderId}'`);
     age(b, "72 hours 1 minute");
     await enqueueDue();
-    const [claimed] = await claimOnly(rowIdOf(b, "approval_reminder", 1));
+    // 셋이 한 번에 차례가 돼도 재알림은 하루 한 통 — 가장 빨리 반려될 urgent 의 6일째 줄 하나다
+    const [claimed] = await claimOnly(rowIdOf(urgent, "approval_reminder", 2));
     expect([claimed!.kind, claimed!.waiting_count, claimed!.days_left, claimed!.order_no, claimed!.must_deliver]).toEqual(["approval_reminder", 3, 1, null, true]);
   });
 
@@ -383,7 +397,8 @@ describe("승인 재알림 3일째·6일째 (INV-NB2)", () => {
     psql(`update public.orders set registered_at = now() - interval '100 hours' where id = '${urgent.orderId}'`);
     age(b, "72 hours 1 minute");
     await enqueueDue();
-    const [c] = await claimOnly(rowIdOf(b, "approval_reminder", 1));
+    // 둘 다 차례지만 재알림은 하루 한 통 — 더 급한 달토끼 건의 줄 하나다
+    const [c] = await claimOnly(rowIdOf(urgent, "approval_reminder", 1));
     // 달토끼 건은 결제가 더 일러(100시간) 먼저 반려된다 — 달토끼가 앞, 서로 다른 팬 둘
     expect([c!.sender_name, c!.sender_count]).toEqual([nicknameOf(DALTOKKI), 2]);
   });
@@ -404,6 +419,98 @@ describe("승인 재알림 3일째·6일째 (INV-NB2)", () => {
     age(a, "150 hours");
     await enqueueDue();
     expect(reminders(a)).toEqual(["approval_reminder|2|email"]);
+  });
+
+  // ── 2026-11-19 재알림은 크리에이터마다 하루 한 통(승인 요청은 세지 않는다) ──
+
+  it("INV-NB2 (하루 한 통): 같은 자동 처리에서 대기 둘이 차례가 돼도 재알림 줄은 하나 — 가장 빨리 자동 반려될 건", async () => {
+    const later = await paidToMomo();
+    const sooner = await paidToMomo();
+    psql(`update public.orders set registered_at = now() - interval '145 hours' where id = '${sooner.orderId}'`);
+    age(later, "72 hours 1 minute");
+    await enqueueDue();
+    await enqueueDue();
+    expect(momoReminders()).toEqual([`${sooner.orderId}|2`]);
+  });
+
+  it("INV-NB2 (하루 한 통, 실패경로): 24시간 안에 재알림이 갔으면 다른 건이 차례가 돼도 만들지 않고, 24시간이 지나면 다음 처리에서 밀린 건이 간다", async () => {
+    const first = await paidToMomo();
+    age(first, "80 hours");
+    await enqueueDue();
+    expect(momoReminders()).toEqual([`${first.orderId}|1`]);
+    const second = await paidToMomo();
+    age(second, "72 hours 1 minute");
+    rowsMadeAgo("23 hours 59 minutes");
+    await enqueueDue();
+    expect(reminders(second)).toEqual([]);
+    rowsMadeAgo("2 minutes");
+    await enqueueDue();
+    expect(reminders(second)).toEqual(["approval_reminder|1|email"]);
+  });
+
+  it("INV-NB2 (하루 한 통, 실패경로): 밀린 재알림은 기다리는 사이에 새 선물로 창이 열렸다 닫혀도 없어지지 않는다 — 24시간이 지나면 간다", async () => {
+    const first = await paidToMomo();
+    age(first, "80 hours");
+    await enqueueDue();
+    const second = await paidToMomo();
+    age(second, "72 hours 1 minute");
+    rowsMadeAgo("12 hours");
+    await enqueueDue();
+    expect(reminders(second)).toEqual([]);
+    // 밀린 사이에 새 선물이 와서 창이 열린다
+    await paidToMomo();
+    // 12시간 1분이 흐른다 — 결제 시각·창·만든 시각을 같이 당긴다
+    psql(`update public.orders set registered_at = registered_at - interval '12 hours 1 minute' where creator_id = '${MOMO.creatorId}' and item_kind = '시험 선물'`);
+    windowAgo("12 hours 1 minute");
+    rowsMadeAgo("12 hours 1 minute");
+    await enqueueDue();
+    expect(reminders(second)).toEqual(["approval_reminder|1|email"]);
+  });
+
+  it("INV-NB2 (하루 한 통): 승인 요청은 세지 않는다 — 방금 새 선물의 승인 요청이 갔어도 창이 끝났으면 재알림이 간다", async () => {
+    const old = await paidToMomo();
+    age(old, "72 hours 1 minute");
+    await paidToMomo();
+    // 새 창이 재알림 시각(1분 전)보다 앞서 끝난 것으로 — 창이 덮은 재알림은 원래 만들지 않는다(S2d)
+    windowAgo("15 minutes");
+    expect(momoApprovalRows()).toBeGreaterThan(0);
+    await enqueueDue();
+    expect(reminders(old)).toEqual(["approval_reminder|1|email"]);
+  });
+
+  it("INV-NB2 (하루 한 통, 실패경로): 건너뜀으로 끝난 재알림은 세지 않는다 — 실제로 가지 않았으니 다른 건의 재알림을 막지 않는다", async () => {
+    const a = await paidToMomo();
+    const b = await paidToMomo();
+    psql(`update public.orders set registered_at = now() - interval '73 hours' where id = '${b.orderId}'`);
+    age(a, "72 hours 1 minute");
+    await enqueueDue();
+    const id = rowIdOf(b, "approval_reminder", 1);
+    await approve(b);
+    expect(await claimOnly(id)).toEqual([]);
+    expect(rowStatus(id)).toBe("skipped|request_not_waiting");
+    await enqueueDue();
+    expect(reminders(a)).toEqual(["approval_reminder|1|email"]);
+  });
+
+  it("INV-NB2 (하루 한 통, 실패경로): 아직 안 보낸 재알림 줄의 요청이 그 사이 승인됐으면 세지 않는다 — 꺼낼 때 건너뜀이 될 줄이다", async () => {
+    const a = await paidToMomo();
+    const b = await paidToMomo();
+    psql(`update public.orders set registered_at = now() - interval '73 hours' where id = '${b.orderId}'`);
+    age(a, "72 hours 1 minute");
+    await enqueueDue();
+    expect(rowStatus(rowIdOf(b, "approval_reminder", 1))).toBe("pending|-");
+    await approve(b);
+    await enqueueDue();
+    expect(reminders(a)).toEqual(["approval_reminder|1|email"]);
+  });
+
+  it("INV-NB2 (하루 한 통, 동시): 자동 처리 셋이 동시에 돌아도 재알림 줄은 하나", async () => {
+    const a = await paidToMomo();
+    const b = await paidToMomo();
+    psql(`update public.orders set registered_at = now() - interval '73 hours' where id = '${b.orderId}'`);
+    age(a, "72 hours 1 minute");
+    await Promise.all([enqueueDue(), enqueueDue(), enqueueDue()]);
+    expect(momoReminders()).toHaveLength(1);
   });
 });
 

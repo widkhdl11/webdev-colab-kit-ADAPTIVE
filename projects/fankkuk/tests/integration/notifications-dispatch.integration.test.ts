@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { dispatchNotifications, type DispatchDeps } from "@/features/notification-dispatch/model/dispatch-notifications";
 import type { ChannelMessage, NotificationChannel } from "@/features/notification-dispatch/api/channels";
-import { adminClient, deleteTestOrders, psql, signedInClient, testPhoneKeys } from "./helpers";
+import { adminClient, deleteTestOrders, psql, settleSeedReminders, signedInClient, testPhoneKeys } from "./helpers";
 import { approve, deleteTestUnmatched, fanSetsWaybill, paidGift, receiveAndLabel, waybill } from "./office-helpers";
 import { PHONE_IN_TEXT } from "./pii-shape";
 import { labeled, measure, paidOrder } from "./difference-helpers";
@@ -86,6 +86,7 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
   });
 
   it("INV-N8 · INV-NB2 (S2): 72시간이 지난 대기 요청에 일꾼이 재알림 줄을 만들고, 꺼내기 전에 승인됐으면 건너뛴다", async () => {
+    settleSeedReminders();
     const waiting = await paidGift(1, undefined, { keepApprovalWindow: true });
     const approved = await paidGift(1, undefined, { keepApprovalWindow: true });
     // 그때 열린 승인 요청 창도 73시간 전 것으로 당긴다 — 창이 재알림 시각을 덮으면 재알림을 만들지 않는다(INV-NB2)

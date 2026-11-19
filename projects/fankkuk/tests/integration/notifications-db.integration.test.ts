@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   adminClient,
   anonClient,
+  settleSeedReminders,
   deleteTestBlocks,
   deleteTestOrders,
   holdRowLock,
@@ -531,6 +532,7 @@ describe("승인 재알림 (INV-N8 · INV-NB2)", () => {
   const reminder = (orderId: string) => outboxRows(orderId).filter((r) => r.startsWith("approval_reminder|"));
 
   it("INV-N8 · INV-NB2 (S2): 결제 완료 + 72시간이 지난 대기 요청 → 재알림 1차 줄 1개, 두 번 돌려도 1개", async () => {
+    settleSeedReminders();
     const g = await paidGift();
     age(g.orderId, "72 hours 1 minute");
     const first = await adminClient().rpc("notification_enqueue_due");
@@ -555,6 +557,7 @@ describe("승인 재알림 (INV-N8 · INV-NB2)", () => {
   });
 
   it("INV-N8 · INV-NB2 (실패경로): 재알림 줄이 대기인 사이에 하루가 승인 → 꺼낼 때 건너뜀으로 끝나고 돌려주지 않는다", async () => {
+    settleSeedReminders();
     const g = await paidGift();
     age(g.orderId, "73 hours");
     await adminClient().rpc("notification_enqueue_due");
@@ -569,11 +572,10 @@ describe("승인 재알림 (INV-N8 · INV-NB2)", () => {
 
   it("INV-N8 · INV-NB2: 재알림 함수는 실제로 넣은 줄 수를 돌려준다 — 두 번째 부르면 0", async () => {
     setTemplate("approval_reminder", "TPL_REMINDER_1");
+    // 시드의 오래된 대기 요청 몫을 하루 전 것으로 먼저 넣어 두고 센다
+    settleSeedReminders();
     const g = await paidGift();
     age(g.orderId, "73 hours");
-    // 시드의 오래된 대기 요청 몫을 먼저 만들어 두고, 이 주문 몫만 지운 뒤 센다
-    psql(`select public.notification_enqueue_due()`);
-    psql(`delete from ${OUTBOX} where order_id = '${g.orderId}' and kind = 'approval_reminder'`);
     expect((await adminClient().rpc("notification_enqueue_due")).data).toBe(2); // 이메일 + 카카오
     expect((await adminClient().rpc("notification_enqueue_due")).data).toBe(0);
   });
