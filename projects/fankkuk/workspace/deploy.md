@@ -115,3 +115,8 @@ basis: f8e3e08320b9
 - 운영 DB: 적용 전 `migration list` 로 빠진 것이 20261018000003 하나뿐임을 확인. 적용 전 셈 — 크리에이터 1 · 테마 색 저장 0 · 비워질 값(8색 밖) 0. `supabase db push` 로 적용(개인정보 구역 접촉 0). 적용 뒤 제약 `creators_personal_color_palette` 있음.
 - 앱: main 57ce3c86 push(커밋 17개) → Vercel 세 프로젝트 빌드 success.
 - 시험 주소(로그인 전, 1440): / · /creators · /login · /faq · /terms 200, 「Application error」 없음, 가로 스크롤 없음, 콘솔 오류 0. /creators 390 폭 가로 스크롤 없음, 카드 1장(「팬꾹 데모」·유튜브 칩·팔로우).
+
+## 2026-11-19 — 승인 재알림 크리에이터마다 24시간에 한 통
+
+- 운영 DB: 사용자가 `npx supabase db push --remote --yes` 로 20261119000001 적용(개인정보 구역 접촉 0). 적용 뒤 `migration list --remote` 198/198 일치.
+- 앱: 코드 변경 없음(e58a6f9e 는 DB 함수·시험·문서만).
