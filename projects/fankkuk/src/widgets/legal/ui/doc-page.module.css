@@ -104,6 +104,8 @@ a.tile:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .barRow { display: flex; align-items: center; gap: var(--space-3); min-height: var(--bar-h); }
 /* 긴 조 제목은 말줄임 — 전체는 펼친 목록에서(그리고 title) */
 .barNow { flex: 1 1 auto; min-width: 0; margin: 0; overflow: hidden; color: var(--gray-900); font-size: var(--fs-small); font-weight: var(--fw-btn); text-overflow: ellipsis; white-space: nowrap; }
+.barNowQuiet { visibility: hidden; }
+.barBtn[hidden] { display: none; }
 .barBtn { flex: none; display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--hit); padding: 0 var(--space-3); border: 0; border-radius: var(--r-btn); background: none; color: var(--gray-900); font: inherit; font-size: var(--fs-small); font-weight: var(--fw-btn); cursor: pointer; }
 .barBtn:hover { background: var(--surface); }
 .barBtn:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }

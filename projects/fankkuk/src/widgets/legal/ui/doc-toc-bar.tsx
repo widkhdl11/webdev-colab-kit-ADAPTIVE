@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import type { TocGroup } from "../model/doc-nav";
 import { DocChips, FrequentBadge } from "./doc-parts";
 import s from "./doc-page.module.css";
@@ -9,6 +9,9 @@ import s from "./doc-page.module.css";
 // 「지금 읽는 조 이름」 + 「목차 열기」. 펼치면 전체 조 · 지금 조 강조(aria-current) · 「주요」 · 약관의 주제 묶음 제목.
 // 칩으로 가린 조는 흐리게 남고, 누르면 「전체」로 돌아가 그 조를 보인다. Esc · 바깥 누름으로 닫히고 초점은 「목차 열기」로.
 // 글 가운데서도 수단이 둘 이상이게(원칙 ①) 「찾기」 단추(검색칸으로 옮겨 초점) · 펼친 목록 맨 위 분류 칩을 둔다 — 줄 높이 44 는 그대로.
+// 같은 것을 두 번 보이지 않는다(design-prompt 1-3 · 9-4, 점검 2026-11-20 policy-doc-toolbar):
+//   「찾기」는 검색칸이 화면 밖으로 나갔을 때만 — 검색칸이 보이면 같은 일을 하는 단추가 둘이 된다.
+//   지금 조 이름은 그 조의 제목이 줄 바로 아래에 보이는 동안 감춘다(자리는 남겨 단추 위치가 흔들리지 않게).
 
 type Props = {
   groups: readonly TocGroup[];
@@ -18,12 +21,16 @@ type Props = {
   onGo: (id: string) => void;
   /** 「찾기」 — 검색칸으로 옮겨 초점을 준다 */
   onFind: () => void;
+  /** 검색칸 — 화면에 보이는 동안 「찾기」를 감춘다 */
+  searchRef?: RefObject<HTMLInputElement | null>;
   /** 분류 칩 — 분류가 있는 글만. 펼친 목록 맨 위에 같은 칩 줄 */
   chips?: { tags: readonly string[]; active: string | null; onPick: (tag: string | null) => void };
 };
 
-export function DocTocBar({ groups, current, hidden, frequent, onGo, onFind, chips }: Props) {
+export function DocTocBar({ groups, current, hidden, frequent, onGo, onFind, searchRef, chips }: Props) {
   const [open, setOpen] = useState(false);
+  const [searchSeen, setSearchSeen] = useState(false);
+  const [headSeen, setHeadSeen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -65,15 +72,42 @@ export function DocTocBar({ groups, current, hidden, frequent, onGo, onFind, chi
     }
   }, [open, current]);
 
+  // 검색칸 · 지금 조 제목이 화면에 보이는지 — 스크롤 · 폭 바뀜마다 한 번(rAF)
+  const nowId = now?.id;
+  useEffect(() => {
+    let raf = 0;
+    const check = () => {
+      raf = 0;
+      const bar = wrapRef.current?.getBoundingClientRect();
+      if (!bar) return;
+      const vh = window.innerHeight;
+      const input = searchRef?.current?.getBoundingClientRect();
+      setSearchSeen(!!input && input.height > 0 && input.bottom > 0 && input.top < vh);
+      const head = nowId ? document.getElementById(nowId)?.querySelector("[data-doc-heading]")?.getBoundingClientRect() : undefined;
+      setHeadSeen(!!head && head.height > 0 && head.top >= bar.bottom - 1 && head.top < bar.bottom + vh / 3);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(check);
+    };
+    check();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [searchRef, nowId]);
+
   if (!now) return null;
 
   return (
     <div ref={wrapRef} className={s.bar}>
       <div className={s.barRow}>
-        <p className={s.barNow} title={now.label}>
+        <p className={headSeen ? `${s.barNow} ${s.barNowQuiet}` : s.barNow} title={now.label} aria-hidden={headSeen || undefined}>
           {now.label}
         </p>
-        <button type="button" className={s.barBtn} onClick={onFind}>
+        <button type="button" className={s.barBtn} onClick={onFind} hidden={searchSeen}>
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />
             <path d="m13.5 13.5 3.5 3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -126,7 +160,7 @@ export function DocTocBar({ groups, current, hidden, frequent, onGo, onFind, chi
 // 보이는 폭은 CSS 가 정한다: 로그인 전 화면 1376 이상, 로그인 후 1400 이상. 그때는 위에 붙는 목차 줄을 숨기고, 더 좁으면 이 목차가 숨는다.
 // 목차 줄의 펼친 목록과 같은 줄 모양 — 지금 조 하늘 면(aria-current) · 「주요」 · 칩으로 가린 조는 흐리게 · 약관식 묶음 제목.
 
-type SideProps = Omit<Props, "onFind" | "chips">;
+type SideProps = Omit<Props, "onFind" | "chips" | "searchRef">;
 
 export function DocSideToc({ groups, current, hidden, frequent, onGo }: SideProps) {
   const listRef = useRef<HTMLDivElement>(null);

@@ -134,6 +134,7 @@ export function FaqPage({
               frequent={frequent}
               onGo={(id) => nav.goTo(id, { focus: true, push: true })}
               onFind={() => focusSearch(searchRef.current)}
+              searchRef={searchRef}
               chips={{ tags, active: nav.tag, onPick: nav.setTag }}
             />
             <div className={`acc ${d.faqList}`}>

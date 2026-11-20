@@ -345,6 +345,18 @@ describe("글 가운데서도 수단 둘(원칙 ①) — 목차 줄의 「찾기
     expect(document.activeElement).toBe(q('input[type="search"]'));
   });
 
+  it("검색칸이 화면에 보이면 「찾기」를 감추고, 지금 조 제목이 줄 바로 아래 보이면 조 이름을 감춘다(같은 것 두 번 X)", () => {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+      if (this.matches('input[type="search"]')) return { top: 100, bottom: 148, height: 48 } as DOMRect;
+      if (this.matches("[data-doc-heading]")) return { top: 220, bottom: 250, height: 30 } as DOMRect;
+      if (this.matches("[class*=bar]")) return { top: 160, bottom: 204, height: 44 } as DOMRect;
+      return { top: 0, bottom: 0, height: 0 } as DOMRect;
+    });
+    render(<DocPage doc={base} variant="policy" />);
+    expect(byText("button", "찾기")?.hidden).toBe(true);
+    expect(q("button[aria-expanded]")?.parentElement?.querySelector("p")?.getAttribute("aria-hidden")).toBe("true");
+  });
+
   it("칩이 있는 글은 펼친 목차 맨 위에 칩 줄 — 거기서 고르면 본문이 걸러진다", () => {
     render(<DocPage doc={tagged} variant="policy" />);
     click(q("button[aria-expanded]"));

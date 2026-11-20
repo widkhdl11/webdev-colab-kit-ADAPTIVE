@@ -101,6 +101,7 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
               frequent={frequent}
               onGo={(id) => nav.goTo(id, { focus: true, push: true })}
               onFind={() => focusSearch(searchRef.current)}
+              searchRef={searchRef}
               chips={{ tags, active: nav.tag, onPick: nav.setTag }}
             />
             <div className={s.main}>
