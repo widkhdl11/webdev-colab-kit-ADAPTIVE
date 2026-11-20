@@ -49,9 +49,15 @@
   .body { padding: var(--space-6); }
   .sec { padding: var(--space-6); }
   .panel > .sec:last-child { padding-bottom: var(--space-6); }
-  /* 휴대폰 저장 줄은 판 아래 끝에 붙어 따라온다(sticky) — 결과 안내 한 줄 · 버튼 한 줄(버튼은 폭을 나눠 갖는다) */
+  /* 휴대폰 저장 줄은 판 아래 끝에 붙어 따라온다(sticky) — 결과 안내 한 줄 · 버튼 묶음.
+     폼의 휴대폰 배치(design-prompt 2-21 2)·8-1): 주 버튼(저장)은 폭 전체로 위, 보조(취소·되돌리기)는 그 아래 글자 버튼.
+     마크업 순서는 PC 의 「보조 → 주」 그대로 두고 세로로 뒤집는다 */
   .bar { position: sticky; bottom: 0; z-index: 4; padding: var(--space-3) var(--space-6); }
   .bar > .msg { flex: 1 0 100%; }
-  .barBtns { flex: 1 0 100%; margin-left: 0; }
-  .barBtns > :global(.btn) { flex: 1; }
+  .barBtns { flex: 1 0 100%; flex-direction: column-reverse; flex-wrap: nowrap; gap: var(--space-1); margin-left: 0; }
+  .barBtns > :global(.btn) { width: 100%; }
+  /* 보조 선 버튼 → 글자 버튼 모양(전역 .btn--text 와 같은 값). 누르는 칸 높이는 44(8-12).
+     화면마다 선 버튼을 짙은 선으로 덮는 규칙(.col.col · .root.root · .form.form — 셋 다 클래스 3개)보다 강해야 해서 클래스 4개 */
+  .bar .barBtns.barBtns > :global(.btn--line) { min-height: var(--hit); background: none; box-shadow: none; color: var(--gray-900); }
+  .bar .barBtns.barBtns > :global(.btn--line):is(:hover, :active) { background: var(--gray-100); }
 }
