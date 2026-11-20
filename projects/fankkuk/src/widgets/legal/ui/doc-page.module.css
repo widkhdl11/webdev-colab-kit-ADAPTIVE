@@ -32,13 +32,15 @@
 /* 요약 판 — 하늘 강조 면(23-1절) + 1px 하늘 테두리로 경계가 보이게(36절, 시안 part7-v4 .sum). 하늘 동그라미 번호 28 */
 .summary { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-8); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: inset 0 0 0 1px var(--tint-line), var(--surface-accent-shadow); }
 .summaryT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
-.summaryList { display: flex; flex-direction: column; max-width: var(--prose-max); margin: 0; padding: 0; list-style: none; counter-reset: sum; }
+/* 줄(누르는 칸)은 판 안쪽 폭 전체 — 화살표는 판 오른쪽 끝(2-21의 11), 글만 680(점검 2026-11-20 policy-summary-panel) */
+.summaryList { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; counter-reset: sum; }
 .summaryList li { counter-increment: sum; }
 /* 줄 하나 = 번호 · 문장 · (갈 조가 있으면) 오른쪽 화살표. 링크면 줄 전체가 누르는 칸(높이 44) — 문장 전체 밑줄 대신 */
 .summaryRow { display: flex; align-items: center; gap: var(--space-3); min-height: var(--hit); margin: 0 calc(-1 * var(--space-2)); padding: var(--space-1) var(--space-2); border-radius: var(--r-btn); color: var(--gray-900); font-weight: var(--fw-btn); text-decoration: none; }
 .summaryRow::before { content: counter(sum); flex: none; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); font-size: var(--fs-small); font-weight: var(--fw-btn); }
-.summaryText { flex: 1 1 auto; min-width: 0; }
-.summaryGo { flex: none; width: 20px; height: 20px; color: var(--brand-ink); }
+/* 글 폭은 전과 같게 — 680 줄에서 번호 원 28 · 화살표 20 · 사이 12 두 번을 뺀 폭(줄바꿈 위치가 바뀌지 않게) */
+.summaryText { flex: 1 1 auto; min-width: 0; max-width: calc(var(--prose-max) - 48px - 2 * var(--space-3)); }
+.summaryGo { flex: none; margin-left: auto; width: 20px; height: 20px; color: var(--brand-ink); }
 a.summaryRow:hover { background: rgb(255 255 255 / 0.7); }
 a.summaryRow:focus-visible { outline: 3px solid var(--focus); outline-offset: 0; }
 
