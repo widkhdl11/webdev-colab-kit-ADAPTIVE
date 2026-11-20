@@ -1,0 +1,11 @@
+# 배송 그림 생성 기록
+
+2026-11-20. 내장 이미지 생성 도구 사용. 기존 회사 그림 `public/images/fankkuk-office-icon-v3.png`와 선물 상자 그림 `public/images/home/revgift-pack.png`를 참고했다. 실제 회사 촬영 사진이 아닌 서비스 설명용 일러스트다. 원본 생성 파일은 보존하고 이 폴더에 복사했다.
+
+## company-arrival.png
+
+Create ONE transparent-background website process illustration, matching the supplied Fankkuk office building and blue-white gift carton illustrations exactly in graphic style: clean navy outlines, gentle pale sky-blue shading, white surfaces. This is scene 2: a LARGE single CLOSED shipping carton has just ARRIVED at the Fankkuk company. Use the reference office building with its Korean 팬꾹 sign and cat logo recognizable, simplified into a squat compact office occupying right half, and a very prominent large white shipping carton with sky-blue packing tape in the foreground left next to the entrance. A short simple arrow from left pointing toward the entrance indicates incoming delivery. No other gift cartons, no people, no vehicles, no scenery, no additional text. Wide landscape composition, almost square 4:3, tightly framed with minimal transparent margins. The building must not dominate the carton. The carton is at least half as tall as building. Transparent background. This is an illustration, not a photograph.
+
+## fan-dispatch.png
+
+Create ONE transparent-background website process illustration matching the provided blue-white gift box illustration: clean dark navy outlines, pale sky-blue shading, white surfaces, elegant friendly Korean gift-service UI asset. Scene 3: unpacking and shipping individual fans' gifts. On LEFT an open LARGE white master shipping carton with sky-blue tape and flaps, containing one small white sky-blue-ribbon gift box. THREE small separate gift boxes are visibly being taken OUT of this master carton and routed toward RIGHT into three separate delivery destinations. Show three clear thin blue arrows, one for each box, leading to three small separate simple house/recipient icons on right. Gift boxes have small label tags A, B, C and matching A B C destination labels only, no other text. Make direction unmistakably FROM master carton OUTWARD TO individual recipients. Compose horizontally in a nearly square 4:3 frame, bold clear shapes readable at 280 pixels wide. No building/office or vehicles. No extra panel frame. Transparent background, minimal empty margins.

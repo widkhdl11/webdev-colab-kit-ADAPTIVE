@@ -1,0 +1,258 @@
+@font-face{font-family:"Tmoney Round Wind";src:url("../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2");font-weight:800;font-display:swap}
+@font-face{font-family:PreviewBody;src:url("../../../../public/images/previews/role-home-unified-v31/Pretendard-Medium.woff") format("woff");font-weight:400;font-display:swap}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:32px}body{margin:0;color:var(--ink);background:var(--surface,#fff);font-family:PreviewBody,var(--font);font-size:16px;line-height:1.7;word-break:keep-all}a{color:inherit;text-decoration:none}a:focus-visible{outline:3px solid var(--ink);outline-offset:4px}img{max-width:100%;object-fit:contain}figure,p,h1,h2,h3{margin:0}h1,h2,h3{font-family:var(--font-round);font-weight:800;letter-spacing:-.02em;line-height:1.35}h1{font-size:48px}h2{font-size:32px}h3{font-size:24px}p{color:var(--gray-600)}p+p{margin-top:16px}.wrap{max-width:928px;padding-inline:24px;margin-inline:auto}.header{height:88px;display:flex;align-items:center;justify-content:space-between;gap:24px}.logo{display:flex;align-items:center;gap:8px;font:800 24px var(--font-round)}nav{display:flex;gap:32px}nav a{display:flex;align-items:center;min-height:44px;font-size:14px}.preview,.sub,figcaption,small{font-size:14px;color:var(--gray-500)}.skip{position:absolute;left:16px;top:-100px;background:white;padding:16px;z-index:2}.skip:focus{top:16px}.hero{display:grid;grid-template-columns:1.2fr 1fr;align-items:center;gap:32px;padding-block:64px 96px}.hero-lead{font-size:24px;color:var(--ink);margin:24px 0 16px}.hero-art img{display:block;margin:auto;width:320px;height:320px}.hero-art figcaption{text-align:center;margin-top:12px}.button{display:inline-flex;align-items:center;gap:32px;background:var(--primary);padding:12px 24px;border-radius:12px;margin-top:32px;font-weight:600;min-height:48px}.button:hover{background:var(--primary-700)}.section{padding-block:96px}.split{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:64px}.section-label{display:block;color:var(--gray-600);font-size:14px;margin-bottom:16px}.copy h2,.copy h3{margin-bottom:24px}.scene figcaption{margin-top:24px;text-align:center}.scene small{display:block;margin-top:4px}.sample-card,.profile,.message{border:1px solid var(--gray-200);border-radius:24px;background:white;padding:32px}.sample-heading{display:flex;gap:16px;align-items:center}.sample-heading strong{display:block;font-size:20px;line-height:1.5}.sample-card>p{margin-top:24px}.sample-actions{display:flex;gap:8px;margin-top:24px}.sample-actions span{flex:1;border-radius:12px;padding:8px;text-align:center;background:var(--gray-100);font-size:14px}.sample-actions span+span{background:var(--primary)}.security-band{background:var(--tint)}.security{display:grid;grid-template-columns:1.5fr 1fr;gap:48px;padding-block:64px;align-items:center}.security h2{margin-bottom:24px}.security-note{font-size:14px}.security figure{text-align:center}.security figure img{width:200px;height:200px}.security figcaption{margin-top:16px}.send-heading{margin-bottom:64px}.send-heading p{margin-top:24px}.gift-card{position:relative;background:white;border:1px solid var(--tint-line);border-radius:24px;margin-top:24px}.lid{height:48px;background:var(--primary-50);border-radius:24px 24px 8px 8px;border-bottom:1px solid var(--tint-line);position:relative}.lid:after{content:"";position:absolute;left:calc(50% - 8px);height:100%;width:16px;background:var(--primary)}.bow{position:absolute;left:50%;top:-16px;width:16px;height:16px;background:var(--primary);transform:translateX(-50%);z-index:1}.bow:before,.bow:after{content:"";position:absolute;top:-8px;width:32px;height:24px;background:var(--primary);border-radius:16px 16px 4px 16px;right:8px;transform:rotate(16deg)}.bow:after{left:8px;right:auto;transform:scaleX(-1) rotate(16deg)}.gift-content{padding:24px}.gift-heading{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center}.gift-heading strong{font-size:20px}.pill{display:inline-block;background:var(--primary-50);border-radius:999px;padding:4px 12px;font-size:14px;color:var(--ink)}.gift-content p{font-size:14px;margin-top:12px}.counts{margin-top:24px;display:flex;justify-content:space-between}.counts b span{font-weight:400;color:var(--gray-500)}.progress{height:6px;border-radius:999px;background:var(--gray-200);margin:8px 0 16px;overflow:hidden}.progress i{display:block;width:60%;height:100%;background:var(--primary)}.request-flow{display:grid;grid-template-columns:repeat(3,1fr);padding:32px 0;margin:48px 0 0;list-style:none;border-block:1px solid var(--gray-200);gap:32px}.request-flow li{display:grid;grid-template-columns:32px 1fr;column-gap:12px;align-items:center}.request-flow li>span{background:var(--primary-50);border-radius:50%;width:32px;height:32px;display:grid;place-items:center;grid-row:span 2}.request-flow small{grid-column:2}.shipping{padding-top:64px}.shipping h3{margin-bottom:24px}.delivery-flow{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:48px;margin:32px 0;padding:0;text-align:center}.delivery-flow li{position:relative}.delivery-flow li+li:before{content:"→";position:absolute;top:64px;left:-32px;color:var(--gray-500);font-size:24px}.delivery-art{height:180px;display:flex;align-items:center;justify-content:center}.delivery-art img{max-height:160px}.delivery-flow strong{display:block;margin-top:12px;font-size:16px}.delivery-flow p{margin-top:8px;font-size:14px}.shipping-benefit{padding:24px;border-radius:16px;background:var(--tint);text-align:center;color:var(--ink);font-size:20px;font-weight:600}.mobile-break{display:none}.channel-band{background:var(--gray-50)}.profile{padding:0 0 24px;overflow:hidden;text-align:center}.profile-cover{height:96px;background:var(--primary-50)}.avatar{display:block;border:4px solid white;border-radius:50%;margin:-32px auto 12px;position:relative;background:white}.profile>strong{display:block;font-size:24px}.profile>.pill{margin-top:8px}.profile>p{font-size:14px;margin-top:12px;padding:0 16px}.swatches{display:flex;justify-content:center;gap:8px;margin-top:24px}.swatches i{width:24px;height:24px;border-radius:50%;background:var(--primary)}.swatches i:nth-child(2){background:var(--accent-peach)}.swatches i:nth-child(3){background:var(--gray-300)}.swatches i:nth-child(4){background:var(--primary-50)}.message{position:relative;min-height:248px}.message>p{font-size:20px;color:var(--ink);margin-top:16px}.message img{display:block;margin-left:auto;margin-top:16px}.footer{background:var(--gray-50);padding-block:32px}.footer .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px}.footer p,.footer a:last-child{font-size:14px}
+@media(max-width:700px){.wrap{padding-inline:24px}.header{height:72px}.header nav{display:none}.hero{grid-template-columns:1fr;padding-block:40px 64px;gap:32px}.hero-art img{width:240px;height:240px}h1{font-size:32px}.hero-lead{font-size:24px}.split,.security{grid-template-columns:1fr;gap:40px}h2{font-size:24px}h3{font-size:20px}.section{padding-block:64px}.security{padding-block:48px}.security figure img{height:144px;width:144px}.send-heading{margin-bottom:48px}.sample-card{padding:24px}.request-flow{grid-template-columns:1fr;gap:24px;padding-block:24px}.delivery-flow{grid-template-columns:1fr;gap:48px}.delivery-flow li+li:before{content:"↓";left:calc(50% - 8px);top:-40px}.delivery-art{height:144px}.delivery-art img{max-height:144px}.shipping-benefit{font-size:16px;padding:24px 16px}.mobile-break{display:block}.footer .wrap{flex-wrap:wrap;gap:16px}.footer p{width:100%;order:3}.gift-heading strong{font-size:16px}.gift-content{padding:24px}.gift-heading .pill{font-size:12px}.scene figcaption{margin-top:16px}.message>p{font-size:20px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* 구역을 빠르게 찾고, 신청과 배송의 관계를 구분하는 소개 화면 */
+html {
+  scroll-padding-top: 96px;
+}
+body {
+  background: white;
+}
+.hero {
+  padding-bottom: 64px;
+}
+.section-nav {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: block;
+  background: white;
+  border-block: 1px solid var(--gray-200);
+}
+.section-nav .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.section-nav a {
+  min-height: 64px;
+  white-space: nowrap;
+  color: var(--gray-600);
+  font-size: 16px;
+  border-bottom: 3px solid transparent;
+}
+.section-nav a:hover,
+.section-nav a[aria-current="location"] {
+  color: var(--ink);
+  border-bottom-color: var(--primary);
+  font-weight: 700;
+}
+.copy p,
+.security p,
+.shipping > p:not(.part-label):not(.shipping-benefit) {
+  line-height: 1.8;
+}
+p strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+.section-label {
+  color: var(--gray-600);
+  margin-bottom: 12px;
+}
+.approval {
+  background: var(--gray-50);
+  padding: 32px;
+  border-radius: 24px;
+}
+.sample-card {
+  padding: 24px;
+}
+.sample-heading strong {
+  font-size: 16px;
+}
+.security-band {
+  border-block: 1px solid var(--tint-line);
+}
+.security-note {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--tint-line);
+  max-width: 440px;
+}
+.send-heading {
+  margin-bottom: 40px;
+}
+.send-part {
+  padding: 40px;
+  border: 1px solid var(--gray-200);
+  border-radius: 24px;
+  background: var(--gray-50);
+}
+.part-label {
+  display: inline-block;
+  margin-bottom: 32px;
+  padding: 4px 12px;
+  background: var(--primary-50);
+  color: var(--ink);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.gift-section {
+  gap: 32px;
+}
+.gift-section .gift-content {
+  padding: 24px;
+}
+.gift-heading strong {
+  font-size: 16px;
+}
+.gift-heading .pill {
+  font-size: 12px;
+}
+.request-flow {
+  gap: 16px;
+  margin-top: 32px;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.request-flow strong {
+  font-size: 14px;
+}
+.shipping.send-part {
+  margin-top: 24px;
+  background: white;
+}
+.shipping-benefit {
+  margin-top: 32px;
+}
+.delivery-flow {
+  gap: 32px;
+  margin-top: 40px;
+}
+.delivery-flow li + li::before {
+  left: -24px;
+}
+.channel-band {
+  border-block: 1px solid var(--gray-200);
+}
+.profile-cover {
+  background: var(--grad-hero);
+}
+.message {
+  background: var(--tint);
+  border-color: var(--tint-line);
+}
+.footer {
+  border-top: 1px solid var(--gray-200);
+}
+.delivery-story .place-label {
+  display: inline-block;
+  padding: 4px 16px;
+  margin-bottom: 16px;
+  border-radius: 999px;
+  background: var(--gray-100);
+  font-size: 14px;
+  font-weight: 700;
+}
+.delivery-story .hub-label {
+  background: var(--primary-50);
+}
+.delivery-story .delivery-art {
+  height: 192px;
+}
+.unpack-art svg {
+  width: 100%;
+  max-height: 192px;
+}
+.delivery-story .route-label {
+  display: block;
+  min-height: 48px;
+  margin-top: 12px;
+  color: var(--gray-600);
+  font-size: 14px;
+}
+.delivery-story li + li::before {
+  top: 128px;
+}
+.separate-art {
+  flex-direction: column;
+  gap: 12px;
+}
+.parcel-route {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+.mini-parcel {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding-top: 8px;
+  border: 2px solid var(--gray-600);
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+}
+.mini-parcel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  background: var(--primary);
+}
+.parcel-arrow {
+  color: var(--gray-500);
+  font-size: 24px;
+}
+.recipient {
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: var(--primary-50);
+  font-size: 14px;
+}
+@media (max-width: 700px) {
+  html {
+    scroll-padding-top: 80px;
+  }
+  .section-nav {
+    display: block;
+    overflow-x: auto;
+  }
+  .section-nav .wrap {
+    width: max-content;
+    gap: 24px;
+  }
+  .section-nav a {
+    min-height: 56px;
+    font-size: 14px;
+  }
+  .approval {
+    padding: 24px 16px;
+  }
+  .send-part {
+    padding: 24px 16px;
+  }
+  .part-label {
+    margin-bottom: 24px;
+  }
+  .request-flow {
+    gap: 24px;
+  }
+  .gift-section .gift-content {
+    padding: 16px;
+  }
+  .delivery-flow {
+    gap: 48px;
+  }
+  .delivery-flow li + li::before {
+    left: calc(50% - 8px);
+    top: -40px;
+  }
+  .shipping-benefit {
+    padding: 16px;
+  }
+}
+
+
+/* 2026-11-20: 회사 도착·팬별 개별 배송 그림. 공통 그림칸 안에서 전체 장면을 표시한다. */
+.delivery-story .delivery-art .delivery-photo { width: 100%; height: 192px; max-height: 192px; object-fit: contain; }
