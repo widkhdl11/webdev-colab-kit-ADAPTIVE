@@ -46,9 +46,9 @@
 .badgeRow > [data-fandom-badge] { min-width: 0; max-width: 100%; overflow: hidden; }
 
 /* 「소개」 최대 두 줄(14 회색, 줄 높이 21 × 2 = 42) — 넘치면 둘째 줄 끝에서 말줄임. 끊을 곳 없는 긴 글자도 줄을 바꾼다.
-   2026-11-13: 내용만큼만 차지하고 비면 접는다(짧은 소개 카드에 빈칸이 크게 남지 않게). 같은 줄 카드 높이는 격자가 맞추고, 버튼 줄이 카드 맨 아래에 붙는다 */
-.line:empty { display: none; }
-.line { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; max-height: calc(var(--fs-small) * var(--lh-caption) * 2); margin: 0; overflow: hidden; font-size: var(--fs-small); line-height: var(--lh-caption); color: var(--gray-600); overflow-wrap: anywhere; }
+   2026-11-21 점검(creator-card): 소개가 없거나 한 줄이어도 두 줄 자리를 남긴다 — 비면 접던 11-13 방식은 소개 없는 카드만 칩 줄이 29 올라가
+   같은 줄 카드끼리 칩 위치가 어긋났다(design-prompt 8-8 「내용 양이 달라도 아래 정보 위치는 고정」) */
+.line { display: -webkit-box; height: calc(var(--fs-small) * var(--lh-caption) * 2); -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; max-height: calc(var(--fs-small) * var(--lh-caption) * 2); margin: 0; overflow: hidden; font-size: var(--fs-small); line-height: var(--lh-caption); color: var(--gray-600); overflow-wrap: anywhere; }
 
 /* 칩 줄 — 소개 줄과 12(카드 줄 사이 8 + 4). 칩이 카드 폭을 다 쓰고 넘치면 +N(2026-10-18 「팔로우」를 아래 버튼 줄로 내렸다) */
 .foot { display: flex; align-items: center; min-height: 22px; margin-top: var(--space-1); min-width: 0; }
@@ -93,13 +93,11 @@
 .measure { position: absolute; top: 0; left: 0; display: flex; width: max-content; visibility: hidden; pointer-events: none; }
 
 /* 카드가 위아래 한 열로 쌓일 때만 — 옆 카드와 줄을 맞출 일이 없다: 사진 없는 배너만 4:1 로 낮추고(사진은 2:1 그대로),
-   팬덤 뱃지가 없으면 그 줄 자리를 접는다(시안 creators-calm-20261113). 화면 폭이 아니라 격자 칸 폭 기준이다 — 격자는 칸 444 이상이면
+   (빈 팬덤 뱃지 줄을 접던 규칙은 2026-11-21 점검에서 뺐다 — 한 열에서도 카드 높이가 뱃지 유무로 달라졌다). 화면 폭이 아니라 격자 칸 폭 기준이다 — 격자는 칸 444 이상이면
    2열이라(creator-search.module.css) 그 아래에서만 한 열이다. 홈 카드 줄은 444 아래에서 옆으로 넘기는 한 줄이라 표시(data-card-stack)가 없어 걸리지 않는다 */
 @container (max-width: 443.98px) {
   :global([data-card-stack]) .cover:has(img) { aspect-ratio: 2 / 1; } /* 한 열은 맞출 옆 카드가 없어 사진은 권장 비율 그대로 */
   :global([data-card-stack]) .cover:not(:has(img)) { aspect-ratio: 4 / 1; }
-  :global([data-card-stack]) .badgeRow:empty { display: none; }
-  :global([data-card-stack]) .who:has(.badgeRow:empty) .id { padding-top: var(--space-1); }
 }
 
 /* 24절 — 누를 수 있는 카드에 마우스를 올리면 배너 사진이 칸 안에서 1.03배(시안 v38-home-micro 2번). 마우스 기기에서만, 움직임 줄이기면 끈다 */
