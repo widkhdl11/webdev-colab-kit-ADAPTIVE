@@ -144,6 +144,12 @@ export function CreatorHomePage({ profile, actionCount, actions, accessLog, noti
         ) : (
           <EmptyCard icon="eye" text="주소 열람 기록이 없습니다.">
             <p>{NO_ADDRESS_ASK}</p>
+            {/* 다음 행동 하나(design-prompt 9-2) — 주소를 언제 누가 여는지 설명하는 보안 안내로. 팬 홈 빈 칸의 버튼과 같은 모양 */}
+            <p className={h.emptyAct}>
+              <Link className="btn btn--line btn--sm" href="/security">
+                보안 안내
+              </Link>
+            </p>
           </EmptyCard>
         )}
       </SlotSection>

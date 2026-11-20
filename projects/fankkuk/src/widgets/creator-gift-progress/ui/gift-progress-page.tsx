@@ -18,6 +18,7 @@ import { ApprovalCancelButton } from "@/features/approval-request/ui/approval-ca
 import type { SentBoxCandidate } from "@/features/box-waybill/ui/find-sent-box";
 import { FindSentBoxButton } from "@/features/box-waybill/ui/find-sent-box-button";
 import { formatDateTime, formatMonthDayKo } from "@/shared/lib/format/datetime";
+import { EmptyState } from "@/shared/ui/empty-state";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import s from "./gift-progress.module.css";
 
@@ -212,7 +213,7 @@ export function GiftProgressPage({ progress, items, candidates, cancelTargets = 
             {moving.map((r) => receivedCard(r, face++))}
           </ul>
         ) : (
-          <p className={`card ${s.none}`}>진행 중인 선물이 없습니다.</p>
+          <EmptyState id="gp-in-empty" headingLevel={3} className={s.none} art="/images/home/icon-gift.webp" title="진행 중인 선물이 없습니다" />
         )}
       </section>
 
@@ -235,7 +236,14 @@ export function GiftProgressPage({ progress, items, candidates, cancelTargets = 
             </div>
           ))
         ) : (
-          <p className={`card ${s.none}`}>진행 중인 선물이 없습니다.</p>
+          <EmptyState
+            id="gp-out-empty"
+            headingLevel={3}
+            className={s.none}
+            art="/images/home/icon-gift.webp"
+            title="진행 중인 선물이 없습니다"
+            action={{ href: "/creator/revgift-boxes", label: "팬에게 보내기" }}
+          />
         )}
       </section>
     </div>

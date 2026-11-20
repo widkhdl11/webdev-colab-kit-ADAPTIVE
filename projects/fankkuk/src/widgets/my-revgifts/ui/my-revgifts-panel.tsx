@@ -7,6 +7,7 @@ import type { ReceivedRevgift } from "@/entities/revgift/model/revgift-rows";
 import { daysLeft, isOngoingStage, receivedStage, type ReceivedStage } from "@/entities/revgift/model/received-stage";
 import { receivedStageCopy } from "@/entities/revgift/ui/received-status";
 import { formatMonthDayKo } from "@/shared/lib/format/datetime";
+import { EmptyState } from "@/shared/ui/empty-state";
 import { RevgiftTabs } from "./revgift-tabs";
 import s from "./my-revgifts.module.css";
 
@@ -83,14 +84,14 @@ export function MyRevgiftsPanel({ items, nowMs }: { items: readonly ReceivedRevg
         <p className="ph-desc">팔로우한 크리에이터가 내게 보낸 선물입니다.</p>
       </header>
       {rows.length === 0 ? (
-        <div className={s.epanel}>
-          <img src="/images/home/creator-cat.webp" alt="" aria-hidden="true" width={160} height={160} />
-          <p>
-            받은 선물이 없습니다.
-            <br />
-            크리에이터가 보낸 선물은 이곳에 표시됩니다.
-          </p>
-        </div>
+        <EmptyState
+          id="rv-empty"
+          className={s.epanel}
+          art="/images/home/icon-gift.webp"
+          title="받은 선물이 없습니다"
+          body="팔로우한 크리에이터가 보낸 선물은 이곳에 표시됩니다."
+          action={{ href: "/creators", label: "크리에이터 찾기" }}
+        />
       ) : (
         <RevgiftTabs
           tabs={[

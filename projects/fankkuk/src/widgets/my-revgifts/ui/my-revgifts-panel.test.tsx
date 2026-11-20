@@ -81,6 +81,8 @@ describe("받은 선물 — 작은 타일", () => {
   it("받은 선물이 없으면 탭 없이 빈 상태 판(empty)", () => {
     act(() => root.render(<MyRevgiftsPanel items={[]} nowMs={NOW} />));
     expect(host.querySelector("[role=tablist]")).toBeNull();
-    expect(host.textContent).toContain("받은 선물이 없습니다.");
+    expect(host.querySelector("#rv-empty")?.textContent).toBe("받은 선물이 없습니다");
+    // 다음 행동 하나(design-prompt 9-2)
+    expect(host.querySelector('a[href="/creators"]')?.textContent).toBe("크리에이터 찾기");
   });
 });

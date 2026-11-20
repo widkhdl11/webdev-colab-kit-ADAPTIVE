@@ -98,11 +98,7 @@
 .inv-tags { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); min-height: 48px; margin: 0; }
 
 /* 보낸 것 없음 (시안 .sempty) */
-.sempty { margin-top: var(--space-8); padding: var(--space-12) var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--card-fx); box-shadow: var(--card-shadow); text-align: center; }
-/* 그림은 블록이라 text-align 이 먹지 않는다 — 좌우 auto 로 글과 같은 가운데 정렬선에 */
-.sempty img { display: block; width: 96px; height: 96px; margin-inline: auto; object-fit: contain; }
-.semptyT.semptyT { margin-top: var(--space-4); font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
-.sempty p { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+.sempty { margin-top: var(--space-8); } /* 공용 빈 상태(shared/ui/empty-state) 위 간격만 */
 
 /* 알아 두세요 — 접기 (시안 .knows) */
 .knows { margin-top: var(--space-12); }

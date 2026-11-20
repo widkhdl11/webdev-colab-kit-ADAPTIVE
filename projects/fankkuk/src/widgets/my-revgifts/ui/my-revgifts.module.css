@@ -27,12 +27,6 @@
 .name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; min-width: 0; font-size: var(--fs-caption); font-weight: var(--fw-btn); line-height: 1.5; color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
 .go { align-self: stretch; }
 
-/* 빈 상태 — 고양이 그림이 위로 걸친 하늘 면, 다른 하늘 판과 같은 1px --tint-line(design-rules 38절) */
-.epanel { position: relative; display: flex; align-items: center; gap: var(--space-8); margin-top: var(--space-24); padding: var(--space-12) var(--space-8) var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
-.epanel img { position: absolute; top: -64px; right: var(--space-12); width: 160px; height: 160px; object-fit: contain; pointer-events: none; }
-.epanel p { max-width: 480px; }
-@media (max-width: 767px) {
-  .epanel { flex-direction: column; align-items: flex-start; padding: var(--space-16) var(--space-6) var(--space-6); }
-  .epanel img { top: -48px; right: var(--space-6); width: 128px; height: 128px; }
-}
+/* 받은 선물 없음 — 공용 빈 상태(shared/ui/empty-state) 위 간격만 */
+.epanel { margin-top: var(--space-8); }
 @media (prefers-reduced-motion: reduce) { .tile { transition: none; } }

@@ -9,6 +9,7 @@ import { BoxAddressCode } from "@/features/box-waybill/ui/box-address-code";
 import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
+import { EmptyState } from "@/shared/ui/empty-state";
 import s from "./revgift-sent.module.css";
 
 // 보낸 역조공(크리에이터). 시안: docs/design/mockups/site/v39-part3/revgifts-sent.html · v39.css (design-rules 25절, 22·23절).
@@ -264,11 +265,14 @@ export function RevgiftSentPage({
         </p>
       </div>
       {batches.length === 0 ? (
-        <section className={s.sempty}>
-          <img src="/images/home/icon-gift.webp" alt="" aria-hidden="true" width={96} height={96} />
-          <h2 className={s.semptyT}>보낸 역조공이 없습니다</h2>
-          <p>나를 팔로우한 팬을 선택해 선물을 보낼 수 있습니다.</p>
-        </section>
+        <EmptyState
+          id="rv-sent-empty"
+          className={s.sempty}
+          art="/images/home/icon-gift.webp"
+          title="보낸 역조공이 없습니다"
+          body="나를 팔로우한 팬을 선택해 선물을 보낼 수 있습니다."
+          action={{ href: "/creator/revgift-boxes", label: "팬에게 보내기" }}
+        />
       ) : (
         batches.map((b, bi) => <Batch key={b.sentAt} b={b} bi={bi} boxByOrder={boxByOrder} senderName={senderName} />)
       )}

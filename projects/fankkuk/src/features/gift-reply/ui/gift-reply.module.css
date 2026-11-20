@@ -11,7 +11,7 @@
 .capped { margin-top: 16px; }
 /* design-rules 40절 — 빈 카드는 오른쪽 칸과 같은 윗선(48)에서, 다섯 화면 공통 빈 카드(흰 카드 + 가운데 글).
    선 버튼은 짙은 선(--gray-500, 이 화면 안에서만 — 공용 .btn--line 은 그대로) */
-.empty.empty { margin-top: var(--space-12); padding: var(--space-12) var(--space-6); }
+.empty.empty { margin-top: var(--space-12); } /* 공용 빈 상태(shared/ui/empty-state) 위 간격만 */
 .side2.side2 :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
 
 /* 달 머리 — 24 둥근 글꼴 + 회색 개수 */

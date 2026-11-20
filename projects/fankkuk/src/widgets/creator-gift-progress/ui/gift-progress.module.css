@@ -61,8 +61,8 @@
 .mini b { color: var(--ink); font-weight: var(--fw-btn); } /* 단계 이름 짙은 글자 600 — 카드 .pfoot b 와 같음. 늦은 줄은 .plLate 갈색 600 */
 /* 선 버튼 짙은 선(--gray-500, 이 화면 안에서만). 줄에서 여는 창(<dialog>) 속 버튼은 바꾸지 않게 바로 아래 자식만 */
 .root :is(.side, .cardAct) > :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
-/* 빈 상태 — 공통 흰 카드(.card) 안 가운데 글 (40절, 다섯 화면 공통 빈 카드) */
-.none.none { margin: var(--space-4) 0 0; padding: var(--space-12) var(--space-6); text-align: center; color: var(--sub); }
+/* 빈 상태 — 공용 빈 상태(shared/ui/empty-state) 위 간격만 */
+.none.none { margin: var(--space-4) 0 0; }
 
 @media (max-width: 767px) {
   .root.root.root > .pfeat { grid-template-columns: minmax(0, 1fr); padding: var(--space-8) var(--space-6) var(--space-6); }

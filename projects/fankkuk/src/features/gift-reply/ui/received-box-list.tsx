@@ -22,6 +22,7 @@ import type { DeliveryStatusSource } from "@/shared/config/delivery-status";
 import { deliveryStage, isEstimatedStage, type DeliveryStage } from "@/shared/lib/delivery/delivery-stage";
 import { monthHeadKo, seoulYearMonth } from "@/shared/lib/format/datetime";
 import { charCount } from "@/shared/lib/validation/char-count";
+import { EmptyState } from "@/shared/ui/empty-state";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { sendConfirmGiftBox, sendDeleteGiftReply } from "../api/send-gift-reply";
 import s from "./gift-reply.module.css";
@@ -334,7 +335,14 @@ export function ReceivedBoxList({
           {status}
         </p>
         {boxes.length === 0 ? (
-          <p className={`empty ${s.empty}`}>출고된 선물이 없습니다. 팬꾹에서 출고하면 상자별로 표시됩니다.</p>
+          <EmptyState
+            id="bx-empty"
+            className={s.empty}
+            art="/images/home/icon-truck.webp"
+            title="출고된 선물이 없습니다"
+            body="팬꾹에서 출고하면 상자별로 표시됩니다."
+            action={{ href: "/creator/progress", label: "선물 현황 보기" }}
+          />
         ) : (
           months.map((m, mi) => (
             <section key={m.key} className={s.month} aria-labelledby={`bm-${m.key}`}>
