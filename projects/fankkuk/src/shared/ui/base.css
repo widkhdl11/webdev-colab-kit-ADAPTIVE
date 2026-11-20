@@ -268,6 +268,9 @@ h3 { font-size: var(--fs-body); }
 .mini-links a { display: flex; align-items: center; min-height: 44px; font-weight: var(--fw-bold); text-decoration: none; color: var(--brand-ink); }
 .foot-line { margin-top: 24px; text-align: center; }
 .foot-line a { font-weight: var(--fw-bold); color: var(--brand-ink); }
+/* 누르는 칸 44(design-prompt 8-12, 점검 2026-11-20 auth-footer-link) — 글자·밑줄 모양은 그대로, 링크 상자만 세로 44.
+   덧칸(::before)으로 위아래만 넓히면 로그인 화면에서 바로 위 「비밀번호를 잊으셨나요?」(44) 칸과 겹치므로 줄 높이 자체를 44로 둔다 */
+.foot-line a { display: inline-flex; align-items: center; min-height: var(--hit); vertical-align: middle; }
 @media (max-width: 767px) { .btn-row2 { grid-template-columns: 1fr; } }
 /* 카카오 인증 버튼만 카카오 노란색 (design-rules 1절) — 떠 있는 그림자 없음 */
 .btn--kakao { background: var(--kakao); color: var(--kakao-ink); box-shadow: none; }
