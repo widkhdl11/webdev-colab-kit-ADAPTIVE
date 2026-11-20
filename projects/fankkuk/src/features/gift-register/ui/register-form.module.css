@@ -111,7 +111,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .opt:has(input:disabled) { border-color: var(--gray-200); background: var(--surface-muted); color: var(--sub); cursor: not-allowed; }
 .opt:has(input:disabled) input { cursor: not-allowed; }
 /* 받기 어려운 품목 안내(안내만) — 회색 보조 판 (시안 .hardnote) */
-.hardnote { margin-top: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.hardnote { margin-top: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
 .hardnote strong { display: block; overflow-wrap: anywhere; }
 .hardnote p { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
 .hardnote:focus { outline: none; }
@@ -125,7 +125,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .photo-row .photo-pick { display: inline-flex; margin-bottom: 0; cursor: pointer; }
 .photo-name { overflow-wrap: anywhere; }
 /* 나만 보는 메모(together INV-F7) — 회색 보조 판, 머리에 자물쇠, 칸은 흰 바탕 (시안 .memo) */
-.memo { display: grid; gap: var(--space-6); margin-top: var(--space-8); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.memo { display: grid; gap: var(--space-6); margin-top: var(--space-8); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
 .memo :global(.field) { background: var(--white); }
 .memo-h.memo-h { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; }
 .memo-lock { width: var(--icon-xs); height: var(--icon-xs); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -148,7 +148,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .zero .qty output { color: var(--sub); }
 
 /* 회색 안내 판 — 3단계 상자 크기 안내 · 4단계 돌려보내는 경우와 승인 시간 (시안 .gnote) */
-.gnote { margin-top: var(--space-6); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.gnote { margin-top: var(--space-6); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
 .gnote-first { margin-top: var(--space-8); }
 .gnote h3 { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; color: var(--ink); overflow-wrap: anywhere; }
 .gnote p, .gnote li { font-size: var(--fs-small); color: var(--sub); }
@@ -268,7 +268,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 
 /* ── 4 결제 — 2026-11-14 시안 추천안(docs/design/mockups/gift-send-step4-20261114, 사용자 「전부 추천안으로 진행」) ──
    반송·환불 안내는 회색 면 + 1px 선(그림자 없음), 조건마다 제목·결과로 나눈다(문장은 그대로). 결제 칸은 옅은 하늘 면 그림자 없이, 동의는 선 아래로 묶는다 */
-.gnote.gnote:not(.gnote-first) { margin-top: var(--space-8); background: var(--surface-muted); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.gnote.gnote:not(.gnote-first) { margin-top: var(--space-8); background: var(--surface-muted); box-shadow: none; }
 /* 반송·환불 안내 세 층(2026-11-17 「구조화·위계·계층화」) — ① 묶음 제목 14 굵게 + 언제(작은 회색) ② 흰 칸 안 줄마다 「조건 | 결과」,
    결과는 굵게 오른쪽(값처럼 훑어 읽는다) ③ 줄 아래 자세한 설명 작은 회색. 묶음 사이 24, 줄 사이 선 1px. 화면 600 미만에서는 결과가 조건 아래로 */
 /* 이 판만 제목 20 — 묶음 제목(16)보다 위 */

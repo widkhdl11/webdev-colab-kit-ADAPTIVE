@@ -37,7 +37,7 @@
 .notes { display: grid; gap: var(--space-1); margin: var(--space-4) 0 0; padding-left: 20px; color: var(--sub); font-size: var(--fs-small); }
 .tierRow { grid-template-columns: minmax(0, 1fr) auto; }
 .tierSelect { width: 140px; min-height: 44px; }
-.estimate { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.estimate { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
 .estimate strong { font-size: var(--fs-card); font-variant-numeric: tabular-nums; }
 .estimateNote { color: var(--sub); font-size: var(--fs-small); }
 .cartons { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3); }
@@ -92,7 +92,7 @@
 .scopeOpt small { color: var(--sub); font-size: var(--fs-small); }
 .scopeOpt:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
 .scopeOpt:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
-.sum { display: grid; gap: var(--space-1); margin: 0; padding: var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.sum { display: grid; gap: var(--space-1); margin: 0; padding: var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
 .sum > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 var(--space-4); font-size: var(--fs-small); }
 .sum dt { color: var(--sub); }
 .sum dd { margin: 0; min-width: 0; font-weight: var(--fw-bold); text-align: right; overflow-wrap: anywhere; }
@@ -100,7 +100,7 @@
 .doneTitle svg { flex: none; width: 24px; height: 24px; color: var(--success); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .made { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); }
 .madeName { min-width: 0; font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; overflow-wrap: anywhere; }
-.linkbox { display: grid; gap: var(--space-2); padding: var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.linkbox { display: grid; gap: var(--space-2); padding: var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
 .lkLabel { font-weight: var(--fw-btn); }
 .lkRow { display: flex; align-items: center; gap: var(--space-4); }
 .lk { flex: 1; min-width: 0; color: var(--sub); font-size: var(--fs-small); line-height: 1.5; overflow-wrap: anywhere; }

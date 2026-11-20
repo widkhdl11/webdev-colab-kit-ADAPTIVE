@@ -30,7 +30,7 @@
 .legend b { color: var(--ink); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
 
 /* 주소·실명 안내 — 회색 보조 칸 (시안 .privacy) */
-.privacy { display: flex; align-items: center; gap: var(--space-4); margin-top: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.privacy { display: flex; align-items: center; gap: var(--space-4); margin-top: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
 .privacy img { flex: none; width: 40px; height: 40px; object-fit: contain; }
 .privacy strong { display: block; }
 .privacy span { font-size: var(--fs-small); color: var(--sub); }
@@ -52,7 +52,7 @@
 .bbody { padding: 0 var(--space-8) var(--space-8); }
 
 /* 받는 주소 안내 — 묶음마다 한 번, 회색 보조 칸 (시안 .batch .guide) */
-.guide { padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.guide { padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
 .guide p { font-size: var(--fs-small); color: var(--sub); }
 .guide .guideT { font-size: var(--fs-body); font-weight: var(--fw-bold); color: var(--ink); }
 .guide p + p { margin-top: var(--space-1); }

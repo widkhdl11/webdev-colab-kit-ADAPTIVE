@@ -12,7 +12,7 @@
 .kicker { color: var(--sub); font-weight: var(--fw-btn); overflow-wrap: anywhere; }
 .back { display: inline-flex; align-items: center; min-height: 44px; color: var(--sub); font-weight: var(--fw-btn); }
 
-.cmp { min-width: 0; margin: 0; padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow), inset 0 0 0 1px var(--gray-200); }
+.cmp { min-width: 0; margin: 0; padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
 .cmpH { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; }
 .cmp p { margin-top: var(--space-2); color: var(--sub); }
 .note { color: var(--sub); }
