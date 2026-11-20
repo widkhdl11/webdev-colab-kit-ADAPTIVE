@@ -147,12 +147,11 @@ describe("추천 크리에이터 둘러보기", () => {
     expect(host.querySelectorAll("#similar-track > li")).toHaveLength(6);
   });
 
-  it("추천 카드 배경 — 배경사진이 있으면 그 사진, 없으면 그림 없이 기본 배경 칸만", () => {
+  it("추천 카드는 보조 영역의 작은 카드 — 배경사진이 있어도 배경 면을 그리지 않는다(design-prompt 8-14)", () => {
     render({ others: [{ ...other(1), backgroundUrl: "https://example.test/bg-1.webp" }, other(2)] });
-    const covers = host.querySelectorAll("#similar-track > li [aria-hidden='true']:first-child");
-    expect(covers).toHaveLength(2);
-    expect(covers[0]?.querySelector("img")?.getAttribute("src")).toBe("https://example.test/bg-1.webp");
-    expect(covers[1]?.childElementCount).toBe(0);
+    const cards = host.querySelectorAll("#similar-track > li > a");
+    expect(cards).toHaveLength(2);
+    expect(host.querySelector('#similar-track img[src="https://example.test/bg-1.webp"]')).toBeNull();
   });
 
   it("(실패경로) 3장 이하면 화살표·멈춤 버튼이 없다", () => {

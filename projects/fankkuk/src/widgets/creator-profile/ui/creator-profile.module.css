@@ -145,16 +145,13 @@
 .ogrid { display: flex; gap: var(--space-4); margin: -4px; padding: 4px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 4px; scrollbar-width: none; overscroll-behavior-x: contain; list-style: none; } /* 4: 그림자가 잘리지 않게 */
 .ogrid::-webkit-scrollbar { display: none; }
 .ogrid > li { flex: 0 0 calc((100% - 2 * var(--space-4)) / 3); min-width: 0; scroll-snap-align: start; }
-/* 카드 — 지금 운영의 작은 링크 카드(사진 56 + 이름 + 태그) 그대로 */
-/* 추천 크리에이터 카드(시안 e판) — 위 배경 2:1(배경사진 · 없으면 크리에이터 카드와 같은 옅은 하늘 그라데이션) → 사진 56(배경에 28 걸침) 오른쪽에 이름 · 아래 태그.
-   배경은 올리는 칸 권장 1200×600 과 같은 2:1 이라 권장대로 올린 사진은 잘리지 않는다(design-prompt 8-15) */
-.other { position: relative; display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: var(--space-3); align-content: start; height: 100%; padding: 0 var(--space-4) var(--space-4); overflow: hidden; border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); text-decoration: none; transition: transform 0.25s var(--ease-micro), box-shadow 0.25s var(--ease-micro); }
+/* 추천 크리에이터 카드 — 보조 영역이라 그림 64 이하의 가로형 작은 카드(design-prompt 8-14, 2026-11-19 사용자 승인). 얼굴 56 | 이름 · 아래 태그, 높이 88 이상.
+   design-rules 44절 e판의 배경 2:1 면은 쓰지 않는다 — 큰 그림 카드는 그 항목을 고르는 것이 목적인 화면(찾기)에만 */
+.other { position: relative; display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: var(--space-3); align-items: center; height: 100%; min-height: 88px; padding: var(--space-4); overflow: hidden; border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); color: var(--ink); text-decoration: none; transition: transform 0.25s var(--ease-micro), box-shadow 0.25s var(--ease-micro); }
 @media (hover: hover) { .other:hover { transform: translateY(-2px); } } /* 시안 e판 값 그대로(UI 리뷰 11-13) */
 .other:hover, .other:focus-visible { box-shadow: var(--hair), var(--card-shadow-hover); }
-.otherCover { grid-column: 1 / -1; display: block; aspect-ratio: 2 / 1; margin: 0 calc(var(--space-4) * -1); overflow: hidden; background: linear-gradient(180deg, var(--primary-50) 0%, var(--tint) 100%); }
-.otherCover > img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.otherFace:global(.face) { position: relative; z-index: 1; flex: none; width: 56px; height: 56px; margin-top: -28px; border: 3px solid var(--white); box-shadow: var(--face-ring); font-weight: var(--fw-btn); } /* 흰 테두리 3 + 바깥 고리(시안 .oface) */
-.otherWho { display: grid; gap: var(--space-1); min-width: 0; padding-top: var(--space-2); }
+.otherFace:global(.face) { flex: none; width: 56px; height: 56px; box-shadow: var(--face-ring); font-weight: var(--fw-btn); }
+.otherWho { display: grid; gap: var(--space-1); min-width: 0; }
 .otherWho b { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; overflow-wrap: anywhere; }
 .otherTags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
 
@@ -167,10 +164,9 @@
   .oarrow { display: none; }
   .ogrid { gap: var(--space-3); margin-right: calc(-1 * var(--gutter)); padding-right: var(--gutter); scroll-padding-inline: 4px var(--gutter); }
   .ogrid > li { flex-basis: calc((100% - var(--space-3)) / 2); }
-  /* 휴대폰 — 사진 위, 이름·태그 아래 한 열(시안 .orow 767 이하). 배경은 카드 위 가장자리에 붙는다 */
-  .other { grid-template-columns: minmax(0, 1fr); padding: 0 var(--space-3) var(--space-3); }
-  .otherCover { margin-inline: calc(var(--space-3) * -1); }
-  .otherFace:global(.face) { width: 48px; height: 48px; margin-top: -24px; }
+  /* 휴대폰 — 같은 가로형, 얼굴 48 · 안쪽 12 */
+  .other { grid-template-columns: 48px minmax(0, 1fr); padding: var(--space-3); }
+  .otherFace:global(.face) { width: 48px; height: 48px; }
   .secTitle { font-size: var(--fs-card); }
 }
 

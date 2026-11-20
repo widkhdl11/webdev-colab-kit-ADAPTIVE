@@ -42,7 +42,7 @@ import s from "./creator-profile.module.css";
 // 공개 화면이라 공개 이름·사진·소개·켠 항목·정해진 문구·집계 숫자·요금만 그린다(INV-E7). 주소 열람 건수는 없다(INV-E11).
 
 export type CreatorLinkView = CreatorCard & { photoUrl: string | null };
-/** 추천 크리에이터 카드 — 배경사진(없으면 기본 배경) 위에 사진·이름·태그(시안 e판) */
+/** 추천 크리에이터 카드 — 보조 영역이라 얼굴 56 + 이름·태그의 가로형 작은 카드(design-prompt 8-14, 2026-11-19). backgroundUrl 은 지금 그리지 않는다 */
 export type OtherCreatorView = CreatorLinkView & { backgroundUrl: string | null };
 
 /** 선물함 입구 — 공개·신청 받는 중인 선물함 + 보는 팬 본인의 신청 상태(팬이 아니거나 읽지 못하면 null) */
@@ -355,9 +355,6 @@ export function CreatorProfilePage({
             {others.map((o) => (
               <li key={o.id}>
                 <Link className={s.other} href={creatorPagePath(o)} aria-label={`${o.name}님의 선물 링크 페이지`}>
-                  <span className={s.otherCover} aria-hidden="true">
-                    {o.backgroundUrl ? <img src={o.backgroundUrl} alt="" width={1200} height={600} loading="lazy" /> : null}
-                  </span>
                   <CreatorPhoto photoUrl={o.photoUrl} tone={o.faceTone} className={`face ${s.otherFace}`} />
                   <span className={s.otherWho}>
                     <b>{o.name}</b>
