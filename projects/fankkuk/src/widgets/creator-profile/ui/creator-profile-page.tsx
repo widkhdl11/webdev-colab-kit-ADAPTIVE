@@ -238,9 +238,28 @@ export function CreatorProfilePage({
             </div>
           </div>
 
-          {/* 윗줄 오른쪽: 버튼 묶음(상태표) — 아래에는 아무것도 두지 않는다 */}
+          {/* 윗줄 오른쪽: 버튼 묶음(상태표) + 바로 아래 요금 줄 */}
           <div className={s.actions}>
             <Actions send={send} creator={creator} followMode={followMode} restingText={restingText} sendClosed={sendClosed} />
+            {/* 요금 · 평균 승인 소요 시간 한 줄 + 받기 어려운 선물 — 팔로우·선물 보내기 바로 아래, 오른쪽 끝을 버튼에 맞춘다(design-prompt 8-16 · 14-7 5)) */}
+            <div className={s.sendMeta}>
+              <dl className={s.sendInfo}>
+                <div>
+                  <dt>요금</dt>
+                  <dd>{`${lowestPriceKrw(prices).toLocaleString("ko-KR")}원부터`}</dd>
+                </div>
+                <div>
+                  <dt>평균 승인 소요 시간</dt>
+                  <dd>{approvalDurationText(creator.approvalMinutes)}</dd>
+                </div>
+              </dl>
+              {showHardItems ? (
+                <aside className={s.alert} aria-labelledby="hard-items-h">
+                  <h2 id="hard-items-h">받기 어려운 선물</h2>
+                  <HardItemsLine hardItems={hardItems} />
+                </aside>
+              ) : null}
+            </div>
           </div>
 
           {/* 아랫줄 왼쪽: 진행 중인 선물함(revgift-box INV-GB4 입구). 신청 자격은 신청 화면·서버가 본다 */}
@@ -252,26 +271,6 @@ export function CreatorProfilePage({
               <BoxTiles boxes={tiles} />
             </section>
           ) : null}
-
-          {/* 아랫줄 오른쪽: 요금 · 평균 승인 소요 시간 한 줄 + 받기 어려운 선물 — 선물함과 같은 높이에서 시작 */}
-          <div className={s.sendMeta}>
-            <dl className={s.sendInfo}>
-              <div>
-                <dt>요금</dt>
-                <dd>{`${lowestPriceKrw(prices).toLocaleString("ko-KR")}원부터`}</dd>
-              </div>
-              <div>
-                <dt>평균 승인 소요 시간</dt>
-                <dd>{approvalDurationText(creator.approvalMinutes)}</dd>
-              </div>
-            </dl>
-            {showHardItems ? (
-              <aside className={s.alert} aria-labelledby="hard-items-h">
-                <h2 id="hard-items-h">받기 어려운 선물</h2>
-                <HardItemsLine hardItems={hardItems} />
-              </aside>
-            ) : null}
-          </div>
         </section>
 
         {/* 상세 내용 — 처음엔 닫힘(2026-11-12 사용자 확정). 2열: 전달 과정 | 보내기 전 안내 */}

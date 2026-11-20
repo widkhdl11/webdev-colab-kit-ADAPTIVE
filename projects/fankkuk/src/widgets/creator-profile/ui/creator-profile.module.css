@@ -12,9 +12,10 @@
 .ringed .cover { background: var(--personal); }
 .cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 
-/* ---------- 상단 묶음 2×2: 윗줄 프로필 | 버튼, 아랫줄 진행 중인 선물함 | 요금·승인 시간 + 받기 어려운 선물 ---------- */
-.head { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); grid-template-areas: "id act" "boxes meta"; column-gap: var(--space-8); row-gap: var(--inner); align-items: start; }
-.headOnly { grid-template-areas: "id act"; }
+/* ---------- 상단 묶음: 윗줄 프로필 | 버튼 + 바로 아래 요금·승인 시간 + 받기 어려운 선물, 아랫줄 진행 중인 선물함 ---------- */
+/* 2026-11-21 점검(creator-profile-head): 요금 줄을 아랫줄 오른쪽에서 버튼 칸 안으로 옮겼다 — 선물함이 없을 때 버튼과 150 넘게 떨어지고 오른쪽 끝도 달랐다 */
+.head { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); grid-template-areas: "id act" "boxes act"; column-gap: var(--space-8); row-gap: var(--inner); align-items: start; }
+.headOnly, .head:not(:has(.boxes)) { grid-template-areas: "id act"; } /* 선물함이 없으면 빈 아랫줄과 줄 사이 간격을 남기지 않는다 */
 .id { grid-area: id; display: grid; grid-template-columns: 184px minmax(0, 1fr); column-gap: var(--space-6); min-width: 0; }
 /* 사진 겉지름 184 · 흰 테두리 6 · 테마 색 안쪽 선 3 · 위로 반(92) 걸침. 왼쪽 24 */
 .photo:global(.face) { position: relative; box-sizing: border-box; width: 184px; height: 184px; margin: -92px 0 0 var(--space-6); border: 6px solid var(--white); font-size: var(--fs-title); font-weight: var(--fw-title); font-family: var(--font-round); object-fit: cover; }
@@ -36,8 +37,8 @@
 .thanks { margin-top: var(--space-1); color: var(--sub); font-weight: 400; }
 
 /* 버튼 칸 — 윗줄 오른쪽, 이름 줄 높이에서 시작. 버튼 높이 48, 채운 버튼은 하나뿐 */
-.actions { grid-area: act; min-width: 0; padding-top: var(--space-4); }
-.btnrow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.actions { grid-area: act; display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); min-width: 0; padding-top: var(--space-4); } /* 버튼과 요금 줄의 오른쪽 끝을 본문 칸 오른쪽 끝에 맞춘다 */
+.btnrow { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: var(--space-2); }
 .btnrow :global(.btn) { white-space: nowrap; }
 .btnrow :global(.btn svg) { width: 20px; height: 20px; }
 /* 채움 버튼(팔로우·선물 보내기)은 같은 하늘의 짙은 선 1px — 「팔로우 중」(테두리 버튼)·누를 수 없는 상태는 그대로 */
@@ -76,9 +77,9 @@
 .ddesc { color: var(--sub); overflow-wrap: anywhere; }
 .dlgAct:global(.btn) { width: 100%; }
 
-/* 아랫줄 오른쪽: 요금 · 평균 승인 소요 시간 한 줄(14) + 받기 어려운 선물 */
-.sendMeta { grid-area: meta; min-width: 0; }
-.sendInfo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--space-3); margin: 0; color: var(--sub); font-size: var(--fs-small); line-height: 1.6; }
+/* 버튼 바로 아래: 요금 · 평균 승인 소요 시간 한 줄(14) + 받기 어려운 선물 */
+.sendMeta { min-width: 0; }
+.sendInfo { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: baseline; gap: 0 var(--space-3); margin: 0; color: var(--sub); font-size: var(--fs-small); line-height: 1.6; }
 .sendInfo > div { display: flex; gap: var(--space-1); }
 .sendInfo > div + div::before { content: "·"; margin-right: var(--space-2); }
 .sendInfo dd { margin: 0; color: var(--ink); font-weight: var(--fw-btn); }
@@ -172,9 +173,12 @@
 
 /* ---------- 칸 폭이 좁아질 때(사이드바 안·태블릿·휴대폰) ---------- */
 @container (max-width: 879px) {
-  .head { grid-template-columns: minmax(0, 1fr); grid-template-areas: "id" "act" "boxes" "meta"; row-gap: var(--space-6); }
-  .headOnly { grid-template-areas: "id" "act"; }
-  .actions, .boxes, .sendMeta { padding-left: calc(184px + 2 * var(--space-6)); } /* 글 묶음(이름 줄) 왼쪽 선에 맞춘다(2-20) */
+  .head, .head:not(:has(.boxes)) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "id" "act" "boxes"; row-gap: var(--space-6); }
+  .headOnly, .head:not(:has(.boxes)) { grid-template-areas: "id" "act"; }
+  /* 한 열이면 버튼·요금 줄을 글 묶음 왼쪽 선에 맞춘다 */
+  .actions { align-items: stretch; }
+  .btnrow, .sendInfo { justify-content: flex-start; }
+  .actions, .boxes { padding-left: calc(184px + 2 * var(--space-6)); } /* 글 묶음(이름 줄) 왼쪽 선에 맞춘다(2-20) */
   .actions { padding-top: 0; }
   .detail, .dbody { margin-top: var(--space-6); }
   .similar { margin-top: var(--space-12); }
@@ -186,7 +190,7 @@
   .id { grid-template-columns: minmax(0, 1fr); }
   .photo:global(.face) { width: 128px; height: 128px; margin: -60px 0 0 var(--space-4); }
   .ringed .photo:global(.face) { outline-offset: -8px; }
-  .actions, .boxes, .sendMeta { padding-left: 0; }
+  .actions, .boxes { padding-left: 0; }
   .btnrow > :global(.btn) { flex: 1 1 0; padding-inline: var(--space-4); }
   .alert { padding: var(--space-4); }
   .flow { grid-template-columns: minmax(0, 1fr); }
