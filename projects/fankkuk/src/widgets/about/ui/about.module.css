@@ -12,6 +12,7 @@
   --step-no: 32px;
   --delivery-h: 192px;
   --delivery-img: 160px;
+  --end-art: 200px; /* 끝 행동 상자 고양이 — 휴대폰 140 */
   --gift-lid: 48px;
   --bow: 16px;
   --cover-h: 96px;
@@ -77,11 +78,15 @@
 
 /* 주소 보호 띠 */
 .securityBand { background: var(--tint); border-block: 1px solid var(--tint-line); }
-/* 끝 행동(S02-1) — 주소 보호 구역과 같은 옅은 하늘 면, 가운데 묶음 */
-.endBand { background: var(--tint); border-block: 1px solid var(--tint-line); }
-.endBox { max-width: calc(var(--col-list) + 2 * var(--gutter)); margin-inline: auto; padding: var(--space-16) var(--gutter); display: flex; flex-direction: column; align-items: center; gap: var(--space-6); text-align: center; }
-.endBox .h2 { margin: 0; }
-.endBtns { display: flex; justify-content: center; gap: var(--space-2); }
+/* 끝 행동(S02-1, 2026-11-21 A안) — 본문 폭 둥근 판 + 강조 면 효과(todo-box·선물 등록 머리와 같은 판) + 오른쪽 상자 고양이.
+   첫 화면 고양이와 짝. 「한 화면에 강조 면 하나」·「마무리 쪽 장식은 뺀다」의 예외 — design-rules 36절 */
+.endBand { padding-bottom: var(--space-16); }
+.endBox { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-8); padding: var(--space-12); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
+.endText { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-6); }
+.endText .h2 { margin: 0; }
+.endBtns { display: flex; gap: var(--space-2); }
+.endBtns svg { flex: none; }
+.endArt { width: var(--end-art); height: var(--end-art); }
 .security { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: center; gap: var(--space-12); padding-block: var(--space-16); }
 .security .h2 { margin-bottom: var(--space-6); }
 .root .securityNote { max-width: var(--note-max); margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--tint-line); font-size: var(--fs-small); }
@@ -160,9 +165,13 @@
 }
 
 @media (max-width: 767px) {
+  .endBand { padding-bottom: var(--space-12); }
+  .endBox { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); padding: var(--space-8) var(--space-5) var(--space-6); text-align: center; }
+  .endText { align-items: center; }
+  .endArt { order: -1; margin-inline: auto; }
   .endBtns { flex-direction: column-reverse; align-self: stretch; }
   .endBtns :global(.btn) { width: 100%; }
-  .root { --snav-h: 56px; --snav-gap: var(--space-6); --hero-art: 240px; --lock-art: 144px; --delivery-img: 144px; }
+  .root { --snav-h: 56px; --snav-gap: var(--space-6); --hero-art: 240px; --lock-art: 144px; --end-art: 140px; --delivery-img: 144px; }
   .hero { grid-template-columns: minmax(0, 1fr); gap: var(--space-8); padding-block: var(--space-10) var(--space-16); }
   .h3 { font-size: var(--fs-card); }
   .split, .security { grid-template-columns: minmax(0, 1fr); gap: var(--space-10); }

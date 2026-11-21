@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>소개 끝 구역 · 신고 버튼 시안</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+  :root {
+    --primary: #89cff0; --primary-hover: #74c3e8; --primary-50: #e0f2fe; --tint: #f0f8ff; --tint-line: #bfe3f7;
+    --ink: #111827; --gray-600: #4b5563; --gray-200: #e5e7eb; --gray-50: #f9fafb; --white: #fff;
+    --font: "Pretendard Variable", Pretendard, -apple-system, "Malgun Gothic", sans-serif;
+    --surface-accent-fx:
+      radial-gradient(120% 140% at 100% 0%, rgb(255 255 255 / 0.9) 0%, rgb(255 255 255 / 0) 45%),
+      radial-gradient(80% 120% at 0% 100%, rgb(137 207 240 / 0.28) 0%, rgb(137 207 240 / 0) 60%),
+      linear-gradient(135deg, #f0f8ff 0%, #e0f2fe 100%);
+    --surface-accent-shadow: inset 0 1px 0 rgb(255 255 255 / 0.8), 0 8px 24px rgb(137 207 240 / 0.18);
+    --lift: 0 1px 2px rgb(31 41 55 / 0.08);
+    --hair: inset 0 0 0 1px #d1d5db;
+    --img: http://localhost:3005/images;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #eef1f4; color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.6; }
+  .doc { max-width: 1520px; margin: 0 auto; padding: 32px 16px 80px; }
+  .doc > h1 { font-size: 28px; margin: 0 0 8px; }
+  .doc > p.lead { margin: 0 0 32px; color: var(--gray-600); }
+  .opt { margin-bottom: 56px; }
+  .opt > h2 { font-size: 22px; margin: 0 0 4px; }
+  .opt > h2 .tag { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: 999px; background: var(--primary); font-size: 14px; vertical-align: middle; }
+  .opt > p { margin: 0 0 16px; color: var(--gray-600); max-width: 900px; }
+  .row { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+  .frame { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgb(0 0 0 / 0.08); }
+  .frame .cap { padding: 8px 12px; font-size: 13px; color: var(--gray-600); border-bottom: 1px solid var(--gray-200); background: var(--gray-50); }
+  .pc { width: 1040px; max-width: 100%; }
+  .mo { width: 390px; }
+  .prev { padding: 40px 48px 48px; color: var(--gray-600); font-size: 15px; }
+  .mo .prev { padding: 32px 16px; }
+  .prev b { color: var(--ink); display: block; font-size: 20px; margin-bottom: 8px; }
+  .foot { background: #1f2937; color: #9ca3af; padding: 20px 48px; font-size: 13px; }
+  .mo .foot { padding: 20px 16px; }
+
+  /* 공통 버튼 — 사이트 .btn 값 */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 24px; border: 0; border-radius: 12px; background: var(--primary); color: var(--ink); font: 600 16px/1.5 var(--font); text-decoration: none; box-shadow: var(--lift); cursor: pointer; }
+  .btn--line { background: #fff; box-shadow: var(--hair); }
+  .btn svg { width: 16px; height: 16px; flex: none; }
+  .h2 { font-size: 28px; line-height: 1.4; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+  .mo .h2 { font-size: 22px; }
+  .btns { display: flex; gap: 8px; }
+  .mo .btns { flex-direction: column-reverse; align-self: stretch; }
+  .mo .btns .btn { width: 100%; }
+
+  /* 지금 — 평평한 하늘 띠 */
+  .now { background: var(--tint); border-block: 1px solid var(--tint-line); padding: 64px 24px; display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center; }
+
+  /* A — 본문 폭 판 + 강조 면 효과 + 고양이 */
+  .a-wrap { padding: 16px 48px 80px; }
+  .mo .a-wrap { padding: 8px 16px 56px; }
+  .a { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 32px; padding: 48px 56px; border: 1px solid var(--tint-line); border-radius: 24px; background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); overflow: hidden; }
+  .a .txt { display: flex; flex-direction: column; gap: 24px; align-items: flex-start; }
+  .a .sub { margin: -12px 0 0; color: var(--gray-600); }
+  .a img { width: 220px; height: 220px; margin: -24px 0 -48px; }
+  .mo .a { grid-template-columns: minmax(0, 1fr); padding: 32px 20px 24px; text-align: center; gap: 16px; }
+  .mo .a .txt { align-items: center; }
+  .mo .a img { width: 140px; height: 140px; margin: 0 auto; order: -1; }
+
+  /* B — 화면 폭 띠 + 강조 면 효과 + 선물 상자 셋 */
+  .b { background: var(--surface-accent-fx); border-block: 1px solid var(--tint-line); padding: 56px 24px 64px; display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center; position: relative; overflow: hidden; }
+  .b img { width: 300px; height: auto; margin-bottom: -8px; }
+  .mo .b { padding: 40px 16px 48px; }
+  .mo .b img { width: 220px; }
+
+  /* 신고 버튼 */
+  .report { padding: 32px 48px 40px; max-width: 560px; }
+  .mo .report { padding: 24px 16px; }
+  .report .btn { width: 100%; }
+  .report .meta { margin-top: 12px; text-align: center; font-size: 14px; color: var(--gray-600); }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .pair > div + div { border-left: 1px solid var(--gray-200); }
+  .pair .lbl { padding: 12px 48px 0; font-size: 13px; color: var(--gray-600); font-weight: 600; }
+  .mo .pair { grid-template-columns: 1fr; }
+  .mo .pair > div + div { border-left: 0; border-top: 1px solid var(--gray-200); }
+  .mo .pair .lbl { padding: 12px 16px 0; }
+
+  .note { background: #fff; border-radius: 12px; padding: 20px 24px; max-width: 1040px; margin-bottom: 40px; box-shadow: 0 2px 12px rgb(0 0 0 / 0.06); }
+  .note h3 { margin: 0 0 8px; font-size: 17px; }
+  .note ul { margin: 0; padding-left: 20px; }
+  .note li + li { margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="doc">
+  <h1>소개 끝 구역 · 신고 버튼 시안</h1>
+  <p class="lead">소개(/about) 맨 아래 「크리에이터 찾기 · 회원가입」 구역 세 안과, 신고 화면 「이메일로 보내기」 버튼 아이콘 전후. 그림은 사이트에 이미 있는 것만 썼습니다.</p>
+
+  <div class="note">
+    <h3>지금 밋밋한 이유</h3>
+    <ul>
+      <li>11-14 소개 시안을 승인할 때 「첫 화면 양옆 장식 그림 둘은 남기고 <b>마무리 쪽 장식은 뺀다</b>」로 정했습니다. 그래서 그림을 넣지 않았습니다.</li>
+      <li>「한 화면에 강조 면 하나」 규칙도 있습니다. 소개에는 이미 「주소 보호」 하늘 구역이 있어서, 끝 구역은 효과 없는 옅은 하늘색 면으로만 칠했습니다.</li>
+      <li>A나 B를 고르시면 위 두 줄을 「소개 끝 구역은 예외」로 고쳐 적습니다.</li>
+    </ul>
+  </div>
+
+  <!-- ───── 지금 ───── -->
+  <section class="opt">
+    <h2>지금</h2>
+    <p>옅은 하늘색 면(#F0F8FF) 위에 제목과 버튼 둘. 그림·효과 없음.</p>
+    <div class="row">
+      <div class="frame pc"><div class="cap">PC 1440 (가운데 1040 부분)</div>
+        <div class="prev"><b>선물 기록</b>…(앞 구역 끝)</div>
+        <div class="now">
+          <h2 class="h2">팬꾹에서<br>선물을 주고받아 보세요.</h2>
+          <div class="btns"><a class="btn btn--line">크리에이터 찾기</a><a class="btn">회원가입</a></div>
+        </div>
+        <div class="foot">바닥글</div>
+      </div>
+      <div class="frame mo"><div class="cap">휴대폰 390</div>
+        <div class="prev"><b>선물 기록</b>…</div>
+        <div class="now" style="padding:48px 16px">
+          <h2 class="h2">팬꾹에서<br>선물을 주고받아 보세요.</h2>
+          <div class="btns"><a class="btn btn--line">크리에이터 찾기</a><a class="btn">회원가입</a></div>
+        </div>
+        <div class="foot">바닥글</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── A ───── -->
+  <section class="opt">
+    <h2>A안 · 둥근 판 + 상자 고양이<span class="tag">추천</span></h2>
+    <p>화면 끝까지 칠한 띠 대신 본문 폭의 둥근 판(반경 24)으로 바꾸고, 사이트의 「강조 면」 효과(하늘빛 그러데이션 + 옅은 그림자)를 씁니다. 오른쪽에 상자에 든 고양이를 둡니다(휴대폰은 제목 위). 버튼에는 아이콘(돋보기 · 사람+)을 붙입니다. 첫 화면 고양이와 짝이 맞아 페이지가 같은 인물로 시작하고 끝납니다.</p>
+    <div class="row">
+      <div class="frame pc"><div class="cap">PC 1440 (가운데 1040 부분)</div>
+        <div class="prev"><b>선물 기록</b>…(앞 구역 끝)</div>
+        <div class="a-wrap">
+          <div class="a">
+            <div class="txt">
+              <h2 class="h2">팬꾹에서<br>선물을 주고받아 보세요.</h2>
+              <div class="btns">
+                <a class="btn btn--line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>크리에이터 찾기</a>
+                <a class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>회원가입</a>
+              </div>
+            </div>
+            <img src="http://localhost:3005/images/mascot-box.png" alt="">
+          </div>
+        </div>
+        <div class="foot">바닥글</div>
+      </div>
+      <div class="frame mo"><div class="cap">휴대폰 390</div>
+        <div class="prev"><b>선물 기록</b>…</div>
+        <div class="a-wrap">
+          <div class="a">
+            <img src="http://localhost:3005/images/mascot-box.png" alt="">
+            <div class="txt">
+              <h2 class="h2">팬꾹에서<br>선물을 주고받아 보세요.</h2>
+              <div class="btns">
+                <a class="btn btn--line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>크리에이터 찾기</a>
+                <a class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>회원가입</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="foot">바닥글</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── B ───── -->
+  <section class="opt">
+    <h2>B안 · 화면 폭 띠 + 선물 상자 셋</h2>
+    <p>지금처럼 화면 끝까지 칠하되 같은 「강조 면」 효과를 쓰고, 제목 위에 크기가 다른 선물 상자 셋을 놓습니다. 버튼 아이콘은 A와 같습니다. 가운데 정렬이 그대로라 지금 배치에서 가장 적게 바뀝니다.</p>
+    <div class="row">
+      <div class="frame pc"><div class="cap">PC 1440 (가운데 1040 부분)</div>
+        <div class="prev"><b>선물 기록</b>…(앞 구역 끝)</div>
+        <div class="b">
+          <img src="http://localhost:3005/images/home/parcel-boxes.png" alt="">
+          <h2 class="h2">팬꾹에서<br>선물을 주고받아 보세요.</h2>
+          <div class="btns">
+            <a class="btn btn--line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>크리에이터 찾기</a>
+            <a class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>회원가입</a>
+          </div>
+        </div>
+        <div class="foot">바닥글</div>
+      </div>
+      <div class="frame mo"><div class="cap">휴대폰 390</div>
+        <div class="prev"><b>선물 기록</b>…</div>
+        <div class="b">
+          <img src="http://localhost:3005/images/home/parcel-boxes.png" alt="">
+          <h2 class="h2">팬꾹에서<br>선물을 주고받아 보세요.</h2>
+          <div class="btns">
+            <a class="btn btn--line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>크리에이터 찾기</a>
+            <a class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>회원가입</a>
+          </div>
+        </div>
+        <div class="foot">바닥글</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── 신고 버튼 ───── -->
+  <section class="opt">
+    <h2>신고 화면 「이메일로 보내기」 버튼</h2>
+    <p>왼쪽 편지봉투 아이콘(lucide mail, 16px · 선 2 · 글자색 — 크리에이터 카드 버튼 아이콘과 같은 값)을 붙입니다. 눌렀을 때 이메일 앱이 열린다는 것을 버튼만 보고도 알 수 있습니다. 아이콘은 꾸밈이라 화면 낭독기는 읽지 않습니다.</p>
+    <div class="row">
+      <div class="frame pc"><div class="cap">PC 1440</div>
+        <div class="pair">
+          <div><div class="lbl">지금</div><div class="report"><a class="btn">이메일로 보내기</a><p class="meta">받는 이메일: report@fankkuk.com</p></div></div>
+          <div><div class="lbl">바꾼 뒤</div><div class="report"><a class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>이메일로 보내기</a><p class="meta">받는 이메일: report@fankkuk.com</p></div></div>
+        </div>
+      </div>
+      <div class="frame mo"><div class="cap">휴대폰 390</div>
+        <div class="pair">
+          <div><div class="lbl">지금</div><div class="report"><a class="btn">이메일로 보내기</a><p class="meta">받는 이메일: report@fankkuk.com</p></div></div>
+          <div><div class="lbl">바꾼 뒤</div><div class="report"><a class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>이메일로 보내기</a><p class="meta">받는 이메일: report@fankkuk.com</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

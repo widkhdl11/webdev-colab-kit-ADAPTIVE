@@ -377,21 +377,35 @@ export function AboutPage({ signedIn = false }: Props) {
 
       {/* 끝 행동 — 긴 소개를 다 읽은 손님이 바닥글에서 멈추지 않게(S02-1). 보조 → 채움 순서, 휴대폰은 채움이 위·폭 전체 */}
       {signedIn ? null : (
-        <section className={s.endBand} aria-labelledby="about-end-title">
+        <section className={`${s.wrap} ${s.endBand}`} aria-labelledby="about-end-title">
           <div className={s.endBox}>
-            <h2 id="about-end-title" className={s.h2}>
-              팬꾹에서
-              <br />
-              선물을 주고받아 보세요.
-            </h2>
-            <div className={s.endBtns}>
-              <Link className="btn btn--line" href="/creators">
-                크리에이터 찾기
-              </Link>
-              <Link className="btn" href="/signup">
-                회원가입
-              </Link>
+            <div className={s.endText}>
+              <h2 id="about-end-title" className={s.h2}>
+                팬꾹에서
+                <br />
+                선물을 주고받아 보세요.
+              </h2>
+              <div className={s.endBtns}>
+                <Link className="btn btn--line" href="/creators">
+                  {/* 아이콘: lucide-static@0.544.0 search · user-plus 경로 그대로, 16 · 선 2 · 글자색. 꾸밈이라 읽지 않는다 */}
+                  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.3-4.3" />
+                  </svg>
+                  크리에이터 찾기
+                </Link>
+                <Link className="btn" href="/signup">
+                  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M19 8v6" />
+                    <path d="M22 11h-6" />
+                  </svg>
+                  회원가입
+                </Link>
+              </div>
             </div>
+            <img className={s.endArt} src="/images/mascot-box.png" alt="" width={200} height={200} loading="lazy" />
           </div>
         </section>
       )}

@@ -6,6 +6,7 @@
 - 하네스 개선은 여기가 아니라 docs/references/harness-backlog.md.
 
 ## 미결
+- [ ] **소개 끝 「크리에이터 찾기 · 회원가입」 판을 더 꾸미기** (2026-11-21 사용자 「일단 그걸로 승인하는데 더 꾸미긴 해야 할 것 같으니까 적어는 둬」) — 지금은 A안: 본문 폭 둥근 판 + 강조 면 효과 + 상자 고양이 + 버튼 아이콘(`src/widgets/about/ui/about-page.tsx` 끝 행동 · `about.module.css` `.endBox`, 시안 `docs/design/audits/screen-audit-20261120/끝구역-시안.html`). 사용자가 꾸밈이 아직 모자라다고 봤다 — 다음에 시안 두세 안(배경 무늬·그림 크기·움직임 등)을 다시 보여 고른다
 - [ ] **반송·취소한 선물을 보낸 선물의 어느 탭에 둘지** (2026-11-21 code 리뷰 중간) — 지금 `fanGiftBucket`(`src/entities/order/ui/fan-stage-copy.ts`)은 거절·기한 지남만 「전달되지 않은 선물」이고 반송(`returned`)·취소(`canceled`)는 「완료된 선물」이다. 11-17 요약 줄부터 쓰던 기준이라 이번(2-6 A안)에 바꾸지 않았다 · 메인 「진행 중인 선물」도 같은 기준이라 바꾸려면 사용자 결정
 - [ ] **선물 상세 「팬꾹으로 보낸 송장번호」 칸(주문 단위)도 첫 상자 도착에 닫힘** (2026-11-21) — `fan-view.ts` 의 `canEnterTrackingNo` 가 `receivedAt === null` 이라 상자가 여럿이면 첫 상자 도착에 꺼진다. 상자별 줄은 이번에 `inboundClosed` 로 고쳤다(S34-2) · 이 칸이 아직 쓰이는지 확인 뒤 같은 판정으로
 - [ ] **화면 점검 구현 ui 리뷰 낮음 3건** (2026-11-21) — ① 휴대폰 저장 줄 `column-reverse` 로 「저장」이 위인데 Tab 순서는 「취소」 먼저(`shared/ui/settings-panel.module.css`) ② 공용 빈 상태 그림 72 를 토큰으로(`--art-empty-sm`) ③ 「주요 내용」 줄 48px 를 번호 원·화살표 변수의 calc 로(`widgets/legal/ui/doc-page.module.css`)
