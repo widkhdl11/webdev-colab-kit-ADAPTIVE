@@ -10,7 +10,6 @@
 .error::before { content: "!"; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--gray-900); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1; }
 .done { margin: 0 0 var(--space-2); color: var(--brand-ink); font-weight: var(--fw-btn); }
 .to { margin-top: var(--space-4); }
-/* 버튼 바로 위 안내 한 줄 — 버튼과 8 */
 /* 보내기 버튼 — PC 는 카드 안 오른쪽 아래에 글자 폭, 휴대폰은 폭 전체(design-rules 36절) */
 @media (min-width: 768px) {
   .form button[type="submit"] { display: flex; width: auto; margin-left: auto; }
