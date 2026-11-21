@@ -151,8 +151,12 @@ export function GiftStatusPage({
   const currentIdx = view.steps.findIndex((st) => st.state === "current");
   // 상자별 원 송장번호는 입고 전까지만 고친다(design-rules 8-1). 출고 운송장은 읽기 함수가 주지 않는다.
   const inProgress = view.outcome === "in_progress";
+  // 팬꾹으로 보내는 단계용 줄(송장번호 입력·주소 없이 보낸 상자 찾기)은 주문의 입고 단계가 끝나기 전까지만 —
+  // 입고가 끝났으면 상자 상태가 아직 도착 전으로 남아 있어도 보이지 않는다(지금 할 수 없는 동작은 보이지 않게, design-prompt 6-6)
+  const inboundDone = view.steps.some((st) => st.key === "received" && st.state === "done");
+  const inboundOpen = inProgress && !inboundDone;
   // 찾기 대상·받는 주소 판정은 features/box-waybill/model/box-targets.ts (INV-C3·C4 ②)
-  const finderBoxes = giftFinderBoxes(boxes, inProgress);
+  const finderBoxes = giftFinderBoxes(boxes, inboundOpen);
   // 아래 찾기 구간의 고를 상자 — 칸에 있는 상자는 칸에서만 찾는다(INV-J13)
   const belowFinder = finderBoxesBelowTodo(finderBoxes, todoBoxIds);
   const officeAddress = inProgress ? view.officeAddress : null;
@@ -196,7 +200,7 @@ export function GiftStatusPage({
   const boxCard = showsProgress && boxes.length > 0;
   // 상자 칸 모양 — 주소·송장·안내가 붙은 상자가 하나도 없으면 2열 타일, 하나라도 있으면 상자별 묶음(시안 .tiles · .bx)
   const boxHasBody = (b: GiftBox): boolean =>
-    isMissing(b.state) || (officeAddress !== null && giftAddressCode(b, officeAddress, inProgress) !== null) || (isWaybillEditable(b.state) && inProgress && !b.sendAckNeeded) || Boolean(b.waybillNo);
+    isMissing(b.state) || (officeAddress !== null && giftAddressCode(b, officeAddress, inProgress) !== null) || (isWaybillEditable(b.state) && inboundOpen && !b.sendAckNeeded) || Boolean(b.waybillNo);
   const tiles = !boxes.some(boxHasBody);
 
   // 상자 줄 머리 — 상자 그림 · 「상자 N · 크기」 · 도착 상태(점 + 글자). 타일과 묶음이 같은 머리를 쓴다
@@ -388,7 +392,7 @@ export function GiftStatusPage({
                           {officeAddress && addressCode ? (
                             <BoxAddressCode officeAddress={officeAddress} code={addressCode} boxName={boxName} senderName={senderName} />
                           ) : null}
-                          {isWaybillEditable(b.state) && inProgress && !b.sendAckNeeded ? (
+                          {isWaybillEditable(b.state) && inboundOpen && !b.sendAckNeeded ? (
                             // 송장번호 입력은 접어 둔다 — 배송 조회를 보고 싶을 때만 넣는 선택 칸(INV-C7).
                             // 그 상자에 받는 주소가 보인 뒤에만 — 먼저 보내기 전에는 보낼 주소가 없다(UX 시범 B-2)
                             <details className={s.fold}>
@@ -419,9 +423,9 @@ export function GiftStatusPage({
                     })}
                   </div>
                 )}
-                {/* 받는 주소 없이 보냈다면(inbound-address-code INV-C4 ②) — 진행 중 + 받는 주소가 보인 뒤 + 고를 입고 전 상자가 있을 때(접어 둔다, B-3).
+                {/* 받는 주소 없이 보냈다면(inbound-address-code INV-C4 ②) — 진행 중이고 입고 단계 전 + 받 주소가 보인 뒤 + 고를 입고 전 상자가 있을 때(접어 둔다, B-3).
                     마지막 상자를 찾아 고를 상자가 없어져도 결과 안내가 남아 있게, 빈 목록은 칸 안에서 처리한다. 잇는 판정은 DB 가 한다 */}
-                {inProgress ? (
+                {inboundOpen ? (
                   <KeepShown key={view.orderNo} show={showFinder}>
                     <details className={s.fold} data-sec="" data-finder="">
                       <summary>주소 끝 6자리 없이 보낸 상자 찾기</summary>
