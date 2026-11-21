@@ -1,0 +1,5866 @@
+[
+ {
+  "role": "anon",
+  "url": "/",
+  "shots": {
+   "390": "anon__root__390.jpg",
+   "1440": "anon__root__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "19「ㅈㅈ」",
+     "19「해든」",
+     "19「구름」",
+     "19「시월」",
+     "19「나무」",
+     "19「라온」",
+     "19「보리」",
+     "19「도담」",
+     "19「솜사탕」",
+     "19「별이」"
+    ],
+    "tapsN": 12,
+    "h1s": [
+     {
+      "t": "선물을 보낼\n크리에이터 찾기",
+      "fs": "32px",
+      "lines": 2
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 5262,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "19「ㅈㅈ」",
+     "19「해든」",
+     "19「구름」",
+     "19「시월」",
+     "19「나무」",
+     "19「라온」",
+     "19「보리」",
+     "19「도담」",
+     "19「솜사탕」",
+     "19「별이」"
+    ],
+    "tapsN": 12,
+    "h1s": [
+     {
+      "t": "선물을 보낼\n크리에이터 찾기",
+      "fs": "48px",
+      "lines": 2
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 3760,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/"
+ },
+ {
+  "role": "anon",
+  "url": "/home",
+  "shots": {
+   "390": "anon__home__390.jpg",
+   "1440": "anon__home__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「로그인」",
+     "19「회원가입」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "로그인",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1442,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「로그인」",
+     "19「회원가입」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "로그인",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1090,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/login"
+ },
+ {
+  "role": "anon",
+  "url": "/about",
+  "shots": {
+   "390": "anon__about__390.jpg",
+   "1440": "anon__about__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「팬꾹 알아보기\n↓」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "팬꾹의 소개",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 7715,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「팬꾹 알아보기\n↓」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "팬꾹의 소개",
+      "fs": "48px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 5134,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/about"
+ },
+ {
+  "role": "anon",
+  "url": "/pricing",
+  "shots": {
+   "390": "anon__pricing__390.jpg",
+   "1440": "anon__pricing__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "요금 안내",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2666,
+    "title": "요금 안내 — 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "요금 안내",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2065,
+    "title": "요금 안내 — 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/pricing"
+ },
+ {
+  "role": "anon",
+  "url": "/faq",
+  "shots": {
+   "390": "anon__faq__390.jpg",
+   "1440": "anon__faq__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "자주 묻는 질문",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 3148,
+    "title": "자주 묻는 질문 — 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "자주 묻는 질문",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2017,
+    "title": "자주 묻는 질문 — 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/faq"
+ },
+ {
+  "role": "anon",
+  "url": "/guide/fan",
+  "shots": {
+   "390": "anon__guide_fan__390.jpg",
+   "1440": "anon__guide_fan__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「팬 이용 안내」",
+     "36「크리에이터 이용 안내」",
+     "36「검수 기준」",
+     "36「보안 안내」",
+     "36「분쟁 처리 안내」",
+     "19「이용약관」",
+     "19「1:1 문의」"
+    ],
+    "tapsN": 7,
+    "h1s": [
+     {
+      "t": "팬 이용 안내",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 10759,
+    "title": "팬 이용 안내 — 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「팬 이용 안내」",
+     "36「크리에이터 이용 안내」",
+     "36「검수 기준」",
+     "36「보안 안내」",
+     "36「분쟁 처리 안내」",
+     "19「이용약관」",
+     "19「1:1 문의」"
+    ],
+    "tapsN": 7,
+    "h1s": [
+     {
+      "t": "팬 이용 안내",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 7553,
+    "title": "팬 이용 안내 — 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/guide/fan"
+ },
+ {
+  "role": "anon",
+  "url": "/guide/creator",
+  "shots": {
+   "390": "anon__guide_creator__390.jpg",
+   "1440": "anon__guide_creator__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「팬 이용 안내」",
+     "36「크리에이터 이용 안내」",
+     "36「검수 기준」",
+     "36「보안 안내」",
+     "36「분쟁 처리 안내」"
+    ],
+    "tapsN": 5,
+    "h1s": [
+     {
+      "t": "크리에이터 이용 안내",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 13086,
+    "title": "크리에이터 이용 안내 — 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「팬 이용 안내」",
+     "36「크리에이터 이용 안내」",
+     "36「검수 기준」",
+     "36「보안 안내」",
+     "36「분쟁 처리 안내」"
+    ],
+    "tapsN": 5,
+    "h1s": [
+     {
+      "t": "크리에이터 이용 안내",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 9157,
+    "title": "크리에이터 이용 안내 — 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/guide/creator"
+ },
+ {
+  "role": "anon",
+  "url": "/creators",
+  "shots": {
+   "390": "anon__creators__390.jpg",
+   "1440": "anon__creators__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「전체」",
+     "36「SOOP」",
+     "36「치지직」",
+     "36「유튜브」",
+     "36「알플레이」",
+     "36「인스타그램」",
+     "36「X」",
+     "36「스레드」",
+     "36「버추얼」",
+     "19「하루」"
+    ],
+    "tapsN": 35,
+    "h1s": [
+     {
+      "t": "선물을 보낼 크리에이터 찾기",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 4697,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「전체」",
+     "36「SOOP」",
+     "36「치지직」",
+     "36「유튜브」",
+     "36「알플레이」",
+     "36「인스타그램」",
+     "36「X」",
+     "36「스레드」",
+     "36「버추얼」",
+     "19「하루」"
+    ],
+    "tapsN": 35,
+    "h1s": [
+     {
+      "t": "선물을 보낼 크리에이터 찾기",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2369,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creators"
+ },
+ {
+  "role": "anon",
+  "url": "/notices",
+  "shots": {
+   "390": "anon__notices__390.jpg",
+   "1440": "anon__notices__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "19「고객센터」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "공지사항",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2066,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "19「고객센터」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "공지사항",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1607,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/notices"
+ },
+ {
+  "role": "anon",
+  "url": "/notice",
+  "shots": {
+   "390": "anon__notice__390.jpg",
+   "1440": "anon__notice__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "19「고객센터」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "공지사항",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2066,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "19「고객센터」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "공지사항",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1607,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/notices"
+ },
+ {
+  "role": "anon",
+  "url": "/support",
+  "shots": {
+   "390": "anon__support__390.jpg",
+   "1440": "anon__support__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「선물 보내기」",
+     "36「요금」",
+     "36「배송」",
+     "36「크리에이터」",
+     "36「계정」",
+     "40「로그인하고 문의하기」"
+    ],
+    "tapsN": 6,
+    "h1s": [
+     {
+      "t": "고객센터",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2056,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「선물 보내기」",
+     "36「요금」",
+     "36「배송」",
+     "36「크리에이터」",
+     "36「계정」",
+     "40「로그인하고 문의하기」"
+    ],
+    "tapsN": 6,
+    "h1s": [
+     {
+      "t": "고객센터",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1531,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/support"
+ },
+ {
+  "role": "anon",
+  "url": "/report",
+  "shots": {
+   "390": "anon__report__390.jpg",
+   "1440": "anon__report__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「이메일로 보내기」",
+     "37「고객센터의 1:1 문의」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "신고·문의",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1869,
+    "title": "신고·문의 — 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「이메일로 보내기」",
+     "16「고객센터의 1:1 문의」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "신고·문의",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1400,
+    "title": "신고·문의 — 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/report"
+ },
+ {
+  "role": "anon",
+  "url": "/dispute",
+  "shots": {
+   "390": "anon__dispute__390.jpg",
+   "1440": "anon__dispute__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「팬 이용 안내」",
+     "36「크리에이터 이용 안내」",
+     "36「검수 기준」",
+     "36「보안 안내」",
+     "36「분쟁 처리 안내」"
+    ],
+    "tapsN": 5,
+    "h1s": [
+     {
+      "t": "분쟁 처리 안내",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 3878,
+    "title": "분쟁 처리 안내 — 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「팬 이용 안내」",
+     "36「크리에이터 이용 안내」",
+     "36「검수 기준」",
+     "36「보안 안내」",
+     "36「분쟁 처리 안내」"
+    ],
+    "tapsN": 5,
+    "h1s": [
+     {
+      "t": "분쟁 처리 안내",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2816,
+    "title": "분쟁 처리 안내 — 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/dispute"
+ },
+ {
+  "role": "anon",
+  "url": "/inspection",
+  "shots": {
+   "390": "anon__inspection__390.jpg",
+   "1440": "anon__inspection__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「팬 이용 안내」",
+     "36「크리에이터 이용 안내」",
+     "36「검수 기준」",
+     "36「보안 안내」",
+     "36「분쟁 처리 안내」"
+    ],
+    "tapsN": 5,
+    "h1s": [
+     {
+      "t": "검수 기준",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 5294,
+    "title": "검수 기준 — 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「팬 이용 안내」",
+     "36「크리에이터 이용 안내」",
+     "36「검수 기준」",
+     "36「보안 안내」",
+     "36「분쟁 처리 안내」"
+    ],
+    "tapsN": 5,
+    "h1s": [
+     {
+      "t": "검수 기준",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 3932,
+    "title": "검수 기준 — 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/inspection"
+ },
+ {
+  "role": "anon",
+  "url": "/security",
+  "shots": {
+   "390": "anon__security__390.jpg",
+   "1440": "anon__security__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「팬 이용 안내」",
+     "36「크리에이터 이용 안내」",
+     "36「검수 기준」",
+     "36「보안 안내」",
+     "36「분쟁 처리 안내」"
+    ],
+    "tapsN": 5,
+    "h1s": [
+     {
+      "t": "보안 안내",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable",
+     "__nextjs-Geist"
+    ],
+    "imgsBroken": 0,
+    "height": 6846,
+    "title": "보안 안내 — 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「팬 이용 안내」",
+     "36「크리에이터 이용 안내」",
+     "36「검수 기준」",
+     "36「보안 안내」",
+     "36「분쟁 처리 안내」"
+    ],
+    "tapsN": 5,
+    "h1s": [
+     {
+      "t": "보안 안내",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable",
+     "__nextjs-Geist"
+    ],
+    "imgsBroken": 0,
+    "height": 4427,
+    "title": "보안 안내 — 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/security"
+ },
+ {
+  "role": "anon",
+  "url": "/privacy",
+  "shots": {
+   "390": "anon__privacy__390.jpg",
+   "1440": "anon__privacy__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「이용약관」",
+     "36「개인정보처리방침」",
+     "36「취소·환불 규정」",
+     "36「전체」",
+     "36「받는 정보」",
+     "36「보관·파기」",
+     "36「주소 보호」",
+     "36「맡기는 곳」",
+     "36「내 권리」",
+     "19「버전 2026-11-11」"
+    ],
+    "tapsN": 11,
+    "h1s": [
+     {
+      "t": "개인정보처리방침",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 17715,
+    "title": "개인정보처리방침 — 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「이용약관」",
+     "36「개인정보처리방침」",
+     "36「취소·환불 규정」",
+     "36「전체」",
+     "36「받는 정보」",
+     "36「보관·파기」",
+     "36「주소 보호」",
+     "36「맡기는 곳」",
+     "36「내 권리」",
+     "19「버전 2026-11-11」"
+    ],
+    "tapsN": 11,
+    "h1s": [
+     {
+      "t": "개인정보처리방침",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 12511,
+    "title": "개인정보처리방침 — 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/privacy"
+ },
+ {
+  "role": "anon",
+  "url": "/terms",
+  "shots": {
+   "390": "anon__terms__390.jpg",
+   "1440": "anon__terms__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「이용약관」",
+     "36「개인정보처리방침」",
+     "36「취소·환불 규정」",
+     "36「전체」",
+     "36「선물·배송」",
+     "36「계정·개인정보」",
+     "36「크리에이터」",
+     "36「환불·취소」",
+     "36「금지 물품」",
+     "19「버전 2026-10-01」"
+    ],
+    "tapsN": 11,
+    "h1s": [
+     {
+      "t": "이용약관",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 21757,
+    "title": "이용약관 — 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「이용약관」",
+     "36「개인정보처리방침」",
+     "36「취소·환불 규정」",
+     "36「전체」",
+     "36「선물·배송」",
+     "36「계정·개인정보」",
+     "36「크리에이터」",
+     "36「환불·취소」",
+     "36「금지 물품」",
+     "19「버전 2026-10-01」"
+    ],
+    "tapsN": 11,
+    "h1s": [
+     {
+      "t": "이용약관",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 14958,
+    "title": "이용약관 — 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/terms"
+ },
+ {
+  "role": "anon",
+  "url": "/refund",
+  "shots": {
+   "390": "anon__refund__390.jpg",
+   "1440": "anon__refund__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「이용약관」",
+     "36「개인정보처리방침」",
+     "36「취소·환불 규정」",
+     "36「전체」",
+     "36「입고 전」",
+     "36「입고 후」",
+     "36「출고 후」",
+     "19「버전 2026-10-17」",
+     "40「고객센터」"
+    ],
+    "tapsN": 9,
+    "h1s": [
+     {
+      "t": "취소·환불 규정",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 7902,
+    "title": "취소·환불 규정 — 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「이용약관」",
+     "36「개인정보처리방침」",
+     "36「취소·환불 규정」",
+     "36「전체」",
+     "36「입고 전」",
+     "36「입고 후」",
+     "36「출고 후」",
+     "19「버전 2026-10-17」",
+     "40「고객센터」"
+    ],
+    "tapsN": 9,
+    "h1s": [
+     {
+      "t": "취소·환불 규정",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 5562,
+    "title": "취소·환불 규정 — 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/refund"
+ },
+ {
+  "role": "anon",
+  "url": "/login",
+  "shots": {
+   "390": "anon__login__390.jpg",
+   "1440": "anon__login__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「로그인」",
+     "19「회원가입」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "로그인",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1442,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「로그인」",
+     "19「회원가입」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "로그인",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1090,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/login"
+ },
+ {
+  "role": "anon",
+  "url": "/signup",
+  "shots": {
+   "390": "anon__signup__390.jpg",
+   "1440": "anon__signup__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「다음」",
+     "19「로그인」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "회원가입",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1477,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「다음」",
+     "19「로그인」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "회원가입",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1125,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/signup"
+ },
+ {
+  "role": "anon",
+  "url": "/signup/creator",
+  "shots": {
+   "390": "anon__signup_creator__390.jpg",
+   "1440": "anon__signup_creator__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「로그인」",
+     "19「회원가입」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "로그인",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1442,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「로그인」",
+     "19「회원가입」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "로그인",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1090,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/login?next=/signup/creator"
+ },
+ {
+  "role": "anon",
+  "url": "/password/forgot",
+  "shots": {
+   "390": "anon__password_forgot__390.jpg",
+   "1440": "anon__password_forgot__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「인증번호 받기」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "비밀번호 찾기",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1284,
+    "title": "비밀번호 찾기"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「인증번호 받기」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "비밀번호 찾기",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "비밀번호 찾기"
+   }
+  },
+  "status": 200,
+  "final": "/password/forgot"
+ },
+ {
+  "role": "anon",
+  "url": "/admin/login",
+  "shots": {
+   "390": "anon__admin_login__390.jpg",
+   "1440": "anon__admin_login__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「로그인」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "팬꾹 운영자",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "팬꾹 운영자 로그인"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「로그인」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "팬꾹 운영자",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "팬꾹 운영자 로그인"
+   }
+  },
+  "status": 200,
+  "final": "/admin/login"
+ },
+ {
+  "role": "fan",
+  "url": "/me",
+  "shots": {
+   "390": "fan__me__390.jpg",
+   "1440": "fan__me__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「프로필 수정」",
+     "36「변경」",
+     "36「변경」",
+     "40「되돌리기」",
+     "40「저장」",
+     "36「탈퇴 안내」"
+    ],
+    "tapsN": 6,
+    "h1s": [
+     {
+      "t": "계정 설정",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2214,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「지금 할 일」",
+     "36「크리에이터 찾기」",
+     "36「선물 보내기」",
+     "36「보낸 선물」",
+     "36「받은 선물」",
+     "36「팔로우한 크리에이터」",
+     "36「문의」",
+     "40「별\n별빛님」"
+    ],
+    "tapsN": 19,
+    "h1s": [
+     {
+      "t": "계정 설정",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1554,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/me"
+ },
+ {
+  "role": "fan",
+  "url": "/me/profile",
+  "shots": {
+   "390": "fan__me_profile__390.jpg",
+   "1440": "fan__me_profile__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "1「INPUT」",
+     "1「INPUT」",
+     "40「취소」",
+     "40「저장」"
+    ],
+    "tapsN": 4,
+    "h1s": [
+     {
+      "t": "프로필 수정",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1858,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「지금 할 일」",
+     "36「크리에이터 찾기」",
+     "36「선물 보내기」",
+     "36「보낸 선물」",
+     "36「받은 선물」",
+     "36「팔로우한 크리에이터」",
+     "36「문의」",
+     "40「별\n별빛님」"
+    ],
+    "tapsN": 17,
+    "h1s": [
+     {
+      "t": "프로필 수정",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1344,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/me/profile"
+ },
+ {
+  "role": "fan",
+  "url": "/me/following",
+  "shots": {
+   "390": "fan__me_following__390.jpg",
+   "1440": "fan__me_following__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "22「하루」",
+     "36「선물 보내기」",
+     "36「팔로우 취소」",
+     "22「모모」",
+     "36「선물 보내기」",
+     "36「팔로우 취소」",
+     "22「새벽달」",
+     "36「선물 보내기」",
+     "36「팔로우 취소」",
+     "22「별이」"
+    ],
+    "tapsN": 22,
+    "h1s": [
+     {
+      "t": "팔로우한 크리에이터",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1511,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「지금 할 일」",
+     "36「크리에이터 찾기」",
+     "36「선물 보내기」",
+     "36「보낸 선물」",
+     "36「받은 선물」",
+     "36「팔로우한 크리에이터」",
+     "36「문의」",
+     "40「별\n별빛님」"
+    ],
+    "tapsN": 35,
+    "h1s": [
+     {
+      "t": "팔로우한 크리에이터",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 964,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/me/following"
+ },
+ {
+  "role": "fan",
+  "url": "/me/actions",
+  "shots": {
+   "390": "fan__me_actions__390.jpg",
+   "1440": "fan__me_actions__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「보낸 선물 보기」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "지금 할 일",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1276,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「지금 할 일」",
+     "36「크리에이터 찾기」",
+     "36「선물 보내기」",
+     "36「보낸 선물」",
+     "36「받은 선물」",
+     "36「팔로우한 크리에이터」",
+     "36「문의」",
+     "40「별\n별빛님」"
+    ],
+    "tapsN": 14,
+    "h1s": [
+     {
+      "t": "지금 할 일",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/me/actions"
+ },
+ {
+  "role": "fan",
+  "url": "/me/email/confirm",
+  "shots": {
+   "390": "fan__me_email_confirm__390.jpg",
+   "1440": "fan__me_email_confirm__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「이메일 주소 확인」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "이메일 확인",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1276,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「지금 할 일」",
+     "36「크리에이터 찾기」",
+     "36「선물 보내기」",
+     "36「보낸 선물」",
+     "36「받은 선물」",
+     "36「팔로우한 크리에이터」",
+     "36「문의」",
+     "40「별\n별빛님」"
+    ],
+    "tapsN": 14,
+    "h1s": [
+     {
+      "t": "이메일 확인",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/me/email/confirm"
+ },
+ {
+  "role": "fan",
+  "url": "/me/revgifts",
+  "shots": {
+   "390": "fan__me_revgifts__390.jpg",
+   "1440": "fan__me_revgifts__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "받은 선물",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1276,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「지금 할 일」",
+     "36「크리에이터 찾기」",
+     "36「선물 보내기」",
+     "36「보낸 선물」",
+     "36「받은 선물」",
+     "36「팔로우한 크리에이터」",
+     "36「문의」",
+     "40「별\n별빛님」"
+    ],
+    "tapsN": 13,
+    "h1s": [
+     {
+      "t": "받은 선물",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/me/revgifts"
+ },
+ {
+  "role": "fan",
+  "url": "/gifts",
+  "shots": {
+   "390": "fan__gifts__390.jpg",
+   "1440": "fan__gifts__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「선물 보내기」",
+     "28「ㅈㅈ님」",
+     "28「하루님」",
+     "28「모모님」",
+     "28「새벽달님」",
+     "36「진행 중 3」",
+     "36「완료 4」",
+     "19「ㅈㅈ님께」",
+     "19「하루님께」",
+     "19「하루님께」"
+    ],
+    "tapsN": 10,
+    "h1s": [
+     {
+      "t": "보낸 선물7",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2080,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「지금 할 일」",
+     "36「크리에이터 찾기」",
+     "36「선물 보내기」",
+     "36「보낸 선물」",
+     "36「받은 선물」",
+     "36「팔로우한 크리에이터」",
+     "36「문의」",
+     "40「별\n별빛님」"
+    ],
+    "tapsN": 23,
+    "h1s": [
+     {
+      "t": "보낸 선물7",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1653,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/gifts"
+ },
+ {
+  "role": "fan",
+  "url": "/gifts/new",
+  "shots": {
+   "390": "fan__gifts_new__390.jpg",
+   "1440": "fan__gifts_new__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「다음」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "선물 보내기",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1816,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「지금 할 일」",
+     "36「크리에이터 찾기」",
+     "36「선물 보내기」",
+     "36「보낸 선물」",
+     "36「받은 선물」",
+     "36「팔로우한 크리에이터」",
+     "36「문의」",
+     "40「별\n별빛님」"
+    ],
+    "tapsN": 14,
+    "h1s": [
+     {
+      "t": "선물 보내기",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1111,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/gifts/new"
+ },
+ {
+  "role": "creator",
+  "url": "/creator",
+  "shots": {
+   "390": "creator__creator__390.jpg",
+   "1440": "creator__creator__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「지금 할 일 1건 확인하기 →」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "하루님,\n반가워요",
+      "fs": "32px",
+      "lines": 2
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 3110,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「선물 현황」",
+     "36「지금 할 일\n1\n, 1건」",
+     "36「크리에이터 찾기」",
+     "36「승인 내역」",
+     "36「받은 선물」",
+     "36「열람 기록」",
+     "36「팬에게 보내기」",
+     "36「팔로우한 크리에이터」"
+    ],
+    "tapsN": 18,
+    "h1s": [
+     {
+      "t": "하루님,\n반가워요",
+      "fs": "48px",
+      "lines": 2
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2465,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creator"
+ },
+ {
+  "role": "creator",
+  "url": "/creator/actions",
+  "shots": {
+   "390": "creator__creator_actions__390.jpg",
+   "1440": "creator__creator_actions__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「받지 않기」",
+     "40「승인하기」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "지금 할 일1건",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1402,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「선물 현황」",
+     "36「지금 할 일\n1\n, 1건」",
+     "36「크리에이터 찾기」",
+     "36「승인 내역」",
+     "36「받은 선물」",
+     "36「열람 기록」",
+     "36「팬에게 보내기」",
+     "36「팔로우한 크리에이터」"
+    ],
+    "tapsN": 19,
+    "h1s": [
+     {
+      "t": "지금 할 일1건",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creator/actions"
+ },
+ {
+  "role": "creator",
+  "url": "/creator/requests",
+  "shots": {
+   "390": "creator__creator_requests__390.jpg",
+   "1440": "creator__creator_requests__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "승인 내역5건",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2105,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「선물 현황」",
+     "36「지금 할 일\n1\n, 1건」",
+     "36「크리에이터 찾기」",
+     "36「승인 내역」",
+     "36「받은 선물」",
+     "36「열람 기록」",
+     "36「팬에게 보내기」",
+     "36「팔로우한 크리에이터」"
+    ],
+    "tapsN": 17,
+    "h1s": [
+     {
+      "t": "승인 내역5건",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1290,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creator/requests"
+ },
+ {
+  "role": "creator",
+  "url": "/creator/progress",
+  "shots": {
+   "390": "creator__creator_progress__390.jpg",
+   "1440": "creator__creator_progress__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「지금 할 일」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "선물 현황· 진행 중 2건",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1717,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「선물 현황」",
+     "36「지금 할 일\n1\n, 1건」",
+     "36「크리에이터 찾기」",
+     "36「승인 내역」",
+     "36「받은 선물」",
+     "36「열람 기록」",
+     "36「팬에게 보내기」",
+     "36「팔로우한 크리에이터」"
+    ],
+    "tapsN": 18,
+    "h1s": [
+     {
+      "t": "선물 현황· 진행 중 2건",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1174,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creator/progress"
+ },
+ {
+  "role": "creator",
+  "url": "/creator/log",
+  "shots": {
+   "390": "creator__creator_log__390.jpg",
+   "1440": "creator__creator_log__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "주소 열람 기록0건",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1549,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「선물 현황」",
+     "36「지금 할 일\n1\n, 1건」",
+     "36「크리에이터 찾기」",
+     "36「승인 내역」",
+     "36「받은 선물」",
+     "36「열람 기록」",
+     "36「팬에게 보내기」",
+     "36「팔로우한 크리에이터」"
+    ],
+    "tapsN": 17,
+    "h1s": [
+     {
+      "t": "주소 열람 기록0건",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creator/log"
+ },
+ {
+  "role": "creator",
+  "url": "/creator/boxes",
+  "shots": {
+   "390": "creator__creator_boxes__390.jpg",
+   "1440": "creator__creator_boxes__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "받은 선물0개",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1276,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「선물 현황」",
+     "36「지금 할 일\n1\n, 1건」",
+     "36「크리에이터 찾기」",
+     "36「승인 내역」",
+     "36「받은 선물」",
+     "36「열람 기록」",
+     "36「팬에게 보내기」",
+     "36「팔로우한 크리에이터」"
+    ],
+    "tapsN": 17,
+    "h1s": [
+     {
+      "t": "받은 선물0개",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creator/boxes"
+ },
+ {
+  "role": "creator",
+  "url": "/creator/customize",
+  "shots": {
+   "390": "creator__creator_customize__390.jpg",
+   "1440": "creator__creator_customize__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「프로필」",
+     "36「채널」",
+     "1「INPUT」",
+     "36「SOOP」",
+     "36「치지직」",
+     "36「유튜브」",
+     "36「알플레이」",
+     "36「인스타그램」",
+     "36「X」",
+     "36「스레드」"
+    ],
+    "tapsN": 19,
+    "h1s": [
+     {
+      "t": "프로필 수정",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 4622,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「선물 현황」",
+     "36「지금 할 일\n1\n, 1건」",
+     "36「크리에이터 찾기」",
+     "36「승인 내역」",
+     "36「받은 선물」",
+     "36「열람 기록」",
+     "36「팬에게 보내기」",
+     "36「팔로우한 크리에이터」"
+    ],
+    "tapsN": 37,
+    "h1s": [
+     {
+      "t": "프로필 수정",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 3318,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creator/profile?tab=channel"
+ },
+ {
+  "role": "creator",
+  "url": "/creator/profile",
+  "shots": {
+   "390": "creator__creator_profile__390.jpg",
+   "1440": "creator__creator_profile__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「프로필」",
+     "36「채널」",
+     "1「INPUT」",
+     "40「취소」",
+     "40「저장」",
+     "36「기념일 추가」",
+     "40「생일·기념일 저장」"
+    ],
+    "tapsN": 7,
+    "h1s": [
+     {
+      "t": "프로필 수정",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2443,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「선물 현황」",
+     "36「지금 할 일\n1\n, 1건」",
+     "36「크리에이터 찾기」",
+     "36「승인 내역」",
+     "36「받은 선물」",
+     "36「열람 기록」",
+     "36「팬에게 보내기」",
+     "36「팔로우한 크리에이터」"
+    ],
+    "tapsN": 24,
+    "h1s": [
+     {
+      "t": "프로필 수정",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1770,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creator/profile"
+ },
+ {
+  "role": "creator",
+  "url": "/creator/account",
+  "shots": {
+   "390": "creator__creator_account__390.jpg",
+   "1440": "creator__creator_account__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "알림 설정",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1417,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「선물 현황」",
+     "36「지금 할 일\n1\n, 1건」",
+     "36「크리에이터 찾기」",
+     "36「승인 내역」",
+     "36「받은 선물」",
+     "36「열람 기록」",
+     "36「팬에게 보내기」",
+     "36「팔로우한 크리에이터」"
+    ],
+    "tapsN": 17,
+    "h1s": [
+     {
+      "t": "알림 설정",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 923,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creator/account"
+ },
+ {
+  "role": "creator",
+  "url": "/creator/settings",
+  "shots": {
+   "390": "creator__creator_settings__390.jpg",
+   "1440": "creator__creator_settings__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「다시 연결」",
+     "40「BUTTON」",
+     "40「BUTTON」",
+     "40「BUTTON」",
+     "36「BUTTON」",
+     "36「BUTTON」",
+     "36「A」"
+    ],
+    "tapsN": 7,
+    "h1s": [
+     {
+      "t": "계정 설정",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1444,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「선물 현황」",
+     "36「지금 할 일\n1\n, 1건」",
+     "36「크리에이터 찾기」",
+     "36「승인 내역」",
+     "36「받은 선물」",
+     "36「열람 기록」",
+     "36「팬에게 보내기」",
+     "36「팔로우한 크리에이터」"
+    ],
+    "tapsN": 24,
+    "h1s": [
+     {
+      "t": "계정 설정",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 963,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creator/settings"
+ },
+ {
+  "role": "creator",
+  "url": "/creator/settings/signature",
+  "shots": {
+   "390": "creator__creator_settings_signature__390.jpg",
+   "1440": "creator__creator_settings_signature__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「이전」",
+     "40「카카오톡 인증 요청」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "계정 설정",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1466,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「선물 현황」",
+     "36「지금 할 일\n1\n, 1건」",
+     "36「크리에이터 찾기」",
+     "36「승인 내역」",
+     "36「받은 선물」",
+     "36「열람 기록」",
+     "36「팬에게 보내기」",
+     "36「팔로우한 크리에이터」"
+    ],
+    "tapsN": 19,
+    "h1s": [
+     {
+      "t": "계정 설정",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 949,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creator/settings/signature"
+ },
+ {
+  "role": "creator",
+  "url": "/creator/revgifts",
+  "shots": {
+   "390": "creator__creator_revgifts__390.jpg",
+   "1440": "creator__creator_revgifts__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「팬에게 보낸 선물」",
+     "36「크리에이터에게 보낸 선물」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "보낸 역조공0묶음",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1457,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「선물 현황」",
+     "36「지금 할 일\n1\n, 1건」",
+     "36「크리에이터 찾기」",
+     "36「승인 내역」",
+     "36「받은 선물」",
+     "36「열람 기록」",
+     "36「팬에게 보내기」",
+     "36「팔로우한 크리에이터」"
+    ],
+    "tapsN": 19,
+    "h1s": [
+     {
+      "t": "보낸 역조공0묶음",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 966,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creator/revgifts"
+ },
+ {
+  "role": "creator",
+  "url": "/creator/revgifts/new",
+  "shots": {
+   "390": "creator__creator_revgifts_new__390.jpg",
+   "1440": "creator__creator_revgifts_new__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「선물함 만들기」",
+     "40「선물함 만들기」",
+     "40「다음」"
+    ],
+    "tapsN": 3,
+    "h1s": [
+     {
+      "t": "팬에게 보내기란?",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 3310,
+    "title": "선물함 만들기 — 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「선물 현황」",
+     "36「지금 할 일\n1\n, 1건」",
+     "36「크리에이터 찾기」",
+     "36「승인 내역」",
+     "36「받은 선물」",
+     "36「열람 기록」",
+     "36「팬에게 보내기」",
+     "36「팔로우한 크리에이터」"
+    ],
+    "tapsN": 20,
+    "h1s": [
+     {
+      "t": "팬에게 보내기란?",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1563,
+    "title": "선물함 만들기 — 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creator/revgift-boxes/new"
+ },
+ {
+  "role": "creator",
+  "url": "/creator/revgift-boxes",
+  "shots": {
+   "390": "creator__creator_revgift-boxes__390.jpg",
+   "1440": "creator__creator_revgift-boxes__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「선물함 만들기」",
+     "40「선물함 만들기」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "팬에게 보내기란?",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 3310,
+    "title": "팬에게 보내기 — 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「선물 현황」",
+     "36「지금 할 일\n1\n, 1건」",
+     "36「크리에이터 찾기」",
+     "36「승인 내역」",
+     "36「받은 선물」",
+     "36「열람 기록」",
+     "36「팬에게 보내기」",
+     "36「팔로우한 크리에이터」"
+    ],
+    "tapsN": 19,
+    "h1s": [
+     {
+      "t": "팬에게 보내기란?",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1563,
+    "title": "팬에게 보내기 — 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creator/revgift-boxes"
+ },
+ {
+  "role": "creator",
+  "url": "/creator/revgift-boxes/new",
+  "shots": {
+   "390": "creator__creator_revgift-boxes_new__390.jpg",
+   "1440": "creator__creator_revgift-boxes_new__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「선물함 만들기」",
+     "40「선물함 만들기」",
+     "40「다음」"
+    ],
+    "tapsN": 3,
+    "h1s": [
+     {
+      "t": "팬에게 보내기란?",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 3310,
+    "title": "선물함 만들기 — 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「선물 현황」",
+     "36「지금 할 일\n1\n, 1건」",
+     "36「크리에이터 찾기」",
+     "36「승인 내역」",
+     "36「받은 선물」",
+     "36「열람 기록」",
+     "36「팬에게 보내기」",
+     "36「팔로우한 크리에이터」"
+    ],
+    "tapsN": 20,
+    "h1s": [
+     {
+      "t": "팬에게 보내기란?",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1563,
+    "title": "선물함 만들기 — 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creator/revgift-boxes/new"
+ },
+ {
+  "role": "operator",
+  "url": "/admin",
+  "shots": {
+   "390": "operator__admin__390.jpg",
+   "1440": "operator__admin__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "대시보드 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 20,
+    "h1s": [
+     {
+      "t": "오늘 할 일",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "대시보드 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/metrics",
+  "shots": {
+   "390": "operator__admin_metrics__390.jpg",
+   "1440": "operator__admin_metrics__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "측정 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [
+     "13px「칸마다 위는 비율, 아래는 「건수 / 전체」」",
+     "13px「첫 선물을 보낸 달 기준, 60일이 다 지난」",
+     "13px「첫 선물을 보낸 지 60일이 지난 팬 가운데」",
+     "13px「첫 선물의 상자에 지우지 않은 답장이 남은 」",
+     "13px「받았어요가 남은 상자 가운데 답장이 남은(지」",
+     "13px「받기 어려운 품목 안내가 뜬 뒤 결제까지 간」"
+    ],
+    "desc13N": 7,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 20,
+    "h1s": [
+     {
+      "t": "측정",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1765,
+    "title": "측정 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/metrics"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/work/inbound",
+  "shots": {
+   "390": "operator__admin_work_inbound__390.jpg",
+   "1440": "operator__admin_work_inbound__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "입고 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [
+     "13px「상자에 붙은 택배 송장 바코드를 스캐너로 읽」"
+    ],
+    "desc13N": 1,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 20,
+    "h1s": [
+     {
+      "t": "입고",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "입고 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/work/inbound"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/work/inspect",
+  "shots": {
+   "390": "operator__admin_work_inspect__390.jpg",
+   "1440": "operator__admin_work_inspect__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "검수 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [
+     "13px「입고하며 붙인 라벨의 QR 로만 상자를 불러」"
+    ],
+    "desc13N": 1,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 21,
+    "h1s": [
+     {
+      "t": "검수",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "검수 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/work/inspect"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/work/inspection-card",
+  "shots": {
+   "390": "operator__admin_work_inspection-card__390.jpg",
+   "1440": "operator__admin_work_inspection-card__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "검수 완료 카드 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 23,
+    "h1s": [
+     {
+      "t": "검수 완료 카드",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1120,
+    "title": "검수 완료 카드 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/work/inspection-card"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/work/outbound",
+  "shots": {
+   "390": "operator__admin_work_outbound__390.jpg",
+   "1440": "operator__admin_work_outbound__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "출고 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [
+     "13px「QR 을 읽으면 그 상자가 지금 할 수 있는」"
+    ],
+    "desc13N": 1,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 20,
+    "h1s": [
+     {
+      "t": "출고",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "출고 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/work/outbound"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/work/gift-boxes",
+  "shots": {
+   "390": "operator__admin_work_gift-boxes__390.jpg",
+   "1440": "operator__admin_work_gift-boxes__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "선물함 입고·실측 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 27,
+    "h1s": [
+     {
+      "t": "선물함 입고·실측",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "선물함 입고·실측 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/work/gift-boxes"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/work/gift-box-outbound",
+  "shots": {
+   "390": "operator__admin_work_gift-box-outbound__390.jpg",
+   "1440": "operator__admin_work_gift-box-outbound__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "선물함 출고·반송 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 22,
+    "h1s": [
+     {
+      "t": "선물함 출고·반송",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable",
+     "__nextjs-Geist"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "선물함 출고·반송 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/work/gift-box-outbound"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/parcels",
+  "shots": {
+   "390": "operator__admin_parcels__390.jpg",
+   "1440": "operator__admin_parcels__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "들어온 상자 · 팬꾹 운영자 화면"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [
+     "13px「구간은 크기와 무게 중 큰 쪽으로 정해요. 」"
+    ],
+    "desc13N": 1,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 28,
+    "h1s": [
+     {
+      "t": "들어온 상자",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "들어온 상자 · 팬꾹 운영자 화면"
+   }
+  },
+  "status": 200,
+  "final": "/admin/parcels"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/unmatched",
+  "shots": {
+   "390": "operator__admin_unmatched__390.jpg",
+   "1440": "operator__admin_unmatched__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "보류 상자 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [
+     "13px「6자리 입력 2 번 중 0 번 (쓰지 않는 」",
+     "13px「보낸 사람 이름·사진·주소는 남기지 않아요.」"
+    ],
+    "desc13N": 2,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 20,
+    "h1s": [
+     {
+      "t": "보류 상자",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "보류 상자 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/unmatched"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/payments",
+  "shots": {
+   "390": "operator__admin_payments__390.jpg",
+   "1440": "operator__admin_payments__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "결제·환불 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [
+     "13px「네 칸을 더하면 결제 금액이에요. 역조공은 」",
+     "13px「결제사는 승인됐다는데 금액이 기록과 다르거나」",
+     "13px「거절·자동 반려·취소 때 아직 도착하지 않은」",
+     "13px「1:1 문의로 받은 입고 뒤 취소예요. 도착」",
+     "13px「1:1 문의로 크리에이터가 더 받을 수 없다」"
+    ],
+    "desc13N": 5,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 35,
+    "h1s": [
+     {
+      "t": "결제·환불 내역",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1603,
+    "title": "결제·환불 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/payments"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/revgifts",
+  "shots": {
+   "390": "operator__admin_revgifts__390.jpg",
+   "1440": "operator__admin_revgifts__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "역조공 처리 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [
+     "13px「기한이 지났는데 답이 없는 건은 「지금 돌리」"
+    ],
+    "desc13N": 1,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 26,
+    "h1s": [
+     {
+      "t": "역조공 처리",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "역조공 처리 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/revgifts"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/creators",
+  "shots": {
+   "390": "operator__admin_creators__390.jpg",
+   "1440": "operator__admin_creators__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "크리에이터 확인 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [
+     "13px「채널의 소개·프로필 링크에 찾을 링크가 걸려」",
+     "13px「한 채널로 10 번까지 신청할 수 있어요. 」",
+     "13px「크리에이터가 고르는 목록이자 찾기·메인의 칩」",
+     "13px「새 선택지 (1~ 20 자, 목록 끝에 붙어」",
+     "13px「카드에 선택지 뒤로 보여요(찾기 칩은 아니에」",
+     "13px「직접 입력과 선택지 이름에 쓸 수 없어요 ·」"
+    ],
+    "desc13N": 7,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 149,
+    "h1s": [
+     {
+      "t": "크리에이터 본인 확인",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 3580,
+    "title": "크리에이터 확인 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/creators"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/inquiries",
+  "shots": {
+   "390": "operator__admin_inquiries__390.jpg",
+   "1440": "operator__admin_inquiries__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "1:1 문의 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 24,
+    "h1s": [
+     {
+      "t": "1:1 문의",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "1:1 문의 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/inquiries"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/notices",
+  "shots": {
+   "390": "operator__admin_notices__390.jpg",
+   "1440": "operator__admin_notices__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "공지 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 33,
+    "h1s": [
+     {
+      "t": "공지",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "공지 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/notices"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/banners",
+  "shots": {
+   "390": "operator__admin_banners__390.jpg",
+   "1440": "operator__admin_banners__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "광고 배너 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 27,
+    "h1s": [
+     {
+      "t": "광고 배너",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 925,
+    "title": "광고 배너 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/banners"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/pricing",
+  "shots": {
+   "390": "operator__admin_pricing__390.jpg",
+   "1440": "operator__admin_pricing__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "요금표 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [
+     "13px「구간 기준(크기·무게)은 이 화면에서 바꾸지」",
+     "13px「기준 월 30 건 · 2 달 연속 미만이면 」",
+     "13px「출고 확정·반송 확정 기준이고, 우체국으로 」"
+    ],
+    "desc13N": 3,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 51,
+    "h1s": [
+     {
+      "t": "요금표",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1896,
+    "title": "요금표 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/pricing"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/prohibited",
+  "shots": {
+   "390": "operator__admin_prohibited__390.jpg",
+   "1440": "operator__admin_prohibited__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "보낼 수 없는 물품 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 36,
+    "h1s": [
+     {
+      "t": "보낼 수 없는 물품",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "보낼 수 없는 물품 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/prohibited"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/office-address",
+  "shots": {
+   "390": "operator__admin_office-address__390.jpg",
+   "1440": "operator__admin_office-address__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "팬꾹 주소 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 21,
+    "h1s": [
+     {
+      "t": "팬꾹 주소",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "팬꾹 주소 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/office-address"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/automation",
+  "shots": {
+   "390": "operator__admin_automation__390.jpg",
+   "1440": "operator__admin_automation__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "자동 처리 현황 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [
+     "13px「모든 주소 열람이 서명된 승인 뒤에 일어났어」",
+     "13px「구독을 기다리는 송장 1 건 — 10분마다 」",
+     "13px「선물 단계가 바뀔 때 쌓인 알림을 보내요. 」",
+     "13px「크리에이터가 7일 안에 승인하지 않은 선물이」",
+     "13px「팬이 기한 안에 받지도 거절하지도 않은 건이」",
+     "13px「상자가 더 큰 구간으로 바뀌어 차액을 내야 」"
+    ],
+    "desc13N": 7,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 21,
+    "h1s": [
+     {
+      "t": "자동 처리 현황",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1309,
+    "title": "자동 처리 현황 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/automation"
+ },
+ {
+  "role": "operator",
+  "url": "/admin/access-log",
+  "shots": {
+   "390": "operator__admin_access-log__390.jpg",
+   "1440": "operator__admin_access-log__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "PC에서 써 주세요",
+      "fs": "22px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 844,
+    "title": "주소 열람 기록 · 팬꾹 운영자"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「대시보드」",
+     "36「입고」",
+     "36「검수」",
+     "36「출고」",
+     "36「선물함 입고·실측」",
+     "36「선물함 출고·반송」",
+     "36「들어온 상자」",
+     "36「보류 상자」",
+     "36「자동 처리 현황」",
+     "36「역조공 처리」"
+    ],
+    "tapsN": 20,
+    "h1s": [
+     {
+      "t": "주소 열람 기록",
+      "fs": "26px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Pretendard Variable\""
+    },
+    "loaded": [
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 900,
+    "title": "주소 열람 기록 · 팬꾹 운영자"
+   }
+  },
+  "status": 200,
+  "final": "/admin/access-log"
+ },
+ {
+  "role": "anon",
+  "url": "/creators/00000000-0000-4000-b000-000000000001",
+  "shots": {
+   "390": "anon__creators_00000000-0000-4000-b000-000000000001__390.jpg",
+   "1440": "anon__creators_00000000-0000-4000-b000-000000000001__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「팔로우」",
+     "36「상세 정보 펼치기」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "하루",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1746,
+    "title": "하루님에게 선물 보내기 · 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「팔로우」",
+     "36「상세 정보 펼치기」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "하루",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1595,
+    "title": "하루님에게 선물 보내기 · 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/creators/00000000-0000-4000-b000-000000000001"
+ },
+ {
+  "role": "anon",
+  "url": "/wikdhdl",
+  "shots": {
+   "390": "anon__wikdhdl__390.jpg",
+   "1440": "anon__wikdhdl__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「팔로우」",
+     "36「상세 정보 펼치기」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "ㅈㅈ",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1746,
+    "title": "ㅈㅈ님에게 선물 보내기 · 팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「팔로우」",
+     "36「상세 정보 펼치기」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "ㅈㅈ",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1595,
+    "title": "ㅈㅈ님에게 선물 보내기 · 팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/wikdhdl"
+ },
+ {
+  "role": "fan",
+  "url": "/home",
+  "shots": {
+   "390": "fan__home__390.jpg",
+   "1440": "fan__home__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "19「하루」",
+     "36「선물 보내기」",
+     "36「팔로우 취소」",
+     "19「모모」",
+     "36「선물 보내기」",
+     "36「팔로우 취소」",
+     "19「새벽달」",
+     "36「선물 보내기」",
+     "36「팔로우 취소」",
+     "19「별이」"
+    ],
+    "tapsN": 21,
+    "h1s": [
+     {
+      "t": "별빛님, 반가워요",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 3687,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「지금 할 일」",
+     "36「크리에이터 찾기」",
+     "36「선물 보내기」",
+     "36「보낸 선물」",
+     "36「받은 선물」",
+     "36「팔로우한 크리에이터」",
+     "36「문의」",
+     "40「별\n별빛님」"
+    ],
+    "tapsN": 34,
+    "h1s": [
+     {
+      "t": "별빛님, 반가워요",
+      "fs": "48px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 3015,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/home"
+ },
+ {
+  "role": "fan",
+  "url": "/gifts/FC-EKTV4",
+  "shots": {
+   "390": "fan__gifts_FC-EKTV4__390.jpg",
+   "1440": "fan__gifts_FC-EKTV4__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "팬꾹에서 보냈어요",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2273,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「지금 할 일」",
+     "36「크리에이터 찾기」",
+     "36「선물 보내기」",
+     "36「보낸 선물」",
+     "36「받은 선물」",
+     "36「팔로우한 크리에이터」",
+     "36「문의」",
+     "40「별\n별빛님」"
+    ],
+    "tapsN": 13,
+    "h1s": [
+     {
+      "t": "팬꾹에서 보냈어요",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1544,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/gifts/FC-EKTV4"
+ },
+ {
+  "role": "fan",
+  "url": "/gifts/FC-F6QW0",
+  "shots": {
+   "390": "fan__gifts_FC-F6QW0__390.jpg",
+   "1440": "fan__gifts_FC-F6QW0__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「6자리 보기」",
+     "36「전체 주소 복사」"
+    ],
+    "tapsN": 2,
+    "h1s": [
+     {
+      "t": "팬꾹으로 상자를 발송해 주세요",
+      "fs": "24px",
+      "lines": 2
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 3945,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「지금 할 일」",
+     "36「크리에이터 찾기」",
+     "36「선물 보내기」",
+     "36「보낸 선물」",
+     "36「받은 선물」",
+     "36「팔로우한 크리에이터」",
+     "36「문의」",
+     "40「별\n별빛님」"
+    ],
+    "tapsN": 15,
+    "h1s": [
+     {
+      "t": "팬꾹으로 상자를 발송해 주세요",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2153,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/gifts/FC-F6QW0"
+ },
+ {
+  "role": "fan",
+  "url": "/gifts/FC-7K3M9",
+  "shots": {
+   "390": "fan__gifts_FC-7K3M9__390.jpg",
+   "1440": "fan__gifts_FC-7K3M9__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [],
+    "tapsN": 0,
+    "h1s": [
+     {
+      "t": "도착했어요(예상)",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 2532,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「지금 할 일」",
+     "36「크리에이터 찾기」",
+     "36「선물 보내기」",
+     "36「보낸 선물」",
+     "36「받은 선물」",
+     "36「팔로우한 크리에이터」",
+     "36「문의」",
+     "40「별\n별빛님」"
+    ],
+    "tapsN": 13,
+    "h1s": [
+     {
+      "t": "도착했어요(예상)",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1731,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/gifts/FC-7K3M9"
+ },
+ {
+  "role": "fan",
+  "url": "/gifts/new?creator=00000000-0000-4000-b000-000000000001",
+  "shots": {
+   "390": "fan__gifts_new_creator_00000000-0000-4000-b000-000000000001__390.jpg",
+   "1440": "fan__gifts_new_creator_00000000-0000-4000-b000-000000000001__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "40「다음」"
+    ],
+    "tapsN": 1,
+    "h1s": [
+     {
+      "t": "선물 보내기",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1846,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「지금 할 일」",
+     "36「크리에이터 찾기」",
+     "36「선물 보내기」",
+     "36「보낸 선물」",
+     "36「받은 선물」",
+     "36「팔로우한 크리에이터」",
+     "36「문의」",
+     "40「별\n별빛님」"
+    ],
+    "tapsN": 14,
+    "h1s": [
+     {
+      "t": "선물 보내기",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1141,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/gifts/new?creator=00000000-0000-4000-b000-000000000001"
+ },
+ {
+  "role": "fan",
+  "url": "/gifts/with/00000000-0000-4000-b000-000000000001",
+  "shots": {
+   "390": "fan__gifts_with_00000000-0000-4000-b000-000000000001__390.jpg",
+   "1440": "fan__gifts_with_00000000-0000-4000-b000-000000000001__1440.jpg"
+  },
+  "m": {
+   "390": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "1「INPUT」",
+     "1「INPUT」",
+     "1「INPUT」"
+    ],
+    "tapsN": 3,
+    "h1s": [
+     {
+      "t": "하루님과 함께한 시간",
+      "fs": "24px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1966,
+    "title": "팬꾹"
+   },
+   "1440": {
+    "overflow": 0,
+    "small": [],
+    "smallN": 0,
+    "desc13": [],
+    "desc13N": 0,
+    "taps": [
+     "36「사이드바 접기」",
+     "36「홈」",
+     "36「지금 할 일」",
+     "36「크리에이터 찾기」",
+     "36「선물 보내기」",
+     "36「보낸 선물」",
+     "36「받은 선물」",
+     "36「팔로우한 크리에이터」",
+     "36「문의」",
+     "40「별\n별빛님」"
+    ],
+    "tapsN": 16,
+    "h1s": [
+     {
+      "t": "하루님과 함께한 시간",
+      "fs": "32px",
+      "lines": 1
+     }
+    ],
+    "fonts": {
+     "body": "\"Pretendard Variable\"",
+     "h": "\"Tmoney Round Wind\""
+    },
+    "loaded": [
+     "Tmoney Round Wind",
+     "Pretendard Variable"
+    ],
+    "imgsBroken": 0,
+    "height": 1627,
+    "title": "팬꾹"
+   }
+  },
+  "status": 200,
+  "final": "/gifts/with/00000000-0000-4000-b000-000000000001"
+ }
+]

@@ -1,0 +1,50 @@
+{
+ "id": "S29-3",
+ "title": "보낸 선물 건수를 한 기준으로",
+ "what": "보낸 선물 (/gifts) — 위 요약 줄(진행 중·완료된 선물·전달되지 않은 선물)과 아래 탭(진행 중·완료)",
+ "why": "같은 말이 다른 숫자로 보여 숫자가 틀린 것처럼 읽힌다 (design-prompt 6-6 같은 정보 반복 금지).",
+ "how": [
+  "지금: 요약 줄 「진행 중 3 · 완료된 선물 1 · 전달되지 않은 선물 3」 + 탭 「진행 중 3 · 완료 4」. 코드(gift-list-page.tsx): 요약 줄은 선물을 세 갈래(ongoing·ended·not_accepted)로 나눠 센 값이고, 탭 「완료 4」는 ended(1) + not_accepted(3, 거절·기한 지남)를 합한 값이다. 그래서 「완료 4」 안에 「완료된 선물 1」이 들어 있는데 이름은 둘 다 「완료」라 달라 보인다. 둘 다 같은 기준 함수(fanGiftBucket)에서 나오므로 숫자 자체는 틀리지 않다.",
+  "A안: 요약 줄을 없애고 탭을 세 개로: 「진행 중 3 · 완료된 선물 1 · 전달되지 않은 선물 3」. 숫자가 화면에 한 번만 나온다. (2026-11-17 사용자가 승인한 요약 줄을 걷어내는 안)",
+  "B안: 요약 줄은 그대로 두고 탭 이름만 「진행 중 3 · 완료·전달 안 됨 4」로. 요약 줄 두 칸의 합이 탭 숫자임이 이름에서 보인다. 숫자는 두 곳에 남는다.",
+  "UX 명세 상태표 변경: 보낸 선물 목록 명세 파일은 없음(docs/ux/pages 에 gifts.md 없음). A안이면 요약 줄 노출 조건을 없애고 탭 3개로, B안이면 탭 이름만 바꾼다. 추천은 A안."
+ ],
+ "how_code": "실제 코드 브랜치(작업 폴더 wt-audit-a, cf9b8c65 에서): A안 audit/flow-S29-3-a 커밋 6e3cc240 — src/widgets/gift-list/ui/gift-list-page.tsx 에서 GiftSummary(요약 줄) 제거, DonePanel 을 EndedPanel·NotAcceptedPanel 두 탭으로 나눔, gift-list.module.css 의 .sum·.subH 제거, gift-list-memo.test.tsx 를 탭 셋 검사로 교체. B안 audit/flow-S29-3-b 커밋 a56875ce — 같은 파일에서 탭 이름만 「완료 N」→「완료·전달 안 됨 N」, 시험의 탭 이름 갱신. 두 브랜치 모두 vitest src/widgets/gift-list 8개 통과.",
+ "also": [
+  "gift-list-memo.test.tsx 가 요약 줄과 탭의 합이 같은지 검사 — A안이면 삭제·변경",
+  "시안 gifts-list-20261112(요약 줄 승인본)과 design-rules 의 요약 줄 항목",
+  "크리에이터 계정의 같은 화면(보낸 내역 탭 안, 같은 GiftListPage 사용)",
+  "메인 홈의 「진행 중인 선물」 숫자는 같은 기준이라 영향 없음"
+ ],
+ "pg": "",
+ "shots": [
+  {
+   "screen": "A안 · 보낸 선물 (/gifts)",
+   "width": 1440,
+   "before": "before__1440.png",
+   "after": "after-a__1440.png"
+  },
+  {
+   "screen": "A안 · 보낸 선물 (/gifts)",
+   "width": 390,
+   "before": "before__390.png",
+   "after": "after-a__390.png"
+  },
+  {
+   "screen": "B안 · 보낸 선물 (/gifts)",
+   "width": 1440,
+   "before": "before__1440.png",
+   "after": "after-b__1440.png"
+  },
+  {
+   "screen": "B안 · 보낸 선물 (/gifts)",
+   "width": 390,
+   "before": "before__390.png",
+   "after": "after-b__390.png"
+  }
+ ],
+ "self_check": "실제 코드 브랜치로 다시 찍음(정적 시안이 크리에이터별 보기·선물 카드의 프로필 사진을 빼먹고 카드 모양도 달라서). main(cf9b8c65)·A·B 세 상태를 같은 서버·같은 계정(byeolbit_fan)·창 1440×1600 / 390×1600 에서 페이지 머리 위 24px ~ 진행 중 탭 첫 카드 줄 아래 24px 로 찍음. 확인: 세 상태 모두 크리에이터 카드 4장 프로필 사진(240×240)·선물 카드 사진 로드, 글꼴 Pretendard Variable·Tmoney Round Wind 로드(document.fonts), 가로 넘침 0. 픽셀 비교: B안은 before 와 탭 글자 줄 12줄만 다름. A안은 요약 줄이 빠진 만큼(1440 117px, 390 184px) 아래가 올라간 것 말고는 탭 글자 줄 12줄만 크게 다름(나머지는 글자 가장자리 수준). 크리에이터별 보기·카드 모양은 세 상태가 같음.",
+ "found": [
+  "시안은 바뀌는 구역만 담았고 크리에이터별 보기 구역은 점선 칸으로 생략했다. 실제 캡처(before)는 main 영역 전체라 그 구역이 보인다."
+ ]
+}

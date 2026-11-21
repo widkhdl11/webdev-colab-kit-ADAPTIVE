@@ -1,0 +1,21 @@
+{ "key": "auth-footer-link", "branch": "audit/auth-footer-link", "commit": "493b2c28",
+  "what": "로그인(/login) 카드 아래 「아직 회원이 아니신가요? 회원가입」의 「회원가입」, 가입(/signup) 아래 「이미 회원이신가요? 로그인」의 「로그인」 링크. 글자·굵기·밑줄은 같고, 누를 수 있는 세로 범위가 44가 된다.",
+  "why": "두 링크의 누르는 칸 높이가 19로 44 미만이다 (design-prompt 8-12).",
+  "how": [
+    "링크 높이(실측, 1440·390 같음): 로그인 「회원가입」 19 → 44 · 가입 「로그인」 19 → 44",
+    "실제로 눌리는 세로 범위(링크 가운데에서 위아래로 짚어 본 값): 20 → 44",
+    "줄 높이가 44로 커져 로그인 화면의 이 줄이 약 10 아래로 내려간다(「비밀번호를 잊으셨나요?」 칸 바로 아래에 붙음, 사이 3 → 0). 가입 화면은 위 단추와 사이 27 → 24",
+    "보이지 않는 덧칸으로 위아래만 넓히는 방법은 쓰지 않았다 — 로그인 화면에서 바로 위 「비밀번호를 잊으셨나요?」(누르는 칸 44)와 약 10이 겹쳐 그 링크 아래쪽을 누르면 가입으로 가게 된다"
+  ],
+  "how_code": "src/shared/ui/base.css — .foot-line a { display:inline-flex; align-items:center; min-height:var(--hit); vertical-align:middle }",
+  "also": ["전역 .foot-line 을 쓰는 곳은 로그인·가입 두 화면뿐(코드 검색 확인) — 다른 화면 변화 없음"],
+  "pg": "로그인·가입 화면 아래 「회원가입」「로그인」 줄이 약 10 아래로 내려간다(로그인). 글자·색·밑줄은 같다. 심사 캡처의 모양 차이는 그 위치뿐이다.",
+  "shots": [
+    { "screen": "로그인 (/login)", "width": 1440, "before": "before__login__1440.png", "after": "after__login__1440.png" },
+    { "screen": "로그인 (/login)", "width": 390, "before": "before__login__390.png", "after": "after__login__390.png" },
+    { "screen": "회원가입 (/signup)", "width": 1440, "before": "before__signup__1440.png", "after": "after__signup__1440.png" },
+    { "screen": "회원가입 (/signup)", "width": 390, "before": "before__signup__390.png", "after": "after__signup__390.png" }
+  ],
+  "tests": "npx vitest run src/widgets/login src/widgets/signup tests/login-page-layout-ui.test.tsx tests/login-notice-ui.test.tsx tests/login-keep-signed-in-ui.test.tsx → 6 files, 27 passed · npx vitest run src/shared/ui → 5 files, 25 passed",
+  "self_check": "document.fonts: Pretendard Variable·Tmoney Round Wind 로드됨, 가로 넘침 0(두 화면 1440·390). 캡처에서 「회원가입」과 앞 문장 글자 기준선이 맞고 밑줄 그대로 확인.",
+  "found": [] }

@@ -1,0 +1,37 @@
+{ "key": "empty-state", "branch": "audit/empty-state", "commit": "069377d8",
+  "what": "빈 상태가 팬 「지금 할 일」(/me/actions)과 같은 모양(흰 카드 · 가운데 그림 72 · 굵은 제목 · 한 줄 · 선 버튼 하나)으로 맞춰진다 — 받은 선물(/me/revgifts), 보낸 역조공(/creator/revgifts), 선물 현황(/creator/progress)의 받는·보내는 선물, 받은 선물(/creator/boxes). 크리에이터 홈(/creator) 「최근 열람 기록」 빈 칸에는 버튼 하나가 붙는다",
+  "why": "빈 상태 모양이 화면마다 다르고(하늘 면·고양이 그림, 글만 있는 카드 등) 안내 문장만 있어 다음에 할 일이 없다 — 빈 상태에는 예시나 다음 행동을 둔다(design-prompt 9-2, 2절 가운데 정렬 묶음 8)).",
+  "how": [
+    "받은 선물(/me/revgifts): 하늘 면 + 오른쪽 위 고양이 그림 160 + 왼쪽 글 → 흰 카드 가운데 선물 그림 72 · 「받은 선물이 없습니다」 · 「팔로우한 크리에이터가 보낸 선물은 이곳에 표시됩니다.」 · 「크리에이터 찾기」(/creators)",
+    "보낸 역조공(/creator/revgifts): 흰 카드 · 그림 96 · 버튼 없음 → 그림 72 · 같은 제목과 문장 · 「팬에게 보내기」(/creator/revgift-boxes)",
+    "선물 현황(/creator/progress) 보내는 선물 0건: 흰 카드 안 회색 글 한 줄 → 그림 72 · 제목 「진행 중인 선물이 없습니다」 · 「팬에게 보내기」. 받는 선물 0건도 같은 모양(버튼 없음)",
+    "받은 선물(/creator/boxes): 흰 카드 안 글 두 문장 → 트럭 그림 72 · 「출고된 선물이 없습니다」 · 「팬꾹에서 출고하면 상자별로 표시됩니다.」 · 「선물 현황 보기」(/creator/progress)",
+    "크리에이터 홈 「최근 열람 기록」: 홈 요약 칸의 작은 빈 칸(아이콘 원 44 · 한 줄 · 안내) 모양은 그대로 두고 그 아래 작은 선 버튼 「보안 안내」(/security) — 팬 홈 「팔로우한 크리에이터가 없습니다」 칸의 「크리에이터 찾기」 버튼과 같은 배치",
+    "버튼 선은 기준 화면과 같은 짙은 선(--gray-500)"
+  ],
+  "how_code": "새 공용 컴포넌트 shared/ui/empty-state.tsx(EmptyState) + empty-state.module.css · my-revgifts-panel.tsx(.epanel), revgift-sent-page.tsx(.sempty), gift-progress-page.tsx(.none), received-box-list.tsx(.empty) 교체 · creator-home-page.tsx 열람 기록 EmptyCard 에 emptyAct 버튼",
+  "also": [
+    "선물 현황 /creator/progress 「받는 선물」 0건 빈 상태도 같은 모양으로 바뀐다(다음 행동은 두지 않음 — 크리에이터가 할 수 있는 일이 없다)",
+    "제안(안 고침): 팬 /me/actions·크리에이터 /creator/actions 의 빈 상태는 이미 같은 모양이라 공용 컴포넌트로 옮기기만 하면 된다",
+    "제안(안 고침): 홈 요약 칸 빈 칸(EmptyCard — 팬 홈·크리에이터 홈·공지)은 작은 가로 모양(design-rules 35절)으로 남겼다. 한 화면에 빈 칸이 세 개 겹칠 수 있는 요약 자리라 큰 가운데 카드로 바꾸면 홈이 길어진다"
+  ],
+  "pg": "",
+  "shots": [
+    { "screen": "받은 선물 — 팬 (/me/revgifts)", "width": 1440, "before": "before__me-revgifts__1440.png", "after": "after__me-revgifts__1440.png" },
+    { "screen": "받은 선물 — 팬 (/me/revgifts)", "width": 390, "before": "before__me-revgifts__390.png", "after": "after__me-revgifts__390.png" },
+    { "screen": "보낸 역조공 (/creator/revgifts)", "width": 1440, "before": "before__creator-revgifts__1440.png", "after": "after__creator-revgifts__1440.png" },
+    { "screen": "보낸 역조공 (/creator/revgifts)", "width": 390, "before": "before__creator-revgifts__390.png", "after": "after__creator-revgifts__390.png" },
+    { "screen": "선물 현황 — 보내는 선물 (/creator/progress)", "width": 1440, "before": "before__creator-progress__1440.png", "after": "after__creator-progress__1440.png" },
+    { "screen": "선물 현황 — 보내는 선물 (/creator/progress)", "width": 390, "before": "before__creator-progress__390.png", "after": "after__creator-progress__390.png" },
+    { "screen": "받은 선물 — 크리에이터 (/creator/boxes)", "width": 1440, "before": "before__creator-boxes__1440.png", "after": "after__creator-boxes__1440.png" },
+    { "screen": "받은 선물 — 크리에이터 (/creator/boxes)", "width": 390, "before": "before__creator-boxes__390.png", "after": "after__creator-boxes__390.png" },
+    { "screen": "크리에이터 홈 — 최근 열람 기록 (/creator)", "width": 1440, "before": "before__creator-home__1440.png", "after": "after__creator-home__1440.png" },
+    { "screen": "크리에이터 홈 — 최근 열람 기록 (/creator)", "width": 390, "before": "before__creator-home__390.png", "after": "after__creator-home__390.png" }
+  ],
+  "tests": "npx vitest run src/widgets/my-revgifts src/widgets/revgift-sent src/widgets/creator-gift-progress src/features/gift-reply src/widgets/home src/shared/ui — 14파일 85개 통과(받은 선물 빈 상태 시험을 제목·버튼 확인으로 고침) · npx tsc --noEmit 오류 0 · npm run copy:lint 금지어 0",
+  "self_check": "글꼴 Pretendard Variable(본문)·Tmoney Round Wind(제목) 로드, 가로 넘침 0(다섯 화면 두 폭). 14-7: 1) 그림 72·제목 20 은 기준 화면(/me/actions)과 같다(보낸 역조공 그림 96→72 로 작아짐) 2) 해당 없음 8) 시선 순서 그림 → 제목 → 버튼. 기준 그림 사본 before__me-actions-ref__*.png 를 같이 두었다.",
+  "found": [
+    "/creator/progress 받는 선물 칸 머리의 「받은 선물 전체 ›」와 보내는 선물 칸의 「보낸 내역 전체 ›」 링크가 밑줄 글자인데 홈 요약 칸의 「… 모두 보기 >」와 모양이 다르다",
+    "보낸 역조공 빈 상태 문구의 「역조공」은 같은 화면 제목·메뉴(「팬에게 보내기」)와 이름이 다르다 — 용어집 대조 필요",
+    "크리에이터 홈 「진행 중인 선물」 빈 칸에도 다음 행동이 없다(이번 지적 대상 아님)"
+  ] }

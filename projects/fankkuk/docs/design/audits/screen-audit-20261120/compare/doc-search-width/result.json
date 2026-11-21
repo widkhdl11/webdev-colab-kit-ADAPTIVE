@@ -1,0 +1,27 @@
+{ "key": "doc-search-width", "branch": "audit/doc-search-width", "commit": "972631c0",
+  "what": "자주 묻는 질문(/faq)과 안내 글 다섯(팬 이용 안내 /guide/fan 등)의 「문서 내 검색」 칸. 오른쪽 끝이 위 「핵심 안내」 판·아래 질문 목록(또는 본문 묶음)의 오른쪽 끝과 맞는다.",
+  "why": "검색칸만 폭 680이고 위아래 판은 880이라 검색칸 오른쪽 끝만 200 안쪽에서 끝난다 (design-prompt 2-9 정렬선 하나 · 6-5).",
+  "how": [
+    "검색칸 폭(1440 폭): 680(x 280~960) → 880(x 280~1160), 위 판·아래 목록과 같음",
+    "390 폭: 원래도 셋 다 358 — 바뀌지 않음",
+    "검색 중 「이전」「다음」 단추가 붙으면 검색칸이 그만큼 줄어 한 줄에 함께 들어간다(전과 같은 방식)",
+    "약관 셋·요금 안내는 본문이 680이라 검색칸 680 그대로"
+  ],
+  "how_code": "src/widgets/legal/ui/doc-page.module.css — .withSide .searchBox { max-width: none }",
+  "also": [
+    "팬 이용 안내 /guide/fan — 1440에서 검색칸 680 · 판 880 어긋남 실측, 고친 뒤 880",
+    "크리에이터 이용 안내 /guide/creator — 같은 어긋남 실측, 고친 뒤 880",
+    "검수 안내 /inspection — 같은 어긋남 실측, 고친 뒤 880",
+    "보안 /security — 같은 어긋남 실측, 고친 뒤 880",
+    "분쟁 /dispute — 같은 어긋남 실측, 고친 뒤 880"
+  ],
+  "pg": "",
+  "shots": [
+    { "screen": "자주 묻는 질문 (/faq)", "width": 1440, "before": "before__faq__1440.png", "after": "after__faq__1440.png" },
+    { "screen": "자주 묻는 질문 (/faq)", "width": 390, "before": "before__faq__390.png", "after": "after__faq__390.png" },
+    { "screen": "팬 이용 안내 (/guide/fan)", "width": 1440, "before": "before__guide-fan__1440.png", "after": "after__guide-fan__1440.png" },
+    { "screen": "팬 이용 안내 (/guide/fan)", "width": 390, "before": "before__guide-fan__390.png", "after": "after__guide-fan__390.png" }
+  ],
+  "tests": "npx vitest run src/widgets/legal → 5 files, 99 passed",
+  "self_check": "document.fonts: Pretendard Variable·Tmoney Round Wind 로드됨, 가로 넘침 0(여섯 화면 1440 · 두 화면 390). 판·검색칸·목록 x 280 / 폭 880 세 값 일치 실측.",
+  "found": [] }

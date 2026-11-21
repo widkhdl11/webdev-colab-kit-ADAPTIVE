@@ -1,0 +1,66 @@
+{
+ "id": "S36-1",
+ "title": "사진 올릴 수 있는 선물 정하기",
+ "what": "함께한 시간 (/gifts/with/00000000-0000-4000-b000-000000000001) — 선물 칸의 「사진 업로드」",
+ "why": "전달되지 않았거나 도착 전인 선물에도 사진 올리기가 열려 있어 기록이 실제와 다를 수 있다 (정책 결정 필요).",
+ "how": [
+  "정책 확인: 스펙 together.md 는 「등록할 때 올릴 수 있고 등록 뒤 함께한 시간에서 바꾸거나 지울 수 있다」, DECISIONS 2026-10-12 는 「결제 대기 주문에도 올릴 수 있다(등록 화면이 결제창 전에 올리기 때문), 취소한 주문에는 올릴 수 없다」까지만 정함. 도착 전은 허용이 이미 정해진 셈이지만 거절·기한 지남(전달되지 않은 선물)은 정해진 곳이 없다. UX 명세에 함께한 시간 파일은 없다. 코드(save-gift-photo.ts)는 취소되지 않은 본인 주문이면 올린다. → 정책 결정 필요.",
+  "지금: 도착 대기·전달되지 않은 선물·그 밖 모두 「사진 업로드」 버튼.",
+  "A안: 도착한 선물만 올린다. 도착 대기·전달되지 않은 선물은 버튼 대신 한 줄(새 문구 「선물이 도착하면 올릴 수 있어요」 · 「전달되지 않은 선물은 올릴 수 없어요」). 단 등록 화면에서 결제 전 올리는 지금 흐름과 충돌하므로 이 안은 등록 화면도 바꿔야 한다.",
+  "B안: 지금처럼 모두 올린다. 버튼 위에 상태 한 줄만 더함(새 문구 「팬꾹에 아직 도착하지 않았어요」 · 「크리에이터에게 전달되지 않았어요」).",
+  "중간안: 전달되지 않은 선물(거절·기한 지남)만 버튼 대신 한 줄(「전달되지 않은 선물은 올릴 수 없어요」). 도착 전은 지금처럼 올린다 — 등록 화면이 결제 전에 올리는 지금 흐름과 충돌하지 않는다.",
+  "UX 명세 상태표 변경: 함께한 시간 명세 파일 없음. 정해진 정책을 명세로 새로 적어야 한다.",
+  "추천은 중간안(전달되지 않은 선물만 막고 도착 전은 허용). 캡처는 A·B·중간안 세 장.",
+  "구현할 때는 서버(업로드 API·DB)도 같이 막아야 한다 — 이번 브랜치들은 화면에서 버튼만 숨겼다."
+ ],
+ "how_code": "src/widgets/together/ui/together-page.tsx(Tile) · src/features/gift-photo/ui/gift-photo-manager.tsx · (A안) src/features/gift-photo/model/save-gift-photo.ts 의 서버 쪽 검사 · 등록 화면 gift-register — 실제 코드 브랜치(모두 cf9b8c65 에서): A안 audit/flow-S36-1-a 커밋 a0c98d21 · B안 audit/flow-S36-1-b 커밋 267c3187 · 중간안 audit/flow-S36-1-mid 커밋 9b91f783. together-page.tsx 의 photoSlotOf(안마다 다름)가 GiftPhotoManager 의 새 note·locked 를 정한다(빈 칸에만 적용, save-gift-photo.ts 등 서버는 그대로). A안의 「도착한 선물」은 출고된 선물(shipped 이후)로 잡았고 반송도 「전달되지 않은 선물」 줄로 묶었다.",
+ "also": [
+  "등록 화면(gift-register)이 등록 직후 사진을 올림 — A안이면 같이 바뀐다",
+  "docs/specs/together.md INV-F2 아래 사진 줄과 DECISIONS 2026-10-12 항목",
+  "크리에이터 화면에는 이 부품이 없어 영향 없음"
+ ],
+ "pg": "",
+ "shots": [
+  {
+   "screen": "A안 · 함께한 시간",
+   "width": 1440,
+   "before": "before__1440.png",
+   "after": "after-a__1440.png"
+  },
+  {
+   "screen": "A안 · 함께한 시간",
+   "width": 390,
+   "before": "before__390.png",
+   "after": "after-a__390.png"
+  },
+  {
+   "screen": "B안 · 함께한 시간",
+   "width": 1440,
+   "before": "before__1440.png",
+   "after": "after-b__1440.png"
+  },
+  {
+   "screen": "B안 · 함께한 시간",
+   "width": 390,
+   "before": "before__390.png",
+   "after": "after-b__390.png"
+  },
+  {
+   "screen": "중간안 · 함께한 시간 (/gifts/with/[id])",
+   "width": 1440,
+   "before": "before__1440.png",
+   "after": "after-mid__1440.png"
+  },
+  {
+   "screen": "중간안 · 함께한 시간 (/gifts/with/[id])",
+   "width": 390,
+   "before": "before__390.png",
+   "after": "after-mid__390.png"
+  }
+ ],
+ "self_check": "실제 코드 브랜치로 다시 찍음(정적 시안이 그림·아이콘·오른쪽 칸·버튼 모양·글자 등 바꾸지 않을 부분을 지금 화면과 다르게 그려서). before=cf9b8c65, after=각 안 브랜치, 같은 로컬 DB·창 1600 높이·1.5초 대기. 확인: 1440·390 모두 글꼴 Pretendard Variable·Tmoney Round Wind 로드(document.fonts), 가로 넘침 0. before 와 픽셀 비교에서 바뀐 곳은 바꾼 칸(도착 대기·전달되지 않은 선물) 안뿐이고 첫 선물 칸·사이드바·꼬리표·글자는 같음(B안 390 은 한 줄만큼 높이가 2px 늘어남). 근처 시험 src/widgets/together·src/features/gift-photo·src/entities/together 25개 세 브랜치 모두 통과.",
+ "found": [
+  "정책 결정 필요 항목이라 사용자가 A·B·중간안 중 고른 뒤 UX 명세·스펙에 적어야 한다.",
+  "시안 새 문구는 확인 대기."
+ ]
+}

@@ -1,0 +1,31 @@
+{ "key": "section-save-bar", "branch": "audit/section-save-bar", "commit": "febf9a67",
+  "what": "휴대폰(767 이하)에서 크리에이터 설정 판 아래 저장 줄 — 프로필 수정(/creator/profile) 소개 판의 「취소/저장」, 꾸미기(/creator/profile?tab=channel) 판의 「취소/저장」과 팬덤 판의 「되돌리기/저장」 — 이 「저장」 폭 전체 + 그 아래 글자 버튼으로 바뀐다. PC 배치는 그대로",
+  "why": "휴대폰에서 주 버튼과 보조 버튼이 반씩 나란히 놓여 폼의 휴대폰 배치와 다르다 — 폼 휴대폰은 주 버튼 폭 전체, 보조는 그 아래 글자 버튼(design-prompt 2-21 2), 8-1).",
+  "how": [
+    "휴대폰 버튼 배치: [취소][저장] 한 줄에 반씩 → 「저장」 한 줄 폭 전체, 그 아래 「취소」(또는 「되돌리기」) 한 줄",
+    "보조 버튼 모양: 흰 면 + 짙은 선 → 선·면 없는 글자 버튼(누르는 칸 높이 44 유지, 누르면 옅은 회색 면)",
+    "버튼 하나만 있는 저장 줄(생일·기념일 저장)은 휴대폰에서 폭 전체로 — 지금과 같음",
+    "PC(768 이상): [보조][주] 오른쪽 정렬 그대로"
+  ],
+  "how_code": "src/shared/ui/settings-panel.module.css 휴대폰 미디어 쿼리의 .barBtns(column-reverse, 폭 전체) · .bar .barBtns.barBtns > .btn--line(글자 버튼 모양)",
+  "also": [
+    "꾸미기 /creator/profile?tab=channel 의 팬덤 판 「되돌리기/저장」 줄", 
+    "프로필 수정 /creator/profile 의 「생일·기념일 저장」 줄(버튼 하나 — 모양 변화 없음)",
+    "계정 설정 /creator/account·설정 /creator/settings 의 공용 저장 줄을 쓰는 판(같은 CSS)",
+    "/creator/customize 는 /creator/profile 로 넘기는 옛 주소라 따로 바뀌는 화면이 없다",
+    "휴대폰 저장 줄은 판 아래에 붙어 따라오는 고정 줄이라 두 줄로 쌓이면서 높이가 약 50px 늘어난다"
+  ],
+  "pg": "",
+  "shots": [
+    { "screen": "프로필 수정 — 소개 판 (/creator/profile)", "width": 390, "before": "before__creator-profile__390.png", "after": "after__creator-profile__390.png" },
+    { "screen": "프로필 수정 — 소개 판 (/creator/profile)", "width": 1440, "before": "before__creator-profile__1440.png", "after": "after__creator-profile__1440.png" },
+    { "screen": "꾸미기 (/creator/profile?tab=channel)", "width": 390, "before": "before__creator-profile-channel__390.png", "after": "after__creator-profile-channel__390.png" },
+    { "screen": "꾸미기 (/creator/profile?tab=channel)", "width": 1440, "before": "before__creator-profile-channel__1440.png", "after": "after__creator-profile-channel__1440.png" }
+  ],
+  "tests": "npx vitest run src/widgets/creator-profile-edit src/widgets/creator-settings src/shared/ui — 12파일 88개 통과",
+  "self_check": "글꼴 Pretendard Variable·Tmoney Round Wind 로드, 가로 넘침 0(두 화면 두 폭). 저장 줄을 띄우려고 소개 글을 바꾸거나 「크리에이터 찾기에 보이기」를 눌렀고 저장은 누르지 않았다. 14-7 3) 한 줄 칸 크기 차이 없어짐, 8) 시선 「저장」이 먼저. 화면마다 선 버튼을 짙은 선으로 덮는 규칙이 처음에 이겨 「취소」에 선이 남았던 것을 고쳐 다시 찍었다.",
+  "found": [
+    "같은 원인 줄의 셋째 지적(바뀐 것이 없을 때 「저장」이 연회색이라 「취소」보다 약해 보임 — .idle)은 이번 「고치면 달라지는 것」에 없어 고치지 않았다",
+    "휴대폰에서 탭 순서는 마크업 순서(취소 → 저장)라 보이는 순서(저장 위, 취소 아래)와 반대다 — PC 「보조 → 주」 순서를 지키려고 마크업은 그대로 뒀다",
+    "프로필 수정 1440 에서 「소개」 판 닉네임 칸 폭(240)과 한 줄 소개 칸(폭 전체)이 다른 것은 8-2 대로라 문제 아님 — 기록만"
+  ] }

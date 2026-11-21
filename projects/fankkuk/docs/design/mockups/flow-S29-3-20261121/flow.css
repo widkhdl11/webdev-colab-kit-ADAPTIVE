@@ -1,0 +1,37 @@
+/* 흐름 시안 공통 — 값은 tokens.css 변수만 쓴다. 글꼴은 about-20261114 시안과 같이 Pretendard Medium 파일을 불러온다 */
+@font-face{font-family:PreviewBody;src:url("../../../../public/images/previews/role-home-unified-v31/Pretendard-Medium.woff") format("woff");font-weight:400 700;font-display:swap}
+@font-face{font-family:"Tmoney Round Wind";src:url("../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2");font-weight:800;font-display:swap}
+*{box-sizing:border-box}
+body{margin:0;background:var(--background,#fff);color:var(--ink);font-family:PreviewBody,var(--font);font-size:16px;line-height:1.6;word-break:keep-all}
+h1,h2,h3,p,dl,dd,ul{margin:0;padding:0}ul{list-style:none}
+a{color:inherit}
+.pane{max-width:928px;margin:0 auto;padding:40px 24px 64px}
+.note{font-size:12px;color:var(--faint);margin-bottom:16px}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.ph h1{font-family:var(--font-round);font-weight:800;font-size:32px;letter-spacing:-.02em;line-height:1.3}
+.ph h1 sup{font-size:14px;font-weight:400;color:var(--faint);margin-left:6px;font-family:PreviewBody}
+.ph-desc{color:var(--sub);font-size:14px;margin-top:4px}
+.btn{display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:12px;background:var(--primary);color:var(--ink);font-weight:600;text-decoration:none;white-space:nowrap}
+.btn--line{background:#fff;border:1px solid var(--line-button)}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);border-radius:16px;margin-top:24px}
+.sum div{padding:16px 24px}.sum div+div{border-left:1px solid var(--line-on-white)}
+.sum dt{font-size:14px;color:var(--sub)}.sum dd{font-size:24px;font-weight:700;line-height:1.3}
+.skip{margin:32px 0;padding:20px;border:1px dashed var(--line-on-white);border-radius:16px;color:var(--sub);font-size:14px;text-align:center}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line-on-white);margin-top:32px;overflow-x:auto}
+.tabs a{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;font-size:15px;color:var(--sub);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent}
+.tabs a[aria-selected=true]{background:var(--surface-selected);color:var(--ink);font-weight:700;border-bottom-color:var(--brand-line)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}
+.gcard{border:1px solid var(--line-on-white);border-radius:16px;padding:20px;background:#fff;box-shadow:var(--shadow)}
+.gcard .top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
+.gcard h3{font-size:20px;margin-top:12px;font-family:var(--font-round);font-weight:800}
+.gcard .box{color:var(--sub);font-size:14px}
+.bar{display:flex;gap:4px;margin:16px 0 8px}.bar i{flex:1;height:6px;border-radius:99px;background:var(--gray-200)}.bar i.on{background:var(--primary)}
+.meta{display:flex;justify-content:space-between;font-size:14px;color:var(--sub)}.meta b{color:var(--ink)}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:99px;font-size:12px;background:var(--primary-50);color:var(--ink);white-space:nowrap}
+.tag--warn{background:var(--warn-soft);color:var(--warn-ink)}
+.tag--plain{background:var(--surface);color:var(--sub)}
+.tag--ok{background:var(--success-soft);color:var(--success)}
+.who{font-weight:700}
+.mock{font-size:12px;color:var(--faint);margin-top:32px}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+@media(max-width:640px){.pane{padding:24px 16px 48px}.ph h1{font-size:26px}.grid{grid-template-columns:1fr}.sum div{padding:12px 14px}.sum dd{font-size:20px}.sum dt{font-size:12px}}

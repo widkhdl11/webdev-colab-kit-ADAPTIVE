@@ -1,0 +1,40 @@
+{
+ "id": "S34-2",
+ "title": "입고 뒤 선물 상세에서 송장번호·상자 찾기 줄 숨기기",
+ "what": "보낸 선물 상세 (/gifts/FC-7K3M9) — 「상자 1개」 카드의 접는 줄 둘",
+ "why": "출고까지 끝난 선물에도 팬꾹으로 보내는 단계용 입력 줄이 보여 할 일이 남은 것처럼 읽힌다 (design-prompt 6-6 지금 할 수 없는 동작은 보이지 않게).",
+ "how": [
+  "지금 → 바꾼 뒤: 「팬꾹으로 보낸 송장번호 (선택)」 줄 — 지금은 상자 상태가 입고 전(no_waybill·awaiting)이고 진행 중이고 먼저 보내기 안내가 없을 때 보인다 → 주문의 입고 단계가 끝난 뒤에는 상자 상태와 상관없이 숨긴다.",
+  "「주소 끝 6자리 없이 보낸 상자 찾기」 줄 — 지금은 진행 중이고 입고 전 상자가 하나라도 있을 때 보인다 → 주문의 입고 단계가 끝난 뒤에는 숨긴다.",
+  "원인: 코드는 이미 상자별로 입고된 상자에서는 두 줄을 숨긴다. FC-7K3M9 는 주문 단계는 배송 중인데 상자 상태가 「아직 도착 전」으로 남은 로컬 데이터라 줄이 보인다. 그래서 주문 단계로도 거르는 안이다(데이터가 정상이면 지금도 안 보인다).",
+  "입고 전(FC-F6QW0 등)은 지금 그대로: 캡처 unchanged__1440.png · unchanged__390.png.",
+  "UX 명세 상태표 변경(docs/ux/pages/gifts-orderNo.md 요소 목록 「접힌 송장번호 · 「팬꾹 주소 없이 보냈다면」」 줄): 보이는 상태 「주소가 보인 뒤」 → 「주소가 보이고 주문의 입고 단계가 끝나기 전」. 명세는 고치지 않음. 명세 이름 「팬꾹 주소 없이 보냈다면」은 화면의 「주소 끝 6자리 없이 보낸 상자 찾기」와 다르다."
+ ],
+ "how_code": "src/widgets/gift-status/ui/gift-status-page.tsx (WaybillEditor 줄 조건 isWaybillEditable(b.state) && inProgress, 찾기 줄 조건 inProgress) · features/box-waybill/model/box-targets.ts(giftFinderBoxes) — 실제 코드 브랜치 audit/flow-S34-2 커밋 7f2f3bca(cf9b8c65 에서): gift-status-page.tsx 에서 입고 단계(steps 의 received 가 done)가 끝났으면 inboundOpen=false 로 송장번호 줄·찾기 줄·giftFinderBoxes 를 모두 끈다.",
+ "also": [
+  "docs/ux/pages/gifts-orderNo.md 요소 목록 해당 줄",
+  "크리에이터 계정이 보는 같은 상세(같은 GiftStatusPage)",
+  "지금 할 일 칸(gift-todo-box, 상자 찾기)은 별도 조건이라 영향 없음",
+  "seed 데이터: 입고 단계 이후인데 상자 상태가 도착 전인 주문"
+ ],
+ "pg": "",
+ "shots": [
+  {
+   "screen": "보낸 선물 상세 (/gifts/FC-7K3M9)",
+   "width": 1440,
+   "before": "before__1440.png",
+   "after": "after-a__1440.png"
+  },
+  {
+   "screen": "보낸 선물 상세 (/gifts/FC-7K3M9)",
+   "width": 390,
+   "before": "before__390.png",
+   "after": "after-a__390.png"
+  }
+ ],
+ "self_check": "실제 코드 브랜치로 다시 찍음(정적 시안이 그림·아이콘·오른쪽 칸·버튼 모양·글자 등 바꾸지 않을 부분을 지금 화면과 다르게 그려서). before=cf9b8c65, after=audit/flow-S34-2(7f2f3bca), 둘 다 같은 로컬 DB·창 1600 높이·1.5초 대기로 찍음. 확인: 1440·390 모두 글꼴 Pretendard Variable·Tmoney Round Wind 로드(document.fonts), 가로 넘침 0. FC-7K3M9 는 두 줄이 사라지고 상자 줄이 상자 칸 모양(내용 없는 상자의 2열 타일)으로 바뀐 것 말고 오른쪽 칸·글자는 그대로. 입고 전 FC-F6QW0 은 after 브랜치 캡처(unchanged__)가 before 와 픽셀까지 같음(1440·390). 근처 시험 src/widgets/gift-status·src/features/box-waybill 93개 통과.",
+ "found": [
+  "상태 판이 맥락용으로 들어가 있고 바뀌지 않는다. 시안 상자 태그 「입고됨」은 정상 데이터일 때의 모습.",
+  "unchanged 캡처는 별도 비교 쌍이 아니라 입고 전 주문이 그대로임을 보이는 참고 캡처."
+ ]
+}

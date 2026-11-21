@@ -1,0 +1,22 @@
+{ "key": "policy-summary-panel", "branch": "audit/policy-summary-panel", "commit": "a7431545",
+  "what": "이용약관(/terms)·개인정보처리방침(/privacy)·환불 규정(/refund) 머리의 「주요 내용」 판. 줄마다 붙은 「>」 화살표가 글 끝이 아니라 판 안쪽 오른쪽 끝에 선다.",
+  "why": "화살표가 판 안쪽 오른쪽 끝(1128)이 아니라 글 폭 끝(약 992)에 있어 판 오른쪽 약 136이 비고, 줄 안 동작은 줄 오른쪽 끝에 둔다는 규칙과 다르다 (design-prompt 2-21의 11 · 2-9).",
+  "how": [
+    "화살표 위치(1440 폭): 왼쪽 972~992 → 1108~1128(판 안쪽 오른쪽 끝, 판 안쪽 여백 32)",
+    "누르는 칸(줄): 글 폭 680 → 판 안쪽 폭 전체 816. 마우스를 올렸을 때 흰 면도 판 폭 전체로 깔린다",
+    "글 폭·줄바꿈 위치: 바뀌지 않음(약 608 그대로)",
+    "390 폭: 원래도 판 폭이 680보다 좁아 화살표가 판 끝(338)에 있었음 — 바뀌지 않음",
+    "요금 안내(/pricing)의 「핵심 안내」 판은 줄에 갈 곳이 없어 화살표가 없다 — 화면 차이 없음(캡처는 전후 같음)"
+  ],
+  "how_code": "src/widgets/legal/ui/doc-page.module.css — .summaryList max-width 제거, .summaryText 에 글 폭 상한, .summaryGo margin-left:auto",
+  "also": ["개인정보처리방침 /privacy", "환불 규정 /refund — 같은 판이라 같이 바뀜"],
+  "pg": "이용약관·개인정보처리방침·환불 규정 첫 화면의 「주요 내용」 판에서 화살표가 판 오른쪽 끝으로 옮겨진다. 문구·줄바꿈은 같다. 요금 안내는 달라지는 점 없음.",
+  "shots": [
+    { "screen": "이용약관 (/terms)", "width": 1440, "before": "before__terms__1440.png", "after": "after__terms__1440.png" },
+    { "screen": "이용약관 (/terms)", "width": 390, "before": "before__terms__390.png", "after": "after__terms__390.png" },
+    { "screen": "요금 안내 (/pricing)", "width": 1440, "before": "before__pricing__1440.png", "after": "after__pricing__1440.png" },
+    { "screen": "요금 안내 (/pricing)", "width": 390, "before": "before__pricing__390.png", "after": "after__pricing__390.png" }
+  ],
+  "tests": "npx vitest run src/widgets/legal → 5 files, 99 passed",
+  "self_check": "document.fonts: Pretendard Variable·Tmoney Round Wind 로드됨, 가로 넘침 0(1440·390). 화살표 x 1108(판 안쪽 끝 1128 − 20) 실측, 세 줄 모두 같은 세로선.",
+  "found": ["요금 안내 「핵심 안내」 판은 줄에 갈 곳(조 링크)이 없어 화살표가 없다 — 점검 shared-files 의 「요금 안내도 같이 걸림」 추정은 실제 화면과 다름(고칠 문제는 아님, 기록만)"] }

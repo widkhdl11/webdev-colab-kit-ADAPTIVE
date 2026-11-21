@@ -1,0 +1,342 @@
+[
+ {
+  "role": "operator",
+  "url": "/admin",
+  "summary": "운영자 대시보드 — 입고·검수·출고 대기 등 오늘 할 일 건수 카드 8개",
+  "items": [
+   {
+    "no": 10,
+    "width": "1440",
+    "where": "왼쪽 운영자 메뉴",
+    "what": "메뉴 19개 + 묶음 제목 4개가 900 높이를 넘어 마지막 「측정」(과 그 위 「주소 열람 기록」 일부)이 첫 화면에서 메뉴를 따로 스크롤해야 보인다. 8-12 예외(사이드바 36)의 근거였던 「1440×900에서 넘치지 않음」이 운영자 메뉴에서는 지켜지지 않는다",
+    "fix": "묶음 사이 간격·로고 높이를 줄이거나 자주 안 쓰는 관리 항목을 묶어 900 안에 넣기",
+    "kind": "shared",
+    "shared_key": "admin-sidebar",
+    "confidence": "중간"
+   },
+   {
+    "no": 16,
+    "width": "390",
+    "where": "운영자 화면 전부(21개)의 휴대폰 폭 안내 화면 「PC에서 써 주세요」",
+    "what": "1023 이하에서 운영자 화면을 막는 것은 승인 시안대로지만, 안내 화면에 누를 곳(로그아웃·사이트 첫 화면 등)이 하나도 없다",
+    "fix": "안내 아래에 「로그아웃」과 「팬꾹 첫 화면」 링크를 둔다",
+    "kind": "shared",
+    "shared_key": "admin-pc-only",
+    "confidence": "높음"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/metrics",
+  "summary": "측정 — 재발송률·답장률·거절률·가입 경로·공유 링크 출처를 달별 표로 보는 화면",
+  "items": [
+   {
+    "no": 10,
+    "width": "1440",
+    "where": "왼쪽 메뉴의 「측정」(지금 화면)",
+    "what": "선택된 「측정」이 메뉴 맨 끝이라 900 높이 화면에서 메뉴 밖으로 밀려 보이지 않는다 — 지금 위치가 메뉴에서 안 보인다",
+    "fix": "메뉴를 900 안에 넣거나, 지금 항목이 보이도록 메뉴 스크롤 위치를 맞추기",
+    "kind": "shared",
+    "shared_key": "admin-sidebar",
+    "confidence": "중간"
+   },
+   {
+    "no": 8,
+    "width": "1440",
+    "where": "구역 위 지표 정의 줄(「재발송률 — 첫 선물을 보낸 지 60일이 지난 팬 가운데…」 등 6줄)과 「칸마다 위는 비율…」 안내",
+    "what": "설명 문장이 13px(측정 7건)로 14 미만. 승인 관리자 시안의 안내 글자(.hint 13)를 따른 값이라 승인값과 충돌",
+    "fix": "운영자 화면 안내 글자를 14로(표 글자는 8절대로 작게 둬도 됨)",
+    "kind": "shared",
+    "shared_key": "admin-hint-13",
+    "confidence": "높음"
+   },
+   {
+    "no": 28,
+    "width": "1440",
+    "where": "지표 표의 빈 칸",
+    "what": "전체가 0인 칸마다 「아직 셀 수 없어요」와 「0 / 0」이 함께 나와 같은 뜻이 두 줄로 반복되고, 표 대부분이 같은 문구로 채워져 실제 숫자가 있는 칸(거절률 등)이 묻힌다",
+    "fix": "0/0 칸은 「—」 하나로 두고 뜻은 위 안내 한 줄에만",
+    "kind": "single",
+    "shared_key": "",
+    "confidence": "중간"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/work/inbound",
+  "summary": "입고 — 상자의 택배 송장 바코드를 스캔해 입고하고, 이 화면에서 처리한 상자를 표로 보는 작업 화면",
+  "items": [
+   {
+    "no": 28,
+    "width": "1440",
+    "where": "제목 아래 설명과 스캔 칸 아래 안내",
+    "what": "제목 아래 「상자 겉면의 택배 송장 바코드를 스캔해요…」와 칸 아래 「상자에 붙은 택배 송장 바코드를 스캐너로 읽은 뒤…」가 같은 내용을 두 번 말한다",
+    "fix": "제목 아래 한 줄만 남기고 칸 아래는 6자리·라벨 QR처럼 새 정보만",
+    "kind": "shared",
+    "shared_key": "work-scan-hint",
+    "confidence": "높음"
+   },
+   {
+    "no": 8,
+    "width": "1440",
+    "where": "스캔 칸 아래 안내 문장",
+    "what": "13px 설명 문장(14 미만). 승인 시안 값(13)과 충돌",
+    "fix": "14로",
+    "kind": "shared",
+    "shared_key": "admin-hint-13",
+    "confidence": "높음"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/work/inspect",
+  "summary": "검수 — 라벨 QR을 스캔해 상자를 불러와 검수 결과를 기록하는 4단계 작업 화면",
+  "items": [
+   {
+    "no": 28,
+    "width": "1440",
+    "where": "제목 아래 설명과 스캔 칸 아래 안내",
+    "what": "「라벨 QR 로 상자를 불러와 검수 결과를 기록해요」와 칸 아래 「입고하며 붙인 라벨의 QR 로만 상자를 불러와요…」가 반복되고, 바로 아래 단계 줄(1 QR 스캔 → 4 QR 다시 스캔해 검수 완료)도 같은 순서를 또 말한다",
+    "fix": "순서는 단계 줄에만 두고 안내 문장은 하나로",
+    "kind": "shared",
+    "shared_key": "work-scan-hint",
+    "confidence": "높음"
+   },
+   {
+    "no": 8,
+    "width": "1440",
+    "where": "스캔 칸 아래 안내 문장",
+    "what": "13px 설명 문장. 승인 시안 값(13)과 충돌",
+    "fix": "14로",
+    "kind": "shared",
+    "shared_key": "admin-hint-13",
+    "confidence": "높음"
+   },
+   {
+    "no": 20,
+    "width": "1440",
+    "where": "오른쪽 위 「검수 완료 카드 인쇄」 버튼",
+    "what": "스캔 판은 폭 약 980에서 끝나는데 버튼만 머리 줄 오른쪽 끝(1416)에 붙어 본문 정렬선 밖에 떠 있다",
+    "fix": "버튼을 스캔 판 오른쪽 끝선에 맞추거나 판 폭을 머리 줄과 같게",
+    "kind": "single",
+    "shared_key": "",
+    "confidence": "중간"
+   },
+   {
+    "no": 12,
+    "width": "1440",
+    "where": "「검수 완료 카드 인쇄」 버튼",
+    "what": "보이는 높이 약 36, 누르는 칸 44 미달로 보임. 승인 관리자 시안 버튼 36과 같아 승인값과 충돌",
+    "fix": "덧칸으로 44 확보",
+    "kind": "shared",
+    "shared_key": "admin-controls-height",
+    "confidence": "중간"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/work/inspection-card",
+  "summary": "검수 완료 카드 — 검수일·크기·장수를 골라 상자에 넣을 카드를 인쇄하는 화면",
+  "items": [
+   {
+    "no": 10,
+    "width": "1440",
+    "where": "왼쪽 메뉴와 맨 위 경로 줄",
+    "what": "메뉴에서 선택된 항목이 하나도 없고 경로 줄이 「작업 / …」가 아니라 「운영자 화면」으로 나온다. 주소(/admin/work/inspection-card)가 「검수」(/admin/work/inspect)의 하위로 잡히지 않아 지금 위치를 알 수 없다",
+    "fix": "이 화면을 「검수」 아래로 보아 「검수」를 선택 표시하고 경로를 「작업 / 검수 / 검수 완료 카드」로",
+    "kind": "shared",
+    "shared_key": "admin-sidebar",
+    "confidence": "높음"
+   },
+   {
+    "no": 12,
+    "width": "1440",
+    "where": "「10장 인쇄」 버튼, 검수일·장수 입력칸",
+    "what": "버튼 보이는 높이 약 32, 입력칸 약 36으로 누르는 칸 44 미만(측정상 메뉴 외 3칸이 44 미만). 승인 관리자 시안 크기와 같아 승인값과 충돌",
+    "fix": "덧칸으로 44 확보",
+    "kind": "shared",
+    "shared_key": "admin-controls-height",
+    "confidence": "중간"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/work/outbound",
+  "summary": "출고 — 라벨 QR을 스캔해 송장을 출력하고 송장 바코드 스캔으로 출고를 확정하는 작업 화면",
+  "items": [
+   {
+    "no": 28,
+    "width": "1440",
+    "where": "제목 아래 설명과 스캔 칸 아래 안내",
+    "what": "「라벨 QR 을 스캔하면 그 상자가 지금 할 수 있는 일만 나와요」가 제목 아래와 칸 아래에 거의 같은 문장으로 두 번 나온다",
+    "fix": "한 곳에만",
+    "kind": "shared",
+    "shared_key": "work-scan-hint",
+    "confidence": "높음"
+   },
+   {
+    "no": 8,
+    "width": "1440",
+    "where": "스캔 칸 아래 안내 문장",
+    "what": "13px 설명 문장. 승인 시안 값(13)과 충돌",
+    "fix": "14로",
+    "kind": "shared",
+    "shared_key": "admin-hint-13",
+    "confidence": "높음"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/work/gift-boxes",
+  "summary": "선물함 입고·실측 — 크리에이터가 보낸 큰 상자를 입고하고, 선물마다 실측하는 화면",
+  "items": [
+   {
+    "no": 1,
+    "width": "1440",
+    "where": "구역 제목 「큰 상자 입고」·「선물 실측」",
+    "what": "구역 제목이 약 32px로 페이지 제목 「선물함 입고·실측」(26px)보다 크다. 화면에서 가장 큰 글자가 둘이고 페이지 제목보다 구역 제목이 먼저 읽힌다",
+    "fix": "구역 제목을 다른 운영자 화면 구역 제목(17~18) 크기로",
+    "kind": "shared",
+    "shared_key": "admin-giftbox-section",
+    "confidence": "높음"
+   },
+   {
+    "no": 13,
+    "width": "1440",
+    "where": "「큰 상자 입고」 양식",
+    "what": "두 열 양식이고, 6자리 값인 「선물함 6자리」 칸이 약 700, 「선반」 칸이 약 400 폭으로 값 길이보다 훨씬 넓다",
+    "fix": "한 열로 바꾸고 6자리·선반·택배비는 짧은 칸(160 안팎), 송장번호는 240 안팎",
+    "kind": "flow",
+    "shared_key": "",
+    "confidence": "높음"
+   },
+   {
+    "no": 33,
+    "width": "1440",
+    "where": "「선물 실측」의 「선물함 6자리」 칸과 「불러오기」 버튼",
+    "what": "버튼이 입력칸과 같은 높이·같은 줄에 맞지 않고 위로 약 12 올라가 있다(버튼 위끝이 라벨 쪽)",
+    "fix": "버튼을 입력칸 높이에 맞춰 아래 정렬",
+    "kind": "shared",
+    "shared_key": "admin-giftbox-section",
+    "confidence": "높음"
+   },
+   {
+    "no": 12,
+    "width": "1440",
+    "where": "「입고」·「불러오기」 버튼과 입력칸",
+    "what": "버튼 보이는 높이 약 34, 입력칸 약 36으로 누르는 칸 44 미만(측정상 메뉴 외 7칸)",
+    "fix": "덧칸으로 44 확보",
+    "kind": "shared",
+    "shared_key": "admin-controls-height",
+    "confidence": "중간"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/work/gift-box-outbound",
+  "summary": "선물함 출고·반송 — 선물 바코드로 불러와 출고하고, 착불 반송할 선물함에 반송 송장번호를 넣는 화면",
+  "items": [
+   {
+    "no": 1,
+    "width": "1440",
+    "where": "구역 제목 「출고」·「착불 반송」",
+    "what": "구역 제목이 약 32px로 페이지 제목(26px)보다 크다",
+    "fix": "구역 제목 크기를 다른 운영자 화면과 같게",
+    "kind": "shared",
+    "shared_key": "admin-giftbox-section",
+    "confidence": "높음"
+   },
+   {
+    "no": 33,
+    "width": "1440",
+    "where": "「선물 바코드」 칸과 「불러오기」 버튼",
+    "what": "버튼이 입력칸보다 약 12 위에 놓여 한 줄에서 높이가 어긋난다",
+    "fix": "입력칸과 아래 정렬",
+    "kind": "shared",
+    "shared_key": "admin-giftbox-section",
+    "confidence": "높음"
+   },
+   {
+    "no": 12,
+    "width": "1440",
+    "where": "「불러오기」 버튼",
+    "what": "보이는 높이 약 34, 누르는 칸 44 미만으로 보임",
+    "fix": "덧칸으로 44 확보",
+    "kind": "shared",
+    "shared_key": "admin-controls-height",
+    "confidence": "중간"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/parcels",
+  "summary": "들어온 상자 — 크리에이터가 고른 상자와 전체 상자를 상태 탭·검색으로 보는 목록",
+  "items": [
+   {
+    "no": 8,
+    "width": "1440",
+    "where": "표 아래 안내 문단(「구간은 크기와 무게 중 큰 쪽으로 정해요…」 두 줄)",
+    "what": "13px 설명 문장. 승인 시안 값(13)과 충돌",
+    "fix": "14로",
+    "kind": "shared",
+    "shared_key": "admin-hint-13",
+    "confidence": "높음"
+   },
+   {
+    "no": 22,
+    "width": "1440",
+    "where": "표의 「입고 시각」 열",
+    "what": "고정 형식 날짜(11-18 13:29)가 왼쪽 정렬",
+    "fix": "열과 열 제목을 오른쪽 정렬",
+    "kind": "shared",
+    "shared_key": "admin-table-date-col",
+    "confidence": "중간"
+   },
+   {
+    "no": 12,
+    "width": "1440",
+    "where": "상태 탭(전체·입고 대기·검수 대기…)과 「다음 단계」 열의 밑줄 링크",
+    "what": "탭 보이는 높이 약 32, 링크는 글자 높이뿐이라 누르는 칸 44 미만(측정상 메뉴 외 8칸). 탭은 승인 관리자 시안(34)과 같아 승인값과 충돌",
+    "fix": "덧칸으로 44, 링크는 칸 전체를 누르는 칸으로",
+    "kind": "shared",
+    "shared_key": "admin-controls-height",
+    "confidence": "중간"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/unmatched",
+  "summary": "보류 상자 — 6자리 없이 들어오거나 출고가 멈춘 상자와 최근 30일 지표, 찾기 실패 계정을 보는 화면",
+  "items": [
+   {
+    "no": 8,
+    "width": "1440",
+    "where": "지표 카드 아래 줄(「6자리 입력 2번 중 0번 (쓰지 않는 글자라 받지 않음 1번)」)과 표 아래 안내 문단",
+    "what": "13px 설명 문장 2건. 승인 시안 값(13)과 충돌",
+    "fix": "14로",
+    "kind": "shared",
+    "shared_key": "admin-hint-13",
+    "confidence": "높음"
+   },
+   {
+    "no": 3,
+    "width": "1440",
+    "where": "「보류 상자」 표와 그 아래 안내 문단",
+    "what": "표와 안내 문단 사이가 약 4로 거의 붙어 있어 안내가 표의 마지막 줄처럼 읽힌다(다른 운영자 화면은 표 아래 16 이상)",
+    "fix": "표 아래 16 띄우기",
+    "kind": "single",
+    "shared_key": "",
+    "confidence": "중간"
+   }
+  ]
+ }
+]

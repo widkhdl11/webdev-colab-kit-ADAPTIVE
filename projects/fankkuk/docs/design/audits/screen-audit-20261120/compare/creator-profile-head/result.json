@@ -1,0 +1,38 @@
+{
+  "key": "creator-profile-head",
+  "branch": "audit/creator-profile-head",
+  "commit": "55476cb2",
+  "what": "크리에이터 상세(/creators/[id])와 개인 주소 페이지(/[handle]) 머리에서 「요금 6,900원부터 · 평균 승인 소요 시간」 줄이 팔로우(또는 선물 보내기·팔로우 중) 버튼 바로 아래 8 간격으로 붙고, 버튼과 요금 줄이 둘 다 본문 칸 오른쪽 끝에 맞춰진다.",
+  "why": "선물함이 없으면 요금 줄이 버튼에서 126 떨어진 아랫줄 오른쪽에 혼자 놓였고, 버튼 오른쪽 끝(1023)과 요금 줄 오른쪽 끝(1200)도 달랐다 — design-prompt 8-16(망설이는 버튼 바로 아래나 옆에 요금 한 줄) · 14-7 5)(함께 읽을 정보가 떨어져 있지 않은가).",
+  "how": [
+    "요금 줄 위치(1440, 로그인 전): 버튼 아래 126 떨어진 아랫줄(y 766) → 버튼 바로 아래 8(y 648)",
+    "오른쪽 끝(1440): 버튼 1023 · 요금 줄 약 1200 → 둘 다 1260(본문 칸 오른쪽 끝). 팬 로그인 화면도 버튼·요금 줄 모두 1380으로 같다",
+    "버튼 위치(1440): 오른쪽 칸 왼쪽(911)에서 시작 → 오른쪽 칸 오른쪽 끝에 붙임",
+    "머리 전체 높이(1440): 204 → 150 (빈 아랫줄과 그 위 간격 32가 사라짐)",
+    "휴대폰(390): 버튼 아래 48 떨어져 있던 요금 줄 → 버튼 바로 아래 8. 왼쪽 정렬은 그대로",
+    "받기 어려운 선물 안내 상자도 요금 줄을 따라 버튼 아래로 온다",
+    "선물함이 있을 때: 선물함은 아랫줄 왼쪽 그대로, 요금 줄은 버튼 아래(오른쪽 칸이 두 줄에 걸침). 휴대폰 순서는 프로필 → 버튼 → 요금 → 선물함으로 바뀐다(전에는 선물함이 버튼과 요금 사이). 시험 데이터에 공개 선물함이 있는 공개 크리에이터가 없어 이 경우는 캡처하지 못했다 — 선물함 있는 두 크리에이터는 둘 다 공개 전이라 상세가 404",
+    "design-rules 44절 「아랫줄 선물함 | 요금·승인 시간」·「휴대폰 한 열: 프로필 → 버튼 → 선물함 → 요금」과 부딪힌다 — 승인되면 44절 두 줄을 고쳐야 한다(이 브랜치에서는 문서를 고치지 않았다)"
+  ],
+  "how_code": "src/widgets/creator-profile/ui/creator-profile-page.tsx(.sendMeta 를 .actions 안으로) · creator-profile.module.css(.head 영역 \"id act\" \"boxes act\", 선물함 없으면 \"id act\" 한 줄(:has), .actions 세로 flex 오른쪽 정렬, 879 이하는 왼쪽 정렬)",
+  "also": [
+    "개인 주소 페이지 /wikdhdl — 같은 화면 부품(캡처 있음)",
+    "팬 로그인 화면(선물 보내기 + 팔로우 중) — 같은 정렬(after__creator-detail-fan__1440·390, 바꾸기 전 캡처 없음)",
+    "채널 확인 중인 크리에이터 상세(verifying-creator-page) — 같은 버튼 칸을 써서 「채널 확인이 끝나면…」 안내 상자가 오른쪽 칸 왼쪽에서 오른쪽 끝으로 옮겨진다(캡처 없음, 시험 데이터 없음)",
+    "크리에이터 본인 화면의 「내 페이지」 꼬리표·쉬는 중 한 줄도 오른쪽 끝 정렬로 바뀐다",
+    "문서: design-rules 44절 상단 묶음 줄, docs/ux/pages/handle.md 의 머리 배치 줄(승인 뒤)"
+  ],
+  "pg": "",
+  "shots": [
+    { "screen": "크리에이터 상세 (/creators/00000000-0000-4000-b000-000000000001)", "width": 1440, "before": "before__creator-detail__1440.png", "after": "after__creator-detail__1440.png" },
+    { "screen": "크리에이터 상세 (/creators/00000000-0000-4000-b000-000000000001)", "width": 390, "before": "before__creator-detail__390.png", "after": "after__creator-detail__390.png" },
+    { "screen": "개인 주소 페이지 (/wikdhdl)", "width": 1440, "before": "before__handle__1440.png", "after": "after__handle__1440.png" },
+    { "screen": "개인 주소 페이지 (/wikdhdl)", "width": 390, "before": "before__handle__390.png", "after": "after__handle__390.png" },
+    { "screen": "크리에이터 상세 — 팬 로그인 (/creators/00000000-0000-4000-b000-000000000001)", "width": 1440, "before": "", "after": "after__creator-detail-fan__1440.png" }
+  ],
+  "tests": "npx vitest run tests/creator-detail-e-ui.test.tsx tests/channel-badge-ui.test.tsx tests/creator-colors-ui.test.tsx tests/follow-notice-ui.test.tsx tests/profile-single-send-ui.test.tsx tests/profile-unsigned-ui.test.tsx — 6파일 67개 통과",
+  "self_check": "document.fonts 에 Pretendard Variable·Tmoney Round Wind 로드, 가로 넘침 1440·390(로그인 전·팬) 모두 0. 14-7 5) 요금이 버튼에 붙었고 3) 버튼·요금 오른쪽 끝이 같다. 8) 시선 1번은 이름(제목) 그대로 — 고칠 것 없음.",
+  "found": [
+    "이름 「하루」가 큰 원형 사진 오른쪽 끝에 거의 붙어 있다(사진 오른쪽 388 · 이름 왼쪽 388, 간격 0) — 사진에 왼쪽 여백 24를 줘서 사진이 칸 사이 간격 24를 다 먹는다. 같은 점검 묶음(S21)에 있던 지적이지만 맡은 변경(요금 줄)이 아니라 고치지 않았다"
+  ]
+}

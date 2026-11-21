@@ -1,0 +1,15 @@
+{ "key": "gray-sub-card", "branch": "audit/gray-sub-card", "commit": "2883462f",
+  "what": "누르지 않는 회색 안내·요약 칸에서 바깥 1px 회색 선이 빠지고 회색 면만 남는다 — 승인 내역(/creator/requests)의 「승인·거절·기한 만료·차단」 숫자 칸, 보낸 역조공(/creator/revgifts)의 「팬의 주소와 실명은…」 안내 칸 등",
+  "why": "누르는 칸이 아닌데 테두리가 있어 버튼처럼 보인다 — 누르지 않는 묶음은 여백으로만 나눈다(design-prompt 4-6, 1-3 판정 「테두리 제거」).",
+  "how": ["회색 칸 테두리: 1px 회색(--gray-200) 선 → 없음", "회색 면과 위쪽 흰 반사선은 그대로(design-rules 23-1 「회색 보조 카드: 그림자 없음, 위 반사선만」)", "선물 보내기의 「반송·환불 안내」 회색 칸(/gifts/new)도 같은 1px 선 → 없음"],
+  "how_code": "9개 CSS 모듈의 muted-fx 칸 16곳(decided-request-list .grid>div, access-log .rule, revgift-sent .privacy·.guide, register-form .hardnote·.memo·.gnote(+surface-muted 변형), gift-reply .quote·.bside, box-apply .onFile·.sum, box-manage .estimate·.sum·.linkbox, send-form .how, revgift-box .cmp)에서 inset 0 0 0 1px var(--gray-200) 제거",
+  "also": ["열람 기록 /creator/log 오른쪽 「주소 열람은 … 최대 3회」 안내 칸", "보낸 역조공 /creator/revgifts 「팬별 팬꾹 주소」 안내 칸", "받은 상자 /creator/boxes 인용 칸·오른쪽 대기 칸", "역조공 상자 만들기·관리 /creator/revgift-boxes, /new, /[boxId] 의 예상 금액·요약·신청 링크 칸", "역조공 상자 받기 /gift-boxes/[boxId] 요약 칸", "역조공 보내기 /creator/revgifts/new 안내 칸", "역조공 상자 발송 칸(방문수거 안내)", "선물 보내기 /gifts/new·/gifts/with/[key] 의 겹침 안내·메모·반송·환불 안내 칸", "누를 수 있는 칸은 없었다 — 16곳 모두 div·dl·section·aside(신청 링크 칸은 안의 「복사」 버튼만 누르는 요소)"],
+  "pg": "선물 보내기 화면(/gifts/new)의 메모·반송·환불 안내 회색 칸에서 바깥 1px 선이 빠진다. 문구·배치는 그대로.",
+  "shots": [
+    { "screen": "승인 내역 (/creator/requests)", "width": 1440, "before": "before__creator-requests__1440.png", "after": "after__creator-requests__1440.png" },
+    { "screen": "승인 내역 (/creator/requests)", "width": 390, "before": "before__creator-requests__390.png", "after": "after__creator-requests__390.png" },
+    { "screen": "보낸 역조공 (/creator/revgifts)", "width": 1440, "before": "before__creator-revgifts__1440.png", "after": "after__creator-revgifts__1440.png" },
+    { "screen": "보낸 역조공 (/creator/revgifts)", "width": 390, "before": "before__creator-revgifts__390.png", "after": "after__creator-revgifts__390.png" } ],
+  "tests": "npx vitest run (approval-request·access-log·revgift-sent·gift-register·gift-reply·revgift-box-apply·revgift-box-manage·revgift-send·revgift-box 폴더) — 15파일 138개 통과",
+  "self_check": "글꼴 Pretendard Variable(본문)·Tmoney Round Wind(제목) 로드 확인, 가로 넘침 0(두 화면 두 폭). 14-7 2) 누르지 않는 묶음의 테두리 없어짐 확인, 흰 바탕 위 회색 면 차이로 칸 경계가 보인다(4-8).",
+  "found": ["전역 .card--soft·.quote(base.css)도 회색 면에 --hair 1px 선을 붙인다 — 주소 확인 창(return-address-window, 승인 창의 주소 칸)에서 쓰인다. 공용이라 이번에 고치지 않음", "전역 .okmsg·.sw-row(base.css)도 회색 면 + 1px 선 — 누르지 않는 칸인지 화면별 확인 필요", "design-rules 760행 「회색 보조 칸에도 1px --gray-200」 문장이 이번 판정(테두리 제거)과 반대 — 승인되면 문서도 고쳐야 한다"] }

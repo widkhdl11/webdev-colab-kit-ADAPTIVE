@@ -1,0 +1,21 @@
+{ "key": "policy-doc-toolbar", "branch": "audit/policy-doc-toolbar", "commit": "201e5f56",
+  "what": "문서형 화면(요금 안내 /pricing, 팬 이용 안내 /guide/fan 등) 본문 위에 붙는 목차 줄. 검색칸이 화면에 보이는 동안에는 줄의 「찾기」 단추가 사라지고, 지금 읽는 조의 제목이 줄 바로 아래 보이는 동안에는 줄 왼쪽의 조 이름이 감춰진다.",
+  "why": "검색칸과 「찾기」가 한 화면에 함께 보여 같은 일을 하는 수단이 둘이고, 줄의 조 이름이 바로 아래 구역 제목과 같은 글자로 반복된다 (design-prompt 1-3 · 9-4 · 13-1).",
+  "how": [
+    "페이지 맨 위(검색칸이 보임): 줄에 「상자 요금 · 찾기 · 목차 열기」 → 「목차 열기」만",
+    "검색칸이 화면 위로 지나간 뒤: 「찾기」가 다시 나타난다(누르면 지금처럼 검색칸으로 올라가 입력 준비)",
+    "조 이름: 그 조 제목이 줄 바로 아래(화면 높이 1/3 안)에 보이면 감추고, 제목이 줄 위로 지나가면 다시 보인다. 감춰도 자리는 남아 「찾기」·「목차 열기」 위치는 움직이지 않는다",
+    "줄 높이 44, 옆 목차가 보이는 넓은 화면(안내 글 다섯·자주 묻는 질문 1376 이상)에서 줄을 숨기는 동작은 그대로"
+  ],
+  "how_code": "src/widgets/legal/ui/doc-toc-bar.tsx DocTocBar(searchRef 추가, 스크롤 시 검색칸·지금 조 제목 위치 확인) · doc-page.module.css .barNowQuiet · doc-page.tsx/faq-page.tsx 에서 searchRef 전달",
+  "also": ["가이드 크리에이터 /guide/creator", "검수 안내 /inspection", "보안 /security", "분쟁 /dispute", "개인정보처리방침 /privacy", "이용약관 /terms", "환불 규정 /refund", "자주 묻는 질문 /faq — 모두 같은 목차 줄을 써서 같이 바뀐다(안내 글 다섯·자주 묻는 질문은 넓은 화면에서 줄 자체가 숨어 있어 좁은 화면에서만 차이가 보인다)"],
+  "pg": "요금 안내·이용약관·개인정보처리방침·환불 규정의 첫 화면에서 검색칸 아래 줄이 「목차 열기」 하나만 남는다. 심사 캡처에서 검색 수단이 둘로 보이던 것이 사라진다. 본문·문구는 바뀌지 않는다.",
+  "shots": [
+    { "screen": "요금 안내 (/pricing)", "width": 1440, "before": "before__pricing__1440.png", "after": "after__pricing__1440.png" },
+    { "screen": "요금 안내 (/pricing)", "width": 390, "before": "before__pricing__390.png", "after": "after__pricing__390.png" },
+    { "screen": "팬 이용 안내 (/guide/fan)", "width": 1440, "before": "before__guide-fan__1440.png", "after": "after__guide-fan__1440.png" },
+    { "screen": "팬 이용 안내 (/guide/fan)", "width": 390, "before": "before__guide-fan__390.png", "after": "after__guide-fan__390.png" }
+  ],
+  "tests": "npx vitest run src/widgets/legal → 5 files, 99 passed (변경 전). 새 시험 1개 추가 후 doc-page.test.tsx 41 passed; 옛 doc-toc-bar.tsx 로 되돌리면 새 시험 1 failed 로 잡히는 것 확인",
+  "self_check": "document.fonts: Pretendard Variable·Tmoney Round Wind 로드됨, 가로 넘침 0(1440·390). 스크롤한 상태에서 「찾기」 다시 보임·조 이름은 제목이 지나간 뒤 보임 확인(/pricing 1440 scroll 1400, /guide/fan 390 scroll 2200). 팬 이용 안내 1440 은 옆 목차가 있어 원래 줄이 없으므로 전후 같음.",
+  "found": [] }

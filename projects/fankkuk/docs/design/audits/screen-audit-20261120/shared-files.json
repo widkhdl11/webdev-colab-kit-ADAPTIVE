@@ -1,0 +1,613 @@
+{
+ "policy-doc-toolbar": {
+  "files": [
+   "src/widgets/legal/ui/doc-toc-bar.tsx",
+   "src/widgets/legal/ui/doc-parts.tsx",
+   "src/widgets/legal/ui/doc-page.module.css"
+  ],
+  "screens": [
+   "/pricing",
+   "/guide/fan",
+   "/guide/creator",
+   "/inspection",
+   "/security",
+   "/dispute",
+   "/privacy",
+   "/terms",
+   "/refund",
+   "/faq"
+  ],
+  "roles": [
+   "anon",
+   "fan",
+   "creator"
+  ],
+  "really_shared": true,
+  "note": "고정 목차 줄(DocTocBar)의 「찾기」 단추·지금 위치 이름과 검색칸(DocSearch)이 문서형 화면 10곳 공통 틀이다"
+ },
+ "doc-search-width": {
+  "files": [
+   "src/widgets/legal/ui/doc-page.module.css",
+   "src/widgets/legal/ui/faq-page.tsx"
+  ],
+  "screens": [
+   "/faq",
+   "/guide/fan",
+   "/guide/creator",
+   "/inspection",
+   "/security",
+   "/dispute"
+  ],
+  "roles": [
+   "anon",
+   "fan",
+   "creator"
+  ],
+  "really_shared": true,
+  "note": ".searchBox 가 max-width 680(--prose-max) 고정이고 요약 판·목록은 880 — 점검은 /faq 만, 같은 넓은 틀(.wide)을 쓰는 안내 글 다섯도 같은 어긋남이 날 것으로 보임(화면 확인 안 함)"
+ },
+ "policy-numbered-list": {
+  "files": [
+   "src/widgets/legal/ui/doc-page.module.css",
+   "src/widgets/legal/ui/doc-blocks.tsx"
+  ],
+  "screens": [
+   "/guide/fan"
+  ],
+  "roles": [
+   "anon",
+   "fan",
+   "creator"
+  ],
+  "really_shared": false,
+  "note": ".rules li 가 grid(32px + 1fr)라 강조 <strong> 이 별도 칸으로 빠진다. 공용 블록이지만 지금 rules 블록을 쓰는 문서는 팬 이용 안내 하나뿐"
+ },
+ "creator-card": {
+  "files": [
+   "src/entities/creator/ui/creator-card-head.tsx",
+   "src/entities/creator/ui/creator-card-head.module.css"
+  ],
+  "screens": [
+   "/creators",
+   "/home",
+   "/",
+   "/creator/profile"
+  ],
+  "roles": [
+   "anon",
+   "fan",
+   "creator"
+  ],
+  "really_shared": true,
+  "note": "공용 카드 머리(CreatorCardHead·Line·Foot)를 찾기·팬 홈·첫 화면·프로필 수정 미리보기가 같이 쓴다 — 소개·뱃지 줄 자리가 고정돼 있지 않다"
+ },
+ "creator-card-recommend": {
+  "files": [
+   "src/widgets/creator-profile/ui/creator-profile-page.tsx",
+   "src/widgets/creator-profile/ui/creator-profile.module.css"
+  ],
+  "screens": [
+   "/creators/[id]",
+   "/[handle]"
+  ],
+  "roles": [
+   "anon",
+   "fan",
+   "creator"
+  ],
+  "really_shared": true,
+  "note": "추천 카드(.other·.otherCover 2:1 배경)는 크리에이터 상세 위젯 하나 — 같은 위젯을 두 주소가 연다"
+ },
+ "creator-profile-head": {
+  "files": [
+   "src/widgets/creator-profile/ui/creator-profile-page.tsx",
+   "src/widgets/creator-profile/ui/creator-profile.module.css"
+  ],
+  "screens": [
+   "/creators/[id]",
+   "/[handle]"
+  ],
+  "roles": [
+   "anon",
+   "fan",
+   "creator"
+  ],
+  "really_shared": true,
+  "note": "상단 묶음(팔로우 · 요금 줄 · 이름)은 크리에이터 상세 위젯 하나 — 같은 위젯을 두 주소가 연다"
+ },
+ "faq-category-chips": {
+  "files": [
+   "src/widgets/support/ui/support.module.css",
+   "src/widgets/support/ui/support-page.tsx"
+  ],
+  "screens": [
+   "/support"
+  ],
+  "roles": [
+   "anon",
+   "fan",
+   "creator"
+  ],
+  "really_shared": false,
+  "note": "휴대폰 .page .tabs 의 음수 margin(-gutter·-space-2)이 원인, 고객센터 화면 파일에만 있다. 문서형 화면의 칩 줄(doc-page.module.css .chipRow)은 따로 쓴 비슷한 가로 넘김"
+ },
+ "inline-text-link": {
+  "files": [
+   "src/features/report-mail/ui/report-form.tsx",
+   "src/features/report-mail/ui/report-form.module.css"
+  ],
+  "screens": [
+   "/report"
+  ],
+  "roles": [
+   "anon",
+   "fan",
+   "creator"
+  ],
+  "really_shared": false,
+  "note": "문장 속 <Link> 에 누를 칸 덧대기가 없다 — 신고 양식 한 파일에만 있다"
+ },
+ "policy-version-link": {
+  "files": [
+   "src/widgets/legal/ui/policy-page.tsx",
+   "src/widgets/legal/ui/policy-page.module.css"
+  ],
+  "screens": [
+   "/privacy",
+   "/terms",
+   "/refund"
+  ],
+  "roles": [
+   "anon",
+   "fan",
+   "creator"
+  ],
+  "really_shared": true,
+  "note": "약관 세 글 공용 머리(.facts a). 이미 min-height 44 선언이 있는데 측정은 19 — 화면에서 다시 재야 한다"
+ },
+ "policy-summary-panel": {
+  "files": [
+   "src/widgets/legal/ui/doc-page.module.css",
+   "src/widgets/legal/ui/doc-parts.tsx"
+  ],
+  "screens": [
+   "/privacy",
+   "/terms",
+   "/refund",
+   "/pricing"
+  ],
+  "roles": [
+   "anon",
+   "fan",
+   "creator"
+  ],
+  "really_shared": true,
+  "note": "DocSummary 목록형의 .summaryList 가 max-width 680 이라 화살표가 판 끝이 아니라 글 폭 끝에 선다. 요금 안내도 같은 목록형(guideFive 아님)이라 같이 걸림"
+ },
+ "auth-footer-link": {
+  "files": [
+   "src/shared/ui/base.css",
+   "src/widgets/login/ui/login.module.css"
+  ],
+  "screens": [
+   "/login",
+   "/signup"
+  ],
+  "roles": [
+   "anon"
+  ],
+  "really_shared": true,
+  "note": "전역 .foot-line a 에 누를 칸 높이가 없다 — 쓰는 화면은 로그인·가입 둘"
+ },
+ "creator-name-link": {
+  "files": [
+   "src/widgets/my-following/ui/my-following-page.tsx",
+   "src/widgets/my-following/ui/my-following.module.css",
+   "src/entities/creator/ui/creator-card-head.module.css"
+  ],
+  "screens": [
+   "/me/following",
+   "/home"
+  ],
+  "roles": [
+   "fan"
+  ],
+  "really_shared": false,
+  "note": "따로 쓴 두 구현이다. /me/following 은 이름 글자만 링크(실제 문제). /home 카드는 .name a::after 가 카드 전체를 덮는 링크라 실제 누르는 칸은 카드 — 측정이 글자 상자만 잰 것"
+ },
+ "empty-state": {
+  "files": [
+   "src/shared/ui/base.css",
+   "src/widgets/home/ui/front-slots.tsx",
+   "src/widgets/my-revgifts/ui/my-revgifts.module.css"
+  ],
+  "screens": [
+   "/me/revgifts",
+   "/creator",
+   "/creator/progress",
+   "/creator/boxes",
+   "/creator/revgifts"
+  ],
+  "roles": [
+   "fan",
+   "creator"
+  ],
+  "really_shared": false,
+  "note": "공용 빈 상태 컴포넌트가 없다 — 전역 .empty, 홈의 EmptyCard, 진행 현황 .none, 받은 상자 목록, 보낸 역조공 .sempty 가 화면마다 따로 만든 모양이다"
+ },
+ "gift-card-link": {
+  "files": [
+   "src/widgets/gift-list/ui/gift-list-page.tsx",
+   "src/widgets/gift-list/ui/gift-list.module.css"
+  ],
+  "screens": [
+   "/gifts"
+  ],
+  "roles": [
+   "fan"
+  ],
+  "really_shared": false,
+  "note": "선물 목록 화면 하나. 이름 링크는 .stretch(::after 로 카드 전체 덮음)라 실제 누르는 칸은 카드, 「함께한 시간 ›」는 링크가 아닌 aria-hidden 글자 — 측정이 글자 상자만 잰 것으로 보임"
+ },
+ "choice-card-radio": {
+  "files": [
+   "src/features/gift-register/ui/register-form.tsx",
+   "src/features/gift-register/ui/register-form.module.css"
+  ],
+  "screens": [
+   "/gifts/new"
+  ],
+  "roles": [
+   "fan"
+  ],
+  "really_shared": false,
+  "note": "크리에이터 고르기 칸(.pick · .pick-ok 를 이름 뒤에 둠)은 선물 보내기 양식 한 파일. ?creator= 는 같은 주소"
+ },
+ "gift-new-stepper": {
+  "files": [
+   "src/features/gift-register/ui/register-form.tsx",
+   "src/features/gift-register/ui/register-form.module.css",
+   "src/widgets/gift-register/ui/gift-summary.module.css"
+  ],
+  "screens": [
+   "/gifts/new"
+  ],
+  "roles": [
+   "fan"
+  ],
+  "really_shared": false,
+  "note": "단계 숫자는 전역 .num-big(48)을, 합계는 .tot b(32)를 선물 보내기 화면이 골라 쓴 것 — 같은 계층 문제는 이 화면에만"
+ },
+ "gift-detail-headline": {
+  "files": [
+   "src/widgets/gift-status/ui/gift-status-page.tsx",
+   "src/shared/lib/delivery/delivery-stage.ts",
+   "src/shared/config/delivery-status.ts"
+  ],
+  "screens": [
+   "/gifts/[orderNo]"
+  ],
+  "roles": [
+   "fan"
+  ],
+  "really_shared": false,
+  "note": "제목·「아직 도착 전」 표시는 선물 상세 화면 파일. 단계 계산(delivery-stage)은 16개 화면이 같이 쓰므로 원인이 계산 쪽이면 다른 화면 문구도 같이 바뀐다"
+ },
+ "gift-detail-layout": {
+  "files": [
+   "src/widgets/gift-status/ui/gift-status-page.tsx",
+   "src/widgets/gift-status/ui/gift-status.module.css"
+  ],
+  "screens": [
+   "/gifts/[orderNo]"
+  ],
+  "roles": [
+   "fan"
+  ],
+  "really_shared": false,
+  "note": "두 열 배치는 선물 상세 화면 파일에만 있다"
+ },
+ "home-intro-banner": {
+  "files": [
+   "src/entities/banner/model/intro-banner.ts",
+   "src/widgets/banner-carousel/ui/banner-slot.tsx",
+   "src/widgets/home/ui/front-slots.tsx"
+  ],
+  "screens": [
+   "/creator",
+   "/home",
+   "/creators",
+   "/"
+  ],
+  "roles": [
+   "anon",
+   "fan",
+   "creator"
+  ],
+  "really_shared": true,
+  "note": "글자가 박힌 소개 그림 한 장(launch-01-introduction-no-button.png)을 회원 배너 첫 장(memberBannerSlot)과 로그인 전 첫 화면(GuestIntroBanner)이 같이 쓴다"
+ },
+ "gray-sub-card": {
+  "files": [
+   "src/features/approval-request/ui/decided-request-list.module.css",
+   "src/widgets/access-log/ui/access-log.module.css",
+   "src/widgets/revgift-sent/ui/revgift-sent.module.css"
+  ],
+  "screens": [
+   "/creator/requests",
+   "/creator/log",
+   "/creator/revgifts",
+   "/creator/actions",
+   "/creator/boxes",
+   "/creator/revgift-boxes",
+   "/creator/revgift-boxes/new",
+   "/creator/revgift-boxes/[boxId]",
+   "/creator/revgift-boxes/[boxId]/labels",
+   "/gift-boxes/[boxId]",
+   "/gifts/new",
+   "/gifts/with/[key]",
+   "/gifts/[orderNo]"
+  ],
+  "roles": [
+   "creator",
+   "fan"
+  ],
+  "really_shared": false,
+  "note": "공용 클래스가 아니라 muted-fx 면 + inset 0 0 0 1px var(--gray-200) 선을 모듈 9개에 복사한 같은 실수(design-rules 23-1 + 40절 「1px 선」을 따름). 전역 .card--soft 도 --hair 테두리를 붙인다"
+ },
+ "section-save-bar": {
+  "files": [
+   "src/shared/ui/settings-panel.module.css",
+   "src/widgets/creator-profile-edit/ui/creator-profile-edit-page.tsx",
+   "src/widgets/creator-settings/ui/days-section.tsx"
+  ],
+  "screens": [
+   "/creator/profile",
+   "/creator/customize",
+   "/creator/account",
+   "/creator/settings"
+  ],
+  "roles": [
+   "creator"
+  ],
+  "really_shared": true,
+  "note": "공용 저장 띠 .bar/.barBtns 가 휴대폰에서 버튼마다 flex:1(반씩), .idle 이 바뀐 것 없을 때 주 버튼을 회색으로. /creator/customize 는 /creator/profile 로 넘기는 옛 주소"
+ },
+ "kakao-signature-form": {
+  "files": [
+   "src/features/signature-link/ui/signature-link-panel.tsx",
+   "src/features/signature-link/ui/signature-link-panel.module.css"
+  ],
+  "screens": [
+   "/creator/settings/signature"
+  ],
+  "roles": [
+   "creator"
+  ],
+  "really_shared": false,
+  "note": "가입 단계 화면(signup-kakao-step)의 배치를 따로 복사한 패널 — 이 주소 하나에만 있다"
+ },
+ "revgift-box-modal-field": {
+  "files": [
+   "src/features/revgift-box-manage/ui/box-create-form.tsx",
+   "src/features/revgift-box-manage/ui/box-manage.module.css"
+  ],
+  "screens": [
+   "/creator/revgift-boxes/new",
+   "/creator/revgift-boxes",
+   "/creator/revgift-boxes/[boxId]"
+  ],
+  "roles": [
+   "creator"
+  ],
+  "really_shared": false,
+  "note": "회색 면 입력칸(.ulField·.ulInput)은 선물함 만들기 창 한 곳에만 있다. 세 주소가 같은 목록 화면을 열어 그 창을 띄운다"
+ },
+ "admin-sidebar": {
+  "files": [
+   "src/widgets/admin-shell/model/admin-menu.ts",
+   "src/widgets/admin-shell/ui/admin-nav.tsx",
+   "src/widgets/admin-shell/ui/admin-shell.module.css"
+  ],
+  "screens": [
+   "/admin",
+   "/admin/access-log",
+   "/admin/automation",
+   "/admin/banners",
+   "/admin/creators",
+   "/admin/inquiries",
+   "/admin/metrics",
+   "/admin/notices",
+   "/admin/office-address",
+   "/admin/parcels",
+   "/admin/payments",
+   "/admin/pricing",
+   "/admin/prohibited",
+   "/admin/revgifts",
+   "/admin/unmatched",
+   "/admin/work/gift-box-outbound",
+   "/admin/work/gift-boxes",
+   "/admin/work/inbound",
+   "/admin/work/inspect",
+   "/admin/work/inspection-card",
+   "/admin/work/outbound"
+  ],
+  "roles": [
+   "operator"
+  ],
+  "really_shared": true,
+  "note": "운영자 화면 21곳 공통 메뉴. 넘침은 메뉴 수·간격, 「검수 완료 카드」 미선택은 메뉴의 주소 매칭(admin-menu)"
+ },
+ "admin-pc-only": {
+  "files": [
+   "src/widgets/admin-shell/ui/admin-shell.tsx",
+   "src/widgets/admin-shell/ui/admin-shell.module.css"
+  ],
+  "screens": [
+   "/admin",
+   "/admin/access-log",
+   "/admin/automation",
+   "/admin/banners",
+   "/admin/creators",
+   "/admin/inquiries",
+   "/admin/metrics",
+   "/admin/notices",
+   "/admin/office-address",
+   "/admin/parcels",
+   "/admin/payments",
+   "/admin/pricing",
+   "/admin/prohibited",
+   "/admin/revgifts",
+   "/admin/unmatched",
+   "/admin/work/gift-box-outbound",
+   "/admin/work/gift-boxes",
+   "/admin/work/inbound",
+   "/admin/work/inspect",
+   "/admin/work/inspection-card",
+   "/admin/work/outbound"
+  ],
+  "roles": [
+   "operator"
+  ],
+  "really_shared": true,
+  "note": "「PC에서 써 주세요」 안내는 운영자 공통 틀 하나가 21곳에 그린다"
+ },
+ "admin-hint-13": {
+  "files": [
+   "src/shared/ui/admin.module.css",
+   "src/shared/ui/work.module.css",
+   "src/widgets/admin-unmatched/ui/unmatched.module.css"
+  ],
+  "screens": [
+   "/admin/metrics",
+   "/admin/work/inbound",
+   "/admin/work/inspect",
+   "/admin/work/outbound",
+   "/admin/work/gift-boxes",
+   "/admin/work/gift-box-outbound",
+   "/admin/parcels",
+   "/admin/unmatched",
+   "/admin/payments",
+   "/admin/revgifts",
+   "/admin/creators",
+   "/admin/pricing",
+   "/admin/automation",
+   "/admin/access-log",
+   "/admin/banners",
+   "/admin/inquiries",
+   "/admin/notices",
+   "/admin/office-address",
+   "/admin/prohibited"
+  ],
+  "roles": [
+   "operator"
+  ],
+  "really_shared": true,
+  "note": "공용 운영자 부품의 13px(.hint·.defs·.sectionH span·.scanHint, 미매칭 .statSub)가 원인 — 운영자 화면 19곳이 쓴다"
+ },
+ "work-scan-hint": {
+  "files": [
+   "src/shared/ui/scan-input.tsx",
+   "src/app/admin/(console)/work/inbound/page.tsx",
+   "src/features/office-inspect/ui/inspect-workbench.tsx"
+  ],
+  "screens": [
+   "/admin/work/inbound",
+   "/admin/work/inspect",
+   "/admin/work/outbound"
+  ],
+  "roles": [
+   "operator"
+  ],
+  "really_shared": false,
+  "note": "문장은 화면마다 따로 쓴 같은 실수(페이지 머리 설명 + 작업대의 ScanInput hint). 공용 ScanInput 이 hint 를 필수로 받아 반복을 부른다"
+ },
+ "admin-controls-height": {
+  "files": [
+   "src/shared/ui/admin.module.css",
+   "src/shared/ui/work.module.css"
+  ],
+  "screens": [
+   "/admin/access-log",
+   "/admin/automation",
+   "/admin/banners",
+   "/admin/creators",
+   "/admin/inquiries",
+   "/admin/metrics",
+   "/admin/notices",
+   "/admin/office-address",
+   "/admin/parcels",
+   "/admin/payments",
+   "/admin/pricing",
+   "/admin/prohibited",
+   "/admin/revgifts",
+   "/admin/unmatched",
+   "/admin/work/gift-box-outbound",
+   "/admin/work/gift-boxes",
+   "/admin/work/inbound",
+   "/admin/work/inspect",
+   "/admin/work/inspection-card",
+   "/admin/work/outbound"
+  ],
+  "roles": [
+   "operator"
+  ],
+  "really_shared": true,
+  "note": "공용 운영자 부품 높이(.btn 36·.btnSm 30·.tab 34·입력 36, 누를 칸 덧대기 없음)가 원인 — 운영자 화면 20곳"
+ },
+ "admin-giftbox-section": {
+  "files": [
+   "src/shared/ui/admin.module.css",
+   "src/features/office-gift-box/ui/gift-box-workbench.tsx",
+   "src/features/office-gift-box/ui/gift-box-outbound.tsx"
+  ],
+  "screens": [
+   "/admin/work/gift-boxes",
+   "/admin/work/gift-box-outbound"
+  ],
+  "roles": [
+   "operator"
+  ],
+  "really_shared": true,
+  "note": "h2.sectionH { font-size: var(--fs-title) } (32) 규칙과 두 작업대의 입력·불러오기 줄 — 쓰는 곳은 선물함 작업 화면 둘"
+ },
+ "admin-table-date-col": {
+  "files": [
+   "src/shared/ui/admin.module.css",
+   "src/widgets/admin-parcels/ui/parcels-panel.tsx",
+   "src/widgets/admin-payments/ui/payments-panel.tsx"
+  ],
+  "screens": [
+   "/admin/parcels",
+   "/admin/payments",
+   "/admin/creators",
+   "/admin/notices",
+   "/admin/prohibited",
+   "/admin/access-log",
+   "/admin/inquiries",
+   "/admin/revgifts",
+   "/admin/unmatched",
+   "/admin/automation",
+   "/admin/work/gift-box-outbound"
+  ],
+  "roles": [
+   "operator"
+  ],
+  "really_shared": true,
+  "note": "공용 .tbl 은 기본 왼쪽 정렬이고 날짜 열 전용 클래스가 없어 패널마다 그대로 둔다 — 날짜 열이 있는 운영자 표 11곳"
+ },
+ "admin-form-submit": {
+  "files": [
+   "src/features/admin-banner-edit/ui/banner-form.tsx",
+   "src/features/admin-notice-edit/ui/notice-form.tsx"
+  ],
+  "screens": [
+   "/admin/banners"
+  ],
+  "roles": [
+   "operator"
+  ],
+  "really_shared": false,
+  "note": "배너 양식만 빈 상태에서 「올리기」를 켜 둔다 — 공지·금지 물품 양식은 따로 꺼짐 처리. 배너 양식 한 파일"
+ }
+}

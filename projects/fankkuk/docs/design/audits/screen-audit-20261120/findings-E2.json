@@ -1,0 +1,388 @@
+[
+ {
+  "role": "operator",
+  "url": "/admin/payments",
+  "summary": "결제 건의 금액 구성과 환불 상태를 보고 환불·확인 필요 결제·입고 뒤 취소를 처리하는 화면",
+  "items": [
+   {
+    "no": 12,
+    "width": "1440",
+    "where": "필터 탭(전체·환불 대기…)·검색창·행의 「환불」·「입고 뒤 취소하기」 버튼",
+    "what": "높이 30~36으로 44 미만(공용 운영자 부품: 버튼 36·작은 버튼 30·탭 34·검색·입력 36, 덧칸 없음). 8절 운영자 시안 값이라 승인값과 충돌",
+    "fix": "보이는 크기는 두고 ::before 덧칸으로 누르는 칸만 44로(11-17절 방식)",
+    "kind": "shared",
+    "shared_key": "admin-controls-height",
+    "confidence": "높음"
+   },
+   {
+    "no": 8,
+    "width": "1440",
+    "where": "표 아래 설명과 「확인 필요 결제」 등 네 묶음의 설명 문장",
+    "what": "설명 문장이 13px(14 미만). 8절이 작게 허용한 것은 표 글자뿐이다",
+    "fix": "운영자 .hint·.defs·.sectionH span 을 14로",
+    "kind": "shared",
+    "shared_key": "admin-hint-13",
+    "confidence": "높음"
+   },
+   {
+    "no": 22,
+    "width": "1440",
+    "where": "결제 시각 열",
+    "what": "고정 형식 날짜·시각 열이 왼쪽 정렬",
+    "fix": "열 제목과 값을 오른쪽 정렬(.num)",
+    "kind": "shared",
+    "shared_key": "admin-table-date-col",
+    "confidence": "중간"
+   },
+   {
+    "no": 30,
+    "width": "1440",
+    "where": "표 아래 네 묶음(확인 필요 결제·끝난 선물의 아직 안 온 상자·입고 뒤 취소·크리에이터 사정 취소)",
+    "what": "제목+긴 설명+표/버튼의 같은 테두리 카드가 4번 연달아 반복",
+    "fix": "드물게 쓰는 두 취소 동작은 묶어 한 줄 도구로, 확인 필요 결제는 건수가 있을 때만 위로(제안)",
+    "kind": "flow",
+    "confidence": "중간"
+   },
+   {
+    "no": 1,
+    "width": "1440",
+    "where": "행마다 있는 하늘색 채움 「환불」 버튼 6개",
+    "what": "같은 세기의 채움 버튼이 여러 개라 먼저 볼 곳이 분명하지 않다",
+    "fix": "행 버튼은 테두리 버튼으로, 채움은 화면 주 행동에만",
+    "kind": "single",
+    "confidence": "낮음"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/revgifts",
+  "summary": "크리에이터가 팬에게 보낸 선물의 팬별 수락·입고·환불 상태를 보는 화면",
+  "items": [
+   {
+    "no": 12,
+    "width": "1440",
+    "where": "필터 탭·검색창",
+    "what": "높이 30~36으로 44 미만(공용 운영자 부품: 버튼 36·작은 버튼 30·탭 34·검색·입력 36, 덧칸 없음). 8절 운영자 시안 값이라 승인값과 충돌",
+    "fix": "보이는 크기는 두고 ::before 덧칸으로 누르는 칸만 44로(11-17절 방식)",
+    "kind": "shared",
+    "shared_key": "admin-controls-height",
+    "confidence": "높음"
+   },
+   {
+    "no": 8,
+    "width": "1440",
+    "where": "표 아래 설명 문장(「기한이 지났는데…」)",
+    "what": "설명 문장이 13px(14 미만). 8절이 작게 허용한 것은 표 글자뿐이다",
+    "fix": "운영자 .hint·.defs·.sectionH span 을 14로",
+    "kind": "shared",
+    "shared_key": "admin-hint-13",
+    "confidence": "높음"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/creators",
+  "summary": "크리에이터 채널 본인 확인 신청을 승인·반려하고 재확인·승인 취소·태그·금칙어를 관리하는 화면",
+  "items": [
+   {
+    "no": 12,
+    "width": "1440",
+    "where": "휴대폰 「보기」·「승인」·「반려」·「링크 없음」·「승인 취소」·↑↓·「이름 고치기」·「숨기기」·금칙어 「빼기」·입력칸",
+    "what": "높이 30~36으로 44 미만(공용 운영자 부품: 버튼 36·작은 버튼 30·탭 34·검색·입력 36, 덧칸 없음). 8절 운영자 시안 값이라 승인값과 충돌",
+    "fix": "보이는 크기는 두고 ::before 덧칸으로 누르는 칸만 44로(11-17절 방식)",
+    "kind": "shared",
+    "shared_key": "admin-controls-height",
+    "confidence": "높음"
+   },
+   {
+    "no": 8,
+    "width": "1440",
+    "where": "구역 제목 옆 안내(「채널의 소개·프로필 링크에…」 등)와 태그 구역 설명",
+    "what": "설명 문장이 13px(14 미만). 8절이 작게 허용한 것은 표 글자뿐이다",
+    "fix": "운영자 .hint·.defs·.sectionH span 을 14로",
+    "kind": "shared",
+    "shared_key": "admin-hint-13",
+    "confidence": "높음"
+   },
+   {
+    "no": 22,
+    "width": "1440",
+    "where": "요청 시각·승인 시각·신청 시각·처리 기록 시각 열",
+    "what": "고정 형식 날짜·시각 열이 왼쪽 정렬",
+    "fix": "열 제목과 값을 오른쪽 정렬(.num)",
+    "kind": "shared",
+    "shared_key": "admin-table-date-col",
+    "confidence": "중간"
+   },
+   {
+    "no": 22,
+    "width": "1440",
+    "where": "태그 선택지 표의 순서·고른 크리에이터(50명), 끝난 신청·확인 대기의 쓴 횟수(0/10회)",
+    "what": "숫자 열이 왼쪽 정렬",
+    "fix": "오른쪽 정렬",
+    "kind": "single",
+    "confidence": "높음"
+   },
+   {
+    "no": 30,
+    "width": "1440",
+    "where": "화면 전체(확인 대기~닉네임 바꾼 기록 10개 구역)",
+    "what": "제목+표 구역이 10번 연달아 쌓여 3,580px. 본인 확인과 성격이 다른 태그 선택지·직접 입력 태그·금칙어가 같은 화면에 있다",
+    "fix": "태그 세 구역을 별도 메뉴 화면으로 나누거나 탭으로 분리(제안)",
+    "kind": "flow",
+    "confidence": "중간"
+   },
+   {
+    "no": 25,
+    "width": "1440",
+    "where": "「새 선택지」 입력칸+「추가하기」, 「새 금칙어」 입력칸+「더하기」",
+    "what": "버튼이 입력칸 오른쪽 끝 밖에 따로 있고 윗선이 입력칸보다 8px쯤 높아 어긋난다. 같은 동작의 버튼 이름도 「추가하기」·「더하기」로 다르다",
+    "fix": "버튼을 입력칸과 같은 줄 높이로 붙이거나 입력칸 아래 왼쪽 끝에, 이름을 하나로",
+    "kind": "single",
+    "confidence": "중간"
+   },
+   {
+    "no": 13,
+    "width": "1440",
+    "where": "「새 선택지(1~20자)」·「새 금칙어(1~20자)」 입력칸",
+    "what": "20자 값의 칸이 본문 폭 전체(약 1,100px)로 늘어나 있다",
+    "fix": "240 안팎으로 줄이고 버튼을 옆에",
+    "kind": "single",
+    "confidence": "중간"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/inquiries",
+  "summary": "1:1 문의 목록을 고르고 오른쪽에서 답하는 화면(위에 회원 탈퇴 처리)",
+  "items": [
+   {
+    "no": 12,
+    "width": "1440",
+    "where": "「회원 탈퇴 처리하기」·필터 탭",
+    "what": "높이 30~36으로 44 미만(공용 운영자 부품: 버튼 36·작은 버튼 30·탭 34·검색·입력 36, 덧칸 없음). 8절 운영자 시안 값이라 승인값과 충돌",
+    "fix": "보이는 크기는 두고 ::before 덧칸으로 누르는 칸만 44로(11-17절 방식)",
+    "kind": "shared",
+    "shared_key": "admin-controls-height",
+    "confidence": "높음"
+   },
+   {
+    "no": 1,
+    "width": "1440",
+    "where": "맨 위 「회원 탈퇴」 카드",
+    "what": "주 업무인 문의 목록보다 드물게 쓰는 회원 탈퇴 처리가 먼저 크게 보인다",
+    "fix": "문의 목록·답변을 위로, 회원 탈퇴는 제목 줄 오른쪽 보조 버튼으로(제안)",
+    "kind": "flow",
+    "confidence": "중간"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/notices",
+  "summary": "공지 목록을 보고 고치며 오른쪽 폼으로 새 공지를 올리는 화면",
+  "items": [
+   {
+    "no": 12,
+    "width": "1440",
+    "where": "행의 「고치기」 버튼·제목 입력칸",
+    "what": "높이 30~36으로 44 미만(공용 운영자 부품: 버튼 36·작은 버튼 30·탭 34·검색·입력 36, 덧칸 없음). 8절 운영자 시안 값이라 승인값과 충돌",
+    "fix": "보이는 크기는 두고 ::before 덧칸으로 누르는 칸만 44로(11-17절 방식)",
+    "kind": "shared",
+    "shared_key": "admin-controls-height",
+    "confidence": "높음"
+   },
+   {
+    "no": 22,
+    "width": "1440",
+    "where": "올린 날 열",
+    "what": "고정 형식 날짜·시각 열이 왼쪽 정렬",
+    "fix": "열 제목과 값을 오른쪽 정렬(.num)",
+    "kind": "shared",
+    "shared_key": "admin-table-date-col",
+    "confidence": "중간"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/banners",
+  "summary": "광고 배너 목록과 오른쪽 폼으로 배너를 올리는 화면",
+  "items": [
+   {
+    "no": 12,
+    "width": "1440",
+    "where": "「그림 고르기」·「올리기」·입력칸",
+    "what": "높이 30~36으로 44 미만(공용 운영자 부품: 버튼 36·작은 버튼 30·탭 34·검색·입력 36, 덧칸 없음). 8절 운영자 시안 값이라 승인값과 충돌",
+    "fix": "보이는 크기는 두고 ::before 덧칸으로 누르는 칸만 44로(11-17절 방식)",
+    "kind": "shared",
+    "shared_key": "admin-controls-height",
+    "confidence": "높음"
+   },
+   {
+    "no": 16,
+    "width": "1440",
+    "where": "「미리보기」 칸",
+    "what": "그림을 고르기 전에도 분홍 면과 빈 회색 네모가 보여 내용 없는 영역이 된다",
+    "fix": "그림을 고른 뒤에만 보이거나, 빈 칸에 「그림을 고르면 여기에 보여요」 한 줄",
+    "kind": "single",
+    "confidence": "중간"
+   },
+   {
+    "no": 24,
+    "width": "1440",
+    "where": "폼 맨 아래 「올리기」",
+    "what": "빈 폼인데 하늘색 채움(눌림 가능 모양)이다. 공지 「올리기」·물품 「추가하기」는 같은 빈 상태에서 회색 꺼짐 모양이라 같은 형태의 폼끼리 다르다",
+    "fix": "세 폼의 빈 상태 표시를 하나로",
+    "kind": "shared",
+    "shared_key": "admin-form-submit",
+    "confidence": "중간"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/pricing",
+  "summary": "구간별 받는 값·검수비, 택배 원가 경로, 팬에게 보내기 택배비, 선물함 서비스료를 고치고 기록을 보는 화면",
+  "items": [
+   {
+    "no": 12,
+    "width": "1440",
+    "where": "금액 입력칸·「되돌리기」·「바뀐 곳이 없어요」",
+    "what": "높이 30~36으로 44 미만(공용 운영자 부품: 버튼 36·작은 버튼 30·탭 34·검색·입력 36, 덧칸 없음). 8절 운영자 시안 값이라 승인값과 충돌",
+    "fix": "보이는 크기는 두고 ::before 덧칸으로 누르는 칸만 44로(11-17절 방식)",
+    "kind": "shared",
+    "shared_key": "admin-controls-height",
+    "confidence": "높음"
+   },
+   {
+    "no": 8,
+    "width": "1440",
+    "where": "「구간 기준(크기·무게)은…」·「기준 월 30건…」·「출고 확정·반송 확정…」 설명",
+    "what": "설명 문장이 13px(14 미만). 8절이 작게 허용한 것은 표 글자뿐이다",
+    "fix": "운영자 .hint·.defs·.sectionH span 을 14로",
+    "kind": "shared",
+    "shared_key": "admin-hint-13",
+    "confidence": "높음"
+   },
+   {
+    "no": 22,
+    "width": "1440",
+    "where": "「팬에게 보내기 택배비」 표",
+    "what": "극소형·소형·중형 열은 제목과 입력칸이 가운데, 대형만 오른쪽이라 금액 열 정렬이 섞여 있다",
+    "fix": "모든 금액 열을 오른쪽 정렬(위 표들과 같게)",
+    "kind": "single",
+    "confidence": "높음"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/prohibited",
+  "summary": "크리에이터 페이지에 보이는 보낼 수 없는 물품 목록을 고치고 추가하는 화면",
+  "items": [
+   {
+    "no": 12,
+    "width": "1440",
+    "where": "행의 「고치기」·「지우기」·입력칸",
+    "what": "높이 30~36으로 44 미만(공용 운영자 부품: 버튼 36·작은 버튼 30·탭 34·검색·입력 36, 덧칸 없음). 8절 운영자 시안 값이라 승인값과 충돌",
+    "fix": "보이는 크기는 두고 ::before 덧칸으로 누르는 칸만 44로(11-17절 방식)",
+    "kind": "shared",
+    "shared_key": "admin-controls-height",
+    "confidence": "높음"
+   },
+   {
+    "no": 22,
+    "width": "1440",
+    "where": "바뀐 시각 열",
+    "what": "고정 형식 날짜·시각 열이 왼쪽 정렬",
+    "fix": "열 제목과 값을 오른쪽 정렬(.num)",
+    "kind": "shared",
+    "shared_key": "admin-table-date-col",
+    "confidence": "중간"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/office-address",
+  "summary": "팬·크리에이터가 상자를 보내는 팬꾹 주소를 고치고 바뀐 기록을 보는 화면",
+  "items": [
+   {
+    "no": 12,
+    "width": "1440",
+    "where": "「되돌리기」·「바뀐 곳이 없어요」",
+    "what": "높이 30~36으로 44 미만(공용 운영자 부품: 버튼 36·작은 버튼 30·탭 34·검색·입력 36, 덧칸 없음). 8절 운영자 시안 값이라 승인값과 충돌",
+    "fix": "보이는 크기는 두고 ::before 덧칸으로 누르는 칸만 44로(11-17절 방식)",
+    "kind": "shared",
+    "shared_key": "admin-controls-height",
+    "confidence": "높음"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/automation",
+  "summary": "자동 처리(배송 조회·알림·자동 반려·기한 처리)의 대기 건과 결과를 보는 화면",
+  "items": [
+   {
+    "no": 12,
+    "width": "1440",
+    "where": "「알림 지금 보내기」",
+    "what": "높이 30~36으로 44 미만(공용 운영자 부품: 버튼 36·작은 버튼 30·탭 34·검색·입력 36, 덧칸 없음). 8절 운영자 시안 값이라 승인값과 충돌",
+    "fix": "보이는 크기는 두고 ::before 덧칸으로 누르는 칸만 44로(11-17절 방식)",
+    "kind": "shared",
+    "shared_key": "admin-controls-height",
+    "confidence": "높음"
+   },
+   {
+    "no": 8,
+    "width": "1440",
+    "where": "구역마다의 설명 문장(「모든 주소 열람이…」·「구독을 기다리는 송장…」 등)",
+    "what": "설명 문장이 13px(14 미만). 8절이 작게 허용한 것은 표 글자뿐이다",
+    "fix": "운영자 .hint·.defs·.sectionH span 을 14로",
+    "kind": "shared",
+    "shared_key": "admin-hint-13",
+    "confidence": "높음"
+   },
+   {
+    "no": 30,
+    "width": "1440",
+    "where": "화면 전체(7개 구역)",
+    "what": "제목+설명+표 구역이 연달아 반복되고 대부분 0건이라 표 머리만 남는다",
+    "fix": "0건 구역은 한 줄 요약(이름·0건)으로 접고, 건수 있는 구역만 표로(제안)",
+    "kind": "flow",
+    "confidence": "중간"
+   },
+   {
+    "no": 33,
+    "width": "1440",
+    "where": "구역 제목 줄 오른쪽 끝의 「0건」·「1건」",
+    "what": "건수가 제목에서 1,000px 넘게 떨어져 있어 함께 읽히지 않는다",
+    "fix": "제목 바로 뒤에 붙인다(다른 화면 「지금 보이는 목록 7개」처럼)",
+    "kind": "single",
+    "confidence": "중간"
+   }
+  ]
+ },
+ {
+  "role": "operator",
+  "url": "/admin/access-log",
+  "summary": "송장 출력으로 주소를 연 기록과 거절된 시도를 보는 내부 기록 화면",
+  "items": [
+   {
+    "no": 22,
+    "width": "1440",
+    "where": "시각 열",
+    "what": "고정 형식 날짜·시각 열이 왼쪽 정렬",
+    "fix": "열 제목과 값을 오른쪽 정렬(.num)",
+    "kind": "shared",
+    "shared_key": "admin-table-date-col",
+    "confidence": "중간"
+   }
+  ]
+ }
+]

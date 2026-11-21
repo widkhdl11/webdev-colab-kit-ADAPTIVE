@@ -1,0 +1,36 @@
+{
+ "id": "S05-2",
+ "title": "팬 이용 안내 끝 행동",
+ "what": "로그인 전 팬 이용 안내(/guide/fan) 마지막 조 「추가 문의」 아래에 「크리에이터 찾기」 버튼",
+ "why": "안내를 다 읽은 팬이 선물 보내기로 넘어갈 길이 문서 안에 없다 (design-prompt 1-5·6-2)",
+ "how": [
+  "지금 → 바꾼 뒤: 「추가 문의」 조로 끝남 → 그 아래 왼쪽 정렬선에 하늘 채움 버튼 「크리에이터 찾기」 하나(휴대폰은 폭 전체)",
+  "S06-3 과 같은 틀: 설명 문장 없이 채움 버튼 하나, 문서 본문 왼쪽 정렬선에 맞춤(2-20·2-21-10)",
+  "UX 명세 상태표 변경(guide-fan.md): 로그인 전 줄에 「끝 행동 버튼 1개」 추가. 로그인 후 줄은 변화 없음(버튼 숨김 제안 — 이미 로그인한 팬은 사이드바로 이동)"
+ ],
+ "how_code": "src/widgets/legal/ui/legal-page.tsx 의 본문 끝(조 목록 뒤)에 선택적 endAction prop, 페이지에서 로그인 전일 때만 넘김.",
+ "also": [
+  "/guide/creator 와 같은 legal-page 틀이라 한 번에 고침",
+  "docs/ux/pages/guide-fan.md·guide-creator.md 요소 목록",
+  "_diff-guide.md 등 안내 문서 정리 메모"
+ ],
+ "pg": "",
+ "shots": [
+  {
+   "screen": "팬 이용 안내 끝 (/guide/fan)",
+   "width": 1440,
+   "before": "before__1440.png",
+   "after": "after-a__1440.png"
+  },
+  {
+   "screen": "팬 이용 안내 끝 (/guide/fan)",
+   "width": 390,
+   "before": "before__390.png",
+   "after": "after-a__390.png"
+  }
+ ],
+ "self_check": "글꼴 로드 확인, 가로 넘침 0. 버튼은 기존 .btn.",
+ "found": [
+  "팬 안내는 조가 길어 끝까지 읽는 사람이 적을 수 있음 — 첫 화면(요약 판 아래)에도 같은 버튼을 둘지는 사용자 판단"
+ ]
+}

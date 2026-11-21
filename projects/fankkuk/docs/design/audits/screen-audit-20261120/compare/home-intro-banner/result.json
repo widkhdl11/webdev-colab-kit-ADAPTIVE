@@ -1,0 +1,31 @@
+{
+  "key": "home-intro-banner",
+  "branch": "",
+  "commit": "",
+  "status": "그림 새로 필요 — 코드는 고치지 않았다(바꾸기 전 캡처만)",
+  "what": "로그인 전 첫 화면(/)과 회원 배너 첫 장(크리에이터 홈 /creator · 팬 홈 /home · 로그인 후 크리에이터 찾기 /creators)의 소개 배너 「팬의 마음을, 크리에이터에게.」 — 글자가 그림 안에 박혀 있어 휴대폰에서 작아진다.",
+  "why": "그림 폭 2172 를 화면 폭에 맞춰 줄이므로 390 에서 배너가 358×119 가 되고, 그림 속 작은 문장 「승인한 선물을 검수해 전달해요.」가 약 6.6px, 큰 제목도 약 16.5px 로 줄어든다(1440 에서는 각각 약 16px·40px) — design-prompt 토큰 「보조 글자만 12」 하한 미달.",
+  "how": [
+    "public 에서 쓸 수 있는 그림을 찾았다: banners 폴더 13장(launch-01~03 의 원본·no-button·v2·v3, gift-delivery-banner v1·v2, gift-cat-v1), home·about 폴더. 소개 배너와 같은 그림의 글자 없는 판은 없다. gift-delivery-banner 두 장은 다른 문구가 박혀 있고, gift-cat-v1 은 배경 없는 고양이 한 마리(정사각)라 배너 그림으로는 모양이 다르다",
+    "안 1 — 휴대폰용 그림: 같은 그림을 휴대폰 비율(예: 4:3 또는 1:1)로 다시 만들어 글자를 크게 넣고, 768 이하에서 <picture> 로 바꿔 낸다. 장점: 지금 모양 그대로. 단점: 글자를 고치면 그림을 두 장 다시 만들어야 하고, 낭독기는 여전히 alt 만 읽는다",
+    "안 2(추천) — 글자 없는 그림 + HTML 글: 지금 그림에서 글자만 뺀 판(왼쪽 옅은 면 + 오른쪽 고양이·상자)을 새로 만들고, 제목·설명을 HTML 글로 얹는다. 휴대폰에서 글자가 20/14 같은 토큰 크기로 보이고, 문구를 코드에서 고칠 수 있다. 단점: 그림 한 장 필요, 회원 배너 넘김(광고 배너와 같은 칸)에서 이 장만 글 층을 그리는 처리가 필요",
+    "그림 없이 해 볼 수 있는 임시 안(만들지 않았다): 지금 그림의 오른쪽(가로 약 820 이후 — 고양이·상자, 글자 없음)만 잘라 보이고 글자는 HTML 로 위나 옆에 둔다. 새 그림은 필요 없지만 잘린 그림 왼쪽 끝에 파란 사선 면이 걸쳐 어색할 수 있어 시안으로 먼저 확인해야 한다"
+  ],
+  "how_code": "(바꾸지 않음) 그림은 src/entities/banner/model/intro-banner.ts 의 imageUrl 과 src/widgets/home/ui/front-slots.tsx GuestIntroBanner 가 같은 파일 /images/banners/launch-01-introduction-no-button.png 를 쓴다. 회원 배너는 src/widgets/banner-carousel/ui/banner-slot.tsx memberBannerSlot",
+  "also": [
+    "회원 배너 첫 장은 크리에이터 홈(/creator)·팬 홈(/home)·로그인 후 크리에이터 찾기(/creators) 세 화면에 같이 나온다",
+    "로그인 전 크리에이터 찾기(/creators)는 회원 배너가 아니라 광고 배너 줄(bannerSlot)이라 소개 그림이 나오지 않는다"
+  ],
+  "pg": "심사 화면 중 로그인 전 첫 화면(/)의 소개 배너가 바뀔 화면이다(이번에는 코드를 바꾸지 않아 달라진 점 없음).",
+  "shots": [
+    { "screen": "로그인 전 첫 화면 (/)", "width": 1440, "before": "before__front__1440.png", "after": "" },
+    { "screen": "로그인 전 첫 화면 (/)", "width": 390, "before": "before__front__390.png", "after": "" },
+    { "screen": "크리에이터 홈 (/creator, 크리에이터 로그인)", "width": 1440, "before": "before__creator-home__1440.png", "after": "" },
+    { "screen": "크리에이터 홈 (/creator, 크리에이터 로그인)", "width": 390, "before": "before__creator-home__390.png", "after": "" }
+  ],
+  "tests": "코드 변경 없음 — 시험 돌리지 않음",
+  "self_check": "바꾸기 전 화면만 확인: 글꼴 Pretendard Variable·Tmoney Round Wind 로드, 가로 넘침 0. 390 에서 그림 속 작은 문장이 약 6.6px(그림 폭 비율로 계산) — 12 하한 미달 확인.",
+  "found": [
+    "그림 속 문장 「승인한 선물을 검수해 전달해요.」와 대체 글자(alt)·INTRO_BANNER 설명 「승인된 선물을 검수 후 전달합니다.」가 다르다 — 낭독기 사용자와 눈으로 보는 사용자가 다른 문장을 받는다. 그림을 새로 만들 때 문구를 하나로 정해야 한다"
+  ]
+}

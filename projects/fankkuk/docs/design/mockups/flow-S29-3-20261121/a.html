@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>S29-3 A안 · 보낸 선물 시안</title>
+<link rel="stylesheet" href="../../../../src/shared/ui/tokens.css"><link rel="stylesheet" href="./flow.css"></head><body>
+<!-- 흐름 시안 S29-3 A안. 바뀌는 구역만: 페이지 머리 → (요약 줄) → 탭 → 카드. 크리에이터별 보기는 생략(바뀌지 않음). 수는 지금 화면과 같은 더미(진행 중 3 · 완료된 선물 1 · 전달되지 않은 선물 3, 합 7) -->
+<main class="pane">
+<header class="ph"><div><h1>보낸 선물<sup>7</sup></h1><p class="ph-desc">크리에이터별 선물 기록과 답장을 확인해 주세요.</p></div><a class="btn" href="#">선물 보내기</a></header>
+<!-- A안: 위 요약 줄을 없애고, 탭 세 개가 그 세 숫자를 그대로 맡는다 -->
+<p class="skip">크리에이터별 보기 (바뀌지 않음, 시안 생략)</p>
+<div class="tabs" role="tablist" aria-label="보낸 선물 상태"><a role="tab" aria-selected="true" href="#">진행 중 3</a><a role="tab" aria-selected="false" href="#">완료된 선물 1</a><a role="tab" aria-selected="false" href="#">전달되지 않은 선물 3</a></div>
+<ul class="grid" role="tabpanel">
+<li class="gcard"><div class="top"><span class="who">ㅈㅈ님께</span><span class="tag">검수</span></div><h3>대형 물품</h3><p class="box">상자 1개</p><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="6" aria-valuenow="3" aria-valuetext="6단계 중 3단계 완료"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div><p class="meta"><span><b>3/6</b> · 검수</span><span>11월 17일 등록</span></p></li>
+<li class="gcard"><div class="top"><span class="who">하루님께</span><span class="tag tag--warn">발송 필요</span></div><h3>인형·쿠션</h3><p class="box">상자 1개</p><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="6" aria-valuenow="1" aria-valuetext="6단계 중 1단계 완료"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div><p class="meta"><span><b>1/6</b> · 등록</span><span>11월 14일 등록</span></p></li>
+<li class="gcard"><div class="top"><span class="who">하루님께</span><span class="tag">배송 중</span></div><h3>손뜨개 인형과 편지</h3><p class="box">상자 1개</p><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="6" aria-valuenow="5" aria-valuetext="6단계 중 5단계 완료"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div><p class="meta"><span><b>5/6</b> · 배송 중</span><span>10월 4일 (일) 도착 예정</span></p></li>
+</ul>
+</main></body></html>
