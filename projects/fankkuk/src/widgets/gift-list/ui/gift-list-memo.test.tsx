@@ -54,8 +54,8 @@ describe("together INV-F7: 보낸 선물 목록의 선물 이름", () => {
   });
 });
 
-describe("보낸 선물 요약 세 칸 (2026-11-17 시안 gifts-list-20261112 승인)", () => {
-  it("진행 중 · 완료된 선물 · 전달되지 않은 선물 수를 탭과 같은 거르기로 보인다", () => {
+describe("보낸 선물 탭 셋 (흐름 시안 flow-S29-3 A안 — 상태별 수는 탭 이름에만)", () => {
+  it("요약 줄 없이 탭이 「진행 중 · 완료된 선물 · 전달되지 않은 선물」이고, 각 탭의 수가 그 탭 카드 수와 같다", () => {
     const gifts = parseFanGiftRows(
       [
         { ...row, memo_title: null },
@@ -66,24 +66,20 @@ describe("보낸 선물 요약 세 칸 (2026-11-17 시안 gifts-list-20261112 �
       "x",
     );
     act(() => root.render(<GiftListPage creators={[]} gifts={gifts} faceToneByName={{}} />));
-    const sum = host.querySelector("[data-gift-summary]");
-    expect(sum).not.toBeNull();
-    const cells = [...sum!.querySelectorAll("div")].map((d) => `${d.querySelector("dt")?.textContent} ${d.querySelector("dd")?.textContent}`);
-    const tabs = [...host.querySelectorAll('[role="tab"]')].map((t) => t.textContent);
-    // 진행 중 칸은 탭 「진행 중 N」과 같고, 완료 칸 둘의 합은 탭 「완료 N」과 같다
-    const ongoingTab = Number(/진행 중 (\d+)/.exec(tabs.join(" "))?.[1]);
-    const doneTab = Number(/완료 (\d+)/.exec(tabs.join(" "))?.[1]);
-    const n = (label: string) => Number(cells.find((c) => c.startsWith(label + " "))?.split(" ").pop());
-    expect(cells.map((c) => c.replace(/ \d+$/, ""))).toEqual(["진행 중", "완료된 선물", "전달되지 않은 선물"]);
-    expect(n("진행 중")).toBe(ongoingTab);
-    expect(n("완료된 선물") + n("전달되지 않은 선물")).toBe(doneTab);
-    // 수가 서로 달라야(1 · 2 · 1) 칸이 서로 바뀐 것도 잡힌다
-    expect([n("진행 중"), n("완료된 선물"), n("전달되지 않은 선물")]).toEqual([1, 2, 1]);
+    expect(host.querySelector("[data-gift-summary]")).toBeNull();
+    const tabs = [...host.querySelectorAll('[role="tab"]')];
+    // 수가 서로 달라야(1 · 2 · 1) 탭끼리 바뀐 것도 잡힌다
+    expect(tabs.map((t) => t.textContent)).toEqual(["진행 중 1", "완료된 선물 2", "전달되지 않은 선물 1"]);
+    const cardsIn = (tab: Element) => host.querySelector(`#${tab.getAttribute("aria-controls")}`)?.querySelectorAll("[data-gift-row]").length;
+    expect(tabs.map(cardsIn)).toEqual([1, 2, 1]);
   });
 
-  it("선물이 하나도 없으면 요약을 그리지 않는다", () => {
+  it("선물이 없는 탭은 빈 안내를 보인다", () => {
     act(() => root.render(<GiftListPage creators={[]} gifts={[]} faceToneByName={{}} />));
-    expect(host.querySelector("[data-gift-summary]")).toBeNull();
+    expect([...host.querySelectorAll('[role="tabpanel"]')].map((p) => p.querySelector("p")?.textContent)).toEqual([
+      "진행 중인 선물이 없습니다.",
+      "완료된 선물이 없습니다.",
+      "전달되지 않은 선물이 없습니다.",
+    ]);
   });
 });
-

@@ -14,8 +14,8 @@ import s from "./gift-list.module.css";
 // 보낸 선물 — 팬·크리에이터 모두 「보낸 선물」 (action-center INV-J14, design-rules 22절, 시안 v35-part1/gifts.html · v35.css .ccard·.gcard).
 // 위는 「크리에이터별로 보기」 카드 줄 — 크리에이터마다 한 장(얼굴·이름·선물 수·답장 수·최근 선물 상태), 카드 전체가 함께한 시간으로 가는 링크.
 // 카드 숫자는 함께한 시간과 같은 읽기의 값이다(model/creator-cards.ts). 이 줄은 탭과 상관없이 전부 보인다. 휴대폰은 옆으로 넘긴다.
-// 아래는 크리에이터로 묶지 않은 선물 카드 격자(최근 등록 순). 탭은 「진행 중」·「완료」 둘이고 이 격자만 거른다 —
-// 완료 탭은 「끝난 선물」·「받지 않은 선물」(거절·기한 지남) 두 덩어리(시안). 카드는 진행 정도와 상관없이 같은 카드(진행 막대 + n/6), 880 안 2열(휴대폰 1열).
+// 아래는 크리에이터로 묶지 않은 선물 카드 격자(최근 등록 순). 탭은 「진행 중」·「완료된 선물」·「전달되지 않은 선물」(거절·기한 지남) 셋이고
+// 이 격자만 거른다 — 상태별 수는 탭 이름에만 한 번 나온다(흐름 시안 flow-S29-3 A안, 위 요약 줄은 없앴다). 카드는 진행 정도와 상관없이 같은 카드(진행 막대 + n/6), 880 안 2열(휴대폰 1열).
 // 할 일이 있는 카드만 하늘 면(22절) — 지금 할 일 읽기 결과에 그 주문의 줄이 있을 때만(UX 시범 A-2 — 「보내 주세요」는 배지로만, 사이드바 숫자와 같은 수).
 // 하늘 면 카드에는 그 줄의 제목·기한 한 줄을 붙이고 상세의 「지금 할 일」 칸(#todo)으로 바로 간다(A-1). 그 밖의 카드는 선물 상세(INV-J12)로 간다.
 // 「진행 중」 탭 맨 위에는 결제를 마치지 않은 선물 카드 — 같은 읽기 결과의 결제 미완료 줄로만 그린다(INV-J14, A-3).
@@ -245,47 +245,16 @@ function OngoingPanel({ gifts, ...rest }: PanelProps) {
   return rows.length + unpaid.length === 0 ? <Empty text="진행 중인 선물이 없습니다." /> : <Grid rows={rows} unpaid={unpaid} {...rest} />;
 }
 
-/** 완료 탭 — 끝난 선물과 받지 않은 선물을 따로 모은다(시안). 둘 다 같은 카드, 각각 최근 등록 순 */
-function DonePanel({ gifts, ...rest }: PanelProps) {
-  const parts = [
-    { id: "ended", label: "완료된 선물", rows: gifts.filter(ended) },
-    { id: "not-accepted", label: "전달되지 않은 선물", rows: gifts.filter(notAccepted) },
-  ].filter((p) => p.rows.length > 0);
-  if (parts.length === 0) return <Empty text="완료된 선물이 없습니다." />;
-  return (
-    <>
-      {parts.map((p) => (
-        <section key={p.id} aria-labelledby={`gift-done-${p.id}`}>
-          <h3 className={s.subH} id={`gift-done-${p.id}`}>
-            {p.label}
-            <small>{p.rows.length}</small>
-          </h3>
-          <Grid rows={p.rows} {...rest} />
-        </section>
-      ))}
-    </>
-  );
+/** 완료된 선물 탭 — 진행이 끝까지 간 선물, 최근 등록 순 */
+function EndedPanel({ gifts, ...rest }: PanelProps) {
+  const rows = gifts.filter(ended);
+  return rows.length === 0 ? <Empty text="완료된 선물이 없습니다." /> : <Grid rows={rows} {...rest} />;
 }
 
-/** 상태별 수 세 칸 — 눌리지 않는 표시(시안 gifts-list-20261112 요약, 2026-11-17 사용자 승인). 수는 탭과 같은 거르기에서 나온다 — 새 계산 없음.
- *  선물이 하나도 없으면 그리지 않는다(숫자가 0뿐인 칸을 만들지 않는다, design-prompt 6-6) */
-function GiftSummary({ ongoingN, endedN, notAcceptedN }: { ongoingN: number; endedN: number; notAcceptedN: number }) {
-  return (
-    <dl className={s.sum} data-gift-summary>
-      <div>
-        <dt>진행 중</dt>
-        <dd>{ongoingN}</dd>
-      </div>
-      <div>
-        <dt>완료된 선물</dt>
-        <dd>{endedN}</dd>
-      </div>
-      <div>
-        <dt>전달되지 않은 선물</dt>
-        <dd>{notAcceptedN}</dd>
-      </div>
-    </dl>
-  );
+/** 전달되지 않은 선물 탭 — 거절·기한 지남(decline-block INV-D5), 최근 등록 순 */
+function NotAcceptedPanel({ gifts, ...rest }: PanelProps) {
+  const rows = gifts.filter(notAccepted);
+  return rows.length === 0 ? <Empty text="전달되지 않은 선물이 없습니다." /> : <Grid rows={rows} {...rest} />;
 }
 
 export function GiftListPage({
@@ -311,7 +280,7 @@ export function GiftListPage({
 }) {
   const all = recentFirst(gifts);
   // 탭 기준은 fanGiftBucket 하나 — 메인 「진행 중인 선물」과 같은 수가 나온다
-  // 결제를 마치지 않은 선물 카드도 「진행 중」에 보이므로 머리 숫자와 탭 숫자에 넣는다(시안 ux-pilot gifts-2-after)
+  // 결제를 마치지 않은 선물 카드도 「진행 중」에 보이므로 머리 숫자와 「진행 중」 탭 숫자에 넣는다(시안 ux-pilot gifts-2-after)
   const unpaidN = unpaidOf(todos).length;
   const ongoingN = all.filter(ongoing).length + unpaidN;
   const panelProps = { gifts: all, todos, faceToneByName };
@@ -330,15 +299,13 @@ export function GiftListPage({
         <p className="ph-desc">크리에이터별 선물 기록과 답장을 확인해 주세요.</p>
       </header>
       {tabs}
-      {all.length + unpaidN > 0 ? (
-        <GiftSummary ongoingN={ongoingN} endedN={all.filter(ended).length} notAcceptedN={all.filter(notAccepted).length} />
-      ) : null}
       {creators.length > 0 ? <Creators creators={creators} faceToneByName={faceToneByName} /> : null}
       <div className={s.giftTabs}>
         <GiftTabs
           tabs={[
             { id: "ongoing", label: `진행 중 ${ongoingN}`, panel: <OngoingPanel {...panelProps} /> },
-            { id: "done", label: `완료 ${all.length + unpaidN - ongoingN}`, panel: <DonePanel {...panelProps} /> },
+            { id: "ended", label: `완료된 선물 ${all.filter(ended).length}`, panel: <EndedPanel {...panelProps} /> },
+            { id: "not-accepted", label: `전달되지 않은 선물 ${all.filter(notAccepted).length}`, panel: <NotAcceptedPanel {...panelProps} /> },
           ]}
         />
       </div>
