@@ -595,3 +595,21 @@ describe("자주 묻는 질문 — 시안 faq-20261112", () => {
     expect(qa("#decline strong").map((st) => st.textContent)).toEqual(["착불 반송"]);
   });
 });
+
+describe("이용 안내 끝 행동(S05-2·S06-3, 2026-11-21)", () => {
+  it("endAction 을 넘기면 마지막 조 바로 뒤에 채움 버튼 하나가 그 주소로 간다", () => {
+    render(<LegalPage doc={base} icon="" tab="guide-fan" endAction={{ href: "/creators", label: "크리에이터 찾기" }} />);
+    const main = q("article:last-of-type")!.parentElement!;
+    const links = qa<HTMLAnchorElement>("a.btn").filter((a) => a.textContent === "크리에이터 찾기");
+    expect(links).toHaveLength(1);
+    expect(links[0]!.getAttribute("href")).toBe("/creators");
+    expect(links[0]!.classList.contains("btn--line")).toBe(false);
+    expect(links[0]!.parentElement!.previousElementSibling).toBe(q("article:last-of-type"));
+    expect(main.contains(links[0]!)).toBe(true);
+  });
+
+  it("endAction 이 없으면(로그인한 사람) 끝 버튼이 없다", () => {
+    render(<LegalPage doc={base} icon="" tab="guide-creator" />);
+    expect(qa("a").filter((a) => a.textContent === "크리에이터로 가입" || a.textContent === "크리에이터 찾기")).toHaveLength(0);
+  });
+});

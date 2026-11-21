@@ -117,6 +117,15 @@ export function LandingPage({ prices, newest, looks, notices, banner = null }: P
               선물을 보낼
               <br /> 크리에이터 찾기
             </h1>
+            {/* 가치 문장 — 무엇을 해 주는 서비스인지 두 줄(S01-3 B안, 2026-11-21). 로그인 후 홈에는 없다 */}
+            <p className={s.value}>
+              <span>
+                <strong>주소를 몰라도</strong> 선물을 보낼 수 있어요.
+              </span>
+              <span>
+                <strong>승인한 선물만</strong> 팬꾹이 검수해 전달해요.
+              </span>
+            </p>
             <LandingSearch id="hero-q" />
           </div>
           <img className={s.heroArt} src="/images/home/creator-cat.webp" width={240} height={240} alt="" aria-hidden="true" fetchPriority="high" />

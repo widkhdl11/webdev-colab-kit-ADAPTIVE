@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { buildReportMail, REPORT_BODY_MAX, REPORT_KIND_LABELS, REPORT_KINDS, type ReportDraft, type ReportField } from "../model/report-mail";
 import s from "./report-form.module.css";
@@ -117,10 +116,10 @@ export function ReportForm({ to, toLabel }: Props) {
           onChange={(e) => edit("body", e.target.value)}
         />
         <p className="hint" id="r-body-hint">
-          최대 {REPORT_BODY_MAX.toLocaleString("ko-KR")}자
+          최대 {REPORT_BODY_MAX.toLocaleString("ko-KR")}자 · 파일은 이메일 앱에서 첨부할 수 있습니다
         </p>
       </div>
-      {/* 오류·열림 문장과 버튼 위 안내는 버튼과 한 묶음 — 빈 알림 영역이 칸 사이 간격을 더 벌리지 않게 */}
+      {/* 오류·열림 문장은 버튼과 한 묶음 — 빈 알림 영역이 칸 사이 간격을 더 벌리지 않게 */}
       <div>
         <div role="alert">
           {error && (
@@ -130,12 +129,11 @@ export function ReportForm({ to, toLabel }: Props) {
           )}
         </div>
         <div role="status">{opened && <p className={s.done}>이메일 앱에서 내용을 확인하고 전송해 주세요. 앱이 열리지 않으면 {toLabel}으로 직접 보내 주세요.</p>}</div>
-        <p className={`hint ${s.btnHint}`}>버튼을 누르면 작성한 내용을 이메일 앱으로 전달합니다. 이메일 앱에서 내용을 확인하고 직접 전송해 주세요. 파일은 이메일 앱에서 첨부할 수 있습니다.</p>
         <button type="submit" className="btn btn--block">
           이메일로 보내기
         </button>
         <p className={`t-meta ${s.to}`}>
-          받는 이메일: {toLabel} · 회원은 <Link href="/support">고객센터의 1:1 문의</Link>도 이용할 수 있습니다.
+          받는 이메일: {toLabel}
         </p>
       </div>
     </form>

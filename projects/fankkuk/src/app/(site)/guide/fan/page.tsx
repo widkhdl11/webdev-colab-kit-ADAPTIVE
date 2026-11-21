@@ -10,14 +10,14 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "팬 이용 안내 — 팬꾹" };
 
-// 로그인 없이 열린다. 헤더만 로그인한 사람에 맞춘다.
+// 로그인 없이 열린다. 헤더만 로그인한 사람에 맞춘다. 끝 행동 버튼은 로그인 전에만(S05-2, 2026-11-21).
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
   const [header, prices] = await Promise.all([readSiteHeader(supabase, viewer, "/guide/fan"), readPublicPrices(supabase)]);
   return (
     <>
       <SiteHeader {...header} />
-      <LegalPage tab="guide-fan" doc={guideFanDoc(prices)} icon="/img/icon-notice.png" />
+      <LegalPage tab="guide-fan" doc={guideFanDoc(prices)} icon="/img/icon-notice.png" endAction={viewer ? undefined : { href: "/creators", label: "크리에이터 찾기" }} />
       <SiteFooter />
     </>
   );

@@ -418,7 +418,9 @@ describe("INV-J14: 보낸 선물 — 위 크리에이터 카드 줄 + 아래 묶
     // 할 일이 있는 카드만 강조(design-rules 22절) — 사이드바 숫자와 같은 지금 할 일 읽기 결과의 주문(모모 FC-MOMO2)
     const hi = [...ing.querySelectorAll("[data-gift-row][data-hi]")];
     expect(hi.map((r) => r.querySelector("a")?.getAttribute("href"))).toEqual(["/gifts/FC-MOMO2#todo"]);
-    expect(rowHrefs(panel(/^완료/))).toEqual(["/gifts/FC-HARU1"]);
+    // 거절된 FC-HARU1 은 「전달되지 않은 선물」 탭(S29-3 A안, 2026-11-21 — 완료와 나눴다)
+    expect(rowHrefs(panel(/^완료된 선물/))).toEqual([]);
+    expect(rowHrefs(panel(/^전달되지 않은 선물/))).toEqual(["/gifts/FC-HARU1"]);
 
     // 함께한 시간 화면 — 같은 읽기(my_together)의 개인 기록 두 칸
     const data = await loadTogetherPage({ client: { rpc: vi.fn() }, viewer: FAN, creatorId: HARU.creatorId, photoBase: "" });
@@ -436,7 +438,7 @@ describe("INV-J14: 보낸 선물 — 위 크리에이터 카드 줄 + 아래 묶
     expect(creatorCard("하루")?.querySelector("[data-creator-count]")?.textContent).toBe("선물 4개 · 답장 2통");
   });
 
-  it("INV-J14 S14b: 하루에게 보낸 것이 모두 끝나면 「진행 중」 격자에 하루 선물이 없지만 하루 크리에이터 카드는 있다 — 「완료」 격자에는 있다", async () => {
+  it("INV-J14 S14b: 하루에게 보낸 것이 모두 끝나면 「진행 중」 격자에 하루 선물이 없지만 하루 크리에이터 카드는 있다 — 「전달되지 않은 선물」 격자에는 있다", async () => {
     state.gifts = [
       giftRow("FC-HARU2", "하루", { status: "expired", registered_at: "2026-10-05T02:00:00+00:00" }),
       giftRow("FC-HARU1", "하루", { status: "rejected", registered_at: "2026-10-01T02:00:00+00:00" }),
@@ -448,11 +450,11 @@ describe("INV-J14: 보낸 선물 — 위 크리에이터 카드 줄 + 아래 묶
     ];
     await draw(GiftsRoute());
     const tabs = [...host.querySelectorAll('main [role="tab"]')].map((t) => t.textContent);
-    expect(tabs).toEqual(["진행 중 1", "완료 2"]);
+    expect(tabs).toEqual(["진행 중 1", "완료된 선물 0", "전달되지 않은 선물 2"]);
     expect(rowHrefs(panel(/^진행 중/))).toEqual(["/gifts/FC-MOMO1"]);
     expect(creatorCards().map((c) => c.getAttribute("data-creator-card"))).toEqual(["하루", "모모"]);
     expect(creatorCard("하루")?.querySelector("[data-creator-count]")?.textContent).toBe("선물 2개 · 답장 0통");
-    expect(rowHrefs(panel(/^완료/))).toEqual(["/gifts/FC-HARU2", "/gifts/FC-HARU1"]);
+    expect(rowHrefs(panel(/^전달되지 않은 선물/))).toEqual(["/gifts/FC-HARU2", "/gifts/FC-HARU1"]);
     // 탭을 바꿔도 크리에이터 카드 줄은 그대로
     expect(creatorCards().map((c) => c.getAttribute("data-creator-card"))).toEqual(["하루", "모모"]);
   });

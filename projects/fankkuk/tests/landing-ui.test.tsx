@@ -22,6 +22,15 @@ afterEach(() => {
 });
 
 describe("로그인 전 첫 화면(시안 4)", () => {
+  it("헤드라인과 검색칸 사이에 가치 문장 두 줄 — 핵심어만 굵게(S01-3 B안, 2026-11-21)", () => {
+    const h1 = host.querySelector("#hero-title")!;
+    const value = h1.nextElementSibling!;
+    expect(value.tagName).toBe("P");
+    expect([...value.children].map((c) => c.textContent)).toEqual(["주소를 몰라도 선물을 보낼 수 있어요.", "승인한 선물만 팬꾹이 검수해 전달해요."]);
+    expect([...value.querySelectorAll("strong")].map((st) => st.textContent)).toEqual(["주소를 몰라도", "승인한 선물만"]);
+    expect(value.nextElementSibling?.matches('form[role="search"]')).toBe(true);
+  });
+
   it("첫 화면의 행동은 검색 하나 — 같은 일을 하는 「선물 보내기」「크리에이터 찾기」 버튼이 없다", () => {
     const hero = host.querySelector('[aria-labelledby="hero-title"]')!;
     expect(hero.querySelectorAll('form[role="search"]')).toHaveLength(1);

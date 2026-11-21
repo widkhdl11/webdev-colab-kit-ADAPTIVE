@@ -1,7 +1,8 @@
+import Link from "next/link";
 import s from "./about.module.css";
 
 // 팬꾹 소개. 시안: docs/design/mockups/about-20261114/index.html · style.css(design-rules 36절, 2026-11-20 사용자 「시안대로 수정」).
-// 순서는 시안 그대로: 첫 화면 → 구역 바로가기(고정) → 선물 승인 → 주소 보호 → 팬에게 보내기(신청 관리 · 선물 배송) → 페이지 꾸미기 → 선물 기록.
+// 순서는 시안 그대로: 첫 화면 → 구역 바로가기(고정) → 선물 승인 → 주소 보호 → 팬에게 보내기(신청 관리 · 선물 배송) → 페이지 꾸미기 → 선물 기록 → (로그인 전만) 끝 행동.
 // 시안 자체의 머리·바닥글·「본문으로 이동」은 옮기지 않는다 — 사이트 공통 SiteHeader·SiteFooter·layout 의 「본문 바로가기」가 맡는다.
 // 「화면 예시」 카드 안의 받지 않기·선물 받기, 진행 막대, 색 견본은 누를 수 없는 장식이라 낭독기에서 뺀다(aria-hidden).
 
@@ -21,7 +22,12 @@ const REQUEST_FLOW = [
   { title: "현황 확인 · 마감", body: "신청 내역을 보고 준비해요" },
 ] as const;
 
-export function AboutPage() {
+type Props = {
+  /** 로그인한 사람이면 끝 행동 구역(가입·크리에이터 찾기)을 그리지 않는다(S02-1, 2026-11-21) */
+  signedIn?: boolean;
+};
+
+export function AboutPage({ signedIn = false }: Props) {
   return (
     <main id="main" className={s.root}>
       <section className={`${s.wrap} ${s.hero}`} aria-labelledby="about-title">
@@ -368,6 +374,27 @@ export function AboutPage() {
           </figcaption>
         </figure>
       </section>
+
+      {/* 끝 행동 — 긴 소개를 다 읽은 손님이 바닥글에서 멈추지 않게(S02-1). 보조 → 채움 순서, 휴대폰은 채움이 위·폭 전체 */}
+      {signedIn ? null : (
+        <section className={s.endBand} aria-labelledby="about-end-title">
+          <div className={s.endBox}>
+            <h2 id="about-end-title" className={s.h2}>
+              팬꾹에서
+              <br />
+              선물을 주고받아 보세요.
+            </h2>
+            <div className={s.endBtns}>
+              <Link className="btn btn--line" href="/creators">
+                크리에이터 찾기
+              </Link>
+              <Link className="btn" href="/signup">
+                회원가입
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

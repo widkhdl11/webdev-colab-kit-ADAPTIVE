@@ -11,6 +11,7 @@
 .page :global(.page-head .ph-title) { font-size: var(--fs-title); line-height: 1.25; }
 .page :global(.page-head) .noAsk { margin-top: var(--space-2); font-size: var(--fs-small); }
 .formCard { max-width: var(--prose-max); }
+.after { margin: var(--space-4) 0 0; }
 @media (max-width: 767px) {
   .formCard { padding: var(--space-6) var(--space-4); }
 }
@@ -30,3 +31,9 @@
 /* 그림 칸 제목·설명은 본문 크기(설명은 회색) */
 .flow h3 { font-size: var(--fs-body); }
 .flowText { color: var(--gray-600); }
+
+/* 이용 안내 끝 행동(S05-2·S06-3) — 마지막 조 아래 채움 버튼 하나, 휴대폰은 폭 전체 */
+.docEnd { margin-top: var(--space-6); display: flex; }
+@media (max-width: 767px) {
+  .docEnd :global(.btn) { width: 100%; }
+}

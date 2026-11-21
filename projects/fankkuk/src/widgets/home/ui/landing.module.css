@@ -19,6 +19,11 @@
 .heroCopy { min-width: 0; }
 .eyebrow { margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; color: var(--gray-600); }
 .heroCopy :global(.t-hero) { margin: var(--space-2) 0 0; line-height: 1.25; }
+/* 가치 문장(S01-3 B안) — 헤드라인 아래 16, 검색칸까지 24. 핵심어만 굵게 진한 하늘 */
+.value { margin: var(--space-4) 0 0; max-width: 34em; font-size: var(--fs-body); line-height: 1.7; color: var(--gray-600); }
+.value span { display: block; }
+.value strong { font-weight: 700; color: var(--emph-ink); }
+.value + .search { margin-top: var(--space-6); }
 .heroArt { width: var(--hero-art); height: auto; object-fit: contain; }
 
 /* 검색 — 채움 버튼은 화면에 이것 하나(설계 기준 1-2). 안쪽 반경 8 × 2 = 칸 16 */

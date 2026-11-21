@@ -12,7 +12,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <AboutPage />
+      <AboutPage signedIn={viewer !== null} />
       <SiteFooter />
     </>
   );

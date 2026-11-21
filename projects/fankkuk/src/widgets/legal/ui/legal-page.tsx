@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { LegalDoc } from "../model/legal-doc";
 import { DocPage } from "./doc-page";
 import s from "./legal.module.css";
@@ -26,15 +27,26 @@ type Props = {
   tab?: GuideTab;
   flow?: readonly FlowStep[];
   flowLabel?: string;
+  /** 본문 끝 행동 버튼 하나(S05-2·S06-3) — 로그인 전에만 넘긴다. 설명 문장 없이 채움 버튼 하나, 본문 왼쪽 정렬선 */
+  endAction?: { href: string; label: string };
 };
 
-export function LegalPage({ doc, tab, flow, flowLabel }: Props) {
+export function LegalPage({ doc, tab, flow, flowLabel, endAction }: Props) {
   return (
     <DocPage
       doc={doc}
       variant="guide"
       guideFive={tab !== undefined}
       tabs={tab ? { label: "이용 안내", current: tab, items: GUIDE_TABS } : undefined}
+      after={
+        endAction ? (
+          <div className={s.docEnd}>
+            <Link className="btn" href={endAction.href}>
+              {endAction.label}
+            </Link>
+          </div>
+        ) : null
+      }
       figure={
         flow ? (
           <figure className={s.figure}>

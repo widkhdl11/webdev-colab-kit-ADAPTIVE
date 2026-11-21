@@ -77,6 +77,11 @@
 
 /* 주소 보호 띠 */
 .securityBand { background: var(--tint); border-block: 1px solid var(--tint-line); }
+/* 끝 행동(S02-1) — 주소 보호 구역과 같은 옅은 하늘 면, 가운데 묶음 */
+.endBand { background: var(--tint); border-block: 1px solid var(--tint-line); }
+.endBox { max-width: calc(var(--col-list) + 2 * var(--gutter)); margin-inline: auto; padding: var(--space-16) var(--gutter); display: flex; flex-direction: column; align-items: center; gap: var(--space-6); text-align: center; }
+.endBox .h2 { margin: 0; }
+.endBtns { display: flex; justify-content: center; gap: var(--space-2); }
 .security { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: center; gap: var(--space-12); padding-block: var(--space-16); }
 .security .h2 { margin-bottom: var(--space-6); }
 .root .securityNote { max-width: var(--note-max); margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--tint-line); font-size: var(--fs-small); }
@@ -155,6 +160,8 @@
 }
 
 @media (max-width: 767px) {
+  .endBtns { flex-direction: column-reverse; align-self: stretch; }
+  .endBtns :global(.btn) { width: 100%; }
   .root { --snav-h: 56px; --snav-gap: var(--space-6); --hero-art: 240px; --lock-art: 144px; --delivery-img: 144px; }
   .hero { grid-template-columns: minmax(0, 1fr); gap: var(--space-8); padding-block: var(--space-10) var(--space-16); }
   .h3 { font-size: var(--fs-card); }

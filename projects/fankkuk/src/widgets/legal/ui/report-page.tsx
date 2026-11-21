@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ReportForm } from "@/features/report-mail/ui/report-form";
 import { NO_ADDRESS_ASK } from "@/shared/config/site-copy";
 import { orBlank, SITE_INFO } from "@/shared/config/site-info";
@@ -5,7 +6,7 @@ import s from "./legal.module.css";
 
 // 신고·문의(/report) — 로그인 없이 쓴다. 시안: docs/design/mockups/site/part7-2026-10-22/report.html (design-rules 28절).
 // 머리 + 주소를 묻지 않는다는 안내 한 줄, 그 아래 메일 양식 한 장 — 머리와 같은 시작선, 680 한 기둥.
-// (요약 판은 없앴다: 첫 줄은 머리 설명과 같은 말이라 빼고, 「이메일 앱이 열려요」 줄은 양식의 버튼 바로 위로 옮겼다)
+// (요약 판은 없앴다. 버튼 위 사용 방법 세 문장도 뺐다 — 누른 뒤 나오는 안내가 같은 말을 한다, S10-2)
 
 export function ReportPage() {
   const to = SITE_INFO.supportEmail;
@@ -27,6 +28,10 @@ export function ReportPage() {
           <div className={`card ${s.formCard}`}>
             <ReportForm to={to} toLabel={orBlank(to)} />
           </div>
+          {/* 회원 안내는 양식 밖 한 줄 — 버튼 가까이는 받는 이메일 하나만(S10-2, 2026-11-21) */}
+          <p className={`t-meta ${s.after}`}>
+            회원은 <Link href="/support">고객센터의 1:1 문의</Link>도 이용할 수 있습니다.
+          </p>
         </div>
       </section>
     </main>

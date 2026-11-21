@@ -76,3 +76,24 @@ describe("AboutPage", () => {
     expect(host.querySelector("section#receive button")).toBeNull();
   });
 });
+
+describe("소개 끝 행동(S02-1, 2026-11-21)", () => {
+  const endLinks = () => [...host.querySelectorAll('[aria-labelledby="about-end-title"] a')].map((a) => [a.textContent, a.getAttribute("href"), a.className]);
+
+  it("로그인 전에는 선물 기록 뒤 마지막 구역에 보조 「크리에이터 찾기」 → 채움 「회원가입」 순서", () => {
+    const end = host.querySelector('[aria-labelledby="about-end-title"]');
+    expect(end).toBeTruthy();
+    expect(host.querySelector("main")?.lastElementChild).toBe(end);
+    expect(end?.previousElementSibling?.id).toBe("memories");
+    expect(endLinks()).toEqual([
+      ["크리에이터 찾기", "/creators", "btn btn--line"],
+      ["회원가입", "/signup", "btn"],
+    ]);
+  });
+
+  it("로그인한 사람에게는 끝 행동 구역이 없다", () => {
+    act(() => root.render(<AboutPage signedIn />));
+    expect(host.querySelector('[aria-labelledby="about-end-title"]')).toBeNull();
+    expect(host.querySelector("main")?.lastElementChild?.id).toBe("memories");
+  });
+});
