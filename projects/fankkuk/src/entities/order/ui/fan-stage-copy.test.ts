@@ -26,6 +26,7 @@ function view(
     approval,
     officeAddress: null,
     canEnterTrackingNo: false,
+    inboundClosed: doneCount >= 2,
     fanTrackingNo: null,
     outboundPrinted: doneCount >= 4 && outcome === "in_progress",
     expectedArrivalDate: null,

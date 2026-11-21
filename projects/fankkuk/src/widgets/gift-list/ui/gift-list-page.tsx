@@ -48,7 +48,7 @@ function GiftCard({ gift, faceTone, todo }: { gift: FanGiftView; faceTone: strin
   const badge = cardBadge(gift);
   const progress = fanProgress(gift);
   const who = `${gift.creatorName}님께`;
-  const notAccepted = fanGiftBucket(gift) === "not_accepted";
+  const stopped = notAccepted(gift);
   const lastDone = [...gift.steps].reverse().find((st) => st.state === "done");
   const hi = todo !== undefined;
   return (
@@ -69,7 +69,7 @@ function GiftCard({ gift, faceTone, todo }: { gift: FanGiftView; faceTone: strin
           {gift.memoTitle ? `${gift.itemKind} · ` : ""}상자 {gift.boxCount}개
         </p>
       </div>
-      {notAccepted ? (
+      {stopped ? (
         <p className={s.stop}>전달되지 않은 선물 · {formatMonthDayKo(gift.registeredAt)} 등록</p>
       ) : (
         <div>

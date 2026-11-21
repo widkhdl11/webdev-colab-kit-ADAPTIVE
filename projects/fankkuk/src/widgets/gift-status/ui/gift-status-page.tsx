@@ -151,10 +151,10 @@ export function GiftStatusPage({
   const currentIdx = view.steps.findIndex((st) => st.state === "current");
   // 상자별 원 송장번호는 입고 전까지만 고친다(design-rules 8-1). 출고 운송장은 읽기 함수가 주지 않는다.
   const inProgress = view.outcome === "in_progress";
-  // 팬꾹으로 보내는 단계용 줄(송장번호 입력·주소 없이 보낸 상자 찾기)은 주문의 입고 단계가 끝나기 전까지만 —
-  // 입고가 끝났으면 상자 상태가 아직 도착 전으로 남아 있어도 보이지 않는다(지금 할 수 없는 동작은 보이지 않게, design-prompt 6-6)
-  const inboundDone = view.steps.some((st) => st.key === "received" && st.state === "done");
-  const inboundOpen = inProgress && !inboundDone;
+  // 팬꾹으로 보내는 단계용 줄(송장번호 입력·주소 없이 보낸 상자 찾기)은 모든 상자가 입고되기 전까지만 —
+  // 다 입고됐으면 상자 상태가 아직 도착 전으로 남아 있어도 보이지 않는다(지금 할 수 없는 동작은 보이지 않게, design-prompt 6-6, S34-2).
+  // 단계 막대의 「입고」는 첫 상자 도착에 켜지므로 쓰지 않는다 — 상자가 여럿이면 남은 상자의 송장번호·찾기가 사라진다
+  const inboundOpen = inProgress && !view.inboundClosed;
   // 찾기 대상·받는 주소 판정은 features/box-waybill/model/box-targets.ts (INV-C3·C4 ②)
   const finderBoxes = giftFinderBoxes(boxes, inboundOpen);
   // 아래 찾기 구간의 고를 상자 — 칸에 있는 상자는 칸에서만 찾는다(INV-J13)

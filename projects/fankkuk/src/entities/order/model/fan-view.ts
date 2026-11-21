@@ -29,6 +29,9 @@ export type FanGiftView = {
   approval: FanApproval;
   officeAddress: string | null;
   canEnterTrackingNo: boolean;
+  /** 모든 상자가 입고됐다 — 주문 상태는 가장 늦은 상자의 단계라 입고 이후 상태면 남은 상자가 없다.
+   *  단계 막대의 「입고」(receivedAt)는 첫 상자 도착에 켜지므로 남은 상자 판정에 쓰지 않는다(S34-2, 2026-11-21) */
+  inboundClosed: boolean;
   fanTrackingNo: string | null;
   expectedArrivalDate: string | null;
   /** 크리에이터행 송장을 출력했는가(송장 출력·출고 상태) — 배송 단계 「팬꾹에서 보냈어요」의 시작(delivery-status INV-DS1). 송장번호 자체는 없다 */
@@ -50,6 +53,9 @@ export type FanOrderRecord = Omit<OrderRecord, "creatorId" | "fanNickname" | "ou
    */
   addressShown: boolean;
 };
+
+/** 모든 상자가 입고된 뒤의 주문 상태(DB 가 상자 단계의 최솟값으로 정한다) */
+const INBOUND_CLOSED: ReadonlySet<string> = new Set(["received", "labeled", "inspected", "label_printed", "shipped"]);
 
 function outcomeOf(r: FanOrderRecord): FanGiftView["outcome"] {
   if (r.status === "rejected") return "declined";
@@ -94,6 +100,7 @@ export function toFanView(r: FanOrderRecord, officeAddress: string | null): FanG
     approval,
     officeAddress: outcome === "in_progress" ? officeAddress : null,
     canEnterTrackingNo: outcome === "in_progress" && r.receivedAt === null,
+    inboundClosed: INBOUND_CLOSED.has(r.status),
     fanTrackingNo: r.fanTrackingNo,
     outboundPrinted: outcome === "in_progress" && (r.status === "label_printed" || r.status === "shipped"),
     expectedArrivalDate: r.expectedArrivalDate,

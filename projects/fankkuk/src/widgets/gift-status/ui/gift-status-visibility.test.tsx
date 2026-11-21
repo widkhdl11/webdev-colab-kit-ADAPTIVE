@@ -549,3 +549,19 @@ describe("C-3: 반송 주소 확인 뒤 안내는 할 일 칸이 없어져도 �
     expect(host.querySelector("main")?.textContent).not.toContain("반송 주소가 확인되었습니다.");
   });
 });
+
+describe("S34-2: 팬꾹으로 보내는 줄(송장번호·상자 찾기)은 모든 상자가 입고되기 전까지만(2026-11-21)", () => {
+  const twoBoxes = () => [box(), box({ boxId: B2, label: `${ORDER}-2`, state: "received", addressCode: null })];
+
+  it("상자 둘 중 하나만 도착(주문 입고 시각은 찍힘, 상태는 아직 등록) — 남은 상자의 송장번호·찾기 칸이 그대로 있다", () => {
+    render({ view: viewOf({ box_count: 2, status: "registered", received_at: "2026-10-24T02:00:00+00:00" }), boxes: twoBoxes() });
+    expect(summaries()).toEqual(ADDRESS_SHOWN_FOLDS);
+  });
+
+  it("(실패경로) 모든 상자가 입고돼 주문 상태가 입고 이후면, 상자가 도착 전으로 남아 있어도 두 칸이 없다", () => {
+    render({ view: viewOf({ status: "inspected", received_at: "2026-10-24T02:00:00+00:00" }), boxes: [box({ state: "awaiting" })] });
+    expect(summaries()).not.toContain("팬꾹으로 보낸 송장번호 (선택)");
+    expect(summaries()).not.toContain("주소 끝 6자리 없이 보낸 상자 찾기");
+  });
+});
+
