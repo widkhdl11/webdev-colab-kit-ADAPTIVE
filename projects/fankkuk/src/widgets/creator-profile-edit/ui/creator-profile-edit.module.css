@@ -59,3 +59,8 @@
   .face { width: 64px; height: 64px; }
   .w240, .tags :global(input.input) { max-width: none; }
 }
+
+/* 2026-11-22 누름 반응(design-prompt 12-5) — 찾기 노출 줄은 라벨이 스위치를 감싼 「스위치 줄」이라 알림 스위치 줄(내 정보·계정)과 같이 줄 규칙:
+   크기는 그대로, 누르는 동안 바탕 --gray-100. 스위치를 직접 눌러도 감싼 라벨이 같이 눌린 상태가 되어 줄 바탕이 바뀐다. 비활성 스위치를 감싼 줄은 뺀다 */
+.swRow { transition: background-color var(--dur-hover) var(--ease-out); }
+.swRow:not(:has(input:disabled)):active { background: var(--gray-100); }

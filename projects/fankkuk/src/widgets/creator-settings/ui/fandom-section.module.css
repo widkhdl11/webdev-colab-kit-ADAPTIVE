@@ -63,3 +63,9 @@
 .fitLine { display: flex; align-items: center; gap: var(--space-2); margin: 0; color: var(--sub); font-size: var(--fs-small); line-height: var(--lh-caption); }
 .fitLine i { flex: none; width: 20px; height: 20px; border-radius: var(--r-pill); background: var(--sw); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gray-900) 22%, transparent); }
 @media (width < 560px) { .picker { grid-template-columns: 1fr; } }
+
+/* 2026-11-22 누름 반응(design-prompt 12-1·12-9, tokens.md 「누름」) — 테마 색 견본·「선택 안 함」·「직접 고르기」는 고르는 칸이라 누르는 동안 98%.
+   비활성 input 을 감싼 칸은 뺀다. 움직임 줄이기면 같은 선택자로 끈다 */
+.sw, .swNone { transition: transform var(--dur-press) var(--ease-out); }
+:is(.sw, .swNone):not(:has(input:disabled)):active { transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) { :is(.sw, .swNone):not(:has(input:disabled)):active { transform: none; } }

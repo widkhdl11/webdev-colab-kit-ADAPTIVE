@@ -120,3 +120,6 @@
 
 /* 회색 저장 줄 위의 「저장」(바꾼 값 없음·저장 중) — 줄 바탕(gray-100)에 묻히지 않게 시안 값 gray-200 면 · gray-600 글자 */
 .bar :global(.btn:not(.btn--line)[aria-disabled="true"]), .bar :global(.btn:not(.btn--line)[aria-disabled="true"]:hover) { background: var(--gray-200); box-shadow: none; color: var(--gray-600); }
+
+/* 2026-11-22 누름 반응(design-prompt 12-5) — 설정 접는 줄은 줄이라 크기는 그대로, 누르는 동안 마우스 올림(--gray-50)보다 한 단계 진한 --gray-100 */
+.fold > summary:active { background: var(--gray-100); }

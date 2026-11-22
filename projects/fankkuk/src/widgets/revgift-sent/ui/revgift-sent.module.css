@@ -127,3 +127,7 @@
   .chev, .line, .line::before, .fold > summary::after { transition: none; }
   .fold[open] > :not(summary) { animation: none; }
 }
+
+/* 2026-11-22 누름 반응(design-prompt 12-5) — 「+」 접기 줄은 줄이라 크기는 그대로, 누르는 동안 바탕 --gray-100(면 바뀜 전환 --dur-hover) */
+.fold > summary { transition: background-color var(--dur-hover) var(--ease-out); }
+.fold > summary:active { background: var(--gray-100); }

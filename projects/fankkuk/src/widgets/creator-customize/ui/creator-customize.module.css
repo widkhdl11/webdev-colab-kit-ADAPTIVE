@@ -52,5 +52,9 @@
   .szBtns > :global(.btn) { flex: 1; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .pickOpt { transition: background 0.15s; }
+  .pickOpt { transition: background 0.15s, transform var(--dur-press) var(--ease-out); }
 }
+/* 2026-11-22 누름 반응(design-prompt 12-1·12-9, tokens.md 「누름」) — 프로필 사진 고르는 칸은 누르는 동안 98%. 고를 수 없는 칸(비활성 input)은 뺀다.
+   움직임 줄이기면 같은 선택자로 끈다 */
+.pickOpt:not(:has(input:disabled)):active { transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) { .pickOpt:not(:has(input:disabled)):active { transform: none; } }
