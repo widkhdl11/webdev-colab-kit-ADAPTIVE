@@ -489,7 +489,8 @@ tierCountText(summary.counts) || "없음";
     ) : null;
 
   return (
-    <div className={f.root}>
+    // data-stepped: 한 번이라도 다음 단계로 넘어간 뒤 — 그때부터만 단계 내용이 짧게 나타난다(처음 열 때는 움직이지 않는다, design-prompt 12-3). 2026-11-22 스킬 실험(에밀 코왈스키)
+    <div className={f.root} data-stepped={reached > 1 ? "" : undefined}>
       {/* 맨 위 하늘 단계 판 — 단계 숫자(48) / 4 단계 · 이번 단계 제목 · 네 칸 진행 막대 (design-rules 25절).
           시안 gifts-new-r2: 판은 아래 두 단(입력 판 + 오른쪽 칸) 전체 폭이고, 입력 판과 칸은 판 아래 같은 높이에서 시작한다 */}
       <section className={f.hero} aria-labelledby={`h-${step}`} ref={stepsWrap}>

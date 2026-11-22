@@ -42,6 +42,10 @@
   .bar-r { font-family: var(--font-round); font-size: var(--fs-page); font-weight: var(--fw-title); line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .bar-r small { margin-left: 2px; font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); }
 }
+/* 2026-11-22 스킬 실험(에밀 코왈스키): 3단계에서 붙는 합계 줄이 순간 나타나지 않게 투명→보임 150(--dur-fade). 움직임 줄이기면 끈다(design-prompt 12-3) */
+@keyframes bar-in { from { opacity: 0; } to { opacity: 1; } }
+.bar { animation: bar-in var(--dur-fade) var(--ease-out) both; }
+@media (prefers-reduced-motion: reduce) { .bar { animation: none; } }
 @media (max-width: 767px) {
   .bar { margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter); border-width: 1px 0 0; border-radius: 0; }
 }
