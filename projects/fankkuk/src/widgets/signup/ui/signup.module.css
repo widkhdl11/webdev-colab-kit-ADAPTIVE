@@ -157,3 +157,11 @@
 @media (max-width: 767px) {
   .make-btn { width: 100%; }
 }
+
+/* 2026-11-22 누름 반응(design-prompt 12-1·12-9, tokens.md 「누름」) — 유형 고르는 칸과 지난 단계로 가는 단계 버튼은 누르는 동안 98%.
+   갈 수 없는 단계(disabled)와 누르지 않는 단계 표시(span)는 뺀다. 움직임 줄이기면 같은 선택자로 끈다 */
+.choice, .st { transition: transform var(--dur-press) var(--ease-out); }
+.choice:not(:has(input:disabled)):active, button.st:not(:disabled):active, a.st:active { transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) {
+  .choice:not(:has(input:disabled)):active, button.st:not(:disabled):active, a.st:active { transform: none; }
+}

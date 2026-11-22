@@ -39,3 +39,6 @@
   .list summary { padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); }
   .pager { margin-top: var(--space-8); }
 }
+
+/* 2026-11-22 누름 반응(design-prompt 12-5) — 펼친 공지 줄은 위 하늘 면이 base.css 의 줄 누름 바탕을 덮어 여기서 다시 적는다. 줄이라 크기는 그대로, 누르는 동안 --gray-100 */
+.list details > summary:active:not([hidden]) { background: var(--gray-100); }

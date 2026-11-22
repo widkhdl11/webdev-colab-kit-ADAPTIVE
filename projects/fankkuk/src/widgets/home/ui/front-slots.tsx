@@ -249,7 +249,7 @@ export function GiftsSlot({ gifts, faceToneByName }: { gifts: readonly FanGiftVi
       {gifts.length === 0 ? (
         <EmptyCard icon="gift" text="진행 중인 선물이 없습니다." />
       ) : (
-        <ul className={`${h.rows} ${h.fanRows}`} aria-label="진행 중인 선물">
+        <ul className={h.rows} aria-label="진행 중인 선물">
           {gifts.slice(0, MAX_GIFTS).map((g) => {
             const badge = fanBadge(g);
             return (

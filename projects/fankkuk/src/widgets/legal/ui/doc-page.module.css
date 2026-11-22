@@ -400,3 +400,13 @@ a.tile:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
   .barBtn .chev, .copyBtn, a.tile { transition: none; }
   a.tile:hover { transform: none; }
 }
+
+/* 2026-11-22 누름 반응(design-prompt 12-1·12-5·12-9, tokens.md 「누름」)
+   목차 열기·거르개 칩·단계 버튼은 누르는 동안 98%. 펼친 질문 줄은 위 하늘 면(.faqItem details[open] > summary)이 base.css 의 줄 누름 바탕을 덮어
+   여기서 다시 적는다 — 줄이라 크기는 그대로, 누르는 동안 --gray-100(12-5) */
+.barBtn, .stepBtn, .filterChip { transition: transform var(--dur-press) var(--ease-out); }
+:is(.barBtn, .stepBtn, .filterChip):active:not(:disabled, [aria-disabled="true"]) { transform: scale(0.98); }
+.faqItem details > summary:active:not([hidden]) { background: var(--gray-100); }
+@media (prefers-reduced-motion: reduce) {
+  :is(.barBtn, .stepBtn, .filterChip):active:not(:disabled, [aria-disabled="true"]) { transform: none; }
+}

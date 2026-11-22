@@ -321,6 +321,9 @@
 @media (hover: hover) {
   .rowArrow:hover { scale: 1.08; }
 }
+/* 누르는 동안 98%(2026-11-22 누름 반응, design-prompt 12-1·tokens.md 「누름」) — 위치를 잡는 transform 과 따로 scale 로. 마우스를 올린 1.08 보다 무거운 선택자라 누를 때는 이것이 이긴다.
+   움직임 줄이기에서는 아래 scale: none !important 가 같이 끈다 */
+.rowArrow:active:not(:disabled) { scale: 0.98; transition-duration: var(--dur-press); }
 @media (prefers-reduced-motion: reduce) {
   .tile img { transform: none !important; }
   .rowArrow { scale: none !important; }

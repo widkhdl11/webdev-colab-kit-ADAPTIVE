@@ -70,13 +70,13 @@
 @media (prefers-reduced-motion: reduce) {
   .row:hover .chev { transform: none !important; }
 }
-/* 2026-11-22 스킬 실험(에밀 코왈스키 emil-design-eng) — 팬 홈 「진행 중인 선물」 줄만(.fanRows, 크리에이터 홈 줄은 그대로).
+/* 2026-11-22 스킬 실험(에밀 코왈스키 emil-design-eng) — 팬 홈 「진행 중인 선물」 줄에서 시작해, 같은 날 크리에이터 홈 줄(받은 선물·바로가기)까지 넓혔다(누름 반응 빠진 곳 채움).
    누르면 줄 면이 한 단계 진해지고(--gray-100) 면 바뀜에 전환(--dur-hover). 터치 기기에서는 누른 뒤 마우스 올림 면이 남지 않게 한다.
-   줄 목록이라 크기는 줄이지 않는다 — 카드 묶음 안의 한 줄만 작아지면 묶음 테두리와 어긋난다 */
-.fanRows .row { transition: background-color var(--dur-hover) var(--ease-out); }
-@media (hover: none) { .fanRows .row:hover { background: none; } }
-.fanRows .row:active { background: var(--gray-100); }
-@media (prefers-reduced-motion: reduce) { .fanRows .row { transition: none; } }
+   줄 목록이라 크기는 줄이지 않는다 — 카드 묶음 안의 한 줄만 작아지면 묶음 테두리와 어긋난다(design-prompt 12-5) */
+.row { transition: background-color var(--dur-hover) var(--ease-out); }
+@media (hover: none) { .row:hover { background: none; } }
+.row:active { background: var(--gray-100); }
+@media (prefers-reduced-motion: reduce) { .row { transition: none; } }
 
 /* 35절 진행 상태 뱃지 — 색만이 아니라 점 + 글자. 모양(점·크기·반사선)은 공용 .tag.tag--dot(base.css)이고 여기서는 줄 안 배치와 색 갈래만 정한다.
    색은 data-tone 으로 직접 준다 — 공용 .tag--warn 등은 홈 밖 범위에서 회색 갈래라 색이 사라지기 때문이다.

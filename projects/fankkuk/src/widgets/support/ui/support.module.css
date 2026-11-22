@@ -67,3 +67,6 @@
 @media (max-width: 767px) {
   .page.page > :is(.sec, .band) { margin-top: var(--space-12); }
 }
+
+/* 2026-11-22 누름 반응(design-prompt 12-5) — 펼친 문의 줄은 위 하늘 면이 base.css 의 줄 누름 바탕을 덮어 여기서 다시 적는다. 줄이라 크기는 그대로, 누르는 동안 --gray-100 */
+.page :global(.acc details > summary:active:not([hidden])) { background: var(--gray-100); }
