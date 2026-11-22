@@ -132,3 +132,15 @@ body:has(.sidebar) { --sb-cur: var(--sidebar-w); padding-left: var(--sb-cur); tr
   .sidebar { --nav-item-h: 44px; --prof-h: 60px; }
   .sb-mark { top: calc((var(--topbar-h) - 44px) / 2); left: calc((var(--rail-w) - 44px) / 2); width: 44px; height: 44px; }
 }
+
+/* 2026-11-22 누름 반응(design-prompt 12-1·12-5·12-9, tokens.md 「누름」)
+   메뉴 열기·사이드바 접기 같은 아이콘 버튼은 누르는 동안 98%. 사이드바 버튼(.sb-btn)은 접힘 등장 전환(opacity·visibility)을 그대로 두고 크기 전환을 더한다.
+   계정 메뉴 줄(.sb-menu > summary)은 줄이라 크기는 그대로 — 마우스를 올리면 이미 --gray-100 이라 누르는 동안은 한 단계 더 진한 --gray-200 */
+.menu-toggle, .icon-btn { transition: transform var(--dur-press) var(--ease-out); }
+.sb-btn { transition: opacity var(--tr-dur) ease var(--tr-delay), visibility 0s linear var(--vis-delay), transform var(--dur-press) var(--ease-out); }
+:is(.menu-toggle, .icon-btn, .sb-btn):active:not(:disabled, [aria-disabled="true"]) { transform: scale(0.98); }
+.sb-menu > summary { transition: background-color var(--dur-hover) var(--ease-out); }
+.sb-menu > summary:active { background: var(--gray-200); }
+@media (prefers-reduced-motion: reduce) {
+  :is(.menu-toggle, .icon-btn, .sb-btn):active:not(:disabled, [aria-disabled="true"]) { transform: none; }
+}

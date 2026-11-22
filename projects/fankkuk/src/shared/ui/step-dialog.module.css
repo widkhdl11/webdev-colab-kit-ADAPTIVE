@@ -54,3 +54,8 @@
   .foot > :first-child:not(:only-child) { margin-right: 0; }
   .small { padding: var(--space-6); }
 }
+
+/* 2026-11-22 누름 반응(design-prompt 12-1·12-9, tokens.md 「누름」) — 닫기 버튼은 누르는 동안 98%. 움직임 줄이기면 같은 선택자로 끈다 */
+.x { transition: transform var(--dur-press) var(--ease-out); }
+.x:active:not(:disabled) { transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) { .x:active:not(:disabled) { transform: none; } }

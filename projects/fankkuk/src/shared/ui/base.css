@@ -1034,3 +1034,19 @@ input[type="checkbox"]:not([role="switch"]):where(:not(.admin-area *)):disabled:
 .tag.tag--dot:where(:not(.admin-area *)) { padding-left: var(--space-2); }
 .tag.tag--dot:where(:not(.admin-area *))::before { width: 6px; height: 6px; }
 .tag.tag:where(:not(.admin-area *)) svg { width: 14px; height: 14px; }
+
+/* ---------- 2026-11-22 누름 반응 빠진 곳 채움(design-prompt 12-1·12-5·12-9, tokens.md 「누름」) ----------
+   1) 탭·누르는 칩 — 누르는 동안 98%. 칩의 면·선 전환은 그대로 두고 크기 전환을 더한다
+   2) 누르는 카드 — 마우스를 올린 채 누르면 위 23절 떠오름(같은 무게, 뒤에 있는 규칙)이 누름을 덮어 크기가 안 바뀌었다. 파일 끝에서 다시 적어 누름이 이긴다
+   3) 접기 줄(.acc summary) — 줄 목록이라 크기는 그대로, 누르는 동안 바탕 --gray-100(12-5). 펼친 줄의 하늘 면은 화면 모듈이 칠해 모듈 쪽에서 따로 적는다
+   4) 움직임 줄이기 — 켜는 규칙과 같은 선택자로 크기 변화를 끈다(12-9). 주 버튼(.btn)의 누름도 여기서 같이 끈다. 줄 바탕 진해짐은 움직임이 아니라 그대로 */
+.tab:where(:not(.admin-area *)) { transition: transform var(--dur-press) var(--ease-out); }
+:is(button.chip, .chips .chip):where(:not(.admin-area *)) { transition: background-color var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out), transform var(--dur-press) var(--ease-out); }
+:is(.tab, button.chip, .chips .chip):where(:not(.admin-area *)):active:not(:disabled, [aria-disabled="true"]) { transform: scale(0.98); }
+:is(a.card, .ccard):where(:not(.admin-area *)):active { transform: scale(0.98); transition-duration: var(--dur-press); }
+.acc details > summary:where(:not(.admin-area *)):active { background: var(--gray-100); }
+@media (prefers-reduced-motion: reduce) {
+  :is(.tab, button.chip, .chips .chip):where(:not(.admin-area *)):active:not(:disabled, [aria-disabled="true"]) { transform: none; }
+  :is(a.card, .ccard):where(:not(.admin-area *)):active { transform: none; }
+  .btn:where(:not(.admin-area *)):active:not(:disabled, [aria-disabled="true"]) { transform: none; }
+}

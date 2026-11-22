@@ -2,3 +2,8 @@
 .link { display: inline-grid; place-items: center; width: 44px; height: 44px; margin: -6px; border-radius: var(--r-btn-sm); }
 .link:hover { background: var(--gray-100); }
 .mark { display: inline-grid; place-items: center; flex: 0 0 auto; width: 24px; height: 24px; border-radius: var(--r-pill); background: var(--success-soft); color: var(--success); }
+
+/* 2026-11-22 누름 반응(design-prompt 12-1·12-9, tokens.md 「누름」) — 채널 아이콘 링크는 아이콘 버튼 모양이라 누르는 동안 98%(글자 링크가 아니다). 움직임 줄이기면 같은 선택자로 끈다 */
+.link { transition: transform var(--dur-press) var(--ease-out); }
+.link:active { transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) { .link:active { transform: none; } }
