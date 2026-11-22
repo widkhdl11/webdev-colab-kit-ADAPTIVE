@@ -218,7 +218,7 @@
   .chevron, .dchev, .other, .gtile, .dtoggle, .oarrow, .opause { transition: none; }
   .other:hover, .gtile:hover { transform: none; }
   .dbody:not([hidden]), .guide details[open] > :not(summary) { animation: none; }
-  .dtoggle:active, .oarrow:active, .opause:active, .gtile:active, .other:active { transform: none; }
+  .dtoggle:active, .oarrow:active:not(:disabled), .opause:active, .gtile:active, .other:active { transform: none; } /* 켜는 규칙과 같은 선택자여야 이긴다 */
 }
 
 /* 나에게 온 감사 카드(docs/specs/my-reply-cards.md · 시안 e판 .rcard) — 상세 정보 안, 2열 뒤 줄 사이 64 의 독립 줄. 누르지 않는 카드라 테두리·그림자 없이 옅은 하늘 면.
