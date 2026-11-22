@@ -251,14 +251,18 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .opt:not(:has(input:disabled)):active { transform: scale(0.98); }
 .qty-btn { transition: background-color var(--dur-hover) var(--ease-out), transform var(--dur-press) var(--ease-out); }
 .qty-btn:not([aria-disabled="true"]):active { transform: scale(0.98); }
+/* 진행 단계 버튼(지나온 단계로 돌아가기)도 누르는 동안 98% — 갈 수 없는 단계(disabled)는 뺀다(2026-11-22 누름 반응 빠진 곳 채움) */
+.fsteps button { transition: transform var(--dur-press) var(--ease-out); }
+.fsteps button:not(:disabled):active { transform: scale(0.98); }
 
 /* 움직임 줄이기 — 막대 차오름·카드 면 바뀜·단계 등장·누름 크기 변화를 모두 끈다(design-prompt 12-3) */
 @media (prefers-reduced-motion: reduce) {
   .fsteps .done button::before { animation: none; }
-  .pick, .pick-ok, .pick-ok svg, .opt, .qty-btn { transition: none; }
+  .pick, .pick-ok, .pick-ok svg, .opt, .qty-btn, .fsteps button { transition: none; }
   .root[data-stepped] .panel > .step:not([hidden]),
   .root[data-stepped] .hero-text > div:not([hidden]) { animation: none; }
-  .pick:not(.stop):active, .opt:not(:has(input:disabled)):active, .qty-btn:not([aria-disabled="true"]):active { transform: none; } /* 켜는 규칙과 같은 선택자여야 이긴다 */
+  .pick:not(.stop):active, .opt:not(:has(input:disabled)):active, .qty-btn:not([aria-disabled="true"]):active { transform: none; }
+  .fsteps button:not(:disabled):active { transform: none; } /* 켜는 규칙과 같은 선택자여야 이긴다 */
 }
 /* 2단계 선택 칸 접기(2026-10-22 d113 D-1, 시안 ux-pilot-2026-10-22 send-1-after .fold.optfold) — 필수 칸 아래 가는 선 + 글자 한 줄, 「+」가 45도 돌아 닫기 표시(design-rules 23-2) */
 .optfold { margin-top: var(--space-8); border-top: 1px solid var(--gray-200); }
@@ -320,3 +324,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
   /* 확인 네 항목은 휴대폰에서도 두 열 — 확인 뒤 반송 주소로 가는 거리를 줄인다(값이 길면 줄을 바꾼다) */
   .sums.sums { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-4); }
 }
+
+/* 2026-11-22 누름 반응(design-prompt 12-5) — 「+」 접기 줄은 줄이라 크기는 그대로, 누르는 동안 바탕 --gray-100(면 바뀜 전환 --dur-hover) */
+.optfold > summary { transition: background-color var(--dur-hover) var(--ease-out); }
+.optfold > summary:active { background: var(--gray-100); }

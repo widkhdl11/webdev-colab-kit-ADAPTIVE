@@ -76,3 +76,8 @@
 
 /* 움직임 — 모듈 안 이름이라 여기 따로 둔다(값은 base.css 23절과 같다). 「움직임 줄이기」에서는 base.css 가 모두 끈다 */
 @keyframes bar-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* 2026-11-22 누름 반응(design-prompt 12-1·12-9, tokens.md 「누름」) — 선물 카드는 카드 전체를 덮는 링크(.stretch)를 누르는 동안 카드가 98%.
+   마우스를 올린 떠오름보다 무거운 선택자라 누를 때는 이것이 이긴다. 크리에이터 카드(.ccard)는 base.css 공용 카드 누름이 맡는다. 움직임 줄이기면 같은 선택자로 끈다 */
+.gcard:has(:global(.stretch):active) { transform: scale(0.98); transition-duration: var(--dur-press); }
+@media (prefers-reduced-motion: reduce) { .gcard:has(:global(.stretch):active) { transform: none; } }

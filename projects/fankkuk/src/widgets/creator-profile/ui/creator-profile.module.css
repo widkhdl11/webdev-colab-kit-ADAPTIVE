@@ -243,3 +243,7 @@
   .rtrack { margin-right: calc(-1 * var(--gutter)); padding-right: var(--gutter); border-radius: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .rtrack { scroll-behavior: auto; } }
+
+/* 2026-11-22 누름 반응(design-prompt 12-5) — 보내기 전 안내의 접는 줄은 줄이라 크기는 그대로, 누르는 동안 바탕 --gray-100(면 바뀜 전환 --dur-hover) */
+.guide summary { transition: background-color var(--dur-hover) var(--ease-out); }
+.guide summary:active { background: var(--gray-100); }

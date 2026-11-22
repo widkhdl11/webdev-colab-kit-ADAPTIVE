@@ -81,3 +81,7 @@
   .end { position: sticky; bottom: 0; z-index: 4; align-items: stretch; margin: var(--space-6) calc(-1 * var(--space-4)) 0; padding: var(--space-3) var(--space-4); border-top: 1px solid var(--line-on-white); background: var(--white); }
   .btns :global(.btn) { flex: 1; }
 }
+
+/* 2026-11-22 누름 반응(design-prompt 12-5) — 알림 스위치 줄은 줄이라 크기는 그대로, 누르는 동안 바탕 --gray-100. 저장하는 동안(aria-disabled)은 뺀다 */
+.swBtn { transition: background-color var(--dur-hover) var(--ease-out); }
+.swBtn:active:not([aria-disabled="true"]) { background: var(--gray-100); }

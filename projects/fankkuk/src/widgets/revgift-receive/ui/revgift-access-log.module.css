@@ -26,3 +26,7 @@
 
 /* 움직임 — 모듈 안 이름이라 여기 따로 둔다(값은 base.css 23절과 같다). 「움직임 줄이기」에서는 base.css 가 모두 끈다 */
 @keyframes fold-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+/* 2026-11-22 누름 반응(design-prompt 12-5) — 「+」 접기 줄은 줄이라 크기는 그대로, 누르는 동안 바탕 --gray-100(면 바뀜 전환 --dur-hover) */
+.fold > summary { transition: background-color var(--dur-hover) var(--ease-out); }
+.fold > summary:active { background: var(--gray-100); }
