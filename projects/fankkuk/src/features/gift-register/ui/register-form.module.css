@@ -237,7 +237,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
    1) 단계를 넘길 때 입력 칸·판 제목이 순간 교체되지 않게 투명→보임 150(--dur-fade · --ease-out). 위치는 움직이지 않는다.
       한 번이라도 넘긴 뒤(.root[data-stepped])에만 — 처음 열 때는 그대로
    2) 고르는 칸·칩·수량 버튼을 누르면 98%(tokens 0-1 「누름 scale(.98)」 · --dur-press 100)
-   3) 고른 카드의 동그라미가 하늘로 채워지고 체크가 튀어 나온다 — 사이트 체크박스와 같은 값(base.css 18) · --dur-check · --ease-pop)
+   3) 고른 카드의 동그라미가 하늘로 채워지고 체크가 커지며 나타난다 — 시간은 사이트 체크박스와 같은 --dur-check, 곡선은 --ease-out
    4) 칩의 면·선 바뀜에 전환(--dur-hover). 마우스 올림 면 바뀜은 마우스 기기에서만 */
 @keyframes step-in { from { opacity: 0; } to { opacity: 1; } }
 .root[data-stepped] .panel > .step:not([hidden]),
@@ -245,7 +245,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .pick { transition: background-color var(--dur-hover) var(--ease-out), transform var(--dur-press) var(--ease-out); }
 .pick:not(.stop):active { transform: scale(0.98); }
 .pick-ok { transition: background-color var(--dur-hover) var(--ease-out), border-color var(--dur-hover) var(--ease-out); }
-.pick-ok svg { transform: scale(0.4); transition: transform var(--dur-check) var(--ease-pop); }
+.pick-ok svg { transform: scale(0.4); transition: transform var(--dur-check) var(--ease-out); } /* 튀는 곡선(--ease-pop)은 impeccable 감지기가 bounce-easing 으로 잡아 ease-out 으로(적용 뒤 감지기 재실행) */
 .pick:has(input:checked) .pick-ok svg { transform: scale(1); }
 .opt { transition: background-color var(--dur-hover) var(--ease-out), border-color var(--dur-hover) var(--ease-out), transform var(--dur-press) var(--ease-out); }
 .opt:not(:has(input:disabled)):active { transform: scale(0.98); }
