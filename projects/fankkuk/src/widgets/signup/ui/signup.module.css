@@ -46,6 +46,10 @@
 
 /* 단계 카드 — 입력과 「이전」「다음」이 한 카드 안 */
 .step { margin: 0; padding: 0; border: 0; min-width: 0; }
+/* 단계를 옮긴 뒤 새로 보이는 단계(입력 단계·카카오 연결)는 투명→보임 --dur-fade, 위치는 그대로(design-prompt 12-7, 선물 보내기 step-in 과 같은 값). 움직임 줄이기에서 끈다(12-9 같은 선택자) */
+.page[data-stepped] .step:not([hidden]) { animation: signup-step-in var(--dur-fade) var(--ease-out) both; }
+@keyframes signup-step-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .page[data-stepped] .step:not([hidden]) { animation: none; } }
 .step > h2 { margin-bottom: 24px; }
 .step > h2:has(+ .lead) { margin-bottom: 8px; } /* 제목 아래 설명이 있으면 제목과 8, 설명 아래 24 */
 .lead { margin: 0 0 24px; }

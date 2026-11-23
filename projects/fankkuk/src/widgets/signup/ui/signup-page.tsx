@@ -519,7 +519,8 @@ export function SignupPage({ sealingKeyPem = null }: { sealingKeyPem?: string | 
 
   return (
     <main id="main">
-      <section className={s.page} aria-labelledby={f("title")}>
+      {/* data-stepped: 한 번이라도 단계를 옮긴 뒤 — 그때부터 새로 보이는 단계가 짧게 나타난다(design-prompt 12-7, 처음 열 때는 그대로) */}
+      <section className={s.page} aria-labelledby={f("title")} data-stepped={moved ? "" : undefined}>
         <div className={`container auth ${s.box}`}>
           <div className="head">
             <h1 className="t-title" id={f("title")}>

@@ -69,6 +69,8 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
   const router = useRouter();
   const [stage, setStage] = useState<ReceivedStage>(props.stage);
   const [stepOpen, setStepOpen] = useState(false);
+  // 「받기」로 주소 칸을 한 번이라도 연 뒤 — 그때부터 바뀌는 칸(주소 입력 ↔ 고르는 칸)이 짧게 나타난다(design-prompt 12-7, 처음 열 때는 그대로)
+  const [moved, setMoved] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -92,6 +94,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
   const openStep = () => {
     setSubmitError(null);
     focusNext.current = "step";
+    setMoved(true);
     setStepOpen(true);
   };
 
@@ -159,7 +162,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
   return (
     <>
       {/* 받을지 정하는 칸 하나만 크게(시안 v35-part1/revgift-detail.html .rvcard, design-rules 22절). 칸 id 는 링크 조각 #todo — 처리할 일 읽기 결과에 있을 때만 */}
-      <section className={showTodo ? s.rvcard : `${s.rvcard} ${s.calm}`} id={showTodo ? TODO_FRAGMENT : undefined} aria-labelledby="rv-title">
+      <section className={showTodo ? s.rvcard : `${s.rvcard} ${s.calm}`} id={showTodo ? TODO_FRAGMENT : undefined} aria-labelledby="rv-title" data-stepped={moved ? "" : undefined}>
         <img className={s.peek} src="/images/home/icon-gift.webp" alt="" aria-hidden="true" width={96} height={96} />
         <div className={s.who}>
           <span className={`face ${s.face}`} aria-hidden="true">

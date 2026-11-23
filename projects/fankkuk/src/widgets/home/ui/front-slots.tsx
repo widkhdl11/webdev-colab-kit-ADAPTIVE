@@ -465,7 +465,7 @@ export function PriceSlot({ prices, joined = false }: { prices: PublicPriceTable
         <h2 id="price-title">
           배송 요금 안내
         </h2>
-        <p className="t-lead">상자 크기·무게 중 더 높은 요금 구간을 선택해 주세요.</p>
+        <p className="t-lead">상자 크기·무게 중 더 높은 요금 구간이 적용됩니다.</p>
       </div>
       <div className={joined ? s.priceJoined : s.grid3}>
         {PRICED_TIERS.map((tier) => (

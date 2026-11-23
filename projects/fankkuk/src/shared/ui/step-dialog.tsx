@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, type ReactNode, type RefObject } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
 import m from "./step-dialog.module.css";
 
 // 단계형 모달 틀 — 머리(제목·딸린 버튼·닫기 / 아래 줄 꼬리표) · 진행 표시(막대 + 「1/3 이름」 + 「다음: …」) · 본문(스크롤) · 고정 칸 · 버튼 줄.
@@ -122,6 +122,16 @@ export function StepDialog({
     };
   }, []);
 
+  // 단계를 넘긴 뒤 본문이 순간 바뀌지 않게 투명→보임(design-prompt 12-7, 선물 보내기 step-in 과 같은 값). 처음 열 때는 움직이지 않는다.
+  // 넘길 때마다 a·b 두 이름을 번갈아 붙여 같은 애니메이션을 다시 시작한다(본문을 다시 만들지 않아 입력값·초점이 그대로다). 닫으면 처음으로 돌린다.
+  const stepKey = progress ? String(progress.step) : "done";
+  const [turn, setTurn] = useState({ key: stepKey, count: 0 });
+  if (!open) {
+    if (turn.count !== 0 || turn.key !== stepKey) setTurn({ key: stepKey, count: 0 });
+  } else if (turn.key !== stepKey) {
+    setTurn({ key: stepKey, count: turn.count + 1 });
+  }
+
   const request = () => {
     if (!busy) onRequestClose();
   };
@@ -173,7 +183,7 @@ export function StepDialog({
           </p>
         </div>
       ) : null}
-      <div className={m.body} tabIndex={bodyLabel ? 0 : undefined} aria-label={bodyLabel} role={bodyLabel ? "region" : undefined}>
+      <div className={m.body} data-turn={turn.count === 0 ? undefined : turn.count % 2 === 1 ? "a" : "b"} tabIndex={bodyLabel ? 0 : undefined} aria-label={bodyLabel} role={bodyLabel ? "region" : undefined}>
         {children}
       </div>
       {fixed ? <div className={m.fixed}>{fixed}</div> : null}

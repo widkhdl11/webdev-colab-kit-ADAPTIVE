@@ -29,6 +29,10 @@
 .fold > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
 .fold[open] > summary .foldChev { transform: rotate(180deg); }
 .fold[open] > summary .rowIco { background: var(--primary); }
+/* 펼친 내용 — 사이트 공용 접기(base.css 23절 11)와 같은 등장(0.25초, 위 4px 에서 내려오며 투명→보임, design-prompt 12-7). 이 카드는 모듈 이름(.acc)이라 공용 규칙이 닿지 않아 따로 둔다 */
+.fold[open] > .foldBody { animation: settings-fold-in 0.25s var(--ease-micro) both; }
+@keyframes settings-fold-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fold[open] > .foldBody { animation: none; } }
 /* 펼친 부분은 옅은 면 — 다음 줄과 경계 */
 .foldBody { display: grid; gap: var(--space-6); min-width: 0; padding: var(--space-6) var(--space-6) var(--space-8); background: var(--surface); box-shadow: inset 0 1px 0 var(--divider); }
 .foldBody > * { min-width: 0; }

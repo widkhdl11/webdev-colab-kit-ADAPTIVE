@@ -71,6 +71,10 @@
 
 /* 움직임 — 모듈 안 이름이라 여기 따로 둔다(값은 base.css 23절과 같다). 「움직임 줄이기」에서는 base.css 가 모두 끈다 */
 @keyframes fold-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+/* 「받기」 ↔ 주소 입력 — 칸이 바뀔 때 투명→보임 --dur-fade, 위치는 그대로(design-prompt 12-7, 선물 보내기 step-in 과 같은 값). 한 번 연 뒤(data-stepped)에만 */
+.rvcard[data-stepped] > :is(.ask, .warn, .choice, .once, .addr) { animation: rv-step-in var(--dur-fade) var(--ease-out) both; }
+@keyframes rv-step-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .rvcard[data-stepped] > :is(.ask, .warn, .choice, .once, .addr) { animation: none; } }
 
 /* 2026-11-22 누름 반응(design-prompt 12-5) — 「+」 접기 줄은 줄이라 크기는 그대로, 누르는 동안 바탕 --gray-100(면 바뀜 전환 --dur-hover) */
 .fold > summary { transition: background-color var(--dur-hover) var(--ease-out); }
