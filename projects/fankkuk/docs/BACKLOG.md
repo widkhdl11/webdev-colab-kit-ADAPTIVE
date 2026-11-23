@@ -6,7 +6,7 @@
 - 하네스 개선은 여기가 아니라 docs/references/harness-backlog.md.
 
 ## 미결
-- [ ] **B·C 넓히기 — 펼침·단계 넘김 등장이 없는 곳** (2026-11-23) — 화면에서 재서 없음: 크리에이터 설정 접기 5줄 · 선물함 만들기 창 단계 · 회원가입 단계. 선물함 신청 창·역조공 받기는 로컬 시험 데이터가 없어 못 잼(넓히기기록 audits/widen-20261123) · 되살릴 조건: 사용자가 A·D 결과를 보고 B·C 를 고르면
+- [ ] **B·C 넓히기 — 펼침·단계 넘김 등장이 없는 곳** (2026-11-23) — 화면에서 재서 없음: 크리에이터 설정 접기 5줄 · 선물함 만들기 창 단계 · 회원가입 단계. 선물함 신청 창 단계·역조공 「받기」 → 주소 입력도 없음(11-23 로컬 데이터를 만들어 잼, 넓히기기록 audits/widen-20261123 B·C 절) · 되살릴 조건: 사용자가 A·D 결과를 보고 B·C 를 고르면
 - [ ] **마우스 올림 확대 4곳(1.03~1.08배)을 12-8 예외로 둘지** (2026-11-23) — 크리에이터 카드 사진 · 홈 바로가기 타일 그림 · 다음 크리에이터 화살표 · 첫 화면 타일 아이콘. 12-8 문장 확정이 이 답을 기다린다 · 되살릴 조건: 사용자 답
 - [ ] **(정정 기록) 2026-11-22~23 디자인 스킬 실험 세션** (2026-11-23) — ① 실험 캡처를 옮기지 말자고 추천해 작업 폴더와 함께 지워짐 — 합친 뒤 그림 대조를 못 하고 계산값으로 대신함 ② 「자주 묻는 질문·공지에 펼침 등장 없음」을 파일 이름만 보고 보고 — 화면에서 재니 이미 있었음(재는 방법도 대조 화면으로 먼저 확인할 것) ③ 첫 사이트 점검이 부드러운 스크롤 중 위치를 재 고친 요소까지 「반응 없음」으로 나와 버림 ④ 확인 스크립트가 팔로우를 바꾼 채 멈춰 로컬 DB 를 되돌림 · 되살릴 조건: 같은 일이 또 나면 retro
 - [ ] **휴대폰에서 버튼 묶음을 뒤집어 쌓는 곳의 키보드 순서** (2026-11-21 ui 리뷰 중간, 소개 끝 행동) — 휴대폰은 채움 버튼을 위로 올리려고 `flex-direction: column-reverse` 를 쓴다. 그래서 보이는 순서와 Tab 순서가 거꾸로 된다. 같은 방식이 사이트 여러 곳에 있다: `src/widgets/about/ui/about.module.css` `.endBtns` · `src/features/gift-register/ui/register-form.module.css` `.actions` · `src/shared/ui/step-dialog.module.css` `.foot` · `src/shared/ui/settings-panel.module.css` `.barBtns` · `src/widgets/creator-settings/ui/creator-settings.module.css` `.bar` · `src/widgets/creator-action-center/ui/creator-action-center.module.css` `.acts` · `src/features/creator-follow/ui/unfollow-dialog.module.css` `.actions`. PC 순서(보조 → 채움)와 휴대폰 순서(채움 위)를 둘 다 DOM 순서로 맞출 수는 없어, 한 폭을 기준으로 고를 결정이 필요하다(design-prompt 2-22)
