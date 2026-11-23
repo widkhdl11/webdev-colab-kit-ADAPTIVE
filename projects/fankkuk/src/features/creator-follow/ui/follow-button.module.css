@@ -2,11 +2,12 @@
    비었을 때는 화면 낭독기 전용 모양으로 자리를 차지하지 않는다 — 떴을 때만 그 카드가 한 줄 높아진다(실패 순간이라 허용, design-rules 17절) */
 .cardNotice { flex: 0 0 100%; min-width: 0; margin: 0; color: var(--danger); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: var(--lh-caption); overflow-wrap: anywhere; }
 .cardNotice:empty { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-/* 「팔로우」↔「팔로우 중」이 바뀌는 순간 글자가 0.2초 동안 1.14배까지 커졌다 돌아온다(design-rules 24절, 시안 v38-home-micro 4번). 움직임 줄이기면 끈다 */
+/* 「팔로우」↔「팔로우 중」이 바뀌는 순간 바뀐 글자가 --dur-fade 동안 투명에서 보이게 나타난다(위치·크기는 그대로 — design-prompt 12-7).
+   2026-11-23 사용자 결정으로 1.14배 커졌다 돌아오는 움직임(design-rules 24절 옛 값)을 없앴다 — 튀는 움직임 금지(12-8). 누르는 동안 98% 는 공용 .btn 이 맡는다(12-1). 움직임 줄이기면 끈다 */
 .lbl { display: inline-block; }
-@keyframes pop { 0% { transform: scale(1); } 45% { transform: scale(1.14); } 100% { transform: scale(1); } }
-.pop { animation: pop 0.2s var(--ease-micro); }
-@media (prefers-reduced-motion: reduce) { .pop { animation: none; } }
+@keyframes label-in { from { opacity: 0; } to { opacity: 1; } }
+.swapIn { animation: label-in var(--dur-fade) var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { .swapIn { animation: none; } }
 /* 크리에이터 상세 버튼 묶음 마이크로 디테일(2026-10-25 사용자 「버튼 디테일 살려줘. 마우스 오버했을때 효과」 — 23-2절 공통 효과 위에 덧붙인다).
    선물 보내기 = 화살표가 2px 앞으로(23-2 「2px 이하」) · 팔로우 = 「+」가 90도 · 팔로우 중 = 체크가 ×로 바뀌고 글자가 빨강(누르면 취소 확인 창). 움직임은 마우스 기기에서만, 움직임 줄이기면 끈다 */
 .ico { display: inline-flex; transition: transform var(--dur-hover) var(--ease-micro); }

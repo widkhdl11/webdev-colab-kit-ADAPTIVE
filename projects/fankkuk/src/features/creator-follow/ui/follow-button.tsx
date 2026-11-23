@@ -60,8 +60,8 @@ export function FollowButton({
     (next === "gift" ? (giftRef.current ?? unfollowRef.current) : followRef.current)?.focus();
   }, [following]);
 
-  // 상태가 바뀐 순간 글자가 0.2초 동안 1.14배까지 커졌다 돌아온다(design-rules 24절, 시안 v38-home-micro 4번) — 표시만, 처음 그릴 때는 튀지 않는다.
-  // 앞 값과 비교해서 고른다(개발 모드에서 효과가 두 번 돌아도 처음 그릴 때 튀지 않게). 카드 띠는 바뀐 뒤 보이는 주 버튼(팔로우 ↔ 선물 보내기)의 글자가 튄다
+  // 상태가 바뀐 순간 바뀐 글자가 짧게(--dur-fade) 투명에서 보이게 나타난다(design-prompt 12-7, 2026-11-23 1.14배 움직임 대신) — 표시만, 처음 그릴 때는 움직이지 않는다.
+  // 앞 값과 비교해서 고른다(개발 모드에서 효과가 두 번 돌아도 처음 그릴 때 움직이지 않게). 카드 띠는 바뀐 뒤 보이는 주 버튼(팔로우 ↔ 선물 보내기)의 글자가 나타난다
   const labelRef = useRef<HTMLSpanElement>(null);
   const shownFollowing = useRef(following);
   useEffect(() => {
@@ -69,10 +69,10 @@ export function FollowButton({
     shownFollowing.current = following;
     const el = variant === "card" ? (following ? (giftRef.current ?? unfollowRef.current) : followRef.current)?.querySelector("span") : labelRef.current;
     if (!el) return;
-    el.classList.remove(s.pop);
+    el.classList.remove(s.swapIn);
     void el.offsetWidth; // 같은 효과를 이어 다시 걸 때 처음부터 다시 돌게
-    el.classList.add(s.pop);
-    el.addEventListener("animationend", () => el.classList.remove(s.pop), { once: true });
+    el.classList.add(s.swapIn);
+    el.addEventListener("animationend", () => el.classList.remove(s.swapIn), { once: true });
   }, [following, variant]);
 
   if (mode === "hidden") return null;

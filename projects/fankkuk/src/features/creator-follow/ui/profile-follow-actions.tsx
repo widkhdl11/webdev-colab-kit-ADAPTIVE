@@ -52,9 +52,9 @@ export function ProfileFollowActions({
 }) {
   const router = useRouter();
   const [following, setFollowing] = useState(initialFollowing);
-  // 상태가 바뀐 뒤에만 새 버튼 글자가 한 번 튄다(design-rules 24절 「팔로우」 버튼과 같은 효과) — 처음 그릴 때는 튀지 않는다
+  // 상태가 바뀐 뒤에만 새 버튼 글자가 짧게 나타난다(follow-button 과 같은 효과, design-prompt 12-7) — 처음 그릴 때는 움직이지 않는다
   const [changed, setChanged] = useState(false);
-  const lbl = changed ? `${s.lbl} ${s.pop}` : s.lbl;
+  const lbl = changed ? `${s.lbl} ${s.swapIn}` : s.lbl;
   const { save, saving, isSaving, failText } = useFollowSave(creatorId);
   const unfollowConfirm = useUnfollowConfirm();
   // 상태가 바뀌면 누른 버튼이 사라진다 — 바뀐 뒤 초점을 옮길 자리(팔로우 → 「선물 보내기」, 팔로우 취소 → 「팔로우」)
