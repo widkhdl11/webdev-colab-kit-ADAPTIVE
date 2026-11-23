@@ -407,6 +407,11 @@ a.tile:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .barBtn, .stepBtn, .filterChip { transition: transform var(--dur-press) var(--ease-out); }
 :is(.barBtn, .stepBtn, .filterChip):active:not(:disabled, [aria-disabled="true"]) { transform: scale(0.98); }
 .faqItem details > summary:active:not([hidden]) { background: var(--gray-100); }
+/* 2026-11-23 남은 셋 — 주소 복사 버튼·요약 타일은 98%(타일은 마우스 올림의 떠오름을 덮는다), 요약 줄은 줄이라 바탕만(12-5) */
+.copyBtn { transition: opacity var(--dur-hover) var(--ease-micro), transform var(--dur-press) var(--ease-out); }
+.copyBtn:active, a.tile:active { transform: scale(0.98); transition-duration: var(--dur-press); }
+a.summaryRow:active { background: var(--gray-100); }
 @media (prefers-reduced-motion: reduce) {
   :is(.barBtn, .stepBtn, .filterChip):active:not(:disabled, [aria-disabled="true"]) { transform: none; }
+  .copyBtn:active, a.tile:active { transform: none; }
 }
