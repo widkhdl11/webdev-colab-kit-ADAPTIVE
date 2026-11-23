@@ -415,3 +415,11 @@ a.summaryRow:active { background: var(--gray-100); }
   :is(.barBtn, .stepBtn, .filterChip):active:not(:disabled, [aria-disabled="true"]) { transform: none; }
   .copyBtn:active, a.tile:active { transform: none; }
 }
+
+/* 2026-11-23 펼침 등장(design-prompt 12-7) — 「목차 열기」로 여는 목차 판은 사이트 접기 등장(base.css fold-in)과 같은 값으로 나타난다.
+   CSS 모듈은 다른 파일의 @keyframes 이름을 바꿔 버려 같은 값을 여기 둔다. 판은 처음에 닫혀 있어 화면을 처음 열 때는 움직이지 않는다 */
+.panel:not([hidden]) { animation: toc-in 0.25s var(--ease-micro) both; }
+@keyframes toc-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .panel:not([hidden]) { animation: none; }
+}
