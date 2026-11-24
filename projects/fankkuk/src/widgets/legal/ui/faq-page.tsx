@@ -145,7 +145,7 @@ export function FaqPage({
                   className={d.faqItem}
                   hidden={nav.hidden.has(f.id)}
                 >
-                  <details ref={i === 0 ? firstRef : undefined} open={i === 0 ? true : undefined}>
+                  <details ref={i === 0 ? firstRef : undefined} open={i === 0 ? true : undefined} data-start-open={i === 0 ? "" : undefined}>
                     <summary data-doc-heading="">
                       <span className="q">
                         <b>

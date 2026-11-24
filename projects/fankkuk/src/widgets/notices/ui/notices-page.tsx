@@ -58,7 +58,7 @@ export function NoticesPage({ notices, page, pageCount }: Props) {
               {notices.map((n, i) => (
                 <li key={n.id}>
                   {/* 첫 쪽의 맨 위 글만 펼쳐 둔다(시안) */}
-                  <details open={page === 1 && i === 0}>
+                  <details open={page === 1 && i === 0} data-start-open={page === 1 && i === 0 ? "" : undefined}>
                     <summary>
                       {n.pinned && <span className="tag tag--brand">고정</span>}
                       <span className="q">

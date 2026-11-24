@@ -242,7 +242,7 @@ export function SupportPage({
               hidden={i !== selected}
             >
               {c.faqs.map((f, j) => (
-                <details key={f.q} open={j === 0}>
+                <details key={f.q} open={j === 0} data-start-open={j === 0 ? "" : undefined}>
                   <summary>
                     <span className="q">
                       <b>{f.q}</b>

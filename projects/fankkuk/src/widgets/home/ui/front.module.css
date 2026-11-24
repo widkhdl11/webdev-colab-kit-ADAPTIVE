@@ -315,7 +315,7 @@
 @media (hover: hover) {
   .tile:hover img { transform: translateY(-2px) scale(1.04); }
 }
-.tile:active img { transform: scale(0.98); transition-duration: 0.15s; }
+.tile:active img { transform: scale(0.98); transition-duration: var(--dur-press); }
 /* 2) 카드 줄 화살표 — 마우스를 올리면 1.08배(위치를 잡는 transform 과 따로 scale 로) */
 .rowArrow { transition: scale 0.15s var(--ease-micro); }
 @media (hover: hover) {

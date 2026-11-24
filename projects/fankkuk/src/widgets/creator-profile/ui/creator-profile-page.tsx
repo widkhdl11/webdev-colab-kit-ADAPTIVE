@@ -305,7 +305,7 @@ export function CreatorProfilePage({
               <div className={s.guide}>
                 {/* 보낼 수 없는 물품 — DB 에서 받은 목록을 이 화면에서 펼쳐 둔다(INV-K9). 운영자가 목록을 다 지웠으면 줄을 그리지 않는다 */}
                 {prohibited.length > 0 ? (
-                  <details open data-prohibited="">
+                  <details open data-start-open="" data-prohibited="">
                     <summary>
                       보낼 수 없는 물품
                       <Chevron />

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DRAFT_MAX_AGE_MS } from "@/entities/session/model/session-lifetime";
 import { DraftPurge } from "@/shared/lib/form-draft/use-form-draft";
+import { FoldStartOpen } from "@/shared/ui/fold-start-open";
 import { IntentPrefetch } from "@/shared/ui/intent-prefetch";
 import { HeaderMemoryProvider } from "@/widgets/site-header/model/header-memory";
 import "./globals.css";
@@ -49,6 +50,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <HeaderMemoryProvider>{children}</HeaderMemoryProvider>
         {/* 링크에 마우스를 올리면 그 페이지를 통째로 미리 받는다(shared/ui/intent-prefetch) */}
         <IntentPrefetch />
+        {/* 처음부터 펼쳐 둔 접기는 열 때 움직이지 않고, 사람이 한 번 접거나 펼친 뒤부터 등장 효과를 받는다(shared/ui/fold-start-open) */}
+        <FoldStartOpen />
         {/* session-login INV-L20: 어느 화면을 열든 만료된 폼 임시 저장을 지운다(로그인한 사람이 누구인지는 여기서 모른다 — 다른 계정 것은 상단 바·운영자 틀이 지운다) */}
         <DraftPurge userId={null} maxAgeMs={DRAFT_MAX_AGE_MS} />
       </body>

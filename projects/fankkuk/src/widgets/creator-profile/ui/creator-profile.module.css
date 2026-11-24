@@ -206,7 +206,7 @@
    3) 누름 반응 — 버튼·타일·카드를 누르면 98%(tokens 0-1 「누름 scale(.98)」·--dur-press 100)
    4) 마우스 올림 그림자는 마우스 기기에서만 — 터치에서 누른 뒤 그림자가 남지 않게 */
 @keyframes reveal { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-.dbody:not([hidden]), .guide details[open] > :not(summary) { animation: reveal 0.25s var(--ease-micro) both; }
+.dbody:not([hidden]), .guide details[open]:not([data-start-open]) > :not(summary) { animation: reveal 0.25s var(--ease-micro) both; }
 .chevron, .dchev { transition: transform var(--dur-hover) var(--ease-out); }
 .dtoggle, .oarrow, .opause { transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-hover) var(--ease-out); }
 .dtoggle:active, .oarrow:active:not(:disabled), .opause:active { transform: scale(0.98); }
@@ -217,7 +217,7 @@
 @media (prefers-reduced-motion: reduce) {
   .chevron, .dchev, .other, .gtile, .dtoggle, .oarrow, .opause { transition: none; }
   .other:hover, .gtile:hover { transform: none; }
-  .dbody:not([hidden]), .guide details[open] > :not(summary) { animation: none; }
+  .dbody:not([hidden]), .guide details[open]:not([data-start-open]) > :not(summary) { animation: none; }
   .dtoggle:active, .oarrow:active:not(:disabled), .opause:active, .gtile:active, .other:active { transform: none; } /* 켜는 규칙과 같은 선택자여야 이긴다 */
 }
 

@@ -107,4 +107,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .cover > img { scale: none !important; }
+  .card:has(.name a[href]):active { transform: none !important; } /* 누름 98% 도 끈다 — 크기가 한 번에 바뀌는 것까지(12-9) */
 }
