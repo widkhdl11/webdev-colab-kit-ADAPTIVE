@@ -81,3 +81,6 @@
    마우스를 올린 떠오름보다 무거운 선택자라 누를 때는 이것이 이긴다. 크리에이터 카드(.ccard)는 base.css 공용 카드 누름이 맡는다. 움직임 줄이기면 같은 선택자로 끈다 */
 .gcard:has(:global(.stretch):active) { transform: scale(0.98); transition-duration: var(--dur-press); }
 @media (prefers-reduced-motion: reduce) { .gcard:has(:global(.stretch):active) { transform: none; } }
+
+/* 50절 아일랜드 걷어냄(2026-11-26) — 구역 판은 면·그림자·모서리 없이 아래 1px 선만, 색 띠·바탕은 흰색. 되돌리려면 이 블록을 지운다 */
+.empty { border: 0; border-bottom: 1px solid var(--gray-200); border-radius: 0; background: none; box-shadow: none; }

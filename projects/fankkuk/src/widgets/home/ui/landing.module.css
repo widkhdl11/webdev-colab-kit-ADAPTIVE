@@ -139,3 +139,7 @@
 @media (prefers-reduced-motion: reduce) {
   .ico img, .searchGo { transition: none; transform: none !important; }
 }
+
+/* 50절 아일랜드 걷어냄(2026-11-26) — 구역 판은 면·그림자·모서리 없이 아래 1px 선만, 색 띠·바탕은 흰색. 되돌리려면 이 블록을 지운다 */
+.page { background: var(--white); }
+.end { background: var(--white); }

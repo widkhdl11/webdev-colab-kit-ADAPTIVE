@@ -70,3 +70,6 @@
 
 /* 2026-11-22 누름 반응(design-prompt 12-5) — 펼친 문의 줄은 위 하늘 면이 base.css 의 줄 누름 바탕을 덮어 여기서 다시 적는다. 줄이라 크기는 그대로, 누르는 동안 --gray-100 */
 .page :global(.acc details > summary:active:not([hidden])) { background: var(--gray-100); }
+
+/* 50절 아일랜드 걷어냄(2026-11-26) — 구역 판은 면·그림자·모서리 없이 아래 1px 선만, 색 띠·바탕은 흰색. 되돌리려면 이 블록을 지운다 */
+.page { background: var(--white); }

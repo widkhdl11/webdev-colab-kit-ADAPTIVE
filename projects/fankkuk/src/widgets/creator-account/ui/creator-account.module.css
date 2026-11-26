@@ -72,3 +72,6 @@
 
 /* 2026-11-22 누름 반응(design-prompt 12-5) — 알림 스위치 줄은 줄이라 크기는 그대로, 누르는 동안 마우스 올림(--gray-50)보다 한 단계 진한 --gray-100. 저장하는 동안(aria-disabled)은 뺀다 */
 .swBtn:active:not([aria-disabled="true"]) { background: var(--gray-100); }
+
+/* 50절 아일랜드 걷어냄(2026-11-26) — 구역 판은 면·그림자·모서리 없이 아래 1px 선만, 색 띠·바탕은 흰색. 되돌리려면 이 블록을 지운다 */
+.swCard, .must { border: 0; border-bottom: 1px solid var(--gray-200); border-radius: 0; background: none; box-shadow: none; }

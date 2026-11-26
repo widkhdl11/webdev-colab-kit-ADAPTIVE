@@ -6,6 +6,8 @@
 @import "../shared/ui/base.css" layer(base);
 /* 선 아이콘 듀오톤은 층 밖에 둔다 — 이유는 그 파일 머리 */
 @import "../shared/ui/icon-duotone.css";
+/* 아일랜드(떠 있는 판) 걷어냄 — 층 밖, 이유는 그 파일 머리 */
+@import "../shared/ui/island-flat.css";
 /* 헤더·푸터는 모든 화면에 붙어 사실상 전역이다. 전역 CSS 는 app 안에서 불러오는 것이 Next.js 권장이라 여기서 불러온다. */
 @import "../widgets/site-header/ui/site-header.css";
 @import "../widgets/site-footer/ui/site-footer.css";

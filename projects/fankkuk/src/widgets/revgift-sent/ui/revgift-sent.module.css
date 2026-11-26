@@ -131,3 +131,6 @@
 /* 2026-11-22 누름 반응(design-prompt 12-5) — 「+」 접기 줄은 줄이라 크기는 그대로, 누르는 동안 바탕 --gray-100(면 바뀜 전환 --dur-hover) */
 .fold > summary { transition: background-color var(--dur-hover) var(--ease-out); }
 .fold > summary:active { background: var(--gray-100); }
+
+/* 50절 아일랜드 걷어냄(2026-11-26) — 구역 판은 면·그림자·모서리 없이 아래 1px 선만, 색 띠·바탕은 흰색. 되돌리려면 이 블록을 지운다 */
+.privacy { border: 0; border-bottom: 1px solid var(--gray-200); border-radius: 0; background: none; box-shadow: none; }

@@ -6,3 +6,6 @@
 .body { margin: 0; color: var(--gray-600); }
 /* 선 버튼은 짙은 선(design-rules 「다섯 화면 공통」의 --gray-500 — 기준 화면과 같게) */
 .root :global(.btn--line) { box-shadow: inset 0 0 0 1px var(--gray-500); }
+
+/* 50절 아일랜드 걷어냄(2026-11-26) — 구역 판은 면·그림자·모서리 없이 아래 1px 선만, 색 띠·바탕은 흰색. 되돌리려면 이 블록을 지운다 */
+.root { border: 0; border-bottom: 1px solid var(--gray-200); border-radius: 0; background: none; box-shadow: none; }

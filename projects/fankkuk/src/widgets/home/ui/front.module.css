@@ -334,3 +334,7 @@
 @media (hover: hover) {
   .notices:global(.nlist) a:hover::before { height: 24px; }
 }
+
+/* 50절 아일랜드 걷어냄(2026-11-26) — 구역 판은 면·그림자·모서리 없이 아래 1px 선만, 색 띠·바탕은 흰색. 되돌리려면 이 블록을 지운다 */
+.landing { background: var(--white); }
+.notices:global(.nlist) { border: 0; border-bottom: 1px solid var(--gray-200); border-radius: 0; background: none; box-shadow: none; }

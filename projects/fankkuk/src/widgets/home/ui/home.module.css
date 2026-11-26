@@ -105,3 +105,6 @@
 .emptyText > p { margin: 0; font-size: var(--fs-small); line-height: 1.6; color: var(--gray-600); }
 .emptyText > p:first-child { min-height: 44px; display: flex; align-items: center; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; color: var(--ink); }
 .emptyText > .emptyAct { margin-top: var(--space-2); }
+
+/* 50절 아일랜드 걷어냄(2026-11-26) — 구역 판은 면·그림자·모서리 없이 아래 1px 선만, 색 띠·바탕은 흰색. 되돌리려면 이 블록을 지운다 */
+.emptyCard, .rows { border: 0; border-bottom: 1px solid var(--gray-200); border-radius: 0; background: none; box-shadow: none; }
