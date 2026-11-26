@@ -100,7 +100,7 @@ const TERMS: ReadonlyArray<{
 /** 완료 표시 — design-rules §3: 체크는 단색 SVG, 글자색을 따라간다. 화면 낭독기에는 읽히지 않는다. */
 function CheckIcon({ size }: { size: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+    <svg data-icon="line" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
       <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );

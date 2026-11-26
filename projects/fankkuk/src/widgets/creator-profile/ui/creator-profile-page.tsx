@@ -89,7 +89,7 @@ export type CreatorProfilePageProps = {
 
 function Chevron() {
   return (
-    <svg className={s.chevron} viewBox="0 0 24 24" aria-hidden="true">
+    <svg data-icon="line" className={s.chevron} viewBox="0 0 24 24" aria-hidden="true">
       <path d="m6 9 6 6 6-6" />
     </svg>
   );
@@ -201,8 +201,8 @@ export function CreatorProfilePage({
               {/* INV-E8: 숫자만 — 누가·몇 개·금액은 없다. 0 이면 줄을 그리지 않는다. 팬 수는 이름 가까이(6-5 3) */}
               {monthFans > 0 ? (
                 <p className={s.metaLine}>
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" />
+                  <svg data-icon="line" viewBox="0 0 24 24" aria-hidden="true">
+                    <path data-duo="" d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" />
                   </svg>
                   이번 달 선물한 팬 {monthFans.toLocaleString("ko-KR")}명
                 </p>
@@ -210,8 +210,8 @@ export function CreatorProfilePage({
               {/* 기념일 — 30일 안일 때만(INV-B8), 이름 쪽 */}
               {dday && ddayDate ? (
                 <p className={s.metaLine}>
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <rect x="3.5" y="5" width="17" height="15" rx="3" />
+                  <svg data-icon="line" viewBox="0 0 24 24" aria-hidden="true">
+                    <rect data-duo="" x="3.5" y="5" width="17" height="15" rx="3" />
                     <path d="M8 3v4M16 3v4M3.5 10h17" />
                   </svg>
                   기념일 {dday.name} ({ddayDate.month}월 {ddayDate.day}일)
@@ -284,7 +284,7 @@ export function CreatorProfilePage({
                 {FLOW_STEPS.map((step, i) => (
                   <li key={step.title} className={step.gate ? `${s.fstep} ${s.gate}` : s.fstep}>
                     {i > 0 ? (
-                      <svg className={s.farrow} viewBox="0 0 16 16" aria-hidden="true">
+                      <svg data-icon="line" className={s.farrow} viewBox="0 0 16 16" aria-hidden="true">
                         <path d="M2 8h11M9 4l4 4-4 4" />
                       </svg>
                     ) : null}
@@ -314,7 +314,7 @@ export function CreatorProfilePage({
                       <ul className={s.prohibited}>
                         {prohibited.map((item) => (
                           <li key={item.id}>
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <svg data-icon="line" viewBox="0 0 24 24" aria-hidden="true">
                               <path d="m7 7 10 10M17 7 7 17" />
                             </svg>
                             <span>

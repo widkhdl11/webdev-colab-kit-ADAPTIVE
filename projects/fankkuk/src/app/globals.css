@@ -4,6 +4,8 @@
 /* 공통 기본 스타일은 층(base) 안에 둔다 — 층 밖에 있는 화면 CSS 모듈이 선택자 점수와 상관없이 이긴다.
    예전에는 base.css 의 점수 높은 선택자가 모듈 선언을 눌러 모듈 값이 화면에 안 나오는 곳이 있었다(2026-11-12 조사). */
 @import "../shared/ui/base.css" layer(base);
+/* 선 아이콘 듀오톤은 층 밖에 둔다 — 이유는 그 파일 머리 */
+@import "../shared/ui/icon-duotone.css";
 /* 헤더·푸터는 모든 화면에 붙어 사실상 전역이다. 전역 CSS 는 app 안에서 불러오는 것이 Next.js 권장이라 여기서 불러온다. */
 @import "../widgets/site-header/ui/site-header.css";
 @import "../widgets/site-footer/ui/site-footer.css";

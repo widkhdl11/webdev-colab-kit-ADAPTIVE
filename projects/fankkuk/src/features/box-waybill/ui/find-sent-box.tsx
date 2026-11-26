@@ -92,8 +92,8 @@ export function FindSentBox({
     return (
       <div ref={resultRef} tabIndex={-1} className={d.stack} role="status">
         <p className={d.done}>
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <circle cx="12" cy="12" r="10" />
+          <svg data-icon="line" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle data-duo="" cx="12" cy="12" r="10" />
             <path d="m16 9-5.5 5.5L8 12" />
           </svg>
           상자 확인 완료

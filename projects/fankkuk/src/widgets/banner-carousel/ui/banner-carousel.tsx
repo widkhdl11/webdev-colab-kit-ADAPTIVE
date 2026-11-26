@@ -32,8 +32,8 @@ function offsetOf(i: number, current: number, n: number): number {
 
 function Icon({ d }: { d: string }) {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d={d} />
+    <svg data-icon="line" viewBox="0 0 24 24" aria-hidden="true">
+      <path data-duo={/z/i.test(d) ? "" : undefined} d={d} />
     </svg>
   );
 }

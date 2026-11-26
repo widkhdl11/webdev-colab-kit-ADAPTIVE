@@ -68,8 +68,8 @@ const OPENED_LABEL = { none: "장치 없음", device: "장치 나옴" } as const
 
 function InfoIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
+    <svg data-icon="line" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+      <circle data-duo="" cx="12" cy="12" r="9" />
       <path d="M12 11v5M12 7.5v.01" />
     </svg>
   );

@@ -295,8 +295,8 @@ export function CreatorAccountPage({
         {/* 꼭 가는 알림(승인 요청·돌려보내는 선물 등)은 두 칸을 꺼도 간다(notifications INV-N6 표, 2026-10-12 문제집 D7) — 접지 않고 늘 보인다(my-account INV-A11) */}
         <div className={s.must}>
           <span className={s.mustIco} aria-hidden="true">
-            <svg viewBox="0 0 24 24" focusable="false">
-              <circle cx="12" cy="12" r="10" />
+            <svg data-icon="line" viewBox="0 0 24 24" focusable="false">
+              <circle data-duo="" cx="12" cy="12" r="10" />
               <path d="M12 16v-4" />
               <path d="M12 8h.01" />
             </svg>

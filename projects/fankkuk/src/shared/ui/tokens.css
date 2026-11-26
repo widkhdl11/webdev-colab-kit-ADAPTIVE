@@ -239,6 +239,9 @@
   --art-step: 56px; /* 단계 카드 그림 */
   --art-empty: 160px; /* 빈 상태 그림 (휴대폰 128) */
   --icon-xs: 20px;
+  --icon-stroke: 1.75px; /* 선 아이콘 선 두께 하나 (2026-11-26 듀오톤, design-rules 49절) */
+  --icon-duo: var(--primary); /* 선 아이콘 닫힌 모양 안 채움 */
+  --icon-duo-opacity: 0.7;
   --fw-sub: 500; /* 시안 --fw-subtitle. 리드·설명 글은 2026-10-25 부터 400(design-rules 28·30절) — 남은 쓰임은 BACKLOG 「입력 칸 라벨이 굵기 700」 */
   --lh-caption: 1.5;
 

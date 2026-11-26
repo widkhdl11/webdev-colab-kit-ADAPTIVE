@@ -6,11 +6,11 @@ import type { ReactNode } from "react";
 export type SettingsIcon = "chat" | "pin" | "gift" | "ban" | "shield" | "out";
 
 const PATHS: Record<SettingsIcon, ReactNode> = {
-  chat: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />,
+  chat: <path data-duo="" d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />,
   pin: (
     <>
-      <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
-      <circle cx="12" cy="10" r="3" />
+      <path data-duo="" d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+      <circle data-duo="" cx="12" cy="10" r="3" />
     </>
   ),
   gift: (
@@ -18,17 +18,17 @@ const PATHS: Record<SettingsIcon, ReactNode> = {
       <path d="M12 7v14" />
       <path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" />
       <path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5" />
-      <rect x="3" y="7" width="18" height="4" rx="1" />
+      <rect data-duo="" x="3" y="7" width="18" height="4" rx="1" />
     </>
   ),
   ban: (
     <>
-      <circle cx="12" cy="12" r="10" />
+      <circle data-duo="" cx="12" cy="12" r="10" />
       <path d="m4.9 4.9 14.2 14.2" />
     </>
   ),
   shield: (
-    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+    <path data-duo="" d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
   ),
   out: (
     <>
@@ -42,7 +42,7 @@ const PATHS: Record<SettingsIcon, ReactNode> = {
 /** 선 아이콘 하나(24 격자). 크기·색은 부르는 쪽 클래스가 정한다 */
 export function SettingsIconSvg({ name, className }: { name: SettingsIcon; className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <svg data-icon="line" className={className} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       {PATHS[name]}
     </svg>
   );

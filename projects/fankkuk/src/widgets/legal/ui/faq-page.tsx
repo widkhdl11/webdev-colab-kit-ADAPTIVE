@@ -153,7 +153,7 @@ export function FaqPage({
                         </b>
                         {f.frequent ? <FrequentBadge /> : null}
                       </span>
-                      <svg viewBox="0 0 20 20" aria-hidden="true">
+                      <svg data-icon="line" viewBox="0 0 20 20" aria-hidden="true">
                         <path
                           d="m4 7.5 6 6 6-6"
                           fill="none"

@@ -403,8 +403,8 @@ function CharCount({ id, value, max }: { id: string; value: string; max: number 
 
 export function ErrorIcon() {
   return (
-    <svg className="ico" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
+    <svg data-icon="line" className="ico" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <circle data-duo="" cx="12" cy="12" r="9" />
       <path d="M12 7.5v5.5" />
       <path d="M12 16.5h.01" />
     </svg>
@@ -413,8 +413,8 @@ export function ErrorIcon() {
 
 function DoneIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
+    <svg data-icon="line" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+      <circle data-duo="" cx="12" cy="12" r="9" />
       <path d="m8 12.5 2.8 2.8L16 10" />
     </svg>
   );

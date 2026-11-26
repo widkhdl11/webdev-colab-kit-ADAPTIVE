@@ -21,7 +21,7 @@ import { useFollowSave } from "./use-follow-save";
 // 버튼 아이콘 — 꾸밈이라 읽지 않는다. 마우스를 올렸을 때의 움직임은 follow-button.module.css(사용자 「버튼 디테일 살려줘」)
 function Icon({ d }: { d: string }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg data-icon="line" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d={d} />
     </svg>
   );

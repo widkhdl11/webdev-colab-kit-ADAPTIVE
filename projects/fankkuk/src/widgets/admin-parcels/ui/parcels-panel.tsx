@@ -16,8 +16,8 @@ const TONE_CLASS: Record<StateTone, string> = { plain: a.tag, warn: `${a.tag} ${
 
 function SearchIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
-      <circle cx="11" cy="11" r="7" />
+    <svg data-icon="line" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+      <circle data-duo="" cx="11" cy="11" r="7" />
       <path d="m20 20-3.5-3.5" />
     </svg>
   );

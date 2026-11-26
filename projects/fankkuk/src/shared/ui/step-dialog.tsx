@@ -156,7 +156,7 @@ export function StepDialog({
         </h2>
         {headExtra}
         <button className={m.x} type="button" aria-label="닫기" onClick={request} aria-disabled={busy || undefined}>
-          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+          <svg data-icon="line" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
             <path d="M6 6l12 12M18 6 6 18" />
           </svg>
         </button>

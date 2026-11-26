@@ -79,7 +79,7 @@ export function ApprovalCancelButton({
     <>
       <button className={`btn btn--text btn--sm ${a["cancel-btn"]}`} type="button" data-cancel-approval="" aria-label={`${fanNickname}님 선물 승인 취소`} onClick={openSheet}>
         {/* 되돌리기 화살표 — lucide rotate-ccw(lucide-static@0.544.0 icons/rotate-ccw.svg) 경로 그대로. 보일지·크기는 .cancel-icon 한 곳에서 */}
-        <svg className={a["cancel-icon"]} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+        <svg data-icon="line" className={a["cancel-icon"]} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
           <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
           <path d="M3 3v5h5" />
         </svg>

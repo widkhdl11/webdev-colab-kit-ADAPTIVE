@@ -61,7 +61,7 @@ export function PaymentSummary({ payment, differences, dueKrw = 0, inProgress = 
       <p className={s.chips}>
         {dueKrw > 0 ? <span className={statusTagClass("warn", "tag--dot")}>추가 결제 {won(dueKrw)}</span> : null}
         <span className="tag">
-          <svg width={16} height={16} viewBox="0 0 24 24" aria-hidden="true">
+          <svg data-icon="line" width={16} height={16} viewBox="0 0 24 24" aria-hidden="true">
             <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           검수 포함

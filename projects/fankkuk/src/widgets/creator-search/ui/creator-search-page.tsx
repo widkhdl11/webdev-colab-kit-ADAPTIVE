@@ -42,7 +42,7 @@ import s from "./creator-search.module.css";
 // 본인 확인 안내 앞 선 아이콘(lucide badge-check, 시안 v18 #i-badge-check)
 function CheckIcon() {
   return (
-    <svg
+    <svg data-icon="line"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -51,7 +51,7 @@ function CheckIcon() {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+      <path data-duo="" d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
       <path d="m9 12 2 2 4-4" />
     </svg>
   );
@@ -146,7 +146,7 @@ export function CreatorSearchPage({
           onChange={(e) => setQuery(e.target.value)}
         />
         <button className={s.searchGo} type="submit" aria-label="검색">
-          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <svg data-icon="line" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" strokeWidth="2.4" />
             <path d="m15.5 15.5 5 5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
           </svg>

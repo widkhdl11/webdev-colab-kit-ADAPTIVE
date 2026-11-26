@@ -27,8 +27,8 @@ export function boxPlace(it: Pick<BluetoothItem, "boxCount" | "boxSeq">): string
 
 function CheckIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <circle cx="12" cy="12" r="10" />
+    <svg data-icon="line" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle data-duo="" cx="12" cy="12" r="10" />
       <path d="m16 9-5.5 5.5L8 12" />
     </svg>
   );

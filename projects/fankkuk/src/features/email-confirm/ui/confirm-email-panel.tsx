@@ -41,7 +41,7 @@ export function ConfirmEmailPanel({ token }: { token: string }) {
         <p className={`${s.text} ${s.ok}`} role="status">
           {state.kind === "done" ? (
             <>
-              <svg width="24" height="24" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+              <svg data-icon="line" width="24" height="24" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
                 <circle cx="10" cy="10" r="10" fill="currentColor" />
                 <path d="m5 10 3 3 7-7" fill="none" stroke="var(--white)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>

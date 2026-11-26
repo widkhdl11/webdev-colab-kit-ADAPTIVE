@@ -593,7 +593,7 @@ tierCountText(summary.counts) || "없음";
                     </span>
                     {/* 고른 카드의 오른쪽 체크 — 모양만, 고른 상태는 라디오가 알린다 */}
                     <span className={f["pick-ok"]} aria-hidden="true">
-                      <svg width="14" height="14" viewBox="0 0 24 24">
+                      <svg data-icon="line" width="14" height="14" viewBox="0 0 24 24">
                         <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </span>
@@ -802,8 +802,8 @@ tierCountText(summary.counts) || "없음";
           <section className={f.memo} aria-labelledby="memo-h">
             <div>
               <h3 className={f["memo-h"]} id="memo-h">
-                <svg className={f["memo-lock"]} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                <svg data-icon="line" className={f["memo-lock"]} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <rect data-duo="" width="18" height="11" x="3" y="11" rx="2" ry="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
                 나만 보는 메모 <span className={f["photo-opt"]}>(선택)</span>
@@ -1102,7 +1102,7 @@ tierCountText(summary.counts) || "없음";
             </div>
             <p className={f["tag-line"]}>
               <span className="tag tag--brand">
-                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                <svg data-icon="line" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 검수 포함

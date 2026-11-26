@@ -108,7 +108,7 @@ export function DocTocBar({ groups, current, hidden, frequent, onGo, onFind, sea
           {now.label}
         </p>
         <button type="button" className={s.barBtn} onClick={onFind} hidden={searchSeen}>
-          <svg viewBox="0 0 20 20" aria-hidden="true">
+          <svg data-icon="line" viewBox="0 0 20 20" aria-hidden="true">
             <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />
             <path d="m13.5 13.5 3.5 3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
@@ -123,7 +123,7 @@ export function DocTocBar({ groups, current, hidden, frequent, onGo, onFind, sea
           onClick={() => setOpen((v) => !v)}
         >
           {open ? "목차 닫기" : "목차 열기"}
-          <svg className={s.chev} viewBox="0 0 20 20" aria-hidden="true">
+          <svg data-icon="line" className={s.chev} viewBox="0 0 20 20" aria-hidden="true">
             <path d="m4 7.5 6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>

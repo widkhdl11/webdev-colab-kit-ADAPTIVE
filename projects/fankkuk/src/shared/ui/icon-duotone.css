@@ -1,0 +1,9 @@
+/* 선 아이콘 듀오톤 (2026-11-26 사용자 지시, design-rules 49절)
+   소스의 선 아이콘 svg 에는 data-icon="line", 그 안 닫힌 모양(사각·원·z 로 닫히거나 제자리로 돌아오는 경로)에는 data-duo 가 붙어 있다.
+   닫힌 모양 안을 하늘로 채우고 선 두께·끝 모양을 하나로 맞춘다. 운영자 화면은 넣지 않는다(23-1 제외 목록과 같다).
+   base.css 와 달리 층(layer) 밖에 둔다 — 화면 CSS 모듈 수십 곳이 이미 `.칸 svg { stroke-width }` 를 적어 두었고,
+   층 안 규칙은 선택자 점수와 상관없이 그 값에 진다. 층 밖에서는 점수(:root + svg + 속성 = 0,2,1)로 앞선다. */
+:root svg[data-icon="line"]:where(:not(.admin-area *)) { stroke-width: var(--icon-stroke); stroke-linecap: round; stroke-linejoin: round; }
+/* 안쪽 모양에 선 두께를 따로 적은 아이콘(검색 버튼 2.4·복사 버튼 1.8·닫기 2.5 등)도 같은 값으로 */
+:root svg[data-icon="line"]:where(:not(.admin-area *)) * { stroke-width: var(--icon-stroke); }
+:root svg[data-icon="line"]:where(:not(.admin-area *)) [data-duo] { fill: var(--icon-duo); fill-opacity: var(--icon-duo-opacity); }

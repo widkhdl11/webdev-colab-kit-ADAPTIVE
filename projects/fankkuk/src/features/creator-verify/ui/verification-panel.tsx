@@ -68,7 +68,7 @@ function StageTag({ panel, dot }: { panel: MyVerificationPanel; dot?: boolean })
 
 function CheckIcon() {
   return (
-    <svg width={20} height={20} viewBox="0 0 24 24" aria-hidden="true" className={s["sent-mark"]}>
+    <svg data-icon="line" width={20} height={20} viewBox="0 0 24 24" aria-hidden="true" className={s["sent-mark"]}>
       <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
       <path d="m7.5 12.5 3 3 6-6.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>

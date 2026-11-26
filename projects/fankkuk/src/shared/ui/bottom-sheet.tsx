@@ -83,7 +83,7 @@ export function BottomSheet({
             {meta ? <p className={`t-meta ${b.meta}`}>{meta}</p> : null}
           </div>
           <button className={b.close} type="button" aria-label="닫기" disabled={busy} onClick={closeSheet}>
-            <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+            <svg data-icon="line" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
               <path d="m4 4 12 12M16 4 4 16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
           </button>

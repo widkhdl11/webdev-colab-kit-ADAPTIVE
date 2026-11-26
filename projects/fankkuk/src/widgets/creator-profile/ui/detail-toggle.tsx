@@ -13,7 +13,7 @@ export function DetailToggle({ children }: { children: ReactNode }) {
       <div className={s.dtoggleRow}>
         <button type="button" className={s.dtoggle} aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen((v) => !v)}>
           <span>{open ? "상세 정보 접기" : "상세 정보 펼치기"}</span>
-          <svg className={s.dchev} viewBox="0 0 24 24" aria-hidden="true">
+          <svg data-icon="line" className={s.dchev} viewBox="0 0 24 24" aria-hidden="true">
             <path d="m6 9 6 6 6-6" />
           </svg>
         </button>

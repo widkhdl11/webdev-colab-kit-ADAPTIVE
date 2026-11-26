@@ -73,7 +73,7 @@ type Props = {
 /** 그림 아이콘 — 선 그림(24 칸). 모양 뜻은 옆 글자가 전한다(4-2) */
 function Icon({ d }: { d: readonly string[] }) {
   return (
-    <svg className={s.icon} viewBox="0 0 24 24" aria-hidden="true">
+    <svg data-icon="line" className={s.icon} viewBox="0 0 24 24" aria-hidden="true">
       {d.map((p) => (
         <path key={p} d={p} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       ))}

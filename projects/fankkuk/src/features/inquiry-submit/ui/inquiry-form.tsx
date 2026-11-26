@@ -16,7 +16,7 @@ import s from "./inquiry-form.module.css";
 
 function Chevron({ className }: { className: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+    <svg data-icon="line" className={className} width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
       <path d="m4 7.5 6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );

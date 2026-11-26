@@ -59,7 +59,7 @@ import s from "./gift-status.module.css";
 
 function Check({ size = 18 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+    <svg data-icon="line" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
       <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -69,8 +69,8 @@ function Check({ size = 18 }: { size?: number }) {
 function BoxIcon() {
   return (
     <span className={s.boxIco} aria-hidden="true">
-      <svg viewBox="0 0 24 24" focusable="false">
-        <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" />
+      <svg data-icon="line" viewBox="0 0 24 24" focusable="false">
+        <path data-duo="" d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" />
         <path d="M12 22V12" />
         <polyline points="3.29 7 12 12 20.71 7" />
         <path d="m7.5 4.27 9 5.15" />

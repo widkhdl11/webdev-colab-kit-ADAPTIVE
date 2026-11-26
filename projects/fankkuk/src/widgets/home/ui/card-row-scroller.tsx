@@ -8,7 +8,7 @@ import s from "./front.module.css";
 
 function Chevron({ dir }: { dir: "prev" | "next" }) {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <svg data-icon="line" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d={dir === "prev" ? "m15 18-6-6 6-6" : "m9 18 6-6-6-6"} />
     </svg>
   );

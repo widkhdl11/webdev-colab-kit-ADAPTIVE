@@ -50,7 +50,7 @@ export function guestTiles(prices: PublicPriceTable): FrontTile[] {
 
 function SearchGlyph() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <svg data-icon="line" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" strokeWidth="2.4" />
       <path d="m15.5 15.5 5 5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
     </svg>
@@ -148,9 +148,9 @@ export function EmptyCard({ icon, text, children }: { icon: keyof typeof EMPTY_I
   return (
     <div className={h.emptyCard}>
       <span className={h.emptyIco} aria-hidden="true">
-        <svg viewBox="0 0 24 24" focusable="false">
-          {icon === "eye" ? <circle cx="12" cy="12" r="3" /> : null}
-          <path d={EMPTY_ICON[icon]} />
+        <svg data-icon="line" viewBox="0 0 24 24" focusable="false">
+          {icon === "eye" ? <circle data-duo="" cx="12" cy="12" r="3" /> : null}
+          <path data-duo={/z/i.test(EMPTY_ICON[icon]) ? "" : undefined} d={EMPTY_ICON[icon]} />
         </svg>
       </span>
       <div className={h.emptyText}>
@@ -236,7 +236,7 @@ const MAX_GIFTS = 3;
 
 function Chev() {
   return (
-    <svg className={h.chev} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <svg data-icon="line" className={h.chev} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d="m9 18 6-6-6-6" />
     </svg>
   );
@@ -350,11 +350,11 @@ type IconName = keyof typeof ICON_PATHS;
 
 function LineIcon({ name, className }: { name: IconName; className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      {(name === "lock" || name === "unlock") && <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />}
-      {name === "eye" && <circle cx="12" cy="12" r="3" />}
-      {name === "inspect" && <circle cx="18.5" cy="16.5" r="2.5" />}
-      {name === "check" && <circle cx="12" cy="12" r="10" />}
+    <svg data-icon="line" className={className} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      {(name === "lock" || name === "unlock") && <rect data-duo="" width="18" height="11" x="3" y="11" rx="2" ry="2" />}
+      {name === "eye" && <circle data-duo="" cx="12" cy="12" r="3" />}
+      {name === "inspect" && <circle data-duo="" cx="18.5" cy="16.5" r="2.5" />}
+      {name === "check" && <circle data-duo="" cx="12" cy="12" r="10" />}
       {ICON_PATHS[name].map((d) => (
         <path key={d} d={d} />
       ))}

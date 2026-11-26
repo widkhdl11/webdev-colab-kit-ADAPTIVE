@@ -66,7 +66,7 @@ function Fold({ id, icon, title, meta, children }: { id?: string; icon: Settings
           {title}
         </span>
         {typeof meta === "string" ? <span className={s.foldMeta}>{meta}</span> : (meta ?? null)}
-        <svg className={s.foldChev} viewBox="0 0 24 24" aria-hidden="true">
+        <svg data-icon="line" className={s.foldChev} viewBox="0 0 24 24" aria-hidden="true">
           <path d="m6 9 6 6 6-6" />
         </svg>
       </summary>
@@ -189,7 +189,7 @@ export function CreatorSettingsPage({
               <RowIcon name="chat" />
               <span className={s.foldName}>카카오톡 인증 알림 연결</span>
               <StateBadge tone="plain" text="연결 전" />
-              <svg className={s.foldChev} viewBox="0 0 24 24" aria-hidden="true">
+              <svg data-icon="line" className={s.foldChev} viewBox="0 0 24 24" aria-hidden="true">
                 <path d="m9 6 6 6-6 6" />
               </svg>
             </Link>

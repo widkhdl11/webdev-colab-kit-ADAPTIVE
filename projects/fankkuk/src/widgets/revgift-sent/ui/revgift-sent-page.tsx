@@ -181,7 +181,7 @@ function Batch({ b, bi, boxByOrder, senderName }: { b: SentBatch; bi: number; bo
             <FaceAvatar key={x.orderNo} index={i} className={s.face} />
           ))}
         </span>
-        <svg className={s.chev} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <svg data-icon="line" className={s.chev} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path d="m6 9 6 6 6-6" />
         </svg>
       </summary>

@@ -351,7 +351,7 @@ export function BoxManageDialog({
 
 function LinkIcon() {
   return (
-    <svg className={s.ico} viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+    <svg data-icon="line" className={s.ico} viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
       <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
       <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
     </svg>

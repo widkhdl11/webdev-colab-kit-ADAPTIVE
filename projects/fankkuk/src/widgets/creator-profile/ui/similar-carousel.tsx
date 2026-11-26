@@ -15,7 +15,7 @@ const PER_VIEW = 3;
 
 function Arrow({ d }: { d: string }) {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
+    <svg data-icon="line" viewBox="0 0 24 24" aria-hidden="true">
       <path d={d} />
     </svg>
   );

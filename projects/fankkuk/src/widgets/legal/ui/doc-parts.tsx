@@ -48,7 +48,7 @@ export function FrequentBadge() {
 /** 요약 줄 오른쪽 화살표 */
 function GoArrow({ className }: { className: string }) {
   return (
-    <svg className={className} viewBox="0 0 20 20" aria-hidden="true">
+    <svg data-icon="line" className={className} viewBox="0 0 20 20" aria-hidden="true">
       <path d="m7.5 4 6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -173,7 +173,7 @@ export function DocSearch({
       </label>
       <div className={s.searchRow}>
         <span className={s.searchBox}>
-          <svg className={s.searchIcon} viewBox="0 0 20 20" aria-hidden="true">
+          <svg data-icon="line" className={s.searchIcon} viewBox="0 0 20 20" aria-hidden="true">
             <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />
             <path d="m13.5 13.5 3.5 3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
@@ -273,7 +273,7 @@ export function CopyAnchor({ id, title }: { id: string; title: string }) {
           );
         }}
       >
-        <svg viewBox="0 0 20 20" aria-hidden="true">
+        <svg data-icon="line" viewBox="0 0 20 20" aria-hidden="true">
           <path
             d="M8.5 11.5a3 3 0 0 0 4.2 0l2.6-2.6a3 3 0 0 0-4.2-4.2l-1 1M11.5 8.5a3 3 0 0 0-4.2 0l-2.6 2.6a3 3 0 0 0 4.2 4.2l1-1"
             fill="none"

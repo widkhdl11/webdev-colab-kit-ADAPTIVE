@@ -11,7 +11,7 @@ export type VerifyingCreatorView = { creatorId: string; name: string; intro: str
 
 function ClockIcon() {
   return (
-    <svg width={20} height={20} viewBox="0 0 24 24" aria-hidden="true">
+    <svg data-icon="line" width={20} height={20} viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" />
       <path d="M12 7v5l3 2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>

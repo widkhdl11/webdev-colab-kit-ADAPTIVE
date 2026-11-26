@@ -16,7 +16,7 @@ const FIELD_IDS: Readonly<Record<ReportField, string>> = { kind: "r-kind", reply
 
 function Chevron({ className }: { className: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+    <svg data-icon="line" className={className} width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
       <path d="m4 7.5 6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -131,9 +131,9 @@ export function ReportForm({ to, toLabel }: Props) {
         <div role="status">{opened && <p className={s.done}>이메일 앱에서 내용을 확인하고 전송해 주세요. 앱이 열리지 않으면 {toLabel}으로 직접 보내 주세요.</p>}</div>
         <button type="submit" className="btn btn--block">
           {/* 편지봉투 — lucide-static@0.544.0 icons/mail.svg 경로 그대로. 16 · 선 2 · 글자색(design-rules 크리에이터 카드 버튼 아이콘과 같은 값). 꾸밈이라 읽지 않는다 */}
-          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+          <svg data-icon="line" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
             <path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" />
-            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <rect data-duo="" x="2" y="4" width="20" height="16" rx="2" />
           </svg>
           이메일로 보내기
         </button>

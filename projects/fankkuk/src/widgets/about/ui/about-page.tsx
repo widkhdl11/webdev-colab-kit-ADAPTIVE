@@ -388,16 +388,16 @@ export function AboutPage({ signedIn = false }: Props) {
               <div className={s.endBtns}>
                 <Link className="btn btn--line" href="/creators">
                   {/* 아이콘: lucide-static@0.544.0 search · user-plus 경로 그대로, 16 · 선 2 · 글자색. 꾸밈이라 읽지 않는다 */}
-                  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-                    <circle cx="11" cy="11" r="8" />
+                  <svg data-icon="line" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                    <circle data-duo="" cx="11" cy="11" r="8" />
                     <path d="m21 21-4.3-4.3" />
                   </svg>
                   크리에이터 찾기
                 </Link>
                 <Link className="btn" href="/signup">
-                  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                  <svg data-icon="line" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
+                    <circle data-duo="" cx="9" cy="7" r="4" />
                     <path d="M19 8v6" />
                     <path d="M22 11h-6" />
                   </svg>
