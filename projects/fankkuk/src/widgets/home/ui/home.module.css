@@ -34,7 +34,7 @@
 .faceSm { width: 40px; height: 40px; flex-shrink: 0; }
 
 /* 크리에이터 홈 바로가기 — 시안 v21-addendum3/cre-21.css .row .ri · .rv (한 줄 목록은 위 .rows · .row 그대로) */
-.ri { display: grid; flex: none; place-items: center; width: 40px; height: 40px; border-radius: var(--r-pill); background: var(--primary-50); }
+.ri { display: grid; flex: none; place-items: center; width: 40px; height: 40px; border-radius: var(--r-pill); }
 .ri svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .rv { flex: none; font-weight: var(--fw-btn); text-align: right; font-variant-numeric: tabular-nums; }
 .rv small { margin-left: 2px; font-size: var(--fs-caption); font-weight: 400; color: var(--gray-600); }
@@ -99,7 +99,7 @@
 
 /* 35절 빈 상태 — 같은 문구를 흰 카드 안에. 하늘 원 44 안 선 아이콘 + 첫 줄 16(본문 글자색) + 아래 안내 14 */
 .emptyCard { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-4); border-radius: var(--r-card); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); }
-.emptyIco { display: grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: var(--r-pill); background: var(--tint); color: var(--ink); }
+.emptyIco { display: grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: var(--r-pill); color: var(--ink); }
 .emptyIco svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .emptyText { min-width: 0; }
 .emptyText > p { margin: 0; font-size: var(--fs-small); line-height: 1.6; color: var(--gray-600); }

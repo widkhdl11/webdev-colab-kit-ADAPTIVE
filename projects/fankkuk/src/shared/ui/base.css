@@ -114,7 +114,7 @@ h3 { font-size: var(--fs-body); }
 .card { min-width: 0; padding: 32px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--shadow); }
 .card .t-card + p { margin-top: 8px; }
 .card--soft { background: var(--surface-brand); box-shadow: none; }
-.card-icon { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 16px; border-radius: 50%; background: var(--surface); color: var(--ink); }
+.card-icon { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 16px; border-radius: 50%; background: none; color: var(--ink); }
 .card-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; }
 /* 표 */
 .table-wrap { overflow-x: auto; border-radius: var(--r-card); box-shadow: var(--hair); background: var(--white); }
@@ -348,10 +348,10 @@ textarea.field { padding-block: 14px; min-height: 160px; resize: vertical; line-
 /* 안내 카드 */
 .info h3 { display: flex; align-items: center; gap: 8px; }
 .info .big { margin-top: 8px; font-size: var(--fs-card); line-height: 1.4; font-weight: var(--fw-bold); }
-.info .ic { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 16px; border-radius: 50%; background: var(--surface); }
+.info .ic { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 16px; border-radius: 50%; background: none; }
 .info .ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.info.ok .ic { background: var(--success-soft); color: var(--success); }
-.info.rest .ic { background: var(--warn-soft); color: var(--warn-ink); }
+.info.ok .ic { color: var(--success); }
+.info.rest .ic { color: var(--warn-ink); }
 .info .dd { margin-top: 12px; }
 .quote { padding: 16px 24px; border-radius: var(--r-btn); background: var(--surface); }
 .quote q { display: block; font-weight: var(--fw-bold); font-size: var(--fs-lead); line-height: 1.5; quotes: "“" "”"; }
@@ -613,7 +613,7 @@ img.asset { display: block; object-fit: contain; }
 .panel:where(:not(.admin-area *)) { padding: var(--card-pad); border-radius: var(--r-card); background: var(--primary-50); }
 .center .panel:where(:not(.admin-area *)) { padding: var(--section-gap) var(--card-pad); }
 :is(a.card, .ccard):where(:not(.admin-area *)):is(:hover, :focus-within) { box-shadow: inset 0 0 0 1px var(--gray-400), var(--shadow); }
-.card-icon:where(:not(.admin-area *)) { width: 40px; height: 40px; margin-bottom: var(--space-4); border-radius: var(--r-pill); background: var(--primary-50); color: var(--brand-ink); }
+.card-icon:where(:not(.admin-area *)) { width: 40px; height: 40px; margin-bottom: var(--space-4); border-radius: var(--r-pill); background: none; color: var(--brand-ink); }
 .card-icon svg:where(:not(.admin-area *)) { width: var(--icon-xs); height: var(--icon-xs); }
 .card-col:where(:not(.admin-area *)) { gap: var(--space-4); }
 .stack:where(:not(.admin-area *)), .block-gap:where(:not(.admin-area *)) { gap: var(--space-6); }
@@ -728,10 +728,10 @@ textarea.field:where(:not(.admin-area *)) { padding-block: var(--space-4); }
 .nlist a:where(:not(.admin-area *)):hover { background: var(--gray-50); }
 .quote:where(:not(.admin-area *)) { padding: var(--space-4); border-radius: var(--r-card); background: var(--gray-50); box-shadow: inset 0 0 0 1px var(--gray-200); }
 .quote q:where(:not(.admin-area *)) { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.6; }
-.info .ic:where(:not(.admin-area *)) { width: 40px; height: 40px; margin-bottom: var(--space-2); background: var(--primary-50); color: var(--brand-ink); }
+.info .ic:where(:not(.admin-area *)) { width: 40px; height: 40px; margin-bottom: var(--space-2); background: none; color: var(--brand-ink); }
 .info .ic svg:where(:not(.admin-area *)) { width: var(--icon-xs); height: var(--icon-xs); }
-.info.ok .ic:where(:not(.admin-area *)) { background: var(--primary-50); color: var(--brand-ink); }
-.info.rest .ic:where(:not(.admin-area *)) { background: var(--gray-100); color: var(--gray-600); }
+.info.ok .ic:where(:not(.admin-area *)) { color: var(--brand-ink); }
+.info.rest .ic:where(:not(.admin-area *)) { color: var(--gray-600); }
 .nos:where(:not(.admin-area *)) { gap: var(--space-4); }
 .nos li:where(:not(.admin-area *)) { align-items: center; gap: var(--space-4); }
 .nos .x:where(:not(.admin-area *)) { width: 32px; height: 32px; margin-top: 0; background: var(--primary-50); color: var(--brand-ink); }

@@ -39,7 +39,7 @@
 .tiles { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); margin: calc(-1 * var(--space-12)) 0 0; padding: 0; list-style: none; }
 .tiles > li { min-width: 0; }
 .tile:global(.card) { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); height: 100%; padding: var(--space-4); text-decoration: none; color: var(--ink); }
-.ico { display: grid; place-items: center; width: var(--ico); height: var(--ico); border-radius: var(--r-pill); background: var(--tint); }
+.ico { display: grid; place-items: center; width: var(--ico); height: var(--ico); border-radius: var(--r-pill); }
 .ico img { width: 28px; height: 28px; object-fit: contain; transition: transform var(--dur-w) var(--ease-micro); }
 @media (hover: hover) {
   .tile:hover .ico img { transform: translateY(-2px) scale(1.04); }

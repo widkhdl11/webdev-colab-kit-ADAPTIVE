@@ -10,8 +10,8 @@
 .page > * { min-width: 0; }
 .group { display: grid; gap: var(--space-8); min-width: 0; }
 
-/* 칸 앞 하늘 동그라미 아이콘 40(시안 .row-ico) — 접힌 칸이 펼쳐지면 하늘색 채움 */
-.rowIco { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--r-pill); background: var(--primary-50); color: var(--ink); transition: background-color var(--dur-hover) var(--ease-out); }
+/* 칸 앞 아이콘 칸 40(시안 .row-ico) — 바탕 없음(2026-11-26 아이콘 뒤 파스텔 박스 뺌), 펼치면 아이콘이 강조 글자색 */
+.rowIco { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--r-pill); color: var(--ink); transition: color var(--dur-hover) var(--ease-out); }
 .rowIcoSvg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .foldName { flex: 1 1 auto; min-width: 0; font-size: var(--fs-body); font-weight: var(--fw-bold); line-height: 1.6; overflow-wrap: anywhere; }
 .foldMeta { color: var(--sub); font-size: var(--fs-small); font-weight: 500; }
@@ -28,7 +28,7 @@
 .fold > summary:hover { background: var(--gray-50); }
 .fold > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
 .fold[open] > summary .foldChev { transform: rotate(180deg); }
-.fold[open] > summary .rowIco { background: var(--primary); }
+.fold[open] > summary .rowIco { color: var(--brand-ink); }
 /* 펼친 내용 — 사이트 공용 접기(base.css 23절 11)와 같은 등장(0.25초, 위 4px 에서 내려오며 투명→보임, design-prompt 12-7). 이 카드는 모듈 이름(.acc)이라 공용 규칙이 닿지 않아 따로 둔다 */
 .fold[open] > .foldBody { animation: settings-fold-in 0.25s var(--ease-micro) both; }
 @keyframes settings-fold-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
