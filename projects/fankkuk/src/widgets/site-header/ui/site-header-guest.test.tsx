@@ -21,8 +21,8 @@ afterEach(() => {
   host.remove();
 });
 
-describe("로그인 전 휴대폰 메뉴의 로그인·회원가입", () => {
-  it("두 버튼은 모양이 다르다 — 회원가입은 테두리, 로그인은 글자 버튼(design-prompt 1-3)", () => {
+describe("로그인 전 휴대폰 상단 바·메뉴의 로그인·회원가입", () => {
+  function render() {
     act(() =>
       root.render(
         <HeaderMemoryProvider>
@@ -30,10 +30,18 @@ describe("로그인 전 휴대폰 메뉴의 로그인·회원가입", () => {
         </HeaderMemoryProvider>,
       ),
     );
-    const menu = host.querySelector(".mobile-menu");
-    const login = menu?.querySelector<HTMLAnchorElement>('.btn-row a[href="/login"]');
-    const signup = menu?.querySelector<HTMLAnchorElement>('.btn-row a[href="/signup"]');
-    expect(signup?.className).toBe("btn btn--line");
-    expect(login?.className).toBe("btn btn--text");
+  }
+
+  it("로그인은 상단 바(메뉴 밖)에 글자 링크로 있고, 메뉴 안에는 없다 — 같은 일 버튼을 둘 두지 않는다(design-prompt 13-1)", () => {
+    render();
+    expect(host.querySelector('.header-actions .auth a[href="/login"]')?.textContent).toBe("로그인");
+    expect(host.querySelector('.mobile-menu a[href="/login"]')).toBeNull();
+  });
+
+  it("메뉴 안 회원가입은 테두리 버튼 하나", () => {
+    render();
+    const signups = host.querySelectorAll<HTMLAnchorElement>('.mobile-menu a[href="/signup"]');
+    expect(signups).toHaveLength(1);
+    expect(signups[0].className).toBe("btn btn--line");
   });
 });

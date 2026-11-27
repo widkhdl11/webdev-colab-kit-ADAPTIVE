@@ -78,7 +78,7 @@ function GuestTopBar({ current }: { current?: string }) {
         </nav>
         <div className="header-actions">
           <div className="auth">
-            <Link href="/login" aria-current={cur("/login")}>
+            <Link href="/login" aria-current={cur("/login")} onClick={() => setMenuOpen(false)}>
               로그인
             </Link>
             <span className="sep" aria-hidden="true" />
@@ -106,12 +106,9 @@ function GuestTopBar({ current }: { current?: string }) {
           </Link>
         ))}
         <div className="btn-row">
-          {/* 회원가입은 테두리, 로그인은 글자 버튼 — 두 버튼이 같은 모양이면 안 된다(design-prompt 1-3). 넓은 화면 「로그인 | 회원가입」(로그인 --sub, 가입 굵게)과 같은 순위.
-              채움 버튼은 화면의 메인 행동 하나에만(2026-11-01 시안 4) */}
-          <Link className="btn btn--text" href="/login">
-            로그인
-          </Link>
-          <Link className="btn btn--line" href="/signup">
+          {/* 로그인은 메뉴를 펼치기 전에도 상단 바(햄버거 옆)에 있으므로 여기는 회원가입 하나 — 같은 일 버튼을 둘 두지 않는다(design-prompt 13-1).
+              테두리 버튼: 채움 버튼은 화면의 메인 행동 하나에만(2026-11-01 시안 4) */}
+          <Link className="btn btn--line" href="/signup" onClick={() => setMenuOpen(false)}>
             회원가입
           </Link>
         </div>
