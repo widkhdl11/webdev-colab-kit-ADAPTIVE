@@ -44,7 +44,7 @@ export function BoxStory() {
           <img src="/images/home/revgift-pack.png" alt="" width={112} height={112} />
         </div>
         <span className={`${s.arr} ${s.arrAb}`} aria-hidden="true">
-          <svg viewBox="0 0 16 16">
+          <svg data-icon="line" viewBox="0 0 16 16">
             <path d="M1 8h13M9 3l5 5-5 5" />
           </svg>
         </span>

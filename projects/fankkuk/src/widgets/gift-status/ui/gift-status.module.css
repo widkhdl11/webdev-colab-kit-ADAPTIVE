@@ -205,3 +205,9 @@
 /* 2026-11-22 누름 반응(design-prompt 12-5) — 「+」 접기 줄은 줄이라 크기는 그대로, 누르는 동안 바탕 --gray-100(면 바뀜 전환 --dur-hover) */
 .fold summary { transition: background-color var(--dur-hover) var(--ease-out); }
 .fold summary:active { background: var(--gray-100); }
+
+/* 50절 아일랜드 걷어냄(2026-11-27, 남은 화면 마저) — 맨 위 하늘 판은 면·테두리·모서리 없이 아래 1px 선만.
+   하늘 바탕에 기대던 것 둘: 단계 줄의 남은 칸(흰색)은 회색으로, 배지(흰 바탕)는 하늘 바탕으로 바꿔 흰 바탕에서도 보이게. 되돌리려면 이 블록을 지운다 */
+.hero { border: 0; border-bottom: 1px solid var(--gray-200); border-radius: 0; background: none; box-shadow: none; }
+.steps > li::before { background: var(--gray-200); }
+.tagrow :global(.tag.tag) { background: var(--tint); }
