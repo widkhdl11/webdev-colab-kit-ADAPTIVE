@@ -90,13 +90,17 @@ describe("계정 설정(팬) — 묶음 순서", () => {
     for (const sec of host.querySelectorAll("section")) expect(sec.textContent).not.toContain("탈퇴 안내");
   });
 
-  it("탈퇴 안내를 누르면 그 아래 탈퇴 문의 링크가 펼쳐진다", () => {
+  it("INV-A17: 탈퇴 안내를 누르면 그 아래 본인 탈퇴 칸(현재 비밀번호·「탈퇴」)이 펼쳐진다 — 옛 「탈퇴 문의」 링크는 없다", () => {
     render();
     const leave = buttonByText("탈퇴 안내")!;
     expect(leave.getAttribute("aria-expanded")).toBe("false");
+    expect(host.querySelector("[data-me-group='leave'] form")).toBeNull();
     act(() => leave.click());
     expect(leave.getAttribute("aria-expanded")).toBe("true");
-    expect(host.querySelector('a[href="/support"]')?.textContent?.trim()).toBe("탈퇴 문의");
+    const panel = host.querySelector("[data-me-group='leave'] form")!;
+    expect(panel.querySelector('input[type="password"]')).not.toBeNull();
+    expect(panel.querySelector('button[type="submit"]')?.textContent?.trim()).toBe("탈퇴");
+    expect(host.textContent).not.toContain("탈퇴 문의");
   });
 });
 

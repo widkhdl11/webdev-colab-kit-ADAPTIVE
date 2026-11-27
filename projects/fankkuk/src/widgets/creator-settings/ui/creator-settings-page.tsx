@@ -112,7 +112,7 @@ export function CreatorSettingsPage({
 }: {
   /** 「보안」 접힌 칸 안쪽 — 비밀번호 · 휴대폰 번호 줄(앱 레이어가 넘긴다) */
   security: ReactNode;
-  /** 「회원 탈퇴」 접힌 칸 안쪽 — 탈퇴 문의 링크 */
+  /** 「회원 탈퇴」 접힌 칸 안쪽 — 본인 탈퇴 칸(my-account INV-A17) */
   leave: ReactNode;
   /** 승인 서명 연결 여부와 연결한 때(approval-signature INV-S16) — 등록한 이름·생년월일·번호는 오지 않는다 */
   signatureLink: MySignatureLink;

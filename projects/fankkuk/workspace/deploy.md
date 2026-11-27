@@ -120,3 +120,5 @@ basis: f8e3e08320b9
 
 - 운영 DB: 사용자가 `npx supabase db push --remote --yes` 로 20261119000001 적용(개인정보 구역 접촉 0). 적용 뒤 `migration list --remote` 198/198 일치.
 - 앱: 코드 변경 없음(e58a6f9e 는 DB 함수·시험·문서만).
+
+- 2026-11-27 Vercel 배포 대상 정리(사용자 「fankkuk 은 팬꾹 버셀에만」): 같은 레포에 연결된 세 프로젝트 중 fankkuk.com = `webdev-colab-kit-adaptive-xqne`(루트 projects/fankkuk, 그대로). `-jso4`(같은 projects/fankkuk 중복, 주소 없음)는 빌드 건너뛰기 `exit 0`. `webdev-colab-kit-adaptive`(simoori.com, projects/signal)는 projects/signal 이 바뀐 push 에서만 빌드(직전 배포 커밋과 비교). 휴대폰 키 두 개는 11-06 에 -jso4 에만 들어가 있었다 — fankkuk.com 가입 휴대폰 단계 500 의 원인.

@@ -7,6 +7,7 @@ import type { MyAccount } from "@/entities/fan/model/my-account";
 import { MustDeliverNotice } from "@/entities/notification/ui/must-deliver-notice";
 import { FAN_PROFILE_EDIT } from "@/entities/session/model/home-path";
 import { postAccount } from "@/features/account-edit/api/save-account-client";
+import { WithdrawSelfPanel } from "@/features/account-withdraw-self/ui/withdraw-self-panel";
 import { planAccountSettingsSave } from "@/features/account-edit/model/settings-input";
 import { PasswordChangePanel } from "@/features/password-change/ui/password-change-panel";
 import { PhoneChangePanel } from "@/features/phone-change/ui/phone-change-panel";
@@ -22,7 +23,7 @@ import s from "./my-info.module.css";
 // - 비밀번호 변경(session-login INV-L12)·번호 변경(카카오 재인증, signup INV-U12)은 「변경」을 눌러야 그 줄 아래에 칸이 펼쳐진다. 두 칸은 저장과 따로 서버에 보낸다.
 // - 이메일·알림 둘은 아래 「저장」으로 보낸다(/api/me). 이메일은 바로 바뀌지 않고 확인 메일의 링크를 눌러야 바뀐다(my-account INV-A7).
 //   닉네임은 프로필 수정 화면에서 고친다 — 여기서는 지금 값을 그대로 실어 보낸다(내 정보 저장이 닉네임 칸을 같이 받는다).
-// - 회원 탈퇴는 다른 줄처럼 「탈퇴 안내」를 눌러야 펼쳐진다(문의만으로 삭제가 끝나는 것처럼 보이지 않게, 문구 다듬은본 10-26). 탈퇴 기능이 아직 없어 펼친 안에는 고객센터로 가는 링크만 둔다.
+// - 회원 탈퇴는 다른 줄처럼 「탈퇴 안내」를 눌러야 펼쳐진다(문의만으로 삭제가 끝나는 것처럼 보이지 않게, 문구 다듬은본 10-26). 펼치면 본인 탈퇴 칸(my-account INV-A17 — 지금 비밀번호 확인 뒤 바로 처리, features/account-withdraw-self).
 // - 알림 스위치 설명은 시안의 스위치별 문구 그대로다. 시안에 없는 안내 문구는 두지 않는다(2026-10-16 사용자 — 문구 남발 금지).
 //   「아이디는 바꿀 수 없어요 …」 문장은 머리 설명·「프로필 수정」 버튼과 겹쳐 뺐다(카드 d114).
 // 「되돌리기」는 이메일 칸을 새로 그려(resetCount) 처음 값에 돌아가고, 알림 스위치도 처음 값으로 돌린다.
@@ -214,7 +215,6 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
         <div className={s.row}>
           <p className={s.txt}>
             <span className={s.k}>회원 탈퇴</span>
-            <span className={s.sub}>탈퇴 문의 및 절차 안내</span>
           </p>
           <button className={`btn btn--sm ${s.danger}`} type="button" aria-expanded={open === "leave"} aria-controls={f("leave-panel")} onClick={() => toggle("leave")}>
             탈퇴 안내
@@ -222,9 +222,7 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
         </div>
         {open === "leave" && (
           <div className={s.panel} id={f("leave-panel")}>
-            <Link className="btn btn--line btn--sm" href="/support">
-              탈퇴 문의
-            </Link>
+            <WithdrawSelfPanel role="fan" onLoginExpired={toLogin} />
           </div>
         )}
       </div>

@@ -93,15 +93,14 @@ describe("승인된 세 역할 홈", () => {
     expect(host.querySelector('[aria-labelledby="creator-log-title"]')!.textContent).toContain("출력 실패");
   });
 
-  it("새 크리에이터 인사 영역은 이름을 한 번 표시하고 팬덤을 별도로 소개한다", () => {
+  it("크리에이터 인사 영역은 이름을 한 번 표시하고, 팬덤 이름 칸과 그림은 두지 않는다(2026-11-27 사용자 지시)", () => {
     draw(creator());
     const hero = host.querySelector('[aria-labelledby="hero-title"]')!;
     expect(hero.textContent?.match(/하루/g)).toHaveLength(1);
-    expect(hero.querySelector("dd")?.textContent).toBe("하늘별");
+    expect(hero.textContent).not.toContain("하늘별");
+    expect(hero.querySelector("dl, img")).toBeNull();
     expect(hero.textContent).toContain("지금은 처리할 일이 없어요");
     expect(hero.textContent).not.toContain("프로필 수정");
-    draw(creator({ profile: { ...profile, fanName: "" } }));
-    expect(host.querySelector('[aria-labelledby="hero-title"] dl')).toBeNull();
   });
 
   it("처리할 일이 있으면 실제 건수로 이동하고, 읽기 실패에는 완료 안내를 표시하지 않는다", () => {

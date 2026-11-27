@@ -123,11 +123,13 @@ describe("계정 설정 「보안」·「회원 탈퇴」 칸 안쪽 (2026-11-13
     expect(document.getElementById(btn.getAttribute("aria-controls")!)).not.toBeNull();
   });
 
-  it("회원 탈퇴 칸 안쪽은 탈퇴 문의 링크 하나(접힌 칸을 펼치는 것이 옛 「탈퇴 안내」 버튼을 대신한다)", () => {
+  it("INV-A17: 회원 탈퇴 칸 안쪽은 본인 탈퇴 칸(현재 비밀번호·「탈퇴」) — 접힌 칸을 펼치는 것이 옛 「탈퇴 안내」 버튼을 대신한다", () => {
     renderSettingsParts();
     const leave = host.querySelector("[data-ca-group='leave']")!;
-    expect([...leave.querySelectorAll("a")].map((a) => [a.textContent?.trim(), a.getAttribute("href")])).toEqual([["탈퇴 문의", "/support"]]);
-    expect(leave.querySelector("button")).toBeNull();
+    expect(leave.querySelector("a")).toBeNull();
+    expect(leave.querySelector('input[type="password"]')).not.toBeNull();
+    expect(leave.querySelector('form > div button[type="submit"]')?.textContent?.trim()).toBe("탈퇴");
+    expect(leave.textContent).toContain("채널 정보");
   });
 
   it("채널 소유자 확인 판은 공용 판 모양이고 제목은 h2 하나", () => {

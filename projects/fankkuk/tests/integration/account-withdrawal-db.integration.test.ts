@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createTestAccount, removeTestAccounts, type TestAccount } from "./account-fixtures";
+import { canSignIn, createTestAccount, device, FIXTURE_PASSWORD, removeTestAccounts, type TestAccount } from "./account-fixtures";
 import { adminClient, anonClient, approveRpc, deleteTestOrders, ensureApprovalAddress, linkTestSignature, payTestOrder, psql, psqlError, registerTestOrder, signedInClient, testPhoneHash } from "./helpers";
 
 // 회원 탈퇴 — 가명 처리(my-account INV-A15 S15~S15c) · 탈퇴 뒤 서명 기록(approval-signature INV-S14 S14·S14b) ·
@@ -1042,6 +1042,8 @@ const MOVED_PROFILE_COLUMNS = [
   "inquiry_restrictions.restricted_by",
   "notices.author_id",
   "notices.updated_by",
+  // 사무실 주소 바꾼 기록(2026-11-14) — 운영자만 쓰는 칸이라 탈퇴하는 회원을 가리키지 않는다
+  "office_address_changes.changed_by",
   "office_code_inputs.operator_id",
   "office_creator_check_events.actor",
   "office_creator_checks.answered_by",
@@ -1079,3 +1081,181 @@ const MOVED_PROFILE_COLUMNS = [
   "review_cancels.requested_by",
   "tier_price_changes.changed_by",
 ];
+
+// ── 본인 탈퇴 (my-account INV-A17 S17~S17f) ──────────────────────
+// DB 입구 withdraw_my_account() — 인자 없음, 계정은 토큰의 사람, 팬·크리에이터만, 서버가 비밀번호 확인 뒤 남긴 일회용 허가가 있어야 처리(S17f).
+// 비밀번호 확인과 허가 남기는 순서는 유닛 시험 src/features/account-withdraw-self/model/withdraw-self.test.ts 가 붙든다.
+// 허가는 서버 키로만 남긴다(self_withdrawal_grant) — 여기서는 서버가 하는 일을 대신 한다.
+
+const granted: string[] = [];
+async function grant(userId: string) {
+  granted.push(userId);
+  const { error } = await adminClient().rpc("self_withdrawal_grant", { p_profile_id: userId });
+  if (error) throw new Error(`허가를 남기지 못했다: ${error.message}`);
+}
+const grantRows = (userId: string) => Number(psql(`select count(*) from public.self_withdrawal_grants where profile_id = '${userId}'`));
+const queuedPhotos = (paths: string[]) => psql(`select bucket || ':' || path from public.pending_photo_deletions where path in (${paths.map((x) => `'${x}'`).join(",")}) order by 1`);
+const photoPaths: string[] = [];
+afterEach(() => {
+  if (granted.length) psql(`delete from public.self_withdrawal_grants where profile_id in (${granted.map((i) => `'${i}'`).join(",")})`);
+  if (photoPaths.length) psql(`delete from public.pending_photo_deletions where path in (${photoPaths.map((x) => `'${x}'`).join(",")})`);
+  granted.length = 0;
+  photoPaths.length = 0;
+});
+
+async function withdrawSelf(client: Awaited<ReturnType<typeof device>>) {
+  const r = await client.rpc("withdraw_my_account");
+  const pseudonym = (r.data as { pseudonym?: string } | null)?.pseudonym;
+  if (pseudonym) made.pseudonyms.push(pseudonym);
+  return r;
+}
+
+const withdrawalRow = (pseudonym: string) =>
+  psql(`select role || '|' || by_self || '|' || coalesce(processed_by::text, 'null') from public.account_withdrawals where pseudonym_id = '${pseudonym}'`);
+
+describe("본인 탈퇴 (my-account INV-A17)", () => {
+  it("INV-A17 (S17): 팬이 본인 탈퇴를 부르면 INV-A15 와 같은 처리가 끝나고 기록은 「본인 탈퇴」(처리한 운영자 없음), 다시 로그인할 수 없다", async () => {
+    const fan = await createTestAccount({ tag: "wdself", phone: "01090007001" });
+    const a = await shippedOrder({ senderId: fan.userId });
+    const photo = `it-a17/${fan.userId}/face.webp`;
+    photoPaths.push(photo);
+    psql(`update public.profiles set fan_photo_path = '${photo}' where id = '${fan.userId}'`);
+    await grant(fan.userId);
+    const r = await withdrawSelf(await device(fan.loginEmail));
+    expect(r.error).toBeNull();
+    const pseudonym = (r.data as { pseudonym: string }).pseudonym;
+    // INV-A15: 지울 사진은 같은 처리로 「지울 사진」 표에 남는다(서버가 저장소에서 지운 뒤 줄을 지운다) · 허가는 쓰고 사라졌다
+    expect(queuedPhotos([photo])).toBe(`fan-photos:${photo}`);
+    expect(grantRows(fan.userId)).toBe(0);
+    expect([profileRows(fan.userId), authRows(fan.userId), contactRows(fan.userId)]).toEqual([0, 0, 0]);
+    expect(fanOf(a.orderId)).toBe(pseudonym);
+    expect(withdrawalRow(pseudonym)).toBe("fan|true|null");
+    expect(await canSignIn(fan.loginEmail, FIXTURE_PASSWORD)).toBe(false);
+  });
+
+  it("INV-A17 (S17): 대표용 입구로 처리한 탈퇴는 「본인 탈퇴」가 아니고 처리한 대표가 남는다 — 두 입구가 같은 처리를 부른다", async () => {
+    const fan = await createTestAccount({ tag: "wdbyowner", phone: "01090007002" });
+    const photo = `it-a17/${fan.userId}/bg.webp`;
+    photoPaths.push(photo);
+    psql(`update public.profiles set fan_bg_path = '${photo}' where id = '${fan.userId}'`);
+    const r = await withdraw(fan.loginId);
+    expect(r.error).toBeNull();
+    expect(queuedPhotos([photo])).toBe(`fan-photos:${photo}`);
+    const ownerId = psql(`select id from public.profiles where login_id = 'fankkuk_admin'`);
+    expect(withdrawalRow((r.data as { pseudonym: string }).pseudonym)).toBe(`fan|false|${ownerId}`);
+  });
+
+  it("INV-A17 (S17): 크리에이터도 진행 중인 주문이 없으면 본인 탈퇴되고, 크리에이터 행은 「탈퇴한 크리에이터」로 비워진다", async () => {
+    const cre = await createTestAccount({ tag: "wdselfcre", phone: "01090007003" });
+    const creatorId = makeCreator(cre);
+    await grant(cre.userId);
+    const r = await withdrawSelf(await device(cre.loginEmail));
+    expect(r.error).toBeNull();
+    expect(withdrawalRow((r.data as { pseudonym: string }).pseudonym)).toBe("creator|true|null");
+    expect(psql(`select name || '|' || (profile_id is null) from public.creators where id = '${creatorId}'`)).toBe("탈퇴한 크리에이터|true");
+  });
+
+  it("INV-A17 (S17c, 실패경로): 진행 중인 선물이 있는 팬은 거부(55000)되고 아무것도 지워지지 않는다", async () => {
+    const fan = await createTestAccount({ tag: "wdselfopen", phone: "01090007004" });
+    const o = await registerTestOrder(1, { senderId: fan.userId });
+    await payTestOrder(o);
+    await grant(fan.userId);
+    expect((await withdrawSelf(await device(fan.loginEmail))).error?.code).toBe("55000");
+    expect([profileRows(fan.userId), authRows(fan.userId), contactRows(fan.userId)]).toEqual([1, 1, 1]);
+    expect(fanOf(o.orderId)).toBe(fan.userId);
+  });
+
+  it("INV-A17 (S17d, 실패경로): 진행 중인 주문이 있는 크리에이터는 거부(55000)되고 크리에이터 행이 그대로다", async () => {
+    const cre = await createTestAccount({ tag: "wdselfcop", phone: "01090007005" });
+    const creatorId = makeCreator(cre);
+    const o = await registerTestOrder(1, { creatorId });
+    await payTestOrder(o);
+    await grant(cre.userId);
+    expect((await withdrawSelf(await device(cre.loginEmail))).error?.code).toBe("55000");
+    expect(profileRows(cre.userId)).toBe(1);
+    expect(psql(`select name || '|' || (profile_id is not null) from public.creators where id = '${creatorId}'`)).toBe("시험크리에이터|true");
+  });
+
+  it("INV-A17 (S17e, 실패경로): 직원·대표 계정은 거부(42501), 로그인하지 않은 쪽은 부를 수 없다 — 아무 계정도 지워지지 않는다", async () => {
+    for (const login of ["fankkuk_staff", "fankkuk_admin"]) {
+      await grant(psql(`select id from public.profiles where login_id = '${login}'`));
+      const c = await signedInClient(login);
+      expect((await withdrawSelf(c)).error?.code).toBe("42501");
+      expect(Number(psql(`select count(*) from public.profiles where login_id = '${login}' and withdrawn_at is null`))).toBe(1);
+    }
+    expect((await anonClient().rpc("withdraw_my_account")).error).not.toBeNull();
+  });
+
+  it("INV-A17 (S17e, 실패경로): 본인 탈퇴 입구는 계정 인자를 받지 않는다 — 다른 사람 아이디를 넣어 부르면 함수를 찾지 못하고 그 사람은 그대로다", async () => {
+    const me = await createTestAccount({ tag: "wdselfme", phone: "01090007006" });
+    const other = await createTestAccount({ tag: "wdselfot", phone: "01090007007" });
+    const r = await (await device(me.loginEmail)).rpc("withdraw_my_account", { p_login_id: other.loginId });
+    expect(r.error).not.toBeNull();
+    expect([profileRows(me.userId), profileRows(other.userId)]).toEqual([1, 1]);
+  });
+
+  it("INV-A17 (실패경로): 안쪽 처리(withdraw_account_core)는 로그인 키·익명 키·서버 키 어느 것으로도 부를 수 없다 — 대표 판정·본인 판정을 건너뛰는 길이 없다", async () => {
+    const target = await createTestAccount({ tag: "wdcore", phone: "01090007008" });
+    const args = { p_profile_id: target.userId, p_by_self: true };
+    for (const c of [await device(target.loginEmail), anonClient(), adminClient()]) {
+      expect((await c.rpc("withdraw_account_core", args)).error).not.toBeNull();
+    }
+    expect(profileRows(target.userId)).toBe(1);
+  });
+
+  it("INV-A17 (실패경로): 탈퇴 기록은 「본인 탈퇴」가 아니면 처리한 운영자가 있어야 한다", () => {
+    expect(
+      psqlError(
+        `begin; set local session_replication_role = replica;
+         insert into public.profiles (id, login_id, nickname, role, withdrawn_at) values ('00000000-0000-4000-8000-00000000a017', 'withdrawn_it_a17', '탈퇴한 회원', 'fan', now());
+         insert into public.account_withdrawals (pseudonym_id, role, processed_by, by_self) values ('00000000-0000-4000-8000-00000000a017', 'fan', null, false);
+         commit;`,
+      ),
+    ).toContain("account_withdrawals_who_check");
+  });
+});
+
+describe("본인 탈퇴 — 일회용 허가 (my-account INV-A17 S17f)", () => {
+  it("INV-A17 (S17f, 실패경로): 허가 없이 로그인 키로 바로 부르면 거부(28000)되고 아무것도 지워지지 않는다", async () => {
+    const fan = await createTestAccount({ tag: "wdnogrant", phone: "01090007011" });
+    expect((await withdrawSelf(await device(fan.loginEmail))).error?.code).toBe("28000");
+    expect([profileRows(fan.userId), authRows(fan.userId), contactRows(fan.userId)]).toEqual([1, 1, 1]);
+  });
+
+  it("INV-A17 (S17f, 실패경로): 기한이 지난 허가로는 거부(28000)", async () => {
+    const fan = await createTestAccount({ tag: "wdexpired", phone: "01090007012" });
+    await grant(fan.userId);
+    psql(`update public.self_withdrawal_grants set expires_at = now() - interval '1 second' where profile_id = '${fan.userId}'`);
+    expect((await withdrawSelf(await device(fan.loginEmail))).error?.code).toBe("28000");
+    expect(profileRows(fan.userId)).toBe(1);
+  });
+
+  it("INV-A17 (S17f, 실패경로): 다른 계정 앞 허가로는 거부(28000) — 그 허가는 그대로 남는다", async () => {
+    const me = await createTestAccount({ tag: "wdgrme", phone: "01090007013" });
+    const other = await createTestAccount({ tag: "wdgrot", phone: "01090007014" });
+    await grant(other.userId);
+    expect((await withdrawSelf(await device(me.loginEmail))).error?.code).toBe("28000");
+    expect([profileRows(me.userId), profileRows(other.userId), grantRows(other.userId)]).toEqual([1, 1, 1]);
+  });
+
+  it("INV-A17 (S17f): 허가는 한 번 쓰면 사라진다 — 탈퇴가 끝나면 그 계정의 허가 줄이 없다(계정 표와 잇지 않아 함께 지워지지 않는다)", async () => {
+    const fan = await createTestAccount({ tag: "wdonce", phone: "01090007015" });
+    await grant(fan.userId);
+    expect(grantRows(fan.userId)).toBe(1);
+    expect((await withdrawSelf(await device(fan.loginEmail))).error).toBeNull();
+    expect(grantRows(fan.userId)).toBe(0);
+  });
+
+  it("INV-A17 (S17f, 실패경로): 허가를 남기고 거두는 함수는 로그인 키·익명 키로 부를 수 없고, 허가 표는 화면 쪽 키로 읽거나 쓸 수 없다", async () => {
+    const fan = await createTestAccount({ tag: "wdgrkey", phone: "01090007016" });
+    granted.push(fan.userId);
+    const mine = await device(fan.loginEmail);
+    for (const c of [mine, anonClient()]) {
+      expect((await c.rpc("self_withdrawal_grant", { p_profile_id: fan.userId })).error).not.toBeNull();
+      expect((await c.rpc("self_withdrawal_grant_drop", { p_profile_id: fan.userId })).error).not.toBeNull();
+      expect((await c.from("self_withdrawal_grants").insert({ profile_id: fan.userId, expires_at: new Date(Date.now() + 60_000).toISOString() })).error).not.toBeNull();
+      expect((await c.from("pending_photo_deletions").select("path")).error).not.toBeNull();
+    }
+    expect(grantRows(fan.userId)).toBe(0);
+  });
+});

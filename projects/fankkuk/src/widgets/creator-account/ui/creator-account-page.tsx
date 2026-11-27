@@ -17,6 +17,7 @@ import {
 } from "@/entities/session/model/home-path";
 import { sendCreatorNotify } from "@/features/creator-settings-save/api/send-creator-settings";
 import { VerificationPanel } from "@/features/creator-verify/ui/verification-panel";
+import { WithdrawSelfPanel } from "@/features/account-withdraw-self/ui/withdraw-self-panel";
 import { PasswordChangePanel } from "@/features/password-change/ui/password-change-panel";
 import { PhoneChangePanel } from "@/features/phone-change/ui/phone-change-panel";
 import { CREATOR_CHANNEL_CREATE_PATH } from "@/shared/config/creator-paths";
@@ -35,7 +36,7 @@ import s from "./creator-account.module.css";
 // - 비밀번호 변경(session-login INV-L12)·번호 바꾸기(카카오 재인증, signup INV-U12)·채널 본인 확인(creator-verification)은 버튼을 눌러야 그 줄 아래에 칸이 펼쳐진다.
 // - 시안의 이메일·이름 바꾸기, 알림 종류별 스위치 넷은 크리에이터에게 지금 없는 기능이라 두지 않는다 — 알림은 카카오·이메일 두 칸(my-account INV-A11),
 //   승인 요청처럼 꼭 가는 알림은 끄는 스위치 없이 「끌 수 없는 알림」으로 알린다(notifications INV-N6). 스위치는 누르는 즉시 저장하고, 실패하면 되돌린다.
-// - 회원 탈퇴는 팬 화면과 같이 펼치면 고객센터 문의 링크만(탈퇴 기능이 아직 없다).
+// - 회원 탈퇴는 팬 화면과 같이 펼치면 본인 탈퇴 칸(my-account INV-A17, features/account-withdraw-self).
 
 type Open = "password" | "phone" | null;
 type Msg = { ok: boolean; text: string } | null;
@@ -186,13 +187,14 @@ export function CreatorChannelOwnerRow({ verification }: { verification: Creator
   );
 }
 
-/** 회원 탈퇴 — 고객센터 문의 링크만(탈퇴 기능이 아직 없다). 계정 설정의 「회원 탈퇴」 접힌 칸 안 — 접힌 칸을 펼치는 것이 옛 「탈퇴 안내」 버튼을 대신한다 */
+/** 회원 탈퇴 — 본인 탈퇴 칸(my-account INV-A17). 계정 설정의 「회원 탈퇴」 접힌 칸 안 — 접힌 칸을 펼치는 것이 옛 「탈퇴 안내」 버튼을 대신한다.
+ *  진행 중인 주문이 남았거나 카카오 서명 기록이 있으면 서버가 막고 1:1 문의 링크를 준다 */
 export function CreatorLeaveBody() {
+  const router = useRouter();
+  const toLogin = () => router.push(`/login?next=${encodeURIComponent(`${CREATOR_SETTINGS}#leave`)}`);
   return (
     <div className={s.wrap} data-ca-group="leave">
-      <Link className="btn btn--line btn--sm" href="/support">
-        탈퇴 문의
-      </Link>
+      <WithdrawSelfPanel role="creator" onLoginExpired={toLogin} />
     </div>
   );
 }
