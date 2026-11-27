@@ -126,3 +126,4 @@ basis: f8e3e08320b9
 - 2026-11-27 오후: -xqne 에 SIGN_GATEWAY_URL(https://sign.fankkuk.com, 운영·미리보기) 넣음 — SIGN_GATEWAY_TOKEN 은 없어서 운영 전환 때 같이(deploy-runbook). 중복 프로젝트 -jso4 삭제(사용자 지시, vercel project rm). 남은 Vercel 프로젝트: -xqne(fankkuk.com) · webdev-colab-kit-adaptive(simoori.com, signal).
 - 2026-11-27 오후 배포: main b4082d16..caf9a6b5 push(리뷰 지적 고침·휴대폰 메뉴 버튼, DB 변경 없음) → -xqne Ready. fankkuk.com 390 메뉴: 로그인 btn--text · 회원가입 btn--line. / · /creators · /login · /signup · /faq 200. 로그인 뒤 화면은 운영에서 보지 않았다.
 - 2026-11-27 저녁 배포: f26a9954 push(휴대폰 상단 바 「로그인」·메뉴는 회원가입 하나) → fankkuk.com 390: 상단 바 로그인 41x44 보임 · 메뉴 안 로그인 없음 · 회원가입 1개.
+- 2026-11-27 저녁 배포 2: ffaa9f1f(휴대폰 로그인 하늘 채움 버튼 — 상단 바·펼친 메뉴, 7069227c 테두리판을 바로 대체) → fankkuk.com 390: 상단 바 로그인 바탕 rgb(137,207,240) · 메뉴 로그인 .btn(채움) · 회원가입 테두리.
