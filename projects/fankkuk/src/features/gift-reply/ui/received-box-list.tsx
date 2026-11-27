@@ -373,7 +373,7 @@ export function ReceivedBoxList({
           {pending}
           <small>개</small>
         </p>
-        <p className={s.bsideNote}>답장은 선택 사항이며, 이 숫자는 본인에게만 표시됩니다.</p>
+        <p className={s.bsideNote}>답장은 선택 사항입니다.</p>
       </aside>
     </div>
   );

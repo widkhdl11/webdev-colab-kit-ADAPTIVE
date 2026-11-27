@@ -135,7 +135,7 @@ function MyInquiries({ inquiries }: { inquiries: readonly MyInquiry[] }) {
       ) : (
         <div className="acc">
           {inquiries.map((q) => (
-            <details key={q.id}>
+            <details key={q.id} name="my-inquiry">
               <summary>
                 <span className="q">
                   <b>{q.title}</b>
@@ -242,7 +242,7 @@ export function SupportPage({
               hidden={i !== selected}
             >
               {c.faqs.map((f, j) => (
-                <details key={f.q} open={j === 0} data-start-open={j === 0 ? "" : undefined}>
+                <details key={f.q} name={`support-faq-${c.id}`} open={j === 0} data-start-open={j === 0 ? "" : undefined}>
                   <summary>
                     <span className="q">
                       <b>{f.q}</b>
