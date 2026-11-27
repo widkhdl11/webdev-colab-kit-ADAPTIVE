@@ -208,6 +208,6 @@
 
 /* 50절 아일랜드 걷어냄(2026-11-27, 남은 화면 마저) — 맨 위 하늘 판은 면·테두리·모서리 없이 아래 1px 선만.
    하늘 바탕에 기대던 것 둘: 단계 줄의 남은 칸(흰색)은 회색으로, 배지(흰 바탕)는 하늘 바탕으로 바꿔 흰 바탕에서도 보이게. 되돌리려면 이 블록을 지운다 */
-.hero { border: 0; border-bottom: 1px solid var(--gray-200); border-radius: 0; background: none; box-shadow: none; }
+.hero { padding: 0 0 var(--space-8); border: 0; border-bottom: 1px solid var(--gray-200); border-radius: 0; background: none; box-shadow: none; } /* 판이 없으니 안쪽 여백도 빼서 아래 칸과 왼쪽 끝을 맞춘다 */
 .steps > li::before { background: var(--gray-200); }
 .tagrow :global(.tag.tag) { background: var(--tint); }

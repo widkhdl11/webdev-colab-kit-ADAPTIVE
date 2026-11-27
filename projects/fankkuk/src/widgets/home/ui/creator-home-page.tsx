@@ -114,18 +114,15 @@ export function CreatorHomePage({ profile, actionCount, actions, accessLog, noti
         <section className={welcome.hero} aria-labelledby="hero-title">
           <div className={welcome.copy}>
             <p className={welcome.label}>나의 팬꾹</p>
-            <h1 id="hero-title">{profile.name}님,<br /><span className={`accent ${welcome.accent}`}>반가워요</span></h1>
-            <p className={welcome.description}>팬들이 보낸 선물과<br />승인 요청을 여기서 확인하세요.</p>
-            {actionCount !== null ? <p className={welcome.state}>
+            <h1 id="hero-title">{profile.name}님, <span className={`accent ${welcome.accent}`}>반가워요</span></h1>
+            <p className={welcome.description}>팬들이 보낸 선물과 승인 요청을 여기서 확인하세요.</p>
+          </div>
+          {/* 2026-11-27 사용자: 팬덤 이름 칸·고양이 그림을 빼고 다시 배치 — 왼쪽 인사, 오른쪽(좁으면 아래) 지금 할 일 상태 하나 */}
+          {actionCount !== null ? <p className={welcome.state}>
               {actionCount === 0
                 ? <span className={welcome.done}><svg data-icon="line" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>지금은 처리할 일이 없어요</span>
                 : <Link className={welcome.go} href={CREATOR_ACTION_CENTER_HREF}>지금 할 일 {actionCount}건 확인하기 →</Link>}
-            </p> : null}
-          </div>
-          <div className={profile.fanName ? welcome.fan : `${welcome.fan} ${welcome.fanOnly}`}>
-            {profile.fanName ? <dl><dt>함께하는 팬덤</dt><dd>{profile.fanName}</dd></dl> : null}
-            <img src="/images/home/creator-cat.webp" width={160} height={160} alt="" />
-          </div>
+          </p> : null}
         </section>
       </div>
     } tiles={tiles} tilesLabel="내 바로가기" tilesClassName={welcome.tiles} banner={banner}>
