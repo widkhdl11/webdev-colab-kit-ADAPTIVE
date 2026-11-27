@@ -77,7 +77,8 @@ function fakes(opts: { role?: ViewerRole | null; currentOk?: boolean; locked?: b
   return { deps, limiter, calls, rpcArgs };
 }
 
-const body = { currentPassword: "right-pass-123" };
+const RIGHT_PW = "right-pass-123";
+const body = { currentPassword: RIGHT_PW };
 
 describe("INV-A17 S17: 본인 탈퇴 — 비밀번호 확인 → DB 본인 탈퇴 → 사진 지우기 → 로그아웃", () => {
   it("INV-A17 S17: 맞는 비밀번호면 확인 세션을 끝낸 뒤 withdraw_my_account 를 인자 없이 부르고, 사진을 지우고, 이 세션을 끝낸다", async () => {
