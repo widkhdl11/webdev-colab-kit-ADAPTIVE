@@ -3,6 +3,7 @@ import { passwordMatches, type AccountPasswordDeps } from "@/entities/session/ap
 import { PASSWORD_LOCKED_MESSAGE } from "@/entities/session/api/password-attempts";
 import { CURRENT_PASSWORD_EMPTY, CURRENT_PASSWORD_WRONG } from "@/entities/session/model/password-rule";
 import type { Viewer } from "@/entities/session/model/viewer";
+import { withdrawalResultShape, type RemoveWithdrawnPhotos } from "@/entities/withdrawal/model/withdrawal-result";
 
 // 본인 탈퇴 (my-account INV-A17 · S17~S17e). 처리 자체는 대표용과 같은 DB 처리(INV-A15)이고, 여기서는 그 앞뒤만 한다.
 // - 계정은 세션에서 확인한 사람(session-login INV-L2)뿐이다. 본문은 지금 비밀번호 하나만 받는다(다른 칸이 있으면 거부) — 계정 값을 읽지 않는다.
@@ -31,9 +32,6 @@ export const FAN_OPEN_WORK_LINKS: readonly WithdrawLink[] = [
 ];
 export const SUPPORT_LINKS: readonly WithdrawLink[] = [{ href: "/support", label: "1:1 문의" }];
 
-/** 저장소에서 지울 사진 — 팬 사진과 크리에이터 사진은 저장소가 다르다. 실패하면 false */
-export type RemoveWithdrawnPhotos = (paths: { fan: string[]; creator: string[] }) => Promise<boolean>;
-
 export type WithdrawSelfDeps = AccountPasswordDeps & {
   viewer: Viewer | null;
   /** 요청한 사람의 세션 클라이언트 — 관리자 키가 아니다 */
@@ -50,12 +48,6 @@ export type WithdrawSelfResult =
   | { ok: false; status: 400 | 401 | 403 | 409 | 429 | 500; field?: "currentPassword"; message: string; links?: readonly WithdrawLink[] };
 
 const inputSchema = z.object({ currentPassword: z.string().max(200) }).strict();
-
-const resultShape = z.object({
-  pseudonym: z.string(),
-  fan_photo_paths: z.array(z.string()),
-  creator_photo_paths: z.array(z.string()),
-});
 
 export async function withdrawSelf(deps: WithdrawSelfDeps, body: unknown): Promise<WithdrawSelfResult> {
   const viewer = deps.viewer;
@@ -90,7 +82,7 @@ export async function withdrawSelf(deps: WithdrawSelfDeps, body: unknown): Promi
   }
 
   // 여기부터 계정은 이미 지워졌다 — 뒤 일이 실패해도 성공으로 답한다(다시 누르면 「로그인이 필요합니다」만 나온다)
-  const result = resultShape.safeParse(data);
+  const result = withdrawalResultShape.safeParse(data);
   if (!result.success) {
     console.error("withdraw-self: 처리 결과의 꼴이 다르다 — 사진을 지우지 못했다");
   } else {

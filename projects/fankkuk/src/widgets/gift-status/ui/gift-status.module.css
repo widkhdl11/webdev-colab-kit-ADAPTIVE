@@ -210,4 +210,5 @@
    하늘 바탕에 기대던 것 둘: 단계 줄의 남은 칸(흰색)은 회색으로, 배지(흰 바탕)는 하늘 바탕으로 바꿔 흰 바탕에서도 보이게. 되돌리려면 이 블록을 지운다 */
 .hero { padding: 0 0 var(--space-8); border: 0; border-bottom: 1px solid var(--gray-200); border-radius: 0; background: none; box-shadow: none; } /* 판이 없으니 안쪽 여백도 빼서 아래 칸과 왼쪽 끝을 맞춘다 */
 .steps > li::before { background: var(--gray-200); }
-.tagrow :global(.tag.tag) { background: var(--tint); }
+.steps > li.done::before { background: var(--primary); } /* 흰 바탕에서 --tint-line 은 남은 칸 회색과 1.1:1 이라 구분이 안 됐다(11-27 ui 리뷰). 지금 칸은 같은 색 + 굵은 글자 */
+.tagrow :global(.tag.tag:not(.tag--warn, .tag--danger, .tag--success, .tag--info)) { background: var(--tint); } /* 상태 색 배지(승인 대기·거절·도착)는 제 색 그대로 — 같은 점수라 좁히지 않으면 뒤에 온 이 줄이 덮었다 */

@@ -95,7 +95,6 @@
 }
 .tiles > li > a:global(.card):is(:hover, :focus-within, :active) { transform: none; box-shadow: none; background: var(--tint); }
 .tiles > li > a:global(.card):focus-visible { outline-offset: -4px; }
-.tiles > li > a:global(.card):hover > span:first-child { background: var(--white); }
 .tiles > li > a:global(.card):hover img { transform: none; }
 /* 이름·설명은 아이콘(높이 44) 아래에서 시작해 오른쪽 위 화살표와 겹치지 않는다. 긴 낱말은 칸 안에서 줄을 바꾼다 */
 .tiles > li > a:global(.card) > span:not(:first-child) { max-width: 100%; overflow-wrap: anywhere; }

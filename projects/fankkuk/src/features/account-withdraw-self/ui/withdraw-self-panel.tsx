@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useId, useRef, useState, type FormEvent } from "react";
-import { CURRENT_PASSWORD_EMPTY } from "@/entities/session/model/password-rule";
+import { CURRENT_PASSWORD_EMPTY, PASSWORD_MAX } from "@/entities/session/model/password-rule";
 import { ConfirmDialog } from "@/shared/ui/step-dialog";
 import { sendWithdrawSelf } from "../api/withdraw-self-client";
 import type { WithdrawLink } from "../model/withdraw-self";
@@ -72,7 +72,7 @@ export function WithdrawSelfPanel({ role, onLoginExpired }: { role: "fan" | "cre
           id={f("pw")}
           type="password"
           autoComplete="current-password"
-          maxLength={72}
+          maxLength={PASSWORD_MAX}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           aria-invalid={invalid || undefined}

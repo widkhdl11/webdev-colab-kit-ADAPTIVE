@@ -25,7 +25,7 @@ export async function removeWithdrawnPhotos(paths: { fan: string[]; creator: str
   return removeAndForget(adminPhotoStore(), batchesOf(paths));
 }
 
-/** 매일 작업 — 남은 줄을 한 번에 최대 500개 다시 지운다. 남은 줄 수를 돌려준다(못 읽으면 null) */
+/** 매일 작업 — 남은 줄을 한 번에 최대 500개 다시 지운다. 이번에 시도한 줄 수와 모두 지웠는지를 돌려준다(못 읽으면 null) */
 export async function sweepPendingPhotoDeletions(): Promise<{ tried: number; done: boolean } | null> {
   const { data, error } = await createAdminSupabase().from("pending_photo_deletions").select("bucket, path").order("created_at").limit(500);
   if (error || !Array.isArray(data)) return null;

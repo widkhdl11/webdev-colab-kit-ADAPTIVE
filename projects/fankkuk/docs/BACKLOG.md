@@ -6,6 +6,10 @@
 - 하네스 개선은 여기가 아니라 docs/references/harness-backlog.md.
 
 ## 미결
+- [ ] **선 두께 옛 값 네 곳 · 화살표 마스크** (2026-11-27 ui 리뷰 낮음) — `src/widgets/home/ui/creator-welcome.module.css` 47(2.2) · `src/widgets/gift-status/ui/gift-status.module.css` 121(1.6)·186(2) · `src/widgets/home/ui/home.module.css` 38(2) 은 지금 icon-duotone.css 가 덮어 안 보이지만 49절을 되돌리거나 data-icon 이 빠지면 살아난다 — 지우거나 `var(--icon-stroke)` · creator-welcome 110 화살표 마스크는 CSS 그림이라 두께 2 로 남는다
+- [ ] **하늘 채움 칸 안의 듀오톤 아이콘 확인** (2026-11-27 ui 리뷰 낮음) — `--primary` 로 채운 칸(register-form.module.css 98 `.pick-ok` · send-form.module.css 35 `.sz` · 채움 버튼) 안에 `data-duo` 아이콘이 있으면 닫힌 모양 안이 바탕과 같은 색이 된다 · 그런 조합이 실제로 있는지 화면에서 본다
+- [ ] **「접기 하나만 열림」을 기준 문서에** (2026-11-27 ux 리뷰 낮음) — 4f431b17 의 동작이 `docs/ux/document-pages.md` 에 없다 · 규칙으로 굳히려면 한 줄
+- [ ] **UX 명세 없는 화면: 계정 설정(본인 탈퇴)·크리에이터 홈·공지** (2026-11-27 ux 리뷰) — me.md·creator-settings.md·home.md·notices.md 가 없어 ux 리뷰가 판정을 못 했다 · `docs/ux/principles.md` 도 없다 · 이 화면을 다시 고칠 때 명세부터
 - [ ] **-jso4 Vercel 프로젝트 정리** (2026-11-27) — fankkuk 중복 빌드 프로젝트, 빌드는 꺼 둠. 10-28 게이트웨이 접속·주소 봉인 키, 11-06 휴대폰 키가 여기에만 들어가 fankkuk.com 가입이 막혔다(오늘 -xqne 에 넣음) · 사용자가 지우기로 하면 그 전에 SIGN_GATEWAY_URL 만 -xqne 로 옮긴다
 - [ ] **운영 전환 때 SIGN_GATEWAY_TOKEN 을 -xqne 에** (2026-11-27) — -jso4 에만 있고 Sensitive 라 꺼낼 수 없다 · 드림시큐리티 실제 서명으로 넘길 때 게이트웨이 서버(sign.fankkuk.com) 설정 파일에서 확인해 넣는다(deploy-runbook 운영 전환 체크리스트)
 - [ ] **아일랜드(50절) 되돌리기가 커밋 하나로 안 된다** (2026-11-27) — cbc502d2 가 판 걷은 머리 두 곳의 안쪽 여백을 같이 뺐다 · 3번을 되돌리라는 지시가 오면 70a9e104·98a3b2f0 와 cbc502d2 의 .hero padding 줄을 함께 정리

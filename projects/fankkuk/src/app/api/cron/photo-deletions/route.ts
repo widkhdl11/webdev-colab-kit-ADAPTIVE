@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { sweepPendingPhotoDeletions } from "@/features/account-withdraw-self/api/withdrawn-photos";
+import { sweepPendingPhotoDeletions } from "@/entities/withdrawal/api/withdrawn-photos";
 import { refuseScheduleRequest } from "@/shared/lib/http/schedule-secret";
 
 // 탈퇴한 계정의 남은 사진 다시 지우기 (my-account INV-A15). DB 예약 작업(pg_net, schedule_photo_deletions)이 하루 한 번,

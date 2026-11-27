@@ -120,10 +120,10 @@ describe("대표의 회원 탈퇴 칸 (INV-A15)", () => {
     await click("회원 탈퇴 처리하기");
     type("byeolbit_fan");
     await click("탈퇴 처리");
-    api.postWithdraw.mockResolvedValueOnce({ kind: "ok", body: { ok: true, message: "탈퇴는 처리됐지만 사진을 지우지 못했어요. 개발 담당에게 알려 주세요." } });
+    api.postWithdraw.mockResolvedValueOnce({ kind: "ok", body: { ok: true, message: "사진 일부는 아직 지우지 못해 다음 날 자동으로 다시 지워요." } });
     await click("탈퇴 처리");
     expect(host.textContent).toContain("byeolbit_fan 계정을 탈퇴 처리했어요.");
-    expect(host.textContent).toContain("사진을 지우지 못했어요");
+    expect(host.textContent).toContain("사진 일부는 아직 지우지 못해 다음 날 자동으로 다시 지워요.");
   });
 
   it("INV-A15: 「닫기」를 누르면 적던 아이디를 지우고 닫힌 칸으로, 포커스는 「회원 탈퇴 처리하기」로 돌아간다", async () => {

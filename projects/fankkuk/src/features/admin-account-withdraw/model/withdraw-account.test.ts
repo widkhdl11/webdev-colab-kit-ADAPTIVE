@@ -60,6 +60,14 @@ describe("INV-A15: 회원 탈퇴 처리", () => {
     expect(q.removed).toEqual([]);
   });
 
+  it("INV-A15 (S15): 사진 지우기가 예외를 던져도 탈퇴는 끝났으니 500 이 아니라 200 + 알릴 문장(다시 누르면 「회원이 아니에요」만 나온다)", async () => {
+    const { client } = fakeClient({ data: RESULT });
+    const boom: RemovePhotos = async () => {
+      throw new Error("storage down");
+    };
+    expect(await withdrawAccount(client, boom, { loginId: "byeolbit" })).toEqual({ status: 200, body: { ok: true, message: MESSAGE_PHOTOS_LEFT } });
+  });
+
   it("INV-A15 (S15b, 실패경로): 운영자가 아니면 404, 직원은 403 — 둘 다 DB 함수를 부르지 않는다", async () => {
     const guest = fakeClient({}, { operator: false, owner: false });
     expect((await withdrawAccount(guest.client, photos().remove, { loginId: "byeolbit" })).status).toBe(404);

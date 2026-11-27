@@ -3,6 +3,7 @@ import { z } from "zod";
 import { readAdminAccess } from "@/entities/session/api/read-admin-access";
 import { MESSAGE_NOT_FOUND } from "@/shared/lib/http/pg-error-reply";
 import type { JsonReply } from "@/shared/lib/http/private-json";
+import { withdrawalResultShape, type RemoveWithdrawnPhotos } from "@/entities/withdrawal/model/withdrawal-result";
 import { MESSAGE_LOGIN_ID, shapeLoginId } from "./login-id";
 
 // 회원 탈퇴 처리 (my-account INV-A15, approval-signature INV-S14·S15). 탈퇴 신청은 1:1 문의로 받고 대표가 아이디로 처리한다.
@@ -14,20 +15,14 @@ export { MESSAGE_LOGIN_ID } from "./login-id";
 export const MESSAGE_NOT_MEMBER = "탈퇴할 수 있는 회원이 아니에요. 아이디를 확인해 주세요.";
 export const MESSAGE_OPEN_WORK = "진행 중인 선물·역조공이 있거나 환불이 끝나지 않아 탈퇴할 수 없어요. 먼저 끝내 주세요.";
 export const MESSAGE_KAKAO_SIGNATURE = "카카오 서명 기록이 있어 아직 탈퇴를 처리할 수 없어요.";
-export const MESSAGE_PHOTOS_LEFT = "탈퇴는 처리됐지만 사진을 지우지 못했어요. 개발 담당에게 알려 주세요.";
-const MESSAGE_FAILED = "탈퇴를 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+export const MESSAGE_PHOTOS_LEFT = "사진 일부는 아직 지우지 못해 다음 날 자동으로 다시 지워요.";
+const MESSAGE_FAILED = "탈퇴 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 const bodyShape = z.object({ loginId: z.string() }).strict();
 export type WithdrawWrite = z.input<typeof bodyShape>;
 
-const resultShape = z.object({
-  pseudonym: z.string(),
-  fan_photo_paths: z.array(z.string()),
-  creator_photo_paths: z.array(z.string()),
-});
-
-/** 저장소에서 지울 사진 — 팬 사진과 크리에이터 사진은 저장소가 다르다. 실패하면 false */
-export type RemovePhotos = (paths: { fan: string[]; creator: string[] }) => Promise<boolean>;
+/** 테스트·route 가 쓰던 이름 — 모양은 entities/withdrawal 하나뿐이다 */
+export type RemovePhotos = RemoveWithdrawnPhotos;
 
 /** client = 로그인한 사람의 세션 클라이언트. 대표 판정과 기록의 「누가」는 DB 가 그 토큰의 사람으로 한다 — 관리자 키를 쓰지 않는다. */
 export async function withdrawAccount(client: Pick<SupabaseClient, "rpc">, removePhotos: RemovePhotos, body: unknown): Promise<JsonReply> {
@@ -45,10 +40,10 @@ export async function withdrawAccount(client: Pick<SupabaseClient, "rpc">, remov
   if (error?.code === "0A000") return { status: 409, body: { message: MESSAGE_KAKAO_SIGNATURE } };
   if (error) return { status: 500, body: { message: MESSAGE_FAILED } };
 
-  const result = resultShape.safeParse(data);
+  const result = withdrawalResultShape.safeParse(data);
   if (!result.success) return { status: 200, body: { ok: true, message: MESSAGE_PHOTOS_LEFT } };
   const { fan_photo_paths: fan, creator_photo_paths: creator } = result.data;
-  if (fan.length + creator.length > 0 && !(await removePhotos({ fan, creator }))) {
+  if (fan.length + creator.length > 0 && !(await removePhotos({ fan, creator }).catch(() => false))) {
     return { status: 200, body: { ok: true, message: MESSAGE_PHOTOS_LEFT } };
   }
   return { status: 200, body: { ok: true } };

@@ -9,7 +9,7 @@ import { createDetachedAuth } from "@/shared/api/supabase/detached";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
 import { sessionOnlyMarker } from "@/shared/api/supabase/session-cookies";
 import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
-import { removeWithdrawnPhotos } from "@/features/account-withdraw-self/api/withdrawn-photos";
+import { removeWithdrawnPhotos } from "@/entities/withdrawal/api/withdrawn-photos";
 
 // 본인 탈퇴 (my-account INV-A17). 같은 사이트의 JSON 만, 응답은 캐시하지 않는다. 본문은 지금 비밀번호 하나.
 // 사람은 세션에서 확인한 사람뿐이다(INV-L2). DB 는 그 사람의 세션 클라이언트로 부른다 — 관리자 키는 비밀번호 확인용 계정 조회·횟수 기록과 사진 지우기에만.
